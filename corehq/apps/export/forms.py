@@ -411,42 +411,6 @@ class FilterFormCouchExportDownloadForm(GenericFilterFormExportDownloadForm):
         return kwargs
 
 
-class FilterFormESExportDownloadForm(GenericFilterFormExportDownloadForm):
-
-    def get_edit_url(self, export):
-        from corehq.apps.export.views import EditNewCustomFormExportView
-        return reverse(EditNewCustomFormExportView.urlname,
-                       args=(self.domain_object.name, export._id))
-
-    def get_form_filter(self):
-        return filter(None, [
-            self._get_datespan_filter(),
-            self._get_group_filter(),
-            self._get_user_type_filter()
-        ])
-
-    def _get_datespan_filter(self):
-        datespan = self._get_datespan()
-        if datespan.is_valid():
-            datespan.set_timezone(self.timezone)
-            return ReceivedOnRangeFilter(gte=datespan.startdate, lt=datespan.enddate + timedelta(days=1))
-
-    def _get_group_filter(self):
-        group = self.cleaned_data['group']
-        if group:
-            return GroupFormSubmittedByFilter(group)
-
-    def _get_user_type_filter(self):
-        group = self.cleaned_data['group']
-        if not group:
-            return UserTypeFilter(self._get_es_user_types())
-
-    def get_multimedia_task_kwargs(self, export, download_id):
-        kwargs = super(FilterFormESExportDownloadForm, self).get_multimedia_task_kwargs(export, download_id)
-        kwargs['export_is_legacy'] = False
-        return kwargs
-
-
 class EmwfFilterExportMixin(object):
     def _get_user_ids(self, mobile_user_and_group_slugs):
         return self.es_user_filter.selected_user_ids(mobile_user_and_group_slugs)
@@ -471,7 +435,7 @@ class EmwfFilterExportMixin(object):
         return self.es_user_filter.selected_group_ids(mobile_user_and_group_slugs)
 
 
-class EmwfFilterFormExport(EmwfFilterExportMixin, FilterFormESExportDownloadForm):
+class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloadForm):
     export_user_filter = FormSubmittedByFilter
     es_user_filter = LocationRestrictedMobileWorkerFilter
 
@@ -561,6 +525,22 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, FilterFormESExportDownloadForm
                 commtrack=False,
             )
             return FormSubmittedByFilter(user_ids)
+
+    def get_edit_url(self, export):
+        from corehq.apps.export.views import EditNewCustomFormExportView
+        return reverse(EditNewCustomFormExportView.urlname,
+                       args=(self.domain_object.name, export._id))
+
+    def _get_datespan_filter(self):
+        datespan = self._get_datespan()
+        if datespan.is_valid():
+            datespan.set_timezone(self.timezone)
+            return ReceivedOnRangeFilter(gte=datespan.startdate, lt=datespan.enddate + timedelta(days=1))
+
+    def get_multimedia_task_kwargs(self, export, download_id):
+        kwargs = super(EmwfFilterFormExport, self).get_multimedia_task_kwargs(export, download_id)
+        kwargs['export_is_legacy'] = False
+        return kwargs
 
 
 class GenericFilterCaseExportDownloadForm(BaseFilterExportDownloadForm):
