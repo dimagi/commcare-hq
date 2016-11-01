@@ -30,8 +30,6 @@ from corehq.apps.analytics.tasks import update_hubspot_properties
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
-from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
-from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.util import reverse
 from corehq.util.quickcache import quickcache
 from couchexport.export import export_from_tables
@@ -60,6 +58,7 @@ from corehq.apps.style.decorators import (
     use_angular_js,
 )
 from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source, _clean_table_name
+from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
 from corehq.apps.userreports.exceptions import (
     BadBuilderConfigError,
     BadSpecError,
@@ -80,6 +79,7 @@ from corehq.apps.userreports.models import (
     DataSourceBuildInformation,
     ReportMeta,
 )
+from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.apps.userreports.reports.builder.forms import (
     DataSourceForm,
     ConfigureMapReportForm,
@@ -583,6 +583,29 @@ class EditReportInBuilder(View):
         raise Http404("Report was not created by the report builder")
 
 
+def to_report_column(column):
+    """
+    column is the JSON that we get when saving or previewing a report. Return a column spec we can use to create a
+    ReportConfiguration.
+    """
+    # Example value of column:
+    #     {
+    #         u'column_id': u'modified_on_6457b79c',
+    #         u'name': u'modified_on'
+    #         u'label': u'modified on',
+    #         u'is_numeric': False,
+    #         u'is_group_by_column': False,
+    #         u'aggregation': None,
+    #     }
+    return {
+        'aggregation': column.get('aggregation') or 'simple',
+        'field': column['column_id'],
+        'display': column['label'],
+        'type': 'field',
+        'format': 'default',
+    }
+
+
 class ConfigureReport(ReportBuilderView):
     urlname = 'configure_report'
     page_title = ugettext_lazy("Configure Report")
@@ -656,33 +679,108 @@ class ConfigureReport(ReportBuilderView):
         else:
             raise
 
-    def post(self, *args, **kwargs):
-        if self.report_form.is_valid():
-            if self.report_form.existing_report:
-                try:
-                    report_configuration = self.report_form.update_report()
-                except ValidationError as e:
-                    messages.error(self.request, e.message)
-                    return self.get(*args, **kwargs)
+    def post(self, request, domain):
+
+        def get_data_source_configuration_kwargs(ds_builder_, app_, report_source_id_, report_data_):
+            aggregation_fields = [c['column_id'] for c in report_data_['columns'] if c['is_group_by_column']]
+            is_multiselect_chart_report = False  # report_data_['isAggregationEnabled']  # Not the same thing
+            if is_multiselect_chart_report:
+                base_item_expression = ds_builder_.base_item_expression(True, aggregation_fields[0])
             else:
-                self._confirm_report_limit()
-                try:
-                    report_configuration = self.report_form.create_report()
-                except BadSpecError as err:
-                    messages.error(self.request, str(err))
-                    notify_exception(self.request, str(err), details={
-                        'domain': self.domain,
-                        'report_form_class': self.report_form.__class__.__name__,
-                        'report_type': self.report_form.report_type,
-                        'group_by': getattr(self.report_form, 'group_by', 'Not set'),
-                        'user_filters': getattr(self.report_form, 'user_filters', 'Not set'),
-                        'default_filters': getattr(self.report_form, 'default_filters', 'Not set'),
-                    })
-                    return self.get(*args, **kwargs)
-            return HttpResponseRedirect(
-                reverse(ConfigurableReport.slug, args=[self.domain, report_configuration._id])
+                base_item_expression = ds_builder_.base_item_expression(False)
+            number_columns = [c['column_id'] for c in report_data_['columns'] if c['is_numeric']]
+            return dict(
+                display_name=ds_builder_.data_source_name,
+                referenced_doc_type=ds_builder_.source_doc_type,
+                configured_filter=ds_builder_.filter,
+                configured_indicators=ds_builder_.indicators(
+                    number_columns, is_multiselect_chart_report
+                ),
+                base_item_expression=base_item_expression,
+                meta=DataSourceMeta(build=DataSourceBuildInformation(
+                    source_id=report_source_id_,
+                    app_id=app_._id,
+                    app_version=app_.version,
+                ))
             )
-        return self.get(*args, **kwargs)
+
+        def build_data_source(domain_, ds_config_kwargs_):
+            data_source_config = DataSourceConfiguration(
+                domain=domain_,
+                # The uuid gets truncated, so it's not really universally unique.
+                table_id=_clean_table_name(domain_, str(uuid.uuid4().hex)),
+                **ds_config_kwargs_,
+            )
+            data_source_config.validate()
+            data_source_config.save()
+            rebuild_indicators.delay(data_source_config._id)
+            return data_source_config._id
+
+        def get_report_charts(report_data_):
+            report_type_funcs = {
+                'bar': lambda cols: [{
+                    'type': 'multibar',
+                    'x_axis_column': [c['column_id'] for c in cols if c['is_group_by_column']][0],  # 1st group by
+                    'y_axis_columns': [c['column_id'] for c in cols if not c['is_group_by_column']],
+                }],
+                'pie': lambda cols: [{
+                    "type": "pie",
+                    "aggregation_column": [c['column_id'] for c in cols if c['is_group_by_column']][0],
+                    "value_column": [c['column_id'] for c in cols if not c['is_group_by_column']][0],
+                }],
+                'none': lambda cols: [],
+            }
+            func = report_type_funcs[report_data_['report_type']]
+            return func(report_data_['columns'])
+
+        self._confirm_report_limit()
+
+        report_name = request.GET['report_name']
+        source_type = request.GET['source_type']
+        report_source_id = request.GET['source']
+        # data_source_id = request.GET['data_source']  # TODO: Why is this a GET param if it's unused?
+        app = Application.get(request.GET['application'])
+
+        report_data = json.loads(request.body)
+
+        ds_builder = DataSourceBuilder(app.domain, app, source_type, report_source_id)
+        ds_config_kwargs = get_data_source_configuration_kwargs(ds_builder, app, report_source_id, report_data)
+        data_source_config_id = build_data_source(app.domain, ds_config_kwargs)
+
+        self._confirm_report_limit()
+        try:
+            if report_data['aggregate']:
+                aggregation_columns = [c['column_id'] for c in report_data['columns'] if c['is_group_by_column']]
+            else:
+                aggregation_columns = []
+            report_configuration = ReportConfiguration(
+                domain=app.domain,
+                config_id=data_source_config_id,
+                title=report_name,
+                aggregation_columns=aggregation_columns,
+                columns=[to_report_column(c) for c in report_data['columns']],
+                filters=[],  # TODO: report_data['user_filters'] + report_data['default_filters']
+                configured_charts=get_report_charts(report_data),
+                report_meta=ReportMeta(
+                    created_by_builder=True,
+                    builder_report_type=report_data['report_type'],
+                )
+            )
+            report_configuration.validate()
+            report_configuration.save()
+        except BadSpecError as err:
+            messages.error(request, str(err))
+            notify_exception(request, str(err), details={
+                'domain': domain,
+                'report_type': report_data['report_type'],
+                # 'group_by': getattr(self.report_form, 'group_by', 'Not set'),
+                # 'user_filters': getattr(self.report_form, 'user_filters', 'Not set'),
+                # 'default_filters': getattr(self.report_form, 'default_filters', 'Not set'),
+            })
+            return self.get(request, domain)
+        return HttpResponseRedirect(
+            reverse(ConfigurableReport.slug, args=[self.domain, report_configuration._id])
+        )
 
     def _confirm_report_limit(self):
         """
@@ -701,28 +799,9 @@ class ReportPreview(BaseDomainView):
     urlname = 'report_preview'
 
     def post(self, request, domain, data_source):
-        post_data = json.loads(urllib.unquote(request.body))
-        do_aggregation = post_data['aggregate']
-        # Example value of an item in post_data['columns']:
-        #     {
-        #         u'columnId': u'modified_on_6457b79c',
-        #         u'name': u'modified_on'
-        #         u'label': u'modified on',
-        #         u'isNumeric': False,
-        #         u'isGroupByColumn': False,
-        #         u'aggregation': None,
-        #     },
-        columns = [{
-            'type': 'field',
-            'field': c['columnId'],
-            'column_id': c['columnId'],
-            'display': c['label'],
-            'aggregation': c.get('aggregation') or 'simple',
-            # TODO: Reuse ColumnOption
-            # Generate column IDs to allow columns to appear more than once
-        } for c in post_data['columns']]
-        if do_aggregation:
-            aggregation_columns = [c['columnId'] for c in post_data['columns'] if c['isGroupByColumn']]
+        report_data = json.loads(urllib.unquote(request.body))
+        if report_data['aggregate']:
+            aggregation_columns = [c['column_id'] for c in report_data['columns'] if c['is_group_by_column']]
         else:
             aggregation_columns = []
         table = ConfigurableReport.report_config_table(
@@ -731,7 +810,7 @@ class ReportPreview(BaseDomainView):
             title='{}_{}_{}'.format(TEMP_REPORT_PREFIX, domain, data_source),
             description='',
             aggregation_columns=aggregation_columns,
-            columns=columns,
+            columns=[to_report_column(c) for c in report_data['columns']],
             report_meta=ReportMeta(created_by_builder=True),
         )
         return json_response(table[0][1])
