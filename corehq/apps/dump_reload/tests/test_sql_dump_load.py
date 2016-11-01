@@ -1,10 +1,12 @@
+import functools
 import inspect
 import json
 import uuid
 from StringIO import StringIO
-import functools
 from collections import Counter
 
+from django.contrib.admin.utils import NestedObjects
+from django.core import serializers
 from django.db.models.signals import post_save
 from django.test import TestCase
 from django.test.utils import override_settings
@@ -17,15 +19,14 @@ from corehq.apps.dump_reload.sql import dump_sql_data
 from corehq.apps.dump_reload.sql import load_sql_data
 from corehq.apps.dump_reload.sql.dump import get_model_domain_filters, get_objects_to_dump
 from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.tzmigration.models import TimezoneMigrationProgress
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.form_processor.models import (
-    XFormInstanceSQL, XFormAttachmentSQL, XFormOperationSQL,
-    CommCareCaseSQL, CommCareCaseIndexSQL, CaseTransaction,
+    XFormInstanceSQL, XFormAttachmentSQL, CommCareCaseSQL, CommCareCaseIndexSQL, CaseTransaction,
     LedgerValue, LedgerTransaction)
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, create_form_for_test
-from django.core import serializers
 
 
 def register_cleanup(test, models, domain):
@@ -37,7 +38,9 @@ def delete_sql_data(test, models, domain):
     for model in models:
         filters = get_model_domain_filters(model, domain)
         for filter in filters:
-            model.objects.filter(filter).delete()
+            collector = NestedObjects(using='default')
+            collector.collect(model.objects.filter(filter))
+            collector.delete()
             test.assertFalse(model.objects.filter(filter).exists(), model)
 
 
@@ -49,6 +52,10 @@ class BaseDumpLoadTest(TestCase):
         cls.domain = Domain(name=cls.domain_name)
         cls.domain.save()
 
+        cls.default_objects_counts = Counter({
+            TimezoneMigrationProgress: 1
+        })
+
     @classmethod
     def tearDownClass(cls):
         TimezoneMigrationProgress.objects.filter(domain=cls.domain_name).delete()
@@ -56,9 +63,10 @@ class BaseDumpLoadTest(TestCase):
         super(BaseDumpLoadTest, cls).tearDownClass()
 
     @override_settings(ALLOW_FORM_PROCESSING_QUERIES=True)
-    def _dump_and_load(self, expected_object_count, models):
-        models.append(TimezoneMigrationProgress)
-        expected_object_count += 1
+    def _dump_and_load(self, expected_object_counts):
+        expected_object_counts.update(self.default_objects_counts)
+
+        models = list(expected_object_counts)
 
         output_stream = StringIO()
         dump_sql_data(self.domain_name, [], output_stream)
@@ -75,11 +83,12 @@ class BaseDumpLoadTest(TestCase):
         dump_lines = [line.strip() for line in dump_output.split('\n') if line.strip()]
         total_object_count, loaded_object_count = load_sql_data(dump_lines)
 
-        model_counts = Counter([json.loads(line)['model'] for line in dump_lines])
-        msg = "{} != {}\n{}".format(expected_object_count, len(dump_lines), model_counts)
-        self.assertEqual(expected_object_count, len(dump_lines), msg)
-        self.assertEqual(expected_object_count, loaded_object_count)
-        self.assertEqual(expected_object_count, total_object_count)
+        expected_model_counts = _normalize_object_counter(expected_object_counts)
+        actual_model_counts = Counter([json.loads(line)['model'] for line in dump_lines])
+        expected_total_objects = sum(expected_object_counts.values())
+        self.assertDictEqual(expected_model_counts, actual_model_counts)
+        self.assertEqual(expected_total_objects, loaded_object_count)
+        self.assertEqual(expected_total_objects, total_object_count)
 
         return dump_lines
 
@@ -116,6 +125,7 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
         cls.form_accessors = FormAccessors(cls.domain_name)
         cls.case_accessors = CaseAccessors(cls.domain_name)
         cls.product = make_product(cls.domain_name, 'A Product', 'prodcode_a')
+        cls.default_objects_counts.update({SQLProduct: 1})
 
     @classmethod
     def tearDownClass(cls):
@@ -123,15 +133,17 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
         super(TestSQLDumpLoadShardedModels, cls).tearDownClass()
 
     def test_dump_laod_form(self):
-        models_under_test = [XFormInstanceSQL, XFormAttachmentSQL, XFormOperationSQL]
-        register_cleanup(self, models_under_test, self.domain_name)
+        expected_object_counts = Counter({
+            XFormInstanceSQL: 2,
+            XFormAttachmentSQL: 2
+        })
+        register_cleanup(self, list(expected_object_counts), self.domain_name)
 
         pre_forms = [
             create_form_for_test(self.domain_name),
             create_form_for_test(self.domain_name)
         ]
-        expected_object_count = 4  # 2 forms, 2 form attachments
-        self._dump_and_load(expected_object_count, models_under_test)
+        self._dump_and_load(expected_object_counts)
 
         form_ids = self.form_accessors.get_all_form_ids_in_domain('XFormInstance')
         self.assertEqual(set(form_ids), set(form.form_id for form in pre_forms))
@@ -141,11 +153,15 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
             self.assertDictEqual(pre_form.to_json(), post_form.to_json())
 
     def test_sql_dump_load_case(self):
-        models_under_test = [
-            XFormInstanceSQL, XFormAttachmentSQL, XFormOperationSQL,
-            CommCareCaseSQL, CommCareCaseIndexSQL, CaseTransaction
-        ]
-        register_cleanup(self, models_under_test, self.domain_name)
+        expected_object_counts = Counter({
+            XFormInstanceSQL: 2,
+            XFormAttachmentSQL: 2,
+            CommCareCaseSQL: 2,
+            CaseTransaction: 3,
+            CommCareCaseIndexSQL: 1
+
+        })
+        register_cleanup(self, list(expected_object_counts), self.domain_name)
 
         pre_cases = self.factory.create_or_update_case(
             CaseStructure(
@@ -160,8 +176,7 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
             attrs={'external_id': 'billie jean', 'update': {'name': 'Billie Jean'}}
         ))[0]
 
-        object_count = 10  # 2 forms, 2 form attachment, 2 cases, 3 case transactions, 1 case index
-        self._dump_and_load(object_count, models_under_test)
+        self._dump_and_load(expected_object_counts)
 
         case_ids = self.case_accessors.get_case_ids_in_domain()
         self.assertEqual(set(case_ids), set(case.case_id for case in pre_cases))
@@ -170,12 +185,16 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
             self.assertDictEqual(pre_case.to_json(), post_case.to_json())
 
     def test_ledgers(self):
-        models_under_test = [
-            XFormInstanceSQL, XFormAttachmentSQL, XFormOperationSQL,
-            CommCareCaseSQL, CommCareCaseIndexSQL, CaseTransaction,
-            LedgerValue, LedgerTransaction
-        ]
-        register_cleanup(self, models_under_test, self.domain_name)
+        expected_object_counts = Counter({
+            XFormInstanceSQL: 3,
+            XFormAttachmentSQL: 3,
+            CommCareCaseSQL: 1,
+            CaseTransaction: 3,
+            LedgerValue: 1,
+            LedgerTransaction: 2
+
+        })
+        register_cleanup(self, list(expected_object_counts), self.domain_name)
 
         case = self.factory.create_case()
         submit_case_blocks([
@@ -190,9 +209,7 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
         self.assertEqual(1, len(pre_ledger_values))
         self.assertEqual(2, len(pre_ledger_transactions))
 
-        # 3 forms, 3 form attachments, 1 case, 3 case transactions, 1 ledger value, 2 ledger transactions
-        expected_doc_count = 13
-        self._dump_and_load(expected_doc_count, models_under_test)
+        self._dump_and_load(expected_object_counts)
 
         post_ledger_values = LedgerAccessorSQL.get_ledger_values_for_case(case.case_id)
         post_ledger_transactions = LedgerAccessorSQL.get_ledger_transactions_for_case(case.case_id)
@@ -216,8 +233,10 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
 
     def test_case_search_config(self):
         from corehq.apps.case_search.models import CaseSearchConfig, CaseSearchConfigJSON
-        models_under_test = [CaseSearchConfig]
-        register_cleanup(self, models_under_test, self.domain_name)
+        expected_object_counts = Counter({
+            CaseSearchConfig: 1,
+        })
+        register_cleanup(self, list(expected_object_counts), self.domain_name)
 
         pre_config, created = CaseSearchConfig.objects.get_or_create(pk=self.domain_name)
         pre_config.enabled = True
@@ -227,7 +246,7 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         pre_config.config = fuzzies
         pre_config.save()
 
-        self._dump_and_load(1, models_under_test)
+        self._dump_and_load(expected_object_counts)
 
         post_config = CaseSearchConfig.objects.get(domain=self.domain_name)
         self.assertTrue(post_config.enabled)
@@ -237,8 +256,12 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         from corehq.apps.data_interfaces.models import (
             AutomaticUpdateRule, AutomaticUpdateRuleCriteria, AutomaticUpdateAction
         )
-        models_under_test = [AutomaticUpdateAction, AutomaticUpdateRuleCriteria, AutomaticUpdateRule]
-        register_cleanup(self, models_under_test, self.domain_name)
+        expected_object_counts = Counter({
+            AutomaticUpdateRule: 1,
+            AutomaticUpdateRuleCriteria: 1,
+            AutomaticUpdateAction: 2,
+        })
+        register_cleanup(self, list(expected_object_counts), self.domain_name)
 
         pre_rule = AutomaticUpdateRule(
             domain=self.domain_name,
@@ -265,7 +288,7 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             rule=pre_rule,
         )
 
-        self._dump_and_load(4, models_under_test)
+        self._dump_and_load(expected_object_counts)
 
         post_rule = AutomaticUpdateRule.objects.get(pk=pre_rule.pk)
         post_criteria = AutomaticUpdateRuleCriteria.objects.get(pk=pre_criteria.pk)
@@ -282,8 +305,8 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         from corehq.apps.users.models import WebUser
         from django.contrib.auth.models import User
 
-        models_under_test = [User]
-        register_cleanup(self, models_under_test, self.domain_name)
+        expected_object_counts = Counter({User: 3})
+        register_cleanup(self, list(expected_object_counts), self.domain_name)
 
         ccuser_1 = CommCareUser.create(
             domain=self.domain_name,
@@ -307,8 +330,7 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         self.addCleanup(ccuser_2.delete)
         self.addCleanup(web_user.delete)
 
-        expected_object_count = 3  # 3 users
-        self._dump_and_load(expected_object_count, models_under_test)
+        self._dump_and_load(expected_object_counts)
 
     def test_device_logs(self):
         from corehq.apps.receiverwrapper.util import submit_form_locally
@@ -316,10 +338,14 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         from corehq.apps.users.models import CommCareUser
         from django.contrib.auth.models import User
 
-        expected_models = [
-            DeviceReportEntry, ForceCloseEntry, UserEntry, UserErrorEntry, User
-        ]
-        register_cleanup(self, expected_models, self.domain_name)
+        expected_object_counts = Counter({
+            User: 1,
+            DeviceReportEntry: 7,
+            UserEntry: 1,
+            UserErrorEntry: 2,
+            ForceCloseEntry: 1
+        })
+        register_cleanup(self, list(expected_object_counts), self.domain_name)
 
         user = CommCareUser.create(
             domain=self.domain_name,
@@ -334,17 +360,18 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             xml = f.read()
         submit_form_locally(xml, self.domain_name)
 
-        # 1 user, 7 device reports, 1 user entry, 2 user errors, 1 force close
-        expected_object_count = 12
-        self._dump_and_load(expected_object_count, expected_models)
+        self._dump_and_load(expected_object_counts)
 
     def test_demo_user_restore(self):
         from corehq.apps.users.models import CommCareUser
         from corehq.apps.ota.models import DemoUserRestore
         from django.contrib.auth.models import User
 
-        expected_models = [DemoUserRestore, User]
-        register_cleanup(self, expected_models, self.domain_name)
+        expected_object_counts = Counter({
+            User: 1,
+            DemoUserRestore: 1
+        })
+        register_cleanup(self, list(expected_object_counts), self.domain_name)
 
         user_id = uuid.uuid4().hex
         user = CommCareUser.create(
@@ -363,22 +390,31 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             restore_comment="Test migrate demo user restore"
         ).save()
 
-        expected_object_count = 2  # 1 user, 1 demo user restore
-        self._dump_and_load(expected_object_count, expected_models)
+        self._dump_and_load(expected_object_counts)
 
     def test_products(self):
         from corehq.apps.products.models import SQLProduct
-        models_under_test = [SQLProduct]
-        register_cleanup(self, models_under_test, self.domain_name)
+        expected_object_counts = Counter({SQLProduct: 3})
+        register_cleanup(self, list(expected_object_counts), self.domain_name)
 
         p1 = SQLProduct.objects.create(domain=self.domain_name, product_id='test1', name='test1')
         p2 = SQLProduct.objects.create(domain=self.domain_name, product_id='test2', name='test2')
         parchived = SQLProduct.objects.create(domain=self.domain_name, product_id='test3', name='test3', is_archived=True)
 
-        self._dump_and_load(3, models_under_test)
+        self._dump_and_load(expected_object_counts)
 
         self.assertEqual(2, SQLProduct.active_objects.filter(domain=self.domain_name).count())
         all_active = SQLProduct.active_objects.filter(domain=self.domain_name).all()
         self.assertTrue(p1 in all_active)
         self.assertTrue(p2 in all_active)
         self.assertTrue(parchived not in all_active)
+
+
+def _normalize_object_counter(counter):
+    """Converts a <Model Class> keyed counter to an model label keyed counter"""
+    def _model_class_to_label(model_class):
+        return '{}.{}'.format(model_class._meta.app_label, model_class.__name__).lower()
+    return Counter({
+        _model_class_to_label(model_class): count
+        for model_class, count in counter.items()
+    })
