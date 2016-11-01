@@ -1,17 +1,12 @@
 import gzip
 from collections import Counter
-
 from datetime import datetime
 
-from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
-from corehq.apps.dump_reload.sql import SqlDataDumper
 from corehq.apps.dump_reload.couch import CouchDataDumper
-from corehq.util.decorators import ContextDecorator
+from corehq.apps.dump_reload.sql import SqlDataDumper
 
-SQL_FILE_PREFIX = 'dump-sql'
-COUCH_FILE_PREFIX = 'dump-couch'
 DATETIME_FORMAT = '%Y-%m-%dT%H%M%SZ'
 
 
@@ -34,52 +29,23 @@ class Command(BaseCommand):
         utcnow = datetime.utcnow().strftime(DATETIME_FORMAT)
         self.stdout.ending = None
         stats = Counter()
-        try:
-            sql_stats = self._dump_sql(console, domain, excludes, utcnow)
-            couch_stats = self._dump_couch(console, domain, excludes, utcnow)
-            stats = sql_stats + couch_stats
-        except Exception as e:
-            if show_traceback:
-                raise
-            raise CommandError("Unable to serialize database: %s" % e)
+        dumpers = [SqlDataDumper, CouchDataDumper]
+        for dumper in dumpers:
+            stream = self.stdout if console else _get_dump_stream(dumper.slug, domain, utcnow)
+            try:
+                stats += dumper(domain, excludes).dump(stream)
+            except Exception as e:
+                if show_traceback:
+                    raise
+                raise CommandError("Unable to serialize database: %s" % e)
+            finally:
+                if stream:
+                    stream.close()
 
-        if stats is not None:
-            for model in sorted(stats):
-                print "{:<40}: {}".format(model, stats[model])
-
-    def _dump_couch(self, console, domain, excludes, utcnow):
-        stream = self.stdout if console else _get_dump_stream(COUCH_FILE_PREFIX, domain, utcnow)
-        try:
-            couch_stats = CouchDataDumper(domain, excludes).dump(stream)
-        finally:
-            if stream:
-                stream.close()
-        return couch_stats
-
-    def _dump_sql(self, console, domain, excludes, utcnow):
-        stream = self.stdout if console else _get_dump_stream(SQL_FILE_PREFIX, domain, utcnow)
-        try:
-            with allow_form_processing_queries():
-                sql_stats = SqlDataDumper(domain, excludes).dump(stream)
-        finally:
-            if stream:
-                stream.close()
-        return sql_stats
+        for model in sorted(stats):
+            print "{:<40}: {}".format(model, stats[model])
 
 
-def _get_dump_stream(prefix, domain, utcnow):
-    filename = '{}-{}-{}.gz'.format(prefix, domain, utcnow)
+def _get_dump_stream(slug, domain, utcnow):
+    filename = 'dump-{}-{}-{}.gz'.format(slug, domain, utcnow)
     return gzip.open(filename, 'wb')
-
-
-class allow_form_processing_queries(ContextDecorator):
-    def __enter__(self):
-        from django.conf import UserSettingsHolder
-        override = UserSettingsHolder(settings._wrapped)
-        setattr(override, 'ALLOW_FORM_PROCESSING_QUERIES', True)
-        self.wrapped = settings._wrapped
-        settings._wrapped = override
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        settings._wrapped = self.wrapped
-        del self.wrapped

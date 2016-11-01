@@ -14,6 +14,8 @@ APP_LABELS = {
 
 
 class CouchDataDumper(DataDumper):
+    slug = 'couch'
+
     def dump(self, output_stream):
         stats = Counter()
         for label, id_provider in APP_LABELS.items():

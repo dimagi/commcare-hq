@@ -4,13 +4,13 @@ from django.apps import apps
 from django.conf import settings
 from django.core import serializers
 from django.db import router
-from django.db.models import Q
 
 from corehq.apps.dump_reload.exceptions import DomainDumpError
 from corehq.apps.dump_reload.interface import DataDumper
 from corehq.apps.dump_reload.sql.filters import SimpleFilter, UsernameFilter, UserIDFilter
 from corehq.apps.dump_reload.sql.serialization import JsonLinesSerializer
 from corehq.sql_db.config import partition_config
+from corehq.util.decorators import ContextDecorator
 
 APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = {
     'locations.LocationType': SimpleFilter('domain'),
@@ -39,7 +39,23 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = {
 }
 
 
+class allow_form_processing_queries(ContextDecorator):
+    def __enter__(self):
+        from django.conf import UserSettingsHolder
+        override = UserSettingsHolder(settings._wrapped)
+        setattr(override, 'ALLOW_FORM_PROCESSING_QUERIES', True)
+        self.wrapped = settings._wrapped
+        settings._wrapped = override
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        settings._wrapped = self.wrapped
+        del self.wrapped
+
+
 class SqlDataDumper(DataDumper):
+    slug = 'sql'
+
+    @allow_form_processing_queries()
     def dump(self, output_stream):
         stats = Counter()
         objects = get_objects_to_dump(self.domain, self.excludes, stats_counter=stats)
