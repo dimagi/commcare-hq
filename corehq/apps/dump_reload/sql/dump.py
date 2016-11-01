@@ -1,4 +1,4 @@
-from collections import OrderedDict
+from collections import OrderedDict, Counter
 
 from django.apps import apps
 from django.conf import settings
@@ -45,52 +45,61 @@ def dump_sql_data(domain, excludes, output_stream):
     :param excludes: List of app labels ("app_label.model_name" or "app_label") to exclude
     :param output_stream: Stream to write json encoded objects to
     """
-    objects = get_objects_to_dump(domain, excludes)
+    stats = Counter()
+    objects = get_objects_to_dump(domain, excludes, stats_counter=stats)
     JsonLinesSerializer().serialize(
         objects,
         use_natural_foreign_keys=False,
         use_natural_primary_keys=False,
         stream=output_stream
     )
+    return stats
 
 
-def get_objects_to_dump(domain, excludes):
+def get_objects_to_dump(domain, excludes, stats_counter=None):
     """
     :param domain: domain name to filter with
-    :param app_list: List of (app_config, model) tuples to dump
-    :param excluded_models: List of model classes to exclude
+    :param app_list: List of (app_config, model_class) tuples to dump
+    :param excluded_models: List of model_class classes to exclude
     :return: generator yielding models objects
     """
+    if stats_counter is None:
+        stats_counter = Counter()
     excluded_apps, excluded_models = get_excluded_apps_and_models(excludes)
     app_config_models = _get_app_list(excluded_apps)
 
     # Collate the objects to be serialized.
-    for model in serializers.sort_dependencies(app_config_models.items()):
-        if model in excluded_models:
+    for model_class in serializers.sort_dependencies(app_config_models.items()):
+        if model_class in excluded_models:
             continue
 
-        using = router.db_for_read(model)
+        using = router.db_for_read(model_class)
         if settings.USE_PARTITIONED_DATABASE and using == partition_config.get_proxy_db():
             using = partition_config.get_form_processing_dbs()
         else:
             using = [using]
 
         for db_alias in using:
-            if not model._meta.proxy and router.allow_migrate_model(db_alias, model):
-                objects = model._default_manager
+            if not model_class._meta.proxy and router.allow_migrate_model(db_alias, model_class):
+                objects = model_class._default_manager
 
-                queryset = objects.using(db_alias).order_by(model._meta.pk.name)
+                queryset = objects.using(db_alias).order_by(model_class._meta.pk.name)
 
-                filters = get_model_domain_filters(model, domain)
+                filters = get_model_domain_filters(model_class, domain)
                 for filter in filters:
                     for obj in queryset.filter(filter).iterator():
+                        stats_counter.update([_get_model_label(model_class)])
                         yield obj
 
 
-def get_model_domain_filters(model, domain):
-    label = '{}.{}'.format(model._meta.app_label, model.__name__)
+def get_model_domain_filters(model_class, domain):
+    label = _get_model_label(model_class)
     filter = APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP[label]
     return filter.get_filters(domain)
+
+
+def _get_model_label(model_class):
+    return '{}.{}'.format(model_class._meta.app_label, model_class.__name__)
 
 
 def get_excluded_apps_and_models(excludes):

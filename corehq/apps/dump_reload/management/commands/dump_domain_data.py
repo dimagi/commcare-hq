@@ -1,4 +1,5 @@
 import gzip
+from collections import Counter
 
 from datetime import datetime
 
@@ -29,19 +30,33 @@ class Command(BaseCommand):
         show_traceback = options.get('traceback')
 
         utcnow = datetime.utcnow().strftime(DATETIME_FORMAT)
+        self.stdout.ending = None
+        stats = Counter()
         try:
-            self.stdout.ending = None
-            stream = self.stdout if console else _get_dump_stream(domain, utcnow)
-            try:
-                with allow_form_processing_queries():
-                    dump_sql_data(domain, excludes, stream)
-            finally:
-                if stream:
-                    stream.close()
+            sql_stats = self._dump_sql(console, domain, excludes, utcnow)
+            couch_stats = self._dump_couch(console, domain, excludes, utcnow)
+            stats = sql_stats | couch_stats
         except Exception as e:
             if show_traceback:
                 raise
             raise CommandError("Unable to serialize database: %s" % e)
+
+        if stats is not None:
+            for model in sorted(stats):
+                print "{:<40}: {}".format(model, sql_stats[model])
+
+    def _dump_couch(self, console, domain, excludes, utcnow):
+        return Counter()
+
+    def _dump_sql(self, console, domain, excludes, utcnow):
+        stream = self.stdout if console else _get_dump_stream(domain, utcnow)
+        try:
+            with allow_form_processing_queries():
+                sql_stats = dump_sql_data(domain, excludes, stream)
+        finally:
+            if stream:
+                stream.close()
+        return sql_stats
 
 
 def _get_dump_stream(domain, utcnow):
