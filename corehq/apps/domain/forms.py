@@ -88,8 +88,6 @@ from dimagi.utils.decorators.memoized import memoized
 # used to resize uploaded custom logos, aspect ratio is preserved
 LOGO_SIZE = (211, 32)
 
-logger = logging.getLogger(__name__)
-
 
 def tf_choices(true_txt, false_txt):
     return (('false', false_txt), ('true', true_txt))
@@ -1403,9 +1401,12 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                         subscription.do_not_invoice = True
                     subscription.save()
                 return True
-        except Exception:
-            logger.exception("There was an error subscribing the domain '%s' to plan '%s'. "
-                             "Go quickly!" % (self.domain, self.plan_version.plan.name))
+        except Exception as e:
+            log_accounting_error(
+                "There was an error subscribing the domain '%s' to plan '%s'. Message: %s "
+                % (self.domain, self.plan_version.plan.name, e.message),
+                show_stack_trace=True,
+            )
         return False
 
 
