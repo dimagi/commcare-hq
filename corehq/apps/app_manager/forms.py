@@ -12,7 +12,7 @@ class CopyApplicationForm(forms.Form):
     domain = forms.CharField(
         label=_("Copy this app to project"),
         widget=forms.TextInput(attrs={
-            "data-bind": "select2: domain_names, select2options: {width: 'off', allowFreetext: 1}",
+            "data-bind": "autocompleteSelect2: domain_names",
         }))
     name = forms.CharField(required=True, label=_('Name'))
 
