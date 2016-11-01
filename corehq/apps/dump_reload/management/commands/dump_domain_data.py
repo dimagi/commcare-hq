@@ -1,6 +1,8 @@
+from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
 from corehq.apps.dump_reload.sql import dump_sql_data
+from corehq.util.decorators import ContextDecorator
 
 
 class Command(BaseCommand):
@@ -23,7 +25,8 @@ class Command(BaseCommand):
             self.stdout.ending = None
             stream = open(output, 'w') if output else self.stdout
             try:
-                dump_sql_data(domain, excludes, stream)
+                with allow_form_processing_queries():
+                    dump_sql_data(domain, excludes, stream)
             finally:
                 if stream:
                     stream.close()
@@ -31,3 +34,16 @@ class Command(BaseCommand):
             if show_traceback:
                 raise
             raise CommandError("Unable to serialize database: %s" % e)
+
+
+class allow_form_processing_queries(ContextDecorator):
+    def __enter__(self):
+        from django.conf import UserSettingsHolder
+        override = UserSettingsHolder(settings._wrapped)
+        setattr(override, 'ALLOW_FORM_PROCESSING_QUERIES', True)
+        self.wrapped = settings._wrapped
+        settings._wrapped = override
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        settings._wrapped = self.wrapped
+        del self.wrapped
