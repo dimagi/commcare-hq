@@ -79,7 +79,7 @@ ko.bindingHandlers.casePropertySelect2 = {
      * Strip attachment: prefix and show icon for attachment properties
      */
     init: function (element, valueAccessor, allBindingsAccessor) {
-        ko.bindingHandlers.select2.init(element, valueAccessor, allBindingsAccessor);
+        ko.bindingHandlers.autocompleteSelect2.init(element, valueAccessor, allBindingsAccessor);
     },
     update: function (element, valueAccessor, allBindingsAccessor) {
         function wrappedValueAccessor() {
@@ -92,7 +92,7 @@ ko.bindingHandlers.casePropertySelect2 = {
                 return {id: value, text: value};
             })
         }
-        ko.bindingHandlers.select2.update(element, wrappedValueAccessor, allBindingsAccessor);
+        ko.bindingHandlers.autocompleteSelect2.update(element, wrappedValueAccessor, allBindingsAccessor);
     }
 };
 
