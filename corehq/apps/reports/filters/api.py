@@ -154,12 +154,23 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
 
 
 class LocationRestrictedEmwfOptionsMixin(object):
+    def include_locations_in_options(self):
+        # to render locations for filtering or not
+        raise NotImplementedError('Not implemented yet')
+
+    def extra_data_sources(self):
+        # extra data sources to be included for filtering
+        raise NotImplementedError('Not implemented yet')
+
     def get_locations_query(self, query):
         return (SQLLocation.active_objects
                 .filter_path_by_user_input(self.domain, query)
                 .accessible_to_user(self.request.domain, self.request.couch_user))
 
     def get_users(self, query, start, size):
+        """
+        :return: tuples for accessible users filtered with query
+        """
         users = (self.user_es_query(query)
                  .fields(['_id', 'username', 'first_name', 'last_name', 'doc_type'])
                  .start(start)
@@ -173,6 +184,7 @@ class LocationRestrictedEmwfOptionsMixin(object):
 
     @property
     def data_sources(self):
+        # data sources for options for selection in filter
         print 'fetching data source for filters in view'
         sources = []
         if self.include_locations_in_options():
@@ -180,7 +192,7 @@ class LocationRestrictedEmwfOptionsMixin(object):
         if self.request.can_access_all_locations:
             sources.append((self.get_static_options_size, self.get_static_options))
             sources.append((self.get_groups_size, self.get_groups))
-        sources.append(*self.extra_data_sources())
+        sources.extend(self.extra_data_sources())
         # appending this in the end to avoid long list of users delaying
         # locations, groups etc in the list on pagination
         sources.append((self.get_users_size, self.get_users))
@@ -194,19 +206,6 @@ class LocationRestrictedEmwfOptions(LocationRestrictedEmwfOptionsMixin, EmwfOpti
 
     def extra_data_sources(self):
         return []
-
-    @property
-    def data_sources(self):
-        sources = []
-        if self.include_locations_in_options():
-            sources.append((self.get_locations_size, self.get_locations))
-        if self.request.can_access_all_locations:
-            sources.append((self.get_static_options_size, self.get_static_options))
-            sources.append((self.get_groups_size, self.get_groups))
-        # appending this in the end to avoid long list of users delaying
-        # locations, groups etc in the list on pagination
-        sources.append((self.get_users_size, self.get_users))
-        return sources
 
 
 @location_safe

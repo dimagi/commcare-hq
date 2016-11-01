@@ -61,6 +61,13 @@ class UserES(HQESQuery):
         location_ids = SQLLocation.objects.get_locations_and_children_ids(location_ids)
         return self.location(location_ids)
 
+    def users_at_locations_and_descendants(self, location_ids):
+        return self.users_at_locations_and_descendants_query(location_ids).run().hits
+
+    def user_ids_at_locations_and_descendants(self, location_ids):
+        users = self.users_at_locations_and_descendants(location_ids)
+        return [user['_id'] for user in users]
+
     def users_at_locations(self, location_ids):
         return self.location(location_ids).run().hits
 
@@ -76,9 +83,6 @@ class UserES(HQESQuery):
     def user_ids_at_accessible_locations(self, domain, user):
         all_users = self.users_at_accessible_locations(domain, user)
         return [_user['_id'] for _user in all_users]
-
-    def users_at_locations_and_descendants(self, location_ids):
-        return self.users_at_locations_and_descendants_query(location_ids).run().hits
 
 
 def domain(domain):

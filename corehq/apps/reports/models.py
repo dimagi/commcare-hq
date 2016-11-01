@@ -65,6 +65,7 @@ from django_prbac.exceptions import PermissionDenied
 
 
 class HQUserType(object):
+    # any new type should be hooked in user_type_mapping
     REGISTERED = 0
     DEMO_USER = 1
     ADMIN = 2
@@ -81,6 +82,7 @@ class HQUserType(object):
 
     @classmethod
     def user_type_mapping(cls):
+        # user_type_mapping used for mapping int to user type
         from corehq.apps.export.forms import BaseFilterExportDownloadForm
         return {
             cls.REGISTERED: BaseFilterExportDownloadForm._USER_MOBILE,

@@ -61,7 +61,4 @@ class CaseListFilter(ExpandedMobileWorkerFilter):
         if self.request.can_access_all_locations:
             return [('project_data', _("[Project Data]"))]
         else:
-            all_locations = self.request.couch_user.get_assigned_sql_locations(
-                self.request.domain
-            )
-            return map(self.utils.location_tuple, all_locations)
+            return self._get_assigned_locations_default()
