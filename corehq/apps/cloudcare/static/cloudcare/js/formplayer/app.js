@@ -280,9 +280,7 @@ FormplayerFrontend.on('clearRestoreAsUser', function() {
         })
     );
 
-    appId = FormplayerFrontend.request('getCurrentAppId');
-
-    FormplayerFrontend.trigger('navigateHome', appId);
+    FormplayerFrontend.trigger('navigateHome');
 });
 
 FormplayerFrontend.on("sync", function () {
@@ -404,16 +402,18 @@ FormplayerFrontend.on('refreshApplication', function(appId) {
         tfLoadingComplete(true);
     }).done(function() {
         tfLoadingComplete();
-        FormplayerFrontend.trigger('navigateHome', appId);
+        FormplayerFrontend.trigger('navigateHome');
     });
 });
 
-FormplayerFrontend.on('navigateHome', function(appId) {
+FormplayerFrontend.on('navigateHome', function() {
     var urlObject = Util.currentUrlToObject(),
+        appId,
         currentUser = FormplayerFrontend.request('currentUser');
     urlObject.clearExceptApp();
     FormplayerFrontend.regions.breadcrumb.empty();
     if (currentUser.displayOptions.phoneMode) {
+        appId = FormplayerFrontend.request('getCurrentAppId');
         FormplayerFrontend.navigate("/single_app/" + appId, { trigger: true });
     } else {
         FormplayerFrontend.navigate("/apps", { trigger: true });
