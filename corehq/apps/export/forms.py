@@ -665,7 +665,7 @@ class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, GenericFilterCaseExp
 
     def _get_group_independent_filters(self, mobile_user_and_group_slugs, can_access_all_locations):
         if can_access_all_locations:
-            user_types = CaseListFilter.selected_user_types(mobile_user_and_group_slugs)
+            user_types = self.es_user_filter.selected_user_types(mobile_user_and_group_slugs)
             ids_to_include = self.get_special_owner_ids(
                 admin=HQUserType.ADMIN in user_types,
                 unknown=HQUserType.UNKNOWN in user_types,

@@ -35,22 +35,6 @@ class TestEmwfFilterFormExport(SimpleTestCase):
         self.assertEqual(datespan_filter.lte, None)
         self.assertEqual(datespan_filter.gt, None)
 
-    def test_get_group_filter(self):
-        """
-        Confirm that EmwfFilterFormExport._get_group_filter() returns
-        a filter with the correct group_id and correct base_filter.
-        """
-        form_data = {
-            'type_or_group': 'group',
-            'group': 'some_group_id',
-            'date_range': '2015-06-25 to 2016-02-19',
-        }
-        form = EmwfFilterFormExport(self.project, pytz.utc, form_data)
-        self.assertTrue(form.is_valid(), "Form had the following errors: {}".format(form.errors))
-        group_filter = form._get_group_filter()
-        self.assertEqual(group_filter.group_id, 'some_group_id')
-        self.assertEqual(group_filter.base_filter, FormSubmittedByFilter)
-
     def test_export_to_es_user_types_map(self):
         mapping = {'mobile': ['mobile'], 'demo_user': ['demo'], 'supply': ['supply'],
                    'unknown': ['unknown', 'system', 'web']}
@@ -124,7 +108,7 @@ class TestEmwfFilterExportMixin(TestCase):
 @patch.object(EmwfFilterFormExport, '_get_user_type_filter')
 @patch.object(EmwfFilterFormExport, '_get_users_filter')
 @patch.object(EmwfFilterFormExport, '_get_locations_filter')
-class TestEmwfFilterFormExport(TestCase):
+class TestEmwfFilterFormExportFilters(TestCase):
     def test_attributes(self, *patches):
         domain = Domain(name="testapp", is_active=True)
         export_filter = EmwfFilterFormExport(domain, pytz.utc)
@@ -201,7 +185,7 @@ class TestFilterCaseESExportDownloadForm(TestCase):
         assert not case_sharing_groups_patch.called
         case_sharing_locations_ids_patch.assert_called_once_with(self.domain.name)
 
-    @patch.object(FilterCaseESExportDownloadForm, '_get_es_user_types')
+    @patch.object(FilterCaseESExportDownloadForm.es_user_filter, 'selected_user_types')
     @patch.object(FilterCaseESExportDownloadForm, '_get_locations_filter')
     @patch.object(FilterCaseESExportDownloadForm, '_get_locations_ids')
     @patch.object(FilterCaseESExportDownloadForm, '_get_users_filter')
@@ -215,7 +199,7 @@ class TestFilterCaseESExportDownloadForm(TestCase):
         get_locations_ids.assert_called_once_with(self.group_ids_slug)
         get_users_filter.assert_called_once_with(self.group_ids_slug)
 
-    @patch.object(FilterCaseESExportDownloadForm, '_get_es_user_types')
+    @patch.object(FilterCaseESExportDownloadForm.es_user_filter, 'selected_user_types')
     @patch.object(FilterCaseESExportDownloadForm, '_get_locations_filter')
     @patch.object(FilterCaseESExportDownloadForm, '_get_locations_ids')
     @patch.object(FilterCaseESExportDownloadForm, '_get_users_filter')
