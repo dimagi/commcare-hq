@@ -298,6 +298,7 @@ def copy_app(request, domain):
         else:
             app_id_or_source = app_id
 
+        clear_app_cache(request, domain)
         return copy_app_check_domain(request, form.cleaned_data['domain'], form.cleaned_data['name'],
                                      app_id_or_source)
     else:
