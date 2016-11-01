@@ -17,6 +17,7 @@ from corehq.apps.dump_reload.sql import dump_sql_data
 from corehq.apps.dump_reload.sql import load_sql_data
 from corehq.apps.dump_reload.sql.dump import get_model_domain_filters, get_objects_to_dump
 from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.tzmigration.models import TimezoneMigrationProgress
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.form_processor.models import (
@@ -44,17 +45,28 @@ class BaseDumpLoadTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super(BaseDumpLoadTest, cls).setUpClass()
-        cls.domain = uuid.uuid4().hex
+        cls.domain_name = uuid.uuid4().hex
+        cls.domain = Domain(name=cls.domain_name)
+        cls.domain.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        TimezoneMigrationProgress.objects.filter(domain=cls.domain_name).delete()
+        cls.domain.delete()
+        super(BaseDumpLoadTest, cls).tearDownClass()
 
     @override_settings(ALLOW_FORM_PROCESSING_QUERIES=True)
     def _dump_and_load(self, expected_object_count, models):
-        output_stream = StringIO()
-        dump_sql_data(self.domain, [], output_stream)
+        models.append(TimezoneMigrationProgress)
+        expected_object_count += 1
 
-        delete_sql_data(self, models, self.domain)
+        output_stream = StringIO()
+        dump_sql_data(self.domain_name, [], output_stream)
+
+        delete_sql_data(self, models, self.domain_name)
 
         # make sure that there's no data left in the DB
-        objects_remaining = list(get_objects_to_dump(self.domain, []))
+        objects_remaining = list(get_objects_to_dump(self.domain_name, []))
         object_classes = [obj.__class__.__name__ for obj in objects_remaining]
         counts = Counter(object_classes)
         self.assertEqual([], objects_remaining, 'Not all data deleted: {}'.format(counts))
@@ -100,23 +112,23 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
     @classmethod
     def setUpClass(cls):
         super(TestSQLDumpLoadShardedModels, cls).setUpClass()
-        cls.factory = CaseFactory(domain=cls.domain)
-        cls.form_accessors = FormAccessors(cls.domain)
-        cls.case_accessors = CaseAccessors(cls.domain)
-        cls.product = make_product(cls.domain, 'A Product', 'prodcode_a')
+        cls.factory = CaseFactory(domain=cls.domain_name)
+        cls.form_accessors = FormAccessors(cls.domain_name)
+        cls.case_accessors = CaseAccessors(cls.domain_name)
+        cls.product = make_product(cls.domain_name, 'A Product', 'prodcode_a')
 
     @classmethod
     def tearDownClass(cls):
-        FormProcessorTestUtils.delete_all_cases_forms_ledgers(cls.domain)
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers(cls.domain_name)
         super(TestSQLDumpLoadShardedModels, cls).tearDownClass()
 
     def test_dump_laod_form(self):
         models_under_test = [XFormInstanceSQL, XFormAttachmentSQL, XFormOperationSQL]
-        register_cleanup(self, models_under_test, self.domain)
+        register_cleanup(self, models_under_test, self.domain_name)
 
         pre_forms = [
-            create_form_for_test(self.domain),
-            create_form_for_test(self.domain)
+            create_form_for_test(self.domain_name),
+            create_form_for_test(self.domain_name)
         ]
         expected_object_count = 4  # 2 forms, 2 form attachments
         self._dump_and_load(expected_object_count, models_under_test)
@@ -133,7 +145,7 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
             XFormInstanceSQL, XFormAttachmentSQL, XFormOperationSQL,
             CommCareCaseSQL, CommCareCaseIndexSQL, CaseTransaction
         ]
-        register_cleanup(self, models_under_test, self.domain)
+        register_cleanup(self, models_under_test, self.domain_name)
 
         pre_cases = self.factory.create_or_update_case(
             CaseStructure(
@@ -163,15 +175,15 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
             CommCareCaseSQL, CommCareCaseIndexSQL, CaseTransaction,
             LedgerValue, LedgerTransaction
         ]
-        register_cleanup(self, models_under_test, self.domain)
+        register_cleanup(self, models_under_test, self.domain_name)
 
         case = self.factory.create_case()
         submit_case_blocks([
             get_single_balance_block(case.case_id, self.product._id, 10)
-        ], self.domain)
+        ], self.domain_name)
         submit_case_blocks([
             get_single_balance_block(case.case_id, self.product._id, 5)
-        ], self.domain)
+        ], self.domain_name)
 
         pre_ledger_values = LedgerAccessorSQL.get_ledger_values_for_case(case.case_id)
         pre_ledger_transactions = LedgerAccessorSQL.get_ledger_transactions_for_case(case.case_id)
@@ -205,9 +217,9 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
     def test_case_search_config(self):
         from corehq.apps.case_search.models import CaseSearchConfig, CaseSearchConfigJSON
         models_under_test = [CaseSearchConfig]
-        register_cleanup(self, models_under_test, self.domain)
+        register_cleanup(self, models_under_test, self.domain_name)
 
-        pre_config, created = CaseSearchConfig.objects.get_or_create(pk=self.domain)
+        pre_config, created = CaseSearchConfig.objects.get_or_create(pk=self.domain_name)
         pre_config.enabled = True
         fuzzies = CaseSearchConfigJSON()
         fuzzies.add_fuzzy_properties('dog', ['breed', 'color'])
@@ -217,7 +229,7 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
 
         self._dump_and_load(1, models_under_test)
 
-        post_config = CaseSearchConfig.objects.get(domain=self.domain)
+        post_config = CaseSearchConfig.objects.get(domain=self.domain_name)
         self.assertTrue(post_config.enabled)
         self.assertDictEqual(pre_config.config.to_json(), post_config.config.to_json())
 
@@ -226,10 +238,10 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             AutomaticUpdateRule, AutomaticUpdateRuleCriteria, AutomaticUpdateAction
         )
         models_under_test = [AutomaticUpdateAction, AutomaticUpdateRuleCriteria, AutomaticUpdateRule]
-        register_cleanup(self, models_under_test, self.domain)
+        register_cleanup(self, models_under_test, self.domain_name)
 
         pre_rule = AutomaticUpdateRule(
-            domain=self.domain,
+            domain=self.domain_name,
             name='test-rule',
             case_type='test-case-type',
             active=True,
@@ -265,34 +277,28 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             [post_rule, post_criteria, post_action_update, post_action_close]
         )
 
-    @override_settings(AUDIT_MODEL_SAVE=[])
     def test_users(self):
         from corehq.apps.users.models import CommCareUser
         from corehq.apps.users.models import WebUser
         from django.contrib.auth.models import User
-        from corehq.apps.tzmigration.models import TimezoneMigrationProgress
 
-        models_under_test = [User, TimezoneMigrationProgress]
-        register_cleanup(self, models_under_test, self.domain)
-
-        ccdomain = Domain(name=self.domain)
-        ccdomain.save()
-        self.addCleanup(ccdomain.delete)
+        models_under_test = [User]
+        register_cleanup(self, models_under_test, self.domain_name)
 
         ccuser_1 = CommCareUser.create(
-            domain=self.domain,
+            domain=self.domain_name,
             username='user_1',
             password='secret',
             email='email@example.com',
         )
         ccuser_2 = CommCareUser.create(
-            domain=self.domain,
+            domain=self.domain_name,
             username='user_2',
             password='secret',
             email='email1@example.com',
         )
         web_user = WebUser.create(
-            domain=self.domain,
+            domain=self.domain_name,
             username='webuser_1',
             password='secret',
             email='webuser@example.com',
@@ -301,7 +307,7 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         self.addCleanup(ccuser_2.delete)
         self.addCleanup(web_user.delete)
 
-        expected_object_count = 4  # 3 users, 1 time zone migration
+        expected_object_count = 3  # 3 users
         self._dump_and_load(expected_object_count, models_under_test)
 
     def test_device_logs(self):
@@ -309,19 +315,14 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         from phonelog.models import DeviceReportEntry, ForceCloseEntry, UserEntry, UserErrorEntry
         from corehq.apps.users.models import CommCareUser
         from django.contrib.auth.models import User
-        from corehq.apps.tzmigration.models import TimezoneMigrationProgress
 
         expected_models = [
-            DeviceReportEntry, ForceCloseEntry, UserEntry, UserErrorEntry, User, TimezoneMigrationProgress
+            DeviceReportEntry, ForceCloseEntry, UserEntry, UserErrorEntry, User
         ]
-        register_cleanup(self, expected_models, self.domain)
-
-        domain = Domain(name=self.domain)
-        domain.save()
-        self.addCleanup(domain.delete)
+        register_cleanup(self, expected_models, self.domain_name)
 
         user = CommCareUser.create(
-            domain=self.domain,
+            domain=self.domain_name,
             username='user_1',
             password='secret',
             email='email@example.com',
@@ -331,28 +332,23 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
 
         with open('corehq/ex-submodules/couchforms/tests/data/devicelogs/devicelog.xml') as f:
             xml = f.read()
-        submit_form_locally(xml, self.domain)
+        submit_form_locally(xml, self.domain_name)
 
-        # 1 user, 7 device reports, 1 user entry, 2 user errors, 1 force close, 1 timezone migration
-        expected_object_count = 13
+        # 1 user, 7 device reports, 1 user entry, 2 user errors, 1 force close
+        expected_object_count = 12
         self._dump_and_load(expected_object_count, expected_models)
 
     def test_demo_user_restore(self):
         from corehq.apps.users.models import CommCareUser
         from corehq.apps.ota.models import DemoUserRestore
         from django.contrib.auth.models import User
-        from corehq.apps.tzmigration.models import TimezoneMigrationProgress
 
-        expected_models = [DemoUserRestore, User, TimezoneMigrationProgress]
-        register_cleanup(self, expected_models, self.domain)
-
-        domain = Domain(name=self.domain)
-        domain.save()
-        self.addCleanup(domain.delete)
+        expected_models = [DemoUserRestore, User]
+        register_cleanup(self, expected_models, self.domain_name)
 
         user_id = uuid.uuid4().hex
         user = CommCareUser.create(
-            domain=self.domain,
+            domain=self.domain_name,
             username='user_1',
             password='secret',
             email='email@example.com',
@@ -367,32 +363,22 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             restore_comment="Test migrate demo user restore"
         ).save()
 
-        expected_object_count = 3  # 1 user, 1 demo ser restore, 1 timezone migration
+        expected_object_count = 2  # 1 user, 1 demo user restore
         self._dump_and_load(expected_object_count, expected_models)
-
-    def test_timezone_migration_progress(self):
-        from corehq.apps.tzmigration.models import TimezoneMigrationProgress
-
-        expected_models = [TimezoneMigrationProgress]
-        register_cleanup(self, expected_models, self.domain)
-
-        TimezoneMigrationProgress(domain=self.domain).save()
-
-        self._dump_and_load(1, expected_models)
 
     def test_products(self):
         from corehq.apps.products.models import SQLProduct
         models_under_test = [SQLProduct]
-        register_cleanup(self, models_under_test, self.domain)
+        register_cleanup(self, models_under_test, self.domain_name)
 
-        p1 = SQLProduct.objects.create(domain=self.domain, product_id='test1', name='test1')
-        p2 = SQLProduct.objects.create(domain=self.domain, product_id='test2', name='test2')
-        parchived = SQLProduct.objects.create(domain=self.domain, product_id='test3', name='test3', is_archived=True)
+        p1 = SQLProduct.objects.create(domain=self.domain_name, product_id='test1', name='test1')
+        p2 = SQLProduct.objects.create(domain=self.domain_name, product_id='test2', name='test2')
+        parchived = SQLProduct.objects.create(domain=self.domain_name, product_id='test3', name='test3', is_archived=True)
 
         self._dump_and_load(3, models_under_test)
 
-        self.assertEqual(2, SQLProduct.active_objects.filter(domain=self.domain).count())
-        all_active = SQLProduct.active_objects.filter(domain=self.domain).all()
+        self.assertEqual(2, SQLProduct.active_objects.filter(domain=self.domain_name).count())
+        all_active = SQLProduct.active_objects.filter(domain=self.domain_name).all()
         self.assertTrue(p1 in all_active)
         self.assertTrue(p2 in all_active)
         self.assertTrue(parchived not in all_active)
