@@ -552,6 +552,9 @@ class ExportInstance(BlobMixin, Document):
         return FormExportInstanceDefaults if self.type == FORM_EXPORT else CaseExportInstanceDefaults
 
     def get_filters(self):
+        """
+        Return a list of export.filters.ExportFilter objects
+        """
         raise NotImplementedError
 
     @property

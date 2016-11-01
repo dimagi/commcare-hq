@@ -1020,7 +1020,7 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
     def daily_emailed_exports(self):
         """Returns a list of exports marked for a daily email.
         """
-        raise NotImplementedError("must implement saved_exports")
+        raise NotImplementedError("must implement daily_emailed_exports")
 
     def fmt_export_data(self, export):
         """Returns the object used for each row (per export)
@@ -1286,10 +1286,12 @@ class DailySavedExportListView(BaseExportListView):
 
     @property
     def legacy_bulk_download_url(self):
+        # Daily Saved exports do not support bulk download
         return ""
 
     @property
     def bulk_download_url(self):
+        # Daily Saved exports do not support bulk download
         return ""
 
     @memoized
@@ -1304,10 +1306,11 @@ class DailySavedExportListView(BaseExportListView):
 
     @property
     def daily_emailed_exports(self):
+        # This function only returns old-style exports. Since this view will only be visible for people using new
+        # exports, it need not return anything.
         return []
 
     def fmt_export_data(self, export):
-
         if isinstance(export, FormExportInstance):
             edit_view = self._get_edit_export_class('form')
             download_view = DownloadNewFormExportView
