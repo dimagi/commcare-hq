@@ -198,9 +198,9 @@ class ExportColumn(DocumentSchema):
         assert base_path == self.item.path[:len(base_path)], "ExportItem's path doesn't start with the base_path"
         # Get the path from the doc root to the desired ExportItem
         path = [x.name for x in self.item.path[len(base_path):]]
-        return self._transform(NestedDictGetter(path)(doc), doc, transform_dates, domain)
+        return self._transform(NestedDictGetter(path)(doc), doc, transform_dates)
 
-    def _transform(self, value, doc, transform_dates, domain):
+    def _transform(self, value, doc, transform_dates):
         """
         Transform the given value with the transform specified in self.item.transform.
         Also transform dates if the transform_dates flag is true.
@@ -1880,8 +1880,7 @@ class StockFormExportColumn(ExportColumn):
         return self._transform(
             NestedDictGetter(path[stock_type_path_index + 1:])(new_doc),
             new_doc,
-            transform_dates,
-            domain
+            transform_dates
         )
 
 
