@@ -8,7 +8,6 @@ from django.views.generic import View
 from braces.views import JSONResponseMixin
 
 from corehq import toggles
-from corehq.apps.commtrack.models import SQLLocation
 from corehq.apps.domain.decorators import LoginAndDomainMixin
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.filters.case_list import CaseListFilterUtils
