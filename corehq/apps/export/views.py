@@ -1672,6 +1672,10 @@ class GenericDownloadNewExportMixin(object):
     """
     Supporting class for new style export download views
     """
+    # Form used for rendering filters
+    filter_form_class = EmwfFilterFormExport
+    # To serve filters for export from mobile_user_and_group_slugs
+    export_filter_class = LocationRestrictedMobileWorkerFilter
 
     def _get_download_task(self, in_data):
         export_filters, export_specs = self._process_filters_and_specs(in_data)
@@ -1722,14 +1726,15 @@ class GenericDownloadNewExportMixin(object):
     def page_context(self):
         parent_context = super(GenericDownloadNewExportMixin, self).page_context
         parent_context['dynamic_filters'] = self.export_filter_class(
-            self.request, self.request.domain).render()
+                                                self.request, self.request.domain
+                                            ).render()
         return parent_context
 
     def _process_filters_and_specs(self, in_data):
         """Returns a the export filters and a list of JSON export specs
+        Override to hook fetching mobile_user_and_group_slugs
         """
         filter_form_data, export_specs = self._get_form_data_and_specs(in_data)
-        # tried self.request.POST.getlist(EMWF.slug)
         import re
         regex = re.compile('(emw=){1}([^&]*)(&){0,1}')
         matches = regex.findall(filter_form_data['emw'])
@@ -1762,7 +1767,7 @@ class DownloadNewFormExportView(GenericDownloadNewExportMixin, DownloadFormExpor
         return form_filters
 
     def scope_filter(self):
-        # Filter to be applied in AND with filters for export to add scope for restricted user
+        # Filter to be applied in AND with filters for export for restricted user
         # Restricts to forms submitted by users at accessible locations
         accessible_user_ids = (UserES()
             .user_ids_at_accessible_locations(

@@ -29,8 +29,8 @@ def get_case_export_base_query(domain, case_type):
 
 def get_groups_user_ids(group_ids):
     q = (GroupES()
-            .doc_id(group_ids)
-            .fields("users"))
+         .doc_id(group_ids)
+         .fields("users"))
     return flatten_list([hit["users"] for hit in q.run().hits])
 
 
