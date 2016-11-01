@@ -7,7 +7,6 @@ from mock import patch
 
 from corehq.apps.export.filters import FormSubmittedByFilter, OwnerFilter
 from corehq.apps.export.forms import (
-    FilterFormESExportDownloadForm,
     BaseFilterExportDownloadForm,
     EmwfFilterFormExport,
     LocationRestrictedMobileWorkerFilter,
@@ -20,7 +19,7 @@ from corehq.apps.locations.models import SQLLocation
 
 
 @patch('corehq.apps.reports.util.get_first_form_submission_received', lambda x: datetime.datetime(2015, 1, 1))
-class TestFilterFormESExportDownloadForm(SimpleTestCase):
+class TestEmwfFilterFormExport(SimpleTestCase):
 
     def setUp(self):
         DomainObject = namedtuple('DomainObject', ['uses_locations', 'name'])
@@ -28,7 +27,7 @@ class TestFilterFormESExportDownloadForm(SimpleTestCase):
 
     def test_get_datespan_filter(self):
         form_data = {'date_range': '2015-06-25 to 2016-02-19'}
-        form = FilterFormESExportDownloadForm(self.project, pytz.utc, form_data)
+        form = EmwfFilterFormExport(self.project, pytz.utc, form_data)
         self.assertTrue(form.is_valid())
         datespan_filter = form._get_datespan_filter()
         self.assertEqual(datespan_filter.lt, datetime.datetime(2016, 2, 20, tzinfo=pytz.utc))
@@ -38,7 +37,7 @@ class TestFilterFormESExportDownloadForm(SimpleTestCase):
 
     def test_get_group_filter(self):
         """
-        Confirm that FilterFormESExportDownloadForm._get_group_filter() returns
+        Confirm that EmwfFilterFormExport._get_group_filter() returns
         a filter with the correct group_id and correct base_filter.
         """
         form_data = {
@@ -46,7 +45,7 @@ class TestFilterFormESExportDownloadForm(SimpleTestCase):
             'group': 'some_group_id',
             'date_range': '2015-06-25 to 2016-02-19',
         }
-        form = FilterFormESExportDownloadForm(self.project, pytz.utc, form_data)
+        form = EmwfFilterFormExport(self.project, pytz.utc, form_data)
         self.assertTrue(form.is_valid(), "Form had the following errors: {}".format(form.errors))
         group_filter = form._get_group_filter()
         self.assertEqual(group_filter.group_id, 'some_group_id')
@@ -56,7 +55,7 @@ class TestFilterFormESExportDownloadForm(SimpleTestCase):
         mapping = {'mobile': ['mobile'], 'demo_user': ['demo'], 'supply': ['supply'],
                    'unknown': ['unknown', 'system', 'web']}
         self.assertEqual(
-            FilterFormESExportDownloadForm._EXPORT_TO_ES_USER_TYPES_MAP,
+            EmwfFilterFormExport._EXPORT_TO_ES_USER_TYPES_MAP,
             mapping
         )
 
