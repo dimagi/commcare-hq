@@ -12,7 +12,7 @@ from corehq.form_processor.backends.sql.dbaccessors import (
     LedgerAccessorSQL, LedgerReindexAccessor
 )
 from corehq.form_processor.models import LedgerValue, CommCareCaseSQL
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, PartitionConfig, create_form_for_test
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, partition_config, create_form_for_test
 
 
 class BaseReindexAccessorTest(object):
@@ -102,12 +102,11 @@ class BaseShardedAccessorMixin(object):
         if not settings.USE_PARTITIONED_DATABASE:
             # https://github.com/nose-devs/nose/issues/946
             raise SkipTest('Only applicable if sharding is setup')
-        cls.partion_config = PartitionConfig()
-        assert len(cls.partion_config.get_form_processing_dbs()) > 1
+        assert len(partition_config.get_form_processing_dbs()) > 1
 
     @classmethod
     def _analyse(cls):
-        for db_alias in cls.partion_config.get_form_processing_dbs():
+        for db_alias in partition_config.get_form_processing_dbs():
             db_cursor = connections[db_alias].cursor()
             with db_cursor as cursor:
                 cursor.execute('ANALYSE')  # the doc count query relies on this
@@ -115,14 +114,14 @@ class BaseShardedAccessorMixin(object):
     def _get_docs(self, start, last_doc_pk=None, limit=500):
         accessor = self.accessor_class()
         all_docs = []
-        for from_db in self.partion_config.get_form_processing_dbs():
+        for from_db in partition_config.get_form_processing_dbs():
             all_docs.extend(accessor.get_docs(from_db, start))
         return all_docs
 
     def test_get_doc_count(self):
         doc_count = sum(
             self.accessor_class().get_doc_count(from_db)
-            for from_db in self.partion_config.get_form_processing_dbs()
+            for from_db in partition_config.get_form_processing_dbs()
         )
         self.assertEqual(8, doc_count)
 

@@ -1,0 +1,15 @@
+--- 
++++ 
+@@ -11,8 +11,9 @@
+         scrolling="no"
+         src="{% url 'preview_app' request.domain app.get_id %}">
+     </iframe>
+-    <button type="button" class="btn btn-default btn-preview-back js-preview-back">
+-      <i class="fa fa-arrow-left"></i>
+-    </button>
++{#    todo fix #}
++{#  <button type="button" class="btn btn-default btn-preview-back js-preview-back">#}
++{#    <i class="fa fa-arrow-left"></i>#}
++{#  </button>#}
+   </div>
+ </div>

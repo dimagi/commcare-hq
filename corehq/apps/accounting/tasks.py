@@ -114,7 +114,7 @@ def _deactivate_subscription(subscription):
         )
         new_plan_version = next_subscription.plan_version
     _, downgraded_privs, upgraded_privs = get_change_status(subscription.plan_version, new_plan_version)
-    if next_subscription and subscription.account == next_subscription.account:
+    if subscription.account == next_subscription.account:
         subscription.transfer_credits(subscription=next_subscription)
     else:
         subscription.transfer_credits()
@@ -608,9 +608,7 @@ def assign_explicit_community_subscription(domain_name, start_date):
             entry_point=EntryPoint.SELF_STARTED,
         )[0],
         domain=domain_name,
-        plan_version=DefaultProductPlan.get_default_plan(
-            SoftwarePlanEdition.COMMUNITY
-        ).plan.get_version(),
+        plan_version=DefaultProductPlan.get_default_plan_version(),
         date_start=start_date,
         date_end=end_date,
         skip_invoicing_if_no_feature_charges=True,

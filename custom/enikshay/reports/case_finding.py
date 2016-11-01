@@ -1,12 +1,19 @@
 # coding=utf-8
 
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
-from custom.enikshay.reports.const import AGE_RANGES
+from custom.enikshay.reports.const import AGE_RANGES, PATIENT_TYPES
 from custom.enikshay.reports.generic import EnikshayReport, EnikshayMultiReport
 from custom.enikshay.reports.sqldata.case_finding_sql_data import CaseFindingSqlData
-from custom.enikshay.reports.treatment_outcome import AllTBPatientsReport
 
 from django.utils.translation import ugettext_lazy, ugettext as _
+
+
+def get_for_all_patient_types(slug, data):
+    row = []
+    for patient_type in PATIENT_TYPES:
+        row.append(data.get('%s_%s' % (slug, patient_type), 0))
+    row.append(data.get('%s_total' % slug, 0))
+    return row
 
 
 def get_for_all_ranges(slug, data):
@@ -30,12 +37,37 @@ def get_headers():
     return headers
 
 
-class CaseFindingAllTBPatientsReport(AllTBPatientsReport):
-    report_title = ugettext_lazy('Block 1: All TB patients registered in the quarter')
+class CaseFindingAllTBPatientsReport(EnikshayReport):
+    name = ugettext_lazy('Block 1: All TB patients registered in the quarter')
+    slug = 'case_finding_all_tb_patients_report'
+
+    @property
+    def model(self):
+        return CaseFindingSqlData(config=self.report_config)
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn(''),
+            DataTablesColumn(_('New')),
+            DataTablesColumn(_('Recurrent')),
+            DataTablesColumn(_('After Treatment Failure')),
+            DataTablesColumn(_('Treatment After Lost to follow up')),
+            DataTablesColumn(_('Other previously treated')),
+            DataTablesColumn(_('Total')),
+        )
 
     @property
     def rows(self):
-        return super(CaseFindingAllTBPatientsReport, self).rows[1:4]
+        model = self.model
+        data = model.get_data()[0]
+        return [
+            ([_('Pulmonary, microbiologically confirmed')] +
+             get_for_all_patient_types('pulmonary_microbiologically', data)),
+            [_('Pulmonary, clinically diagnosed')] + get_for_all_patient_types('pulmonary_clinical', data),
+            [_('Extra pulmonary')] + get_for_all_patient_types('extra_pulmonary', data),
+            [_('Total')] + get_for_all_patient_types('total', data),
+        ]
 
 
 class AllNewAndRecurrentTBCases(EnikshayReport):

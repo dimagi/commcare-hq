@@ -598,7 +598,7 @@ class ProjectDataTab(UITab):
 
 
 class ApplicationsTab(UITab):
-    view = "corehq.apps.app_manager.views.view_app"
+    view = "default_app"
 
     url_prefix_formats = ('/a/{domain}/apps/',)
 
@@ -639,7 +639,9 @@ class ApplicationsTab(UITab):
             submenu_context.append(dropdown_dict(None, is_divider=True))
             submenu_context.append(dropdown_dict(
                 _('New Application'),
-                url=reverse('default_app', args=[self.domain]),
+                url=(reverse('default_new_app', args=[self.domain])
+                     if toggles.APP_MANAGER_V2.enabled(self.domain)
+                     else reverse('default_app', args=[self.domain])),
             ))
         return submenu_context
 

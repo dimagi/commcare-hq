@@ -1,4 +1,4 @@
-/*global Backbone, FormplayerFrontend */
+/*global Backbone, FormplayerFrontend, DOMPurify */
 
 function Util() {
 }
@@ -27,7 +27,7 @@ Util.confirmationModal = function(options) {
     });
     var $modal = $('#js-confirmation-modal');
     $modal.find('.js-modal-title').text(options.title);
-    $modal.find('.js-modal-body').text(options.message);
+    $modal.find('.js-modal-body').html(DOMPurify.sanitize(options.message));
     $modal.find('#js-confirmation-confirm').text(options.confirmText);
     $modal.find('#js-confirmation-cancel').text(options.cancelText);
 
@@ -71,7 +71,7 @@ Util.setCrossDomainAjaxOptions = function (options) {
     options.dataType = "json";
     options.crossDomain = {crossDomain: true};
     options.xhrFields = {withCredentials: true};
-    options.contentType = "application/json";
+    options.contentType = "application/json;charset=UTF-8";
 };
 
 Util.CloudcareUrl = function (options) {
@@ -184,5 +184,31 @@ if (!String.prototype.startsWith) {
     String.prototype.startsWith = function (searchString, position) {
         position = position || 0;
         return this.substr(position, searchString.length) === searchString;
+    };
+}
+
+if (!String.prototype.endsWith) {
+    String.prototype.endsWith = function(searchString, position) {
+        var subjectString = this.toString();
+        if (typeof position !== 'number' || !isFinite(position) || Math.floor(position) !== position || position > subjectString.length) {
+            position = subjectString.length;
+        }
+        position -= searchString.length;
+        var lastIndex = subjectString.lastIndexOf(searchString, position);
+        return lastIndex !== -1 && lastIndex === position;
+    };
+}
+
+if (!String.prototype.includes) {
+    String.prototype.includes = function(search, start) {
+        'use strict';
+        if (typeof start !== 'number') {
+            start = 0;
+        }
+        if (start + search.length > this.length) {
+            return false;
+        } else {
+            return this.indexOf(search, start) !== -1;
+        }
     };
 }

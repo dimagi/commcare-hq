@@ -125,7 +125,7 @@ class Annual(ICDSMixin, ASRData):
                         ("F_st_count_4",),
                         ("M_st_count_all",),
                         ("F_st_count_all",),
-                        ("M_st_count_ag",)
+                        ("pregnant_st_count", "delivered_st_count", "M_st_count_all", "F_st_count_all")
                     ),
                     (
                         'SC',
@@ -143,7 +143,7 @@ class Annual(ICDSMixin, ASRData):
                         ("F_sc_count_4",),
                         ("M_sc_count_all",),
                         ("F_sc_count_all",),
-                        ("M_sc_count_ag",)
+                        ("pregnant_sc_count", "delivered_sc_count", "M_sc_count_all", "F_sc_count_all")
                     ),
                     (
                         'Other',
@@ -161,7 +161,7 @@ class Annual(ICDSMixin, ASRData):
                         ("F_other_count_4",),
                         ("M_other_count_all",),
                         ("F_other_count_all",),
-                        ("M_other_count_ag",)
+                        ("pregnant_other_count", "delivered_other_count", "M_other_count_all", "F_other_count_all")
                     ),
                     (
                         'Total',
@@ -179,7 +179,9 @@ class Annual(ICDSMixin, ASRData):
                         ('F_st_count_4', 'F_sc_count_4', 'F_other_count_4'),
                         ('M_st_count_all', 'M_sc_count_all', 'M_other_count_all'),
                         ('F_st_count_all', 'F_sc_count_all', 'F_other_count_all'),
-                        ('M_st_count_ag', 'M_sc_count_ag', 'M_other_count_ag')
+                        ("pregnant_st_count", "delivered_st_count", "M_st_count_all", "F_st_count_all",
+                         "pregnant_sc_count", "delivered_sc_count", "M_sc_count_all", "F_sc_count_all",
+                         "pregnant_other_count", "delivered_other_count", "M_other_count_all", "F_other_count_all")
                     ),
                     (
                         'Minority',
@@ -197,7 +199,8 @@ class Annual(ICDSMixin, ASRData):
                         ("F_minority_count_4",),
                         ("M_minority_count_all",),
                         ("F_minority_count_all",),
-                        ("M_minority_count_ag",)
+                        ("pregnant_minority_count", "delivered_minority_count",
+                         "M_minority_count_all", "F_minority_count_all")
                     )
                 )
 
@@ -247,13 +250,7 @@ class DisabledChildren(ICDSMixin, ASRData):
                 ('disabled_seeing_count',),
                 ('disabled_hearing_count',),
                 ('disabled_speaking_count',),
-                (
-                    'disabled_movement_count',
-                    'disabled_mental_count',
-                    'disabled_seeing_count',
-                    'disabled_hearing_count',
-                    'disabled_speaking_count'
-                )
+                ('M_disabled_count', 'F_disabled_count')
             ),
             (
                 'No. of children 3-6 yrs',
@@ -262,13 +259,7 @@ class DisabledChildren(ICDSMixin, ASRData):
                 ('disabled_seeing_count_1',),
                 ('disabled_hearing_count_1',),
                 ('disabled_speaking_count_1',),
-                (
-                    'disabled_movement_count_1',
-                    'disabled_mental_count_1',
-                    'disabled_seeing_count_1',
-                    'disabled_hearing_count_1',
-                    'disabled_speaking_count_1'
-                )
+                ('M_disabled_count_1', 'F_disabled_count_1')
             ),
             (
                 'Total',
@@ -278,16 +269,8 @@ class DisabledChildren(ICDSMixin, ASRData):
                 ('disabled_hearing_count', 'disabled_hearing_count_1'),
                 ('disabled_speaking_count', 'disabled_speaking_count_1'),
                 (
-                    'disabled_movement_count',
-                    'disabled_mental_count',
-                    'disabled_seeing_count',
-                    'disabled_hearing_count',
-                    'disabled_speaking_count',
-                    'disabled_movement_count_1',
-                    'disabled_mental_count_1',
-                    'disabled_seeing_count_1',
-                    'disabled_hearing_count_1',
-                    'disabled_speaking_count_1'
+                    'M_disabled_count', 'F_disabled_count',
+                    'M_disabled_count_1', 'F_disabled_count_1'
                 )
             )
         )

@@ -238,13 +238,13 @@ hqDefine('app_manager/js/app_manager.js', function () {
         });
 
         if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
-            $('.new-form').on('click', function (e) {
+            $(document).on('click', '.js-new-form', function (e) {
                 e.preventDefault();
                 var $a = $(this),
                     $form = $a.siblings("form"),
                     action = $a.data("case-action");
                 $form.find("input[name='case_action']").val(action);
-                $form.find("input[name='name']").val(action === "update" ? "Untitled Followup" : "Untitled Survey");
+                $form.find("input[name='name']").val(action === "update" ? "Followup" : "Survey");
                 if (!$form.data('clicked')) {
                     $form.data('clicked', 'true');
                     $a.find(".fa-plus").removeClass("fa-plus").addClass("fa fa-refresh icon-spin");

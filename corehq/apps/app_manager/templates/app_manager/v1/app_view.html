@@ -3,8 +3,15 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 {% load crispy_forms_tags %}
+{% load compress %}
+
 {% block head %}{{ block.super }}
     {% include 'analytics/fullstory.html' %}
+{% endblock %}
+{% block stylesheets %}{{ block.super }}
+    {% compress css %}
+    <link rel="stylesheet" href="{% static 'At.js/dist/css/jquery.atwho.min.css' %}">
+    {% endcompress %}
 {% endblock %}
 {% block js %}{{ block.super }}
     <script src="{% static 'app_manager/js/commcaresettings.js' %}"></script>
@@ -23,6 +30,8 @@
     {{ block.super }}
     {% if app.get_doc_type == "Application" %}
         <script src="{% static 'translations/js/translations.js' %}"></script>
+        <script src="{% static 'Caret.js/dist/jquery.caret.min.js' %}"></script>
+        <script src="{% static 'At.js/dist/js/jquery.atwho.min.js' %}"></script>
     {% endif %}
     {% if app %}
     <script>
@@ -276,7 +285,7 @@
         </div>
         <div class="tab-pane" id="delete">
             <h3>{% trans "Delete Application" %}</h3>
-            <form action="{% url "corehq.apps.app_manager.views.delete_app" domain app.id %}" method="POST">
+            <form action="{% url "delete_app" domain app.id %}" method="POST">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-danger disable-on-submit">
                     <i class="fa fa-trash"></i>

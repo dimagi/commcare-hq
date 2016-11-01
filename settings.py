@@ -256,6 +256,7 @@ HQ_APPS = (
     'corehq.apps.data_analytics',
     'corehq.apps.domain',
     'corehq.apps.domainsync',
+    'corehq.apps.dump_reload',
     'corehq.apps.hqadmin',
     'corehq.apps.hqcase',
     'corehq.apps.hqcouchlog',
@@ -366,7 +367,6 @@ HQ_APPS = (
     'custom.opm',
     'pact',
 
-    'custom.apps.care_benin',
     'custom.reports.mc',
     'custom.apps.crs_reports',
     'custom.hope',
@@ -1266,7 +1266,6 @@ COUCHDB_APPS = [
     'openclinica',
 
     # custom reports
-    'care_benin',
     'gsid',
     'hsph',
     'mvp',
@@ -1792,12 +1791,14 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('eqa_expression', 'custom.eqa.expressions.eqa_expression'),
     ('cqi_action_item', 'custom.eqa.expressions.cqi_action_item'),
     ('year_expression', 'custom.pnlppgi.expressions.year_expression'),
-    ('week_expression', 'custom.pnlppgi.expressions.week_expression')
+    ('week_expression', 'custom.pnlppgi.expressions.week_expression'),
+    ('concatenate_strings', 'custom.enikshay.expressions.concatenate_strings_expression')
 ]
 
 CUSTOM_UCR_EXPRESSION_LISTS = [
     ('mvp.ucr.reports.expressions.CUSTOM_UCR_EXPRESSIONS'),
     ('custom.icds_reports.ucr.expressions.CUSTOM_UCR_EXPRESSIONS'),
+    ('custom.ucr_ext.expressions.CUSTOM_UCR_EXPRESSIONS'),
 ]
 
 CUSTOM_MODULES = [
@@ -1839,7 +1840,6 @@ DOMAIN_MODULE_MAP = {
     'mvp-pampaida': 'mvp',
     'opm': 'custom.opm',
     'pact': 'pact',
-    'project': 'custom.apps.care_benin',
 
     'ipm-senegal': 'custom.intrahealth',
     'icds-test': 'custom.icds_reports',
@@ -1870,7 +1870,7 @@ CASEXML_FORCE_DOMAIN_CHECK = True
 TRAVIS_TEST_GROUPS = (
     (
         'accounting', 'api', 'app_manager', 'appstore',
-        'auditcare', 'bihar', 'builds', 'cachehq', 'callcenter', 'care_benin',
+        'auditcare', 'bihar', 'builds', 'cachehq', 'callcenter',
         'case', 'casegroups', 'cleanup', 'cloudcare', 'commtrack', 'consumption',
         'couchapps', 'couchlog', 'crud', 'django_digest',
         'domain', 'domainsync', 'export',

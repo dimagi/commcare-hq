@@ -464,6 +464,42 @@ class TestBulkManagement(TestCase):
             actual.append((attr, parent))
 
         self.assertEqual(set(actual), expected_locations)
+        self.assertMpttDescendants(expected_locations)
+
+    def assertMpttDescendants(self, pairs):
+        # Given list of (child, parent), check that for each location
+        # SQLLocation.get_descendants is same as calculated descendants
+
+        from collections import defaultdict
+
+        # index by parent, to calculate descendants
+        by_parent = defaultdict(list)
+        for (child, parent) in pairs:
+            by_parent[parent].append(child)
+
+        descendants = defaultdict(list)
+
+        def get_descendants(l):
+            if descendants[l]:
+                return descendants[l]
+
+            to_ret = []
+            children = by_parent[l]
+            for child in children:
+                to_ret = to_ret + get_descendants(child)
+            return children + to_ret
+
+        # calculate descendants for each location
+        for (child, pair) in pairs:
+            descendants[child] = get_descendants(child)
+
+        # for each location assert that calculated and expected get_descendants are equal
+        for (l, desc) in descendants.iteritems():
+            q = SQLLocation.objects.filter(site_code=l)
+            loc = q[0] if q else None
+
+            actual = [i.site_code for i in loc.get_descendants()] if loc else []
+            self.assertEqual(set(actual), set(desc))
 
     def assertCouchSync(self):
         def assertLocationsEqual(loc1, loc2):
@@ -836,4 +872,31 @@ class TestBulkManagement(TestCase):
         self.assertEqual(result.errors, [])
         self.assertLocationTypesMatch(reverse_order)
         self.assertLocationsMatch(self.as_pairs(edit_types_of_locations))
+        self.assertCouchSync()
+
+    def test_swap_parents(self):
+        lt_by_code = self.create_location_types(FLAT_LOCATION_TYPES)
+        original = [
+            ('State 1', 's1', 'state', '', '', False) + extra_stub_args,
+            ('State 2', 's2', 'state', '', '', False) + extra_stub_args,
+            ('County 11', 'c1', 'county', 's1', '', False) + extra_stub_args,
+            ('County 21', 'c2', 'county', 's2', '', False) + extra_stub_args,
+        ]
+        self.create_locations(original, lt_by_code)
+
+        swap_parents = [
+            ('State 1', 's1', 'state', '', '', False) + extra_stub_args,
+            ('State 2', 's2', 'state', '', '', False) + extra_stub_args,
+            ('County 11', 'c1', 'county', 's2', '', False) + extra_stub_args,
+            ('County 21', 'c2', 'county', 's1', '', False) + extra_stub_args,
+        ]
+
+        result = self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            swap_parents,
+        )
+
+        self.assertEqual(result.errors, [])
+        self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
+        self.assertLocationsMatch(self.as_pairs(swap_parents))
         self.assertCouchSync()

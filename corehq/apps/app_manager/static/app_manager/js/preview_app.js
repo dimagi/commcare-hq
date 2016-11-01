@@ -4,7 +4,16 @@
 hqDefine('app_manager/js/preview_app.js', function() {
     'use strict';
     var module = {};
-    
+    var _private = {};
+
+    module.SELECTORS = {
+        BTN_TOGGLE_PREVIEW: '.js-preview-toggle',
+        PREVIEW_WINDOW: '#js-appmanager-preview',
+        APP_MANAGER_BODY: '#js-appmanager-body',
+        PREVIEW_ACTION_TEXT_SHOW: '.js-preview-action-show',
+        PREVIEW_ACTION_TEXT_HIDE: '.js-preview-action-hide',
+    };
+
     module.EVENTS = {
         RESIZE: 'previewApp.resize',
     };
@@ -18,64 +27,74 @@ hqDefine('app_manager/js/preview_app.js', function() {
         OPEN: 'isopen',
         POSITION: 'position',
     };
-    
-    module.initPreviewWindow = function (
-        previewWindowSelector,
-        appManagerBodySelector,
-        previewToggleBtnSelector
-    ) {
 
-        var $appPreview = $(previewWindowSelector);
-        var $appBody = $(appManagerBodySelector);
-        var $togglePreviewBtn = $(previewToggleBtnSelector);
+    _private.showAppPreview = function() {
+        $(module.SELECTORS.PREVIEW_ACTION_TEXT_SHOW).addClass('hide');
+        $(module.SELECTORS.PREVIEW_ACTION_TEXT_HIDE).removeClass('hide');
+    };
+    _private.hideAppPreview = function() {
+        $(module.SELECTORS.PREVIEW_ACTION_TEXT_SHOW).removeClass('hide');
+        $(module.SELECTORS.PREVIEW_ACTION_TEXT_HIDE).addClass('hide');
+    };
+
+    _private.navigateBack = function() {
+        var previewWindow = $appPreviewIframe[0].contentWindow;
+        previewWindow.postMessage({
+            action: 'back',
+        }, window.location.origin);
+    };
+
+    _private.toggleAppPreview = function (e) {
+        e.preventDefault();
+        if (localStorage.getItem(module.DATA.OPEN) === module.DATA.OPEN) {
+            localStorage.removeItem(module.DATA.OPEN);
+        } else {
+            localStorage.setItem(module.DATA.OPEN, module.DATA.OPEN);
+        }
+        $(window).trigger(module.EVENTS.RESIZE);
+        if (localStorage.getItem(module.DATA.OPEN)) {
+            _private.showAppPreview();
+        } else {
+            _private.hideAppPreview();
+        }
+    };
+
+    module.initPreviewWindow = function (layoutController) {
+
+        var $appPreview = $(module.SELECTORS.PREVIEW_WINDOW),
+            $appBody = $(module.SELECTORS.APP_MANAGER_BODY),
+            $togglePreviewBtn = $(module.SELECTORS.BTN_TOGGLE_PREVIEW),
+            $messages = $(layoutController.selector.messages);
 
         $appPreview.data(module.DATA.POSITION, module.POSITION.FIXED);
 
-        var _toggleAppPreview = function () {
-            if (localStorage.getItem(module.DATA.OPEN) === module.DATA.OPEN) {
-                localStorage.removeItem(module.DATA.OPEN);
-            } else {
-                localStorage.setItem(module.DATA.OPEN, module.DATA.OPEN);
-            }
-            $(window).trigger(module.EVENTS.RESIZE);
-            if (localStorage.getItem(module.DATA.OPEN)) {
-                _showAppPreview();
-            } else {
-                _hideAppPreview();
-            }
-        };
-
-        var _showAppPreview = function() {
-            $('.preview-action-show').addClass('hide');
-            $('.preview-action-hide').removeClass('hide');
-        };
-        var _hideAppPreview = function() {
-            $('.preview-action-show').removeClass('hide');
-            $('.preview-action-hide').addClass('hide');
-        };
-
         if (localStorage.getItem(module.DATA.OPEN)) {
-            _showAppPreview();
+            _private.showAppPreview();
         } else {
-            _hideAppPreview();
+            _private.hideAppPreview();
         }
 
-        if ($togglePreviewBtn) {
-            $togglePreviewBtn.click(_toggleAppPreview);
-        }
-        $appPreview.find('.btn-preview-close').click(_toggleAppPreview);
+        $togglePreviewBtn.click(_private.toggleAppPreview);
 
         var _resizeAppPreview = function () {
+            $appPreview.height($(window).outerHeight() + 'px');
+
             if (localStorage.getItem(module.DATA.OPEN)) {
                 $appPreview.addClass('open');
-                $appBody.css('margin-right', $appPreview.outerWidth() + 50 + 'px');
+                if ($('#formdesigner').length === 0) $appBody.addClass('offset-for-preview');
+                $messages.addClass('offset-for-preview');
             } else {
                 $appPreview.removeClass('open');
-                $appBody.css('margin-right', 0);
+                if ($('#formdesigner').length === 0) $appBody.removeClass('offset-for-preview');
+                $messages.removeClass('offset-for-preview');
             }
-            var maxHeight = $appPreview.outerHeight() + 120;
-            if ($(window).height() <  maxHeight
-                && $appPreview.data(module.DATA.POSITION) === module.POSITION.FIXED) {
+
+            var $nav = $(layoutController.selector.navigation);
+
+            var maxHeight = $appPreview.find('.preview-phone-container').outerHeight() + $nav.outerHeight() + 80;
+            if (($(window).height() <  maxHeight
+                && $appPreview.data(module.DATA.POSITION) === module.POSITION.FIXED)
+            ) {
                 $appPreview.data(module.DATA.POSITION, module.POSITION.ABSOLUTE);
                 $appPreview.addClass('small-height');
             } else if ($(window).height() >=  maxHeight
@@ -83,11 +102,33 @@ hqDefine('app_manager/js/preview_app.js', function() {
                 $appPreview.data(module.DATA.POSITION, module.POSITION.FIXED);
                 $appPreview.removeClass('small-height');
             }
-        };
-        _resizeAppPreview();
-        $(window).resize(_resizeAppPreview);
-        $(window).on(module.EVENTS.RESIZE, _resizeAppPreview);
 
+            $(module.SELECTORS.BTN_TOGGLE_PREVIEW).fadeIn(500);
+
+        };
+        $(window).on(module.EVENTS.RESIZE, _resizeAppPreview);
+        layoutController.utils.setBalancePreviewFn(_resizeAppPreview);
+        $('.js-preview-back').click(_private.navigateBack);
+
+    };
+
+    module.prependToggleTo = function (selector, layout, attempts) {
+        attempts = attempts || 0;
+        if ($(selector).length) {
+            var $toggleParent = $(selector);
+            $toggleParent.prepend(layout);
+            $toggleParent.find(module.SELECTORS.BTN_TOGGLE_PREVIEW).click(_private.toggleAppPreview);
+            if (localStorage.getItem(module.DATA.OPEN)) {
+                _private.showAppPreview();
+            } else {
+                _private.hideAppPreview();
+            }
+        } else if (attempts <= 30) {
+            // give up appending element after waiting 30 seconds to load
+            setTimeout(function () {
+                module.prependToggleTo(selector, layout, attempts++);
+            }, 1000);
+        }
     };
 
     return module;

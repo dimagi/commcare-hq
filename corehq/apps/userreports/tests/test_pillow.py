@@ -193,6 +193,7 @@ class StaticKafkaIndicatorPillowTest(TestCase):
         'corehq.apps.userreports.pillow.'
         'ConfigurableReportTableManagerMixin.rebuild_tables_if_necessary',
         MagicMock(return_value=None))
+    @run_with_all_ucr_backends
     def test_bootstrap_can_be_called(self):
         get_kafka_ucr_static_pillow().bootstrap()
 

@@ -572,7 +572,7 @@
         "is_nullable": true,
         "column_id": "week",
         "expression": {
-          "property": "date_fin",
+          "property": "date_debut",
           "type": "week_expression"
         }
       },
@@ -585,7 +585,7 @@
         "is_nullable": true,
         "column_id": "year",
         "expression": {
-          "property": "date_fin",
+          "property": "date_debut",
           "type": "year_expression"
         }
       }

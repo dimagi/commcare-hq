@@ -87,7 +87,7 @@ def get_doc_info(doc, domain_hint=None, cache=None):
                 display=doc['name'],
                 type_display=_('Application'),
                 link=reverse(
-                    'corehq.apps.app_manager.views.view_app',
+                    'view_app',
                     args=[domain, doc_id],
                 ),
                 is_deleted=generic_delete,

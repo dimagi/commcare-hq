@@ -45,7 +45,7 @@ from django_prbac.utils import has_privilege
 
 @retry_resource(3)
 def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
-                 copy_app_form=None):
+                 copy_app_form=None, release_manager=False):
     """
     This is the main view for the app. All other views redirect to here.
 
@@ -85,7 +85,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     if app and app.copy_of:
         # don't fail hard.
         return HttpResponseRedirect(reverse(
-            "corehq.apps.app_manager.views.view_app", args=[domain, app.copy_of]
+            "view_app", args=[domain, app.copy_of] # TODO - is this right?
         ))
 
     # grandfather in people who set commcare sense earlier
@@ -123,11 +123,18 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         module_context = get_module_view_context(app, module, lang)
         context.update(module_context)
     elif app:
+
+        # todo APP MANAGER V2 update template here
+        # if release_manager:
+
         template = "app_manager/v1/app_view.html"
         context.update(get_app_view_context(request, app))
     else:
         from corehq.apps.dashboard.views import NewUserDashboardView
-        return HttpResponseRedirect(reverse(NewUserDashboardView.urlname, args=[domain]))
+        if toggles.APP_MANAGER_V2.enabled(domain):
+            context.update(NewUserDashboardView.get_page_context(domain))
+        else:
+            return HttpResponseRedirect(reverse(NewUserDashboardView.urlname, args=[domain]))
 
     # update multimedia context for forms and modules.
     menu_host = form or module

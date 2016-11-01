@@ -146,7 +146,8 @@
             {% if toggle_meta.description %}
                 <p>{{ toggle_meta.description|safe }}</p>
             {% endif %}
-            <p>{% trans "This flag is tagged as: " %}<span class="label label-{{ toggle_meta.tag.css_class }}">{{ toggle_meta.tag.name }}</span></p>
+            <p><span class="label label-{{ toggle_meta.tag.css_class }}">{{ toggle_meta.tag.name }}</span></p>
+            <p>{{ toggle_meta.tag.description }}</p>
             {% if toggle_meta.help_link %}
             <p><a href="{{ toggle_meta.help_link }}" target="_blank">{% trans "More information" %}</a></p>
             {% endif %}

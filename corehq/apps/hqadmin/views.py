@@ -472,6 +472,12 @@ class AdminRestoreView(TemplateView):
             response, _ = self._get_restore_response()
             return response
 
+        download = request.GET.get('download') == 'true'
+        if download:
+            response, _ = self._get_restore_response()
+            response['Content-Disposition'] = "attachment; filename={}-restore.xml".format(username)
+            return response
+
         return super(AdminRestoreView, self).get(request, *args, **kwargs)
 
     def _get_restore_response(self):

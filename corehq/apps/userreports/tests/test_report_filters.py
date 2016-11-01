@@ -115,6 +115,42 @@ class DateFilterTestCase(SimpleTestCase):
         self.assertEqual(type(val['my_slug_enddate']), str)
 
 
+class QuarterFilterTestCase(SimpleTestCase):
+
+    def test_date_filter(self):
+        def get_query_value(year, quarter):
+            spec = {
+                "type": "quarter",
+                "field": "modified_on_field",
+                "slug": "my_slug",
+                "display": "date Modified",
+            }
+            reports_core_filter = ReportFilterFactory.from_spec(spec)
+            reports_core_value = reports_core_filter.get_value({
+                "my_slug-year": year,
+                "my_slug-quarter": quarter
+            })
+
+            filter = ReportFilter.wrap(spec)
+            return filter.create_filter_value(reports_core_value).to_sql_values()
+
+        value = get_query_value(2016, 1)
+        self.assertEqual(value['my_slug_startdate'], datetime(2016, 1, 1))
+        self.assertEqual(value['my_slug_enddate'], datetime(2016, 4, 1))
+
+        value = get_query_value(2016, 2)
+        self.assertEqual(value['my_slug_startdate'], datetime(2016, 4, 1))
+        self.assertEqual(value['my_slug_enddate'], datetime(2016, 7, 1))
+
+        value = get_query_value(2016, 3)
+        self.assertEqual(value['my_slug_startdate'], datetime(2016, 7, 1))
+        self.assertEqual(value['my_slug_enddate'], datetime(2016, 10, 1))
+
+        value = get_query_value(2016, 4)
+        self.assertEqual(value['my_slug_startdate'], datetime(2016, 10, 1))
+        self.assertEqual(value['my_slug_enddate'], datetime(2017, 1, 1))
+
+
 class NumericFilterTestCase(SimpleTestCase):
 
     def test_numeric_filter(self):

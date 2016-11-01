@@ -87,7 +87,7 @@ class TestZapierIntegration(TestCase):
         cls.domain = cls.domain_object.name
 
         account = BillingAccount.get_or_create_account_by_domain(cls.domain, created_by="automated-test")[0]
-        plan = DefaultProductPlan.get_default_plan(edition=SoftwarePlanEdition.STANDARD)
+        plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.STANDARD)
         subscription = Subscription.new_domain_subscription(account, cls.domain, plan)
         subscription.is_active = True
         subscription.save()

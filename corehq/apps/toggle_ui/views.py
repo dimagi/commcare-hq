@@ -96,7 +96,7 @@ class ToggleEditView(ToggleBaseView):
 
     @property
     def page_title(self):
-        return "Edit Flag '{}'".format(self.toggle_meta().label)
+        return self.toggle_meta().label
 
     @property
     def page_url(self):

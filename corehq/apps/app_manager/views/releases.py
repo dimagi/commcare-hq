@@ -90,6 +90,11 @@ def paginate_releases(request, domain, app_id):
     return json_response(saved_apps)
 
 
+def release_manager(request, domain, app_id):
+    from corehq.apps.app_manager.views.view_generic import view_generic
+    return view_generic(request, domain, app_id=app_id, release_manager=True)
+
+
 @require_deploy_apps
 def releases_ajax(request, domain, app_id, template='app_manager/v1/partials/releases.html'):
     app = get_app(domain, app_id)
@@ -98,6 +103,7 @@ def releases_ajax(request, domain, app_id, template='app_manager/v1/partials/rel
     build_profile_access = domain_has_privilege(domain, privileges.BUILD_PROFILES)
 
     context.update({
+        'intro_only': len(app.modules) == 0,
         'release_manager': True,
         'can_send_sms': can_send_sms,
         'has_mobile_workers': get_doc_count_in_domain_by_class(domain, CommCareUser) > 0,
@@ -251,7 +257,7 @@ def odk_install(request, domain, app_id, with_media=False):
     context = {
         "domain": domain,
         "app": app,
-        "qr_code": reverse("corehq.apps.app_manager.views.%s" % qr_code_view,
+        "qr_code": reverse(qr_code_view,
                            args=[domain, app_id],
                            params={'profile': build_profile_id}),
         "profile_url": profile_url,

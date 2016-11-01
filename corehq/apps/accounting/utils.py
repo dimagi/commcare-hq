@@ -138,8 +138,8 @@ def domain_is_on_trial(domain):
     return subscription.is_trial
 
 
-def is_active_subscription(date_start, date_end):
-    today = datetime.date.today()
+def is_active_subscription(date_start, date_end, today=None):
+    today = today or datetime.date.today()
     return ((date_start is None or date_start <= today)
             and (date_end is None or today < date_end))
 

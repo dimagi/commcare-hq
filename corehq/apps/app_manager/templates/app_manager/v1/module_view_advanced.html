@@ -11,7 +11,7 @@
         var VisitScheduler = hqImport('app_manager/js/visit-scheduler.js');
         var visitScheduler = new VisitScheduler.ModuleScheduler({
             home: $('#module-scheduler'),
-            saveUrl: "{% url 'corehq.apps.app_manager.views.edit_schedule_phases' app.domain app.id module.id %}",
+            saveUrl: "{% url 'edit_schedule_phases' app.domain app.id module.id %}",
             hasSchedule: {{ module.has_schedule|JSON }},
             schedulePhases: {{ schedule_phases|JSON }},
             caseProperties: {{details|JSON}}[0].properties
