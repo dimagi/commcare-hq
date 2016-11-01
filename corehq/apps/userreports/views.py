@@ -733,7 +733,7 @@ class ConfigureReport(ReportBuilderView):
                 domain=domain_,
                 # The uuid gets truncated, so it's not really universally unique.
                 table_id=_clean_table_name(domain_, str(uuid.uuid4().hex)),
-                **ds_config_kwargs_,
+                **ds_config_kwargs_
             )
             data_source_config.validate()
             data_source_config.save()
