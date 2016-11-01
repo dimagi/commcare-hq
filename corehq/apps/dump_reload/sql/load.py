@@ -15,6 +15,7 @@ from django.db import (
 )
 from django.utils.encoding import force_text
 
+from corehq.apps.dump_reload.interface import DataLoader
 from corehq.form_processor.backends.sql.dbaccessors import ShardAccessor
 from corehq.sql_db.config import partition_config
 
@@ -45,38 +46,35 @@ class LoadStat(namedtuple('LoadStats', 'db_alias, loaded_object_count, models'))
         )
 
 
-def load_sql_data(data_file):
-    """
-    Loads data from a given file.
-    :return: tuple(total object count, loaded object count)
-    """
-    # Keep a count of the installed objects
-    load_stats_by_db = {}
-    total_object_counts = []
+class SqlDataLoader(DataLoader):
+    def load_objects(self, object_strings):
+        # Keep a count of the installed objects
+        load_stats_by_db = {}
+        total_object_counts = []
 
-    def _process_chunk(chunk, total_object_counts=total_object_counts, load_stats_by_db=load_stats_by_db):
-        chunk_stats = load_objects(chunk)
-        total_object_counts.append(len(chunk))
-        _update_stats(load_stats_by_db, chunk_stats)
+        def _process_chunk(chunk, total_object_counts=total_object_counts, load_stats_by_db=load_stats_by_db):
+            chunk_stats = load_objects(chunk)
+            total_object_counts.append(len(chunk))
+            _update_stats(load_stats_by_db, chunk_stats)
 
-    chunk = []
-    for line in data_file:
-        line = line.strip()
-        if not line:
-            continue
-        chunk.append(json.loads(line))
-        if len(chunk) >= 1000:
+        chunk = []
+        for line in object_strings:
+            line = line.strip()
+            if not line:
+                continue
+            chunk.append(json.loads(line))
+            if len(chunk) >= 1000:
+                _process_chunk(chunk)
+                chunk = []
+
+        if chunk:
             _process_chunk(chunk)
-            chunk = []
 
-    if chunk:
-        _process_chunk(chunk)
+        _reset_sequences(load_stats_by_db.values())
 
-    _reset_sequences(load_stats_by_db.values())
+        loaded_object_count = sum(stat.loaded_object_count for stat in load_stats_by_db.values())
 
-    loaded_object_count = sum(stat.loaded_object_count for stat in load_stats_by_db.values())
-
-    return sum(total_object_counts), loaded_object_count
+        return sum(total_object_counts), loaded_object_count
 
 
 def _reset_sequences(load_stats):

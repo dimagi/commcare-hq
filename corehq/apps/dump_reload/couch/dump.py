@@ -1,5 +1,8 @@
 from collections import Counter
 
+from corehq.apps.dump_reload.interface import DataDumper
 
-def dump_couch_data(domain, excludes, output_stream):
-    return Counter()
+
+class CouchDataDumper(DataDumper):
+    def dump(self, output_stream):
+        return Counter()

@@ -7,7 +7,7 @@ import zipfile
 
 from django.core.management.base import BaseCommand, CommandError
 
-from corehq.apps.dump_reload.sql import load_sql_data
+from corehq.apps.dump_reload.sql import SqlDataLoader
 
 
 class Command(BaseCommand):
@@ -33,7 +33,7 @@ class Command(BaseCommand):
         open_method, mode = self.compression_formats[cmp_fmt]
         dump_file = open_method(dump_file_path, mode)
         try:
-            total_object_count, loaded_object_count = load_sql_data(dump_file)
+            total_object_count, loaded_object_count = SqlDataLoader().load_objects(dump_file)
         except Exception as e:
             if not isinstance(e, CommandError):
                 e.args = ("Problem installing data '%s': %s" % (dump_file_path, e),)

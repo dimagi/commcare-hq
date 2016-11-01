@@ -6,7 +6,8 @@ from datetime import datetime
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
-from corehq.apps.dump_reload.sql import dump_sql_data
+from corehq.apps.dump_reload.sql import SqlDataDumper
+from corehq.apps.dump_reload.couch import CouchDataDumper
 from corehq.util.decorators import ContextDecorator
 
 SQL_FILE_PREFIX = 'dump-sql'
@@ -46,13 +47,13 @@ class Command(BaseCommand):
                 print "{:<40}: {}".format(model, sql_stats[model])
 
     def _dump_couch(self, console, domain, excludes, utcnow):
-        return Counter()
+        return CouchDataDumper(domain, excludes).dump(None)
 
     def _dump_sql(self, console, domain, excludes, utcnow):
         stream = self.stdout if console else _get_dump_stream(domain, utcnow)
         try:
             with allow_form_processing_queries():
-                sql_stats = dump_sql_data(domain, excludes, stream)
+                sql_stats = SqlDataDumper(domain, excludes).dump(stream)
         finally:
             if stream:
                 stream.close()

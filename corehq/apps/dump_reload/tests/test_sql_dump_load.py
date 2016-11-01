@@ -15,8 +15,7 @@ from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from corehq.apps.commtrack.helpers import make_product
 from corehq.apps.commtrack.tests.util import get_single_balance_block
 from corehq.apps.domain.models import Domain
-from corehq.apps.dump_reload.sql import dump_sql_data
-from corehq.apps.dump_reload.sql import load_sql_data
+from corehq.apps.dump_reload.sql import SqlDataLoader, SqlDataDumper
 from corehq.apps.dump_reload.sql.dump import get_model_domain_filters, get_objects_to_dump
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.products.models import SQLProduct
@@ -69,7 +68,7 @@ class BaseDumpLoadTest(TestCase):
         models = list(expected_object_counts)
 
         output_stream = StringIO()
-        dump_sql_data(self.domain_name, [], output_stream)
+        SqlDataDumper(self.domain_name, []).dump(output_stream)
 
         delete_sql_data(self, models, self.domain_name)
 
@@ -81,7 +80,7 @@ class BaseDumpLoadTest(TestCase):
 
         dump_output = output_stream.getvalue()
         dump_lines = [line.strip() for line in dump_output.split('\n') if line.strip()]
-        total_object_count, loaded_object_count = load_sql_data(dump_lines)
+        total_object_count, loaded_object_count = SqlDataLoader().load_objects(dump_lines)
 
         expected_model_counts = _normalize_object_counter(expected_object_counts)
         actual_model_counts = Counter([json.loads(line)['model'] for line in dump_lines])

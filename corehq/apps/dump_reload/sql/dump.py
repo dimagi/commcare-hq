@@ -7,6 +7,7 @@ from django.db import router
 from django.db.models import Q
 
 from corehq.apps.dump_reload.exceptions import DomainDumpError
+from corehq.apps.dump_reload.interface import DataDumper
 from corehq.apps.dump_reload.sql.filters import SimpleFilter, UsernameFilter, UserIDFilter
 from corehq.apps.dump_reload.sql.serialization import JsonLinesSerializer
 from corehq.sql_db.config import partition_config
@@ -38,22 +39,17 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = {
 }
 
 
-def dump_sql_data(domain, excludes, output_stream):
-    """
-    Dump SQL data for domain to stream.
-    :param domain: Name of domain to dump data for
-    :param excludes: List of app labels ("app_label.model_name" or "app_label") to exclude
-    :param output_stream: Stream to write json encoded objects to
-    """
-    stats = Counter()
-    objects = get_objects_to_dump(domain, excludes, stats_counter=stats)
-    JsonLinesSerializer().serialize(
-        objects,
-        use_natural_foreign_keys=False,
-        use_natural_primary_keys=False,
-        stream=output_stream
-    )
-    return stats
+class SqlDataDumper(DataDumper):
+    def dump(self, output_stream):
+        stats = Counter()
+        objects = get_objects_to_dump(self.domain, self.excludes, stats_counter=stats)
+        JsonLinesSerializer().serialize(
+            objects,
+            use_natural_foreign_keys=False,
+            use_natural_primary_keys=False,
+            stream=output_stream
+        )
+        return stats
 
 
 def get_objects_to_dump(domain, excludes, stats_counter=None):
