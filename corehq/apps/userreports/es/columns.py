@@ -1,6 +1,5 @@
 from corehq.apps.es import filters
 from corehq.apps.es.aggregations import FilterAggregation
-from corehq.apps.reports.datatables import DataTablesColumn
 from corehq.apps.userreports.columns import UCRExpandDatabaseSubcolumn
 
 

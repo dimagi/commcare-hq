@@ -1,7 +1,7 @@
 from corehq.apps.userreports.models import DataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.es.data_source import ConfigurableReportEsDataSource
 from corehq.apps.userreports.sql.data_source import ConfigurableReportSqlDataSource
-from corehq.apps.userreports.util import get_table_name, get_backend_id
+from corehq.apps.userreports.util import get_backend_id
 
 
 class ConfigurableReportDataSource(object):
