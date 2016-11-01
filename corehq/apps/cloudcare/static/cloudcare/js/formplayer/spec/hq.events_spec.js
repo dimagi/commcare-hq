@@ -44,30 +44,5 @@ describe('HQ.Events', function() {
             dummyEvent.data.action = 'unknown';
             assert.throws(function() { receiver(dummyEvent); }, /Invalid action/);
         });
-
-        it('should call success on success', function() {
-            var receiver = new Receiver(origin);
-            dummyEvent.data.action = Actions.BACK;
-            dummyEvent.data.success = sinon.spy();
-            dummyEvent.data.complete = sinon.spy();
-
-            receiver(dummyEvent);
-            assert.isTrue(dummyEvent.data.success.called);
-            assert.isTrue(dummyEvent.data.complete.called);
-        });
-
-        it('should call error on error', function() {
-            var receiver = new Receiver(origin);
-            dummyEvent.data.action = Actions.BACK;
-            dummyEvent.data.error = sinon.spy();
-            dummyEvent.data.complete = sinon.spy();
-
-            FormplayerFrontend.trigger.restore();
-            sinon.stub(FormplayerFrontend, 'trigger', function() { throw new Error('Boom'); });
-
-            receiver(dummyEvent);
-            assert.isTrue(dummyEvent.data.error.called);
-            assert.isTrue(dummyEvent.data.complete.called);
-        });
     });
 });
