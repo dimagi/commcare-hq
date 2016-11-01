@@ -8,7 +8,7 @@
     {% if is_deid %}
     <p>
         {% blocktrans %}
-            These {{ exports_type }} are <strong>De-Identified</strong>, meaning that
+            These {{ export_type_plural }} are <strong>De-Identified</strong>, meaning that
             the administrator of this domain has removed all personally-identifying
             properties from the exported data.
         {% endblocktrans %}
@@ -30,33 +30,33 @@
            class="btn btn-success new-export-link">
             <i class="fa fa-plus"></i>
             {% blocktrans %}
-                Create New {{ Export_type }}
+                Create New {{ export_type_caps }}
             {% endblocktrans %}
         </a>
     </p>
     <div class="alert alert-success"
          ng-show="_.isEmpty(exports) && !!hasLoaded">
         <p class="lead"><strong>{% blocktrans %}
-            It seems you haven't created any {{ exports_type }} yet!
+            It seems you haven't created any {{ export_type_plural }} yet!
         {% endblocktrans %}</strong></p>
         <p><a href="#createExportOptionsModal"
               data-toggle="modal"
               class="btn btn-success new-export-link">
             <i class="fa fa-plus"></i>
             {% blocktrans %}
-                Create New {{ Export_type }}
+                Create New {{ export_type_caps }}
             {% endblocktrans %}
         </a></p>
     </div>
     {% endif %}
     <div class="panel panel-default">
-        <div class="panel-heading">{{ Exports_type }}</div>
+        <div class="panel-heading">{{ export_type_caps_plural }}</div>
         <div class="panel-body">
             <div class="alert alert-info"
                  ng-show="!hasLoaded">
                 <p>
                     <i class="fa fa-spinner fa-spin"></i>
-                    <strong>{% blocktrans %}Fetching List of {{ Exports_type }}...{% endblocktrans %}</strong>
+                    <strong>{% blocktrans %}Fetching List of {{ export_type_caps_plural }}...{% endblocktrans %}</strong>
                 </p>
             </div>
             <div class="alert alert-info"
@@ -64,11 +64,11 @@
                 <p>
                     {% if is_deid %}
                         {% blocktrans %}
-                            No De-Identified {{ Exports_type }} are available at this time.
+                            No De-Identified {{ export_type_caps_plural }} are available at this time.
                         {% endblocktrans %}
                     {% else %}
                         {% blocktrans %}
-                            No {{ Exports_type }} Created Yet.
+                            No {{ export_type_caps_plural }} Created Yet.
                         {% endblocktrans %}
                     {% endif %}
                 </p>
@@ -77,7 +77,7 @@
                  ng-show="!!exportsListError">
                 <strong ng-if="exportsListError === 'default'">
                     {% blocktrans %}
-                        Issue fetching list of {{ exports_type }}. Please check your Internet connection.
+                        Issue fetching list of {{ export_type_plural }}. Please check your Internet connection.
                     {% endblocktrans %}
                 </strong>
                 <strong ng-if="exportsListError !== 'default'">
@@ -98,10 +98,10 @@
                         {% if has_edit_permissions %}
                         <th class="col-sm-1">{% block second_column_header %}{% trans 'Edit' %}{% endblock %}</th>
                         {% endif %}
-                        <th class="col-sm-2">{% block third_column_header %}{{ Export_type }}{% endblock %}</th>
+                        <th class="col-sm-2">{% block third_column_header %}{{ export_type_caps }}{% endblock %}</th>
                         {%  if allow_bulk_export %}
                         <th class="col-sm-3">
-                            {% blocktrans %}Bulk {{ Export_type }}:{% endblocktrans %}
+                            {% blocktrans %}Bulk {{ export_type_caps }}:{% endblocktrans %}
                             <button type="button"
                                     class="btn btn-xs btn-default"
                                     ng-click="selectAll()">
@@ -279,7 +279,7 @@
                                class="btn btn-primary"
                                ng-click="sendExportAnalytics()"
                             >
-                                {{ Export_type }}
+                                {{ export_type_caps }}
                             </a>
                             {% if has_edit_permissions %}
                             <a class="btn btn-default"

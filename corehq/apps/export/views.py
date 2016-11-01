@@ -976,10 +976,10 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
             'allow_bulk_export': self.allow_bulk_export,
             'has_edit_permissions': self.has_edit_permissions,
             'is_deid': self.is_deid,
-            "Export_type": _("Export"),
+            "export_type_caps": _("Export"),
             "export_type": _("export"),
-            "Exports_type": _("Exports"),
-            "exports_type": _("exports"),
+            "export_type_caps_plural": _("Exports"),
+            "export_type_plural": _("exports"),
             "model_type": self.form_or_case,
             "static_model_type": True,
         }
@@ -1429,10 +1429,10 @@ class DashboardFeedListView(DailySavedExportListView):
     def page_context(self):
         context = super(DashboardFeedListView, self).page_context
         context.update({
-            "Export_type": _("Dashboard Feed"),
+            "export_type_caps": _("Dashboard Feed"),
             "export_type": _("dashboard feed"),
-            "Exports_type": _("Dashboard Feeds"),
-            "exports_type": _("dashboard feeds"),
+            "export_type_caps_plural": _("Dashboard Feeds"),
+            "export_type_plural": _("dashboard feeds"),
         })
         return context
 

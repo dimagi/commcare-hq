@@ -108,7 +108,7 @@
                     <p class="lead">
                         <i class="fa fa-spinner fa-spin"></i>
                         {% blocktrans %}
-                            Preparing {{ Export_type }} Data...
+                            Preparing {{ export_type_caps }} Data...
                         {% endblocktrans %}
                     </p>
                     <p>
@@ -148,7 +148,7 @@
                     <p class="lead">
                     {% blocktrans %}
                         It seems as though you haven't submitted any data to CommCare HQ.
-                        Please deploy an Application and submit data before creating any {{ exports_type }}.
+                        Please deploy an Application and submit data before creating any {{ export_type_plural }}.
                     {% endblocktrans %}
                     </p>
                     <a href="https://confluence.dimagi.com/display/commcarepublic/Application+Building"
@@ -167,7 +167,7 @@
                             ng-show="!showNoAppsError && !formLoadError"
                             ng-disabled="!!exportOptionsForm.$invalid || !!isSubmittingForm">
                         {% blocktrans %}
-                            Create {{ Export_type }}
+                            Create {{ export_type_caps }}
                         {% endblocktrans %}
                     </button>
                 </div>
