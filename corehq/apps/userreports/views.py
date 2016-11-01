@@ -821,11 +821,6 @@ class ConfigureMapReport(ConfigureReport):
     report_title = ugettext_lazy("Map Report: {}")
     report_type = 'map'
 
-    @property
-    @memoized
-    def configuration_form_class(self):
-        return ConfigureMapReportForm
-
 
 def delete_report(request, domain, report_id):
     if not (toggle_enabled(request, toggles.USER_CONFIGURABLE_REPORTS)
