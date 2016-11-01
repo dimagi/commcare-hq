@@ -75,7 +75,7 @@ class UserES(HQESQuery):
 
     def user_ids_at_accessible_locations(self, domain, user):
         all_users = self.users_at_accessible_locations(domain, user)
-        return [user['_id'] for user in all_users]
+        return [_user['_id'] for _user in all_users]
 
     def users_at_locations_and_descendants(self, location_ids):
         return self.users_at_locations_and_descendants_query(location_ids).run().hits
