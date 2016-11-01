@@ -1,6 +1,56 @@
 ElasticSearch
 =============
 
+Playing Nice with ES: Simple things to know to get reasonable performance
+-------------------------------------------------------------------------
+
+Here are the most basic things to know if you want to get reasonable performance
+out of Elasticsearch.
+
+Prefer "get" to "search"
+========================
+
+Don't use search to fetch a doc or doc fields by doc id; use "get" instead.
+
+**Bad:**
+
+POST /hqcases_2016-03-04/case/_search
+{
+  "query": {
+    "filtered": {
+      "filter": {
+        "and": [{
+          "terms": {
+            "_id": [case_id]
+          }
+        }, {
+          "match_all": {}
+        }]
+      },
+      "query": {"match_all":{}}
+    }
+  },
+  "_source": ["name"],
+  "size":1000000
+}
+
+**Good:**
+
+GET /hqcases_2016-03-04/case/<case_id>?_source_include=name
+
+
+Prefer scroll queries
+=====================
+
+Use a scroll query when fetching lots of records.
+
+
+Prefer query to filter
+======================
+
+Don't use ``query`` when you could use ``filter`` if you don't need rank.
+
+
 Indexes
 -------
 We have indexes for each of the following doc types:
