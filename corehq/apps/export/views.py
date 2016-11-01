@@ -1961,10 +1961,12 @@ class EditNewCustomCaseExportView(BaseEditNewCustomExportView):
 
 class EditCaseFeedView(DashboardFeedMixin, EditNewCustomCaseExportView):
     urlname = 'edit_case_feed_export'
+    page_title = ugettext_lazy("Edit Case Feed")
 
 
 class EditFormFeedView(DashboardFeedMixin, EditNewCustomFormExportView):
     urlname = 'edit_form_feed_export'
+    page_title = ugettext_lazy("Edit Form Feed")
 
 
 class EditCaseDailySavedExportView(DailySavedExportMixin, EditNewCustomCaseExportView):
