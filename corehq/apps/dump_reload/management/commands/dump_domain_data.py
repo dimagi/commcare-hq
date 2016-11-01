@@ -1,8 +1,15 @@
+import gzip
+
+from datetime import datetime
+
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
 from corehq.apps.dump_reload.sql import dump_sql_data
 from corehq.util.decorators import ContextDecorator
+
+SQL_FILE_PREFIX = 'dump-sql'
+DATETIME_FORMAT = '%Y-%m-%dT%H%M%SZ'
 
 
 class Command(BaseCommand):
@@ -13,17 +20,18 @@ class Command(BaseCommand):
         parser.add_argument('-e', '--exclude', dest='exclude', action='append', default=[],
             help='An app_label or app_label.ModelName to exclude '
                  '(use multiple --exclude to exclude multiple apps/models).')
-        parser.add_argument('-o', '--output', default=None, dest='output',
-            help='Specifies file to which the output is written.')
+        parser.add_argument('--console', action='store_true', default=False, dest='console',
+                            help = 'Write output to the console instead of to file.')
 
     def handle(self, domain, **options):
         excludes = options.get('exclude')
-        output = options.get('output')
+        console = options.get('console')
         show_traceback = options.get('traceback')
 
+        utcnow = datetime.utcnow().strftime(DATETIME_FORMAT)
         try:
             self.stdout.ending = None
-            stream = open(output, 'w') if output else self.stdout
+            stream = self.stdout if console else _get_dump_stream(domain, utcnow)
             try:
                 with allow_form_processing_queries():
                     dump_sql_data(domain, excludes, stream)
@@ -34,6 +42,11 @@ class Command(BaseCommand):
             if show_traceback:
                 raise
             raise CommandError("Unable to serialize database: %s" % e)
+
+
+def _get_dump_stream(domain, utcnow):
+    filename = '{}-{}-{}.gz'.format(SQL_FILE_PREFIX, domain, utcnow)
+    return gzip.open(filename, 'wb')
 
 
 class allow_form_processing_queries(ContextDecorator):
