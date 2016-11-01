@@ -14,11 +14,11 @@ from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.users.permissions import can_view_form_exports, can_view_case_exports
-from corehq.util.spreadsheets.excel import JSONReaderError, WorkbookJSONReader
+from corehq.util.spreadsheets.excel import JSONReaderError, WorkbookJSONReader, \
+    InvalidExcelFileException
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from django.utils.decorators import method_decorator
-from openpyxl.utils.exceptions import InvalidFileException
 from corehq.apps.data_interfaces.tasks import (
     bulk_upload_cases_to_group, bulk_archive_forms, bulk_form_management_async)
 from corehq.apps.data_interfaces.forms import (
@@ -48,7 +48,6 @@ from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
-from zipfile import BadZipfile
 
 
 @login_and_domain_required
@@ -233,7 +232,7 @@ class ArchiveFormView(DataInterfaceSection):
             raise BulkUploadCasesException(_("No files uploaded"))
         try:
             return WorkbookJSONReader(bulk_file)
-        except (InvalidFileException, BadZipfile):
+        except InvalidExcelFileException:
             try:
                 csv.DictReader(io.StringIO(bulk_file.read().decode('utf-8'),
                                            newline=None))
@@ -403,7 +402,7 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
             raise BulkUploadCasesException(_("No files uploaded"))
         try:
             return WorkbookJSONReader(bulk_file)
-        except (InvalidFileException, BadZipfile):
+        except InvalidExcelFileException:
             try:
                 csv.DictReader(io.StringIO(bulk_file.read().decode('ascii'),
                                            newline=None))
