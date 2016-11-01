@@ -277,12 +277,6 @@ def app_source(request, domain, app_id):
 
 
 @require_can_edit_apps
-def copy_app_check_domain(request, domain, name, app_id_or_source):
-    app_copy = import_app_util(app_id_or_source, domain, {'name': name})
-    return back_to_main(request, app_copy.domain, app_id=app_copy._id)
-
-
-@require_can_edit_apps
 def copy_app(request, domain):
     app_id = request.POST.get('app')
     form = CopyApplicationForm(
@@ -299,8 +293,9 @@ def copy_app(request, domain):
             app_id_or_source = app_id
 
         clear_app_cache(request, domain)
-        return copy_app_check_domain(request, form.cleaned_data['domain'], form.cleaned_data['name'],
-                                     app_id_or_source)
+        app_copy = import_app_util(app_id_or_source, form.cleaned_data['domain'],
+                                   {'name': form.cleaned_data['name']})
+        return back_to_main(request, app_copy.domain, app_id=app_copy._id)
     else:
         from corehq.apps.app_manager.views.view_generic import view_generic
         return view_generic(request, domain, app_id=app_id, copy_app_form=form)
