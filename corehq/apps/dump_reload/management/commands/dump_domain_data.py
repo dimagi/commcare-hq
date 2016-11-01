@@ -1,4 +1,6 @@
 import gzip
+import os
+import zipfile
 from collections import Counter
 from datetime import datetime
 
@@ -27,11 +29,14 @@ class Command(BaseCommand):
         show_traceback = options.get('traceback')
 
         utcnow = datetime.utcnow().strftime(DATETIME_FORMAT)
+        zipname = 'data-dump-{}-{}.zip'.format(domain, utcnow)
         self.stdout.ending = None
         stats = Counter()
         dumpers = [SqlDataDumper, CouchDataDumper]
+
         for dumper in dumpers:
-            stream = self.stdout if console else _get_dump_stream(dumper.slug, domain, utcnow)
+            filename = _get_dump_stream_filename(dumper.slug, domain, utcnow)
+            stream = self.stdout if console else gzip.open(filename, 'wb')
             try:
                 stats += dumper(domain, excludes).dump(stream)
             except Exception as e:
@@ -42,10 +47,15 @@ class Command(BaseCommand):
                 if stream:
                     stream.close()
 
+            if not console:
+                with zipfile.ZipFile(zipname, 'a') as z:
+                    z.write(filename, '{}.gz'.format(dumper.slug))
+
+                os.remove(filename)
+
         for model in sorted(stats):
             print "{:<40}: {}".format(model, stats[model])
 
 
-def _get_dump_stream(slug, domain, utcnow):
-    filename = 'dump-{}-{}-{}.gz'.format(slug, domain, utcnow)
-    return gzip.open(filename, 'wb')
+def _get_dump_stream_filename(slug, domain, utcnow):
+    return 'dump-{}-{}-{}.gz'.format(slug, domain, utcnow)
