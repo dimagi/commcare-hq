@@ -65,17 +65,6 @@
             valueDefault: property.key,
             default: property.defaultKey,
             casePropertySelect2: suggestedProperties,
-            event: {
-                change: function(){
-                    var el = $($element),
-                        caretPosition = el.caret();
-                    el.val(el.val().replace(/ /g,'_'));
-                    if(el.is(':focus')) {
-                        el.caret(caretPosition);
-                    }
-                    return true;
-                }
-            }
         "/>
     </span>
     <span data-bind="visible: property.required()">

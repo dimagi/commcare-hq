@@ -547,13 +547,10 @@ ko.bindingHandlers.autocompleteSelect2 = new function(){
 
     this.SOURCE_KEY = "select2-source";
 
-    this.init = function(element, valueAccessor, allBindingsAccessor) {
-        var $el = $(element),
-            allBindings = allBindingsAccessor();
-
+    this.select2Options = function(element) {
+        var $el = $(element);
         $el.data(that.SOURCE_KEY, []);
-
-        var options = {
+        return {
             multiple: false,
             width: "off",
             data: $el.data(that.SOURCE_KEY),
@@ -569,7 +566,14 @@ ko.bindingHandlers.autocompleteSelect2 = new function(){
                 }
             },
         };
-        $el.select2(options);
+    };
+
+    this.init = function(element, valueAccessor) {
+        that._init(element, that.select2Options(element));
+    }
+
+    this._init = function(element, select2Options) {
+        $(element).select2(select2Options);
     };
 
     this.update = function(element, valueAccessor, allBindings){
@@ -596,7 +600,7 @@ ko.bindingHandlers.autocompleteSelect2 = new function(){
 
         // Update the selected item
         $el.val(newValue);
-        $el.select2("val", newValue);
+        $el.select2("val", newValue, true);
     };
 }();
 

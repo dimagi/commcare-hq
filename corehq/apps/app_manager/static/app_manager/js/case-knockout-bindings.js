@@ -76,10 +76,18 @@
 
 ko.bindingHandlers.casePropertySelect2 = {
     /*
-     * Strip attachment: prefix and show icon for attachment properties
+     * Strip "attachment:" prefix and show icon for attachment properties.
+     * Replace any spaces in free text with underscores.
      */
-    init: function (element, valueAccessor, allBindingsAccessor) {
-        ko.bindingHandlers.autocompleteSelect2.init(element, valueAccessor, allBindingsAccessor);
+    init: function (element, valueAccessor) {
+        var options = ko.bindingHandlers.autocompleteSelect2.select2Options(element),
+            old_createSearchChoice = options.createSearchChoice;
+        options.createSearchChoice = function(term, data) {
+            term = term.replace(/ /g, '_');
+            return old_createSearchChoice(term, data);
+        };
+
+        ko.bindingHandlers.autocompleteSelect2._init(element, options);
     },
     update: function (element, valueAccessor, allBindingsAccessor) {
         function wrappedValueAccessor() {
@@ -93,7 +101,7 @@ ko.bindingHandlers.casePropertySelect2 = {
             })
         }
         ko.bindingHandlers.autocompleteSelect2.update(element, wrappedValueAccessor, allBindingsAccessor);
-    }
+    },
 };
 
 // Originally from http://stackoverflow.com/a/17998880
