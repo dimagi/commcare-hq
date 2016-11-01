@@ -412,9 +412,6 @@ class FilterFormCouchExportDownloadForm(GenericFilterFormExportDownloadForm):
 
 
 class EmwfFilterExportMixin(object):
-    def _get_user_ids(self, mobile_user_and_group_slugs):
-        return self.es_user_filter.selected_user_ids(mobile_user_and_group_slugs)
-
     def _get_users_filter(self, mobile_user_and_group_slugs):
         user_ids = self._get_user_ids(mobile_user_and_group_slugs)
         if user_ids:
@@ -427,12 +424,24 @@ class EmwfFilterExportMixin(object):
             user_ids = [user['_id'] for user in users]
             return self.export_user_filter(user_ids)
 
+    def _get_user_ids(self, mobile_user_and_group_slugs):
+        return self.es_user_filter.selected_user_ids(mobile_user_and_group_slugs)
+
     def _get_locations_ids(self, mobile_user_and_group_slugs):
         return self.es_user_filter.selected_location_ids(mobile_user_and_group_slugs)
 
     def _get_group_ids(self, mobile_user_and_group_slugs):
         # Override to fetch params from url and not form_data
         return self.es_user_filter.selected_group_ids(mobile_user_and_group_slugs)
+
+    def _get_es_user_types(self, mobile_user_and_group_slugs):
+        """
+        Override to fetch params from url and not form_data
+        Return a list of elastic search user types (each item in the return list
+        is in corehq.pillows.utils.USER_TYPES) corresponding to the selected
+        export user types.
+        """
+        return LocationRestrictedMobileWorkerFilter.selected_user_types(mobile_user_and_group_slugs)
 
 
 class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloadForm):
@@ -449,15 +458,6 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloa
         self.helper.layout = Layout(
             *super(EmwfFilterFormExport, self).extra_fields
         )
-
-    def _get_es_user_types(self, mobile_user_and_group_slugs):
-        """
-        Override to fetch params from url and not form_data
-        Return a list of elastic search user types (each item in the return list
-        is in corehq.pillows.utils.USER_TYPES) corresponding to the selected
-        export user types.
-        """
-        return LocationRestrictedMobileWorkerFilter.selected_user_types(mobile_user_and_group_slugs)
 
     def get_form_filter(self, mobile_user_and_group_slugs, can_access_all_locations):
         form_filters = []
@@ -662,15 +662,6 @@ class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, GenericFilterCaseExp
             case_filter.append(date_filter)
 
         return case_filter
-
-    def _get_es_user_types(self, mobile_user_and_group_slugs):
-        """
-        Override to fetch params from url and not form_data
-        Return a list of elastic search user types (each item in the return list
-        is in corehq.pillows.utils.USER_TYPES) corresponding to the selected
-        export user types.
-        """
-        return CaseListFilter.selected_user_types(mobile_user_and_group_slugs)
 
     def _get_group_independent_filters(self, mobile_user_and_group_slugs, can_access_all_locations):
         if can_access_all_locations:
