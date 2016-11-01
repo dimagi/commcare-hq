@@ -1753,6 +1753,14 @@ class DownloadNewFormExportView(GenericDownloadNewExportMixin, DownloadFormExpor
     def _get_export(self, domain, export_id):
         return FormExportInstance.get(export_id)
 
+    def get_filters(self, filter_form_data, mobile_user_and_group_slugs):
+        filter_form = self._get_filter_form(filter_form_data)
+        form_filters = filter_form.get_form_filter(mobile_user_and_group_slugs,
+                                                   self.request.can_access_all_locations)
+        if not self.request.can_access_all_locations:
+            form_filters.append(self.scope_filter())
+        return form_filters
+
     def scope_filter(self):
         # Filter to be applied in AND with filters for export to add scope for restricted user
         # Restricts to forms submitted by users at accessible locations
@@ -1761,14 +1769,6 @@ class DownloadNewFormExportView(GenericDownloadNewExportMixin, DownloadFormExpor
                 self.request.domain, self.request.couch_user
         ))
         return FormSubmittedByFilter(accessible_user_ids)
-
-    def get_filters(self, filter_form_data, mobile_user_and_group_slugs):
-        filter_form = self._get_filter_form(filter_form_data)
-        form_filters = filter_form.get_form_filter(mobile_user_and_group_slugs,
-                                                   self.request.can_access_all_locations)
-        if not self.request.can_access_all_locations:
-            form_filters.append(self.scope_filter())
-        return form_filters
 
 
 class BulkDownloadNewFormExportView(DownloadNewFormExportView):
@@ -1785,6 +1785,15 @@ class DownloadNewCaseExportView(GenericDownloadNewExportMixin, DownloadCaseExpor
     def _get_export(self, domain, export_id):
         return CaseExportInstance.get(export_id)
 
+    def get_filters(self, filter_form_data, mobile_user_and_group_slugs):
+        print 'fetching filters for export'
+        filter_form = self._get_filter_form(filter_form_data)
+        form_filters = filter_form.get_case_filter(mobile_user_and_group_slugs,
+                                                   self.request.can_access_all_locations)
+        if not self.request.can_access_all_locations:
+            form_filters.append(self.scope_filter())
+        return form_filters
+
     def scope_filter(self):
         # Filter to be applied in AND with filters for export to add scope for restricted user
         # Restricts to cases owned by accessible locations and their respective users Or Cases
@@ -1796,15 +1805,6 @@ class DownloadNewCaseExportView(GenericDownloadNewExportMixin, DownloadCaseExpor
         accessible_user_ids = UserES().user_ids_at_locations(accessible_location_ids)
         accessible_ids = accessible_user_ids + list(accessible_location_ids)
         return OR(OwnerFilter(accessible_ids), LastModifiedByFilter(accessible_user_ids))
-
-    def get_filters(self, filter_form_data, mobile_user_and_group_slugs):
-        print 'fetching filters for export'
-        filter_form = self._get_filter_form(filter_form_data)
-        form_filters = filter_form.get_case_filter(mobile_user_and_group_slugs,
-                                                   self.request.can_access_all_locations)
-        if not self.request.can_access_all_locations:
-            form_filters.append(self.scope_filter())
-        return form_filters
 
 
 @csrf_exempt
