@@ -639,6 +639,30 @@ class ConfigureReport(ReportBuilderView):
             'is_numeric': not v.is_non_numeric,
         } for k, v in builder.data_source_properties.iteritems()]
 
+    # TODO: OR ...
+    # @property
+    # @memoized
+    # def report_column_options(self):
+    #     options = OrderedDict()
+    #     for id_, prop in self.data_source_properties.iteritems():
+    #         if prop.type == "question":
+    #             if prop.source['type'] == "MSelect":
+    #                 option = MultiselectQuestionColumnOption(id_, prop.text, prop.column_id, prop.source)
+    #             else:
+    #                 option = QuestionColumnOption(id_, prop.text, prop.column_id, prop.is_non_numeric,
+    #                                               prop.source)
+    #         else:
+    #             # meta properties
+    #             option = ColumnOption(id_, prop.text, prop.column_id, prop.is_non_numeric)
+    #         options[id_] = option
+    #     return options
+    # TODO: Except we want to be able to choose a column more than once, each time with a unique ID. ...
+    #       ... Generated client-side?
+    #
+    # def get_columns(self):
+    #     columns = self.report_column_options
+    #     return columns.values()
+
     @property
     def page_context(self):
         return {

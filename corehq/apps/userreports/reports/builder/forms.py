@@ -568,6 +568,7 @@ DefaultFilterViewModel = namedtuple("DefaultFilterViewModel",
 ColumnViewModel = namedtuple("ColumnViewModel", _shared_properties + ['calculation'])
 
 
+# TODO: Kill this and subclasses
 class ConfigureNewReportBase(forms.Form):
     user_filters = FilterField(required=False)
     default_filters = FilterField(required=False)
