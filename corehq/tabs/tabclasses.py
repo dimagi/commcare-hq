@@ -502,6 +502,14 @@ class ProjectDataTab(UITab):
                 EditNewCustomCaseExportView,
                 DashboardFeedListView,
                 DailySavedExportListView,
+                CreateNewDailySavedFormExport,
+                CreateNewDailySavedCaseExport,
+                EditFormDailySavedExportView,
+                EditCaseDailySavedExportView,
+                CreateNewFormFeedView,
+                CreateNewCaseFeedView,
+                EditFormFeedView,
+                EditCaseFeedView,
             )
             if use_new_exports(self.domain):
                 create_case_cls = CreateNewCustomCaseExportView
@@ -582,16 +590,48 @@ class ProjectDataTab(UITab):
                     "title": DailySavedExportListView.page_title,
                     "url": reverse(DailySavedExportListView.urlname, args=(self.domain,)),
                     "show_in_dropdown": True,
-                    'icon': 'icon icon-share fa fa-share-square-o',  # TODO: Choose a unique icon for this
-                    "subpages": []  # TODO: populate this
+                    "subpages": filter(None, [
+                        {
+                            'title': CreateNewDailySavedFormExport.page_title,
+                            'urlname': CreateNewDailySavedFormExport.urlname,
+                        } if self.can_edit_commcare_data else None,
+                        {
+                            'title': CreateNewDailySavedCaseExport.page_title,
+                            'urlname': CreateNewDailySavedCaseExport.urlname,
+                        } if self.can_edit_commcare_data else None,
+                        {
+                            'title': EditFormDailySavedExportView.page_title,
+                            'urlname': EditFormDailySavedExportView.urlname,
+                        } if self.can_edit_commcare_data else None,
+                        {
+                            'title': EditCaseDailySavedExportView.page_title,
+                            'urlname': EditCaseDailySavedExportView.urlname,
+                        } if self.can_edit_commcare_data else None,
+                    ])
                 })
             if self.can_view_dashboard_feeds:
                 export_data_views.append({
                     'title': DashboardFeedListView.page_title,
                     'url': reverse(DashboardFeedListView.urlname, args=(self.domain,)),
                     'show_in_dropdown': True,
-                    'icon': 'icon icon-share fa fa-share-square-o',  # TODO: Choose a unique icon for this
-                    'subpages': []  # TODO: populate this
+                    'subpages': filter(None, [
+                        {
+                            'title': CreateNewFormFeedView.page_title,
+                            'urlname': CreateNewFormFeedView.urlname,
+                        } if self.can_edit_commcare_data else None,
+                        {
+                            'title': CreateNewCaseFeedView.page_title,
+                            'urlname': CreateNewCaseFeedView.urlname,
+                        } if self.can_edit_commcare_data else None,
+                        {
+                            'title': EditFormFeedView.page_title,
+                            'urlname': EditFormFeedView.urlname,
+                        } if self.can_edit_commcare_data else None,
+                        {
+                            'title': EditCaseFeedView.page_title,
+                            'urlname': EditCaseFeedView.urlname,
+                        } if self.can_edit_commcare_data else None,
+                    ])
                 })
 
         if export_data_views:
@@ -646,13 +686,13 @@ class ProjectDataTab(UITab):
                 url=reverse(CaseExportListView.urlname, args=(self.domain,))
             ) if self.can_view_case_exports else None,
             dropdown_dict(
-                DashboardFeedListView.page_title,
-                url=reverse(DashboardFeedListView.urlname, args=(self.domain,))
-            ) if self.can_view_dashboard_feeds else None,
-            dropdown_dict(
                 DailySavedExportListView.page_title,
                 url=reverse(DailySavedExportListView.urlname, args=(self.domain,))
             ) if self.can_view_daily_saved_exports else None,
+            dropdown_dict(
+                DashboardFeedListView.page_title,
+                url=reverse(DashboardFeedListView.urlname, args=(self.domain,))
+            ) if self.can_view_dashboard_feeds else None,
             dropdown_dict(None, is_divider=True),
             dropdown_dict(_("View All"), url=self.url),
         ])
