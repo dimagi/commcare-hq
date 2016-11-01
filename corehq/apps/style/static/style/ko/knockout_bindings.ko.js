@@ -595,7 +595,8 @@ ko.bindingHandlers.autocompleteSelect2 = new function(){
         }
 
         // Update the selected item
-        $el.val(newValue).trigger("change");
+        $el.val(newValue);
+        $el.select2("val", newValue);
     };
 }();
 
