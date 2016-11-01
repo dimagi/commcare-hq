@@ -486,12 +486,8 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloa
     def _get_group_filter(self, mobile_user_and_group_slugs):
         group_ids = self._get_group_ids(mobile_user_and_group_slugs)
         if group_ids:
-            # if user_ids fetched by GroupFormSubmittedByFilter is same as static_user_ids then just use
-            # return GroupFormSubmittedByFilter(group_ids)
-            groups_static_user_ids = Group.get_static_user_ids_for_groups(group_ids)
-            groups_static_user_ids = [item for sublist in groups_static_user_ids for item in sublist]
-            owner_filter_ids = groups_static_user_ids
-            return FormSubmittedByFilter(owner_filter_ids)
+            return GroupFormSubmittedByFilter(group_ids)
+
 
     def get_special_owner_ids(self, mobile, admin, unknown, demo, commtrack):
         # referenced from CaseListMixin to fetch user_ids for each user type
