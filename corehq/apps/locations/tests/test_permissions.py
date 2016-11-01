@@ -8,6 +8,7 @@ from StringIO import StringIO
 from django.core.urlresolvers import reverse
 
 from corehq.apps.es.fake.users_fake import UserESFake
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import WebUser, CommCareUser, UserRole, Permissions
 from corehq.toggles import (RESTRICT_FORM_EDIT_BY_LOCATION, NAMESPACE_DOMAIN)
 from corehq.util.test_utils import flag_enabled
@@ -117,11 +118,8 @@ class FormEditRestrictionsMixin(object):
 
     @classmethod
     def tearDownClass(cls):
-        cls.middlesex_web_user.delete()
-        cls.massachusetts_web_user.delete()
-        cls.locationless_web_user.delete()
-        cls.project_admin.delete()
         cls.domain_obj.delete()
+        delete_all_users()
         delete_all_locations()
         delete_all_xforms()
 
@@ -186,7 +184,7 @@ class TestAccessRestrictions(LocationHierarchyTestCase):
     def setUpClass(cls):
         super(TestAccessRestrictions, cls).setUpClass()
         cls.suffolk_user = WebUser.create(cls.domain, 'suffolk-joe', 'password')
-        cls.suffolk_user.set_location(cls.domain, cls.locations['Suffolk'].couch_location)
+        cls.suffolk_user.set_location(cls.domain, cls.locations['Suffolk'])
         cls.restrict_user_to_location(cls.suffolk_user)
 
         def make_mobile_worker(username, location):
@@ -203,6 +201,7 @@ class TestAccessRestrictions(LocationHierarchyTestCase):
         super(TestAccessRestrictions, cls).tearDownClass()
         UserESFake.reset_docs()
         cls.suffolk_user.delete()
+        delete_all_users()
 
     def test_can_access_location_list(self):
         self.client.login(username=self.suffolk_user.username, password="password")
@@ -214,7 +213,9 @@ class TestAccessRestrictions(LocationHierarchyTestCase):
     def _assert_url_returns_status(self, url, status_code):
         self.client.login(username=self.suffolk_user.username, password="password")
         response = self.client.get(url)
-        self.assertEqual(response.status_code, status_code)
+        msg = ("This request returned a {} status code instead of the expected {}"
+               .format(response.status_code, status_code))
+        self.assertEqual(response.status_code, status_code, msg=msg)
 
     def _assert_edit_location_gives_status(self, location, status_code):
         location_id = self.locations[location].location_id
