@@ -8,9 +8,9 @@
       ng-submit="prepareExport()"
       novalidate="novalidate">
     <div class="form-notice-container">
-        {% if new_export_filters %}
+        {% if dynamic_filters %}
             <div class="form-group">
-                {{ new_export_filters }}
+                {{ dynamic_filters }}
             </div>
         {% endif %}
         {% crispy download_export_form %}

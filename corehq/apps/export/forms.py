@@ -425,14 +425,14 @@ class EmwfFilterExportMixin(object):
             return self.export_user_filter(user_ids)
 
     def _get_user_ids(self, mobile_user_and_group_slugs):
-        return self.es_user_filter.selected_user_ids(mobile_user_and_group_slugs)
+        return self.dynamic_filter_class.selected_user_ids(mobile_user_and_group_slugs)
 
     def _get_locations_ids(self, mobile_user_and_group_slugs):
-        return self.es_user_filter.selected_location_ids(mobile_user_and_group_slugs)
+        return self.dynamic_filter_class.selected_location_ids(mobile_user_and_group_slugs)
 
     def _get_group_ids(self, mobile_user_and_group_slugs):
         # Override to fetch params from url and not form_data
-        return self.es_user_filter.selected_group_ids(mobile_user_and_group_slugs)
+        return self.dynamic_filter_class.selected_group_ids(mobile_user_and_group_slugs)
 
     def _get_es_user_types(self, mobile_user_and_group_slugs):
         """
@@ -445,8 +445,15 @@ class EmwfFilterExportMixin(object):
 
 
 class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloadForm):
+    """
+    Generic Filter form including dynamic filters using LocationRestrictedMobileWorkerFilter
+    """
+
+    # filter to be used to identify objects(forms/cases) for users
     export_user_filter = FormSubmittedByFilter
-    es_user_filter = LocationRestrictedMobileWorkerFilter
+
+    # filter class for including dynamic fields in the context of the view as dynamic_filters
+    dynamic_filter_class = LocationRestrictedMobileWorkerFilter
 
     def __init__(self, domain_object, *args, **kwargs):
         self.domain_object = domain_object
@@ -570,7 +577,7 @@ class FilterCaseCouchExportDownloadForm(GenericFilterCaseExportDownloadForm):
 
 class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, GenericFilterCaseExportDownloadForm):
     export_user_filter = OwnerFilter
-    es_user_filter = CaseListFilter
+    dynamic_filter_class = CaseListFilter
 
     _export_type = 'case'
 
@@ -618,9 +625,9 @@ class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, GenericFilterCaseExp
 
     def get_case_filter(self, mobile_user_and_group_slugs, can_access_all_locations):
         # if all data then just filter by date
-        if can_access_all_locations and self.es_user_filter.show_all_data(mobile_user_and_group_slugs):
+        if can_access_all_locations and self.dynamic_filter_class.show_all_data(mobile_user_and_group_slugs):
             case_filter = []
-        elif can_access_all_locations and self.es_user_filter.show_project_data(mobile_user_and_group_slugs):
+        elif can_access_all_locations and self.dynamic_filter_class.show_project_data(mobile_user_and_group_slugs):
             # exclude ids
             user_types = LocationRestrictedMobileWorkerFilter.selected_user_types(mobile_user_and_group_slugs)
             ids_to_exclude = self.get_special_owner_ids(
@@ -665,7 +672,7 @@ class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, GenericFilterCaseExp
 
     def _get_group_independent_filters(self, mobile_user_and_group_slugs, can_access_all_locations):
         if can_access_all_locations:
-            user_types = self.es_user_filter.selected_user_types(mobile_user_and_group_slugs)
+            user_types = self.dynamic_filter_class.selected_user_types(mobile_user_and_group_slugs)
             ids_to_include = self.get_special_owner_ids(
                 admin=HQUserType.ADMIN in user_types,
                 unknown=HQUserType.UNKNOWN in user_types,
