@@ -502,10 +502,8 @@ ko.bindingHandlers.select2 = new function(){
 
     this.SOURCE_KEY = "select2-source";
 
-    this.init = function(element, valueAccessor, allBindingsAccessor) {
-        var $el = $(element),
-            allBindings = allBindingsAccessor(),
-            koOptions = allBindings.select2options || {};
+    this.init = function(element, valueAccessor) {
+        var $el = $(element);
 
         // The select2 jquery element uses the array stored at
         // $el.data(that.SOURCE_KEY) as its data source. Therefore, the options
@@ -513,28 +511,11 @@ ko.bindingHandlers.select2 = new function(){
         // not change the select options.
         $el.data(that.SOURCE_KEY, []);
 
-        var options = {
+        $el.select2({
             multiple: false,
-            width: koOptions.width || "element",
-            data: $el.data(that.SOURCE_KEY),
-        };
-        if (koOptions.allowFreetext) {
-            // Allow manually entered text in drop down, which is not supported by legacy
-            options.createSearchChoice = function(term, data) {
-                if (!_.find(data, function(d) { return d.text === term; })) {
-                    return {
-                        id: term,
-                        text: term,
-                    };
-                }
-            };
-        }
-        if (koOptions.allowHtml) {
-            options.escapeMarkup = function(text) {
-                return DOMPurify.sanitize(text);
-            };
-        }
-        $el.select2(options);
+            width: "element",
+            data: $el.data(that.SOURCE_KEY)
+        });
     };
 
     this.update = function(element, valueAccessor, allBindings){
@@ -555,6 +536,66 @@ ko.bindingHandlers.select2 = new function(){
 
         // Update the selected item
         $el.val(ko.unwrap(allBindings().value)).trigger("change");
+    };
+}();
+
+/**
+ * Autocomplete widget based on a select2. Allows free text entry.
+ */
+ko.bindingHandlers.autocompleteSelect2 = new function(){
+    var that = this;
+
+    this.SOURCE_KEY = "select2-source";
+
+    this.init = function(element, valueAccessor, allBindingsAccessor) {
+        var $el = $(element),
+            allBindings = allBindingsAccessor();
+
+        $el.data(that.SOURCE_KEY, []);
+
+        var options = {
+            multiple: false,
+            width: "off",
+            data: $el.data(that.SOURCE_KEY),
+            escapeMarkup: function(text) {
+                return DOMPurify.sanitize(text);
+            },
+            createSearchChoice: function(term, data) {
+                if (term !== "" && !_.find(data, function(d) { return d.text === term; })) {
+                    return {
+                        id: term,
+                        text: term,
+                    };
+                }
+            },
+        };
+        $el.select2(options);
+    };
+
+    this.update = function(element, valueAccessor, allBindings){
+        var $el = $(element),
+            newValue = ko.unwrap(allBindings().value) || $el.val(),
+            source = $el.data(that.SOURCE_KEY);
+
+        // We clear the array and repopulate it, instead of simply replacing
+        // it, because the select2 options are tied to this specific instance.
+        while (source.length > 0) {
+            source.pop();
+        }
+        var newItems = ko.utils.unwrapObservable(valueAccessor()) || [];
+        for (var i = 0; i < newItems.length; i++) {
+            var text = newItems[i].text || newItems[i];
+            var id = newItems[i].id || newItems[i];
+            source.push({id: id, text: text});
+        }
+        if (newValue && !_.find(source, function(item) {
+            return item.id === newValue;
+        })) {
+            source.unshift({id: newValue, text: newValue});
+        }
+
+        // Update the selected item
+        $el.val(newValue).trigger("change");
     };
 }();
 
