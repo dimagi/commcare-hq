@@ -379,3 +379,20 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         TimezoneMigrationProgress(domain=self.domain).save()
 
         self._dump_and_load(1, expected_models)
+
+    def test_products(self):
+        from corehq.apps.products.models import SQLProduct
+        models_under_test = [SQLProduct]
+        register_cleanup(self, models_under_test, self.domain)
+
+        p1 = SQLProduct.objects.create(domain=self.domain, product_id='test1', name='test1')
+        p2 = SQLProduct.objects.create(domain=self.domain, product_id='test2', name='test2')
+        parchived = SQLProduct.objects.create(domain=self.domain, product_id='test3', name='test3', is_archived=True)
+
+        self._dump_and_load(3, models_under_test)
+
+        self.assertEqual(2, SQLProduct.active_objects.filter(domain=self.domain).count())
+        all_active = SQLProduct.active_objects.filter(domain=self.domain).all()
+        self.assertTrue(p1 in all_active)
+        self.assertTrue(p2 in all_active)
+        self.assertTrue(parchived not in all_active)

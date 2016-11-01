@@ -34,6 +34,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = {
     'phonelog.UserEntry': UserIDFilter('user_id'),
     'ota.DemoUserRestore': UserIDFilter('demo_user_id', include_web_users=False),
     'tzmigration.TimezoneMigrationProgress': SimpleFilter('domain'),
+    'products.SQLProduct': SimpleFilter('domain'),
 }
 
 
