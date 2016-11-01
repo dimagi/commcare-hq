@@ -1,9 +1,6 @@
 # Use modern Python
 from __future__ import absolute_import, print_function, unicode_literals
 
-import logging
-from collections import defaultdict
-
 from corehq.apps.accounting.exceptions import AccountingError
 from corehq.apps.accounting.models import (
     FeatureType,
@@ -11,9 +8,7 @@ from corehq.apps.accounting.models import (
     SoftwarePlanVisibility,
     SoftwareProductType,
 )
-
-logger = logging.getLogger(__name__)
-
+from corehq.apps.accounting.utils import log_accounting_error, log_accounting_info
 
 PRODUCT_TYPES = [
     SoftwareProductType.COMMCARE,
@@ -56,18 +51,18 @@ def ensure_plans(config, dry_run, verbose, apps):
             )
 
             if dry_run:
-                logger.info("[DRY RUN] Creating Software Plan: %s", software_plan.name)
+                log_accounting_info("[DRY RUN] Creating Software Plan: %s" % software_plan.name)
             else:
                 try:
                     software_plan = SoftwarePlan.objects.get(name=software_plan.name)
                     if verbose:
-                        logger.info(
-                            "Plan '%s' already exists. Using existing plan to add version.", software_plan.name
+                        log_accounting_info(
+                            "Plan '%s' already exists. Using existing plan to add version." % software_plan.name
                         )
                 except SoftwarePlan.DoesNotExist:
                     software_plan.save()
                     if verbose:
-                        logger.info("Creating Software Plan: %s", software_plan.name)
+                        log_accounting_info("Creating Software Plan: %s" % software_plan.name)
 
                 software_plan_version = SoftwarePlanVersion(role=role, plan=software_plan)
 
@@ -96,21 +91,27 @@ def ensure_plans(config, dry_run, verbose, apps):
                 product_type=product.product_type, edition=edition, is_trial=is_trial
             )
             if dry_run:
-                logger.info("[DRY RUN] Setting plan as default for product '%s' and edition '%s'.",
-                            product.product_type, default_product_plan.edition)
+                log_accounting_info(
+                    "[DRY RUN] Setting plan as default for product '%s' and edition '%s'."
+                    % (product.product_type, default_product_plan.edition)
+                )
             else:
                 try:
                     default_product_plan = DefaultProductPlan.objects.get(product_type=product.product_type,
                                                                           edition=edition, is_trial=is_trial)
                     if verbose:
-                        logger.info("Default for product '%s' and edition '%s' already exists.",
-                                    product.product_type, default_product_plan.edition)
+                        log_accounting_info(
+                            "Default for product '%s' and edition '%s' already exists."
+                            % (product.product_type, default_product_plan.edition)
+                        )
                 except DefaultProductPlan.DoesNotExist:
                     default_product_plan.plan = software_plan
                     default_product_plan.save()
                     if verbose:
-                        logger.info("Setting plan as default for product '%s' and edition '%s'.",
-                                    product.product_type, default_product_plan.edition)
+                        log_accounting_info(
+                            "Setting plan as default for product '%s' and edition '%s'."
+                            % (product.product_type, default_product_plan.edition)
+                        )
 
 
 def _ensure_role(role_slug, apps):
@@ -118,8 +119,11 @@ def _ensure_role(role_slug, apps):
     try:
         role = Role.objects.get(slug=role_slug)
     except Role.DoesNotExist:
-        logger.error("Could not find the role '%s'. Did you forget to run cchq_prbac_bootstrap?", role_slug)
-        logger.error("Aborting. You should figure this out.")
+        log_accounting_error(
+            "Could not find the role '%s'. Did you forget to run cchq_prbac_bootstrap?"
+            % role_slug
+        )
+        log_accounting_error("Aborting. You should figure this out.")
         raise
     return role
 
@@ -132,7 +136,7 @@ def _ensure_product_and_rate(product_rate, product_type, edition, dry_run, verbo
     SoftwareProductRate = apps.get_model('accounting', 'SoftwareProductRate')
 
     if verbose:
-        logger.info('Ensuring Products and Product Rates')
+        log_accounting_info('Ensuring Products and Product Rates')
 
     product = SoftwareProduct(name='%s %s' % (product_type, edition), product_type=product_type)
     if edition == SoftwarePlanEdition.ENTERPRISE:
@@ -140,19 +144,22 @@ def _ensure_product_and_rate(product_rate, product_type, edition, dry_run, verbo
 
     product_rate = SoftwareProductRate(**product_rate)
     if dry_run:
-        logger.info("[DRY RUN] Creating Product: %s", product)
-        logger.info("[DRY RUN] Corresponding product rate of $%d created.", product_rate.monthly_fee)
+        log_accounting_info("[DRY RUN] Creating Product: %s" % product)
+        log_accounting_info("[DRY RUN] Corresponding product rate of $%d created." % product_rate.monthly_fee)
     else:
         try:
             product = SoftwareProduct.objects.get(name=product.name)
             if verbose:
-                logger.info("Product '%s' already exists. Using existing product to add rate.", product.name)
+                log_accounting_info(
+                    "Product '%s' already exists. Using existing product to add rate."
+                    % product.name
+                )
         except SoftwareProduct.DoesNotExist:
             product.save()
             if verbose:
-                logger.info("Creating Product: %s", product)
+                log_accounting_info("Creating Product: %s" % product)
         if verbose:
-            logger.info("Corresponding product rate of $%d created.", product_rate.monthly_fee)
+            log_accounting_info("Corresponding product rate of $%d created." % product_rate.monthly_fee)
     product_rate.product = product
     return product, product_rate
 
@@ -164,7 +171,7 @@ def _ensure_features(edition, dry_run, verbose, apps):
     Feature = apps.get_model('accounting', 'Feature')
 
     if verbose:
-        logger.info('Ensuring Features for plan: %s', edition)
+        log_accounting_info('Ensuring Features for plan: %s' % edition)
 
     features = []
     for feature_type in FEATURE_TYPES:
@@ -172,18 +179,19 @@ def _ensure_features(edition, dry_run, verbose, apps):
         if edition == SoftwarePlanEdition.ENTERPRISE:
             feature.name = "Dimagi Only %s" % feature.name
         if dry_run:
-            logger.info("[DRY RUN] Creating Feature: %s", feature)
+            log_accounting_info("[DRY RUN] Creating Feature: %s" % feature)
         else:
             try:
                 feature = Feature.objects.get(name=feature.name)
                 if verbose:
-                    logger.info("Feature '%s' already exists. Using "
-                                "existing feature to add rate.",
-                                feature.name)
+                    log_accounting_info(
+                        "Feature '%s' already exists. Using existing feature to add rate."
+                        % feature.name
+                    )
             except Feature.DoesNotExist:
                 feature.save()
                 if verbose:
-                    logger.info("Creating Feature: %s", feature)
+                    log_accounting_info("Creating Feature: %s" % feature)
         features.append(feature)
     return features
 
@@ -195,15 +203,15 @@ def _ensure_feature_rates(feature_rates, features, edition, dry_run, verbose, ap
     FeatureRate = apps.get_model('accounting', 'FeatureRate')
 
     if verbose:
-        logger.info('Ensuring Feature Rates')
+        log_accounting_info('Ensuring Feature Rates')
 
     db_feature_rates = []
     for feature in features:
         feature_rate = FeatureRate(**feature_rates[feature.feature_type])
         feature_rate.feature = feature
         if dry_run:
-            logger.info("[DRY RUN] Creating rate for feature '%s': %s", feature.name, feature_rate)
+            log_accounting_info("[DRY RUN] Creating rate for feature '%s': %s" % (feature.name, feature_rate))
         elif verbose:
-            logger.info("Creating rate for feature '%s': %s", feature.name, feature_rate)
+            log_accounting_info("Creating rate for feature '%s': %s" % (feature.name, feature_rate))
         db_feature_rates.append(feature_rate)
     return db_feature_rates
