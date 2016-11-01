@@ -616,6 +616,53 @@ class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, GenericFilterCaseExp
             datespan.set_timezone(self.timezone)
             return ModifiedOnRangeFilter(gte=datespan.startdate, lt=datespan.enddate + timedelta(days=1))
 
+    def get_case_filter(self, mobile_user_and_group_slugs, can_access_all_locations):
+        # if all data then just filter by date
+        if can_access_all_locations and self.es_user_filter.show_all_data(mobile_user_and_group_slugs):
+            case_filter = []
+        elif can_access_all_locations and self.es_user_filter.show_project_data(mobile_user_and_group_slugs):
+            # exclude ids
+            user_types = LocationRestrictedMobileWorkerFilter.selected_user_types(mobile_user_and_group_slugs)
+            ids_to_exclude = self.get_special_owner_ids(
+                admin=HQUserType.ADMIN not in user_types,
+                unknown=HQUserType.UNKNOWN not in user_types,
+                demo=HQUserType.DEMO_USER not in user_types,
+                commtrack=False,
+            )
+            case_filter = [NOT(OwnerFilter(ids_to_exclude))]
+        else:
+            group_ids = None
+
+            if can_access_all_locations:
+                group_ids = self._get_group_ids(mobile_user_and_group_slugs)
+
+            if group_ids:
+                groups_static_user_ids = Group.get_static_user_ids_for_groups(group_ids)
+                groups_static_user_ids = [item for sublist in groups_static_user_ids for item in sublist]
+                owner_filter_ids = group_ids + groups_static_user_ids
+                last_modified_filter_ids = groups_static_user_ids
+            else:
+                if can_access_all_locations:
+                    # case sharing groups returns case sharing groups and locations wrapped as Group
+                    case_sharing_ids = [g.get_id for g in
+                                        Group.get_case_sharing_groups(self.domain_object.name)]
+                else:
+                    case_sharing_ids = SQLLocation.get_case_sharing_locations_ids(self.domain_object.name)
+                owner_filter_ids = case_sharing_ids
+                last_modified_filter_ids = case_sharing_ids
+
+            case_filter = [OR(
+                OwnerFilter(owner_filter_ids),
+                LastModifiedByFilter(last_modified_filter_ids),
+                *self._get_group_independent_filters(mobile_user_and_group_slugs, can_access_all_locations)
+            )]
+
+        date_filter = self._get_datespan_filter()
+        if date_filter:
+            case_filter.append(date_filter)
+
+        return case_filter
+
     def _get_es_user_types(self, mobile_user_and_group_slugs):
         """
         Override to fetch params from url and not form_data
@@ -669,52 +716,6 @@ class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, GenericFilterCaseExp
             owner_ids.append("demo_user")
         return owner_ids
 
-    def get_case_filter(self, mobile_user_and_group_slugs, can_access_all_locations):
-        # if all data then just filter by date
-        if can_access_all_locations and self.es_user_filter.show_all_data(mobile_user_and_group_slugs):
-            case_filter = []
-        elif can_access_all_locations and self.es_user_filter.show_project_data(mobile_user_and_group_slugs):
-            # exclude ids
-            user_types = LocationRestrictedMobileWorkerFilter.selected_user_types(mobile_user_and_group_slugs)
-            ids_to_exclude = self.get_special_owner_ids(
-                admin=HQUserType.ADMIN not in user_types,
-                unknown=HQUserType.UNKNOWN not in user_types,
-                demo=HQUserType.DEMO_USER not in user_types,
-                commtrack=False,
-            )
-            case_filter = [NOT(OwnerFilter(ids_to_exclude))]
-        else:
-            group_ids = None
-
-            if can_access_all_locations:
-                group_ids = self._get_group_ids(mobile_user_and_group_slugs)
-
-            if group_ids:
-                groups_static_user_ids = Group.get_static_user_ids_for_groups(group_ids)
-                groups_static_user_ids = [item for sublist in groups_static_user_ids for item in sublist]
-                owner_filter_ids = group_ids + groups_static_user_ids
-                last_modified_filter_ids = groups_static_user_ids
-            else:
-                if can_access_all_locations:
-                    # case sharing groups returns case sharing groups and locations wrapped as Group
-                    case_sharing_ids = [g.get_id for g in
-                                        Group.get_case_sharing_groups(self.domain_object.name)]
-                else:
-                    case_sharing_ids = SQLLocation.get_case_sharing_locations_ids(self.domain_object.name)
-                owner_filter_ids = case_sharing_ids
-                last_modified_filter_ids = case_sharing_ids
-
-            case_filter = [OR(
-                OwnerFilter(owner_filter_ids),
-                LastModifiedByFilter(last_modified_filter_ids),
-                *self._get_group_independent_filters(mobile_user_and_group_slugs, can_access_all_locations)
-            )]
-
-        date_filter = self._get_datespan_filter()
-        if date_filter:
-            case_filter.append(date_filter)
-
-        return case_filter
 
     @property
     def extra_fields(self):
