@@ -601,7 +601,6 @@ Formplayer.Utils.answersEqual = function(answer1, answer2) {
 Formplayer.Utils.initialRender = function(formJSON, resourceMap, $div) {
     var form = new Form(formJSON),
         $debug = $('#cloudcare-debugger'),
-        $webformsNav = $('#webforms-nav'),
         cloudCareDebugger;
     Formplayer.resourceMap = resourceMap;
     ko.cleanNode($div[0]);
@@ -611,11 +610,6 @@ Formplayer.Utils.initialRender = function(formJSON, resourceMap, $div) {
         cloudCareDebugger = new Formplayer.ViewModels.CloudCareDebugger();
         ko.cleanNode($debug[0]);
         $debug.koApplyBindings(cloudCareDebugger);
-    }
-
-    if ($webformsNav.length) {
-        ko.cleanNode($webformsNav[0]);
-        $webformsNav.koApplyBindings(form);
     }
 
     return form;
