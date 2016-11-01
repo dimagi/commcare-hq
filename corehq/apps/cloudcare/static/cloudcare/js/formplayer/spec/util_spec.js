@@ -13,7 +13,7 @@ describe('Util', function() {
         });
 
         it('should retrieve saved display options', function() {
-            var options = { option: 'yes' }
+            var options = { option: 'yes' };
             Util.saveDisplayOptions(options);
             assert.deepEqual(Util.getSavedDisplayOptions(), options);
         });

@@ -1,4 +1,4 @@
-/* global FormplayerFrontend, Util */
+/* global FormplayerFrontend, Util, Backbone */
 /* eslint-env mocha */
 
 describe('FormplayerFrontend Integration', function() {
