@@ -222,7 +222,7 @@ class ExportColumn(DocumentSchema):
         if transform_dates:
             value = couch_to_excel_datetime(value, doc)
         if self.item.transform:
-            value = TRANSFORM_FUNCTIONS[self.item.transform](value, doc)
+            value = TRANSFORM_FUNCTIONS[self.item.transform](value, doc, domain)
         if self.deid_transform:
             try:
                 value = DEID_TRANSFORM_FUNCTIONS[self.deid_transform](value, doc)
