@@ -29,7 +29,6 @@ def _cached_case_id_to_case_name(case_id):
     ret = cache.get(key, NULL_CACHE_VALUE)
     if ret != NULL_CACHE_VALUE:
         return ret
-    case_names = get_case_name(case_id)
-    ret = case_names[0] if case_names else None
-    cache.set(key, ret)
-    return ret
+    case_name = get_case_name(case_id)
+    cache.set(key, case_name)
+    return case_name
