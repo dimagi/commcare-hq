@@ -14,9 +14,10 @@
 {% block page_content %}
   <div id="reportConfig">
 
+    <form id="reportConfigForm" method="post">
     <div class="pull-right page-actions-toolbar">
-      <button class="btn btn-info">Save &amp; View</button>
-      <button class="btn btn-success">Save</button>
+      <button id="btnSaveView" class="btn btn-info">Save &amp; View</button>
+      &nbsp;<span id="saveButtonHolder"></span>
     </div>
     {# See `style/two_column.html` #}
     <div class="page-header" style="margin-top: 0;">
@@ -135,6 +136,7 @@
         <table id="preview" class="table"></table>
       </div>
     </div>
+    </form>
   </div>
 {% endblock %}
 

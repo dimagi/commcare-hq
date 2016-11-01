@@ -1,4 +1,4 @@
-/* global _, $ */
+/* global _, $, COMMCAREHQ */
 var reportBuilder = function () {
     var self = this;
 
@@ -45,6 +45,17 @@ var reportBuilder = function () {
             parent.refreshPreview();
         });
 
+        self.serialize = function () {
+            return {
+                "column_id": self.columnId,
+                "name": self.name,
+                "label": self.label,
+                "is_numeric": self.isNumeric,
+                "is_group_by_column": self.isGroupByColumn,
+                "aggregation": self.aggregation,
+            };
+        };
+
         return self;
     };
 
@@ -65,6 +76,7 @@ var reportBuilder = function () {
         ));
         self.selectedColumns.subscribe(function (newValue) {
             self.refreshPreview(newValue);
+            self.saveButton.fire('change');
         });
         self.selectedColumns.extend({ rateLimit: 50 });
 
@@ -82,6 +94,7 @@ var reportBuilder = function () {
                 }
             }
             self.refreshPreview();
+            self.saveButton.fire('change');
         });
 
         self.isAggregationEnabled = ko.observable(false);
@@ -111,14 +124,7 @@ var reportBuilder = function () {
                 type: 'post',
                 contentType: 'application/json; charset=utf-8',
                 data: JSON.stringify({
-                    'columns': _.map(columns, function (c) { return {
-                        'columnId': c.columnId,
-                        'name': c.name,
-                        'label': c.label,
-                        'isNumeric': c.isNumeric,
-                        'isGroupByColumn': c.isGroupByColumn,
-                        'aggregation': c.aggregation,
-                    }; }),
+                    'columns': _.map(columns, function (c) { return c.serialize(); }),
                     'aggregate': self.isAggregationEnabled(),
                 }),
                 dataType: 'json',
@@ -207,6 +213,36 @@ var reportBuilder = function () {
         self.moreColumns = ko.computed(function () {
             return self.otherColumns().length > 0;
         });
+
+        self.serialize = function () {
+            return {
+                "report_title": self.reportTitle,
+                "report_description": "",  // TODO: self.reportDescription,
+                "report_type": self.reportType(),
+                "is_aggregation_enabled": self.isAggregationEnabled(),
+                "chart": self.selectedChart(),
+                "columns": _.map(self.selectedColumns(), function (c) { return c.serialize(); }),
+                "default_filters": [],  // TODO: self.defaultFilters,
+                "user_filters": [],  // TODO: self.userFilters,
+            };
+        };
+
+        self.saveButton = COMMCAREHQ.SaveButton.init({
+            unsavedMessage: "You have unsaved settings.",
+            save: function () {
+                self.saveButton.ajax({
+                    url: window.location.href,  // POST here; keep URL params
+                    type: "POST",
+                    data: JSON.stringify(self.serialize()),
+                    dataType: 'json',
+                });
+            }
+        });
+        self.saveButton.ui.appendTo($("#saveButtonHolder"));
+
+        self.saveAndView = function () {
+            // TODO: Submit, with normal server-side redirect to view report
+        };
 
         return self;
     };
