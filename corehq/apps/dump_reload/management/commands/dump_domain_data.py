@@ -11,6 +11,7 @@ from corehq.apps.dump_reload.couch import CouchDataDumper
 from corehq.util.decorators import ContextDecorator
 
 SQL_FILE_PREFIX = 'dump-sql'
+COUCH_FILE_PREFIX = 'dump-couch'
 DATETIME_FORMAT = '%Y-%m-%dT%H%M%SZ'
 
 
@@ -36,7 +37,7 @@ class Command(BaseCommand):
         try:
             sql_stats = self._dump_sql(console, domain, excludes, utcnow)
             couch_stats = self._dump_couch(console, domain, excludes, utcnow)
-            stats = sql_stats | couch_stats
+            stats = sql_stats + couch_stats
         except Exception as e:
             if show_traceback:
                 raise
@@ -44,13 +45,19 @@ class Command(BaseCommand):
 
         if stats is not None:
             for model in sorted(stats):
-                print "{:<40}: {}".format(model, sql_stats[model])
+                print "{:<40}: {}".format(model, stats[model])
 
     def _dump_couch(self, console, domain, excludes, utcnow):
-        return CouchDataDumper(domain, excludes).dump(None)
+        stream = self.stdout if console else _get_dump_stream(COUCH_FILE_PREFIX, domain, utcnow)
+        try:
+            couch_stats = CouchDataDumper(domain, excludes).dump(stream)
+        finally:
+            if stream:
+                stream.close()
+        return couch_stats
 
     def _dump_sql(self, console, domain, excludes, utcnow):
-        stream = self.stdout if console else _get_dump_stream(domain, utcnow)
+        stream = self.stdout if console else _get_dump_stream(SQL_FILE_PREFIX, domain, utcnow)
         try:
             with allow_form_processing_queries():
                 sql_stats = SqlDataDumper(domain, excludes).dump(stream)
@@ -60,8 +67,8 @@ class Command(BaseCommand):
         return sql_stats
 
 
-def _get_dump_stream(domain, utcnow):
-    filename = '{}-{}-{}.gz'.format(SQL_FILE_PREFIX, domain, utcnow)
+def _get_dump_stream(prefix, domain, utcnow):
+    filename = '{}-{}-{}.gz'.format(prefix, domain, utcnow)
     return gzip.open(filename, 'wb')
 
 
