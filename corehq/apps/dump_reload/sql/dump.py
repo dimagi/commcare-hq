@@ -7,7 +7,7 @@ from django.db import router
 from django.db.models import Q
 
 from corehq.apps.dump_reload.exceptions import DomainDumpError
-from corehq.apps.dump_reload.sql.filters import SimpleFilter, UsernameFilter
+from corehq.apps.dump_reload.sql.filters import SimpleFilter, UsernameFilter, UserIDFilter
 from corehq.apps.dump_reload.sql.serialization import JsonLinesSerializer
 from corehq.sql_db.config import partition_config
 
@@ -19,6 +19,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = {
     'form_processor.XFormOperationSQL': SimpleFilter('form__domain'),
     'form_processor.CommCareCaseSQL': SimpleFilter('domain'),
     'form_processor.CommCareCaseIndexSQL': SimpleFilter('domain'),
+    'form_processor.CaseAttachmentSQL': SimpleFilter('case__domain'),
     'form_processor.CaseTransaction': SimpleFilter('case__domain'),
     'form_processor.LedgerValue': SimpleFilter('domain'),
     'form_processor.LedgerTransaction': SimpleFilter('case__domain'),
@@ -27,6 +28,13 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = {
     'data_interfaces.AutomaticUpdateRuleCriteria': SimpleFilter('rule__domain'),
     'data_interfaces.AutomaticUpdateAction': SimpleFilter('rule__domain'),
     'auth.User': UsernameFilter(),
+    'phonelog.DeviceReportEntry': SimpleFilter('domain'),
+    'phonelog.ForceCloseEntry': SimpleFilter('domain'),
+    'phonelog.UserErrorEntry': SimpleFilter('domain'),
+    'phonelog.UserEntry': UserIDFilter('user_id'),
+    'ota.DemoUserRestore': UserIDFilter('demo_user_id', include_web_users=False),
+    'tzmigration.TimezoneMigrationProgress': SimpleFilter('domain'),
+    'products.SQLProduct': SimpleFilter('domain'),
 }
 
 
@@ -37,9 +45,7 @@ def dump_sql_data(domain, excludes, output_stream):
     :param excludes: List of app labels ("app_label.model_name" or "app_label") to exclude
     :param output_stream: Stream to write json encoded objects to
     """
-    excluded_apps, excluded_models = get_excluded_apps_and_models(excludes)
-    app_config_models = _get_app_list(excluded_apps)
-    objects = get_objects_to_dump(domain, app_config_models, excluded_models)
+    objects = get_objects_to_dump(domain, excludes)
     JsonLinesSerializer().serialize(
         objects,
         use_natural_foreign_keys=False,
@@ -48,13 +54,16 @@ def dump_sql_data(domain, excludes, output_stream):
     )
 
 
-def get_objects_to_dump(domain, app_config_models, excluded_models):
+def get_objects_to_dump(domain, excludes):
     """
     :param domain: domain name to filter with
     :param app_list: List of (app_config, model) tuples to dump
     :param excluded_models: List of model classes to exclude
     :return: generator yielding models objects
     """
+    excluded_apps, excluded_models = get_excluded_apps_and_models(excludes)
+    app_config_models = _get_app_list(excluded_apps)
+
     # Collate the objects to be serialized.
     for model in serializers.sort_dependencies(app_config_models.items()):
         if model in excluded_models:
