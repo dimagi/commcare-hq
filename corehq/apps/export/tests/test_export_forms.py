@@ -115,7 +115,7 @@ class TestEmwfFilterFormExportFilters(TestCase):
 
         self.assertTrue(export_filter.skip_layout)
         self.assertEqual(export_filter.export_user_filter, FormSubmittedByFilter)
-        self.assertEqual(export_filter.es_user_filter, LocationRestrictedMobileWorkerFilter)
+        self.assertEqual(export_filter.dynamic_filter_class, LocationRestrictedMobileWorkerFilter)
 
     def test_get_form_filter_for_all_locations_access(self, locations_patch, users_patch, user_type_patch,
                                                       group_patch):
@@ -158,7 +158,7 @@ class TestFilterCaseESExportDownloadForm(TestCase):
 
         self.assertTrue(self.export_filter.skip_layout)
         self.assertEqual(self.export_filter.export_user_filter, OwnerFilter)
-        self.assertEqual(self.export_filter.es_user_filter, CaseListFilter)
+        self.assertEqual(self.export_filter.dynamic_filter_class, CaseListFilter)
 
     @patch.object(FilterCaseESExportDownloadForm, '_get_group_independent_filters', lambda x, y, z: [])
     def test_get_case_filter_for_all_locations_access(self, case_sharing_locations_ids_patch,
@@ -185,7 +185,7 @@ class TestFilterCaseESExportDownloadForm(TestCase):
         assert not case_sharing_groups_patch.called
         case_sharing_locations_ids_patch.assert_called_once_with(self.domain.name)
 
-    @patch.object(FilterCaseESExportDownloadForm.es_user_filter, 'selected_user_types')
+    @patch.object(FilterCaseESExportDownloadForm.dynamic_filter_class, 'selected_user_types')
     @patch.object(FilterCaseESExportDownloadForm, '_get_locations_filter')
     @patch.object(FilterCaseESExportDownloadForm, '_get_locations_ids')
     @patch.object(FilterCaseESExportDownloadForm, '_get_users_filter')
@@ -199,7 +199,7 @@ class TestFilterCaseESExportDownloadForm(TestCase):
         get_locations_ids.assert_called_once_with(self.group_ids_slug)
         get_users_filter.assert_called_once_with(self.group_ids_slug)
 
-    @patch.object(FilterCaseESExportDownloadForm.es_user_filter, 'selected_user_types')
+    @patch.object(FilterCaseESExportDownloadForm.dynamic_filter_class, 'selected_user_types')
     @patch.object(FilterCaseESExportDownloadForm, '_get_locations_filter')
     @patch.object(FilterCaseESExportDownloadForm, '_get_locations_ids')
     @patch.object(FilterCaseESExportDownloadForm, '_get_users_filter')
