@@ -137,7 +137,7 @@ Prefer scroll queries
 Use a scroll query when fetching lots of records.
 
 
-Prefer query to filter
+Prefer filter to query
 ======================
 
 Don't use ``query`` when you could use ``filter`` if you don't need rank.
