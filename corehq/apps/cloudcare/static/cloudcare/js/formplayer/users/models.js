@@ -1,5 +1,5 @@
 /*global FormplayerFrontend */
 
-FormplayerFrontend.module("Models", function(Models, FormplayerFrontend, Backbone) {
+FormplayerFrontend.module("Users.Models", function(Models, FormplayerFrontend, Backbone) {
     Models.User = Backbone.Model.extend();
 });

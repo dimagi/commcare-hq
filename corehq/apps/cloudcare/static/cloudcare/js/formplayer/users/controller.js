@@ -6,7 +6,7 @@ FormplayerFrontend.module("SessionNavigate.Users", function(Users, FormplayerFro
             var currentUser = FormplayerFrontend.request('currentUser'),
                 users;
 
-            users = new FormplayerFrontend.Collections.User([], { domain: currentUser.domain });
+            users = new FormplayerFrontend.Users.Collections.User([], { domain: currentUser.domain });
             var restoreAsView = new Users.Views.RestoreAsView({
                 collection: users,
                 page: page,
