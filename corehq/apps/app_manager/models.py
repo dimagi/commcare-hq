@@ -777,6 +777,15 @@ class CommentMixin(DocumentSchema):
         return self.comment if len(self.comment) <= 500 else self.comment[:497] + '...'
 
 
+def _render_xform_vary_on(self, build_profile_id=None):
+    def _hash(val):
+        return hashlib.md5(val).hexdigest()
+    return [
+        _hash(self.source.encode('utf-8')),
+        build_profile_id,
+    ]
+
+
 class FormBase(DocumentSchema):
     """
     Part of a Managed Application; configuration for a form.
@@ -977,6 +986,7 @@ class FormBase(DocumentSchema):
         xform.strip_vellum_ns_attributes()
         xform.set_version(self.get_version())
 
+    @quickcache(_render_xform_vary_on, timeout=5 * 60 * 60)
     def render_xform(self, build_profile_id=None):
         xform = XForm(self.source)
         self.add_stuff_to_xform(xform, build_profile_id)
