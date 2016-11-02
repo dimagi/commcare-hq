@@ -9,6 +9,8 @@ from couchdbkit.ext.django.schema import IntegerProperty
 from django.utils.translation import ugettext as _
 
 from corehq.apps.export.esaccessors import get_ledger_section_entry_combinations
+from corehq.apps.reports.daterange import get_daterange_start_end_dates
+from corehq.util.timezones.utils import get_timezone_for_domain
 from dimagi.utils.decorators.memoized import memoized
 from couchdbkit import SchemaListProperty, SchemaProperty, BooleanProperty, DictProperty
 
@@ -39,6 +41,7 @@ from dimagi.ext.couchdbkit import (
     ListProperty,
     StringProperty,
     DateTimeProperty,
+    DateProperty,
 )
 from corehq.apps.export.const import (
     PROPERTY_TAG_UPDATE,
@@ -480,6 +483,30 @@ class TableConfiguration(DocumentSchema):
         return TableConfiguration._get_sub_documents_helper(path[1:], new_docs)
 
 
+class DatePeriod(DocumentSchema):
+    period_type = StringProperty(required=True)
+    days = IntegerProperty()
+    begin = DateProperty()
+    end = DateProperty()
+
+    @property
+    def startdate(self):
+        startdate, _ = get_daterange_start_end_dates(self.period_type, self.begin, self.end, self.days)
+        return startdate
+
+    @property
+    def enddate(self):
+        _, enddate = get_daterange_start_end_dates(self.period_type, self.begin, self.end, self.days)
+        return enddate
+
+
+class ExportInstanceFilters(DocumentSchema):
+    date_period = SchemaProperty(DatePeriod, default=None)
+    type_or_group = StringProperty()
+    user_types = ListProperty(StringProperty)
+    group = StringProperty()
+
+
 class ExportInstance(BlobMixin, Document):
     """
     This is an instance of an export. It contains the tables to export and
@@ -508,6 +535,10 @@ class ExportInstance(BlobMixin, Document):
     last_updated = DateTimeProperty()
     last_accessed = DateTimeProperty()
 
+    # static filters to limit the data in this export
+    # filters are only used in daily saved and HTML (dashboard feed) exports
+    filters = SchemaProperty(ExportInstanceFilters)
+
     class Meta:
         app_label = 'export'
 
@@ -519,6 +550,12 @@ class ExportInstance(BlobMixin, Document):
     @property
     def defaults(self):
         return FormExportInstanceDefaults if self.type == FORM_EXPORT else CaseExportInstanceDefaults
+
+    def get_filters(self):
+        """
+        Return a list of export.filters.ExportFilter objects
+        """
+        raise NotImplementedError
 
     @property
     @memoized
@@ -738,6 +775,20 @@ class CaseExportInstance(ExportInstance):
             case_type=schema.case_type,
         )
 
+    def get_filters(self):
+        if self.filters:
+            from corehq.apps.export.filter_builders import ESCaseExportFilterBuilder
+            filter_builder = ESCaseExportFilterBuilder(
+                self.domain,
+                get_timezone_for_domain(self.domain),
+                self.filters.type_or_group,
+                self.filters.group,
+                self.filters.user_types,
+                self.filters.date_period
+            )
+            return filter_builder.get_filter()
+        return []
+
 
 class FormExportInstance(ExportInstance):
     xmlns = StringProperty()
@@ -758,6 +809,20 @@ class FormExportInstance(ExportInstance):
             xmlns=schema.xmlns,
             app_id=schema.app_id,
         )
+
+    def get_filters(self):
+        if self.filters:
+            from corehq.apps.export.filter_builders import ESFormExportFilterBuilder
+            filter_builder = ESFormExportFilterBuilder(
+                self.domain,
+                get_timezone_for_domain(self.domain),
+                self.filters.type_or_group,
+                self.filters.group,
+                self.filters.user_types,
+                self.filters.date_period
+            )
+            return filter_builder.get_filter()
+        return []
 
 
 class ExportInstanceDefaults(object):

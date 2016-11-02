@@ -19,7 +19,7 @@
 
     var exportsControllers = {};
     exportsControllers.ListExportsController = function (
-        $scope, djangoRMI, bulk_download_url, legacy_bulk_download_url
+        $scope, djangoRMI, bulk_download_url, legacy_bulk_download_url, $rootScope
     ) {
         /**
          * This controller fetches a list of saved exports from
@@ -85,6 +85,16 @@
             $btn.addClass('disabled');
             $btn.text(gettext('Download Requested'));
         };
+        $scope.copyLinkRequested = function($event, export_) {
+            export_.showLink = true;
+            var clipboard = new Clipboard($event.target, {
+                target: function (trigger) {
+                    return trigger.nextElementSibling;
+                }
+            });
+            clipboard.onClick($event);
+            clipboard.destroy();
+        };
         $scope.selectAll = function () {
             _.each($scope.exports, function (exp) {
                 exp.addedToBulk = true;
@@ -101,7 +111,7 @@
             analytics.workflow("Clicked Export button");
         };
         $scope.updateEmailedExportData = function (component, exp) {
-            $('#modalRefreshExportConfirm-' + exp.id + '-' + component.groupId).modal('hide');
+            $('#modalRefreshExportConfirm-' + exp.id + '-' + (component.groupId ? component.groupId : '')).modal('hide');
             component.updatingData = true;
             djangoRMI.update_emailed_export_data({
                 'component': component,
@@ -115,6 +125,87 @@
                         component.updatedDataTriggered = true;
                     }
                 });
+        };
+        $scope.setFilterModalExport = function (export_) {
+            // The filterModalExport is used as context for the FeedFilterFormController
+            $rootScope.filterModalExport = export_;
+        };
+    };
+    exportsControllers.FeedFilterFormController = function (
+        $scope, $rootScope, djangoRMI, filterFormElements, filterFormModalElement
+    ) {
+        var self = {};
+        $scope._ = _;   // make underscore.js available
+        $scope.formData = {};
+        $scope.isSubmittingForm = false;
+        $scope.hasFormSubmitError = false;
+        $scope.formSubmitErrorMessage = null;
+        $scope.hasGroups = true;
+        $scope.dateRegex = '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]';
+        self.nonPristineExportFilters = {};
+        var formElement = filterFormElements;
+
+
+        $rootScope.$watch("filterModalExport", function (newSelectedExport, oldSelectedExport) {
+            if (newSelectedExport) {
+                if (!(newSelectedExport.id in self.nonPristineExportFilters)) {
+                    // Mark the form as pristine if we are editing filters of a different export than before
+                    self.nonPristineExportFilters[newSelectedExport.id] = true;
+                    $scope.feedFiltersForm.$setPristine();
+
+                }
+
+                $scope.formData = newSelectedExport.emailedExport.filters;
+                // select2s require programmatic update
+                formElement.user_type().select2("val", $scope.formData.user_types);
+                formElement.group().select2("val", $scope.formData.group);
+            }
+        });
+
+        $scope.$watch("formData.date_range", function(newDateRange, oldDateRange) {
+            if (!newDateRange) {
+                $scope.formData.date_range = "last7";
+            } else {
+                self._clearSubmitError();
+            }
+        });
+        $scope.$watch("formData.type_or_group", function(newVal, oldVal) {
+            if (!newVal) {
+                $scope.formData.type_or_group = "type";
+            }
+        });
+
+        $scope.commitFilters = function () {
+            var export_ = $rootScope.filterModalExport;
+            $scope.isSubmittingForm = true;
+
+            djangoRMI.commit_filters({
+                export: export_,
+                form_data: $scope.formData,
+            }).success(function (data) {
+                $scope.isSubmittingForm = false;
+                if (data.success) {
+                    self._clearSubmitError();
+                    export_.emailedExport.filters = $scope.formData;
+                    export_.emailedExport.updatingData = false;
+                    export_.emailedExport.updatedDataTriggered = true;
+                    filterFormModalElement().modal('hide');
+                } else {
+                    self._handleSubmitError(data);
+                }
+            }).error(function (data) {
+                $scope.isSubmittingForm = false;
+                self._handleSubmitError(data);
+            });
+        };
+
+        self._handleSubmitError = function(data) {
+            $scope.hasFormSubmitError = true;
+            $scope.formSubmitErrorMessage = data.error;
+        };
+        self._clearSubmitError = function() {
+            $scope.hasFormSubmitError = false;
+            $scope.formSubmitErrorMessage = null;
         };
     };
 

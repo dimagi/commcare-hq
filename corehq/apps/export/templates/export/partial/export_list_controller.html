@@ -8,18 +8,20 @@
     {% if is_deid %}
     <p>
         {% blocktrans %}
-            These exports are <strong>De-Identified</strong>, meaning that
+            These {{ export_type_plural }} are <strong>De-Identified</strong>, meaning that
             the administrator of this domain has removed all personally-identifying
             properties from the exported data.
         {% endblocktrans %}
     </p>
     {% endif %}
     <p>
+        {% block lead_text %}
         {% blocktrans %}
             Exports are a way to download data from CommCare HQ
             in a variety of formats (CSV, Excel, etc.) for use in
             third-party data analysis tools.
         {% endblocktrans %}
+        {% endblock %}
     </p>
     {% if has_edit_permissions %}
     <p ng-show="!_.isEmpty(exports) || !hasLoaded">
@@ -27,46 +29,56 @@
            data-toggle="modal"
            class="btn btn-success new-export-link">
             <i class="fa fa-plus"></i>
-            {% trans "Create New Export" %}
+            {% blocktrans %}
+                Create New {{ export_type_caps }}
+            {% endblocktrans %}
         </a>
     </p>
     <div class="alert alert-success"
          ng-show="_.isEmpty(exports) && !!hasLoaded">
         <p class="lead"><strong>{% blocktrans %}
-            It seems you haven't created any exports yet!
+            It seems you haven't created any {{ export_type_plural }} yet!
         {% endblocktrans %}</strong></p>
         <p><a href="#createExportOptionsModal"
               data-toggle="modal"
               class="btn btn-success new-export-link">
             <i class="fa fa-plus"></i>
-            {% trans "Create New Export" %}
+            {% blocktrans %}
+                Create New {{ export_type_caps }}
+            {% endblocktrans %}
         </a></p>
     </div>
     {% endif %}
     <div class="panel panel-default">
-        <div class="panel-heading">{% trans "Exports" %}</div>
+        <div class="panel-heading">{{ export_type_caps_plural }}</div>
         <div class="panel-body">
             <div class="alert alert-info"
                  ng-show="!hasLoaded">
                 <p>
                     <i class="fa fa-spinner fa-spin"></i>
-                    <strong>{% trans 'Fetching List of Exports...' %}</strong>
+                    <strong>{% blocktrans %}Fetching List of {{ export_type_caps_plural }}...{% endblocktrans %}</strong>
                 </p>
             </div>
             <div class="alert alert-info"
                  ng-show="_.isEmpty(exports) && !!hasLoaded && !exportsListError">
                 <p>
                     {% if is_deid %}
-                        {% trans "No De-Identified Exports are available at this time." %}
+                        {% blocktrans %}
+                            No De-Identified {{ export_type_caps_plural }} are available at this time.
+                        {% endblocktrans %}
                     {% else %}
-                        {% trans 'No Exports Created Yet.' %}
+                        {% blocktrans %}
+                            No {{ export_type_caps_plural }} Created Yet.
+                        {% endblocktrans %}
                     {% endif %}
                 </p>
             </div>
             <div class="alert alert-warning"
                  ng-show="!!exportsListError">
                 <strong ng-if="exportsListError === 'default'">
-                    {% trans "Issue fetching list of exports. Please check your Internet connection." %}
+                    {% blocktrans %}
+                        Issue fetching list of {{ export_type_plural }}. Please check your Internet connection.
+                    {% endblocktrans %}
                 </strong>
                 <strong ng-if="exportsListError !== 'default'">
                     {% angularjs %}{{ exportsListError }}{% endangularjs %}
@@ -84,12 +96,12 @@
                     <tr>
                         <th class="col-sm-6">{% trans 'Name' %}</th>
                         {% if has_edit_permissions %}
-                        <th class="col-sm-1">{% trans 'Edit' %}</th>
+                        <th class="col-sm-1">{% block second_column_header %}{% trans 'Edit' %}{% endblock %}</th>
                         {% endif %}
-                        <th class="col-sm-2">{% trans 'Export' %}</th>
+                        <th class="col-sm-2">{% block third_column_header %}{{ export_type_caps }}{% endblock %}</th>
                         {%  if allow_bulk_export %}
                         <th class="col-sm-3">
-                            {% trans 'Bulk Export:' %}
+                            {% blocktrans %}Bulk {{ export_type_caps }}:{% endblocktrans %}
                             <button type="button"
                                     class="btn btn-xs btn-default"
                                     ng-click="selectAll()">
@@ -120,9 +132,12 @@
                             {% angularjs %}
                             <div class="alert alert-neutral alert-small"
                                  ng-show="export.emailedExport">
-                                <h5>
-                                    <i class="fa fa-envelope"></i>
-                                    {% trans "Saved for Daily Report" %}
+                                <div class="h5">
+                                    <span ng-if="export.emailedExport.hasFile">
+                                        <strong>{% trans "Size:" %}</strong> {{ export.emailedExport.fileData.size }}&nbsp;&nbsp;&nbsp;
+                                        <strong>{% trans "Last Updated:" %}</strong> {{ export.emailedExport.fileData.lastUpdated }}
+                                    </span>
+                                    &nbsp;&nbsp;
                                     {% if has_edit_permissions %}
                                     {% angularjs %}
                                     <button type="button"
@@ -142,14 +157,41 @@
                                         {% trans "Updating Data, please wait..." %}
                                     </button>
                                     {% endif %}
-                                </h5>
+                                </div>
+
+                                <div class="h5" ng-if="export.emailedExport.hasFile">
+
+                                    <a href="{{ export.emailedExport.fileData.downloadUrl }}"
+                                       ng-click="downloadRequested($event)"
+                                       class="btn btn-info btn-xs"
+                                       ng-show="!export.isFeed">
+                                        <i class="fa fa-download"></i>
+                                        {% trans "Download" %}
+                                    </a>
+
+                                    <div class="input-group" ng-show="export.isFeed">
+                                        <span ng-class="{'input-group-btn': export.showLink}" ng-click="copyLinkRequested($event, export)">
+                                            <a class="btn btn-info btn-sm">
+                                                <i class="fa fa-download"></i>
+                                                {% trans "Copy Dashboard Feed Link" %}
+                                            </a>
+                                        </span>
+                                        <input ng-show="export.showLink"
+                                               type="text"
+                                               class="form-control input-sm"
+                                               readonly
+                                               value="{{ export.emailedExport.fileData.downloadUrl }}"
+                                        >
+                                    </div>
+                                </div>
+
 
                                 {% if has_edit_permissions %}
                                 <p class="text-warning"
                                    ng-if="export.emailedExport.hasFile && export.emailedExport.fileData.showExpiredWarning && !export.emailedExport.updateDataTriggered">
                                     <i class="fa fa-exclamation-triangle"></i>
                                     {% blocktrans %}
-                                        This saved export has expired because it has not been used in
+                                        This saved {{ export_type }} has expired because it has not been used in
                                         the last 35 days. To renew daily updates, click the 'Update Data'
                                         button and download the file.
                                     {% endblocktrans %}
@@ -161,17 +203,6 @@
                                 </p>
                                 {% endif %}
 
-                                <p ng-if="export.emailedExport.hasFile">
-                                    <a href="{{ export.emailedExport.fileData.downloadUrl }}"
-                                       ng-click="downloadRequested($event)"
-                                       class="btn btn-info btn-xs">
-                                        <i class="fa fa-download"></i>
-                                        {% trans "Download" %}
-                                    </a>&nbsp;&nbsp;
-                                    <strong>{% trans "Size:" %}</strong> {{ export.emailedExport.fileData.size }}&nbsp;&nbsp;&nbsp;
-                                    <strong>{% trans "Last Updated:" %}</strong> {{ export.emailedExport.fileData.lastUpdated }}
-                                </p>
-                            
                                 {% if has_edit_permissions %}
                                 <p ng-if="!export.emailedExport.hasFile && !export.emailedExport.updatedDataTriggered">
                                     {% blocktrans %}
@@ -201,10 +232,16 @@
                                                         <strong>Once the data is updated, a data refresh should occur automatically on a daily basis.</strong>
                                                     {% endblocktrans %}
                                                 </p>
-                                                <p>
+                                                <p ng-if="!export.isDailySaved">
                                                     {% blocktrans %}
                                                         To download data now, please click the Export button instead.
                                                     {% endblocktrans %}
+                                                </p>
+                                                <p ng-if="export.isDailySaved && export.isFeed">
+                                                    To export data now, please copy the dashboard feed link instead.
+                                                </p>
+                                                <p ng-if="!export.isFeed">
+                                                    To export data now, please click the Download button instead.
                                                 </p>
                                             </div>
                                             <div class="modal-footer">
@@ -227,20 +264,35 @@
                         {% if has_edit_permissions %}
                         {% angularjs %}
                         <td>
-                            <a href="{{ export.editUrl }}"
-                               class="btn btn-default"><i class="fa fa-pencil"></i>
-                                {% trans 'Edit' %}</a>
+                            <a href="{{ export.editUrl }}" class="btn btn-default">
+                                <i class="fa fa-pencil"></i>
+                                <span ng-show="!export.isDailySaved">{% trans 'Edit' %}</span>
+                                <span ng-show="export.isDailySaved">{% trans 'Edit Columns' %}</span>
+
+                            </a>
                         </td>
                         {% endangularjs %}
                         {% endif %}
-                        {% angularjs %}
                         <td>
-                            <a href="{{ export.downloadUrl }}"
+                            <a href="{% angularjs %}{{ export.downloadUrl }}{% endangularjs %}"
+                               ng-show="!export.isDailySaved"
                                class="btn btn-primary"
-                               ng-click="sendExportAnalytics()">
-                                {% trans 'Export' %}</a>
+                               ng-click="sendExportAnalytics()"
+                            >
+                                {{ export_type_caps }}
+                            </a>
+                            {% if has_edit_permissions %}
+                            <a class="btn btn-default"
+                               ng-show="export.isDailySaved"
+                               href="#setFeedFiltersModal"
+                               data-toggle="modal"
+                               ng-click="setFilterModalExport(export)"
+
+                            >
+                                {% trans "Edit Filters" %}
+                            </a>
+                            {% endif %}
                         </td>
-                        {% endangularjs %}
                         {% if allow_bulk_export %}
                         {% angularjs %}
                         <td>

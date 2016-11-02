@@ -33,6 +33,6 @@ class TestDailySavedExports(TestCase):
                 pass
 
         magic_mock = MagicMock(return_value=MockExportFile())
-        with patch("corehq.apps.export.export.get_export_file", new=magic_mock):
+        with patch("corehq.apps.export.tasks.rebuild_export", new=magic_mock):
             saved_exports()
             self.assertEqual(magic_mock.call_count, 2)

@@ -5,31 +5,17 @@ from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _, ugettext_lazy
 from unidecode import unidecode
 
-from corehq.apps.export.filters import (
-    ReceivedOnRangeFilter,
-    GroupFormSubmittedByFilter,
-    OR, OwnerFilter, LastModifiedByFilter, UserTypeFilter,
-    OwnerTypeFilter, ModifiedOnRangeFilter
-)
+from corehq.apps.export.models.new import ExportInstanceFilters, DatePeriod
 from corehq.apps.groups.models import Group
-from corehq.apps.reports.models import HQUserType
+
 from corehq.apps.reports.util import (
-    group_filter,
-    users_matching_filter,
-    users_filter,
-    datespan_export_filter,
-    app_export_filter,
-    case_group_filter,
-    case_users_filter,
     datespan_from_beginning,
 )
 from corehq.apps.style.crispy import B3MultiField, CrispyTemplate
 from corehq.apps.style.forms.widgets import (
     Select2MultipleChoiceWidget,
     DateRangePickerWidget,
-)
-from corehq.pillows import utils
-from couchexport.util import SerializableFunction
+    Select2)
 
 from crispy_forms.bootstrap import InlineField
 from crispy_forms.helper import FormHelper
@@ -38,19 +24,70 @@ from crispy_forms import layout as crispy
 from crispy_forms.layout import Layout
 from dimagi.utils.dates import DateSpan
 
+USER_MOBILE = 'mobile'
+USER_DEMO = 'demo_user'
+USER_UNKNOWN = 'unknown'
+USER_SUPPLY = 'supply'
 
-class CreateFormExportTagForm(forms.Form):
-    """The information necessary to create an export tag to begin creating a
-    Form Export. This form interacts with DrilldownToFormController in
-    hq.app_data_drilldown.ng.js
-    """
-    app_type = forms.CharField()
-    application = forms.CharField()
-    module = forms.CharField()
-    form = forms.CharField()
+
+class UserTypesField(forms.MultipleChoiceField):
+
+    _USER_TYPES_CHOICES = [
+        (USER_MOBILE, ugettext_lazy("All Mobile Workers")),
+        (USER_DEMO, ugettext_lazy("Demo User")),
+        (USER_UNKNOWN, ugettext_lazy("Unknown Users")),
+        (USER_SUPPLY, ugettext_lazy("CommCare Supply")),
+    ]
+    widget = Select2MultipleChoiceWidget
 
     def __init__(self, *args, **kwargs):
-        super(CreateFormExportTagForm, self).__init__(*args, **kwargs)
+        if len(args) == 0 and "choices" not in kwargs:  # choices is the first arg, and a kwarg
+            kwargs['choices'] = self._USER_TYPES_CHOICES
+        super(UserTypesField, self).__init__(*args, **kwargs)
+
+
+class DateSpanField(forms.CharField):
+    widget = DateRangePickerWidget
+
+    def clean(self, value):
+        date_range = super(DateSpanField, self).clean(value)
+        dates = date_range.split(DateRangePickerWidget.separator)
+        startdate = dateutil.parser.parse(dates[0])
+        enddate = dateutil.parser.parse(dates[1])
+        return DateSpan(startdate, enddate)
+
+
+class CreateExportTagForm(forms.Form):
+    # common fields
+    model_type = forms.ChoiceField(
+        choices=[("", ugettext_lazy("Select model type")), ('case', ugettext_lazy('case')), ('form', ugettext_lazy('form'))]
+    )
+    app_type = forms.CharField()
+    application = forms.CharField()
+
+    # Form export fields
+    module = forms.CharField(required=False)
+    form = forms.CharField(required=False)
+
+    # Case export fields
+    case_type = forms.CharField(required=False)
+
+    def __init__(self, has_form_export_permissions, has_case_export_permissions, *args, **kwargs):
+        self.has_form_export_permissions = has_form_export_permissions
+        self.has_case_export_permissions = has_case_export_permissions
+        super(CreateExportTagForm, self).__init__(*args, **kwargs)
+
+        # We shouldn't ever be showing this form if the user has neither permission
+        assert self.has_case_export_permissions or self.has_form_export_permissions
+        if not (self.has_case_export_permissions and self.has_form_export_permissions):
+            model_field = self.fields['model_type']
+            if self.has_form_export_permissions:
+                model_field.initial = "form"
+            if self.has_case_export_permissions:
+                model_field.initial = 'case'
+
+            model_field.widget.attrs['readonly'] = True
+            model_field.widget.attrs['disabled'] = True
 
         self.helper = FormHelper()
         self.helper.form_tag = False
@@ -60,95 +97,102 @@ class CreateFormExportTagForm(forms.Form):
         self.helper.layout = crispy.Layout(
             crispy.Div(
                 crispy.Field(
-                    'app_type',
-                    placeholder=_("Select Application Type"),
-                    ng_model="formData.app_type",
-                    ng_change="updateAppChoices()",
+                    'model_type',
+                    placeholder=_('Select model type'),
+                    ng_model='formData.model_type',
+                    ng_change='resetForm()',
                     ng_required="true",
                 ),
-                ng_show="hasSpecialAppTypes",
+                ng_show="!staticModelType"
             ),
-            crispy.Field(
-                'application',
-                placeholder=_("Select Application"),
-                ng_model="formData.application",
-                ng_change="updateModuleChoices()",
-                ng_required="true",
-            ),
-            crispy.Field(
-                'module',
-                placeholder=_("Select Module"),
-                ng_model="formData.module",
-                ng_disabled="!formData.application",
-                ng_change="updateFormChoices()",
-                ng_required="true",
-            ),
-            crispy.Field(
-                'form',
-                placeholder=_("Select Form"),
-                ng_model="formData.form",
-                ng_disabled="!formData.module",
-                ng_required="true",
-            ),
+            crispy.Div(
+                crispy.Div(
+                    crispy.Field(
+                        'app_type',
+                        placeholder=_("Select Application Type"),
+                        ng_model="formData.app_type",
+                        ng_change="updateAppChoices()",
+                        ng_required="true",
+                    ),
+                    ng_show="hasSpecialAppTypes || formData.model_type === 'case'",
+                ),
+                crispy.Field(
+                    'application',
+                    placeholder=_("Select Application"),
+                    ng_model="formData.application",
+                    ng_change="formData.model_type === 'case' ? updateCaseTypeChoices() : updateModuleChoices()",
+                    ng_required="true",
+                ),
+                crispy.Div(  # Form export fields
+                    crispy.Field(
+                        'module',
+                        placeholder=_("Select Module"),
+                        ng_model="formData.module",
+                        ng_disabled="!formData.application",
+                        ng_change="updateFormChoices()",
+                        ng_required="formData.model_type === 'form'",
+                    ),
+                    crispy.Field(
+                        'form',
+                        placeholder=_("Select Form"),
+                        ng_model="formData.form",
+                        ng_disabled="!formData.module",
+                        ng_required="formData.model_type === 'form'",
+                    ),
+                    ng_show="formData.model_type === 'form'"
+                ),
+                crispy.Div(  # Case export fields
+                    crispy.Field(
+                        'case_type',
+                        placeholder=_("Select Case Type"),
+                        ng_model="formData.case_type",
+                        ng_disabled="!formData.application",
+                        ng_required="formData.model_type === 'case'",
+                    ),
+                    ng_show="formData.model_type === 'case'",
+                ),
+                ng_show="formData.model_type"
+            )
         )
 
+    @property
+    def has_form_permissions_only(self):
+        return self.has_form_export_permissions and not self.has_case_export_permissions
 
-class CreateCaseExportTagForm(forms.Form):
-    """The information necessary to create an export tag to begin creating a
-    Case Export. This form interacts with CreateExportController in
-    list_exports.ng.js
-    """
-    app_type = forms.CharField()
-    application = forms.CharField()
-    case_type = forms.CharField()
+    @property
+    def has_case_permissions_only(self):
+        return not self.has_form_export_permissions and self.has_case_export_permissions
 
-    def __init__(self, *args, **kwargs):
-        super(CreateCaseExportTagForm, self).__init__(*args, **kwargs)
+    def clean_model_type(self):
+        model_type = self.cleaned_data['model_type']
+        if self.has_form_permissions_only:
+            model_type = "form"
+        elif self.has_case_permissions_only:
+            model_type = "case"
+        return model_type
 
-        self.helper = FormHelper()
-        self.helper.form_tag = False
-        self.helper.label_class = 'col-sm-2'
-        self.helper.field_class = 'col-sm-10'
+    def clean(self):
+        cleaned_data = super(CreateExportTagForm, self).clean()
+        model_type = cleaned_data.get("model_type")
 
-        self.helper.layout = crispy.Layout(
-            crispy.Field(
-                'app_type',
-                placeholder=_("Select Application Type"),
-                ng_model="formData.app_type",
-                ng_change="updateAppChoices()",
-                ng_required="true",
-            ),
-            crispy.Field(
-                'application',
-                placeholder=_("Select Application"),
-                ng_model="formData.application",
-                ng_change="updateCaseTypeChoices()",
-                ng_required="true",
-            ),
-            crispy.Field(
-                'case_type',
-                placeholder=_("Select Case Type"),
-                ng_model="formData.case_type",
-                ng_disabled="!formData.application",
-                ng_required="true",
-            ),
-        )
+        if model_type == "form":
+            # Require module and form fields if model_type is form
+            errors = []
+            if not cleaned_data.get("module"):
+                errors.append(forms.ValidationError(_("Module is required")))
+            if not cleaned_data.get("form"):
+                errors.append(forms.ValidationError(_("Form is required")))
+            if errors:
+                raise forms.ValidationError(errors)
+        elif model_type == "case":
+            # Require case_type if model_type is case
+            if not cleaned_data.get('case_type'):
+                raise forms.ValidationError(_("case type is required"))
 
 
 class BaseFilterExportDownloadForm(forms.Form):
     _export_type = 'all'  # should be form or case
 
-    _USER_MOBILE = 'mobile'
-    _USER_DEMO = 'demo_user'
-    _USER_UNKNOWN = 'unknown'
-    _USER_SUPPLY = 'supply'
-
-    _USER_TYPES_CHOICES = [
-        (_USER_MOBILE, ugettext_lazy("All Mobile Workers")),
-        (_USER_DEMO, ugettext_lazy("Demo User")),
-        (_USER_UNKNOWN, ugettext_lazy("Unknown Users")),
-        (_USER_SUPPLY, ugettext_lazy("CommCare Supply")),
-    ]
     type_or_group = forms.ChoiceField(
         label=ugettext_lazy("User Types or Group"),
         required=False,
@@ -157,25 +201,29 @@ class BaseFilterExportDownloadForm(forms.Form):
             ('group', ugettext_lazy("Group")),
         )
     )
-    user_types = forms.MultipleChoiceField(
+    user_types = UserTypesField(
         label=ugettext_lazy("Select User Types"),
-        widget=Select2MultipleChoiceWidget,
-        choices=_USER_TYPES_CHOICES,
         required=False,
     )
-    group = forms.CharField(
+    group = forms.ChoiceField(
         label=ugettext_lazy("Select Group"),
         required=False,
+        widget=Select2()
     )
 
     def __init__(self, domain_object, *args, **kwargs):
         self.domain_object = domain_object
         super(BaseFilterExportDownloadForm, self).__init__(*args, **kwargs)
 
+        self.fields['group'].choices = [("", "")] + map(
+            lambda g: (g._id, g.name),
+            Group.get_reporting_groups(self.domain_object.name)
+        )
+
         if not self.domain_object.uses_locations:
             # don't use CommCare Supply as a user_types choice if the domain
             # is not a CommCare Supply domain.
-            self.fields['user_types'].choices = self._USER_TYPES_CHOICES[:-1]
+            self.fields['user_types'].choices = self.fields['user_types'].choices[:-1]
 
         self.helper = FormHelper()
         self.helper.form_tag = False
@@ -226,45 +274,6 @@ class BaseFilterExportDownloadForm(forms.Form):
         """
         return []
 
-    def _get_filtered_users(self):
-        user_types = self.cleaned_data['user_types']
-        user_filter_toggles = [
-            self._USER_MOBILE in user_types,
-            self._USER_DEMO in user_types,
-            # The following line results in all users who match the
-            # HQUserType.ADMIN filter to be included if the unknown users
-            # filter is selected.
-            self._USER_UNKNOWN in user_types,
-            self._USER_UNKNOWN in user_types,
-            self._USER_SUPPLY in user_types
-        ]
-        # todo refactor HQUserType
-        user_filters = HQUserType._get_manual_filterset(
-            (True,) * HQUserType.count,
-            user_filter_toggles
-        )
-        return users_matching_filter(self.domain_object.name, user_filters)
-
-    def _get_es_user_types(self):
-        """
-        Return a list of elastic search user types (each item in the return list
-        is in corehq.pillows.utils.USER_TYPES) corresponding to the selected
-        export user types.
-        """
-        es_user_types = []
-        export_user_types = self.cleaned_data['user_types']
-        export_to_es_user_types_map = {
-            self._USER_MOBILE: [utils.MOBILE_USER_TYPE],
-            self._USER_DEMO: [utils.DEMO_USER_TYPE],
-            self._USER_UNKNOWN: [
-                utils.UNKNOWN_USER_TYPE, utils.SYSTEM_USER_TYPE, utils.WEB_USER_TYPE
-            ],
-            self._USER_SUPPLY: [utils.COMMCARE_SUPPLY_USER_TYPE]
-        }
-        for type_ in export_user_types:
-            es_user_types.extend(export_to_es_user_types_map[type_])
-        return es_user_types
-
     def _get_group(self):
         group = self.cleaned_data['group']
         if group:
@@ -288,15 +297,149 @@ class BaseFilterExportDownloadForm(forms.Form):
         }
 
 
+def _date_help_text(field):
+    return """
+        <small class="label label-default">{fmt}</small>
+        <div ng-show="feedFiltersForm.{field}.$invalid && !feedFiltersForm.{field}.$pristine" class="help-block">
+            {msg}
+        </div>
+    """.format(
+        field=field,
+        fmt=ugettext_lazy("YYYY-MM-DD"),
+        msg=ugettext_lazy("Invalid date format"),
+    )
+
+
+class DashboardFeedFilterForm(BaseFilterExportDownloadForm):
+    """
+    A form used to configure the filters on a Dashboard Feed export
+    """
+
+    date_range = forms.ChoiceField(
+        label=ugettext_lazy("Date Range"),
+        required=True,
+        initial="last7",
+        choices=[
+            ("last7", ugettext_lazy("Last 7 days")),
+            ("last30", ugettext_lazy("Last 30 days")),
+            ("lastmonth", ugettext_lazy("Last month")),
+            ("lastyear", ugettext_lazy("Last year")),
+            ("lastn", ugettext_lazy("Days ago")),
+            ("since", ugettext_lazy("Since a date")),
+            ("range", ugettext_lazy("From a date to a date")),
+        ],
+    )
+    days = forms.IntegerField(
+        label=ugettext_lazy("Number of Days"),
+        required=False,
+    )
+    start_date = forms.DateField(
+        label=ugettext_lazy("Begin Date"),
+        required=False,
+        widget=forms.DateInput(format="%Y-%m-%d", attrs={"placeholder": "YYYY-MM-DD", "ng-pattern": "dateRegex"}),
+        help_text=_date_help_text("start_date")
+    )
+    end_date = forms.DateField(
+        label=ugettext_lazy("End Date"),
+        required=False,
+        widget=forms.DateInput(format="%Y-%m-%d", attrs={"placeholder": "YYYY-MM-DD", "ng-pattern": "dateRegex"}),
+        help_text=_date_help_text("end_date"),
+    )
+
+    def clean(self):
+        cleaned_data = super(DashboardFeedFilterForm, self).clean()
+        date_range = cleaned_data['date_range']
+        errors = []
+        if date_range in ("since", "range") and not cleaned_data.get('start_date', None):
+            errors.append(
+                forms.ValidationError(_("A valid start date is required"))
+            )
+        if date_range == "range" and not cleaned_data.get('end_date', None):
+            errors.append(
+                forms.ValidationError(_("A valid end date is required"))
+            )
+        if errors:
+            raise forms.ValidationError(errors)
+
+    @property
+    def extra_fields(self):
+        return [
+            crispy.Field(
+                'date_range',
+                ng_model='formData.date_range',
+                ng_required='true',
+            ),
+            crispy.Div(
+                crispy.Field("days", ng_model="formData.days"),
+                ng_show="formData.date_range === 'lastn'"
+            ),
+            crispy.Div(
+                crispy.Field(
+                    "start_date",
+                    ng_model="formData.start_date",
+                    ng_required="formData.date_range === 'since' || formData.date_range === 'range'"
+                ),
+                ng_show="formData.date_range === 'range' || formData.date_range === 'since'",
+                ng_class="{'has-error': feedFiltersForm.start_date.$invalid && !feedFiltersForm.start_date.$pristine}",
+            ),
+            crispy.Div(
+                crispy.Field(
+                    "end_date",
+                    ng_model="formData.end_date",
+                    ng_required="formData.date_range === 'range'"
+                ),
+                ng_show="formData.date_range === 'range'",
+                ng_class="{'has-error': feedFiltersForm.end_date.$invalid && !feedFiltersForm.end_date.$pristine}",
+            )
+        ]
+
+    def to_export_instance_filters(self):
+        """
+        Serialize the bound form as an ExportInstanceFilters object.
+        """
+        return ExportInstanceFilters(
+            date_period=DatePeriod(
+                period_type=self.cleaned_data['date_range'],
+                days=self.cleaned_data['days'],
+                begin=self.cleaned_data['start_date'],
+                end=self.cleaned_data['end_date'],
+            ),
+            type_or_group=self.cleaned_data['type_or_group'],
+            user_types=self.cleaned_data['user_types'],
+            group=self.cleaned_data['group']
+        )
+
+    @classmethod
+    def get_form_data_from_export_instance_filters(cls, export_instance_filters):
+        """
+        Return a dictionary representing the form data from a given ExportInstanceFilters.
+        This is used to populate a form from an existing export instance
+        :param export_instance_filters:
+        :return:
+        """
+        if export_instance_filters:
+            date_period = export_instance_filters.date_period
+            return {
+                "date_range": date_period.period_type if date_period else None,
+                "days": date_period.days if date_period else None,
+                "start_date": date_period.begin if date_period else None,
+                "end_date": date_period.end if date_period else None,
+                "type_or_group": export_instance_filters['type_or_group'],
+                "user_types": export_instance_filters['user_types'],
+                "group": export_instance_filters['group'],
+            }
+        else:
+            return None
+
+
 class GenericFilterFormExportDownloadForm(BaseFilterExportDownloadForm):
     """The filters for Form Export Download
     """
     _export_type = 'form'
 
-    date_range = forms.CharField(
+    date_range = DateSpanField(
         label=ugettext_lazy("Date Range"),
         required=True,
-        widget=DateRangePickerWidget(),
     )
 
     def __init__(self, domain_object, timezone, *args, **kwargs):
@@ -326,13 +469,6 @@ class GenericFilterFormExportDownloadForm(BaseFilterExportDownloadForm):
             ),
         ]
 
-    def _get_datespan(self):
-        date_range = self.cleaned_data['date_range']
-        dates = date_range.split(DateRangePickerWidget.separator)
-        startdate = dateutil.parser.parse(dates[0])
-        enddate = dateutil.parser.parse(dates[1])
-        return DateSpan(startdate, enddate)
-
     def get_form_filter(self):
         raise NotImplementedError
 
@@ -340,7 +476,7 @@ class GenericFilterFormExportDownloadForm(BaseFilterExportDownloadForm):
         """These are the kwargs for the Multimedia Download task,
         specific only to forms.
         """
-        datespan = self._get_datespan()
+        datespan = self.cleaned_data['date_range']
         return {
             'domain': self.domain_object.name,
             'startdate': datespan.startdate.isoformat(),
@@ -371,28 +507,15 @@ class FilterFormCouchExportDownloadForm(GenericFilterFormExportDownloadForm):
                        args=(self.domain_object.name, export.get_id))
 
     def get_form_filter(self):
-        form_filter = SerializableFunction(app_export_filter, app_id=None)
-        datespan_filter = self._get_datespan_filter()
-        if datespan_filter:
-            form_filter &= datespan_filter
-        form_filter &= self._get_user_or_group_filter()
-        return form_filter
-
-    def _get_user_or_group_filter(self):
-        group = self._get_group()
-        if group:
-            # filter by groups
-            return SerializableFunction(group_filter, group=group)
-        # filter by users
-        return SerializableFunction(users_filter,
-                                    users=self._get_filtered_users())
-
-    def _get_datespan_filter(self):
-        datespan = self._get_datespan()
-        if datespan.is_valid():
-            datespan.set_timezone(self.timezone)
-            return SerializableFunction(datespan_export_filter,
-                                        datespan=datespan)
+        from corehq.apps.export.filter_builders import CouchFormExportFilterBuilder
+        return CouchFormExportFilterBuilder(
+            self.domain_object.name,
+            self.timezone,
+            self.cleaned_data['type_or_group'],
+            self.cleaned_data['group'],
+            self.cleaned_data['user_types'],
+            self.cleaned_data['date_range'],
+        ).get_filter()
 
     def get_multimedia_task_kwargs(self, export, download_id):
         kwargs = super(FilterFormCouchExportDownloadForm, self).get_multimedia_task_kwargs(export, download_id)
@@ -408,27 +531,15 @@ class FilterFormESExportDownloadForm(GenericFilterFormExportDownloadForm):
                        args=(self.domain_object.name, export._id))
 
     def get_form_filter(self):
-        return filter(None, [
-            self._get_datespan_filter(),
-            self._get_group_filter(),
-            self._get_user_filter()
-        ])
-
-    def _get_datespan_filter(self):
-        datespan = self._get_datespan()
-        if datespan.is_valid():
-            datespan.set_timezone(self.timezone)
-            return ReceivedOnRangeFilter(gte=datespan.startdate, lt=datespan.enddate + timedelta(days=1))
-
-    def _get_group_filter(self):
-        group = self.cleaned_data['group']
-        if group:
-            return GroupFormSubmittedByFilter(group)
-
-    def _get_user_filter(self):
-        group = self.cleaned_data['group']
-        if not group:
-            return UserTypeFilter(self._get_es_user_types())
+        from corehq.apps.export.filter_builders import ESFormExportFilterBuilder
+        return ESFormExportFilterBuilder(
+            self.domain_object.name,
+            self.timezone,
+            self.cleaned_data['type_or_group'],
+            self.cleaned_data['group'],
+            self.cleaned_data['user_types'],
+            self.cleaned_data['date_range'],
+        ).get_filter()
 
     def get_multimedia_task_kwargs(self, export, download_id):
         kwargs = super(FilterFormESExportDownloadForm, self).get_multimedia_task_kwargs(export, download_id)
@@ -451,23 +562,23 @@ class FilterCaseCouchExportDownloadForm(GenericFilterCaseExportDownloadForm):
                        args=(self.domain_object.name, export.get_id))
 
     def get_case_filter(self):
-        group = self._get_group()
-        if group:
-            return SerializableFunction(case_group_filter, group=group)
-        case_sharing_groups = [g.get_id for g in
-                               Group.get_case_sharing_groups(self.domain_object.name)]
-        return SerializableFunction(case_users_filter,
-                                    users=self._get_filtered_users(),
-                                    groups=case_sharing_groups)
+        from corehq.apps.export.filter_builders import CouchCaseExportFilterBuilder
+        return CouchCaseExportFilterBuilder(
+            self.domain_object.name,
+            self.timezone,
+            self.cleaned_data['type_or_group'],
+            self.cleaned_data['group'],
+            self.cleaned_data['user_types'],
+            None,
+        ).get_filter()
 
 
 class FilterCaseESExportDownloadForm(GenericFilterCaseExportDownloadForm):
     _export_type = 'case'
 
-    date_range = forms.CharField(
+    date_range = DateSpanField(
         label=ugettext_lazy("Date Range"),
         required=True,
-        widget=DateRangePickerWidget(),
         help_text="Export cases modified in this date range",
     )
 
@@ -488,42 +599,16 @@ class FilterCaseESExportDownloadForm(GenericFilterCaseExportDownloadForm):
         return reverse(EditNewCustomCaseExportView.urlname,
                        args=(self.domain_object.name, export.get_id))
 
-    def _get_datespan(self):
-        date_range = self.cleaned_data['date_range']
-        dates = date_range.split(DateRangePickerWidget.separator)
-        startdate = dateutil.parser.parse(dates[0])
-        enddate = dateutil.parser.parse(dates[1])
-        return DateSpan(startdate, enddate)
-
-    def _get_datespan_filter(self):
-        datespan = self._get_datespan()
-        if datespan.is_valid():
-            datespan.set_timezone(self.timezone)
-            return ModifiedOnRangeFilter(gte=datespan.startdate, lt=datespan.enddate + timedelta(days=1))
-
     def get_case_filter(self):
-        group = self._get_group()
-        if group:
-            user_ids = set(group.get_static_user_ids())
-            case_filter = [OR(
-                OwnerFilter(group._id),
-                OwnerFilter(user_ids),
-                LastModifiedByFilter(user_ids)
-            )]
-        else:
-            case_sharing_groups = [g.get_id for g in
-                                   Group.get_case_sharing_groups(self.domain_object.name)]
-            case_filter = [OR(
-                OwnerTypeFilter(self._get_es_user_types()),
-                OwnerFilter(case_sharing_groups),
-                LastModifiedByFilter(case_sharing_groups)
-            )]
-
-        date_filter = self._get_datespan_filter()
-        if date_filter:
-            case_filter.append(date_filter)
-
-        return case_filter
+        from corehq.apps.export.filter_builders import ESCaseExportFilterBuilder
+        return ESCaseExportFilterBuilder(
+            self.domain_object.name,
+            self.timezone,
+            self.cleaned_data['type_or_group'],
+            self.cleaned_data['group'],
+            self.cleaned_data['user_types'],
+            self.cleaned_data['date_range'],
+        ).get_filter()
 
     @property
     def extra_fields(self):

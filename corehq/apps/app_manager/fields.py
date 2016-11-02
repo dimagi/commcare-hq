@@ -538,3 +538,8 @@ class ApplicationDataRMIHelper(object):
         if self.as_dict:
             response = response._asdict()
         return response
+
+    def get_dual_model_rmi_response(self):
+        response = self.get_form_rmi_response()
+        response.update(self.get_case_rmi_response())
+        return response

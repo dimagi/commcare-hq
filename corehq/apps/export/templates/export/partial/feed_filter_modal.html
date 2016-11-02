@@ -1,0 +1,49 @@
+{% load crispy_forms_tags %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load djangular_tags %}
+
+<div class="modal fade"
+     id="setFeedFiltersModal"
+     ng-controller="FeedFilterFormController"
+>
+    <div class="modal-dialog">
+        <form name="feedFiltersForm"
+              class="form form-horizontal"
+              ng-submit="commitFilters()"
+        >
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span aria-hidden="true">&times;</span><span class="sr-only">{% trans 'Close' %}</span>
+                    </button>
+                    <h4 class="modal-title">{% trans "Filter Feed" %}</h4>
+                </div>
+
+                <div class="modal-body">
+                    {% crispy export_filter_form %}
+                    <div class="alert alert-danger" role="alert" ng-show="hasFormSubmitError">
+                        <span>{% angularjs %}{{ formSubmitErrorMessage }}{% endangularjs %}</span>
+                        <span ng-show="!formSubmitErrorMessage">There was an unknown saving the filters</span>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button"
+                            class="btn btn-default"
+                            data-dismiss="modal"
+                            ng-disabled="isSubmittingForm"
+                    >
+                        {% trans 'Cancel' %}
+                    </button>
+                    <button type="submit" class="btn btn-success" ng-show="!isSubmittingForm">
+                        {% trans "Save filters"%}
+                    </button>
+                    <button class="btn" disabled ng-show="isSubmittingForm">
+                        {% trans "Saving..." %}
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

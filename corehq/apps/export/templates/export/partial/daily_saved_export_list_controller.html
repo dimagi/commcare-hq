@@ -1,0 +1,14 @@
+{%  extends 'export/partial/export_list_controller.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load djangular_tags %}
+
+{% block second_column_header %}
+    {% trans "Edit Columns" %}
+{% endblock %}
+
+{% block third_column_header %}
+    {% if has_edit_permissions %}
+        {% trans "Edit Filters" %}
+    {% endif %}
+{% endblock %}
