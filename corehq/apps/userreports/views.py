@@ -773,11 +773,11 @@ class ConfigureReport(ReportBuilderView):
         data_source_config_id = build_data_source(app.domain, ds_config_kwargs)
 
         self._confirm_report_limit()
+        if report_data['aggregate']:
+            aggregation_columns = [c['column_id'] for c in report_data['columns'] if c['is_group_by_column']]
+        else:
+            aggregation_columns = []
         try:
-            if report_data['aggregate']:
-                aggregation_columns = [c['column_id'] for c in report_data['columns'] if c['is_group_by_column']]
-            else:
-                aggregation_columns = []
             report_configuration = ReportConfiguration(
                 domain=app.domain,
                 config_id=data_source_config_id,
