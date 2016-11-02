@@ -112,8 +112,7 @@ class ProjectReportsTab(UITab):
                 filtered_sidebar_items.append((section, filtered_items))
         return filtered_sidebar_items
 
-    @property
-    def dropdown_items(self):
+    def _get_saved_reports_dropdown(self):
         saved_report_header = dropdown_dict(_('My Saved Reports'), is_header=True)
         saved_reports_list = list(ReportConfig.by_domain_and_owner(
                                   self.domain,
@@ -134,24 +133,36 @@ class ProjectReportsTab(UITab):
         ] if len(saved_reports_list) > MAX_DISPLAYABLE_SAVED_REPORTS else []
 
         if first_five_items:
-            saved_reports_dropdown = ([saved_report_header] + first_five_items + rest_as_second_level_items)
+            return ([saved_report_header] + first_five_items + rest_as_second_level_items)
         else:
-            saved_reports_dropdown = []
-
-        reports = sidebar_to_dropdown(
-            ProjectReportDispatcher.navigation_sections(
-                request=self._request, domain=self.domain),
-            current_url=self.url)
-
-        return saved_reports_dropdown + reports + self._get_configurable_reports_dropdown()
-
-    def _get_configurable_reports_dropdown(self):
-        """Returns all the configurable reports turned on for that user only if that
-        user is restricted by location.
-        """
-        if self.can_access_all_locations:
             return []
 
+    @property
+    def dropdown_items(self):
+        if self.can_access_all_locations:
+            reports = sidebar_to_dropdown(
+                ProjectReportDispatcher.navigation_sections(
+                    request=self._request, domain=self.domain),
+                current_url=self.url)
+            return self._get_saved_reports_dropdown() + reports
+
+        else:
+            return (self._get_saved_reports_dropdown()
+                    + self._get_configurable_reports_dropdown()
+                    + self._get_all_sidebar_items_as_dropdown())
+
+    def _get_all_sidebar_items_as_dropdown(self):
+        def show(page):
+            page['show_in_dropdown'] = True
+            return page
+        return sidebar_to_dropdown([
+            (header, map(show, pages))
+            for header, pages in self.sidebar_items
+        ])
+
+    def _get_configurable_reports_dropdown(self):
+        """Returns all the configurable reports turned on for that user
+        """
         from corehq.reports import _safely_get_report_configs, _make_report_class
         configurable_reports = [
             _make_report_class(config, show_in_dropdown=True)

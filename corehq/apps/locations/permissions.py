@@ -88,9 +88,8 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.decorators import (login_and_domain_required,
                                            domain_admin_required)
 from corehq.apps.reports.generic import GenericReportView
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CouchUser
 from .models import SQLLocation
-from .util import get_xform_location
 
 LOCATION_ACCESS_DENIED = mark_safe(ugettext_lazy(
     "This project has restricted data access rules. Please contact your "
@@ -198,35 +197,43 @@ def can_edit_location_types(view_fn):
     return locations_access_required(_inner)
 
 
+#### Unified location permissions below this point
+# TODO incorporate the above stuff into the new system
+
+
 def can_edit_form_location(domain, web_user, form):
     # Domain admins can always edit locations.  If the user isn't an admin and
     # the location restriction is enabled, they can only edit forms that are
     # explicitly at or below them in the location tree.
-    domain_obj = Domain.get_by_name(domain)
-    if (not toggles.RESTRICT_FORM_EDIT_BY_LOCATION.enabled(domain)
-            or user_can_edit_any_location(web_user, domain_obj)):
-        return True
 
-    if domain_obj.supports_multiple_locations_per_user:
-        user_id = form.user_id
-        if not user_id:
+    # This first block checks for old permissions, remove when that's gone
+    if toggles.RESTRICT_FORM_EDIT_BY_LOCATION.enabled(domain):
+        domain_obj = Domain.get_by_name(domain)
+        if user_can_edit_any_location(web_user, domain_obj):
+            return True
+        if not form.user_id:
             return False
-
-        form_user = CommCareUser.get(user_id)
-        for location in form_user.locations:
-            if user_can_edit_location(web_user, location.sql_location, domain_obj):
+        form_user = CouchUser.get_by_user_id(form.user_id)
+        if domain_obj.supports_multiple_locations_per_user:
+            form_locations = [loc.sql_location for loc in form_user.locations]
+        else:
+            form_locations = form_user.get_sql_locations(domain)
+        for location in form_locations:
+            if user_can_edit_location(web_user, location, domain_obj):
                 return True
         return False
 
-    else:
-        form_location = get_xform_location(form)
-        if not form_location:
-            return False
-        return user_can_edit_location(web_user, form_location, domain_obj)
+    if web_user.has_permission(domain, 'access_all_locations'):
+        return True
 
+    if not form.user_id:
+        return False
 
-#### Unified location permissions below this point
-# TODO incorporate the above stuff into the new system
+    form_user = CouchUser.get_by_user_id(form.user_id)
+    if not form_user:
+        return False  # It's a special form, deny to be safe
+    form_location_ids = form_user.get_location_ids(domain)
+    return user_can_access_any_location_id(domain, web_user, form_location_ids)
 
 
 def location_safe(view):
@@ -299,6 +306,16 @@ def user_can_access_location_id(domain, user, location_id):
     return (SQLLocation.objects
             .accessible_to_user(domain, user)
             .filter(location_id=location_id)
+            .exists())
+
+
+def user_can_access_any_location_id(domain, user, location_ids):
+    if user.has_permission(domain, 'access_all_locations'):
+        return True
+
+    return (SQLLocation.objects
+            .accessible_to_user(domain, user)
+            .filter(location_id__in=location_ids)
             .exists())
 
 

@@ -300,23 +300,6 @@ def write_to_file(locations):
     return outfile.getvalue()
 
 
-def get_xform_location(xform):
-    """
-    Returns the sql location associated with the user who submitted an xform
-    """
-    from corehq.apps.users.models import CouchUser
-    user_id = xform.user_id
-    if not user_id:
-        return None
-
-    user = CouchUser.get_by_user_id(user_id)
-    if hasattr(user, 'get_sql_location'):
-        return user.get_sql_location(xform.domain)
-    elif hasattr(user, 'sql_location'):
-        return user.sql_location
-    return None
-
-
 def get_locations_and_children(location_ids):
     """
     Takes a set of location ids and returns a django queryset of those
