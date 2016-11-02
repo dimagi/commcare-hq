@@ -705,14 +705,14 @@ class ConfigureReport(ReportBuilderView):
 
     def post(self, request, domain):
 
-        def get_data_source_configuration_kwargs(ds_builder_, app_, report_source_id_, report_data_):
-            aggregation_fields = [c['column_id'] for c in report_data_['columns'] if c['is_group_by_column']]
-            is_multiselect_chart_report = False  # report_data_['isAggregationEnabled']  # Not the same thing
+        def get_data_source_configuration_kwargs(ds_builder_, app_, report_source_id_, columns,
+                                                 is_multiselect_chart_report=False):
+            aggregation_fields = [c['column_id'] for c in columns if c['is_group_by_column']]
             if is_multiselect_chart_report:
                 base_item_expression = ds_builder_.base_item_expression(True, aggregation_fields[0])
             else:
                 base_item_expression = ds_builder_.base_item_expression(False)
-            number_columns = [c['column_id'] for c in report_data_['columns'] if c['is_numeric']]
+            number_columns = [c['column_id'] for c in columns if c['is_numeric']]
             return dict(
                 display_name=ds_builder_.data_source_name,
                 referenced_doc_type=ds_builder_.source_doc_type,
@@ -768,7 +768,8 @@ class ConfigureReport(ReportBuilderView):
         report_data = json.loads(request.body)
 
         ds_builder = DataSourceBuilder(app.domain, app, source_type, report_source_id)
-        ds_config_kwargs = get_data_source_configuration_kwargs(ds_builder, app, report_source_id, report_data)
+        ds_config_kwargs = get_data_source_configuration_kwargs(ds_builder, app, report_source_id,
+                                                                report_data['columns'])
         data_source_config_id = build_data_source(app.domain, ds_config_kwargs)
 
         self._confirm_report_limit()
