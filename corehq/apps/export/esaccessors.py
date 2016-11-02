@@ -50,6 +50,6 @@ def get_case_name(case_id):
     try:
         result = get_es_new().get(CASE_INDEX_INFO.index, case_id, _source_include=['name'])
     except ElasticsearchException:
-        return []
+        return None
 
     return result['_source']['name']
