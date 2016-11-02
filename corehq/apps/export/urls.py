@@ -30,7 +30,11 @@ from corehq.apps.export.views import (
     DailySavedExportListView,
     CreateNewDailySavedCaseExport,
     CreateNewDailySavedFormExport,
-    DeIdDailySavedExportListView, DeIdDashboardFeedListView)
+    DeIdDailySavedExportListView,
+    DeIdDashboardFeedListView,
+    DashboardFeedPaywall,
+    DailySavedExportPaywall,
+)
 
 urlpatterns = patterns(
     'corehq.apps.export.views',
@@ -58,7 +62,7 @@ urlpatterns = patterns(
         DashboardFeedListView.as_view(),
         name=DashboardFeedListView.urlname),
 
-    # New export configuratino views
+    # New export configuration views
     url(r"^custom/form/create$",
         CreateCustomFormExportView.as_view(),
         name=CreateCustomFormExportView.urlname),
@@ -140,4 +144,12 @@ urlpatterns = patterns(
     url(r"^custom/new/(?P<export_type>[\w\-]+)/delete/(?P<export_id>[\w\-]+)/$",
         DeleteNewCustomExportView.as_view(),
         name=DeleteNewCustomExportView.urlname),
+
+    # Paywalls
+    url(r"^dashboard_feed/paywall/$",
+        DashboardFeedPaywall.as_view(),
+        name=DashboardFeedPaywall.urlname),
+    url(r"^daily_saved/paywall/$",
+        DailySavedExportPaywall.as_view(),
+        name=DailySavedExportPaywall.urlname),
 )

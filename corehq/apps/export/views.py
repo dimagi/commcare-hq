@@ -1454,6 +1454,16 @@ class DashboardFeedListView(DailySavedExportListView):
         return filter(lambda x: x.is_daily_saved_export and x.export_format == "html", combined_exports)
 
 
+class DailySavedExportPaywall(BaseProjectDataView):
+    urlname = 'daily_saved_paywall'
+    template_name = 'export/paywall.html'
+
+
+class DashboardFeedPaywall(BaseProjectDataView):
+    urlname = 'dashbaord_feeds_paywall'
+    template_name = 'export/paywall.html'
+
+
 class FormExportListView(BaseExportListView):
     urlname = 'list_form_exports'
     page_title = ugettext_noop("Export Forms")

@@ -510,6 +510,8 @@ class ProjectDataTab(UITab):
                 CreateNewCaseFeedView,
                 EditFormFeedView,
                 EditCaseFeedView,
+                DashboardFeedPaywall,
+                DailySavedExportPaywall
             )
             if use_new_exports(self.domain):
                 create_case_cls = CreateNewCustomCaseExportView
@@ -609,6 +611,13 @@ class ProjectDataTab(UITab):
                         } if self.can_edit_commcare_data else None,
                     ])
                 })
+            else:
+                export_data_views.append({
+                    'title': DailySavedExportListView.page_title,
+                    'url': reverse(DailySavedExportPaywall.urlname, args=(self.domain,)),
+                    'show_in_dropdown': True,
+                    'subpages': []
+                })
             if self.can_view_dashboard_feeds:
                 export_data_views.append({
                     'title': DashboardFeedListView.page_title,
@@ -632,6 +641,13 @@ class ProjectDataTab(UITab):
                             'urlname': EditCaseFeedView.urlname,
                         } if self.can_edit_commcare_data else None,
                     ])
+                })
+            else:
+                export_data_views.append({
+                    'title': DashboardFeedListView.page_title,
+                    'url': reverse(DashboardFeedPaywall.urlname, args=(self.domain,)),
+                    'show_in_dropdown': True,
+                    'subpages': []
                 })
 
         if export_data_views:
@@ -675,7 +691,13 @@ class ProjectDataTab(UITab):
             CaseExportListView,
             DashboardFeedListView,
             DailySavedExportListView,
+            DailySavedExportPaywall,
+            DashboardFeedPaywall,
         )
+        daily_saved_list_url = reverse(DailySavedExportListView.urlname, args=(self.domain,))
+        daily_saved_paywall_url = reverse(DailySavedExportPaywall.urlname, args=(self.domain,))
+        feed_list_url = reverse(DashboardFeedListView.urlname, args=(self.domain,))
+        feed_paywall_url = reverse(DashboardFeedPaywall.urlname, args=(self.domain,))
         return filter(None, [
             dropdown_dict(
                 FormExportListView.page_title,
@@ -687,12 +709,12 @@ class ProjectDataTab(UITab):
             ) if self.can_view_case_exports else None,
             dropdown_dict(
                 DailySavedExportListView.page_title,
-                url=reverse(DailySavedExportListView.urlname, args=(self.domain,))
-            ) if self.can_view_daily_saved_exports else None,
+                url=daily_saved_list_url if self.can_view_daily_saved_exports else daily_saved_paywall_url
+            ),
             dropdown_dict(
                 DashboardFeedListView.page_title,
-                url=reverse(DashboardFeedListView.urlname, args=(self.domain,))
-            ) if self.can_view_dashboard_feeds else None,
+                url=feed_list_url if self.can_view_dashboard_feeds else feed_paywall_url
+            ),
             dropdown_dict(None, is_divider=True),
             dropdown_dict(_("View All"), url=self.url),
         ])
