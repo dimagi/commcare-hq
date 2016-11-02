@@ -408,6 +408,97 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         self.assertTrue(p2 in all_active)
         self.assertTrue(parchived not in all_active)
 
+    def test_location_type(self):
+        from corehq.apps.locations.models import LocationType
+        from corehq.apps.locations.tests.test_location_types import make_loc_type
+        expected_object_counts = Counter({LocationType: 7})
+        register_cleanup(self, list(expected_object_counts), self.domain_name)
+
+        state = make_loc_type('state', domain=self.domain_name)
+
+        district = make_loc_type('district', state, domain=self.domain_name)
+        section = make_loc_type('section', district, domain=self.domain_name)
+        block = make_loc_type('block', district, domain=self.domain_name)
+        center = make_loc_type('center', block, domain=self.domain_name)
+
+        county = make_loc_type('county', state, domain=self.domain_name)
+        city = make_loc_type('city', county, domain=self.domain_name)
+
+        self._dump_and_load(expected_object_counts)
+
+        hierarchy = LocationType.objects.full_hierarchy(self.domain_name)
+        desired_hierarchy = {
+            state.id: (
+                state,
+                {
+                    district.id: (
+                        district,
+                        {
+                            section.id: (section, {}),
+                            block.id: (block, {
+                                center.id: (center, {}),
+                            }),
+                        },
+                    ),
+                    county.id: (
+                        county,
+                        {city.id: (city, {})},
+                    ),
+                },
+            ),
+        }
+        self.assertEqual(hierarchy, desired_hierarchy)
+
+    def test_location(self):
+        from corehq.apps.locations.models import LocationType, SQLLocation
+        from corehq.apps.locations.tests.util import setup_locations_and_types
+        from corehq.apps.locations.util import get_locations_and_children
+        expected_object_counts = Counter({LocationType: 3, SQLLocation: 11})
+        register_cleanup(self, list(expected_object_counts), self.domain_name)
+
+        location_type_names = ['province', 'district', 'city']
+        location_structure = [
+            ('Western Cape', [
+                ('Cape Winelands', [
+                    ('Stellenbosch', []),
+                    ('Paarl', []),
+                ]),
+                ('Cape Town', [
+                    ('Cape Town City', []),
+                ])
+            ]),
+            ('Gauteng', [
+                ('Ekurhuleni ', [
+                    ('Alberton', []),
+                    ('Benoni', []),
+                    ('Springs', []),
+                ]),
+            ]),
+        ]
+
+        location_types, locations = setup_locations_and_types(
+            self.domain_name,
+            location_type_names,
+            [],
+            location_structure,
+        )
+
+        self._dump_and_load(expected_object_counts)
+
+        names = ['Cape Winelands', 'Paarl', 'Cape Town']
+        result = get_locations_and_children([locations[name].location_id
+                                             for name in names])
+        self.assertItemsEqual(
+            [loc.name for loc in result],
+            ['Cape Winelands', 'Stellenbosch', 'Paarl', 'Cape Town', 'Cape Town City']
+        )
+
+        result = get_locations_and_children([locations['Gauteng'].location_id])
+        self.assertItemsEqual(
+            [loc.name for loc in result],
+            ['Gauteng', 'Ekurhuleni ', 'Alberton', 'Benoni', 'Springs']
+        )
+
 
 def _normalize_object_counter(counter):
     """Converts a <Model Class> keyed counter to an model label keyed counter"""
