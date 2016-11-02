@@ -188,7 +188,7 @@ FormplayerFrontend.on("start", function (options) {
     if (Backbone.history) {
         Backbone.history.start();
         FormplayerFrontend.regions.restoreAsBanner.show(
-            new FormplayerFrontend.SessionNavigate.Users.Views.RestoreAsBanner({
+            new FormplayerFrontend.Users.Views.RestoreAsBanner({
                 model: user,
             })
         );
@@ -275,7 +275,7 @@ FormplayerFrontend.on('clearRestoreAsUser', function() {
     );
     user.restoreAs = null;
     FormplayerFrontend.regions.restoreAsBanner.show(
-        new FormplayerFrontend.SessionNavigate.Users.Views.RestoreAsBanner({
+        new FormplayerFrontend.Users.Views.RestoreAsBanner({
             model: user,
         })
     );
