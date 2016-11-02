@@ -39,7 +39,7 @@ hqDefine('app_manager/js/preview_app.js', function() {
     };
 
     _private.navigateBack = function() {
-        var $appPreviewIframe = $(module.SELECTORS.PREVIEW_WINDOW.IFRAME),
+        var $appPreviewIframe = $(module.SELECTORS.PREVIEW_WINDOW_IFRAME),
             previewWindow = $appPreviewIframe[0].contentWindow;
         previewWindow.postMessage({
             action: 'back',
