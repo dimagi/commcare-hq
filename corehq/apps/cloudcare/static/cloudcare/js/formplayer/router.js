@@ -20,11 +20,11 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
     var API = {
         listApps: function () {
             FormplayerFrontend.regions.breadcrumb.empty();
-            SessionNavigate.AppList.Controller.listApps();
+            FormplayerFrontend.Apps.Controller.listApps();
         },
         singleApp: function(appId) {
             FormplayerFrontend.regions.breadcrumb.empty();
-            SessionNavigate.AppList.Controller.singleApp(appId);
+            FormplayerFrontend.Apps.Controller.singleApp(appId);
         },
         selectApp: function (appId) {
             SessionNavigate.MenuList.Controller.selectMenu({
@@ -46,7 +46,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             FormplayerFrontend.Users.Controller.listUsers(page, query);
         },
         listSettings: function() {
-            SessionNavigate.AppList.Controller.listSettings();
+            FormplayerFrontend.Apps.Controller.listSettings();
         },
         showDetail: function (model, detailTabIndex) {
             SessionNavigate.MenuList.Controller.showDetail(model, detailTabIndex);
