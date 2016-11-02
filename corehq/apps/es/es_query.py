@@ -207,8 +207,8 @@ class ESQuery(object):
 
     def run(self):
         """Actually run the query.  Returns an ESQuerySet object."""
-        query = self
-        if query.uses_aggregations:
+        query = deepcopy(self)
+        if query.uses_aggregations():
             query = query.size(0)
         raw = run_query(query.index, query.raw_query, debug_host=query.debug_host)
         return ESQuerySet(raw, deepcopy(query))
