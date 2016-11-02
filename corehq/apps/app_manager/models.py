@@ -5567,6 +5567,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             return []
         return form.get_questions(self.langs)
 
+    @quickcache(['self._id', 'self.domain'], timeout=5 * 60 * 60)
     def check_subscription(self):
 
         def app_uses_usercase(app):
