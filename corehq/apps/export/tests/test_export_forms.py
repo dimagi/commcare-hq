@@ -7,7 +7,43 @@ from mock import patch, MagicMock
 
 from corehq.apps.export.filter_builders import ESFormExportFilterBuilder
 from corehq.apps.export.filters import FormSubmittedByFilter
-from corehq.apps.export.forms import FilterFormESExportDownloadForm
+from corehq.apps.export.forms import FilterFormESExportDownloadForm, DashboardFeedFilterForm
+
+
+DomainObject = namedtuple('DomainObject', ['uses_locations', 'name'])
+
+
+@patch('corehq.apps.export.forms.Group', new=MagicMock(get_reporting_groups=lambda x: []))
+class TestDashboardFeedFilterForm(SimpleTestCase):
+
+    def test_good_data(self):
+        data = {
+            'type_or_group': 'group',
+            'date_range': 'range',
+            'start_date': '1992-01-30',
+            'end_date': '2016-10-01',
+        }
+        form = DashboardFeedFilterForm(DomainObject([], 'my domain'), data=data)
+        self.assertTrue(form.is_valid())
+
+    def test_missing_fields(self):
+        data = {
+            'type_or_group': 'group',
+            'date_range': 'range',
+            'start_date': '1992-01-30',
+        }
+        form = DashboardFeedFilterForm(DomainObject([], 'my domain'), data=data)
+        self.assertFalse(form.is_valid())
+
+    def test_bad_dates(self):
+        data = {
+            'type_or_group': 'group',
+            'date_range': 'range',
+            'start_date': '1992-01-30',
+            'end_date': 'banana',
+        }
+        form = DashboardFeedFilterForm(DomainObject([], 'my domain'), data=data)
+        self.assertFalse(form.is_valid())
 
 
 @patch('corehq.apps.reports.util.get_first_form_submission_received', lambda x: datetime.datetime(2015, 1, 1))
@@ -17,7 +53,6 @@ from corehq.apps.export.forms import FilterFormESExportDownloadForm
 class TestFilterFormESExportDownloadForm(SimpleTestCase):
 
     def setUp(self):
-        DomainObject = namedtuple('DomainObject', ['uses_locations', 'name'])
         self.project = DomainObject(False, "foo")
 
     def test_get_datespan_filter(self):
