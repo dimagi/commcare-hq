@@ -185,7 +185,6 @@ class LocationRestrictedEmwfOptionsMixin(object):
     @property
     def data_sources(self):
         # data sources for options for selection in filter
-        print 'fetching data source for filters in view'
         sources = []
         if self.include_locations_in_options():
             sources.append((self.get_locations_size, self.get_locations))
