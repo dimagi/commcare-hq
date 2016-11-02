@@ -10,7 +10,8 @@ from corehq.util.context_managers import drop_connected_signals
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.models import XForm, Application
 from corehq.apps.app_manager.signals import app_post_save
-from corehq.apps.export.dbaccessors import delete_all_export_data_schemas
+from corehq.apps.export.dbaccessors import delete_all_export_data_schemas, delete_all_inferred_schemas
+from corehq.apps.export.signals import add_inferred_export_properties
 from corehq.apps.export.models import (
     FormExportDataSchema,
     CaseExportDataSchema,
@@ -642,6 +643,7 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
 
     def tearDown(self):
         delete_all_export_data_schemas()
+        delete_all_inferred_schemas()
 
     def test_basic_application_schema(self):
         schema = CaseExportDataSchema.generate_schema_from_builds(
@@ -689,6 +691,36 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
         self.assertEqual(new_schema.last_app_versions[app._id], app.version)
         # One for case, one for case history
         self.assertEqual(len(new_schema.group_schemas), 2)
+
+    def test_build_with_inferred_schema(self):
+        app = self.current_app
+
+        schema = CaseExportDataSchema.generate_schema_from_builds(
+            app.domain,
+            app._id,
+            self.case_type,
+        )
+        # Main table
+        group_schema = schema.group_schemas[0]
+        self.assertEqual(len(group_schema.items), 2)
+
+        add_inferred_export_properties(
+            'TestSend',
+            domain=app.domain,
+            case_type=self.case_type,
+            properties=['question2', 'new-property'],
+        )
+
+        schema = CaseExportDataSchema.generate_schema_from_builds(
+            app.domain,
+            app._id,
+            self.case_type,
+        )
+        # Main table
+        group_schema = schema.group_schemas[0]
+
+        # Only the new property should be added. The repeated one should be merged
+        self.assertEqual(len(group_schema.items), 3)
 
 
 class TestBuildingCaseSchemaFromMultipleApplications(TestCase, TestXmlMixin):
