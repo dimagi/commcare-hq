@@ -141,3 +141,16 @@ Prefer query to filter
 ======================
 
 Don't use ``query`` when you could use ``filter`` if you don't need rank.
+
+
+Use size(0) with aggregations
+=============================
+
+Use ``size(0)`` when you're only doing aggregations thing—otherwise you'll
+get back doc bodies as well! Sometimes that's just abstractly wasteful, but often
+it can be a serious performance hit for the operation as well as the cluster.
+
+The best way to do this is by using helpers like ESQuery's ``.count()``
+that know to do this for you—your code will look better and you won't have to remember
+to check for that every time. (If you ever find *helpers* not doing this correctly,
+then it's definitely worth fixing.)
