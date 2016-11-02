@@ -5,7 +5,13 @@ from django.conf import settings
 from celery import Celery
 from restkit import Resource
 
+from corehq.util.soft_assert import soft_assert
 from corehq.apps.hqadmin.utils import parse_celery_workers, parse_celery_pings
+
+_soft_assert = soft_assert(
+    to='{}@{}'.format('brudolph', 'dimagi.com'),
+    exponential_backoff=False,
+)
 
 
 class Command(BaseCommand):
@@ -17,6 +23,7 @@ class Command(BaseCommand):
 
 def _kill_stale_workers():
     celery_monitoring = getattr(settings, 'CELERY_FLOWER_URL', None)
+    hosts_to_stop = ['ben', 'lisa']
     if celery_monitoring:
         cresource = Resource(celery_monitoring, timeout=3)
         t = cresource.get("api/workers", params_dict={'status': True}).body_string()
@@ -31,3 +38,4 @@ def _kill_stale_workers():
         hosts_to_stop = filter(lambda hostname: hostname in pings, expected_stopped)
         if hosts_to_stop:
             celery.control.broadcast('shutdown', destination=hosts_to_stop)
+            _soft_assert(False, 'Used kill stale for: {}'.format(', '.join(hosts_to_stop)))
