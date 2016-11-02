@@ -7,10 +7,39 @@ from mock import patch, MagicMock
 
 from corehq.apps.export.filter_builders import ESFormExportFilterBuilder
 from corehq.apps.export.filters import FormSubmittedByFilter
-from corehq.apps.export.forms import FilterFormESExportDownloadForm, DashboardFeedFilterForm
-
+from corehq.apps.export.forms import FilterFormESExportDownloadForm, DashboardFeedFilterForm, CreateExportTagForm
 
 DomainObject = namedtuple('DomainObject', ['uses_locations', 'name'])
+
+
+class TestCreateExportTagForm(SimpleTestCase):
+
+    def test_required_fields(self):
+        # Confirm that form cannot be submitted without case_type when model_type is case
+        data = {
+            'model_type': 'case',
+            'app_type': "application",
+            'application': "fdksajhfjkqwf",
+        }
+        form = CreateExportTagForm(True, True, data)
+        # Missing case_type
+        self.assertFalse(form.is_valid())
+
+    def test_static_model_type(self):
+        # Confirm that model_type is cleaned according to export permissions
+        data = {
+            'model_type': 'form',  # This should be switch to case in the cleaned_data
+            'app_type': 'application',
+            'application': 'asdfjwkeghrk',
+            "case_type": "my_case_type"
+        }
+        form = CreateExportTagForm(
+            has_form_export_permissions=False,
+            has_case_export_permissions=True,
+            data=data
+        )
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['model_type'], 'case')
 
 
 @patch('corehq.apps.export.forms.Group', new=MagicMock(get_reporting_groups=lambda x: []))
