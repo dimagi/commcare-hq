@@ -23,7 +23,6 @@ class Command(BaseCommand):
 
 def _kill_stale_workers():
     celery_monitoring = getattr(settings, 'CELERY_FLOWER_URL', None)
-    hosts_to_stop = ['ben', 'lisa']
     if celery_monitoring:
         cresource = Resource(celery_monitoring, timeout=3)
         t = cresource.get("api/workers", params_dict={'status': True}).body_string()
