@@ -570,7 +570,7 @@ ko.bindingHandlers.autocompleteSelect2 = new function(){
 
     this.init = function(element, valueAccessor) {
         that._init(element, that.select2Options(element));
-    }
+    };
 
     this._init = function(element, select2Options) {
         $(element).select2(select2Options).on('change', function() {
