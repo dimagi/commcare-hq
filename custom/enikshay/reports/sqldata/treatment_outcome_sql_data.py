@@ -157,5 +157,17 @@ class TreatmentOutcomeSqlData(EnikshaySqlData):
                         alias='total_initiated_on_art'
                     )
                 )
+            ] + [
+                DatabaseColumn(
+                    '',
+                    CountColumn(
+                        'doc_id',
+                        filters=(
+                            self.filters + [RawFilter("hiv_status = 'reactive'")] +
+                            [RawFilter("cpt_initiated = 'yes'")]
+                        ),
+                        alias='total_cpt_initiated'
+                    )
+                )
             ]
         )

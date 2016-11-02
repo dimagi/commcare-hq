@@ -8,7 +8,7 @@
         {% include 'reports/partials/description.html' %}
     {% else %}
         {% for report_context in reports %}
-            {% include 'reports/async/partials/report_content.html' with report=report_context.report report_table=report_context.report_table %}
+            {% include 'enikshay/partials/report_content.html' with report=report_context.report report_table=report_context.report_table %}
         {% endfor %}
     {% endif %}
 {% endblock %}
