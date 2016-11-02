@@ -23,7 +23,7 @@ var mk_translation_ui = function (spec) {
                     $(this).remove();
                     translation_ui.deleteTranslation(that.key.val());
                 }).css({cursor: 'pointer'}).attr('title', "Delete Translation");
-                
+
                 this.$add = $('<button class="btn btn-default"><i></i></button>').addClass(COMMCAREHQ.icons.ADD).click(function () {
                     // remove any trailing whitespace from the input box
                     that.key.val($.trim(that.key.val()));
@@ -53,46 +53,44 @@ var mk_translation_ui = function (spec) {
 
                 this.value.on('change', helperFunction);
 
-                var $input = this.value.ui.find('input');
-                var options = {
-                    at: "",
-                    maxLen: Infinity,
-                    suffix: "",
-                    tabSelectsMatch: false,
-                    callbacks: {
-                        filter: function(query, data, searchKey) {
-                            return _.filter(data, function(item) {
-                                return item.name.indexOf(query) !== -1;
-                            });
+                this.value.ui.find('input').select2({
+                    minimumInputLength: 0,
+                    delay: 100,
+                    allowClear: 1,
+                    placeholder: ' ',   // allowClear requires a placeholder
+                    initSelection: function(element, callback) {
+                        callback({
+                            id: element.val(),
+                            text: element.val(),
+                        });
+                    },
+                    createSearchChoice: function(term, data) {
+                        if (term !== "" && !_.find(data, function(d) { return d.text === term; })) {
+                            return {
+                                id: term,
+                                text: term,
+                            };
+                        }
+                    },
+                    ajax: {
+                        url: suggestionURL,
+                        data: function (term, page) {
+                            return {
+                                lang: translation_ui.lang,
+                                key: that.key.val(),
+                            };
                         },
-                        matcher: function(flag, subtext, should_startWithSpace) {
-                            return $input.val();
-                        },
-                        beforeInsert: function(value, $li) {
-                            helperFunction();
-
-                            // This and the inserted.atwho handler below ensure that the entire
-                            // input's value is replaced, regardless of where the cursor is
-                            $input.data("selected-value", value);
+                        results: function(data, page) {
+                            return {
+                                results: _.map(_.compact(data), function(item) {
+                                    return {
+                                        id: item,
+                                        text: item,
+                                    };
+                                }),
+                            };
                         },
                     },
-                };
-
-                $input.one('focus', function () {
-                    $.ajax({
-                        url: suggestionURL,
-                        data: {
-                            lang: translation_ui.lang,
-                            key: that.key.val(),
-                        },
-                        success: function (data) {
-                            options.data = data;
-                            $input.atwho(options).on("inserted.atwho", function(event, $li, otherEvent) {
-                                $input.val($input.data("selected-value")).change();
-                            });
-                            $input.atwho('run');
-                        },
-                    });
                 });
             };
             Translation.init = function (key, value) {
