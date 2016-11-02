@@ -1,5 +1,5 @@
 from corehq.apps.userreports.models import get_report_config
-from corehq.apps.userreports.sql import get_expanded_column_config
+from corehq.apps.userreports.columns import get_expanded_column_config
 
 
 def get_expanded_columns(column_configs, data_source_config):

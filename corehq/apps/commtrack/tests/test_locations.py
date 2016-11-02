@@ -227,6 +227,24 @@ class MultiLocationsTest(CommTrackTest):
         self.check_supply_point(user, sp1.case_id)
         self.check_supply_point(user, sp2.case_id)
 
+    def test_can_set_sql_locations(self):
+        user = self.user
+
+        loc1 = make_loc('secondloc').sql_location
+        sp1 = loc1.linked_supply_point()
+
+        loc2 = make_loc('thirdloc').sql_location
+        sp2 = loc2.linked_supply_point()
+
+        user.create_location_delegates([loc1, loc2])
+
+        # should only have the two new cases
+        self.assertEqual(len(user.locations), 2)
+
+        # and will have access to these two
+        self.check_supply_point(user, sp1.case_id)
+        self.check_supply_point(user, sp2.case_id)
+
     def test_setting_new_list_causes_submit(self):
         """
         this test mostly exists to make sure the one
@@ -245,6 +263,19 @@ class MultiLocationsTest(CommTrackTest):
         user.clear_location_delegates()
         loc1 = make_loc('secondloc')
         loc2 = make_loc('thirdloc')
+
+        user.add_location_delegate(loc1)
+        user.add_location_delegate(loc2)
+
+        with patch('corehq.apps.users.models.CommCareUser.submit_location_block') as submit_blocks:
+            user.create_location_delegates([loc1, loc2])
+            self.assertEqual(submit_blocks.call_count, 0)
+
+    def test_setting_existing_list_in_sql_does_not_submit(self):
+        user = self.user
+        user.clear_location_delegates()
+        loc1 = make_loc('secondloc').sql_location
+        loc2 = make_loc('thirdloc').sql_location
 
         user.add_location_delegate(loc1)
         user.add_location_delegate(loc2)

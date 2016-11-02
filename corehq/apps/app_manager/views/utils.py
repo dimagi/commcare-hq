@@ -3,6 +3,8 @@ from urllib import urlencode
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
+
+from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.decorators import require_deploy_apps
 
@@ -49,15 +51,15 @@ def back_to_main(request, domain, app_id=None, module_id=None, form_id=None,
         view_name = page
     else:
         view_name = {
-            1: 'view_app',
+            1: 'default_app',
             2: 'view_app',
             3: 'view_module',
-            4: 'view_form',
+            4: 'form_designer' if toggles.APP_MANAGER_V2.enabled(domain) else 'view_form',
         }[len(args)]
 
     return HttpResponseRedirect(
         "%s%s" % (
-            reverse('corehq.apps.app_manager.views.%s' % view_name, args=args),
+            reverse(view_name, args=args),
             "?%s" % urlencode(params) if params else ""
         )
     )

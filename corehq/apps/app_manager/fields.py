@@ -5,6 +5,8 @@ import collections
 import itertools
 from django import forms
 from django.utils.translation import ugettext as _
+
+from corehq import toggles
 from corehq.apps.app_manager.analytics import get_exports_by_application
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain, get_app
 from corehq.apps.app_manager.const import USERCASE_TYPE
@@ -164,7 +166,8 @@ class ApplicationDataRMIHelper(object):
         self.as_dict = as_dict
         default_form_placeholder = AppFormRMIPlaceholder(
             application=_("Select Application"),
-            module=_("Select Module"),
+            module=_("Select Menu" if toggles.APP_MANAGER_V2.enabled(domain)
+                     else "Select Module"),
             form=_("Select Form"),
         )
         self.form_placeholders = form_placeholders or default_form_placeholder

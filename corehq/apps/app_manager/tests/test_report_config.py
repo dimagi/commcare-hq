@@ -17,6 +17,7 @@ from corehq.apps.userreports.reports.filters.choice_providers import ChoiceProvi
 from corehq.apps.userreports.reports.filters.specs import DynamicChoiceListFilterSpec
 from corehq.apps.userreports.reports.specs import FieldColumn, MultibarChartSpec, \
     GraphDisplayColumn
+from corehq.apps.userreports.tests.utils import mock_datasource_config, mock_sql_backend
 from corehq.toggles import MOBILE_UCR, NAMESPACE_DOMAIN
 from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
 
@@ -132,7 +133,9 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
             with mock_report_configuration_get(cls.report_configs_by_id):
                 with mock.patch('corehq.apps.app_manager.fixtures.mobile_ucr.get_apps_in_domain',
                                 lambda domain, include_remote: [cls.app]):
-                    fixture, = report_fixture_generator(cls.user, '2.0')
+                    with mock_sql_backend():
+                        with mock_datasource_config():
+                            fixture, = report_fixture_generator(cls.user, '2.0')
         cls.fixture = ElementTree.tostring(fixture)
 
     @classmethod

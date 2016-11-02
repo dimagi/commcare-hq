@@ -113,7 +113,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.hqcase.export import export_cases
 from corehq.apps.hqwebapp.utils import csrf_inline
-from corehq.apps.locations.permissions import can_edit_form_location
+from corehq.apps.locations.permissions import can_edit_form_location, location_safe
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.userreports.util import default_language as ucr_default_language
@@ -1610,13 +1610,15 @@ def _get_case_or_404(domain, case_id):
         raise Http404()
 
 
-def _get_form_to_edit(domain, user, instance_id):
+def _get_location_safe_form(domain, user, instance_id):
+    """Fetches a form and verifies that the user can access it."""
     form = _get_form_or_404(domain, instance_id)
     if not can_edit_form_location(domain, user, form):
         raise PermissionDenied()
     return form
 
 
+@location_safe
 class FormDataView(BaseProjectReportSectionView):
     urlname = 'render_form_data'
     page_title = ugettext_lazy("Untitled Form")
@@ -1625,12 +1627,6 @@ class FormDataView(BaseProjectReportSectionView):
 
     @method_decorator(require_form_view_permission)
     def dispatch(self, request, *args, **kwargs):
-        if self.xform_instance is None:
-            raise Http404()
-        try:
-            assert self.domain == self.xform_instance.domain
-        except AssertionError:
-            raise Http404()
         return super(FormDataView, self).dispatch(request, *args, **kwargs)
 
     @property
@@ -1644,10 +1640,8 @@ class FormDataView(BaseProjectReportSectionView):
     @property
     @memoized
     def xform_instance(self):
-        try:
-            return FormAccessors(self.domain).get_form(self.instance_id)
-        except XFormNotFound:
-            return None
+        return _get_location_safe_form(
+            self.domain, self.request.couch_user, self.instance_id)
 
     @property
     @memoized
@@ -1709,6 +1703,7 @@ def download_form(request, domain, instance_id):
     return response
 
 
+@location_safe
 class EditFormInstance(View):
 
     @method_decorator(require_form_view_permission)
@@ -1749,7 +1744,7 @@ class EditFormInstance(View):
         if not (has_privilege(request, privileges.DATA_CLEANUP)) or not instance_id:
             raise Http404()
 
-        instance = _get_form_to_edit(domain, request.couch_user, instance_id)
+        instance = _get_location_safe_form(domain, request.couch_user, instance_id)
         context = _get_form_context(request, domain, instance)
         if not instance.app_id or not instance.build_id:
             return _error(_('Could not detect the application/form for this submission.'))
@@ -1812,11 +1807,12 @@ class EditFormInstance(View):
 @require_form_view_permission
 @require_permission(Permissions.edit_data)
 @require_POST
+@location_safe
 def restore_edit(request, domain, instance_id):
     if not (has_privilege(request, privileges.DATA_CLEANUP)):
         raise Http404()
 
-    instance = _get_form_to_edit(domain, request.couch_user, instance_id)
+    instance = _get_location_safe_form(domain, request.couch_user, instance_id)
     if isinstance(instance, XFormDeprecated):
         submit_form_locally(instance.get_xml(), domain, app_id=instance.app_id, build_id=instance.build_id)
         messages.success(request, _(u'Form was restored from a previous version.'))
@@ -1848,8 +1844,9 @@ def download_attachment(request, domain, instance_id):
 @require_form_view_permission
 @require_permission(Permissions.edit_data)
 @require_POST
+@location_safe
 def archive_form(request, domain, instance_id):
-    instance = _get_form_to_edit(domain, request.couch_user, instance_id)
+    instance = _get_location_safe_form(domain, request.couch_user, instance_id)
     assert instance.domain == domain
     if instance.is_normal:
         instance.archive(user_id=request.couch_user._id)
@@ -1895,8 +1892,9 @@ def archive_form(request, domain, instance_id):
 
 @require_form_view_permission
 @require_permission(Permissions.edit_data)
+@location_safe
 def unarchive_form(request, domain, instance_id):
-    instance = _get_form_to_edit(domain, request.couch_user, instance_id)
+    instance = _get_location_safe_form(domain, request.couch_user, instance_id)
     assert instance.domain == domain
     if instance.is_archived:
         instance.unarchive(user_id=request.couch_user._id)
@@ -1913,11 +1911,12 @@ def unarchive_form(request, domain, instance_id):
 @require_form_view_permission
 @require_permission(Permissions.edit_data)
 @require_POST
+@location_safe
 def resave_form(request, domain, instance_id):
     """Re-save the form to have it re-processed by pillows
     """
     from corehq.form_processor.change_publishers import publish_form_saved
-    instance = _get_form_to_edit(domain, request.couch_user, instance_id)
+    instance = _get_location_safe_form(domain, request.couch_user, instance_id)
     assert instance.domain == domain
     if should_use_sql_backend(domain):
         publish_form_saved(instance)

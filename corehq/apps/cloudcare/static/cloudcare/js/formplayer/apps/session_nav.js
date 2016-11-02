@@ -8,14 +8,18 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             "sessions": "listSessions", //list all this user's current sessions (incomplete forms)
             "sessions/:id": "getSession",
             "local/:path": "localInstall",
+            "restore_as/:page/:query": "listUsers",
+            "restore_as/:page/": "listUsers",
+            "restore_as": "listUsers",
+            "settings": "listSettings",
             ":session": "listMenus",  // Default route
         },
     });
 
+
     var API = {
         listApps: function () {
             FormplayerFrontend.regions.breadcrumb.empty();
-            FormplayerFrontend.trigger("clearForm");
             SessionNavigate.AppList.Controller.listApps();
         },
         singleApp: function(appId) {
@@ -28,17 +32,26 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             });
         },
         listMenus: function (sessionObject) {
-            FormplayerFrontend.trigger("clearForm");
             var urlObject = Util.CloudcareUrl.fromJson(
                 Util.encodedUrlToObject(sessionObject || Backbone.history.getFragment())
             );
             SessionNavigate.MenuList.Controller.selectMenu(urlObject);
         },
+        listUsers: function(page, query) {
+            FormplayerFrontend.trigger("clearForm");
+            page = parseInt(page);
+            if (_.isNaN(page)) {
+                page = 1;
+            }
+            SessionNavigate.Users.Controller.listUsers(page, query);
+        },
+        listSettings: function() {
+            SessionNavigate.AppList.Controller.listSettings();
+        },
         showDetail: function (model, detailTabIndex) {
             SessionNavigate.MenuList.Controller.showDetail(model, detailTabIndex);
         },
         listSessions: function() {
-            FormplayerFrontend.trigger("clearForm");
             SessionNavigate.SessionList.Controller.listSessions();
         },
         getSession: function(sessionId) {
@@ -57,7 +70,6 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
          * be a form response which will route to a new form.
          */
         renderResponse: function (response) {
-            FormplayerFrontend.trigger("clearForm");
             var currentFragment,
                 urlObject,
                 encodedUrl,
@@ -87,6 +99,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             SessionNavigate.MenuList.Controller.showMenu(menuCollection);
         },
     };
+    API = SessionNavigate.Middleware.apply(API);
 
     FormplayerFrontend.on("apps:currentApp", function () {
         var urlObject = Util.currentUrlToObject();
@@ -139,6 +152,16 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         API.listMenus();
     });
 
+    FormplayerFrontend.on('restore_as:list', function() {
+        FormplayerFrontend.navigate("/restore_as");
+        API.listUsers();
+    });
+
+    FormplayerFrontend.on('settings:list', function() {
+        FormplayerFrontend.navigate("/settings");
+        API.listSettings();
+    });
+
     FormplayerFrontend.on("menu:show:detail", function (model, detailTabIndex) {
         API.showDetail(model, detailTabIndex);
     });
@@ -164,7 +187,6 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
     });
 
     FormplayerFrontend.on("breadcrumbSelect", function (index) {
-        FormplayerFrontend.trigger("clearForm");
         var urlObject = Util.currentUrlToObject();
         urlObject.spliceSteps(index);
         Util.setUrlToObject(urlObject);

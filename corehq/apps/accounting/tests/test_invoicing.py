@@ -16,7 +16,6 @@ from corehq.apps.accounting.models import (
     Invoice,
     LineItem,
     SoftwarePlanEdition,
-    SoftwareProductType,
     Subscriber,
     Subscription,
     SubscriptionAdjustment,

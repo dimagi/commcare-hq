@@ -137,8 +137,8 @@ class CPTAndARTReport(EnikshayReport):
         return [
             [
                 data.get('total_hiv_cases', 0),
-                0,  # TODO ask about CPT field
-                data.get('total_initiated_on_art')
+                data.get('total_cpt_initiated', 0),
+                data.get('total_initiated_on_art', 0)
             ]
         ]
 

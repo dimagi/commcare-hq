@@ -1,0 +1,23 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+<script type="text/template" id="settings-template">
+<div class="module-menu-container">
+    <div class="page-header menu-header">
+        <h1 class="page-title">{% trans "Settings" %}</h1>
+    </div>
+    <table class="table module-table">
+        <tbody>
+            <tr>
+                <th>Use one question per screen</th>
+                <td><input class="js-one-question-per-screen" type="checkbox" data-size="mini" /></td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="page-footer">
+        <button class="btn btn-success js-done">
+            <i class="fa fa-check"></i>&nbsp;Done
+        </button>
+    </div>
+</div>
+</script>

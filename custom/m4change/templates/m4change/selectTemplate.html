@@ -84,7 +84,7 @@
                 {% block status_button %}
                     <button class="btn btn-default" disabled="disabled" data-bind="click: updateStatus.bind(undefined, 'reviewed'), mcctProjectReviewPage: selected_forms">{% trans 'Review' %}</button>
                 {% endblock %}
-                <a class="btn btn-default" href="{% url 'corehq.apps.reports.views.default' domain %}">{% trans 'Cancel' %}</a>
+                <a class="btn btn-default" href="{% url 'reports_home' domain %}">{% trans 'Cancel' %}</a>
                 {%  block reject_button %}
                     <button id="reject_button" class="btn btn-default" disabled="disabled" data-bind="click: updateStatus.bind(undefined, 'rejected'), mcctProjectReviewPage: selected_forms">{% trans 'Reject' %}</button>
                     <label for="reject_reason">{% trans 'Reason' %}:</label>

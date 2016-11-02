@@ -6,8 +6,7 @@ from django_prbac.models import Role, Grant
 from corehq import privileges
 from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, \
     SoftwarePlanEdition, Subscription, SoftwarePlan, SoftwarePlanVersion, \
-    SubscriptionType, ProBonoStatus, SoftwarePlanVisibility, SoftwareProduct, \
-    SoftwareProductType
+    SubscriptionType, ProBonoStatus, SoftwarePlanVisibility
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.app_manager.models import Application
@@ -58,10 +57,9 @@ class TestSubscriptionPermissionsChanges(BaseAccountingTest):
             plan=plan,
             role=role
         )
-        product = SoftwareProduct.objects.get(name='CommCare Pro', product_type=SoftwareProductType.COMMCARE)
-        rate = product.get_rate()
-        rate.save()
-        self.pro_rb_version.product_rate = rate
+        self.pro_rb_version.product_rate = DefaultProductPlan.get_default_plan_version(
+            SoftwarePlanEdition.PRO
+        ).product_rate
         self.pro_rb_version.save()
 
     def _subscribe_to_advanced(self):
@@ -107,7 +105,7 @@ class TestSubscriptionPermissionsChanges(BaseAccountingTest):
         self.assertTrue(LOGO_HOME in app_build.logo_refs.keys())
         self.assertTrue(LOGO_LOGIN in app_build.logo_refs.keys())
 
-        advanced_sub.cancel_subscription(web_user=self.admin_user.username)
+        community_sub = advanced_sub.change_plan(DefaultProductPlan.get_default_plan_version())
 
         app_standard = Application.get(app_standard._id)
         app_build = Application.get(app_build._id)
@@ -117,7 +115,9 @@ class TestSubscriptionPermissionsChanges(BaseAccountingTest):
         self.assertFalse(LOGO_HOME in app_build.logo_refs.keys())
         self.assertFalse(LOGO_LOGIN in app_build.logo_refs.keys())
 
-        self._subscribe_to_advanced()
+        community_sub.change_plan(
+            DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.ADVANCED)
+        )
 
         app_standard = Application.get(app_standard._id)
         app_build = Application.get(app_build._id)
@@ -162,7 +162,7 @@ class TestSubscriptionPermissionsChanges(BaseAccountingTest):
         report_builder_report.save()
 
         # downgrade the domain
-        pro_with_rb_sub.cancel_subscription(web_user=self.admin_user.username)
+        community_sub = pro_with_rb_sub.change_plan(DefaultProductPlan.get_default_plan_version())
 
         # Check that the builder data source is deactivated
         builder_report_data_source = _get_data_source(builder_report_data_source._id)
@@ -174,7 +174,9 @@ class TestSubscriptionPermissionsChanges(BaseAccountingTest):
         # upgrade the domain
         # (for the upgrade to work, there has to be an existing subscription,
         # which is why we subscribe to advanced first)
-        self._subscribe_to_advanced()
+        community_sub.change_plan(
+            DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.ADVANCED)
+        )
         pro_with_rb_sub = self._subscribe_to_pro_with_rb()
 
         # check that the data source is activated
@@ -188,7 +190,7 @@ class TestSubscriptionPermissionsChanges(BaseAccountingTest):
         report_builder_report.delete()
 
         # reset the subscription
-        pro_with_rb_sub.cancel_subscription(web_user=self.admin_user.username)
+        pro_with_rb_sub.change_plan(DefaultProductPlan.get_default_plan_version())
 
     def tearDown(self):
         self.project.delete()

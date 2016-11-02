@@ -2,13 +2,43 @@ from sqlagg.columns import CountColumn
 from sqlagg.filters import RawFilter
 
 from corehq.apps.reports.sqlreport import DatabaseColumn
-from custom.enikshay.reports.const import AGE_RANGES
+from custom.enikshay.reports.const import AGE_RANGES, PATIENT_TYPES
 from custom.enikshay.reports.generic import EnikshaySqlData
+from custom.enikshay.reports.utils import convert_to_raw_filters_list
 
 TABLE_ID = 'episode'
 
 
 DAYS_IN_YEARS = 365
+
+
+def generate_for_all_patient_types(slug, filters):
+    columns = []
+    for patient_type in PATIENT_TYPES:
+        patient_type_filter = RawFilter(
+            "patient_type = '%s'" % patient_type
+        )
+        columns.append(
+            DatabaseColumn(
+                '',
+                CountColumn(
+                    'doc_id',
+                    filters=filters + [patient_type_filter],
+                    alias='%s_%s' % (slug, patient_type)
+                )
+            )
+        )
+    columns.append(
+        DatabaseColumn(
+            '',
+            CountColumn(
+                'doc_id',
+                filters=filters,
+                alias='%s_total' % slug
+            )
+        )
+    )
+    return columns
 
 
 def generate_for_all_ranges(slug, filters):
@@ -53,6 +83,13 @@ def generate_for_all_ranges(slug, filters):
     return columns
 
 
+def diagnosis_filter(diagnosis, classification):
+    return [
+        RawFilter("basis_of_diagnosis = '%s'" % diagnosis),
+        RawFilter("disease_classification = '%s'" % classification)
+    ]
+
+
 class CaseFindingSqlData(EnikshaySqlData):
 
     @property
@@ -62,6 +99,18 @@ class CaseFindingSqlData(EnikshaySqlData):
         ]
 
         return (
+            generate_for_all_patient_types(
+                'pulmonary_microbiologically', self.filters + diagnosis_filter('microbiological', 'pulmonary')
+            ) +
+            generate_for_all_patient_types(
+                'pulmonary_clinical', self.filters + diagnosis_filter('clinical', 'pulmonary')
+            ) +
+            generate_for_all_patient_types(
+                'extra_pulmonary', self.filters + [RawFilter("disease_classification = 'extra_pulmonary'")]
+            ) +
+            generate_for_all_patient_types(
+                'total', self.filters + [RawFilter("patient_type IS NOT NULL")]
+            ) +
             generate_for_all_ranges('male', self.filters + [RawFilter("sex = 'male'")]) +
             generate_for_all_ranges('female', self.filters + [RawFilter("sex = 'female'")]) +
             generate_for_all_ranges('transgender', self.filters + [RawFilter("sex = 'transgender'")]) +
@@ -108,7 +157,9 @@ class CaseFindingSqlData(EnikshaySqlData):
                     '',
                     CountColumn(
                         'doc_id',
-                        filters=self.filters + [RawFilter("hiv_status = 'reactive'")],
+                        filters=self.filters + [
+                            RawFilter("hiv_status = 'reactive'"), RawFilter("cpt_initiated = 'yes'")
+                        ],
                         alias='hiv_reactive_cpt'
                     )
                 ),
@@ -123,6 +174,100 @@ class CaseFindingSqlData(EnikshaySqlData):
                         alias='hiv_reactive_art'
                     )
 
+                ),
+                DatabaseColumn(
+                    '',
+                    CountColumn(
+                        'doc_id',
+                        filters=(
+                            self.filters + convert_to_raw_filters_list(
+                                "patient_type = 'new'",
+                                "disease_classification = 'pulmonary'",
+                                "diagnostic_result = 'tb_detected'"
+                            )
+                        ),
+                        alias='new_positive_tb_pulmonary'
+                    )
+                ),
+                DatabaseColumn(
+                    '',
+                    CountColumn(
+                        'doc_id',
+                        filters=(
+                            self.filters + convert_to_raw_filters_list(
+                                "patient_type = 'new'",
+                                "disease_classification = 'pulmonary'",
+                                "diagnostic_result = 'tb_not_detected'"
+                            )
+                        ),
+                        alias='new_negative_tb_pulmonary'
+                    )
+                ),
+                DatabaseColumn(
+                    '',
+                    CountColumn(
+                        'doc_id',
+                        filters=(
+                            self.filters + convert_to_raw_filters_list(
+                                "patient_type = 'new'",
+                                "disease_classification = 'extrapulmonary'",
+                                "diagnostic_result = 'tb_detected'"
+                            )
+                        ),
+                        alias='new_positive_tb_extrapulmonary'
+                    )
+                ),
+                DatabaseColumn(
+                    '',
+                    CountColumn(
+                        'doc_id',
+                        filters=(
+                            self.filters + convert_to_raw_filters_list(
+                                "patient_type = 'recurrent'",
+                                "diagnostic_result = 'tb_detected'"
+                            )
+                        ),
+                        alias='recurrent_positive_tb'
+                    )
+                ),
+                DatabaseColumn(
+                    '',
+                    CountColumn(
+                        'doc_id',
+                        filters=(
+                            self.filters + convert_to_raw_filters_list(
+                                "patient_type = 'treatment_after_failure'",
+                                "diagnostic_result = 'tb_detected'"
+                            )
+                        ),
+                        alias='failure_positive_tb'
+                    )
+                ),
+                DatabaseColumn(
+                    '',
+                    CountColumn(
+                        'doc_id',
+                        filters=(
+                            self.filters + convert_to_raw_filters_list(
+                                "patient_type = 'treatment_after_lfu'",
+                                "diagnostic_result = 'tb_detected'"
+                            )
+                        ),
+                        alias='lfu_positive_tb'
+                    )
+                ),
+                DatabaseColumn(
+                    '',
+                    CountColumn(
+                        'doc_id',
+                        filters=(
+                            self.filters + convert_to_raw_filters_list(
+                                "patient_type = 'other_previously_treated'",
+                                "diagnostic_result = 'tb_detected'"
+                            )
+                        ),
+                        alias='other_positive_tb'
+                    )
                 )
             ]
         )

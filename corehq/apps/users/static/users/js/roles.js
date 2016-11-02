@@ -31,6 +31,9 @@ hqDefine('users/js/roles.js', function () {
                 };
                 self.hasUsersAssigned = data.hasUsersAssigned;
                 self.hasUnpermittedLocationRestriction = data.has_unpermitted_location_restriction || false;
+                if (self.hasUnpermittedLocationRestriction) {
+                    self.permissions.access_all_locations(true);
+                }
                 return self;
             },
             unwrap: function (self) {
@@ -42,9 +45,6 @@ hqDefine('users/js/roles.js', function () {
                     return report.path;
                 });
                 data.permissions.view_reports = data.reportPermissions.all;
-                if (self.hasUnpermittedLocationRestriction) {
-                    data.permissions.access_all_locations = true;
-                }
                 return data;
             },
         };

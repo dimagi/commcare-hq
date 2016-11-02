@@ -26,7 +26,7 @@
     <tr>
         <td>
             {% trans "Low Performing Users" %}
-            <p class="text-muted"><small>{% blocktrans %}Active users who submitted less than {{ threhold }} forms last month.{% endblocktrans %}</small></p>
+            <p class="text-muted"><small>{% blocktrans %}Active users who submitted less than {{ threshold }} forms last month.{% endblocktrans %}</small></p>
         </td>
         <td>{{ last_month.number_of_low_performing_users }}</td>
         <td>

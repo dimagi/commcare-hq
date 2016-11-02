@@ -3,7 +3,7 @@ from elasticsearch import NotFoundError
 from corehq.apps.userreports.util import get_table_name
 from corehq.apps.userreports.adapter import IndicatorAdapter
 from corehq.apps.es.es_query import HQESQuery
-from corehq.elastic import get_es_new
+from corehq.elastic import get_es_new, ESError
 from dimagi.utils.decorators.memoized import memoized
 from pillowtop.es_utils import INDEX_STANDARD_SETTINGS
 
@@ -133,6 +133,22 @@ class IndicatorESAdapter(IndicatorAdapter):
 
     def get_query_object(self):
         return ESAlchemy(self.table_name, self.config)
+
+    def get_distinct_values(self, column, limit):
+        query = self.get_query_object()
+        too_many_values = False
+
+        try:
+            distinct_values = query.distinct_values(column, limit + 1)
+        except ESError:
+            # table doesn't exist
+            return [], False
+
+        if len(distinct_values) > limit:
+            distinct_values = distinct_values[:limit]
+            too_many_values = True
+
+        return distinct_values, too_many_values
 
     def best_effort_save(self, doc):
         try:

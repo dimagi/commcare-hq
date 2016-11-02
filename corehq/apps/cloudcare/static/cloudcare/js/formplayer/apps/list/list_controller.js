@@ -27,6 +27,11 @@ FormplayerFrontend.module("SessionNavigate.AppList", function(AppList, Formplaye
                 new FormplayerFrontend.Navigation.PhoneNavigation({ appId: appId })
             );
             FormplayerFrontend.regions.main.show(singleAppView);
+            FormplayerFrontend.trigger('phone:back:hide');
+        },
+        listSettings: function() {
+            var settingsView = new AppList.SettingsView();
+            FormplayerFrontend.regions.main.show(settingsView);
         },
     };
 });

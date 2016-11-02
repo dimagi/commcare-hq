@@ -42,6 +42,7 @@
               href="{% static 'datatables/media/css/jquery.dataTables.min.css' %}"/>
         <link rel="stylesheet" href="{% static 'cloudcare/css/webforms.css' %}">
         <link rel="stylesheet" href="{% static 'codemirror/lib/codemirror.css' %}"/>
+        <link rel="stylesheet" href="{% static 'bootstrap-switch/dist/css/bootstrap3/bootstrap-switch.css' %}"/>
     {% endcompress %}
 
   {% if less_debug %}
@@ -140,6 +141,7 @@
         <section id="cases"></section>
         <div id="menu-container">
             <section id="formplayer-progress-container"></section>
+            <div id="restore-as-region"></div>
             <div id="breadcrumb-region"></div>
             <div id="persistent-case-tile" class="container"></div>
             <section id="cloudcare-notifications" class="container notifications-container"></section>
@@ -159,9 +161,11 @@
 
     {% include 'form_entry/templates.html' %}
     {% include 'formplayer/grid_view.html' %}
+    {% include 'formplayer/settings_view.html' %}
     {% include 'formplayer/case_detail.html' %}
     {% include 'formplayer/case_list.html' %}
     {% include 'formplayer/menu_list.html' %}
+    {% include 'formplayer/users.html' %}
     {% include 'formplayer/session_list.html' %}
     {% include 'formplayer/query_view.html' %}
     {% include 'formplayer/confirmation_modal.html' %}

@@ -24,8 +24,10 @@ def set_language(sender, **kwargs):
 
 
 # Signal that syncs django_user => couch_user
-def django_user_post_save_signal(sender, instance, created, **kwargs):
+def django_user_post_save_signal(sender, instance, created, raw=False, **kwargs):
     from corehq.apps.users.models import CouchUser
+    if raw:
+        return
     return CouchUser.django_user_post_save_signal(sender, instance, created)
 
 

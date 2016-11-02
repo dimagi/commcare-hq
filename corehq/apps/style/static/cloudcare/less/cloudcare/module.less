@@ -37,6 +37,13 @@
   }
 }
 
+.module-icon-user {
+  background-color: @cc-dark-cool-accent-mid;
+  .module-icon {
+    color: @cc-dark-cool-accent-hi;
+  }
+}
+
 .module-audio-control, .module-delete-control {
   text-align: center;
   .transition(background 1s);
@@ -104,7 +111,7 @@
   background-color: darken(@cc-bg, 5);;
 }
 
-.module-caselist-search-container {
+.module-search-container, .module-pagination-container {
   padding: 10px;
 }
 
@@ -137,6 +144,17 @@
     background-color: @cc-brand-hi;
     color: @cc-brand-low;
   }
+}
+
+.module-banner {
+  background-color: @cc-light-warm-accent-hi;
+  color: black;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  border: none;
+  margin-top: -1px;
+  text-align: center;
+  font-size: 14px;
 }
 
 .module-table-casedetail tbody tr:nth-child(odd) {
@@ -189,12 +207,6 @@
     font-size: 1.8rem;
   }
 }
-@media(max-width: 720px) {
-  .module-caselist-table-container {
-    width: 100%;
-    overflow-x: scroll;
-  }
-}
 
 #formplayer-progress {
   top: 0;
@@ -215,4 +227,37 @@
   margin: 0 auto;
   width: 80%;
   top: 50%;
+
+  // Centers container vertically
+  transform: translateY(-50%);
+  -ms-transform: translateY(-50%);
+  -webkit-transform: translateY(-50%);
+
+  .progress-title {
+    display: inline-block;
+    h1 {
+      margin-bottom: 0px;
+    }
+    .subtext {
+      margin-top: 0px;
+    }
+    margin-bottom: 14px;
+  }
+}
+
+@media(max-width: @screen-sm-max) {
+  .module-caselist-table-container {
+    width: 100%;
+    overflow-x: scroll;
+  }
+  #formplayer-progress .progress-container {
+    .progress-title {
+      h1, h2 {
+        font-size: 1.3em;
+      }
+      h1 {
+        margin-bottom: 4px;
+      }
+    }
+  }
 }

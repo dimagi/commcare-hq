@@ -1,6 +1,6 @@
-from couchdbkit import ResourceNotFound
 from django.core.cache import cache
-from casexml.apps.case.models import CommCareCase
+
+from corehq.apps.export.esaccessors import get_case_name
 from corehq.apps.users.util import cached_user_id_to_username, cached_owner_id_to_display
 
 """
@@ -23,14 +23,12 @@ NULL_CACHE_VALUE = "___NULL_CACHE_VAL___"
 
 
 def _cached_case_id_to_case_name(case_id):
+    if not case_id:
+        return None
     key = 'case_id_to_case_name_cache_{id}'.format(id=case_id)
     ret = cache.get(key, NULL_CACHE_VALUE)
     if ret != NULL_CACHE_VALUE:
         return ret
-    try:
-        case = CommCareCase.get_lite(case_id)
-        ret = case['name'] if "name" in case else None
-    except ResourceNotFound:
-        ret = None
-    cache.set(key, ret)
-    return ret
+    case_name = get_case_name(case_id)
+    cache.set(key, case_name)
+    return case_name

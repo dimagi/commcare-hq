@@ -1,5 +1,6 @@
 from collections import OrderedDict
 from datetime import datetime, timedelta
+import hashlib
 import json
 import warnings
 
@@ -13,6 +14,7 @@ from django import template
 from django.core.urlresolvers import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
+from dimagi.utils.decorators.memoized import memoized
 
 from dimagi.utils.make_uuid import random_hex
 from corehq.apps.domain.models import Domain
@@ -223,11 +225,16 @@ def is_new_cloudcare(request):
 
 @register.simple_tag
 def toggle_js_url(domain, username):
-    return '{url}?username={username}&cachebuster={domain_cb}-{user_cb}'.format(
+    return (
+        '{url}?username={username}'
+        '&cachebuster={toggles_cb}-{previews_cb}-{domain_cb}-{user_cb}'
+    ).format(
         url=reverse('toggles_js', args=[domain]),
         username=username,
         domain_cb=toggle_js_domain_cachebuster(domain),
         user_cb=toggle_js_user_cachebuster(username),
+        toggles_cb=toggles_cachebuster(),
+        previews_cb=previews_cachebuster(),
     )
 
 
@@ -235,13 +242,36 @@ def toggle_js_url(domain, username):
 def toggle_js_domain_cachebuster(domain):
     # to get fresh cachebusters on the next deploy
     # change the date below (output from *nix `date` command)
-    #   Thu Mar  3 16:21:30 EST 2016
+    #   Mon Oct 31 10:30:09 EDT 2016
     return random_hex()[:3]
 
 
 @quickcache(['username'], timeout=30 * 24 * 60 * 60)
 def toggle_js_user_cachebuster(username):
     return random_hex()[:3]
+
+
+def _get_py_filename(module):
+    """
+    return the full path to the .py file of a module
+    (not the .pyc file)
+
+    """
+    return module.__file__.rstrip('c')
+
+
+@memoized
+def toggles_cachebuster():
+    import corehq.toggles
+    with open(_get_py_filename(corehq.toggles)) as f:
+        return hashlib.sha1(f.read()).hexdigest()[:3]
+
+
+@memoized
+def previews_cachebuster():
+    import corehq.feature_previews
+    with open(_get_py_filename(corehq.feature_previews)) as f:
+        return hashlib.sha1(f.read()).hexdigest()[:3]
 
 
 @register.filter

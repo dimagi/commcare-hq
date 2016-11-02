@@ -1,26 +1,35 @@
 from couchdbkit import ResourceNotFound
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
-from corehq.apps.fixtures.exceptions import ExcelMalformatException, FixtureUploadError, \
-    FixtureAPIException, DuplicateFixtureTagException
+
 from corehq.apps.fixtures.models import FixtureDataType, FieldList, FixtureItemField, \
     FixtureDataItem
-from corehq.apps.fixtures.utils import get_fields_without_attributes
-from corehq.util.soft_assert import soft_assert
-from corehq.util.spreadsheets.excel import WorksheetNotFound
-from .upload import DELETE_HEADER, FixtureUploadResult, \
-    get_memoized_location, FAILURE_MESSAGES, get_workbook
+from corehq.apps.fixtures.upload.const import DELETE_HEADER
+from corehq.apps.fixtures.upload.definitions import FixtureUploadResult
+from corehq.apps.fixtures.upload.location_cache import get_memoized_location_getter
+from corehq.apps.fixtures.upload.workbook import get_workbook
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
 from dimagi.utils.couch.bulk import CouchTransaction
 from soil import DownloadBase
 
 
-def run_upload(domain, workbook, replace=False, task=None):
+def upload_fixture_file(domain, filename, replace, task=None):
+    """
+    should only ever be called after the same file has been validated
+    using validate_fixture_file_format
+
+    """
+
+    workbook = get_workbook(filename)
+    return _run_fixture_upload(domain, workbook, replace=replace, task=task)
+
+
+def _run_fixture_upload(domain, workbook, replace=False, task=None):
     from corehq.apps.users.bulkupload import GroupMemoizer
     return_val = FixtureUploadResult()
     group_memoizer = GroupMemoizer(domain)
-    get_location = get_memoized_location(domain)
+    get_location = get_memoized_location_getter(domain)
 
     with CouchTransaction() as transaction:
         type_sheets = workbook.get_all_type_sheets()
@@ -181,132 +190,3 @@ def run_upload(domain, workbook, replace=False, task=None):
                                                    transaction=transaction)
 
     return return_val
-
-
-def _diff_lists(list_a, list_b):
-    set_a = set(list_a)
-    set_b = set(list_b)
-    not_in_b = set_a.difference(set_b)
-    not_in_a = set_b.difference(set_a)
-    return sorted(not_in_a), sorted(not_in_b)
-
-
-def validate_fixture_upload(workbook):
-
-    try:
-        type_sheets = workbook.get_all_type_sheets()
-    except DuplicateFixtureTagException as e:
-        return [e.message]
-    except ExcelMalformatException as e:
-        return e.errors
-
-    error_messages = []
-
-    for table_number, table_def in enumerate(type_sheets):
-        tag = table_def.table_id
-        fields = table_def.fields
-        item_attributes = table_def.item_attributes
-        try:
-            data_items = workbook.get_data_sheet(tag)
-        except WorksheetNotFound:
-            error_messages.append(_(FAILURE_MESSAGES['type_has_no_sheet']).format(type=tag))
-            continue
-
-        try:
-            data_item = iter(data_items).next()
-        except StopIteration:
-            continue
-        else:
-            # Check that type definitions in 'types' sheet vs corresponding columns in the item-sheet MATCH
-            item_fields_list = data_item['field'].keys() if 'field' in data_item else []
-            not_in_sheet, not_in_types = _diff_lists(item_fields_list, get_fields_without_attributes(fields))
-            for missing_field in not_in_sheet:
-                error_messages.append(
-                    _(FAILURE_MESSAGES["has_no_field_column"])
-                    .format(tag=tag, field=missing_field))
-            for missing_field in not_in_types:
-                error_messages.append(
-                    _(FAILURE_MESSAGES["has_extra_column"])
-                    .format(tag=tag, field=missing_field))
-
-            # check that this item has all the properties listed in its 'types' definition
-            item_attributes_list = data_item['property'].keys() if 'property' in data_item else []
-            not_in_sheet, not_in_types = _diff_lists(item_attributes_list, item_attributes)
-            for missing_field in not_in_sheet:
-                error_messages.append(
-                    _(FAILURE_MESSAGES["has_no_field_column"])
-                    .format(tag=tag, field=missing_field))
-            for missing_field in not_in_types:
-                error_messages.append(
-                    _(FAILURE_MESSAGES["has_extra_column"])
-                    .format(tag=tag, field=missing_field))
-
-            # check that properties in 'types' sheet vs item-sheet MATCH
-            for field in fields:
-                if len(field.properties) > 0:
-                    sheet_props = data_item.get(field.field_name, {})
-                    if not isinstance(sheet_props, dict):
-                        error_messages.append(
-                            _(FAILURE_MESSAGES["invalid_field_syntax"])
-                            .format(tag=tag, field=field.field_name))
-                        continue
-                    sheet_props_list = sheet_props.keys()
-                    type_props = field.properties
-                    not_in_sheet, not_in_types = _diff_lists(sheet_props_list, type_props)
-                    for missing_property in not_in_sheet:
-                        error_messages.append(
-                            _(FAILURE_MESSAGES["sheet_has_no_property"])
-                            .format(tag=tag, property=missing_property, field=field.field_name))
-                    for missing_property in not_in_types:
-                        error_messages.append(
-                            _(FAILURE_MESSAGES["sheet_has_extra_property"])
-                            .format(tag=tag, property=missing_property, field=field.field_name))
-                    # check that fields with properties are numbered
-                    if type(data_item['field'][field.field_name]) != list:
-                        error_messages.append(
-                            _(FAILURE_MESSAGES["invalid_field_with_property"])
-                            .format(field=field.field_name))
-                    field_prop_len = len(data_item['field'][field.field_name])
-                    for prop in sheet_props:
-                        if type(sheet_props[prop]) != list:
-                            error_messages.append(
-                                _(FAILURE_MESSAGES["invalid_property"])
-                                .format(field=field.field_name, prop=prop))
-                        if len(sheet_props[prop]) != field_prop_len:
-                            error_messages.append(
-                                _(FAILURE_MESSAGES["wrong_field_property_combos"])
-                                .format(field=field.field_name, prop=prop))
-    return error_messages
-
-
-def do_fixture_upload(domain, file_ref, replace, task=None):
-    workbook = get_workbook(file_ref.get_filename())
-    try:
-        return run_upload(domain, workbook, replace=replace, task=task)
-    except WorksheetNotFound as e:
-        raise FixtureUploadError(
-            _("Workbook does not contain a sheet called '%(title)s'")
-            % {'title': e.title})
-    except ExcelMalformatException as e:
-        raise FixtureUploadError(
-            _("Uploaded excel file has following formatting-problems: '%(e)s'")
-            % {'e': '\n'.join(e.errors)})
-    except FixtureAPIException as e:
-        raise FixtureUploadError(unicode(e))
-    except Exception:
-        soft_assert('@'.join(['droberts', 'dimagi.com'])).call(
-            False, 'Unknown fixture upload exception',
-            {'filename': file_ref.get_filename()}
-        )
-        raise FixtureUploadError(_("Fixture upload failed for some reason and we have noted this failure. "
-                                   "Please make sure the excel file is correctly formatted and try again."))
-
-
-def safe_fixture_upload(domain, file_ref, replace, task=None):
-    try:
-        return do_fixture_upload(domain, file_ref, replace, task)
-    except FixtureUploadError as e:
-        result = FixtureUploadResult()
-        result.success = False
-        result.errors.append(unicode(e))
-        return result

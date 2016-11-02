@@ -906,10 +906,6 @@ class Subscriber(models.Model):
             internal_change=is_internal_change,
         )
 
-    def cancel_subscription(self, old_subscription):
-        assert old_subscription
-        return self._apply_upgrades_and_downgrades(old_subscription=old_subscription)
-
     def change_subscription(self, downgraded_privileges, upgraded_privileges, new_plan_version,
                             old_subscription, new_subscription, internal_change):
         return self._apply_upgrades_and_downgrades(
@@ -1043,6 +1039,7 @@ class Subscription(models.Model):
     )
     last_modified = models.DateTimeField(auto_now=True)
     is_hidden_to_ops = models.BooleanField(default=False)
+    skip_auto_downgrade = models.BooleanField(default=False)
 
     objects = SubscriptionManager()
     api_objects = Manager()
@@ -1089,7 +1086,8 @@ class Subscription(models.Model):
         These are the attributes of a Subscription that can always be
         changed while the subscription is active (or reactivated)
         """
-        return ['do_not_invoice', 'no_invoice_reason', 'salesforce_contract_id']
+        return ['do_not_invoice', 'no_invoice_reason',
+                'salesforce_contract_id', 'skip_auto_downgrade']
 
     @property
     def next_subscription_filter(self):
@@ -1112,29 +1110,6 @@ class Subscription(models.Model):
             return self.next_subscription_filter.order_by('date_start')[0]
         except (Subscription.DoesNotExist, IndexError):
             return None
-
-    def cancel_subscription(self, adjustment_method=None, web_user=None, note=None):
-        adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
-        today = datetime.date.today()
-        if self.date_end is not None and today > self.date_end:
-            raise SubscriptionAdjustmentError("The end date for this subscription already passed.")
-
-        self.date_end = today
-        if self.date_start > today:
-            self.date_start = today
-
-        self.is_active = False
-        self.save()
-
-        self.subscriber.cancel_subscription(old_subscription=self)
-
-        # transfer existing credit lines to the account
-        self.transfer_credits()
-
-        SubscriptionAdjustment.record_adjustment(
-            self, reason=SubscriptionAdjustmentReason.CANCEL,
-            method=adjustment_method, note=note, web_user=web_user,
-        )
 
     def raise_conflicting_dates(self, date_start, date_end):
         """Raises a subscription Adjustment error if the specified date range
@@ -1190,7 +1165,7 @@ class Subscription(models.Model):
                             auto_generate_credits=None,
                             web_user=None, note=None, adjustment_method=None,
                             service_type=None, pro_bono_status=None, funding_source=None,
-                            skip_invoicing_if_no_feature_charges=None):
+                            skip_invoicing_if_no_feature_charges=None, skip_auto_downgrade=None):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
         self._update_dates(date_start, date_end)
@@ -1209,6 +1184,7 @@ class Subscription(models.Model):
             service_type=service_type,
             pro_bono_status=pro_bono_status,
             funding_source=funding_source,
+            skip_auto_downgrade=skip_auto_downgrade
         )
 
         self.save()
@@ -1251,6 +1227,7 @@ class Subscription(models.Model):
             'service_type',
             'pro_bono_status',
             'funding_source',
+            'skip_auto_downgrade'
         }
 
         assert property_names >= set(kwargs.keys())
@@ -1264,7 +1241,8 @@ class Subscription(models.Model):
                     note=None, web_user=None, adjustment_method=None,
                     service_type=None, pro_bono_status=None, funding_source=None,
                     transfer_credits=True, internal_change=False, account=None,
-                    do_not_invoice=None, no_invoice_reason=None, **kwargs):
+                    do_not_invoice=None, no_invoice_reason=None,
+                    skip_auto_downgrade=None, **kwargs):
         """
         Changing a plan TERMINATES the current subscription and
         creates a NEW SUBSCRIPTION where the old plan left off.
@@ -1272,15 +1250,11 @@ class Subscription(models.Model):
         """
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
-        change_status_result = get_change_status(self.plan_version, new_plan_version)
-
         today = datetime.date.today()
-        new_start_date = today if self.date_start < today else self.date_start
+        assert is_active_subscription(self.date_start, self.date_end, today=today) and self.is_active
+        assert date_end is None or date_end > today
 
-        if self.date_start > today:
-            self.date_start = today
-        if self.date_end is None or self.date_end > today:
-            self.date_end = today
+        self.date_end = today
         if self.date_delay_invoicing is not None and self.date_delay_invoicing > today:
             self.date_delay_invoicing = today
         self.is_active = False
@@ -1291,22 +1265,25 @@ class Subscription(models.Model):
             plan_version=new_plan_version,
             subscriber=self.subscriber,
             salesforce_contract_id=self.salesforce_contract_id,
-            date_start=new_start_date,
+            date_start=today,
             date_end=date_end,
             date_delay_invoicing=self.date_delay_invoicing,
-            is_active=is_active_subscription(new_start_date, date_end),
+            is_active=True,
             do_not_invoice=do_not_invoice if do_not_invoice else self.do_not_invoice,
             no_invoice_reason=no_invoice_reason if no_invoice_reason else self.no_invoice_reason,
             service_type=(service_type or SubscriptionType.NOT_SET),
             pro_bono_status=(pro_bono_status or ProBonoStatus.NO),
             funding_source=(funding_source or FundingSource.CLIENT),
+            skip_auto_downgrade=skip_auto_downgrade if skip_auto_downgrade is not None else self.skip_auto_downgrade,
             **kwargs
         )
 
         new_subscription.save()
+        new_subscription.raise_conflicting_dates(new_subscription.date_start, new_subscription.date_end)
 
         new_subscription.set_billing_account_entry_point()
 
+        change_status_result = get_change_status(self.plan_version, new_plan_version)
         self.subscriber.change_subscription(
             downgraded_privileges=change_status_result.downgraded_privs,
             upgraded_privileges=change_status_result.upgraded_privs,

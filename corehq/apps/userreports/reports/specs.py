@@ -28,8 +28,8 @@ from sqlagg.columns import (
     YearColumn,
 )
 from corehq.apps.reports.sqlreport import DatabaseColumn, AggregateColumn
+from corehq.apps.userreports.columns import ColumnConfig, get_expanded_column_config
 from corehq.apps.userreports.specs import TypeProperty
-from corehq.apps.userreports.sql import get_expanded_column_config, ColumnConfig
 from corehq.apps.userreports.transforms.factory import TransformFactory
 from corehq.apps.userreports.util import localize
 from dimagi.utils.decorators.memoized import memoized
