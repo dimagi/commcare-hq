@@ -9,6 +9,7 @@ from corehq.apps.dump_reload.exceptions import DomainDumpError
 from corehq.apps.dump_reload.interface import DataDumper
 from corehq.apps.dump_reload.sql.filters import SimpleFilter, UsernameFilter, UserIDFilter
 from corehq.apps.dump_reload.sql.serialization import JsonLinesSerializer
+from corehq.apps.dump_reload.util import get_model_label
 from corehq.sql_db.config import partition_config
 from corehq.util.decorators import ContextDecorator
 
@@ -100,18 +101,14 @@ def get_objects_to_dump(domain, excludes, stats_counter=None):
                 filters = get_model_domain_filters(model_class, domain)
                 for filter in filters:
                     for obj in queryset.filter(filter).iterator():
-                        stats_counter.update([_get_model_label(model_class)])
+                        stats_counter.update([get_model_label(model_class)])
                         yield obj
 
 
 def get_model_domain_filters(model_class, domain):
-    label = _get_model_label(model_class)
+    label = get_model_label(model_class)
     filter = APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP[label]
     return filter.get_filters(domain)
-
-
-def _get_model_label(model_class):
-    return '{}.{}'.format(model_class._meta.app_label, model_class.__name__)
 
 
 def get_excluded_apps_and_models(excludes):
