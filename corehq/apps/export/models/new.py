@@ -943,7 +943,7 @@ class InferredExportGroupSchema(ExportGroupSchema):
     Same as an ExportGroupSchema with a few utility methods
     """
 
-    def put_item(self, path, inferred_from=None):
+    def put_item(self, path, inferred_from=None, item_cls=ScalarItem):
         assert self.path == path[:len(self.path)], "ExportItem's path doesn't start with the table"
         item = self.get_item(path)
 
@@ -951,7 +951,7 @@ class InferredExportGroupSchema(ExportGroupSchema):
             item.inferred_from.add(inferred_from or UNKNOWN_INFERRED_FROM)
             return item
 
-        item = ExportItem(
+        item = item_cls(
             path=path,
             label='.'.join(map(lambda node: node.name, path)),
             inferred=True,
