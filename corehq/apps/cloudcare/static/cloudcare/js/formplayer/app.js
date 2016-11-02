@@ -76,7 +76,7 @@ FormplayerFrontend.reqres.setHandler('gridPolyfillPath', function(path) {
 
 FormplayerFrontend.reqres.setHandler('currentUser', function () {
     if (!FormplayerFrontend.currentUser) {
-        FormplayerFrontend.currentUser = new FormplayerFrontend.Entities.Models.CurrentUser();
+        FormplayerFrontend.currentUser = new FormplayerFrontend.Users.Models.CurrentUser();
     }
     return FormplayerFrontend.currentUser;
 });
