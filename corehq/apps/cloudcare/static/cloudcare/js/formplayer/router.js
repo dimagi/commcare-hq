@@ -90,7 +90,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
 
             // When the response gets parsed, it will automatically trigger form
             // entry if it is a form response.
-            menuCollection = new FormplayerFrontend.Entities.MenuSelectCollection(
+            menuCollection = new FormplayerFrontend.Menus.Collections.MenuSelect(
                 response,
                 { parse: true }
             );
