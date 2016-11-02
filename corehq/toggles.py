@@ -621,7 +621,7 @@ INSTANCE_VIEWER = StaticToggle(
     'instance_viewer',
     'CloudCare Form Debugging Tool',
     TAG_PRODUCT_PATH,
-    namespaces=[NAMESPACE_USER],
+    namespaces=[NAMESPACE_USER, NAMESPACE_DOMAIN],
 )
 
 LOCATIONS_IN_REPORTS = StaticToggle(
@@ -951,5 +951,5 @@ RESTORE_AS_CLOUDCARE = StaticToggle(
     'restore_as_cloudcare',
     'Restore as a different user for cloudcare',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN],
+    [NAMESPACE_USER, NAMESPACE_DOMAIN],
 )
