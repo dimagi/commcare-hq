@@ -207,8 +207,11 @@ class ESQuery(object):
 
     def run(self):
         """Actually run the query.  Returns an ESQuerySet object."""
-        raw = run_query(self.index, self.raw_query, debug_host=self.debug_host)
-        return ESQuerySet(raw, deepcopy(self))
+        query = self
+        if query.uses_aggregations:
+            query = query.size(0)
+        raw = run_query(query.index, query.raw_query, debug_host=query.debug_host)
+        return ESQuerySet(raw, deepcopy(query))
 
     def scroll(self):
         """
@@ -248,6 +251,9 @@ class ESQuery(object):
         want to reproduce a query with additional filtering.
         """
         return self._default_filters.values() + self._filters
+
+    def uses_aggregations(self):
+        return len(self._aggregations) > 0
 
     def aggregation(self, aggregation):
         """
