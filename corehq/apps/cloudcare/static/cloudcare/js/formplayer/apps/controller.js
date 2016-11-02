@@ -30,7 +30,7 @@ FormplayerFrontend.module("SessionNavigate.AppList", function(AppList, Formplaye
             FormplayerFrontend.trigger('phone:back:hide');
         },
         listSettings: function() {
-            var settingsView = new AppList.SettingsView();
+            var settingsView = new FormplayerFrontend.Layout.Views.SettingsView();
             FormplayerFrontend.regions.main.show(settingsView);
         },
     };
