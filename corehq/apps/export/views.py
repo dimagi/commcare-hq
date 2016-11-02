@@ -1792,7 +1792,6 @@ class DownloadNewCaseExportView(GenericDownloadNewExportMixin, DownloadCaseExpor
         return CaseExportInstance.get(export_id)
 
     def get_filters(self, filter_form_data, mobile_user_and_group_slugs):
-        print 'fetching filters for export'
         filter_form = self._get_filter_form(filter_form_data)
         form_filters = filter_form.get_case_filter(mobile_user_and_group_slugs,
                                                    self.request.can_access_all_locations)
