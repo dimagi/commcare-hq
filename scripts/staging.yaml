@@ -54,7 +54,7 @@ branches:
   - typeahead-to-select2 # Jenny 11/1
   - kill-autocomplete # Jenny 11/1
   - cc-trans-select2 # Jenny 11/1
-  - location_export # Manish 11/2
+  #- location_export # Manish 11/2
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
