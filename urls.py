@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.conf.urls import patterns, url, include
+from django.conf.urls import url, include
 from django.shortcuts import render
 from django.views.generic import TemplateView, RedirectView
 
@@ -20,14 +20,14 @@ from corehq.apps.sms.views import sms_in
 try:
     from localsettings import LOCAL_APP_URLS
 except ImportError:
-    LOCAL_APP_URLS = ()
+    LOCAL_APP_URLS = []
 
 try:
     from localsettings import PRELOGIN_APP_URLS
 except ImportError:
-    PRELOGIN_APP_URLS = (
-        (r'', include('corehq.apps.prelogin.urls')),
-    )
+    PRELOGIN_APP_URLS = [
+        url(r'', include('corehq.apps.prelogin.urls')),
+    ]
 admin.autodiscover()
 
 handler500 = 'corehq.apps.hqwebapp.views.server_error'
@@ -40,7 +40,7 @@ from corehq.apps.settings.urls import users_redirect, domain_redirect
 from corehq.apps.sms.urls import sms_admin_interface_urls
 
 
-domain_specific = patterns('',
+domain_specific = [
     url(r'^logo.png', logo, name='logo'),
     url(r'^apps/', include('corehq.apps.app_manager.urls')),
     url(r'^api/', include('corehq.apps.api.urls')),
@@ -82,9 +82,9 @@ domain_specific = patterns('',
     )),
     url(r'^zapier/', include('corehq.apps.zapier.urls', namespace='zapier')),
     url(r'^zipline/', include('custom.zipline.urls'))
-)
+]
 
-urlpatterns = patterns('',
+urlpatterns = [
     url(r'^favicon\.ico$', RedirectView.as_view(
         url=static('hqwebapp/img/favicon2.png'))),
     url(r'^auditcare/', include('auditcare.urls')),
@@ -151,10 +151,10 @@ urlpatterns = patterns('',
     url(r'^unsubscribe_report/(?P<scheduled_report_id>[\w-]+)/'
         r'(?P<user_email>[\w.%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4})/(?P<scheduled_report_secret>[\w-]+)/',
         ReportNotificationUnsubscribeView.as_view(), name=ReportNotificationUnsubscribeView.urlname),
-) + patterns('', *LOCAL_APP_URLS)
+] + LOCAL_APP_URLS
 
 if settings.ENABLE_PRELOGIN_SITE:
-    urlpatterns += patterns('', *PRELOGIN_APP_URLS)
+    urlpatterns += PRELOGIN_APP_URLS
 
 if settings.DEBUG:
     try:
@@ -165,6 +165,6 @@ if settings.DEBUG:
     except ImportError:
         pass
 
-    urlpatterns += patterns('',
+    urlpatterns += [
         url(r'^mocha/', include('corehq.apps.mocha.urls')),
-    )
+    ]
