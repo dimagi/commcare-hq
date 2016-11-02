@@ -259,6 +259,9 @@
             $('#cloudcare-preview-url').click(function(e) {
                 ga_track_event('CloudCare', 'Click "Preview Form"');
                 analytics.workflow("Clicked Preview Form");
+                {% if request.couch_user.days_since_created == 0 %}
+                    analytics.workflow("Clicked Preview Form within first 24 hours");
+                {% endif %}
             });
         {% endif %}
         });
