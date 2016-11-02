@@ -23,8 +23,8 @@ You can follow the quick start guide above, or you can use brew to install kafka
 
 ```
 brew install kafka
-cd /usr/local/opt/kafka/libexec
-./bin/zookeeper-server-start.sh config/zookeeper.properties & ./bin/kafka-server-start.sh config/server.properties
+brew services start zookeeper
+brew services start kafka
 ```
 
 # Configuration
@@ -33,3 +33,9 @@ If you use the default configuration you should not have to do anything.
 If you are running kafka in a VM, on another machine, or on a nonstandard port, you will need to override `KAFKA_URL` in your `localsettings.py`.
 
 To more easily manage Kafka's settings, try installing [kafkat](https://github.com/airbnb/kafkat)
+
+Finally, once you have kafka running, initialize it with
+
+```
+./manage.py create_kafka_topics
+```
