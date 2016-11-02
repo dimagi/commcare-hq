@@ -5,8 +5,11 @@ import os
 import warnings
 import zipfile
 
+from datetime import datetime
 from django.core.management.base import BaseCommand, CommandError
 
+from corehq.apps.dump_reload.const import DATETIME_FORMAT
+from corehq.apps.dump_reload.couch.load import CouchDataLoader
 from corehq.apps.dump_reload.sql import SqlDataLoader
 
 
@@ -17,38 +20,27 @@ class Command(BaseCommand):
     def handle(self, dump_file_path, **options):
         self.verbosity = options.get('verbosity')
 
-        self.compression_formats = {
-            None: (open, 'rb'),
-            'gz': (gzip.GzipFile, 'rb'),
-            'zip': (SingleZipReader, 'r'),
-        }
-
-        if not os.path.isfile(dump_file_path):
-            raise CommandError("Dump file not found: {}".format(dump_file_path))
+        _check_file(dump_file_path)
 
         if self.verbosity >= 2:
             self.stdout.write("Installing data from %s." % dump_file_path)
 
-        cmp_fmt = self.get_compression_format(os.path.basename(dump_file_path))
-        open_method, mode = self.compression_formats[cmp_fmt]
-        dump_file = open_method(dump_file_path, mode)
-        try:
-            total_object_count, loaded_object_count = SqlDataLoader().load_objects(dump_file)
-        except Exception as e:
-            if not isinstance(e, CommandError):
-                e.args = ("Problem installing data '%s': %s" % (dump_file_path, e),)
-            raise
-        finally:
-            dump_file.close()
+        utcnow = datetime.utcnow().strftime(DATETIME_FORMAT)
+        target_dir = '_tmp_load_{}'.format(utcnow)
+        with zipfile.ZipFile(dump_file_path, 'r') as archive:
+            archive.extractall(target_dir)
 
-        # Warn if the file we loaded contains 0 objects.
-        if loaded_object_count == 0:
-            warnings.warn(
-                "No data found for '%s'. (File format may be "
-                "invalid.)" % dump_file_path,
-                RuntimeWarning
-            )
+        sql_dump_path = os.path.join(target_dir, 'sql.gz')
+        couch_dump_path = os.path.join(target_dir, 'couch.gz')
 
+        _check_file(sql_dump_path)
+        _check_file(couch_dump_path)
+
+        loaded_object_count_sql, total_object_count_sql = self._load_data(SqlDataLoader, sql_dump_path)
+        loaded_object_count_couch, total_object_count_couch = self._load_data(CouchDataLoader, sql_dump_path)
+
+        total_object_count = total_object_count_sql + total_object_count_couch
+        loaded_object_count = loaded_object_count_sql + loaded_object_count_couch
         if self.verbosity >= 1:
             if total_object_count == loaded_object_count:
                 self.stdout.write("Installed %d object(s)" % loaded_object_count)
@@ -56,23 +48,26 @@ class Command(BaseCommand):
                 self.stdout.write("Installed %d object(s) (of %d)" %
                                   (loaded_object_count, total_object_count))
 
-    def get_compression_format(self, file_name):
-        parts = file_name.rsplit('.', 1)
+    def _load_data(self, parser_class, dump_path):
+        with gzip.open(dump_path) as dump_file:
+            try:
+                total_object_count, loaded_object_count = parser_class().load_objects(dump_file)
+            except Exception as e:
+                if not isinstance(e, CommandError):
+                    e.args = ("Problem installing data '%s': %s" % (dump_path, e),)
+                raise
 
-        if len(parts) > 1 and parts[-1] in self.compression_formats:
-            cmp_fmt = parts[-1]
-        else:
-            cmp_fmt = None
+        # Warn if the file we loaded contains 0 objects.
+        if loaded_object_count == 0:
+            warnings.warn(
+                "No data found for '%s'. (File format may be "
+                "invalid.)" % dump_path,
+                RuntimeWarning
+            )
 
-        return cmp_fmt
+        return loaded_object_count, total_object_count
 
 
-class SingleZipReader(zipfile.ZipFile):
-
-    def __init__(self, *args, **kwargs):
-        zipfile.ZipFile.__init__(self, *args, **kwargs)
-        if len(self.namelist()) != 1:
-            raise ValueError("Zip-compressed data file must contain one file.")
-
-    def read(self):
-        return zipfile.ZipFile.read(self, self.namelist()[0])
+def _check_file(path):
+    if not os.path.isfile(path):
+        raise CommandError("Dump file not found: {}".format(path))

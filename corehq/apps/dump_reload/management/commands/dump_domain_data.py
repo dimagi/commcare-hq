@@ -6,10 +6,9 @@ from datetime import datetime
 
 from django.core.management.base import BaseCommand, CommandError
 
+from corehq.apps.dump_reload.const import DATETIME_FORMAT
 from corehq.apps.dump_reload.couch import CouchDataDumper
 from corehq.apps.dump_reload.sql import SqlDataDumper
-
-DATETIME_FORMAT = '%Y-%m-%dT%H%M%SZ'
 
 
 class Command(BaseCommand):
