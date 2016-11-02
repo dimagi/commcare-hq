@@ -53,8 +53,14 @@ class Command(BaseCommand):
 
                 os.remove(filename)
 
+        print '{0} Dump Stats {0}'.format('-' * 32)
         for model in sorted(stats):
             print "{:<40}: {}".format(model, stats[model])
+        print '{0}{0}'.format('-' * 38)
+        print 'Dumped {} objects'.format(sum(stats.values()))
+        print '{0}{0}'.format('-' * 38)
+
+        print '\nData dumped to file: {}'.format(zipname)
 
 
 def _get_dump_stream_filename(slug, domain, utcnow):
