@@ -36,7 +36,7 @@ class CopyApplicationForm(forms.Form):
             ),
             Hidden('app', app_id),
             hqcrispy.FormActions(
-                StrictButton(_('Copy'), type='submit', css_class='btn-primary')
+                StrictButton(_('Copy'), type='button', css_class='btn-primary')
             )
         )
 

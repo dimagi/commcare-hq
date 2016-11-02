@@ -34,6 +34,7 @@ from corehq.apps.domain.views import (
     EditOpenClinicaSettingsView,
     autocomplete_fields, test_repeater, drop_repeater, set_published_snapshot,
     calculated_properties,
+    feature_flag_diff,
 )
 from corehq.apps.repeaters.views import AddCaseRepeaterView, RepeatRecordView
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
@@ -187,6 +188,7 @@ domain_settings = patterns(
     url(r'^internal/calculated_properties/$', calculated_properties, name='calculated_properties'),
     url(r'^previews/$', FeaturePreviewsView.as_view(), name=FeaturePreviewsView.urlname),
     url(r'^flags/$', FeatureFlagsView.as_view(), name=FeatureFlagsView.urlname),
+    url(r'^flag_diff/$', feature_flag_diff, name='feature_flag_diff'),
     url(r'^sms_rates/$', SMSRatesView.as_view(), name=SMSRatesView.urlname),
     DomainReportDispatcher.url_pattern()
 )

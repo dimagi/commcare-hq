@@ -1,0 +1,25 @@
+{% load i18n %}
+
+<div class="modal fade" id="copy-feature-flags">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title">{% trans "Feature Flag Warning" %}</h4>
+            </div>
+            <div class="modal-body form-horizontal">
+                {% blocktrans %}
+                The following feature flags are not turned on in the domain you're copying to.
+                Are you sure you wish to copy this application?
+                {% endblocktrans %}
+                <ul></ul>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                <button class="btn btn-primary">{% trans "Copy" %}</button>
+            </div>
+        </div>
+    </div>
+</div>

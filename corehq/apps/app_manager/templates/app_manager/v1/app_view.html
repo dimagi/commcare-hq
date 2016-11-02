@@ -188,6 +188,47 @@
             }));
         });
     </script>
+    {% if request|toggle_enabled:"SUPPORT" %}
+    <script>
+        $("#copy form button").click(function() {
+            var $submit = $(this),
+                $form = $submit.closest("form"),
+                domain = $form.find("#id_domain").val(),
+                $modal = $("#copy-feature-flags");
+            $submit.disableButton();
+            $.ajax({
+                method: "GET",
+                url: "{% url "feature_flag_diff" domain %}",
+                data: {
+                    domain: domain,
+                },
+                success: function(links) {
+                    if (links.length) {
+                        var $ul = $modal.find("ul").html("");
+                        _.each(links, function(link) {
+                            $ul.append($("<li/>").html(link));
+                        });
+                        $modal.one("click", ".btn-primary", function() {
+                            $(this).disableButton();
+                            $form.submit();
+                        });
+                        $modal.one("hide.bs.modal", function() {
+                            $submit.enableButton();
+                        });
+                        $modal.modal();
+                    } else {
+                        $form.submit();
+                    }
+                },
+                error: function() {
+                    // If anything goes wrong, just submit the form
+                    $form.submit();
+                },
+            });
+            return false;
+        });
+    </script>
+    {% endif %}
     {% endif %}
     {% if app.doc_type == "Application" %}
         <script>
@@ -301,4 +342,5 @@
 {% include 'hqmedia/partials/multimedia_uploader.html' %}
 {% endfor %}
 {% include 'app_manager/v1/partials/password_setter_modal.html' %}
+{% include 'app_manager/v1/partials/feature_flag_modal.html' %}
 {% endblock %}
