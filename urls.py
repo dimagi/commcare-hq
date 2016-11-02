@@ -144,7 +144,6 @@ urlpatterns = [
     url(r'^wisepill/', include('custom.apps.wisepill.urls')),
     url(r'^pro_bono/$', ProBonoStaticView.as_view(),
         name=ProBonoStaticView.urlname),
-    url(r'^ping/$', 'corehq.apps.app_manager.views.formdesigner.ping', name='ping'),
     url(r'^ping/$', ping, name='ping'),
     url(r'^robots.txt$', TemplateView.as_view(template_name='robots.txt', content_type='text/plain')),
     url(r'^software-plans/$', RedirectView.as_view(url=PRICING_LINK), name='go_to_pricing'),
