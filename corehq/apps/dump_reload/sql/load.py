@@ -73,7 +73,7 @@ class SqlDataLoader(DataLoader):
 
         loaded_model_counts = Counter()
         for db_stats in load_stats_by_db.values():
-            model_labels = (get_model_label(model) for model in db_stats.model_counter.elements())
+            model_labels = ('(sql) {}'.format(get_model_label(model)) for model in db_stats.model_counter.elements())
             loaded_model_counts.update(model_labels)
 
         return sum(total_object_counts), loaded_model_counts

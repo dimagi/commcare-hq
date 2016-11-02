@@ -16,8 +16,13 @@ class Command(BaseCommand):
     help = 'Loads data from the give file into the database.'
     args = '<dump file path>'
 
+    def add_arguments(self, parser):
+        parser.add_argument('--use-extracted', action='store_true', default=False, dest='use_extracted',
+                            help = "Use already extracted dump if it exists.")
+
     def handle(self, dump_file_path, **options):
         self.verbosity = options.get('verbosity')
+        use_extracted = options.get('use_extracted')
 
         if not os.path.isfile(dump_file_path):
             raise CommandError("Dump file not found: {}".format(dump_file_path))
@@ -25,10 +30,12 @@ class Command(BaseCommand):
         if self.verbosity >= 2:
             self.stdout.write("Loading data from %s." % dump_file_path)
 
-        utcnow = datetime.utcnow().strftime(DATETIME_FORMAT)
-        target_dir = '_tmp_load_{}'.format(utcnow)
-        with zipfile.ZipFile(dump_file_path, 'r') as archive:
-            archive.extractall(target_dir)
+        target_dir = '_tmp_load_{}'.format(dump_file_path)
+        if not os.path.exists(target_dir):
+            with zipfile.ZipFile(dump_file_path, 'r') as archive:
+                archive.extractall(target_dir)
+        elif not use_extracted:
+            raise CommandError("Extracted dump already exists at {}. Delete it or use --use-extracted".format(target_dir))
 
         total_object_count = 0
         model_counts = Counter()
@@ -40,12 +47,12 @@ class Command(BaseCommand):
         loaded_object_count = sum(model_counts.values())
 
         if self.verbosity >= 2:
-            print '{0} Load Stats {0}'.format('-' * 32)
+            print '{0} Load Stats {0}'.format('-' * 40)
             for model in sorted(model_counts):
-                print "{:<40}: {}".format(model, model_counts[model])
-            print '{0}{0}'.format('-' * 38)
+                print "{:<48}: {}".format(model, model_counts[model])
+            print '{0}{0}'.format('-' * 46)
             print 'Loaded {}/{} objects'.format(loaded_object_count, total_object_count)
-            print '{0}{0}'.format('-' * 38)
+            print '{0}{0}'.format('-' * 46)
         else:
             self.stdout.write("Loaded %d object(s) (of %d)" %
                               (loaded_object_count, total_object_count))
