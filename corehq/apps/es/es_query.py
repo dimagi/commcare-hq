@@ -207,11 +207,15 @@ class ESQuery(object):
 
     def run(self, no_hits_with_aggs=True):
         """Actually run the query.  Returns an ESQuerySet object."""
-        query = self
-        if no_hits_with_aggs and query.uses_aggregations():
-            query = query.size(0)
+        query = self._clean_before_run(no_hits_with_aggs)
         raw = run_query(query.index, query.raw_query, debug_host=query.debug_host)
         return ESQuerySet(raw, deepcopy(query))
+
+    def _clean_before_run(self, no_hits_with_aggs=True):
+        query = deepcopy(self)
+        if no_hits_with_aggs and query.uses_aggregations():
+            query = query.size(0)
+        return query
 
     def scroll(self):
         """
