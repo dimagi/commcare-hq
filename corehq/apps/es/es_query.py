@@ -453,8 +453,8 @@ class ESQuerySet(object):
     def hits(self):
         """Return the docs from the response."""
         raw_hits = self.raw_hits
-        if not raw_hits and self.query._aggregations and self.query._size == 0:
-            raise EsError("no hits, did you forget about no_hits_with_aggs?")
+        if not raw_hits and self.query.uses_aggregations() and self.query._size == 0:
+            raise ESError("no hits, did you forget about no_hits_with_aggs?")
 
         return [self.normalize_result(self.query, r) for r in raw_hits]
 
