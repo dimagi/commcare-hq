@@ -1,3 +1,6 @@
+import gzip
+import os
+import warnings
 from abc import ABCMeta, abstractmethod
 
 import six
@@ -24,6 +27,8 @@ class DataDumper(six.with_metaclass(ABCMeta)):
 
 
 class DataLoader(six.with_metaclass(ABCMeta)):
+    slug = None
+
     @abstractmethod
     def load_objects(self, object_strings):
         """
@@ -31,3 +36,21 @@ class DataLoader(six.with_metaclass(ABCMeta)):
         :return: tuple(total object count, loaded object count)
         """
         raise NotImplementedError
+
+    def load_from_file(self, extracted_dump_path):
+        file_path = os.path.join(extracted_dump_path, '{}.gz'.format(self.slug))
+        if not os.path.isfile(file_path):
+            raise Exception("Dump file not found: {}".format(file_path))
+
+        with gzip.open(file_path) as dump_file:
+            total_object_count, loaded_object_count = self.load_objects(dump_file)
+
+        # Warn if the file we loaded contains 0 objects.
+        if sum(loaded_object_count.values()) == 0:
+            warnings.warn(
+                "No data found for '%s'. (File format may be "
+                "invalid.)" % file_path,
+                RuntimeWarning
+            )
+
+        return total_object_count, loaded_object_count

@@ -1,11 +1,10 @@
 from __future__ import unicode_literals
 
-import gzip
 import os
-import warnings
 import zipfile
-
+from collections import Counter
 from datetime import datetime
+
 from django.core.management.base import BaseCommand, CommandError
 
 from corehq.apps.dump_reload.const import DATETIME_FORMAT
@@ -20,54 +19,41 @@ class Command(BaseCommand):
     def handle(self, dump_file_path, **options):
         self.verbosity = options.get('verbosity')
 
-        _check_file(dump_file_path)
+        if not os.path.isfile(dump_file_path):
+            raise CommandError("Dump file not found: {}".format(dump_file_path))
 
         if self.verbosity >= 2:
-            self.stdout.write("Installing data from %s." % dump_file_path)
+            self.stdout.write("Loading data from %s." % dump_file_path)
 
         utcnow = datetime.utcnow().strftime(DATETIME_FORMAT)
         target_dir = '_tmp_load_{}'.format(utcnow)
         with zipfile.ZipFile(dump_file_path, 'r') as archive:
             archive.extractall(target_dir)
 
-        sql_dump_path = os.path.join(target_dir, 'sql.gz')
-        couch_dump_path = os.path.join(target_dir, 'couch.gz')
+        total_object_count = 0
+        model_counts = Counter()
+        for loader in [SqlDataLoader, CouchDataLoader]:
+            loader_total_object_count, loader_model_counts = self._load_data(loader, target_dir)
+            total_object_count += loader_total_object_count
+            model_counts.update(loader_model_counts)
 
-        _check_file(sql_dump_path)
-        _check_file(couch_dump_path)
+        loaded_object_count = sum(model_counts.values())
 
-        loaded_object_count_sql, total_object_count_sql = self._load_data(SqlDataLoader, sql_dump_path)
-        loaded_object_count_couch, total_object_count_couch = self._load_data(CouchDataLoader, sql_dump_path)
+        if self.verbosity >= 2:
+            print '{0} Load Stats {0}'.format('-' * 32)
+            for model in sorted(model_counts):
+                print "{:<40}: {}".format(model, model_counts[model])
+            print '{0}{0}'.format('-' * 38)
+            print 'Loaded {}/{} objects'.format(loaded_object_count, total_object_count)
+            print '{0}{0}'.format('-' * 38)
+        else:
+            self.stdout.write("Loaded %d object(s) (of %d)" %
+                              (loaded_object_count, total_object_count))
 
-        total_object_count = total_object_count_sql + total_object_count_couch
-        loaded_object_count = loaded_object_count_sql + loaded_object_count_couch
-        if self.verbosity >= 1:
-            if total_object_count == loaded_object_count:
-                self.stdout.write("Installed %d object(s)" % loaded_object_count)
-            else:
-                self.stdout.write("Installed %d object(s) (of %d)" %
-                                  (loaded_object_count, total_object_count))
-
-    def _load_data(self, parser_class, dump_path):
-        with gzip.open(dump_path) as dump_file:
-            try:
-                total_object_count, loaded_object_count = parser_class().load_objects(dump_file)
-            except Exception as e:
-                if not isinstance(e, CommandError):
-                    e.args = ("Problem installing data '%s': %s" % (dump_path, e),)
-                raise
-
-        # Warn if the file we loaded contains 0 objects.
-        if loaded_object_count == 0:
-            warnings.warn(
-                "No data found for '%s'. (File format may be "
-                "invalid.)" % dump_path,
-                RuntimeWarning
-            )
-
-        return loaded_object_count, total_object_count
-
-
-def _check_file(path):
-    if not os.path.isfile(path):
-        raise CommandError("Dump file not found: {}".format(path))
+    def _load_data(self, loader_class, extracted_dump_path):
+        try:
+            return loader_class().load_from_file(extracted_dump_path)
+        except Exception as e:
+            if not isinstance(e, CommandError):
+                e.args = ("Problem loading data '%s': %s" % (extracted_dump_path, e),)
+            raise
