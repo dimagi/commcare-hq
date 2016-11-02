@@ -74,6 +74,26 @@ Util.setCrossDomainAjaxOptions = function (options) {
     options.contentType = "application/json;charset=UTF-8";
 };
 
+Util.saveDisplayOptions = function(displayOptions) {
+    var displayOptionsKey = Util.getDisplayOptionsKey();
+    localStorage.setItem(displayOptionsKey, JSON.stringify(displayOptions));
+};
+
+Util.getSavedDisplayOptions = function() {
+    var displayOptionsKey = Util.getDisplayOptionsKey();
+    try {
+        return JSON.parse(localStorage.getItem(displayOptionsKey));
+    } catch (e) {
+        window.console.warn('Unabled to parse saved display options');
+        return {};
+    }
+};
+
+Util.getDisplayOptionsKey = function() {
+    var user = FormplayerFrontend.request('currentUser');
+    return user.domain + ':' + user.username + ':' + 'displayOptions';
+};
+
 Util.CloudcareUrl = function (options) {
     this.appId = options.appId;
     this.sessionId = options.sessionId;

@@ -30,7 +30,9 @@
   <body>
       <!-- HTML Fixtures -->
       <div id="mocha"></div>
+      <div id="mocha-fixtures" style="display:none">
       {% block fixtures %}{% endblock %}
+      </div>
       {% block mocha_tests %}{% endblock %}
       <script charset="utf-8">
 	// Only tests run in real browser, injected script run if options.run == true

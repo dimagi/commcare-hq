@@ -18,7 +18,7 @@
 </script>
 
 <script type="text/html" id="form-navigation-ko-template">
-  <h2 class="formnav-title" data-bind="text: title, visible: showInFormNavigation"></h2>
+  <h1 class="formnav-title page-header" data-bind="text: title, visible: showInFormNavigation"></h1>
   <div class="formnav-container" data-bind="visible: showInFormNavigation">
     <button type="button"
             class="btn btn-formnav"
@@ -56,6 +56,8 @@
       <div class="page-header" data-bind="visible: !showInFormNavigation()">
         <h1 class="title" data-bind="text: title"></h1>
       </div>
+      <div class="webforms-nav"
+           data-bind="template: { name: 'form-navigation-ko-template' }"></div>
 
       <div class="row">
         <div class="col-sm-12">

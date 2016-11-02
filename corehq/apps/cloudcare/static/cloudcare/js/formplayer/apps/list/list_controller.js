@@ -29,5 +29,9 @@ FormplayerFrontend.module("SessionNavigate.AppList", function(AppList, Formplaye
             FormplayerFrontend.regions.main.show(singleAppView);
             FormplayerFrontend.trigger('phone:back:hide');
         },
+        listSettings: function() {
+            var settingsView = new AppList.SettingsView();
+            FormplayerFrontend.regions.main.show(settingsView);
+        },
     };
 });
