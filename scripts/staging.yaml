@@ -53,7 +53,6 @@ branches:
   - jquery-3-1-0 # Jenny 9/26
   - typeahead-to-select2 # Jenny 11/1
   - kill-autocomplete # Jenny 11/1
-  - cc-trans-select2 # Jenny 11/1
   #- location_export # Manish 11/2
   - nc/exports-rrr # Noah 11/2
 submodules:
