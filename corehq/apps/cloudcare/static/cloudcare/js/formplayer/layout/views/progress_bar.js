@@ -1,6 +1,6 @@
 /*global FormplayerFrontend */
 
-FormplayerFrontend.module("Utils.Views", function (Views, FormplayerFrontend, Backbone, Marionette) {
+FormplayerFrontend.module("Layout.Views", function (Views, FormplayerFrontend, Backbone, Marionette) {
 
     Views.ProgressView = Marionette.ItemView.extend({
         template: "#progress-view-template",

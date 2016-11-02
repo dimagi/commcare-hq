@@ -342,7 +342,7 @@ FormplayerFrontend.on("retry", function(response, retryFn, progressMessage) {
     progressMessage = progressMessage || gettext('Please wait...');
 
     if (!progressView) {
-        progressView = new FormplayerFrontend.Utils.Views.ProgressView({
+        progressView = new FormplayerFrontend.Layout.Views.ProgressView({
             progressMessage: progressMessage,
         });
         FormplayerFrontend.regions.loadingProgress.show(progressView);
