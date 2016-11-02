@@ -1,7 +1,7 @@
 /*global FormplayerFrontend, Util */
 
-FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, FormplayerFrontend, Backbone, Marionette, $) {
-    MenuList.Controller = {
+FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone, Marionette, $) {
+    Menus.Controller = {
         selectMenu: function (options) {
 
             var fetchingNextMenu = FormplayerFrontend.request("app:select:menus", options);
@@ -38,34 +38,34 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                     Util.setUrlToObject(urlObject);
                 }
 
-                MenuList.Controller.showMenu(menuResponse);
+                Menus.Controller.showMenu(menuResponse);
             });
         },
 
         showMenu: function (menuResponse) {
-            var menuListView = MenuList.Util.getMenuView(menuResponse);
+            var menuListView = Menus.Util.getMenuView(menuResponse);
 
             if (menuListView) {
                 FormplayerFrontend.regions.main.show(menuListView.render());
             }
             if (menuResponse.persistentCaseTile) {
-                MenuList.Controller.showPersistentCaseTile(menuResponse.persistentCaseTile);
+                Menus.Controller.showPersistentCaseTile(menuResponse.persistentCaseTile);
             } else {
                 FormplayerFrontend.regions.persistentCaseTile.empty();
             }
 
             if (menuResponse.breadcrumbs) {
-                MenuList.Controller.showBreadcrumbs(menuResponse.breadcrumbs);
+                Menus.Controller.showBreadcrumbs(menuResponse.breadcrumbs);
             } else {
                 FormplayerFrontend.regions.breadcrumb.empty();
             }
             if (menuResponse.appVersion) {
-                MenuList.Controller.showAppVersion(menuResponse.appVersion);
+                Menus.Controller.showAppVersion(menuResponse.appVersion);
             }
         },
 
         showPersistentCaseTile: function (persistentCaseTile) {
-            var detailView = MenuList.Controller.getCaseTile(persistentCaseTile);
+            var detailView = Menus.Controller.getCaseTile(persistentCaseTile);
             FormplayerFrontend.regions.persistentCaseTile.show(detailView.render());
         },
 
@@ -83,7 +83,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             }
             var detailCollection = new Backbone.Collection();
             detailCollection.reset(breadcrumbsModel);
-            var breadcrumbView = new MenuList.BreadcrumbListView({
+            var breadcrumbView = new Menus.Views.BreadcrumbListView({
                 collection: detailCollection,
             });
             FormplayerFrontend.regions.breadcrumb.show(breadcrumbView.render());
@@ -98,14 +98,14 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 return;
             }
             var detailObject = detailObjects[detailTabIndex];
-            var menuListView = MenuList.Controller.getDetailList(detailObject);
+            var menuListView = Menus.Controller.getDetailList(detailObject);
 
             var tabModels = _.map(detailObjects, function (detail, index) {
                 return {title: detail.title, id: index};
             });
             var tabCollection = new Backbone.Collection();
             tabCollection.reset(tabModels);
-            var tabListView = new MenuList.DetailTabListView({
+            var tabListView = new Menus.Views.DetailTabListView({
                 collection: tabCollection,
                 showDetail: function (detailTabIndex) {
                     self.showDetail(model, detailTabIndex);
@@ -134,7 +134,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             }
             var detailCollection = new Backbone.Collection();
             detailCollection.reset(detailModel);
-            return new MenuList.DetailListView({
+            return new Menus.Views.DetailListView({
                 collection: detailCollection,
             });
         },
@@ -148,7 +148,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
             detailModel.push(obj);
             var detailCollection = new Backbone.Collection();
             detailCollection.reset(detailModel);
-            return new MenuList.CaseTileListView({
+            return new Menus.Views.CaseTileListView({
                 collection: detailCollection,
                 styles: detailObject.styles,
                 tiles: detailObject.tiles,
@@ -158,7 +158,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         },
     };
 
-    MenuList.Util = {
+    Menus.Util = {
         getMenuView: function (menuResponse) {
             var menuData = {
                 collection: menuResponse,
@@ -178,18 +178,18 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
                 useUniformUnits: menuResponse.useUniformUnits,
             };
             if (menuResponse.type === "commands") {
-                return new MenuList.MenuListView(menuData);
+                return new Menus.Views.MenuListView(menuData);
             } else if (menuResponse.type === "query") {
-                return new MenuList.QueryListView(menuData);
+                return new Menus.Views.QueryListView(menuData);
             }
             else if (menuResponse.type === "entities") {
                 if (menuResponse.tiles === null || menuResponse.tiles === undefined) {
-                    return new MenuList.CaseListView(menuData);
+                    return new Menus.Views.CaseListView(menuData);
                 } else {
                     if (menuResponse.numEntitiesPerRow > 1) {
-                        return new MenuList.GridCaseTileListView(menuData);
+                        return new Menus.Views.GridCaseTileListView(menuData);
                     } else {
-                        return new MenuList.CaseTileListView(menuData);
+                        return new Menus.Views.CaseTileListView(menuData);
                     }
                 }
             }

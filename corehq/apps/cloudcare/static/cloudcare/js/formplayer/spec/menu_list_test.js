@@ -1,28 +1,28 @@
 /* global FormplayerFrontend */
 /* eslint-env mocha */
 describe('Render a case list', function () {
-    var MenuList = FormplayerFrontend.SessionNavigate.MenuList;
+    var Menus = FormplayerFrontend.Menus;
     var fixtures = hqImport("corehq/apps/cloudcare/static/cloudcare/js/formplayer/spec/fixtures.js");
     describe('#getMenuView', function () {
 
         it('Should parse a case list response to a CaseListView', function () {
-            var caseListView = MenuList.Util.getMenuView(fixtures.caseList);
-            assert.isTrue(caseListView instanceof MenuList.CaseListView);
+            var caseListView = Menus.Util.getMenuView(fixtures.caseList);
+            assert.isTrue(caseListView instanceof Menus.Views.CaseListView);
         });
 
         it('Should parse a menu list response to a MenuListView', function () {
-            var menuListView = MenuList.Util.getMenuView(fixtures.menuList);
-            assert.isTrue(menuListView instanceof MenuList.MenuListView);
+            var menuListView = Menus.Util.getMenuView(fixtures.menuList);
+            assert.isTrue(menuListView instanceof Menus.Views.MenuListView);
         });
 
         it('Should parse a case list response with tiles to a CaseTileListView', function () {
-            var caseTileListView = MenuList.Util.getMenuView(fixtures.caseTileList);
-            assert.isTrue(caseTileListView instanceof MenuList.CaseTileListView);
+            var caseTileListView = Menus.Util.getMenuView(fixtures.caseTileList);
+            assert.isTrue(caseTileListView instanceof Menus.Views.CaseTileListView);
         });
 
         it('Should parse a case grid response with tiles to a GridCaseTileListView', function () {
-            var caseTileGridView = MenuList.Util.getMenuView(fixtures.caseGridList);
-            assert.isTrue(caseTileGridView instanceof MenuList.GridCaseTileListView);
+            var caseTileGridView = Menus.Util.getMenuView(fixtures.caseGridList);
+            assert.isTrue(caseTileGridView instanceof Menus.Views.GridCaseTileListView);
         });
     });
 

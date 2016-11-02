@@ -1,7 +1,7 @@
 /*global FormplayerFrontend, Util */
 
-FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, FormplayerFrontend, Backbone, Marionette, $) {
-    MenuList.MenuView = Marionette.ItemView.extend({
+FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Backbone, Marionette, $) {
+    Views.MenuView = Marionette.ItemView.extend({
         tagName: "tr",
         className: "formplayer-request",
         events: {
@@ -65,10 +65,10 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         },
     });
 
-    MenuList.MenuListView = Marionette.CompositeView.extend({
+    Views.MenuListView = Marionette.CompositeView.extend({
         tagName: "div",
         template: "#menu-view-list-template",
-        childView: MenuList.MenuView,
+        childView: Views.MenuView,
         childViewContainer: "tbody",
         templateHelpers: function () {
             return {
@@ -192,7 +192,7 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         }
     };
 
-    MenuList.CaseView = Marionette.ItemView.extend({
+    Views.CaseView = Marionette.ItemView.extend({
         tagName: "tr",
         template: "#case-view-item-template",
         className: "formplayer-request",
@@ -218,15 +218,15 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         },
     });
 
-    MenuList.CaseTileView = MenuList.CaseView.extend({
+    Views.CaseTileView = Views.CaseView.extend({
         template: "#case-tile-view-item-template",
     });
 
-    MenuList.CaseListView = Marionette.CompositeView.extend({
+    Views.CaseListView = Marionette.CompositeView.extend({
         tagName: "div",
         template: "#case-view-list-template",
         childViewContainer: ".js-case-container",
-        childView: MenuList.CaseView,
+        childView: Views.CaseView,
 
         initialize: function (options) {
             this.styles = options.styles;
@@ -291,10 +291,10 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         },
     });
 
-    MenuList.CaseTileListView = MenuList.CaseListView.extend({
-        childView: MenuList.CaseTileView,
+    Views.CaseTileListView = Views.CaseListView.extend({
+        childView: Views.CaseTileView,
         initialize: function (options) {
-            MenuList.CaseTileListView.__super__.initialize.apply(this, arguments);
+            Views.CaseTileListView.__super__.initialize.apply(this, arguments);
             var gridPolyfillPath = FormplayerFrontend.request('gridPolyfillPath');
             generateCaseTileStyles(options.tiles);
             makeInnerGridStyle(options.maxHeight,
@@ -305,26 +305,26 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         },
 
         templateHelpers: function () {
-            var dict = MenuList.CaseTileListView.__super__.templateHelpers.apply(this, arguments);
+            var dict = Views.CaseTileListView.__super__.templateHelpers.apply(this, arguments);
             dict['useTiles'] = true;
             return dict;
         },
     });
 
-    MenuList.GridCaseTileViewItem = MenuList.CaseTileView.extend({
+    Views.GridCaseTileViewItem = Views.CaseTileView.extend({
         tagName: "div",
         className: "formplayer-request case-tile-grid-item",
         template: "#case-tile-view-item-template",
     });
 
-    MenuList.GridCaseTileListView = MenuList.CaseTileListView.extend({
+    Views.GridCaseTileListView = Views.CaseTileListView.extend({
         initialize: function () {
-            MenuList.GridCaseTileListView.__super__.initialize.apply(this, arguments);
+            Views.GridCaseTileListView.__super__.initialize.apply(this, arguments);
         },
-        childView: MenuList.GridCaseTileViewItem,
+        childView: Views.GridCaseTileViewItem,
     });
 
-    MenuList.BreadcrumbView = Marionette.ItemView.extend({
+    Views.BreadcrumbView = Marionette.ItemView.extend({
         tagName: "li",
         template: "#breadcrumb-item-template",
         className: "breadcrumb-text",
@@ -339,28 +339,28 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         },
     });
 
-    MenuList.BreadcrumbListView = Marionette.CompositeView.extend({
+    Views.BreadcrumbListView = Marionette.CompositeView.extend({
         tagName: "div",
         template: "#breadcrumb-list-template",
-        childView: MenuList.BreadcrumbView,
+        childView: Views.BreadcrumbView,
         childViewContainer: "ol",
     });
 
-    MenuList.DetailView = Marionette.ItemView.extend({
+    Views.DetailView = Marionette.ItemView.extend({
         tagName: "tr",
         className: "",
         template: "#detail-view-item-template",
     });
 
-    MenuList.DetailListView = Marionette.CompositeView.extend({
+    Views.DetailListView = Marionette.CompositeView.extend({
         tagName: "table",
         className: "table module-table module-table-casedetail",
         template: "#detail-view-list-template",
-        childView: MenuList.DetailView,
+        childView: Views.DetailView,
         childViewContainer: "tbody",
     });
 
-    MenuList.DetailTabView = Marionette.ItemView.extend({
+    Views.DetailTabView = Marionette.ItemView.extend({
         tagName: "li",
         template: "#detail-view-tab-item-template",
         events: {
@@ -376,10 +376,10 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         },
     });
 
-    MenuList.DetailTabListView = Marionette.CompositeView.extend({
+    Views.DetailTabListView = Marionette.CompositeView.extend({
         tagName: "div",
         template: "#detail-view-tab-list-template",
-        childView: MenuList.DetailTabView,
+        childView: Views.DetailTabView,
         childViewContainer: "ul",
         childViewOptions: function () {
             return {

@@ -1,7 +1,7 @@
 /*global FormplayerFrontend */
 
-FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, FormplayerFrontend, Backbone, Marionette) {
-    MenuList.QueryView = Marionette.ItemView.extend({
+FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Backbone, Marionette) {
+    Views.QueryView = Marionette.ItemView.extend({
         tagName: "tr",
         className: "formplayer-request",
         template: "#query-view-item-template",
@@ -17,10 +17,10 @@ FormplayerFrontend.module("SessionNavigate.MenuList", function (MenuList, Formpl
         },
     });
 
-    MenuList.QueryListView = Marionette.CompositeView.extend({
+    Views.QueryListView = Marionette.CompositeView.extend({
         tagName: "div",
         template: "#query-view-list-template",
-        childView: MenuList.QueryView,
+        childView: Views.QueryView,
         childViewContainer: "tbody",
 
         initialize: function(options) {
