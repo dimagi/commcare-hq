@@ -4568,6 +4568,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return '/a/%s/api/custom/pact_formdata/v1/' % self.domain
 
     @absolute_url_property
+    @quickcache(['self.domain', 'self._id'], timeout=5 * 60 * 60)
     def hq_profile_url(self):
         # RemoteApp already has a property called "profile_url",
         # Application.profile_url just points here to stop the conflict
