@@ -11,7 +11,7 @@ from corehq.apps.es.domains import DomainES
 from corehq.apps.es import filters
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.export.signals import added_inferred_export_properties
+from corehq.apps.export.tasks import add_inferred_export_properties
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import UserTime, ServerTime
@@ -155,11 +155,11 @@ def _get_user_case_fields(commcare_user):
         'phone_number': commcare_user.phone_number or ''
     })
 
-    added_inferred_export_properties.send(
+    add_inferred_export_properties.delay(
         'UserSave',
-        domain=commcare_user.domain,
-        case_type=USERCASE_TYPE,
-        properties=fields.keys()
+        commcare_user.domain,
+        USERCASE_TYPE,
+        fields.keys(),
     )
     return fields
 

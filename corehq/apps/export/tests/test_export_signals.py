@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from corehq.apps.export.signals import added_inferred_export_properties
+from corehq.apps.export.tasks import add_inferred_export_properties
 from corehq.apps.export.dbaccessors import get_inferred_schema, delete_all_inferred_schemas
 from corehq.apps.export.models import ScalarItem, ExportItem
 
@@ -14,11 +14,11 @@ class InferredSchemaSignalTest(TestCase):
 
     def test_add_inferred_export_properties(self):
         props = set(['one', 'two'])
-        added_inferred_export_properties.send(
+        add_inferred_export_properties(
             'TestSend',
-            domain=self.domain,
-            case_type=self.case_type,
-            properties=props,
+            self.domain,
+            self.case_type,
+            props,
         )
 
         schema = get_inferred_schema(self.domain, self.case_type)
@@ -28,17 +28,17 @@ class InferredSchemaSignalTest(TestCase):
     def test_add_inferred_export_properties_saved_schema(self):
         props = set(['one', 'two'])
         props_two = set(['one', 'three'])
-        added_inferred_export_properties.send(
+        add_inferred_export_properties(
             'TestSend',
-            domain=self.domain,
-            case_type=self.case_type,
-            properties=props,
+            self.domain,
+            self.case_type,
+            props,
         )
-        added_inferred_export_properties.send(
+        add_inferred_export_properties(
             'TestSend',
-            domain=self.domain,
-            case_type=self.case_type,
-            properties=props_two,
+            self.domain,
+            self.case_type,
+            props_two,
         )
 
         schema = get_inferred_schema(self.domain, self.case_type)
@@ -56,11 +56,11 @@ class InferredSchemaSignalTest(TestCase):
         Ensures that when we add a system property, it uses the system's item type
         """
         props = set(['closed'])
-        added_inferred_export_properties.send(
+        add_inferred_export_properties(
             'TestSend',
-            domain=self.domain,
-            case_type=self.case_type,
-            properties=props,
+            self.domain,
+            self.case_type,
+            props,
         )
         schema = get_inferred_schema(self.domain, self.case_type)
         group_schema = schema.group_schemas[0]

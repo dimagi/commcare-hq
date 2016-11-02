@@ -8,7 +8,7 @@ from corehq.apps.importer.const import LookupErrors, ImportErrors
 from corehq.apps.importer import util as importer_util
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CouchUser
-from corehq.apps.export.signals import added_inferred_export_properties
+from corehq.apps.export.tasks import add_inferred_export_properties
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from soil import DownloadBase
 from dimagi.utils.prime_views import prime_views
@@ -82,11 +82,11 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
                 )
             else:
                 properties = set().union(*map(lambda c: set(c.dynamic_case_properties().keys()), cases))
-                added_inferred_export_properties.send(
+                add_inferred_export_properties.delay(
                     'CaseImporter',
-                    domain=domain,
-                    case_type=case_type,
-                    properties=properties,
+                    domain,
+                    case_type,
+                    properties,
                 )
         return err
 

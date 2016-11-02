@@ -11,7 +11,7 @@ from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.models import XForm, Application
 from corehq.apps.app_manager.signals import app_post_save
 from corehq.apps.export.dbaccessors import delete_all_export_data_schemas, delete_all_inferred_schemas
-from corehq.apps.export.signals import add_inferred_export_properties
+from corehq.apps.export.tasks import add_inferred_export_properties
 from corehq.apps.export.models import (
     FormExportDataSchema,
     CaseExportDataSchema,
@@ -706,9 +706,9 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
 
         add_inferred_export_properties(
             'TestSend',
-            domain=app.domain,
-            case_type=self.case_type,
-            properties=['question2', 'new-property'],
+            app.domain,
+            self.case_type,
+            ['question2', 'new-property'],
         )
 
         schema = CaseExportDataSchema.generate_schema_from_builds(
