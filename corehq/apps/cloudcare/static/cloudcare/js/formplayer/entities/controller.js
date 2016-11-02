@@ -5,20 +5,11 @@
  */
 
 FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Backbone) {
-    Entities.AppModel = Backbone.Model.extend({
-        urlRoot: "appSelects",
-        idAttribute: "_id",
-    });
-
-    Entities.AppCollection = Backbone.Collection.extend({
-        url: "appSelects",
-        model: Entities.AppModel,
-    });
 
     var API = {
         getAppEntities: function () {
             var appsJson = FormplayerFrontend.request('currentUser').apps;
-            return new Entities.AppCollection(appsJson);
+            return new FormplayerFrontend.Apps.Collections.App(appsJson);
         },
         getAppEntity: function (app_id) {
             var apps = API.getAppEntities();
