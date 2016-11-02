@@ -200,7 +200,7 @@
                 workflow: '{{ form.post_form_workflow }}',
             };
 
-            {% if request|toggle_enabled:"FORM_LINK_WORKFLOW"%}
+            {% if request|toggle_enabled:"FORM_LINK_WORKFLOW" or uses_form_workflow %}
             labels[FormWorkflow.Values.FORM] = "{% trans "Link to other form" %}";
             options.forms = {{ linkable_forms|JSON}}
             options.formLinks = {{ form.form_links|JSON }}
