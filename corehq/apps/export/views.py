@@ -1247,6 +1247,14 @@ class DailySavedExportListView(BaseExportListView):
     form_or_case = None  # This view lists both case and form feeds
     allow_bulk_export = False
 
+    def dispatch(self, *args, **kwargs):
+        if not self._priv_check():
+            raise Http404
+        return super(DailySavedExportListView, self).dispatch(*args, **kwargs)
+
+    def _priv_check(self):
+        return domain_has_privilege(self.domain, DAILY_SAVED_EXPORT)
+
     def _get_create_export_class(self, model):
         return {
             "form": CreateNewDailySavedFormExport,
@@ -1411,6 +1419,9 @@ class DashboardFeedListView(DailySavedExportListView):
     page_title = ugettext_lazy("Excel Dashboard Integration")
     form_or_case = None  # This view lists both case and form feeds
     allow_bulk_export = False
+
+    def _priv_check(self):
+        return domain_has_privilege(self.domain, EXCEL_DASHBOARD)
 
     def _get_create_export_class(self, model):
         return {
@@ -1819,6 +1830,11 @@ class CreateNewCustomCaseExportView(BaseModifyNewCustomView):
 
 class DashboardFeedMixin(object):
 
+    def dispatch(self, *args, **kwargs):
+        if not domain_has_privilege(self.domain, EXCEL_DASHBOARD):
+            raise Http404
+        return super(DashboardFeedMixin, self).dispatch(*args, **kwargs)
+
     def create_new_export_instance(self, schema):
         instance = super(DashboardFeedMixin, self).create_new_export_instance(schema)
         instance.export_format = "html"
@@ -1837,6 +1853,11 @@ class DashboardFeedMixin(object):
 
 
 class DailySavedExportMixin(object):
+
+    def dispatch(self, *args, **kwargs):
+        if not domain_has_privilege(self.domain, DAILY_SAVED_EXPORT):
+            raise Http404
+        return super(DailySavedExportMixin, self).dispatch(*args, **kwargs)
 
     def create_new_export_instance(self, schema):
         instance = super(DailySavedExportMixin, self).create_new_export_instance(schema)
@@ -2126,6 +2147,14 @@ class DownloadNewCaseExportView(GenericDownloadNewExportMixin, DownloadCaseExpor
 def download_daily_saved_export(req, domain, export_instance_id):
     export_instance = get_properly_wrapped_export_instance(export_instance_id)
     assert domain == export_instance.domain
+
+    if export_instance.export_format == "html":
+        if not domain_has_privilege(domain, EXCEL_DASHBOARD):
+            raise Http404
+    elif export_instance.is_daily_saved_export:
+        if not domain_has_privilege(domain, DAILY_SAVED_EXPORT):
+            raise Http404
+
     if should_update_export(export_instance.last_accessed):
         try:
             from corehq.apps.export.tasks import rebuild_export_task
