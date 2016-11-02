@@ -24,7 +24,7 @@ FormplayerFrontend.module("SessionNavigate.AppList", function(AppList, Formplaye
                 appId: appId,
             });
             FormplayerFrontend.regions.phoneModeNavigation.show(
-                new FormplayerFrontend.Navigation.PhoneNavigation({ appId: appId })
+                new FormplayerFrontend.Layout.Views.PhoneNavigation({ appId: appId })
             );
             FormplayerFrontend.regions.main.show(singleAppView);
             FormplayerFrontend.trigger('phone:back:hide');
