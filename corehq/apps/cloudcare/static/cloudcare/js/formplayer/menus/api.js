@@ -4,10 +4,10 @@
  * Backbone model for listing and selecting CommCare menus (modules, forms, and cases)
  */
 
-FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Backbone, Marionette, $) {
+FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone, Marionette, $) {
 
 
-    var API = {
+    Menus.API = {
 
         getMenus: function (params) {
 
@@ -72,6 +72,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
     };
 
     FormplayerFrontend.reqres.setHandler("app:select:menus", function (options) {
-        return API.getMenus(options);
+        return Menus.API.getMenus(options);
     });
 });
+
