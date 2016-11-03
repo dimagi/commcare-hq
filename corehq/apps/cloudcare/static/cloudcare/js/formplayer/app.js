@@ -193,6 +193,12 @@ FormplayerFrontend.on("start", function (options) {
                 model: user,
             })
         );
+        if (user.displayOptions.phoneMode) {
+            FormplayerFrontend.regions.phoneModeNavigation.show(
+                new FormplayerFrontend.Layout.Views.PhoneNavigation({ appId: appId })
+            );
+            FormplayerFrontend.trigger('phone:back:hide');
+        }
         // will be the same for every domain. TODO: get domain/username/pass from django
         if (this.getCurrentRoute() === "") {
             if (options.phoneMode) {
