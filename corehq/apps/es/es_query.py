@@ -205,15 +205,15 @@ class ESQuery(object):
             size = sliced_or_int.stop - start
         return self.start(start).size(size).run().hits
 
-    def run(self, no_hits_with_aggs=True):
+    def run(self, include_hits=False):
         """Actually run the query.  Returns an ESQuerySet object."""
-        query = self._clean_before_run(no_hits_with_aggs)
+        query = self._clean_before_run(include_hits)
         raw = run_query(query.index, query.raw_query, debug_host=query.debug_host)
         return ESQuerySet(raw, deepcopy(query))
 
-    def _clean_before_run(self, no_hits_with_aggs=True):
+    def _clean_before_run(self, include_hits=False):
         query = deepcopy(self)
-        if no_hits_with_aggs and query.uses_aggregations():
+        if not include_hits and query.uses_aggregations():
             query = query.size(0)
         return query
 
