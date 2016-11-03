@@ -263,7 +263,7 @@ function Form(json) {
     });
 
     $.subscribe('session.block', function(e, block) {
-        $('.webforms input').prop('disabled', !!block);
+        $('#webforms input, #webforms textarea').prop('disabled', !!block);
     });
 
     self.submitting = function() {
