@@ -815,7 +815,6 @@ def get_case_owner_filters(domains):
     result = {'terms': {}}
 
     mobile_user_ids = list(get_user_ids(True, domains))
-
     group_ids = GroupES().domain(domains).get_ids()
     result['terms']['owner_id'] = mobile_user_ids + group_ids
     return result
@@ -907,11 +906,12 @@ def get_general_stats_data(domains, histo_type, datespan, interval="day",
         user_type_mobile=None, is_cumulative=True, supply_points=False,
         j2me_only=False):
     additional_filters = []
+    domains_for_es = [d for sublist in domains for d in sublist['names']]
     if histo_type == 'forms':
         if user_type_mobile is not None:
             additional_filters.append({
                 'terms': {
-                    'form.meta.userID': list(get_user_ids(user_type_mobile, domains))
+                    'form.meta.userID': list(get_user_ids(user_type_mobile, domains_for_es))
                 }
             })
         if j2me_only:
@@ -921,7 +921,7 @@ def get_general_stats_data(domains, histo_type, datespan, interval="day",
                 }
             })
     if histo_type == 'active_cases' and not supply_points:
-        additional_filters.append(get_case_owner_filters(domains))
+        additional_filters.append(get_case_owner_filters(domains_for_es))
     if supply_points:
         additional_filters.append({'terms': {'type': ['supply-point']}})
 
