@@ -237,4 +237,4 @@ class BulkFormManagementInterface(SubmitHistoryMixin, DataInterface, ProjectRepo
         # returns a list of form_ids
         # this is called using ReportDispatcher.dispatch(render_as='form_ids', ***) in
         # the bulk_form_management_async task
-        return self.es_query.exclude_source().run().doc_ids
+        return self.es_query.get_ids()

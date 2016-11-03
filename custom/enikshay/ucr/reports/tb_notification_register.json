@@ -15,11 +15,11 @@
         "filters": [
             {
                 "compare_as_string": false,
-                "datatype": "string",
+                "datatype": "datetime",
                 "required": false,
                 "display": "Case Open Date",
                 "field": "opened_on",
-                "type": "date",
+                "type": "quarter",
                 "slug": "opened_on"
             },
             {
@@ -379,21 +379,9 @@
                 "calculate_total": false
             },
             {
-                "display": "Treatment Supporter Details - First Name",
+                "display": "Treatment Supporter Details - Name",
                 "type": "field",
-                "field": "treatment_supporter_first_name",
-                "aggregation": "simple",
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {
-                },
-                "calculate_total": false
-            },
-            {
-                "display": "Treatment Supporter Details - Last Name",
-                "type": "field",
-                "field": "treatment_supporter_last_name",
+                "field": "treatment_supporter_name",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,

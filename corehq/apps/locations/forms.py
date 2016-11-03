@@ -359,12 +359,11 @@ class UsersAtLocationForm(MultipleSelectionForm):
     @property
     @memoized
     def users_at_location(self):
-        user_query = (UserES()
-                      .domain(self.domain_object.name)
-                      .mobile_users()
-                      .location(self.location.location_id)
-                      .fields([]))
-        return user_query.run().doc_ids
+        return (UserES()
+                .domain(self.domain_object.name)
+                .mobile_users()
+                .location(self.location.location_id)
+                .get_ids())
 
     def unassign_users(self, users):
         for doc in iter_docs(CommCareUser.get_db(), users):

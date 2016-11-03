@@ -76,7 +76,7 @@ FormplayerFrontend.reqres.setHandler('gridPolyfillPath', function(path) {
 
 FormplayerFrontend.reqres.setHandler('currentUser', function () {
     if (!FormplayerFrontend.currentUser) {
-        FormplayerFrontend.currentUser = new FormplayerFrontend.Entities.UserModel();
+        FormplayerFrontend.currentUser = new FormplayerFrontend.Users.Models.CurrentUser();
     }
     return FormplayerFrontend.currentUser;
 });
@@ -165,6 +165,7 @@ FormplayerFrontend.on('startForm', function (data) {
 
 FormplayerFrontend.on("start", function (options) {
     var user = FormplayerFrontend.request('currentUser'),
+        savedDisplayOptions,
         appId;
     user.username = options.username;
     user.language = options.language;
@@ -172,18 +173,22 @@ FormplayerFrontend.on("start", function (options) {
     user.domain = options.domain;
     user.formplayer_url = options.formplayer_url;
     user.debuggerEnabled = options.debuggerEnabled;
-    user.phoneMode = options.phoneMode;
     user.restoreAs = FormplayerFrontend.request('restoreAsUser', user.domain, user.username);
-    user.displayOptions = {
+
+    savedDisplayOptions = _.pick(
+        Util.getSavedDisplayOptions(),
+        FormplayerFrontend.Constants.ALLOWED_SAVED_OPTIONS
+    );
+    user.displayOptions = _.defaults(savedDisplayOptions, {
         phoneMode: options.phoneMode,
         oneQuestionPerScreen: options.oneQuestionPerScreen,
-    };
+    });
 
     FormplayerFrontend.request('gridPolyfillPath', options.gridPolyfillPath);
     if (Backbone.history) {
         Backbone.history.start();
         FormplayerFrontend.regions.restoreAsBanner.show(
-            new FormplayerFrontend.SessionNavigate.Users.Views.RestoreAsBanner({
+            new FormplayerFrontend.Users.Views.RestoreAsBanner({
                 model: user,
             })
         );
@@ -270,14 +275,12 @@ FormplayerFrontend.on('clearRestoreAsUser', function() {
     );
     user.restoreAs = null;
     FormplayerFrontend.regions.restoreAsBanner.show(
-        new FormplayerFrontend.SessionNavigate.Users.Views.RestoreAsBanner({
+        new FormplayerFrontend.Users.Views.RestoreAsBanner({
             model: user,
         })
     );
 
-    appId = FormplayerFrontend.request('getCurrentAppId');
-
-    FormplayerFrontend.trigger('navigateHome', appId);
+    FormplayerFrontend.trigger('navigateHome');
 });
 
 FormplayerFrontend.on("sync", function () {
@@ -339,7 +342,7 @@ FormplayerFrontend.on("retry", function(response, retryFn, progressMessage) {
     progressMessage = progressMessage || gettext('Please wait...');
 
     if (!progressView) {
-        progressView = new FormplayerFrontend.Utils.Views.ProgressView({
+        progressView = new FormplayerFrontend.Layout.Views.ProgressView({
             progressMessage: progressMessage,
         });
         FormplayerFrontend.regions.loadingProgress.show(progressView);
@@ -399,16 +402,18 @@ FormplayerFrontend.on('refreshApplication', function(appId) {
         tfLoadingComplete(true);
     }).done(function() {
         tfLoadingComplete();
-        FormplayerFrontend.trigger('navigateHome', appId);
+        FormplayerFrontend.trigger('navigateHome');
     });
 });
 
-FormplayerFrontend.on('navigateHome', function(appId) {
+FormplayerFrontend.on('navigateHome', function() {
     var urlObject = Util.currentUrlToObject(),
+        appId,
         currentUser = FormplayerFrontend.request('currentUser');
     urlObject.clearExceptApp();
     FormplayerFrontend.regions.breadcrumb.empty();
-    if (currentUser.phoneMode) {
+    if (currentUser.displayOptions.phoneMode) {
+        appId = FormplayerFrontend.request('getCurrentAppId');
         FormplayerFrontend.navigate("/single_app/" + appId, { trigger: true });
     } else {
         FormplayerFrontend.navigate("/apps", { trigger: true });

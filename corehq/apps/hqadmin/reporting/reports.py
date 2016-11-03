@@ -155,7 +155,7 @@ def get_mobile_users(domains):
         .show_inactive()
         .mobile_users()
         .domain(domains)
-        .run().doc_ids
+        .get_ids()
     )
 
 
@@ -401,7 +401,7 @@ def get_total_clients_data(domains, datespan, interval, datefield='opened_on'):
             .domain(domains)
             .filter({"ids": {"values": cases}})
             .opened_range(lt=datespan.startdate)
-            .size(0)).run().total
+            .count())
 
     return format_return_data(histo_data, cases_before_date, datespan)
 
@@ -437,7 +437,7 @@ def get_mobile_workers_data(domains, datespan, interval,
             .mobile_users()
             .show_inactive()
             .created(lt=datespan.startdate)
-            .size(0)).run().total
+            .count())
 
     return format_return_data(histo_data, users_before_date, datespan)
 
@@ -598,7 +598,7 @@ def get_domain_stats_data(domains, datespan, interval,
 
 def commtrack_form_submissions(domains, datespan, interval,
         datefield='received_on'):
-    mobile_workers = UserES().exclude_source().mobile_users().show_inactive().run().doc_ids
+    mobile_workers = UserES().mobile_users().show_inactive().get_ids()
 
     forms_after_date = (FormES()
             .domain(domains)
@@ -693,11 +693,7 @@ def get_users_all_stats(domains, datespan, interval,
         .run().aggregations.date.as_facet_result()
     )
 
-    users_before_date = len(
-        query
-        .created(lt=datespan.startdate)
-        .run().doc_ids
-    )
+    users_before_date = query.created(lt=datespan.startdate).count()
 
     return format_return_data(histo_data, users_before_date, datespan)
 
@@ -785,7 +781,7 @@ def get_user_ids(user_type_mobile):
         query = query.mobile_users()
     else:
         query = query.web_users()
-    return set(query.run().doc_ids)
+    return set(query.get_ids())
 
 
 def get_submitted_users():

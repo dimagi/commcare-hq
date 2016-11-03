@@ -50,12 +50,10 @@ branches:
 #  - np/upgrade-twofactor # Nick P 10/5
   - bmb/currentind-string # Biyeun 11/12
 #  - np/110/TEMPLATES
-  - ce/billing-notification # Cal 10/25
   - jquery-3-1-0 # Jenny 9/26
   - typeahead-to-select2 # Jenny 11/1
   - kill-autocomplete # Jenny 11/1
-  - cc-trans-select2 # Jenny 11/1
-  - es/refactor-submit-history  # Ethan 2016-10-27
+  - location_export # Manish 11/2
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
@@ -76,4 +74,5 @@ submodules:
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches: []
   deployment/commcare-hq-deploy:
-    branches: []
+    branches:
+      - br/use-different-shutdown-method

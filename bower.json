@@ -27,8 +27,6 @@
     "select2": "4.0.0",
     "less": "1.7.3",
     "xpath": "dimagi/js-xpath#f4f0c78",
-    "At.js": "1.5.2",
-    "Caret.js": "0.2.2",
     "backbone": "0.9.1",
     "backbone-1.3.2": "backbone#1.3.2",
     "bootstrap-daterangepicker": "2.1.13",
@@ -58,7 +56,8 @@
     "datetimepicker": "2.5.4",
     "DOMPurify": "0.8.3",
     "jquery-tiny-pubsub": "https://github.com/cowboy/jquery-tiny-pubsub.git#~0.7.0",
-    "markdown-it": "7.0.1"
+    "markdown-it": "7.0.1",
+    "bootstrap-switch": "3.3.2"
   },
   "devDependencies": {
     "chai": "3.3.0",

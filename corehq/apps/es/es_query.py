@@ -404,6 +404,10 @@ class ESQuery(object):
         """Performs a minimal query to get the count of matching documents"""
         return self.size(0).run().total
 
+    def get_ids(self):
+        """Performs a minimal query to get the ids of the matching documents"""
+        return self.exclude_source().run().doc_ids
+
 
 class ESQuerySet(object):
     """

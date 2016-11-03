@@ -231,7 +231,7 @@ class TestForceConvertExport(TestConvertBase):
         instance, _ = self._convert_case_export('case', force=True)
         table = instance.get_table(MAIN_TABLE)
 
-        index, column = table.get_column([PathNode(name='age')], 'ExportItem', None)
+        index, column = table.get_column([PathNode(name='age')], 'ScalarItem', None)
         # When we do force the convert we should convert even when it's not in the schema
         self.assertIsNotNone(column)
         self.assertEqual(column.label, 'Age Label')
@@ -384,7 +384,7 @@ class TestConvertSavedExportSchemaToCaseExportInstance(TestConvertBase):
         table = instance.get_table(MAIN_TABLE)
         index, column = table.get_column(
             [PathNode(name='age')],
-            'ExportItem',
+            'ScalarItem',
             None,
         )
         self.assertIsNotNone(column)

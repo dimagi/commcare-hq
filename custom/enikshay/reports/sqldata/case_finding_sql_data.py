@@ -157,7 +157,9 @@ class CaseFindingSqlData(EnikshaySqlData):
                     '',
                     CountColumn(
                         'doc_id',
-                        filters=self.filters + [RawFilter("hiv_status = 'reactive'")],
+                        filters=self.filters + [
+                            RawFilter("hiv_status = 'reactive'"), RawFilter("cpt_initiated = 'yes'")
+                        ],
                         alias='hiv_reactive_cpt'
                     )
                 ),

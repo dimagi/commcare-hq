@@ -15,11 +15,11 @@
         "filters": [
             {
                 "compare_as_string": false,
-                "datatype": "string",
+                "datatype": "datetime",
                 "required": false,
                 "display": "Case Open Date",
                 "field": "date_reported",
-                "type": "date",
+                "type": "quarter",
                 "slug": "date_reported"
             },
             {

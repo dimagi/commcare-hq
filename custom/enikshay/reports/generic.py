@@ -1,15 +1,14 @@
 from collections import namedtuple
 
-from sqlagg.filters import BETWEEN, IN
+from sqlagg.filters import IN, AND, GTE, LT
 
-from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.reports.sqlreport import SqlTabularReport, SqlData
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
 from corehq.apps.reports.util import get_INFilter_bindparams
 from corehq.apps.userreports.util import get_table_name
 from corehq.sql_db.connections import UCR_ENGINE_ID
-from custom.enikshay.reports.filters import EnikshayLocationFilter
+from custom.enikshay.reports.filters import EnikshayLocationFilter, QuarterFilter
 from custom.utils.utils import clean_IN_filter_value
 
 TABLE_ID = 'episode'
@@ -41,7 +40,7 @@ class MultiReport(CustomProjectReport, GenericReportView):
 
 
 class EnikshayMultiReport(MultiReport):
-    fields = (DatespanFilter, EnikshayLocationFilter)
+    fields = (QuarterFilter, EnikshayLocationFilter)
 
 
 class EnikshayReport(DatespanMixin, CustomProjectReport, SqlTabularReport):
@@ -49,11 +48,12 @@ class EnikshayReport(DatespanMixin, CustomProjectReport, SqlTabularReport):
 
     @property
     def report_config(self):
+        datespan = QuarterFilter.get_value(self.request, self.domain)
         return EnikshayReportConfig(
             domain=self.domain,
             locations_id=self.request.GET.getlist('locations_id', []),
-            start_date=self.datespan.startdate,
-            end_date=self.datespan.end_of_end_day
+            start_date=datespan.startdate,
+            end_date=datespan.enddate
         )
 
 
@@ -84,7 +84,7 @@ class EnikshaySqlData(SqlData):
     @property
     def filters(self):
         filters = [
-            BETWEEN('opened_on', 'start_date', 'end_date'),
+            AND([GTE('opened_on', 'start_date'), LT('opened_on', 'end_date')]),
         ]
 
         locations_id = filter(lambda x: bool(x), self.config.locations_id)
