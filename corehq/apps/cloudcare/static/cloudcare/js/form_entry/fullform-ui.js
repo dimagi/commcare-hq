@@ -1,3 +1,4 @@
+/* globals CodeMirror */
 var Formplayer = {
     Utils: {},
     Const: {},
@@ -421,14 +422,17 @@ Formplayer.ViewModels.CloudCareDebugger = function() {
     self.evalXPath = new Formplayer.ViewModels.EvaluateXPath();
     self.isMinimized = ko.observable(true);
     self.instanceXml = ko.observable('');
+    self.formattedQuestionsHtml = ko.observable('');
     self.toggleState = function() {
         self.isMinimized(!self.isMinimized());
     };
+
     $.unsubscribe('debugger.update');
-    $.subscribe('debugger.update', function(e, resp) {
-        if (resp.instanceXml) {
-            self.instanceXml(resp.instanceXml.output);
-        }
+    $.subscribe('debugger.update', function(e) {
+        $.publish('formplayer.' + Formplayer.Const.FORMATTED_QUESTIONS, function(resp) {
+            self.formattedQuestionsHtml(resp.formattedQuestions);
+            self.instanceXml(resp.instanceXml);
+        });
     });
 
     self.instanceXml.subscribe(function(newXml) {
@@ -451,7 +455,7 @@ Formplayer.ViewModels.CloudCareDebugger = function() {
     });
 
     // Called afterRender, ensures that the debugger takes the whole screen
-    self.adjustWidth = function(e) {
+    self.adjustWidth = function() {
         var $debug = $('#instance-xml-home'),
             $body = $('body');
 
@@ -569,6 +573,7 @@ Formplayer.Const = {
     DELETE_REPEAT: 'delete-repeat',
     SET_LANG: 'set-lang',
     SUBMIT: 'submit-all',
+    FORMATTED_QUESTIONS: 'formatted_questions',
 
     // Control values. See commcare/javarosa/src/main/java/org/javarosa/core/model/Constants.java
     CONTROL_UNTYPED: -1,
