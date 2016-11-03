@@ -130,8 +130,7 @@ class CouchFormExportFilterBuilder(BaseExportFilterBuilder):
                     return
                 self.date_interval.set_timezone(self.timezone)
             except AttributeError:
-                # Some date_intervals (e.g. DatePeriod instances) don't have a set_timezone() or is_valid() method.
-                pass
+                pass  # TODO: Explain this
             return SerializableFunction(datespan_export_filter, datespan=self.date_interval)
 
 
@@ -167,8 +166,7 @@ class ESCaseExportFilterBuilder(BaseExportFilterBuilder):
                     return
                 self.date_interval.set_timezone(self.timezone)
             except AttributeError:
-                # Some date_intervals (e.g. DatePeriod instances) don't have a set_timezone() or is_valid() method.
-                pass
+                pass  # TODO: Explain this
             return ModifiedOnRangeFilter(
                 gte=self.date_interval.startdate, lt=self.date_interval.enddate + timedelta(days=1)
             )
