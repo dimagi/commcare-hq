@@ -57,7 +57,6 @@ class BaseDumpLoadTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        TimezoneMigrationProgress.objects.filter(domain=cls.domain_name).delete()
         cls.domain.delete()
         super(BaseDumpLoadTest, cls).tearDownClass()
 
@@ -80,13 +79,13 @@ class BaseDumpLoadTest(TestCase):
 
         dump_output = output_stream.getvalue()
         dump_lines = [line.strip() for line in dump_output.split('\n') if line.strip()]
-        total_object_count, loaded_object_count = SqlDataLoader().load_objects(dump_lines)
+        total_object_count, loaded_model_counts = SqlDataLoader().load_objects(dump_lines)
 
         expected_model_counts = _normalize_object_counter(expected_object_counts)
         actual_model_counts = Counter([json.loads(line)['model'] for line in dump_lines])
         expected_total_objects = sum(expected_object_counts.values())
         self.assertDictEqual(expected_model_counts, actual_model_counts)
-        self.assertEqual(expected_total_objects, loaded_object_count)
+        self.assertEqual(expected_total_objects, sum(loaded_model_counts.values()))
         self.assertEqual(expected_total_objects, total_object_count)
 
         return dump_lines
@@ -321,7 +320,7 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         )
         web_user = WebUser.create(
             domain=self.domain_name,
-            username='webuser_1',
+            username='webuser_t1',
             password='secret',
             email='webuser@example.com',
         )

@@ -104,6 +104,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('accounting', 'Invoice', 'subscription__subscriber__domain'),
     ModelDeletion('accounting', 'Subscription', 'subscriber__domain'),
     ModelDeletion('accounting', 'Subscriber', 'domain'),
+    ModelDeletion('tzmigration', 'TimezoneMigrationProgress', 'domain'),
     ModelDeletion('sms', 'SMS', 'domain'),
     ModelDeletion('sms', 'SQLLastReadMessage', 'domain'),
     ModelDeletion('sms', 'ExpectedCallback', 'domain'),
