@@ -812,14 +812,7 @@ def get_case_owner_filters(domains):
 
     mobile_user_ids = list(get_user_ids(True, domains))
 
-    def all_groups():
-        for domain in domains:
-            for group in Group.by_domain(domain):
-                yield group
-    group_ids = [
-        group._id for group in all_groups()
-    ]
-
+    group_ids = GroupES().domain(domains).get_ids()
     result['terms']['owner_id'] = mobile_user_ids + group_ids
     return result
 
