@@ -777,7 +777,9 @@ def get_user_ids(user_type_mobile, domains):
     Returns the set of mobile user IDs if user_type_mobile is True,
     else returns the set of web user IDs.
     """
-    query = UserES().show_inactive().domain(domains)
+    query = UserES().show_inactive()
+    if domains:
+        query = query.domain(domains)
     if user_type_mobile:
         query = query.mobile_users()
     else:
@@ -788,22 +790,23 @@ def get_user_ids(user_type_mobile, domains):
 def get_submitted_users(domains):
     real_form_users = set(
         FormES()
-        .domain(domains)
         .user_aggregation()
         .size(0)
-        .run()
-        .aggregations.user.keys
     )
 
     real_sms_users = set(
         SMSES()
-        .domain(domains)
         .terms_aggregation('couch_recipient', 'user')
         .incoming_messages()
         .size(0)
-        .run()
-        .aggregations.user.keys
     )
+
+    if domains:
+        real_form_users = real_form_users.domain(domains)
+        real_sms_users = real_sms_users.domain(domains)
+
+    real_form_users = real_form_users.run().aggregations.users.keys
+    real_sms_users = real_sms_users.run().aggregations.users.keys
 
     return real_form_users | real_sms_users
 
