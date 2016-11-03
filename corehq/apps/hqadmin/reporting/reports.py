@@ -39,6 +39,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.es.cases import CaseES
 from corehq.apps.es.domains import DomainES
 from corehq.apps.es.forms import FormES
+from corehq.apps.es.groups import GroupES
 from corehq.apps.es.sms import SMSES
 from corehq.apps.es.users import UserES
 from corehq.apps.groups.models import Group
