@@ -202,20 +202,23 @@
                     data: {
                         domain: domain,
                     },
-                    success: function(links) {
-                        if (links.length) {
-                            var $ul = $modal.find("ul").html("");
-                            _.each(links, function(link) {
-                                $ul.append($("<li/>").html(link));
+                    success: function(toggles) {
+                        if (toggles.length) {
+                            var template = _.template($modal.find("script").html()),
+                                $ul = $modal.find("ul").html("");
+                            _.each(toggles, function(toggle) {
+                                $ul.append(template(toggle));
                             });
-                            $modal.one("click", ".btn-primary", function() {
+                            $modal.modal().one("click", ".btn-primary", function() {
                                 $(this).disableButton();
+                                var slugs = _.map($modal.find(":checked"), function(c) {
+                                    return $(c).data("slug");
+                                });
+                                $form.find("input[name='toggles']").val(slugs.join(","));
                                 $form.submit();
-                            });
-                            $modal.one("hide.bs.modal", function() {
+                            }).one("hide.bs.modal", function() {
                                 $submit.enableButton();
                             });
-                            $modal.modal();
                         } else {
                             $form.submit();
                         }

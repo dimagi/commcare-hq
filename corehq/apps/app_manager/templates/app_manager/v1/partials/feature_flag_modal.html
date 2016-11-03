@@ -7,14 +7,14 @@
                 <button type="button" class="close" data-dismiss="modal">
                     <span aria-hidden="true">&times;</span>
                 </button>
-                <h4 class="modal-title">{% trans "Feature Flag Warning" %}</h4>
+                <h4 class="modal-title">{% trans "Feature Flag Discrepancy" %}</h4>
             </div>
             <div class="modal-body form-horizontal">
                 {% blocktrans %}
                 The following feature flags are not turned on in the domain you're copying to.
-                Are you sure you wish to copy this application?
+                Select any that you wish to copy along with this application.
                 {% endblocktrans %}
-                <ul></ul>
+                <ul class="list-unstyled"></ul>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
@@ -22,4 +22,12 @@
             </div>
         </div>
     </div>
+    <script type="text/html">
+        <li class="checkbox">
+            <label>
+                <input type="checkbox" data-slug="<%= slug %>" />
+                <%= label %>
+            </label>
+        </li>
+    </script>
 </div>
