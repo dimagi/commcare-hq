@@ -95,12 +95,11 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
             (demo, user_es.demo_users()),
         ] if include]
 
-        query = (user_es.UserES()
-                 .domain(self.domain)
-                 .OR(*user_filters)
-                 .show_inactive()
-                 .fields([]))
-        owner_ids = query.run().doc_ids
+        owner_ids = (user_es.UserES()
+                     .domain(self.domain)
+                     .OR(*user_filters)
+                     .show_inactive()
+                     .get_ids())
 
         if commtrack:
             owner_ids.append("commtrack-system")
@@ -144,14 +143,13 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         selected_reporting_group_users = list(set().union(*user_lists))
 
         # Get ids for each sharing group that contains a user from selected_reporting_group_users OR a user that was specifically selected
-        share_group_q = (HQESQuery(index="groups")
-                         .domain(self.domain)
-                         .doc_type("Group")
-                         .term("case_sharing", True)
-                         .term("users", (selected_reporting_group_users +
-                                         selected_user_ids))
-                         .fields([]))
-        sharing_group_ids = share_group_q.run().doc_ids
+        sharing_group_ids = (HQESQuery(index="groups")
+                             .domain(self.domain)
+                             .doc_type("Group")
+                             .term("case_sharing", True)
+                             .term("users", (selected_reporting_group_users +
+                                             selected_user_ids))
+                             .get_ids())
 
         owner_ids = list(set().union(
             special_owner_ids,
