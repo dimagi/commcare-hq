@@ -37,12 +37,7 @@ TAG_PREVIEW = Tag(
     css_class='default',
     description="",  # I'm not sure...
 )
-TAG_UNKNOWN = Tag(
-    name='Unknown',
-    css_class='default',
-    description="",  # I'm not sure...
-)
-ALL_TAGS = [TAG_ONE_OFF, TAG_EXPERIMENTAL, TAG_PRODUCT_PATH, TAG_PRODUCT_CORE, TAG_PREVIEW, TAG_UNKNOWN]
+ALL_TAGS = [TAG_ONE_OFF, TAG_EXPERIMENTAL, TAG_PRODUCT_PATH, TAG_PRODUCT_CORE, TAG_PREVIEW]
 
 
 class StaticToggle(object):
@@ -506,7 +501,7 @@ FORM_LINK_WORKFLOW = StaticToggle(
 VELLUM_SAVE_TO_CASE = StaticToggle(
     'save_to_case',
     "Adds save to case as a question to the form builder",
-    TAG_UNKNOWN,
+    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN]
 )
 
@@ -528,7 +523,7 @@ CACHE_AND_INDEX = StaticToggle(
     'cache_and_index',
     'Enable the "Cache and Index" format option when choosing sort properties '
     'in the app builder',
-    TAG_UNKNOWN,
+    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN],
 )
 
@@ -884,7 +879,7 @@ MOBILE_USER_DEMO_MODE = StaticToggle(
 EXPORT_ZIPPED_APPS = StaticToggle(
     'export-zipped-apps',
     'Export+Import Zipped Applications',
-    TAG_UNKNOWN,
+    TAG_EXPERIMENTAL,
     [NAMESPACE_USER]
 )
 
