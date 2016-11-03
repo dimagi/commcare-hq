@@ -471,11 +471,11 @@ Formplayer.ViewModels.EvaluateXPath = function() {
     self.evaluate = function(form) {
         var callback = function(result, status) {
             self.result(result);
-            self.success(status === "success");
+            self.success(status === "accepted");
         };
         $.publish('formplayer.' + Formplayer.Const.EVALUATE_XPATH, [self.xpath(), callback]);
     };
-}
+};
 
 /**
  * Used to compare if questions are equal to each other by looking at their index
