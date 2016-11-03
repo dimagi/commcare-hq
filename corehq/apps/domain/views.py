@@ -2529,7 +2529,7 @@ class EditInternalCalculationsView(BaseInternalDomainSettingsView):
 @login_and_domain_required
 @require_superuser
 @require_GET
-def feature_flag_diff(request, domain):
+def toggle_diff(request, domain):
     params = json_request(request.GET)
     other_domain = params.get('domain')
     diff = []

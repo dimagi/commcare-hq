@@ -185,12 +185,12 @@
             var $submit = $(this),
                 $form = $submit.closest("form"),
                 domain = $form.find("#id_domain").val(),
-                $modal = $("#copy-feature-flags");
+                $modal = $("#copy-toggles");
             {% if request.user.is_superuser %}
                 $submit.disableButton();
                 $.ajax({
                     method: "GET",
-                    url: "{% url "feature_flag_diff" domain %}",
+                    url: "{% url "toggle_diff" domain %}",
                     data: {
                         domain: domain,
                     },
@@ -338,5 +338,5 @@
 {% include 'hqmedia/partials/multimedia_uploader.html' %}
 {% endfor %}
 {% include 'app_manager/v1/partials/password_setter_modal.html' %}
-{% include 'app_manager/v1/partials/feature_flag_modal.html' %}
+{% include 'app_manager/v1/partials/toggle_diff_modal.html' %}
 {% endblock %}
