@@ -1,4 +1,4 @@
-/*global CodeMirror, Formplayer */
+/*global Formplayer */
 
 // IE compliance
 if (!Array.prototype.indexOf) {
@@ -378,11 +378,11 @@ WebFormSession.prototype.evaluateXPath = function(xpath, callback) {
 
 WebFormSession.prototype.getFormattedQuestions = function(callback) {
     this.serverRequest({
-            'action': Formplayer.Const.FORMATTED_QUESTIONS,
-        },
-        function(resp) {
-            callback(resp);
-        });
+        'action': Formplayer.Const.FORMATTED_QUESTIONS,
+    },
+    function(resp) {
+        callback(resp);
+    });
 };
 
 WebFormSession.prototype.newRepeat = function(repeat) {

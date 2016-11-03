@@ -376,4 +376,3 @@ class ReadableQuestionsAPITest(TestCase):
             )
         self.assertEqual(result.status_code, 200)
         self.assertIn('form_data', json.loads(result.content))
-
