@@ -86,13 +86,11 @@ class ESFormExportFilterBuilder(BaseExportFilterBuilder):
         ])
 
     def _get_datespan_filter(self):
-        if self.date_interval:
+        if self.date_interval and (not hasattr(self.date_interval, "is_valid") or self.date_interval.is_valid()):
             try:
-                if not self.date_interval.is_valid():
-                    return
                 self.date_interval.set_timezone(self.timezone)
             except AttributeError:
-                # Some date_intervals (e.g. DatePeriod instances) don't have a set_timezone() or is_valid() method.
+                # Some date_intervals (e.g. DatePeriod instances) don't have a set_timezone method.
                 pass
             return ReceivedOnRangeFilter(gte=self.date_interval.startdate, lt=self.date_interval.enddate + timedelta(days=1))
 
