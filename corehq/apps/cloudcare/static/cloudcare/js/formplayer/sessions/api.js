@@ -2,36 +2,11 @@
 
 /**
  * Backbone model for listing and selecting FormEntrySessions
- * TODO Shares too much logic with menu.js which should be refactored
  */
 
-FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Backbone, Marionette, $) {
+FormplayerFrontend.module("Sessions", function (Sessions, FormplayerFrontend, Backbone, Marionette, $) {
 
-    Entities.FormEntrySession = Backbone.Model.extend({
-        isNew: function() {
-            return !this.get('sessionId');
-        },
-        sync: function (method, model, options) {
-            Util.setCrossDomainAjaxOptions(options);
-            return Backbone.Collection.prototype.sync.call(this, 'create', model, options);
-        },
-    });
-
-    Entities.FormEntrySessionCollection = Backbone.Collection.extend({
-
-        model: Entities.FormEntrySession,
-
-        parse: function (response) {
-            return response.sessions;
-        },
-
-        fetch: function (options) {
-            Util.setCrossDomainAjaxOptions(options);
-            return Backbone.Collection.prototype.fetch.call(this, options);
-        },
-    });
-
-    var API = {
+    Sessions.API = {
 
         getSessions: function () {
 
@@ -51,7 +26,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                 },
             };
 
-            var menus = new Entities.FormEntrySessionCollection(options);
+            var menus = new Sessions.Collections.FormEntrySession(options);
 
             var defer = $.Deferred();
             menus.fetch(options);
@@ -62,7 +37,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
 
             var user = FormplayerFrontend.request('currentUser');
             var formplayerUrl = user.formplayer_url;
-            var menus = new Entities.MenuSelectCollection();
+            var menus = new FormplayerFrontend.Menus.Collections.MenuSelect();
             var defer = $.Deferred();
 
             menus.fetch({
@@ -96,7 +71,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
                             'showError',
                             "Unable to delete incomplete form '" + session.get('title') + "'"
                         );
-                        console.error(xhr.responseJSON.exception);
+                        window.console.error(xhr.responseJSON.exception);
                     }
 
                 },
@@ -107,14 +82,15 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
     };
 
     FormplayerFrontend.reqres.setHandler("getSession", function (session) {
-        return API.getSession(session);
+        return Sessions.API.getSession(session);
     });
 
     FormplayerFrontend.reqres.setHandler("deleteSession", function (sessionId) {
-        return API.deleteSession(sessionId);
+        return Sessions.API.deleteSession(sessionId);
     });
 
     FormplayerFrontend.reqres.setHandler("sessions", function () {
-        return API.getSessions();
+        return Sessions.API.getSessions();
     });
 });
+

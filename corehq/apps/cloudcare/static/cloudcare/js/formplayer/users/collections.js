@@ -1,6 +1,6 @@
 /*global FormplayerFrontend */
 
-FormplayerFrontend.module("Collections", function(Collections, FormplayerFrontend, Backbone) {
+FormplayerFrontend.module("Users.Collections", function(Collections, FormplayerFrontend, Backbone) {
     /**
      * This collection represents a mobile worker user
      */
@@ -11,7 +11,7 @@ FormplayerFrontend.module("Collections", function(Collections, FormplayerFronten
             }
             return '/a/' + this.domain + '/settings/users/commcare/';
         },
-        model: FormplayerFrontend.Models.User,
+        model: FormplayerFrontend.Users.Models.User,
 
         initialize: function(models, options) {
             options = options || {};

@@ -20,14 +20,14 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
     var API = {
         listApps: function () {
             FormplayerFrontend.regions.breadcrumb.empty();
-            SessionNavigate.AppList.Controller.listApps();
+            FormplayerFrontend.Apps.Controller.listApps();
         },
         singleApp: function(appId) {
             FormplayerFrontend.regions.breadcrumb.empty();
-            SessionNavigate.AppList.Controller.singleApp(appId);
+            FormplayerFrontend.Apps.Controller.singleApp(appId);
         },
         selectApp: function (appId) {
-            SessionNavigate.MenuList.Controller.selectMenu({
+            FormplayerFrontend.Menus.Controller.selectMenu({
                 'appId': appId,
             });
         },
@@ -35,7 +35,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             var urlObject = Util.CloudcareUrl.fromJson(
                 Util.encodedUrlToObject(sessionObject || Backbone.history.getFragment())
             );
-            SessionNavigate.MenuList.Controller.selectMenu(urlObject);
+            FormplayerFrontend.Menus.Controller.selectMenu(urlObject);
         },
         listUsers: function(page, query) {
             FormplayerFrontend.trigger("clearForm");
@@ -43,13 +43,13 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             if (_.isNaN(page)) {
                 page = 1;
             }
-            SessionNavigate.Users.Controller.listUsers(page, query);
+            FormplayerFrontend.Users.Controller.listUsers(page, query);
         },
         listSettings: function() {
-            SessionNavigate.AppList.Controller.listSettings();
+            FormplayerFrontend.Apps.Controller.listSettings();
         },
         showDetail: function (model, detailTabIndex) {
-            SessionNavigate.MenuList.Controller.showDetail(model, detailTabIndex);
+            FormplayerFrontend.Menus.Controller.showDetail(model, detailTabIndex);
         },
         listSessions: function() {
             SessionNavigate.SessionList.Controller.listSessions();
@@ -90,13 +90,13 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
 
             // When the response gets parsed, it will automatically trigger form
             // entry if it is a form response.
-            menuCollection = new FormplayerFrontend.Entities.MenuSelectCollection(
+            menuCollection = new FormplayerFrontend.Menus.Collections.MenuSelect(
                 response,
                 { parse: true }
             );
             FormplayerFrontend.navigate(encodedUrl);
 
-            SessionNavigate.MenuList.Controller.showMenu(menuCollection);
+            FormplayerFrontend.Menus.Controller.showMenu(menuCollection);
         },
     };
     API = SessionNavigate.Middleware.apply(API);
@@ -194,7 +194,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             'appId': urlObject.appId,
             'steps': urlObject.steps,
         };
-        SessionNavigate.MenuList.Controller.selectMenu(options);
+        FormplayerFrontend.Menus.Controller.selectMenu(options);
     });
 
 
@@ -203,6 +203,6 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             'installReference': path,
         });
         Util.setUrlToObject(urlObject);
-        SessionNavigate.MenuList.Controller.selectMenu(urlObject);
+        FormplayerFrontend.Menus.Controller.selectMenu(urlObject);
     });
 });

@@ -1,7 +1,7 @@
 /*global FormplayerFrontend */
 
-FormplayerFrontend.module("SessionNavigate.AppList", function (AppList, FormplayerFrontend, Backbone, Marionette) {
-    AppList.GridItem = Marionette.ItemView.extend({
+FormplayerFrontend.module("Apps.Views", function (Views, FormplayerFrontend, Backbone, Marionette) {
+    Views.GridItem = Marionette.ItemView.extend({
         template: "#row-template",
         tagName: "div",
         className: "grid-item col-xs-6 col-sm-4 col-lg-3 formplayer-request",
@@ -15,7 +15,7 @@ FormplayerFrontend.module("SessionNavigate.AppList", function (AppList, Formplay
         },
     });
 
-    AppList.BaseAppView = {
+    Views.BaseAppView = {
         events: {
             'click .js-incomplete-sessions-item': 'incompleteSessionsClick',
             'click .js-sync-item': 'syncClick',
@@ -40,16 +40,16 @@ FormplayerFrontend.module("SessionNavigate.AppList", function (AppList, Formplay
         },
     };
 
-    AppList.GridView = Marionette.CompositeView.extend({
+    Views.GridView = Marionette.CompositeView.extend({
         template: "#grid-template",
-        childView: AppList.GridItem,
+        childView: Views.GridItem,
         childViewContainer: ".js-application-container",
 
-        events: _.extend(AppList.BaseAppView.events),
-        incompleteSessionsClick: _.extend(AppList.BaseAppView.incompleteSessionsClick),
-        syncClick: _.extend(AppList.BaseAppView.syncClick),
-        onClickRestoreAs: _.extend(AppList.BaseAppView.onClickRestoreAs),
-        onClickSettings: _.extend(AppList.BaseAppView.onClickSettings),
+        events: _.extend(Views.BaseAppView.events),
+        incompleteSessionsClick: _.extend(Views.BaseAppView.incompleteSessionsClick),
+        syncClick: _.extend(Views.BaseAppView.syncClick),
+        onClickRestoreAs: _.extend(Views.BaseAppView.onClickRestoreAs),
+        onClickSettings: _.extend(Views.BaseAppView.onClickSettings),
     });
 
     /**
@@ -59,17 +59,17 @@ FormplayerFrontend.module("SessionNavigate.AppList", function (AppList, Formplay
      * The user doesn't need to select the application because we already have
      * that information. Used for phone previewing in the app manager
      */
-    AppList.SingleAppView = Marionette.ItemView.extend({
+    Views.SingleAppView = Marionette.ItemView.extend({
         template: "#single-app-template",
         className: 'single-app-view',
 
         events: _.extend({
             'click .js-start-app': 'startApp',
-        }, AppList.BaseAppView.events),
-        incompleteSessionsClick: _.extend(AppList.BaseAppView.incompleteSessionsClick),
-        syncClick: _.extend(AppList.BaseAppView.syncClick),
-        onClickRestoreAs: _.extend(AppList.BaseAppView.onClickRestoreAs),
-        onClickSettings: _.extend(AppList.BaseAppView.onClickSettings),
+        }, Views.BaseAppView.events),
+        incompleteSessionsClick: _.extend(Views.BaseAppView.incompleteSessionsClick),
+        syncClick: _.extend(Views.BaseAppView.syncClick),
+        onClickRestoreAs: _.extend(Views.BaseAppView.onClickRestoreAs),
+        onClickSettings: _.extend(Views.BaseAppView.onClickSettings),
 
         initialize: function(options) {
             this.appId = options.appId;

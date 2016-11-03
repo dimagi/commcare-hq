@@ -1,13 +1,13 @@
 /*global FormplayerFrontend */
 
-FormplayerFrontend.module("SessionNavigate.AppList", function(AppList, FormplayerFrontend, Backbone, Marionette, $){
-    AppList.Controller = {
+FormplayerFrontend.module("Apps", function(Apps, FormplayerFrontend, Backbone, Marionette, $){
+    Apps.Controller = {
         listApps: function(){
             var fetchingApps = FormplayerFrontend.request("appselect:apps");
 
             $.when(fetchingApps).done(function (apps) {
 
-                var appGridView = new AppList.GridView({
+                var appGridView = new Apps.Views.GridView({
                     collection: apps,
                 });
 
@@ -20,17 +20,17 @@ FormplayerFrontend.module("SessionNavigate.AppList", function(AppList, Formplaye
          * Renders a SingleAppView.
          */
         singleApp: function(appId) {
-            var singleAppView = new AppList.SingleAppView({
+            var singleAppView = new Apps.Views.SingleAppView({
                 appId: appId,
             });
             FormplayerFrontend.regions.phoneModeNavigation.show(
-                new FormplayerFrontend.Navigation.PhoneNavigation({ appId: appId })
+                new FormplayerFrontend.Layout.Views.PhoneNavigation({ appId: appId })
             );
             FormplayerFrontend.regions.main.show(singleAppView);
             FormplayerFrontend.trigger('phone:back:hide');
         },
         listSettings: function() {
-            var settingsView = new AppList.SettingsView();
+            var settingsView = new FormplayerFrontend.Layout.Views.SettingsView();
             FormplayerFrontend.regions.main.show(settingsView);
         },
     };

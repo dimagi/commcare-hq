@@ -4,60 +4,10 @@
  * Backbone model for listing and selecting CommCare menus (modules, forms, and cases)
  */
 
-FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Backbone, Marionette, $) {
+FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone, Marionette, $) {
 
-    Entities.MenuSelect = Backbone.Model.extend({});
 
-    Entities.MenuSelectCollection = Backbone.Collection.extend({
-
-        model: Entities.MenuSelect,
-
-        commonProperties: [
-            'title',
-            'type',
-            'clearSession',
-            'notification',
-            'breadcrumbs',
-            'appVersion',
-            'appId',
-            'persistentCaseTile',
-        ],
-
-        entityProperties: [
-            'action',
-            'styles',
-            'headers',
-            'currentPage',
-            'pageCount',
-            'titles',
-            'numEntitiesPerRow',
-            'maxWidth',
-            'maxHeight',
-        ],
-
-        parse: function (response, request) {
-            _.extend(this, _.pick(response, this.commonProperties));
-
-            if (response.commands) {
-                return response.commands;
-            } else if (response.entities) {
-                _.extend(this, _.pick(response, this.entityProperties));
-                return response.entities;
-            } else if (response.type === "query") {
-                return response.displays;
-            } else if (response.tree){
-                // form entry time, doggy
-                FormplayerFrontend.trigger('startForm', response, this.app_id);
-            }
-        },
-
-        sync: function (method, model, options) {
-            Util.setCrossDomainAjaxOptions(options);
-            return Backbone.Collection.prototype.sync.call(this, 'create', model, options);
-        },
-    });
-
-    var API = {
+    Menus.API = {
 
         getMenus: function (params) {
 
@@ -111,7 +61,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
             });
             options.url = formplayerUrl + '/navigate_menu';
 
-            menus = new Entities.MenuSelectCollection();
+            menus = new FormplayerFrontend.Menus.Collections.MenuSelect();
 
             if (Object.freeze) {
                 Object.freeze(options);
@@ -122,6 +72,7 @@ FormplayerFrontend.module("Entities", function (Entities, FormplayerFrontend, Ba
     };
 
     FormplayerFrontend.reqres.setHandler("app:select:menus", function (options) {
-        return API.getMenus(options);
+        return Menus.API.getMenus(options);
     });
 });
+
