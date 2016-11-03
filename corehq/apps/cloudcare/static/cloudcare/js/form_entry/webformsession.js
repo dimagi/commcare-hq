@@ -202,7 +202,7 @@ WebFormSession.prototype.handleSuccess = function(resp, action, callback) {
         try {
             callback(resp);
             if (self.shouldUpdateDebugger(action)) {
-                $.publish('debugger.update', resp);
+                $.publish('debugger.update');
             }
         } catch (err) {
             console.error(err);
