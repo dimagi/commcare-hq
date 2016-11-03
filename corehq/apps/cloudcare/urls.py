@@ -1,4 +1,4 @@
-from django.conf.urls import patterns, url, include
+from django.conf.urls import url, include
 
 from corehq.apps.cloudcare.views import (
     EditCloudcareUserPermissionsView,
@@ -9,13 +9,13 @@ from corehq.apps.cloudcare.views import (
     sync_db_api, default,
 )
 
-app_urls = patterns('corehq.apps.cloudcare.views',
+app_urls = [
     url(r'^view/(?P<app_id>[\w-]+)/modules-(?P<module_id>[\w-]+)/forms-(?P<form_id>[\w-]+)/context/$',
         form_context, name='cloudcare_form_context'),
     url(r'^(?P<urlPath>.*)$', CloudcareMain.as_view(), name='cloudcare_main'),
-)
+]
 
-api_urls = patterns('corehq.apps.cloudcare.views',
+api_urls = [
     url(r'^cases/$', get_cases, name='cloudcare_get_cases'),
     url(r'^cases/module/(?P<app_id>[\w-]+)/modules-(?P<module_id>[\w-]+)/$', 
         filter_cases, name='cloudcare_filter_cases'),
@@ -32,15 +32,15 @@ api_urls = patterns('corehq.apps.cloudcare.views',
     url(r'^render_form/$', render_form, name='cloudcare_render_form'),
     url(r'^readable_questions/$', ReadableQuestions.as_view(), name=ReadableQuestions.urlname),
     url(r'^sync_db/$', sync_db_api, name='cloudcare_sync_db'),
-)
+]
 
 # used in settings urls
-settings_urls = patterns('corehq.apps.cloudcare.views',
+settings_urls = [
     url(r'^app/', EditCloudcareUserPermissionsView.as_view(), name=EditCloudcareUserPermissionsView.urlname),
-)
+]
 
-urlpatterns = patterns('corehq.apps.cloudcare.views',
+urlpatterns = [
     url(r'^$', default, name='cloudcare_default'),
     url(r'^apps/', include(app_urls)),
     url(r'^api/', include(api_urls)),
-)
+]
