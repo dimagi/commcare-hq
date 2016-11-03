@@ -401,7 +401,7 @@ def get_total_clients_data(domains, datespan, interval, datefield='opened_on'):
             .domain(domains)
             .filter({"ids": {"values": cases}})
             .opened_range(lt=datespan.startdate)
-            .size(0)).run().total
+            .count())
 
     return format_return_data(histo_data, cases_before_date, datespan)
 
@@ -437,7 +437,7 @@ def get_mobile_workers_data(domains, datespan, interval,
             .mobile_users()
             .show_inactive()
             .created(lt=datespan.startdate)
-            .size(0)).run().total
+            .count())
 
     return format_return_data(histo_data, users_before_date, datespan)
 
@@ -693,11 +693,7 @@ def get_users_all_stats(domains, datespan, interval,
         .run().aggregations.date.as_facet_result()
     )
 
-    users_before_date = len(
-        query
-        .created(lt=datespan.startdate)
-        .run().doc_ids
-    )
+    users_before_date = query.created(lt=datespan.startdate).count()
 
     return format_return_data(histo_data, users_before_date, datespan)
 
