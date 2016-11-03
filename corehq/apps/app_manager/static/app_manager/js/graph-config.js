@@ -43,7 +43,8 @@ hqDefine('app_manager/js/graph-config.js', function () {
             };
 
             // Load the modal with the copy
-            var $modalDiv = $('<div data-bind="template: \'graph_configuration_modal\'"></div>');
+            var $modalDiv = $(document.createElement("div"));
+            $modalDiv.attr("data-bind", "template: \'graph_configuration_modal\'");
 
             $modalDiv.koApplyBindings(graphViewModelCopy);
 
