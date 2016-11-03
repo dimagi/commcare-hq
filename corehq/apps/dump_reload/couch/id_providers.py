@@ -3,6 +3,8 @@ from abc import ABCMeta, abstractmethod
 import itertools
 import six
 
+from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
+
 
 class BaseIDProvider(six.with_metaclass(ABCMeta)):
     @abstractmethod
@@ -12,8 +14,8 @@ class BaseIDProvider(six.with_metaclass(ABCMeta)):
 
 class LocationIDProvider(BaseIDProvider):
     def get_doc_ids(self, domain):
-        from corehq.apps.locations.models import SQLLocation
-        return SQLLocation.objects.filter(domain=domain).location_ids()
+        from corehq.apps.locations.models import Location
+        return get_doc_ids_in_domain_by_class(domain, Location)
 
 
 class AppIdProvier(BaseIDProvider):
@@ -22,4 +24,4 @@ class AppIdProvier(BaseIDProvider):
         from corehq.apps.app_manager.dbaccessors import get_built_app_ids
         app_ids = get_app_ids_in_domain(domain)
         build_apps_ids = get_built_app_ids(domain)
-        return itertools.chain(app_ids, build_apps_ids)
+        return list(itertools.chain(app_ids, build_apps_ids))
