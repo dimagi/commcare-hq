@@ -5,7 +5,7 @@ from corehq.apps.styleguide.views.docs import (
     ViewsSimpleCrispyFormExampleView,
 )
 
-urlpatterns = patterns('corehq.apps.styleguide.examples.simple_crispy_form.views',
+urlpatterns = [
     url(r'^$', DefaultSimpleCrispyFormSectionView.as_view(),
         name=DefaultSimpleCrispyFormSectionView.urlname),
     url(r'^example/$', SimpleCrispyFormView.as_view(),
@@ -16,4 +16,4 @@ urlpatterns = patterns('corehq.apps.styleguide.examples.simple_crispy_form.views
         name=FormsSimpleCrispyFormExampleView.urlname),
     url(r'^views/$', ViewsSimpleCrispyFormExampleView.as_view(),
         name=ViewsSimpleCrispyFormExampleView.urlname),
-)
+]

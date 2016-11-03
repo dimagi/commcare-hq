@@ -1,4 +1,4 @@
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 
 from corehq.apps.performance_sms.views import (
     ListPerformanceConfigsView,
@@ -10,8 +10,7 @@ from corehq.apps.performance_sms.views import (
     send_performance_messages,
 )
 
-urlpatterns = patterns(
-    'corehq.apps.performance_sms.views',
+urlpatterns = [
     url(r'^$', ListPerformanceConfigsView.as_view(),
         name=ListPerformanceConfigsView.urlname),
     url(r'^new/$', AddPerformanceConfigView.as_view(),
@@ -26,4 +25,4 @@ urlpatterns = patterns(
         name='performance_sms.sample_performance_messages'),
     url(r'^send/(?P<config_id>[\w-]+)/$', send_performance_messages,
         name='performance_sms.send_performance_messages'),
-)
+]
