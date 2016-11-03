@@ -44,7 +44,7 @@ class CouchDumpLoadTest(TestCase):
 
             self.assertEqual(0, len(get_docs(db, doc_ids)))
 
-    def _dump_and_load(self, expected_object_counts):
+    def _dump_and_load(self, expected_objects):
         output_stream = StringIO()
         CouchDataDumper(self.domain_name, []).dump(output_stream)
 
@@ -64,7 +64,10 @@ class CouchDumpLoadTest(TestCase):
             get_document_class_by_doc_type(json.loads(line)['doc_type'])
             for line in dump_lines
         ])
-        expected_total_objects = sum(expected_object_counts.values())
+        expected_object_counts = Counter(
+            object.__class__ for object in expected_objects
+        )
+        expected_total_objects = len(expected_objects)
         self.assertDictEqual(expected_object_counts, actual_model_counts)
         self.assertEqual(expected_total_objects, sum(loaded_object_count.values()))
         self.assertEqual(expected_total_objects, total_object_count)
@@ -72,16 +75,15 @@ class CouchDumpLoadTest(TestCase):
         counts_in_fake_db = _get_doc_counts_from_fake_db(fake_db)
         self.assertDictEqual(expected_object_counts, counts_in_fake_db)
 
+        for object in expected_objects:
+            copied_object_source = fake_db.get(object._id)
+            self.assertDictEqual(object.to_json(), copied_object_source)
+
         return fake_db
 
     def test_location(self):
-        from corehq.apps.locations.models import Location
-        expected_model_counts = {
-            Location: 1
-        }
-        make_loc('ct', 'Cape Town', domain=self.domain_name, type='city')
-
-        self._dump_and_load(expected_model_counts)
+        loc = make_loc('ct', 'Cape Town', domain=self.domain_name, type='city')
+        self._dump_and_load([loc])
 
     def test_applications(self):
         from corehq.apps.app_manager.models import Application
@@ -96,12 +98,34 @@ class CouchDumpLoadTest(TestCase):
         app.domain = self.domain_name
         app.save()
 
-        fakedb = self._dump_and_load({
-            Application: 1
-        })
+        self._dump_and_load([app])
 
-        copied_app_source = fakedb.get(app._id)
-        self.assertDictEqual(app.to_json(), copied_app_source)
+    def test_consumption_config(self):
+        from corehq.apps.commtrack.models import CommtrackConfig
+        from corehq.apps.commtrack.models import ConsumptionConfig
+
+        commtrack_config = CommtrackConfig(
+            domain=self.domain.name,
+            use_auto_emergency_levels=True
+        )
+        commtrack_config.consumption_config = ConsumptionConfig(exclude_invalid_periods=True)
+        commtrack_config.save()
+
+        self._dump_and_load([commtrack_config])
+
+    def test_default_consumption(self):
+        from corehq.apps.consumption.shortcuts import set_default_monthly_consumption_for_domain
+        from corehq.apps.consumption.shortcuts import set_default_consumption_for_product
+        from corehq.apps.consumption.shortcuts import set_default_consumption_for_supply_point
+
+        objects = [
+            set_default_monthly_consumption_for_domain(self.domain_name, 100),
+            set_default_consumption_for_product(self.domain_name, 'p1', 42),
+            set_default_consumption_for_product(self.domain_name, 'p2', 23),
+            set_default_consumption_for_supply_point(self.domain_name, 'p1', 'clinic1', 80)
+        ]
+
+        self._dump_and_load(objects)
 
 
 def _get_doc_counts_from_db(domain):
