@@ -259,7 +259,7 @@ class PreFilterValue(FilterValue):
                 get_INFilter_bindparams(self.filter.slug, self.value['operand'])
             )
         else:
-            return self._scalar_filter(self.filter.field, self.filter.slug)
+            return self._scalar_filter.sql(self.filter.field, self.filter.slug)
 
     def to_sql_values(self):
         if self._is_dyn_date():
