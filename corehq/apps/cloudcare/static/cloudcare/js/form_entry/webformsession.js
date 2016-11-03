@@ -383,7 +383,6 @@ WebFormSession.prototype.getFormattedQuestions = function(callback) {
         function(resp) {
             callback(resp);
         });
-
 };
 
 WebFormSession.prototype.newRepeat = function(repeat) {
