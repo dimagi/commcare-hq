@@ -2535,7 +2535,8 @@ def feature_flag_diff(request, domain):
     diff = []
     if Domain.get_by_name(other_domain):
         diff = [{'slug': t.slug, 'label': t.label, 'url': reverse(ToggleEditView.urlname, args=[t.slug])}
-                for t in all_toggles() if t.enabled(request.domain) and not t.enabled(other_domain)]
+                for t in feature_previews.all_previews() + all_toggles()
+                if t.enabled(request.domain) and not t.enabled(other_domain)]
         diff.sort(cmp=lambda x, y: cmp(x['label'], y['label']))
     return json_response(diff)
 
