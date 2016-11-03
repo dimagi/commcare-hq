@@ -370,6 +370,21 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             cls.slug: 'g__%s' % group_id
         }
 
+    def _get_assigned_locations_default(self):
+        user_assigned_locations = self.request.couch_user.get_assigned_sql_locations(
+            self.request.domain
+        )
+        return map(self.utils.location_tuple, user_assigned_locations)
+
+
+class LocationRestrictedMobileWorkerFilter(ExpandedMobileWorkerFilter):
+    options_url = 'new_emwf_options'
+
+    def get_default_selections(self):
+        if self.request.can_access_all_locations:
+            return super(LocationRestrictedMobileWorkerFilter, self).get_default_selections()
+        else:
+            return self._get_assigned_locations_default()
 
 def get_user_toggle(request):
     ufilter = group = individual = show_commtrack = None

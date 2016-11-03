@@ -114,6 +114,40 @@ class TestESQuery(ElasticTestMixin, TestCase):
                 .xmlns('banana')
         self.checkQuery(query, json_output)
 
+    @patch('corehq.apps.locations.models.SQLLocation.objects.get_locations_and_children_ids')
+    def test_users_at_locations_and_descendants_query(self, locations_patch):
+        location_ids = ['09d1a58cb849e53bb3a456a5957d998a', '09d1a58cb849e53bb3a456a5957d99ba']
+        children_ids = ['19d1a58cb849e53bb3a456a5957d998a', '19d1a58cb849e53bb3a456a5957d99ba']
+        all_ids = location_ids + children_ids
+        locations_patch.return_value = location_ids + children_ids
+        json_output = {
+            'query': {
+                'filtered': {
+                    'filter': {
+                        'and': [
+                            {'or': (
+                                {'and': (
+                                    {'term': {'doc_type': 'CommCareUser'}},
+                                    {'terms': {'assigned_location_ids': all_ids}}
+                                )
+                                },
+                                {'and': (
+                                    {'term': {'doc_type': 'WebUser'}},
+                                    {'terms': {'domain_memberships.assigned_location_ids': all_ids}}
+                                )
+                                }
+                            )}, {'term': {'is_active': True}},
+                            {'term': {'base_doc': 'couchuser'}}
+                        ]
+                    },
+                    'query': {'match_all': {}}}},
+            'size': 1000000
+        }
+
+        query = (users.UserES()
+                 .users_at_locations_and_descendants_query(location_ids))
+        self.checkQuery(query, json_output)
+
     def test_remove_all_defaults(self):
         # Elasticsearch fails if you pass it an empty list of filters
         query = (users.UserES()

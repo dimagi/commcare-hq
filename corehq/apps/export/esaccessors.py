@@ -4,6 +4,7 @@ from corehq.apps.es import CaseES, GroupES, LedgerES
 from corehq.apps.es import FormES
 from corehq.apps.es.aggregations import AggregationTerm, NestedTermAggregationsHelper
 from corehq.elastic import get_es_new
+from corehq.util import flatten_list
 
 
 def get_form_export_base_query(domain, app_id, xmlns, include_errors):
@@ -26,11 +27,11 @@ def get_case_export_base_query(domain, case_type):
             .sort("opened_on"))
 
 
-def get_group_user_ids(group_id):
+def get_groups_user_ids(group_ids):
     q = (GroupES()
-            .doc_id(group_id)
-            .fields("users"))
-    return q.run().hits[0]['users']
+         .doc_id(group_ids)
+         .fields("users"))
+    return flatten_list([hit["users"] for hit in q.run().hits])
 
 
 def get_ledger_section_entry_combinations(domain):
