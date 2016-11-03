@@ -1,11 +1,14 @@
 import gzip
+import json
 import os
 import zipfile
 from collections import Counter
 from datetime import datetime
 
+from couchdbkit.exceptions import ResourceNotFound
 from django.core.management.base import BaseCommand, CommandError
 
+from corehq.apps.domain.models import Domain
 from corehq.apps.dump_reload.const import DATETIME_FORMAT
 from corehq.apps.dump_reload.couch import CouchDataDumper
 from corehq.apps.dump_reload.sql import SqlDataDumper
@@ -22,22 +25,32 @@ class Command(BaseCommand):
         parser.add_argument('--console', action='store_true', default=False, dest='console',
                             help = 'Write output to the console instead of to file.')
 
-    def handle(self, domain, **options):
+    def handle(self, domain_name, **options):
         excludes = options.get('exclude')
         console = options.get('console')
         show_traceback = options.get('traceback')
 
+        try:
+            domain = Domain.get_by_name(domain_name)
+        except ResourceNotFound:
+            raise CommandError("Domain not found: {}".format(domain_name))
+
         utcnow = datetime.utcnow().strftime(DATETIME_FORMAT)
-        zipname = 'data-dump-{}-{}.zip'.format(domain, utcnow)
+        zipname = 'data-dump-{}-{}.zip'.format(domain_name, utcnow)
+
+        self.stdout.write("Dumping domain object")
+        with zipfile.ZipFile(zipname, 'a') as z:
+            z.writestr("domain.json", json.dumps(domain.to_json()))
+
         self.stdout.ending = None
         stats = Counter()
         dumpers = [SqlDataDumper, CouchDataDumper]
 
         for dumper in dumpers:
-            filename = _get_dump_stream_filename(dumper.slug, domain, utcnow)
+            filename = _get_dump_stream_filename(dumper.slug, domain_name, utcnow)
             stream = self.stdout if console else gzip.open(filename, 'wb')
             try:
-                stats += dumper(domain, excludes).dump(stream)
+                stats += dumper(domain_name, excludes).dump(stream)
             except Exception as e:
                 if show_traceback:
                     raise
@@ -52,14 +65,14 @@ class Command(BaseCommand):
 
                 os.remove(filename)
 
-        print '{0} Dump Stats {0}'.format('-' * 32)
+        self.stdout.write('{0} Dump Stats {0}'.format('-' * 32))
         for model in sorted(stats):
-            print "{:<40}: {}".format(model, stats[model])
-        print '{0}{0}'.format('-' * 38)
-        print 'Dumped {} objects'.format(sum(stats.values()))
-        print '{0}{0}'.format('-' * 38)
+            self.stdout.write("{:<40}: {}".format(model, stats[model]))
+        self.stdout.write('{0}{0}'.format('-' * 38))
+        self.stdout.write('Dumped {} objects'.format(sum(stats.values())))
+        self.stdout.write('{0}{0}'.format('-' * 38))
 
-        print '\nData dumped to file: {}'.format(zipname)
+        self.stdout.write('\nData dumped to file: {}'.format(zipname))
 
 
 def _get_dump_stream_filename(slug, domain, utcnow):
