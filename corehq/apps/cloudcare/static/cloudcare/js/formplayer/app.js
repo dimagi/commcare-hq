@@ -84,6 +84,7 @@ FormplayerFrontend.reqres.setHandler('currentUser', function () {
 FormplayerFrontend.on('clearForm', function () {
     $('#webforms').html("");
     $('#webforms-nav').html("");
+    $('#cloudcare-debugger').html("");
 });
 
 FormplayerFrontend.reqres.setHandler('clearMenu', function () {
