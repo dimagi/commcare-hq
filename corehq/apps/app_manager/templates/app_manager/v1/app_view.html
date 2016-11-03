@@ -194,7 +194,7 @@
                 $form = $submit.closest("form"),
                 domain = $form.find("#id_domain").val(),
                 $modal = $("#copy-feature-flags");
-            {% if request|toggle_enabled:"SUPPORT" %}
+            {% if request.user.is_superuser %}
                 $submit.disableButton();
                 $.ajax({
                     method: "GET",
