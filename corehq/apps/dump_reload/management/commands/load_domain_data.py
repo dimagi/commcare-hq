@@ -3,11 +3,9 @@ from __future__ import unicode_literals
 import os
 import zipfile
 from collections import Counter
-from datetime import datetime
 
 from django.core.management.base import BaseCommand, CommandError
 
-from corehq.apps.dump_reload.const import DATETIME_FORMAT
 from corehq.apps.dump_reload.couch.load import CouchDataLoader
 from corehq.apps.dump_reload.sql import SqlDataLoader
 
