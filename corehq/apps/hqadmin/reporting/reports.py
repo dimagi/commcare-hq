@@ -259,7 +259,7 @@ def get_active_domain_stats_data(domains, datespan, interval,
                 .submitted(gte=f, lte=t)
                 .size(0))
             if restrict_to_mobile_submissions:
-                form_query = form_query.user_id(get_user_ids(True))
+                form_query = form_query.user_id(get_user_ids(True, domains_in_interval))
             active_domains |= set(
                 form_query.run().aggregations.domains.keys
             )
@@ -598,7 +598,7 @@ def get_domain_stats_data(domains, datespan, interval,
 
 def commtrack_form_submissions(domains, datespan, interval,
         datefield='received_on'):
-    mobile_workers = UserES().mobile_users().show_inactive().get_ids()
+    mobile_workers = get_mobile_users(domains)
 
     forms_after_date = (FormES()
             .domain(domains)
@@ -684,7 +684,7 @@ def get_users_all_stats(domains, datespan, interval,
     elif user_type_mobile is not None:
         query = query.web_users()
     if require_submissions:
-        query = query.user_ids(get_submitted_users())
+        query = query.user_ids(get_submitted_users(domains))
 
     histo_data = (
         query
@@ -771,12 +771,12 @@ def get_products_stats_data(domains, datespan, interval,
     return format_return_data(ret, initial, datespan)
 
 
-def get_user_ids(user_type_mobile):
+def get_user_ids(user_type_mobile, domains):
     """
     Returns the set of mobile user IDs if user_type_mobile is True,
     else returns the set of web user IDs.
     """
-    query = UserES().show_inactive()
+    query = UserES().show_inactive().domain(domains)
     if user_type_mobile:
         query = query.mobile_users()
     else:
@@ -784,9 +784,10 @@ def get_user_ids(user_type_mobile):
     return set(query.get_ids())
 
 
-def get_submitted_users():
+def get_submitted_users(domains):
     real_form_users = set(
         FormES()
+        .domain(domains)
         .user_aggregation()
         .size(0)
         .run()
@@ -795,6 +796,7 @@ def get_submitted_users():
 
     real_sms_users = set(
         SMSES()
+        .domain(domains)
         .terms_aggregation('couch_recipient', 'user')
         .incoming_messages()
         .size(0)
@@ -805,14 +807,14 @@ def get_submitted_users():
     return real_form_users | real_sms_users
 
 
-def get_case_owner_filters():
+def get_case_owner_filters(domains):
     result = {'terms': {}}
 
-    mobile_user_ids = list(get_user_ids(True))
+    mobile_user_ids = list(get_user_ids(True, domains))
 
     def all_groups():
-        for domain in Domain.get_all():
-            for group in Group.by_domain(domain.name):
+        for domain in domains:
+            for group in Group.by_domain(domain):
                 yield group
     group_ids = [
         group._id for group in all_groups()
@@ -912,7 +914,7 @@ def get_general_stats_data(domains, histo_type, datespan, interval="day",
         if user_type_mobile is not None:
             additional_filters.append({
                 'terms': {
-                    'form.meta.userID': list(get_user_ids(user_type_mobile))
+                    'form.meta.userID': list(get_user_ids(user_type_mobile, domains))
                 }
             })
         if j2me_only:
@@ -922,7 +924,7 @@ def get_general_stats_data(domains, histo_type, datespan, interval="day",
                 }
             })
     if histo_type == 'active_cases' and not supply_points:
-        additional_filters.append(get_case_owner_filters())
+        additional_filters.append(get_case_owner_filters(domains))
     if supply_points:
         additional_filters.append({'terms': {'type': ['supply-point']}})
 
