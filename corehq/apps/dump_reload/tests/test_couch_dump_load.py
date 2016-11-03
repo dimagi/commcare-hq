@@ -1,5 +1,5 @@
-import functools
 import json
+import os
 import uuid
 from StringIO import StringIO
 from collections import Counter
@@ -20,20 +20,6 @@ from dimagi.utils.couch.bulk import get_docs
 from dimagi.utils.couch.database import iter_docs
 
 
-def register_cleanup(test, domain):
-    test.addCleanup(functools.partial(delete_couch_data, test, domain))
-
-
-def delete_couch_data(test, domain_name):
-    print list(get_doc_ids_to_dump(domain_name))
-    for doc_class, doc_ids in get_doc_ids_to_dump(domain_name):
-        db = doc_class.get_db()
-        for docs in chunked(iter_docs(db, doc_ids), 100):
-            db.bulk_delete(docs)
-
-        test.assertEqual(0, len(get_docs(db, doc_ids)))
-
-
 class CouchDumpLoadTest(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -47,19 +33,22 @@ class CouchDumpLoadTest(TestCase):
         cls.domain.delete()
         super(CouchDumpLoadTest, cls).tearDownClass()
 
-    def setUp(self):
-        self.fakedb = FakeCouchDb()
-
     def tearDown(self):
-        self.fakedb.reset()
+        self._delete_couch_data()
+
+    def _delete_couch_data(self):
+        for doc_class, doc_ids in get_doc_ids_to_dump(self.domain_name):
+            db = doc_class.get_db()
+            for docs in chunked(iter_docs(db, doc_ids), 100):
+                db.bulk_delete(docs)
+
+            self.assertEqual(0, len(get_docs(db, doc_ids)))
 
     def _dump_and_load(self, expected_object_counts):
-        models = list(expected_object_counts)
-
         output_stream = StringIO()
         CouchDataDumper(self.domain_name, []).dump(output_stream)
 
-        delete_couch_data(self, self.domain_name)
+        self._delete_couch_data()
 
         # make sure that there's no data left in the DB
         objects_remaining = _get_doc_counts_from_db(self.domain_name)
@@ -83,18 +72,36 @@ class CouchDumpLoadTest(TestCase):
         counts_in_fake_db = _get_doc_counts_from_fake_db(fake_db)
         self.assertDictEqual(expected_object_counts, counts_in_fake_db)
 
-        return dump_lines
+        return fake_db
 
     def test_location(self):
         from corehq.apps.locations.models import Location
         expected_model_counts = {
             Location: 1
         }
-        register_cleanup(self, self.domain_name)
-
         make_loc('ct', 'Cape Town', domain=self.domain_name, type='city')
 
         self._dump_and_load(expected_model_counts)
+
+    def test_applications(self):
+        from corehq.apps.app_manager.models import Application
+
+        path = os.path.join(
+            'corehq', 'apps', 'app_manager', 'tests', 'data', 'suite', 'app.json'
+        )
+        with open(path) as f:
+            source = json.load(f)
+
+        app = Application.wrap(source)
+        app.domain = self.domain_name
+        app.save()
+
+        fakedb = self._dump_and_load({
+            Application: 1
+        })
+
+        copied_app_source = fakedb.get(app._id)
+        self.assertDictEqual(app.to_json(), copied_app_source)
 
 
 def _get_doc_counts_from_db(domain):
