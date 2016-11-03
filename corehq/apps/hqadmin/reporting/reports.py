@@ -36,6 +36,7 @@ from corehq.apps.accounting.models import Subscription, SoftwarePlanEdition
 from corehq.apps.commtrack.const import SUPPLY_POINT_CASE_TYPE
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.domain.models import Domain
+from corehq.apps.es import filters
 from corehq.apps.es.cases import CaseES
 from corehq.apps.es.domains import DomainES
 from corehq.apps.es.forms import FormES
@@ -812,12 +813,9 @@ def get_submitted_users(domains):
 
 
 def get_case_owner_filters(domains):
-    result = {'terms': {}}
-
     mobile_user_ids = list(get_user_ids(True, domains))
     group_ids = GroupES().domain(domains).get_ids()
-    result['terms']['owner_id'] = mobile_user_ids + group_ids
-    return result
+    return filters.term('owner_id', mobile_user_ids + group_ids)
 
 
 def _histo_data(domain_list, histogram_type, start_date, end_date, interval,
