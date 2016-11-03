@@ -1,9 +1,9 @@
 from abc import ABCMeta, abstractmethod
 
-import itertools
 import six
 
-from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
+from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
+from corehq.util.couch import get_document_class_by_doc_type
 
 
 class BaseIDProvider(six.with_metaclass(ABCMeta)):
@@ -12,16 +12,12 @@ class BaseIDProvider(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
 
-class LocationIDProvider(BaseIDProvider):
-    def get_doc_ids(self, domain):
-        from corehq.apps.locations.models import Location
-        return get_doc_ids_in_domain_by_class(domain, Location)
+class DocTypeIDProvider(BaseIDProvider):
+    def __init__(self, doc_types):
+        self.doc_types = doc_types
 
-
-class AppIdProvier(BaseIDProvider):
     def get_doc_ids(self, domain):
-        from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain
-        from corehq.apps.app_manager.dbaccessors import get_built_app_ids
-        app_ids = get_app_ids_in_domain(domain)
-        build_apps_ids = get_built_app_ids(domain)
-        return list(itertools.chain(app_ids, build_apps_ids))
+        for doc_type in self.doc_types:
+            doc_class = get_document_class_by_doc_type(doc_type)
+            doc_ids = get_doc_ids_in_domain_by_type(domain, doc_type)
+            yield doc_class, doc_ids

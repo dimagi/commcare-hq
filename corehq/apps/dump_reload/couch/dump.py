@@ -1,15 +1,15 @@
 import json
 from collections import Counter
 
-from couchdbkit.ext.django.loading import couchdbkit_handler
+import itertools
 
-from corehq.apps.dump_reload.couch.id_providers import LocationIDProvider, AppIdProvier
+from corehq.apps.dump_reload.couch.id_providers import DocTypeIDProvider
 from corehq.apps.dump_reload.interface import DataDumper
 from dimagi.utils.couch.database import iter_docs
 
-APP_LABELS = {
-    'locations.Location': LocationIDProvider(),
-    'app_manager.Application': AppIdProvier(),
+DOC_PROVIDERS = {
+    DocTypeIDProvider(['Location']),
+    DocTypeIDProvider(['Application']),
 }
 
 
@@ -24,20 +24,18 @@ class CouchDataDumper(DataDumper):
 
 
 def _dump_docs(doc_class, doc_ids, output_stream):
-    stats = Counter()
+    model_label = '{}.{}'.format(doc_class._meta.app_label, doc_class.__name__)
+    count = 0
     for doc in iter_docs(doc_class.get_db(), doc_ids):
+        count += 1
         json.dump(doc, output_stream)
         output_stream.write('\n')
-        stats.update(['{}.{}'.format(doc_class._meta.app_label, doc_class.__name__)])
-    return stats
+    return Counter({model_label: count})
 
 
 def get_doc_ids_to_dump(domain):
     """
     :return: A generator of (doc_class, list(doc_ids))
     """
-    for label, id_provider in APP_LABELS.items():
-        app_label, schema = label.split('.')
-        doc_class = couchdbkit_handler.get_schema(app_label, schema.lower())
-        ids = id_provider.get_doc_ids(domain)
-        yield doc_class, ids
+    for id_provider in DOC_PROVIDERS:
+        yield itertools.chain(*id_provider.get_doc_ids(domain))

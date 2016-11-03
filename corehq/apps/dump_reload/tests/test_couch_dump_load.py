@@ -11,7 +11,7 @@ from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.domain.models import Domain
 from corehq.apps.dump_reload.couch import CouchDataDumper
 from corehq.apps.dump_reload.couch import CouchDataLoader
-from corehq.apps.dump_reload.couch.dump import APP_LABELS, get_doc_ids_to_dump
+from corehq.apps.dump_reload.couch.dump import get_doc_ids_to_dump
 from corehq.apps.dump_reload.util import get_model_label
 from corehq.util.couch import get_document_class_by_doc_type
 from corehq.util.test_utils import mock_out_couch
@@ -20,14 +20,14 @@ from dimagi.utils.couch.bulk import get_docs
 from dimagi.utils.couch.database import iter_docs
 
 
-def register_cleanup(test, models, domain):
-    test.addCleanup(functools.partial(delete_couch_data, test, models, domain))
+def register_cleanup(test, domain):
+    test.addCleanup(functools.partial(delete_couch_data, test, domain))
 
 
-def delete_couch_data(test, models, domain_name):
-    for model in models:
-        db = model.get_db()
-        doc_ids = APP_LABELS[get_model_label(model)].get_doc_ids(domain_name)
+def delete_couch_data(test, domain_name):
+    print list(get_doc_ids_to_dump(domain_name))
+    for doc_class, doc_ids in get_doc_ids_to_dump(domain_name):
+        db = doc_class.get_db()
         for docs in chunked(iter_docs(db, doc_ids), 100):
             db.bulk_delete(docs)
 
@@ -59,7 +59,7 @@ class CouchDumpLoadTest(TestCase):
         output_stream = StringIO()
         CouchDataDumper(self.domain_name, []).dump(output_stream)
 
-        delete_couch_data(self, models, self.domain_name)
+        delete_couch_data(self, self.domain_name)
 
         # make sure that there's no data left in the DB
         objects_remaining = _get_doc_counts_from_db(self.domain_name)
@@ -90,7 +90,7 @@ class CouchDumpLoadTest(TestCase):
         expected_model_counts = {
             Location: 1
         }
-        register_cleanup(self, expected_model_counts, self.domain_name)
+        register_cleanup(self, self.domain_name)
 
         make_loc('ct', 'Cape Town', domain=self.domain_name, type='city')
 
