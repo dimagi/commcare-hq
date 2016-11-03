@@ -13,7 +13,9 @@ class CopyApplicationForm(forms.Form):
         label=_("Copy this app to project"),
         widget=forms.TextInput(attrs={"data-bind": "typeahead: domain_names"}))
     name = forms.CharField(required=True, label=_('Name'))
-    toggles = forms.CharField(widget=forms.HiddenInput, max_length=5000)
+
+    # Toggles to enable when copying the app
+    toggles = forms.CharField(required=False, widget=forms.HiddenInput, max_length=5000)
 
     def __init__(self, from_domain, app_id, *args, **kwargs):
         export_zipped_apps_enabled = kwargs.pop('export_zipped_apps_enabled', False)
