@@ -18,10 +18,9 @@ of all unknown users, web users, and demo users on a domain.
     query = (user_es.UserES()
              .domain(self.domain)
              .OR(*user_filters)
-             .show_inactive()
-             .fields([]))
+             .show_inactive())
 
-    owner_ids = query.run().doc_ids
+    owner_ids = query.get_ids()
 """
 from copy import deepcopy
 from .es_query import HQESQuery
