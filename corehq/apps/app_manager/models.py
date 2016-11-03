@@ -4893,8 +4893,8 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     def save(self, response_json=None, increment_version=None, **params):
         if not self._rev and not domain_has_apps(self.domain):
             domain_has_apps.clear(self.domain)
-        user = view_utils.get_request().couch_user
-        if user.days_since_created == 0:
+        user = view_utils.get_request().getattr('couch_user', None)
+        if user and user.days_since_created == 0:
             track_workflow(user.get_email(), 'Saved the App Builder within first 24 hours')
         super(ApplicationBase, self).save(
             response_json=response_json, increment_version=increment_version, **params)
