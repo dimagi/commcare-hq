@@ -205,10 +205,17 @@ class ESQuery(object):
             size = sliced_or_int.stop - start
         return self.start(start).size(size).run().hits
 
-    def run(self):
+    def run(self, include_hits=False):
         """Actually run the query.  Returns an ESQuerySet object."""
-        raw = run_query(self.index, self.raw_query, debug_host=self.debug_host)
-        return ESQuerySet(raw, deepcopy(self))
+        query = self._clean_before_run(include_hits)
+        raw = run_query(query.index, query.raw_query, debug_host=query.debug_host)
+        return ESQuerySet(raw, deepcopy(query))
+
+    def _clean_before_run(self, include_hits=False):
+        query = deepcopy(self)
+        if not include_hits and query.uses_aggregations():
+            query = query.size(0)
+        return query
 
     def scroll(self):
         """
@@ -248,6 +255,9 @@ class ESQuery(object):
         want to reproduce a query with additional filtering.
         """
         return self._default_filters.values() + self._filters
+
+    def uses_aggregations(self):
+        return len(self._aggregations) > 0
 
     def aggregation(self, aggregation):
         """
@@ -450,7 +460,11 @@ class ESQuerySet(object):
     @property
     def hits(self):
         """Return the docs from the response."""
-        return [self.normalize_result(self.query, r) for r in self.raw_hits]
+        raw_hits = self.raw_hits
+        if not raw_hits and self.query.uses_aggregations() and self.query._size == 0:
+            raise ESError("no hits, did you forget about no_hits_with_aggs?")
+
+        return [self.normalize_result(self.query, r) for r in raw_hits]
 
     @property
     def total(self):
