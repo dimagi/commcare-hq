@@ -93,13 +93,14 @@
             instanceViewerEnabled = true;
         {% endif %}
         var options = {
-            "apps": apps,
-            "language": language,
-            "username": username,
-            "domain": domain,
-            "formplayer_url": formplayer_url,
-            "gridPolyfillPath": "{% static 'css-grid-polyfill-binaries/css-polyfills.js' %}",
-            "debuggerEnabled": instanceViewerEnabled,
+            apps: apps,
+            language: language,
+            username: username,
+            domain: domain,
+            formplayer_url: formplayer_url,
+            gridPolyfillPath: "{% static 'css-grid-polyfill-binaries/css-polyfills.js' %}",
+            debuggerEnabled: instanceViewerEnabled,
+            singleAppMode: {{ single_app_mode|JSON }},
         };
         FormplayerFrontend.start(options);
         $(function () {

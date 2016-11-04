@@ -181,6 +181,7 @@ FormplayerFrontend.on("start", function (options) {
         FormplayerFrontend.Constants.ALLOWED_SAVED_OPTIONS
     );
     user.displayOptions = _.defaults(savedDisplayOptions, {
+        singleAppMode: options.singleAppMode,
         phoneMode: options.phoneMode,
         oneQuestionPerScreen: options.oneQuestionPerScreen,
     });
@@ -201,9 +202,8 @@ FormplayerFrontend.on("start", function (options) {
         }
         // will be the same for every domain. TODO: get domain/username/pass from django
         if (this.getCurrentRoute() === "") {
-            if (options.phoneMode) {
+            if (user.displayOptions.singleAppMode) {
                 appId = options.apps[0]['_id'];
-                user.previewAppId = appId;
 
                 FormplayerFrontend.trigger('setAppDisplayProperties', options.apps[0]);
                 FormplayerFrontend.trigger("app:singleApp", appId);
