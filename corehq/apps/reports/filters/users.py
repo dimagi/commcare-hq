@@ -7,7 +7,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.util import namedtupledict
 from corehq.apps.users.models import CommCareUser
-from corehq.util import remove_dups
+from corehq.util import remove_dups, flatten_list
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.commtrack.models import SQLLocation
 
@@ -342,7 +342,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
                 group=group,
                 simplified=True
             )
-        users_in_groups = [user for sublist in user_dict.values() for user in sublist]
+        users_in_groups = flatten_list(user_dict.values())
         users_by_group = user_dict
         combined_users = remove_dups(all_users + users_in_groups, "user_id")
 
