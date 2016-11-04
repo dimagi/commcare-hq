@@ -67,7 +67,7 @@ class DomainMigrationMiddleware(object):
 
     def process_view(self, request, view_func, view_args, view_kwargs):
         if hasattr(request, 'domain') and hasattr(request, 'couch_user'):
-            if getattr(view_func, 'mobile_request', False):
+            if getattr(view_func, 'domain_migration_handled', False):
                 return None
             if DATA_MIGRATION.enabled(request.domain):
                 return TemplateResponse(

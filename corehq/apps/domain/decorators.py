@@ -391,11 +391,11 @@ cls_require_previewer = cls_to_view(additional_decorator=require_previewer)
 
 
 def check_domain_migration(view_func):
-    def decorator(request, domain, *args, **kwargs):
+    def wrapped_view(request, domain, *args, **kwargs):
         if DATA_MIGRATION.enabled(domain):
             return HttpResponse('Service Temporarily Unavailable',
                                 content_type='text/plain', status=503)
-        else:
-            view_func.mobile_request = True
-            return view_func(request, domain, *args, **kwargs)
-    return decorator
+        return view_func(request, domain, *args, **kwargs)
+
+    wrapped_view.domain_migration_handled = True
+    return wraps(view_func)(wrapped_view)
