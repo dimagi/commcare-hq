@@ -396,5 +396,6 @@ def check_domain_migration(view_func):
             return HttpResponse('Service Temporarily Unavailable',
                                 content_type='text/plain', status=503)
         else:
+            view_func.mobile_request = True
             return view_func(request, domain, *args, **kwargs)
     return decorator

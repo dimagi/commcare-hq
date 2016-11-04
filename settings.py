@@ -152,6 +152,7 @@ MIDDLEWARE_CLASSES = [
     'corehq.middleware.OpenRosaMiddleware',
     'corehq.util.global_request.middleware.GlobalRequestMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
+    'corehq.apps.domain.middleware.DomainMigrationMiddleware',
     'corehq.middleware.TimeoutMiddleware',
     'corehq.apps.domain.middleware.CCHQPRBACMiddleware',
     'corehq.apps.domain.middleware.DomainHistoryMiddleware',
