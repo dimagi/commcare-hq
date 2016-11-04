@@ -1,10 +1,8 @@
 from django.utils.translation import ugettext as _
 
 from dimagi.utils.decorators.memoized import memoized
-from corehq.apps.locations.models import LocationType
 
 from .users import ExpandedMobileWorkerFilter, EmwfUtils
-from .api import EmwfOptionsView
 
 
 class CaseListFilterUtils(EmwfUtils):
@@ -60,44 +58,7 @@ class CaseListFilter(ExpandedMobileWorkerFilter):
         return reporting + sharing
 
     def get_default_selections(self):
-        return [('project_data', _("[Project Data]"))]
-
-
-class CaseListFilterOptions(EmwfOptionsView):
-
-    @property
-    @memoized
-    def utils(self):
-        return CaseListFilterUtils(self.domain)
-
-    @property
-    def data_sources(self):
-        locations_own_cases = (LocationType.objects
-                               .filter(domain=self.domain, shares_cases=True)
-                               .exists())
-        if locations_own_cases:
-            return [
-                (self.get_static_options_size, self.get_static_options),
-                (self.get_groups_size, self.get_groups),
-                (self.get_sharing_groups_size, self.get_sharing_groups),
-                (self.get_locations_size, self.get_locations),
-                (self.get_users_size, self.get_users),
-            ]
+        if self.request.can_access_all_locations:
+            return [('project_data', _("[Project Data]"))]
         else:
-            return [
-                (self.get_static_options_size, self.get_static_options),
-                (self.get_groups_size, self.get_groups),
-                (self.get_sharing_groups_size, self.get_sharing_groups),
-                (self.get_users_size, self.get_users),
-            ]
-
-    def get_sharing_groups_size(self, query):
-        return self.group_es_query(query, group_type="case_sharing").count()
-
-    def get_sharing_groups(self, query, start, size):
-        groups = (self.group_es_query(query, group_type="case_sharing")
-                  .fields(['_id', 'name'])
-                  .start(start)
-                  .size(size)
-                  .sort("name.exact"))
-        return map(self.utils.sharing_group_tuple, groups.run().hits)
+            return self._get_assigned_locations_default()
