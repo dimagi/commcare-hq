@@ -16,7 +16,7 @@ sniffer
 psutil  # for memory profiling
 django-extensions
 ipython==4.2.1
-ipython-genutils
+ipython-genutils==0.1.0
 ipdb==0.9.4
 
 --requirement=test-requirements.txt
