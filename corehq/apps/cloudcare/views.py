@@ -284,6 +284,7 @@ class FormplayerMain(View):
             "username": request.user.username,
             "formplayer_url": settings.FORMPLAYER_URL,
             "single_app_mode": False,
+            "home_url": reverse(self.urlname, args=[domain]),
         }
         return render(request, "cloudcare/formplayer_home.html", context)
 
@@ -334,6 +335,7 @@ class FormplayerPreviewSingleApp(View):
             "username": request.user.username,
             "formplayer_url": settings.FORMPLAYER_URL,
             "single_app_mode": True,
+            "home_url": reverse(self.urlname, args=[domain, app_id]),
         }
         return render(request, "cloudcare/formplayer_home.html", context)
 
