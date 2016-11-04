@@ -466,6 +466,39 @@ class EmwfFilterExportMixin(object):
         """
         return self.dynamic_filter_class.selected_user_types(mobile_user_and_group_slugs)
 
+    def get_user_ids_for_user_types(self, admin, unknown, demo, commtrack):
+        """
+        referenced from CaseListMixin to fetch user_ids for selected user type
+        :param admin: if admin users to be included
+        :param unknown: if unknown users to be included
+        :param demo: if demo users to be included
+        :param commtrack: if commtrack users to be included
+        :return: user_ids for selected user types
+        """
+        from corehq.apps.es import filters, users as user_es
+        if not any([admin, unknown, demo]):
+            return []
+
+        user_filters = [filter_ for include, filter_ in [
+            (admin, user_es.admin_users()),
+            (unknown, filters.OR(user_es.unknown_users(), user_es.web_users())),
+            (demo, user_es.demo_users()),
+        ] if include]
+
+        query = (user_es.UserES()
+                 .domain(self.domain_object.name)
+                 .OR(*user_filters)
+                 .show_inactive()
+                 .fields([]))
+        user_ids = query.run().doc_ids
+
+        if commtrack:
+            user_ids.append("commtrack-system")
+        if demo:
+            user_ids.append("demo_user_group_id")
+            user_ids.append("demo_user")
+        return user_ids
+
 
 class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloadForm):
     """
@@ -531,41 +564,6 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloa
         if group_ids:
             return GroupFormSubmittedByFilter(group_ids)
 
-    def get_user_ids_for_user_types(self, mobile, admin, unknown, demo, commtrack):
-        """
-        referenced from CaseListMixin to fetch user_ids for selected user type
-        :param mobile: if mobile users to be included
-        :param admin: if admin users to be included
-        :param unknown: if unknown users to be included
-        :param demo: if demo users to be included
-        :param commtrack: if commtrack users to be included
-        :return: user_ids for selected user types
-        """
-        from corehq.apps.es import filters, users as user_es
-        if not any([mobile, admin, unknown, demo]):
-            return []
-
-        user_filters = [filter_ for include, filter_ in [
-            (mobile, user_es.mobile_users()),
-            (admin, user_es.admin_users()),
-            (unknown, filters.OR(user_es.unknown_users(), user_es.web_users())),
-            (demo, user_es.demo_users()),
-        ] if include]
-
-        query = (user_es.UserES()
-                 .domain(self.domain_object.name)
-                 .OR(*user_filters)
-                 .show_inactive()
-                 .fields([]))
-        user_ids = query.run().doc_ids
-
-        if commtrack:
-            user_ids.append("commtrack-system")
-        if demo:
-            user_ids.append("demo_user_group_id")
-            user_ids.append("demo_user")
-        return user_ids
-
     def _get_user_type_filter(self, mobile_user_and_group_slugs):
         """
         :param mobile_user_and_group_slugs: ['t__0', 't__1']
@@ -573,14 +571,17 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloa
         """
         user_types = self._get_es_user_types(mobile_user_and_group_slugs)
         if user_types:
+            form_filters = []
+            if HQUserType.REGISTERED in user_types:
+                form_filters.append(UserTypeFilter(self._USER_MOBILE))
             user_ids = self.get_user_ids_for_user_types(
-                mobile=HQUserType.REGISTERED in user_types,
                 admin=HQUserType.ADMIN in user_types,
                 unknown=HQUserType.UNKNOWN in user_types,
                 demo=HQUserType.DEMO_USER in user_types,
                 commtrack=False,
             )
-            return FormSubmittedByFilter(user_ids)
+            form_filters.append(FormSubmittedByFilter(user_ids))
+            return form_filters
 
     def get_edit_url(self, export):
         from corehq.apps.export.views import EditNewCustomFormExportView
@@ -755,40 +756,6 @@ class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, GenericFilterCaseExp
 
         default_filters.append(self._get_users_filter(mobile_user_and_group_slugs))
         return filter(None, default_filters)
-
-    def get_user_ids_for_user_types(self, admin, unknown, demo, commtrack):
-        """
-        referenced from CaseListMixin to fetch user_ids for selected user type
-        :param admin: if admin users to be included
-        :param unknown: if unknown users to be included
-        :param demo: if demo users to be included
-        :param commtrack: if commtrack users to be included
-        :return: owner_ids for selected user types
-        """
-        from corehq.apps.es import filters, users as user_es
-        if not any([admin, unknown, demo]):
-            return []
-
-        user_filters = [filter_ for include, filter_ in [
-            (admin, user_es.admin_users()),
-            (unknown, filters.OR(user_es.unknown_users(), user_es.web_users())),
-            (demo, user_es.demo_users()),
-        ] if include]
-
-        query = (user_es.UserES()
-                 .domain(self.domain_object.name)
-                 .OR(*user_filters)
-                 .show_inactive()
-                 .fields([]))
-        owner_ids = query.run().doc_ids
-
-        if commtrack:
-            owner_ids.append("commtrack-system")
-        if demo:
-            owner_ids.append("demo_user_group_id")
-            owner_ids.append("demo_user")
-        return owner_ids
-
 
     @property
     def extra_fields(self):
