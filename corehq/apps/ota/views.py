@@ -15,7 +15,9 @@ from corehq.const import OPENROSA_VERSION_MAP, OPENROSA_DEFAULT_VERSION
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.case_search.models import CaseSearchConfig
-from corehq.apps.domain.decorators import domain_admin_required, login_or_digest_or_basic_or_apikey
+from corehq.apps.domain.decorators import (
+    domain_admin_required, login_or_digest_or_basic_or_apikey, check_domain_migration
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin, EditMyProjectSettingsView
 from corehq.apps.es.case_search import CaseSearchES, flatten_result
@@ -38,6 +40,7 @@ from .utils import demo_user_restore_response, get_restore_user, is_permitted_to
 @json_error
 @handle_401_response
 @login_or_digest_or_basic_or_apikey()
+@check_domain_migration
 def restore(request, domain, app_id=None):
     """
     We override restore because we have to supply our own
@@ -51,6 +54,7 @@ def restore(request, domain, app_id=None):
 
 @json_error
 @login_or_digest_or_basic_or_apikey()
+@check_domain_migration
 def search(request, domain):
     """
     Accepts search criteria as GET params, e.g. "https://www.commcarehq.org/a/domain/phone/search/?a=b&c=d"
@@ -99,6 +103,7 @@ def search(request, domain):
 @require_POST
 @json_error
 @login_or_digest_or_basic_or_apikey()
+@check_domain_migration
 def claim(request, domain):
     """
     Allows a user to claim a case that they don't own.
