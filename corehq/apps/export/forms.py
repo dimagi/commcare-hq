@@ -9,9 +9,9 @@ from corehq.apps.export.filters import (
     ReceivedOnRangeFilter,
     GroupFormSubmittedByFilter,
     OR, OwnerFilter, LastModifiedByFilter, UserTypeFilter,
-    OwnerTypeFilter, ModifiedOnRangeFilter, FormSubmittedByFilter, NOT
+    ModifiedOnRangeFilter, FormSubmittedByFilter, NOT
 )
-from corehq.apps.es.users import UserES, user_ids_at_locations_and_descendants
+from corehq.apps.es.users import user_ids_at_locations_and_descendants
 from corehq.apps.reports.filters.case_list import CaseListFilter
 from corehq.apps.reports.filters.users import LocationRestrictedMobileWorkerFilter
 from corehq.apps.groups.models import Group
