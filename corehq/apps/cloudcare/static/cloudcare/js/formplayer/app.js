@@ -419,7 +419,7 @@ FormplayerFrontend.on('navigateHome', function() {
         currentUser = FormplayerFrontend.request('currentUser');
     urlObject.clearExceptApp();
     FormplayerFrontend.regions.breadcrumb.empty();
-    if (currentUser.displayOptions.phoneMode) {
+    if (currentUser.displayOptions.singleAppMode) {
         appId = FormplayerFrontend.request('getCurrentAppId');
         FormplayerFrontend.navigate("/single_app/" + appId, { trigger: true });
     } else {
