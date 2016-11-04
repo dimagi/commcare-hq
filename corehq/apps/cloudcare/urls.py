@@ -6,6 +6,7 @@ from corehq.apps.cloudcare.views import (
     ReadableQuestions,
     FormplayerMain,
     FormplayerMainPreview,
+    FormplayerPreviewSingleApp,
     form_context, get_cases, filter_cases, get_apps_api, get_app_api,
     get_fixtures, get_sessions, get_session_context, get_ledgers, render_form,
     sync_db_api, default,
@@ -16,6 +17,11 @@ app_urls = patterns('corehq.apps.cloudcare.views',
         form_context, name='cloudcare_form_context'),
     url(r'^v2/$', FormplayerMain.as_view(), name=FormplayerMain.urlname),
     url(r'^v2/preview/$', FormplayerMainPreview.as_view(), name=FormplayerMainPreview.urlname),
+    url(
+        r'^v2/preview/(?P<app_id>[\w-]+)/$',
+        FormplayerPreviewSingleApp.as_view(),
+        name=FormplayerPreviewSingleApp.urlname,
+    ),
     url(r'^(?P<urlPath>.*)$', CloudcareMain.as_view(), name='cloudcare_main'),
 )
 

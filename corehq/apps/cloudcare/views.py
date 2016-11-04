@@ -236,7 +236,6 @@ class CloudcareMain(View):
 class FormplayerMain(View):
 
     preview = False
-    single_app = False
     urlname = 'formplayer_main'
 
     @use_datatables
@@ -263,7 +262,7 @@ class FormplayerMain(View):
             app_ids,
         )
         apps = filter(None, apps)
-        apps = filter(lambda app: app['cloudcare_enabled'], apps)
+        apps = filter(lambda app: app['cloudcare_enabled'] or self.preview, apps)
         apps = filter(lambda app: app_access.user_can_access_app(request.couch_user, app), apps)
         apps = sorted(apps, key=lambda app: app['name'])
 
@@ -281,12 +280,10 @@ class FormplayerMain(View):
             "domain": domain,
             "language": language,
             "apps": apps,
-            "apps_raw": apps,
-            "preview": self.preview,
             "maps_api_key": settings.GMAPS_API_KEY,
-            "use_cloudcare_releases": request.project.use_cloudcare_releases,
             "username": request.user.username,
             "formplayer_url": settings.FORMPLAYER_URL,
+            "single_app_mode": False,
         }
         return render(request, "cloudcare/formplayer_home.html", context)
 
@@ -294,11 +291,51 @@ class FormplayerMain(View):
 class FormplayerMainPreview(FormplayerMain):
 
     preview = True
-    single_app = False
     urlname = 'formplayer_main_preview'
 
     def fetch_app(self, domain, app_id):
         return get_current_app(domain, app_id)
+
+
+class FormplayerPreviewSingleApp(View):
+
+    urlname = 'formplayer_single_app'
+
+    @use_datatables
+    @use_jquery_ui
+    @method_decorator(require_cloudcare_access)
+    @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
+    def dispatch(self, request, *args, **kwargs):
+        return super(FormplayerPreviewSingleApp, self).dispatch(request, *args, **kwargs)
+
+    def get(self, request, domain, app_id, **kwargs):
+        app_access = ApplicationAccess.get_by_domain(domain)
+
+        app = get_current_app(domain, app_id)
+
+        if not app_access.user_can_access_app(request.couch_user, app):
+            raise Http404()
+
+        def _default_lang():
+            try:
+                return app['langs'][0]
+            except Exception:
+                return 'en'
+
+        # default language to user's preference, followed by
+        # first app's default, followed by english
+        language = request.couch_user.language or _default_lang()
+
+        context = {
+            "domain": domain,
+            "language": language,
+            "apps": [app],
+            "maps_api_key": settings.GMAPS_API_KEY,
+            "username": request.user.username,
+            "formplayer_url": settings.FORMPLAYER_URL,
+            "single_app_mode": True,
+        }
+        return render(request, "cloudcare/formplayer_home.html", context)
 
 
 @login_and_domain_required
