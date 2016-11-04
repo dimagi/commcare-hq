@@ -24,6 +24,7 @@ from corehq.apps.app_manager.exceptions import ConflictingCaseTypeError, \
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs, \
     validate_langs, CASE_TYPE_CONFLICT_MSG
 from corehq import toggles, privileges
+from toggle.shortcuts import set_toggle
 from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager import id_strings
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
@@ -292,12 +293,15 @@ def copy_app(request, domain):
         else:
             app_id_or_source = app_id
 
-        def _inner(request, domain, name):
+        def _inner(request, domain, data):
             clear_app_cache(request, domain)
-            app_copy = import_app_util(app_id_or_source, domain, {'name': name})
+            if data['toggles']:
+                for slug in data['toggles'].split(","):
+                    set_toggle(slug, domain, True, namespace=toggles.NAMESPACE_DOMAIN)
+            app_copy = import_app_util(app_id_or_source, domain, {'name': data['name']})
             return back_to_main(request, app_copy.domain, app_id=app_copy._id)
 
-        return login_and_domain_required(_inner)(request, form.cleaned_data['domain'], form.cleaned_data['name'])
+        return login_and_domain_required(_inner)(request, form.cleaned_data['domain'], form.cleaned_data)
     else:
         from corehq.apps.app_manager.views.view_generic import view_generic
         return view_generic(request, domain, app_id=app_id, copy_app_form=form)
