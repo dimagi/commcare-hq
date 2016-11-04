@@ -169,13 +169,18 @@ class mock_out_couch(ContextDecorator):
         def _get_db(*args):
             return self.db
 
-        self.patch = mock.patch('dimagi.ext.couchdbkit.Document.get_db', new=_get_db)
-        self.patch.start()
+        self.patches = [
+            mock.patch('dimagi.ext.couchdbkit.Document.get_db', new=_get_db),
+            mock.patch('dimagi.ext.couchdbkit.SafeSaveDocument.get_db', new=_get_db),
+        ]
+        for patch in self.patches:
+            patch.start()
 
         return self.db
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.patch.stop()
+        for patch in self.patches:
+            patch.stop()
 
 
 def NOOP(*args, **kwargs):

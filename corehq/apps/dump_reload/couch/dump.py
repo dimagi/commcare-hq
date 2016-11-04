@@ -13,6 +13,11 @@ DOC_PROVIDERS = {
     DocTypeIDProvider(['CommtrackConfig']),
     DocTypeIDProvider(['DefaultConsumption']),
     ViewIDProvider('CommCareMultimedia', 'hqmedia/by_domain'),
+    DocTypeIDProvider(['MobileAuthKeyRecord']),
+    DocTypeIDProvider(['Product']),
+    DocTypeIDProvider(['Program']),
+    DocTypeIDProvider(['CaseReminder']),
+    DocTypeIDProvider(['CaseReminderHandler']),
 }
 
 
