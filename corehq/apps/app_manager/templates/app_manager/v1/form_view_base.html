@@ -250,7 +250,7 @@
             };
 
             {% if request|toggle_enabled:"USE_FORMPLAYER_FRONTEND"%}
-                var cloudCareUrl = getFormplayerUrl("{% url "cloudcare_main" domain '' %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}");
+                var cloudCareUrl = getFormplayerUrl("{% url "formplayer_main" domain %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}");
             {% else %}
                 var cloudCareUrl = getCloudCareUrl("{% url "cloudcare_main" domain '' %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}") + "?preview=true";
             {% endif %}
