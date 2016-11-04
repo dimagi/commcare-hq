@@ -11,7 +11,7 @@ from corehq.apps.export.filters import (
     OR, OwnerFilter, LastModifiedByFilter, UserTypeFilter,
     OwnerTypeFilter, ModifiedOnRangeFilter, FormSubmittedByFilter, NOT
 )
-from corehq.apps.es.users import UserES
+from corehq.apps.es.users import UserES, user_ids_at_locations_and_descendants
 from corehq.apps.reports.filters.case_list import CaseListFilter
 from corehq.apps.reports.filters.users import LocationRestrictedMobileWorkerFilter
 from corehq.apps.groups.models import Group
@@ -448,7 +448,7 @@ class EmwfFilterExportMixin(object):
         """
         location_ids = self._get_locations_ids(mobile_user_and_group_slugs)
         if location_ids:
-            user_ids = UserES().user_ids_at_locations_and_descendants(location_ids)
+            user_ids = user_ids_at_locations_and_descendants(location_ids)
             return self.export_user_filter(user_ids)
 
     def _get_group_ids(self, mobile_user_and_group_slugs):
