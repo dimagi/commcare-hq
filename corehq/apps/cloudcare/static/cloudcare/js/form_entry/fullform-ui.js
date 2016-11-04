@@ -432,10 +432,7 @@ Formplayer.ViewModels.CloudCareDebugger = function() {
         $.publish('formplayer.' + Formplayer.Const.FORMATTED_QUESTIONS, function(resp) {
             self.formattedQuestionsHtml(resp.formattedQuestions);
             self.instanceXml(resp.instanceXml);
-            self.evalXPath.autocomplete(_.map(
-                resp.questionList,
-                function(question) { return question.value; }
-            ));
+            self.evalXPath.autocomplete(resp.questionList);
         });
     });
 
@@ -481,27 +478,32 @@ Formplayer.ViewModels.EvaluateXPath = function() {
         $.publish('formplayer.' + Formplayer.Const.EVALUATE_XPATH, [self.xpath(), callback]);
     };
 
+    self.matcher = function(flag, subtext) {
+        var match, regexp;
+        // Match text that starts with the flag and then looks like a path.
+        // CKEditor reserves the right to insert arbitrary zero-width spaces, so watch for those.
+        regexp = new RegExp('([\\s\u200b\(]+|^)' + RegExp.escape(flag) + '([\\w/-]*)$', 'gi');
+        match = regexp.exec(subtext);
+        return match ? match[2] : null;
+    };
+
     /**
      * Set autocomplete for xpath input.
      *
      * @param {Array} data - List of datums to be autocompleted for the xpath input
      */
-    self.autocomplete = function(data) {
+    self.autocomplete = function(questionData) {
         self.$xpath = $('#xpath');
         self.$xpath.atwho({
             at: '',
-            data: data,
+            data: questionData,
+            searchKey: 'value',
             maxLen: Infinity,
+            displayTpl: '<li>${value} - [${type}]</li>',
+            insertTpl: '${value}',
             callbacks: {
-                matcher: function(flag, subtext) {
-                    var match, regexp;
-                    // Match text that starts with the flag and then looks like a path.
-                    // CKEditor reserves the right to insert arbitrary zero-width spaces, so watch for those.
-                    regexp = new RegExp('([\\s\u200b]+|^)' + RegExp.escape(flag) + '([\\w/-]*)$', 'gi');
-                    match = regexp.exec(subtext);
-                    return match ? match[2] : null;
-                },
-            }
+                matcher: self.matcher,
+            },
         });
     };
 };
