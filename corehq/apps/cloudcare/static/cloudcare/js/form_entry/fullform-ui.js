@@ -432,6 +432,10 @@ Formplayer.ViewModels.CloudCareDebugger = function() {
         $.publish('formplayer.' + Formplayer.Const.FORMATTED_QUESTIONS, function(resp) {
             self.formattedQuestionsHtml(resp.formattedQuestions);
             self.instanceXml(resp.instanceXml);
+            self.evalXPath.autocomplete(_.map(
+                resp.questionList,
+                function(question) { return question.value; }
+            ));
         });
     });
 
@@ -466,6 +470,7 @@ Formplayer.ViewModels.CloudCareDebugger = function() {
 Formplayer.ViewModels.EvaluateXPath = function() {
     var self = this;
     self.xpath = ko.observable('');
+    self.$xpath = null;
     self.result = ko.observable('');
     self.success = ko.observable(true);
     self.evaluate = function(form) {
@@ -474,6 +479,30 @@ Formplayer.ViewModels.EvaluateXPath = function() {
             self.success(status === "accepted");
         };
         $.publish('formplayer.' + Formplayer.Const.EVALUATE_XPATH, [self.xpath(), callback]);
+    };
+
+    /**
+     * Set autocomplete for xpath input.
+     *
+     * @param {Array} data - List of datums to be autocompleted for the xpath input
+     */
+    self.autocomplete = function(data) {
+        self.$xpath = $('#xpath');
+        self.$xpath.atwho({
+            at: '',
+            data: data,
+            maxLen: Infinity,
+            callbacks: {
+                matcher: function(flag, subtext) {
+                    var match, regexp;
+                    // Match text that starts with the flag and then looks like a path.
+                    // CKEditor reserves the right to insert arbitrary zero-width spaces, so watch for those.
+                    regexp = new RegExp('([\\s\u200b]+|^)' + RegExp.escape(flag) + '([\\w/-]*)$', 'gi');
+                    match = regexp.exec(subtext);
+                    return match ? match[2] : null;
+                },
+            }
+        });
     };
 };
 
@@ -646,3 +675,6 @@ Formplayer.Utils.initialRender = function(formJSON, resourceMap, $div) {
     return form;
 };
 
+RegExp.escape= function(s) {
+    return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+};
