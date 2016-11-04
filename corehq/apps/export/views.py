@@ -99,7 +99,7 @@ from corehq.apps.users.decorators import get_permission_name
 from corehq.apps.users.models import Permissions
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
     DEID_EXPORT_PERMISSION, has_permission_to_view_report
-from corehq.apps.es.users import UserES
+from corehq.apps.es.users import UserES, user_ids_at_accessible_locations, user_ids_at_locations
 from corehq.util.couch import get_document_or_404_lite
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.soft_assert import soft_assert
@@ -1770,8 +1770,7 @@ class DownloadNewFormExportView(GenericDownloadNewExportMixin, DownloadFormExpor
     def scope_filter(self):
         # Filter to be applied in AND with filters for export for restricted user
         # Restricts to forms submitted by users at accessible locations
-        accessible_user_ids = (UserES()
-            .user_ids_at_accessible_locations(
+        accessible_user_ids = (user_ids_at_accessible_locations(
                 self.request.domain, self.request.couch_user
         ))
         return FormSubmittedByFilter(accessible_user_ids)
@@ -1807,7 +1806,7 @@ class DownloadNewCaseExportView(GenericDownloadNewExportMixin, DownloadCaseExpor
             self.request.domain,
             self.request.couch_user)
         )
-        accessible_user_ids = UserES().user_ids_at_locations(accessible_location_ids)
+        accessible_user_ids = user_ids_at_locations(accessible_location_ids)
         accessible_ids = accessible_user_ids + list(accessible_location_ids)
         return OR(OwnerFilter(accessible_ids), LastModifiedByFilter(accessible_user_ids))
 

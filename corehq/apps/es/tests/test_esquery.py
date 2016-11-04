@@ -146,7 +146,7 @@ class TestESQuery(ElasticTestMixin, TestCase):
         }
 
         query = (users.UserES()
-                 .users_at_locations_and_descendants_query(location_ids))
+                 .users_at_locations_and_descendants(location_ids))
         self.checkQuery(query, json_output)
 
     def test_remove_all_defaults(self):
