@@ -8,7 +8,9 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect, Http404, HttpResponseForbidden, JsonResponse
+from django.http import (
+    HttpResponse, HttpResponseRedirect, Http404, HttpResponseForbidden, JsonResponse,
+)
 from django.template.response import TemplateResponse
 from django.utils.decorators import method_decorator
 from django.utils.http import urlquote
@@ -35,7 +37,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.hqwebapp.signals import clear_login_attempts
 
 ########################################################################################################
-from corehq.toggles import IS_DEVELOPER
+from corehq.toggles import IS_DEVELOPER, DATA_MIGRATION
 
 logger = logging.getLogger(__name__)
 
@@ -386,3 +388,13 @@ def require_previewer(view_func):
     return shim
 
 cls_require_previewer = cls_to_view(additional_decorator=require_previewer)
+
+
+def check_domain_migration(view_func):
+    def decorator(request, domain, *args, **kwargs):
+        if DATA_MIGRATION.enabled(domain):
+            return HttpResponse('Service Temporarily Unavailable',
+                                content_type='text/plain', status=503)
+        else:
+            return view_func(request, *args, **kwargs)
+    return decorator
