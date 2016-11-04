@@ -490,7 +490,7 @@ Formplayer.ViewModels.EvaluateXPath = function() {
     /**
      * Set autocomplete for xpath input.
      *
-     * @param {Array} data - List of datums to be autocompleted for the xpath input
+     * @param {Array} questionData - List of questions to be autocompleted for the xpath input
      */
     self.autocomplete = function(questionData) {
         self.$xpath = $('#xpath');
