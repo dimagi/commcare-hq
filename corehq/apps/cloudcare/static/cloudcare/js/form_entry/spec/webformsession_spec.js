@@ -1,3 +1,6 @@
+/* globals Formplayer, TaskQueue, WebFormSession */
+/* eslint-env mocha */
+
 describe('WebForm', function() {
 
     describe('TaskQueue', function() {
@@ -98,6 +101,19 @@ describe('WebForm', function() {
             $.unsubscribe();
         });
 
+        it('Should determine whether to update debugger', function() {
+            var sess = new WebFormSession(params);
+
+            sess.debuggerEnabled = false;
+            assert.isFalse(sess.shouldUpdateDebugger(Formplayer.Const.ANSWER));
+
+            sess.debuggerEnabled = true;
+            assert.isTrue(sess.shouldUpdateDebugger(Formplayer.Const.ANSWER));
+
+            sess.debuggerEnabled = true;
+            assert.isFalse(sess.shouldUpdateDebugger('bogus-action'));
+        });
+
         it('Should queue requests', function() {
             var sess = new WebFormSession(params);
             sess.serverRequest({}, sinon.spy(), false);
@@ -165,7 +181,7 @@ describe('WebForm', function() {
         it('Should handle error in callback', function() {
             var sess = new WebFormSession(params);
 
-            sess.handleSuccess({}, sinon.stub().throws());
+            sess.handleSuccess({}, 'action', sinon.stub().throws());
 
             assert.isTrue(sess.onerror.calledOnce);
         });
@@ -174,7 +190,7 @@ describe('WebForm', function() {
             var sess = new WebFormSession(params),
                 cb = sinon.stub();
 
-            sess.handleSuccess({ status: 'error' }, cb);
+            sess.handleSuccess({ status: 'error' }, 'action', cb);
 
             assert.isTrue(sess.onerror.calledOnce);
             assert.isFalse(cb.calledOnce);
@@ -189,7 +205,7 @@ describe('WebForm', function() {
 
         it('Should handle timeout error', function() {
             var sess = new WebFormSession(params);
-            sess.handleFailure({}, 'timeout');
+            sess.handleFailure({}, 'action', 'timeout');
 
             assert.isTrue(sess.onerror.calledOnce);
             assert.isTrue(sess.onerror.calledWith({

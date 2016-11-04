@@ -3,6 +3,7 @@ from django.conf.urls import patterns, url, include
 from corehq.apps.cloudcare.views import (
     EditCloudcareUserPermissionsView,
     CloudcareMain,
+    ReadableQuestions,
     form_context, get_cases, filter_cases, get_apps_api, get_app_api,
     get_fixtures, get_sessions, get_session_context, get_ledgers, render_form,
     sync_db_api, default,
@@ -29,6 +30,7 @@ api_urls = patterns('corehq.apps.cloudcare.views',
     url(r'^sessions/(?P<session_id>[\w-]*)/$', get_session_context, name='cloudcare_get_session_context'),
     url(r'^ledgers/$', get_ledgers, name='cloudcare_get_ledgers'),
     url(r'^render_form/$', render_form, name='cloudcare_render_form'),
+    url(r'^readable_questions/$', ReadableQuestions.as_view(), name=ReadableQuestions.urlname),
     url(r'^sync_db/$', sync_db_api, name='cloudcare_sync_db'),
 )
 
