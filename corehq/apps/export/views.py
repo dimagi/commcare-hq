@@ -11,6 +11,16 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 
 from corehq.apps.export.export import get_export_download, get_export_size
+from corehq.apps.export.filters import (
+    FormSubmittedByFilter,
+    OwnerFilter,
+    LastModifiedByFilter,
+    OR
+)
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.permissions import location_safe
+from corehq.apps.reports.filters.case_list import CaseListFilter
+from corehq.apps.reports.filters.users import LocationRestrictedMobileWorkerFilter
 from corehq.apps.reports.views import should_update_export, \
     build_download_saved_export_response, require_form_export_permission
 from corehq.form_processor.utils import use_new_exports
@@ -46,7 +56,7 @@ from corehq.apps.export.forms import (
     CreateCaseExportTagForm,
     FilterFormCouchExportDownloadForm,
     FilterCaseCouchExportDownloadForm,
-    FilterFormESExportDownloadForm,
+    EmwfFilterFormExport,
     FilterCaseESExportDownloadForm,
 )
 from corehq.apps.export.models import (
@@ -89,6 +99,7 @@ from corehq.apps.users.decorators import get_permission_name
 from corehq.apps.users.models import Permissions
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
     DEID_EXPORT_PERMISSION, has_permission_to_view_report
+from corehq.apps.es.users import user_ids_at_accessible_locations, user_ids_at_locations
 from corehq.util.couch import get_document_or_404_lite
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.soft_assert import soft_assert
@@ -1661,6 +1672,10 @@ class GenericDownloadNewExportMixin(object):
     """
     Supporting class for new style export download views
     """
+    # Form used for rendering filters
+    filter_form_class = EmwfFilterFormExport
+    # To serve filters for export from mobile_user_and_group_slugs
+    export_filter_class = LocationRestrictedMobileWorkerFilter
 
     def _get_download_task(self, in_data):
         export_filters, export_specs = self._process_filters_and_specs(in_data)
@@ -1707,18 +1722,58 @@ class GenericDownloadNewExportMixin(object):
                 "filters to be less than " + MAX_EXPORTABLE_ROWS + "rows.")
             )
 
+    @property
+    def page_context(self):
+        parent_context = super(GenericDownloadNewExportMixin, self).page_context
+        parent_context['dynamic_filters'] = self.export_filter_class(
+            self.request,
+            self.request.domain
+        ).render()
+        return parent_context
 
+    def _process_filters_and_specs(self, in_data):
+        """Returns a the export filters and a list of JSON export specs
+        Override to hook fetching mobile_user_and_group_slugs
+        """
+        filter_form_data, export_specs = self._get_form_data_and_specs(in_data)
+        import re
+        regex = re.compile('(emw=){1}([^&]*)(&){0,1}')
+        matches = regex.findall(filter_form_data['emw'])
+        mobile_user_and_group_slugs = [n[1] for n in matches]
+        try:
+            export_filter = self.get_filters(filter_form_data, mobile_user_and_group_slugs)
+        except ExportFormValidationException:
+            raise ExportAsyncException(
+                _("Form did not validate.")
+            )
+
+        return export_filter, export_specs
+
+
+@location_safe
 class DownloadNewFormExportView(GenericDownloadNewExportMixin, DownloadFormExportView):
     urlname = 'new_export_download_forms'
-    filter_form_class = FilterFormESExportDownloadForm
+    filter_form_class = EmwfFilterFormExport
+    export_filter_class = LocationRestrictedMobileWorkerFilter
 
     def _get_export(self, domain, export_id):
         return FormExportInstance.get(export_id)
 
-    def get_filters(self, filter_form_data):
+    def get_filters(self, filter_form_data, mobile_user_and_group_slugs):
         filter_form = self._get_filter_form(filter_form_data)
-        form_filters = filter_form.get_form_filter()
+        form_filters = filter_form.get_form_filter(mobile_user_and_group_slugs,
+                                                   self.request.can_access_all_locations)
+        if not self.request.can_access_all_locations:
+            form_filters.append(self.scope_filter())
         return form_filters
+
+    def scope_filter(self):
+        # Filter to be applied in AND with filters for export for restricted user
+        # Restricts to forms submitted by users at accessible locations
+        accessible_user_ids = (user_ids_at_accessible_locations(
+            self.request.domain, self.request.couch_user
+        ))
+        return FormSubmittedByFilter(accessible_user_ids)
 
 
 class BulkDownloadNewFormExportView(DownloadNewFormExportView):
@@ -1726,17 +1781,34 @@ class BulkDownloadNewFormExportView(DownloadNewFormExportView):
     page_title = ugettext_noop("Download Form Exports")
 
 
+@location_safe
 class DownloadNewCaseExportView(GenericDownloadNewExportMixin, DownloadCaseExportView):
     urlname = 'new_export_download_cases'
     filter_form_class = FilterCaseESExportDownloadForm
+    export_filter_class = CaseListFilter
 
     def _get_export(self, domain, export_id):
         return CaseExportInstance.get(export_id)
 
-    def get_filters(self, filter_form_data):
+    def get_filters(self, filter_form_data, mobile_user_and_group_slugs):
         filter_form = self._get_filter_form(filter_form_data)
-        form_filters = filter_form.get_case_filter()
+        form_filters = filter_form.get_case_filter(mobile_user_and_group_slugs,
+                                                   self.request.can_access_all_locations)
+        if not self.request.can_access_all_locations:
+            form_filters.append(self.scope_filter())
         return form_filters
+
+    def scope_filter(self):
+        # Filter to be applied in AND with filters for export to add scope for restricted user
+        # Restricts to cases owned by accessible locations and their respective users Or Cases
+        # Last Modified by accessible users
+        accessible_location_ids = (SQLLocation.active_objects.accessible_location_ids(
+            self.request.domain,
+            self.request.couch_user)
+        )
+        accessible_user_ids = user_ids_at_locations(accessible_location_ids)
+        accessible_ids = accessible_user_ids + list(accessible_location_ids)
+        return OR(OwnerFilter(accessible_ids), LastModifiedByFilter(accessible_user_ids))
 
 
 @csrf_exempt
