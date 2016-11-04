@@ -36,9 +36,11 @@ from corehq.apps.accounting.models import Subscription, SoftwarePlanEdition
 from corehq.apps.commtrack.const import SUPPLY_POINT_CASE_TYPE
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.domain.models import Domain
+from corehq.apps.es import filters
 from corehq.apps.es.cases import CaseES
 from corehq.apps.es.domains import DomainES
 from corehq.apps.es.forms import FormES
+from corehq.apps.es.groups import GroupES
 from corehq.apps.es.sms import SMSES
 from corehq.apps.es.users import UserES
 from corehq.apps.groups.models import Group
@@ -259,7 +261,7 @@ def get_active_domain_stats_data(domains, datespan, interval,
                 .submitted(gte=f, lte=t)
                 .size(0))
             if restrict_to_mobile_submissions:
-                form_query = form_query.user_id(get_user_ids(True))
+                form_query = form_query.user_id(get_user_ids(True, domains_in_interval))
             active_domains |= set(
                 form_query.run().aggregations.domains.keys
             )
@@ -598,7 +600,7 @@ def get_domain_stats_data(domains, datespan, interval,
 
 def commtrack_form_submissions(domains, datespan, interval,
         datefield='received_on'):
-    mobile_workers = UserES().mobile_users().show_inactive().get_ids()
+    mobile_workers = get_mobile_users(domains)
 
     forms_after_date = (FormES()
             .domain(domains)
@@ -684,7 +686,7 @@ def get_users_all_stats(domains, datespan, interval,
     elif user_type_mobile is not None:
         query = query.web_users()
     if require_submissions:
-        query = query.user_ids(get_submitted_users())
+        query = query.user_ids(get_submitted_users(domains))
 
     histo_data = (
         query
@@ -771,12 +773,14 @@ def get_products_stats_data(domains, datespan, interval,
     return format_return_data(ret, initial, datespan)
 
 
-def get_user_ids(user_type_mobile):
+def get_user_ids(user_type_mobile, domains):
     """
     Returns the set of mobile user IDs if user_type_mobile is True,
     else returns the set of web user IDs.
     """
     query = UserES().show_inactive()
+    if domains:
+        query = query.domain(domains)
     if user_type_mobile:
         query = query.mobile_users()
     else:
@@ -784,13 +788,11 @@ def get_user_ids(user_type_mobile):
     return set(query.get_ids())
 
 
-def get_submitted_users():
+def get_submitted_users(domains):
     real_form_users = set(
         FormES()
         .user_aggregation()
         .size(0)
-        .run()
-        .aggregations.user.keys
     )
 
     real_sms_users = set(
@@ -798,28 +800,22 @@ def get_submitted_users():
         .terms_aggregation('couch_recipient', 'user')
         .incoming_messages()
         .size(0)
-        .run()
-        .aggregations.user.keys
     )
+
+    if domains:
+        real_form_users = real_form_users.domain(domains)
+        real_sms_users = real_sms_users.domain(domains)
+
+    real_form_users = real_form_users.run().aggregations.users.keys
+    real_sms_users = real_sms_users.run().aggregations.users.keys
 
     return real_form_users | real_sms_users
 
 
-def get_case_owner_filters():
-    result = {'terms': {}}
-
-    mobile_user_ids = list(get_user_ids(True))
-
-    def all_groups():
-        for domain in Domain.get_all():
-            for group in Group.by_domain(domain.name):
-                yield group
-    group_ids = [
-        group._id for group in all_groups()
-    ]
-
-    result['terms']['owner_id'] = mobile_user_ids + group_ids
-    return result
+def get_case_owner_filters(domains):
+    mobile_user_ids = list(get_user_ids(True, domains))
+    group_ids = GroupES().domain(domains).get_ids()
+    return filters.term('owner_id', mobile_user_ids + group_ids)
 
 
 def _histo_data(domain_list, histogram_type, start_date, end_date, interval,
@@ -908,11 +904,12 @@ def get_general_stats_data(domains, histo_type, datespan, interval="day",
         user_type_mobile=None, is_cumulative=True, supply_points=False,
         j2me_only=False):
     additional_filters = []
+    domains_for_es = [d for sublist in domains for d in sublist['names']]
     if histo_type == 'forms':
         if user_type_mobile is not None:
             additional_filters.append({
                 'terms': {
-                    'form.meta.userID': list(get_user_ids(user_type_mobile))
+                    'form.meta.userID': list(get_user_ids(user_type_mobile, domains_for_es))
                 }
             })
         if j2me_only:
@@ -922,7 +919,7 @@ def get_general_stats_data(domains, histo_type, datespan, interval="day",
                 }
             })
     if histo_type == 'active_cases' and not supply_points:
-        additional_filters.append(get_case_owner_filters())
+        additional_filters.append(get_case_owner_filters(domains_for_es))
     if supply_points:
         additional_filters.append({'terms': {'type': ['supply-point']}})
 
