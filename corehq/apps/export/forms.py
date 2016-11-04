@@ -42,6 +42,8 @@ from crispy_forms import layout as crispy
 from crispy_forms.layout import Layout
 from dimagi.utils.dates import DateSpan
 
+from corehq.util import flatten_list
+
 
 class CreateFormExportTagForm(forms.Form):
     """The information necessary to create an export tag to begin creating a
@@ -551,6 +553,7 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloa
             self._get_locations_filter(mobile_user_and_group_slugs)
         ])
 
+        form_filters = flatten_list(form_filters)
         form_filters = [OR(*form_filters)]
         form_filters.append(self._get_datespan_filter())
         return form_filters
@@ -718,7 +721,7 @@ class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, GenericFilterCaseExp
 
         if group_ids:
             groups_static_user_ids = Group.get_static_user_ids_for_groups(group_ids)
-            groups_static_user_ids = [item for sublist in groups_static_user_ids for item in sublist]
+            groups_static_user_ids = flatten_list(groups_static_user_ids)
             owner_filter_ids = group_ids + groups_static_user_ids
             last_modified_filter_ids = groups_static_user_ids
         else:
