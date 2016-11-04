@@ -231,6 +231,60 @@ class CloudcareMain(View):
             return render(request, "cloudcare/cloudcare_home.html", context)
 
 
+class FormplayerMain(View):
+
+    preview = False
+    urlname = 'formplayer_main'
+
+    @use_datatables
+    @use_jquery_ui
+    @method_decorator(require_cloudcare_access)
+    @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
+    def dispatch(self, request, *args, **kwargs):
+        return super(FormplayerMain, self).dispatch(request, *args, **kwargs)
+
+    def get(self, request, domain, urlPath):
+        app_access = ApplicationAccess.get_by_domain(domain)
+
+        apps = get_cloudcare_apps(domain)
+
+        if (toggles.CLOUDCARE_LATEST_BUILD.enabled(domain) or
+                toggles.CLOUDCARE_LATEST_BUILD.enabled(request.couch_user.username)):
+            get_cloudcare_app = get_latest_build_doc
+        else:
+            get_cloudcare_app = get_latest_released_app_doc
+
+        apps = map(
+            lambda app: get_cloudcare_app(domain, app['_id']),
+            apps,
+        )
+        apps = filter(None, apps)
+        apps = filter(lambda app: app_access.user_can_access_app(request.couch_user, app), apps)
+
+        def _default_lang():
+            try:
+                return apps[0]['langs'][0]
+            except Exception:
+                return 'en'
+
+        # default language to user's preference, followed by
+        # first app's default, followed by english
+        language = request.couch_user.language or _default_lang()
+
+        context = {
+            "domain": domain,
+            "language": language,
+            "apps": apps,
+            "apps_raw": apps,
+            "preview": self.preview,
+            "maps_api_key": settings.GMAPS_API_KEY,
+            "use_cloudcare_releases": request.project.use_cloudcare_releases,
+            "username": request.user.username,
+            "formplayer_url": settings.FORMPLAYER_URL,
+        }
+        return render(request, "cloudcare/formplayer_home.html", context)
+
+
 @login_and_domain_required
 @requires_privilege_for_commcare_user(privileges.CLOUDCARE)
 def form_context(request, domain, app_id, module_id, form_id):

@@ -665,11 +665,17 @@ class ApplicationsTab(UITab):
 
 
 class CloudcareTab(UITab):
-    view = "corehq.apps.cloudcare.views.default"
-
     url_prefix_formats = ('/a/{domain}/cloudcare/',)
 
     ga_tracker = GaTracker('CloudCare', 'Click Cloud-Care top-level nav')
+
+    @property
+    def view(self):
+        from corehq.apps.cloudcare.views import FormplayerMain
+        if toggles.USE_FORMPLAYER_FRONTEND.enabled(self.domain):
+            return FormplayerMain.urlname
+        else:
+            return "corehq.apps.cloudcare.views.default"
 
     @property
     def title(self):

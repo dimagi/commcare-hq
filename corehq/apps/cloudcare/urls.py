@@ -4,6 +4,7 @@ from corehq.apps.cloudcare.views import (
     EditCloudcareUserPermissionsView,
     CloudcareMain,
     ReadableQuestions,
+    FormplayerMain,
     form_context, get_cases, filter_cases, get_apps_api, get_app_api,
     get_fixtures, get_sessions, get_session_context, get_ledgers, render_form,
     sync_db_api, default,
@@ -12,6 +13,7 @@ from corehq.apps.cloudcare.views import (
 app_urls = patterns('corehq.apps.cloudcare.views',
     url(r'^view/(?P<app_id>[\w-]+)/modules-(?P<module_id>[\w-]+)/forms-(?P<form_id>[\w-]+)/context/$',
         form_context, name='cloudcare_form_context'),
+    url(r'^v2/$', FormplayerMain.as_view(), name=FormplayerMain.urlname),
     url(r'^(?P<urlPath>.*)$', CloudcareMain.as_view(), name='cloudcare_main'),
 )
 
