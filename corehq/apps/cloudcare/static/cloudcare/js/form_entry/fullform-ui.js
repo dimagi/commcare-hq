@@ -481,8 +481,7 @@ Formplayer.ViewModels.EvaluateXPath = function() {
     self.matcher = function(flag, subtext) {
         var match, regexp;
         // Match text that starts with the flag and then looks like a path.
-        // CKEditor reserves the right to insert arbitrary zero-width spaces, so watch for those.
-        regexp = new RegExp('([\\s\u200b\(]+|^)' + RegExp.escape(flag) + '([\\w/-]*)$', 'gi');
+        regexp = new RegExp('([\\s\(]+|^)' + RegExp.escape(flag) + '([\\w/-]*)$', 'gi');
         match = regexp.exec(subtext);
         return match ? match[2] : null;
     };
