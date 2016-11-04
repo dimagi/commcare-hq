@@ -4,6 +4,7 @@ import uuid
 from StringIO import StringIO
 from collections import Counter
 
+from datetime import datetime
 from django.test import TestCase
 from fakecouch import FakeCouchDb
 
@@ -126,6 +127,38 @@ class CouchDumpLoadTest(TestCase):
         ]
 
         self._dump_and_load(objects)
+
+    def test_multimedia(self):
+        from corehq.apps.hqmedia.models import CommCareAudio, CommCareImage, CommCareMultimedia, CommCareVideo
+        image_path = os.path.join('corehq', 'apps', 'hqwebapp', 'static', 'hqwebapp', 'img', 'commcare-hq-logo.png')
+        with open(image_path, 'r') as f:
+            image_data = f.read()
+
+        image = CommCareImage.get_by_data(image_data)
+        image.attach_data(image_data, original_filename='logo.png')
+        image.add_domain(self.domain_name)
+        self.assertEqual(image_data, image.get_display_file(False))
+
+        audio_data = 'fake audio data'
+        audio = CommCareAudio.get_by_data(audio_data)
+        audio.attach_data(audio_data, original_filename='tr-la-la.mp3')
+        audio.add_domain(self.domain_name)
+        self.assertEqual(audio_data, audio.get_display_file(False))
+
+        video_data = 'fake video data'
+        video = CommCareVideo.get_by_data(video_data)
+        video.attach_data(video_data, 'kittens.mp4')
+        video.add_domain(self.domain_name)
+        self.assertEqual(video_data, video.get_display_file(False))
+
+        fakedb = self._dump_and_load([image, audio, video])
+
+        copied_image = CommCareImage.wrap(fakedb.get(image._id))
+        copied_audio = CommCareAudio.wrap(fakedb.get(audio._id))
+        copied_video = CommCareVideo.wrap(fakedb.get(video._id))
+        self.assertEqual(image_data, copied_image.get_display_file(False))
+        self.assertEqual(audio_data, copied_audio.get_display_file(False))
+        self.assertEqual(video_data, copied_video.get_display_file(False))
 
 
 def _get_doc_counts_from_db(domain):

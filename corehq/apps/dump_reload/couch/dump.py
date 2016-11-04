@@ -3,7 +3,7 @@ from collections import Counter
 
 import itertools
 
-from corehq.apps.dump_reload.couch.id_providers import DocTypeIDProvider
+from corehq.apps.dump_reload.couch.id_providers import DocTypeIDProvider, ViewIDProvider
 from corehq.apps.dump_reload.interface import DataDumper
 from dimagi.utils.couch.database import iter_docs
 
@@ -12,6 +12,7 @@ DOC_PROVIDERS = {
     DocTypeIDProvider(['Application']),
     DocTypeIDProvider(['CommtrackConfig']),
     DocTypeIDProvider(['DefaultConsumption']),
+    ViewIDProvider('CommCareMultimedia', 'hqmedia/by_domain'),
 }
 
 
