@@ -6,7 +6,9 @@ from django.http import (
     HttpResponseForbidden,
 )
 from casexml.apps.case.xform import get_case_updates, is_device_report
-from corehq.apps.domain.decorators import login_or_digest_ex, login_or_basic_ex
+from corehq.apps.domain.decorators import (
+    check_domain_migration, login_or_digest_ex, login_or_basic_ex
+)
 from corehq.apps.receiverwrapper.auth import (
     AuthContext,
     WaivedAuthContext,
@@ -104,6 +106,7 @@ def _process_form(request, domain, app_id, user_id, authenticated,
 
 @csrf_exempt
 @require_POST
+@check_domain_migration
 def post(request, domain, app_id=None):
     try:
         if domain_requires_auth(domain):
@@ -215,6 +218,7 @@ def _secure_post_basic(request, domain, app_id=None):
 
 @csrf_exempt
 @require_POST
+@check_domain_migration
 def secure_post(request, domain, app_id=None):
     authtype_map = {
         'digest': _secure_post_digest,
