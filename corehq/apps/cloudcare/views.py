@@ -35,6 +35,8 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_build_doc,
     get_brief_apps_in_domain,
     get_latest_released_app_doc,
+    get_app_ids_in_domain,
+    get_current_app,
     wrap_app,
 )
 from corehq.apps.app_manager.exceptions import FormNotFoundException, ModuleNotFoundException
@@ -234,6 +236,7 @@ class CloudcareMain(View):
 class FormplayerMain(View):
 
     preview = False
+    single_app = False
     urlname = 'formplayer_main'
 
     @use_datatables
@@ -243,23 +246,26 @@ class FormplayerMain(View):
     def dispatch(self, request, *args, **kwargs):
         return super(FormplayerMain, self).dispatch(request, *args, **kwargs)
 
-    def get(self, request, domain, urlPath):
-        app_access = ApplicationAccess.get_by_domain(domain)
-
-        apps = get_cloudcare_apps(domain)
-
+    def fetch_app(self, domain, app_id):
+        username = self.request.couch_user.username
         if (toggles.CLOUDCARE_LATEST_BUILD.enabled(domain) or
-                toggles.CLOUDCARE_LATEST_BUILD.enabled(request.couch_user.username)):
-            get_cloudcare_app = get_latest_build_doc
+                toggles.CLOUDCARE_LATEST_BUILD.enabled(username)):
+            return get_latest_build_doc(domain, app_id)
         else:
-            get_cloudcare_app = get_latest_released_app_doc
+            return get_latest_released_app_doc(domain, app_id)
+
+    def get(self, request, domain):
+        app_access = ApplicationAccess.get_by_domain(domain)
+        app_ids = get_app_ids_in_domain(domain)
 
         apps = map(
-            lambda app: get_cloudcare_app(domain, app['_id']),
-            apps,
+            lambda app_id: self.fetch_app(domain, app_id),
+            app_ids,
         )
         apps = filter(None, apps)
+        apps = filter(lambda app: app['cloudcare_enabled'], apps)
         apps = filter(lambda app: app_access.user_can_access_app(request.couch_user, app), apps)
+        apps = sorted(apps, key=lambda app: app['name'])
 
         def _default_lang():
             try:
@@ -283,6 +289,16 @@ class FormplayerMain(View):
             "formplayer_url": settings.FORMPLAYER_URL,
         }
         return render(request, "cloudcare/formplayer_home.html", context)
+
+
+class FormplayerMainPreview(FormplayerMain):
+
+    preview = True
+    single_app = False
+    urlname = 'formplayer_main_preview'
+
+    def fetch_app(self, domain, app_id):
+        return get_current_app(domain, app_id)
 
 
 @login_and_domain_required
