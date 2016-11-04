@@ -10,3 +10,7 @@ def remove_dups(list_of_dicts, unique_key):
             keys.add(d.get(unique_key))
             ret.append(d)
     return ret
+
+
+def flatten_list(elements):
+    return [item for sublist in elements for item in sublist]
