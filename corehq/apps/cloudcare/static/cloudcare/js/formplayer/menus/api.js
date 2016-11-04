@@ -35,12 +35,12 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                     }
                 },
                 error: function () {
-                    FormplayerFrontend.request(
+                    FormplayerFrontend.trigger(
                         'showError',
                         gettext('Unable to connect to form playing service. ' +
                                 'Please report an issue if you continue to see this message.')
                     );
-                    defer.resolve();
+                    defer.reject();
                 },
             };
 
