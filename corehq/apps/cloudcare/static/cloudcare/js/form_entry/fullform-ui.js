@@ -498,7 +498,10 @@ Formplayer.ViewModels.EvaluateXPath = function() {
             data: questionData,
             searchKey: 'value',
             maxLen: Infinity,
-            displayTpl: '<li>${value} - [${type}]</li>',
+            displayTpl: function(d) {
+                var icon = Formplayer.Utils.getIconFromType(d.type);
+                return '<li><i class="' + icon + '"></i> ${value}</li>';
+            },
             insertTpl: '${value}',
             callbacks: {
                 matcher: self.matcher,
@@ -674,6 +677,79 @@ Formplayer.Utils.initialRender = function(formJSON, resourceMap, $div) {
     }
 
     return form;
+};
+
+Formplayer.Utils.getIconFromType = function(type) {
+    var icon = '';
+    switch (type) {
+    case 'Trigger':
+        icon = 'fcc fcc-fd-variable';
+        break;
+    case 'Text':
+        icon = 'fcc fcc-fd-text';
+        break;
+    case 'PhoneNumber':
+        icon = 'fa fa-signal';
+        break;
+    case 'Secret':
+        icon = 'fa fa-key';
+        break;
+    case 'Integer':
+        icon = 'fcc fcc-fd-numeric';
+        break;
+    case 'Audio':
+        icon = 'fcc fcc-fd-audio-capture';
+        break;
+    case 'Image':
+        icon = 'fa fa-camera';
+        break;
+    case 'Video':
+        icon = 'fa fa-video-camera';
+        break;
+    case 'Signature':
+        icon = 'fcc fcc-fd-signature';
+        break;
+    case 'Geopoint':
+        icon = 'fa fa-map-marker';
+        break;
+    case 'Barcode Scan':
+        icon = 'fa fa-barcode';
+        break;
+    case 'Date':
+        icon = 'fa fa-calendar';
+        break;
+    case 'Date and Time':
+        icon = 'fcc fcc-fd-datetime';
+        break;
+    case 'Time':
+        icon = 'fcc fcc-fa-clock-o';
+        break;
+    case 'Select':
+        icon = 'fcc fcc-fd-single-select';
+        break;
+    case 'Double':
+        icon = 'fcc fcc-fd-decimal';
+        break;
+    case 'Label':
+        icon = 'fa fa-tag';
+        break;
+    case 'MSelect':
+        icon = 'fcc fcc-fd-multi-select';
+        break;
+    case 'Multiple Choice':
+        icon = 'fcc fcc-fd-single-select';
+        break;
+    case 'Group':
+        icon = 'fa fa-folder-open';
+        break;
+    case 'Question List':
+        icon = 'fa fa-reorder';
+        break;
+    case 'Repeat Group':
+        icon = 'fa fa-retweet';
+        break;
+    }
+    return icon;
 };
 
 RegExp.escape= function(s) {
