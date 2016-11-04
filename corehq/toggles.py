@@ -948,3 +948,10 @@ RESTORE_AS_CLOUDCARE = StaticToggle(
     TAG_PRODUCT_PATH,
     [NAMESPACE_USER, NAMESPACE_DOMAIN],
 )
+
+DATA_MIGRATION = StaticToggle(
+    'data_migration',
+    'Disable submissions and restores during a data migration',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
