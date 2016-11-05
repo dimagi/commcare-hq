@@ -1,15 +1,11 @@
 from __future__ import unicode_literals
 
-import json
 import os
-import warnings
 import zipfile
 from collections import Counter
 
-from couchdbkit.exceptions import ResourceNotFound
 from django.core.management.base import BaseCommand, CommandError
 
-from corehq.apps.domain.models import Domain
 from corehq.apps.dump_reload.couch.load import CouchDataLoader, ToggleLoader, DomainLoader
 from corehq.apps.dump_reload.exceptions import DataExistsException
 from corehq.apps.dump_reload.sql import SqlDataLoader
@@ -21,7 +17,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('--use-extracted', action='store_true', default=False, dest='use_extracted',
-                            help = "Use already extracted dump if it exists.")
+                            help="Use already extracted dump if it exists.")
         parser.add_argument('--force', action='store_true', default=False, dest='force',
                             help="Load data for domain that already exists.")
 

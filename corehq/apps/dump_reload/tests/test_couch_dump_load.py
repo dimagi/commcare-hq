@@ -4,13 +4,11 @@ import random
 import uuid
 from StringIO import StringIO
 from collections import Counter
-
 from datetime import datetime, time
 
 from couchdbkit.exceptions import ResourceNotFound
 from django.test import SimpleTestCase
 from django.test import TestCase
-from fakecouch import FakeCouchDb
 from mock import Mock
 
 from corehq.apps.domain.models import Domain
@@ -141,7 +139,7 @@ class CouchDumpLoadTest(TestCase):
         self._dump_and_load(objects)
 
     def test_multimedia(self):
-        from corehq.apps.hqmedia.models import CommCareAudio, CommCareImage, CommCareMultimedia, CommCareVideo
+        from corehq.apps.hqmedia.models import CommCareAudio, CommCareImage, CommCareVideo
         image_path = os.path.join('corehq', 'apps', 'hqwebapp', 'static', 'hqwebapp', 'img', 'commcare-hq-logo.png')
         with open(image_path, 'r') as f:
             image_data = f.read()

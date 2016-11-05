@@ -18,7 +18,9 @@ class CouchDataLoader(DataLoader):
 
     def _get_db_for_doc_type(self, doc_type):
         if doc_type not in self._dbs:
-            db = IterDB(get_db_by_doc_type(doc_type), new_edits=False, callback=LoaderCallback(self.success_counter))
+            couch_db = get_db_by_doc_type(doc_type)
+            callback = LoaderCallback(self.success_counter)
+            db = IterDB(couch_db, new_edits=False, callback=callback)
             db.__enter__()
             self._dbs[doc_type] = db
         return self._dbs[doc_type]
@@ -71,7 +73,9 @@ class ToggleLoader(DataLoader):
             except ResourceNotFound:
                 Toggle.wrap(toggle_dict).save()
             else:
-                enabled_for = set(existing_toggle.enabled_users) | set(toggle_dict['enabled_users'])
+                existing_items = set(existing_toggle.enabled_users)
+                items_to_load = set(toggle_dict['enabled_users'])
+                enabled_for = existing_items | items_to_load
                 existing_toggle.enabled_users = list(enabled_for)
                 existing_toggle.save()
 

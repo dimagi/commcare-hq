@@ -1,14 +1,11 @@
 import gzip
-import json
 import os
 import zipfile
 from collections import Counter
 from datetime import datetime
 
-from couchdbkit.exceptions import ResourceNotFound
 from django.core.management.base import BaseCommand, CommandError
 
-from corehq.apps.domain.models import Domain
 from corehq.apps.dump_reload.const import DATETIME_FORMAT
 from corehq.apps.dump_reload.couch import CouchDataDumper
 from corehq.apps.dump_reload.couch.dump import ToggleDumper, DomainDumper
@@ -24,7 +21,7 @@ class Command(BaseCommand):
             help='An app_label or app_label.ModelName to exclude '
                  '(use multiple --exclude to exclude multiple apps/models).')
         parser.add_argument('--console', action='store_true', default=False, dest='console',
-                            help = 'Write output to the console instead of to file.')
+                            help='Write output to the console instead of to file.')
 
     def handle(self, domain_name, **options):
         excludes = options.get('exclude')
