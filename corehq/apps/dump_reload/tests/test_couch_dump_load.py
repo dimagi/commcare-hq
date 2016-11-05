@@ -4,7 +4,6 @@ import random
 import uuid
 from StringIO import StringIO
 from collections import Counter
-from datetime import datetime, time
 
 from couchdbkit.exceptions import ResourceNotFound
 from django.test import SimpleTestCase
