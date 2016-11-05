@@ -4,6 +4,7 @@ import warnings
 from abc import ABCMeta, abstractmethod, abstractproperty
 
 import six
+import sys
 
 
 class DataDumper(six.with_metaclass(ABCMeta)):
@@ -31,25 +32,30 @@ class DataDumper(six.with_metaclass(ABCMeta)):
 
 
 class DataLoader(six.with_metaclass(ABCMeta)):
+    def __init__(self, stdout=None, stderr=None):
+        self.stdout = stdout or sys.stdout
+        self.stderr = stderr or sys.stderr
+
     @abstractproperty
     def slug(self):
         raise NotImplementedError
 
     @abstractmethod
-    def load_objects(self, object_strings):
+    def load_objects(self, object_strings, force=False):
         """
         :param object_strings: iterable of JSON encoded object strings
+        :param force: True if objects should be loaded into an existing domain
         :return: tuple(total object count, loaded object count)
         """
         raise NotImplementedError
 
-    def load_from_file(self, extracted_dump_path):
+    def load_from_file(self, extracted_dump_path, force=False):
         file_path = os.path.join(extracted_dump_path, '{}.gz'.format(self.slug))
         if not os.path.isfile(file_path):
             raise Exception("Dump file not found: {}".format(file_path))
 
         with gzip.open(file_path) as dump_file:
-            total_object_count, loaded_object_count = self.load_objects(dump_file)
+            total_object_count, loaded_object_count = self.load_objects(dump_file, force)
 
         # Warn if the file we loaded contains 0 objects.
         if sum(loaded_object_count.values()) == 0:

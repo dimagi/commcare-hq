@@ -1,11 +1,11 @@
+import itertools
 import json
 from collections import Counter
-
-import itertools
 
 from couchdbkit import ResourceNotFound
 
 from corehq.apps.dump_reload.couch.id_providers import DocTypeIDProvider, ViewIDProvider
+from corehq.apps.dump_reload.exceptions import DomainDumpError
 from corehq.apps.dump_reload.interface import DataDumper
 from dimagi.utils.couch.database import iter_docs
 
@@ -98,3 +98,18 @@ class ToggleDumper(DataDumper):
         for doc_type in ('CommCareUser', 'WebUser'):
             user_ids.update(set(get_doc_ids_in_domain_by_type(self.domain, doc_type)))
         return user_ids
+
+
+class DomainDumper(DataDumper):
+    slug = 'domain'
+
+    def dump(self, output_stream):
+        from corehq.apps.domain.models import Domain
+        domain_obj = Domain.get_by_name(self.domain)
+        if not domain_obj:
+            raise DomainDumpError("Domain not found: {}".format(self.domain))
+
+        json.dump(domain_obj.to_json(), output_stream)
+        output_stream.write('\n')
+
+        return Counter({'Domain': 1})

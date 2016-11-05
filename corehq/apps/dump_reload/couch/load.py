@@ -3,6 +3,7 @@ from collections import Counter
 
 from couchdbkit.exceptions import ResourceNotFound
 
+from corehq.apps.dump_reload.exceptions import DataExistsException
 from corehq.apps.dump_reload.interface import DataLoader
 from corehq.util.couch import IterDB, get_db_by_doc_type, IterDBCallback, get_document_class_by_doc_type
 
@@ -10,7 +11,8 @@ from corehq.util.couch import IterDB, get_db_by_doc_type, IterDBCallback, get_do
 class CouchDataLoader(DataLoader):
     slug = 'couch'
 
-    def __init__(self):
+    def __init__(self, stdout=None, stderr=None):
+        super(CouchDataLoader, self).__init__(stdout, stderr)
         self._dbs = {}
         self.success_counter = Counter()
 
@@ -21,7 +23,7 @@ class CouchDataLoader(DataLoader):
             self._dbs[doc_type] = db
         return self._dbs[doc_type]
 
-    def load_objects(self, object_strings):
+    def load_objects(self, object_strings, force=False):
         total_object_count = 0
         for obj_string in object_strings:
             total_object_count += 1
@@ -58,7 +60,7 @@ class LoaderCallback(IterDBCallback):
 class ToggleLoader(DataLoader):
     slug = 'toggles'
 
-    def load_objects(self, object_strings):
+    def load_objects(self, object_strings, force=False):
         from toggle.models import Toggle
         count = 0
         for toggle_json in object_strings:
@@ -75,3 +77,29 @@ class ToggleLoader(DataLoader):
 
             count += 1
         return count, Counter({'Toggle': count})
+
+
+class DomainLoader(DataLoader):
+    slug = 'domain'
+
+    def load_objects(self, object_strings, force=False):
+        from corehq.apps.domain.models import Domain
+        objects = list(object_strings)
+        assert len(objects) == 1, "Only 1 domain allowed per dump"
+
+        domain_dict = json.loads(objects[0])
+
+        domain_name = domain_dict['name']
+        try:
+            Domain.get_by_name(domain_name)
+        except ResourceNotFound:
+            pass
+        else:
+            if force:
+                self.stderr.write('Loading data for existing domain: {}'.format(domain_name))
+            else:
+                raise DataExistsException("Domain: {}".format(domain_name))
+
+        Domain.get_db().bulk_save([domain_dict], new_edits=False)
+
+        return 1, Counter({'Domain': 1})

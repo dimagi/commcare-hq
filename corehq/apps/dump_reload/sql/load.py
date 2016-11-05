@@ -46,7 +46,7 @@ class LoadStat(namedtuple('LoadStats', 'db_alias, model_counter')):
 class SqlDataLoader(DataLoader):
     slug = 'sql'
 
-    def load_objects(self, object_strings):
+    def load_objects(self, object_strings, force=False):
         # Keep a count of the installed objects
         load_stats_by_db = {}
         total_object_counts = []

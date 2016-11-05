@@ -10,7 +10,8 @@ from couchdbkit.exceptions import ResourceNotFound
 from django.core.management.base import BaseCommand, CommandError
 
 from corehq.apps.domain.models import Domain
-from corehq.apps.dump_reload.couch.load import CouchDataLoader, ToggleLoader
+from corehq.apps.dump_reload.couch.load import CouchDataLoader, ToggleLoader, DomainLoader
+from corehq.apps.dump_reload.exceptions import DataExistsException
 from corehq.apps.dump_reload.sql import SqlDataLoader
 
 
@@ -37,11 +38,10 @@ class Command(BaseCommand):
 
         extracted_dir = self.extract_dump_archive(dump_file_path)
 
-        self.load_and_check_domain(extracted_dir)
-
         total_object_count = 0
         model_counts = Counter()
-        for loader in [SqlDataLoader, CouchDataLoader, ToggleLoader]:
+        # Domain loader should be first
+        for loader in [DomainLoader, SqlDataLoader, CouchDataLoader, ToggleLoader]:
             loader_total_object_count, loader_model_counts = self._load_data(loader, extracted_dir)
             total_object_count += loader_total_object_count
             model_counts.update(loader_model_counts)
@@ -59,25 +59,6 @@ class Command(BaseCommand):
             self.stdout.write("Loaded %d object(s) (of %d)" %
                               (loaded_object_count, total_object_count))
 
-    def load_and_check_domain(self, extracted_dir):
-        domain_path = os.path.join(extracted_dir, 'domain.json')
-        if not os.path.isfile(domain_path):
-            raise CommandError("Domain json missing: {}".format(domain_path))
-        with open(domain_path, 'r') as dom:
-            domain = json.load(dom)
-        domain_name = domain['name']
-        try:
-            Domain.get_by_name(domain_name)
-        except ResourceNotFound:
-            pass
-        else:
-            if self.force:
-                self.stderr.write('Loading data for existing domain: {}'.format(domain_name))
-            else:
-                raise CommandError('Domain "{}" already exists. Use --force to load anyway.'.format(domain_name))
-
-        Domain.get_db().bulk_save([domain], new_edits=False)
-
     def extract_dump_archive(self, dump_file_path):
         target_dir = '_tmp_load_{}'.format(dump_file_path)
         if not os.path.exists(target_dir):
@@ -90,7 +71,9 @@ class Command(BaseCommand):
 
     def _load_data(self, loader_class, extracted_dump_path):
         try:
-            return loader_class().load_from_file(extracted_dump_path)
+            return loader_class(self.stdout, self.stderr).load_from_file(extracted_dump_path, self.force)
+        except DataExistsException as e:
+            raise CommandError('Some data already exists. Use --force to load anyway: {}'.format(e.message))
         except Exception as e:
             if not isinstance(e, CommandError):
                 e.args = ("Problem loading data '%s': %s" % (extracted_dump_path, e),)

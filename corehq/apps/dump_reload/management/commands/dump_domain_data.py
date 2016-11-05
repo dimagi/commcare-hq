@@ -11,7 +11,7 @@ from django.core.management.base import BaseCommand, CommandError
 from corehq.apps.domain.models import Domain
 from corehq.apps.dump_reload.const import DATETIME_FORMAT
 from corehq.apps.dump_reload.couch import CouchDataDumper
-from corehq.apps.dump_reload.couch.dump import ToggleDumper
+from corehq.apps.dump_reload.couch.dump import ToggleDumper, DomainDumper
 from corehq.apps.dump_reload.sql import SqlDataDumper
 
 
@@ -31,21 +31,13 @@ class Command(BaseCommand):
         console = options.get('console')
         show_traceback = options.get('traceback')
 
-        try:
-            domain = Domain.get_by_name(domain_name)
-        except ResourceNotFound:
-            raise CommandError("Domain not found: {}".format(domain_name))
-
         utcnow = datetime.utcnow().strftime(DATETIME_FORMAT)
         zipname = 'data-dump-{}-{}.zip'.format(domain_name, utcnow)
 
-        self.stdout.write("Dumping domain object")
-        with zipfile.ZipFile(zipname, 'a') as z:
-            z.writestr("domain.json", json.dumps(domain.to_json()))
-
         self.stdout.ending = None
         stats = Counter()
-        dumpers = [SqlDataDumper, CouchDataDumper, ToggleDumper]
+        # domain dumper should be first since it validates domain exists
+        dumpers = [DomainDumper, SqlDataDumper, CouchDataDumper, ToggleDumper]
 
         for dumper in dumpers:
             filename = _get_dump_stream_filename(dumper.slug, domain_name, utcnow)
