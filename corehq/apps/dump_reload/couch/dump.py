@@ -20,6 +20,27 @@ DOC_PROVIDERS = {
     DocTypeIDProvider(['Program']),
     DocTypeIDProvider(['CaseReminder']),
     DocTypeIDProvider(['CaseReminderHandler']),
+    DocTypeIDProvider(['WebUser']),
+    DocTypeIDProvider(['CommCareUser']),
+    DocTypeIDProvider(['UserRole']),
+    DocTypeIDProvider(['Group']),
+    DocTypeIDProvider(['ReportConfiguration']),
+    DocTypeIDProvider(['ReportNotification']),
+    DocTypeIDProvider(['ReportConfig']),
+    DocTypeIDProvider(['DataSourceConfiguration']),
+    DocTypeIDProvider(['FormExportInstance']),
+    DocTypeIDProvider(['FormExportDataSchema']),
+    DocTypeIDProvider(['ExportInstance']),
+    DocTypeIDProvider(['ExportDataSchema']),
+    DocTypeIDProvider(['CaseExportInstance']),
+    DocTypeIDProvider(['CaseExportDataSchema']),
+    DocTypeIDProvider(['CustomDataFieldsDefinition']),
+    DocTypeIDProvider(['FixtureOwnership']),
+    DocTypeIDProvider(['FixtureDataType']),
+    DocTypeIDProvider(['FixtureDataItem']),
+    # 'SimplifiedSyncLog'
+    # 'SyncLog' ? don't think new domains use this at all
+    # 'AdminUserRole' ? don't think this is a doc type that gets saved to the DB
 }
 
 
