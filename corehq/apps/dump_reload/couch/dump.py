@@ -3,6 +3,8 @@ from collections import Counter
 
 import itertools
 
+from couchdbkit import ResourceNotFound
+
 from corehq.apps.dump_reload.couch.id_providers import DocTypeIDProvider, ViewIDProvider
 from corehq.apps.dump_reload.interface import DataDumper
 from dimagi.utils.couch.database import iter_docs
@@ -47,3 +49,52 @@ def get_doc_ids_to_dump(domain):
     """
     for id_provider in DOC_PROVIDERS:
         yield itertools.chain(*id_provider.get_doc_ids(domain))
+
+
+class ToggleDumper(DataDumper):
+    slug = 'toggles'
+
+    def dump(self, output_stream):
+        count = 0
+        for toggle in self._get_toggles_to_migrate():
+            count += 1
+            json.dump(toggle, output_stream)
+            output_stream.write('\n')
+        return Counter({'Toggle': count})
+
+    def _get_toggles_to_migrate(self):
+        from corehq.toggles import all_toggles, NAMESPACE_DOMAIN
+        from toggle.models import Toggle
+        from toggle.shortcuts import namespaced_item
+
+        all_user_ids = self._user_ids_in_domain()
+
+        toggles_to_migrate = []
+        domain_item = namespaced_item(self.domain, NAMESPACE_DOMAIN)
+
+        for toggle in all_toggles():
+            try:
+                current_toggle = Toggle.get(toggle.slug)
+            except ResourceNotFound:
+                continue
+
+            enabled_for = set(current_toggle.enabled_users)
+
+            new_toggle = Toggle(slug=toggle.slug, enabled_users=[])
+            if domain_item in enabled_for:
+                new_toggle.enabled_users.append(domain_item)
+
+            enabled_users = enabled_for & all_user_ids
+            new_toggle.enabled_users.extend(list(enabled_users))
+
+            if new_toggle.enabled_users:
+                toggles_to_migrate.append(new_toggle.to_json())
+
+        return toggles_to_migrate
+
+    def _user_ids_in_domain(self):
+        from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
+        user_ids = set()
+        for doc_type in ('CommCareUser', 'WebUser'):
+            user_ids.update(set(get_doc_ids_in_domain_by_type(self.domain, doc_type)))
+        return user_ids

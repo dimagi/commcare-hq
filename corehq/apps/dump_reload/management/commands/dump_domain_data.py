@@ -11,6 +11,7 @@ from django.core.management.base import BaseCommand, CommandError
 from corehq.apps.domain.models import Domain
 from corehq.apps.dump_reload.const import DATETIME_FORMAT
 from corehq.apps.dump_reload.couch import CouchDataDumper
+from corehq.apps.dump_reload.couch.dump import ToggleDumper
 from corehq.apps.dump_reload.sql import SqlDataDumper
 
 
@@ -44,7 +45,7 @@ class Command(BaseCommand):
 
         self.stdout.ending = None
         stats = Counter()
-        dumpers = [SqlDataDumper, CouchDataDumper]
+        dumpers = [SqlDataDumper, CouchDataDumper, ToggleDumper]
 
         for dumper in dumpers:
             filename = _get_dump_stream_filename(dumper.slug, domain_name, utcnow)

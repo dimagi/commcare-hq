@@ -1,5 +1,6 @@
 import json
 import os
+import random
 import uuid
 from StringIO import StringIO
 from collections import Counter
@@ -7,16 +8,20 @@ from collections import Counter
 from datetime import datetime, time
 
 from couchdbkit.exceptions import ResourceNotFound
+from django.test import SimpleTestCase
 from django.test import TestCase
 from fakecouch import FakeCouchDb
+from mock import Mock
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.dump_reload.couch import CouchDataDumper
 from corehq.apps.dump_reload.couch import CouchDataLoader
-from corehq.apps.dump_reload.couch.dump import get_doc_ids_to_dump
+from corehq.apps.dump_reload.couch.dump import get_doc_ids_to_dump, ToggleDumper
+from corehq.apps.dump_reload.couch.load import ToggleLoader
 from corehq.apps.dump_reload.util import get_model_label
+from corehq.toggles import all_toggles, NAMESPACE_DOMAIN
 from corehq.util.couch import get_document_class_by_doc_type
-from corehq.util.test_utils import mock_out_couch, create_test_case
+from corehq.util.test_utils import mock_out_couch
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import get_docs
 from dimagi.utils.couch.database import iter_docs
@@ -242,6 +247,78 @@ class CouchDumpLoadTest(TestCase):
         reminder.save()
 
         self._dump_and_load([handler, reminder])
+
+
+class TestDumpLoadToggles(SimpleTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestDumpLoadToggles, cls).setUpClass()
+        cls.domain_name = uuid.uuid4().hex
+
+    def test_dump_toggles(self):
+        mocked_toggles, expected_items = self._get_mocked_toggles()
+
+        dumper = ToggleDumper(self.domain_name, [])
+        dumper._user_ids_in_domain = Mock(return_value={'user1', 'user2', 'user3'})
+
+        output_stream = StringIO()
+
+        with mock_out_couch(docs=[doc.to_json() for doc in mocked_toggles.values()]):
+            dump_counter = dumper.dump(output_stream)
+
+        self.assertEqual(3, dump_counter['Toggle'])
+        output_stream.seek(0)
+        dumped = [json.loads(line.strip()) for line in output_stream.readlines()]
+        for dump in dumped:
+            self.assertItemsEqual(expected_items[dump['slug']], dump['enabled_users'])
+
+    def _get_mocked_toggles(self):
+        from toggle.models import generate_toggle_id
+        from toggle.models import Toggle
+        from toggle.shortcuts import namespaced_item
+
+        mocked_toggles = {
+            toggle.slug: Toggle(_id=generate_toggle_id(toggle.slug), slug=toggle.slug)
+            for toggle in random.sample(all_toggles(), 3)
+        }
+        toggles = mocked_toggles.values()
+        domain_item = namespaced_item(self.domain_name, NAMESPACE_DOMAIN)
+        toggles[0].enabled_users = [domain_item]
+        toggles[1].enabled_users = ['user1', 'other-user', 'user2']
+        toggles[2].enabled_users = ['user1', domain_item, namespaced_item('other_domain', NAMESPACE_DOMAIN)]
+
+        expected_items = {
+            toggles[0].slug: [domain_item],
+            toggles[1].slug: ['user1', 'user2'],
+            toggles[2].slug: ['user1', domain_item],
+        }
+
+        return mocked_toggles, expected_items
+
+    def test_load_toggles(self):
+        from toggle.models import Toggle
+        mocked_toggles, expected_items = self._get_mocked_toggles()
+
+        dumped_data = [
+            json.dumps(Toggle(slug=slug, enabled_users=items).to_json())
+            for slug, items in expected_items.items()
+        ]
+
+        existing_toggle_docs = []
+        for toggle in mocked_toggles.values():
+            doc_dict = toggle.to_json()
+            expected = expected_items[toggle.slug]
+            # leave only items that aren't in the dump
+            doc_dict['enabled_users'] = [item for item in doc_dict['enabled_users'] if item not in expected]
+            existing_toggle_docs.append(doc_dict)
+
+        with mock_out_couch(docs=existing_toggle_docs):
+            ToggleLoader().load_objects(dumped_data)
+
+            for mocked_toggle in mocked_toggles.values():
+                loaded_toggle = Toggle.get(mocked_toggle.slug)
+                self.assertItemsEqual(mocked_toggle.enabled_users, loaded_toggle.enabled_users)
 
 
 def _get_doc_counts_from_db(domain):

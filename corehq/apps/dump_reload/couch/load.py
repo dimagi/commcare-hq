@@ -1,6 +1,8 @@
 import json
 from collections import Counter
 
+from couchdbkit.exceptions import ResourceNotFound
+
 from corehq.apps.dump_reload.interface import DataLoader
 from corehq.util.couch import IterDB, get_db_by_doc_type, IterDBCallback, get_document_class_by_doc_type
 
@@ -52,3 +54,24 @@ class LoaderCallback(IterDBCallback):
 
         self.success_counter.update(success_doc_types)
 
+
+class ToggleLoader(DataLoader):
+    slug = 'toggles'
+
+    def load_objects(self, object_strings):
+        from toggle.models import Toggle
+        count = 0
+        for toggle_json in object_strings:
+            toggle_dict = json.loads(toggle_json)
+            slug = toggle_dict['slug']
+            try:
+                existing_toggle = Toggle.get(slug)
+            except ResourceNotFound:
+                Toggle.wrap(toggle_dict).save()
+            else:
+                enabled_for = set(existing_toggle.enabled_users) | set(toggle_dict['enabled_users'])
+                existing_toggle.enabled_users = list(enabled_for)
+                existing_toggle.save()
+
+            count += 1
+        return count, Counter({'Toggle': count})

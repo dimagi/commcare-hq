@@ -10,7 +10,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from django.core.management.base import BaseCommand, CommandError
 
 from corehq.apps.domain.models import Domain
-from corehq.apps.dump_reload.couch.load import CouchDataLoader
+from corehq.apps.dump_reload.couch.load import CouchDataLoader, ToggleLoader
 from corehq.apps.dump_reload.sql import SqlDataLoader
 
 
@@ -41,7 +41,7 @@ class Command(BaseCommand):
 
         total_object_count = 0
         model_counts = Counter()
-        for loader in [SqlDataLoader, CouchDataLoader]:
+        for loader in [SqlDataLoader, CouchDataLoader, ToggleLoader]:
             loader_total_object_count, loader_model_counts = self._load_data(loader, extracted_dir)
             total_object_count += loader_total_object_count
             model_counts.update(loader_model_counts)
