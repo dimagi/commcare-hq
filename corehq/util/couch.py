@@ -195,11 +195,11 @@ class IterDB(object):
             else:
                 success_ids = {r['id'] for r in categorized_errors.pop(None, [])}
         else:
-            if not self.new_edits:
+            if self.new_edits or self.new_edits is None:
+                success_ids = {d['id'] for d in results}
+            else:
                 # only errors returned in this mode
                 success_ids = {d['_id'] for d in docs}
-            else:
-                success_ids = {d['id'] for d in results}
 
         if self.callback:
             self.callback.post_commit(op_slug, docs, success_ids, categorized_errors.values())
