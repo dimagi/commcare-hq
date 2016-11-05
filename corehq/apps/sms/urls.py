@@ -1,4 +1,4 @@
-from django.conf.urls import patterns, url, include
+from django.conf.urls import url, include
 from corehq.apps.sms.views import (
     DomainSmsGatewayListView,
     SubscribeSMSView,
@@ -26,7 +26,7 @@ from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from corehq.messaging.smsbackends.telerivet.urls import domain_specific as telerivet_urls
 
 
-urlpatterns = patterns('corehq.apps.sms.views',
+urlpatterns = [
     url(r'^$', default, name='sms_default'),
     url(r'^send_to_recipients/$', send_to_recipients, name='send_to_recipients'),
     url(r'^compose/$', ComposeMessageView.as_view(), name=ComposeMessageView.urlname),
@@ -64,10 +64,10 @@ urlpatterns = patterns('corehq.apps.sms.views',
     url(r'^app_info/(?P<app_id>[\w-]+)/$', InvitationAppInfoView.as_view(),
         name=InvitationAppInfoView.urlname),
     url(r'^telerivet/', include(telerivet_urls)),
-)
+]
 
 
-sms_admin_interface_urls = patterns('corehq.apps.sms.views',
+sms_admin_interface_urls = [
     url(r'^$', GlobalSmsGatewayListView.as_view(), name='default_sms_admin_interface'),
     url(r'^global_gateways/$', GlobalSmsGatewayListView.as_view(), name=GlobalSmsGatewayListView.urlname),
     url(r'^add_global_gateway/(?P<hq_api_id>[\w-]+)/$', AddGlobalGatewayView.as_view(),
@@ -77,4 +77,4 @@ sms_admin_interface_urls = patterns('corehq.apps.sms.views',
     url(r'^global_backend_map/$', GlobalBackendMap.as_view(), name=GlobalBackendMap.urlname),
     url(SMSAdminInterfaceDispatcher.pattern(), SMSAdminInterfaceDispatcher.as_view(),
         name=SMSAdminInterfaceDispatcher.name()),
-)
+]

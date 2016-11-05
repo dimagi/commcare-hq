@@ -1,4 +1,4 @@
-from django.conf.urls import patterns, url, include
+from django.conf.urls import url, include
 from corehq.apps.app_manager.view_helpers import DynamicTemplateView
 from corehq.apps.app_manager.views import (
     DownloadCCZ,
@@ -21,12 +21,12 @@ from corehq.apps.app_manager.views import (
     edit_report_module, validate_module_for_build, commcare_profile, edit_commcare_profile, edit_commcare_settings,
     edit_app_langs, edit_app_attr, edit_app_ui_translations, get_app_ui_translations, rearrange, odk_qr_code,
     odk_media_qr_code, odk_install, short_url, short_odk_url, save_copy, revert_to_copy, delete_copy, list_apps,
-    direct_ccz, download_index, download_file, formdefs,
+    direct_ccz, download_index, download_file, formdefs, release_manager,
 )
 from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
 from corehq.apps.hqmedia.urls import download_urls as media_download_urls
 
-app_urls = patterns('corehq.apps.app_manager.views',
+app_urls = [
     url(r'^languages/$', view_app, name='app_languages'),
     url(r'^languages/translations/download/$', download_bulk_ui_translations, name='download_bulk_ui_translations'),
     url(r'^languages/translations/upload/$', upload_bulk_ui_translations, name='upload_bulk_ui_translations'),
@@ -40,7 +40,7 @@ app_urls = patterns('corehq.apps.app_manager.views',
     url(r'^releases/$', view_app, name='release_manager'),
 
     # placeholder for app manager v2
-    url(r'^releases_v2/$', 'release_manager', name='release_manager_v2'),
+    url(r'^releases_v2/$', release_manager, name='release_manager_v2'),
 
     url(r'^releases_ajax/$', releases_ajax, name='release_manager_ajax'),
     url(r'^current_version/$', current_app_version, name='current_app_version'),
@@ -63,9 +63,9 @@ app_urls = patterns('corehq.apps.app_manager.views',
     url(r'^update_build_comment/$', update_build_comment,
         name='update_build_comment'),
     url(r'^copy/gzip$', export_gzip, name='gzip_app')
-)
+]
 
-urlpatterns = patterns('corehq.apps.app_manager.views',
+urlpatterns = [
     url(r'^$', view_app, name='default_app'),
     url(r'^xform/(?P<form_unique_id>[\w-]+)/$', xform_display, name='xform_display'),
     url(r'^browse/(?P<app_id>[\w-]+)/modules-(?P<module_id>[\w-]+)/forms-(?P<form_id>[\w-]+)/source/$',
@@ -111,16 +111,16 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
     url(r'^rename_language/(?P<form_unique_id>[\w-]+)/$', rename_language, name='rename_language'),
     url(r'^validate_langcode/(?P<app_id>[\w-]+)/$', validate_language, name='validate_language'),
     url(r'^edit_form_actions/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/(?P<form_id>[\w-]+)/$',
-        'edit_form_actions', name='edit_form_actions'),
+        edit_form_actions, name='edit_form_actions'),
     url(r'^edit_careplan_form_actions/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/(?P<form_id>[\w-]+)/$',
-        'edit_careplan_form_actions', name='edit_careplan_form_actions'),
+        edit_careplan_form_actions, name='edit_careplan_form_actions'),
     url(r'^edit_advanced_form_actions/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/(?P<form_id>[\w-]+)/$',
-        'edit_advanced_form_actions', name='edit_advanced_form_actions'),
+        edit_advanced_form_actions, name='edit_advanced_form_actions'),
 
     # Scheduler Modules
     url(r'^edit_visit_schedule/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/(?P<form_id>[\w-]+)/$',
-        'edit_visit_schedule', name='edit_visit_schedule'),
-    url(r'^edit_schedule_phases/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/$', 'edit_schedule_phases', name='edit_schedule_phases'),
+        edit_visit_schedule, name='edit_visit_schedule'),
+    url(r'^edit_schedule_phases/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/$', edit_schedule_phases, name='edit_schedule_phases'),
     url(r'^edit_careplan_form_actions/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/(?P<form_id>[\w-]+)/$',
         edit_careplan_form_actions, name='edit_careplan_form_actions'),
     url(r'^edit_advanced_form_actions/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/(?P<form_id>[\w-]+)/$',
@@ -189,4 +189,4 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
     url(r'^diff/(?P<first_app_id>[\w-]+)/(?P<second_app_id>[\w-]+)/$', AppDiffView.as_view(), name=AppDiffView.urlname),
 
     url(r'^', include('custom.ucla.urls')),
-)
+]

@@ -1,4 +1,4 @@
-from django.conf.urls import patterns, url, include
+from django.conf.urls import url, include
 
 from corehq.apps.api.urls import CommCareHqApi
 from custom.ilsgateway.resources.v0_1 import ILSLocationResource
@@ -16,7 +16,7 @@ from custom.ilsgateway.views import ILSConfigView
 hq_api = CommCareHqApi(api_name='v0.3')
 hq_api.register(ILSLocationResource())
 
-urlpatterns = patterns('custom.ilsgateway.views',
+urlpatterns = [
     url(r'^ils_dashboard_report/$', DashboardPageRedirect.as_view(), name='ils_dashboard_report'),
     url(r'^ils_config/$', ILSConfigView.as_view(), name=ILSConfigView.urlname),
     url(r'^global_stats/$', GlobalStats.as_view(), name=GlobalStats.urlname),
@@ -37,4 +37,4 @@ urlpatterns = patterns('custom.ilsgateway.views',
     url(r'^recalculate_non_facilities/$', recalculate_non_facilities, name='recalculate_non_facilities'),
     # api
     url(r'^', include(hq_api.urls)),
-)
+]

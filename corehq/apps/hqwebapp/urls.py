@@ -1,4 +1,4 @@
-from django.conf.urls import include, patterns, url
+from django.conf.urls import include, url
 from corehq.apps.domain.views import PublicSMSRatesView
 from corehq.apps.settings.views import (
     TwoFactorProfileView, TwoFactorSetupView, TwoFactorSetupCompleteView,
@@ -11,22 +11,21 @@ from corehq.apps.hqwebapp.views import (
     MaintenanceAlertsView, redirect_to_default,
     landing_page, yui_crossdomain, password_change, no_permissions, login, logout, bug_report, debug_notify,
     quick_find, osdd, create_alert, activate_alert, deactivate_alert, jserror, dropbox_upload, domain_login,
-    retrieve_download, toggles_js, couch_doc_counts)
+    retrieve_download, toggles_js, couch_doc_counts, server_up)
 
-urlpatterns = patterns(
-    'corehq.apps.hqwebapp.views',
-    (r'^$', 'redirect_to_default'),
+urlpatterns = [
+    url(r'^$', redirect_to_default),
     url(r'^homepage/$', redirect_to_default, name='homepage'),
     url(r'^default_landing/$', landing_page, name='landing_page'),
     url(r'^crossdomain.xml$', yui_crossdomain, name='yui_crossdomain'),
-    (r'^serverup.txt$', 'server_up'),
+    url(r'^serverup.txt$', server_up),
     url(r'^change_password/$', password_change, name='password_change'),
 
     url(r'^no_permissions/$', no_permissions, name='no_permissions'),
 
     url(r'^accounts/login/$', login, name="login"),
     url(r'^accounts/logout/$', logout, name="logout"),
-    (r'^reports/$', 'redirect_to_default'),
+    url(r'^reports/$', redirect_to_default),
     url(r'^bug_report/$', bug_report, name='bug_report'),
     url(r'^debug/notify/$', debug_notify, name='debug_notify'),
     url(r'^search/$', quick_find, name="global_quick_find"),
@@ -47,9 +46,9 @@ urlpatterns = patterns(
     url(r'^account/two_factor/backup/phone/register/$', TwoFactorPhoneSetupView.as_view(), name=TwoFactorPhoneSetupView.urlname),
     url(r'', include(tf_urls + tf_twilio_urls, 'two_factor')),
     url(r'^account/two_factor/new_phone/$', NewPhoneView.as_view(), name=NewPhoneView.urlname)
-)
+]
 
-domain_specific = patterns('corehq.apps.hqwebapp.views',
+domain_specific = [
     url(r'^$', redirect_to_default, name='domain_homepage'),
     url(r'^login/$', domain_login, name='domain_login'),
     url(r'^login/mobile/$', domain_login, name='domain_mobile_login',
@@ -59,4 +58,4 @@ domain_specific = patterns('corehq.apps.hqwebapp.views',
         name='hq_soil_download'),
     url(r'toggles.js$', toggles_js, name='toggles_js'),
     url(r'couch_doc_counts', couch_doc_counts),
-)
+]
