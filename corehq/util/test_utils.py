@@ -144,7 +144,7 @@ class DocTestMixin(object):
         )
 
 
-class mock_out_couch(ContextDecorator):
+class mock_out_couch(object):
     """
     Mock out calls to couch so you can use SimpleTestCase
 
@@ -164,7 +164,6 @@ class mock_out_couch(ContextDecorator):
         self.docs = docs
         self.db = FakeCouchDb(views=views, docs=docs)
 
-    def __enter__(self):
         @classmethod
         def _get_db(*args):
             return self.db
@@ -173,6 +172,23 @@ class mock_out_couch(ContextDecorator):
             mock.patch('dimagi.ext.couchdbkit.Document.get_db', new=_get_db),
             mock.patch('dimagi.ext.couchdbkit.SafeSaveDocument.get_db', new=_get_db),
         ]
+
+    def __call__(self, func):
+        if isinstance(func, type):
+            return self._patch_class(func)
+        else:
+            @wraps(func)
+            def decorated(*args, **kwds):
+                with self:
+                    return func(*args, **kwds)
+            return decorated
+
+    def _patch_class(self, klass):
+        for patch in self.patches:
+            klass = patch(klass)
+        return klass
+
+    def __enter__(self):
         for patch in self.patches:
             patch.start()
 
