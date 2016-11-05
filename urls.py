@@ -80,7 +80,7 @@ domain_specific = [
     url(r'^_base_template/$', login_and_domain_required(
         lambda request, domain: render(request, 'style/base.html', {'domain': domain})
     )),
-    url(r'^zapier/', include('corehq.apps.zapier.urls', namespace='zapier')),
+    url(r'^zapier/', include('corehq.apps.zapier.urls')),
     url(r'^zipline/', include('custom.zipline.urls'))
 ]
 
