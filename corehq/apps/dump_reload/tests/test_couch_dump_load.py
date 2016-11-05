@@ -155,6 +155,28 @@ class CouchDumpLoadTest(TestCase):
         self.assertEqual(audio_data, copied_audio.get_display_file(False))
         self.assertEqual(video_data, copied_video.get_display_file(False))
 
+    def test_web_user(self):
+        from corehq.apps.users.models import WebUser
+        other_domain = Domain(name='other-domain')
+        other_domain.save()
+        self.addCleanup(other_domain.delete)
+
+        web_user = WebUser.create(
+            domain=self.domain_name,
+            username='webuser_t1',
+            password='secret',
+            email='webuser1@example.com',
+        )
+        other_user = WebUser.create(
+            domain='other-domain',
+            username='other_webuser',
+            password='secret',
+            email='webuser2@example.com',
+        )
+        self.addCleanup(other_user.delete)
+
+        self._dump_and_load([web_user], [other_user])
+
 
 class TestDumpLoadToggles(SimpleTestCase):
 

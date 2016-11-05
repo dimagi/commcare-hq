@@ -4,7 +4,7 @@ from collections import Counter
 
 from couchdbkit import ResourceNotFound
 
-from corehq.apps.dump_reload.couch.id_providers import DocTypeIDProvider, ViewIDProvider
+from corehq.apps.dump_reload.couch.id_providers import DocTypeIDProvider, ViewIDProvider, UserIDProvider
 from corehq.apps.dump_reload.exceptions import DomainDumpError
 from corehq.apps.dump_reload.interface import DataDumper
 from dimagi.utils.couch.database import iter_docs
@@ -20,7 +20,7 @@ DOC_PROVIDERS = {
     DocTypeIDProvider(['Program']),
     DocTypeIDProvider(['CaseReminder']),
     DocTypeIDProvider(['CaseReminderHandler']),
-    DocTypeIDProvider(['WebUser']),
+    UserIDProvider(include_mobile_users=False),
     DocTypeIDProvider(['CommCareUser']),
     DocTypeIDProvider(['UserRole']),
     DocTypeIDProvider(['Group']),

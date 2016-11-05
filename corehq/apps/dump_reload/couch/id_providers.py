@@ -48,3 +48,25 @@ class ViewIDProvider(BaseIDProvider):
             for row in doc_class.get_db().view(self.view_name, key=key, include_docs=False)
         ]
         return [(doc_class, doc_ids)]
+
+
+class UserIDProvider(BaseIDProvider):
+    def __init__(self, include_mobile_users=True, include_web_users=True):
+        self.include_mobile_users = include_mobile_users
+        self.include_web_users = include_web_users
+
+    def get_doc_ids(self, domain):
+        from corehq.apps.users.dbaccessors.all_commcare_users import get_all_user_ids_by_domain
+        from corehq.apps.users.models import CommCareUser
+        from corehq.apps.users.models import WebUser
+        if self.include_mobile_users:
+            user_ids = get_all_user_ids_by_domain(
+                domain, include_web_users=False, include_mobile_users=True
+            )
+            yield CommCareUser, list(user_ids)
+
+        if self.include_web_users:
+            user_ids = get_all_user_ids_by_domain(
+                domain, include_web_users=True, include_mobile_users=False
+            )
+            yield WebUser, list(user_ids)
