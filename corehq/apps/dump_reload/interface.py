@@ -1,7 +1,7 @@
 import gzip
 import os
 import warnings
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta, abstractmethod, abstractproperty
 
 import six
 
@@ -11,6 +11,10 @@ class DataDumper(six.with_metaclass(ABCMeta)):
     :param domain: Name of domain to dump data for
     :param excludes: List of app labels ("app_label.model_name" or "app_label") to exclude
     """
+
+    @abstractproperty
+    def slug(self):
+        raise NotImplementedError
 
     def __init__(self, domain, excludes):
         self.domain = domain
@@ -27,7 +31,9 @@ class DataDumper(six.with_metaclass(ABCMeta)):
 
 
 class DataLoader(six.with_metaclass(ABCMeta)):
-    slug = None
+    @abstractproperty
+    def slug(self):
+        raise NotImplementedError
 
     @abstractmethod
     def load_objects(self, object_strings):
