@@ -171,6 +171,7 @@ class mock_out_couch(object):
         self.patches = [
             mock.patch('dimagi.ext.couchdbkit.Document.get_db', new=_get_db),
             mock.patch('dimagi.ext.couchdbkit.SafeSaveDocument.get_db', new=_get_db),
+            mock.patch('dimagi.utils.couch.undo.UndoableDocument.get_db', new=_get_db),
         ]
 
     def __call__(self, func):
