@@ -168,16 +168,6 @@ def _two_factor_needed(domain_name, request):
         return domain.two_factor_auth and not request.user.is_verified()
 
 
-def landing_page(req, template_name="home.html"):
-    # this view, and the one below, is overridden because
-    # we need to set the base template to use somewhere
-    # somewhere that the login page can access it.
-    if req.user.is_authenticated():
-        return HttpResponseRedirect(reverse('homepage'))
-    req.base_template = settings.BASE_TEMPLATE
-    return HQLoginView.as_view()(req)
-
-
 def yui_crossdomain(req):
     x_domain = """<?xml version="1.0"?>
 <!DOCTYPE cross-domain-policy SYSTEM "http://www.macromedia.com/xml/dtds/cross-domain-policy.dtd">
