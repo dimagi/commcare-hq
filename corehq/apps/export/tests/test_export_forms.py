@@ -77,14 +77,10 @@ class TestEmwfFilterExportMixin(TestCase):
 
         self.assertEqual(self.filter_export._get_locations_ids(self.location_ids_slug), self.location_ids)
 
-    @patch('corehq.apps.es.users.UserES.users_at_locations_and_descendants')
+    @patch('corehq.apps.export.forms.user_ids_at_locations_and_descendants')
     def test_get_locations_filter(self, users_patch):
         self.filter_export = EmwfFilterFormExport(self.domain, pytz.utc)
-        users = [
-            {'_id': 'e80c5e54ab552245457d2546d0cdbb03'},
-            {'_id': 'e80c5e54ab552245457d2546d0cdbb04'}
-        ]
-        users_patch.return_value = users
+        users_patch.return_value = self.user_ids
         locations_filter = self.filter_export._get_locations_filter(self.location_ids_slug)
 
         self.assertIsInstance(locations_filter, FormSubmittedByFilter)

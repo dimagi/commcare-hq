@@ -17,8 +17,8 @@ class CCUserLocationAssignmentTest(TestCase):
         cls.domain = 'my-domain'
         cls.domain_obj = create_domain(cls.domain)
 
-        cls.loc1 = make_loc('1', 'loc1', cls.domain).sql_location
-        cls.loc2 = make_loc('2', 'loc2', cls.domain).sql_location
+        cls.loc1 = make_loc('1', 'loc1', cls.domain)
+        cls.loc2 = make_loc('2', 'loc2', cls.domain)
         cls.loc_ids = [l.location_id for l in [cls.loc1, cls.loc2]]
 
     @classmethod
