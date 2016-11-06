@@ -149,6 +149,68 @@ class TestESQuery(ElasticTestMixin, TestCase):
                  .users_at_locations_and_descendants(location_ids))
         self.checkQuery(query, json_output)
 
+    def test_users_at_locations(self):
+        location_ids = ['09d1a58cb849e53bb3a456a5957d998a', '09d1a58cb849e53bb3a456a5957d99ba']
+        json_output = {
+            'query': {
+                'filtered': {
+                    'filter': {
+                        'and': [
+                            {'or': (
+                                {'and': (
+                                    {'term': {'doc_type': 'CommCareUser'}},
+                                    {'terms': {'assigned_location_ids': location_ids}}
+                                )
+                                },
+                                {'and': (
+                                    {'term': {'doc_type': 'WebUser'}},
+                                    {'terms': {'domain_memberships.assigned_location_ids': location_ids}}
+                                )
+                                }
+                            )}, {'term': {'is_active': True}},
+                            {'term': {'base_doc': 'couchuser'}}
+                        ]
+                    },
+                    'query': {'match_all': {}}}},
+            'size': 1000000
+        }
+
+        query = (users.UserES()
+                 .users_at_locations(location_ids))
+        self.checkQuery(query, json_output)
+
+    @patch('corehq.apps.locations.models.OnlyUnarchivedLocationManager.accessible_location_ids')
+    def test_users_at_accessible_locations(self, mocked_locations):
+        location_ids = ['09d1a58cb849e53bb3a456a5957d998a', '09d1a58cb849e53bb3a456a5957d99ba']
+        mocked_locations.return_value = location_ids
+        json_output = {
+            'query': {
+                'filtered': {
+                    'filter': {
+                        'and': [
+                            {'or': (
+                                {'and': (
+                                    {'term': {'doc_type': 'CommCareUser'}},
+                                    {'terms': {'assigned_location_ids': location_ids}}
+                                )
+                                },
+                                {'and': (
+                                    {'term': {'doc_type': 'WebUser'}},
+                                    {'terms': {'domain_memberships.assigned_location_ids': location_ids}}
+                                )
+                                }
+                            )}, {'term': {'is_active': True}},
+                            {'term': {'base_doc': 'couchuser'}}
+                        ]
+                    },
+                    'query': {'match_all': {}}}},
+            'size': 1000000
+        }
+
+        query = (users.UserES()
+                 .users_at_accessible_locations('testapp', 'user'))
+        self.checkQuery(query, json_output)
+
     def test_remove_all_defaults(self):
         # Elasticsearch fails if you pass it an empty list of filters
         query = (users.UserES()
