@@ -125,9 +125,9 @@ def redirect_to_default(req, domain=None):
                     url = reverse(HomePublicView.urlname)
                 except ImportError:
                     # this happens when the prelogin app is not included.
-                    url = reverse('landing_page')
+                    url = reverse('login')
             else:
-                url = reverse('landing_page')
+                url = reverse('login')
     elif domain and _two_factor_needed(domain, req):
         return TemplateResponse(
             request=req,
