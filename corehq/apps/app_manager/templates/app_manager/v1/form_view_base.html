@@ -48,7 +48,7 @@
     </style>
 
     {% if request|toggle_enabled:"USE_FORMPLAYER_FRONTEND"%}
-        <script src="{% static 'cloudcare/js/formplayer/apps/util/util.js' %}"></script>
+        <script src="{% static 'cloudcare/js/formplayer/utils/util.js' %}"></script>
     {% endif %}
 
     {% include "app_manager/v1/partials/form_filter/value-or-none-ui.html" %}
