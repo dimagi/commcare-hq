@@ -5,7 +5,7 @@ import pytz
 from django.test import SimpleTestCase, TestCase
 from mock import patch
 
-from corehq.apps.export.filters import FormSubmittedByFilter, OwnerFilter
+from corehq.apps.export.filters import FormSubmittedByFilter, OwnerFilter, GroupFormSubmittedByFilter
 from corehq.apps.export.forms import (
     BaseFilterExportDownloadForm,
     EmwfFilterFormExport,
@@ -58,14 +58,13 @@ class TestEmwfFilterExportMixin(TestCase):
 
     def test_get_user_ids(self):
         self.filter_export = EmwfFilterFormExport(self.domain, pytz.utc)
-
         self.assertEqual(self.filter_export._get_user_ids(self.user_ids_slug), self.user_ids)
 
     def test_get_users_filter(self):
         self.filter_export = EmwfFilterFormExport(self.domain, pytz.utc)
         user_filter = self.filter_export._get_users_filter(self.user_ids_slug)
 
-        self.assertIsInstance(user_filter, FormSubmittedByFilter)
+        self.assertIsInstance(user_filter, EmwfFilterFormExport.export_user_filter)
         self.assertEqual(user_filter.submitted_by, self.user_ids)
         expected_filter = {
             'terms': {'form.meta.userID': self.user_ids}
@@ -74,7 +73,6 @@ class TestEmwfFilterExportMixin(TestCase):
 
     def test_get_location_ids(self):
         self.filter_export = EmwfFilterFormExport(self.domain, pytz.utc)
-
         self.assertEqual(self.filter_export._get_locations_ids(self.location_ids_slug), self.location_ids)
 
     @patch('corehq.apps.export.forms.user_ids_at_locations_and_descendants')
@@ -83,7 +81,7 @@ class TestEmwfFilterExportMixin(TestCase):
         users_patch.return_value = self.user_ids
         locations_filter = self.filter_export._get_locations_filter(self.location_ids_slug)
 
-        self.assertIsInstance(locations_filter, FormSubmittedByFilter)
+        self.assertIsInstance(locations_filter, EmwfFilterFormExport.export_user_filter)
         self.assertEqual(locations_filter.submitted_by, self.user_ids)
         expected_filter = {
             'terms': {'form.meta.userID': self.user_ids}
@@ -97,6 +95,24 @@ class TestEmwfFilterExportMixin(TestCase):
 
         self.assertEqual(self.filter_export._get_group_ids(group_ids_slug), group_ids)
 
+    def test_get_es_user_types(self):
+        self.filter_export = EmwfFilterFormExport(self.domain, pytz.utc)
+        self.assertEqual(self.filter_export._get_es_user_types(['t__0', 't__1']), [0, 1])
+
+    @patch('corehq.apps.export.filters.get_groups_user_ids')
+    def test_get_group_filter(self, patch_object):
+        self.filter_export = EmwfFilterFormExport(self.domain, pytz.utc)
+        group_ids = ['e80c5e54ab552245457d2546d0cdbb03', 'e80c5e54ab552245457d2546d0cdbb04']
+        group_ids_slug = ['g__e80c5e54ab552245457d2546d0cdbb03', 'g__e80c5e54ab552245457d2546d0cdbb04']
+        patch_object.return_value = group_ids
+        group_filter = self.filter_export._get_group_filter(group_ids_slug)
+
+        self.assertIsInstance(group_filter, GroupFormSubmittedByFilter)
+        self.assertEqual(group_filter.group_ids, group_ids)
+        expected_filter = {
+            'terms': {'form.meta.userID': group_ids}
+        }
+        self.assertEqual(group_filter.to_es_filter(), expected_filter)
 
 @patch('corehq.apps.reports.util.get_first_form_submission_received', lambda x: datetime.datetime(2015, 1, 1))
 @patch.object(EmwfFilterFormExport, '_get_datespan_filter', lambda x: None)
