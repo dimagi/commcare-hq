@@ -320,6 +320,7 @@ class Currency(models.Model):
 
 DEFAULT_ACCOUNT_FORMAT = 'Account for Project %s'
 
+
 class BillingAccount(ValidateModelMixin, models.Model):
     """
     The key model that links a Subscription to its financial source and methods of payment.
