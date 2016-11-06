@@ -1,4 +1,5 @@
 {% load i18n %}
+{% load hq_shared_tags %}
 
 {% include 'app_manager/v1/partials/case_config_shared.html' %}
 
@@ -372,7 +373,9 @@
 
 <div id="case-config-ko">
     <div data-bind="saveButton: saveButton"></div>
-    <div data-bind="template: 'case-config:refresh-form-questions'"></div>
+    {% if request|toggle_enabled:"REFRESH_CASE_MANAGEMENT" %}
+        <div data-bind="template: 'case-config:refresh-form-questions'"></div>
+    {% endif %}
     <div data-bind="with: caseConfigViewModel">
         <div class="btn-group" data-bind="visible: actionOptions().length">
             <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
