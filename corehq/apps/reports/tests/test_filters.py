@@ -1,8 +1,18 @@
 from django.test import SimpleTestCase, TestCase
+from mock import patch
+from django.test.client import RequestFactory
+
+from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.reports.filters.api import paginate_options
+from corehq.apps.reports.filters.case_list import CaseListFilter
 from corehq.apps.reports.filters.forms import FormsByApplicationFilterParams, FormsByApplicationFilter, \
     PARAM_SLUG_STATUS, PARAM_VALUE_STATUS_ACTIVE, PARAM_SLUG_APP_ID, PARAM_SLUG_MODULE
 from corehq.apps.reports.tests.test_analytics import SetupSimpleAppMixin
+from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
+from corehq.apps.users.models import WebUser
+from corehq.apps.domain.models import Domain
+from corehq.apps.locations.tests.util import make_loc
+from corehq.apps.reports.filters.users import LocationRestrictedMobileWorkerFilter
 
 
 class TestEmwfPagination(SimpleTestCase):
@@ -104,6 +114,90 @@ class FormsByApplicationFilterDbTest(SetupSimpleAppMixin, TestCase):
             self.assertEqual(1, len(results))
             details = results[0]
             self._assert_form_details_match(i, details)
+
+
+class TestExpandedMobileWorkerFilter(TestCase):
+    def setUp(self):
+        self.domain = Domain(name='test', is_active=True)
+        self.domain.save()
+        self.location_type = LocationType.objects.create(domain=self.domain.name, name='testtype')
+        self.user_assigned_locations = [
+            make_loc('root', domain=self.domain.name, type=self.location_type).sql_location
+        ]
+        self.request = RequestFactory()
+        self.request.couch_user = WebUser()
+        self.request.domain = self.domain
+
+    @patch('corehq.apps.users.models.WebUser.get_assigned_sql_locations')
+    def test_get_assigned_locations_default(self, assigned_locations_patch):
+        assigned_locations_patch.return_value = self.user_assigned_locations
+        emwf = ExpandedMobileWorkerFilter(self.request)
+        loc_defaults = emwf._get_assigned_locations_default()
+        self.assertEqual(loc_defaults, map(emwf.utils.location_tuple, self.user_assigned_locations))
+
+
+class TestLocationRestrictedMobileWorkerFilter(TestCase):
+    def setUp(self):
+        self.subject = LocationRestrictedMobileWorkerFilter
+        self.domain = Domain(name='test', is_active=True)
+        self.domain.save()
+        self.location_type = LocationType.objects.create(domain=self.domain.name, name='testtype')
+        self.user_assigned_locations = [
+            make_loc('root', domain=self.domain.name, type=self.location_type).sql_location
+        ]
+        self.request = RequestFactory()
+        self.request.couch_user = WebUser()
+        self.request.domain = self.domain
+
+    def test_attributes(self):
+        self.assertEqual(self.subject.options_url, 'new_emwf_options')
+
+    @patch('corehq.apps.users.models.WebUser.get_assigned_sql_locations')
+    def test_default_selections_for_full_access(self, assigned_locations_patch):
+        self.request.can_access_all_locations = True
+        self.request.project = self.domain
+        emwf = LocationRestrictedMobileWorkerFilter(self.request)
+        emwf.get_default_selections()
+        assert not assigned_locations_patch.called
+
+    @patch('corehq.apps.users.models.WebUser.get_assigned_sql_locations')
+    def test_default_selections_for_restricted_access(self, assigned_locations_patch):
+        self.request.can_access_all_locations = False
+        self.request.project = self.domain
+        emwf = LocationRestrictedMobileWorkerFilter(self.request)
+        emwf.get_default_selections()
+        assert assigned_locations_patch.called
+
+
+class TestCaseListFilter(TestCase):
+    def setUp(self):
+        self.subject = CaseListFilter
+        self.domain = Domain(name='test', is_active=True)
+        self.domain.save()
+        self.location_type = LocationType.objects.create(domain=self.domain.name, name='testtype')
+        self.user_assigned_locations = [
+            make_loc('root', domain=self.domain.name, type=self.location_type).sql_location
+        ]
+        self.request = RequestFactory()
+        self.request.couch_user = WebUser()
+        self.request.domain = self.domain
+
+    @patch('corehq.apps.users.models.WebUser.get_assigned_sql_locations')
+    def test_default_selections_for_full_access(self, assigned_locations_patch):
+        self.request.can_access_all_locations = True
+        self.request.project = self.domain
+        emwf = self.subject(self.request)
+        default_selections = emwf.get_default_selections()
+        self.assertEqual(default_selections, emwf.default_selections)
+        assert not assigned_locations_patch.called
+
+    @patch('corehq.apps.users.models.WebUser.get_assigned_sql_locations')
+    def test_default_selections_for_restricted_access(self, assigned_locations_patch):
+        self.request.can_access_all_locations = False
+        self.request.project = self.domain
+        emwf = self.subject(self.request)
+        emwf.get_default_selections()
+        assert assigned_locations_patch.called
 
 
 def _make_filter(slug, value):
