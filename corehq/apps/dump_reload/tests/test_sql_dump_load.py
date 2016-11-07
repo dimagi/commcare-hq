@@ -451,7 +451,6 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
     def test_location(self):
         from corehq.apps.locations.models import LocationType, SQLLocation
         from corehq.apps.locations.tests.util import setup_locations_and_types
-        from corehq.apps.locations.util import get_locations_and_children
         expected_object_counts = Counter({LocationType: 3, SQLLocation: 11})
         register_cleanup(self, list(expected_object_counts), self.domain_name)
 
@@ -485,14 +484,14 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         self._dump_and_load(expected_object_counts)
 
         names = ['Cape Winelands', 'Paarl', 'Cape Town']
-        result = get_locations_and_children([locations[name].location_id
-                                             for name in names])
+        location_ids = [locations[name].location_id for name in names]
+        result = SQLLocation.objects.get_locations_and_children(location_ids)
         self.assertItemsEqual(
             [loc.name for loc in result],
             ['Cape Winelands', 'Stellenbosch', 'Paarl', 'Cape Town', 'Cape Town City']
         )
 
-        result = get_locations_and_children([locations['Gauteng'].location_id])
+        result = SQLLocation.objects.get_locations_and_children([locations['Gauteng'].location_id])
         self.assertItemsEqual(
             [loc.name for loc in result],
             ['Gauteng', 'Ekurhuleni ', 'Alberton', 'Benoni', 'Springs']
