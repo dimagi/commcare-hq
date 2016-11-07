@@ -27,7 +27,8 @@ from corehq.form_processor.utils import use_new_exports
 from corehq.privileges import EXCEL_DASHBOARD, DAILY_SAVED_EXPORT
 from django_prbac.utils import has_privilege
 from django.utils.decorators import method_decorator
-import json, re
+import json
+import re
 from django.utils.safestring import mark_safe
 
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
