@@ -15,7 +15,8 @@
     <instance id="casedb" src="jr://instance/casedb"/>
     <session>
       <query url="https://www.example.com/a/test_domain/phone/search/"
-             storage-instance="results">
+             storage-instance="results"
+             template="case">
         <data key="case_type" ref="'case'"/>
         <data key="include_closed" ref="'False'"/>
         <prompt key="name">

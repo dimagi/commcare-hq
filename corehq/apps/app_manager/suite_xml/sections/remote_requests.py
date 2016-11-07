@@ -89,6 +89,7 @@ class RemoteRequestContributor(SuiteContributorByModule):
                         RemoteRequestQuery(
                             url=absolute_reverse('remote_search', args=[domain]),
                             storage_instance=RESULTS_INSTANCE,
+                            template='case',
                             data=([
                                 QueryData(
                                     key='case_type',
