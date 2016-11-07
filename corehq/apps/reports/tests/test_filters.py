@@ -2,7 +2,7 @@ from django.test import SimpleTestCase, TestCase
 from mock import patch
 from django.test.client import RequestFactory
 
-from corehq.apps.locations.models import LocationType, SQLLocation
+from corehq.apps.locations.models import LocationType
 from corehq.apps.reports.filters.api import paginate_options
 from corehq.apps.reports.filters.case_list import CaseListFilter
 from corehq.apps.reports.filters.forms import FormsByApplicationFilterParams, FormsByApplicationFilter, \
