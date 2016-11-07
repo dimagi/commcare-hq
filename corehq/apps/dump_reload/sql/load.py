@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 
 import json
-from collections import defaultdict, namedtuple
+from collections import defaultdict, namedtuple, Counter
 
 from django.apps import apps
 from django.conf import settings
@@ -15,6 +15,8 @@ from django.db import (
 )
 from django.utils.encoding import force_text
 
+from corehq.apps.dump_reload.interface import DataLoader
+from corehq.apps.dump_reload.util import get_model_label
 from corehq.form_processor.backends.sql.dbaccessors import ShardAccessor
 from corehq.sql_db.config import partition_config
 
@@ -31,60 +33,60 @@ PARTITIONED_MODEL_SHARD_ID_FIELDS = {
 }
 
 
-class LoadStat(namedtuple('LoadStats', 'db_alias, loaded_object_count, models')):
+class LoadStat(namedtuple('LoadStats', 'db_alias, model_counter')):
     """Simple object for keeping track of stats"""
     def update(self, stat):
         """
         :type stat: LoadStat
         """
         assert self.db_alias == stat.db_alias
-        return LoadStat(
-            db_alias=self.db_alias,
-            loaded_object_count=self.loaded_object_count + stat.loaded_object_count,
-            models=self.models | stat.models
-        )
+        self.model_counter += stat.model_counter
 
 
-def load_sql_data(data_file):
-    """
-    Loads data from a given file.
-    :return: tuple(total object count, loaded object count)
-    """
-    # Keep a count of the installed objects
-    load_stats_by_db = {}
-    total_object_counts = []
+class SqlDataLoader(DataLoader):
+    slug = 'sql'
 
-    def _process_chunk(chunk, total_object_counts=total_object_counts, load_stats_by_db=load_stats_by_db):
-        chunk_stats = load_objects(chunk)
-        total_object_counts.append(len(chunk))
-        _update_stats(load_stats_by_db, chunk_stats)
+    def load_objects(self, object_strings, force=False):
+        # Keep a count of the installed objects
+        load_stats_by_db = {}
+        total_object_counts = []
 
-    chunk = []
-    for line in data_file:
-        line = line.strip()
-        if not line:
-            continue
-        chunk.append(json.loads(line))
-        if len(chunk) >= 1000:
+        def _process_chunk(chunk, total_object_counts=total_object_counts, load_stats_by_db=load_stats_by_db):
+            chunk_stats = load_objects(chunk)
+            total_object_counts.append(len(chunk))
+            _update_stats(load_stats_by_db, chunk_stats)
+
+        chunk = []
+        for line in object_strings:
+            line = line.strip()
+            if not line:
+                continue
+            chunk.append(json.loads(line))
+            if len(chunk) >= 1000:
+                _process_chunk(chunk)
+                chunk = []
+
+        if chunk:
             _process_chunk(chunk)
-            chunk = []
 
-    if chunk:
-        _process_chunk(chunk)
+        _reset_sequences(load_stats_by_db.values())
 
-    _reset_sequences(load_stats_by_db.values())
+        loaded_model_counts = Counter()
+        for db_stats in load_stats_by_db.values():
+            model_labels = ('(sql) {}'.format(get_model_label(model)) for model in db_stats.model_counter.elements())
+            loaded_model_counts.update(model_labels)
 
-    loaded_object_count = sum(stat.loaded_object_count for stat in load_stats_by_db.values())
-
-    return sum(total_object_counts), loaded_object_count
+        return sum(total_object_counts), loaded_model_counts
 
 
 def _reset_sequences(load_stats):
     """Reset DB sequences if needed"""
     for stat in load_stats:
-        if stat.loaded_object_count > 0:
+        loaded_object_count = sum(stat.model_counter.values())
+        if loaded_object_count > 0:
             connection = connections[stat.db_alias]
-            sequence_sql = connection.ops.sequence_reset_sql(no_style(), stat.models)
+            models = list(stat.model_counter)
+            sequence_sql = connection.ops.sequence_reset_sql(no_style(), models)
             if sequence_sql:
                 with connection.cursor() as cursor:
                     for line in sequence_sql:
@@ -110,9 +112,10 @@ def _update_stats(current_stats_by_db, new_stats):
     """Helper to update stats dictionary"""
     for new_stat in new_stats:
         current_stat = current_stats_by_db.get(new_stat.db_alias)
-        if current_stat:
-            new_stat = current_stat.update(new_stat.db_alias)
-        current_stats_by_db[new_stat.db_alias] = new_stat
+        if current_stat is not None:
+            current_stat.update(new_stat)
+        else:
+            current_stats_by_db[new_stat.db_alias] = new_stat
 
 
 def load_data_for_db(db_alias, objects):
@@ -123,13 +126,11 @@ def load_data_for_db(db_alias, objects):
     """
     connection = connections[db_alias]
 
-    loaded_object_count = 0
-    models = set()
+    model_counter = Counter()
     with connection.constraint_checks_disabled():
         for obj in PythonDeserializer(objects, using=db_alias):
             if router.allow_migrate_model(db_alias, obj.object.__class__):
-                loaded_object_count += 1
-                models.add(obj.object.__class__)
+                model_counter.update([obj.object.__class__])
                 try:
                     obj.save(using=db_alias)
                 except (DatabaseError, IntegrityError) as e:
@@ -143,14 +144,14 @@ def load_data_for_db(db_alias, objects):
 
     # Since we disabled constraint checks, we must manually check for
     # any invalid keys that might have been added
-    table_names = [model._meta.db_table for model in models]
+    table_names = [model._meta.db_table for model in model_counter]
     try:
         connection.check_constraints(table_names=table_names)
     except Exception as e:
         e.args = ("Problem loading data: %s" % e,)
         raise
 
-    return LoadStat(db_alias, loaded_object_count, models)
+    return LoadStat(db_alias, model_counter)
 
 
 def _group_objects_by_db(objects):

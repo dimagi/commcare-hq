@@ -36,4 +36,4 @@ class CommCareJSONEncoder(DjangoJSONEncoder):
         if isinstance(o, datetime.datetime):
             return json_format_datetime(o)
         else:
-            super(CommCareJSONEncoder, self).default(o)
+            return super(CommCareJSONEncoder, self).default(o)

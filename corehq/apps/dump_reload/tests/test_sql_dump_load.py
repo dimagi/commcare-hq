@@ -15,8 +15,7 @@ from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from corehq.apps.commtrack.helpers import make_product
 from corehq.apps.commtrack.tests.util import get_single_balance_block
 from corehq.apps.domain.models import Domain
-from corehq.apps.dump_reload.sql import dump_sql_data
-from corehq.apps.dump_reload.sql import load_sql_data
+from corehq.apps.dump_reload.sql import SqlDataLoader, SqlDataDumper
 from corehq.apps.dump_reload.sql.dump import get_model_domain_filters, get_objects_to_dump
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.products.models import SQLProduct
@@ -58,7 +57,6 @@ class BaseDumpLoadTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        TimezoneMigrationProgress.objects.filter(domain=cls.domain_name).delete()
         cls.domain.delete()
         super(BaseDumpLoadTest, cls).tearDownClass()
 
@@ -69,7 +67,7 @@ class BaseDumpLoadTest(TestCase):
         models = list(expected_object_counts)
 
         output_stream = StringIO()
-        dump_sql_data(self.domain_name, [], output_stream)
+        SqlDataDumper(self.domain_name, []).dump(output_stream)
 
         delete_sql_data(self, models, self.domain_name)
 
@@ -81,13 +79,13 @@ class BaseDumpLoadTest(TestCase):
 
         dump_output = output_stream.getvalue()
         dump_lines = [line.strip() for line in dump_output.split('\n') if line.strip()]
-        total_object_count, loaded_object_count = load_sql_data(dump_lines)
+        total_object_count, loaded_model_counts = SqlDataLoader().load_objects(dump_lines)
 
         expected_model_counts = _normalize_object_counter(expected_object_counts)
         actual_model_counts = Counter([json.loads(line)['model'] for line in dump_lines])
         expected_total_objects = sum(expected_object_counts.values())
         self.assertDictEqual(expected_model_counts, actual_model_counts)
-        self.assertEqual(expected_total_objects, loaded_object_count)
+        self.assertEqual(expected_total_objects, sum(loaded_model_counts.values()))
         self.assertEqual(expected_total_objects, total_object_count)
 
         return dump_lines
@@ -322,7 +320,7 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         )
         web_user = WebUser.create(
             domain=self.domain_name,
-            username='webuser_1',
+            username='webuser_t1',
             password='secret',
             email='webuser@example.com',
         )
@@ -408,6 +406,97 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         self.assertTrue(p1 in all_active)
         self.assertTrue(p2 in all_active)
         self.assertTrue(parchived not in all_active)
+
+    def test_location_type(self):
+        from corehq.apps.locations.models import LocationType
+        from corehq.apps.locations.tests.test_location_types import make_loc_type
+        expected_object_counts = Counter({LocationType: 7})
+        register_cleanup(self, list(expected_object_counts), self.domain_name)
+
+        state = make_loc_type('state', domain=self.domain_name)
+
+        district = make_loc_type('district', state, domain=self.domain_name)
+        section = make_loc_type('section', district, domain=self.domain_name)
+        block = make_loc_type('block', district, domain=self.domain_name)
+        center = make_loc_type('center', block, domain=self.domain_name)
+
+        county = make_loc_type('county', state, domain=self.domain_name)
+        city = make_loc_type('city', county, domain=self.domain_name)
+
+        self._dump_and_load(expected_object_counts)
+
+        hierarchy = LocationType.objects.full_hierarchy(self.domain_name)
+        desired_hierarchy = {
+            state.id: (
+                state,
+                {
+                    district.id: (
+                        district,
+                        {
+                            section.id: (section, {}),
+                            block.id: (block, {
+                                center.id: (center, {}),
+                            }),
+                        },
+                    ),
+                    county.id: (
+                        county,
+                        {city.id: (city, {})},
+                    ),
+                },
+            ),
+        }
+        self.assertEqual(hierarchy, desired_hierarchy)
+
+    def test_location(self):
+        from corehq.apps.locations.models import LocationType, SQLLocation
+        from corehq.apps.locations.tests.util import setup_locations_and_types
+        from corehq.apps.locations.util import get_locations_and_children
+        expected_object_counts = Counter({LocationType: 3, SQLLocation: 11})
+        register_cleanup(self, list(expected_object_counts), self.domain_name)
+
+        location_type_names = ['province', 'district', 'city']
+        location_structure = [
+            ('Western Cape', [
+                ('Cape Winelands', [
+                    ('Stellenbosch', []),
+                    ('Paarl', []),
+                ]),
+                ('Cape Town', [
+                    ('Cape Town City', []),
+                ])
+            ]),
+            ('Gauteng', [
+                ('Ekurhuleni ', [
+                    ('Alberton', []),
+                    ('Benoni', []),
+                    ('Springs', []),
+                ]),
+            ]),
+        ]
+
+        location_types, locations = setup_locations_and_types(
+            self.domain_name,
+            location_type_names,
+            [],
+            location_structure,
+        )
+
+        self._dump_and_load(expected_object_counts)
+
+        names = ['Cape Winelands', 'Paarl', 'Cape Town']
+        result = get_locations_and_children([locations[name].location_id
+                                             for name in names])
+        self.assertItemsEqual(
+            [loc.name for loc in result],
+            ['Cape Winelands', 'Stellenbosch', 'Paarl', 'Cape Town', 'Cape Town City']
+        )
+
+        result = get_locations_and_children([locations['Gauteng'].location_id])
+        self.assertItemsEqual(
+            [loc.name for loc in result],
+            ['Gauteng', 'Ekurhuleni ', 'Alberton', 'Benoni', 'Springs']
+        )
 
 
 def _normalize_object_counter(counter):
