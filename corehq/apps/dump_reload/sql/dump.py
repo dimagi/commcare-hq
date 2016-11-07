@@ -81,6 +81,19 @@ def get_objects_to_dump(domain, excludes, stats_counter=None):
     """
     if stats_counter is None:
         stats_counter = Counter()
+    for model_class, query in get_querysets_to_dump(domain, excludes):
+        for obj in query.iterator():
+            stats_counter.update([get_model_label(model_class)])
+            yield obj
+
+
+def get_querysets_to_dump(domain, excludes):
+    """
+    :param domain: domain name to filter with
+    :param app_list: List of (app_config, model_class) tuples to dump
+    :param excluded_models: List of model_class classes to exclude
+    :return: generator yielding query sets
+    """
     excluded_apps, excluded_models = get_excluded_apps_and_models(excludes)
     app_config_models = _get_app_list(excluded_apps)
 
@@ -103,9 +116,7 @@ def get_objects_to_dump(domain, excludes, stats_counter=None):
 
                 filters = get_model_domain_filters(model_class, domain)
                 for filter in filters:
-                    for obj in queryset.filter(filter).iterator():
-                        stats_counter.update([get_model_label(model_class)])
-                        yield obj
+                    yield model_class, queryset.filter(filter)
 
 
 def get_model_domain_filters(model_class, domain):
