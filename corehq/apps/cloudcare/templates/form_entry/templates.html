@@ -94,9 +94,9 @@
             ">
             <!-- Tab title -->
             <div class="debugger-tab-title">
-                <i class="fa fa-bug"></i>
-                <span class="debugger-title">{% trans "CloudCare Debugger" %}</span>
-                <a class="pull-right" data-bind="click: toggleState">{% trans "Show Debugger" %}</a>
+                <i class="fa fa-table"></i>
+                <span class="debugger-title">{% trans "Data Preview" %}</span>
+                <a class="pull-right" data-bind="click: toggleState">{% trans "Show Data Preview" %}</a>
             </div>
 
             <!-- Debugger content -->
@@ -172,7 +172,7 @@
                                         <input id="auto-sync-control" type="checkbox" checked="checked">{% trans "Auto Sync" %}
                                         <span class="help-block">
                                         {% blocktrans %}
-                                            When this is checked, the CloudCare Debug tool will auto sync your XML after every question answered. On slow connetions, uncheck this.
+                                            When this is checked, the Data Preview tool will auto sync your XML after every question answered. On slow connetions, uncheck this.
                                         {% endblocktrans %}
                                         </span>
                                     </label>
@@ -192,9 +192,10 @@
                 <div class="input-group">
                     <input
                         id="xpath"
-                        class="form-control debugger-code"
+                        class="form-control debugger-code at-who-input"
                         name="xpath"
                         placeholder="/data/[your path here]"
+                        autocomplete="off"
                         data-bind="value: xpath" />
                     <span class="input-group-btn">
                         <button class="btn btn-default" id="evaluate-button">{% trans "Evaluate" %}</button>

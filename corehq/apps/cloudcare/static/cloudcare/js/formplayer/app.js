@@ -85,6 +85,7 @@ FormplayerFrontend.on('clearForm', function () {
     $('#webforms').html("");
     $('#webforms-nav').html("");
     $('#cloudcare-debugger').html("");
+    $('.atwho-container').remove();
 });
 
 FormplayerFrontend.reqres.setHandler('clearMenu', function () {

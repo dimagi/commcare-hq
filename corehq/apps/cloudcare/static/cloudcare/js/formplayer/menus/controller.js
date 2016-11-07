@@ -39,6 +39,8 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 }
 
                 Menus.Controller.showMenu(menuResponse);
+            }).fail(function() {
+                FormplayerFrontend.trigger('navigateHome');
             });
         },
 

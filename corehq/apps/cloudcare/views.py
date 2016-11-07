@@ -695,6 +695,7 @@ class ReadableQuestions(View):
 
         return json_response({
             'form_data': rendered_readable_form,
+            'form_questions': pretty_questions
         })
 
 
