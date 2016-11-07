@@ -5,6 +5,7 @@ import uuid
 from StringIO import StringIO
 from collections import Counter
 
+from datetime import datetime
 from django.contrib.admin.utils import NestedObjects
 from django.core import serializers
 from django.db.models.signals import post_save
@@ -497,6 +498,39 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             [loc.name for loc in result],
             ['Gauteng', 'Ekurhuleni ', 'Alberton', 'Benoni', 'Springs']
         )
+
+    def test_sms(self):
+        from corehq.apps.sms.models import PhoneNumber, MessagingEvent, MessagingSubEvent
+        expected_object_counts = Counter({PhoneNumber: 1, MessagingEvent: 1, MessagingSubEvent: 1})
+        register_cleanup(self, list(expected_object_counts), self.domain_name)
+
+        phone_number = PhoneNumber(
+            domain=self.domain_name,
+            owner_doc_type='CommCareCase',
+            owner_id='fake-owner-id1',
+            phone_number='99912341234',
+            backend_id=None,
+            ivr_backend_id=None,
+            verified=True,
+            contact_last_modified=datetime.utcnow()
+        )
+        phone_number.save()
+        event = MessagingEvent.objects.create(
+            domain=self.domain_name,
+            date=datetime.utcnow(),
+            source=MessagingEvent.SOURCE_REMINDER,
+            content_type=MessagingEvent.CONTENT_SMS,
+            status=MessagingEvent.STATUS_COMPLETED
+        )
+        MessagingSubEvent.objects.create(
+            parent=event,
+            date=datetime.utcnow(),
+            recipient_type=MessagingEvent.RECIPIENT_CASE,
+            content_type=MessagingEvent.CONTENT_SMS,
+            status=MessagingEvent.STATUS_COMPLETED
+        )
+
+        self._dump_and_load(expected_object_counts)
 
 
 def _normalize_object_counter(counter):

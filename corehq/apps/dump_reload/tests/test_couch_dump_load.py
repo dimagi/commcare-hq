@@ -166,7 +166,7 @@ class CouchDumpLoadTest(TestCase):
 
         web_user = WebUser.create(
             domain=self.domain_name,
-            username='webuser_t1',
+            username='webuser_1',
             password='secret',
             email='webuser1@example.com',
         )
