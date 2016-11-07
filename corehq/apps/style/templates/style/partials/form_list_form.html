@@ -107,7 +107,7 @@
                     .attr('name', 'child_form_data')
                     .attr('value', JSON.stringify(self.serialize()))
                     .appendTo(tableForm);
-                $("{% csrf_token %}").appendTo($form);
+                $("{% csrf_token %}").appendTo(tableForm);
                 tableForm.appendTo("body");
                 tableForm.submit();
             };
