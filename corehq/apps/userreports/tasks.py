@@ -1,6 +1,5 @@
 import datetime
 
-from celery.task import task
 from couchdbkit import ResourceConflict
 from django.utils.translation import ugettext as _
 from corehq import toggles
@@ -8,6 +7,7 @@ from corehq.apps.userreports.document_stores import get_document_store
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration, id_is_static
 from corehq.apps.userreports.util import get_indicator_adapter
+from corehq.util.celery_utils import hqtask
 from corehq.util.context_managers import notify_someone
 from pillowtop.dao.couch import ID_CHUNK_SIZE
 
@@ -33,7 +33,7 @@ def _build_indicators(config, document_store, relevant_ids, resume_helper):
         resume_helper.add_id(last_id)
 
 
-@task(queue='ucr_queue', ignore_result=True)
+@hqtask(queue='ucr_queue', ignore_result=True)
 def rebuild_indicators(indicator_config_id, initiated_by=None):
     config = _get_config_by_id(indicator_config_id)
     success = _('Your UCR table {} has finished rebuilding').format(config.table_id)
@@ -52,7 +52,7 @@ def rebuild_indicators(indicator_config_id, initiated_by=None):
         _iteratively_build_table(config)
 
 
-@task(queue='ucr_queue', ignore_result=True, acks_late=True)
+@hqtask(queue='ucr_queue', ignore_result=True, acks_late=True)
 def resume_building_indicators(indicator_config_id, initiated_by=None):
     config = _get_config_by_id(indicator_config_id)
     success = _('Your UCR table {} has finished rebuilding').format(config.table_id)

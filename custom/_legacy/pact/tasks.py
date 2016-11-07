@@ -3,12 +3,12 @@ from datetime import datetime
 from xml.etree import ElementTree
 from celery.schedules import crontab
 
-from celery.task import task, periodic_task
+from celery.task import periodic_task
 import json
 from casexml.apps.case.mock import CaseBlock
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.hqcase.utils import submit_case_blocks
-
+from corehq.util.celery_utils import hqtask
 from couchforms.models import XFormInstance
 from dimagi.utils.logging import notify_exception
 from pact.enums import PACT_DOTS_DATA_PROPERTY
@@ -19,7 +19,7 @@ from pact.utils import get_case_id
 DOT_RECOMPUTE = True
 
 
-@task(ignore_result=True)
+@hqtask(ignore_result=True)
 def recalculate_dots_data(case_id, cc_user, sync_token=None):
     """
     Recalculate the dots data and resubmit calling the pact api for dot recompute
@@ -35,7 +35,7 @@ def recalculate_dots_data(case_id, cc_user, sync_token=None):
             notify_exception(None, message="PACT error recomputing DOTS case block: %s\n%s" % (ex, tb))
 
 
-@task(ignore_result=True)
+@hqtask(ignore_result=True)
 def eval_dots_block(xform_json, callback=None):
     """
     Evaluate the dots block in the xform submission and put it in the computed_ block for the xform.

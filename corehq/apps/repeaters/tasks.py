@@ -1,8 +1,9 @@
 from datetime import datetime
 
 from django.conf import settings
-from celery.task import periodic_task, task
+from celery.task import periodic_task
 from celery.utils.log import get_task_logger
+from corehq.util.celery_utils import hqtask
 from redis.exceptions import LockError
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch.undo import DELETED_SUFFIX
@@ -54,7 +55,7 @@ def check_repeaters():
         pass
 
 
-@task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
+@hqtask(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
 def process_repeat_record(repeat_record):
     try:
         if repeat_record.repeater.doc_type.endswith(DELETED_SUFFIX):

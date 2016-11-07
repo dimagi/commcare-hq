@@ -1,5 +1,5 @@
-from celery.task import task
 from corehq.apps.ivr import api
+from corehq.util.celery_utils import hqtask
 from django.conf import settings
 from dimagi.utils.logging import notify_exception
 
@@ -13,7 +13,7 @@ OUTBOUND_RETRY_INTERVAL = getattr(settings, "IVR_OUTBOUND_RETRY_INTERVAL",
     DEFAULT_OUTBOUND_RETRY_INTERVAL)
 
 
-@task(ignore_result=True)
+@hqtask(ignore_result=True)
 def initiate_outbound_call(*args, **kwargs):
     retry_num = kwargs.pop("retry_num", 0)
     try:

@@ -1,7 +1,7 @@
 from corehq.blobs.mixin import BlobMixin
+from corehq.util.celery_utils import hqtask
 from custom.uth.utils import create_case, match_case, attach_images_to_case, submit_error_case
 from custom.uth.models import SonositeUpload, VscanUpload
-from celery.task import task
 import io
 
 
@@ -21,7 +21,7 @@ def get_files_from_doc(doc):
     return files
 
 
-@task(ignore_result=True)
+@hqtask(ignore_result=True)
 def async_create_case(upload_id):
     """
     Task backend for sonosite upload
@@ -34,7 +34,7 @@ def async_create_case(upload_id):
     upload_doc.delete()
 
 
-@task(ignore_result=True)
+@hqtask(ignore_result=True)
 def async_find_and_attach(upload_id):
     """
     Task backend for Vscan upload

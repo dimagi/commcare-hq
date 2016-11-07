@@ -1,8 +1,8 @@
-from celery.task import task
 import sys
 from django.conf import settings
 
 from corehq.apps.change_feed.data_sources import get_document_store
+from corehq.util.celery_utils import hqtask
 from dimagi.utils.couch import release_lock
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.logging import notify_error
@@ -14,7 +14,7 @@ from celery.utils.log import get_task_logger
 logger = get_task_logger(__name__)
 
 
-@task(queue='pillow_retry_queue', ignore_result=True)
+@hqtask(queue='pillow_retry_queue', ignore_result=True)
 def process_pillow_retry(error_doc_id):
     # Redis error logged in get_redis_client
     try:

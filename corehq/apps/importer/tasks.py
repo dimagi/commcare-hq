@@ -1,4 +1,3 @@
-from celery.task import task
 from xml.etree import ElementTree
 from corehq.apps.importer.util import get_importer_error_message
 from dimagi.utils.couch.database import is_bigcouch
@@ -10,6 +9,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CouchUser
 from corehq.apps.export.tasks import add_inferred_export_properties
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.util.celery_utils import hqtask
 from soil import DownloadBase
 from dimagi.utils.prime_views import prime_views
 from couchdbkit.exceptions import ResourceNotFound
@@ -20,7 +20,7 @@ PRIME_VIEW_FREQUENCY = 500
 CASEBLOCK_CHUNKSIZE = 100
 
 
-@task
+@hqtask()
 def bulk_import_async(config, domain, excel_id):
     excel_ref = DownloadBase.get(excel_id)
     try:

@@ -1,6 +1,5 @@
 import math
 from datetime import datetime, timedelta
-from celery.task import task
 from corehq.apps.sms.mixin import (InvalidFormatException,
     PhoneNumberInUseException)
 from corehq.apps.sms.models import (OUTGOING, INCOMING, SMS,
@@ -16,6 +15,7 @@ from corehq.apps.smsbillables.exceptions import RetryBillableTaskException
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.sms.change_publishers import publish_sms_saved
 from corehq.apps.sms.util import is_contact_active
+from corehq.util.celery_utils import hqtask
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch import release_lock, CriticalSection
@@ -173,7 +173,7 @@ def handle_incoming(msg):
         handle_unsuccessful_processing_attempt(msg)
 
 
-@task(queue="sms_queue", ignore_result=True, acks_late=True)
+@hqtask(queue="sms_queue", ignore_result=True, acks_late=True)
 def process_sms(queued_sms_pk):
     """
     queued_sms_pk - pk of a QueuedSMS entry
@@ -244,7 +244,7 @@ def process_sms(queued_sms_pk):
             process_sms.delay(queued_sms_pk)
 
 
-@task(ignore_result=True, default_retry_delay=5 * 60, max_retries=10, bind=True)
+@hqtask(ignore_result=True, default_retry_delay=5 * 60, max_retries=10, bind=True)
 def store_billable(self, msg):
     if not isinstance(msg, SMS):
         raise Exception("Expected msg to be an SMS")
@@ -271,7 +271,7 @@ def store_billable(self, msg):
             raise
 
 
-@task(queue='background_queue', ignore_result=True, acks_late=True)
+@hqtask(queue='background_queue', ignore_result=True, acks_late=True)
 def delete_phone_numbers_for_owners(owner_ids):
     for p in PhoneNumber.objects.filter(owner_id__in=owner_ids):
         # Clear cache and delete
@@ -283,8 +283,8 @@ def clear_case_caches(case):
     is_case_contact_active.clear(case.domain, case.case_id)
 
 
-@task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, ignore_result=True, acks_late=True,
-      default_retry_delay=5 * 60, max_retries=10, bind=True)
+@hqtask(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, ignore_result=True, acks_late=True,
+        default_retry_delay=5 * 60, max_retries=10, bind=True)
 def sync_case_phone_number(self, case):
     try:
         clear_case_caches(case)
@@ -345,8 +345,8 @@ def _sync_case_phone_number(contact_case):
                 phone_number.delete()
 
 
-@task(queue='background_queue', ignore_result=True, acks_late=True,
-      default_retry_delay=5 * 60, max_retries=10, bind=True)
+@hqtask(queue='background_queue', ignore_result=True, acks_late=True,
+        default_retry_delay=5 * 60, max_retries=10, bind=True)
 def publish_sms_change(self, sms):
     try:
         publish_sms_saved(sms)

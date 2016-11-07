@@ -1,9 +1,9 @@
 from corehq.apps.fixtures.upload import upload_fixture_file
+from corehq.util.celery_utils import hqtask
 from soil import DownloadBase
-from celery.task import task
 
 
-@task
+@hqtask()
 def fixture_upload_async(domain, download_id, replace):
     task = fixture_upload_async
     DownloadBase.set_progress(task, 0, 100)
@@ -15,7 +15,7 @@ def fixture_upload_async(domain, download_id, replace):
     }
 
 
-@task
+@hqtask()
 def fixture_download_async(prepare_download, *args, **kw):
     task = fixture_download_async
     DownloadBase.set_progress(task, 0, 100)

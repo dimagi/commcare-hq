@@ -1,15 +1,16 @@
-from celery.task import task, periodic_task
+from celery.task import periodic_task
 import time
 from django.core.cache import cache
 from soil import CachedDownload
 import uuid
 from celery.schedules import crontab
+from corehq.util.celery_utils import hqtask
 from soil.heartbeat import write_file_heartbeat, write_cache_heartbeat
 from soil.util import expose_cached_download
 from django.conf import settings
 
 
-@task
+@hqtask()
 def demo_sleep(download_id, howlong=5, expiry=1*60*60):
     """
     Demo the downloader, with sleep
@@ -20,7 +21,7 @@ def demo_sleep(download_id, howlong=5, expiry=1*60*60):
     cache.set(download_id, CachedDownload(temp_id), expiry)
 
 
-@task
+@hqtask()
 def prepare_download(download_id, payload_func, content_disposition,
                      content_type, expiry=10*60*60):
     """

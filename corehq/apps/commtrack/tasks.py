@@ -1,6 +1,6 @@
-from celery.task import task
 from corehq.apps.commtrack.consumption import recalculate_domain_consumption
 from corehq.apps.locations.bulk_management import new_locations_import
+from corehq.util.celery_utils import hqtask
 from corehq.util.decorators import serial_task
 from corehq.util.spreadsheets.excel_importer import MultiExcelImporter
 from django.conf import settings
@@ -23,7 +23,7 @@ def import_locations_async(domain, file_ref_id):
     }
 
 
-@task(ignore_result=True)
+@hqtask(ignore_result=True)
 def recalculate_domain_consumption_task(domain):
     recalculate_domain_consumption(domain)
 

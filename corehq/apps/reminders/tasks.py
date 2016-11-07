@@ -1,9 +1,10 @@
 from datetime import datetime, timedelta
-from celery.task import periodic_task, task
+from celery.task import periodic_task
 from corehq.apps.reminders.models import (CaseReminderHandler, CaseReminder,
     CASE_CRITERIA, REMINDER_TYPE_DEFAULT)
 from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.util.celery_utils import hqtask
 from django.conf import settings
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.chunked import chunked
@@ -32,9 +33,9 @@ if not settings.REMINDERS_QUEUE_ENABLED:
         CaseReminderHandler.fire_reminders()
 
 
-@task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, ignore_result=True, acks_late=True,
-      default_retry_delay=CASE_CHANGED_RETRY_INTERVAL * 60, max_retries=CASE_CHANGED_RETRY_MAX,
-      bind=True)
+@hqtask(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, ignore_result=True, acks_late=True,
+        default_retry_delay=CASE_CHANGED_RETRY_INTERVAL * 60, max_retries=CASE_CHANGED_RETRY_MAX,
+        bind=True)
 def case_changed(self, domain, case_id):
     try:
         handler_ids = CaseReminderHandler.get_handler_ids(
@@ -64,7 +65,7 @@ def _case_changed(domain, case_id, handler_ids):
                     handler.case_changed(subcase, **kwargs)
 
 
-@task(queue=settings.CELERY_REMINDER_RULE_QUEUE, ignore_result=True, acks_late=True)
+@hqtask(queue=settings.CELERY_REMINDER_RULE_QUEUE, ignore_result=True, acks_late=True)
 def process_reminder_rule(handler, schedule_changed, prev_definition,
     send_immediately):
     try:
@@ -75,7 +76,7 @@ def process_reminder_rule(handler, schedule_changed, prev_definition,
     handler.save(unlock=True)
 
 
-@task(queue=CELERY_REMINDERS_QUEUE, ignore_result=True, acks_late=True)
+@hqtask(queue=CELERY_REMINDERS_QUEUE, ignore_result=True, acks_late=True)
 def fire_reminder(reminder_id, domain):
     try:
         if reminder_rate_limiter.can_perform_action(domain):
@@ -113,7 +114,7 @@ def _fire_reminder(reminder_id):
                 reminder.save()
 
 
-@task(queue='background_queue', ignore_result=True, acks_late=True)
+@hqtask(queue='background_queue', ignore_result=True, acks_late=True)
 def delete_reminders_for_cases(domain, case_ids):
     handler_ids = CaseReminderHandler.get_handler_ids(
         domain, reminder_type_filter=REMINDER_TYPE_DEFAULT)

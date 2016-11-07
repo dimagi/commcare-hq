@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 import logging
 import itertools
 from celery.canvas import chain
-from celery.task import task
 from django.db import transaction, connection
 from django.db.models import Q
 from django.db.models.aggregates import Avg, Sum
@@ -10,6 +9,7 @@ from django.db.models.aggregates import Avg, Sum
 from corehq.apps.locations.dbaccessors import get_users_by_location_id
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.locations.models import Location, SQLLocation
+from corehq.util.celery_utils import hqtask
 from custom.ilsgateway.tanzania.warehouse import const
 from custom.ilsgateway.tanzania.warehouse.alerts import populate_no_primary_alerts, \
     populate_facility_stockout_alerts, create_alert
@@ -260,7 +260,7 @@ def populate_report_data(start_date, end_date, domain, runner, strict=True):
     runner.save()
 
 
-@task(queue='logistics_background_queue')
+@hqtask(queue='logistics_background_queue', trail=True)
 def process_facility_warehouse_data(facility, start_date, end_date, runner=None):
     """
     process all the facility-level warehouse tables
@@ -481,7 +481,7 @@ def get_non_archived_facilities_below(location):
                 .couch_locations())
 
 
-@task(queue='logistics_background_queue')
+@hqtask(queue='logistics_background_queue', trail=True)
 def process_non_facility_warehouse_data(location, start_date, end_date, runner=None, strict=True):
     start_date = datetime(start_date.year, start_date.month, 1)
     end_date = datetime(end_date.year, end_date.month, 1)

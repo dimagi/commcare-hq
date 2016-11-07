@@ -1,5 +1,5 @@
 from celery.schedules import crontab
-from celery.task import task, periodic_task
+from celery.task import periodic_task
 from celery.utils.log import get_task_logger
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule, AUTO_UPDATE_XMLNS
 from datetime import datetime
@@ -11,6 +11,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
 from corehq.apps.data_interfaces.utils import add_cases_to_case_group, archive_forms_old, archive_or_restore_forms
+from corehq.util.celery_utils import hqtask
 from .interfaces import FormManagementMode, BulkFormManagementInterface
 from .dispatcher import EditDataInterfaceDispatcher
 from dimagi.utils.django.email import send_HTML_email
@@ -21,13 +22,13 @@ logger = get_task_logger('data_interfaces')
 ONE_HOUR = 60 * 60
 
 
-@task(ignore_result=True)
+@hqtask(ignore_result=True)
 def bulk_upload_cases_to_group(download_id, domain, case_group_id, cases):
     results = add_cases_to_case_group(domain, case_group_id, cases)
     cache.set(download_id, results, ONE_HOUR)
 
 
-@task(ignore_result=True)
+@hqtask(ignore_result=True)
 def bulk_archive_forms(domain, couch_user, uploaded_data):
     # archive using Excel-data
     response = archive_forms_old(domain, couch_user.user_id, couch_user.username, uploaded_data)
@@ -41,7 +42,7 @@ def bulk_archive_forms(domain, couch_user, uploaded_data):
     send_HTML_email(_('Your archived forms'), couch_user.email, html_content)
 
 
-@task
+@hqtask()
 def bulk_form_management_async(archive_or_restore, domain, couch_user, form_ids_or_query_string):
     # form_ids_or_query_string - can either be list of formids or a BulkFormMangementInterface query url
     def get_ids_from_url(query_string, domain, couch_user):
@@ -94,7 +95,7 @@ def run_case_update_rules(now=None):
         run_case_update_rules_for_domain.delay(domain, now)
 
 
-@task(queue='background_queue', acks_late=True, ignore_result=True)
+@hqtask(queue='background_queue', acks_late=True, ignore_result=True)
 def run_case_update_rules_for_domain(domain, now=None):
     now = now or datetime.utcnow()
     all_rules = AutomaticUpdateRule.by_domain(domain)
@@ -115,7 +116,7 @@ def run_case_update_rules_for_domain(domain, now=None):
             rule.save()
 
 
-@task(queue='background_queue', acks_late=True, ignore_result=True)
+@hqtask(queue='background_queue', acks_late=True, ignore_result=True)
 def run_case_update_rules_on_save(case):
     key = 'case-update-on-save-case-{case}'.format(case=case.case_id)
     with CriticalSection([key]):

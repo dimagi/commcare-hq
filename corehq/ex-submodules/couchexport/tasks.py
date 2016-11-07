@@ -1,6 +1,6 @@
+from corehq.util.celery_utils import hqtask
 from celery.utils.log import get_task_logger
 from unidecode import unidecode
-from celery.task import task
 import zipfile
 from couchexport.files import Temp
 from couchexport.models import Format, ExportSchema, GroupExportConfiguration
@@ -14,7 +14,7 @@ from couchexport.export import SchemaMismatchException, ExportConfiguration
 logging = get_task_logger(__name__)
 
 
-@task
+@hqtask()
 def export_async(custom_export, download_id, format=None, filename=None, **kwargs):
     try:
         export_files = custom_export.get_export_files(format=format, process=export_async, **kwargs)
@@ -41,7 +41,7 @@ def export_async(custom_export, download_id, format=None, filename=None, **kwarg
             return cache_file_to_be_served(None, None, download_id, format, filename)
 
 
-@task
+@hqtask()
 def rebuild_schemas(index):
     """
     Resets the schema for all checkpoints to the latest version based off the
@@ -59,7 +59,7 @@ def rebuild_schemas(index):
     return counter
 
 
-@task
+@hqtask()
 def bulk_export_async(bulk_export_helper, download_id,
                       filename="bulk_export", expiry=10*60*60, domain=None):
 

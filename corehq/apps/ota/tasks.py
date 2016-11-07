@@ -1,10 +1,10 @@
-from celery.task import task
 from celery import group
 from couchdbkit.exceptions import ResourceNotFound
 from casexml.apps.case.xml import V1
 from casexml.apps.phone.restore import RestoreParams, RestoreCacheSettings, RestoreConfig
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.ota.exceptions import PrimeRestoreException, PrimeRestoreUserException
+from corehq.util.celery_utils import hqtask
 
 
 def queue_prime_restore(domain, usernames_or_ids, version=V1, cache_timeout_hours=None,
@@ -33,7 +33,7 @@ def queue_prime_restore(domain, usernames_or_ids, version=V1, cache_timeout_hour
     return group(tasks)()
 
 
-@task
+@hqtask()
 def prime_restore(username_or_id, domain, version, cache_timeout_hours,
                   overwrite_cache, check_cache_only):
     couch_user = get_user(username_or_id, domain)

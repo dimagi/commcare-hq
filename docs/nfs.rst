@@ -40,7 +40,7 @@ Using apache / nginx to handle downloads
 
 This also works for files that are generated asynchronously::
 
-    @task
+    @hqtask()
     def generate_download(download_id):
         use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
         if use_transfer:

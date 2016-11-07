@@ -2,7 +2,7 @@ from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend, I
 from corehq.apps.sms.api import incoming as incoming_sms
 from corehq.apps.sms.util import strip_plus
 from corehq.apps.ivr.api import incoming as incoming_ivr
-from celery.task import task
+from corehq.util.celery_utils import hqtask
 from dimagi.utils.logging import notify_exception
 from django.conf import settings
 
@@ -16,7 +16,7 @@ CELERY_QUEUE = ("sms_queue" if settings.SMS_QUEUE_ENABLED else
     settings.CELERY_MAIN_QUEUE)
 
 
-@task(queue=CELERY_QUEUE, ignore_result=True)
+@hqtask(queue=CELERY_QUEUE, ignore_result=True)
 def process_incoming_message(*args, **kwargs):
     try:
         from corehq.messaging.smsbackends.telerivet.views import TELERIVET_INBOUND_FIELD_MAP

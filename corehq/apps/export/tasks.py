@@ -1,11 +1,11 @@
 import urllib
 import logging
-from celery.task import task
 
 from corehq.apps.export.export import get_export_file, rebuild_export
 from corehq.apps.export.utils import convert_saved_export_to_export_instance
 from corehq.apps.export.dbaccessors import get_inferred_schema
 from corehq.apps.export.system_properties import MAIN_CASE_TABLE_PROPERTIES
+from corehq.util.celery_utils import hqtask
 from couchexport.models import Format
 from couchexport.tasks import escape_quotes
 from soil.util import expose_cached_download
@@ -13,7 +13,7 @@ from soil.util import expose_cached_download
 logger = logging.getLogger('export_migration')
 
 
-@task
+@hqtask()
 def populate_export_download_task(export_instances, filters, download_id, filename=None, expiry=10 * 60 * 60):
     export_file = get_export_file(
         export_instances,
@@ -40,12 +40,12 @@ def populate_export_download_task(export_instances, filters, download_id, filena
     export_file.file.delete()
 
 
-@task(queue='background_queue', ignore_result=True)
+@hqtask(queue='background_queue', ignore_result=True)
 def rebuild_export_task(export_instance, last_access_cutoff=None, filter=None):
     rebuild_export(export_instance, last_access_cutoff, filter)
 
 
-@task(queue='background_queue')
+@hqtask(queue='background_queue')
 def async_convert_saved_export_to_export_instance(domain, legacy_export, dryrun=False):
     export_instance, meta = convert_saved_export_to_export_instance(
         domain,
@@ -71,7 +71,7 @@ def async_convert_saved_export_to_export_instance(domain, legacy_export, dryrun=
         _log_conversion_meta(meta, column_meta, 'column')
 
 
-@task(queue='background_queue')
+@hqtask(queue='background_queue')
 def add_inferred_export_properties(sender, domain, case_type, properties):
     from corehq.apps.export.models import MAIN_TABLE, PathNode, InferredSchema, ScalarItem
     """
