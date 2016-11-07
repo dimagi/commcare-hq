@@ -73,6 +73,7 @@ class ReadableFormdataTest(SimpleTestCase):
                 "response": "foo",
                 "type": "Text",
                 'calculate': None,
+                'comment': None,
                 'required': False,
                 'relevant': None,
             }])
