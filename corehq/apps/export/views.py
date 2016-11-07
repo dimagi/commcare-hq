@@ -27,7 +27,7 @@ from corehq.form_processor.utils import use_new_exports
 from corehq.privileges import EXCEL_DASHBOARD, DAILY_SAVED_EXPORT
 from django_prbac.utils import has_privilege
 from django.utils.decorators import method_decorator
-import json
+import json, re
 from django.utils.safestring import mark_safe
 
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
@@ -1215,6 +1215,7 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
         })
 
 
+@location_safe
 class FormExportListView(BaseExportListView):
     urlname = 'list_form_exports'
     page_title = ugettext_noop("Export Forms")
@@ -1333,6 +1334,7 @@ class DeIdFormExportListView(FormExportListView):
     is_deid = True
 
 
+@location_safe
 class CaseExportListView(BaseExportListView):
     urlname = 'list_case_exports'
     page_title = ugettext_noop("Export Cases")
@@ -1673,9 +1675,10 @@ class GenericDownloadNewExportMixin(object):
     Supporting class for new style export download views
     """
     # Form used for rendering filters
-    filter_form_class = EmwfFilterFormExport
+    filter_form_class = None
     # To serve filters for export from mobile_user_and_group_slugs
-    export_filter_class = LocationRestrictedMobileWorkerFilter
+    export_filter_class = None
+    mobile_user_and_group_slugs_regex = re.compile('(emw=){1}([^&]*)(&){0,1}')
 
     def _get_download_task(self, in_data):
         export_filters, export_specs = self._process_filters_and_specs(in_data)
@@ -1725,21 +1728,23 @@ class GenericDownloadNewExportMixin(object):
     @property
     def page_context(self):
         parent_context = super(GenericDownloadNewExportMixin, self).page_context
-        parent_context['dynamic_filters'] = self.export_filter_class(
-            self.request,
-            self.request.domain
-        ).render()
+        if self.export_filter_class:
+            parent_context['dynamic_filters'] = self.export_filter_class(
+                self.request, self.request.domain
+            ).render()
         return parent_context
 
+    def _get_mobile_user_and_group_slugs(self, filter_slug):
+        matches = self.mobile_user_and_group_slugs_regex.findall(filter_slug)
+        return [n[1] for n in matches]
+
     def _process_filters_and_specs(self, in_data):
-        """Returns a the export filters and a list of JSON export specs
+        """
+        Returns a the export filters and a list of JSON export specs
         Override to hook fetching mobile_user_and_group_slugs
         """
         filter_form_data, export_specs = self._get_form_data_and_specs(in_data)
-        import re
-        regex = re.compile('(emw=){1}([^&]*)(&){0,1}')
-        matches = regex.findall(filter_form_data['emw'])
-        mobile_user_and_group_slugs = [n[1] for n in matches]
+        mobile_user_and_group_slugs = self._get_mobile_user_and_group_slugs(filter_form_data['emw'])
         try:
             export_filter = self.get_filters(filter_form_data, mobile_user_and_group_slugs)
         except ExportFormValidationException:
@@ -1779,6 +1784,8 @@ class DownloadNewFormExportView(GenericDownloadNewExportMixin, DownloadFormExpor
 class BulkDownloadNewFormExportView(DownloadNewFormExportView):
     urlname = 'new_bulk_download_forms'
     page_title = ugettext_noop("Download Form Exports")
+    filter_form_class = EmwfFilterFormExport
+    export_filter_class = LocationRestrictedMobileWorkerFilter
 
 
 @location_safe
