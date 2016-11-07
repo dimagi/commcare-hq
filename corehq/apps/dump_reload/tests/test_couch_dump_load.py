@@ -51,7 +51,7 @@ class CouchDumpLoadTest(TestCase):
 
             self.assertEqual(0, len(get_docs(db, doc_ids)))
 
-    def _dump_and_load(self, expected_objects, not_expected_objects=None):
+    def _dump_and_load(self, expected_objects, not_expected_objects=None, doc_to_doc_class=None):
         output_stream = StringIO()
         CouchDataDumper(self.domain_name, []).dump(output_stream)
 
@@ -67,8 +67,12 @@ class CouchDumpLoadTest(TestCase):
         with mock_out_couch() as fake_db:
             total_object_count, loaded_object_count = CouchDataLoader().load_objects(dump_lines)
 
+        def _dump_line_to_doc_class(line):
+            doc = json.loads(line)
+            return _doc_to_doc_class(doc, doc_to_doc_class)
+
         actual_model_counts = Counter([
-            get_document_class_by_doc_type(json.loads(line)['doc_type'])
+            _dump_line_to_doc_class(line)
             for line in dump_lines
         ])
         expected_object_counts = Counter(
@@ -79,7 +83,7 @@ class CouchDumpLoadTest(TestCase):
         self.assertEqual(expected_total_objects, sum(loaded_object_count.values()))
         self.assertEqual(expected_total_objects, total_object_count)
 
-        counts_in_fake_db = _get_doc_counts_from_fake_db(fake_db)
+        counts_in_fake_db = _get_doc_counts_from_fake_db(fake_db, doc_to_doc_class)
         self.assertDictEqual(dict(expected_object_counts), counts_in_fake_db)
 
         for object in expected_objects:
@@ -176,6 +180,40 @@ class CouchDumpLoadTest(TestCase):
 
         self._dump_and_load([web_user], [other_user])
 
+    def test_sync_log(self):
+        from casexml.apps.phone.models import SyncLog, SimplifiedSyncLog
+        from corehq.apps.users.models import WebUser, CommCareUser
+        from casexml.apps.phone.models import get_sync_log_class_by_format
+
+        web_user = WebUser.create(
+            domain=self.domain_name,
+            username='webuser_4',
+            password='secret',
+            email='webuser1@example.com',
+        )
+        mobile_user = CommCareUser.create(
+            self.domain_name, 'mobile_user1', 'secret'
+        )
+        other_user = CommCareUser.create(
+            'other_domain', 'mobile_user2', 'secret'
+        )
+        self.addCleanup(other_user.delete)
+
+        l1 = SyncLog(user_id=web_user._id)
+        l1.save()
+        l2 = SimplifiedSyncLog(user_id=mobile_user._id)
+        l2.save()
+        other_log = SyncLog(user_id=other_user._id)
+        other_log.save()
+
+        def _synclog_to_class(doc):
+            if doc['doc_type'] == 'SyncLog':
+                return get_sync_log_class_by_format(doc.get('log_format'))
+
+        expected_docs = [web_user, mobile_user, l1, l2]
+        not_expected_docs = [other_user, other_log]
+        self._dump_and_load(expected_docs, not_expected_docs, doc_to_doc_class=_synclog_to_class)
+
 
 class TestDumpLoadToggles(SimpleTestCase):
 
@@ -256,11 +294,19 @@ def _get_doc_counts_from_db(domain):
     }
 
 
-def _get_doc_counts_from_fake_db(fake_db):
+def _get_doc_counts_from_fake_db(fake_db, doc_to_doc_class=None):
     return dict(Counter(
-        get_document_class_by_doc_type(doc['doc_type'])
+        _doc_to_doc_class(doc, doc_to_doc_class)
         for doc in fake_db.mock_docs.values()
     ))
+
+
+def _doc_to_doc_class(doc, doc_to_doc_class):
+    if doc_to_doc_class:
+        doc_class = doc_to_doc_class(doc)
+        if doc_class:
+            return doc_class
+    return get_document_class_by_doc_type(doc['doc_type'])
 
 
 def _get_property_value(prop):

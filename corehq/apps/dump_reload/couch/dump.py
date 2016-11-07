@@ -4,7 +4,8 @@ from collections import Counter
 
 from couchdbkit import ResourceNotFound
 
-from corehq.apps.dump_reload.couch.id_providers import DocTypeIDProvider, ViewIDProvider, UserIDProvider
+from corehq.apps.dump_reload.couch.id_providers import DocTypeIDProvider, ViewIDProvider, UserIDProvider, \
+    SyncLogIDProvider
 from corehq.apps.dump_reload.exceptions import DomainDumpError
 from corehq.apps.dump_reload.interface import DataDumper
 from dimagi.utils.couch.database import iter_docs
@@ -38,8 +39,7 @@ DOC_PROVIDERS = {
     DocTypeIDProvider(['FixtureOwnership']),
     DocTypeIDProvider(['FixtureDataType']),
     DocTypeIDProvider(['FixtureDataItem']),
-    # 'SimplifiedSyncLog'
-    # 'SyncLog' ? don't think new domains use this at all
+    SyncLogIDProvider(),
     # 'AdminUserRole' ? don't think this is a doc type that gets saved to the DB
 }
 
@@ -69,7 +69,8 @@ def get_doc_ids_to_dump(domain):
     :return: A generator of (doc_class, list(doc_ids))
     """
     for id_provider in DOC_PROVIDERS:
-        yield itertools.chain(*id_provider.get_doc_ids(domain))
+        for doc_type, doc_ids in id_provider.get_doc_ids(domain):
+            yield doc_type, doc_ids
 
 
 class ToggleDumper(DataDumper):
