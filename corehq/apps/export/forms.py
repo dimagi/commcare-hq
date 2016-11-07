@@ -688,12 +688,13 @@ class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, GenericFilterCaseExp
             case_filter = []
         elif can_access_all_locations and self.dynamic_filter_class.show_project_data(mobile_user_and_group_slugs):
             # show projects data except user_ids for user types excluded
-            user_types = LocationRestrictedMobileWorkerFilter.selected_user_types(mobile_user_and_group_slugs)
+            user_types = self.dynamic_filter_class.selected_user_types(mobile_user_and_group_slugs)
             ids_to_exclude = self.get_user_ids_for_user_types(
                 admin=HQUserType.ADMIN not in user_types,
                 unknown=HQUserType.UNKNOWN not in user_types,
                 demo=HQUserType.DEMO_USER not in user_types,
-                commtrack=False,
+                # this should be true since we are excluding
+                commtrack=True,
             )
             case_filter = [NOT(OwnerFilter(ids_to_exclude))]
         else:

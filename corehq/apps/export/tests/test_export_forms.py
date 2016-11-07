@@ -9,7 +9,8 @@ from corehq.apps.export.filters import (
     FormSubmittedByFilter,
     OwnerFilter,
     GroupFormSubmittedByFilter,
-    UserTypeFilter
+    UserTypeFilter,
+    NOT
 )
 from corehq.apps.export.forms import (
     BaseFilterExportDownloadForm,
@@ -232,10 +233,36 @@ class TestFilterCaseESExportDownloadForm(TestCase):
         self.assertEqual(self.export_filter.export_user_filter, OwnerFilter)
         self.assertEqual(self.export_filter.dynamic_filter_class, CaseListFilter)
 
+    @patch('corehq.apps.reports.filters.case_list.CaseListFilter.show_all_data', return_value=True)
+    @patch('corehq.apps.reports.filters.case_list.CaseListFilter.show_project_data')
+    @patch.object(FilterCaseESExportDownloadForm, '_get_filters_from_slugs')
+    def test_get_case_filter_for_all_data(self, filters_from_slugs_patch, project_data_patch, *patches):
+        self.export_filter = FilterCaseESExportDownloadForm(self.domain, pytz.utc)
+        case_filters = self.export_filter.get_case_filter('', True)
+        assert not project_data_patch.called
+        assert not filters_from_slugs_patch.called
+        self.assertEqual(len(case_filters), 0)
+
+    @patch('corehq.apps.reports.filters.case_list.CaseListFilter.show_project_data', return_value=True)
+    @patch('corehq.apps.reports.filters.case_list.CaseListFilter.show_all_data', return_value=False)
+    @patch('corehq.apps.reports.filters.case_list.CaseListFilter.selected_user_types', return_value=[HQUserType.ADMIN])
+    @patch.object(FilterCaseESExportDownloadForm, '_get_filters_from_slugs')
+    @patch.object(FilterCaseESExportDownloadForm, 'get_user_ids_for_user_types', return_value=['123'])
+    def test_get_case_filter_for_project_data(self, fetch_user_ids_patch, filters_from_slugs_patch, *patches):
+        self.export_filter = FilterCaseESExportDownloadForm(self.domain, pytz.utc)
+        case_filters = self.export_filter.get_case_filter('', True)
+
+        fetch_user_ids_patch.assert_called_once_with(admin=False, unknown=True, demo=True, commtrack=True)
+        assert not filters_from_slugs_patch.called
+
+        self.assertIsInstance(case_filters[0], NOT)
+        self.assertIsInstance(case_filters[0].operand_filter, OwnerFilter)
+        self.assertEqual(case_filters[0].operand_filter.owner_id, ['123'])
+
     @patch.object(FilterCaseESExportDownloadForm, '_get_group_independent_filters', lambda x, y, z: [])
-    def test_get_case_filter_for_all_locations_access(self, case_sharing_locations_ids_patch,
-                                                      case_sharing_groups_patch, static_user_ids_for_group_patch,
-                                                      group_ids_patch):
+    def test_get_filters_from_slugs_for_all_locations_access(self, case_sharing_locations_ids_patch,
+                                                             case_sharing_groups_patch, static_user_ids_for_group_patch,
+                                                             group_ids_patch):
         group_ids_patch.return_value = self.group_ids
         self.export_filter = FilterCaseESExportDownloadForm(self.domain, pytz.utc)
         self.export_filter.get_case_filter(self.group_ids_slug, True)
@@ -246,9 +273,9 @@ class TestFilterCaseESExportDownloadForm(TestCase):
         assert not case_sharing_locations_ids_patch.called
 
     @patch.object(FilterCaseESExportDownloadForm, '_get_group_independent_filters', lambda x, y, z: [])
-    def test_get_case_filter_for_restricted_locations_access(self, case_sharing_locations_ids_patch,
-                                                             case_sharing_groups_patch,
-                                                             static_user_ids_for_group_patch, group_ids_patch):
+    def test_get_filters_from_slugs_for_restricted_locations_access(self, case_sharing_locations_ids_patch,
+                                                                    case_sharing_groups_patch,
+                                                                    static_user_ids_for_group_patch, group_ids_patch):
         self.export_filter = FilterCaseESExportDownloadForm(self.domain, pytz.utc)
         self.export_filter.get_case_filter(self.group_ids_slug, False)
 
@@ -265,7 +292,7 @@ class TestFilterCaseESExportDownloadForm(TestCase):
                                                           get_locations_ids, get_locations_filter,
                                                           get_es_user_types, *patches):
         self.export_filter = FilterCaseESExportDownloadForm(self.domain, pytz.utc)
-        self.export_filter._get_group_independent_filters(self.group_ids_slug, True)
+        self.export_filter.get_case_filter(self.group_ids_slug, True)
         get_es_user_types.assert_called_once_with(self.group_ids_slug)
         get_locations_filter.assert_called_once_with(self.group_ids_slug)
         get_locations_ids.assert_called_once_with(self.group_ids_slug)
@@ -279,7 +306,7 @@ class TestFilterCaseESExportDownloadForm(TestCase):
                                                                  get_locations_ids, get_locations_filter,
                                                                  get_es_user_types, *patches):
         self.export_filter = FilterCaseESExportDownloadForm(self.domain, pytz.utc)
-        self.export_filter._get_group_independent_filters(self.group_ids_slug, False)
+        self.export_filter.get_case_filter(self.group_ids_slug, False)
         assert not get_es_user_types.called
         get_locations_filter.assert_called_once_with(self.group_ids_slug)
         get_locations_ids.assert_called_once_with(self.group_ids_slug)
