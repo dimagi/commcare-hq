@@ -1,5 +1,6 @@
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseForbidden, HttpResponse, HttpResponseBadRequest
+from elasticsearch.exceptions import NotFoundError
 from tastypie import fields
 from tastypie.bundle import Bundle
 from tastypie.authentication import Authentication
@@ -9,14 +10,12 @@ from corehq.apps.api.models import ESXFormInstance, ESCase
 from corehq.apps.api.resources.auth import DomainAdminAuthentication, RequirePermissionAuthentication
 from corehq.apps.api.resources.v0_1 import _safe_bool
 from corehq.apps.api.resources.meta import CustomResourceMeta
-from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from corehq.elastic import get_es_new
 from couchforms.models import doc_types
 from casexml.apps.case import xform as casexml_xform
 from custom.hope.models import HOPECase, CC_BIHAR_NEWBORN, CC_BIHAR_PREGNANCY
 
-from corehq.apps.api.util import get_object_or_not_exist, object_does_not_exist, get_obj, form_to_es_form, \
-    case_to_es_case
+from corehq.apps.api.util import get_object_or_not_exist, object_does_not_exist, get_obj
 from corehq.apps.app_manager import util as app_manager_util
 from corehq.apps.app_manager.models import Application, RemoteApp
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
@@ -112,15 +111,13 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
 
     def obj_get(self, bundle, **kwargs):
         instance_id = kwargs['pk']
+        from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
         try:
-            form = FormAccessors(kwargs['domain']).get_form(instance_id)
-            es_form = form_to_es_form(form)
-            if es_form:
-                return es_form
-            else:
-                raise XFormNotFound
-        except XFormNotFound:
+            result = get_es_new().get(XFORM_INDEX_INFO.index, instance_id)
+        except NotFoundError:
             raise object_does_not_exist("XFormInstance", instance_id)
+
+        return result['_source']
 
     def xform_es(self, domain):
         return MOCK_XFORM_ES or XFormES(domain)
@@ -252,11 +249,13 @@ class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResourc
 
     def obj_get(self, bundle, **kwargs):
         case_id = kwargs['pk']
+        from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
         try:
-            case = CaseAccessors(kwargs['domain']).get_case(case_id)
-            return case_to_es_case(case)
-        except CaseNotFound:
+            result = get_es_new().get(CASE_INDEX_INFO.index, case_id)
+        except NotFoundError:
             raise object_does_not_exist("CommCareCase", case_id)
+
+        return result['_source']
 
     def case_es(self, domain):
         return MOCK_CASE_ES or CaseES(domain)
