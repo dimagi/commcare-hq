@@ -1,7 +1,6 @@
 from datetime import date
 
 from django.core.exceptions import ValidationError
-from django.test import TransactionTestCase
 
 from corehq.apps.accounting.models import (
     BillingAccount,
@@ -27,6 +26,8 @@ class TestCreditAdjustmentValidation(BaseAccountingTest):
 
     def test_clean(self):
         account = BillingAccount.objects.create(
+            name='Test Account',
+            created_by='test@example.com',
             currency=generator.init_default_currency(),
         )
         subscription = Subscription.objects.create(
