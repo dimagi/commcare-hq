@@ -63,6 +63,7 @@ class BaseDumpLoadTest(TestCase):
         expected_object_counts.update(self.default_objects_counts)
 
         models = list(expected_object_counts)
+        self._check_signals_handle_raw(models)
 
         output_stream = StringIO()
         SqlDataDumper(self.domain_name, []).dump(output_stream)
@@ -94,20 +95,16 @@ class BaseDumpLoadTest(TestCase):
         whitelist_receivers = [
             'django_digest.models._post_save_persist_partial_digests'
         ]
-        post_save_receivers = post_save.receivers
         for model in models:
-            target_id = id(model)
-            for receiver in post_save_receivers:
-                if receiver[0][1] == target_id:
-                    receiver_fn = receiver[1]()
-                    receiver_path = receiver_fn.__module__ + '.' + receiver_fn.__name__
-                    if receiver_path in whitelist_receivers:
-                        continue
-                    args = inspect.getargspec(receiver_fn).args
-                    message = 'Signal handler "{}" for model "{}" missing raw arg'.format(
-                        receiver_fn, model
-                    )
-                    self.assertIn('raw', args, message)
+            for receiver in post_save._live_receivers(model):
+                receiver_path = receiver.__module__ + '.' + receiver.__name__
+                if receiver_path in whitelist_receivers:
+                    continue
+                args = inspect.getargspec(receiver).args
+                message = 'Signal handler "{}" for model "{}" missing raw arg'.format(
+                    receiver, model
+                )
+                self.assertIn('raw', args, message)
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
