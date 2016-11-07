@@ -23,7 +23,9 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             FormplayerFrontend.Apps.Controller.listApps();
         },
         singleApp: function(appId) {
+            var user = FormplayerFrontend.request('currentUser');
             FormplayerFrontend.regions.breadcrumb.empty();
+            user.previewAppId = appId;
             FormplayerFrontend.Apps.Controller.singleApp(appId);
         },
         selectApp: function (appId) {

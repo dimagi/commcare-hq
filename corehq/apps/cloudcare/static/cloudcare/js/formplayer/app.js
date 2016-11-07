@@ -181,6 +181,7 @@ FormplayerFrontend.on("start", function (options) {
         FormplayerFrontend.Constants.ALLOWED_SAVED_OPTIONS
     );
     user.displayOptions = _.defaults(savedDisplayOptions, {
+        singleAppMode: options.singleAppMode,
         phoneMode: options.phoneMode,
         oneQuestionPerScreen: options.oneQuestionPerScreen,
     });
@@ -193,11 +194,16 @@ FormplayerFrontend.on("start", function (options) {
                 model: user,
             })
         );
+        if (user.displayOptions.phoneMode) {
+            FormplayerFrontend.regions.phoneModeNavigation.show(
+                new FormplayerFrontend.Layout.Views.PhoneNavigation({ appId: appId })
+            );
+            FormplayerFrontend.trigger('phone:back:hide');
+        }
         // will be the same for every domain. TODO: get domain/username/pass from django
         if (this.getCurrentRoute() === "") {
-            if (options.phoneMode) {
+            if (user.displayOptions.singleAppMode) {
                 appId = options.apps[0]['_id'];
-                user.previewAppId = appId;
 
                 FormplayerFrontend.trigger('setAppDisplayProperties', options.apps[0]);
                 FormplayerFrontend.trigger("app:singleApp", appId);
@@ -413,7 +419,7 @@ FormplayerFrontend.on('navigateHome', function() {
         currentUser = FormplayerFrontend.request('currentUser');
     urlObject.clearExceptApp();
     FormplayerFrontend.regions.breadcrumb.empty();
-    if (currentUser.displayOptions.phoneMode) {
+    if (currentUser.displayOptions.singleAppMode) {
         appId = FormplayerFrontend.request('getCurrentAppId');
         FormplayerFrontend.navigate("/single_app/" + appId, { trigger: true });
     } else {

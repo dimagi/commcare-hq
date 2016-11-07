@@ -344,6 +344,12 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
         template: "#breadcrumb-list-template",
         childView: Views.BreadcrumbView,
         childViewContainer: "ol",
+        events: {
+            'click .js-home': 'onClickHome',
+        },
+        onClickHome: function() {
+            FormplayerFrontend.trigger('navigateHome');
+        },
     });
 
     Views.DetailView = Marionette.ItemView.extend({
