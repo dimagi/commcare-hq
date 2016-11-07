@@ -54,6 +54,7 @@ class SqlDataLoader(DataLoader):
         def _process_chunk(chunk, total_object_counts=total_object_counts, load_stats_by_db=load_stats_by_db):
             chunk_stats = load_objects(chunk)
             total_object_counts.append(len(chunk))
+            self.stdout.write('Loaded {} SQL objects'.format(sum(total_object_counts)))
             _update_stats(load_stats_by_db, chunk_stats)
 
         chunk = []

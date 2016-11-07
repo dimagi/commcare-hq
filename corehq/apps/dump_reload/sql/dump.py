@@ -62,7 +62,7 @@ class SqlDataDumper(DataDumper):
     @allow_form_processing_queries()
     def dump(self, output_stream):
         stats = Counter()
-        objects = get_objects_to_dump(self.domain, self.excludes, stats_counter=stats)
+        objects = get_objects_to_dump(self.domain, self.excludes, stats_counter=stats, stdout=self.stdout)
         JsonLinesSerializer().serialize(
             objects,
             use_natural_foreign_keys=False,
@@ -72,7 +72,7 @@ class SqlDataDumper(DataDumper):
         return stats
 
 
-def get_objects_to_dump(domain, excludes, stats_counter=None):
+def get_objects_to_dump(domain, excludes, stats_counter=None, stdout=None):
     """
     :param domain: domain name to filter with
     :param app_list: List of (app_config, model_class) tuples to dump
@@ -82,8 +82,11 @@ def get_objects_to_dump(domain, excludes, stats_counter=None):
     if stats_counter is None:
         stats_counter = Counter()
     for model_class, query in get_querysets_to_dump(domain, excludes):
+        model_label = get_model_label(model_class)
+        if stdout:
+            stdout.write('Dumping {}\n'.format(model_label))
         for obj in query.iterator():
-            stats_counter.update([get_model_label(model_class)])
+            stats_counter.update([model_label])
             yield obj
 
 

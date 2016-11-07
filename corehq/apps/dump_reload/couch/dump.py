@@ -8,6 +8,8 @@ from corehq.apps.dump_reload.couch.id_providers import DocTypeIDProvider, ViewID
     SyncLogIDProvider
 from corehq.apps.dump_reload.exceptions import DomainDumpError
 from corehq.apps.dump_reload.interface import DataDumper
+from dimagi.utils.chunked import chunked
+from dimagi.utils.couch.bulk import get_docs
 from dimagi.utils.couch.database import iter_docs
 
 DOC_PROVIDERS = {
@@ -49,18 +51,18 @@ class CouchDataDumper(DataDumper):
     def dump(self, output_stream):
         stats = Counter()
         for doc_class, doc_ids in get_doc_ids_to_dump(self.domain):
-            stats += _dump_docs(doc_class, doc_ids, output_stream)
+            stats += self._dump_docs(doc_class, doc_ids, output_stream)
         return stats
 
-
-def _dump_docs(doc_class, doc_ids, output_stream):
-    model_label = '{}.{}'.format(doc_class._meta.app_label, doc_class.__name__)
-    count = 0
-    for doc in iter_docs(doc_class.get_db(), doc_ids):
-        count += 1
-        json.dump(doc, output_stream)
-        output_stream.write('\n')
-    return Counter({model_label: count})
+    def _dump_docs(self, doc_class, doc_ids, output_stream):
+        model_label = '{}.{}'.format(doc_class._meta.app_label, doc_class.__name__)
+        self.stdout.write('Dumped {}\n'.format(model_label))
+        count = 0
+        for doc in iter_docs(doc_class.get_db(), doc_ids, chunksize=500):
+            count += 1
+            json.dump(doc, output_stream)
+            output_stream.write('\n')
+        return Counter({model_label: count})
 
 
 def get_doc_ids_to_dump(domain):
@@ -81,6 +83,8 @@ class ToggleDumper(DataDumper):
             count += 1
             json.dump(toggle, output_stream)
             output_stream.write('\n')
+
+        self.stdout.write('Dumped {} Toggles\n'.format(count))
         return Counter({'Toggle': count})
 
     def _get_toggles_to_migrate(self):
@@ -133,4 +137,5 @@ class DomainDumper(DataDumper):
         json.dump(domain_obj.to_json(), output_stream)
         output_stream.write('\n')
 
+        self.stdout.write('Dumping {} Domain\n'.format(1))
         return Counter({'Domain': 1})
