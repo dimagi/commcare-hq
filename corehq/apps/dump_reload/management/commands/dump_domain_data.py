@@ -58,7 +58,7 @@ class Command(BaseCommand):
         self.stdout.ending = '\n'
         self.stdout.write('{0} Dump Stats {0}'.format('-' * 32))
         for model in sorted(stats):
-            self.stdout.write("{:<40}: {}".format(model, stats[model]))
+            self.stdout.write("{:<50}: {}".format(model, stats[model]))
         self.stdout.write('{0}{0}'.format('-' * 38))
         self.stdout.write('Dumped {} objects'.format(sum(stats.values())))
         self.stdout.write('{0}{0}'.format('-' * 38))

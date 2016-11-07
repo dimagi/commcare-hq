@@ -19,7 +19,7 @@ class CouchDataLoader(DataLoader):
     def _get_db_for_doc_type(self, doc_type):
         if doc_type not in self._dbs:
             couch_db = get_db_by_doc_type(doc_type)
-            callback = LoaderCallback(self.success_counter)
+            callback = LoaderCallback(self.success_counter, self.stdout)
             db = IterDB(couch_db, new_edits=False, callback=callback)
             db.__enter__()
             self._dbs[doc_type] = db
@@ -40,8 +40,9 @@ class CouchDataLoader(DataLoader):
 
 
 class LoaderCallback(IterDBCallback):
-    def __init__(self, success_counter):
+    def __init__(self, success_counter, stdout=None):
         self.success_counter = success_counter
+        self.stdout = stdout
 
     def post_commit(self, operation, committed_docs, success_ids, errors):
         if errors:
@@ -57,6 +58,9 @@ class LoaderCallback(IterDBCallback):
                 success_doc_types.append(doc_label)
 
         self.success_counter.update(success_doc_types)
+
+        if self.stdout:
+            self.stdout.write('Loaded {} couch docs'.format(sum(self.success_counter.values())))
 
 
 class ToggleLoader(DataLoader):
@@ -80,6 +84,8 @@ class ToggleLoader(DataLoader):
                 existing_toggle.save()
 
             count += 1
+
+        self.stdout.write('Loaded {} Toggles'.format(count))
         return count, Counter({'Toggle': count})
 
 
@@ -105,5 +111,6 @@ class DomainLoader(DataLoader):
                 raise DataExistsException("Domain: {}".format(domain_name))
 
         Domain.get_db().bulk_save([domain_dict], new_edits=False)
+        self.stdout.write('Loaded Domain')
 
         return 1, Counter({'Domain': 1})

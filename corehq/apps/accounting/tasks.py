@@ -340,7 +340,7 @@ def send_subscription_reminder_emails_dimagi_contact(num_days):
                             .filter(is_active=True)
                             .filter(date_end=date_in_n_days)
                             .filter(do_not_email_reminder=False)
-                            .filter(account__dimagi_contact__isnull=False))
+                            .exclude(account__dimagi_contact=''))
     for subscription in ending_subscriptions:
         # only send reminder emails if the subscription isn't renewed
         if not subscription.is_renewed:
@@ -469,8 +469,10 @@ def weekly_digest():
             date_end__gte=today,
             is_active=True,
             is_trial=False,
-            account__dimagi_contact__isnull=True,
-        ))
+        ).exclude(
+            account__dimagi_contact='',
+        )
+    )
 
     if not ending_in_forty_days:
         log_accounting_info(
