@@ -51,10 +51,10 @@
 {% endblock %}
 
 {% block page_content %}
-    {% include 'importer/partials/help_message.html' %}
+    {% include 'case_importer_v1/partials/help_message.html' %}
 
     <form class="form-horizontal form-report"
-          action="{% url "corehq.apps.importer.views.excel_fields" domain %}"
+          action="{% url "corehq.apps.case_importer_v1.views.excel_fields" domain %}"
           method="post">
         {% csrf_token %}
         <input type="hidden" name="named_columns" value="{{named_columns}}" />
