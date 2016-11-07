@@ -24,6 +24,7 @@ class CaseListFilterUtils(EmwfUtils):
 
 class CaseListFilter(ExpandedMobileWorkerFilter):
     options_url = 'case_list_options'
+    default_selections = [('project_data', _("[Project Data]"))]
 
     @property
     @memoized
@@ -59,6 +60,6 @@ class CaseListFilter(ExpandedMobileWorkerFilter):
 
     def get_default_selections(self):
         if self.request.can_access_all_locations:
-            return [('project_data', _("[Project Data]"))]
+            return self.default_selections
         else:
             return self._get_assigned_locations_default()
