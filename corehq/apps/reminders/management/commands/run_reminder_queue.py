@@ -1,4 +1,6 @@
 from django.conf import settings
+
+from corehq.toggles import DATA_MIGRATION
 from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.reminders.models import CaseReminder
 from corehq.apps.reminders.tasks import fire_reminder
@@ -33,6 +35,8 @@ class ReminderEnqueuingOperation(GenericEnqueuingOperation):
 
     def enqueue_item(self, _id):
         domain = get_reminder_domain(_id)
+        if DATA_MIGRATION.enabled(domain):
+            return
         fire_reminder.delay(_id, domain)
 
     def enqueue_directly(self, reminder):
