@@ -10,6 +10,7 @@ from casexml.apps.stock.models import StockTransaction
 from corehq.apps.commtrack.const import SUPPLY_POINT_CASE_TYPE
 from corehq.apps.commtrack.processing import plan_rebuild_stock_state, \
     rebuild_stock_state
+from corehq import toggles
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.exceptions import XFormNotFound
@@ -249,6 +250,10 @@ class StockLevelsView(BaseCommTrackManageView):
     urlname = 'stock_levels'
     page_title = ugettext_noop("Stock Levels")
     template_name = 'commtrack/manage/stock_levels.html'
+
+    @method_decorator(toggles.LOCATION_TYPE_STOCK_RATES.required_decorator())
+    def dispatch(self, *args, **kwargs):
+        return super(StockLevelsView, self).dispatch(*args, **kwargs)
 
     def get_existing_stock_levels(self):
         loc_types = LocationType.objects.by_domain(self.domain)
