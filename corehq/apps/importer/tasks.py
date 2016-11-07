@@ -82,12 +82,13 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
                 )
             else:
                 properties = set().union(*map(lambda c: set(c.dynamic_case_properties().keys()), cases))
-                add_inferred_export_properties.delay(
-                    'CaseImporter',
-                    domain,
-                    case_type,
-                    properties,
-                )
+                if case_type:
+                    add_inferred_export_properties.delay(
+                        'CaseImporter',
+                        domain,
+                        case_type,
+                        properties,
+                    )
         return err
 
     for i in range(row_count):
