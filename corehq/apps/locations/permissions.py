@@ -217,7 +217,7 @@ def can_edit_form_location(domain, web_user, form):
         if domain_obj.supports_multiple_locations_per_user:
             form_locations = [loc.sql_location for loc in form_user.locations]
         else:
-            form_locations = form_user.get_assigned_sql_locations(domain)
+            form_locations = form_user.get_sql_locations(domain)
         for location in form_locations:
             if user_can_edit_location(web_user, location, domain_obj):
                 return True
@@ -232,7 +232,7 @@ def can_edit_form_location(domain, web_user, form):
     form_user = CouchUser.get_by_user_id(form.user_id)
     if not form_user:
         return False  # It's a special form, deny to be safe
-    form_location_ids = form_user.get_assigned_location_ids(domain)
+    form_location_ids = form_user.get_location_ids(domain)
     return user_can_access_any_location_id(domain, web_user, form_location_ids)
 
 
