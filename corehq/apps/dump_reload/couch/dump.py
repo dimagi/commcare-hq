@@ -40,7 +40,6 @@ DOC_PROVIDERS = {
     DocTypeIDProvider(['FixtureDataType']),
     DocTypeIDProvider(['FixtureDataItem']),
     SyncLogIDProvider(),
-    # 'AdminUserRole' ? don't think this is a doc type that gets saved to the DB
 }
 
 
