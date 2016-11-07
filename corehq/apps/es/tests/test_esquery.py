@@ -142,7 +142,7 @@ class TestESQuery(ElasticTestMixin, TestCase):
         self.checkQuery(query, json_output)
 
     @patch('corehq.apps.locations.models.SQLLocation.objects.get_locations_and_children_ids')
-    def test_users_at_locations_and_descendants_query(self, locations_patch):
+    def test_users_at_locations_and_descendants(self, locations_patch):
         location_ids = ['09d1a58cb849e53bb3a456a5957d998a', '09d1a58cb849e53bb3a456a5957d99ba']
         children_ids = ['19d1a58cb849e53bb3a456a5957d998a', '19d1a58cb849e53bb3a456a5957d99ba']
         all_ids = location_ids + children_ids
