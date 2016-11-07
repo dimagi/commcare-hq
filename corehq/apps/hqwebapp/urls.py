@@ -9,14 +9,13 @@ from two_factor.urls import urlpatterns as tf_urls
 from two_factor.gateways.twilio.urls import urlpatterns as tf_twilio_urls
 from corehq.apps.hqwebapp.views import (
     MaintenanceAlertsView, redirect_to_default,
-    landing_page, yui_crossdomain, password_change, no_permissions, login, logout, bug_report, debug_notify,
+    yui_crossdomain, password_change, no_permissions, login, logout, bug_report, debug_notify,
     quick_find, osdd, create_alert, activate_alert, deactivate_alert, jserror, dropbox_upload, domain_login,
     retrieve_download, toggles_js, couch_doc_counts, server_up)
 
 urlpatterns = [
     url(r'^$', redirect_to_default),
     url(r'^homepage/$', redirect_to_default, name='homepage'),
-    url(r'^default_landing/$', landing_page, name='landing_page'),
     url(r'^crossdomain.xml$', yui_crossdomain, name='yui_crossdomain'),
     url(r'^serverup.txt$', server_up),
     url(r'^change_password/$', password_change, name='password_change'),
