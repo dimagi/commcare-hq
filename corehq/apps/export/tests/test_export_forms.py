@@ -5,7 +5,12 @@ import pytz
 from django.test import SimpleTestCase, TestCase
 from mock import patch
 
-from corehq.apps.export.filters import FormSubmittedByFilter, OwnerFilter, GroupFormSubmittedByFilter
+from corehq.apps.export.filters import (
+    FormSubmittedByFilter,
+    OwnerFilter,
+    GroupFormSubmittedByFilter,
+    UserTypeFilter
+)
 from corehq.apps.export.forms import (
     BaseFilterExportDownloadForm,
     EmwfFilterFormExport,
@@ -16,6 +21,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.reports.filters.case_list import CaseListFilter
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.reports.models import HQUserType
 
 
 @patch('corehq.apps.reports.util.get_first_form_submission_received', lambda x: datetime.datetime(2015, 1, 1))
@@ -99,6 +105,19 @@ class TestEmwfFilterExportMixin(TestCase):
         self.filter_export = EmwfFilterFormExport(self.domain, pytz.utc)
         self.assertEqual(self.filter_export._get_es_user_types(['t__0', 't__1']), [0, 1])
 
+
+@patch('corehq.apps.reports.util.get_first_form_submission_received', lambda x: datetime.datetime(2015, 1, 1))
+class TestEmwfFilterFormExportFilters(TestCase):
+    def setUp(self):
+        self.domain = Domain(name="testapp", is_active=True)
+
+    def test_attributes(self):
+        export_filter = EmwfFilterFormExport(self.domain, pytz.utc)
+
+        self.assertTrue(export_filter.skip_layout)
+        self.assertEqual(export_filter.export_user_filter, FormSubmittedByFilter)
+        self.assertEqual(export_filter.dynamic_filter_class, LocationRestrictedMobileWorkerFilter)
+
     @patch('corehq.apps.export.filters.get_groups_user_ids')
     def test_get_group_filter(self, patch_object):
         self.filter_export = EmwfFilterFormExport(self.domain, pytz.utc)
@@ -114,21 +133,62 @@ class TestEmwfFilterExportMixin(TestCase):
         }
         self.assertEqual(group_filter.to_es_filter(), expected_filter)
 
+    @patch('corehq.apps.export.forms.EmwfFilterFormExport._get_es_user_types',
+           lambda x, y: [HQUserType.REGISTERED])
+    @patch('corehq.apps.export.forms.EmwfFilterFormExport.get_user_ids_for_user_types')
+    def test_get_user_type_filter_for_mobile(self, fetch_user_ids_patch):
+        self.filter_export = EmwfFilterFormExport(self.domain, pytz.utc)
+        user_filters = self.filter_export._get_user_type_filter('')
+        fetch_user_ids_patch.assert_called_once_with(admin=False, demo=False, unknown=False, commtrack=False)
+        self.assertIsInstance(user_filters[0], UserTypeFilter)
+        self.assertEqual(user_filters[0].user_types, EmwfFilterFormExport._USER_MOBILE)
+
+    @patch('corehq.apps.export.forms.EmwfFilterFormExport._get_es_user_types', lambda x, y: [HQUserType.ADMIN])
+    @patch('corehq.apps.export.forms.EmwfFilterFormExport.get_user_ids_for_user_types')
+    def test_get_user_type_filter_for_admin(self, fetch_user_ids_patch):
+        self.filter_export = EmwfFilterFormExport(self.domain, pytz.utc)
+        self.user_ids = ['e80c5e54ab552245457d2546d0cdbb03', 'e80c5e54ab552245457d2546d0cdbb04']
+        fetch_user_ids_patch.return_value = self.user_ids
+        user_filters = self.filter_export._get_user_type_filter('')
+        fetch_user_ids_patch.assert_called_once_with(admin=True, demo=False, unknown=False, commtrack=False)
+        self.assertIsInstance(user_filters[0], FormSubmittedByFilter)
+        self.assertEqual(user_filters[0].submitted_by, self.user_ids)
+
+    @patch('corehq.apps.export.forms.EmwfFilterFormExport._get_es_user_types',
+           lambda x, y: [HQUserType.REGISTERED, HQUserType.ADMIN])
+    @patch('corehq.apps.export.forms.EmwfFilterFormExport.get_user_ids_for_user_types')
+    def test_get_user_type_filter_for_admin_and_mobile(self, fetch_user_ids_patch):
+        self.filter_export = EmwfFilterFormExport(self.domain, pytz.utc)
+        self.user_ids = ['e80c5e54ab552245457d2546d0cdbb03', 'e80c5e54ab552245457d2546d0cdbb04']
+        fetch_user_ids_patch.return_value = self.user_ids
+        user_filters = self.filter_export._get_user_type_filter('')
+        fetch_user_ids_patch.assert_called_once_with(admin=True, demo=False, unknown=False, commtrack=False)
+
+        self.assertIsInstance(user_filters[0], UserTypeFilter)
+        self.assertEqual(user_filters[0].user_types, EmwfFilterFormExport._USER_MOBILE)
+
+        self.assertIsInstance(user_filters[1], FormSubmittedByFilter)
+        self.assertEqual(user_filters[1].submitted_by, self.user_ids)
+
+    @patch('corehq.apps.export.forms.EmwfFilterFormExport._get_es_user_types', lambda x, y: [HQUserType.UNKNOWN])
+    @patch('corehq.apps.export.forms.EmwfFilterFormExport.get_user_ids_for_user_types')
+    def test_get_user_type_filter_for_unknown(self, fetch_user_ids_patch):
+        self.filter_export = EmwfFilterFormExport(self.domain, pytz.utc)
+        self.user_ids = ['e80c5e54ab552245457d2546d0cdbb03', 'e80c5e54ab552245457d2546d0cdbb04']
+        fetch_user_ids_patch.return_value = self.user_ids
+        user_filters = self.filter_export._get_user_type_filter('')
+        fetch_user_ids_patch.assert_called_once_with(admin=False, demo=False, unknown=True, commtrack=False)
+        self.assertIsInstance(user_filters[0], FormSubmittedByFilter)
+        self.assertEqual(user_filters[0].submitted_by, self.user_ids)
+
+
 @patch('corehq.apps.reports.util.get_first_form_submission_received', lambda x: datetime.datetime(2015, 1, 1))
 @patch.object(EmwfFilterFormExport, '_get_datespan_filter', lambda x: None)
 @patch.object(EmwfFilterFormExport, '_get_group_filter')
 @patch.object(EmwfFilterFormExport, '_get_user_type_filter')
 @patch.object(EmwfFilterFormExport, '_get_users_filter')
 @patch.object(EmwfFilterFormExport, '_get_locations_filter')
-class TestEmwfFilterFormExportFilters(TestCase):
-    def test_attributes(self, *patches):
-        domain = Domain(name="testapp", is_active=True)
-        export_filter = EmwfFilterFormExport(domain, pytz.utc)
-
-        self.assertTrue(export_filter.skip_layout)
-        self.assertEqual(export_filter.export_user_filter, FormSubmittedByFilter)
-        self.assertEqual(export_filter.dynamic_filter_class, LocationRestrictedMobileWorkerFilter)
-
+class TestEmwfFilterFormExportFormFilters(TestCase):
     def test_get_form_filter_for_all_locations_access(self, locations_patch, users_patch, user_type_patch,
                                                       group_patch):
         domain = Domain(name="testapp", is_active=True)
