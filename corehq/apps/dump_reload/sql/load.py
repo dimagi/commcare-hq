@@ -22,14 +22,14 @@ from corehq.sql_db.config import partition_config
 
 
 PARTITIONED_MODEL_SHARD_ID_FIELDS = {
-    'form_processor.XFormInstanceSQL': 'form_id',
-    'form_processor.XFormAttachmentSQL': 'form',
-    'form_processor.XFormOperationSQL': 'form',
-    'form_processor.CommCareCaseSQL': 'case_id',
-    'form_processor.CommCareCaseIndexSQL': 'case',
-    'form_processor.CaseTransaction': 'case',
-    'form_processor.LedgerValue': 'case',
-    'form_processor.LedgerTransaction': 'case',
+    'form_processor.xforminstancesql': 'form_id',
+    'form_processor.xformattachmentsql': 'form',
+    'form_processor.xformoperationsql': 'form',
+    'form_processor.commcarecasesql': 'case_id',
+    'form_processor.commcarecaseindexsql': 'case',
+    'form_processor.casetransaction': 'case',
+    'form_processor.ledgervalue': 'case',
+    'form_processor.ledgertransaction': 'case',
 }
 
 
@@ -101,7 +101,7 @@ def load_objects(objects):
 
     for db_alias, objects_for_db in _group_objects_by_db(objects):
         with transaction.atomic(using=db_alias):
-            load_stat = load_data_for_db(db_alias, objects)
+            load_stat = load_data_for_db(db_alias, objects_for_db)
 
         _update_stats(load_stats_by_db, [load_stat])
 
@@ -174,4 +174,4 @@ def _group_objects_by_db(objects):
 
 def _get_doc_id(app_label, model_json):
     field = PARTITIONED_MODEL_SHARD_ID_FIELDS[app_label]
-    return model_json[field]
+    return model_json['fields'][field]

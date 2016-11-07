@@ -48,7 +48,7 @@ class BaseDumpLoadTest(TestCase):
     @override_settings(ALLOW_FORM_PROCESSING_QUERIES=True)
     def delete_sql_data(self):
         for model_class, queryset in get_querysets_to_dump(self.domain_name, []):
-            collector = NestedObjects(using='default')
+            collector = NestedObjects(using=queryset.db)
             collector.collect(queryset)
             collector.delete()
 
@@ -83,7 +83,9 @@ class BaseDumpLoadTest(TestCase):
         expected_model_counts = _normalize_object_counter(expected_object_counts)
         actual_model_counts = Counter([json.loads(line)['model'] for line in dump_lines])
         expected_total_objects = sum(expected_object_counts.values())
-        self.assertDictEqual(expected_model_counts, actual_model_counts)
+        self.assertDictEqual(dict(expected_model_counts), dict(actual_model_counts))
+        expected_loaded_counts = _normalize_object_counter(expected_object_counts, for_loaded=True)
+        self.assertDictEqual(dict(expected_loaded_counts), dict(loaded_model_counts))
         self.assertEqual(expected_total_objects, sum(loaded_model_counts.values()))
         self.assertEqual(expected_total_objects, total_object_count)
 
@@ -515,10 +517,12 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         self._dump_and_load(expected_object_counts)
 
 
-def _normalize_object_counter(counter):
+def _normalize_object_counter(counter, for_loaded=False):
     """Converts a <Model Class> keyed counter to an model label keyed counter"""
     def _model_class_to_label(model_class):
-        return '{}.{}'.format(model_class._meta.app_label, model_class.__name__).lower()
+        prefix = '(sql) ' if for_loaded else ''
+        label = '{}{}.{}'.format(prefix, model_class._meta.app_label, model_class.__name__)
+        return label if for_loaded else label.lower()
     return Counter({
         _model_class_to_label(model_class): count
         for model_class, count in counter.items()
