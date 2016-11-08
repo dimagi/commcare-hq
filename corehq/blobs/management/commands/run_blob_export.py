@@ -22,34 +22,39 @@ class Command(BaseCommand):
     Example: ./manage.py run_blob_export [options] export_domain_apps domain
     """
     help = USAGE
-    option_list = BaseCommand.option_list + (
-        make_option('--log-dir', help="Migration log directory."),
-        make_option('--reset', action="store_true", default=False,
-            help="Discard any existing migration state."),
-        make_option('--chunk-size', type="int", default=100,
-            help="Maximum number of records to read from couch at once."),
-    )
+    args = '<domain>'
+
+    def add_arguments(self, parser):
+        parser.add_argument('-s', '--slug', dest='exporters', action='append', default=[],
+                            help='Exporter slug to run '
+                                 '(use multiple --slug to run multiple exporters or --all to run them all).')
+        parser.add_argument('--all', action='store_true', default=False,
+                            help='Run all exporters')
+        parser.add_argument('--reset', action='store_true', default=False,
+                            help='Discard any existing migration state.')
+        parser.add_argument('--chunk-size', type=int, default=100,
+                            help='Maximum number of records to read from couch at once.')
 
     @change_log_level('boto3', logging.WARNING)
     @change_log_level('botocore', logging.WARNING)
-    def handle(self, slug=None, domain=None, log_dir=None, reset=False,
-               chunk_size=100, **options):
-        try:
-            migrator = EXPORTERS[slug]
-        except KeyError:
-            raise CommandError(USAGE)
+    def handle(self, domain=None, reset=False,
+               chunk_size=100, all=None, **options):
+        exporters = options.get('exporters')
 
         if not domain:
             raise CommandError(USAGE)
 
-        if log_dir is None:
-            file = None
-        else:
-            file = os.path.join(log_dir, "{}-blob-export-{}.txt".format(
-                slug, datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
-            ))
-            assert not os.path.exists(file), file
-        migrator.by_domain(domain)
-        total, skips = migrator.migrate(file, reset=reset, chunk_size=chunk_size)
-        if skips:
-            sys.exit(skips)
+        if all:
+            exporters = list(EXPORTERS)
+
+        for exporter_slug in exporters:
+            try:
+                exporter = EXPORTERS[exporter_slug]
+            except KeyError:
+                raise CommandError(USAGE)
+
+            self.stdout.write("\nRunning exporter: {}".format(exporter_slug))
+            exporter.by_domain(domain)
+            total, skips = exporter.migrate(reset=reset, chunk_size=chunk_size)
+            if skips:
+                sys.exit(skips)
