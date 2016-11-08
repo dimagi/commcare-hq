@@ -1,6 +1,5 @@
+from .case_block import CaseBlock, CaseBlockError
 from .mock import (
-    CaseBlock,
-    CaseBlockError,
     CaseFactory,
     CaseIndex,
     CaseStructure,
