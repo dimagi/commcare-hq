@@ -83,7 +83,7 @@ from corehq.blobs.mixin import BlobHelper
 from corehq.blobs.models import BlobMigrationState
 from corehq.blobs.zipdb import get_export_filename
 from corehq.dbaccessors.couchapps.all_docs import get_doc_count_by_type
-from corehq.util.doc_processor.couch import CouchDocumentProvider, doc_type_tuples_to_dict
+from corehq.util.doc_processor.couch import CouchDocumentProvider, doc_type_tuples_to_dict, CouchViewDocumentProvider
 from corehq.util.doc_processor.couch import CouchProcessorProgressLogger
 from corehq.util.doc_processor.interface import (
     BaseDocProcessor, DOCS_SKIPPED_WARNING,
@@ -315,7 +315,7 @@ class BlobDbBackendExporter(BaseDocProcessor):
             print(PROCESSING_COMPLETE_MESSAGE.format(self.not_found, self.total_blobs))
 
     def should_process(self, doc):
-        return doc.get('domain') == self.domain and doc.get("external_blobs")
+        return doc.get("external_blobs")
 
 
 class SqlFormAttachmentExporter(BaseDocProcessor):
@@ -440,8 +440,19 @@ class ExportByDomain(Migrator):
             filename=filename, reset=reset, max_retry=max_retry, chunk_size=chunk_size
         )
 
+    def _get_document_provider(self):
+        return CouchDocumentProvider(self.iteration_key, self.doc_types, domain=self.domain)
+
     def _get_doc_migrator(self, filename):
         return self.doc_migrator_class(self.slug, self.domain, self.couchdb)
+
+
+class ExportMultimediaByDomain(ExportByDomain):
+    def _get_document_provider(self):
+        return CouchViewDocumentProvider(
+            self.couchdb, self.iteration_key,
+            "hqmedia/by_domain", view_keys=[self.domain]
+        )
 
 
 class ExportByDomainSQL(Migrator):
@@ -541,10 +552,7 @@ EXPORTERS = {m.slug: m for m in [
         ("Application-Deleted", Application),
         ("RemoteApp-Deleted", RemoteApp),
     ], BlobDbBackendExporter),
-    ExportByDomain("multimedia", [
-        hqmedia.CommCareAudio,
-        hqmedia.CommCareImage,
-        hqmedia.CommCareVideo,
+    ExportMultimediaByDomain("multimedia", [
         hqmedia.CommCareMultimedia,
     ], BlobDbBackendExporter),
     ExportByDomain("couch_xforms", [
