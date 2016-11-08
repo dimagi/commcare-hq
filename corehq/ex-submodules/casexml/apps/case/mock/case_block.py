@@ -9,44 +9,12 @@ from dimagi.utils.parsing import json_format_datetime
 class CaseBlock(dict):
     undefined = object()
 
-    def __init__(self,
-            case_id,
-            date_modified=None,
-            user_id=undefined,
-            owner_id=undefined,
-            external_id=undefined,
-            case_type=undefined,
-            case_name=undefined,
-            create=False,
-            date_opened=undefined,
-            update=None,
-            close=False,
-            index=None,
-            strict=True,
-        ):
+    def __init__(self, case_id, date_modified=None, user_id=undefined,
+                 owner_id=undefined, external_id=undefined, case_type=undefined,
+                 case_name=undefined, create=False, date_opened=undefined, update=None,
+                 close=False, index=None, strict=True):
         """
-        https://github.com/dimagi/commcare/wiki/casexml20
-
-        <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="" user_id="" date_modified="" >
-            <!-- user_id - At Most One: the GUID of the user responsible for this transaction -->
-            <!-- case_id - Exactly One: The id of the abstract case to be modified (even in the case of creation) -->
-            <!-- date_modified - Exactly One: The date and time of this operation -->
-            <create>         <!-- At Most One: Create action -->
-                <case_type/>             <!-- Exactly One: The ID for the type of case represented -->
-                <owner_id/>                 <!-- At Most One: The GUID of the current owner of this case -->
-                <case_name/>                <!-- Exactly One: A semantically meaningless but human readable name associated with the case -->
-            </create>
-            <update>         <!-- At Most One: Updates data for the case -->
-                <case_type/>             <!-- At Most One: Modifies the Case Type for the case -->
-                <case_name/>                <!-- At Most One: A semantically meaningless but human  readable name associated with the case -->
-                <date_opened/>              <!-- At Most One: Modifies the Date the case was opened -->
-                <owner_id/>                 <!-- At Most One: Modifies the owner of this case -->
-                <*/>                        <-- An Arbitrary Number: Creates or mutates a value  identified by the key provided -->
-            </update>
-            <index/>          <!-- At Most One: Contains a set of referenced GUID's to other cases -->
-            <close/>          <!-- At Most One: Closes the case -->
-         </case>
-
+        see https://github.com/dimagi/commcare/wiki/casexml20 for spec
         """
         super(CaseBlock, self).__init__()
         self._id = case_id
@@ -152,11 +120,11 @@ class CaseBlock(dict):
                 raise CaseBlockError("Can't transform to XML: {}; unexpected type {}.".format(value, type(value)))
 
         def dict_to_xml(block, dct):
-            if dct.has_key('_attrib'):
+            if '_attrib' in dct:
                 for (key, value) in dct['_attrib'].items():
                     if value is not CaseBlock.undefined:
                         block.set(key, fmt(value))
-            if dct.has_key('_text'):
+            if '_text' in dct:
                 block.text = unicode(dct['_text'])
 
             for (key, value) in sorted(dct.items(), key=sort_key):
