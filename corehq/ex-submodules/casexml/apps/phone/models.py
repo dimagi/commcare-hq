@@ -181,7 +181,7 @@ class OTARestoreCommCareUser(OTARestoreUser):
 
     @property
     def sql_locations(self):
-        return self._couch_user.sql_locations
+        return self._couch_user.get_assigned_sql_locations
 
     @property
     def locations(self):
