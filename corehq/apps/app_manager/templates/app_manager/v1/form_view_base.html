@@ -26,7 +26,6 @@
     <script src="{% static 'syntaxhighlighter/scripts/shBrushXml.js' %}"></script>
     {% endcompress %}
     <script src="{% static 'style/ko/knockout_subscribables.ko.js' %}"></script>
-    <script src="{% static 'jquery.caret/dist/jquery.caret-1.5.2.min.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -79,7 +78,7 @@
                         $(".source-readonly").hide();
                         $(".source-edit").show();
                         $.get($(this).data('href'), function (data) {
-                            $("#xform-source-edit").text(data).caret(0);
+                            $("#xform-source-edit").text(data).blur();
                         }, 'json');
                     } else {
                         // Plain click: view form source
