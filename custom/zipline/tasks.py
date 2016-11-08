@@ -1,6 +1,6 @@
 import json
 import requests
-from celery.task import task
+from corehq.util.celery_utils import hqtask
 from custom.zipline.api import get_order_update_critical_section_key
 from custom.zipline.models import EmergencyOrder, EmergencyOrderStatusUpdate
 from django.conf import settings
@@ -22,7 +22,7 @@ RETRY_INTERVAL = 5
 MAX_ATTEMPTS = 3
 
 
-@task(ignore_result=True)
+@hqtask(ignore_result=True)
 def send_emergency_order_request(order_id, attempt=1):
     try:
         with CriticalSection(

@@ -5,11 +5,12 @@ import logging
 
 from celery.schedules import crontab
 
-from celery.task import task, periodic_task
+from celery.task import periodic_task
 from django.db import transaction
 from psycopg2._psycopg import DatabaseError
 
 from corehq.apps.locations.models import SQLLocation
+from corehq.util.celery_utils import hqtask
 from corehq.util.decorators import serial_task
 from custom.ilsgateway.slab.reminders.stockout import StockoutReminder
 from custom.ilsgateway.tanzania.reminders import REMINDER_MONTHLY_SOH_SUMMARY, REMINDER_MONTHLY_DELIVERY_SUMMARY, \
@@ -335,7 +336,7 @@ def recalculate_on_parent_change(location, previous_parent_id, last_run):
     return type_location_map
 
 
-@task(queue='logistics_background_queue', ignore_result=True)
+@hqtask(queue='logistics_background_queue', ignore_result=True)
 def recalculation_on_location_change(domain, last_run):
     if not last_run:
         PendingReportingDataRecalculation.objects.filter(domain=domain).delete()

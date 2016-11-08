@@ -1,4 +1,3 @@
-from celery.task import task
 from dropbox.client import DropboxClient
 from dropbox.rest import ErrorResponse
 
@@ -7,11 +6,12 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
 from corehq.apps.users.models import CouchUser
+from corehq.util.celery_utils import hqtask
 from corehq.util.translation import localize
 from dimagi.utils.django.email import send_HTML_email
 
 
-@task
+@hqtask()
 def upload(dropbox_helper_id, access_token, size, max_retries):
     from .models import DropboxUploadHelper
     helper = DropboxUploadHelper.objects.get(id=dropbox_helper_id)

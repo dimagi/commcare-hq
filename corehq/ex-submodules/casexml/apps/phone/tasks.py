@@ -1,8 +1,9 @@
 from celery import current_task, current_app
 from celery.schedules import crontab
-from celery.task import periodic_task, task
+from celery.task import periodic_task
 from celery.signals import after_task_publish
 from casexml.apps.phone.cleanliness import set_cleanliness_flags_for_all_domains
+from corehq.util.celery_utils import hqtask
 
 
 ASYNC_RESTORE_QUEUE = 'async_restore_queue'
@@ -30,7 +31,7 @@ def force_update_cleanliness_flags():
     set_cleanliness_flags_for_all_domains(force_full=True)
 
 
-@task(queue=ASYNC_RESTORE_QUEUE)
+@hqtask(queue=ASYNC_RESTORE_QUEUE)
 def get_async_restore_payload(restore_config):
     """Process an async restore
     """

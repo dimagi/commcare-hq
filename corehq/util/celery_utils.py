@@ -1,7 +1,9 @@
 import kombu.five
 from celery import Celery
+from celery.task import task
 from django.conf import settings
 from datetime import datetime
+from functools import wraps
 from time import sleep, time
 
 
@@ -19,6 +21,24 @@ class TaskInfo(object):
 
 class InvalidTaskTypeError(Exception):
     pass
+
+
+def hqtask(*args, **kwargs):
+    defaults = {
+        'trail': False,
+    }
+
+    for name, value in defaults.items():
+        if name not in kwargs:
+            kwargs[name] = value
+
+    def decorator(fn):
+        @task(*args, **kwargs)
+        @wraps(fn)
+        def wrapper(*fn_args, **fn_kwargs):
+            return fn(*fn_args, **fn_kwargs)
+        return wrapper
+    return decorator
 
 
 def get_active_task_info(tasks):

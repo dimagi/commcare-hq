@@ -1,7 +1,6 @@
 from datetime import datetime
 from celery.exceptions import MaxRetriesExceededError
 from celery.schedules import crontab
-from celery.task import task
 from celery.task.base import periodic_task
 from celery.utils.log import get_task_logger
 from django.utils.translation import ugettext as _
@@ -9,6 +8,7 @@ from couchdbkit import ResourceConflict, BulkSaveError
 from casexml.apps.case.mock import CaseBlock
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.form_processor.models import UserArchivedRebuild
+from corehq.util.celery_utils import hqtask
 from corehq.util.log import SensitiveErrorMail
 from couchforms.exceptions import UnexpectedDeletedXForm
 from corehq.apps.domain.models import Domain
@@ -20,7 +20,7 @@ from casexml.apps.case.xform import get_case_ids_from_form
 logger = get_task_logger(__name__)
 
 
-@task(ErrorMail=SensitiveErrorMail)
+@hqtask(ErrorMail=SensitiveErrorMail)
 def bulk_upload_async(domain, user_specs, group_specs, location_specs):
     from corehq.apps.users.bulkupload import create_or_update_users_and_groups
     task = bulk_upload_async
@@ -38,7 +38,7 @@ def bulk_upload_async(domain, user_specs, group_specs, location_specs):
     }
 
 
-@task(rate_limit=2, queue='background_queue', ignore_result=True)  # limit this to two bulk saves a second so cloudant has time to reindex
+@hqtask(rate_limit=2, queue='background_queue', ignore_result=True)  # limit this to two bulk saves a second so cloudant has time to reindex
 def tag_cases_as_deleted_and_remove_indices(domain, case_ids, deletion_id, deletion_date):
     from corehq.apps.sms.tasks import delete_phone_numbers_for_owners
     from corehq.apps.reminders.tasks import delete_reminders_for_cases
@@ -48,7 +48,7 @@ def tag_cases_as_deleted_and_remove_indices(domain, case_ids, deletion_id, delet
     delete_reminders_for_cases.delay(domain, case_ids)
 
 
-@task(rate_limit=2, queue='background_queue', ignore_result=True, acks_late=True)
+@hqtask(rate_limit=2, queue='background_queue', ignore_result=True, acks_late=True)
 def tag_forms_as_deleted_rebuild_associated_cases(user_id, domain, form_id_list, deletion_id,
                                                   deletion_date, deleted_cases=None):
     """
@@ -74,7 +74,7 @@ def tag_forms_as_deleted_rebuild_associated_cases(user_id, domain, form_id_list,
         _rebuild_case_with_retries.delay(domain, case_id, detail)
 
 
-@task(queue='background_queue', ignore_result=True, acks_late=True)
+@hqtask(queue='background_queue', ignore_result=True, acks_late=True)
 def _remove_indices_from_deleted_cases_task(domain, case_ids):
     # todo: we may need to add retry logic here but will wait to see
     # what errors we should be catching
@@ -106,8 +106,8 @@ def remove_indices_from_deleted_cases(domain, case_ids):
     submit_case_blocks(case_updates, domain)
 
 
-@task(bind=True, queue='background_queue', ignore_result=True,
-      default_retry_delay=5 * 60, max_retries=3, acks_late=True)
+@hqtask(bind=True, queue='background_queue', ignore_result=True,
+        default_retry_delay=5 * 60, max_retries=3, acks_late=True)
 def _rebuild_case_with_retries(self, domain, case_id, detail):
     """
     Rebuild a case with retries
@@ -143,7 +143,7 @@ def resend_pending_invitations():
                 invitation.send_activation_email(days_to_expire - days)
 
 
-@task
+@hqtask()
 def turn_on_demo_mode_task(couch_user, domain):
     from corehq.apps.ota.utils import turn_on_demo_mode
 
@@ -156,7 +156,7 @@ def turn_on_demo_mode_task(couch_user, domain):
     }
 
 
-@task
+@hqtask()
 def reset_demo_user_restore_task(couch_user, domain):
     from corehq.apps.ota.utils import reset_demo_user_restore
 

@@ -1,5 +1,6 @@
 from celery.schedules import crontab
-from celery.task import task, periodic_task
+from celery.task import periodic_task
+from corehq.util.celery_utils import hqtask
 from custom.ewsghana.alerts.ongoing_non_reporting import OnGoingNonReporting
 from custom.ewsghana.alerts.ongoing_stockouts import OnGoingStockouts, OnGoingStockoutsRMS
 from custom.ewsghana.alerts.urgent_alerts import UrgentNonReporting, UrgentStockoutAlert
@@ -103,6 +104,6 @@ def reminder_to_visit_website():
         VisitWebsiteReminder(domain).send()
 
 
-@task(queue='logistics_reminder_queue')
+@hqtask(queue='logistics_reminder_queue')
 def send_soh_messages_task(alerts_obj, parser, stockouts, transactions):
     alerts_obj.send_messages(parser, stockouts, transactions)

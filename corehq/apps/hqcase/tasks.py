@@ -1,13 +1,13 @@
 import uuid
-from celery.task import task
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.hqcase.utils import submit_case_blocks, make_creating_casexml
 from corehq.apps.users.models import CommCareUser
 from soil import DownloadBase
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.util.celery_utils import hqtask
 
 
-@task
+@hqtask()
 def explode_case_task(user_id, domain, factor):
     explode_cases(user_id, domain, factor, explode_case_task)
 

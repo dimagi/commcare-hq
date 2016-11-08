@@ -13,13 +13,13 @@ from django.conf import settings
 
 from celery.schedules import crontab
 from celery.task import periodic_task
-from celery.task import task
 from celery.utils.log import get_task_logger
 
 from casexml.apps.case.xform import extract_case_blocks
 from corehq.apps.export.dbaccessors import get_all_daily_saved_export_instances
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.dates import iso_string_to_datetime
+from corehq.util.celery_utils import hqtask
 from couchexport.files import Temp
 from couchexport.groupexports import export_for_group, rebuild_export
 from couchexport.tasks import cache_file_to_be_served
@@ -82,7 +82,7 @@ def get_report_queue(report):
         return 'celery'
 
 
-@task(ignore_result=True)
+@hqtask(ignore_result=True)
 def send_report(notification_id):
     notification = ReportNotification.get(notification_id)
     try:
@@ -91,7 +91,7 @@ def send_report(notification_id):
         pass
 
 
-@task
+@hqtask()
 def create_metadata_export(download_id, domain, format, filename, datespan=None, user_ids=None):
     tmp_path = save_metadata_export_to_tempfile(domain, format, datespan, user_ids)
 
@@ -147,21 +147,21 @@ def saved_exports():
         rebuild_export_task.delay(daily_saved_export, last_access_cutoff)
 
 
-@task(queue='background_queue', ignore_result=True)
+@hqtask(queue='background_queue', ignore_result=True)
 def rebuild_export_task(groupexport_id, index, last_access_cutoff=None, filter=None):
     group_config = HQGroupExportConfiguration.get(groupexport_id)
     config, schema = group_config.all_exports[index]
     rebuild_export(config, schema, last_access_cutoff, filter=filter)
 
 
-@task(queue='saved_exports_queue', ignore_result=True)
+@hqtask(queue='saved_exports_queue', ignore_result=True)
 def export_for_group_async(group_config):
     # exclude exports not accessed within the last 7 days
     last_access_cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
     export_for_group(group_config, last_access_cutoff=last_access_cutoff)
 
 
-@task(queue='saved_exports_queue', ignore_result=True)
+@hqtask(queue='saved_exports_queue', ignore_result=True)
 def rebuild_export_async(config, schema):
     rebuild_export(config, schema)
 
@@ -261,7 +261,7 @@ def apps_update_calculated_properties():
         es.update(APP_INDEX, ES_META['apps'].type, r["_id"], body={"doc": calced_props})
 
 
-@task(ignore_result=True)
+@hqtask(ignore_result=True)
 def export_all_rows_task(ReportClass, report_state):
     report = object.__new__(ReportClass)
     report.__setstate__(report_state)
@@ -302,7 +302,7 @@ def _store_excel_in_redis(file):
     return hash_id
 
 
-@task
+@hqtask()
 def build_form_multimedia_zip(
         domain,
         xmlns,

@@ -1,9 +1,9 @@
-from celery.task import task
 from functools import wraps
 import logging
 import requests
 from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.util.global_request import get_request
+from corehq.util.celery_utils import hqtask
 from dimagi.utils.couch import release_lock
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.logging import notify_exception
@@ -114,8 +114,8 @@ def serial_task(unique_key, default_retry_delay=30, timeout=5*60, max_retries=3,
     """
     def decorator(fn):
         # register task with celery.  Note that this still happens on import
-        @task(bind=True, queue=queue, ignore_result=ignore_result,
-              default_retry_delay=default_retry_delay, max_retries=max_retries)
+        @hqtask(bind=True, queue=queue, ignore_result=ignore_result,
+                default_retry_delay=default_retry_delay, max_retries=max_retries)
         @wraps(fn)
         def _inner(self, *args, **kwargs):
             if settings.UNIT_TESTING:  # Don't depend on redis
@@ -150,8 +150,8 @@ def analytics_task(default_retry_delay=10, max_retries=3, queue='background_queu
         that is not our fault.
     '''
     def decorator(func):
-        @task(bind=True, queue=queue, ignore_result=True, acks_late=True,
-              default_retry_delay=default_retry_delay, max_retries=max_retries)
+        @hqtask(bind=True, queue=queue, ignore_result=True, acks_late=True,
+                default_retry_delay=default_retry_delay, max_retries=max_retries)
         @wraps(func)
         def _inner(self, *args, **kwargs):
             try:

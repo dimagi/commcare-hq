@@ -12,7 +12,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext
 
 from celery.schedules import crontab
-from celery.task import periodic_task, task
+from celery.task import periodic_task
 from couchdbkit import ResourceNotFound
 
 from couchexport.export import export_from_tables
@@ -55,6 +55,7 @@ from corehq.apps.users.models import FakeUser, WebUser
 from corehq.const import USER_DATE_FORMAT, USER_MONTH_FORMAT
 from corehq.util.view_utils import absolute_reverse
 from corehq.util.dates import get_previous_month_date_range
+from corehq.util.celery_utils import hqtask
 from corehq.util.soft_assert import soft_assert
 
 _invoicing_complete_soft_assert = soft_assert(
@@ -346,7 +347,7 @@ def send_subscription_reminder_emails_dimagi_contact(num_days):
             subscription.send_dimagi_ending_reminder_email()
 
 
-@task(ignore_result=True, acks_late=True)
+@hqtask(ignore_result=True, acks_late=True)
 @transaction.atomic()
 def create_wire_credits_invoice(domain_name,
                                 account_created_by,
@@ -383,7 +384,7 @@ def create_wire_credits_invoice(domain_name,
         record.save()
 
 
-@task(ignore_result=True, acks_late=True)
+@hqtask(ignore_result=True, acks_late=True)
 def send_purchase_receipt(payment_record, domain,
                           template_html, template_plaintext,
                           additional_context):
@@ -420,7 +421,7 @@ def send_purchase_receipt(payment_record, domain,
     )
 
 
-@task(queue='background_queue', ignore_result=True, acks_late=True)
+@hqtask(queue='background_queue', ignore_result=True, acks_late=True)
 def send_autopay_failed(invoice, payment_method):
     subscription = invoice.subscription
     auto_payer = subscription.account.auto_pay_user

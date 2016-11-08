@@ -1,11 +1,11 @@
-from celery.task import task
 from corehq.apps.products.bulk import import_products
+from corehq.util.celery_utils import hqtask
 from corehq.util.spreadsheets.excel_importer import SingleExcelImporter, UnknownFileRefException
 
 from django.utils.translation import ugettext as _
 
 
-@task
+@hqtask()
 def import_products_async(domain, file_ref_id):
     try:
         importer = SingleExcelImporter(import_products_async, file_ref_id)

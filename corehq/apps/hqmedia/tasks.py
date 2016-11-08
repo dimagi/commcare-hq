@@ -1,13 +1,13 @@
 import os
 import tempfile
 from wsgiref.util import FileWrapper
-from celery.task import task
 from celery.utils.log import get_task_logger
 from django.conf import settings
 import zipfile
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache
 from corehq.apps.hqmedia.models import CommCareMultimedia
+from corehq.util.celery_utils import hqtask
 from corehq.util.files import file_extention_from_filename
 from soil import DownloadBase
 from django.utils.translation import ugettext as _
@@ -18,7 +18,7 @@ logging = get_task_logger(__name__)
 MULTIMEDIA_EXTENSIONS = ('.mp3', '.wav', '.jpg', '.png', '.gif', '.3gp', '.mp4', '.zip', )
 
 
-@task
+@hqtask()
 def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_media=False,
                             license_name=None, author=None, attribution_notes=None):
     """
@@ -106,7 +106,7 @@ def process_bulk_upload_zip(processing_id, domain, app_id, username=None, share_
     status.save()
 
 
-@task
+@hqtask()
 def build_application_zip(include_multimedia_files, include_index_files, app,
                           download_id, build_profile_id=None, compress_zip=False, filename="commcare.zip"):
     from corehq.apps.hqmedia.views import iter_app_files
