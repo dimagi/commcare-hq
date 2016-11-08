@@ -131,9 +131,9 @@
 {% endblock %}
 
 {% block page_content %}
-    {% include 'importer/partials/help_message.html' %}
+    {% include 'case_importer_v1/partials/help_message.html' %}
 
-    <form action="{% url "corehq.apps.importer.views.excel_commit" domain %}"
+    <form action="{% url "corehq.apps.case_importer_v1.views.excel_commit" domain %}"
           method="post"
           id="field_form"
           class="form-horizontal">
@@ -160,7 +160,7 @@
                 <tbody>
                     {% for item in excel_fields %}
                     <tr>
-                        {% include "importer/partials/excel_field_row.html" %}
+                        {% include "case_importer_v1/partials/excel_field_row.html" %}
                     </tr>
                     {% endfor %}
                 </tbody>

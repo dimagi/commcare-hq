@@ -1,11 +1,11 @@
 from celery.task import task
 from xml.etree import ElementTree
-from corehq.apps.importer.util import get_importer_error_message
+from corehq.apps.case_importer_v1.util import get_importer_error_message
 from dimagi.utils.couch.database import is_bigcouch
 from casexml.apps.case.mock import CaseBlock, CaseBlockError
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.apps.importer.const import LookupErrors, ImportErrors
-from corehq.apps.importer import util as importer_util
+from corehq.apps.case_importer_v1.const import LookupErrors, ImportErrors
+from corehq.apps.case_importer_v1 import util as importer_util
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CouchUser
 from corehq.apps.export.tasks import add_inferred_export_properties
