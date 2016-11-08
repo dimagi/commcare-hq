@@ -535,19 +535,19 @@ MIGRATIONS = {m.slug: m for m in [
 ]}
 
 EXPORTERS = {m.slug: m for m in [
-    ExportByDomain("export_domain_apps", [
+    ExportByDomain("applications", [
         Application,
         RemoteApp,
         ("Application-Deleted", Application),
         ("RemoteApp-Deleted", RemoteApp),
     ], BlobDbBackendExporter),
-    ExportByDomain("export_domain_media", [
+    ExportByDomain("multimedia", [
         hqmedia.CommCareAudio,
         hqmedia.CommCareImage,
         hqmedia.CommCareVideo,
         hqmedia.CommCareMultimedia,
     ], BlobDbBackendExporter),
-    ExportByDomain("export_domain_couch_xform", [
+    ExportByDomain("couch_xforms", [
         xform.XFormInstance,
         ("XFormInstance-Deleted", xform.XFormInstance),
         xform.XFormArchived,
@@ -557,7 +557,7 @@ EXPORTERS = {m.slug: m for m in [
         xform.SubmissionErrorLog,
         ("HQSubmission", xform.XFormInstance),
     ], BlobDbBackendExporter),
-    ExportByDomainSQL("export_domain_sql_xform", [
+    ExportByDomainSQL("sql_xforms", [
         xform.XFormInstance,
         ("XFormInstance-Deleted", xform.XFormInstance),
         xform.XFormArchived,
@@ -567,12 +567,12 @@ EXPORTERS = {m.slug: m for m in [
         xform.SubmissionErrorLog,
         ("HQSubmission", xform.XFormInstance),
     ], SqlFormAttachmentExporter),
-    ExportByDomain("export_exports", [
+    ExportByDomain("saved_exports", [
         exports.CaseExportInstance,
         exports.FormExportInstance,
     ], BlobDbBackendExporter),
     SqlModelMigrator(
-        "export_demo_user_restores",
+        "demo_user_restores",
         DemoUserRestore,
         DemoUserRestoreExporter
     )

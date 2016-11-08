@@ -26,7 +26,7 @@ class Command(BaseCommand):
     args = '<domain>'
 
     def add_arguments(self, parser):
-        parser.add_argument('-s', '--slug', dest='exporters', action='append', default=[],
+        parser.add_argument('-e', '--exporter', dest='exporters', action='append', default=[],
                             help='Exporter slug to run '
                                  '(use multiple --slug to run multiple exporters or --all to run them all).')
         parser.add_argument('--all', action='store_true', default=False,
