@@ -292,7 +292,12 @@ def _login(req, domain_name, template_name):
     req.base_template = settings.BASE_TEMPLATE
 
     context = {}
-    if domain_name:
+    if settings.CUSTOM_LANDING_PAGE:
+        context.update({
+            'current_page': {'page_name': settings.CUSTOM_WELCOME_MESSAGE}
+        })
+        template_name = settings.CUSTOM_LANDING_TEMPLATE
+    elif domain_name:
         domain = Domain.get_by_name(domain_name)
         req_params = req.GET if req.method == 'GET' else req.POST
         context.update({

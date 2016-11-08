@@ -388,6 +388,7 @@ HQ_APPS = (
     'custom.care_pathways',
     'custom.common',
 
+    'custom.icds',
     'custom.icds_reports',
     'custom.pnlppgi',
 
