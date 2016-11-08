@@ -98,8 +98,7 @@ import corehq.apps.hqmedia.models as hqmedia
 import couchforms.models as xform
 from corehq.apps.app_manager.models import Application, RemoteApp
 from couchexport.models import SavedBasicExport
-from dimagi.utils.decorators.memoized import memoized
-
+import corehq.form_processor.models as sql_xform
 
 MIGRATION_INSTRUCTIONS = """
 There are {total} documents that may have attachments, and they must be
@@ -318,49 +317,7 @@ class BlobDbBackendExporter(BaseDocProcessor):
         return doc.get("external_blobs")
 
 
-class SqlFormAttachmentExporter(BaseDocProcessor):
-    def __init__(self, slug, domain):
-        from corehq.blobs.zipdb import get_blob_db_exporter, ZipBlobDB
-        self.slug = slug
-        self.db = get_blob_db_exporter(self.slug, domain)
-        self.total_blobs = 0
-        self.not_found = 0
-        self.domain = domain
-        if not isinstance(self.db, ZipBlobDB):
-            raise MigrationError(
-                "Expected to find zip blob db backend (got %r)" % self.db)
-
-    def handle_skip(self, doc):
-        return True  # ignore
-
-    def process_doc(self, doc):
-        from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        from_db = get_blob_db()
-        for attachment in FormAccessorSQL.get_attachments(doc['_id']):
-            bucket = attachment.blobdb_bucket()
-            blob_id = attachment.blob_id
-            info = BlobInfo(identifier=blob_id, length=attachment.content_length,
-                            digest="md5="+attachment.md5)
-            self.total_blobs += 1
-            try:
-                content = from_db.get(blob_id, bucket)
-            except NotFound:
-                self.not_found += 1
-            else:
-                with content:
-                    self.db.copy_blob(content, info, bucket)
-        return True
-
-    def processing_complete(self, skipped):
-        super(SqlFormAttachmentExporter, self).processing_complete(skipped)
-        if self.not_found:
-            print(PROCESSING_COMPLETE_MESSAGE.format(self.not_found, self.total_blobs))
-
-    def should_process(self, doc):
-        return doc.get('domain') == self.domain and doc.get("external_blobs")
-
-
-class DemoUserRestoreExporter(object):
+class SqlObjectExporter(object):
     def __init__(self, slug, domain):
         from corehq.blobs.zipdb import get_blob_db_exporter, ZipBlobDB
         self.slug = slug
@@ -373,6 +330,34 @@ class DemoUserRestoreExporter(object):
                 "Expected to find zip blob db backend (got %r)" % self.db)
 
     def process_object(self, object):
+        pass
+
+    def processing_complete(self):
+        if self.not_found:
+            print("{} {} objects processed, {} blobs not found".format(self.total_blobs, self.slug, self.not_found))
+        else:
+            print("{} {} objects processed".format(self.total_blobs, self.slug))
+
+
+class SqlFormAttachmentExporter(SqlObjectExporter):
+    def process_object(self, attachment):
+        from_db = get_blob_db()
+        bucket = attachment.blobdb_bucket()
+        blob_id = attachment.blob_id
+        info = BlobInfo(identifier=blob_id, length=attachment.content_length,
+                        digest="md5="+attachment.md5)
+        self.total_blobs += 1
+        try:
+            content = from_db.get(blob_id, bucket)
+        except NotFound:
+            self.not_found += 1
+        else:
+            with content:
+                self.db.copy_blob(content, info, bucket)
+
+
+class DemoUserRestoreExporter(SqlObjectExporter):
+    def process_object(self, object):
         blob_id = object.restore_blob_id
         info = BlobInfo(identifier=blob_id, length=object.content_length, digest=None)
         self.total_blobs += 1
@@ -384,12 +369,6 @@ class DemoUserRestoreExporter(object):
         else:
             with content:
                 self.db.copy_blob(content, info, DEFAULT_BUCKET)
-
-    def processing_complete(self):
-        if self.not_found:
-            print("{} objects processed, {} blobs not found".format(self.total_blobs, self.not_found))
-        else:
-            print("{} objects processed".format(self.total_blobs))
 
 
 class Migrator(object):
@@ -455,45 +434,6 @@ class ExportMultimediaByDomain(ExportByDomain):
         )
 
 
-class ExportByDomainSQL(Migrator):
-    domain = None
-
-    def __init__(self, slug, doc_types, doc_migrator_class):
-        self.slug = slug
-        self.doc_migrator_class = doc_migrator_class
-        self.doc_types = doc_types
-
-        sorted_types = sorted(doc_type_tuples_to_dict(self.doc_types))
-        self.iteration_key = "{}-blob-migration/{}".format(self.slug, " ".join(sorted_types))
-
-    def by_domain(self, domain):
-        self.domain = domain
-        self.iteration_key = self.iteration_key + '/domain=' + self.domain
-
-    def migrate(self, filename=None, reset=False, max_retry=2, chunk_size=100):
-        if not self.domain:
-            raise MigrationError("Must specify domain")
-
-        if os.path.exists(get_export_filename(self.slug, self.domain)):
-            raise MigrationError(
-                "{} exporter doesn't support resume. "
-                "To re-run the export use 'reset'".format(self.slug)
-            )
-
-        return super(ExportByDomainSQL, self).migrate(
-            filename=filename, reset=reset, max_retry=max_retry, chunk_size=chunk_size
-        )
-
-    def _get_doc_migrator(self, filename):
-        return self.doc_migrator_class(self.slug, self.domain)
-
-    def _get_document_provider(self):
-        return SqlDocumentProvider(self.iteration_key, FormReindexAccessor())
-
-    def _get_progress_logger(self):
-        return None
-
-
 class SqlModelMigrator(Migrator):
     def __init__(self, slug, model_class, migrator_class):
         self.slug = slug
@@ -505,14 +445,22 @@ class SqlModelMigrator(Migrator):
 
     def migrate(self, filename=None, reset=False, max_retry=2, chunk_size=100):
         from corehq.apps.dump_reload.sql.dump import get_all_models_in_domain
+        from corehq.apps.dump_reload.sql.dump import allow_form_processing_queries
 
         if not self.domain:
             raise MigrationError("Must specify domain")
 
+        if os.path.exists(get_export_filename(self.slug, self.domain)):
+            raise MigrationError(
+                "{} exporter doesn't support resume. "
+                "To re-run the export use 'reset'".format(self.slug)
+            )
+
         migrator = self.migrator_class(self.slug, self.domain)
 
-        for object in get_all_models_in_domain(self.model_class, self.domain):
-            migrator.process_object(object)
+        with allow_form_processing_queries():
+            for object in get_all_models_in_domain(self.model_class, self.domain):
+                migrator.process_object(object)
 
         migrator.processing_complete()
         return migrator.total_blobs, 0
@@ -565,16 +513,11 @@ EXPORTERS = {m.slug: m for m in [
         xform.SubmissionErrorLog,
         ("HQSubmission", xform.XFormInstance),
     ], BlobDbBackendExporter),
-    ExportByDomainSQL("sql_xforms", [
-        xform.XFormInstance,
-        ("XFormInstance-Deleted", xform.XFormInstance),
-        xform.XFormArchived,
-        xform.XFormDeprecated,
-        xform.XFormDuplicate,
-        xform.XFormError,
-        xform.SubmissionErrorLog,
-        ("HQSubmission", xform.XFormInstance),
-    ], SqlFormAttachmentExporter),
+    SqlModelMigrator(
+        "sql_xforms",
+        sql_xform.XFormAttachmentSQL,
+        SqlFormAttachmentExporter
+    ),
     ExportByDomain("saved_exports", [
         exports.CaseExportInstance,
         exports.FormExportInstance,

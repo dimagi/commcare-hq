@@ -52,7 +52,7 @@ class Command(BaseCommand):
             except KeyError:
                 raise CommandError(USAGE)
 
-            self.stdout.write("\nRunning exporter: {}".format(exporter_slug))
+            self.stdout.write("\nRunning exporter: {}\n{}".format(exporter_slug, '-' * 50))
             export_filename = get_export_filename(exporter_slug, domain)
             if os.path.exists(export_filename):
                 reset_export = False
