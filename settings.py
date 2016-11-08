@@ -437,7 +437,7 @@ INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
 
 # after login, django redirects to this URL
 # rather than the default 'accounts/profile'
-LOGIN_REDIRECT_URL = '/'
+LOGIN_REDIRECT_URL = 'homepage'
 
 
 REPORT_CACHE = 'default'  # or e.g. 'redis'
