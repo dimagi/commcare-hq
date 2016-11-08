@@ -1,11 +1,11 @@
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 
 from corehq.apps.groups.views import (
     add_group, delete_group, undo_delete_group, restore_group, edit_group,
     update_group_data, update_group_membership,
 )
 
-urlpatterns = patterns('corehq.apps.groups.views',
+urlpatterns = [
     url(r'^add_group/$',
         add_group,
         name='add_group'),
@@ -27,4 +27,4 @@ urlpatterns = patterns('corehq.apps.groups.views',
     url(r'^update_group_membership/(?P<group_id>[\w-]+)/$',
         update_group_membership,
         name='update_group_membership'),
-)
+]

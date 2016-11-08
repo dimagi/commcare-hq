@@ -58,11 +58,11 @@ submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
-    branches: []
+    branches: [2.31.0-jars]
   submodules/formtranslate-src:
     # let's leave this here even when empty
     # just so we always get latest master
-    branches: []
+    branches: [commcare_2.31.0-jars]
   submodules/django-digest-src:
     branches: []
   submodules/dimagi-utils-src:

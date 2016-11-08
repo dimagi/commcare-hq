@@ -45,6 +45,7 @@ describe('FormplayerFrontend Integration', function() {
 
             assert.deepEqual(user.displayOptions, {
                 phoneMode: undefined, // we don't store this option
+                singleAppMode: undefined,
                 oneQuestionPerScreen: true,
             });
         });

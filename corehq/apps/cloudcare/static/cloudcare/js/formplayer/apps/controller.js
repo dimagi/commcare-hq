@@ -23,11 +23,7 @@ FormplayerFrontend.module("Apps", function(Apps, FormplayerFrontend, Backbone, M
             var singleAppView = new Apps.Views.SingleAppView({
                 appId: appId,
             });
-            FormplayerFrontend.regions.phoneModeNavigation.show(
-                new FormplayerFrontend.Layout.Views.PhoneNavigation({ appId: appId })
-            );
             FormplayerFrontend.regions.main.show(singleAppView);
-            FormplayerFrontend.trigger('phone:back:hide');
         },
         listSettings: function() {
             var settingsView = new FormplayerFrontend.Layout.Views.SettingsView();

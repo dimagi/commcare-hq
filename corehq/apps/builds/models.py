@@ -190,6 +190,9 @@ class BuildSpec(DocumentSchema):
                 return item.label or self.get_label()
         return self.get_label()
 
+    def supports_j2me(self):
+        return self.get_menu_item_label() in CommCareBuildConfig.j2me_enabled_config_labels()
+
     def __str__(self):
         fmt = "{self.version}/"
         fmt += "latest" if self.latest else "{self.build_number}"

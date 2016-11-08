@@ -11,6 +11,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
 from corehq.apps.data_interfaces.utils import add_cases_to_case_group, archive_forms_old, archive_or_restore_forms
+from corehq.toggles import DATA_MIGRATION
 from .interfaces import FormManagementMode, BulkFormManagementInterface
 from .dispatcher import EditDataInterfaceDispatcher
 from dimagi.utils.django.email import send_HTML_email
@@ -91,7 +92,8 @@ def run_case_update_rules(now=None):
                .distinct()
                .order_by('domain'))
     for domain in domains:
-        run_case_update_rules_for_domain.delay(domain, now)
+        if not DATA_MIGRATION.enabled(domain):
+            run_case_update_rules_for_domain.delay(domain, now)
 
 
 @task(queue='background_queue', acks_late=True, ignore_result=True)

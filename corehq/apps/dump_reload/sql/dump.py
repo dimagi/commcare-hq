@@ -37,6 +37,9 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = {
     'ota.DemoUserRestore': UserIDFilter('demo_user_id', include_web_users=False),
     'tzmigration.TimezoneMigrationProgress': SimpleFilter('domain'),
     'products.SQLProduct': SimpleFilter('domain'),
+    'sms.MessagingEvent': SimpleFilter('domain'),
+    'sms.MessagingSubEvent': SimpleFilter('parent__domain'),
+    'sms.PhoneNumber': SimpleFilter('domain'),
 }
 
 
@@ -59,7 +62,7 @@ class SqlDataDumper(DataDumper):
     @allow_form_processing_queries()
     def dump(self, output_stream):
         stats = Counter()
-        objects = get_objects_to_dump(self.domain, self.excludes, stats_counter=stats)
+        objects = get_objects_to_dump(self.domain, self.excludes, stats_counter=stats, stdout=self.stdout)
         JsonLinesSerializer().serialize(
             objects,
             use_natural_foreign_keys=False,
@@ -69,12 +72,30 @@ class SqlDataDumper(DataDumper):
         return stats
 
 
-def get_objects_to_dump(domain, excludes, stats_counter=None):
+def get_objects_to_dump(domain, excludes, stats_counter=None, stdout=None):
     """
     :param domain: domain name to filter with
     :param app_list: List of (app_config, model_class) tuples to dump
     :param excluded_models: List of model_class classes to exclude
     :return: generator yielding models objects
+    """
+    if stats_counter is None:
+        stats_counter = Counter()
+    for model_class, query in get_querysets_to_dump(domain, excludes):
+        model_label = get_model_label(model_class)
+        if stdout:
+            stdout.write('Dumping {}\n'.format(model_label))
+        for obj in query.iterator():
+            stats_counter.update([model_label])
+            yield obj
+
+
+def get_querysets_to_dump(domain, excludes):
+    """
+    :param domain: domain name to filter with
+    :param app_list: List of (app_config, model_class) tuples to dump
+    :param excluded_models: List of model_class classes to exclude
+    :return: generator yielding query sets
     """
     excluded_apps, excluded_models = get_excluded_apps_and_models(excludes)
     app_config_models = _get_app_list(excluded_apps)
@@ -84,11 +105,11 @@ def get_objects_to_dump(domain, excludes, stats_counter=None):
         if model_class in excluded_models:
             continue
 
-        for object in get_all_models_in_domain(model_class, domain, stats_counter=stats_counter):
-            yield object
+        for model_class, queryset in get_all_model_querysets_for_domain(model_class, domain):
+            yield model_class, queryset
 
 
-def get_all_models_in_domain(model_class, domain, stats_counter=None):
+def get_all_model_querysets_for_domain(model_class, domain):
     using = router.db_for_read(model_class)
     if settings.USE_PARTITIONED_DATABASE and using == partition_config.get_proxy_db():
         using = partition_config.get_form_processing_dbs()
@@ -103,10 +124,7 @@ def get_all_models_in_domain(model_class, domain, stats_counter=None):
 
             filters = get_model_domain_filters(model_class, domain)
             for filter in filters:
-                for obj in queryset.filter(filter).iterator():
-                    if stats_counter:
-                        stats_counter.update([get_model_label(model_class)])
-                    yield obj
+                yield model_class, queryset.filter(filter)
 
 
 def get_model_domain_filters(model_class, domain):

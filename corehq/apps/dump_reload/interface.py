@@ -17,9 +17,11 @@ class DataDumper(six.with_metaclass(ABCMeta)):
     def slug(self):
         raise NotImplementedError
 
-    def __init__(self, domain, excludes):
+    def __init__(self, domain, excludes, stdout=None, stderr=None):
         self.domain = domain
         self.excludes = excludes
+        self.stdout = stdout or sys.stdout
+        self.stderr = stderr or sys.stderr
 
     @abstractmethod
     def dump(self, output_stream):

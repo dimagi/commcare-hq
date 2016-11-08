@@ -444,7 +444,7 @@ class SqlModelMigrator(Migrator):
         self.domain = domain
 
     def migrate(self, filename=None, reset=False, max_retry=2, chunk_size=100):
-        from corehq.apps.dump_reload.sql.dump import get_all_models_in_domain
+        from corehq.apps.dump_reload.sql.dump import get_all_model_querysets_for_domain
         from corehq.apps.dump_reload.sql.dump import allow_form_processing_queries
 
         if not self.domain:
@@ -459,8 +459,9 @@ class SqlModelMigrator(Migrator):
         migrator = self.migrator_class(self.slug, self.domain)
 
         with allow_form_processing_queries():
-            for object in get_all_models_in_domain(self.model_class, self.domain):
-                migrator.process_object(object)
+            for model_class, queryset in get_all_model_querysets_for_domain(self.model_class, self.domain):
+                for obj in queryset.iterator():
+                    migrator.process_object(obj)
 
         migrator.processing_complete()
         return migrator.total_blobs, 0
