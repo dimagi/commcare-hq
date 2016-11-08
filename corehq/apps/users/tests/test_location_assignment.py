@@ -1,4 +1,5 @@
 import copy
+from datetime import datetime
 
 from django.test import TestCase
 
@@ -32,6 +33,7 @@ class CCUserLocationAssignmentTest(TestCase):
             domain=self.domain,
             username='cc1',
             password='***',
+            last_login=datetime.now()
         )
 
     def tearDown(self):
@@ -139,6 +141,7 @@ class WebUserLocationAssignmentTest(TestCase):
             domain=self.domain,
             username='web1',
             password='***',
+            last_login=datetime.now()
         )
 
     def tearDown(self):

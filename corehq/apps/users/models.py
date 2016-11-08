@@ -1640,10 +1640,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 pass
         return []
 
-    def get_location_ids(self, domain):
+    def get_assigned_location_ids(self, domain):
         return self.assigned_location_ids
 
-    def get_sql_locations(self, domain):
+    def get_assigned_sql_locations(self, domain=None):
         return self.sql_locations
 
     def add_to_assigned_locations(self, location):
@@ -2130,6 +2130,18 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         if loc_id:
             return SQLLocation.objects.get_or_None(domain=domain, location_id=loc_id)
 
+    def get_assigned_location_ids(self, domain):
+        return getattr(self.get_domain_membership(domain), 'assigned_location_ids', None)
+
+    @memoized
+    def get_assigned_sql_locations(self, domain=None):
+        from corehq.apps.locations.models import SQLLocation
+        loc_ids = self.get_assigned_location_ids(domain)
+        if loc_ids:
+            return SQLLocation.objects.get_locations(loc_ids)
+        else:
+            return []
+
     @memoized
     def get_location(self, domain):
         from corehq.apps.locations.models import Location
@@ -2140,13 +2152,6 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             except ResourceNotFound:
                 pass
         return None
-
-    def get_location_ids(self, domain):
-        return self.get_domain_membership(domain).assigned_location_ids
-
-    def get_sql_locations(self, domain):
-        from corehq.apps.locations.models import SQLLocation
-        return SQLLocation.objects.filter(location_id__in=self.get_location_ids(domain))
 
     def is_locked_out(self):
         return self.login_attempts >= MAX_LOGIN_ATTEMPTS
