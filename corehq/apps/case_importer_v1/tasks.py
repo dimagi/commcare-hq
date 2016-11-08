@@ -13,6 +13,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from soil import DownloadBase
 from dimagi.utils.prime_views import prime_views
 from couchdbkit.exceptions import ResourceNotFound
+from corehq.util.soft_assert import soft_assert
 import uuid
 
 POOL_SIZE = 10
@@ -82,12 +83,20 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
                 )
             else:
                 properties = set().union(*map(lambda c: set(c.dynamic_case_properties().keys()), cases))
-                add_inferred_export_properties.delay(
-                    'CaseImporter',
-                    domain,
-                    case_type,
-                    properties,
-                )
+                if case_type and len(properties):
+                    add_inferred_export_properties.delay(
+                        'CaseImporter',
+                        domain,
+                        case_type,
+                        properties,
+                    )
+                else:
+                    _soft_assert = soft_assert(notify_admins=True)
+                    soft_assert(
+                        False,
+                        'error adding inferred export properties in domain '
+                        '({}): {}'.format(domain, ", ".join(properties))
+                    )
         return err
 
     for i in range(row_count):
