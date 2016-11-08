@@ -212,6 +212,9 @@ class LocationTypesView(BaseLocationView):
             'expand_from': loc_type.expand_from.pk if loc_type.expand_from else None,
             'expand_from_root': loc_type.expand_from_root,
             'expand_to': loc_type.expand_to.pk if loc_type.expand_to else None,
+            'include_without_expanding': (loc_type.include_without_expanding.pk
+                                          if loc_type.include_without_expanding else None),
+            'include_root_without_expanding': loc_type.include_root_without_expanding,
         } for loc_type in LocationType.objects.by_domain(self.domain)]
 
     @method_decorator(lock_locations)
@@ -223,7 +226,7 @@ class LocationTypesView(BaseLocationView):
             return isinstance(pk, basestring) and pk.startswith("fake-pk-")
 
         def mk_loctype(name, parent_type, administrative,
-                       shares_cases, view_descendants, pk, code, expand_from, expand_from_root, expand_to):
+                       shares_cases, view_descendants, pk, code, **kwargs):
             parent = sql_loc_types[parent_type] if parent_type else None
 
             loc_type = None
@@ -271,7 +274,7 @@ class LocationTypesView(BaseLocationView):
             mk_loctype(**loc_type)
 
         for loc_type in hierarchy:
-            # apply sync boundaries (expand_from and expand_to) after the
+            # apply sync boundaries (expand_from, expand_to and include_without_expanding) after the
             # locations are all created since there are dependencies between them
             self._attach_sync_boundaries_to_location_type(loc_type, sql_loc_types)
 
@@ -286,6 +289,7 @@ class LocationTypesView(BaseLocationView):
         loc_type = loc_type_db[loc_type_data['pk']]
         expand_from_id = loc_type_data['expand_from']
         expand_to_id = loc_type_data['expand_to']
+        include_without_expanding_id = loc_type_data['include_without_expanding']
         try:
             loc_type.expand_from = loc_type_db[expand_from_id] if expand_from_id else None
         except KeyError:        # expand_from location type was deleted
@@ -295,6 +299,12 @@ class LocationTypesView(BaseLocationView):
             loc_type.expand_to = loc_type_db[expand_to_id] if expand_to_id else None
         except KeyError:        # expand_to location type was deleted
             loc_type.expand_to = None
+        try:
+            loc_type.include_without_expanding = (loc_type_db[include_without_expanding_id]
+                                                  if include_without_expanding_id else None)
+        except KeyError:        # include_without_expanding location type was deleted
+            loc_type.include_without_expanding = None
+        loc_type.include_root_without_expanding = loc_type_data['include_root_without_expanding']
         loc_type.save()
 
     def remove_old_location_types(self, pks):

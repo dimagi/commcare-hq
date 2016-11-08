@@ -190,7 +190,7 @@ hqDefine('locations/ko/location_types.js', function(){
         self.code = ko.observable(loc_type.code || '');
         self.expand_from = ko.observable(loc_type.expand_from_root ? ROOT_LOCATION_ID : loc_type.expand_from);
         self.expand_to = ko.observable(loc_type.expand_to);
-        self.include_without_expanding = ko.observable(loc_type.include_without_expanding);
+        self.include_without_expanding = ko.observable(loc_type.include_root_without_expanding ? ROOT_LOCATION_ID : loc_type.include_without_expanding);
 
         self.view = view_model;
 
@@ -326,6 +326,8 @@ hqDefine('locations/ko/location_types.js', function(){
                 expand_from: (self.expand_from() !== -1 ? self.expand_from() : null) || null,
                 expand_from_root: self.expand_from() === ROOT_LOCATION_ID,
                 expand_to: self.expand_to() || null,
+                include_without_expanding: (self.include_without_expanding() !== ROOT_LOCATION_ID ? self.include_without_expanding(): null) || null,
+                include_root_without_expanding: self.include_without_expanding() === ROOT_LOCATION_ID,
             };
         };
     }
