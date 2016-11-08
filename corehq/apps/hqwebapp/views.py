@@ -292,11 +292,16 @@ def _login(req, domain_name, template_name):
     req.base_template = settings.BASE_TEMPLATE
 
     context = {}
+    default_page_name = _('Welcome back to CommCare HQ!')
     if settings.CUSTOM_LANDING_PAGE:
+        page_name = getattr(settings, 'CUSTOM_WELCOME_MESSAGE', default_page_name)
+        custom_template =  getattr(settings, 'CUSTOM_LANDING_TEMPLATE', False)
+        custom_logo = getattr(settings, 'CUSTOM_PRELOGIN_LOGO_URL', '')
         context.update({
-            'current_page': {'page_name': settings.CUSTOM_WELCOME_MESSAGE}
+            'current_page': {'page_name': page_name},
+            'CUSTOM_LOGO_URL': custom_logo
         })
-        template_name = settings.CUSTOM_LANDING_TEMPLATE
+        template_name = custom_template or template_name
     elif domain_name:
         domain = Domain.get_by_name(domain_name)
         req_params = req.GET if req.method == 'GET' else req.POST
@@ -309,7 +314,7 @@ def _login(req, domain_name, template_name):
         })
     else:
         context.update({
-            'current_page': {'page_name': _('Welcome back to CommCare HQ!')}
+            'current_page': {'page_name': default_page_name}
         })
 
     auth_view = HQLoginView if not domain_name else CloudCareLoginView
