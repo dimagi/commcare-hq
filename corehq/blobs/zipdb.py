@@ -28,7 +28,7 @@ class ZipBlobDB(AbstractBlobDB):
 
     def copy_blob(self, content, info, bucket):
         path = self.get_path(info.identifier, bucket)
-        with zipfile.ZipFile(self.zipname, 'a') as z:
+        with zipfile.ZipFile(self.zipname, 'a', allowZip64=True) as z:
             z.writestr(path, content.read())
 
     def get_path(self, identifier=None, bucket=DEFAULT_BUCKET):
