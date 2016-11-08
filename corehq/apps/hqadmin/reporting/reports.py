@@ -814,7 +814,10 @@ def get_submitted_users(domains):
 
 def get_case_owner_filters(domains):
     mobile_user_ids = list(get_user_ids(True, domains))
-    group_ids = GroupES().domain(domains).get_ids()
+    group_query = GroupES()
+    if domains:
+        group_query = group_query.domain(domains)
+    group_ids = group_query.get_ids()
     return filters.term('owner_id', mobile_user_ids + group_ids)
 
 
@@ -904,7 +907,9 @@ def get_general_stats_data(domains, histo_type, datespan, interval="day",
         user_type_mobile=None, is_cumulative=True, supply_points=False,
         j2me_only=False):
     additional_filters = []
-    domains_for_es = [d for sublist in domains for d in sublist['names']]
+    domains_for_es = None
+    if domains:
+        domains_for_es = [d for sublist in domains for d in sublist['names']]
     if histo_type == 'forms':
         if user_type_mobile is not None:
             additional_filters.append({
