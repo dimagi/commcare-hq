@@ -373,21 +373,24 @@ class Migrator(object):
         self.iteration_key = "{}-blob-migration/{}".format(self.slug, " ".join(sorted_types))
 
     def migrate(self, filename=None, reset=False, max_retry=2, chunk_size=100):
-        doc_migrator = self.doc_migrator_class(self.slug, self.couchdb, filename)
-
-        progress_logger = CouchProcessorProgressLogger(self.doc_types)
-
-        document_provider = CouchDocumentProvider(self.iteration_key, self.doc_types)
-
         processor = DocumentProcessorController(
-            document_provider,
-            doc_migrator,
+            self._get_document_provider(),
+            self._get_doc_migrator(filename),
             reset,
             max_retry,
             chunk_size,
-            progress_logger=progress_logger
+            progress_logger=self._get_progress_logger()
         )
         return processor.run()
+
+    def _get_doc_migrator(self, filename):
+        return self.doc_migrator_class(self.slug, self.couchdb, filename)
+
+    def _get_document_provider(self):
+        return CouchDocumentProvider(self.iteration_key, self.doc_types)
+
+    def _get_progress_logger(self):
+        return CouchProcessorProgressLogger(self.doc_types)
 
 
 class ExportByDomain(Migrator):
@@ -401,21 +404,12 @@ class ExportByDomain(Migrator):
         if not self.domain:
             raise MigrationError("Must specify domain")
 
-        doc_migrator = self.doc_migrator_class(self.slug, self.couchdb, filename, self.domain)
-
-        progress_logger = CouchProcessorProgressLogger(self.doc_types)
-
-        document_provider = CouchDocumentProvider(self.iteration_key, self.doc_types)
-
-        processor = DocumentProcessorController(
-            document_provider,
-            doc_migrator,
-            reset,
-            max_retry,
-            chunk_size,
-            progress_logger=progress_logger
+        return super(ExportByDomain, self).migrate(
+            filename=filename, reset=reset, max_retry=max_retry, chunk_size=chunk_size
         )
-        return processor.run()
+
+    def _get_doc_migrator(self, filename):
+        return self.doc_migrator_class(self.slug, self.couchdb, filename, self.domain)
 
 
 class ExportByDomainSQL(Migrator):
@@ -437,18 +431,18 @@ class ExportByDomainSQL(Migrator):
         if not self.domain:
             raise MigrationError("Must specify domain")
 
-        doc_migrator = self.doc_migrator_class(self.slug, self.domain)
-
-        document_provider = SqlDocumentProvider(self.iteration_key, FormReindexAccessor())
-
-        processor = DocumentProcessorController(
-            document_provider,
-            doc_migrator,
-            reset,
-            max_retry,
-            chunk_size,
+        return super(ExportByDomainSQL, self).migrate(
+            filename=filename, reset=reset, max_retry=max_retry, chunk_size=chunk_size
         )
-        return processor.run()
+
+    def _get_doc_migrator(self, filename):
+        return self.doc_migrator_class(self.slug, self.domain)
+
+    def _get_document_provider(self):
+        return SqlDocumentProvider(self.iteration_key, FormReindexAccessor())
+
+    def _get_progress_logger(self):
+        return None
 
 
 MIGRATIONS = {m.slug: m for m in [
