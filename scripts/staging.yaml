@@ -75,5 +75,4 @@ submodules:
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches: []
   deployment/commcare-hq-deploy:
-    branches:
-      - br/use-different-shutdown-method
+    branches: []
