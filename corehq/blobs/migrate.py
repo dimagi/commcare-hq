@@ -83,7 +83,9 @@ from corehq.blobs.mixin import BlobHelper
 from corehq.blobs.models import BlobMigrationState
 from corehq.blobs.zipdb import get_export_filename
 from corehq.dbaccessors.couchapps.all_docs import get_doc_count_by_type
-from corehq.util.doc_processor.couch import CouchDocumentProvider, doc_type_tuples_to_dict, CouchViewDocumentProvider
+from corehq.util.doc_processor.couch import (
+    CouchDocumentProvider, doc_type_tuples_to_dict, CouchViewDocumentProvider
+)
 from corehq.util.doc_processor.couch import CouchProcessorProgressLogger
 from corehq.util.doc_processor.interface import (
     BaseDocProcessor, DOCS_SKIPPED_WARNING,
@@ -334,7 +336,9 @@ class SqlObjectExporter(object):
 
     def processing_complete(self):
         if self.not_found:
-            print("{} {} objects processed, {} blobs not found".format(self.total_blobs, self.slug, self.not_found))
+            print("{} {} objects processed, {} blobs not found".format(
+                self.total_blobs, self.slug, self.not_found
+            ))
         else:
             print("{} {} objects processed".format(self.total_blobs, self.slug))
 
@@ -345,7 +349,7 @@ class SqlFormAttachmentExporter(SqlObjectExporter):
         bucket = attachment.blobdb_bucket()
         blob_id = attachment.blob_id
         info = BlobInfo(identifier=blob_id, length=attachment.content_length,
-                        digest="md5="+attachment.md5)
+                        digest="md5=" + attachment.md5)
         self.total_blobs += 1
         try:
             content = from_db.get(blob_id, bucket)

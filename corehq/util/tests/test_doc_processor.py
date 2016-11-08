@@ -78,7 +78,9 @@ class TestResumableDocsByTypeIterator(TestCase):
         return doc
 
     def get_iterator(self, chunk_size=2, domain=None):
-        return resumable_docs_by_type_iterator(self.db, self.doc_types, self.iteration_key, chunk_size, domain=domain)
+        return resumable_docs_by_type_iterator(
+            self.db, self.doc_types, self.iteration_key, chunk_size, domain=domain
+        )
 
     def test_iteration(self):
         self.assertEqual([doc["_id"] for doc in self.itr], self.sorted_keys)

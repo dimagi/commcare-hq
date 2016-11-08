@@ -45,7 +45,8 @@ def resumable_view_iterator(db, iteration_key, view_name, view_keys, chunk_size=
     return ResumableDocsIterator(iteration_key, data_function, args_provider, item_getter, view_event_handler)
 
 
-def resumable_docs_by_type_iterator(db, doc_types, iteration_key, chunk_size=100, view_event_handler=None, domain=None):
+def resumable_docs_by_type_iterator(db, doc_types, iteration_key, chunk_size=100,
+                                    view_event_handler=None, domain=None):
     """Perform one-time resumable iteration over documents by type
 
     Iteration can be efficiently stopped and resumed. The iteration may
