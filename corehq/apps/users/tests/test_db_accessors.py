@@ -6,7 +6,7 @@ from corehq.apps.users.dbaccessors.all_commcare_users import (
     delete_all_users,
     get_all_user_ids,
     get_deleted_user_by_username,
-)
+    get_all_usernames_by_domain)
 from corehq.apps.users.dbaccessors.couch_users import (
     get_user_id_by_username,
 )
@@ -67,6 +67,12 @@ class AllCommCareUsersTest(TestCase):
         expected_users = [self.ccuser_2, self.ccuser_1]
         expected_usernames = [user.username for user in expected_users]
         actual_usernames = [user.username for user in get_all_commcare_users_by_domain(self.ccdomain.name)]
+        self.assertItemsEqual(actual_usernames, expected_usernames)
+
+    def test_get_all_usernames_by_domain(self):
+        all_cc_users = [self.ccuser_1, self.ccuser_2, self.web_user]
+        expected_usernames = [user.username for user in all_cc_users]
+        actual_usernames = get_all_usernames_by_domain(self.ccdomain.name)
         self.assertItemsEqual(actual_usernames, expected_usernames)
 
     def test_exclude_retired_users(self):

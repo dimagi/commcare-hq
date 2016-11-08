@@ -74,7 +74,10 @@ git+git://github.com/smartfile/django-transfer.git@6e0dc94c3341c358fca8eb2bf74e2
 Pygments==2.0.2
 tinys3==0.1.11
 django-formtools==1.0
-django-two-factor-auth==1.4.0
+# to be moved back to official branch after merge/release of
+# https://github.com/Bouke/django-two-factor-auth/pull/178
+# django-two-factor-auth==1.5.0
+git+git://github.com/emord/django-two-factor-auth.git@cea4533f6048fe4de7431a182a44490c84d0486c
 datadog==0.10.0
 django-websocket-redis==0.4.6
 django-redis-sessions==0.5.0
@@ -90,3 +93,4 @@ laboratory==0.2.0
 ConcurrentLogHandler==0.9.1
 github3.py==1.0.0a4
 django-bulk-update==1.1.10
+csiphash==0.0.4

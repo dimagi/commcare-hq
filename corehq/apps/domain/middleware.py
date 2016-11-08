@@ -1,9 +1,12 @@
 # Use modern Python
 from __future__ import unicode_literals, print_function, absolute_import
 
+from django.template.response import TemplateResponse
+
 # External imports
 from corehq.apps.accounting.exceptions import AccountingError
 from corehq.apps.accounting.models import Subscription
+from corehq.toggles import DATA_MIGRATION
 from django_prbac.models import Role
 
 
@@ -55,3 +58,21 @@ class DomainHistoryMiddleware(object):
         last_visited_domain = request.session.get('last_visited_domain')
         if last_visited_domain != request.domain:
             request.session['last_visited_domain'] = request.domain
+
+
+class DomainMigrationMiddleware(object):
+    """
+    Redirects web requests to a page explaining a data migration is occurring
+    """
+
+    def process_view(self, request, view_func, view_args, view_kwargs):
+        if hasattr(request, 'domain') and hasattr(request, 'couch_user'):
+            if getattr(view_func, 'domain_migration_handled', False):
+                return None
+            if DATA_MIGRATION.enabled(request.domain):
+                return TemplateResponse(
+                    request=request,
+                    template='domain/data_migration_in_progress.html',
+                    status=503,
+                )
+        return None

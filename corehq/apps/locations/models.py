@@ -279,6 +279,8 @@ class LocationQueriesMixin(object):
             return self.all()
 
         users_location = user.get_sql_location(domain)
+        if not users_location:
+            return self.none()  # No locations are accessible to this user
         return self.all() & users_location.get_descendants(include_self=True)
 
 
@@ -885,17 +887,6 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
         Return all active top level locations for this domain
         """
         return list(SQLLocation.root_locations(domain).couch_locations())
-
-    @classmethod
-    def get_in_domain(cls, domain, id):
-        if id:
-            try:
-                loc = Location.get(id)
-                assert domain == loc.domain
-                return loc
-            except (ResourceNotFound, AssertionError):
-                pass
-        return None
 
     @property
     def is_root(self):

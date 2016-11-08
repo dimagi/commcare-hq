@@ -5,18 +5,19 @@
 ├── Caret.js#0.2.2 (latest is 0.3.1)
 ├── MediaUploader#8a75015f15
 ├── XMLWriter#ab8760d6e0
-├─┬ bootstrap#3.3.7 (latest is 4.0.0-alpha.4)
+├─┬ bootstrap#3.3.7 (latest is 4.0.0-alpha.5)
 │ └── jquery#2.2.4 (3.1.1 available)
-├── chai#3.5.0
+├── chai#3.5.0 (4.0.0-canary.1 available)
 ├── codemirror#3.24.0 (latest is 5.19.0)
 ├── equivalent-xml-js#7de21be295
 ├── fuse.js#2.5.0
 ├── jquery#2.2.4 (latest is 3.1.1)
 ├── jsdiff#2.2.2
-├─┬ jstree#3.3.2
+├─┬ jstree#3.3.3
 │ └── jquery#2.2.4 (3.1.1 available)
-├── langcodes#e03b2f012e
-├── markdown-it#7.0.1 (latest is 8.0.0)
+├── jstree-actions#0.1.0 extraneous
+├── langcodes#325270e56e
+├── markdown-it#7.0.1 (latest is 8.1.0)
 ├── require-css#0.1.8
 ├── require-less#0.1.5
 ├── requirejs#2.3.2

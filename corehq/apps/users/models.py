@@ -1640,6 +1640,12 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 pass
         return []
 
+    def get_location_ids(self, domain):
+        return self.assigned_location_ids
+
+    def get_sql_locations(self, domain):
+        return self.sql_locations
+
     def add_to_assigned_locations(self, location):
         if self.location_id:
             if location.location_id in self.assigned_location_ids:
@@ -1659,6 +1665,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         """
         Set the primary location, and all important user data, for
         the user.
+
+        :param location: may be a sql or couch location
         """
         from corehq.apps.fixtures.models import UserFixtureType
 
@@ -1708,7 +1716,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             This option exists only to be backwards compatible when user can only have one location
         """
         from corehq.apps.fixtures.models import UserFixtureType
-        from corehq.apps.locations.models import Location
+        from corehq.apps.locations.models import SQLLocation
 
         old_primary_location_id = self.location_id
         self.assigned_location_ids.remove(old_primary_location_id)
@@ -1721,7 +1729,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         if self.assigned_location_ids and fall_back_to_next:
             new_primary_location_id = self.assigned_location_ids[0]
-            self.set_location(Location.get(new_primary_location_id))
+            self.set_location(SQLLocation.objects.get(location_id=new_primary_location_id))
         else:
             self.user_data.pop('commcare_location_id', None)
             self.user_data.pop('commtrack-supply-point', None)
@@ -1758,7 +1766,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             If primary-location is not set, then next available location from
             assigned_location_ids is set as the primary-location
         """
-        from corehq.apps.locations.models import Location
+        from corehq.apps.locations.models import SQLLocation
 
         self.assigned_location_ids = location_ids
         self.get_domain_membership(self.domain).assigned_location_ids = location_ids
@@ -1771,7 +1779,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         # try to set primary-location if not set already
         if not self.location_id and location_ids:
-            self.set_location(Location.get(location_ids[0]))
+            self.set_location(SQLLocation.objects.get(location_id=location_ids[0]))
         else:
             self.save()
 
@@ -2070,7 +2078,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         if isinstance(location_object_or_id, basestring):
             location_id = location_object_or_id
         else:
-            location_id = location_object_or_id._id
+            location_id = location_object_or_id.location_id
 
         membership = self.get_domain_membership(domain)
         membership.location_id = location_id
@@ -2120,11 +2128,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         from corehq.apps.locations.models import SQLLocation
         loc_id = self.get_location_id(domain)
         if loc_id:
-            try:
-                return SQLLocation.objects.get(location_id=loc_id)
-            except SQLLocation.DoesNotExist:
-                pass
-        return None
+            return SQLLocation.objects.get_or_None(domain=domain, location_id=loc_id)
 
     @memoized
     def get_location(self, domain):
@@ -2136,6 +2140,13 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             except ResourceNotFound:
                 pass
         return None
+
+    def get_location_ids(self, domain):
+        return self.get_domain_membership(domain).assigned_location_ids
+
+    def get_sql_locations(self, domain):
+        from corehq.apps.locations.models import SQLLocation
+        return SQLLocation.objects.filter(location_id__in=self.get_location_ids(domain))
 
     def is_locked_out(self):
         return self.login_attempts >= MAX_LOGIN_ATTEMPTS

@@ -15,7 +15,7 @@ from custom.ilsgateway.tanzania.handlers.notsubmitted import NotSubmittedHandler
 
 
 def handle(verified_contact, text, msg):
-    if not verified_contact:
+    if not (verified_contact and verified_contact.verified):
         return False
 
     user = verified_contact.owner if verified_contact else None

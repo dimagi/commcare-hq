@@ -1,5 +1,11 @@
 from tempfile import NamedTemporaryFile
+from zipfile import BadZipfile
 import openpyxl
+from openpyxl.utils.exceptions import InvalidFileException
+
+
+class InvalidExcelFileException(Exception):
+    pass
 
 
 class JSONReaderError(Exception):
@@ -189,7 +195,10 @@ class WorkbookJSONReader(object):
         else:
             filename = f
 
-        self.wb = openpyxl.load_workbook(filename, use_iterators=True, data_only=True)
+        try:
+            self.wb = openpyxl.load_workbook(filename, use_iterators=True, data_only=True)
+        except (BadZipfile, InvalidFileException) as e:
+            raise InvalidExcelFileException(e.message)
         self.worksheets_by_title = {}
         self.worksheets = []
 

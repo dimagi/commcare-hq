@@ -79,6 +79,8 @@
                   href="{% static 'datetimepicker/build/jquery.datetimepicker.min.css' %}" />
           {% endcompress %}
         {% endif %}
+        <link rel="stylesheet"
+              href="{% static 'bootstrap-switch/dist/css/bootstrap3/bootstrap-switch.css' %}"/>
         <link type="text/css"
               rel="stylesheet"
               media="screen"
@@ -86,6 +88,7 @@
 
         <link rel="stylesheet" href="{% static 'nprogress/nprogress.css' %}">
         <link rel="stylesheet" href="{% static 'jquery-ui/themes/base/jquery-ui.min.css' %}">
+        <link rel="stylesheet" href="{% static 'At.js/dist/css/jquery.atwho.min.css' %}">
         <link type="text/css"
               rel="stylesheet"
               media="all"
@@ -151,8 +154,9 @@
         <section id="cases"></section>
         <div id="menu-container">
             <div id="phone-mode-navigation"></div>
-            <div id="webforms-nav" class="webforms-nav" data-bind="template: { name: 'form-navigation-ko-template' }"></div>
+            <div id="formplayer-progress-container"></div>
             <section id="cloudcare-notifications" class="notifications-container"></section>
+            <div id="restore-as-region"></div>
             <div id="breadcrumb-region"></div>
             <div class="scrollable-container dragscroll">
               <div id="menu-region" class="content menu-content"></div>
@@ -178,8 +182,13 @@
                 username: "{{ request.user.username  }}",
                 domain: "{{ request.domain }}",
                 formplayer_url: "{{ formplayer_url }}",
+                singleAppMode: true,
                 phoneMode: true,
                 oneQuestionPerScreen: true,
+                allowedHost: "{{ request.get_host }}",
+                {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
+                debuggerEnabled: true,
+                {% endif %}
             });
             $('.dragscroll').on('scroll', function () {
               $('.form-control').blur();
@@ -188,13 +197,15 @@
         </script>
         {% include 'form_entry/templates.html' %}
         {% include 'formplayer/grid_view.html' %}
+        {% include 'formplayer/settings_view.html' %}
         {% include 'formplayer/case_detail.html' %}
         {% include 'formplayer/case_list.html' %}
         {% include 'formplayer/menu_list.html' %}
         {% include 'formplayer/session_list.html' %}
         {% include 'formplayer/navigation.html' %}
         {% include 'formplayer/confirmation_modal.html' %}
-
+        {% include 'formplayer/users.html' %}
+        {% include 'formplayer/progress.html' %}
         {% include 'formplayer/dependencies.html' %}
         {% include "style/includes/ko.html" %}
         <script src="{% static 'preview_app/js/preview_app.js' %}"></script>

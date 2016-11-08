@@ -2,6 +2,7 @@ from datetime import datetime
 
 from django.conf import settings
 
+from corehq.sql_db.config import partition_config
 from corehq.util.doc_processor.interface import DocumentProvider
 from corehq.util.pagination import ResumableFunctionIterator, ArgsProvider
 
@@ -95,6 +96,4 @@ def _get_db_aliases_to_query():
     if not settings.USE_PARTITIONED_DATABASE:
         return [None]  # use the default database
     else:
-        from corehq.sql_db.config import PartitionConfig
-        partition_config = PartitionConfig()
         return partition_config.get_form_processing_dbs()

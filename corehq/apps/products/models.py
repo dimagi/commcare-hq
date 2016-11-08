@@ -215,7 +215,7 @@ class Product(Document):
         up in Couch and SQL views again.
         """
         if self.code:
-            if SQLProduct.objects.filter(code=self.code, is_archived=False).exists():
+            if SQLProduct.objects.filter(domain=self.domain, code=self.code, is_archived=False).exists():
                 raise DuplicateProductCodeException()
         self.is_archived = False
         self.save()

@@ -1,10 +1,12 @@
+from contextlib import contextmanager
 import json
+from tempfile import NamedTemporaryFile
 from couchdbkit import ResourceNotFound
 from collections import OrderedDict
 
 from django.contrib import messages
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseBadRequest, HttpResponseRedirect, Http404, HttpResponse
+from django.http import HttpResponseBadRequest, HttpResponseRedirect, Http404
 from django.http.response import HttpResponseServerError
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
@@ -20,23 +22,16 @@ from corehq.apps.fixtures.dispatcher import require_can_edit_fixtures
 from corehq.apps.fixtures.download import prepare_fixture_download, prepare_fixture_html
 from corehq.apps.fixtures.exceptions import (
     FixtureDownloadError,
-    ExcelMalformatException,
-    FixtureAPIException,
-    DuplicateFixtureTagException,
-    FixtureUploadError
-)
+    FixtureUploadError,
+    FixtureAPIRequestError)
 from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem, FieldList, FixtureTypeField
-from corehq.apps.fixtures.upload import validate_file_format, get_workbook
 from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
-from corehq.apps.fixtures.upload.run_upload import run_upload
+from corehq.apps.fixtures.upload import upload_fixture_file, validate_fixture_file_format
 from corehq.apps.fixtures.utils import is_identifier_invalid
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.models import Permissions
 from corehq.util.files import file_extention_from_filename
-from corehq.util.soft_assert import soft_assert
-from corehq.util.spreadsheets.excel import JSONReaderError, HeaderValueError, \
-    WorksheetNotFound
 from dimagi.utils.couch.bulk import CouchTransaction
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
@@ -319,16 +314,13 @@ class UploadItemLists(TemplateView):
 
         # catch basic validation in the synchronous UI
         try:
-            validate_file_format(file_ref.get_filename())
-        except ExcelMalformatException as e:
+            validate_fixture_file_format(file_ref.get_filename())
+        except FixtureUploadError as e:
             messages.error(
                 request, _(u'Please fix the following formatting issues in your excel file: %s') %
                 '<ul><li>{}</li></ul>'.format('</li><li>'.join(e.errors)),
                 extra_tags='html'
             )
-            return HttpResponseRedirect(fixtures_home(self.domain))
-        except (FixtureUploadError, JSONReaderError, HeaderValueError) as e:
-            messages.error(request, _(u'Upload unsuccessful: %s') % e)
             return HttpResponseRedirect(fixtures_home(self.domain))
 
         # hand off to async
@@ -363,7 +355,8 @@ class FixtureUploadStatusView(FixtureViewMixIn, BaseDomainView):
             'poll_url': reverse('fixture_upload_job_poll', args=[self.domain, kwargs['download_id']]),
             'title': _(self.page_title),
             'progress_text': _("Importing your data. This may take some time..."),
-            'error_text': _("Problem importing data! Please try again or report an issue."),
+            'error_text': _("Fixture upload failed for some reason and we have noted this failure. "
+                            "Please make sure the excel file is correctly formatted and try again."),
             'next_url': reverse('edit_lookup_tables', args=[self.domain]),
             'next_url_text': _("Return to manage lookup tables"),
         })
@@ -380,12 +373,22 @@ def fixture_upload_job_poll(request, domain, download_id, template="fixtures/par
     except TaskFailedError:
         return HttpResponseServerError()
 
-    context.update({
-        'on_complete_short': _('Upload complete.'),
-        'on_complete_long': _('Lookup table upload has finished'),
-
-    })
     return render(request, template, context)
+
+
+class UploadFixtureAPIResponse(object):
+
+    response_codes = {"fail": 405, "warning": 402, "success": 200}
+
+    def __init__(self, status, message):
+        assert status in self.response_codes, \
+            'status must be in {!r}: {}'.format(self.status.keys(), status)
+        self.status = status
+        self.message = message
+
+    @property
+    def code(self):
+        return self.response_codes[self.status]
 
 
 @csrf_exempt
@@ -399,21 +402,54 @@ def upload_fixture_api(request, domain, **kwargs):
                 -F "file-to-upload=@hqtest_fixtures.xlsx"
                 -F "replace=true"
     """
-    response_codes = {"fail": 405, "warning": 402, "success": 200}
-    error_messages = {
-        "invalid_post_req": "Invalid post request. Submit the form with field 'file-to-upload' and POST parameter 'replace'",
-        "has_no_permission": "User {attr} doesn't have permission to upload fixtures",
-        "invalid_file": "Error processing your file. Submit a valid (.xlsx) file",
-        "has_no_sheet": "Workbook does not have a sheet called {attr}",
-        "unknown_fail": "Fixture upload couldn't succeed due to the following error: {attr}",
-    }
 
-    def _return_response(code, message):
-        resp_json = {}
-        resp_json["code"] = code
-        resp_json["message"] = message
-        return HttpResponse(json.dumps(resp_json), content_type="application/json")
+    upload_fixture_api_response = _upload_fixture_api(request, domain)
+    return json_response({'message': upload_fixture_api_response.message,
+                          'code': upload_fixture_api_response.code})
 
+
+def _upload_fixture_api(request, domain):
+    try:
+        excel_file, replace = _get_fixture_upload_args_from_request(request, domain)
+    except FixtureAPIRequestError as e:
+        return UploadFixtureAPIResponse('fail', e.message)
+
+    with excel_file as filename:
+        try:
+            validate_fixture_file_format(filename)
+        except FixtureUploadError as e:
+            return UploadFixtureAPIResponse(
+                'fail',
+                _(u'Please fix the following formatting issues in your excel file: %s')
+                % '\n'.join(e.errors))
+
+        result = upload_fixture_file(domain, filename, replace=replace)
+        status = 'warning' if result.errors else 'success'
+        return UploadFixtureAPIResponse(status, result.get_display_message())
+
+
+@contextmanager
+def _excel_upload_file(upload_file):
+    """
+    convert django FILES object to the filename of a tempfile
+    that gets deleted when you leave the with...as block
+
+    usage:
+        with _excel_upload_file(upload_file) as filename:
+            # you can now access the file by filename
+            upload_fixture_file(domain, filename, replace)
+            ...
+
+    """
+    with NamedTemporaryFile(suffix='.xlsx') as tempfile:
+        # copy upload_file into tempfile (flush guarantees the operation is completed)
+        for chunk in upload_file.chunks():
+            tempfile.write(chunk)
+        tempfile.flush()
+        yield tempfile.name
+
+
+def _get_fixture_upload_args_from_request(request, domain):
     try:
         upload_file = request.FILES["file-to-upload"]
         replace = request.POST["replace"]
@@ -422,62 +458,16 @@ def upload_fixture_api(request, domain, **kwargs):
         elif replace.lower() == "false":
             replace = False
     except Exception:
-        return _return_response(response_codes["fail"], error_messages["invalid_post_req"])
+        raise FixtureAPIRequestError(
+            u"Invalid post request."
+            u"Submit the form with field 'file-to-upload' and POST parameter 'replace'")
 
     if not request.couch_user.has_permission(domain, Permissions.edit_data.name):
-        error_message = error_messages["has_no_permission"].format(attr=request.couch_user.username)
-        return _return_response(response_codes["fail"], error_message)
+        raise FixtureAPIRequestError(
+            u"User {} doesn't have permission to upload fixtures"
+            .format(request.couch_user.username))
 
-    try:
-        validate_file_format(upload_file)
-    except ExcelMalformatException as e:
-        return _return_response(response_codes["fail"], '\n'.join(e.errors))
-    except (FixtureUploadError, JSONReaderError, HeaderValueError) as e:
-        return _return_response(response_codes["fail"], _(u'Upload unsuccessful: %s') % e)
-
-    try:
-        workbook = get_workbook(upload_file)
-    except Exception:
-        return _return_response(response_codes["fail"], error_messages["invalid_file"])
-
-    try:
-        upload_resp = run_upload(domain, workbook, replace=replace)  # error handle for other files
-    except WorksheetNotFound as e:
-        error_message = error_messages["has_no_sheet"].format(attr=e.title)
-        return _return_response(response_codes["fail"], error_message)
-    except ExcelMalformatException as e:
-        return _return_response(response_codes["fail"], '\n'.join(e.errors))
-    except DuplicateFixtureTagException as e:
-        return _return_response(response_codes["fail"], str(e))
-    except FixtureAPIException as e:
-        return _return_response(response_codes["fail"], str(e))
-    except Exception as e:
-        soft_assert('@'.join(['droberts', 'dimagi.com'])).call(
-            False, 'Unknown fixture upload api exception',
-        )
-        error_message = error_messages["unknown_fail"].format(attr=e)
-        return _return_response(response_codes["fail"], error_message)
-
-    num_unknown_groups = len(upload_resp.unknown_groups)
-    num_unknown_users = len(upload_resp.unknown_users)
-    resp_json = {}
-
-    if not num_unknown_users and not num_unknown_groups:
-        num_uploads = upload_resp.number_of_fixtures
-        success_message = "Successfully uploaded %d fixture%s." % (num_uploads, 's' if num_uploads > 1 else '')
-        return _return_response(response_codes["success"], success_message)
-    else:
-        resp_json["code"] = response_codes["warning"]
-
-    warn_groups = "%d group%s unknown" % (num_unknown_groups, 's are' if num_unknown_groups > 1 else ' is')
-    warn_users = "%d user%s unknown" % (num_unknown_users, 's are' if num_unknown_users > 1 else ' is')
-    resp_json["message"] = "Fixtures have been uploaded. But following "
-    if num_unknown_groups:
-        resp_json["message"] += "%s %s" % (warn_groups, upload_resp.unknown_groups)
-    if num_unknown_users:
-        resp_json["message"] += "%s%s%s" % (("and following " if num_unknown_groups else ""), warn_users, upload_resp.unknown_users)
-
-    return HttpResponse(json.dumps(resp_json), content_type="application/json")
+    return _excel_upload_file(upload_file), replace
 
 
 @login_and_domain_required

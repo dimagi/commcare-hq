@@ -7,6 +7,7 @@ from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404
 from django.shortcuts import get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
@@ -34,6 +35,8 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_build_doc,
     get_brief_apps_in_domain,
     get_latest_released_app_doc,
+    get_app_ids_in_domain,
+    get_current_app,
     wrap_app,
 )
 from corehq.apps.app_manager.exceptions import FormNotFoundException, ModuleNotFoundException
@@ -228,6 +231,113 @@ class CloudcareMain(View):
             return render(request, "cloudcare/formplayer_home.html", context)
         else:
             return render(request, "cloudcare/cloudcare_home.html", context)
+
+
+class FormplayerMain(View):
+
+    preview = False
+    urlname = 'formplayer_main'
+
+    @use_datatables
+    @use_jquery_ui
+    @method_decorator(require_cloudcare_access)
+    @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
+    def dispatch(self, request, *args, **kwargs):
+        return super(FormplayerMain, self).dispatch(request, *args, **kwargs)
+
+    def fetch_app(self, domain, app_id):
+        username = self.request.couch_user.username
+        if (toggles.CLOUDCARE_LATEST_BUILD.enabled(domain) or
+                toggles.CLOUDCARE_LATEST_BUILD.enabled(username)):
+            return get_latest_build_doc(domain, app_id)
+        else:
+            return get_latest_released_app_doc(domain, app_id)
+
+    def get(self, request, domain):
+        app_access = ApplicationAccess.get_by_domain(domain)
+        app_ids = get_app_ids_in_domain(domain)
+
+        apps = map(
+            lambda app_id: self.fetch_app(domain, app_id),
+            app_ids,
+        )
+        apps = filter(None, apps)
+        apps = filter(lambda app: app['cloudcare_enabled'] or self.preview, apps)
+        apps = filter(lambda app: app_access.user_can_access_app(request.couch_user, app), apps)
+        apps = sorted(apps, key=lambda app: app['name'])
+
+        def _default_lang():
+            try:
+                return apps[0]['langs'][0]
+            except Exception:
+                return 'en'
+
+        # default language to user's preference, followed by
+        # first app's default, followed by english
+        language = request.couch_user.language or _default_lang()
+
+        context = {
+            "domain": domain,
+            "language": language,
+            "apps": apps,
+            "maps_api_key": settings.GMAPS_API_KEY,
+            "username": request.user.username,
+            "formplayer_url": settings.FORMPLAYER_URL,
+            "single_app_mode": False,
+            "home_url": reverse(self.urlname, args=[domain]),
+        }
+        return render(request, "cloudcare/formplayer_home.html", context)
+
+
+class FormplayerMainPreview(FormplayerMain):
+
+    preview = True
+    urlname = 'formplayer_main_preview'
+
+    def fetch_app(self, domain, app_id):
+        return get_current_app(domain, app_id)
+
+
+class FormplayerPreviewSingleApp(View):
+
+    urlname = 'formplayer_single_app'
+
+    @use_datatables
+    @use_jquery_ui
+    @method_decorator(require_cloudcare_access)
+    @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
+    def dispatch(self, request, *args, **kwargs):
+        return super(FormplayerPreviewSingleApp, self).dispatch(request, *args, **kwargs)
+
+    def get(self, request, domain, app_id, **kwargs):
+        app_access = ApplicationAccess.get_by_domain(domain)
+
+        app = get_current_app(domain, app_id)
+
+        if not app_access.user_can_access_app(request.couch_user, app):
+            raise Http404()
+
+        def _default_lang():
+            try:
+                return app['langs'][0]
+            except Exception:
+                return 'en'
+
+        # default language to user's preference, followed by
+        # first app's default, followed by english
+        language = request.couch_user.language or _default_lang()
+
+        context = {
+            "domain": domain,
+            "language": language,
+            "apps": [app],
+            "maps_api_key": settings.GMAPS_API_KEY,
+            "username": request.user.username,
+            "formplayer_url": settings.FORMPLAYER_URL,
+            "single_app_mode": True,
+            "home_url": reverse(self.urlname, args=[domain, app_id]),
+        }
+        return render(request, "cloudcare/formplayer_home.html", context)
 
 
 @login_and_domain_required
@@ -557,6 +667,36 @@ def sync_db_api(request, domain):
         )
     else:
         return json_response(response)
+
+
+class ReadableQuestions(View):
+
+    urlname = 'readable_questions'
+
+    @csrf_exempt
+    @method_decorator(cloudcare_api)
+    def dispatch(self, request, *args, **kwargs):
+        return super(ReadableQuestions, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, domain):
+        instance_xml = request.POST.get('instanceXml').encode('utf-8')
+        app_id = request.POST.get('appId')
+        xmlns = request.POST.get('xmlns')
+
+        _, form_data_json = xml2json(instance_xml)
+        pretty_questions = readable.get_questions(domain, app_id, xmlns)
+
+        readable_form = readable.get_readable_form_data(form_data_json, pretty_questions)
+
+        rendered_readable_form = render_to_string(
+            'reports/form/partials/readable_form.html',
+            {'questions': readable_form}
+        )
+
+        return json_response({
+            'form_data': rendered_readable_form,
+            'form_questions': pretty_questions
+        })
 
 
 @cloudcare_api

@@ -152,6 +152,7 @@ MIDDLEWARE_CLASSES = [
     'corehq.middleware.OpenRosaMiddleware',
     'corehq.util.global_request.middleware.GlobalRequestMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
+    'corehq.apps.domain.middleware.DomainMigrationMiddleware',
     'corehq.middleware.TimeoutMiddleware',
     'corehq.apps.domain.middleware.CCHQPRBACMiddleware',
     'corehq.apps.domain.middleware.DomainHistoryMiddleware',
@@ -256,6 +257,7 @@ HQ_APPS = (
     'corehq.apps.data_analytics',
     'corehq.apps.domain',
     'corehq.apps.domainsync',
+    'corehq.apps.dump_reload',
     'corehq.apps.hqadmin',
     'corehq.apps.hqcase',
     'corehq.apps.hqcouchlog',
@@ -328,7 +330,6 @@ HQ_APPS = (
     'corehq.apps.notifications',
     'corehq.apps.cachehq',
     'corehq.apps.toggle_ui',
-    'corehq.apps.sofabed',
     'corehq.apps.hqpillow_retry',
     'corehq.couchapps',
     'corehq.preindex',
@@ -436,7 +437,7 @@ INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
 
 # after login, django redirects to this URL
 # rather than the default 'accounts/profile'
-LOGIN_REDIRECT_URL = '/'
+LOGIN_REDIRECT_URL = 'homepage'
 
 
 REPORT_CACHE = 'default'  # or e.g. 'redis'
@@ -1247,7 +1248,6 @@ COUCHDB_APPS = [
     'programs',
     'reminders',
     'reports',
-    'sofabed',
     'sms',
     'smsforms',
     'telerivet',
@@ -1681,13 +1681,12 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_timely_home_visits.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_ccs_record_cases.json'),
 
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'case_finding.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_notification_register.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'sputum_conversion.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'treatment_outcome.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_hiv.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'lab_monthly_summary.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_lab_register.json')
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_lab_register.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'new_patient_summary.json'),
 ]
 
 
@@ -1790,12 +1789,14 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('eqa_expression', 'custom.eqa.expressions.eqa_expression'),
     ('cqi_action_item', 'custom.eqa.expressions.cqi_action_item'),
     ('year_expression', 'custom.pnlppgi.expressions.year_expression'),
-    ('week_expression', 'custom.pnlppgi.expressions.week_expression')
+    ('week_expression', 'custom.pnlppgi.expressions.week_expression'),
+    ('concatenate_strings', 'custom.enikshay.expressions.concatenate_strings_expression')
 ]
 
 CUSTOM_UCR_EXPRESSION_LISTS = [
     ('mvp.ucr.reports.expressions.CUSTOM_UCR_EXPRESSIONS'),
     ('custom.icds_reports.ucr.expressions.CUSTOM_UCR_EXPRESSIONS'),
+    ('custom.ucr_ext.expressions.CUSTOM_UCR_EXPRESSIONS'),
 ]
 
 CUSTOM_MODULES = [

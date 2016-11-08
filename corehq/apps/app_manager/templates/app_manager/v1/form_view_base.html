@@ -48,7 +48,7 @@
     </style>
 
     {% if request|toggle_enabled:"USE_FORMPLAYER_FRONTEND"%}
-        <script src="{% static 'cloudcare/js/formplayer/apps/util/util.js' %}"></script>
+        <script src="{% static 'cloudcare/js/formplayer/utils/util.js' %}"></script>
     {% endif %}
 
     {% include "app_manager/v1/partials/form_filter/value-or-none-ui.html" %}
@@ -200,7 +200,7 @@
                 workflow: '{{ form.post_form_workflow }}',
             };
 
-            {% if request|toggle_enabled:"FORM_LINK_WORKFLOW"%}
+            {% if request|toggle_enabled:"FORM_LINK_WORKFLOW" or uses_form_workflow %}
             labels[FormWorkflow.Values.FORM] = "{% trans "Link to other form" %}";
             options.forms = {{ linkable_forms|JSON}}
             options.formLinks = {{ form.form_links|JSON }}
@@ -250,7 +250,7 @@
             };
 
             {% if request|toggle_enabled:"USE_FORMPLAYER_FRONTEND"%}
-                var cloudCareUrl = getFormplayerUrl("{% url "cloudcare_main" domain '' %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}");
+            var cloudCareUrl = getFormplayerUrl("{% url "formplayer_single_app" domain app.id %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}");
             {% else %}
                 var cloudCareUrl = getCloudCareUrl("{% url "cloudcare_main" domain '' %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}") + "?preview=true";
             {% endif %}

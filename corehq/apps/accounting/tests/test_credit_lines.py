@@ -2,6 +2,8 @@ from decimal import Decimal
 import random
 import datetime
 
+from dateutil.relativedelta import relativedelta
+
 from dimagi.utils.dates import add_months_to_date
 
 from corehq.apps.accounting import tasks, utils
@@ -273,11 +275,15 @@ class TestCreditTransfers(BaseAccountingTest):
         self.account = BillingAccount.get_or_create_account_by_domain(
             self.domain, created_by="biyeun@dimagi.com",
         )[0]
+        self.web_user = generator.arbitrary_web_user()
+        # TODO - refactor interface to generator.billing_account so web user object is not required
+        self.other_account = generator.billing_account(self.web_user, self.web_user)
 
     def tearDown(self):
         CreditAdjustment.objects.all().delete()
         CreditLine.objects.all().delete()
         generator.delete_all_subscriptions()
+        self.web_user.delete()
         super(TestCreditTransfers, self).tearDown()
 
     def _ensure_transfer(self, original_credits):
@@ -302,14 +308,15 @@ class TestCreditTransfers(BaseAccountingTest):
         return transferred_credits
 
     def test_transfers(self):
-        advanced_plan = DefaultProductPlan.get_default_plan(
+        advanced_plan = DefaultProductPlan.get_default_plan_version(
             edition=SoftwarePlanEdition.ADVANCED
         )
-        standard_plan = DefaultProductPlan.get_default_plan(
+        standard_plan = DefaultProductPlan.get_default_plan_version(
             edition=SoftwarePlanEdition.STANDARD
         )
         first_sub = Subscription.new_domain_subscription(
-            self.account, self.domain.name, advanced_plan
+            self.account, self.domain.name, advanced_plan,
+            date_start=datetime.date.today() - relativedelta(days=1),
         )
 
         product_credit = CreditLine.add_credit(
@@ -335,14 +342,22 @@ class TestCreditTransfers(BaseAccountingTest):
 
         second_sub.date_end = datetime.date.today() + datetime.timedelta(days=5)
         second_sub.save()
-
         third_sub = second_sub.renew_subscription()
         deactivate_subscriptions(second_sub.date_end)
+        third_sub = Subscription.objects.get(id=third_sub.id)
+
         third_credits = self._ensure_transfer(second_credits)
         for credit_line in third_credits:
             self.assertEqual(credit_line.subscription.pk, third_sub.pk)
 
-        third_sub.cancel_subscription()
+        third_sub.date_end = third_sub.date_start + relativedelta(days=1)
+        third_sub.save()
+        Subscription.new_domain_subscription(
+            self.other_account, self.domain, DefaultProductPlan.get_default_plan_version(),
+            date_start=third_sub.date_end,
+        )
+        deactivate_subscriptions(third_sub.date_end)
+
         account_credits = self._ensure_transfer(third_credits)
         for credit_line in account_credits:
             self.assertIsNone(credit_line.subscription)

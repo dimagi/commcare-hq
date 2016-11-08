@@ -505,19 +505,17 @@ class RepeatRecord(Document):
         return not self.succeeded
 
     def get_payload(self):
-        return self.repeater.get_payload(self)
-
-    def fire(self, max_tries=3, force_send=False):
         try:
-            payload = self.get_payload()
-        except ResourceNotFound:
+            return self.repeater.get_payload(self)
+        except ResourceNotFound as e:
             # this repeater is pointing at a missing document
             # quarantine it and tell it to stop trying.
-            logging.exception(u'Repeater {} in domain {} references a missing or deleted document!'.format(
-                self._id, self.domain,
-            ))
-            self.doc_type = self.doc_type + '-Failed'
-            self.save()
+            logging.exception(
+                u'Repeater {} in domain {} references a missing or deleted document!'.format(
+                    self._id, self.domain,
+                ))
+
+            self._payload_exception(e, reraise=False)
         except IgnoreDocument:
             # this repeater is pointing at a document with no payload
             logging.info(u'Repeater {} in domain {} references a document with no payload'.format(
@@ -525,12 +523,22 @@ class RepeatRecord(Document):
             ))
             # Mark it succeeded so that we don't try again
             self.update_success()
-        else:
-            headers = self.repeater.get_headers(self)
-            if self.try_now() or force_send:
-                tries = 0
-                post_info = PostInfo(payload, headers, force_send, max_tries)
-                self.post(post_info, tries=tries)
+        except Exception as e:
+            self._payload_exception(e, reraise=True)
+
+    def _payload_exception(self, exception, reraise=False):
+        self.doc_type = self.doc_type + '-Failed'
+        self.failure_reason = unicode(exception)
+        self.save()
+        if reraise:
+            raise exception
+
+    def fire(self, max_tries=3, force_send=False):
+        headers = self.repeater.get_headers(self)
+        if self.try_now() or force_send:
+            tries = 0
+            post_info = PostInfo(self.get_payload(), headers, force_send, max_tries)
+            self.post(post_info, tries=tries)
 
     def post(self, post_info, tries=0):
         tries += 1

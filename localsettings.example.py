@@ -1,6 +1,8 @@
 import os
 ####### Database config. This assumes Postgres ####### 
 
+INTERNAL_IPS = ['127.0.0.1']
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
@@ -200,6 +202,10 @@ LOCAL_APPS = (
 #    'testapps.test_elasticsearch',
 #    'testapps.test_pillowtop',
 )
+
+LOCAL_MIDDLEWARE_CLASSES = [
+    # 'debug_toolbar.middleware.DebugToolbarMiddleware',
+]
 
 # list of domains to enable ADM reporting on
 ADM_ENABLED_PROJECTS = []

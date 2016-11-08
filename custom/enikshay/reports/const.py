@@ -19,3 +19,12 @@ AGE_RANGES = (
     (55, 64),
     (65,)
 )
+
+
+PATIENT_TYPES = (
+    'new',
+    'recurrent',
+    'treatment_after_failure',
+    'treatment_after_lfu',
+    'other_previously_treated'
+)

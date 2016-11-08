@@ -187,22 +187,10 @@ class LocationsTest(LocationTestBase):
             Location.filter_by_type(self.domain.name, 'village', test_state1)
         )
 
-        # Location.get_in_domain
         create_domain('rejected')
         bootstrap_location_types('rejected')
         test_village2.domain = 'rejected'
         test_village2.save()
-        self.assertEqual(
-            Location.get_in_domain(self.domain.name, test_village1._id)._id,
-            test_village1._id
-        )
-        self.assertIsNone(
-            Location.get_in_domain(self.domain.name, test_village2._id),
-        )
-        self.assertIsNone(
-            Location.get_in_domain(self.domain.name, 'not-a-real-id'),
-        )
-
         self.assertEqual(
             {loc.location_id for loc in [self.user.location, test_state1, test_state2,
                                  test_village1]},

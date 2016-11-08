@@ -6,7 +6,7 @@ from corehq.apps.reports.standard import CustomProjectReport
 from custom.icds_reports.asr_sqldata import ASRIdentification, ASROperationalization, ASRPopulation, Annual, \
     DisabledChildren, Infrastructure, Equipment
 from custom.icds_reports import const
-from custom.icds_reports.filters import ICDSMonthFilter
+from custom.icds_reports.filters import ICDSMonthFilter, IcdsLocationFilter
 from custom.icds_reports.mpr_sqldata import MPRIdentification, MPRSectors, MPRPopulation, MPRBirthsAndDeaths, \
     MPRAWCDetails, MPRSupplementaryNutrition, MPRUsingSalt, MPRProgrammeCoverage, MPRPreschoolEducation, \
     MPRGrowthMonitoring, MPRImmunizationCoverage, MPRVhnd, MPRReferralServices, MPRMonitoring
@@ -52,7 +52,7 @@ class ASRReport(IcdsBaseReport):
     slug = 'asr_report'
     name = 'Block ASR'
 
-    fields = [AsyncLocationFilter]
+    fields = [IcdsLocationFilter]
 
     @property
     @memoized

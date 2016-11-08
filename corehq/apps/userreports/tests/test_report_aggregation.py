@@ -1,12 +1,16 @@
+from django.conf import settings
 from django.http import HttpRequest
 from django.test import TestCase
 
+from corehq.apps.userreports.const import UCR_BACKENDS, UCR_SQL_BACKEND
 from corehq.apps.userreports.exceptions import UserReportsError
 from corehq.apps.userreports.models import DataSourceConfiguration, \
     ReportConfiguration
 from corehq.apps.userreports.reports.view import ConfigurableReport
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.tests.test_view import ConfigurableReportTestMixin
+from corehq.apps.userreports.tests.utils import run_with_all_ucr_backends
+from corehq.apps.userreports.util import get_indicator_adapter
 
 
 class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
@@ -28,45 +32,56 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
 
     @classmethod
     def _create_data_source(cls):
-        cls.data_source_config = DataSourceConfiguration(
-            domain=cls.domain,
-            display_name=cls.domain,
-            referenced_doc_type='CommCareCase',
-            table_id="foo",
-            configured_filter={
-                "type": "boolean_expression",
-                "operator": "eq",
-                "expression": {
-                    "type": "property_name",
-                    "property_name": "type"
-                },
-                "property_value": cls.case_type,
-            },
-            configured_indicators=[
-                {
-                    "type": "expression",
+        cls.data_sources = {}
+        cls.adapters = {}
+
+        # this is a hack to have both sql and es backends created in a class
+        # method. alternative would be to have these created on each test run
+        for backend_id in UCR_BACKENDS:
+            config = DataSourceConfiguration(
+                backend_id=backend_id,
+                domain=cls.domain,
+                display_name=cls.domain,
+                referenced_doc_type='CommCareCase',
+                table_id="foo",
+                configured_filter={
+                    "type": "boolean_expression",
+                    "operator": "eq",
                     "expression": {
                         "type": "property_name",
-                        "property_name": 'first_name'
+                        "property_name": "type"
                     },
-                    "column_id": 'indicator_col_id_first_name',
-                    "display_name": 'indicator_display_name_first_name',
-                    "datatype": "string"
+                    "property_value": cls.case_type,
                 },
-                {
-                    "type": "expression",
-                    "expression": {
-                        "type": "property_name",
-                        "property_name": 'number'
+                configured_indicators=[
+                    {
+                        "type": "expression",
+                        "expression": {
+                            "type": "property_name",
+                            "property_name": 'first_name'
+                        },
+                        "column_id": 'indicator_col_id_first_name',
+                        "display_name": 'indicator_display_name_first_name',
+                        "datatype": "string"
                     },
-                    "column_id": 'indicator_col_id_number',
-                    "datatype": "integer"
-                },
-            ],
-        )
-        cls.data_source_config.validate()
-        cls.data_source_config.save()
-        rebuild_indicators(cls.data_source_config._id)
+                    {
+                        "type": "expression",
+                        "expression": {
+                            "type": "property_name",
+                            "property_name": 'number'
+                        },
+                        "column_id": 'indicator_col_id_number',
+                        "datatype": "integer"
+                    },
+                ],
+            )
+            config.validate()
+            config.save()
+            rebuild_indicators(config._id)
+            adapter = get_indicator_adapter(config)
+            adapter.refresh_table()
+            cls.data_sources[backend_id] = config
+            cls.adapters[backend_id] = adapter
 
     @classmethod
     def setUpClass(cls):
@@ -74,10 +89,18 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
         cls._create_data()
         cls._create_data_source()
 
+    @classmethod
+    def tearDownClass(cls):
+        for key, adapter in cls.adapters.iteritems():
+            adapter.drop_table()
+        cls._delete_everything()
+        super(TestReportAggregation, cls).tearDownClass()
+
     def _create_report(self, aggregation_columns, columns):
+        backend_id = settings.OVERRIDE_UCR_BACKEND or UCR_SQL_BACKEND
         report_config = ReportConfiguration(
             domain=self.domain,
-            config_id=self.data_source_config._id,
+            config_id=self.data_sources[backend_id]._id,
             title='foo',
             aggregation_columns=aggregation_columns,
             columns=columns,
@@ -92,6 +115,7 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
         view._report_config_id = report_config._id
         return view
 
+    @run_with_all_ucr_backends
     def test_aggregation_by_column_not_in_report(self):
         """
         Confirm that aggregation works when the aggregated by column does
@@ -121,6 +145,7 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
             ]]
         )
 
+    @run_with_all_ucr_backends
     def test_aggregation_by_column_in_report(self):
         """
         Confirm that aggregation works when the aggregated by column appears in
@@ -195,6 +220,7 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
             ]]
         )
 
+    @run_with_all_ucr_backends
     def test_aggregation_by_column_with_new_id(self):
         """
         Confirm that aggregation works when the aggregated by column appears in
@@ -234,6 +260,7 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
             ]]
         )
 
+    @run_with_all_ucr_backends
     def test_sort_expression(self):
         report_config = self._create_report(
             aggregation_columns=['indicator_col_id_first_name'],

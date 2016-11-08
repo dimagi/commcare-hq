@@ -18,7 +18,7 @@
         {# The '___' in these urls will later be replaced by an app's _id ReleasesMain's url function #}
         var urls = {
             fetch: '{% url "paginate_releases" domain app.id %}',
-            delete: '{% url "corehq.apps.app_manager.views.delete_copy" domain app.id %}',
+            delete: '{% url "delete_copy" domain app.id %}',
             cloudcare: '{% url "cloudcare_get_app" domain '___' %}',
             compare: '{% url "diff" domain '___' '___' %}',
             jad: '{% url "download_jad" domain '___' %}',
@@ -29,9 +29,9 @@
             source: '{% url "download_index" domain '___' %}',
             summary: '{% url "app_summary" domain '___' %}',
             release: '{% url "release_build" domain app.id '___' %}',
-            newBuild: '{% url "corehq.apps.app_manager.views.save_copy" domain app.id %}',
-            revertBuild: '{% url "corehq.apps.app_manager.views.revert_to_copy" domain app.id %}',
-            currentVersion: '{% url "corehq.apps.app_manager.views.current_app_version" domain app.id %}',
+            newBuild: '{% url "save_copy" domain app.id %}',
+            revertBuild: '{% url "revert_to_copy" domain app.id %}',
+            currentVersion: '{% url "current_app_version" domain app.id %}',
             hubspot_click_deploy: '{% url "hubspot_click_deploy" %}',
             download_zip: '{% url "download_ccz" app.domain '___' %}',
             download_multimedia: '{% url "download_multimedia_zip" app.domain '___' %}',

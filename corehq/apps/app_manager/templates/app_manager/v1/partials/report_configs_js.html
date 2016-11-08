@@ -14,7 +14,7 @@
                 {{ multimedia.object_map|JSON }},
                 {{ multimedia.menu.default_file_name|JSON }}
         );
-        var saveURL = "{% url "corehq.apps.app_manager.views.edit_report_module" domain app.id module.id %}";
+        var saveURL = "{% url "edit_report_module" domain app.id module.id %}";
         var reportModule = new ReportModule({
             moduleName: {{ module.name|JSON }},
             moduleFilter: "{{ module.module_filter|escapejs }}",

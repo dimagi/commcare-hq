@@ -43,6 +43,12 @@ class CCUserLocationAssignmentTest(TestCase):
         self.assertPrimaryLocation(self.loc1.location_id)
         self.assertAssignedLocations([self.loc1.location_id])
 
+    def test_set_sql_location(self):
+        loc = self.loc1.sql_location
+        self.user.set_location(loc)
+        self.assertPrimaryLocation(loc.location_id)
+        self.assertAssignedLocations([loc.location_id])
+
     def test_location_append(self):
         self.user.add_to_assigned_locations(self.loc1)
         self.assertPrimaryLocation(self.loc1.location_id)  # first location added becomes primary

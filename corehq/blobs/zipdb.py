@@ -12,7 +12,7 @@ class ZipBlobDB(AbstractBlobDB):
     """
 
     def __init__(self, slug, domain):
-        self.zipname = 'export-{domain}-{slug}-blobs.zip'.format(domain=domain, slug=slug)
+        self.zipname = get_export_filename(slug, domain)
 
     def put(self, content, basename="", bucket=DEFAULT_BUCKET):
         raise NotImplementedError
@@ -28,13 +28,18 @@ class ZipBlobDB(AbstractBlobDB):
 
     def copy_blob(self, content, info, bucket):
         path = self.get_path(info.identifier, bucket)
-        with zipfile.ZipFile(self.zipname, 'a') as z:
+        with zipfile.ZipFile(self.zipname, 'a', allowZip64=True) as z:
             z.writestr(path, content.read())
 
     def get_path(self, identifier=None, bucket=DEFAULT_BUCKET):
         if identifier is None:
             return bucket
         return safejoin(bucket, identifier)
+
+    def exists(self, identifier, bucket=DEFAULT_BUCKET):
+        path = self.get_path(identifier, bucket)
+        with zipfile.ZipFile(self.zipname, 'r') as z:
+            return path in z.namelist()
 
 
 def safejoin(root, subpath):
@@ -52,3 +57,7 @@ def get_blob_db_exporter(slug, domain):
 
 def _get_zip_db(slug, domain):
     return ZipBlobDB(slug, domain)
+
+
+def get_export_filename(slug, domain):
+    return 'export-{domain}-{slug}-blobs.zip'.format(domain=domain, slug=slug)

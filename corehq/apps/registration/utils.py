@@ -96,7 +96,7 @@ def request_new_domain(request, form, is_new_user=True):
     if is_new_user:
         # Only new-user domains are eligible for Advanced trial
         # domains with no subscription are equivalent to be on free Community plan
-        create_30_day_advanced_trial(new_domain)
+        create_30_day_advanced_trial(new_domain, current_user.username)
     else:
         ensure_explicit_community_subscription(new_domain.name, date.today())
 
@@ -233,15 +233,16 @@ You can view the %s here: %s""" % (
 
 
 # Only new-users are eligible for advanced trial
-def create_30_day_advanced_trial(domain_obj):
+def create_30_day_advanced_trial(domain_obj, creating_username):
     # Create a 30 Day Trial subscription to the Advanced Plan
-    advanced_plan_version = DefaultProductPlan.get_default_plan(
+    advanced_plan_version = DefaultProductPlan.get_default_plan_version(
         edition=SoftwarePlanEdition.ADVANCED, is_trial=True
     )
     expiration_date = date.today() + timedelta(days=30)
     trial_account = BillingAccount.objects.get_or_create(
         name=DEFAULT_ACCOUNT_FORMAT % domain_obj.name,
         currency=Currency.get_default(),
+        created_by=creating_username,
         created_by_domain=domain_obj.name,
         account_type=BillingAccountType.USER_CREATED,
         pre_or_post_pay=PreOrPostPay.POSTPAY,

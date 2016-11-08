@@ -68,11 +68,14 @@ from corehq.apps.app_manager.models import (
     DeleteFormRecord,
     Form,
     FormActions,
+    FormActionCondition,
     FormDatum,
     FormLink,
+    UpdateCaseAction,
     IncompatibleFormTypeException,
     ModuleNotFoundException,
     load_case_reserved_words,
+    WORKFLOW_FORM,
 )
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
@@ -339,12 +342,10 @@ def new_form(request, domain, app_id, module_id):
 
     if toggles.APP_MANAGER_V2.enabled(domain):
         case_action = request.POST.get('case_action', 'none')
-        if case_action != 'none':
+        if case_action == 'update':
             form.requires = 'case'
-            if case_action == 'open':
-                pass    # TODO APP MANAGER V2
-            else:
-                pass    # TODO APP MANAFER V2
+            form.actions.update_case = UpdateCaseAction(
+                condition=FormActionCondition(type='always'))
 
     app.save()
     # add form_id to locals()
@@ -497,6 +498,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         'allow_form_filtering': (module_filter_preview or
             (not isinstance(form, CareplanForm) and not form_has_schedule)),
         'allow_form_workflow': not isinstance(form, CareplanForm),
+        'uses_form_workflow': form.post_form_workflow == WORKFLOW_FORM,
         'allow_usercase': domain_has_privilege(request.domain, privileges.USER_CASE),
         'is_usercase_in_use': is_usercase_in_use(request.domain),
         'is_module_filter_enabled': (feature_previews.MODULE_FILTER.enabled(request.domain) and

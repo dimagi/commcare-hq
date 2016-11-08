@@ -1,4 +1,4 @@
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 from custom.enikshay.integrations.ninetyninedots.views import (
     RegisterPatientRepeaterView,
     UpdatePatientRepeaterView,
@@ -7,8 +7,7 @@ from custom.enikshay.integrations.ninetyninedots.views import (
     update_default_confidence,
 )
 
-urlpatterns = patterns(
-    'custom.enikshay.integrations.ninetyninedots.views',
+urlpatterns = [
     url(r'^update_patient_adherence$', update_patient_adherence, name='update_patient_adherence'),
     url(r'^update_adherence_confidence$', update_adherence_confidence, name='update_adherence_confidence'),
     url(r'^update_default_confidence$', update_default_confidence, name='update_default_confidence'),
@@ -24,4 +23,4 @@ urlpatterns = patterns(
         {'repeater_type': 'NinetyNineDotsUpdatePatientRepeater'},
         name=UpdatePatientRepeaterView.urlname
     ),
-)
+]

@@ -1,6 +1,8 @@
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 
-urlpatterns = patterns('corehq.messaging.smsbackends.tropo.views',
-    url(r'^sms/?$', 'sms_in', name='sms_in'),
-    url(r'^ivr/?$', 'ivr_in', name='ivr_in'),
-)
+from corehq.messaging.smsbackends.tropo.views import ivr_in, sms_in
+
+urlpatterns = [
+    url(r'^sms/?$', sms_in, name='sms_in'),
+    url(r'^ivr/?$', ivr_in, name='ivr_in'),
+]

@@ -3,9 +3,31 @@ from elasticsearch import NotFoundError
 from corehq.apps.userreports.util import get_table_name
 from corehq.apps.userreports.adapter import IndicatorAdapter
 from corehq.apps.es.es_query import HQESQuery
-from corehq.elastic import get_es_new
+from corehq.elastic import get_es_new, ESError
 from dimagi.utils.decorators.memoized import memoized
 from pillowtop.es_utils import INDEX_STANDARD_SETTINGS
+
+
+# todo have different settings for rebuilding and indexing esp. refresh_interval
+# These settings tell ES to not tokenize strings
+UCR_INDEX_SETTINGS = {
+    "settings": INDEX_STANDARD_SETTINGS,
+    "mappings": {
+        "indicator": {
+            "dynamic": "true",
+            "dynamic_templates": [{
+                "non_analyzed_string": {
+                    "match": "*",
+                    "match_mapping_type": "string",
+                    "mapping": {
+                        "type": "string",
+                        "index": "not_analyzed"
+                    }
+                }
+            }]
+        }
+    }
+}
 
 
 def normalize_id(values):
@@ -78,6 +100,11 @@ class ESAlchemy(object):
     def count(self):
         return self.es.count()
 
+    def distinct_values(self, column, size):
+        query = self.es.terms_aggregation(column, column, size=size).size(0)
+        results = query.run()
+        return getattr(results.aggregations, column).keys
+
 
 class IndicatorESAdapter(IndicatorAdapter):
 
@@ -88,7 +115,7 @@ class IndicatorESAdapter(IndicatorAdapter):
 
     def rebuild_table(self):
         self.drop_table()
-        self.es.indices.create(index=self.table_name, body=INDEX_STANDARD_SETTINGS)
+        self.es.indices.create(index=self.table_name, body=UCR_INDEX_SETTINGS)
 
     def drop_table(self):
         try:
@@ -107,6 +134,22 @@ class IndicatorESAdapter(IndicatorAdapter):
     def get_query_object(self):
         return ESAlchemy(self.table_name, self.config)
 
+    def get_distinct_values(self, column, limit):
+        query = self.get_query_object()
+        too_many_values = False
+
+        try:
+            distinct_values = query.distinct_values(column, limit + 1)
+        except ESError:
+            # table doesn't exist
+            return [], False
+
+        if len(distinct_values) > limit:
+            distinct_values = distinct_values[:limit]
+            too_many_values = True
+
+        return distinct_values, too_many_values
+
     def best_effort_save(self, doc):
         try:
             self.save(doc)
@@ -121,7 +164,7 @@ class IndicatorESAdapter(IndicatorAdapter):
         if indicator_rows:
             es = get_es_new()
             for indicator_row in indicator_rows:
-                primary_key_values = [i.value for i in indicator_row if i.column.is_primary_key]
+                primary_key_values = [str(i.value) for i in indicator_row if i.column.is_primary_key]
                 all_values = {i.column.database_column_name: i.value for i in indicator_row}
                 es.index(
                     index=self.table_name, body=all_values,

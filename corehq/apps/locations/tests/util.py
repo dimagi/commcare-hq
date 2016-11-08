@@ -153,14 +153,17 @@ class LocationHierarchyTestCase(TestCase):
         cls.domain_obj.delete()
         delete_all_locations()
 
-    def restrict_user_to_location(self, user):
+    @classmethod
+    def restrict_user_to_location(cls, user):
         role = UserRole(
-            domain=self.domain,
+            domain=cls.domain,
             name='Regional Supervisor',
-            permissions=Permissions(access_all_locations=False),
+            permissions=Permissions(edit_commcare_users=True,
+                                    access_all_locations=False),
         )
         role.save()
-        user.set_role(self.domain, role.get_qualified_id())
+        user.set_role(cls.domain, role.get_qualified_id())
+        user.save()
 
 
 class LocationHierarchyPerTest(TestCase):

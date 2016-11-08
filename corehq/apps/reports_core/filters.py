@@ -9,7 +9,7 @@ from corehq.util.dates import iso_string_to_date
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext, ugettext_lazy as _
-
+from django.conf import settings
 
 FilterParam = namedtuple('FilterParam', ['name', 'required'])
 
@@ -127,6 +127,67 @@ class DatespanFilter(BaseFilter):
         return {
             'timezone': None
         }
+
+
+class QuarterFilter(BaseFilter):
+    template = 'reports_core/filters/quarter_filter.html'
+
+    def __init__(self, name, label=_('Quarter'), css_id=None):
+        self.label = label
+        self.css_id = css_id or name
+        params = [
+            FilterParam(self.quarter_param_name, True),
+            FilterParam(self.year_param_name, True),
+        ]
+        super(QuarterFilter, self).__init__(name=name, params=params)
+
+    @property
+    def quarter_param_name(self):
+        return '{}-quarter'.format(self.css_id)
+
+    @property
+    def year_param_name(self):
+        return '{}-year'.format(self.css_id)
+
+    @property
+    def years(self):
+        start_year = getattr(settings, 'START_YEAR', 2008)
+        years = [(str(y), y) for y in range(start_year, datetime.utcnow().year + 1)]
+        years.reverse()
+        return years
+
+    def filter_context(self):
+        return {
+            'years': self.years
+        }
+
+    def get_quarter(self, year, quarter):
+        return {
+            1: DateSpan(datetime(year, 1, 1), datetime(year, 4, 1), inclusive=False),
+            2: DateSpan(datetime(year, 4, 1), datetime(year, 7, 1), inclusive=False),
+            3: DateSpan(datetime(year, 7, 1), datetime(year, 10, 1), inclusive=False),
+            4: DateSpan(datetime(year, 10, 1), datetime(year + 1, 1, 1), inclusive=False),
+        }[quarter]
+
+    @property
+    def default_year(self):
+        return datetime.utcnow().year
+
+    def default_value(self, request_user=None):
+        return self.get_quarter(self.default_year, 1)
+
+    @memoized
+    def value(self, **kwargs):
+        try:
+            year = int(kwargs[self.year_param_name])
+            quarter = int(kwargs[self.quarter_param_name])
+        except ValueError:
+            raise FilterValueException()
+
+        if not (1 <= quarter <= 4):
+            raise FilterValueException()
+
+        return self.get_quarter(year, quarter)
 
 
 class NumericFilter(BaseFilter):

@@ -14,6 +14,7 @@ from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.core.validators import validate_email
 from django.views.decorators.debug import sensitive_post_parameters
+from django.views.decorators.http import require_GET
 from django.views.generic import View
 from django.db.models import Sum
 from django.conf import settings
@@ -70,12 +71,14 @@ from corehq.apps.accounting.utils import (
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.smsbillables.async_handlers import SMSRatesAsyncHandler, SMSRatesSelect2AsyncHandler
 from corehq.apps.smsbillables.forms import SMSRateCalculatorForm
+from corehq.apps.toggle_ui.views import ToggleEditView
 from corehq.apps.users.models import Invitation, CouchUser, Permissions
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA, TRANSFER_DOMAIN
 from custom.openclinica.forms import OpenClinicaSettingsForm
 from custom.openclinica.models import OpenClinicaSettings
 from dimagi.utils.couch.resource_conflict import retry_resource
+from dimagi.utils.web import json_request, json_response
 from corehq import privileges, feature_previews
 from django_prbac.utils import has_privilege
 from corehq.apps.accounting.models import (
@@ -104,7 +107,8 @@ from corehq.apps.domain.forms import (
     ConfirmNewSubscriptionForm, ProBonoForm, EditBillingAccountInfoForm,
     ConfirmSubscriptionRenewalForm, SnapshotFixtureForm, TransferDomainForm,
     SelectSubscriptionTypeForm, INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS, AdvancedExtendedTrialForm,
-    ContractedPartnerForm, DimagiOnlyEnterpriseForm)
+    ContractedPartnerForm, DimagiOnlyEnterpriseForm, USE_PARENT_LOCATION_CHOICE,
+    USE_LOCATION_CHOICE)
 from corehq.apps.domain.models import (
     Domain,
     LICENSES,
@@ -425,8 +429,8 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
         config = self.domain_object.call_center_config
         if config.use_user_location_as_owner:
             if config.user_location_ancestor_level == 1:
-                return DomainGlobalSettingsForm.USE_PARENT_LOCATION_CHOICE
-            return DomainGlobalSettingsForm.USE_LOCATION_CHOICE
+                return USE_PARENT_LOCATION_CHOICE
+            return USE_LOCATION_CHOICE
         return self.domain_object.call_center_config.case_owner_id
 
     @property
@@ -1474,7 +1478,7 @@ class ConfirmSelectedPlanView(SelectPlanView):
     @property
     @memoized
     def selected_plan_version(self):
-        return DefaultProductPlan.get_default_plan(self.edition).plan.get_version()
+        return DefaultProductPlan.get_default_plan_version(self.edition)
 
     @property
     def downgrade_messages(self):
@@ -1662,7 +1666,7 @@ class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin
     @property
     @memoized
     def next_plan_version(self):
-        plan_version = DefaultProductPlan.get_default_plan(self.new_edition)
+        plan_version = DefaultProductPlan.get_default_plan_version(self.new_edition)
         if plan_version is None:
             log_accounting_error(
                 "Could not find a matching renewable plan "
@@ -2520,6 +2524,21 @@ class EditInternalCalculationsView(BaseInternalDomainSettingsView):
             'calcs': CALCS,
             'order': CALC_ORDER,
         }
+
+
+@login_and_domain_required
+@require_superuser
+@require_GET
+def toggle_diff(request, domain):
+    params = json_request(request.GET)
+    other_domain = params.get('domain')
+    diff = []
+    if Domain.get_by_name(other_domain):
+        diff = [{'slug': t.slug, 'label': t.label, 'url': reverse(ToggleEditView.urlname, args=[t.slug])}
+                for t in feature_previews.all_previews() + all_toggles()
+                if t.enabled(request.domain) and not t.enabled(other_domain)]
+        diff.sort(cmp=lambda x, y: cmp(x['label'], y['label']))
+    return json_response(diff)
 
 
 @login_and_domain_required

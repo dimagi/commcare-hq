@@ -1,3 +1,4 @@
+/* globals CodeMirror */
 var Formplayer = {
     Utils: {},
     Const: {},
@@ -263,7 +264,7 @@ function Form(json) {
     });
 
     $.subscribe('session.block', function(e, block) {
-        $('.webforms input').prop('disabled', !!block);
+        $('#webforms input, #webforms textarea').prop('disabled', !!block);
     });
 
     self.submitting = function() {
@@ -420,12 +421,42 @@ Formplayer.ViewModels.CloudCareDebugger = function() {
 
     self.evalXPath = new Formplayer.ViewModels.EvaluateXPath();
     self.isMinimized = ko.observable(true);
+    self.instanceXml = ko.observable('');
+    self.formattedQuestionsHtml = ko.observable('');
     self.toggleState = function() {
         self.isMinimized(!self.isMinimized());
     };
 
+    $.unsubscribe('debugger.update');
+    $.subscribe('debugger.update', function(e) {
+        $.publish('formplayer.' + Formplayer.Const.FORMATTED_QUESTIONS, function(resp) {
+            self.formattedQuestionsHtml(resp.formattedQuestions);
+            self.instanceXml(resp.instanceXml);
+            self.evalXPath.autocomplete(resp.questionList);
+        });
+    });
+
+    self.instanceXml.subscribe(function(newXml) {
+        var $instanceTab = $('#debugger-xml-instance-tab'),
+            codeMirror;
+
+        codeMirror = CodeMirror(function(el) {
+            $('#xml-viewer-pretty').html(el);
+        }, {
+            value: newXml,
+            mode: 'xml',
+            viewportMargin: Infinity,
+            readOnly: true,
+            lineNumbers: true,
+        });
+        $instanceTab.off();
+        $instanceTab.on('shown.bs.tab', function() {
+            codeMirror.refresh();
+        });
+    });
+
     // Called afterRender, ensures that the debugger takes the whole screen
-    self.adjustWidth = function(e) {
+    self.adjustWidth = function() {
         var $debug = $('#instance-xml-home'),
             $body = $('body');
 
@@ -436,16 +467,48 @@ Formplayer.ViewModels.CloudCareDebugger = function() {
 Formplayer.ViewModels.EvaluateXPath = function() {
     var self = this;
     self.xpath = ko.observable('');
+    self.$xpath = null;
     self.result = ko.observable('');
     self.success = ko.observable(true);
     self.evaluate = function(form) {
         var callback = function(result, status) {
             self.result(result);
-            self.success(status === "success");
+            self.success(status === "accepted");
         };
         $.publish('formplayer.' + Formplayer.Const.EVALUATE_XPATH, [self.xpath(), callback]);
     };
-}
+
+    self.matcher = function(flag, subtext) {
+        var match, regexp;
+        // Match text that starts with the flag and then looks like a path.
+        regexp = new RegExp('([\\s\(]+|^)' + RegExp.escape(flag) + '([\\w/-]*)$', 'gi');
+        match = regexp.exec(subtext);
+        return match ? match[2] : null;
+    };
+
+    /**
+     * Set autocomplete for xpath input.
+     *
+     * @param {Array} questionData - List of questions to be autocompleted for the xpath input
+     */
+    self.autocomplete = function(questionData) {
+        self.$xpath = $('#xpath');
+        self.$xpath.atwho({
+            at: '',
+            data: questionData,
+            searchKey: 'value',
+            maxLen: Infinity,
+            displayTpl: function(d) {
+                var icon = Formplayer.Utils.getIconFromType(d.type);
+                return '<li><i class="' + icon + '"></i> ${value}</li>';
+            },
+            insertTpl: '${value}',
+            callbacks: {
+                matcher: self.matcher,
+            },
+        });
+    };
+};
 
 /**
  * Used to compare if questions are equal to each other by looking at their index
@@ -543,6 +606,7 @@ Formplayer.Const = {
     DELETE_REPEAT: 'delete-repeat',
     SET_LANG: 'set-lang',
     SUBMIT: 'submit-all',
+    FORMATTED_QUESTIONS: 'formatted_questions',
 
     // Control values. See commcare/javarosa/src/main/java/org/javarosa/core/model/Constants.java
     CONTROL_UNTYPED: -1,
@@ -601,7 +665,6 @@ Formplayer.Utils.answersEqual = function(answer1, answer2) {
 Formplayer.Utils.initialRender = function(formJSON, resourceMap, $div) {
     var form = new Form(formJSON),
         $debug = $('#cloudcare-debugger'),
-        $webformsNav = $('#webforms-nav'),
         cloudCareDebugger;
     Formplayer.resourceMap = resourceMap;
     ko.cleanNode($div[0]);
@@ -613,11 +676,82 @@ Formplayer.Utils.initialRender = function(formJSON, resourceMap, $div) {
         $debug.koApplyBindings(cloudCareDebugger);
     }
 
-    if ($webformsNav.length) {
-        ko.cleanNode($webformsNav[0]);
-        $webformsNav.koApplyBindings(form);
-    }
-
     return form;
 };
 
+Formplayer.Utils.getIconFromType = function(type) {
+    var icon = '';
+    switch (type) {
+    case 'Trigger':
+        icon = 'fcc fcc-fd-variable';
+        break;
+    case 'Text':
+        icon = 'fcc fcc-fd-text';
+        break;
+    case 'PhoneNumber':
+        icon = 'fa fa-signal';
+        break;
+    case 'Secret':
+        icon = 'fa fa-key';
+        break;
+    case 'Integer':
+        icon = 'fcc fcc-fd-numeric';
+        break;
+    case 'Audio':
+        icon = 'fcc fcc-fd-audio-capture';
+        break;
+    case 'Image':
+        icon = 'fa fa-camera';
+        break;
+    case 'Video':
+        icon = 'fa fa-video-camera';
+        break;
+    case 'Signature':
+        icon = 'fcc fcc-fd-signature';
+        break;
+    case 'Geopoint':
+        icon = 'fa fa-map-marker';
+        break;
+    case 'Barcode Scan':
+        icon = 'fa fa-barcode';
+        break;
+    case 'Date':
+        icon = 'fa fa-calendar';
+        break;
+    case 'Date and Time':
+        icon = 'fcc fcc-fd-datetime';
+        break;
+    case 'Time':
+        icon = 'fcc fcc-fa-clock-o';
+        break;
+    case 'Select':
+        icon = 'fcc fcc-fd-single-select';
+        break;
+    case 'Double':
+        icon = 'fcc fcc-fd-decimal';
+        break;
+    case 'Label':
+        icon = 'fa fa-tag';
+        break;
+    case 'MSelect':
+        icon = 'fcc fcc-fd-multi-select';
+        break;
+    case 'Multiple Choice':
+        icon = 'fcc fcc-fd-single-select';
+        break;
+    case 'Group':
+        icon = 'fa fa-folder-open';
+        break;
+    case 'Question List':
+        icon = 'fa fa-reorder';
+        break;
+    case 'Repeat Group':
+        icon = 'fa fa-retweet';
+        break;
+    }
+    return icon;
+};
+
+RegExp.escape= function(s) {
+    return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+};

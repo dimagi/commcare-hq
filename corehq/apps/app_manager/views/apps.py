@@ -24,6 +24,7 @@ from corehq.apps.app_manager.exceptions import ConflictingCaseTypeError, \
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs, \
     validate_langs, CASE_TYPE_CONFLICT_MSG
 from corehq import toggles, privileges
+from toggle.shortcuts import set_toggle
 from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager import id_strings
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
@@ -120,9 +121,13 @@ def default_new_app(request, domain):
         identify.delay(request.couch_user.username, {'First Template App Chosen': 'blank'})
     lang = 'en'
     app = Application.new_app(domain, _("Untitled Application"), lang=lang)
-    module = Module.new_module(_("Untitled Module"), lang)
-    app.add_module(module)
-    form = app.new_form(0, "Untitled Form", lang)
+
+    if not toggles.APP_MANAGER_V2.enabled(domain):
+        # APP MANAGER V2 is completely blank on new app
+        module = Module.new_module(_("Untitled Module"), lang)
+        app.add_module(module)
+        form = app.new_form(0, "Untitled Form", lang)
+
     if request.project.secure_submissions:
         app.secure_submissions = True
     clear_app_cache(request, domain)
@@ -273,12 +278,6 @@ def app_source(request, domain, app_id):
 
 
 @require_can_edit_apps
-def copy_app_check_domain(request, domain, name, app_id_or_source):
-    app_copy = import_app_util(app_id_or_source, domain, {'name': name})
-    return back_to_main(request, app_copy.domain, app_id=app_copy._id)
-
-
-@require_can_edit_apps
 def copy_app(request, domain):
     app_id = request.POST.get('app')
     form = CopyApplicationForm(
@@ -294,8 +293,15 @@ def copy_app(request, domain):
         else:
             app_id_or_source = app_id
 
-        return copy_app_check_domain(request, form.cleaned_data['domain'], form.cleaned_data['name'],
-                                     app_id_or_source)
+        def _inner(request, domain, data):
+            clear_app_cache(request, domain)
+            if data['toggles']:
+                for slug in data['toggles'].split(","):
+                    set_toggle(slug, domain, True, namespace=toggles.NAMESPACE_DOMAIN)
+            app_copy = import_app_util(app_id_or_source, domain, {'name': data['name']})
+            return back_to_main(request, app_copy.domain, app_id=app_copy._id)
+
+        return login_and_domain_required(_inner)(request, form.cleaned_data['domain'], form.cleaned_data)
     else:
         from corehq.apps.app_manager.views.view_generic import view_generic
         return view_generic(request, domain, app_id=app_id, copy_app_form=form)

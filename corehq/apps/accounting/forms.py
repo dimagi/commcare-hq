@@ -423,6 +423,10 @@ class SubscriptionForm(forms.Form):
         choices=FundingSource.CHOICES,
         initial=FundingSource.CLIENT,
     )
+    skip_auto_downgrade = forms.BooleanField(
+        label=ugettext_lazy("Exclude from automated downgrade process"),
+        required=False
+    )
     set_subscription = forms.CharField(widget=forms.HiddenInput, required=False)
 
     def __init__(self, subscription, account_id, web_user, *args, **kwargs):
@@ -502,6 +506,7 @@ class SubscriptionForm(forms.Form):
             self.fields['service_type'].initial = subscription.service_type
             self.fields['pro_bono_status'].initial = subscription.pro_bono_status
             self.fields['funding_source'].initial = subscription.funding_source
+            self.fields['skip_auto_downgrade'].initial = subscription.skip_auto_downgrade
 
             if (
                 subscription.date_start is not None
@@ -583,6 +588,7 @@ class SubscriptionForm(forms.Form):
                 'service_type',
                 'pro_bono_status',
                 'funding_source',
+                hqcrispy.B3MultiField("Skip Auto Downgrade", 'skip_auto_downgrade'),
                 'set_subscription'
             ),
             hqcrispy.FormActions(
@@ -658,6 +664,7 @@ class SubscriptionForm(forms.Form):
             service_type=self.cleaned_data['service_type'],
             pro_bono_status=self.cleaned_data['pro_bono_status'],
             funding_source=self.cleaned_data['funding_source'],
+            skip_auto_downgrade=self.cleaned_data['skip_auto_downgrade'],
         )
 
     def clean_active_accounts(self):

@@ -17,7 +17,7 @@ from corehq.form_processor.interfaces.processor import FormProcessorInterface, P
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, CaseTransaction, Attachment
 from corehq.form_processor.parsers.form import process_xform_xml
 from corehq.form_processor.utils.general import should_use_sql_backend
-from corehq.sql_db.config import PartitionConfig
+from corehq.sql_db.config import partition_config
 from corehq.util.test_utils import unit_testing_only, run_with_multiple_configs, RunConfig
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import safe_delete
@@ -171,7 +171,7 @@ run_with_all_backends = functools.partial(
 
 def _get_db_list_to_query():
     if settings.USE_PARTITIONED_DATABASE:
-        return PartitionConfig().get_form_processing_dbs()
+        return partition_config.get_form_processing_dbs()
     return [None]
 
 

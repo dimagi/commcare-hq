@@ -158,6 +158,14 @@ if settings.ENABLE_PRELOGIN_SITE:
     urlpatterns += patterns('', *PRELOGIN_APP_URLS)
 
 if settings.DEBUG:
+    try:
+        from debug_toolbar import urls as debug_toolbar_urls
+        urlpatterns += [
+            url(r'^__debug__/', include(debug_toolbar_urls)),
+        ]
+    except ImportError:
+        pass
+
     urlpatterns += patterns('',
         url(r'^mocha/', include('corehq.apps.mocha.urls')),
     )

@@ -144,7 +144,7 @@ class DocTestMixin(object):
         )
 
 
-def mock_out_couch(views=None, docs=None):
+class mock_out_couch(object):
     """
     Mock out calls to couch so you can use SimpleTestCase
 
@@ -152,16 +152,52 @@ def mock_out_couch(views=None, docs=None):
         class TestMyStuff(SimpleTestCase):
             ...
 
+        with mock_out_couch() as fake_db:
+            fake_db.save_doc({...})
+
     You can optionally pass default return values for specific views and doc
     gets.  See the FakeCouchDb docstring for more specifics.
     """
-    from fakecouch import FakeCouchDb
-    db = FakeCouchDb(views=views, docs=docs)
+    def __init__(self, views=None, docs=None):
+        from fakecouch import FakeCouchDb
+        self.views = views
+        self.docs = docs
+        self.db = FakeCouchDb(views=views, docs=docs)
 
-    def _get_db(*args):
-        return db
+        @classmethod
+        def _get_db(*args):
+            return self.db
 
-    return mock.patch('dimagi.ext.couchdbkit.Document.get_db', new=_get_db)
+        self.patches = [
+            mock.patch('dimagi.ext.couchdbkit.Document.get_db', new=_get_db),
+            mock.patch('dimagi.ext.couchdbkit.SafeSaveDocument.get_db', new=_get_db),
+            mock.patch('dimagi.utils.couch.undo.UndoableDocument.get_db', new=_get_db),
+        ]
+
+    def __call__(self, func):
+        if isinstance(func, type):
+            return self._patch_class(func)
+        else:
+            @wraps(func)
+            def decorated(*args, **kwds):
+                with self:
+                    return func(*args, **kwds)
+            return decorated
+
+    def _patch_class(self, klass):
+        for patch in self.patches:
+            klass = patch(klass)
+        return klass
+
+    def __enter__(self):
+        for patch in self.patches:
+            patch.start()
+
+        return self.db
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        for patch in self.patches:
+            patch.stop()
 
 
 def NOOP(*args, **kwargs):

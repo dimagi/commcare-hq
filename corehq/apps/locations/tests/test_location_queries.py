@@ -79,6 +79,15 @@ class TestLocationScopedQueryset(BaseTestLocationQuerysetMethods):
             accessible_locs
         )
 
+    def test_location_restricted_but_unassigned(self):
+        # unassigned users shouldn't be able to access any locations
+        unassigned_user = WebUser.create(self.domain, 'unassigned', 'password')
+        self.restrict_user_to_location(unassigned_user)
+        self.assertItemsEqual(
+            [],
+            SQLLocation.objects.accessible_to_user(self.domain, unassigned_user)
+        )
+
     def test_filter_path_by_user_input(self):
         self.restrict_user_to_location(self.web_user)
 

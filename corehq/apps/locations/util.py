@@ -231,6 +231,11 @@ class LocationExporter(object):
             else:
                 return None
 
+        def coax_boolean(value):
+            if isinstance(value, bool):
+                value = 'yes' if value else 'no'
+            return value
+
         rows = []
         for lt in location_types:
             type_row = {
@@ -238,12 +243,12 @@ class LocationExporter(object):
                 headers['name']: lt.name,
                 headers['parent_code']: foreign_code(lt, 'parent_type'),
                 headers['do_delete']: '',
-                headers['shares_cases']: lt.shares_cases,
-                headers['view_descendants']: lt.view_descendants,
+                headers['shares_cases']: coax_boolean(lt.shares_cases),
+                headers['view_descendants']: coax_boolean(lt.view_descendants),
                 headers['expand_from']: foreign_code(lt, 'expand_from'),
                 headers['expand_to']: foreign_code(lt, 'expand_to'),
             }
-            rows.append(dict(flatten_json(type_row)))
+            rows.append(dict(type_row))
 
         return ('types', {
             'headers': [headers[header] for header in ['code', 'name', 'parent_code', 'do_delete',
@@ -293,23 +298,6 @@ def write_to_file(locations):
         writer.write([(tab_name, tab_rows)])
     writer.close()
     return outfile.getvalue()
-
-
-def get_xform_location(xform):
-    """
-    Returns the sql location associated with the user who submitted an xform
-    """
-    from corehq.apps.users.models import CouchUser
-    user_id = xform.user_id
-    if not user_id:
-        return None
-
-    user = CouchUser.get_by_user_id(user_id)
-    if hasattr(user, 'get_sql_location'):
-        return user.get_sql_location(xform.domain)
-    elif hasattr(user, 'sql_location'):
-        return user.sql_location
-    return None
 
 
 def get_locations_and_children(location_ids):

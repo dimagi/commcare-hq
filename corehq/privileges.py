@@ -27,6 +27,7 @@ REPORT_BUILDER_ADD_ON_PRIVS = {
 }
 
 ROLE_BASED_ACCESS = 'role_based_access'
+RESTRICT_ACCESS_BY_LOCATION = 'restrict_access_by_location'
 
 OUTBOUND_SMS = 'outbound_sms'
 REMINDERS_FRAMEWORK = 'reminders_framework'
@@ -69,6 +70,7 @@ MAX_PRIVILEGES = [
     CUSTOM_BRANDING,
     CUSTOM_REPORTS,
     ROLE_BASED_ACCESS,
+    RESTRICT_ACCESS_BY_LOCATION,
     OUTBOUND_SMS,
     REMINDERS_FRAMEWORK,
     CUSTOM_SMS_GATEWAY,
@@ -115,6 +117,7 @@ class Titles(object):
             ACTIVE_DATA_MANAGEMENT: _("Active Data Management"),
             CUSTOM_BRANDING: _("Custom Branding"),
             ROLE_BASED_ACCESS: _("Advanced Role-Based Access"),
+            RESTRICT_ACCESS_BY_LOCATION: _("Organization-based user management restrictions"),
             OUTBOUND_SMS: _("Outgoing Messaging"),
             INBOUND_SMS: _("Incoming Messaging"),
             REMINDERS_FRAMEWORK: _("Reminders Framework"),

@@ -1,4 +1,5 @@
 import datetime
+from collections import namedtuple
 
 from django.core.urlresolvers import reverse
 
@@ -15,9 +16,10 @@ from sqlagg.filters import (
     NOTEQFilter,
     NOTNULLFilter,
     get_column,
-)
+    ANDFilter)
 from sqlalchemy import bindparam
 
+from corehq.apps.es import filters
 from corehq.apps.reports.daterange import get_all_daterange_choices, get_daterange_start_end_dates
 from corehq.apps.reports.util import (
     get_INFilter_bindparams,
@@ -42,6 +44,9 @@ class FilterValue(object):
         raise NotImplementedError()
 
     def to_sql_values(self):
+        raise NotImplementedError()
+
+    def to_es_filter(self):
         raise NotImplementedError()
 
 
@@ -101,15 +106,45 @@ class DateFilterValue(FilterValue):
             enddate = enddate + datetime.timedelta(days=1) - datetime.timedelta.resolution
         return enddate
 
+    def to_es_filter(self):
+        if self.value is None:
+            return None
+
+        return filters.date_range(self.filter.field, lt=self.value.startdate, gt=self.value.enddate)
+
+
+class QuarterFilterValue(FilterValue):
+
+    @property
+    def startdate_slug(self):
+        return '%s_startdate' % self.filter.slug
+
+    @property
+    def enddate_slug(self):
+        return '%s_enddate' % self.filter.slug
+
+    def to_sql_filter(self):
+        return ANDFilter([
+            GTEFilter(self.filter.field, self.startdate_slug),
+            LTFilter(self.filter.field, self.enddate_slug)
+        ])
+
+    def to_sql_values(self):
+        return {
+            self.startdate_slug: self.value.computed_startdate,
+            self.enddate_slug: self.value.computed_enddate
+        }
+
 
 class NumericFilterValue(FilterValue):
+    DBSpecificFilter = namedtuple('DBSpecificFilter', ['sql', 'es'])
     operators_to_filters = {
-        '=': EQFilter,
-        '!=': NOTEQFilter,
-        '>=': GTEFilter,
-        '>': GTFilter,
-        '<=': LTEFilter,
-        '<': LTFilter,
+        '=': DBSpecificFilter(EQFilter, filters.term),
+        '!=': DBSpecificFilter(NOTEQFilter, filters.not_term),
+        '>=': DBSpecificFilter(GTEFilter, lambda field, val: filters.range_filter(field, gte=val)),
+        '>': DBSpecificFilter(GTFilter, lambda field, val: filters.range_filter(field, gt=val)),
+        '<=': DBSpecificFilter(LTEFilter, lambda field, val: filters.range_filter(field, lte=val)),
+        '<': DBSpecificFilter(LTFilter, lambda field, val: filters.range_filter(field, lt=val)),
     }
 
     def __init__(self, filter, value):
@@ -123,7 +158,7 @@ class NumericFilterValue(FilterValue):
     def to_sql_filter(self):
         if self.value is None:
             return None
-        filter_class = self.operators_to_filters[self.value['operator']]
+        filter_class = self.operators_to_filters[self.value['operator']].sql
         return filter_class(self.filter.field, self.filter.slug)
 
     def to_sql_values(self):
@@ -132,6 +167,13 @@ class NumericFilterValue(FilterValue):
         return {
             self.filter.slug: self.value["operand"],
         }
+
+    def to_es_filter(self):
+        if self.value is None:
+            return None
+
+        filter_class = self.operators_to_filters[self.value['operator']].es
+        return filter_class(self.filter.field, self.filter.value)
 
 
 class BasicBetweenFilter(BasicFilter):
@@ -217,7 +259,7 @@ class PreFilterValue(FilterValue):
                 get_INFilter_bindparams(self.filter.slug, self.value['operand'])
             )
         else:
-            return self._scalar_filter(self.filter.field, self.filter.slug)
+            return self._scalar_filter.sql(self.filter.field, self.filter.slug)
 
     def to_sql_values(self):
         if self._is_dyn_date():
@@ -236,6 +278,17 @@ class PreFilterValue(FilterValue):
             }
         else:
             return {self.filter.slug: self.value['operand']}
+
+    def to_es_filter(self):
+        # TODO: support the array and null operators defined at top of class
+        if self._is_dyn_date():
+            start_date, end_date = get_daterange_start_end_dates(self.value['operator'], *self.value['operand'])
+            return filters.date_range(self.filter.field, gt=start_date, lt=end_date)
+        elif self._is_null():
+            return filters.missing(self.filter.field)
+        else:
+            terms = [v.value.lower() for v in self.value]
+            return filters.term(self.filter.field, terms)
 
 
 class ChoiceListFilterValue(FilterValue):
@@ -272,6 +325,14 @@ class ChoiceListFilterValue(FilterValue):
             get_INFilter_element_bindparam(self.filter.slug, i): val.value
             for i, val in enumerate(self.value)
         }
+
+    def to_es_filter(self):
+        if self.show_all:
+            return None
+        if self.is_null:
+            return filters.missing(self.filter.field)
+        terms = [v.value.lower() for v in self.value]
+        return filters.term(self.filter.field, terms)
 
 
 def dynamic_choice_list_url(domain, report, filter):

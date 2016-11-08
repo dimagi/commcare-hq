@@ -6,7 +6,7 @@ Vellum
 Vellum is a JavaRosa [XForm](http://en.wikipedia.org/wiki/XForms) designer used
 in [CommCare HQ](http://github.com/dimagi/commcare-hq).
 
-![](http://i.imgur.com/Eoi3XE3.png)
+![](http://i.imgur.com/PvrL8Rr.jpg)
 
 Image courtesy of the [ReMIND
 project](https://www.commcarehq.org/exchange/325775003aa58cfcefbc75cfdf132e4d/info/).

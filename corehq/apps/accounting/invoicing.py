@@ -79,9 +79,7 @@ class DomainInvoiceFactory(object):
 
     @transaction.atomic
     def _ensure_full_coverage(self, subscriptions):
-        plan_version = DefaultProductPlan.get_default_plan(
-            edition=SoftwarePlanEdition.COMMUNITY
-        ).plan.get_version()
+        plan_version = DefaultProductPlan.get_default_plan_version()
         if not plan_version.feature_charges_exist_for_domain(self.domain):
             return
 

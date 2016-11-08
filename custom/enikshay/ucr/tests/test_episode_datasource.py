@@ -105,6 +105,48 @@ class TestEpisodeDatasource(BaseEnikshayDatasourceTest):
             )]
         )
 
+        end_of_ip_test = CaseStructure(
+            case_id='end_of_ip_test',
+            attrs={
+                'case_type': 'test',
+                'create': True,
+                'update': dict(
+                    test_type_value='microscopy-zn',
+                    result='tb_detected',
+                    purpose_of_testing='follow_up',
+                    follow_up_test_reason='end_of_ip',
+                    opened_on=datetime(2016, 1, 1)
+                )
+            },
+            indices=[CaseIndex(
+                occurrence,
+                identifier='host',
+                relationship=CASE_INDEX_EXTENSION,
+                related_type=occurrence.attrs['case_type'],
+            )]
+        )
+
+        second_test = CaseStructure(
+            case_id='second_test',
+            attrs={
+                'case_type': 'test',
+                'create': True,
+                'update': dict(
+                    test_type_value='culture',
+                    result='resistant',
+                    purpose_of_testing='diagnostic',
+                    follow_up_test_reason='repeat_for_diagnosis',
+                    opened_on=datetime(2016, 1, 2)
+                )
+            },
+            indices=[CaseIndex(
+                occurrence,
+                identifier='host',
+                relationship=CASE_INDEX_EXTENSION,
+                related_type=occurrence.attrs['case_type'],
+            )]
+        )
+
         episode = CaseStructure(
             case_id='episode_case_1',
             attrs={
@@ -117,7 +159,8 @@ class TestEpisodeDatasource(BaseEnikshayDatasourceTest):
                     opened_on=datetime(1989, 6, 11, 0, 0),
                     patient_type_choice="new",
                     hiv_status="reactive",
-                    lab_result=lab_result
+                    lab_result=lab_result,
+                    length_of_ip=65
                 )
             },
             indices=[CaseIndex(
@@ -127,7 +170,7 @@ class TestEpisodeDatasource(BaseEnikshayDatasourceTest):
                 related_type=occurrence.attrs['case_type'],
             )],
         )
-        self.factory.create_or_update_cases([episode, test])
+        self.factory.create_or_update_cases([episode, test, end_of_ip_test, second_test])
 
     @run_with_all_ucr_backends
     def test_hiv_status(self):
@@ -139,56 +182,28 @@ class TestEpisodeDatasource(BaseEnikshayDatasourceTest):
         self.assertEqual(row.hiv_status, 'reactive')
 
     @run_with_all_ucr_backends
-    def test_sputum_positive(self):
-        self._create_case_structure(lab_result="tb_detected")
+    def test_new_sputum_positive_patient_2months_ip(self):
+        self._create_case_structure()
         query = self._rebuild_table_get_query_object()
         self.assertEqual(query.count(), 1)
         row = query[0]
 
-        self.assertEqual(row.male, 1)
-        self.assertEqual(row.female, 0)
-        self.assertEqual(row.transgender, 0)
-
-        self.assertEqual(row.disease_classification, 'pulmonary')
-        self.assertEqual(row.hiv_positive, 1)
-
-        self.assertEqual(row.age_in_days, 666)
-        self.assertEqual(row.under_15, 1)
-
-        self.assertEqual(row.new_smear_positive_pulmonary_TB, 1)
-        self.assertEqual(row.new_smear_positive_pulmonary_TB_male, 1)
-        self.assertEqual(row.new_smear_positive_pulmonary_TB_female, 0)
-        self.assertEqual(row.new_smear_positive_pulmonary_TB_transgender, 0)
-
-        self.assertEqual(row.new_smear_positive_pulmonary_TB_under_15, 1)
-        self.assertEqual(row.new_smear_positive_pulmonary_TB_over_15, 0)
+        self.assertEqual(row.new_sputum_positive_patient_2months_ip, 1)
 
     @run_with_all_ucr_backends
-    def test_sputum_negative(self):
-        self._create_case_structure(lab_result="tb_not_detected")
+    def test_diagnostic_test_after_end_of_ip(self):
+        self._create_case_structure()
         query = self._rebuild_table_get_query_object()
         self.assertEqual(query.count(), 1)
         row = query[0]
 
-        self.assertEqual(row.new_smear_negative_pulmonary_TB, 1)
-        self.assertEqual(row.new_smear_negative_pulmonary_TB_male, 1)
-        self.assertEqual(row.new_smear_negative_pulmonary_TB_female, 0)
-        self.assertEqual(row.new_smear_negative_pulmonary_TB_transgender, 0)
-
-        self.assertEqual(row.new_smear_negative_pulmonary_TB_under_15, 1)
-        self.assertEqual(row.new_smear_negative_pulmonary_TB_over_15, 0)
+        self.assertEqual(row.diagnostic_test_after_end_of_ip, 1)
 
     @run_with_all_ucr_backends
-    def test_extra_pulmonary(self):
-        self._create_case_structure(lab_result="tb_detected", disease_classification="extra_pulmonary")
+    def test_positive_diagnostic_test_after_end_of_ip(self):
+        self._create_case_structure()
         query = self._rebuild_table_get_query_object()
         self.assertEqual(query.count(), 1)
         row = query[0]
 
-        self.assertEqual(row.new_smear_positive_extra_pulmonary_TB, 1)
-        self.assertEqual(row.new_smear_positive_extra_pulmonary_TB_male, 1)
-        self.assertEqual(row.new_smear_positive_extra_pulmonary_TB_female, 0)
-        self.assertEqual(row.new_smear_positive_extra_pulmonary_TB_transgender, 0)
-
-        self.assertEqual(row.new_smear_positive_extra_pulmonary_TB_under_15, 1)
-        self.assertEqual(row.new_smear_positive_extra_pulmonary_TB_over_15, 0)
+        self.assertEqual(row.positive_diagnostic_test_after_end_of_ip, 1)

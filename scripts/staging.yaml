@@ -45,21 +45,25 @@
 trunk: master
 name: autostaging
 branches:
+  - case_importer_rename  # Danny 11/8
   - vellum-staging # J$ 11/13
-  #- onboarding # Jenny 9/19
-#  - np/upgrade-twofactor # Nick P 10/5
+#  - bmb/appmanager-v2-001  #bmb 10/26 if you pull master into this, please rebase
+  - django19
   - bmb/currentind-string # Biyeun 11/12
-  - np/upgrade-django-celery # Nick P 10/13
-  - je/remove-phonenumbers
+  - np/110/TEMPLATES
+  - jquery-3-1-0 # Jenny 9/26
+  - typeahead-to-select2 # Jenny 11/1
+  - kill-autocomplete # Jenny 11/1
+  - location_export # Manish 11/2
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
-    branches: []
+    branches: [2.31.0-jars]
   submodules/formtranslate-src:
     # let's leave this here even when empty
     # just so we always get latest master
-    branches: []
+    branches: [commcare_2.31.0-jars]
   submodules/django-digest-src:
     branches: []
   submodules/dimagi-utils-src:
@@ -71,5 +75,4 @@ submodules:
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches: []
   deployment/commcare-hq-deploy:
-    branches:
-      - br/jmx-formplayer
+    branches: []

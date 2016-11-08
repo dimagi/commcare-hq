@@ -3,15 +3,9 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 {% load crispy_forms_tags %}
-{% load compress %}
 
 {% block head %}{{ block.super }}
     {% include 'analytics/fullstory.html' %}
-{% endblock %}
-{% block stylesheets %}{{ block.super }}
-    {% compress css %}
-    <link rel="stylesheet" href="{% static 'At.js/dist/css/jquery.atwho.min.css' %}">
-    {% endcompress %}
 {% endblock %}
 {% block js %}{{ block.super }}
     <script src="{% static 'app_manager/js/commcaresettings.js' %}"></script>
@@ -30,8 +24,6 @@
     {{ block.super }}
     {% if app.get_doc_type == "Application" %}
         <script src="{% static 'translations/js/translations.js' %}"></script>
-        <script src="{% static 'Caret.js/dist/jquery.caret.min.js' %}"></script>
-        <script src="{% static 'At.js/dist/js/jquery.atwho.min.js' %}"></script>
     {% endif %}
     {% if app %}
     <script>
@@ -188,6 +180,51 @@
             }));
         });
     </script>
+    <script>
+        $("#copy form button").click(function() {
+            var $submit = $(this),
+                $form = $submit.closest("form"),
+                domain = $form.find("#id_domain").val(),
+                $modal = $("#copy-toggles");
+            {% if request.user.is_superuser %}
+                $submit.disableButton();
+                $.ajax({
+                    method: "GET",
+                    url: "{% url "toggle_diff" domain %}",
+                    data: {
+                        domain: domain,
+                    },
+                    success: function(toggles) {
+                        if (toggles.length) {
+                            var template = _.template($modal.find("script").html()),
+                                $ul = $modal.find("ul").html("");
+                            _.each(toggles, function(toggle) {
+                                $ul.append(template(toggle));
+                            });
+                            $modal.modal().one("click", ".btn-primary", function() {
+                                $(this).disableButton();
+                                var slugs = _.map($modal.find(":checked"), function(c) {
+                                    return $(c).data("slug");
+                                });
+                                $form.find("input[name='toggles']").val(slugs.join(","));
+                                $form.submit();
+                            }).one("hide.bs.modal", function() {
+                                $submit.enableButton();
+                            });
+                        } else {
+                            $form.submit();
+                        }
+                    },
+                    error: function() {
+                        // If anything goes wrong, just submit the form
+                        $form.submit();
+                    },
+                });
+            {% else %}
+                $form.submit();
+            {% endif %}
+        });
+    </script>
     {% endif %}
     {% if app.doc_type == "Application" %}
         <script>
@@ -285,7 +322,7 @@
         </div>
         <div class="tab-pane" id="delete">
             <h3>{% trans "Delete Application" %}</h3>
-            <form action="{% url "corehq.apps.app_manager.views.delete_app" domain app.id %}" method="POST">
+            <form action="{% url "delete_app" domain app.id %}" method="POST">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-danger disable-on-submit">
                     <i class="fa fa-trash"></i>
@@ -301,4 +338,5 @@
 {% include 'hqmedia/partials/multimedia_uploader.html' %}
 {% endfor %}
 {% include 'app_manager/v1/partials/password_setter_modal.html' %}
+{% include 'app_manager/v1/partials/toggle_diff_modal.html' %}
 {% endblock %}

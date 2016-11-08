@@ -205,10 +205,17 @@ class ESQuery(object):
             size = sliced_or_int.stop - start
         return self.start(start).size(size).run().hits
 
-    def run(self):
+    def run(self, include_hits=False):
         """Actually run the query.  Returns an ESQuerySet object."""
-        raw = run_query(self.index, self.raw_query, debug_host=self.debug_host)
-        return ESQuerySet(raw, deepcopy(self))
+        query = self._clean_before_run(include_hits)
+        raw = run_query(query.index, query.raw_query, debug_host=query.debug_host)
+        return ESQuerySet(raw, deepcopy(query))
+
+    def _clean_before_run(self, include_hits=False):
+        query = deepcopy(self)
+        if not include_hits and query.uses_aggregations():
+            query = query.size(0)
+        return query
 
     def scroll(self):
         """
@@ -248,6 +255,9 @@ class ESQuery(object):
         want to reproduce a query with additional filtering.
         """
         return self._default_filters.values() + self._filters
+
+    def uses_aggregations(self):
+        return len(self._aggregations) > 0
 
     def aggregation(self, aggregation):
         """
@@ -353,12 +363,26 @@ class ESQuery(object):
         """pretty prints the JSON query that will be sent to elasticsearch."""
         print self.dumps(pretty=True)
 
-    def sort(self, field, desc=False):
+    def sort(self, field, desc=False, reset_sort=True):
         """Order the results by field."""
         query = deepcopy(self)
-        query.es_query['sort'] = {
+        sort_field = {
             field: {'order': 'desc' if desc else 'asc'}
         }
+
+        if reset_sort:
+            query.es_query['sort'] = [sort_field]
+        else:
+            if not query.es_query.get('sort'):
+                query.es_query['sort'] = []
+            query.es_query['sort'].append(sort_field)
+
+        return query
+
+    def set_sorting_block(self, sorting_block):
+        """To be used with `get_sorting_block`, which interprets datatables sorting"""
+        query = deepcopy(self)
+        query.es_query['sort'] = sorting_block
         return query
 
     def remove_default_filters(self):
@@ -389,6 +413,10 @@ class ESQuery(object):
     def count(self):
         """Performs a minimal query to get the count of matching documents"""
         return self.size(0).run().total
+
+    def get_ids(self):
+        """Performs a minimal query to get the ids of the matching documents"""
+        return self.exclude_source().run().doc_ids
 
 
 class ESQuerySet(object):
@@ -432,7 +460,11 @@ class ESQuerySet(object):
     @property
     def hits(self):
         """Return the docs from the response."""
-        return [self.normalize_result(self.query, r) for r in self.raw_hits]
+        raw_hits = self.raw_hits
+        if not raw_hits and self.query.uses_aggregations() and self.query._size == 0:
+            raise ESError("no hits, did you forget about no_hits_with_aggs?")
+
+        return [self.normalize_result(self.query, r) for r in raw_hits]
 
     @property
     def total(self):

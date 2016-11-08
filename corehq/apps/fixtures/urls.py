@@ -1,4 +1,4 @@
-from django.conf.urls import url, patterns
+from django.conf.urls import url
 from django.views.generic import RedirectView
 
 from corehq.apps.fixtures.dispatcher import FixtureInterfaceDispatcher
@@ -8,7 +8,7 @@ from corehq.apps.fixtures.views import (
     download_file, update_tables, fixture_upload_job_poll,
 )
 
-urlpatterns = patterns('corehq.apps.fixtures.views',
+urlpatterns = [
     url(r'^fixapi/', upload_fixture_api),
     url(r'^metadata/$', fixture_metadata, name='fixture_metadata'),
     url(r'^$', RedirectView.as_view(url='edit_lookup_tables'), name='edit_lookup_tables'),
@@ -24,4 +24,4 @@ urlpatterns = patterns('corehq.apps.fixtures.views',
         name=FixtureUploadStatusView.urlname),
     url(r'^upload/status/poll/(?P<download_id>[0-9a-fA-Z]{25,32})/$',
         fixture_upload_job_poll, name='fixture_upload_job_poll'),
-)
+]
