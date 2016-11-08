@@ -74,32 +74,34 @@
     };
 }());
 
-ko.bindingHandlers.casePropertyTypeahead = {
+ko.bindingHandlers.casePropertySelect2 = {
     /*
-     * Strip attachment: prefix and show icon for attachment properties
+     * Strip "attachment:" prefix and show icon for attachment properties.
+     * Replace any spaces in free text with underscores.
      */
     init: function (element, valueAccessor) {
-        ko.bindingHandlers.typeahead.init(element, valueAccessor);
-        $(element).data("ui-autocomplete")._renderItem = function (ul, item) {
-            return $("<li></li>")
-                .data("item.autocomplete", item)
-                .append($("<a></a>").html(item.label))
-                .appendTo(ul);
+        var options = ko.bindingHandlers.autocompleteSelect2.select2Options(element),
+            old_createSearchChoice = options.createSearchChoice;
+        options.createSearchChoice = function(term, data) {
+            term = term.replace(/ /g, '_');
+            return old_createSearchChoice(term, data);
         };
+
+        ko.bindingHandlers.autocompleteSelect2._init(element, options);
     },
-    update: function (element, valueAccessor) {
+    update: function (element, valueAccessor, allBindingsAccessor) {
         function wrappedValueAccessor() {
             return _.map(ko.unwrap(valueAccessor()), function(value) {
                 if (value.indexOf("attachment:") === 0) {
                     var text = value.substring(11),
                         html = '<i class="fa fa-paperclip"></i> ' + text;
-                    return {value: text, label: html};
+                    return {id: text, text: html};
                 }
-                return {value: value, label: value};
+                return {id: value, text: value};
             })
         }
-        ko.bindingHandlers.typeahead.update(element, wrappedValueAccessor);
-    }
+        ko.bindingHandlers.autocompleteSelect2.update(element, wrappedValueAccessor, allBindingsAccessor);
+    },
 };
 
 // Originally from http://stackoverflow.com/a/17998880
