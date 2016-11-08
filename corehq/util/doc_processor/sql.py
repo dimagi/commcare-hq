@@ -2,6 +2,7 @@ from datetime import datetime
 
 from django.conf import settings
 
+from corehq.sql_db.config import partition_config
 from corehq.util.doc_processor.interface import DocumentProvider
 from corehq.util.pagination import ResumableFunctionIterator, ArgsProvider
 

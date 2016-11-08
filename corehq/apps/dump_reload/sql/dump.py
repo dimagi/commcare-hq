@@ -105,21 +105,26 @@ def get_querysets_to_dump(domain, excludes):
         if model_class in excluded_models:
             continue
 
-        using = router.db_for_read(model_class)
-        if settings.USE_PARTITIONED_DATABASE and using == partition_config.get_proxy_db():
-            using = partition_config.get_form_processing_dbs()
-        else:
-            using = [using]
+        for model_class, queryset in get_all_model_querysets_for_domain(model_class, domain):
+            yield model_class, queryset
 
-        for db_alias in using:
-            if not model_class._meta.proxy and router.allow_migrate_model(db_alias, model_class):
-                objects = model_class._default_manager
 
-                queryset = objects.using(db_alias).order_by(model_class._meta.pk.name)
+def get_all_model_querysets_for_domain(model_class, domain):
+    using = router.db_for_read(model_class)
+    if settings.USE_PARTITIONED_DATABASE and using == partition_config.get_proxy_db():
+        using = partition_config.get_form_processing_dbs()
+    else:
+        using = [using]
 
-                filters = get_model_domain_filters(model_class, domain)
-                for filter in filters:
-                    yield model_class, queryset.filter(filter)
+    for db_alias in using:
+        if not model_class._meta.proxy and router.allow_migrate_model(db_alias, model_class):
+            objects = model_class._default_manager
+
+            queryset = objects.using(db_alias).order_by(model_class._meta.pk.name)
+
+            filters = get_model_domain_filters(model_class, domain)
+            for filter in filters:
+                yield model_class, queryset.filter(filter)
 
 
 def get_model_domain_filters(model_class, domain):
