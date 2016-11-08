@@ -190,6 +190,7 @@ hqDefine('locations/ko/location_types.js', function(){
         self.code = ko.observable(loc_type.code || '');
         self.expand_from = ko.observable(loc_type.expand_from_root ? ROOT_LOCATION_ID : loc_type.expand_from);
         self.expand_to = ko.observable(loc_type.expand_to);
+        self.include_without_expanding = ko.observable(loc_type.include_without_expanding);
 
         self.view = view_model;
 
@@ -292,6 +293,25 @@ hqDefine('locations/ko/location_types.js', function(){
                 children: children_to_return.slice(0, children_to_return.length - 1),
                 leaf: children_to_return[children_to_return.length - 1],
             };
+        };
+
+        self.include_without_expanding_options = function(){
+            var options;
+            if (self.expand_from() !== ROOT_LOCATION_ID){
+                if (typeof(self.expand_from()) === 'undefined' || self.expand_from() === null){
+                    options = self.expand_from_options();
+                } else {
+                    options = self.view.loc_types_by_id()[self.expand_from()].parents();
+                    options.push(new LocationTypeModel(
+                        {name: "root", pk: ROOT_LOCATION_ID},
+                        commtrack_enabled, this
+                    ));
+                    options = options.reverse();
+                }
+                return options;
+            } else {
+                return [];
+            }
         };
 
         self.to_json = function() {
