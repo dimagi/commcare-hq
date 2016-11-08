@@ -371,7 +371,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         }
 
     def _get_assigned_locations_default(self):
-        user_assigned_locations = self.request.couch_user.get_assigned_sql_locations(
+        user_assigned_locations = self.request.couch_user.get_sql_locations(
             self.request.domain
         )
         return map(self.utils.location_tuple, user_assigned_locations)
