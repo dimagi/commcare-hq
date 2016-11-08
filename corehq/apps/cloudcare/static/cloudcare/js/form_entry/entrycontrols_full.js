@@ -87,20 +87,21 @@ EntrySingleAnswer = function(question, options) {
     var self = this;
 
     Entry.call(self, question, options);
-    var extensions = {};
-    var displayOptions = _getDisplayOptions(question)
     self.valueUpdate = undefined;
-    if (options.enableRateLimit && ko.utils.unwrapObservable(displayOptions.phoneMode)) {
-        extensions.rateLimit = {
-            timeout: Formplayer.Const.KO_ENTRY_TIMEOUT,
-            method: "notifyWhenChangesStop"
-        };
-        self.valueUpdate = 'keyup';
-    }
-    self.rawAnswer = ko.observable(question.answer() || Formplayer.Const.NO_ANSWER)
-        .extend(extensions);
+    self.rawAnswer = ko.observable(question.answer() || Formplayer.Const.NO_ANSWER);
 
     self.rawAnswer.subscribe(self.onPreProcess.bind(self));
+
+    var displayOptions = _getDisplayOptions(question);
+    if (options.enableAutoUpdate && ko.utils.unwrapObservable(displayOptions.phoneMode)) {
+        self.valueUpdate = 'keyup';
+        self.answer.extend({
+            rateLimit: {
+                timeout: Formplayer.Const.KO_ENTRY_TIMEOUT,
+                method: "notifyWhenChangesStop"
+            }
+        });
+    }
 }
 EntrySingleAnswer.prototype = Object.create(Entry.prototype);
 EntrySingleAnswer.prototype.constructor = Entry;
@@ -519,19 +520,19 @@ function getEntry(question) {
         case Formplayer.Const.STRING:
             rawStyle = question.style ? ko.utils.unwrapObservable(question.style.raw) === 'numeric' : false;
             if (rawStyle) {
-                entry = new PhoneEntry(question, { enableRateLimit: true });
+                entry = new PhoneEntry(question, { enableAutoUpdate: true });
             } else {
-                entry = new FreeTextEntry(question, { enableRateLimit: true });
+                entry = new FreeTextEntry(question, { enableAutoUpdate: true });
             }
             break;
         case Formplayer.Const.INT:
-            entry = new IntEntry(question, { enableRateLimit: true });
+            entry = new IntEntry(question, { enableAutoUpdate: true });
             break;
         case Formplayer.Const.LONGINT:
-            entry = new IntEntry(question, { lengthLimit: 15, enableRateLimit: true  });
+            entry = new IntEntry(question, { lengthLimit: 15, enableAutoUpdate: true  });
             break;
         case Formplayer.Const.FLOAT:
-            entry = new FloatEntry(question, { enableRateLimit: true });
+            entry = new FloatEntry(question, { enableAutoUpdate: true });
             break;
         case Formplayer.Const.SELECT:
             entry = new SingleSelectEntry(question, {});
