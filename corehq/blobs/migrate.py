@@ -81,6 +81,7 @@ from corehq.blobs.exceptions import NotFound
 from corehq.blobs.migratingdb import MigratingBlobDB
 from corehq.blobs.mixin import BlobHelper
 from corehq.blobs.models import BlobMigrationState
+from corehq.blobs.zipdb import get_export_filename
 from corehq.dbaccessors.couchapps.all_docs import get_doc_count_by_type
 from corehq.util.doc_processor.couch import CouchDocumentProvider, doc_type_tuples_to_dict
 from corehq.util.doc_processor.couch import CouchProcessorProgressLogger
@@ -461,6 +462,12 @@ class ExportByDomainSQL(Migrator):
     def migrate(self, filename=None, reset=False, max_retry=2, chunk_size=100):
         if not self.domain:
             raise MigrationError("Must specify domain")
+
+        if os.path.exists(get_export_filename(self.slug, self.domain)):
+            raise MigrationError(
+                "{} exporter doesn't support resume. "
+                "To re-run the export use 'reset'".format(self.slug)
+            )
 
         return super(ExportByDomainSQL, self).migrate(
             filename=filename, reset=reset, max_retry=max_retry, chunk_size=chunk_size

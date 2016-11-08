@@ -12,7 +12,7 @@ class ZipBlobDB(AbstractBlobDB):
     """
 
     def __init__(self, slug, domain):
-        self.zipname = 'export-{domain}-{slug}-blobs.zip'.format(domain=domain, slug=slug)
+        self.zipname = get_export_filename(slug, domain)
 
     def put(self, content, basename="", bucket=DEFAULT_BUCKET):
         raise NotImplementedError
@@ -57,3 +57,7 @@ def get_blob_db_exporter(slug, domain):
 
 def _get_zip_db(slug, domain):
     return ZipBlobDB(slug, domain)
+
+
+def get_export_filename(slug, domain):
+    return 'export-{domain}-{slug}-blobs.zip'.format(domain=domain, slug=slug)
