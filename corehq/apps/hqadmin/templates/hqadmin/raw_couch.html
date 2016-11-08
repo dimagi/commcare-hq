@@ -5,12 +5,10 @@
         <title>Doc {{ doc_id }}</title>
 
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.min.css' %}"/>
-        <link rel="stylesheet" href="{% static 'codemirror/lib/codemirror.css' %}" />
-        <link rel="stylesheet" href="{% static 'codemirror/addon/fold/foldgutter.css' %}"/>
-        <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'font-awesome/css/font-awesome.min.css' %}" />
+        <link type="text/css"
+              rel="stylesheet"
+              media="all"
+              href="{% static 'font-awesome/css/font-awesome.min.css' %}" />
 
         {% compress js %}
             <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
@@ -18,11 +16,15 @@
         {% endcompress %}
 
         {# CodeMirror uses granular resources as a means of config #}
+        {% if not raw %}
+        <link rel="stylesheet" href="{% static 'codemirror/lib/codemirror.css' %}" />
+        <link rel="stylesheet" href="{% static 'codemirror/addon/fold/foldgutter.css' %}"/>
         <script src="{% static 'codemirror/lib/codemirror.js' %}"></script>
         <script src="{% static 'codemirror/mode/javascript/javascript.js' %}"></script>
         <script src="{% static 'codemirror/addon/fold/foldcode.js' %}"></script>
         <script src="{% static 'codemirror/addon/fold/foldgutter.js' %}"></script>
         <script src="{% static 'codemirror/addon/fold/brace-fold.js' %}"></script>
+        {% endif %}
 
         <style>
             .CodeMirror {
@@ -81,6 +83,11 @@
                              title="Open in HQ" />
                     </a>
                     <a href="{% url 'doc_in_es' %}?id={{ doc_id }}" target="_blank" title="Search in ES"><i class="fa fa-search"></i></a>
+                    {% if raw %}
+                        <a href="{% url "raw_couch" %}?id={{ doc_id }}&db_name={{ selected_db }}" title="Enable CodeMirror"><i class="fa fa-code"></i></a>
+                    {% else %}
+                        <a href="{% url "raw_couch" %}?id={{ doc_id }}&db_name={{ selected_db }}&raw=true" title="Disable CodeMirror"><i class="fa fa-code"></i></a>
+                    {% endif %}
                     <div>
                         <h3>Raw Doc:</h3>
                         <pre id="couch-document">{{ doc }}</pre>
@@ -92,7 +99,8 @@
 
         <script>
             // don't break if offline (Also why I left it as a <pre/>)
-            if (window.CodeMirror) {
+            var raw = {{ raw|JSON  }};
+            if (!raw && window.CodeMirror) {
                 var couchDocElement = document.getElementById('couch-document');
                 var myCodeMirror = CodeMirror(function(elt) {
                     couchDocElement.parentNode.replaceChild(elt, couchDocElement);
