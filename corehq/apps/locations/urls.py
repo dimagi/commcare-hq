@@ -1,4 +1,4 @@
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 
 from .views import (
     LocationsListView,
@@ -14,7 +14,7 @@ from .views import (
     delete_location, location_descendants_count,
 )
 
-settings_urls = patterns('corehq.apps.locations.views',
+settings_urls = [
     url(r'^$', default, name='default_locations_view'),
     url(r'^child_locations/$', child_locations_for_select2, name='child_locations_for_select2'),
     url(r'^list/$', LocationsListView.as_view(), name=LocationsListView.urlname),
@@ -35,4 +35,4 @@ settings_urls = patterns('corehq.apps.locations.views',
     url(r'^(?P<loc_id>[\w-]+)/delete/$', delete_location, name='delete_location'),
     url(r'^(?P<loc_id>[\w-]+)/descendants/$', location_descendants_count, name='location_descendants_count'),
     url(r'^(?P<loc_id>[\w-]+)/$', EditLocationView.as_view(), name=EditLocationView.urlname),
-)
+]
