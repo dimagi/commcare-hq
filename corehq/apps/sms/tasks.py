@@ -244,7 +244,7 @@ def process_sms(queued_sms_pk):
             process_sms.delay(queued_sms_pk)
 
 
-@task(ignore_result=True, default_retry_delay=5 * 60, max_retries=10, bind=True)
+@task(ignore_result=True, default_retry_delay=10 * 60, max_retries=10, bind=True)
 def store_billable(self, msg):
     if not isinstance(msg, SMS):
         raise Exception("Expected msg to be an SMS")
