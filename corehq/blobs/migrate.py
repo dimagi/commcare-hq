@@ -73,7 +73,10 @@ from base64 import b64encode
 from tempfile import mkdtemp
 
 from django.conf import settings
-from corehq.blobs import get_blob_db
+
+from corehq.apps.export import models as exports
+from corehq.apps.ota.models import DemoUserRestore
+from corehq.blobs import get_blob_db, DEFAULT_BUCKET, BlobInfo
 from corehq.blobs.exceptions import NotFound
 from corehq.blobs.migratingdb import MigratingBlobDB
 from corehq.blobs.mixin import BlobHelper
@@ -275,23 +278,21 @@ class BlobDbBackendMigrator(BaseDocMigrator):
         return doc.get("external_blobs")
 
 
-class BlobDbBackendExporter(BaseDocMigrator):
+class BlobDbBackendExporter(BaseDocProcessor):
 
-    def __init__(self, slug, couchdb, filename=None, domain=None):
-        super(BlobDbBackendExporter, self).__init__(slug, couchdb, filename)
+    def __init__(self, slug, domain, couchdb):
         from corehq.blobs.zipdb import get_blob_db_exporter, ZipBlobDB
+        self.slug = slug
         self.db = get_blob_db_exporter(self.slug, domain)
         self.total_blobs = 0
         self.not_found = 0
         self.domain = domain
+        self.couchdb = couchdb
         if not isinstance(self.db, ZipBlobDB):
             raise MigrationError(
                 "Expected to find zip blob db backend (got %r)" % self.db)
 
-    def _backup_doc(self, doc):
-        pass
-
-    def _do_migration(self, doc):
+    def process_doc(self, doc):
         obj = BlobHelper(doc, self.couchdb)
         bucket = obj._blobdb_bucket()
         assert obj.external_blobs and obj.external_blobs == obj.blobs, doc
@@ -318,7 +319,6 @@ class BlobDbBackendExporter(BaseDocMigrator):
 
 class SqlFormAttachmentExporter(BaseDocProcessor):
     def __init__(self, slug, domain):
-        super(SqlFormAttachmentExporter, self).__init__()
         from corehq.blobs.zipdb import get_blob_db_exporter, ZipBlobDB
         self.slug = slug
         self.db = get_blob_db_exporter(self.slug, domain)
@@ -334,7 +334,6 @@ class SqlFormAttachmentExporter(BaseDocProcessor):
 
     def process_doc(self, doc):
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        from corehq.blobs import BlobInfo
         from_db = get_blob_db()
         for attachment in FormAccessorSQL.get_attachments(doc['_id']):
             bucket = attachment.blobdb_bucket()
@@ -358,6 +357,38 @@ class SqlFormAttachmentExporter(BaseDocProcessor):
 
     def should_process(self, doc):
         return doc.get('domain') == self.domain and doc.get("external_blobs")
+
+
+class DemoUserRestoreExporter(object):
+    def __init__(self, slug, domain):
+        from corehq.blobs.zipdb import get_blob_db_exporter, ZipBlobDB
+        self.slug = slug
+        self.db = get_blob_db_exporter(self.slug, domain)
+        self.total_blobs = 0
+        self.not_found = 0
+        self.domain = domain
+        if not isinstance(self.db, ZipBlobDB):
+            raise MigrationError(
+                "Expected to find zip blob db backend (got %r)" % self.db)
+
+    def process_object(self, object):
+        blob_id = object.restore_blob_id
+        info = BlobInfo(identifier=blob_id, length=object.content_length, digest=None)
+        self.total_blobs += 1
+        db = get_blob_db()
+        try:
+            content = db.get(blob_id)
+        except NotFound as e:
+            self.not_found += 1
+        else:
+            with content:
+                self.db.copy_blob(content, info, DEFAULT_BUCKET)
+
+    def processing_complete(self):
+        if self.not_found:
+            print("{} objects processed, {} blobs not found".format(self.total_blobs, self.not_found))
+        else:
+            print("{} objects processed".format(self.total_blobs))
 
 
 class Migrator(object):
@@ -409,7 +440,7 @@ class ExportByDomain(Migrator):
         )
 
     def _get_doc_migrator(self, filename):
-        return self.doc_migrator_class(self.slug, self.couchdb, filename, self.domain)
+        return self.doc_migrator_class(self.slug, self.domain, self.couchdb)
 
 
 class ExportByDomainSQL(Migrator):
@@ -443,6 +474,30 @@ class ExportByDomainSQL(Migrator):
 
     def _get_progress_logger(self):
         return None
+
+
+class SqlModelMigrator(Migrator):
+    def __init__(self, slug, model_class, migrator_class):
+        self.slug = slug
+        self.model_class = model_class
+        self.migrator_class = migrator_class
+
+    def by_domain(self, domain):
+        self.domain = domain
+
+    def migrate(self, filename=None, reset=False, max_retry=2, chunk_size=100):
+        from corehq.apps.dump_reload.sql.dump import get_all_models_in_domain
+
+        if not self.domain:
+            raise MigrationError("Must specify domain")
+
+        migrator = self.migrator_class(self.slug, self.domain)
+
+        for object in get_all_models_in_domain(self.model_class, self.domain):
+            migrator.process_object(object)
+
+        migrator.processing_complete()
+        return migrator.total_blobs, 0
 
 
 MIGRATIONS = {m.slug: m for m in [
@@ -505,6 +560,15 @@ EXPORTERS = {m.slug: m for m in [
         xform.SubmissionErrorLog,
         ("HQSubmission", xform.XFormInstance),
     ], SqlFormAttachmentExporter),
+    ExportByDomain("export_exports", [
+        exports.CaseExportInstance,
+        exports.FormExportInstance,
+    ], BlobDbBackendExporter),
+    SqlModelMigrator(
+        "export_demo_user_restores",
+        DemoUserRestore,
+        DemoUserRestoreExporter
+    )
 ]}
 
 
