@@ -90,7 +90,7 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
                         case_type,
                         properties,
                     )
-                else:
+                elif len(properties):
                     _soft_assert = soft_assert(notify_admins=True)
                     soft_assert(
                         False,
