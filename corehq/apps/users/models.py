@@ -1640,10 +1640,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 pass
         return []
 
-    def get_location_ids(self, domain):
+    def get_assigned_location_ids(self, domain):
         return self.assigned_location_ids
 
-    def get_sql_locations(self, domain):
+    def get_assigned_sql_locations(self, domain):
         return self.sql_locations
 
     def add_to_assigned_locations(self, location):
