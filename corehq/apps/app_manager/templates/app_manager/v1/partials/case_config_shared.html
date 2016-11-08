@@ -64,18 +64,7 @@
         <input type="text" class="form-control" data-bind="
             valueDefault: property.key,
             default: property.defaultKey,
-            casePropertyTypeahead: suggestedProperties,
-            event: {
-                change: function(){
-                    var el = $($element),
-                        caretPosition = el.caret();
-                    el.val(el.val().replace(/ /g,'_'));
-                    if(el.is(':focus')) {
-                        el.caret(caretPosition);
-                    }
-                    return true;
-                }
-            }
+            casePropertySelect2: suggestedProperties,
         "/>
     </span>
     <span data-bind="visible: property.required()">
