@@ -84,23 +84,8 @@ def get_objects_to_dump(domain, excludes, stats_counter=None):
         if model_class in excluded_models:
             continue
 
-        using = router.db_for_read(model_class)
-        if settings.USE_PARTITIONED_DATABASE and using == partition_config.get_proxy_db():
-            using = partition_config.get_form_processing_dbs()
-        else:
-            using = [using]
-
-        for db_alias in using:
-            if not model_class._meta.proxy and router.allow_migrate_model(db_alias, model_class):
-                objects = model_class._default_manager
-
-                queryset = objects.using(db_alias).order_by(model_class._meta.pk.name)
-
-                filters = get_model_domain_filters(model_class, domain)
-                for filter in filters:
-                    for obj in queryset.filter(filter).iterator():
-                        stats_counter.update([get_model_label(model_class)])
-                        yield obj
+        for object in get_all_models_in_domain(model_class, domain, stats_counter=stats_counter):
+            yield object
 
 
 def get_all_models_in_domain(model_class, domain, stats_counter=None):
