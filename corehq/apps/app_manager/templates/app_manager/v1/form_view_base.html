@@ -260,8 +260,8 @@
                 ga_track_event('CloudCare', 'Click "Preview Form"');
                 analytics.workflow("Clicked Preview Form");
                 {% if request.couch_user.days_since_created == 0 %}
-                    ga_track_event('CloudCare', 'Click "Preview Form" within first 24 hours');
-                    analytics.workflow("Clicked Preview Form within first 24 hours");
+                    ga_track_event('CloudCare', 'Clicked "Preview Form" within first 24 hours');
+                    analytics.workflow('Clicked "Preview Form" within first 24 hours');
                 {% endif %}
             });
         {% endif %}
