@@ -323,7 +323,6 @@ class SetupTab(UITab):
 
         if self.project.commtrack_enabled:
             commcare_supply_setup = [
-                # products
                 {
                     'title': ProductListView.page_title,
                     'url': reverse(ProductListView.urlname, args=[self.domain]),
@@ -342,7 +341,6 @@ class SetupTab(UITab):
                         },
                     ]
                 },
-                # programs
                 {
                     'title': ProgramListView.page_title,
                     'url': reverse(ProgramListView.urlname, args=[self.domain]),
@@ -357,27 +355,24 @@ class SetupTab(UITab):
                         },
                     ]
                 },
-                # sms
                 {
                     'title': SMSSettingsView.page_title,
                     'url': reverse(SMSSettingsView.urlname, args=[self.domain]),
                 },
-                # consumption
                 {
                     'title': DefaultConsumptionView.page_title,
                     'url': reverse(DefaultConsumptionView.urlname, args=[self.domain]),
                 },
-                # settings
                 {
                     'title': CommTrackSettingsView.page_title,
                     'url': reverse(CommTrackSettingsView.urlname, args=[self.domain]),
                 },
-                # stock levels
-                {
+            ]
+            if toggles.LOCATION_TYPE_STOCK_RATES.enabled(self.domain):
+                commcare_supply_setup.append({
                     'title': StockLevelsView.page_title,
                     'url': reverse(StockLevelsView.urlname, args=[self.domain]),
-                },
-            ]
+                })
             return [[_('CommCare Supply Setup'), commcare_supply_setup]]
 
 

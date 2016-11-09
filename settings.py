@@ -330,7 +330,6 @@ HQ_APPS = (
     'corehq.apps.notifications',
     'corehq.apps.cachehq',
     'corehq.apps.toggle_ui',
-    'corehq.apps.sofabed',
     'corehq.apps.hqpillow_retry',
     'corehq.couchapps',
     'corehq.preindex',
@@ -438,7 +437,7 @@ INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
 
 # after login, django redirects to this URL
 # rather than the default 'accounts/profile'
-LOGIN_REDIRECT_URL = '/'
+LOGIN_REDIRECT_URL = 'homepage'
 
 
 REPORT_CACHE = 'default'  # or e.g. 'redis'
@@ -1249,7 +1248,6 @@ COUCHDB_APPS = [
     'programs',
     'reminders',
     'reports',
-    'sofabed',
     'sms',
     'smsforms',
     'telerivet',

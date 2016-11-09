@@ -275,6 +275,7 @@ FORM_SUMMARY_EXPORT_HEADER_NAMES = [
     "calculate",
     "relevant",
     "required",
+    "comment",
 ]
 FormSummaryRow = namedtuple('FormSummaryRow', FORM_SUMMARY_EXPORT_HEADER_NAMES)
 FormSummaryRow.__new__.__defaults__ = (None, ) * len(FORM_SUMMARY_EXPORT_HEADER_NAMES)
@@ -313,7 +314,6 @@ class DownloadFormSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
         )
 
     def _get_form_row(self, form, language):
-        from corehq.apps.reports.formdetails.readable import FormQuestionResponse
         form_summary_rows = []
         for question in form.get_questions(
             self.app.langs,
@@ -337,6 +337,7 @@ class DownloadFormSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
                     calculate=question_response.calculate,
                     relevant=question_response.relevant,
                     required="true" if question_response.required else "false",
+                    comment=question_response.comment,
                 )
             )
         return tuple(form_summary_rows)
