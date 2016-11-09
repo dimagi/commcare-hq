@@ -101,7 +101,7 @@ class DomainLoader(DataLoader):
 
         domain_name = domain_dict['name']
         try:
-            existing_domain = Domain.get_by_name(domain_name)
+            existing_domain = Domain.get_by_name(domain_name, strict=True)
         except ResourceNotFound:
             pass
         else:
