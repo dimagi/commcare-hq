@@ -97,8 +97,7 @@ def process_fast(items, function, num_threads=4, item_goal=None, max_threads=50,
         threads_alive = count
 
     if err.error_occurred:
-        raise RuntimeError("Error occurred calling process_fast. Check "
-            "couchlog for details.")
+        raise RuntimeError("Error occurred calling process_fast.")
 
 
 def print_all_stacks():
