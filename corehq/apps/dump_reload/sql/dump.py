@@ -13,7 +13,8 @@ from corehq.apps.dump_reload.util import get_model_label
 from corehq.sql_db.config import partition_config
 from corehq.util.decorators import ContextDecorator
 
-APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = {
+# order is important here for foreign key constraints
+APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = OrderedDict({
     'locations.LocationType': SimpleFilter('domain'),
     'locations.SQLLocation': SimpleFilter('domain'),
     'form_processor.XFormInstanceSQL': SimpleFilter('domain'),
@@ -40,7 +41,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = {
     'sms.MessagingEvent': SimpleFilter('domain'),
     'sms.MessagingSubEvent': SimpleFilter('parent__domain'),
     'sms.PhoneNumber': SimpleFilter('domain'),
-}
+})
 
 
 class allow_form_processing_queries(ContextDecorator):
