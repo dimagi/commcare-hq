@@ -14,9 +14,9 @@ from corehq.apps.export.models import (
     ExportItem,
     MAIN_TABLE,
 )
-from corehq.apps.importer.exceptions import ImporterError
-from corehq.apps.importer.tasks import do_import, bulk_import_async
-from corehq.apps.importer.util import ImporterConfig, is_valid_owner, get_case_properties_for_case_type
+from corehq.apps.case_importer_v1.exceptions import ImporterError
+from corehq.apps.case_importer_v1.tasks import do_import, bulk_import_async
+from corehq.apps.case_importer_v1.util import ImporterConfig, is_valid_owner, get_case_properties_for_case_type
 from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.tests.util import delete_all_locations
 from corehq.apps.users.models import WebUser, CommCareUser, DomainMembership
@@ -125,7 +125,7 @@ class ImporterTest(TestCase):
 
     @run_with_all_backends
     def testImporterErrors(self):
-        with mock.patch('corehq.apps.importer.tasks.importer_util.get_spreadsheet', side_effect=ImporterError()):
+        with mock.patch('corehq.apps.case_importer_v1.tasks.importer_util.get_spreadsheet', side_effect=ImporterError()):
             res = bulk_import_async(self._config(), self.domain, None)
             self.assertEqual('The session containing the file you uploaded has expired - please upload a new one.',
                              unicode(res['errors']))
