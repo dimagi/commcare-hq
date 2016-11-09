@@ -206,10 +206,6 @@ class ConfigurableReportEsDataSource(ConfigurableReportSqlDataSource):
     def engine_id(self):
         raise NotImplementedError
 
-    def set_filter_values(self, filter_values):
-        # this does nothing here. it's only used in sql, but can't throw error yet
-        pass
-
     @property
     def keys(self):
         raise NotImplementedError
