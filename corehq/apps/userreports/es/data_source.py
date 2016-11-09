@@ -17,11 +17,6 @@ from corehq.apps.userreports.util import get_table_name
 
 class ConfigurableReportEsDataSource(ConfigurableReportSqlDataSource):
     @property
-    def aggregation_columns(self):
-        # TODO add deferred filters to support mobile ucr
-        return self._aggregation_columns
-
-    @property
     def config(self):
         if self._config is None:
             self._config, _ = get_datasource_config(self._config_id, self.domain)
