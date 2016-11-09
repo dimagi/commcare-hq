@@ -86,6 +86,7 @@ def websockets_override(request):
         # able to generate this, so don't worry about it.
         return {}
 
+
 def enterprise_mode(request):
     return {
         'enterprise_mode': settings.ENTERPRISE_MODE
