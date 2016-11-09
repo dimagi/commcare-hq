@@ -887,6 +887,11 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         username = self.username.split("@")[0]
         return "%s <%s>" % (self.full_name, username) if self.full_name else username
 
+    @property
+    def days_since_created(self):
+        # Note this does not round, but returns the floor of days since creation
+        return (datetime.utcnow() - self.created_on).days
+
     formatted_name = full_name
     name = full_name
 
