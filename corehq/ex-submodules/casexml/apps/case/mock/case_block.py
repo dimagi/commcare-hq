@@ -23,14 +23,13 @@ class CaseBlock(object):
                  owner_id=undefined, external_id=undefined, case_type=undefined,
                  case_name=undefined, create=False, date_opened=undefined, update=None,
                  close=False, index=None):
-
+        # todo: can we use None instead of CaseBlock.undefined, throughout?
+        owner_id = CaseBlock.undefined if owner_id is None else owner_id
+        self.update = copy.copy(update) if update else {}
         now = datetime.utcnow()
         self.date_modified = date_modified or now
-        if date_opened == CaseBlock.undefined and create:
-            self.date_opened = now.date()
-        else:
-            self.date_opened = date_opened
-        self.update = copy.copy(update) if update else {}
+        self.date_opened = (now.date() if create and date_opened is CaseBlock.undefined
+                            else date_opened)
 
         self.case_type = "" if create and case_type is CaseBlock.undefined else case_type
         self.case_name = "" if create and case_name is CaseBlock.undefined else case_name
