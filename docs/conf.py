@@ -14,6 +14,7 @@
 import sys, os
 from mock import MagicMock
 import sphinx_rtd_theme
+from recommonmark.parser import CommonMarkParser
 
 sys.path.insert(0, os.path.abspath('..'))
 from ..manage import init_hq_python_path
@@ -33,6 +34,11 @@ class Mock(MagicMock):
 MOCK_MODULES = ["PIL.Image", "PIL"]
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
+source_parsers = {
+    '.md': CommonMarkParser
+}
+
+source_suffix = ['.rst', '.md']
 
 # -- General configuration -----------------------------------------------------
 
@@ -45,9 +51,6 @@ extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
-
-# The suffix of source filenames.
-source_suffix = '.rst'
 
 # The encoding of source files.
 #source_encoding = 'utf-8-sig'
