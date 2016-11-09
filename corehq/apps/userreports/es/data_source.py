@@ -7,40 +7,15 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.es.aggregations import SumAggregation, TermsAggregation
 from corehq.apps.es.es_query import HQESQuery
 
-from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.userreports.columns import get_expanded_column_config
 from corehq.apps.userreports.decorators import catch_and_raise_exceptions
 from corehq.apps.userreports.models import DataSourceConfiguration, get_datasource_config
+from corehq.apps.userreports.sql.data_source import ConfigurableReportSqlDataSource
 from corehq.apps.userreports.reports.sorting import ASCENDING, DESCENDING
 from corehq.apps.userreports.util import get_table_name
 
 
-class ConfigurableReportEsDataSource(ReportDataSource):
-    def __init__(self, domain, config_or_config_id, filters, aggregation_columns, columns, order_by):
-        self.lang = None
-        self.domain = domain
-        if isinstance(config_or_config_id, DataSourceConfiguration):
-            self._config = config_or_config_id
-            self._config_id = self._config._id
-        else:
-            assert isinstance(config_or_config_id, basestring)
-            self._config = None
-            self._config_id = config_or_config_id
-
-        self._filters = {f.slug: f for f in filters}
-        self._filter_values = {}
-        self._deferred_filters = {}
-        self._order_by = order_by
-        self._aggregation_columns = aggregation_columns
-        self._column_configs = OrderedDict()
-        for column in columns:
-            # should be caught in validation prior to reaching this
-            assert column.column_id not in self._column_configs, \
-                'Report {} in domain {} has more than one {} column defined!'.format(
-                    self._config_id, self.domain, column.column_id,
-                )
-            self._column_configs[column.column_id] = column
-
+class ConfigurableReportEsDataSource(ConfigurableReportSqlDataSource):
     @property
     def aggregation_columns(self):
         # TODO add deferred filters to support mobile ucr
@@ -53,39 +28,13 @@ class ConfigurableReportEsDataSource(ReportDataSource):
         return self._config
 
     @property
-    def top_level_columns(self):
-        return self._column_configs.values()
-
-    @property
-    def inner_columns(self):
-        """
-        This returns a list of Column objects that are contained within the top_level_columns
-        above.
-        """
-        return [
-            inner_col for col in self.top_level_columns
-            for inner_col in col.get_column_config(self.config, self.lang).columns
-        ]
-
-    @property
     def table_name(self):
         # TODO make this the same function as the adapter
-        return get_table_name(self.domain, self.config.table_id).lower()
+        return super(ConfigurableReportEsDataSource, self).table_name.lower()
 
     @property
     def filters(self):
         return filter(None, [f.to_es_filter() for f in self._filter_values.values()])
-
-    def set_filter_values(self, filter_values):
-        for filter_slug, value in filter_values.items():
-            self._filter_values[filter_slug] = self._filters[filter_slug].create_filter_value(value)
-
-    def defer_filters(self, filter_slugs):
-        self._deferred_filters.update({
-            filter_slug: self._filters[filter_slug] for filter_slug in filter_slugs})
-
-    def set_order_by(self, columns):
-        self._order_by = columns
 
     @property
     def order_by(self):
@@ -221,10 +170,6 @@ class ConfigurableReportEsDataSource(ReportDataSource):
 
         return query.run()
 
-    @property
-    def has_total_row(self):
-        return any(column_config.calculate_total for column_config in self.top_level_columns)
-
     @method_decorator(catch_and_raise_exceptions)
     def get_total_records(self):
         if self.uses_aggregations:
@@ -244,3 +189,23 @@ class ConfigurableReportEsDataSource(ReportDataSource):
     def get_total_row(self):
         # todo calculate total row
         return []
+
+    # sql only methods that should never be called
+    @property
+    def engine_id(self):
+        raise NotImplementedError
+
+    def set_filter_values(self, filter_values):
+        # this does nothing here. it's only used in sql, but can't throw error yet
+        pass
+
+    @property
+    def keys(self):
+        raise NotImplementedError
+
+    @property
+    def wrapped_filters(self):
+        raise NotImplementedError
+
+    def query_context(self, start=None, limit=None):
+        raise NotImplementedError
