@@ -283,16 +283,16 @@ class BlobDbBackendMigrator(BaseDocMigrator):
 class BlobDbBackendExporter(BaseDocProcessor):
 
     def __init__(self, slug, domain, couchdb):
-        from corehq.blobs.zipdb import get_blob_db_exporter, ZipBlobDB
+        from corehq.blobs.zipdb import ZipBlobDB
         self.slug = slug
-        self.db = get_blob_db_exporter(self.slug, domain)
+        self.db = ZipBlobDB(self.slug, domain)
         self.total_blobs = 0
         self.not_found = 0
         self.domain = domain
         self.couchdb = couchdb
-        if not isinstance(self.db, ZipBlobDB):
-            raise MigrationError(
-                "Expected to find zip blob db backend (got %r)" % self.db)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.db.close()
 
     def process_doc(self, doc):
         obj = BlobHelper(doc, self.couchdb)
@@ -311,7 +311,6 @@ class BlobDbBackendExporter(BaseDocProcessor):
         return True
 
     def processing_complete(self, skipped):
-        super(BlobDbBackendExporter, self).processing_complete(skipped)
         if self.not_found:
             print(PROCESSING_COMPLETE_MESSAGE.format(self.not_found, self.total_blobs))
 
@@ -321,15 +320,19 @@ class BlobDbBackendExporter(BaseDocProcessor):
 
 class SqlObjectExporter(object):
     def __init__(self, slug, domain):
-        from corehq.blobs.zipdb import get_blob_db_exporter, ZipBlobDB
+        from corehq.blobs.zipdb import ZipBlobDB
         self.slug = slug
-        self.db = get_blob_db_exporter(self.slug, domain)
+        self.db = ZipBlobDB(self.slug, domain)
         self.total_blobs = 0
         self.not_found = 0
         self.domain = domain
-        if not isinstance(self.db, ZipBlobDB):
-            raise MigrationError(
-                "Expected to find zip blob db backend (got %r)" % self.db)
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.db.close()
+        self.processing_complete()
 
     def process_object(self, object):
         pass
@@ -462,12 +465,12 @@ class SqlModelMigrator(Migrator):
 
         migrator = self.migrator_class(self.slug, self.domain)
 
-        with allow_form_processing_queries():
-            for model_class, queryset in get_all_model_querysets_for_domain(self.model_class, self.domain):
-                for obj in queryset.iterator():
-                    migrator.process_object(obj)
+        with migrator:
+            with allow_form_processing_queries():
+                for model_class, queryset in get_all_model_querysets_for_domain(self.model_class, self.domain):
+                    for obj in queryset.iterator():
+                        migrator.process_object(obj)
 
-        migrator.processing_complete()
         return migrator.total_blobs, 0
 
 
