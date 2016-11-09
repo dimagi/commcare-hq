@@ -261,7 +261,6 @@ HQ_APPS = (
     'corehq.apps.dump_reload',
     'corehq.apps.hqadmin',
     'corehq.apps.hqcase',
-    'corehq.apps.hqcouchlog',
     'corehq.apps.hqwebapp',
     'corehq.apps.hqmedia',
     'corehq.apps.locations',
