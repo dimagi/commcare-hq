@@ -333,7 +333,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
         null=True,
         help_text="This is how we link to the salesforce account",
     )
-    created_by = models.CharField(max_length=80)
+    created_by = models.CharField(max_length=80, blank=True)
     created_by_domain = models.CharField(max_length=256, null=True, blank=True)
     date_created = models.DateTimeField(auto_now_add=True)
     dimagi_contact = models.EmailField(blank=True)
