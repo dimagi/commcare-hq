@@ -132,7 +132,8 @@ class BaseStripePaymentHandler(object):
                 "A payment for %(cost_item)s failed due to: %(error_msg)s" % {
                     'cost_item': self.cost_item_name,
                     'error_msg': e,
-                }
+                },
+                show_stack_trace=True,
             )
             return generic_error
 
