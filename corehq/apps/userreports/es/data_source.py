@@ -103,7 +103,8 @@ class ConfigurableReportEsDataSource(ConfigurableReportSqlDataSource):
                         else:
                             r[ui_col] = 0
                         counter += 1
-                r[report_column.column_id] = row[report_column.field]
+                else:
+                    r[report_column.column_id] = row[report_column.field]
             ret.append(r)
 
         return ret
