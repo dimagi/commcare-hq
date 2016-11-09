@@ -1,8 +1,14 @@
-import logging
+from django.conf import settings
 
 from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.form_processor.abstract_models import AbstractSupplyInterface
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+from corehq.util.soft_assert import soft_assert
+
+_supply_point_dynamically_created = soft_assert(
+    to='{}@{}'.format('skelly', 'dimagi.com'),
+    exponential_backoff=False,
+)
 
 
 class SupplyPointSQL(AbstractSupplyInterface):
@@ -12,6 +18,14 @@ class SupplyPointSQL(AbstractSupplyInterface):
         sp = SupplyPointSQL.get_by_location(location)
         if not sp:
             sp = make_supply_point(location.domain, location)
+
+            if not settings.UNIT_TESTING:
+                _supply_point_dynamically_created(False, 'supply_point_dynamically_created, {}, {}, {}'.format(
+                    location.name,
+                    sp.case_id,
+                    location.domain,
+                ))
+
         return sp
 
     @classmethod
