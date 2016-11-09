@@ -2,7 +2,7 @@ ElasticSearch
 =============
 
 Indexes
--------
+~~~~~~~
 We have indexes for each of the following doc types:
  * Applications - ``hqapps``
  * Cases - ``hqcases``
@@ -34,7 +34,7 @@ to the new index, allowing for a relatively seamless transition.
 
 
 Keeping indexes up-to-date
---------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 Pillowtop looks at the changes feed from couch and listens for any relevant
 new/changed docs.  In order to have your changes appear in elasticsearch,
 pillowtop must be running::
@@ -46,12 +46,12 @@ You can also run a once-off reindex for a specific index::
     $ ./manage.py ptop_reindexer_v2 user
 
 Changing a mapping or adding data
----------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 If you're adding additional data to elasticsearch, you'll need modify that
 index's mapping file in order to be able to query on that new data.
 
 Adding data to an index
-'''''''''''''''''''''''
+-----------------------
 Each pillow has a function or class that takes in the raw document dictionary
 and transforms it into the document that get's sent to ES.  If for example,
 you wanted to store username in addition to user_id on cases in elastic,
@@ -61,7 +61,7 @@ appropriate lookup.  It accepts a ``doc_dict`` for the case doc and is
 expected to return a ``doc_dict``, so just add the ``username`` to that.
 
 Building the new index
-''''''''''''''''''''''
+----------------------
 Once you've made the change, you'll need to build a new index which uses
 that new mapping, so you'll have to update the hash at the top of the file.
 This can just be a random alphanumeric string.  This will trigger a preindex
@@ -69,7 +69,7 @@ as outlined in the `Indexes` section.
 
 
 How to un-bork your broken indexes
-----------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Sometimes things get in a weird state and (locally!) it's easiest to just
 blow away the index and start over.
 
@@ -84,14 +84,14 @@ blow away the index and start over.
 
 
 Querying Elasticsearch - Best Practices
----------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Here are the most basic things to know if you want to write readable
 and reasonably performant code for accessing Elasticsearch.
 
 
 Use ESQuery when possible
-=========================
+-------------------------
 
 Check out :doc:`/es_query`
 
@@ -104,7 +104,7 @@ Check out :doc:`/es_query`
 
 
 Prefer "get" to "search"
-========================
+------------------------
 
 Don't use search to fetch a doc or doc fields by doc id; use "get" instead.
 Searching by id can be easily an order of magnitude (10x) slower. If done in a loop,
@@ -132,19 +132,19 @@ this can effectively grind the ES cluster to a halt.
 
 
 Prefer scroll queries
-=====================
+---------------------
 
 Use a scroll query when fetching lots of records.
 
 
 Prefer filter to query
-======================
+----------------------
 
 Don't use ``query`` when you could use ``filter`` if you don't need rank.
 
 
 Use size(0) with aggregations
-=============================
+-----------------------------
 
 Use ``size(0)`` when you're only doing aggregations thing—otherwise you'll
 get back doc bodies as well! Sometimes that's just abstractly wasteful, but often
