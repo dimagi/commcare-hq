@@ -87,7 +87,18 @@ class ConfigurableReportEsDataSource(ConfigurableReportSqlDataSource):
 
         for row in hits:
             r = {}
-            for report_column in self.top_level_columns:
+            for report_column in self.top_level_db_columns:
+                if report_column.type == 'expanded':
+                    # todo aggregation only supports # of docs matching
+                    counter = 0
+                    for sub_col in get_expanded_column_config(self.config, report_column, 'en').columns:
+                        ui_col = report_column.column_id + "-" + str(counter)
+                        # todo move interpretation of data into column config
+                        if row[report_column.column_id] == sub_col.expand_value:
+                            r[ui_col] = 1
+                        else:
+                            r[ui_col] = 0
+                        counter += 1
                 r[report_column.column_id] = row[report_column.field]
             ret.append(r)
 
@@ -182,7 +193,7 @@ class ConfigurableReportEsDataSource(ConfigurableReportSqlDataSource):
 
     @property
     def required_fields(self):
-        ret = [c.field for c in self.top_level_columns]
+        ret = [c.field for c in self.top_level_db_columns]
         return ret + [c for c in self.aggregation_columns]
 
     @method_decorator(catch_and_raise_exceptions)
