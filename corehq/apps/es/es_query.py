@@ -303,7 +303,9 @@ class ESQuery(object):
         if self._start is not None:
             self.es_query['from'] = self._start
         self.es_query['size'] = self._size if self._size is not None else SIZE_LIMIT
-        if self._source:
+        if self._exclude_source:
+            self.es_query['_source'] = False
+        elif self._source is not None:
             self.es_query['_source'] = self._source
         if self._aggregations:
             self.es_query['aggs'] = {

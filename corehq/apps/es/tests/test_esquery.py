@@ -234,3 +234,30 @@ class TestESQuery(ElasticTestMixin, TestCase):
         query = HQESQuery('forms').date_histogram('by_day', 'date', 'day', '-01:00')
         self.checkQuery(query, json_output)
         self.checkQuery(query._clean_before_run(), expected_output)
+
+    def test_exclude_source(self):
+        json_output = {
+            "query": {
+                "filtered": {
+                    "filter": {
+                        "and": [
+                            {
+                                "term": {
+                                    "domain.exact": "test-exclude"
+                                }
+                            },
+                            {
+                                "match_all": {}
+                            }
+                        ]
+                    },
+                    "query": {
+                        "match_all": {}
+                    }
+                }
+            },
+            "_source": False,
+            "size": SIZE_LIMIT,
+        }
+        query = HQESQuery('forms').domain('test-exclude').exclude_source()
+        self.checkQuery(query, json_output)
