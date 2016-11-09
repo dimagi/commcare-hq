@@ -75,8 +75,12 @@ class ConfigurableReportEsDataSource(ConfigurableReportSqlDataSource):
         else:
             ret = self._get_query_results(start, limit)
 
-        for report_column in self.top_level_columns:
+        for report_column in self.top_level_db_columns:
             report_column.format_data(ret)
+
+        for computed_column in self.top_level_computed_columns:
+            for row in ret:
+                row[computed_column.column_id] = computed_column.wrapped_expression(row)
 
         return ret
 

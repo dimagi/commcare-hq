@@ -4,7 +4,7 @@ from django.test import TestCase
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 from corehq.apps.userreports.pillow import get_kafka_ucr_pillow
 from corehq.apps.userreports.reports.factory import ReportFactory
-from corehq.apps.userreports.tests.utils import doc_to_change
+from corehq.apps.userreports.tests.utils import doc_to_change, run_with_all_ucr_backends
 from corehq.apps.userreports.util import get_indicator_adapter
 
 
@@ -47,7 +47,8 @@ class ReportDataTest(TestCase):
         )
         self.data_source.validate()
         self.data_source.save()
-        get_indicator_adapter(self.data_source).rebuild_table()
+        self.adapter = get_indicator_adapter(self.data_source)
+        self.adapter.rebuild_table()
         self.addCleanup(self.data_source.delete)
 
         # initialize a report on the data
@@ -108,6 +109,7 @@ class ReportDataTest(TestCase):
     def _add_some_rows(self, count):
         rows = [ReportDataTestRow(uuid.uuid4().hex, i) for i in range(count)]
         self._add_rows(rows)
+        self.adapter.refresh_table()
         return rows
 
     def _add_rows(self, rows):
@@ -126,6 +128,7 @@ class ReportDataTest(TestCase):
         for row in rows:
             pillow.process_change(doc_to_change(_get_case(row)))
 
+    @run_with_all_ucr_backends
     def test_basic_query(self):
         # add a few rows to the data source
         rows = self._add_some_rows(3)
@@ -141,6 +144,7 @@ class ReportDataTest(TestCase):
             self.assertEqual(10, row['ten'])
             self.assertEqual(10 * row['number'], row['by_tens'])
 
+    @run_with_all_ucr_backends
     def test_limit(self):
         count = 5
         self._add_some_rows(count)
@@ -151,6 +155,7 @@ class ReportDataTest(TestCase):
         self.assertEqual(3, len(limited_data))
         self.assertEqual(original_data[:3], limited_data)
 
+    @run_with_all_ucr_backends
     def test_skip(self):
         count = 5
         self._add_some_rows(count)
