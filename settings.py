@@ -276,7 +276,6 @@ HQ_APPS = (
     'corehq.sql_proxy_accessors',
     'couchforms',
     'couchexport',
-    'couchlog',
     'dimagi.utils',
     'formtranslate',
     'langcodes',
@@ -621,30 +620,6 @@ HQ_ACCOUNT_ROOT = "commcarehq.org"
 XFORMS_PLAYER_URL = "http://localhost:4444/"  # touchform's setting
 FORMPLAYER_URL = 'http://localhost:8080'
 
-####### Couchlog config #######
-
-COUCHLOG_BLUEPRINT_HOME = "%s%s" % (
-    STATIC_URL, "hqwebapp/stylesheets/blueprint/")
-COUCHLOG_DATATABLES_LOC = "%s%s" % (
-    STATIC_URL, "hqwebapp/js/lib/datatables-1.9/js/jquery.dataTables.min.js")
-
-# These allow HQ to override what shows up in couchlog (add a domain column)
-COUCHLOG_TABLE_CONFIG = {"id_column": 0,
-                         "archived_column": 1,
-                         "date_column": 2,
-                         "message_column": 4,
-                         "actions_column": 8,
-                         "email_column": 9,
-                         "no_cols": 10}
-COUCHLOG_DISPLAY_COLS = ["id", "archived?", "date", "exception type", "message",
-                         "domain", "user", "url", "actions", "report"]
-COUCHLOG_RECORD_WRAPPER = "corehq.apps.hqcouchlog.wrapper"
-COUCHLOG_DATABASE_NAME = "commcarehq-couchlog"
-COUCHLOG_AUTH_DECORATOR = 'corehq.apps.domain.decorators.require_superuser_or_developer'
-
-# couchlog/case search
-LUCENE_ENABLED = False
-
 ####### SMS Queue Settings #######
 
 # Setting this to False will make the system process outgoing and incoming SMS
@@ -792,7 +767,6 @@ PRELOGIN_APPS = (
 
 # our production logstash aggregation
 LOGSTASH_DEVICELOG_PORT = 10777
-LOGSTASH_COUCHLOG_PORT = 10888
 LOGSTASH_AUDITCARE_PORT = 10999
 LOGSTASH_HOST = 'localhost'
 
@@ -1285,7 +1259,6 @@ COUCHDB_APPS = [
     'ilsgateway',
     'ewsghana',
     ('auditcare', 'auditcare'),
-    ('couchlog', 'couchlog'),
     ('performance_sms', 'meta'),
     ('repeaters', 'receiverwrapper'),
     ('userreports', 'meta'),
@@ -1880,11 +1853,11 @@ TRAVIS_TEST_GROUPS = (
         'accounting', 'api', 'app_manager', 'appstore',
         'auditcare', 'bihar', 'builds', 'cachehq', 'callcenter',
         'case', 'casegroups', 'cleanup', 'cloudcare', 'commtrack', 'consumption',
-        'couchapps', 'couchlog', 'crud', 'django_digest',
+        'couchapps', 'crud', 'django_digest',
         'domain', 'domainsync', 'export',
         'facilities', 'fixtures', 'fluff_filter', 'formplayer',
         'formtranslate', 'fri', 'grapevine', 'groups', 'gsid', 'hope',
-        'hqadmin', 'hqcase', 'hqcouchlog', 'hqmedia',
+        'hqadmin', 'hqcase', 'hqmedia',
         'care_pathways', 'common', 'compressor', 'smsbillables', 'ilsgateway'
     ),
 )

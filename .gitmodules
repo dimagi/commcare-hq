@@ -4,9 +4,6 @@
 [submodule "submodules/dimagi-utils-src"]
 	path = submodules/dimagi-utils-src
 	url = git://github.com/dimagi/dimagi-utils.git
-[submodule "submodules/couchlog-src"]
-	path = submodules/couchlog-src
-	url = git://github.com/dimagi/couchlog.git
 [submodule "submodules/auditcare-src"]
 	path = submodules/auditcare-src
 	url = git://github.com/dimagi/auditcare.git
