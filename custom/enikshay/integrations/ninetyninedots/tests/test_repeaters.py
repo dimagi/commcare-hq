@@ -11,7 +11,8 @@ from casexml.apps.case.tests.util import delete_all_cases
 
 from custom.enikshay.tests.utils import ENikshayCaseStructureMixin
 from custom.enikshay.integrations.ninetyninedots.repeater_generators import RegisterPatientPayloadGenerator
-from custom.enikshay.integrations.ninetyninedots.repeaters import(
+from custom.enikshay.const import PRIMARY_PHONE_NUMBER, BACKUP_PHONE_NUMBER
+from custom.enikshay.integrations.ninetyninedots.repeaters import (
     NinetyNineDotsRegisterPatientRepeater,
     NinetyNineDotsUpdatePatientRepeater
 )
@@ -154,8 +155,8 @@ class TestRegisterPatientPayloadGenerator(ENikshayCaseStructureMixin, TestCase):
         payload_generator = RegisterPatientPayloadGenerator(None)
         person = self.cases[self.person_id].dynamic_case_properties()
         expected_numbers = u"+91{}, +91{}".format(
-            person['phone_number'].replace("0", ""),
-            person['backup_number'].replace("0", "")
+            person[PRIMARY_PHONE_NUMBER].replace("0", ""),
+            person[BACKUP_PHONE_NUMBER].replace("0", "")
         )
         expected_payload = json.dumps({
             'beneficiary_id': self.person_id,

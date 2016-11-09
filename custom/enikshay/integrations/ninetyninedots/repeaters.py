@@ -11,6 +11,7 @@ from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.xform import get_case_updates
 
 from custom.enikshay.case_utils import get_open_episode_case_from_person
+from custom.enikshay.const import PRIMARY_PHONE_NUMBER, BACKUP_PHONE_NUMBER
 
 
 class NinetyNineDotsRegisterPatientRepeater(CaseRepeater):
@@ -79,8 +80,8 @@ def phone_number_changed(case):
     update_actions = [update.get_update_action() for update in get_case_updates(last_case_action.form)]
     phone_number_changed = any(
         action for action in update_actions
-        if 'phone_number' in action.dynamic_properties or
-        'backup_number' in action.dynamic_properties
+        if PRIMARY_PHONE_NUMBER in action.dynamic_properties or
+        BACKUP_PHONE_NUMBER in action.dynamic_properties
     )
     return phone_number_changed
 
