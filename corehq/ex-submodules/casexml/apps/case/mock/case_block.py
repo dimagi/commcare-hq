@@ -39,25 +39,25 @@ class CaseBlock(dict):
         self['update'] = update
 
         create_or_update = {
-            self.CASE_TYPE:                 case_type,
-            'case_name':                    case_name,
+            self.CASE_TYPE: case_type,
+            'case_name': case_name,
         }
 
         self.update({
             '_attrib': {
-                'case_id':              case_id,
-                'date_modified':        date_modified,
-                'user_id':              user_id,
-                'xmlns':                self.XMLNS,
+                'case_id': case_id,
+                'date_modified': date_modified,
+                'user_id': user_id,
+                'xmlns': self.XMLNS,
             }
         })
         if owner_id is not None:
             create_or_update.update({
-                'owner_id':                 owner_id,
+                'owner_id': owner_id,
             })
         self['update'].update({
-            'external_id':              external_id,
-            'date_opened':              date_opened,
+            'external_id': external_id,
+            'date_opened': date_opened,
         })
 
         # fail if user specifies both, say, case_name='Johnny' and update={'case_name': 'Johnny'}
