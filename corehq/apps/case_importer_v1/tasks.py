@@ -90,13 +90,12 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
                         case_type,
                         properties,
                     )
-                elif len(properties):
-                    _soft_assert = soft_assert(notify_admins=True)
-                    soft_assert(
-                        False,
-                        'error adding inferred export properties in domain '
-                        '({}): {}'.format(domain, ", ".join(properties))
-                    )
+                _soft_assert = soft_assert(notify_admins=True)
+                _soft_assert(
+                    len(properties) == 0 and not case_type,
+                    'error adding inferred export properties in domain '
+                    '({}): {}'.format(domain, ", ".join(properties))
+                )
         return err
 
     for i in range(row_count):
