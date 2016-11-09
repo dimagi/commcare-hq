@@ -8,7 +8,7 @@ class UCRExpandEsDatabaseSubcolumn(UCRExpandDatabaseSubcolumn):
         self.aggregation = aggregation
         self.es_alias = es_alias
         self.ui_alias = ui_alias
-        super(UCRExpandEsDatabaseSubcolumn, self).__init__(header, *args, **kwargs)
+        super(UCRExpandEsDatabaseSubcolumn, self).__init__(header, slug=ui_alias, *args, **kwargs)
 
 
 def expand_column(report_column, distinct_values, lang):
