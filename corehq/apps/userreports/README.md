@@ -1,5 +1,5 @@
-User Configurable Reporting
-===========================
+# User Configurable Reporting
+
 An overview of the design, API and data structures used here.
 
 
@@ -105,7 +105,7 @@ An overview of the design, API and data structures used here.
     - [Inspecting database tables](#inspecting-database-tables)
 
 
-# Data Flow
+## Data Flow
 
 Reporting is handled in multiple stages. Here is the basic workflow.
 
@@ -113,7 +113,7 @@ Raw data (form or case) → [Data source config] → Row in database table → [
 
 Both the data source config and report config are JSON documents that live in the database. The data source config determines how raw data (forms and cases) gets mapped to rows in an intermediary table, while the report config(s) determine how that report table gets turned into an interactive report in the UI.
 
-# Data Sources
+## Data Sources
 
 Each data source configuration maps a filtered set of the raw data to indicators. A data source configuration consists of two primary sections:
 
@@ -133,7 +133,7 @@ named_expressions    | A list of named expressions that can be referenced in oth
 named_filters        | A list of named filters that can be referenced in other filters and indicators
 
 
-## Data Source Filtering
+### Data Source Filtering
 
 When setting up a data source configuration, filtering defines what data applies to a given set of indicators. Some example uses of filtering on a data source include:
 
@@ -143,7 +143,7 @@ When setting up a data source configuration, filtering defines what data applies
 - Excluding closed cases
 - Only showing data that meets a domain-specific condition (e.g. pregnancy cases opened for women over 30 years of age)
 
-### Filter type overview
+#### Filter type overview
 
 There are currently four supported filter types. However, these can be used together to produce arbitrarily complicated expressions.
 
@@ -157,7 +157,7 @@ not                | A "not" or inverse expression on a filter
 
 To understand the `boolean_expression` type, we must first explain expressions.
 
-### Expressions
+#### Expressions
 
 An *expression* is a way of representing a set of operations that should return a single value. Expressions can basically be thought of as functions that take in a document and return a value:
 
@@ -210,11 +210,11 @@ flatten_items   | Flatten multiple lists of items into one list | `[[1, 2], [4, 
 
 
 
-### JSON snippets for expressions
+#### JSON snippets for expressions
 
 Here are JSON snippets for the various expression types. Hopefully they are self-explanatory.
 
-##### Constant Expression
+###### Constant Expression
 
 There are two formats for constant expressions. The simplified format is simply the constant itself. For example `"hello"`, or `5`.
 
@@ -228,7 +228,7 @@ The complete format is as follows. This expression returns the constant `"hello"
 ```
 
 
-##### Property Name Expression
+###### Property Name Expression
 
 This expression returns `doc["age"]`:
 ```
@@ -239,7 +239,7 @@ This expression returns `doc["age"]`:
 ```
 An optional `"datatype"` attribute may be specified, which will attempt to cast the property to the given data type. The options are "date", "datetime", "string", "integer", and "decimal". If no datatype is specified, "string" will be used.
 
-##### Property Path Expression
+###### Property Path Expression
 
 This expression returns `doc["child"]["age"]`:
 ```
@@ -250,7 +250,7 @@ This expression returns `doc["child"]["age"]`:
 ```
 An optional `"datatype"` attribute may be specified, which will attempt to cast the property to the given data type. The options are "date", "datetime", "string", "integer", and "decimal". If no datatype is specified, "string" will be used.
 
-##### Conditional Expression
+###### Conditional Expression
 
 This expression returns `"legal" if doc["age"] > 21 else "underage"`:
 ```
@@ -280,7 +280,7 @@ Note that this expression contains other expressions inside it! This is why expr
 
 Note also that it's important to make sure that you are comparing values of the same type. In this example, the expression that retrieves the age property from the document also casts the value to an integer. If this datatype is not specified, the expression will compare a string to the `21` value, which will not produce the expected results!
 
-##### Switch Expression
+###### Switch Expression
 
 This expression returns the value of the expression for the case that matches the switch on expression. Note that case values may only be strings at this time.
 ```json
@@ -315,7 +315,7 @@ This expression returns the value of the expression for the case that matches th
 }
 ```
 
-##### Array Index Expression
+###### Array Index Expression
 
 This expression returns `doc["siblings"][0]`:
 ```json
@@ -333,7 +333,7 @@ This expression returns `doc["siblings"][0]`:
 ```
 It will return nothing if the siblings property is not a list, the index isn't a number, or the indexed item doesn't exist.
 
-##### Split String Expression
+###### Split String Expression
 
 This expression returns `(doc["foo bar"]).split(' ')[0]`:
 ```json
@@ -352,7 +352,7 @@ This expression returns `(doc["foo bar"]).split(' ')[0]`:
 ```
 The delimiter is optional and is defaulted to a space.  It will return nothing if the string_expression is not a string, or if the index isn't a number or the indexed item doesn't exist.
 
-##### Iterator Expression
+###### Iterator Expression
 
 ```json
 {
@@ -380,7 +380,7 @@ You can add a `test` attribute to filter rows from what is emitted - if you don'
 This can be used/combined with the `base_item_expression` to emit multiple rows per document.
 
 
-#### Base iteration number expressions
+##### Base iteration number expressions
 
 These are very simple expressions with no config. They return the index of the repeat item starting from 0 when used with a `base_item_expression`.
 
@@ -390,7 +390,7 @@ These are very simple expressions with no config. They return the index of the r
 }
 ```
 
-#### Related document expressions
+##### Related document expressions
 
 This can be used to lookup a property in another document. Here's an example that lets you look up `form.case.owner_id` from a form.
 
@@ -409,7 +409,7 @@ This can be used to lookup a property in another document. Here's an example tha
 }
 ```
 
-#### Nested expressions
+##### Nested expressions
 
 These can be used to nest expressions. This can be used, e.g. to pull a specific property out of an item in a list of objects.
 
@@ -430,7 +430,7 @@ More examples can be found in the [practical examples](https://github.com/dimagi
 }
 ```
 
-#### Dict expressions
+##### Dict expressions
 
 These can be used to create dictionaries of key/value pairs. This is only useful as an intermediate structure in another expression since the result of the expression is a dictionary that cannot be saved to the database.
 
@@ -455,7 +455,7 @@ Here is a simple example that demonstrates the structure. The keys of `propertie
 }
 ```
 
-#### "Add Days" expressions
+##### "Add Days" expressions
 
 Below is a simple example that demonstrates the structure.
 The expression below will add 28 days to a property called "dob".
@@ -472,7 +472,7 @@ The date_expression and count_expression can be any valid expressions, or simply
 }
 ```
 
-#### "Add Months" expressions
+##### "Add Months" expressions
 
 `add_months` offsets given date by given number of calendar months.
 If offset results in an invalid day (for e.g. Feb 30, April 31), the day of resulting date will be adjusted to last day of the resulting calendar month.
@@ -490,7 +490,7 @@ The date_expression and months_expression can be any valid expressions, or simpl
 }
 ```
 
-#### "Diff Days" expressions
+##### "Diff Days" expressions
 
 `diff_days` returns number of days between dates specified by `from_date_expression` and `to_date_expression`.
 The from_date_expression and to_date_expression can be any valid expressions, or simply constants.
@@ -506,7 +506,7 @@ The from_date_expression and to_date_expression can be any valid expressions, or
 }
 ```
 
-#### "Evaluator" expression
+##### "Evaluator" expression
 `evaluator` expression can be used to evaluate statements that contain arithmetic (and simple python like statements). It evaluates the statement specified by `statement` which can contain variables as defined in `context_variables`.
 
 ```json
@@ -530,7 +530,7 @@ Variables can be any valid numbers (Python datatypes `int`, `float` and `long` a
 * `date`
 * `datetime`
 
-#### Function calls within evaluator expressions
+##### Function calls within evaluator expressions
 Only the following functions are permitted:
 
 * `rand()`: generate a random number between 0 and 1
@@ -542,7 +542,7 @@ Only the following functions are permitted:
   * e.g. `timedelta_to_seconds(time_end - time_start)`
 * `range(start, [stop], [skip])`: the same as the python [`range` function](https://docs.python.org/2/library/functions.html#range). Note that for performance reasons this is limited to 100 items or less.
 
-#### "Month Start Date" and "Month End Date" expressions
+##### "Month Start Date" and "Month End Date" expressions
 
 `month_start_date` returns date of first day in the month of given date and `month_end_date` returns date of last day in the month of given date.
 
@@ -559,11 +559,11 @@ The `date_expression` can be any valid expression, or simply constant
 ```
 
 
-#### Filter, Sort, Map and Reduce Expressions
+##### Filter, Sort, Map and Reduce Expressions
 
 We have following expressions that act on a list of objects or list of lists. The list to operate on is specified by `items_expression`. This can be any valid expression that returns a list. If the `items_expression` doesn't return a valid list, these might either fail or return one of empty list or `None` value.
 
-##### map_items Expression
+###### map_items Expression
 
 `map_items` performs a calculation specified by `map_expression` on each item of the list specified by `items_expression` and returns a list of the calculation results. The `map_expression` is evaluated relative to each item in the list and not relative to the parent document from which the list is specified. For e.g. if `items_expression` is a path to repeat-list of children in a form document, `map_expression` is a path relative to the repeat item.
 
@@ -587,7 +587,7 @@ We have following expressions that act on a list of objects or list of lists. Th
 Above returns list of ages. Note that the `property_path` in `map_expression` is relative to the repeat item rather than to the form.
 
 
-##### filter_items Expression
+###### filter_items Expression
 
 `filter_items` performs filtering on given list and returns a new list. If the boolean expression specified by `filter_expression` evaluates to a `True` value, the item is included in the new list and if not, is not included in the new list.
 
@@ -614,7 +614,7 @@ Above returns list of ages. Note that the `property_path` in `map_expression` is
 }
 ```
 
-##### sort_items Expression
+###### sort_items Expression
 
 `sort_items` returns a sorted list of items based on sort value of each item.The sort value of an item is specified by `sort_expression`. By default, list will be in ascending order. Order can be changed by adding optional `order` expression with one of `DESC` (for descending) or `ASC` (for ascending) If a sort-value of an item is `None`, the item will appear in the start of list. If sort-values of any two items can't be compared, an empty list is returned.
 
@@ -636,7 +636,7 @@ Above returns list of ages. Note that the `property_path` in `map_expression` is
 }
 ```
 
-##### reduce_items Expression
+###### reduce_items Expression
 
 `reduce_items` returns aggregate value of the list specified by `aggregation_fn`.
 
@@ -664,7 +664,7 @@ Function Name  | Example
 ```
 This returns number of family members
 
-##### flatten_items expression
+###### flatten_items expression
 
 `flatten_items` takes list of list of objects specified by `items_expression` and returns one list of all objects.
 
@@ -677,7 +677,7 @@ This returns number of family members
 ```
 
 
-#### Named Expressions
+##### Named Expressions
 
 Last, but certainly not least, are named expressions.
 These are special expressions that can be defined once in a data source and then used throughout other filters and indicators in that data source.
@@ -705,7 +705,7 @@ This assumes that your named expression section of your data source includes a s
 
 This is just a simple example - the value that `"my_expression"` takes on can be as complicated as you want _as long as it doesn't reference any other named expressions_.
 
-### Boolean Expression Filters
+#### Boolean Expression Filters
 
 A `boolean_expression` filter combines an *expression*, an *operator*, and a *property value* (a constant), to produce a statement that is either `True` or `False`. *Note: in the future the constant value may be replaced with a second expression to be more general, however currently only constant property values are supported.*
 
@@ -724,7 +724,7 @@ Here is a sample JSON format for simple `boolean_expression` filter:
 ```
 This is equivalent to the python statement: `doc["age"] > 21`
 
-#### Operators
+##### Operators
 
 The following operators are currently supported:
 
@@ -739,11 +739,11 @@ Operator   | Description  | Value type | Example
 `gt`       | is greater than | number | `doc["age"] > 21`
 `gte`      | is greater than or equal | number | `doc["age"] >= 21`
 
-### Compound filters
+#### Compound filters
 
 Compound filters build on top of `boolean_expression` filters to create boolean logic. These can be combined to support arbitrarily complicated boolean logic on data. There are three types of filters, *and*, *or*, and *not* filters. The JSON representation of these is below. Hopefully these are self explanatory.
 
-#### "And" Filters
+##### "And" Filters
 
 The following filter represents the statement: `doc["age"] < 21 and doc["nationality"] == "american"`:
 ```
@@ -772,7 +772,7 @@ The following filter represents the statement: `doc["age"] < 21 and doc["nationa
     ]
 }
 ```
-#### "Or" Filters
+##### "Or" Filters
 
 The following filter represents the statement: `doc["age"] > 21 or doc["nationality"] == "european"`:
 ```
@@ -801,7 +801,7 @@ The following filter represents the statement: `doc["age"] > 21 or doc["national
     ]
 }
 ```
-#### "Not" Filters
+##### "Not" Filters
 
 The following filter represents the statement: `!(doc["nationality"] == "european")`:
 ```
@@ -822,12 +822,12 @@ The following filter represents the statement: `!(doc["nationality"] == "europea
 ```
 *Note that this could be represented more simply using a single filter with the `not_eq` operator, but "not" filters can represent more complex logic than operators generally, since the filter itself can be another compound filter.*
 
-### Practical Examples
+#### Practical Examples
 
 See [examples.md](examples/examples.md) for some practical examples showing various filter types.
 
 
-## Indicators
+### Indicators
 
 Now that we know how to filter the data in our data source, we are still left with a very important problem: *how do we know what data to save*? This is where indicators come in. Indicators are the data outputs - what gets computed and put in a column in the database.
 
@@ -835,7 +835,7 @@ A typical data source will include many indicators (data that will later be incl
 
 The overall set of possible indicators is theoretically any function that can take in a single document (form or case) and output a value. However the set of indicators that are configurable is more limited than that.
 
-### Indicator Properties
+#### Indicator Properties
 
 All indicator definitions have the following properties:
 
@@ -847,7 +847,7 @@ display_name    | A display name for the indicator (not widely used, currently).
 
 Additionally, specific indicator types have other type-specific properties. These are covered below.
 
-### Indicator types
+#### Indicator types
 
 The following primary indicator types are supported:
 
@@ -860,7 +860,7 @@ ledger_balances | Save a column for each product specified, containing ledger da
 
 *Note/todo: there are also other supported formats, but they are just shortcuts around the functionality of these ones they are left out of the current docs.*
 
-#### Boolean indicators
+##### Boolean indicators
 
 Now we see again the power of our filter framework defined above! Boolean indicators take any arbitrarily complicated filter expression and save a `1` to the database if the expression is true, otherwise a `0`.  Here is an example boolean indicator which will save `1` if a form has a question with ID `is_pregnant` with a value of `"yes"`:
 
@@ -880,7 +880,7 @@ Now we see again the power of our filter framework defined above! Boolean indica
 }
 ```
 
-#### Expression indicators
+##### Expression indicators
 
 Similar to the boolean indicators - expression indicators leverage the expression structure defined above to create arbitrarily complex indicators. Expressions can store arbitrary values from documents (as opposed to boolean indicators which just store `0`'s and `1`'s). Because of this they require a few additional properties in the definition:
 
@@ -907,7 +907,7 @@ Here is a sample expression indicator that just saves the "age" property to an i
 }
 ```
 
-#### Choice list indicators
+##### Choice list indicators
 
 Choice list indicators take a single choice column (select or multiselect) and expand it into multiple columns where each column represents a different choice. These can support both single-select and multi-select quesitons.
 
@@ -929,7 +929,7 @@ A sample spec is below:
 }
 ```
 
-#### Ledger Balance Indicators
+##### Ledger Balance Indicators
 
 Ledger Balance indicators take a list of product codes and a ledger section,
 and produce a column for each product code, saving the value found in the
@@ -963,15 +963,15 @@ soh_aspirin | soh_bandaids | soh_gauze
  67         |  32          |  9
 
 
-### Practical notes for creating indicators
+#### Practical notes for creating indicators
 
 These are some practical notes for how to choose what indicators to create.
 
-#### Fractions
+##### Fractions
 
 All indicators output single values. Though fractional indicators are common, these should be modeled as two separate indicators (for numerator and denominator) and the relationship should be handled in the report UI config layer.
 
-## Saving Multiple Rows per Case/Form
+### Saving Multiple Rows per Case/Form
 
 You can save multiple rows per case/form by specifying a root level `base_item_expression` that describes how to get the repeat data from the main document.
 You can also use the `root_doc` expression type to reference parent properties
@@ -1041,7 +1041,7 @@ There are also additional examples in the [examples](examples/examples.md):
 }
 ```
 
-# Report Configurations
+## Report Configurations
 
 A report configuration takes data from a data source and renders it in the UI. A report configuration consists of a few different sections:
 
@@ -1051,7 +1051,7 @@ A report configuration takes data from a data source and renders it in the UI. A
 4. [Charts](#charts) - Definition of charts to display on the report.
 5. [Sort Expression](#sort-expression) - How the rows in the report are ordered.
 
-## Samples
+### Samples
 
 Here are some sample configurations that can be used as a reference until we have better documentation.
 
@@ -1059,7 +1059,7 @@ Here are some sample configurations that can be used as a reference until we hav
 - [GSID form report](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/userreports/examples/gsid/gsid-form-report.json)
 
 
-## Report Filters
+### Report Filters
 
 The documentation for report filters is still in progress. Apologies for brevity below.
 
@@ -1067,7 +1067,7 @@ The documentation for report filters is still in progress. Apologies for brevity
 
 Report filters are _completely_ different from data source filters. Data source filters limit the global set of data that ends up in the table, whereas report filters allow you to select values to limit the data returned by a query.
 
-### Numeric Filters
+#### Numeric Filters
 Numeric filters allow users to filter the rows in the report by comparing a column to some constant that the user specifies when viewing the report.
 Numeric filters are only intended to be used with numeric (integer or decimal type) columns. Supported operators are =, &ne;, &lt;, &le;, &gt;, and &ge;.
 
@@ -1081,7 +1081,7 @@ ex:
 }
 ```
 
-### Date filters
+#### Date filters
 
 Date filters allow you filter on a date. They will show a datepicker in the UI.
 
@@ -1099,7 +1099,7 @@ filter to be compared against an indicator of data type `string`. You shouldn't
 ever need to use this option (make your column a `date` or `datetime` type
 instead), but it exists because the report builder needs it.
 
-### Quarter filters
+#### Quarter filters
 
 Quarter filters are similar to date filters, but a choice is restricted only to the particular quarter of the year. They will show inputs for year and quarter in the UI.
 
@@ -1113,7 +1113,7 @@ Quarter filters are similar to date filters, but a choice is restricted only to 
 }
 ```
 
-### Pre-Filters
+#### Pre-Filters
 
 Pre-filters offer the kind of functionality you get from
 [data source filters](#data-source-filtering). This makes it easier to use one
@@ -1151,7 +1151,7 @@ operator. e.g.
 (If `pre_value` is an array and `datatype` is not "array", it is assumed that
 `datatype` refers to the data type of the items in the array.)
 
-### Dynamic choice lists
+#### Dynamic choice lists
 
 Dynamic choice lists provide a select widget that will generate a list of options dynamically.
 
@@ -1168,7 +1168,7 @@ Simple example assuming "village" is a name:
 }
 ```
 
-#### Choice providers
+##### Choice providers
 
 Currently the supported `choice_provider`s are supported:
 
@@ -1197,7 +1197,7 @@ Example assuming "village" is a location ID, which is converted to names using t
 }
 ```
 
-### Choice lists
+#### Choice lists
 
 Choice lists allow manual configuration of a fixed, specified number of choices and let you change what they look like in the UI.
 ```
@@ -1212,7 +1212,7 @@ Choice lists allow manual configuration of a fixed, specified number of choices 
 }
 ```
 
-### Internationalization
+#### Internationalization
 
 Report builders may specify translations for the filter display value. See the section on internationalization in the Report Column section for more information.
 ```json
@@ -1224,7 +1224,7 @@ Report builders may specify translations for the filter display value. See the s
 }
 ```
 
-## Report Columns
+### Report Columns
 
 Reports are made up of columns. The currently supported column types ares:
 
@@ -1233,7 +1233,7 @@ Reports are made up of columns. The currently supported column types ares:
 * [_aggregate_date_](#aggregatedatecolumn) which aggregates data by month
 * [_expanded_](#expanded-columns) which expands a select question into multiple columns
 
-### Field columns
+#### Field columns
 
 Field columns have a type of `"field"`. Here's an example field column that shows the owner name from an associated `owner_id`:
 
@@ -1252,7 +1252,7 @@ Field columns have a type of `"field"`. Here's an example field column that show
 }
 ```
 
-### Percent columns
+#### Percent columns
 
 Percent columns have a type of `"percent"`. They must specify a `numerator` and `denominator` as separate field columns. Here's an example percent column that shows the percentage of pregnant women who had danger signs.
 
@@ -1277,7 +1277,7 @@ Percent columns have a type of `"percent"`. They must specify a `numerator` and 
 }
 ```
 
-#### Formats
+##### Formats
 
 The following percentage formats are supported.
 
@@ -1290,7 +1290,7 @@ numeric_percent | Percentage as a number                         | 33
 decimal         | Fraction as a decimal number                   | .333
 
 
-### AggregateDateColumn
+#### AggregateDateColumn
 
 AggregateDate columns allow for aggregating data by month over a given date field.  They have a type of `"aggregate_date"`. Unlike regular fields, you do not specify how aggregation happens, it is automatically grouped by month.
 
@@ -1316,19 +1316,19 @@ Keep in mind that the only variables available for formatting are `year` and `mo
 | "%b (%y)" | "Sep (08)"        |
 
 
-### Expanded Columns
+#### Expanded Columns
 
 Expanded columns have a type of `"expanded"`. Expanded columns will be "expanded" into a new column for each distinct value in this column of the data source. For example:
 
 If you have a data source like this:
 ```
-+---------+----------+-------------+
++---------|----------|-------------+
 | Patient | district | test_result |
-+---------+----------+-------------+
++---------|----------|-------------+
 | Joe     | North    | positive    |
 | Bob     | North    | positive    |
 | Fred    | South    | negative    |
-+---------+----------+-------------+
++---------|----------|-------------+
 ```
 and a report configuration like this:
 ```
@@ -1354,17 +1354,17 @@ columns:
 ```
 Then you will get a report like this:
 ```
-+----------+----------------------+----------------------+
++----------|----------------------|----------------------+
 | district | test_result-positive | test_result-negative |
-+----------+----------------------+----------------------+
++----------|----------------------|----------------------+
 | North    | 2                    | 0                    |
 | South    | 0                    | 1                    |
-+----------+----------------------+----------------------+
++----------|----------------------|----------------------+
 ```
 
 Expanded columns have an optional parameter `"max_expansion"` (defaults to 10) which limits the number of columns that can be created.  WARNING: Only override the default if you are confident that there will be no adverse performance implications for the server.
 
-### Expression columns
+#### Expression columns
 
 Expression columns can be used to do just-in-time calculations on the data coming out of reports.
 They allow you to use any UCR expression on the data in the report row.
@@ -1395,7 +1395,7 @@ how you could make a column that is 10 times that column.
 }
 ```
 
-### The "aggregation" column property
+#### The "aggregation" column property
 
 The aggregation column property defines how the column should be aggregated. If the report is not doing any aggregation, or if the column is one of the aggregation columns this should always be `"simple"` (see [Aggregation](#aggregation) below for more information on aggregation).
 
@@ -1411,16 +1411,16 @@ min             | Choose the minimum value
 max             | Choose the maximum value
 sum             | Sum the values
 
-#### Column IDs
+##### Column IDs
 
 Column IDs in percentage fields *must be unique for the whole report*. If you use a field in a normal column and in a percent column you must assign unique `column_id` values to it in order for the report to process both.
 
 
-### Calculating Column Totals
+#### Calculating Column Totals
 
 To sum a column and include the result in a totals row at the bottom of the report, set the `calculate_total` value in the column configuration to `true`.
 
-### Internationalization
+#### Internationalization
 Report columns can be translated into multiple languages. To specify translations
 for a column header, use an object as the `display` value in the configuration
 instead of a string. For example:
@@ -1450,37 +1450,37 @@ The value displayed to the user is determined as follows:
 Valid `display` languages are any of the two or three letter language codes available on the user settings page.
 
 
-## Aggregation
+### Aggregation
 
 Aggregation in reports is done using a list of columns to aggregate on.
 This defines how indicator data will be aggregated into rows in the report.
 The columns represent what will be grouped in the report, and should be the `column_id`s of valid report columns.
 In most simple reports you will only have one level of aggregation. See examples below.
 
-### No aggregation
+#### No aggregation
 
 ```json
 ["doc_id"]
 ```
 
-### Aggregate by 'username' column
+#### Aggregate by 'username' column
 
 ```json
 ["username"]
 ```
 
-### Aggregate by two columns
+#### Aggregate by two columns
 
 ```json
 ["column1", "column2"]
 ```
 
-## Transforms
+### Transforms
 
 Transforms can be used in two places - either to manipulate the value of a column just before it gets saved to a data source, or to transform the value returned by a column just before it reaches the user in a report.
 The currently supported transform types are shown below:
 
-### Displaying username instead of user ID
+#### Displaying username instead of user ID
 
 ```
 {
@@ -1489,7 +1489,7 @@ The currently supported transform types are shown below:
 }
 ```
 
-### Displaying username minus @domain.commcarehq.org instead of user ID
+#### Displaying username minus @domain.commcarehq.org instead of user ID
 
 ```
 {
@@ -1498,7 +1498,7 @@ The currently supported transform types are shown below:
 }
 ```
 
-### Displaying owner name instead of owner ID
+#### Displaying owner name instead of owner ID
 
 ```
 {
@@ -1507,7 +1507,7 @@ The currently supported transform types are shown below:
 }
 ```
 
-### Displaying month name instead of month index
+#### Displaying month name instead of month index
 
 ```
 {
@@ -1516,7 +1516,7 @@ The currently supported transform types are shown below:
 }
 ```
 
-### Rounding decimals
+#### Rounding decimals
 
 Rounds decimal and floating point numbers to two decimal places.
 
@@ -1527,7 +1527,7 @@ Rounds decimal and floating point numbers to two decimal places.
 }
 ```
 
-### Generic number formatting
+#### Generic number formatting
 
 Rounds numbers using Python's [built in formatting](https://docs.python.org/2.7/library/string.html#string-formatting).
 
@@ -1536,7 +1536,7 @@ See below for a few simple examples. Read the docs for complex ones. The input t
 If the format string is not valid or the input is not a number then the original input will be returned.
 
 
-#### Round to the nearest whole number
+##### Round to the nearest whole number
 
 ```
 {
@@ -1545,7 +1545,7 @@ If the format string is not valid or the input is not a number then the original
 }
 ```
 
-#### Always round to 3 decimal places
+##### Always round to 3 decimal places
 
 ```
 {
@@ -1554,7 +1554,7 @@ If the format string is not valid or the input is not a number then the original
 }
 ```
 
-### Date formatting
+#### Date formatting
 Formats dates with the given format string. See [here](https://docs.python.org/2/library/datetime.html#strftime-strptime-behavior) for an explanation of format string behavior.
 If there is an error formatting the date, the transform is not applied to that value.
 ```
@@ -1564,11 +1564,11 @@ If there is an error formatting the date, the transform is not applied to that v
 }
 ```
 
-## Charts
+### Charts
 
 There are currently three types of charts supported. Pie charts, and two types of bar charts.
 
-### Pie charts
+#### Pie charts
 
 A pie chart takes two inputs and makes a pie chart. Here are the inputs:
 
@@ -1589,7 +1589,7 @@ Here's a sample spec:
 }
 ```
 
-### Aggregate multibar charts
+#### Aggregate multibar charts
 
 An aggregate multibar chart is used to aggregate across two columns (typically both of which are select questions). It takes three inputs:
 
@@ -1611,7 +1611,7 @@ Here's a sample spec:
 }
 ```
 
-### Multibar charts
+#### Multibar charts
 
 A multibar chart takes a single x-axis column (typically a user, date, or select question) and any number of y-axis columns (typically indicators or counts) and makes a bar chart from them.
 
@@ -1640,7 +1640,7 @@ Here's a sample spec:
 }
 ```
 
-## Sort Expression
+### Sort Expression
 
 A sort order for the report rows can be specified. Multiple fields, in either ascending or descending order, may be specified. Example:
 
@@ -1659,20 +1659,20 @@ Field should refer to report column IDs, not database fields.
 ]
 ```
 
-# Mobile UCR
+## Mobile UCR
 
 Mobile UCR is a beta feature that enables you to make application modules and charts linked to UCRs on mobile.
 It also allows you to send down UCR data from a report as a fixture which can be used in standard case lists and forms throughout the mobile application.
 
 The documentation for Mobile UCR is very sparse right now.
 
-## Filters
+### Filters
 
 On mobile UCR, filters can be automatically applied to the mobile reports based on hardcoded or user-specific data, or can be displayed to the user.
 
 The documentation of mobile UCR filters is incomplete. However some are documented below.
 
-### Custom Calendar Month
+#### Custom Calendar Month
 
 When configuring a report within a module, you can filter a date field by the 'CustomMonthFilter'.  The choice includes the following options:
 - Start of Month (a number between 1 and 28)
@@ -1696,7 +1696,7 @@ Period 0, day 21, you would sync May 21-May 21th
 Period 1, day 21, you would sync April 21-May 20th
 Period 2, day 21, you would sync March 21-April 20th
 
-# Export
+## Export
 
 A UCR data source can be exported, to back an excel dashboard, for instance.
 The URL for exporting data takes the form https://www.commcarehq.org/a/[domain]/configurable_reports/data_sources/export/[data source id]/
@@ -1716,7 +1716,7 @@ URL parameter          | Value          | Description
 This is configured in `export_data_source` and tested in `test_export`.  It
 should be pretty straightforward to add support for additional filter types.
 
-### Export example
+#### Export example
 
 Let's say you want to restrict the results to only cases owned by a particular
 user, opened in the last 90 days, and with a child between 12 and 24 months old as an xlsx file.
@@ -1725,11 +1725,11 @@ The querystring might look like this:
 ?$format=xlsx&owner_id=48l069n24myxk08hl563&opened_on-lastndays=90&child_age-range=12..24
 ```
 
-# Practical Notes
+## Practical Notes
 
 Some rough notes for working with user configurable reports.
 
-## Getting Started
+### Getting Started
 
 
 The easiest way to get started is to start with sample data and reports.
@@ -1759,7 +1759,7 @@ There is a second example based off the "gsid" domain as well using forms.
 
 The tests are also a good source of documentation for the various filter and indicator formats that are supported.
 
-## Static data sources
+### Static data sources
 
 As well as being able to define data sources via the UI which are stored in the database you
 can also define static data sources which live as JSON documents in the source repository.
@@ -1784,7 +1784,7 @@ Changes to the data source require restarting the pillow which will rebuild the 
 can use the UI to rebuild the data source (requires Celery to be running).
 
 
-## Static configurable reports
+### Static configurable reports
 
 Configurable reports can also be defined in the source repository.  Static configurable reports have
 the following style:
@@ -1799,7 +1799,7 @@ the following style:
 }
 ```
 
-## Custom configurable reports
+### Custom configurable reports
 
 Sometimes a client's needs for a rendered report are outside of the scope of the framework.  To render
 the report using a custom Django template or with custom Excel formatting, define a subclass of
@@ -1807,7 +1807,7 @@ the report using a custom Django template or with custom Excel formatting, defin
 in the field `custom_configurable_report` of the static report and don't forget to include the static
 report in `STATIC_DATA_SOURCES` in `settings.py`.
 
-## Extending User Configurable Reports
+### Extending User Configurable Reports
 
 When building a custom report for a client, you may find that you want to extend
 UCR with custom functionality. The UCR framework allows developers to write
@@ -1818,7 +1818,7 @@ with a signature like conditional_expression(spec, context) that returns an
 expression object. e.g.:
 
 ```
-# settings.py
+## settings.py
 
 CUSTOM_UCR_EXPRESSIONS = [
     ('abt_supervisor', 'custom.abt.reports.expressions.abt_supervisor'),
@@ -1834,7 +1834,7 @@ Following are some custom expressions that are currently available.
 
 You can find examples of these in [practical examples](examples/examples.md).
 
-## Inspecting database tables
+### Inspecting database tables
 
 
 The easiest way to inspect the database tables is to use the sql command line utility.

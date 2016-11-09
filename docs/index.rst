@@ -17,6 +17,7 @@ Welcome to CommCareHQ's documentation!
 .. toctree::
    :maxdepth: 2
 
+   ucr
    reporting
    change_feed
    api
