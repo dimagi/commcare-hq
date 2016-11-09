@@ -30,15 +30,11 @@ class CaseBlock(object):
         else:
             self.date_opened = date_opened
         self.update = copy.copy(update) if update else {}
-        self.index = {}
         if index:
-            for key, value in (copy.copy(index) if index else {}).items():
-                if isinstance(index, IndexAttrs):
-                    self.index[key] = index
-                elif len(value) == 2:
-                    self.index[key] = IndexAttrs(value[0], value[1], 'child')
-                else:
-                    self.index[key] = IndexAttrs(value[0], value[1], value[2])
+            self.index = {key: self._make_index_attrs(value)
+                          for key, value in index.items()}
+        else:
+            self.index = {}
 
         if create:
             self.case_type = "" if case_type is CaseBlock.undefined else case_type
@@ -55,6 +51,13 @@ class CaseBlock(object):
         self.external_id = external_id
         self.create = create
         self._json_repr = self._to_json()
+
+    @staticmethod
+    def _make_index_attrs(value):
+        if len(value) == 2:
+            return IndexAttrs(value[0], value[1], 'child')
+        else:
+            return IndexAttrs(value[0], value[1], value[2])
 
     def _to_json(self):
         result = {}
