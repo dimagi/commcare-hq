@@ -155,12 +155,12 @@ class ConfigurableReportSqlDataSource(SqlData):
             if deferred_filter.field not in fields]
 
     @property
-    def sql_column_configs(self):
+    def column_configs(self):
         return [col.get_column_config(self.config, self.lang) for col in self.top_level_db_columns]
 
     @property
     def column_warnings(self):
-        return [w for sql_conf in self.sql_column_configs for w in sql_conf.warnings]
+        return [w for conf in self.column_configs for w in conf.warnings]
 
     @memoized
     @method_decorator(catch_and_raise_exceptions)
