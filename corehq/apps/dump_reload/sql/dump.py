@@ -67,7 +67,7 @@ class SqlDataDumper(DataDumper):
         JsonLinesSerializer().serialize(
             objects,
             use_natural_foreign_keys=False,
-            use_natural_primary_keys=False,
+            use_natural_primary_keys=True,
             stream=output_stream
         )
         return stats
