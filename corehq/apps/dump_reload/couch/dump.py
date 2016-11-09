@@ -138,11 +138,12 @@ class DomainDumper(DataDumper):
 
     def dump(self, output_stream):
         from corehq.apps.domain.models import Domain
-        domain_obj = Domain.get_by_name(self.domain)
+        domain_obj = Domain.get_by_name(self.domain, strict=True)
         if not domain_obj:
             raise DomainDumpError("Domain not found: {}".format(self.domain))
 
-        domain_obj = _get_doc_with_attachments(Domain.get_db(), domain_obj)
+        domain_dict = _get_doc_with_attachments(Domain.get_db(), domain_obj.to_json())
+        domain_obj = Domain.wrap(domain_dict)
         json.dump(domain_obj.to_json(), output_stream)
         output_stream.write('\n')
 
