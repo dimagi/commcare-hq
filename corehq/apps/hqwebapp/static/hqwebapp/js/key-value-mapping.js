@@ -190,7 +190,7 @@ uiElement.key_value_mapping = function (o) {
         // create a throw-away modal every time
         // lets us create a sandbox for editing that you can cancel
         var $modalDiv = $(document.createElement("div"));
-        $modalDiv.attr("data-bind", "template: \'key_value_mapping_modal\'");
+        $modalDiv.attr("data-bind", "template: 'key_value_mapping_modal'");
         var copy = new MapList({
             lang: o.lang,
             langs: o.langs,
