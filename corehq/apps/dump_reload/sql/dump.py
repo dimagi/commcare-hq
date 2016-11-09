@@ -84,11 +84,11 @@ def get_objects_to_dump(domain, excludes, stats_counter=None, stdout=None):
         stats_counter = Counter()
     for model_class, query in get_querysets_to_dump(domain, excludes):
         model_label = get_model_label(model_class)
-        if stdout:
-            stdout.write('Dumping {}\n'.format(model_label))
         for obj in query.iterator():
             stats_counter.update([model_label])
             yield obj
+        if stdout:
+            stdout.write('Dumped {} {}\n'.format(stats_counter[model_label], model_label))
 
 
 def get_querysets_to_dump(domain, excludes):
