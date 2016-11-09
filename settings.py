@@ -573,7 +573,12 @@ GET_URL_BASE = 'dimagi.utils.web.get_url_base'
 # celery
 BROKER_URL = 'django://'  # default django db based
 
-CELERY_ANNOTATIONS = {'*': {'on_failure': helper.celery_failure_handler}}
+CELERY_ANNOTATIONS = {
+    '*': {
+        'on_failure': helper.celery_failure_handler,
+        'trail': False,
+    }
+}
 
 CELERY_MAIN_QUEUE = 'celery'
 
