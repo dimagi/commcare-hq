@@ -293,7 +293,7 @@ def _login(req, domain_name, template_name):
 
     context = {}
     default_page_name = _('Welcome back to CommCare HQ!')
-    if getattr(settings, 'CUSTOM_LANDING_PAGE', False):
+    if settings.CUSTOM_LANDING_PAGE:
         page_name = getattr(settings, 'CUSTOM_WELCOME_MESSAGE', default_page_name)
         custom_template = getattr(settings, 'CUSTOM_LANDING_TEMPLATE', False)
         custom_logo = getattr(settings, 'CUSTOM_PRELOGIN_LOGO_URL', '')
