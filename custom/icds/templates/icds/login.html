@@ -1,0 +1,14 @@
+{% extends "style/base_page.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Login to ICDS CAS" %}{% endblock title %}
+
+{% block page_content %}
+    {% block login-content %}
+    <div class="row">
+        <div class="col-sm-8">
+            {% include "login_and_password/two_factor/core/login.html" %}
+        </div>
+    </div>
+    {% endblock %}
+{% endblock page_content %}

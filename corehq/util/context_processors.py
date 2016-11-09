@@ -85,3 +85,9 @@ def websockets_override(request):
         # it's very unlikely this was needed, and some workflows (like scheduled reports) aren't
         # able to generate this, so don't worry about it.
         return {}
+
+
+def enterprise_mode(request):
+    return {
+        'enterprise_mode': settings.ENTERPRISE_MODE
+    }

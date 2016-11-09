@@ -196,6 +196,7 @@ TEMPLATE_CONTEXT_PROCESSORS = [
     "corehq.util.context_processors.base_template",
     "corehq.util.context_processors.js_api_keys",
     'corehq.util.context_processors.websockets_override',
+    "corehq.util.context_processors.enterprise_mode",
     'django.core.context_processors.i18n',
 ]
 
@@ -387,6 +388,7 @@ HQ_APPS = (
     'custom.care_pathways',
     'custom.common',
 
+    'custom.icds',
     'custom.icds_reports',
     'custom.pnlppgi',
 
@@ -913,6 +915,10 @@ KAFKA_URL = 'localhost:9092'
 MOBILE_INTEGRATION_TEST_TOKEN = None
 
 OVERRIDE_UCR_BACKEND = None
+
+ENTERPRISE_MODE = False
+
+CUSTOM_LANDING_PAGE = False
 
 try:
     # try to see if there's an environmental variable set for local_settings

@@ -178,6 +178,8 @@ def _get_default_tile_configurations():
 
     can_view_commtrack_setup = lambda request: (request.project.commtrack_enabled)
 
+    can_view_exchange = lambda request: can_edit_apps(request) and not settings.ENTERPRISE_MODE
+
     def _can_access_sms(request):
         return has_privilege(request, privileges.OUTBOUND_SMS)
 
@@ -255,7 +257,7 @@ def _get_default_tile_configurations():
             icon='fcc fcc-exchange',
             context_processor_class=IconContext,
             urlname='appstore',
-            visibility_check=can_edit_apps,
+            visibility_check=can_view_exchange,
             url_generator=lambda urlname, req: reverse(urlname),
             help_text=_('Download and share CommCare applications with '
                         'other users around the world'),
