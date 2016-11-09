@@ -2,104 +2,132 @@ import copy
 from datetime import datetime, date
 import numbers
 from xml.etree import ElementTree
-from casexml.apps.case.xml import NS_VERSION_MAP, V2
+from casexml.apps.case.xml import V2_NAMESPACE
 from dimagi.utils.parsing import json_format_datetime
+from collections import namedtuple
+from functools import partial
 
 
-class CaseBlock(dict):
+IndexAttrs = namedtuple('IndexAttrs', ['case_type', 'case_id', 'relationship'])
+ChildIndexAttrs = partial(IndexAttrs, relationship='child')
+
+
+class CaseBlock(object):
+    """
+    see https://github.com/dimagi/commcare/wiki/casexml20 for spec
+    """
     undefined = object()
 
     def __init__(self, case_id, date_modified=None, user_id=undefined,
                  owner_id=undefined, external_id=undefined, case_type=undefined,
                  case_name=undefined, create=False, date_opened=undefined, update=None,
-                 close=False, index=None, strict=True):
-        """
-        see https://github.com/dimagi/commcare/wiki/casexml20 for spec
-        """
-        super(CaseBlock, self).__init__()
-        self._id = case_id
+                 close=False, index=None):
+
         now = datetime.utcnow()
-        date_modified = date_modified or now
+        self.date_modified = date_modified or now
         if date_opened == CaseBlock.undefined and create:
-            date_opened = now.date()
-        update = copy.copy(update) if update else {}
-        index = copy.copy(index) if index else {}
-
-        self.XMLNS = NS_VERSION_MAP.get(V2)
-
-        self.VERSION = V2
-        self.CASE_TYPE = "case_type"
+            self.date_opened = now.date()
+        else:
+            self.date_opened = date_opened
+        self.update = copy.copy(update) if update else {}
+        self.index = {}
+        if index:
+            for key, value in (copy.copy(index) if index else {}).items():
+                if isinstance(index, IndexAttrs):
+                    self.index[key] = index
+                elif len(value) == 2:
+                    self.index[key] = IndexAttrs(value[0], value[1], 'child')
+                else:
+                    self.index[key] = IndexAttrs(value[0], value[1], value[2])
 
         if create:
-            self['create'] = {}
-            # make case_type
-            case_type = "" if case_type is CaseBlock.undefined else case_type
-            case_name = "" if case_name is CaseBlock.undefined else case_name
-            owner_id = "" if owner_id is CaseBlock.undefined else owner_id
-        self['update'] = update
+            self.case_type = "" if case_type is CaseBlock.undefined else case_type
+            self.case_name = "" if case_name is CaseBlock.undefined else case_name
+            self.owner_id = "" if owner_id is CaseBlock.undefined else owner_id
+        else:
+            self.case_type = case_type
+            self.case_name = case_name
+            self.owner_id = owner_id
+
+        self.close = close
+        self.case_id = case_id
+        self.user_id = user_id
+        self.external_id = external_id
+        self.create = create
+        self._json_repr = self._to_json()
+
+    def _to_json(self):
+        result = {}
+        if self.create:
+            result['create'] = {}
+        result['update'] = self.update
 
         create_or_update = {
-            self.CASE_TYPE: case_type,
-            'case_name': case_name,
+            'case_type': self.case_type,
+            'case_name': self.case_name,
         }
 
-        self.update({
+        result.update({
             '_attrib': {
-                'case_id': case_id,
-                'date_modified': date_modified,
-                'user_id': user_id,
-                'xmlns': self.XMLNS,
+                'case_id': self.case_id,
+                'date_modified': self.date_modified,
+                'user_id': self.user_id,
+                'xmlns': V2_NAMESPACE,
             }
         })
-        if owner_id is not None:
+        if self.owner_id is not None:
             create_or_update.update({
-                'owner_id': owner_id,
+                'owner_id': self.owner_id,
             })
-        self['update'].update({
-            'external_id': external_id,
-            'date_opened': date_opened,
+        result['update'].update({
+            'external_id': self.external_id,
+            'date_opened': self.date_opened,
         })
 
         # fail if user specifies both, say, case_name='Johnny' and update={'case_name': 'Johnny'}
-        if strict:
-            for key in create_or_update:
-                if create_or_update[key] is not CaseBlock.undefined and key in self['update']:
-                    raise CaseBlockError("Key %r specified twice" % key)
+        for key in create_or_update:
+            if create_or_update[key] is not CaseBlock.undefined and key in result['update']:
+                raise CaseBlockError("Key %r specified twice" % key)
 
-        create_or_update = {key: val for key, val in create_or_update.items() if val is not CaseBlock.undefined}
-        if create:
-            self['create'].update(create_or_update)
+        create_or_update = {key: val for key, val in create_or_update.items()
+                            if val is not CaseBlock.undefined}
+        if self.create:
+            result['create'].update(create_or_update)
         else:
-            self['update'].update(create_or_update)
+            result['update'].update(create_or_update)
 
-        if close:
-            self['close'] = {}
+        if self.close:
+            result['close'] = {}
 
-        if not ['' for val in self['update'].values() if val is not CaseBlock.undefined]:
-                self['update'] = CaseBlock.undefined
-        if index:
-            self['index'] = {}
-            for name in index.keys():
-                case_type = index[name][0]
-                case_id = index[name][1]
+        if all(val is CaseBlock.undefined for val in result['update'].values()):
+                result['update'] = CaseBlock.undefined
+
+        if self.index:
+            result['index'] = {}
+            for name in self.index.keys():
+                print name
+                self.case_type = self.index[name].case_type
+                self.case_id = self.index[name].case_id
+
                 # relationship = "child" for index to a parent case (default)
                 # relationship = "extension" for index to a host case
-                relationship = index[name][2] if len(index[name]) > 2 else 'child'
+                relationship = self.index[name].relationship
                 if relationship not in ('child', 'extension'):
                     raise CaseBlockError('Valid values for an index relationship are "child" and "extension"')
-                _attrib = {'case_type': case_type}
+                _attrib = {'case_type': self.case_type}
                 if relationship != 'child':
                     _attrib['relationship'] = relationship
-                self['index'][name] = {
+                result['index'][name] = {
                     '_attrib': _attrib,
-                    '_text': case_id
+                    '_text': self.case_id
                 }
+        return result
 
     def as_xml(self, format_datetime=None):
         format_datetime = format_datetime or json_format_datetime
         case = ElementTree.Element('case')
         order = ['case_id', 'date_modified', 'create', 'update', 'close',
-                 self.CASE_TYPE, 'user_id', 'case_name', 'external_id', 'owner_id', 'date_opened']
+                 'case_type', 'user_id', 'case_name', 'external_id', 'owner_id', 'date_opened']
 
         def sort_key(item):
             word, _ = item
@@ -135,7 +163,7 @@ class CaseBlock(dict):
                         dict_to_xml(elem, value)
                     else:
                         elem.text = fmt(value)
-        dict_to_xml(case, self)
+        dict_to_xml(case, self._json_repr)
         return case
 
     def as_string(self, format_datetime=None):
