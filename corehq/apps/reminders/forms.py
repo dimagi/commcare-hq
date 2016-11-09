@@ -677,7 +677,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     'start_date',
                     placeholder=_("Enter Case Property"),
                     css_class="input-xlarge",
-                    data_bind="autocompleteSelect2: getAvailableCaseProperties,"
+                    data_bind="autocompleteSelect2: getAvailableCaseProperties",
                 ),
                 hqcrispy.B3MultiField(
                     "",
@@ -723,7 +723,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     InlineField(
                         'recipient_case_match_property',
                         css_class="input-xlarge",
-                        data_bind="autocompleteSelect2: getAvailableSubcaseProperties,",
+                        data_bind="autocompleteSelect2: getAvailableSubcaseProperties",
                     ),
                     css_class='col-sm-6'
                 ),
@@ -853,7 +853,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     InlineField(
                         'until',
                         css_class="input-large",
-                        data_bind="autocompleteSelect2: getAvailableCaseProperties,",
+                        data_bind="autocompleteSelect2: getAvailableCaseProperties",
                     ),
                     css_class="col-sm-6",
                     data_bind="visible: isUntilVisible",
