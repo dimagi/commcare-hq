@@ -209,11 +209,11 @@ class LocationTypesView(BaseLocationView):
             'shares_cases': loc_type.shares_cases,
             'view_descendants': loc_type.view_descendants,
             'code': loc_type.code,
-            'expand_from': loc_type.expand_from.pk if loc_type.expand_from else None,
+            'expand_from': loc_type.expand_from if loc_type.expand_from else None,
             'expand_from_root': loc_type.expand_from_root,
-            'expand_to': loc_type.expand_to.pk if loc_type.expand_to else None,
-            'include_without_expanding': (loc_type.include_without_expanding.pk
-                                          if loc_type.include_without_expanding else None),
+            'expand_to': loc_type.expand_to_id if loc_type.expand_to_id else None,
+            'include_without_expanding': (loc_type.include_without_expanding_id
+                                          if loc_type.include_without_expanding_id else None),
         } for loc_type in LocationType.objects.by_domain(self.domain)]
 
     @method_decorator(lock_locations)

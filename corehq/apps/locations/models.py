@@ -118,7 +118,6 @@ class LocationType(models.Model):
         'self',
         null=True,
         related_name='+',
-        db_column='include_without_expanding',
         on_delete=models.SET_NULL,
     )  # include all leves of this type and their ancestors
     last_modified = models.DateTimeField(auto_now=True)

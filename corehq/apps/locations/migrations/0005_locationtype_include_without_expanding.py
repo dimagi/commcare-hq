@@ -15,6 +15,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='locationtype',
             name='include_without_expanding',
-            field=models.ForeignKey(related_name='+', on_delete=django.db.models.deletion.SET_NULL, db_column=b'include_without_expanding', to='locations.LocationType', null=True),
+            field=models.ForeignKey(related_name='+', on_delete=django.db.models.deletion.SET_NULL, to='locations.LocationType', null=True),
         ),
     ]
