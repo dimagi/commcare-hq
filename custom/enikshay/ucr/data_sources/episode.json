@@ -327,6 +327,53 @@
                 "column_id": "mobile_number"
             },
             {
+                "display_name": "previous_tb_treatment",
+                "type": "expression",
+                "datatype": "string",
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "previous_tb_treatment"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "datatype": null,
+                        "type": "named",
+                        "name": "person_id"
+                    }
+                },
+                "column_id": "previous_tb_treatment"
+            },
+            {
+                "display_name": "episode_type_patient",
+                "type": "boolean",
+                "filter": {
+                    "type": "named",
+                    "name": "current_episode_type_patient"
+                },
+                "column_id": "episode_type_patient"
+            },
+            {
+                "display_name": "cat1",
+                "type": "boolean",
+                "filter": {
+                    "type": "named",
+                    "name": "cat1"
+                },
+                "column_id": "cat1"
+            },
+            {
+                "display_name": "cat2",
+                "type": "boolean",
+                "filter": {
+                    "type": "named",
+                    "name": "cat2"
+                },
+                "column_id": "cat2"
+            },
+            {
                 "display_name": "patient_type",
                 "datatype": "string",
                 "type": "expression",
@@ -648,6 +695,20 @@
                 "column_id": "diabetes_status"
             },
             {
+                "type": "boolean",
+                "filter": {
+                    "type": "boolean_expression",
+                    "operator": "eq",
+                    "expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "diabetes_status"
+                    },
+                    "property_value": "diabetic"
+                },
+                "column_id": "diabetic"
+            },
+            {
                 "display_name": "hiv_status",
                 "datatype": "string",
                 "type": "expression",
@@ -660,6 +721,51 @@
                     "name": "hiv_status"
                 },
                 "column_id": "hiv_status"
+            },
+            {
+                "display_name": "dots_commcareuser",
+                "type": "boolean",
+                "filter": {
+                    "type": "named",
+                    "name": "dots_commcareuser"
+                },
+                "column_id": "dots_commcareuser"
+            },
+            {
+                "display_name": "dots_commcareuser_cat1",
+                "type": "boolean",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "dots_commcareuser"
+                        },
+                        {
+                            "type": "named",
+                            "name": "cat1"
+                        }
+                    ]
+                },
+                "column_id": "dots_commcareuser_cat1"
+            },
+             {
+                "display_name": "dots_commcareuser_cat2",
+                "type": "boolean",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "dots_commcareuser"
+                        },
+                        {
+                            "type": "named",
+                            "name": "cat2"
+                        }
+                    ]
+                },
+                "column_id": "dots_commcareuser_cat2"
             },
             {
                 "column_id": "purpose_of_test",
@@ -985,6 +1091,18 @@
             },
             {
                 "filter": {
+                    "type": "not",
+                    "filter": {
+                        "type": "named",
+                        "name": "under_15"
+                    }
+                },
+                "type": "boolean",
+                "display_name": null,
+                "column_id": "over_15"
+            },
+            {
+                "filter": {
                     "type": "named",
                     "name": "new_patient"
                 },
@@ -1036,24 +1154,6 @@
                 "type": "boolean",
                 "display_name": null,
                 "column_id": "hiv_positive"
-            },
-            {
-                "column_id": "episode_type_patient",
-                "type": "boolean",
-                "filter": {
-                    "type": "and",
-                    "filters": [
-                        {
-                            "type": "boolean_expression",
-                            "expression": {
-                                "type": "property_name",
-                                "property_name": "episode_type"
-                            },
-                            "operator": "eq",
-                            "property_value": "confirmed_tb"
-                        }
-                    ]
-                }
             },
             {
                 "column_id": "cpt_during_tb",
@@ -2670,6 +2770,25 @@
                 },
                 "property_value": "yes"
             },
+            "cat1": {
+                "operator": "eq",
+                "type": "boolean_expression",
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "previous_tb_treatment"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "datatype": null,
+                        "type": "named",
+                        "name": "person_id"
+                    }
+                },
+                "property_value": "no"
+            },
             "cpt_months_delivered_zero": {
                 "operator": "eq",
                 "type": "boolean_expression",
@@ -3220,6 +3339,48 @@
                 },
                 "type": "boolean_expression",
                 "property_value": "presumptive_tb"
+            },
+            "current_episode_type_patient": {
+                "operator": "eq",
+                "expression": {
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "type": "named",
+                        "name": "occurrence_id"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "current_episode_type"
+                    }
+                },
+                "type": "boolean_expression",
+                "property_value": "confirmed_tb"
+            },
+            "dots_commcareuser" : {
+                "type": "and",
+                "filters": [
+                    {
+                        "type": "boolean_expression",
+                        "operator": "eq",
+                        "expression": {
+                            "datatype": "string",
+                            "type": "property_name",
+                            "property_name": "adherence_type_choice"
+                        },
+                        "property_value": "dots"
+                    },
+                    {
+                        "type": "boolean_expression",
+                        "operator": "eq",
+                        "expression": {
+                            "datatype": "string",
+                            "type": "property_name",
+                            "property_name": "treatment_supporter_designation"
+                        },
+                        "property_value": "tbhv_to"
+                    }
+                ]
             }
         },
         "named_expressions": {
