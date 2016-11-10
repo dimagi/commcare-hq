@@ -3,7 +3,7 @@ pillowtop
 A couchdb listening framework to transform and process changes.
 
 NOTE: this readme is out of date and does not reflect the latest changes to the library.
-Please see [read the docs](http://commcare-hq.readthedocs.org/en/latest/change_feeds.html) for more up to date information and best practices.
+Please see [read the docs](http://commcare-hq.readthedocs.org/change_feeds.html) for more up to date information and best practices.
 
 
 Django Config
