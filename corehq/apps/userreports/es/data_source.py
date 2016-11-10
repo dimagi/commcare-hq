@@ -2,7 +2,7 @@ from django.utils.decorators import method_decorator
 
 from dimagi.utils.decorators.memoized import memoized
 
-from corehq.apps.es.aggregations import SumAggregation, TermsAggregation
+from corehq.apps.es.aggregations import MinAggregation, SumAggregation, TermsAggregation
 from corehq.apps.es.es_query import HQESQuery
 
 from corehq.apps.reports.api import ReportDataSource
@@ -121,9 +121,11 @@ class ConfigurableReportEsDataSource(ConfigurableReportDataSourceMixin, ReportDa
                 elif report_column.field == self.aggregation_columns[0]:
                     r[report_column.column_id] = row['key']
                 elif report_column.aggregation == 'sum':
-                    r[report_column.column_id] = int(row[report_column.field]['value'])
+                    r[report_column.column_id] = int(row[report_column.column_id]['value'])
+                elif report_column.aggregation == 'min':
+                    r[report_column.column_id] = int(row[report_column.column_id]['value'])
                 else:
-                    r[report_column.column_id] = row[report_column.field]['doc_count']
+                    r[report_column.column_id] = row[report_column.column_id]['doc_count']
             ret.append(r)
 
         return ret
@@ -146,9 +148,11 @@ class ConfigurableReportEsDataSource(ConfigurableReportDataSourceMixin, ReportDa
                 for sub_col in get_expanded_column_config(self.config, col, 'en').columns:
                     aggregations.append(sub_col.aggregation)
             elif col.type == 'field':
+                # todo push this to the column
                 if col.aggregation == 'sum':
-                    # todo push this to the column
-                    aggregations.append(SumAggregation(col.field, col.field))
+                    aggregations.append(SumAggregation(col.column_id, col.field))
+                elif col.aggregation == 'min':
+                    aggregations.append(MinAggregation(col.column_id, col.field))
 
         for agg in aggregations:
             top_agg = top_agg.aggregation(agg)

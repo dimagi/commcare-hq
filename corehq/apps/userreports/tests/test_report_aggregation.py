@@ -371,7 +371,7 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
             ]]
         )
 
-    # todo @run_with_all_ucr_backends
+    @run_with_all_ucr_backends
     def test_no_total_row(self):
         report_config = self._create_report(
             aggregation_columns=['indicator_col_id_first_name'],
