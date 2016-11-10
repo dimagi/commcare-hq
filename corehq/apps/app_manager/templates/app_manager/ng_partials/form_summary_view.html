@@ -67,19 +67,19 @@
                                 ng-click="showCalculations = !showCalculations"
                                 ng-class="{ 'active' : showCalculations }">
                             <i class="fa fa-calculator" ng-class="showCalculations ? 'hq-icon' : ''"></i>
-                            &nbsp;{% trans "Show Calculations" %}
+                            &nbsp;{% trans "Calculations" %}
                         </button>
                         <button type="button" class="btn btn-default"
                                 ng-click="showRelevance = !showRelevance"
                                 ng-class="{ 'active' : showRelevance }">
                             <i class="fa fa-code-fork" ng-class="showRelevance ? 'hq-icon' : ''"></i>
-                            &nbsp;{% trans "Show Display Conditions" %}
+                            &nbsp;{% trans "Display Conditions" %}
                         </button>
                         <button type="button" class="btn btn-default"
                                 ng-click="showComments = !showComments"
                                 ng-class="{ 'active': showComments }">
                             <i class="fa fa-quote-left" ng-class="showComments ? 'hq-icon' : ''"></i>
-                            &nbsp;{% trans "Show Comments" %}
+                            &nbsp;{% trans "Comments" %}
                         </button>
                     </div>
                     <a class="btn btn-primary" href="{{ formDownloadURL }}?lang={{ lang }}">
