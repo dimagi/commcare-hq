@@ -51,7 +51,6 @@ branches:
   - django19
   - bmb/currentind-string # Biyeun 11/12
 #  - np/110/TEMPLATES
-  - jquery-3-1-0 # Jenny 9/26
   - location_export # Manish 11/2
 submodules:
   submodules/touchforms-src:
