@@ -1,9 +1,7 @@
 import numbers
-from collections import OrderedDict
 
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext
-from corehq.apps.userreports.reports.specs import ReportColumn, ExpressionColumn, CalculatedColumn
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -13,103 +11,22 @@ from sqlagg.sorting import OrderBy
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
 from corehq.apps.userreports.decorators import catch_and_raise_exceptions
 from corehq.apps.userreports.exceptions import InvalidQueryColumn
-from corehq.apps.userreports.models import DataSourceConfiguration, get_datasource_config
+from corehq.apps.userreports.mixins import ConfigurableReportDataSourceMixin
 from corehq.apps.userreports.reports.sorting import ASCENDING
+from corehq.apps.userreports.reports.specs import CalculatedColumn
 from corehq.apps.userreports.reports.util import get_expanded_columns
 from corehq.apps.userreports.sql.connection import get_engine_id
-from corehq.apps.userreports.util import get_table_name
 from corehq.sql_db.connections import connection_manager
 
 
-class ConfigurableReportSqlDataSource(SqlData):
-
-    def __init__(self, domain, config_or_config_id, filters, aggregation_columns, columns, order_by):
-        self.lang = None
-        self.domain = domain
-        if isinstance(config_or_config_id, DataSourceConfiguration):
-            self._config = config_or_config_id
-            self._config_id = self._config._id
-        else:
-            assert isinstance(config_or_config_id, basestring)
-            self._config = None
-            self._config_id = config_or_config_id
-
-        self._filters = {f.slug: f for f in filters}
-        self._filter_values = {}
-        self._deferred_filters = {}
-        self._order_by = order_by
-        self._aggregation_columns = aggregation_columns
-        self._column_configs = OrderedDict()
-        for column in columns:
-            # should be caught in validation prior to reaching this
-            assert column.column_id not in self._column_configs, \
-                'Report {} in domain {} has more than one {} column defined!'.format(
-                    self._config_id, self.domain, column.column_id,
-                )
-            self._column_configs[column.column_id] = column
-
-    @property
-    def aggregation_columns(self):
-        return self._aggregation_columns + [
-            deferred_filter.field for deferred_filter in self._deferred_filters.values()
-            if deferred_filter.field not in self._aggregation_columns]
-
-    @property
-    def config(self):
-        if self._config is None:
-            self._config, _ = get_datasource_config(self._config_id, self.domain)
-        return self._config
-
+class ConfigurableReportSqlDataSource(ConfigurableReportDataSourceMixin, SqlData):
     @property
     def engine_id(self):
         return get_engine_id(self.config)
 
     @property
-    def top_level_columns(self):
-        """
-        This returns a list of BaseReportColumn objects that define the top-level columns
-        in the report. These top-level columns may resolve to more than one column in the
-        underlying query or report (e.g. percentage columns or expanded columns)
-        """
-        return self._column_configs.values()
-
-    @property
-    def inner_columns(self):
-        """
-        This returns a list of Column objects that are contained within the top_level_columns
-        above.
-        """
-        return [
-            inner_col for col in self.top_level_columns
-            for inner_col in col.get_column_config(self.config, self.lang).columns
-        ]
-
-    @property
-    def top_level_db_columns(self):
-        return [col for col in self.top_level_columns if isinstance(col, ReportColumn)]
-
-    @property
-    def top_level_computed_columns(self):
-        return [col for col in self.top_level_columns if isinstance(col, ExpressionColumn)]
-
-    @property
-    def table_name(self):
-        return get_table_name(self.domain, self.config.table_id)
-
-    @property
     def filters(self):
         return filter(None, [fv.to_sql_filter() for fv in self._filter_values.values()])
-
-    def set_filter_values(self, filter_values):
-        for filter_slug, value in filter_values.items():
-            self._filter_values[filter_slug] = self._filters[filter_slug].create_filter_value(value)
-
-    def defer_filters(self, filter_slugs):
-        self._deferred_filters.update({
-            filter_slug: self._filters[filter_slug] for filter_slug in filter_slugs})
-
-    def set_order_by(self, columns):
-        self._order_by = columns
 
     @property
     def filter_values(self):
@@ -154,14 +71,6 @@ class ConfigurableReportSqlDataSource(SqlData):
             for deferred_filter in self._deferred_filters.values()
             if deferred_filter.field not in fields]
 
-    @property
-    def column_configs(self):
-        return [col.get_column_config(self.config, self.lang) for col in self.top_level_db_columns]
-
-    @property
-    def column_warnings(self):
-        return [w for conf in self.column_configs for w in conf.warnings]
-
     @memoized
     @method_decorator(catch_and_raise_exceptions)
     def get_data(self, start=None, limit=None):
@@ -175,10 +84,6 @@ class ConfigurableReportSqlDataSource(SqlData):
                 row[computed_column.column_id] = computed_column.wrapped_expression(row)
 
         return ret
-
-    @property
-    def has_total_row(self):
-        return any(column_config.calculate_total for column_config in self.top_level_db_columns)
 
     @method_decorator(catch_and_raise_exceptions)
     def get_total_records(self):

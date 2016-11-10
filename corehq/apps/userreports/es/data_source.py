@@ -1,5 +1,3 @@
-from collections import OrderedDict
-
 from django.utils.decorators import method_decorator
 
 from dimagi.utils.decorators.memoized import memoized
@@ -7,21 +5,14 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.es.aggregations import SumAggregation, TermsAggregation
 from corehq.apps.es.es_query import HQESQuery
 
+from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.userreports.columns import get_expanded_column_config
 from corehq.apps.userreports.decorators import catch_and_raise_exceptions
-from corehq.apps.userreports.models import DataSourceConfiguration, get_datasource_config
-from corehq.apps.userreports.sql.data_source import ConfigurableReportSqlDataSource
+from corehq.apps.userreports.mixins import ConfigurableReportDataSourceMixin
 from corehq.apps.userreports.reports.sorting import ASCENDING, DESCENDING
-from corehq.apps.userreports.util import get_table_name
 
 
-class ConfigurableReportEsDataSource(ConfigurableReportSqlDataSource):
-    @property
-    def config(self):
-        if self._config is None:
-            self._config, _ = get_datasource_config(self._config_id, self.domain)
-        return self._config
-
+class ConfigurableReportEsDataSource(ConfigurableReportDataSourceMixin, ReportDataSource):
     @property
     def table_name(self):
         # TODO make this the same function as the adapter
@@ -48,14 +39,6 @@ class ConfigurableReportEsDataSource(ConfigurableReportSqlDataSource):
     def columns(self):
         db_columns = [c for conf in self.column_configs for c in conf.columns]
         return db_columns
-
-    @property
-    def column_configs(self):
-        return [col.get_column_config(self.config, self.lang) for col in self.top_level_columns]
-
-    @property
-    def column_warnings(self):
-        return [w for conf in self.column_configs for w in conf.warnings]
 
     @property
     @memoized
@@ -200,19 +183,3 @@ class ConfigurableReportEsDataSource(ConfigurableReportSqlDataSource):
     def get_total_row(self):
         # todo calculate total row
         return []
-
-    # sql only methods that should never be called
-    @property
-    def engine_id(self):
-        raise NotImplementedError
-
-    @property
-    def keys(self):
-        raise NotImplementedError
-
-    @property
-    def wrapped_filters(self):
-        raise NotImplementedError
-
-    def query_context(self, start=None, limit=None):
-        raise NotImplementedError
