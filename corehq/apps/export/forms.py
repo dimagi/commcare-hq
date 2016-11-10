@@ -554,7 +554,8 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloa
         ])
 
         form_filters = flatten_non_iterable_list(form_filters)
-        form_filters = [OR(*form_filters)]
+        if form_filters:
+            form_filters = [OR(*form_filters)]
         form_filters.append(self._get_datespan_filter())
         return form_filters
 
