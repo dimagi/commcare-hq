@@ -214,7 +214,6 @@ class LocationTypesView(BaseLocationView):
             'expand_to': loc_type.expand_to.pk if loc_type.expand_to else None,
             'include_without_expanding': (loc_type.include_without_expanding.pk
                                           if loc_type.include_without_expanding else None),
-            'include_root_without_expanding': loc_type.include_root_without_expanding,
         } for loc_type in LocationType.objects.by_domain(self.domain)]
 
     @method_decorator(lock_locations)
@@ -304,7 +303,6 @@ class LocationTypesView(BaseLocationView):
                                                   if include_without_expanding_id else None)
         except KeyError:        # include_without_expanding location type was deleted
             loc_type.include_without_expanding = None
-        loc_type.include_root_without_expanding = loc_type_data['include_root_without_expanding']
         loc_type.save()
 
     def remove_old_location_types(self, pks):

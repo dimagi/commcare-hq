@@ -209,7 +209,6 @@ def _get_include_without_expanding_locations(domain, location_type):
     """returns all locations set for inclusion along with their ancestors
     """
     include_without_expanding = location_type.include_without_expanding
-    include_root_without_expanding = location_type.include_root_without_expanding
     if include_without_expanding is not None:
         # add in other "forced" locations the user should have, along with their ancestors
         forced_locations = set(SQLLocation.active_objects.filter(
@@ -223,10 +222,6 @@ def _get_include_without_expanding_locations(domain, location_type):
         }
 
         return forced_locations | forced_ancestors
-
-    if include_root_without_expanding:
-        # return only the root locations
-        return set(SQLLocation.root_locations(domain=domain))
 
     return set()
 

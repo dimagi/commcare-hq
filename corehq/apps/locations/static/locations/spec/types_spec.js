@@ -83,7 +83,6 @@ describe('Location Types', function() {
                     extract_name
                 ),
                     desired_loc_types_returned = _.map([this.state_model, this.district_model], extract_name);
-                desired_loc_types_returned.push('root');
                 assert.sameMembers(desired_loc_types_returned, returned_loc_types);
             });
 
@@ -94,7 +93,6 @@ describe('Location Types', function() {
                     extract_name
                 ),
                     desired_loc_types_returned = _.map([this.state_model], extract_name);
-                desired_loc_types_returned.push('root');
                 assert.sameMembers(desired_loc_types_returned, returned_loc_types);
             });
 

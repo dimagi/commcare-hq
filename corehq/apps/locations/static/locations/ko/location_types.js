@@ -190,7 +190,7 @@ hqDefine('locations/ko/location_types.js', function(){
         self.code = ko.observable(loc_type.code || '');
         self.expand_from = ko.observable(loc_type.expand_from_root ? ROOT_LOCATION_ID : loc_type.expand_from);
         self.expand_to = ko.observable(loc_type.expand_to);
-        self.include_without_expanding = ko.observable(loc_type.include_root_without_expanding ? ROOT_LOCATION_ID : loc_type.include_without_expanding);
+        self.include_without_expanding = ko.observable(loc_type.include_without_expanding);
 
         self.view = view_model;
 
@@ -299,13 +299,9 @@ hqDefine('locations/ko/location_types.js', function(){
             var options;
             if (self.expand_from() !== ROOT_LOCATION_ID){
                 if (typeof(self.expand_from()) === 'undefined' || self.expand_from() === null){
-                    options = self.expand_from_options();
+                    options = self.parents().reverse();
                 } else {
                     options = self.view.loc_types_by_id()[self.expand_from()].parents();
-                    options.push(new LocationTypeModel(
-                        {name: "root", pk: ROOT_LOCATION_ID},
-                        commtrack_enabled, this
-                    ));
                     options = options.reverse();
                 }
                 return options;
@@ -326,8 +322,7 @@ hqDefine('locations/ko/location_types.js', function(){
                 expand_from: (self.expand_from() !== -1 ? self.expand_from() : null) || null,
                 expand_from_root: self.expand_from() === ROOT_LOCATION_ID,
                 expand_to: self.expand_to() || null,
-                include_without_expanding: (self.include_without_expanding() !== ROOT_LOCATION_ID ? self.include_without_expanding(): null) || null,
-                include_root_without_expanding: self.include_without_expanding() === ROOT_LOCATION_ID,
+                include_without_expanding: self.include_without_expanding() || null,
             };
         };
     }

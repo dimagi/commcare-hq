@@ -165,21 +165,6 @@ class TestLocationTypeExpansions(SimpleTestCase):
         self.assertFalse(self.city.expand_from_root)
         self.assertEqual(self.city.expand_from, self.state)
 
-    def test_setting_include_without_expanding(self):
-        self.assertFalse(self.city.include_root_without_expanding)
-
-        self.city.include_without_expanding = self.state
-        self.assertFalse(self.city.include_root_without_expanding)
-        self.assertEqual(self.city.include_without_expanding, self.state)
-
-        self.city.include_root_without_expanding = True
-        self.assertTrue(self.city.include_root_without_expanding)
-        self.assertIsNone(self.city.include_without_expanding)
-
-        self.city.include_without_expanding = self.state
-        self.assertFalse(self.city.include_root_without_expanding)
-        self.assertEqual(self.city.include_without_expanding, self.state)
-
 
 def make_loc_type(name, parent_type=None, domain='locations-test',
                   shares_cases=False, view_descendants=False):

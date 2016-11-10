@@ -114,17 +114,13 @@ class LocationType(models.Model):
     )  # levels below this location type that we start expanding from
     _expand_from_root = models.BooleanField(default=False, db_column='expand_from_root')
     expand_to = models.ForeignKey('self', null=True, related_name='+', on_delete=models.CASCADE)  # levels above this type that are synced
-    _include_without_expanding = models.ForeignKey(
+    include_without_expanding = models.ForeignKey(
         'self',
         null=True,
         related_name='+',
         db_column='include_without_expanding',
-        on_delete=models.CASCADE
+        on_delete=models.SET_NULL,
     )  # include all leves of this type and their ancestors
-    _include_root_without_expanding = models.BooleanField(
-        default=False,
-        db_column='include_root_without_expanding'
-    )
     last_modified = models.DateTimeField(auto_now=True)
 
     emergency_level = StockLevelField(default=0.5)
@@ -163,26 +159,6 @@ class LocationType(models.Model):
         if self._expand_from_root is False and value is True:
             self._expand_from = None
         self._expand_from_root = value
-
-    @property
-    def include_without_expanding(self):
-        return self._include_without_expanding
-
-    @include_without_expanding.setter
-    def include_without_expanding(self, value):
-        if self.include_root_without_expanding is True:
-            self._include_root_without_expanding = False
-        self._include_without_expanding = value
-
-    @property
-    def include_root_without_expanding(self):
-        return self._include_root_without_expanding
-
-    @include_root_without_expanding.setter
-    def include_root_without_expanding(self, value):
-        if self._include_root_without_expanding is False and value is True:
-            self._include_without_expanding = None
-        self._include_root_without_expanding = value
 
     @property
     @memoized
