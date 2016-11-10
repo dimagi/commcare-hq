@@ -251,6 +251,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
     usercase_enabled = BooleanProperty(default=False)
     hipaa_compliant = BooleanProperty(default=False)
     use_sql_backend = BooleanProperty(default=False)
+    first_domain_for_user = BooleanProperty(default=False)
 
     case_display = SchemaProperty(CaseDisplaySettings)
 
