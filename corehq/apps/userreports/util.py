@@ -9,7 +9,9 @@ from corehq import privileges, toggles
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.userreports.const import (
     REPORT_BUILDER_EVENTS_KEY,
-    UCR_ES_BACKEND
+    UCR_ES_BACKEND,
+    UCR_LABORATORY_BACKEND,
+    UCR_SQL_BACKEND,
 )
 from django_prbac.utils import has_privilege
 
@@ -158,7 +160,10 @@ def get_ucr_es_indices():
     return [get_table_name(s.domain, s.table_id) for s in sources]
 
 
-def get_backend_id(config):
+def get_backend_id(config, can_handle_laboratory=False):
+    if not can_handle_laboratory and config.backend_id == UCR_LABORATORY_BACKEND:
+        return UCR_SQL_BACKEND
+
     if settings.OVERRIDE_UCR_BACKEND:
         return settings.OVERRIDE_UCR_BACKEND
     return config.backend_id

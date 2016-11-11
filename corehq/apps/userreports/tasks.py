@@ -97,3 +97,8 @@ def _iteratively_build_table(config, last_id=None, resume_helper=None):
             if config.meta.build.initiated == current_config.meta.build.initiated:
                 current_config.meta.build.finished = True
                 current_config.save()
+
+
+@task(queue='ucr_queue')
+def do_science_in_the_laboratory(report_id):
+    pass
