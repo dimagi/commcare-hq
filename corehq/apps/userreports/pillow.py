@@ -61,7 +61,7 @@ class ConfigurableReportTableManagerMixin(object):
         self._rebuild_sql_tables(
             filter(lambda a: get_backend_id(a.config) in sql_supported_backends, self.table_adapters))
         self._rebuild_es_tables(
-                filter(lambda a: get_backend_id(a.config) in es_supported_backends, self.table_adapters))
+            filter(lambda a: get_backend_id(a.config) in es_supported_backends, self.table_adapters))
 
     def _rebuild_sql_tables(self, adapters):
         # todo move this code to sql adapter rebuild_if_necessary
