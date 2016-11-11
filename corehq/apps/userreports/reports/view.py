@@ -47,7 +47,7 @@ from corehq.apps.userreports.reports.util import (
     get_expanded_columns,
     has_location_filter,
 )
-from corehq.apps.userreports.tasks import do_science_in_the_laboratory
+from corehq.apps.userreports.tasks import compare_ucr_dbs
 from corehq.apps.userreports.util import (
     default_language,
     has_report_builder_trial,
@@ -400,7 +400,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
         if total_row is not None:
             json_response["total_row"] = total_row
         if data_source.data_source.config.backend_id == UCR_LABORATORY_BACKEND:
-            do_science_in_the_laboratory.delay(
+            compare_ucr_dbs.delay(
                 self.domain, self.report_config_id, self.filter_values,
                 sort_column, sort_order, params
             )

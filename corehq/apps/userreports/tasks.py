@@ -106,7 +106,7 @@ def _iteratively_build_table(config, last_id=None, resume_helper=None):
 
 
 @task(queue='ucr-queue')
-def do_science_in_the_laboratory(domain, report_config_id, filter_values, sort_column, sort_order, params):
+def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column, sort_order, params):
     from corehq.apps.userreports.laboratory.experiment import UCRExperiment
 
     def _run_report(backend_to_use):
