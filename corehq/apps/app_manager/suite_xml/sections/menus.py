@@ -14,7 +14,7 @@ from dimagi.utils.decorators.memoized import memoized
 class MenuContributor(SuiteContributorByModule):
 
     def get_module_contributions(self, module):
-        def get_commands():
+        def get_commands(excluded_form_ids):
             @memoized
             def module_uses_case():
                 return module.all_forms_require_a_case()
@@ -24,6 +24,9 @@ class MenuContributor(SuiteContributorByModule):
                 return is_usercase_in_use(self.app.domain)
 
             for form in module.get_suite_forms():
+                if form.unique_id in excluded_form_ids:
+                    continue
+
                 command = Command(id=id_strings.form_command(form, module))
 
                 if form.requires_case():
@@ -123,7 +126,12 @@ class MenuContributor(SuiteContributorByModule):
                         })
                         menu = Menu(**menu_kwargs)
 
-                    menu.commands.extend(get_commands())
+                    excluded_form_ids = []
+                    if root_module and root_module.doc_type == 'ShadowModule':
+                        excluded_form_ids = root_module.excluded_form_ids
+                    if id_module and id_module.doc_type == 'ShadowModule':
+                        excluded_form_ids = id_module.excluded_form_ids
+                    menu.commands.extend(get_commands(excluded_form_ids))
 
                     menus.append(menu)
 
