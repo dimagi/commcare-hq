@@ -12,7 +12,8 @@ class ShadowModuleFormSelectionSuiteTest(SimpleTestCase, TestXmlMixin):
         self.form1 = self.factory.new_form(self.basic_module)
         self.form1.xmlns = 'http://openrosa.org/formdesigner/secondform'
         self.shadow_module = self.factory.new_shadow_module('shadow_module', self.basic_module, with_form=False)
-        self.child_module, self.form2 = self.factory.new_basic_module('child_module', 'parrot', parent_module=self.basic_module)
+        self.child_module, self.form2 = self.factory.new_basic_module('child_module', 'parrot',
+                                                                      parent_module=self.basic_module)
 
     def test_all_forms_selected(self):
         expected = """
@@ -66,7 +67,6 @@ class ShadowModuleFormSelectionSuiteTest(SimpleTestCase, TestXmlMixin):
             self.factory.app.create_suite(),
             "./menu[@id='m1']"
         )
-
 
     def test_no_child_forms_selected(self):
         self.shadow_module.excluded_form_ids = [self.form2.unique_id]
