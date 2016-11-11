@@ -924,6 +924,13 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                 });
                 this.persistCaseContext = ko.observable(spec[this.columnKey].persist_case_context || false);
                 this.persistentCaseContextXML = ko.observable(spec[this.columnKey].persistent_case_context_xml|| 'case_name');
+                this.customVariablesViewModel = {
+                    enabled: COMMCAREHQ.toggleEnabled('CASE_LIST_CUSTOM_VARIABLES'),
+                    xml: ko.observable(spec[this.columnKey].custom_variables || ""),
+                };
+                this.customVariablesViewModel.xml.subscribe(function(){
+                    that.fireChange();
+                });
                 this.persistTileOnForms = ko.observable(spec[this.columnKey].persist_tile_on_forms || false);
                 this.enableTilePullDown = ko.observable(spec[this.columnKey].pull_down_tile || false);
                 this.allowsEmptyColumns = options.allowsEmptyColumns;
@@ -1156,6 +1163,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                     if (this.containsCustomXMLConfiguration){
                         data.custom_xml = this.config.customXMLViewModel.xml();
                     }
+                    data[this.columnKey + '_custom_variables'] = this.customVariablesViewModel.xml();
                     if (this.containsSearchConfiguration) {
                         data.search_properties = JSON.stringify(this.config.search.serialize());
                     }
