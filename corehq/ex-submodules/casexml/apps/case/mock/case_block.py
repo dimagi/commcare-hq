@@ -22,7 +22,7 @@ class CaseBlock(object):
     def __init__(self, case_id, date_modified=None, user_id=undefined,
                  owner_id=undefined, external_id=undefined, case_type=undefined,
                  case_name=undefined, create=False, date_opened=undefined, update=None,
-                 close=False, index=None):
+                 close=False, index=None, strict=True):
         # todo: can we use None instead of CaseBlock.undefined, throughout?
         owner_id = CaseBlock.undefined if owner_id is None else owner_id
         self.update = copy.copy(update) if update else {}
@@ -39,7 +39,8 @@ class CaseBlock(object):
         self.user_id = user_id
         self.external_id = external_id
         self.create = create
-        self._check_for_duplicate_properties()
+        if strict:
+            self._check_for_duplicate_properties()
         self.index = {key: self._make_index_attrs(value)
                       for key, value in index.items()} if index else {}
 
