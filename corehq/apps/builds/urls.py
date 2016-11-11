@@ -1,10 +1,10 @@
-from django.conf.urls import patterns, url
-from .views import EditMenuView
+from django.conf.urls import url
+from .views import EditMenuView, import_build, post, get, get_all
 
-urlpatterns = patterns('corehq.apps.builds.views',
+urlpatterns = [
     url(r'^edit_menu/$', EditMenuView.as_view(), name=EditMenuView.urlname),
-    (r'^import/$', 'import_build'),
-    (r'^post/$', 'post'),
-    (r'^(?P<version>.+)/(?P<build_number>\d+)/(?P<path>.+)$', "get"),
-    (r'^$', 'get_all'),
-)
+    url(r'^import/$', import_build, name='import_build'),
+    url(r'^post/$', post),
+    url(r'^(?P<version>.+)/(?P<build_number>\d+)/(?P<path>.+)$', get),
+    url(r'^$', get_all),
+]
