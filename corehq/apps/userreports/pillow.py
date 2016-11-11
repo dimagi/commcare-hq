@@ -50,7 +50,7 @@ class ConfigurableReportTableManagerMixin(object):
         if configs is None:
             configs = self.get_all_configs()
 
-        self.table_adapters = [get_indicator_adapter(config) for config in configs]
+        self.table_adapters = [get_indicator_adapter(config, can_handle_laboratory=True) for config in configs]
         self.rebuild_tables_if_necessary()
         self.bootstrapped = True
         self.last_bootstrapped = datetime.utcnow()
@@ -64,9 +64,11 @@ class ConfigurableReportTableManagerMixin(object):
                 filter(lambda a: get_backend_id(a.config) in es_supported_backends, self.table_adapters))
 
     def _rebuild_sql_tables(self, adapters):
+        # todo move this code to sql adapter rebuild_if_necessary
         tables_by_engine = defaultdict(dict)
         for adapter in adapters:
-            tables_by_engine[adapter.engine_id][adapter.get_table().name] = adapter
+            sql_adapter = get_indicator_adapter(adapter.config)
+            tables_by_engine[sql_adapter.engine_id][sql_adapter.get_table().name] = sql_adapter
 
         _assert = soft_assert(to='@'.join(['czue', 'dimagi.com']))
         _notify_cory = lambda msg, obj: _assert(False, msg, obj)

@@ -111,12 +111,17 @@ def number_of_report_builder_reports(domain):
     return len(builder_reports)
 
 
-def get_indicator_adapter(config, raise_errors=False):
+def get_indicator_adapter(config, raise_errors=False, can_handle_laboratory=False):
     from corehq.apps.userreports.sql.adapter import IndicatorSqlAdapter, ErrorRaisingIndicatorSqlAdapter
     from corehq.apps.userreports.es.adapter import IndicatorESAdapter
+    from corehq.apps.userreports.laboratory.adapter import IndicatorLaboratoryAdapter
 
-    if get_backend_id(config) == UCR_ES_BACKEND:
+    backend_id = get_backend_id(config, can_handle_laboratory)
+
+    if backend_id == UCR_ES_BACKEND:
         return IndicatorESAdapter(config)
+    elif backend_id == UCR_LABORATORY_BACKEND:
+        return IndicatorLaboratoryAdapter(config)
     else:
         if raise_errors:
             return ErrorRaisingIndicatorSqlAdapter(config)
