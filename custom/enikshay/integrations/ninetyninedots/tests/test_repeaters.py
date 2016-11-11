@@ -136,6 +136,26 @@ class TestUpdatePatientRepeater(ENikshayRepeaterTestBase):
         self._update_person({'phone_number': '999999999', })
         self.assertEqual(1, len(self.repeat_records().all()))
 
+    @run_with_all_backends
+    def test_trigger_multiple_cases(self):
+        """Submitting a form with noop case blocks was throwing an exception
+        """
+        self._create_99dots_registered_case()
+
+        empty_case = CaseStructure(
+            case_id=self.episode_id,
+        )
+        person_case = CaseStructure(
+            case_id=self.person_id,
+            attrs={
+                'case_type': 'person',
+                'update': {'phone_number': '9999999999'}
+            }
+        )
+
+        self.factory.create_or_update_cases([empty_case, person_case])
+        self.assertEqual(1, len(self.repeat_records().all()))
+
 
 class TestRegisterPatientPayloadGenerator(ENikshayCaseStructureMixin, TestCase):
 
