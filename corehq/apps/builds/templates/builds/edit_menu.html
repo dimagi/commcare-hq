@@ -257,7 +257,7 @@
             <div id="build-note">
                 <strong>{% trans "Note: Adding version without artifacts would make the corresponding app builds incompatible with Java phones" %}</strong>
             </div>
-            <form class="form-horizontal" action="{% url 'corehq.apps.builds.views.import_build' %}" method="post">
+            <form class="form-horizontal" action="{% url 'import_build' %}" method="post">
                 {% csrf_token %}
                 <div class="form-group">
                     <label class="control-label col-sm-3" for="import_build_name">
