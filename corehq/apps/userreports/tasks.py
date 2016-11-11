@@ -4,11 +4,17 @@ from celery.task import task
 from couchdbkit import ResourceConflict
 from django.utils.translation import ugettext as _
 from corehq import toggles
+from corehq.apps.userreports.const import UCR_ES_BACKEND, UCR_SQL_BACKEND
 from corehq.apps.userreports.document_stores import get_document_store
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
-from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration, id_is_static
+from corehq.apps.userreports.models import (
+    DataSourceConfiguration, StaticDataSourceConfiguration, id_is_static, ReportConfiguration
+)
+from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.util.context_managers import notify_someone
+from corehq.util.couch import get_document_or_not_found
+from dimagi.utils.couch.pagination import DatatablesParams
 from pillowtop.dao.couch import ID_CHUNK_SIZE
 
 
@@ -99,6 +105,40 @@ def _iteratively_build_table(config, last_id=None, resume_helper=None):
                 current_config.save()
 
 
-@task(queue='ucr_queue')
-def do_science_in_the_laboratory(report_id):
-    pass
+@task(queue='ucr-queue')
+def do_science_in_the_laboratory(domain, report_config_id, filter_values, sort_column, sort_order, params):
+    import laboratory
+
+    def _run_report(backend_to_use):
+        spec = get_document_or_not_found(ReportConfiguration, domain, report_config_id)
+        data_source = ReportFactory.from_spec(spec, include_prefilters=True)
+        data_source.override_backend(backend_to_use)
+        data_source.set_filter_values(filter_values)
+        if sort_column:
+            data_source.set_order_by(
+                [(data_source.top_level_columns[int(sort_column)].column_id, sort_order.upper())]
+            )
+
+        datatables_params = DatatablesParams.from_request_dict(params)
+        page = list(data_source.get_data(start=datatables_params.start, limit=datatables_params.count))
+        total_records = data_source.get_total_records()
+        json_response = {
+            'aaData': page,
+            "iTotalRecords": total_records,
+            "iTotalDisplayRecords": total_records,
+        }
+        # these are to be checked after ES supports total rows
+        # total_row = data_source.get_total_row() if data_source.has_total_row else None
+        # if total_row is not None:
+        #     json_response["total_row"] = total_row
+        return json_response
+
+    experiment = laboratory.Experiment()
+    with experiment.control() as c:
+        c.record(_run_report(UCR_SQL_BACKEND))
+
+    with experiment.candidate() as c:
+        c.record(_run_report(UCR_ES_BACKEND))
+
+    objects = experiment.run()
+    return objects
