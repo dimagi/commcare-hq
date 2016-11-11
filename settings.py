@@ -115,6 +115,9 @@ ANALYTICS_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.analytics.log")
 DATADOG_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.datadog.log")
 FORMPLAYER_TIMING_FILE = "%s/%s" % (FILEPATH, "formplayer.timing.log")
 FORMPLAYER_DIFF_FILE = "%s/%s" % (FILEPATH, "formplayer.diff.log")
+UCR_TIMING_FILE = "%s/%s" % (FILEPATH, "ucr.timing.log")
+UCR_DIFF_FILE = "%s/%s" % (FILEPATH, "ucr.diff.log")
+UCR_EXCEPTION_FILE = "%s/%s" % (FILEPATH, "ucr.exception.log")
 EXPORT_MIGRATION_LOG_FILE = "%s/%s" % (FILEPATH, "export_migration.log")
 
 LOCAL_LOGGING_HANDLERS = {}
@@ -939,7 +942,16 @@ LOGGING = {
         },
         'formplayer_diff': {
             'format': '%(asctime)s, %(action)s, %(request)s, %(control)s, %(candidate)s'
-        }
+        },
+        'ucr_timing': {
+            'format': '%(asctime)s\t%(domain)s\t%(report_config_id)s\t%(filter_values)s\t%(control_duration)s\t%(candidate_duration)s'
+        },
+        'ucr_diff': {
+            'format': '%(asctime)s\t%(domain)s\t%(report_config_id)s\t%(filter_values)s\t%(control)s\t%(diff)s'
+        },
+        'ucr_exception': {
+            'format': '%(asctime)s\t%(domain)s\t%(report_config_id)s\t%(filter_values)s\t%(candidate)s'
+        },
     },
     'filters': {
         'hqcontext': {
@@ -1011,6 +1023,30 @@ LOGGING = {
             'class': 'logging.handlers.RotatingFileHandler',
             'formatter': 'formplayer_timing',
             'filename': FORMPLAYER_TIMING_FILE,
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 20  # Backup 200 MB of logs
+        },
+        'ucr_diff': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'ucr_diff',
+            'filename': UCR_DIFF_FILE,
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 20  # Backup 200 MB of logs
+        },
+        'ucr_exception': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'ucr_exception',
+            'filename': UCR_EXCEPTION_FILE,
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 20  # Backup 200 MB of logs
+        },
+        'ucr_timing': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'ucr_timing',
+            'filename': UCR_TIMING_FILE,
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 20  # Backup 200 MB of logs
         },
@@ -1101,6 +1137,21 @@ LOGGING = {
         },
         'formplayer_diff': {
             'handlers': ['formplayer_diff'],
+            'level': 'INFO',
+            'propogate': True,
+        },
+        'ucr_timing': {
+            'handlers': ['ucr_timing'],
+            'level': 'INFO',
+            'propogate': True,
+        },
+        'ucr_diff': {
+            'handlers': ['ucr_diff'],
+            'level': 'INFO',
+            'propogate': True,
+        },
+        'ucr_exception': {
+            'handlers': ['ucr_exception'],
             'level': 'INFO',
             'propogate': True,
         },

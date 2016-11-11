@@ -107,12 +107,11 @@ def _iteratively_build_table(config, last_id=None, resume_helper=None):
 
 @task(queue='ucr-queue')
 def do_science_in_the_laboratory(domain, report_config_id, filter_values, sort_column, sort_order, params):
-    import laboratory
+    from corehq.apps.userreports.laboratory.experiment import UCRExperiment
 
     def _run_report(backend_to_use):
-        spec = get_document_or_not_found(ReportConfiguration, domain, report_config_id)
         data_source = ReportFactory.from_spec(spec, include_prefilters=True)
-        data_source.override_backend(backend_to_use)
+        data_source.override_backend_id(backend_to_use)
         data_source.set_filter_values(filter_values)
         if sort_column:
             data_source.set_order_by(
@@ -133,7 +132,13 @@ def do_science_in_the_laboratory(domain, report_config_id, filter_values, sort_c
         #     json_response["total_row"] = total_row
         return json_response
 
-    experiment = laboratory.Experiment()
+    spec = get_document_or_not_found(ReportConfiguration, domain, report_config_id)
+    experiment_context = {
+        "domain": domain,
+        "report_config_id": report_config_id,
+        "filter_values": filter_values,
+    }
+    experiment = UCRExperiment(name="UCR DB Experiment", context=experiment_context)
     with experiment.control() as c:
         c.record(_run_report(UCR_SQL_BACKEND))
 
