@@ -1,9 +1,9 @@
 import json
 from datetime import datetime
 from django.test import TestCase
-from django.test.utils import override_settings
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.tests.utils import run_with_all_backends
 from casexml.apps.case.mock import CaseStructure
 from corehq.apps.repeaters.models import RepeatRecord
 from corehq.apps.repeaters.dbaccessors import delete_all_repeat_records, delete_all_repeaters
@@ -73,7 +73,7 @@ class ENikshayRepeaterTestBase(ENikshayCaseStructureMixin, TestCase):
 
 class TestRegisterPatientRepeater(ENikshayRepeaterTestBase):
 
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    @run_with_all_backends
     def setUp(self):
         super(TestRegisterPatientRepeater, self).setUp()
 
@@ -84,7 +84,7 @@ class TestRegisterPatientRepeater(ENikshayRepeaterTestBase):
         self.repeater.white_listed_case_types = ['episode']
         self.repeater.save()
 
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    @run_with_all_backends
     def test_trigger(self):
         # 99dots not enabled
         self.create_case(self.episode)
@@ -101,7 +101,6 @@ class TestRegisterPatientRepeater(ENikshayRepeaterTestBase):
 
 class TestUpdatePatientRepeater(ENikshayRepeaterTestBase):
 
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def setUp(self):
         super(TestUpdatePatientRepeater, self).setUp()
         self.repeater = NinetyNineDotsUpdatePatientRepeater(
@@ -123,7 +122,7 @@ class TestUpdatePatientRepeater(ENikshayRepeaterTestBase):
             )
         )
 
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    @run_with_all_backends
     def test_trigger(self):
         self._update_person({'phone_number': '999999999', })
         self.assertEqual(0, len(self.repeat_records().all()))
@@ -140,17 +139,15 @@ class TestUpdatePatientRepeater(ENikshayRepeaterTestBase):
 
 class TestRegisterPatientPayloadGenerator(ENikshayCaseStructureMixin, TestCase):
 
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def setUp(self):
         super(TestRegisterPatientPayloadGenerator, self).setUp()
         self.cases = self.create_case_structure()
 
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def tearDown(self):
         super(TestRegisterPatientPayloadGenerator, self).tearDown()
         delete_all_cases()
 
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    @run_with_all_backends
     def test_get_payload(self):
         payload_generator = RegisterPatientPayloadGenerator(None)
         person = self.cases[self.person_id].dynamic_case_properties()
@@ -166,7 +163,7 @@ class TestRegisterPatientPayloadGenerator(ENikshayCaseStructureMixin, TestCase):
         actual_payload = payload_generator.get_payload(None, self.cases[self.episode_id])
         self.assertEqual(expected_payload, actual_payload)
 
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    @run_with_all_backends
     def test_handle_success(self):
         payload_generator = RegisterPatientPayloadGenerator(None)
         payload_generator.handle_success(MockResponse(201, {"success": "hooray"}), self.cases[self.episode_id])
@@ -180,7 +177,7 @@ class TestRegisterPatientPayloadGenerator(ENikshayCaseStructureMixin, TestCase):
             ''
         )
 
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    @run_with_all_backends
     def test_handle_failure(self):
         payload_generator = RegisterPatientPayloadGenerator(None)
         error = {
