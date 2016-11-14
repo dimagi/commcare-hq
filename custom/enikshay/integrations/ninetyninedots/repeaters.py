@@ -4,6 +4,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from corehq.form_processor.models import CommCareCaseSQL
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.xml.parser import CaseUpdateAction
 
 from corehq.apps.repeaters.models import CaseRepeater
 from corehq.apps.repeaters.signals import create_repeat_records
@@ -80,8 +81,9 @@ def phone_number_changed(case):
     update_actions = [update.get_update_action() for update in get_case_updates(last_case_action.form)]
     phone_number_changed = any(
         action for action in update_actions
-        if PRIMARY_PHONE_NUMBER in action.dynamic_properties or
-        BACKUP_PHONE_NUMBER in action.dynamic_properties
+        if isinstance(action, CaseUpdateAction)
+        and (PRIMARY_PHONE_NUMBER in action.dynamic_properties or
+             BACKUP_PHONE_NUMBER in action.dynamic_properties)
     )
     return phone_number_changed
 
