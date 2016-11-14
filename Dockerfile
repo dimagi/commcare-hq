@@ -34,7 +34,6 @@ RUN git config --global url."https://".insteadOf git:// \
  && pip install \
     -r /vendor/requirements.txt \
     -r /vendor/dev-requirements.txt \
-    ipython \
     --user --upgrade \
  && rm -rf /root/.cache/pip
 
