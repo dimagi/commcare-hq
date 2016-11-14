@@ -1,0 +1,204 @@
+{
+    "domains": [
+        "enikshay-test",
+        "enikshay-test-test"
+    ],
+    "data_source_table": "episode",
+    "report_id": "patient_overview_mobile",
+    "config": {
+        "description": "",
+        "title": "Patient Overview - Mobile",
+        "sort_expression": [],
+        "visible": false,
+        "configured_charts": [],
+        "aggregation_columns": [],
+        "filters": [
+            {
+                "compare_as_string": false,
+                "datatype": "datetime",
+                "required": false,
+                "display": "Case Open Date",
+                "field": "opened_on",
+                "type": "quarter",
+                "slug": "patient_registration_date"
+            },
+            {
+                "compare_as_string": false,
+                "datatype": "string",
+                "type": "dynamic_choice_list",
+                "slug": "village",
+                "field": "person_owner_id",
+                "choice_provider": {
+                    "include_descendants": true,
+                    "type": "location"
+                },
+                "display": "Location"
+            },
+            {
+                "type": "pre",
+                "field": "episode_type_patient",
+                "slug": "episode_type_patient",
+                "datatype": "integer",
+                "pre_value": 1
+            }
+        ],
+        "columns": [
+            {
+                "display": "# of total occurence cases where episode_type = patient",
+                "type": "field",
+                "field": "doc_id",
+                "aggregation": "count",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "# of episode cases where history of att = no, and episode_type = patient",
+                "type": "field",
+                "field": "cat1",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "# of episode cases where history of att = yes, and episode_type = patient",
+                "type": "field",
+                "field": "cat2",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "# of active patients who sex = male",
+                "type": "field",
+                "field": "male",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "# of active patients who sex = female",
+                "type": "field",
+                "field": "female",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "# of active patients who sex = transgender",
+                "type": "field",
+                "field": "transgender",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "# of active patients who age =< 14",
+                "type": "field",
+                "field": "under_15",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "# of active patients who age => 15",
+                "type": "field",
+                "field": "over_15",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "# of active patients where HIV status = reactive",
+                "type": "field",
+                "field": "hiv_positive",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "# of active patients where diabetes status = diabetic",
+                "type": "field",
+                "field": "diabetic",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "# of patients where type of treatment adherence = DOTS, and dots_provider = commcareuser",
+                "type": "field",
+                "field": "dots_commcareuser",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "# of patients where type of treatment adherence = DOTS, and dots_provider = commcareuser, and history of att = no",
+                "type": "field",
+                "field": "dots_commcareuser_cat1",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "# of patients where type of treatment adherence = DOTS, and dots_provider = commcareuser, and history of att = yes",
+                "type": "field",
+                "field": "dots_commcareuser_cat2",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            }
+        ]
+    }
+}
