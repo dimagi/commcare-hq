@@ -51,6 +51,7 @@ branches:
   - bmb/currentind-string # Biyeun 11/12
 #  - np/110/TEMPLATES
   - location_export # Manish 11/2
+  - mk-241177-remove_location_bugfix # Manish 11/14
 #  - jquery-3-retry # Jenny 11/11
 submodules:
   submodules/touchforms-src:
