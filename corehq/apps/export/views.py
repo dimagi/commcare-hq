@@ -1488,6 +1488,7 @@ class BaseModifyNewCustomView(BaseNewExportView):
         return super(BaseModifyNewCustomView, self).dispatch(request, *args, **kwargs)
 
 
+@location_safe
 class CreateNewCustomFormExportView(BaseModifyNewCustomView):
     urlname = 'new_custom_export_form'
     page_title = ugettext_lazy("Create Form Export")
@@ -1507,6 +1508,7 @@ class CreateNewCustomFormExportView(BaseModifyNewCustomView):
         return super(CreateNewCustomFormExportView, self).get(request, *args, **kwargs)
 
 
+@location_safe
 class CreateNewCustomCaseExportView(BaseModifyNewCustomView):
     urlname = 'new_custom_export_case'
     page_title = ugettext_lazy("Create Case Export")
