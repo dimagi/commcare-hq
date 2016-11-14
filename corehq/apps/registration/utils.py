@@ -77,7 +77,8 @@ def request_new_domain(request, form, is_new_user=True):
             date_created=datetime.utcnow(),
             creating_user=current_user.username,
             secure_submissions=True,
-            use_sql_backend=True
+            use_sql_backend=True,
+            first_domain_for_user=is_new_user
         )
 
         if form.cleaned_data.get('domain_timezone'):

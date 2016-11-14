@@ -374,6 +374,74 @@
                 "column_id": "cat2"
             },
             {
+                "display_name": "person/tu",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "tu_choice"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "datatype": null,
+                        "type": "named",
+                        "name": "person_id"
+                    }
+                },
+                "column_id": "tu"
+            },
+            {
+                "display_name": "person/phi",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "phi"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "datatype": null,
+                        "type": "named",
+                        "name": "person_id"
+                    }
+                },
+                "column_id": "phi"
+            },
+            {
+                "type": "expression",
+                "datatype": "string",
+                "column_id": "treatment_status",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "complete_treatment_form"
+                    },
+                    "value_expression": {
+                        "type": "property_path",
+                        "property_path": [
+                            "form",
+                            "ql_notification_details",
+                            "treatment_status"
+                        ]
+                    }
+                }
+            },
+            {
                 "display_name": "patient_type",
                 "datatype": "string",
                 "type": "expression",
@@ -4717,6 +4785,37 @@
                     },
                     "aggregation_fn": "first_item"
                 }
+            },
+            "complete_treatment_form": {
+                "type": "reduce_items",
+                "items_expression": {
+                    "type": "sort_items",
+                    "items_expression": {
+                        "type": "filter_items",
+                        "items_expression": {
+                            "type": "get_case_forms",
+                            "case_id_expression": {
+                                "type": "property_name",
+                                "property_name": "_id"
+                            }
+                        },
+                        "filter_expression": {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "xmlns"
+                            },
+                            "property_value": "http://openrosa.org/formdesigner/60B0DB43-CC15-43A0-BFE7-885310AFD6E4"
+                        }
+                    },
+                    "sort_expression": {
+                        "type": "property_name",
+                        "property_name": "received_on"
+                    }
+                },
+                "aggregation_fn": "last_item"
+
             },
             "hiv_status": {
                 "value_expression": {

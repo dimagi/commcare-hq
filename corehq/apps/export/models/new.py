@@ -517,7 +517,7 @@ class ExportInstance(BlobMixin, Document):
 
     @property
     def is_safe(self):
-        """For compatability with old exports"""
+        """For compatibility with old exports"""
         return self.is_deidentified
 
     @property

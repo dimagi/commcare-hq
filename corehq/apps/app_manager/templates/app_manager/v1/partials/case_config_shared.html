@@ -122,7 +122,9 @@
 </script>
 
 <script type="text/html" id="case-config:case-transaction:case-properties">
-    <div class="panel-heading panel-title">{% trans "Save data to the following case properties" %}</div>
+    <div class="panel-heading panel-title">
+        {% trans "Save data to the following case properties" %}
+    </div>
     <table class="table table-condensed" data-bind="visible: case_properties().length">
         <thead>
             <tr>
@@ -167,5 +169,16 @@
             <i class="fa fa-plus"></i>
             {% trans "Save properties" %}
         </a>
+    </div>
+</script>
+
+<script type="text/html" id="case-config:refresh-form-questions">
+    <div style="margin-right: 1em;"
+         class="btn btn-success refresh-form-questions pull-right"
+         data-bind="click: function(data, event){
+                    refreshQuestions('{% url 'get_form_questions' domain app.id %}', '{{module.id}}', '{{form.id}}', event);
+                    analytics.usage('Refresh case management', 'Button Clicked');
+                    }">
+        <i class="fa fa-refresh"></i>
     </div>
 </script>

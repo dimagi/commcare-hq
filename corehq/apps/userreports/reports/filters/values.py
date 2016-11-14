@@ -287,7 +287,7 @@ class PreFilterValue(FilterValue):
         elif self._is_null():
             return filters.missing(self.filter.field)
         else:
-            terms = [v.value.lower() for v in self.value]
+            terms = [v.value for v in self.value]
             return filters.term(self.filter.field, terms)
 
 
@@ -331,7 +331,7 @@ class ChoiceListFilterValue(FilterValue):
             return None
         if self.is_null:
             return filters.missing(self.filter.field)
-        terms = [v.value.lower() for v in self.value]
+        terms = [v.value for v in self.value]
         return filters.term(self.filter.field, terms)
 
 

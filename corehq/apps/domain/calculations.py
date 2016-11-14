@@ -191,6 +191,10 @@ def display_time(submission_time, display=True):
         return json_format_datetime(submission_time)
 
 
+def first_domain_for_user(domain):
+    return domain.first_domain_for_user
+
+
 def first_form_submission(domain, display=True):
     try:
         submission_time = get_first_form_submission_received(domain)
