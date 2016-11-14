@@ -73,7 +73,6 @@ class ENikshayRepeaterTestBase(ENikshayCaseStructureMixin, TestCase):
 
 class TestRegisterPatientRepeater(ENikshayRepeaterTestBase):
 
-    @run_with_all_backends
     def setUp(self):
         super(TestRegisterPatientRepeater, self).setUp()
 
