@@ -1,5 +1,4 @@
-from ..models import LocationType
-from ..util import get_locations_and_children
+from ..models import LocationType, SQLLocation
 from .util import LocationHierarchyTestCase
 
 
@@ -42,8 +41,9 @@ class TestGetLocationsAndChildren(MassachusettsTestCase):
 
     def test_get_locations_and_children(self):
         names = ['Middlesex', 'Somerville', 'Suffolk']
-        result = get_locations_and_children([self.locations[name].location_id
-                                             for name in names])
+        result = SQLLocation.objects.get_locations_and_children(
+            [self.locations[name].location_id for name in names]
+        )
         self.assertItemsEqual(
             [loc.name for loc in result],
             ['Middlesex', 'Cambridge', 'Somerville', 'Suffolk', 'Boston']
@@ -51,8 +51,9 @@ class TestGetLocationsAndChildren(MassachusettsTestCase):
 
     def test_get_locations_and_children2(self):
         names = ['Middlesex', 'Boston']
-        result = get_locations_and_children([self.locations[name].location_id
-                                             for name in names])
+        result = SQLLocation.objects.get_locations_and_children(
+            [self.locations[name].location_id for name in names]
+        )
         self.assertItemsEqual(
             [loc.name for loc in result],
             ['Middlesex', 'Cambridge', 'Somerville', 'Boston']

@@ -280,6 +280,15 @@ class LocationQueriesMixin(object):
             return itertools.imap(Location.wrap, locations)
         return locations
 
+    def assigned_to_user(self, domain, user):
+        if user.has_permission(domain, 'access_all_locations'):
+            return self.all()
+
+        assigned_location_ids = user.get_assigned_location_ids(domain)
+        if not assigned_location_ids:
+            return self.none()  # No locations are assigned to this user
+        return self.all() & SQLLocation.active_objects.get_locations_and_children(assigned_location_ids)
+
     def accessible_to_user(self, domain, user):
         if user.has_permission(domain, 'access_all_locations'):
             return self.all()
@@ -339,12 +348,31 @@ class LocationManager(LocationQueriesMixin, TreeManager):
         direct_matches = self.filter_by_user_input(domain, user_input)
         return self.get_queryset_descendants(direct_matches, include_self=True)
 
+    def get_locations(self, location_ids):
+        return self.filter(location_id__in=location_ids)
+
+    def get_locations_and_children(self, location_ids):
+        """
+        Takes a set of location ids and returns a django queryset of those
+        locations and their children.
+        """
+        return SQLLocation.objects.get_queryset_descendants(
+            SQLLocation.objects.filter(location_id__in=location_ids),
+            include_self=True
+        )
+
+    def get_locations_and_children_ids(self, location_ids):
+        return list(self.get_locations_and_children(location_ids).location_ids())
+
 
 class OnlyUnarchivedLocationManager(LocationManager):
 
     def get_queryset(self):
         return (super(OnlyUnarchivedLocationManager, self).get_queryset()
                 .filter(is_archived=False))
+
+    def accessible_location_ids(self, domain, user):
+        return list(self.accessible_to_user(domain, user).location_ids())
 
 
 class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
@@ -685,6 +713,9 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
         notify_of_deprecation("'sql_location' was just called on a sql_location.  That's kinda silly.")
         return self
 
+    @classmethod
+    def get_case_sharing_locations_ids(cls, domain):
+        return list(SQLLocation.objects.filter(domain=domain, location_type__shares_cases=True).location_ids())
 
 def filter_for_archived(locations, include_archive_ancestors):
     """

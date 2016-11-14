@@ -8,14 +8,16 @@ from django.views.generic import View
 from braces.views import JSONResponseMixin
 
 from corehq import toggles
-from corehq.apps.commtrack.models import SQLLocation
 from corehq.apps.domain.decorators import LoginAndDomainMixin
+from corehq.apps.locations.permissions import location_safe
+from corehq.apps.reports.filters.case_list import CaseListFilterUtils
 from corehq.elastic import ESError
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.reports.filters.users import EmwfUtils
 from corehq.apps.es import UserES, GroupES, groups
+from corehq.apps.locations.models import LocationType, SQLLocation
 
 logger = logging.getLogger(__name__)
 
@@ -149,6 +151,86 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
                   .size(size)
                   .sort("name.exact"))
         return [self.utils.reporting_group_tuple(g) for g in groups.run().hits]
+
+
+class LocationRestrictedEmwfOptionsMixin(object):
+    def include_locations_in_options(self):
+        # to render locations for filtering or not
+        raise NotImplementedError('Not implemented yet')
+
+    def extra_data_sources(self):
+        # extra data sources to be included for filtering
+        raise NotImplementedError('Not implemented yet')
+
+    def get_locations_query(self, query):
+        return (SQLLocation.active_objects
+                .filter_path_by_user_input(self.domain, query)
+                .assigned_to_user(self.request.domain, self.request.couch_user))
+
+    def get_users(self, query, start, size):
+        """
+        :return: tuples for accessible users filtered with query
+        """
+        users = (self.user_es_query(query)
+                 .fields(['_id', 'username', 'first_name', 'last_name', 'doc_type'])
+                 .start(start)
+                 .size(size)
+                 .sort("username.exact"))
+        if not self.request.can_access_all_locations:
+            accessible_location_ids = SQLLocation.active_objects.accessible_location_ids(self.request.domain,
+                                                                                         self.request.couch_user)
+            users = users.location(accessible_location_ids)
+        return [self.utils.user_tuple(u) for u in users.run().hits]
+
+    @property
+    def data_sources(self):
+        # data sources for options for selection in filter
+        sources = []
+        if self.include_locations_in_options():
+            sources.append((self.get_locations_size, self.get_locations))
+        if self.request.can_access_all_locations:
+            sources.append((self.get_static_options_size, self.get_static_options))
+            sources.append((self.get_groups_size, self.get_groups))
+        sources.extend(self.extra_data_sources())
+        # appending this in the end to avoid long list of users delaying
+        # locations, groups etc in the list on pagination
+        sources.append((self.get_users_size, self.get_users))
+        return sources
+
+
+@location_safe
+class LocationRestrictedEmwfOptions(LocationRestrictedEmwfOptionsMixin, EmwfOptionsView):
+    def include_locations_in_options(self):
+        return toggles.LOCATIONS_IN_REPORTS.enabled(self.domain)
+
+    def extra_data_sources(self):
+        return []
+
+
+@location_safe
+class CaseListFilterOptions(LocationRestrictedEmwfOptionsMixin, EmwfOptionsView):
+
+    @property
+    @memoized
+    def utils(self):
+        return CaseListFilterUtils(self.domain)
+
+    def include_locations_in_options(self):
+        return LocationType.objects.filter(domain=self.domain, shares_cases=True).exists()
+
+    def extra_data_sources(self):
+        return [(self.get_sharing_groups_size, self.get_sharing_groups)]
+
+    def get_sharing_groups_size(self, query):
+        return self.group_es_query(query, group_type="case_sharing").count()
+
+    def get_sharing_groups(self, query, start, size):
+        groups = (self.group_es_query(query, group_type="case_sharing")
+                  .fields(['_id', 'name'])
+                  .start(start)
+                  .size(size)
+                  .sort("name.exact"))
+        return map(self.utils.sharing_group_tuple, groups.run().hits)
 
 
 def paginate_options(data_sources, query, start, size):
