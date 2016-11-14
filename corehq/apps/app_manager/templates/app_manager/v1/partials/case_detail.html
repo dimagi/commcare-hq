@@ -4,6 +4,10 @@
 {% include 'app_manager/v1/partials/case_list_missing_warning.html' %}
 
 <div data-bind="saveButton: longScreen.saveButton"></div>
+
+
+{% include 'app_manager/v1/partials/custom_detail_variables.html' with screen='longScreen'%}
+
 <legend>
     {% trans "Display Properties" %}
     <span class="hq-help-template"

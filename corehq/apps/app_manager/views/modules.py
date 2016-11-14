@@ -3,6 +3,7 @@ import os
 from collections import OrderedDict, namedtuple
 import json
 import logging
+from lxml import etree
 
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _, gettext_lazy
@@ -660,6 +661,10 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
     pull_down_tile = params.get("enableTilePullDown", None)
     case_list_lookup = params.get("case_list_lookup", None)
     search_properties = params.get("search_properties")
+    custom_variables = {
+        'short': params.get("short_custom_variables", None),
+        'long': params.get("long_custom_variables", None)
+    }
 
     app = get_app(domain, app_id)
     module = app.get_module(module_id)
@@ -701,6 +706,25 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
         detail.short.filter = filter
     if custom_xml is not None:
         detail.short.custom_xml = custom_xml
+
+    if custom_variables['short'] is not None:
+        try:
+            etree.fromstring("<variables>{}</variables>".format(custom_variables['short']))
+        except etree.XMLSyntaxError as error:
+            return HttpResponseBadRequest(
+                "There was an issue with your custom variables: {}".format(error.message)
+            )
+        detail.short.custom_variables = custom_variables['short']
+
+    if custom_variables['long'] is not None:
+        try:
+            etree.fromstring("<variables>{}</variables>".format(custom_variables['long']))
+        except etree.XMLSyntaxError as error:
+            return HttpResponseBadRequest(
+                "There was an issue with your custom variables: {}".format(error.message)
+            )
+        detail.long.custom_variables = custom_variables['long']
+
     if sort_elements is not None:
         detail.short.sort_elements = []
         for sort_element in sort_elements:

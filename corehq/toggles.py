@@ -246,6 +246,13 @@ CASE_LIST_CUSTOM_XML = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+CASE_LIST_CUSTOM_VARIABLES = StaticToggle(
+    'case_list_custom_variables',
+    'Show text area for entering custom variables',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
+
 CASE_LIST_TILE = StaticToggle(
     'case_list_tile',
     'Allow configuration of case list tiles',
