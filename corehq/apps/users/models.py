@@ -1722,14 +1722,14 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         """
         from corehq.apps.fixtures.models import UserFixtureType
         from corehq.apps.locations.models import SQLLocation
-
         old_primary_location_id = self.location_id
-        self.assigned_location_ids.remove(old_primary_location_id)
-        self.get_domain_membership(self.domain).assigned_location_ids.remove(old_primary_location_id)
+        if old_primary_location_id:
+            self.assigned_location_ids.remove(old_primary_location_id)
+            self.get_domain_membership(self.domain).assigned_location_ids.remove(old_primary_location_id)
 
         if self.assigned_location_ids:
             self.user_data['commcare_location_ids'] = user_location_data(self.assigned_location_ids)
-        else:
+        elif self.user_data.get('commcare_location_ids'):
             self.user_data.pop('commcare_location_ids')
 
         if self.assigned_location_ids and fall_back_to_next:
@@ -2098,7 +2098,8 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         """
         membership = self.get_domain_membership(domain)
         old_location_id = membership.location_id
-        membership.assigned_location_ids.remove(old_location_id)
+        if old_location_id:
+            membership.assigned_location_ids.remove(old_location_id)
         if membership.assigned_location_ids and fall_back_to_next:
             membership.location_id = membership.assigned_location_ids[0]
         else:
