@@ -193,6 +193,14 @@ If you have npm installed, that should be as simple as
 npm install -g uglify-js@2.6.1
 ```
 
+###### Install other JS-XPATH
+
+This is required for the server side xpath validation. See [package.json](package.json) for exact version.
+
+```
+npm install dimagi/js-xpath#v0.0.2-rc1
+```
+
 ###### Compressor and Caching
 
 If you're doing a lot of front end work (CSS AND/OR Javascript in Bootstrap 3)
