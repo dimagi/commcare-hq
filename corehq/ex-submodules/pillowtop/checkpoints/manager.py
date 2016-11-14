@@ -79,12 +79,24 @@ class PillowCheckpoint(object):
 
 class PillowCheckpointEventHandler(ChangeEventHandler):
 
-    def __init__(self, checkpoint, checkpoint_frequency):
+    def __init__(self, checkpoint, checkpoint_frequency, max_checkpoint_delay=300):
+        """
+        :param checkpoint: PillowCheckpoint object
+        :param checkpoint_frequency: Number of changes between checkpoint updates
+        :param max_checkpoint_delay: Max number of seconds between checkpoint updates
+        """
         self.checkpoint = checkpoint
         self.checkpoint_frequency = checkpoint_frequency
+        self.max_checkpoint_delay = max_checkpoint_delay
+        self.last_update = datetime.utcnow()
+
+    def should_update_checkpoint(self, context):
+        frequency_hit = context.changes_seen % self.checkpoint_frequency == 0
+        time_hit = (datetime.utcnow() - self.last_update).total_seconds() >= self.max_checkpoint_delay
+        return context.do_set_checkpoint and frequency_hit or time_hit
 
     def fire_change_processed(self, change, context):
-        if context.changes_seen % self.checkpoint_frequency == 0 and context.do_set_checkpoint:
+        if self.should_update_checkpoint(context):
             updated_to = change['seq']
             self.checkpoint.update_to(updated_to)
 
