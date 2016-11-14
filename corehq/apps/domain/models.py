@@ -1,6 +1,10 @@
 from datetime import datetime
 from itertools import imap
+import time
 import uuid
+
+from couchdbkit import PreconditionFailed
+
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.template.loader import render_to_string
@@ -690,7 +694,11 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
             # Saving the domain should happen before we import any apps since
             # importing apps can update the domain object (for example, if user
             # as a case needs to be enabled)
-            new_domain.save()
+            try:
+                new_domain.save()
+            except PreconditionFailed:
+                time.sleep(0.5)
+                new_domain.save()
 
             new_app_components = {}  # a mapping of component's id to its copy
 
