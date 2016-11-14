@@ -124,7 +124,6 @@ def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column, sort_o
         json_response = {
             'aaData': page,
             "iTotalRecords": total_records,
-            "iTotalDisplayRecords": total_records,
         }
         # these are to be checked after ES supports total rows
         # total_row = data_source.get_total_row() if data_source.has_total_row else None
