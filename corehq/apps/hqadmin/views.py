@@ -876,9 +876,6 @@ def raw_doc(request):
     if db_name and "__" in db_name:
         db_name = db_name.split("__")[-1]
     context = _lookup_id_in_database(doc_id, db_name) if doc_id else {}
-    other_couch_dbs = sorted(filter(None, couch_config.all_dbs_by_slug.keys()))
-    context['all_databases'] = ['commcarehq'] + other_couch_dbs + _SQL_DBS.keys()
-    context['use_code_mirror'] = request.GET.get('code_mirror', 'true').lower() == 'true'
 
     if request.GET.get("raw", False):
         if 'doc' in context:
@@ -887,6 +884,9 @@ def raw_doc(request):
             return HttpResponse(json.dumps({"status": "missing"}),
                                 content_type="application/json", status=404)
 
+    other_couch_dbs = sorted(filter(None, couch_config.all_dbs_by_slug.keys()))
+    context['all_databases'] = ['commcarehq'] + other_couch_dbs + _SQL_DBS.keys()
+    context['use_code_mirror'] = request.GET.get('code_mirror', 'true').lower() == 'true'
     return render(request, "hqadmin/raw_couch.html", context)
 
 
