@@ -15,7 +15,7 @@ class ChartsSqlData(EnikshaySqlData):
                 CountColumn(
                     'doc_id',
                     filters=self.filters + convert_to_raw_filters_list(
-                        "patient_type = 'new'"
+                        "patient_type IS NOT NULL AND previous_tb_treatment ='no'"
                     ),
                     alias='cat1_patients'
                 )
@@ -25,8 +25,7 @@ class ChartsSqlData(EnikshaySqlData):
                 CountColumn(
                     'doc_id',
                     filters=self.filters + convert_to_raw_filters_list(
-                        "patient_type in ('', 'recurrent', 'treatment_after_failure', 'treatment_after_lfu',"
-                        " 'other_previously_treated')"
+                        "patient_type IS NOT NULL AND previous_tb_treatment ='yes'"
                     ),
                     alias='cat2_patients'
                 )
