@@ -53,7 +53,6 @@ branches:
   - location_export # Manish 11/2
   - mk-241177-remove_location_bugfix # Manish 11/14
 #  - jquery-3-retry # Jenny 11/11
-  - np/billing/upgrade-twilio # NP 11/15
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
