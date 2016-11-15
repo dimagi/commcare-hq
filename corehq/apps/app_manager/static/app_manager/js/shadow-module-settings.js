@@ -12,9 +12,13 @@ hqDefine('app_manager/js/shadow-module-settings.js', function () {
             self.selectedModule = ko.pureComputed(function () {
                 return _.findWhere(self.modules(), {uniqueId: self.selectedModuleId()});
             });
+            self.allForms = ko.pureComputed(function() {
+                return _.flatten(_.map(self.modules(), function(m) { return m.forms(); }));
+            });
+            self.includedFormIds = ko.observableArray();
             self.excludedFormIds = ko.pureComputed(function () {
-                var exclForms = _.filter(self.selectedModule().forms(), function (form) {
-                    return self.selectedModule().includedFormIds().indexOf(form.uniqueId) === -1;
+                var exclForms = _.filter(self.allForms(), function (form) {
+                    return self.includedFormIds().indexOf(form.uniqueId) === -1;
                 });
                 return _.map(exclForms, function (form) { return form.uniqueId; });
             });
@@ -23,7 +27,6 @@ hqDefine('app_manager/js/shadow-module-settings.js', function () {
                 this.uniqueId = uniqueId;
                 this.name = name;
                 this.forms = ko.observableArray();
-                this.includedFormIds = ko.observableArray();
             };
 
             var SourceModuleForm = function (uniqueId, name) {
@@ -41,7 +44,7 @@ hqDefine('app_manager/js/shadow-module-settings.js', function () {
                     var sourceModuleForm = new SourceModuleForm(form.unique_id, form.name);
                     sourceModule.forms.push(sourceModuleForm);
                     if (excludedFormIds.indexOf(form.unique_id) === -1) {
-                        sourceModule.includedFormIds.push(form.unique_id);
+                        self.includedFormIds.push(form.unique_id);
                     }
                 }
                 self.modules.push(sourceModule);
