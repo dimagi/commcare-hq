@@ -280,7 +280,7 @@ class LocationQueriesMixin(object):
             return itertools.imap(Location.wrap, locations)
         return locations
 
-    def assigned_to_user(self, domain, user):
+    def accessible_to_user(self, domain, user):
         if user.has_permission(domain, 'access_all_locations'):
             return self.all()
 
@@ -288,17 +288,6 @@ class LocationQueriesMixin(object):
         if not assigned_location_ids:
             return self.none()  # No locations are assigned to this user
         return self.all() & SQLLocation.active_objects.get_locations_and_children(assigned_location_ids)
-
-    def accessible_to_user(self, domain, user):
-        from corehq.apps.locations.util import get_locations_and_children
-
-        if user.has_permission(domain, 'access_all_locations'):
-            return self.all()
-
-        assigned_location_ids = user.get_location_ids(domain)
-        if not assigned_location_ids:
-            return self.none()  # No locations are accessible to this user
-        return self.all() & get_locations_and_children(assigned_location_ids)
 
 
 class LocationQuerySet(LocationQueriesMixin, models.query.QuerySet):

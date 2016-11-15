@@ -165,7 +165,7 @@ class LocationRestrictedEmwfOptionsMixin(object):
     def get_locations_query(self, query):
         return (SQLLocation.active_objects
                 .filter_path_by_user_input(self.domain, query)
-                .assigned_to_user(self.request.domain, self.request.couch_user))
+                .accessible_to_user(self.request.domain, self.request.couch_user))
 
     def get_users(self, query, start, size):
         """
