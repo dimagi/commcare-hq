@@ -8,6 +8,7 @@ from corehq.apps.dump_reload.couch.id_providers import DocTypeIDProvider, ViewID
     SyncLogIDProvider
 from corehq.apps.dump_reload.exceptions import DomainDumpError
 from corehq.apps.dump_reload.interface import DataDumper
+from corehq.feature_previews import all_previews
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import get_docs
 from dimagi.utils.couch.database import iter_docs
@@ -105,7 +106,7 @@ class ToggleDumper(DataDumper):
         toggles_to_migrate = []
         domain_item = namespaced_item(self.domain, NAMESPACE_DOMAIN)
 
-        for toggle in all_toggles():
+        for toggle in all_toggles() + all_previews():
             try:
                 current_toggle = Toggle.get(toggle.slug)
             except ResourceNotFound:
