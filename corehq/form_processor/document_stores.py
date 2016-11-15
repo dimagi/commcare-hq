@@ -56,7 +56,7 @@ class ReadonlyCaseDocumentStore(ReadOnlyDocumentStore):
 class ReadonlyLedgerV2DocumentStore(ReadOnlyDocumentStore):
 
     def __init__(self, domain):
-        assert should_use_sql_backend(domain), "Only SQL backend supported"
+        assert should_use_sql_backend(domain), "Only SQL backend supported: {}".format(domain)
         self.domain = domain
         self.ledger_accessors = LedgerAccessorSQL
         self.case_accessors = CaseAccessorSQL
