@@ -67,11 +67,13 @@ class Command(BaseCommand):
         self.stdout.write(template.format('Doc Type', 'Couch', 'SQL', 'ES'))
         if with_header_divider:
             self.stdout.write(template.format('-' * 50, *['-' * 20] * 3))
-        for doc_type, couch, sql, es in output_rows:
+        for doc_type, couch_count, sql_count, es_count in output_rows:
             row_template = template
-            if with_color and es and ((couch and couch != es) or (sql and sql != es)):
+            couch_dff = couch_count and couch_count != es_count
+            sql_diff = sql_count and sql_count != es_count
+            if with_color and es and (couch_dff or sql_diff):
                 row_template = shell_red(template)
-            self.stdout.write(row_template.format(doc_type, couch, sql, es))
+            self.stdout.write(row_template.format(doc_type, couch_count, sql_count, es_count))
 
 
 def _get_couchdb_counts(domain):
