@@ -1,18 +1,23 @@
 import json
+
 from django.core import serializers
 from django.http import JsonResponse
+
+from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.data_dictionary import util
 from corehq.apps.data_dictionary.models import CaseProperty
 
 
 @login_and_domain_required
+@toggles.DATA_DICTIONARY.required_decorator()
 def generate_data_dictionary(request, domain):
     util.generate_data_dictionary(domain)
     return JsonResponse({"status": "success"})
 
 
 @login_and_domain_required
+@toggles.DATA_DICTIONARY.required_decorator()
 def data_dictionary_json(request, domain):
     props = []
     queryset = CaseProperty.objects.filter(domain=domain).only(
