@@ -139,7 +139,7 @@ class CommCareCaseSQLSerializer(DeletableModelSerializer):
 
     class Meta:
         model = CommCareCaseSQL
-        exclude = ('case_json',)
+        exclude = ('id', 'case_json',)
 
 
 class CommCareCaseSQLAPISerializer(serializers.ModelSerializer):

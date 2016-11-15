@@ -33,8 +33,12 @@ PARTITIONED_MODEL_SHARD_ID_FIELDS = {
 }
 
 
-class LoadStat(namedtuple('LoadStats', 'db_alias, model_counter')):
+class LoadStat(object):
     """Simple object for keeping track of stats"""
+    def __init__(self, db_alias, model_counter):
+        self.db_alias = db_alias
+        self.model_counter = model_counter
+
     def update(self, stat):
         """
         :type stat: LoadStat
