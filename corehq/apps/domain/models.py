@@ -697,6 +697,9 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
             try:
                 new_domain.save()
             except PreconditionFailed:
+                # This is a hack to resolve http://manage.dimagi.com/default.asp?241492
+                # Following solution in
+                # https://github.com/dimagi/commcare-hq/commit/d59b1e403060ade599cc4a03db0aabc4da62b668
                 time.sleep(0.5)
                 new_domain.save()
 
