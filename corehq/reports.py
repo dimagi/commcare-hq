@@ -61,6 +61,7 @@ from custom.openclinica.reports import OdmExportReport
 def REPORTS(project):
     from corehq.apps.reports.standard.cases.basic import CaseListReport
     from corehq.apps.reports.standard.cases.careplan import make_careplan_reports
+    from corehq.apps.reports.standard.maps import DemoMapReport, DemoMapReport2, DemoMapCaseList
 
     reports = []
 
@@ -86,6 +87,9 @@ def REPORTS(project):
             phonelog.DeviceLogDetailsReport,
             deployments.SyncHistoryReport,
             deployments.ApplicationErrorReport,
+        )),
+        (ugettext_lazy("Demos"), (
+            DemoMapReport, DemoMapReport2, DemoMapCaseList,
         )),
     ])
 
