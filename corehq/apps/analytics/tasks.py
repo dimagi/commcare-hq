@@ -408,11 +408,10 @@ def track_periodic_data():
     submit_json = json.dumps(submit)
 
     submit_data_to_hub_and_kiss(submit_json)
-    notify_datadog(
-        { DATADOG_MOBILE_USER_COUNT: number_of_users,
-          DATADOG_EXCEEDING_MAX_FORMS_COUNT: number_of_users_exceeding_max_forms
-        }
-    )
+    notify_datadog({
+        DATADOG_MOBILE_USER_COUNT: number_of_users,
+        DATADOG_EXCEEDING_MAX_FORMS_COUNT: number_of_users_exceeding_max_forms
+    })
 
 
 def submit_data_to_hub_and_kiss(submit_json):

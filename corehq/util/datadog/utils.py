@@ -109,6 +109,6 @@ def get_url_group(url):
     return default
 
 
-def notify_datadog(metrics= {}):
+def notify_datadog(metrics={}):
     for metric, value in metrics.items:
         statsd.gauge(metric, value)
