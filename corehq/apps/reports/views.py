@@ -126,7 +126,7 @@ from corehq.apps.users.models import (
     WebUser,
 )
 from corehq.util.couch import get_document_or_404
-from corehq.util.spreadsheets.export import WorkBook
+from corehq.util.spreadsheets_v1.export import WorkBook
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import absolute_reverse, reverse
 

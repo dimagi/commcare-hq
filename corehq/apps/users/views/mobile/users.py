@@ -82,7 +82,7 @@ from corehq.apps.users.util import can_add_extra_mobile_workers, format_username
 from corehq.apps.users.views import BaseUserSettingsView, BaseEditUserView, get_domain_languages
 from corehq.const import USER_DATE_FORMAT, GOOGLE_PLAY_STORE_COMMCARE_URL
 from corehq.util.couch import get_document_or_404
-from corehq.util.spreadsheets.excel import JSONReaderError, HeaderValueError, \
+from corehq.util.spreadsheets_v1.excel import JSONReaderError, HeaderValueError, \
     WorksheetNotFound, WorkbookJSONReader, enforce_string_type, StringTypeRequiredError, \
     InvalidExcelFileException
 from soil import DownloadBase

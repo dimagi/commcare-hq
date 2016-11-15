@@ -3,7 +3,7 @@ from corehq.apps.fixtures.exceptions import FixtureUploadError
 from corehq.apps.fixtures.upload.failure_messages import FAILURE_MESSAGES
 from corehq.apps.fixtures.upload.workbook import get_workbook
 from corehq.apps.fixtures.utils import get_fields_without_attributes
-from corehq.util.spreadsheets.excel import WorksheetNotFound
+from corehq.util.spreadsheets_v1.excel import WorksheetNotFound
 
 
 def validate_fixture_file_format(file_or_filename):
