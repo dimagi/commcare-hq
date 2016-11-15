@@ -285,6 +285,7 @@ CALCS = {
 CALC_FNS = {
     'num_web_users': num_web_users,
     "num_mobile_users": num_mobile_users,
+    "first_domain_for_user": first_domain_for_user,
     "forms": forms,
     "forms_in_last": forms_in_last,
     "sms": sms,
