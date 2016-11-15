@@ -1,5 +1,7 @@
 import os
 import mock
+from datetime import date
+from dateutil.relativedelta import relativedelta
 from xml.etree import ElementTree
 from django.test import TestCase
 from casexml.apps.case.mock import CaseFactory
@@ -60,3 +62,13 @@ class BaseICDSDatasourceTest(TestCase, TestFileMixin):
         rebuild_indicators(self.datasource._id)
         adapter = IndicatorSqlAdapter(self.datasource)
         return adapter.get_query_object()
+
+    def _run_iterative_monthly_test(self, case_id, cases, start_date=date(2015, 12, 1)):
+        query = self._rebuild_table_get_query_object().filter_by(doc_id=case_id)
+        self.assertEqual(query.count(), 7)
+
+        for index, test_values in cases:
+            row = query.all()[index]._asdict()
+            self.assertEqual(row['month'], start_date+relativedelta(months=index))
+            for key, value in test_values:
+                self.assertEqual(row[key], value)
