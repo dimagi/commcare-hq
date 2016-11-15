@@ -10,7 +10,8 @@ from corehq.apps.dump_reload.couch.id_providers import DocTypeIDProvider
 from corehq.apps.dump_reload.sql.dump import get_querysets_to_dump, allow_form_processing_queries
 from corehq.apps.dump_reload.util import get_model_label
 from corehq.apps.hqmedia.models import CommCareMultimedia
-from corehq.apps.users.dbaccessors.all_commcare_users import get_web_user_count
+from corehq.apps.users.dbaccessors.all_commcare_users import get_web_user_count, get_mobile_user_count
+from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
 from corehq.sql_db.config import get_sql_db_aliases_in_use
@@ -78,6 +79,8 @@ def _get_couchdb_counts(domain):
     for provider in DOC_PROVIDERS:
         if isinstance(provider, DocTypeIDProvider):
             for doc_type in provider.doc_types:
+                if doc_type == 'CommCareUser':
+                    continue  # want to split deleted
                 doc_class = get_document_class_by_doc_type(doc_type)
                 count = get_doc_count_in_domain_by_class(domain, doc_class)
                 couch_db_counts.update({doc_type: count})
@@ -85,8 +88,11 @@ def _get_couchdb_counts(domain):
     for row in CommCareMultimedia.get_db().view('hqmedia/by_domain', key=domain, include_docs=False):
         couch_db_counts.update(['CommCareMultimedia'])
 
+    mobile_user_count = get_mobile_user_count(domain)
     couch_db_counts.update({
-        'WebUser': get_web_user_count(domain)
+        'WebUser': get_web_user_count(domain),
+        'CommCareUser': mobile_user_count,
+        'CommCareUser-Deleted': get_doc_count_in_domain_by_class(domain, CommCareUser) - mobile_user_count
     })
 
     # for _, doc_ids in SyncLogIDProvider().get_doc_ids(domain):
