@@ -947,7 +947,7 @@ def get_general_stats_data(domains, histo_type, datespan, interval="day",
                 histo_type,
                 datespan,
                 filters=additional_filters,
-                domain_list=domain_data["names"],
+                domain_list=domain_data.get("names", []),
             ) for domain_data in domains
         } if is_cumulative else {"All Domains": 0},
         'startdate': datespan.startdate_key_utc,
