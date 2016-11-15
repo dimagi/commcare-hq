@@ -1,20 +1,19 @@
 from collections import Counter
 
-from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
 
+from corehq.apps import es
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
 from corehq.apps.dump_reload.couch.dump import DOC_PROVIDERS
 from corehq.apps.dump_reload.couch.id_providers import DocTypeIDProvider
 from corehq.apps.dump_reload.sql.dump import get_querysets_to_dump, allow_form_processing_queries
 from corehq.apps.dump_reload.util import get_model_label
-from corehq.apps import es
 from corehq.apps.hqmedia.models import CommCareMultimedia
 from corehq.apps.users.dbaccessors.all_commcare_users import get_web_user_count
 from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
 from corehq.form_processor.models import XFormInstanceSQL
-from corehq.sql_db.config import partition_config
+from corehq.sql_db.config import get_sql_db_aliases_in_use
 from corehq.util.couch import get_document_class_by_doc_type
 
 DOC_TYPE_MAPPING = {
@@ -142,13 +141,8 @@ def _map_doc_types(counter):
 
 
 def _get_sql_forms_by_doc_type(domain):
-    if settings.USE_PARTITIONED_DATABASE:
-        using = partition_config.get_form_processing_dbs()
-    else:
-        using = ['default']
-
     counter = Counter()
-    for db_alias in using:
+    for db_alias in get_sql_db_aliases_in_use():
         queryset = XFormInstanceSQL.objects.using(db_alias).filter(domain=domain)
         for doc_type, state in doc_type_to_state.items():
             counter[doc_type] += queryset.filter(state=state).count()
