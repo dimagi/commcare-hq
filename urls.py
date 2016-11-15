@@ -5,6 +5,7 @@ from django.views.generic import TemplateView, RedirectView
 
 from corehq.apps.app_manager.views import download_test_jar
 from corehq.apps.app_manager.views.formdesigner import ping
+from corehq.apps.appstore.views import rewrite_url
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.utils import legacy_domain_re
 
@@ -93,7 +94,7 @@ urlpatterns = [
     url(r'^register/', include('corehq.apps.registration.urls')),
     url(r'^a/(?P<domain>%s)/' % legacy_domain_re, include(domain_specific)),
     url(r'^account/', include('corehq.apps.settings.urls')),
-    url(r'^project_store(.*)$', 'corehq.apps.appstore.views.rewrite_url'),
+    url(r'^project_store(.*)$', rewrite_url),
     url(r'^exchange/', include('corehq.apps.appstore.urls')),
     url(r'^webforms/', include('touchforms.formplayer.urls')),
     url(r'', include('corehq.apps.hqwebapp.urls')),
