@@ -125,6 +125,7 @@ def _get_es_counts(domain):
 def _get_index_counts(es_query, domain):
     return Counter(
         es_query
+        .remove_default_filters()
         .filter(es.filters.term('domain', domain))
         .terms_aggregation('doc_type', 'doc_type')
         .size(0)
