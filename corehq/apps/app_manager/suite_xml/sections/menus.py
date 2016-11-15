@@ -1,7 +1,6 @@
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import (ScheduleError, CaseXPathValidationError,
     UserCaseXPathValidationError)
-from corehq.apps.app_manager.models import ShadowModule
 from corehq.apps.app_manager.suite_xml.contributors import SuiteContributorByModule
 from corehq.apps.app_manager.suite_xml.xml_models import Menu, Command, LocalizedMenu
 from corehq.apps.app_manager.util import (is_usercase_in_use, xpath_references_case,
@@ -80,6 +79,7 @@ class MenuContributor(SuiteContributorByModule):
             for menu in module.get_menus(supports_module_filter=supports_module_filter):
                 menus.append(menu)
         elif module.module_type != 'careplan':
+            from corehq.apps.app_manager.models import ShadowModule
             id_modules = [module]
             root_modules = []
 
