@@ -1,5 +1,6 @@
 from collections import defaultdict
 from corehq.apps.hqcase.analytics import get_number_of_cases_in_domain
+from corehq.apps.users.dbaccessors.all_commcare_users import get_web_user_count, get_mobile_user_count
 from corehq.util.dates import iso_string_to_datetime
 from datetime import date, datetime, timedelta
 from dateutil.relativedelta import relativedelta
@@ -26,22 +27,11 @@ from dimagi.utils.parsing import json_format_datetime
 
 
 def num_web_users(domain, *args):
-    key = ["active", domain, 'WebUser']
-    row = CouchUser.get_db().view('users/by_domain', startkey=key, endkey=key+[{}]).one()
-    return row["value"] if row else 0
+    return get_web_user_count(domain, include_inactive=False)
 
 
 def num_mobile_users(domain, *args):
-    startkey = ['active', domain, 'CommCareUser']
-    endkey = startkey + [{}]
-    result = CouchUser.get_db().view(
-        'users/by_domain',
-        startkey=startkey,
-        endkey=endkey,
-        include_docs=False,
-        reduce=True
-    ).one()
-    return result['value'] if result else 0
+    return get_mobile_user_count(domain, include_inactive=False)
 
 
 DISPLAY_DATE_FORMAT = '%Y/%m/%d %H:%M:%S'
