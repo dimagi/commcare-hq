@@ -19,9 +19,17 @@ class _XLSWorksheetAdaptor(object):
 
     def _make_cell_value(self, cell):
         if cell.ctype == xlrd.XL_CELL_NUMBER:
-            return int(cell.value)
+            # cell.value is a float, return int if it's an int
+            if int(cell.value) == cell.value:
+                return int(cell.value)
+            else:
+                return cell.value
         elif cell.ctype == xlrd.XL_CELL_DATE:
             return datetime(*xlrd.xldate_as_tuple(cell.value, self._sheet.book.datemode))
+        elif cell.ctype == xlrd.XL_CELL_BOOLEAN:
+            return bool(cell.value)
+        elif cell.ctype == xlrd.XL_CELL_EMPTY:
+            return None
         else:
             return cell.value
 

@@ -19,7 +19,7 @@ def _make_path(*args):
 class ExcelCellTypeTest(SimpleTestCase):
 
     def assert_workbooks_equal(self, workbook1, workbook2):
-        fillvalue = object()
+        fillvalue = Exception('Value missing')
 
         def assert_worksheets_equal(worksheet1, worksheet2):
             self.assertIsInstance(worksheet1, Worksheet)
@@ -42,10 +42,19 @@ class ExcelCellTypeTest(SimpleTestCase):
                 workbook,
                 Workbook(
                     worksheets=[
-                        Worksheet(title='Sheet1', iter_rows=lambda: iter([
-                            [Cell(u'Name'), Cell(u'Date of Birth'), Cell(u'Age')],
-                            [Cell(u'Danny'), Cell(datetime(1988, 7, 7, 0, 0)), Cell(28)]
-                        ]))
+                        Worksheet(title='Sheet1', iter_rows=lambda: [
+                            [Cell(u'String'), Cell(u'Danny')],
+                            [Cell(u'Date'), Cell(datetime(1988, 7, 7, 0, 0))],
+                            [Cell(u'Int'), Cell(28)],
+                            [Cell(u'Int.0'), Cell(5)],
+                            [Cell(u'Float'), Cell(5.1)],
+                            [Cell(u'Bool-F'), Cell(False)],
+                            [Cell(u'Bool-T'), Cell(True)],
+                            [Cell(u'Empty'), Cell(None)],
+                            [Cell(u'Percent'), Cell(0.49)],
+                            [Cell(u'Calculation'), Cell(2)],
+                            [Cell(u'Styled'), Cell(u'Styled')],
+                        ])
                     ]
                 )
             )
