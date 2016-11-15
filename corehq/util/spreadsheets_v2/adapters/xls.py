@@ -1,8 +1,7 @@
 from contextlib import contextmanager
 from datetime import datetime
 import xlrd
-from corehq.util.spreadsheets_v2.datamodels import Worksheet, Cell, Workbook
-from corehq.util.spreadsheets_v2.exceptions import SpreadsheetFileError
+from corehq.util.spreadsheets_v2 import Worksheet, Cell, Workbook, SpreadsheetFileError
 
 
 @contextmanager

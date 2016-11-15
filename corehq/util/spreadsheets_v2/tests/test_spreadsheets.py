@@ -2,9 +2,14 @@ from datetime import datetime
 from itertools import izip_longest
 import os
 from django.test import SimpleTestCase
-from corehq.util.spreadsheets_v2.adapters import open_xlsx_workbook, open_xls_workbook
-from corehq.util.spreadsheets_v2.datamodels import Workbook, Worksheet, Cell
-from corehq.util.spreadsheets_v2.exceptions import SpreadsheetFileError
+from corehq.util.spreadsheets_v2 import (
+    open_xls_workbook,
+    open_xlsx_workbook,
+    SpreadsheetFileError,
+    Workbook,
+    Worksheet,
+    Cell,
+)
 
 
 def _make_path(*args):
