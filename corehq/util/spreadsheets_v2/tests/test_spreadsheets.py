@@ -2,8 +2,6 @@ from datetime import datetime
 from itertools import izip_longest
 import os
 from django.test import SimpleTestCase
-import openpyxl
-import unittest2
 from corehq.util.spreadsheets_v2.adapters import open_xlsx_workbook, open_xls_workbook
 from corehq.util.spreadsheets_v2.datamodels import Workbook, Worksheet, Cell
 from corehq.util.spreadsheets_v2.exceptions import SpreadsheetFileError
