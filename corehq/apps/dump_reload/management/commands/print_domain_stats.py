@@ -28,7 +28,7 @@ DOC_TYPE_MAPPING = {
 
 
 class Command(BaseCommand):
-    help = "Print database stats for a domain"
+    help = "Print database stats for a domain. Use in conjunction with 'compare_docs_with_es'."
     args = '<domain>'
 
     def add_arguments(self, parser):
