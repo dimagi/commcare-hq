@@ -383,7 +383,7 @@ SYNC_ALL_LOCATIONS = StaticToggle(
 FLAT_LOCATION_FIXTURE = StaticToggle(
     'flat_location_fixture',
     'Sync the location fixture in a flat format.',
-    TAG_ONE_OFF,  # todo: this should change to product path once we are signed off on format
+    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
 
