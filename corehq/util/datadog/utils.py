@@ -13,6 +13,26 @@ from corehq.util.datadog.const import ALERT_INFO
 datadog_metric_logger = logging.getLogger('datadog-metrics')
 
 WILDCARD = '*'
+DATADOG_USER_MAX_FORMS_LIMIT = 300
+DATADOG_MOBILE_USER_COUNT = 'commcare.mobile_user_count'
+DATADOG_EXCEEDING_MAX_FORMS_COUNT = 'commcare.users_gt_{}_forms'.format(DATADOG_USER_MAX_FORMS_LIMIT)
+
+
+def increment_metric(metric):
+    def _wrapper(fn):
+        @wraps(fn)
+        def _inner(*args, **kwargs):
+            response = fn(*args, **kwargs)
+
+            try:
+                statsd.increment(metric)
+            except Exception:
+                datadog_logger.exception('Unable to record Datadog stats')
+
+            return response
+
+        return _inner
+    return _wrapper
 
 
 def count_by_response_code(metric_prefix):
@@ -87,3 +107,8 @@ def get_url_group(url):
         return parts[3] if len(parts) >= 4 else default
 
     return default
+
+
+def notify_datadog(metrics= {}):
+    for metric, value in metrics.items:
+        statsd.gauge(metric, value)

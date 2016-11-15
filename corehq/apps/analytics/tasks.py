@@ -21,6 +21,13 @@ from django.core.urlresolvers import reverse
 from corehq.toggles import deterministic_random
 from corehq.util.decorators import analytics_task
 from corehq.util.soft_assert import soft_assert
+from corehq.util.datadog.utils import (
+    increment_metric,
+    notify_datadog,
+    DATADOG_USER_MAX_FORMS_LIMIT,
+    DATADOG_EXCEEDING_MAX_FORMS_COUNT,
+    DATADOG_MOBILE_USER_COUNT
+)
 
 from dimagi.utils.logging import notify_exception
 
@@ -144,6 +151,7 @@ def _get_client_ip(meta):
     return ip
 
 
+@increment_metric('sent_form_to_hubspot')
 def _send_form_to_hubspot(form_id, webuser, cookies, meta, extra_fields=None, email=False):
     """
     This sends hubspot the user's first and last names and tracks everything they did
@@ -343,6 +351,10 @@ def track_periodic_data():
     # Keep track of india and www data seperately
     env = get_instance_string()
 
+    # Track no of users and users with max_forms greater than DATADOG_NOTIFY_MAX_FORMS
+    number_of_users = 0
+    number_of_users_exceeding_max_forms = 0
+
     # For each web user, iterate through their domains and select the max number of form submissions and
     # max number of mobile workers
     submit = []
@@ -350,6 +362,8 @@ def track_periodic_data():
         email = user.get('email')
         if not email:
             continue
+
+        number_of_users += 1
         date_created = user.get('date_joined')
         max_forms = 0
         max_workers = 0
@@ -361,6 +375,8 @@ def track_periodic_data():
                 max_workers = domains_to_mobile_users[domain]
 
         project_spaces_created = ", ".join(get_domains_created_by_user(email))
+        if max_forms > DATADOG_USER_MAX_FORMS_LIMIT:
+            number_of_users_exceeding_max_forms += 1
 
         user_json = {
             'email': email,
@@ -392,6 +408,11 @@ def track_periodic_data():
     submit_json = json.dumps(submit)
 
     submit_data_to_hub_and_kiss(submit_json)
+    notify_datadog(
+        { DATADOG_MOBILE_USER_COUNT: number_of_users,
+          DATADOG_EXCEEDING_MAX_FORMS_COUNT: number_of_users_exceeding_max_forms
+        }
+    )
 
 
 def submit_data_to_hub_and_kiss(submit_json):
