@@ -2816,6 +2816,25 @@
                     }
                 },
                 "column_id": "referral_date"
+            },
+            {
+                "type": "expression",
+                "datatype": "string",
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "previous_tb_treatment"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "datatype": null,
+                        "type": "named",
+                        "name": "person_id"
+                    }
+                },
+                "column_id": "previous_tb_treatment"
             }
         ],
         "named_filters": {
