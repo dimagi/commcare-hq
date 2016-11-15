@@ -9,9 +9,13 @@ from corehq.apps.export.filters import (
     ReceivedOnRangeFilter,
     GroupFormSubmittedByFilter,
     OR, OwnerFilter, LastModifiedByFilter, UserTypeFilter,
-    OwnerTypeFilter, ModifiedOnRangeFilter
+    ModifiedOnRangeFilter, FormSubmittedByFilter, NOT
 )
+from corehq.apps.es.users import user_ids_at_locations_and_descendants
+from corehq.apps.reports.filters.case_list import CaseListFilter
+from corehq.apps.reports.filters.users import LocationRestrictedMobileWorkerFilter
 from corehq.apps.groups.models import Group
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.util import (
     group_filter,
@@ -37,6 +41,8 @@ from crispy_forms import layout as crispy
 
 from crispy_forms.layout import Layout
 from dimagi.utils.dates import DateSpan
+
+from corehq.util import flatten_non_iterable_list
 
 
 class CreateFormExportTagForm(forms.Form):
@@ -142,6 +148,7 @@ class BaseFilterExportDownloadForm(forms.Form):
     _USER_DEMO = 'demo_user'
     _USER_UNKNOWN = 'unknown'
     _USER_SUPPLY = 'supply'
+    _USER_ADMIN = 'admin'
 
     _USER_TYPES_CHOICES = [
         (_USER_MOBILE, ugettext_lazy("All Mobile Workers")),
@@ -168,6 +175,18 @@ class BaseFilterExportDownloadForm(forms.Form):
         required=False,
     )
 
+    _EXPORT_TO_ES_USER_TYPES_MAP = {
+        _USER_MOBILE: [utils.MOBILE_USER_TYPE],
+        _USER_DEMO: [utils.DEMO_USER_TYPE],
+        _USER_UNKNOWN: [
+            utils.UNKNOWN_USER_TYPE, utils.SYSTEM_USER_TYPE, utils.WEB_USER_TYPE
+        ],
+        _USER_SUPPLY: [utils.COMMCARE_SUPPLY_USER_TYPE]
+    }
+
+    # To be used by subclasses when rendering their own layouts using filters and extra_fields
+    skip_layout = False
+
     def __init__(self, domain_object, *args, **kwargs):
         self.domain_object = domain_object
         super(BaseFilterExportDownloadForm, self).__init__(*args, **kwargs)
@@ -181,42 +200,43 @@ class BaseFilterExportDownloadForm(forms.Form):
         self.helper.form_tag = False
         self.helper.label_class = 'col-sm-3'
         self.helper.field_class = 'col-sm-5'
-        self.helper.layout = Layout(
-            crispy.Field(
-                'type_or_group',
-                ng_model="formData.type_or_group",
-                ng_required='false',
-            ),
-            crispy.Div(
+        if not self.skip_layout:
+            self.helper.layout = Layout(
                 crispy.Field(
-                    'user_types',
-                    ng_model='formData.user_types',
+                    'type_or_group',
+                    ng_model="formData.type_or_group",
                     ng_required='false',
                 ),
-                ng_show="formData.type_or_group === 'type'",
-            ),
-            crispy.Div(
-                B3MultiField(
-                    _("Group"),
-                    crispy.Div(
-                        crispy.Div(
-                            InlineField(
-                                'group',
-                                ng_model='formData.group',
-                                ng_required='false',
-                                style="width: 98%",
-                            ),
-                            ng_show="hasGroups",
-                        ),
+                crispy.Div(
+                    crispy.Field(
+                        'user_types',
+                        ng_model='formData.user_types',
+                        ng_required='false',
                     ),
-                    CrispyTemplate('export/crispy_html/groups_help.html', {
-                        'domain': self.domain_object.name,
-                    }),
+                    ng_show="formData.type_or_group === 'type'",
                 ),
-                ng_show="formData.type_or_group === 'group'",
-            ),
-            *self.extra_fields
-        )
+                crispy.Div(
+                    B3MultiField(
+                        _("Group"),
+                        crispy.Div(
+                            crispy.Div(
+                                InlineField(
+                                    'group',
+                                    ng_model='formData.group',
+                                    ng_required='false',
+                                    style="width: 98%",
+                                ),
+                                ng_show="hasGroups",
+                            ),
+                        ),
+                        CrispyTemplate('export/crispy_html/groups_help.html', {
+                            'domain': self.domain_object.name,
+                        }),
+                    ),
+                    ng_show="formData.type_or_group === 'group'",
+                ),
+                *self.extra_fields
+            )
 
     @property
     def extra_fields(self):
@@ -253,14 +273,7 @@ class BaseFilterExportDownloadForm(forms.Form):
         """
         es_user_types = []
         export_user_types = self.cleaned_data['user_types']
-        export_to_es_user_types_map = {
-            self._USER_MOBILE: [utils.MOBILE_USER_TYPE],
-            self._USER_DEMO: [utils.DEMO_USER_TYPE],
-            self._USER_UNKNOWN: [
-                utils.UNKNOWN_USER_TYPE, utils.SYSTEM_USER_TYPE, utils.WEB_USER_TYPE
-            ],
-            self._USER_SUPPLY: [utils.COMMCARE_SUPPLY_USER_TYPE]
-        }
+        export_to_es_user_types_map = self._EXPORT_TO_ES_USER_TYPES_MAP
         for type_ in export_user_types:
             es_user_types.extend(export_to_es_user_types_map[type_])
         return es_user_types
@@ -400,19 +413,184 @@ class FilterFormCouchExportDownloadForm(GenericFilterFormExportDownloadForm):
         return kwargs
 
 
-class FilterFormESExportDownloadForm(GenericFilterFormExportDownloadForm):
+class EmwfFilterExportMixin(object):
+    # filter to be used to identify objects(forms/cases) for users
+    export_user_filter = FormSubmittedByFilter
+
+    # filter class for including dynamic fields in the context of the view as dynamic_filters
+    dynamic_filter_class = LocationRestrictedMobileWorkerFilter
+
+    def _get_user_ids(self, mobile_user_and_group_slugs):
+        """
+        :param mobile_user_and_group_slugs: ['l__e80c5e54ab552245457d2546d0cdbb05']
+        :return: ['e80c5e54ab552245457d2546d0cdbb05']
+        """
+        return self.dynamic_filter_class.selected_user_ids(mobile_user_and_group_slugs)
+
+    def _get_users_filter(self, mobile_user_and_group_slugs):
+        """
+        :param mobile_user_and_group_slugs: ['u__e80c5e54ab552245457d2546d0cdbb05']
+        :return: User filter set by inheriting class
+        """
+        user_ids = self._get_user_ids(mobile_user_and_group_slugs)
+        if user_ids:
+            return self.export_user_filter(user_ids)
+
+    def _get_locations_ids(self, mobile_user_and_group_slugs):
+        """
+        :param mobile_user_and_group_slugs: ['l__e80c5e54ab552245457d2546d0cdbb05']
+        :return: ['e80c5e54ab552245457d2546d0cdbb05']
+        """
+        return self.dynamic_filter_class.selected_location_ids(mobile_user_and_group_slugs)
+
+    def _get_locations_filter(self, mobile_user_and_group_slugs):
+        """
+        :param mobile_user_and_group_slugs: ['l__e80c5e54ab552245457d2546d0cdbb05']
+        :return: User filter with users at filtered locations and their descendants
+        """
+        location_ids = self._get_locations_ids(mobile_user_and_group_slugs)
+        if location_ids:
+            user_ids = user_ids_at_locations_and_descendants(location_ids)
+            return self.export_user_filter(user_ids)
+
+    def _get_group_ids(self, mobile_user_and_group_slugs):
+        """
+        :param mobile_user_and_group_slugs: ['g__e80c5e54ab552245457d2546d0cdbb05']
+        :return: ['e80c5e54ab552245457d2546d0cdbb05']
+        """
+        return self.dynamic_filter_class.selected_group_ids(mobile_user_and_group_slugs)
+
+    def _get_es_user_types(self, mobile_user_and_group_slugs):
+        """
+        :param: ['t__0', 't__1']
+        :return: int values corresponding to user types as in HQUserType
+        HQUserType user_type_mapping to be used for mapping
+        """
+        return self.dynamic_filter_class.selected_user_types(mobile_user_and_group_slugs)
+
+    def get_user_ids_for_user_types(self, admin, unknown, demo, commtrack):
+        """
+        referenced from CaseListMixin to fetch user_ids for selected user type
+        :param admin: if admin users to be included
+        :param unknown: if unknown users to be included
+        :param demo: if demo users to be included
+        :param commtrack: if commtrack users to be included
+        :return: user_ids for selected user types
+        """
+        from corehq.apps.es import filters, users as user_es
+        if not any([admin, unknown, demo]):
+            return []
+
+        user_filters = [filter_ for include, filter_ in [
+            (admin, user_es.admin_users()),
+            (unknown, filters.OR(user_es.unknown_users(), user_es.web_users())),
+            (demo, user_es.demo_users()),
+        ] if include]
+
+        query = (user_es.UserES()
+                 .domain(self.domain_object.name)
+                 .OR(*user_filters)
+                 .show_inactive()
+                 .fields([]))
+        user_ids = query.run().doc_ids
+
+        if commtrack:
+            user_ids.append("commtrack-system")
+        if demo:
+            user_ids.append("demo_user_group_id")
+            user_ids.append("demo_user")
+        return user_ids
+
+
+class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloadForm):
+    """
+    Generic Filter form including dynamic filters using LocationRestrictedMobileWorkerFilter
+    overrides few methods from GenericFilterFormExportDownloadForm for dynamic fields over form fields
+    """
+    export_user_filter = FormSubmittedByFilter
+    dynamic_filter_class = LocationRestrictedMobileWorkerFilter
+
+    def __init__(self, domain_object, *args, **kwargs):
+        self.domain_object = domain_object
+        self.skip_layout = True
+        super(EmwfFilterFormExport, self).__init__(domain_object, *args, **kwargs)
+
+        self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-3'
+        self.helper.layout = Layout(
+            *super(EmwfFilterFormExport, self).extra_fields
+        )
+
+    def get_form_filter(self, mobile_user_and_group_slugs, can_access_all_locations):
+        """
+        :param mobile_user_and_group_slugs: slug from request like
+        ['g__e80c5e54ab552245457d2546d0cdbb03', 'g__e80c5e54ab552245457d2546d0cdbb04',
+        'u__e80c5e54ab552245457d2546d0cdbb05', 't__1']
+        :param can_access_all_locations: if request user has full organization access permission
+        :return: set of form filters for export
+        :filters:
+        OR
+            for full access:
+                group's user ids via GroupFormSubmittedByFilter,
+                users under user types,
+                users by user_ids,
+                users at locations and their descendants
+            for restrict access:
+                users by user_ids
+                users at locations and their descendants
+        AND
+            datespan filter
+        """
+        form_filters = []
+        if can_access_all_locations:
+            form_filters += filter(None, [
+                self._get_group_filter(mobile_user_and_group_slugs),
+                self._get_user_type_filter(mobile_user_and_group_slugs),
+            ])
+
+        form_filters += filter(None, [
+            self._get_users_filter(mobile_user_and_group_slugs),
+            self._get_locations_filter(mobile_user_and_group_slugs)
+        ])
+
+        form_filters = flatten_non_iterable_list(form_filters)
+        if form_filters:
+            form_filters = [OR(*form_filters)]
+        form_filters.append(self._get_datespan_filter())
+        return form_filters
+
+    def _get_group_filter(self, mobile_user_and_group_slugs):
+        """
+        :param mobile_user_and_group_slugs: ['g__e80c5e54ab552245457d2546d0cdbb03']
+        :return: GroupFormSubmittedByFilter filter which filters for users for selected groups
+        """
+        group_ids = self._get_group_ids(mobile_user_and_group_slugs)
+        if group_ids:
+            return GroupFormSubmittedByFilter(group_ids)
+
+    def _get_user_type_filter(self, mobile_user_and_group_slugs):
+        """
+        :param mobile_user_and_group_slugs: ['t__0', 't__1']
+        :return: FormSubmittedByFilter with user_ids for selected user types
+        """
+        user_types = self._get_es_user_types(mobile_user_and_group_slugs)
+        if user_types:
+            form_filters = []
+            if HQUserType.REGISTERED in user_types:
+                form_filters.append(UserTypeFilter(self._USER_MOBILE))
+            user_ids = self.get_user_ids_for_user_types(
+                admin=HQUserType.ADMIN in user_types,
+                unknown=HQUserType.UNKNOWN in user_types,
+                demo=HQUserType.DEMO_USER in user_types,
+                commtrack=False,
+            )
+            form_filters.append(FormSubmittedByFilter(user_ids))
+            return form_filters
 
     def get_edit_url(self, export):
         from corehq.apps.export.views import EditNewCustomFormExportView
         return reverse(EditNewCustomFormExportView.urlname,
                        args=(self.domain_object.name, export._id))
-
-    def get_form_filter(self):
-        return filter(None, [
-            self._get_datespan_filter(),
-            self._get_group_filter(),
-            self._get_user_filter()
-        ])
 
     def _get_datespan_filter(self):
         datespan = self._get_datespan()
@@ -420,18 +598,8 @@ class FilterFormESExportDownloadForm(GenericFilterFormExportDownloadForm):
             datespan.set_timezone(self.timezone)
             return ReceivedOnRangeFilter(gte=datespan.startdate, lt=datespan.enddate + timedelta(days=1))
 
-    def _get_group_filter(self):
-        group = self.cleaned_data['group']
-        if group:
-            return GroupFormSubmittedByFilter(group)
-
-    def _get_user_filter(self):
-        group = self.cleaned_data['group']
-        if not group:
-            return UserTypeFilter(self._get_es_user_types())
-
     def get_multimedia_task_kwargs(self, export, download_id):
-        kwargs = super(FilterFormESExportDownloadForm, self).get_multimedia_task_kwargs(export, download_id)
+        kwargs = super(EmwfFilterFormExport, self).get_multimedia_task_kwargs(export, download_id)
         kwargs['export_is_legacy'] = False
         return kwargs
 
@@ -461,7 +629,10 @@ class FilterCaseCouchExportDownloadForm(GenericFilterCaseExportDownloadForm):
                                     groups=case_sharing_groups)
 
 
-class FilterCaseESExportDownloadForm(GenericFilterCaseExportDownloadForm):
+class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, GenericFilterCaseExportDownloadForm):
+    export_user_filter = OwnerFilter
+    dynamic_filter_class = CaseListFilter
+
     _export_type = 'case'
 
     date_range = forms.CharField(
@@ -473,15 +644,20 @@ class FilterCaseESExportDownloadForm(GenericFilterCaseExportDownloadForm):
 
     def __init__(self, domain_object, timezone, *args, **kwargs):
         self.timezone = timezone
+        self.skip_layout = True
         super(FilterCaseESExportDownloadForm, self).__init__(domain_object, timezone, *args, **kwargs)
 
+        self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-3'
         # update date_range filter's initial values to span the entirety of
         # the domain's submission range
         default_datespan = datespan_from_beginning(self.domain_object, self.timezone)
         self.fields['date_range'].widget = DateRangePickerWidget(
             default_datespan=default_datespan
         )
-
+        self.helper.layout = Layout(
+            *self.extra_fields
+        )
 
     def get_edit_url(self, export):
         from corehq.apps.export.views import EditNewCustomCaseExportView
@@ -501,29 +677,90 @@ class FilterCaseESExportDownloadForm(GenericFilterCaseExportDownloadForm):
             datespan.set_timezone(self.timezone)
             return ModifiedOnRangeFilter(gte=datespan.startdate, lt=datespan.enddate + timedelta(days=1))
 
-    def get_case_filter(self):
-        group = self._get_group()
-        if group:
-            user_ids = set(group.get_static_user_ids())
-            case_filter = [OR(
-                OwnerFilter(group._id),
-                OwnerFilter(user_ids),
-                LastModifiedByFilter(user_ids)
-            )]
+    def get_case_filter(self, mobile_user_and_group_slugs, can_access_all_locations):
+        """
+        Taking reference from CaseListMixin allow filters depending on locations access
+        :param mobile_user_and_group_slugs: ['g__e80c5e54ab552245457d2546d0cdbb03', 't__0', 't__1']
+        :param can_access_all_locations: if request user has full organization access permission
+        :return: set of filters
+        """
+        if can_access_all_locations and self.dynamic_filter_class.show_all_data(mobile_user_and_group_slugs):
+            # if all data then just filter by date
+            case_filter = []
+        elif can_access_all_locations and self.dynamic_filter_class.show_project_data(mobile_user_and_group_slugs):
+            # show projects data except user_ids for user types excluded
+            user_types = self.dynamic_filter_class.selected_user_types(mobile_user_and_group_slugs)
+            ids_to_exclude = self.get_user_ids_for_user_types(
+                admin=HQUserType.ADMIN not in user_types,
+                unknown=HQUserType.UNKNOWN not in user_types,
+                demo=HQUserType.DEMO_USER not in user_types,
+                # this should be true since we are excluding
+                commtrack=True,
+            )
+            case_filter = [NOT(OwnerFilter(ids_to_exclude))]
         else:
-            case_sharing_groups = [g.get_id for g in
-                                   Group.get_case_sharing_groups(self.domain_object.name)]
-            case_filter = [OR(
-                OwnerTypeFilter(self._get_es_user_types()),
-                OwnerFilter(case_sharing_groups),
-                LastModifiedByFilter(case_sharing_groups)
-            )]
+            case_filter = self._get_filters_from_slugs(mobile_user_and_group_slugs, can_access_all_locations)
 
         date_filter = self._get_datespan_filter()
         if date_filter:
             case_filter.append(date_filter)
 
         return case_filter
+
+    def _get_filters_from_slugs(self, mobile_user_and_group_slugs, can_access_all_locations):
+        """
+        for full organization access:
+            for selected groups return group ids and groups user ids otherwise fetches case sharing groups and
+            locations ids
+        for restricted access:
+            fetches case sharing location ids
+        :return: set of filters using OwnerFilter and LastModifiedByFilter along with group independent filters
+        """
+        group_ids = None
+
+        if can_access_all_locations:
+            group_ids = self._get_group_ids(mobile_user_and_group_slugs)
+
+        if group_ids:
+            groups_static_user_ids = Group.get_static_user_ids_for_groups(group_ids)
+            groups_static_user_ids = flatten_non_iterable_list(groups_static_user_ids)
+            owner_filter_ids = group_ids + groups_static_user_ids
+            last_modified_filter_ids = groups_static_user_ids
+        else:
+            if can_access_all_locations:
+                # case sharing groups returns case sharing groups and locations wrapped as Group
+                case_sharing_ids = [g.get_id for g in
+                                    Group.get_case_sharing_groups(self.domain_object.name)]
+            else:
+                case_sharing_ids = SQLLocation.get_case_sharing_locations_ids(self.domain_object.name)
+            owner_filter_ids = case_sharing_ids
+            last_modified_filter_ids = case_sharing_ids
+
+        return [OR(
+            OwnerFilter(owner_filter_ids),
+            LastModifiedByFilter(last_modified_filter_ids),
+            *self._get_group_independent_filters(mobile_user_and_group_slugs, can_access_all_locations)
+        )]
+
+    def _get_group_independent_filters(self, mobile_user_and_group_slugs, can_access_all_locations):
+        # filters for location and users for both and user type in case of full access
+        if can_access_all_locations:
+            user_types = self.dynamic_filter_class.selected_user_types(mobile_user_and_group_slugs)
+            ids_to_include = self.get_user_ids_for_user_types(
+                admin=HQUserType.ADMIN in user_types,
+                unknown=HQUserType.UNKNOWN in user_types,
+                demo=HQUserType.DEMO_USER in user_types,
+                commtrack=False,
+            )
+            default_filters = [OwnerFilter(ids_to_include)]
+        else:
+            default_filters = []
+        # filters for cases owned by users at locations and locations itself
+        default_filters.append(self._get_locations_filter(mobile_user_and_group_slugs))
+        default_filters.append(self.export_user_filter(self._get_locations_ids(mobile_user_and_group_slugs)))
+
+        default_filters.append(self._get_users_filter(mobile_user_and_group_slugs))
+        return filter(None, default_filters)
 
     @property
     def extra_fields(self):
