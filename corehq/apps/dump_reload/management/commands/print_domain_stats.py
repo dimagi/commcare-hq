@@ -12,14 +12,17 @@ from corehq.apps.dump_reload.util import get_model_label
 from corehq.apps.hqmedia.models import CommCareMultimedia
 from corehq.apps.users.dbaccessors.all_commcare_users import get_web_user_count
 from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
-from corehq.form_processor.models import XFormInstanceSQL
+from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
 from corehq.sql_db.config import get_sql_db_aliases_in_use
 from corehq.util.couch import get_document_class_by_doc_type
+from corehq.util.markup import shell_red
 
 DOC_TYPE_MAPPING = {
     'xforminstance': 'XFormInstance',
-    'form_processor.XFormInstanceSQL': 'XFormInstance',
-    'form_processor.CommCareCaseSQL': 'CommCareCase',
+    'submissionerrorlog': 'SubmissionErrorLog',
+    'xformduplicate': 'XFormDuplicate',
+    'xformerror': 'XFormError',
+    'xformarchived': 'XFormArchived',
 }
 
 
@@ -52,19 +55,22 @@ class Command(BaseCommand):
             self.output_table(output_rows)
 
     def output_table(self, output_rows):
-        template = "{:<50} | {:<20} | {:<20} | {:<20}\n"
+        template = "{:<50} | {:<20} | {:<20} | {:<20}"
         self._write_output(template, output_rows)
 
     def output_csv(self, output_rows):
         template = "{},{},{},{}\n"
         self._write_output(template, output_rows, with_header_divider=False)
 
-    def _write_output(self, template, output_rows, with_header_divider=True):
+    def _write_output(self, template, output_rows, with_header_divider=True, with_color=True):
         self.stdout.write(template.format('Doc Type', 'Couch', 'SQL', 'ES'))
         if with_header_divider:
             self.stdout.write(template.format('-' * 50, *['-' * 20] * 3))
         for doc_type, couch, sql, es in output_rows:
-            self.stdout.write(template.format(doc_type, couch, sql, es))
+            row_template = template
+            if with_color and es and ((couch and couch != es) or (sql and sql != es)):
+                row_template = shell_red(template)
+            self.stdout.write(row_template.format(doc_type, couch, sql, es))
 
 
 def _get_couchdb_counts(domain):
@@ -106,11 +112,12 @@ def _get_doc_counts_for_couch_db(couch_db, domain):
 def _get_sql_counts(domain):
     counter = Counter()
     for model_class, queryset in get_querysets_to_dump(domain, []):
-        if model_class in (User, XFormInstanceSQL):
-            continue  # ignore Django Users
+        if model_class in (User, XFormInstanceSQL, CommCareCaseSQL):
+            continue  # User is very slow, others we want to break out
         counter[get_model_label(model_class)] += queryset.count()
 
     counter += _get_sql_forms_by_doc_type(domain)
+    counter += _get_sql_cases_by_doc_type(domain)
     return counter
 
 
@@ -150,5 +157,15 @@ def _get_sql_forms_by_doc_type(domain):
 
         where_clause = 'state & {0} = {0}'.format(XFormInstanceSQL.DELETED)
         counter['XFormInstance-Deleted'] += queryset.extra(where=[where_clause]).count()
+
+    return counter
+
+
+def _get_sql_cases_by_doc_type(domain):
+    counter = Counter()
+    for db_alias in get_sql_db_aliases_in_use():
+        queryset = CommCareCaseSQL.objects.using(db_alias).filter(domain=domain)
+        counter['CommCareCase'] += queryset.filter(deleted=False).count()
+        counter['CommCareCase-Deleted'] += queryset.filter(deleted=True).count()
 
     return counter

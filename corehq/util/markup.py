@@ -30,3 +30,12 @@ def mark_up_urls(text):
                 yield escape(chunk)
 
     return mark_safe(''.join(parts()))
+
+
+def _shell_color_template(color_code):
+    def inner(text):
+        return "\033[%sm%s\033[0m" % (color_code, text)
+    return inner
+
+shell_red = _shell_color_template('31')
+shell_green = _shell_color_template('32')
