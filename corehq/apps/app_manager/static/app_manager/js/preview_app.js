@@ -13,6 +13,7 @@ hqDefine('app_manager/js/preview_app.js', function() {
         APP_MANAGER_BODY: '#js-appmanager-body',
         PREVIEW_ACTION_TEXT_SHOW: '.js-preview-action-show',
         PREVIEW_ACTION_TEXT_HIDE: '.js-preview-action-hide',
+        BTN_REFRESH: '.js-preview-refresh',
     };
 
     module.EVENTS = {
@@ -119,7 +120,15 @@ hqDefine('app_manager/js/preview_app.js', function() {
         $(window).on(module.EVENTS.RESIZE, _resizeAppPreview);
         layoutController.utils.setBalancePreviewFn(_resizeAppPreview);
         $('.js-preview-back').click(_private.triggerPreviewEvent.bind(this, 'back'));
-        $('.js-preview-refresh').click(_private.triggerPreviewEvent.bind(this, 'refresh'));
+        $('.js-preview-refresh').click(function() {
+            $(module.SELECTORS.BTN_REFRESH).removeClass('app-out-of-date');
+            _private.triggerPreviewEvent('refresh');
+        });
+        $(document).ajaxComplete(function(e, xhr, options) {
+            if (/edit_form_attr/.test(options.url)) {
+                $(module.SELECTORS.BTN_REFRESH).addClass('app-out-of-date');
+            }
+        });
 
     };
 
