@@ -11,9 +11,10 @@ class Command(BaseCommand):
     args = ''
     help = """Output ALL views in your project in a format helpful for auditcare"""
 
-    option_list = BaseCommand.option_list +\
-                  (make_option('--show-path', action='store_true', dest='show_path', default=False,
-                      help='Show the URL paths, this is for informational purposes only'),)
+    option_list = (
+        make_option('--show-path', action='store_true', dest='show_path', default=False,
+                    help='Show the URL paths, this is for informational purposes only'),
+    )
 
 
     def handle(self, *args, **options):
