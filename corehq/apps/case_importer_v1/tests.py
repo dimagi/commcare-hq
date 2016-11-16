@@ -26,7 +26,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from .const import ImportErrors
 
 
-class MockExcelFile(object):
+class ExcelFileFake(object):
     """
     Provides the minimal API of ExcelFile used by the importer
     """
@@ -48,10 +48,15 @@ class MockExcelFile(object):
     def get_header_columns(self):
         return self.header_columns
 
-    def get_num_rows(self):
+    @property
+    def max_row(self):
         return self.num_rows
 
-    def get_row(self, index):
+    def iter_rows(self):
+        for i in range(self.max_row):
+            yield self._get_row(i)
+
+    def _get_row(self, index):
         return self.row_generator(self, index)
 
 
@@ -134,7 +139,7 @@ class ImporterTest(TestCase):
     @run_with_all_backends
     def testImportBasic(self):
         config = self._config(self.default_headers)
-        file = MockExcelFile(header_columns=self.default_headers, num_rows=5)
+        file = ExcelFileFake(header_columns=self.default_headers, num_rows=5)
         res = do_import(file, config, self.domain)
         self.assertEqual(5, res['created_count'])
         self.assertEqual(0, res['match_count'])
@@ -156,7 +161,7 @@ class ImporterTest(TestCase):
     @run_with_all_backends
     def testImportNamedColumns(self):
         config = self._config(self.default_headers, named_columns=True)
-        file = MockExcelFile(header_columns=self.default_headers, num_rows=5)
+        file = ExcelFileFake(header_columns=self.default_headers, num_rows=5)
         res = do_import(file, config, self.domain)
         # we create 1 less since we knock off the header column
         self.assertEqual(4, res['created_count'])
@@ -166,7 +171,7 @@ class ImporterTest(TestCase):
     def testImportTrailingWhitespace(self):
         cols = ['case_id', 'age', u'sex\xa0', 'location']
         config = self._config(cols, named_columns=True)
-        file = MockExcelFile(header_columns=cols, num_rows=2)
+        file = ExcelFileFake(header_columns=cols, num_rows=2)
         res = do_import(file, config, self.domain)
         # we create 1 less since we knock off the header column
         self.assertEqual(1, res['created_count'])
@@ -185,7 +190,7 @@ class ImporterTest(TestCase):
         self.assertEqual(1, len(self.accessor.get_case_ids_in_domain()))
 
         config = self._config(self.default_headers)
-        file = MockExcelFile(
+        file = ExcelFileFake(
             header_columns=self.default_headers,
             num_rows=3,
             row_generator=id_match_generator(case.case_id)
@@ -213,7 +218,7 @@ class ImporterTest(TestCase):
         }))
         self.assertEqual(1, len(self.accessor.get_case_ids_in_domain()))
         config = self._config(self.default_headers)
-        file = MockExcelFile(header_columns=self.default_headers, num_rows=3,
+        file = ExcelFileFake(header_columns=self.default_headers, num_rows=3,
                              row_generator=id_match_generator(case.case_id))
         res = do_import(file, config, self.domain)
         # because the type is wrong these shouldn't match
@@ -229,7 +234,7 @@ class ImporterTest(TestCase):
         }))
         self.assertEqual(0, len(self.accessor.get_case_ids_in_domain()))
         config = self._config(self.default_headers)
-        file = MockExcelFile(
+        file = ExcelFileFake(
             header_columns=self.default_headers,
             num_rows=3,
             row_generator=id_match_generator(case.case_id)
@@ -255,7 +260,7 @@ class ImporterTest(TestCase):
 
         headers = ['external_id', 'age', 'sex', 'location']
         config = self._config(headers, search_field='external_id')
-        file = MockExcelFile(
+        file = ExcelFileFake(
             header_columns=headers,
             num_rows=3,
             row_generator=id_match_generator(external_id)
@@ -273,7 +278,7 @@ class ImporterTest(TestCase):
         headers = ['id_column', 'age', 'sex', 'location']
         external_id = 'external-id-test'
         config = self._config(headers[1:], search_column='id_column', search_field='external_id')
-        file = MockExcelFile(
+        file = ExcelFileFake(
             header_columns=headers,
             num_rows=2,
             row_generator=id_match_generator(external_id)
@@ -289,7 +294,7 @@ class ImporterTest(TestCase):
 
     def testNoCreateNew(self):
         config = self._config(self.default_headers, create_new_cases=False)
-        file = MockExcelFile(header_columns=self.default_headers, num_rows=5)
+        file = ExcelFileFake(header_columns=self.default_headers, num_rows=5)
         res = do_import(file, config, self.domain)
 
         # no matching and no create new set - should do nothing
@@ -300,7 +305,7 @@ class ImporterTest(TestCase):
     def testBlankRows(self):
         # don't create new cases for rows left blank
         config = self._config(self.default_headers, create_new_cases=True)
-        file = MockExcelFile(
+        file = ExcelFileFake(
             header_columns=self.default_headers,
             num_rows=5,
             row_generator=blank_row_generator
@@ -314,7 +319,7 @@ class ImporterTest(TestCase):
 
     def testBasicChunking(self):
         config = self._config(self.default_headers)
-        file = MockExcelFile(header_columns=self.default_headers, num_rows=5)
+        file = ExcelFileFake(header_columns=self.default_headers, num_rows=5)
         res = do_import(file, config, self.domain, chunksize=2)
         # 5 cases in chunks of 2 = 3 chunks
         self.assertEqual(3, res['num_chunks'])
@@ -328,7 +333,7 @@ class ImporterTest(TestCase):
 
         headers = ['external_id', 'age', 'sex', 'location']
         config = self._config(headers, search_field='external_id')
-        file = MockExcelFile(header_columns=headers, num_rows=3,
+        file = ExcelFileFake(header_columns=headers, num_rows=3,
                              row_generator=id_match_generator(external_id))
 
         # the first one should create the case, and the remaining two should update it
@@ -354,10 +359,10 @@ class ImporterTest(TestCase):
         [parent_case] = self.factory.create_or_update_case(CaseStructure(attrs={'create': True}))
         self.assertEqual(1, len(self.accessor.get_case_ids_in_domain()))
 
-        file = MockExcelFile(header_columns=headers,
+        file = ExcelFileFake(header_columns=headers,
                              num_rows=rows,
                              row_generator=id_match_generator(parent_case.case_id))
-        file_missing = MockExcelFile(header_columns=headers,
+        file_missing = ExcelFileFake(header_columns=headers,
                                      num_rows=rows)
 
         # Should successfully match on `rows` cases
@@ -375,7 +380,7 @@ class ImporterTest(TestCase):
         config = self._config(rows[0])
         case_rows = rows[1:]
         num_rows = len(case_rows)
-        xls_file = MockExcelFile(
+        xls_file = ExcelFileFake(
             header_columns=rows[0],
             num_rows=num_rows,
             row_generator=lambda _, i: case_rows[i],
@@ -424,7 +429,7 @@ class ImporterTest(TestCase):
 
     def _typeTest(self, type_fields, error_message):
         config = self._config(self.default_headers, type_fields=type_fields)
-        file = MockExcelFile(header_columns=self.default_headers, num_rows=3)
+        file = ExcelFileFake(header_columns=self.default_headers, num_rows=3)
         res = do_import(file, config, self.domain)
         self.assertIn(self.default_headers[1], res['errors'][error_message])
         self.assertEqual(res['errors'][error_message][self.default_headers[1]]['rows'], [1, 2, 3])
