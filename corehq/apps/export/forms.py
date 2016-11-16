@@ -265,14 +265,17 @@ class BaseFilterExportDownloadForm(forms.Form):
         )
         return users_matching_filter(self.domain_object.name, user_filters)
 
-    def _get_es_user_types(self):
+    def _get_selected_user_types(self, mobile_user_and_groups_slugs=None):
+        return self.cleaned_data['user_types']
+
+    def _get_es_user_types(self, mobile_user_and_groups_slugs=None):
         """
         Return a list of elastic search user types (each item in the return list
         is in corehq.pillows.utils.USER_TYPES) corresponding to the selected
         export user types.
         """
         es_user_types = []
-        export_user_types = self.cleaned_data['user_types']
+        export_user_types = self._get_selected_user_types(mobile_user_and_groups_slugs)
         export_to_es_user_types_map = self._EXPORT_TO_ES_USER_TYPES_MAP
         for type_ in export_user_types:
             es_user_types.extend(export_to_es_user_types_map[type_])
@@ -349,7 +352,7 @@ class GenericFilterFormExportDownloadForm(BaseFilterExportDownloadForm):
     def get_form_filter(self):
         raise NotImplementedError
 
-    def get_multimedia_task_kwargs(self, export, download_id):
+    def get_multimedia_task_kwargs(self, export, download_id, mobile_user_and_group_slugs=None):
         """These are the kwargs for the Multimedia Download task,
         specific only to forms.
         """
@@ -362,7 +365,7 @@ class GenericFilterFormExportDownloadForm(BaseFilterExportDownloadForm):
             'xmlns': export.xmlns if hasattr(export, 'xmlns') else '',
             'export_id': export.get_id,
             'zip_name': 'multimedia-{}'.format(unidecode(export.name)),
-            'user_types': self._get_es_user_types(),
+            'user_types': self._get_es_user_types(mobile_user_and_group_slugs),
             'group': self.data['group'],
             'download_id': download_id
         }
@@ -407,7 +410,7 @@ class FilterFormCouchExportDownloadForm(GenericFilterFormExportDownloadForm):
             return SerializableFunction(datespan_export_filter,
                                         datespan=datespan)
 
-    def get_multimedia_task_kwargs(self, export, download_id):
+    def get_multimedia_task_kwargs(self, export, download_id, mobile_user_and_group_slugs=None):
         kwargs = super(FilterFormCouchExportDownloadForm, self).get_multimedia_task_kwargs(export, download_id)
         kwargs['export_is_legacy'] = True
         return kwargs
@@ -460,7 +463,7 @@ class EmwfFilterExportMixin(object):
         """
         return self.dynamic_filter_class.selected_group_ids(mobile_user_and_group_slugs)
 
-    def _get_es_user_types(self, mobile_user_and_group_slugs):
+    def _get_selected_es_user_types(self, mobile_user_and_group_slugs):
         """
         :param: ['t__0', 't__1']
         :return: int values corresponding to user types as in HQUserType
@@ -568,12 +571,28 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloa
         if group_ids:
             return GroupFormSubmittedByFilter(group_ids)
 
+    def _get_selected_user_types(self, mobile_user_and_group_slugs):
+        return self._get_mapped_user_types(self._get_selected_es_user_types(mobile_user_and_group_slugs))
+
+    def _get_mapped_user_types(self, selected_user_types):
+        user_types = []
+        if HQUserType.REGISTERED in selected_user_types:
+            user_types.append(BaseFilterExportDownloadForm._USER_MOBILE)
+        if HQUserType.ADMIN in selected_user_types:
+            user_types.append(BaseFilterExportDownloadForm._USER_ADMIN)
+        if HQUserType.UNKNOWN in selected_user_types:
+            user_types.append(BaseFilterExportDownloadForm._USER_UNKNOWN)
+        if HQUserType.DEMO_USER in selected_user_types:
+            user_types.append(BaseFilterExportDownloadForm._USER_DEMO)
+
+        return user_types
+
     def _get_user_type_filter(self, mobile_user_and_group_slugs):
         """
         :param mobile_user_and_group_slugs: ['t__0', 't__1']
         :return: FormSubmittedByFilter with user_ids for selected user types
         """
-        user_types = self._get_es_user_types(mobile_user_and_group_slugs)
+        user_types = self._get_selected_es_user_types(mobile_user_and_group_slugs)
         if user_types:
             form_filters = []
             if HQUserType.REGISTERED in user_types:
@@ -598,8 +617,8 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloa
             datespan.set_timezone(self.timezone)
             return ReceivedOnRangeFilter(gte=datespan.startdate, lt=datespan.enddate + timedelta(days=1))
 
-    def get_multimedia_task_kwargs(self, export, download_id):
-        kwargs = super(EmwfFilterFormExport, self).get_multimedia_task_kwargs(export, download_id)
+    def get_multimedia_task_kwargs(self, export, download_id, mobile_user_and_group_slugs):
+        kwargs = super(EmwfFilterFormExport, self).get_multimedia_task_kwargs(export, download_id, mobile_user_and_group_slugs)
         kwargs['export_is_legacy'] = False
         return kwargs
 

@@ -845,9 +845,8 @@ class DownloadFormExportView(BaseDownloadExportView):
                 )
             download = DownloadBase()
             export_object = self._get_export(self.domain, export_specs[0]['export_id'])
-            task_kwargs = filter_form.get_multimedia_task_kwargs(
-                export_object, download.download_id
-            )
+            task_kwargs = self.get_multimedia_task_kwargs(in_data, filter_form, export_object,
+                                                          download.download_id)
             from corehq.apps.reports.tasks import build_form_multimedia_zip
             download.set_task(build_form_multimedia_zip.delay(**task_kwargs))
         except Exception as e:
@@ -855,6 +854,9 @@ class DownloadFormExportView(BaseDownloadExportView):
         return format_angular_success({
             'download_id': download.download_id,
         })
+
+    def get_multimedia_task_kwargs(self, in_data, filter_form, export_object, download_id):
+        return filter_form.get_multimedia_task_kwargs(export_object, download_id)
 
     def _get_filter_form(self, filter_form_data):
         filter_form = self.filter_form_class(
@@ -1782,6 +1784,11 @@ class DownloadNewFormExportView(GenericDownloadNewExportMixin, DownloadFormExpor
             self.request.domain, self.request.couch_user
         ))
         return FormSubmittedByFilter(accessible_user_ids)
+
+    def get_multimedia_task_kwargs(self, in_data, filter_form, export_object, download_id):
+        filter_slug = in_data['form_data']['emw']
+        mobile_user_and_group_slugs = self._get_mobile_user_and_group_slugs(filter_slug)
+        return filter_form.get_multimedia_task_kwargs(export_object, download_id, mobile_user_and_group_slugs)
 
 
 class BulkDownloadNewFormExportView(DownloadNewFormExportView):
