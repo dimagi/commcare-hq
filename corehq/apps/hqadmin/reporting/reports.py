@@ -909,7 +909,7 @@ def get_general_stats_data(domains, histo_type, datespan, interval="day",
     additional_filters = []
     domains_for_es = None
     if not (len(domains) == 1 and domains[0]['names'] is None):
-        domains_for_es = [d for sublist in domains for d in sublist['names']]
+        domains_for_es = [d for sublist in domains for d in sublist.get('names', [])]
     if histo_type == 'forms':
         if user_type_mobile is not None:
             additional_filters.append({
@@ -947,7 +947,7 @@ def get_general_stats_data(domains, histo_type, datespan, interval="day",
                 histo_type,
                 datespan,
                 filters=additional_filters,
-                domain_list=domain_data["names"],
+                domain_list=domain_data.get("names", []),
             ) for domain_data in domains
         } if is_cumulative else {"All Domains": 0},
         'startdate': datespan.startdate_key_utc,
