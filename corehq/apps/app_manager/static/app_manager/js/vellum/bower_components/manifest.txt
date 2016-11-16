@@ -15,7 +15,6 @@
 ├── jsdiff#2.2.2
 ├─┬ jstree#3.3.3
 │ └── jquery#3.1.1
-├── jstree-actions#0.1.0 extraneous
 ├── langcodes#b4ea78bae6
 ├── markdown-it#7.0.1 (latest is 8.1.0)
 ├── require-css#0.1.8
@@ -25,6 +24,5 @@
 ├── requirejs-text#2.0.15
 ├── requirejs-tpl#a3ca1e0e7f
 ├── underscore#1.8.3
-├── when#2.8.0 extraneous (latest is 3.7.7)
 ├── xpath#0.0.3
 └── xrayquire#ca32cdec50
