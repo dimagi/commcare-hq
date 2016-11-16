@@ -78,6 +78,9 @@ class JsonFieldSerializerMixin(object):
 
 class XFormInstanceSQLRawDocSerializer(JsonFieldSerializerMixin, DeletableModelSerializer):
     state = XFormStateField()
+    history = XFormOperationSQLSerializer(many=True, read_only=True)
+    form = serializers.JSONField(source='form_data')
+    external_blobs = serializers.JSONField(source='serialized_attachments')
 
     class Meta:
         model = XFormInstanceSQL

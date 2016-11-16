@@ -166,3 +166,12 @@ def _get_config():
 
 
 partition_config = _get_config()
+
+
+def get_sql_db_aliases_in_use():
+    if settings.USE_PARTITIONED_DATABASE:
+        using = partition_config.get_form_processing_dbs()
+    else:
+        using = [None]  # use the default database
+
+    return using
