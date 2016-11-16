@@ -93,7 +93,7 @@ class PillowCheckpointEventHandler(ChangeEventHandler):
     def should_update_checkpoint(self, context):
         frequency_hit = context.changes_seen % self.checkpoint_frequency == 0
         time_hit = (datetime.utcnow() - self.last_update).total_seconds() >= self.max_checkpoint_delay
-        return context.do_set_checkpoint and frequency_hit or time_hit
+        return context.do_set_checkpoint and (frequency_hit or time_hit)
 
     def fire_change_processed(self, change, context):
         if self.should_update_checkpoint(context):
