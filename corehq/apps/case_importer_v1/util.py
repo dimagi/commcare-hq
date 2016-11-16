@@ -1,5 +1,5 @@
 import json
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from datetime import date
 
 import xlrd
@@ -33,54 +33,28 @@ from couchexport.export import SCALAR_NEVER_WAS
 RESERVED_FIELDS = ('type',)
 EXTERNAL_ID = 'external_id'
 
-class ImporterConfig(object):
+
+class ImporterConfig(namedtuple('ImporterConfig', [
+    'couch_user_id',
+    'excel_fields',
+    'case_fields',
+    'custom_fields',
+    'type_fields',
+    'search_column',
+    'key_column',
+    'value_column',
+    'named_columns',
+    'case_type',
+    'search_field',
+    'create_new_cases',
+])):
     """
     Class for storing config values from the POST in a format that can
     be pickled and passed to celery tasks.
     """
 
-    def __init__(self,
-        couch_user_id=None,
-        excel_fields=None,
-        case_fields=None,
-        custom_fields=None,
-        type_fields=None,
-        search_column=None,
-        key_column=None,
-        value_column=None,
-        named_columns=None,
-        case_type=None,
-        search_field=None,
-        create_new_cases=None
-    ):
-        self.couch_user_id=couch_user_id
-        self.excel_fields=excel_fields
-        self.case_fields=case_fields
-        self.custom_fields=custom_fields
-        self.type_fields=type_fields
-        self.search_column=search_column
-        self.key_column=key_column
-        self.value_column=value_column
-        self.named_columns=named_columns
-        self.case_type=case_type
-        self.search_field=search_field
-        self.create_new_cases=create_new_cases
-
     def to_dict(self):
-        return {
-            'couch_user_id': self.couch_user_id,
-            'excel_fields': self.excel_fields,
-            'case_fields': self.case_fields,
-            'custom_fields': self.custom_fields,
-            'type_fields': self.type_fields,
-            'search_column': self.search_column,
-            'key_column': self.key_column,
-            'value_column': self.value_column,
-            'named_columns': self.named_columns,
-            'case_type': self.case_type,
-            'search_field': self.search_field,
-            'create_new_cases': self.create_new_cases,
-        }
+        return self._asdict()
 
     def to_json(self):
         return json.dumps(self.to_dict())
@@ -95,7 +69,7 @@ class ImporterConfig(object):
 
     @classmethod
     def from_request(cls, request):
-        return ImporterConfig(
+        return cls(
             couch_user_id=request.couch_user._id,
             excel_fields=request.POST.getlist('excel_field[]'),
             case_fields=request.POST.getlist('case_field[]'),
@@ -108,7 +82,6 @@ class ImporterConfig(object):
             case_type=request.POST['case_type'],
             search_field=request.POST['search_field'],
             create_new_cases=request.POST['create_new_cases'] == 'True',
-
         )
 
 
