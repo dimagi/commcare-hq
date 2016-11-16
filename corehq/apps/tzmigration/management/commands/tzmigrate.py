@@ -26,9 +26,8 @@ class Command(BaseCommand):
 
     @staticmethod
     def require_only_option(sole_option, options):
-        base_options = {option.dest for option in BaseCommand.option_list}
         assert all(not value for key, value in options.items()
-                   if key not in base_options and key != sole_option)
+                   if key != sole_option)
 
     def handle(self, domain, **options):
         if should_use_sql_backend(domain):
