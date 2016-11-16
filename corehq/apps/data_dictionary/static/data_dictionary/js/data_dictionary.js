@@ -48,7 +48,7 @@
         }, this);
 
         this.goToCaseType = function (caseType) {
-            self.activeCaseType(caseType);
+            self.activeCaseType(caseType.name());
         };
     };
 

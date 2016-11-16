@@ -70,17 +70,6 @@ class DataDictionaryView(BaseDomainView):
         return main_context
 
     @property
-    def page_context(self):
-        page_context = super(DataDictionaryView, self).page_context
-        case_types = [
-            c.name for c in CaseType.objects.filter(domain=self.request.domain).all()
-        ]
-        page_context.update({
-            'case_types': case_types,
-        })
-        return page_context
-
-    @property
     @memoized
     def section_url(self):
         return reverse(DataDictionaryView.urlname, args=[self.domain])

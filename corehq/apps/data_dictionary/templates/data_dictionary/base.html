@@ -11,10 +11,7 @@
 {% block js-inline %}
 <script>
     $(function () {
-        var $table = $('#data-dictionary-table');
-        if ($table.length > 0) {
-            $table.initializeDataDictionary("{% url 'data_dictionary_json' domain%}");
-        }
+        $('#hq-content').parent().initializeDataDictionary("{% url 'data_dictionary_json' domain%}");
     });
 </script>
 {% endblock %}
@@ -28,14 +25,11 @@
 {% endblock %}
 
 {% block page_navigation %}
-
     <h2 class="text-hq-nav-header">{% trans "Data Dictionary" %}</h2>
-    <ul class="nav nav-hq-sidebar">
-        {% for case_type in case_types %}
-        <li>
-            <a href="#">{{ case_type }}</a>
+    <ul class="nav nav-hq-sidebar" data-bind="foreach: caseTypes">
+        <li data-bind="css: { active: $data.name() == $root.activeCaseType() }">
+            <a href="#" data-bind="text: $data.name(), click: $root.goToCaseType"></a>
         </li>
-        {% endfor %}
     </ul>
 {% endblock %}
 
