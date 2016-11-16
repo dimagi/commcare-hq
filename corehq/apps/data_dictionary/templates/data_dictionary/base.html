@@ -1,0 +1,37 @@
+{% extends "style/two_column.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block title %}{% trans "Data Dictionary" %}{% endblock %}\
+
+{% block page_breadcrumbs %}
+    <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
+        <li>
+            <a href="{% url 'data_dictionary' domain %}"><strong>{% trans "Data Dictionary" %}</strong></a>
+        </li>
+    </ol>
+{% endblock %}
+
+{% block page_navigation %}
+
+    <h2 class="text-hq-nav-header">{% trans "Data Dictionary" %}</h2>
+    <ul class="nav nav-hq-sidebar">
+        {% for case_type in case_types %}
+        <li>
+            <a href="#">{{ case_type }}</a>
+        </li>
+        {% endfor %}
+    </ul>
+{% endblock %}
+
+{% block page_content %}
+    <table class="table">
+        <thead>
+            <th>Case Property</th>
+            <th>Type</th>
+            <th>Description</th>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+{% endblock %}
