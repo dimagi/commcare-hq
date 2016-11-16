@@ -71,7 +71,7 @@ class Command(BaseCommand):
             row_template = template
             couch_dff = couch_count and couch_count != es_count
             sql_diff = sql_count and sql_count != es_count
-            if with_color and es and (couch_dff or sql_diff):
+            if with_color and es_count and (couch_dff or sql_diff):
                 row_template = shell_red(template)
             self.stdout.write(row_template.format(doc_type, couch_count, sql_count, es_count))
 
