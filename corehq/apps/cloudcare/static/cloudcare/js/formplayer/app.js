@@ -381,6 +381,10 @@ FormplayerFrontend.on('clearProgress', function() {
 });
 
 
+FormplayerFrontend.on('setVersionInfo', function(versionInfo) {
+    $("#version-info").text(versionInfo || '');
+});
+
 /**
  * refreshApplication
  *

@@ -28,10 +28,14 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
     var clearFormMiddleware = function(name) {
         FormplayerFrontend.trigger("clearForm");
     };
+    var clearVersionInfo = function(name) {
+        FormplayerFrontend.trigger('setVersionInfo', '');
+    };
 
     SessionNavigate.Middleware.middlewares = [
         logRouteMiddleware,
         backButtonShowHideMiddleware,
         clearFormMiddleware,
+        clearVersionInfo,
     ];
 });
