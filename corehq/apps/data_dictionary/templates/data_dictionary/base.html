@@ -4,6 +4,21 @@
 
 {% block title %}{% trans "Data Dictionary" %}{% endblock %}\
 
+{% block js %}
+<script src="{% static 'data_dictionary/js/data_dictionary.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}
+<script>
+    $(function () {
+        var $table = $('#data-dictionary-table');
+        if ($table.length > 0) {
+            $table.initializeDataDictionary("{% url 'data_dictionary_json' domain%}");
+        }
+    });
+</script>
+{% endblock %}
+
 {% block page_breadcrumbs %}
     <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
         <li>
@@ -25,13 +40,18 @@
 {% endblock %}
 
 {% block page_content %}
-    <table class="table">
+    <table id="data-dictionary-table" class="table">
         <thead>
             <th>Case Property</th>
             <th>Type</th>
             <th>Description</th>
         </thead>
-        <tbody>
+        <tbody data-bind="foreach: activeCaseTypeData">
+            <tr>
+                <td data-bind="text: name"></td>
+                <td data-bind="text: type"></td>
+                <td data-bind="text: description"></td>
+            </tr>
         </tbody>
     </table>
 {% endblock %}

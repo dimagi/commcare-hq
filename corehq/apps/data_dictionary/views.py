@@ -1,6 +1,7 @@
 import json
 
 from django.core.urlresolvers import reverse
+from django.db.models.query import Prefetch
 from django.http import JsonResponse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy as _
@@ -11,8 +12,7 @@ from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.data_dictionary import util
-from corehq.apps.data_dictionary.models import CaseProperty
-from corehq.apps.data_dictionary.models import CaseType
+from corehq.apps.data_dictionary.models import CaseType, CaseProperty
 from corehq.tabs.tabclasses import ApplicationsTab
 
 
@@ -27,7 +27,9 @@ def generate_data_dictionary(request, domain):
 @toggles.DATA_DICTIONARY.required_decorator()
 def data_dictionary_json(request, domain, case_type_name=None):
     props = []
-    queryset = CaseType.objects.filter(domain=domain).prefetch_related('properties')
+    queryset = CaseType.objects.filter(domain=domain).prefetch_related(
+        Prefetch('properties', queryset=CaseProperty.objects.order_by('name'))
+    )
     if case_type_name:
         queryset = queryset.filter(name=case_type_name)
     for case_type in queryset:
