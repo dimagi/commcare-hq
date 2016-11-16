@@ -327,18 +327,6 @@ FormplayerFrontend.on("sync", function () {
     $.ajax(options);
 });
 
-FormplayerFrontend.on('phone:back:hide', function() {
-    if (FormplayerFrontend.regions.phoneModeNavigation.currentView) {
-        FormplayerFrontend.regions.phoneModeNavigation.currentView.hideBackButton();
-    }
-});
-
-FormplayerFrontend.on('phone:back:show', function() {
-    if (FormplayerFrontend.regions.phoneModeNavigation.currentView) {
-        FormplayerFrontend.regions.phoneModeNavigation.currentView.showBackButton();
-    }
-});
-
 /**
  * retry
  *

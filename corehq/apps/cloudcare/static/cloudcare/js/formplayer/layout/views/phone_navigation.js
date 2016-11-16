@@ -11,7 +11,6 @@ FormplayerFrontend.module("Layout.Views", function (Views, FormplayerFrontend, B
         className: 'formplayer-phone-navigation',
         template: '#formplayer-phone-navigation-template',
         ui: {
-            backButton: '.formplayer-back',
             reloadButton: '.formplayer-reload',
         },
         events: {
@@ -21,19 +20,9 @@ FormplayerFrontend.module("Layout.Views", function (Views, FormplayerFrontend, B
         initialize: function(options) {
             this.appId = options.appId;
         },
-        onBack: function(e) {
-            e.preventDefault();
-            window.history.back();
-        },
         onReload: function(e) {
             e.preventDefault();
             FormplayerFrontend.trigger('refreshApplication', this.appId);
-        },
-        hideBackButton: function() {
-            this.ui.backButton.hide();
-        },
-        showBackButton: function() {
-            this.ui.backButton.show();
         },
     });
 });

@@ -15,13 +15,6 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             return wrappedApi;
         },
     };
-    var backButtonShowHideMiddleware = function(name) {
-        if (name === 'singleApp') {
-            FormplayerFrontend.trigger('phone:back:hide');
-        } else {
-            FormplayerFrontend.trigger('phone:back:show');
-        }
-    };
     var logRouteMiddleware = function(name) {
         window.console.log('User navigated to ' + name);
     };
@@ -34,7 +27,6 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
 
     SessionNavigate.Middleware.middlewares = [
         logRouteMiddleware,
-        backButtonShowHideMiddleware,
         clearFormMiddleware,
         clearVersionInfo,
     ];
