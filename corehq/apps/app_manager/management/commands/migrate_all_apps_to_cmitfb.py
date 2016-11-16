@@ -14,8 +14,21 @@ class Command(BaseCommand):
     '''
 
     def handle(self, *args, **options):
-        ids = AppES().is_build(False).term('vellum_case_management', False) \
-                     .term('doc_type', 'Application').get_ids()
-        for id in ids:
-            call_command('migrate_app_to_cmitfb', id)
-        logger.info('done with migrate_all_apps_to_cmitfb, migrated {} apps'.format(len(ids)))
+        app_query = AppES().is_build(False).term('vellum_case_management', True) \
+                     .term('doc_type', 'Application').source(['domain', '_id'])
+
+        hits = app_query.run().hits
+        logger.info('found {} apps to migrate'.format(len(hits)))
+
+        failures = {}
+        for hit in hits:
+            try:
+                call_command('migrate_app_to_cmitfb', hit['_id'])
+            except Exception:
+                logger.info('migration failed')
+                failures[hit['_id']] = hit['domain']
+
+        for id, domain in failures.iteritems():
+            logger.info('Failed: {} in {}'.format(id, domain))
+        logger.info('Total: {} successes, {} failures'.format(len(hits) - len(failures), len(failures)))
+        logger.info('Done with migrate_all_apps_to_cmitfb')
