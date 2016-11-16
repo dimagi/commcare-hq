@@ -182,7 +182,8 @@ def display_time(submission_time, display=True):
 
 
 def first_domain_for_user(domain):
-    return domain.first_domain_for_user
+    project = Domain.get_by_name(domain)
+    return project.first_domain_for_user
 
 
 def first_form_submission(domain, display=True):
