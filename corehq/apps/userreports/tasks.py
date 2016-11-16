@@ -4,11 +4,17 @@ from celery.task import task
 from couchdbkit import ResourceConflict
 from django.utils.translation import ugettext as _
 from corehq import toggles
+from corehq.apps.userreports.const import UCR_ES_BACKEND, UCR_SQL_BACKEND
 from corehq.apps.userreports.document_stores import get_document_store
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
-from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration, id_is_static
+from corehq.apps.userreports.models import (
+    DataSourceConfiguration, StaticDataSourceConfiguration, id_is_static, ReportConfiguration
+)
+from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.util.context_managers import notify_someone
+from corehq.util.couch import get_document_or_not_found
+from dimagi.utils.couch.pagination import DatatablesParams
 from pillowtop.dao.couch import ID_CHUNK_SIZE
 
 
@@ -20,7 +26,7 @@ def _get_config_by_id(indicator_config_id):
 
 
 def _build_indicators(config, document_store, relevant_ids, resume_helper):
-    adapter = get_indicator_adapter(config, raise_errors=True)
+    adapter = get_indicator_adapter(config, raise_errors=True, can_handle_laboratory=True)
 
     last_id = None
     for doc in document_store.iter_documents(relevant_ids):
@@ -40,7 +46,7 @@ def rebuild_indicators(indicator_config_id, initiated_by=None):
     failure = _('There was an error rebuilding Your UCR table {}.').format(config.table_id)
     send = toggles.SEND_UCR_REBUILD_INFO.enabled(initiated_by)
     with notify_someone(initiated_by, success_message=success, error_message=failure, send=send):
-        adapter = get_indicator_adapter(config)
+        adapter = get_indicator_adapter(config, can_handle_laboratory=True)
         if not id_is_static(indicator_config_id):
             # Save the start time now in case anything goes wrong. This way we'll be
             # able to see if the rebuild started a long time ago without finishing.
@@ -97,3 +103,46 @@ def _iteratively_build_table(config, last_id=None, resume_helper=None):
             if config.meta.build.initiated == current_config.meta.build.initiated:
                 current_config.meta.build.finished = True
                 current_config.save()
+
+
+@task(queue='ucr-queue')
+def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column, sort_order, params):
+    from corehq.apps.userreports.laboratory.experiment import UCRExperiment
+
+    def _run_report(backend_to_use):
+        data_source = ReportFactory.from_spec(spec, include_prefilters=True)
+        data_source.override_backend_id(backend_to_use)
+        data_source.set_filter_values(filter_values)
+        if sort_column:
+            data_source.set_order_by(
+                [(data_source.top_level_columns[int(sort_column)].column_id, sort_order.upper())]
+            )
+
+        datatables_params = DatatablesParams.from_request_dict(params)
+        page = list(data_source.get_data(start=datatables_params.start, limit=datatables_params.count))
+        total_records = data_source.get_total_records()
+        json_response = {
+            'aaData': page,
+            "iTotalRecords": total_records,
+        }
+        # these are to be checked after ES supports total rows
+        # total_row = data_source.get_total_row() if data_source.has_total_row else None
+        # if total_row is not None:
+        #     json_response["total_row"] = total_row
+        return json_response
+
+    spec = get_document_or_not_found(ReportConfiguration, domain, report_config_id)
+    experiment_context = {
+        "domain": domain,
+        "report_config_id": report_config_id,
+        "filter_values": filter_values,
+    }
+    experiment = UCRExperiment(name="UCR DB Experiment", context=experiment_context)
+    with experiment.control() as c:
+        c.record(_run_report(UCR_SQL_BACKEND))
+
+    with experiment.candidate() as c:
+        c.record(_run_report(UCR_ES_BACKEND))
+
+    objects = experiment.run()
+    return objects
