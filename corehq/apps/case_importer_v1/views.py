@@ -81,7 +81,7 @@ def excel_config(request, domain):
         return render_error(request, domain, get_importer_error_message(e))
 
     columns = spreadsheet.get_header_columns()
-    row_count = spreadsheet.get_num_rows()
+    row_count = spreadsheet.max_row
 
     if row_count == 0:
         return render_error(request, domain,
