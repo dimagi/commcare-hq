@@ -101,18 +101,16 @@ class ImporterTest(TestCase):
         super(ImporterTest, self).tearDown()
 
     def _config(self, col_names=None, search_column=None, case_type=None,
-                search_field='case_id', named_columns=False, create_new_cases=True, type_fields=None):
+                search_field='case_id', named_columns=False, create_new_cases=True):
         col_names = col_names or self.default_headers
         case_type = case_type or self.default_case_type
         search_column = search_column or col_names[0]
-        type_fields = type_fields if type_fields is not None else ['plain'] * len(col_names)
         return ImporterConfig(
             couch_user_id=self.couch_user._id,
             case_type=case_type,
             excel_fields=col_names,
             case_fields=[''] * len(col_names),
             custom_fields=col_names,
-            type_fields=type_fields,
             search_column=search_column,
             search_field=search_field,
             named_columns=named_columns,
@@ -426,19 +424,6 @@ class ImporterTest(TestCase):
         self.assertIn(error_message, res['errors'])
         error_column_name = 'owner_id'
         self.assertEqual(res['errors'][error_message][error_column_name]['rows'], [5])
-
-    def _typeTest(self, type_fields, error_message):
-        config = self._config(self.default_headers, type_fields=type_fields)
-        file = ExcelFileFake(header_columns=self.default_headers, num_rows=3)
-        res = do_import(file, config, self.domain)
-        self.assertIn(self.default_headers[1], res['errors'][error_message])
-        self.assertEqual(res['errors'][error_message][self.default_headers[1]]['rows'], [1, 2, 3])
-
-    def testDateError(self):
-        self._typeTest(['plain', 'date', 'plain', 'plain'], ImportErrors.InvalidDate)
-
-    def testIntegerError(self):
-        self._typeTest(['plain', 'integer', 'plain', 'plain'], ImportErrors.InvalidInteger)
 
 
 class ImporterUtilsTest(SimpleTestCase):
