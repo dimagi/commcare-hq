@@ -92,8 +92,7 @@ EntrySingleAnswer = function(question, options) {
 
     self.rawAnswer.subscribe(self.onPreProcess.bind(self));
 
-    var displayOptions = _getDisplayOptions(question);
-    if (options.enableAutoUpdate && ko.utils.unwrapObservable(displayOptions.phoneMode)) {
+    if (options.enableAutoUpdate) {
         self.valueUpdate = 'keyup';
         self.answer.extend({
             rateLimit: {
@@ -516,23 +515,26 @@ function getEntry(question) {
     var options = {};
     var rawStyle;
 
+    var displayOptions = _getDisplayOptions(question);
+    var isPhoneMode = ko.utils.unwrapObservable(displayOptions.phoneMode);
+
     switch (question.datatype()) {
         case Formplayer.Const.STRING:
             rawStyle = question.style ? ko.utils.unwrapObservable(question.style.raw) === 'numeric' : false;
             if (rawStyle) {
-                entry = new PhoneEntry(question, { enableAutoUpdate: true });
+                entry = new PhoneEntry(question, { enableAutoUpdate: isPhoneMode });
             } else {
-                entry = new FreeTextEntry(question, { enableAutoUpdate: true });
+                entry = new FreeTextEntry(question, { enableAutoUpdate: isPhoneMode });
             }
             break;
         case Formplayer.Const.INT:
-            entry = new IntEntry(question, { enableAutoUpdate: true });
+            entry = new IntEntry(question, { enableAutoUpdate: isPhoneMode });
             break;
         case Formplayer.Const.LONGINT:
-            entry = new IntEntry(question, { lengthLimit: 15, enableAutoUpdate: true  });
+            entry = new IntEntry(question, { lengthLimit: 15, enableAutoUpdate: isPhoneMode  });
             break;
         case Formplayer.Const.FLOAT:
-            entry = new FloatEntry(question, { enableAutoUpdate: true });
+            entry = new FloatEntry(question, { enableAutoUpdate: isPhoneMode });
             break;
         case Formplayer.Const.SELECT:
             entry = new SingleSelectEntry(question, {});
