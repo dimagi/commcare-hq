@@ -195,7 +195,11 @@ FormplayerFrontend.on("start", function (options) {
                 model: user,
             })
         );
-        if (user.displayOptions.phoneMode) {
+        if (user.displayOptions.singleAppMode) {
+            appId = options.apps[0]['_id'];
+        }
+
+        if (user.displayOptions.phoneMode && user.displayOptions.singleAppMode) {
             FormplayerFrontend.regions.phoneModeNavigation.show(
                 new FormplayerFrontend.Layout.Views.PhoneNavigation({ appId: appId })
             );
@@ -204,8 +208,6 @@ FormplayerFrontend.on("start", function (options) {
         // will be the same for every domain. TODO: get domain/username/pass from django
         if (this.getCurrentRoute() === "") {
             if (user.displayOptions.singleAppMode) {
-                appId = options.apps[0]['_id'];
-
                 FormplayerFrontend.trigger('setAppDisplayProperties', options.apps[0]);
                 FormplayerFrontend.trigger("app:singleApp", appId);
             } else {
@@ -391,6 +393,9 @@ FormplayerFrontend.on('clearProgress', function() {
  * @param {String} appId - The id of the application to refresh
  */
 FormplayerFrontend.on('refreshApplication', function(appId) {
+    if (!appId) {
+        throw new Error('Attempt to refresh application for null appId');
+    }
     var user = FormplayerFrontend.request('currentUser'),
         formplayer_url = user.formplayer_url,
         resp,
