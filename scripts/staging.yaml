@@ -45,6 +45,7 @@
 trunk: master
 name: autostaging
 branches:
+  - case_importer_v1-infer-type  # Danny 11/16
   - case_importer_v1-spreadsheet-interface  # Danny 11/16
   - spreadsheets_v2  # Danny 11/16
   - vellum-staging # J$ 11/13
