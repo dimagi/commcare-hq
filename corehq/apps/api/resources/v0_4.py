@@ -1,31 +1,14 @@
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseForbidden, HttpResponse, HttpResponseBadRequest
-from elasticsearch.exceptions import NotFoundError
 from tastypie import fields
-from tastypie.bundle import Bundle
 from tastypie.authentication import Authentication
+from tastypie.bundle import Bundle
 from tastypie.exceptions import BadRequest
 
-from corehq.apps.api.models import ESXFormInstance, ESCase
-from corehq.apps.api.resources.auth import DomainAdminAuthentication, RequirePermissionAuthentication
-from corehq.apps.api.resources.v0_1 import _safe_bool
-from corehq.apps.api.resources.meta import CustomResourceMeta
-from corehq.elastic import get_es_new
-from couchforms.models import doc_types
 from casexml.apps.case import xform as casexml_xform
-from custom.hope.models import HOPECase, CC_BIHAR_NEWBORN, CC_BIHAR_PREGNANCY
-
-from corehq.apps.api.util import get_object_or_not_exist, object_does_not_exist, get_obj
-from corehq.apps.app_manager import util as app_manager_util
-from corehq.apps.app_manager.models import Application, RemoteApp
-from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
-from corehq.apps.repeaters.models import Repeater
-from corehq.apps.repeaters.utils import get_all_repeater_types
-from corehq.apps.groups.models import Group
-from corehq.apps.cloudcare.api import ElasticCaseQuery
-from corehq.apps.users.util import format_username
-from corehq.apps.users.models import CouchUser, Permissions
-
+from corehq.apps.api.es import XFormES, CaseES, ElasticAPIQuerySet, es_search
+from corehq.apps.api.fields import ToManyDocumentsField, UseIfRequested, ToManyDictField, ToManyListDictField
+from corehq.apps.api.models import ESXFormInstance, ESCase
 from corehq.apps.api.resources import (
     CouchResourceMixin,
     DomainSpecificResourceMixin,
@@ -34,10 +17,22 @@ from corehq.apps.api.resources import (
     v0_1,
     v0_3,
 )
-from corehq.apps.api.es import XFormES, CaseES, ElasticAPIQuerySet, es_search
-from corehq.apps.api.fields import ToManyDocumentsField, UseIfRequested, ToManyDictField, ToManyListDictField
+from corehq.apps.api.resources.auth import DomainAdminAuthentication, RequirePermissionAuthentication
+from corehq.apps.api.resources.meta import CustomResourceMeta
+from corehq.apps.api.resources.v0_1 import _safe_bool
 from corehq.apps.api.serializers import CommCareCaseSerializer, XFormInstanceSerializer
-
+from corehq.apps.api.util import get_object_or_not_exist, get_obj
+from corehq.apps.app_manager import util as app_manager_util
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.apps.app_manager.models import Application, RemoteApp
+from corehq.apps.cloudcare.api import ElasticCaseQuery
+from corehq.apps.groups.models import Group
+from corehq.apps.repeaters.models import Repeater
+from corehq.apps.repeaters.utils import get_all_repeater_types
+from corehq.apps.users.models import CouchUser, Permissions
+from corehq.apps.users.util import format_username
+from couchforms.models import doc_types
+from custom.hope.models import HOPECase, CC_BIHAR_NEWBORN, CC_BIHAR_PREGNANCY
 from no_exceptions.exceptions import Http400
 
 # By the time a test case is running, the resource is already instantiated,
