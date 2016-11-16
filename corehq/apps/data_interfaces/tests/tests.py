@@ -7,7 +7,7 @@ from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
 from corehq.form_processor.utils.xform import TestFormMetadata, get_simple_wrapped_form
 from corehq.util.context_managers import drop_connected_signals
-from corehq.util.spreadsheets.excel import WorkbookJSONReader
+from corehq.util.spreadsheets_v1.excel import WorkbookJSONReader
 from couchforms.signals import xform_archived
 
 from django_prbac.models import UserRole, Role, Grant

@@ -1,6 +1,6 @@
 from celery.task import task
 from corehq.apps.products.bulk import import_products
-from corehq.util.spreadsheets.excel_importer import SingleExcelImporter, UnknownFileRefException
+from corehq.util.spreadsheets_v1.excel_importer import SingleExcelImporter, UnknownFileRefException
 
 from django.utils.translation import ugettext as _
 
