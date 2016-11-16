@@ -38,10 +38,11 @@ def log_event(writer, event, override_user=""):
 class Command(BaseCommand):
     args = 'domain filename'
     help = """Generate request report"""
-    option_list = BaseCommand.option_list +\
-                  (make_option('--display-superuser', action='store_true',
-                      dest='display_superuser', default=False,
-                      help="Include superusers in report, otherwise 'Dimagi User'"),)
+    option_list = (
+        make_option('--display-superuser', action='store_true',
+            dest='display_superuser', default=False,
+            help="Include superusers in report, otherwise 'Dimagi User'"),
+    )
 
     def handle(self, *args, **options):
         domain, filename = args
