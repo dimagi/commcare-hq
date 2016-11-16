@@ -3,8 +3,7 @@ from django.conf import settings
 
 
 class Command(BaseCommand):
-    option_list = BaseCommand.option_list + (
-    )
+    option_list = ()
     help = 'Outputs to STDOUT apache config for your project runtime.'
     args = "mkserverinstance [host] [port]"
 
