@@ -26,11 +26,10 @@ def get_case_export_base_query(domain, case_type):
             .sort("opened_on"))
 
 
-def get_group_user_ids(group_id):
+def get_groups_user_ids(group_ids):
     q = (GroupES()
-            .doc_id(group_id)
-            .fields("users"))
-    return q.run().hits[0]['users']
+         .doc_id(group_ids))
+    return q.values_list("users", flat=True)
 
 
 def get_ledger_section_entry_combinations(domain):
