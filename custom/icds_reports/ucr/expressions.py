@@ -555,17 +555,17 @@ def get_last_form_repeat(spec, context):
                 'filters': repeat_filters
             },
             'items_expression': {
-                'type': 'map_items',
-                'map_expression': {
+                'type': 'nested',
+                'argument_expression': {
+                    'type': 'reduce_items',
+                    'aggregation_fn': 'last_item',
+                    'items_expression': spec['forms_expression']
+                },
+                'value_expression': {
                     'type': 'property_path',
                     'datatype': 'array',
                     'property_path': spec['repeat_path']
                 },
-                'items_expression': {
-                    'type': 'reduce_items',
-                    'aggregation_fn': 'last_item',
-                    'items_expression': spec['forms_expression']
-                }
             }
         }
     }
