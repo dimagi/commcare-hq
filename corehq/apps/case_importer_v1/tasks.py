@@ -120,21 +120,9 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
             errors.add(ImportErrors.BlankExternalId, i + 1)
             continue
 
-        try:
-            fields_to_update = importer_util.populate_updated_fields(
-                config,
-                columns,
-                row,
-                spreadsheet.workbook.datemode
-            )
-            if not any(fields_to_update.values()):
-                # if the row was blank, just skip it, no errors
-                continue
-        except importer_util.InvalidDateException as e:
-            errors.add(ImportErrors.InvalidDate, i + 1, e.column)
-            continue
-        except importer_util.InvalidIntegerException as e:
-            errors.add(ImportErrors.InvalidInteger, i + 1, e.column)
+        fields_to_update = importer_util.populate_updated_fields(config, columns, row)
+        if not any(fields_to_update.values()):
+            # if the row was blank, just skip it, no errors
             continue
 
         external_id = fields_to_update.pop('external_id', None)
