@@ -111,13 +111,8 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
 
     def obj_get(self, bundle, **kwargs):
         instance_id = kwargs['pk']
-        from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
-        try:
-            result = get_es_new().get(XFORM_INDEX_INFO.index, instance_id)
-        except NotFoundError:
-            raise object_does_not_exist("XFormInstance", instance_id)
-
-        return result['_source']
+        domain = kwargs['domain']
+        return self.xform_es(domain).get_document(instance_id)
 
     def xform_es(self, domain):
         return MOCK_XFORM_ES or XFormES(domain)
@@ -249,13 +244,8 @@ class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResourc
 
     def obj_get(self, bundle, **kwargs):
         case_id = kwargs['pk']
-        from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
-        try:
-            result = get_es_new().get(CASE_INDEX_INFO.index, case_id)
-        except NotFoundError:
-            raise object_does_not_exist("CommCareCase", case_id)
-
-        return result['_source']
+        domain = kwargs['domain']
+        return self.case_es(domain).get_document(case_id)
 
     def case_es(self, domain):
         return MOCK_CASE_ES or CaseES(domain)
