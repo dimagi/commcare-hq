@@ -1,5 +1,5 @@
 import json
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from datetime import date
 
 import xlrd
@@ -33,54 +33,28 @@ from couchexport.export import SCALAR_NEVER_WAS
 RESERVED_FIELDS = ('type',)
 EXTERNAL_ID = 'external_id'
 
-class ImporterConfig(object):
+
+class ImporterConfig(namedtuple('ImporterConfig', [
+    'couch_user_id',
+    'excel_fields',
+    'case_fields',
+    'custom_fields',
+    'type_fields',
+    'search_column',
+    'key_column',
+    'value_column',
+    'named_columns',
+    'case_type',
+    'search_field',
+    'create_new_cases',
+])):
     """
     Class for storing config values from the POST in a format that can
     be pickled and passed to celery tasks.
     """
 
-    def __init__(self,
-        couch_user_id=None,
-        excel_fields=None,
-        case_fields=None,
-        custom_fields=None,
-        type_fields=None,
-        search_column=None,
-        key_column=None,
-        value_column=None,
-        named_columns=None,
-        case_type=None,
-        search_field=None,
-        create_new_cases=None
-    ):
-        self.couch_user_id=couch_user_id
-        self.excel_fields=excel_fields
-        self.case_fields=case_fields
-        self.custom_fields=custom_fields
-        self.type_fields=type_fields
-        self.search_column=search_column
-        self.key_column=key_column
-        self.value_column=value_column
-        self.named_columns=named_columns
-        self.case_type=case_type
-        self.search_field=search_field
-        self.create_new_cases=create_new_cases
-
     def to_dict(self):
-        return {
-            'couch_user_id': self.couch_user_id,
-            'excel_fields': self.excel_fields,
-            'case_fields': self.case_fields,
-            'custom_fields': self.custom_fields,
-            'type_fields': self.type_fields,
-            'search_column': self.search_column,
-            'key_column': self.key_column,
-            'value_column': self.value_column,
-            'named_columns': self.named_columns,
-            'case_type': self.case_type,
-            'search_field': self.search_field,
-            'create_new_cases': self.create_new_cases,
-        }
+        return self._asdict()
 
     def to_json(self):
         return json.dumps(self.to_dict())
@@ -95,7 +69,7 @@ class ImporterConfig(object):
 
     @classmethod
     def from_request(cls, request):
-        return ImporterConfig(
+        return cls(
             couch_user_id=request.couch_user._id,
             excel_fields=request.POST.getlist('excel_field[]'),
             case_fields=request.POST.getlist('case_field[]'),
@@ -108,7 +82,6 @@ class ImporterConfig(object):
             case_type=request.POST['case_type'],
             search_field=request.POST['search_field'],
             create_new_cases=request.POST['create_new_cases'] == 'True',
-
         )
 
 
@@ -156,6 +129,8 @@ class ExcelFile(object):
         self.column_headers = column_headers
 
         self.workbook = open_workbook(self.file_path)
+        if not self.workbook:
+            raise AssertionError("open_workbook failed to return a Book object")
 
     def _col_values(self, sheet, index):
         return [self._fmt_value(cell) for cell in sheet.col(index)]
@@ -170,15 +145,12 @@ class ExcelFile(object):
         return cell.value
 
     def get_first_sheet(self):
-        if self.workbook:
-            return self.workbook.sheet_by_index(0)
-        else:
-            return None
+        return self.workbook.sheet_by_index(0)
 
     def get_header_columns(self):
         sheet = self.get_first_sheet()
 
-        if sheet and sheet.ncols > 0:
+        if sheet.ncols > 0:
             columns = []
 
             # get columns
@@ -192,31 +164,33 @@ class ExcelFile(object):
         else:
             return []
 
-    def get_column_values(self, column_index):
+    def _get_column_values(self, column_index):
         sheet = self.get_first_sheet()
 
-        if sheet:
-            if self.column_headers:
-                return self._col_values(sheet, column_index)[1:]
-            else:
-                return self._col_values(sheet, column_index)
+        if self.column_headers:
+            return self._col_values(sheet, column_index)[1:]
         else:
-            return []
+            return self._col_values(sheet, column_index)
 
     def get_unique_column_values(self, column_index):
-        return list(set(self.get_column_values(column_index)))
+        return list(set(self._get_column_values(column_index)))
 
-    def get_num_rows(self):
+    def _get_num_rows(self):
         sheet = self.get_first_sheet()
+        return sheet.nrows
 
-        if sheet:
-            return sheet.nrows
-
-    def get_row(self, index):
+    def _get_row(self, index):
         sheet = self.get_first_sheet()
+        return self._row_values(sheet, index)
 
-        if sheet:
-            return self._row_values(sheet, index)
+    @property
+    def max_row(self):
+        return self._get_num_rows()
+
+    def iter_rows(self):
+        row_count = self.max_row
+        for i in range(row_count):
+            yield self._get_row(i)
 
 
 def convert_custom_fields_to_struct(config):
