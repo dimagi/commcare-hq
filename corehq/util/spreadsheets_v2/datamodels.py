@@ -15,7 +15,7 @@ class Workbook(namedtuple('Workbook', ['worksheets'])):
         raise ValueError("Worksheet {0} does not exist.".format(name))
 
 
-class Worksheet(namedtuple('Worksheet', ['title', 'iter_rows'])):
+class Worksheet(namedtuple('Worksheet', ['title', 'max_row', 'iter_rows'])):
     pass
 
 

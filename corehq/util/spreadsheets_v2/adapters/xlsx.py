@@ -25,7 +25,8 @@ class _XLSXWorksheetAdaptor(object):
             yield [Cell(cell.value) for cell in row]
 
     def to_worksheet(self):
-        return Worksheet(title=self._worksheet.title, iter_rows=self.iter_rows)
+        return Worksheet(title=self._worksheet.title, max_row=self._worksheet.max_row,
+                         iter_rows=self.iter_rows)
 
 
 class _XLSXWorkbookAdaptor(object):

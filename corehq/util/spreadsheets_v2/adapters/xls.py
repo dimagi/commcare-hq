@@ -38,7 +38,8 @@ class _XLSWorksheetAdaptor(object):
             yield [Cell(self._make_cell_value(cell)) for cell in self._sheet.row(i)]
 
     def to_worksheet(self):
-        return Worksheet(title=self._sheet.name, iter_rows=self.iter_rows)
+        return Worksheet(title=self._sheet.name, max_row=self._sheet.nrows,
+                         iter_rows=self.iter_rows)
 
 
 class _XLSWorkbookAdaptor(object):

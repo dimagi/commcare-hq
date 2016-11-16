@@ -42,7 +42,7 @@ class ExcelCellTypeTest(SimpleTestCase):
                 workbook,
                 Workbook(
                     worksheets=[
-                        Worksheet(title='Sheet1', iter_rows=lambda: [
+                        Worksheet(title='Sheet1', max_row=12, iter_rows=lambda: [
                             [Cell(u'String'), Cell(u'Danny')],
                             [Cell(u'Date'), Cell(datetime(1988, 7, 7, 0, 0))],
                             [Cell(u'Int'), Cell(28)],
@@ -54,6 +54,7 @@ class ExcelCellTypeTest(SimpleTestCase):
                             [Cell(u'Percent'), Cell(0.49)],
                             [Cell(u'Calculation'), Cell(2)],
                             [Cell(u'Styled'), Cell(u'Styled')],
+                            [Cell(u'Empty Date'), Cell(None)],
                         ])
                     ]
                 )
