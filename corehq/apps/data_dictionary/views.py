@@ -25,18 +25,23 @@ def generate_data_dictionary(request, domain):
 
 @login_and_domain_required
 @toggles.DATA_DICTIONARY.required_decorator()
-def data_dictionary_json(request, domain):
+def data_dictionary_json(request, domain, case_type_name=None):
     props = []
-    queryset = CaseProperty.objects.filter(domain=domain).only(
-        'description', 'case_type', 'property_name', 'type'
-    )
-    for prop in queryset:
-        props.append({
-            'description': prop.description,
-            'case_type': prop.case_type,
-            'property_name': prop.property_name,
-            'type': prop.type,
-        })
+    queryset = CaseType.objects.filter(domain=domain).prefetch_related('properties')
+    if case_type_name:
+        queryset = queryset.filter(name=case_type_name)
+    for case_type in queryset:
+        p = {
+            "type": case_type.name,
+            "properties": [],
+        }
+        for prop in case_type.properties.all():
+            p['properties'].append({
+                "description": prop.description,
+                "name": prop.name,
+                "type": prop.type,
+            })
+        props.append(p)
     return JsonResponse({'properties': props})
 
 
