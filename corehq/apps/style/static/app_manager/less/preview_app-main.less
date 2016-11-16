@@ -10,6 +10,9 @@ preview_app/less */
 
 @preview-phone-wrapper-width: 300px;
 @preview-phone-width: 250px;
+@preview-tablet-wrapper-width: 500px;
+@preview-tablet-width: 450px;
+@preview-tablet-height: 644px;
 @preview-phone-height: 444px;
 @preview-phone-case-offset-y: 40px;
 @preview-phone-case-offset-x: 15px;
@@ -85,6 +88,28 @@ preview_app/less */
    background-color: white;
 }
 
+/* CSS Adjustments for tablet mode */
+.preview-tablet-mode {
+  #js-appmanager-body.offset-for-preview {
+    margin-right: @preview-tablet-wrapper-width;
+  }
+  #hq-messages-container.offset-for-preview > div > div > .alert {
+    margin-right: @preview-tablet-wrapper-width + 10;
+  }
+  &.open {
+    width: @preview-tablet-wrapper-width;
+  }
+  .preview-phone-container {
+    width: @preview-tablet-width + (@preview-phone-case-offset-x * 2);
+    height: @preview-tablet-height + (@preview-phone-case-offset-y * 2);
+    margin-top: -(@preview-tablet-height + (@preview-phone-case-offset-y * 2))/2;
+  }
+
+  .preview-phone-window {
+    width: @preview-tablet-width;
+    height: @preview-tablet-height;
+  }
+}
 
 
 .preview-icon {
