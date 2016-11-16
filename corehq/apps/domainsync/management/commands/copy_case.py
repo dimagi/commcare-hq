@@ -12,7 +12,7 @@ from couchforms.models import XFormInstance
 class Command(BaseCommand):
     help = "Copy a case and all related forms"
     args = '<sourcedb> <case_id> <domain>'
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option('--postgres-db',
                     action='store',
                     dest='postgres_db',

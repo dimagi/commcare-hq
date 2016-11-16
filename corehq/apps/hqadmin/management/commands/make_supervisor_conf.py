@@ -18,7 +18,7 @@ def parse_params(option, opt, value, parser):
 
 
 class SupervisorConfCommand(BaseCommand):
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option('--conf_file', help='Config template file to use', default=False),
         make_option('--conf_destination', help='Rendered supervisor configuration file path destination', default=None),
         make_option('--params',

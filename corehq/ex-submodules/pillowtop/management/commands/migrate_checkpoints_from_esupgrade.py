@@ -12,7 +12,7 @@ class Command(BaseCommand):
     """
     help = "Migrate the esupgrade checkpoints"
 
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option(
             '--check',
             action='store_true',

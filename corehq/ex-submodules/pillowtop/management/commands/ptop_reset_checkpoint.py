@@ -9,14 +9,13 @@ class Command(BaseCommand):
     args = '<pillow_class>'
     label = 'Pillow class'
 
-    option_list = BaseCommand.option_list + \
-                  (
-                     make_option('--noinput',
-                                  action='store_true',
-                                  dest='interactive',
-                                  default=False,
-                                  help="Suppress confirmation messages - dangerous mode!"),
-                  )
+    option_list = (
+        make_option('--noinput',
+            action='store_true',
+            dest='interactive',
+            default=False,
+            help="Suppress confirmation messages - dangerous mode!"),
+    )
 
     def handle(self, *labels, **options):
         """

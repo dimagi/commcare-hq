@@ -69,9 +69,10 @@ class Command(BaseCommand):
             'regenerate the appropriate case blocks for them. Can pass in '
             'a domain and date to process forms received after that date or '
             'just a domain to process all problem forms in the domain.')
-    option_list = BaseCommand.option_list + \
-        (make_option('--dryrun', action='store_true', dest='dryrun', default=False,
-            help="Don't do the actual reprocessing, just print the ids that would be affected"),)
+    option_list = (
+        make_option('--dryrun', action='store_true', dest='dryrun', default=False,
+            help="Don't do the actual reprocessing, just print the ids that would be affected"),
+    )
 
     def handle(self, *args, **options):
 

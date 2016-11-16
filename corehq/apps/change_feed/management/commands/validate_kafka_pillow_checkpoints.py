@@ -10,7 +10,7 @@ class Command(BaseCommand):
     help = ("Validates that all pillows that use kafka have checkpoints that still exist "
             "in the kafka feed.")
 
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option('--print-only',
                     action='store_true',
                     dest='print_only',

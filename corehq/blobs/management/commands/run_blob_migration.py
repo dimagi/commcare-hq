@@ -22,7 +22,7 @@ class Command(BaseCommand):
     Example: ./manage.py run_blob_migration [options] saved_exports
     """
     help = USAGE
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option('--log-dir', help="Migration log directory."),
         make_option('--reset', action="store_true", default=False,
             help="Discard any existing migration state."),

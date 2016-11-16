@@ -21,7 +21,7 @@ class Command(BaseCommand):
     help = "Copy all data (users, forms, cases) associated with a single group"
     args = '<sourcedb> <group_id>'
     label = ""
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option('--exclude-user-owned',
             action='store_true', dest='exclude_user_owned', default=False,
             help="In addition to getting cases owned by the group itself, also get those owned by all users in the group"),

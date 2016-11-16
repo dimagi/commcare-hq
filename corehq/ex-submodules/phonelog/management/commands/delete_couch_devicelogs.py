@@ -11,7 +11,7 @@ from couchforms.models import XFormInstance
 class Command(BaseCommand):
     filename = 'device_log_docs_to_delete'
 
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option('--dump', action='store_true', default=False,
                     help='Dump all device log docs to a file named device_log_docs_to_delete'),
         make_option('--delete', action='store_true', default=False,

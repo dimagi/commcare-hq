@@ -9,7 +9,7 @@ from corehq.apps.hqadmin.models import HqDeploy
 class Command(BaseCommand):
     help = "Print a list of code deploys between dates"
     args = ''
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option('--start',
                     action='store',
                     dest='startdate',
