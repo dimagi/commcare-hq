@@ -39,10 +39,14 @@ class BulkUiTranslation(SimpleTestCase):
 
     def test_translation(self):
         headers = (('translations', ('property', 'en', 'fra')),)
-        data = (('date.tomorrow', 'wobble', ''),
-                ('entity.sort.title', 'wabble', ''),
-                ('activity.locationcapture.Longitude', '', 'wibble'),
-                ('entity.sort.title', '', 'wubble'),
+        # on an update to 2.31.0, the keys date.tomorrow, entity.sort.title,
+        # activity.locationcapture.Longitude were no longer present in messages_en-2.txt
+        # They were replaced by other randomly selected strings in that file.
+        # Leaving this note here in case this issue comes up again. --B
+        data = (('key.manage.title', 'wobble', ''),
+                ('bulk.send.dialog.progress', 'wabble', ''),
+                ('connection.test.access.settings', '', 'wibble'),
+                ('bulk.send.dialog.progress', '', 'wubble'),
                 ('home.start.demo', 'Ding', 'Dong'),
                 ('unknown_string', 'Ding', 'Dong'))
 
@@ -53,14 +57,14 @@ class BulkUiTranslation(SimpleTestCase):
             dict(translations),
             {
                 u'en': {
-                    u'date.tomorrow': u'wobble',
-                    u'entity.sort.title': u'wabble',
+                    u'key.manage.title': u'wobble',
+                    u'bulk.send.dialog.progress': u'wabble',
                     u'home.start.demo': u'Ding',
                     u'unknown_string': u'Ding',
                 },
                 u'fra': {
-                    u'activity.locationcapture.Longitude': u'wibble',
-                    u'entity.sort.title': u'wubble',
+                    u'connection.test.access.settings': u'wibble',
+                    u'bulk.send.dialog.progress': u'wubble',
                     u'home.start.demo': u'Dong',
                     u'unknown_string': u'Dong',
                 }
