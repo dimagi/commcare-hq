@@ -10,7 +10,7 @@ from corehq.apps.app_manager.models import import_app
 class Command(BaseCommand):
     args = 'source_domain app_id'
     help = ("Import an app from another Commcare instance")
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option('-u', '--username',
                     action='store',
                     dest='username',

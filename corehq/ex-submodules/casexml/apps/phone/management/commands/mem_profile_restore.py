@@ -14,7 +14,7 @@ class Command(BaseCommand):
 
     Usage: ./manage.py mem_profile_restore --username large_caseload@domain.commcarehq.org
     """
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option('--username', action='store', dest='username'),
     )
 

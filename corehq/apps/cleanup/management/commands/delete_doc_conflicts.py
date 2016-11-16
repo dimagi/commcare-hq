@@ -29,7 +29,7 @@ def bulk_delete(db, docs):
 class Command(BaseCommand):
     help = 'Delete document conflicts'
 
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option(
             '--batch_size',
             action='store',

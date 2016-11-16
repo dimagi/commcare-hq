@@ -32,7 +32,7 @@ class Command(BaseCommand):
            "If targetdb is not specified, the target is the database " \
            "specified by COUCH_DATABASE in your settings."
     args = '<sourcedb> <domain> [<targetdb>]'
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option('--include',
                     action='store',
                     dest='doc_types',

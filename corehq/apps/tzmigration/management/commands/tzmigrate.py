@@ -12,7 +12,7 @@ from couchforms.dbaccessors import get_form_ids_by_type
 
 
 class Command(BaseCommand):
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option('--BEGIN', action='store_true', default=False),
         make_option('--COMMIT', action='store_true', default=False),
         make_option('--ABORT', action='store_true', default=False),

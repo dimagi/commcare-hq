@@ -5,7 +5,7 @@ from dimagi.utils.post import post_data
 
 
 class Command(BaseCommand):
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option('--method', action='store',
                     dest='method', default='curl',
                     help='Method to upload (curl, pyton), defaults to curl', type='string'),

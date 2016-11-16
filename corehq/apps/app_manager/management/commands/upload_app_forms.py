@@ -14,7 +14,7 @@ class Command(BaseCommand):
     help = """
         Uploads a a directory of forms to an app. See also: download_app_forms
     """
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option('--deploy',
                     action='store_true',
                     dest='deploy',

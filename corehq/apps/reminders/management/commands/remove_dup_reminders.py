@@ -17,7 +17,7 @@ class Command(BaseCommand):
     args = ""
     help = ("A command which removes duplicate reminder instances created due "
         "to race conditions")
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option("--fix",
                     action="store_true",
                     dest="fix",

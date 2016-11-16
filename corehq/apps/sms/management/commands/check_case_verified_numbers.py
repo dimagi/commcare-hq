@@ -7,7 +7,7 @@ from corehq.apps.sms.mixin import InvalidFormatException, PhoneNumberInUseExcept
 class Command(BaseCommand):
     args = "<domain1 domain2 ... >"
     help = "Looks for discrepancies between case phone numbers and corresponding verified number entries for all cases in the given domains."
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option("--fix",
                     action="store_true",
                     dest="fix",

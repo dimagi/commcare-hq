@@ -12,7 +12,7 @@ class Command(BaseCommand):
     help = "Run a pillow on a set list of doc ids"
     args = "--pillow=<Pillow> --docs=<doc"
 
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option(
             '--pillow',
             action='store',

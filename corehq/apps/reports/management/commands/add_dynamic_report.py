@@ -9,7 +9,7 @@ from dimagi.utils.modules import to_function
 class Command(BaseCommand):
     help = "Set up a dynamic report for a domain"
     args = "<domain> <subsection> <reportname> <reportclass> <reportproperties (json) (if '-' read from stdin)>"
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option('-u', '--update', action='store_true', help='update existing report config if already exists'),
         make_option('-x', '--execute', action='store_true', help='actually make the change; otherwise just a dry run'),
         make_option('-a', '--all', action='store_true', help='make report visible to all (otherwise just previewers'),
