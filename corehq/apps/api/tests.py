@@ -1,6 +1,7 @@
 import base64
 import json
 import uuid
+from collections import OrderedDict
 from copy import deepcopy
 from datetime import datetime
 
@@ -17,6 +18,7 @@ from tastypie.resources import Resource
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import post_case_blocks
+from corehq.apps.api.models import ESCase, ESXFormInstance
 from corehq.apps.userreports.models import ReportConfiguration, \
     DataSourceConfiguration
 from corehq.apps.userreports.tasks import rebuild_indicators
@@ -37,7 +39,7 @@ from corehq.apps.accounting.tests import generator
 from corehq.apps.api.es import ElasticAPIQuerySet
 from corehq.apps.api.fields import ToManyDocumentsField, ToOneDocumentField, UseIfRequested, ToManyDictField
 from corehq.apps.api.resources import v0_4, v0_5
-from corehq.apps.api.util import get_obj
+from corehq.apps.api.util import get_obj, object_does_not_exist
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -59,14 +61,16 @@ class FakeXFormES(object):
     A mock of XFormES that will return the docs that have been
     added regardless of the query.
     """
-    
-    def __init__(self):
-        self.docs = []
+
+    def __init__(self, wrapper=None):
+        self.wrapper = wrapper
+        self.docs = OrderedDict()
         self.queries = []
 
     def add_doc(self, id, doc):
-        self.docs.append(doc)
-    
+        id = doc.get('_id', id)
+        self.docs[id] = doc
+
     def run_query(self, query):
         self.queries.append(query)
 
@@ -76,9 +80,19 @@ class FakeXFormES(object):
         return {
             'hits': {
                 'total': len(self.docs),
-                'hits': [{'_source': doc} for doc in self.docs[start:end]]
+                'hits': [{'_source': doc} for doc in self.docs.values()[start:end]]
             }
         }
+
+    def get_document(self, doc_id):
+        try:
+            doc = self.docs[doc_id]
+        except KeyError:
+            raise object_does_not_exist('document', doc_id)
+
+        if self.wrapper:
+            return self.wrapper(doc)
+        return doc
 
 
 def set_up_subscription(cls):
@@ -343,6 +357,9 @@ class TestXFormInstanceResource(APIResourceTest):
 
     @run_with_all_backends
     def test_fetching_xform_cases(self):
+        fake_xform_es = FakeXFormES(ESXFormInstance)
+        v0_4.MOCK_XFORM_ES = fake_xform_es
+
         # Create an xform that touches a case
         case_id = uuid.uuid4().hex
         form = submit_case_blocks(
@@ -352,6 +369,8 @@ class TestXFormInstanceResource(APIResourceTest):
             ).as_string(),
             self.domain.name
         )[0]
+
+        fake_xform_es.add_doc(form.form_id, transform_xform_for_elasticsearch(form.to_json()))
 
         # Fetch the xform through the API
         response = self._assert_auth_get_resource(self.single_endpoint(form.form_id) + "?cases__full=true")
@@ -402,27 +421,32 @@ class TestCommCareCaseResource(APIResourceTest):
 
     @run_with_all_backends
     def test_parent_and_child_cases(self):
+        fake_case_es = FakeXFormES(ESCase)
+        v0_4.MOCK_CASE_ES = fake_case_es
 
         # Create cases
         parent_case_id = uuid.uuid4().hex
         parent_type = 'parent_case_type'
-        submit_case_blocks(
+        parent_case = submit_case_blocks(
             CaseBlock(
                 case_id=parent_case_id,
                 create=True,
                 case_type=parent_type,
             ).as_string(),
             self.domain.name
-        )
+        )[1][0]
         child_case_id = uuid.uuid4().hex
-        submit_case_blocks(
+        child_case = submit_case_blocks(
             CaseBlock(
                 case_id=child_case_id,
                 create=True,
                 index={'parent': (parent_type, parent_case_id)}
             ).as_string(),
             self.domain.name
-        )
+        )[1][0]
+
+        fake_case_es.add_doc(parent_case_id, transform_case_for_elasticsearch(parent_case.to_json()))
+        fake_case_es.add_doc(child_case_id, transform_case_for_elasticsearch(child_case.to_json()))
 
         # Fetch the child case through the API
 
