@@ -6,7 +6,7 @@ import settings
 
 
 class Command(BaseCommand):
-    option_list = BaseCommand.option_list + (
+    option_list = (
     #       make_option('--file', action='store', dest='file', default=None, help='File to upload REQUIRED', type='string'),
     #       make_option('--url', action='store', dest='url', default=None, help='URL to upload to*', type='string'),
     make_option('--xmlreporting', action='store_true', dest='xml_reporting', default=False,
