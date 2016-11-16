@@ -21,5 +21,5 @@ urlpatterns = [
     url(r'^non_administrative_locations/$', non_administrative_locations_for_select2,
         name='non_administrative_locations_for_select2'),
     url(r'^user_settings/(?P<user_id>[ \w-]+)/$', EWSUserExtensionView.as_view(), name='ews_user_settings'),
-    url(r'^dashboard_page/$', DashboardPageView.as_view(), name='dashboard_page'),
+    url(r'^dashboard_page/$', DashboardPageView.as_view(permanent=True), name='dashboard_page'),
 ]

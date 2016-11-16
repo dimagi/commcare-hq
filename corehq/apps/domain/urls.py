@@ -180,7 +180,7 @@ domain_settings = [
     url(r'^snapshots/new/$', CreateNewExchangeSnapshotView.as_view(), name=CreateNewExchangeSnapshotView.urlname),
     url(r'^multimedia/$', ManageProjectMediaView.as_view(), name=ManageProjectMediaView.urlname),
     url(r'^case_search/$', CaseSearchConfigView.as_view(), name=CaseSearchConfigView.urlname),
-    url(r'^commtrack/settings/$', RedirectView.as_view(url='commtrack_settings')),
+    url(r'^commtrack/settings/$', RedirectView.as_view(url='commtrack_settings', permanent=True)),
     url(r'^internal/info/$', EditInternalDomainInfoView.as_view(), name=EditInternalDomainInfoView.urlname),
     url(r'^internal/calculations/$', EditInternalCalculationsView.as_view(), name=EditInternalCalculationsView.urlname),
     url(r'^internal/calculated_properties/$', calculated_properties, name='calculated_properties'),
