@@ -177,14 +177,14 @@ def update_calculated_properties():
             last_form_submission = CALC_FNS["last_form_submission"](dom, False)
             if _skip_updating_domain_stats(r.get("cp_last_updated"), last_form_submission):
                 continue
-            calced_props = calced_props(dom, r["_id"], all_stats)
-            if calced_props['cp_first_form'] is None:
-                del calced_props['cp_first_form']
-            if calced_props['cp_last_form'] is None:
-                del calced_props['cp_last_form']
-            if calced_props['cp_300th_form'] is None:
-                del calced_props['cp_300th_form']
-            send_to_elasticsearch("domains", calced_props)
+            props = calced_props(dom, r["_id"], all_stats)
+            if props['cp_first_form'] is None:
+                del props['cp_first_form']
+            if props['cp_last_form'] is None:
+                del props['cp_last_form']
+            if props['cp_300th_form'] is None:
+                del props['cp_300th_form']
+            send_to_elasticsearch("domains", props)
         except Exception, e:
             notify_exception(None, message='Domain {} failed on stats calculations with {}'.format(dom, e))
 
@@ -218,8 +218,8 @@ def apps_update_calculated_properties():
     q = {"filter": {"and": [{"missing": {"field": "copy_of"}}]}}
     results = stream_es_query(q=q, es_index='apps', size=999999, chunksize=500)
     for r in results:
-        calced_props = {"cp_is_active": is_app_active(r["_id"], r["_source"]["domain"])}
-        es.update(APP_INDEX, ES_META['apps'].type, r["_id"], body={"doc": calced_props})
+        props = {"cp_is_active": is_app_active(r["_id"], r["_source"]["domain"])}
+        es.update(APP_INDEX, ES_META['apps'].type, r["_id"], body={"doc": props})
 
 
 @task(ignore_result=True)
