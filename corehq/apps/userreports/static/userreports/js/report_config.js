@@ -219,7 +219,7 @@ var reportBuilder = function () {
                 "report_title": self.reportTitle,
                 "report_description": "",  // TODO: self.reportDescription,
                 "report_type": self.reportType(),
-                "is_aggregation_enabled": self.isAggregationEnabled(),
+                "aggregate": self.isAggregationEnabled(),
                 "chart": self.selectedChart(),
                 "columns": _.map(self.selectedColumns(), function (c) { return c.serialize(); }),
                 "default_filters": [],  // TODO: self.defaultFilters,
