@@ -2115,12 +2115,12 @@
             "item"
           ],
           "case_id_path": [
-            "@id"
+            "child_health_case_id"
           ]
         },
         "value_expression": {
           "type": "property_name",
-          "property_name": "not_breasfeeding"
+          "property_name": "not_breastfeeding"
         }
       },
       "task_case_id": {
@@ -2331,7 +2331,7 @@
           "item"
         ],
         "case_id_path": [
-          "@id"
+          "child_health_case_id"
         ]
       },
       "get_latest_cf_update": {
@@ -2403,7 +2403,7 @@
           "item"
         ],
         "case_id_path": [
-          "@id"
+          "child_health_case_id"
         ]
       }
     },
