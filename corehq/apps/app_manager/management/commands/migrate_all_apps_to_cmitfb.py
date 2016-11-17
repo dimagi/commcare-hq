@@ -14,7 +14,7 @@ class Command(BaseCommand):
     '''
 
     def handle(self, *args, **options):
-        app_query = AppES().is_build(False).term('vellum_case_management', True) \
+        app_query = AppES().is_build(False).term('vellum_case_management', False) \
                            .term('doc_type', 'Application').source(['domain', '_id'])
 
         hits = app_query.run().hits
