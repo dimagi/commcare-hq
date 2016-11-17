@@ -61,7 +61,6 @@ from corehq.apps.export.const import (
     CASE_EXPORT,
     MAX_EXPORTABLE_ROWS,
 )
-from corehq.apps.export.tasks import async_convert_saved_export_to_export_instance
 from corehq.apps.export.dbaccessors import (
     get_form_export_instances,
     get_case_export_instances,
@@ -323,16 +322,6 @@ class BaseModifyCustomExportView(BaseExportView):
     @property
     def export_id(self):
         return self.kwargs.get('export_id')
-
-    @property
-    def page_context(self):
-        if not use_new_exports(self.domain):
-            async_convert_saved_export_to_export_instance.delay(
-                self.domain,
-                self.export_helper.custom_export,
-                dryrun=True
-            )
-        return super(BaseModifyCustomExportView, self).page_context
 
     @property
     @memoized

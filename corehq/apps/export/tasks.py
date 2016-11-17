@@ -46,32 +46,6 @@ def rebuild_export_task(export_instance, last_access_cutoff=None, filter=None):
 
 
 @task(queue='background_queue')
-def async_convert_saved_export_to_export_instance(domain, legacy_export, dryrun=False):
-    export_instance, meta = convert_saved_export_to_export_instance(
-        domain,
-        legacy_export,
-        dryrun=dryrun,
-    )
-
-    if not meta.skipped_tables and not meta.skipped_columns:
-        logger.info(
-            'domain={domain} export_id={export_id} export_type={export_type} '
-            'remote={remote} SUCCESS'.format(
-                domain=meta.domain,
-                export_id=meta.saved_export_id,
-                export_type=meta.export_type,
-                remote=meta.is_remote_app_migration,
-            )
-        )
-
-    for table_meta in meta.skipped_tables:
-        _log_conversion_meta(meta, table_meta, 'table')
-
-    for column_meta in meta.skipped_columns:
-        _log_conversion_meta(meta, column_meta, 'column')
-
-
-@task(queue='background_queue')
 def add_inferred_export_properties(sender, domain, case_type, properties):
     from corehq.apps.export.models import MAIN_TABLE, PathNode, InferredSchema, ScalarItem
     """
@@ -109,18 +83,3 @@ def add_inferred_export_properties(sender, domain, case_type, properties):
             group_schema.put_item(path, inferred_from=sender, item_cls=ScalarItem)
 
     inferred_schema.save()
-
-
-def _log_conversion_meta(meta, conversion_meta, type_):
-    logger.info(
-        'domain={domain} export_id={export_id} export_type={export_type} '
-        'remote={remote} type={type} path={path} reason={reason}'.format(
-            domain=meta.domain,
-            export_id=meta.saved_export_id,
-            export_type=meta.export_type,
-            remote=meta.is_remote_app_migration,
-            type=type_,
-            path=conversion_meta.path,
-            reason=conversion_meta.failure_reason,
-        )
-    )
