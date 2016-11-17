@@ -1,6 +1,7 @@
 from celery.task import task
-from xml.etree import ElementTree
+from corehq.apps.case_importer_v1.exceptions import ImporterRefError, ImporterError
 from corehq.apps.case_importer_v1.util import get_importer_error_message
+from corehq.util.spreadsheets_v2 import SpreadsheetFileError
 from dimagi.utils.couch.database import is_bigcouch
 from casexml.apps.case.mock import CaseBlock, CaseBlockError
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -24,22 +25,25 @@ CASEBLOCK_CHUNKSIZE = 100
 @task
 def bulk_import_async(config, domain, excel_id):
     excel_ref = DownloadBase.get(excel_id)
+    if not excel_ref:
+        return {'errors': get_importer_error_message(ImporterRefError('null download ref'))}
+
     try:
-        spreadsheet = importer_util.get_spreadsheet(excel_ref, config.named_columns)
-    except Exception as e:
+        with importer_util.get_spreadsheet(excel_ref.get_filename(), config.named_columns) as spreadsheet:
+            try:
+                result = do_import(spreadsheet, config, domain, task=bulk_import_async)
+            except Exception as e:
+                raise
+                return {
+                    'errors': 'Error: ' + e.message
+                }
+
+            # return compatible with soil
+            return {
+                'messages': result
+            }
+    except ImporterError as e:
         return {'errors': get_importer_error_message(e)}
-
-    try:
-        result = do_import(spreadsheet, config, domain, task=bulk_import_async)
-    except Exception as e:
-        return {
-            'errors': 'Error: ' + e.message
-        }
-
-    # return compatible with soil
-    return {
-        'messages': result
-    }
 
 
 def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKSIZE):

@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 import json
 from collections import defaultdict, namedtuple
 from datetime import date
@@ -23,6 +24,8 @@ from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.util.soft_assert import soft_assert
+from corehq.util.spreadsheets_v2 import open_any_workbook, Workbook, \
+    SpreadsheetFileEncrypted, SpreadsheetFileNotFound, SpreadsheetFileInvalidError
 from couchexport.export import SCALAR_NEVER_WAS
 
 
@@ -98,6 +101,8 @@ def open_workbook(filename=None, **kwargs):
         _soft_assert(False, 'xlrd.open_workbook raised unaccounted for error', e)
         raise ImporterFileNotFound(unicode(e))
 
+ALLOWED_EXTENSIONS = ['xls', 'xlsx']
+
 
 class ExcelFile(object):
     """
@@ -108,8 +113,6 @@ class ExcelFile(object):
     extension so if you fix this you should also fix these assumptions
     (see get_spreadsheet)
     """
-
-    ALLOWED_EXTENSIONS = ['xls']
 
     file_path = ''
     workbook = None
@@ -146,11 +149,11 @@ class ExcelFile(object):
         else:
             return cell.value
 
-    def get_first_sheet(self):
+    def _get_first_sheet(self):
         return self.workbook.sheet_by_index(0)
 
     def get_header_columns(self):
-        sheet = self.get_first_sheet()
+        sheet = self._get_first_sheet()
 
         if sheet.ncols > 0:
             columns = []
@@ -167,7 +170,7 @@ class ExcelFile(object):
             return []
 
     def _get_column_values(self, column_index):
-        sheet = self.get_first_sheet()
+        sheet = self._get_first_sheet()
 
         if self.column_headers:
             return self._col_values(sheet, column_index)[1:]
@@ -178,11 +181,11 @@ class ExcelFile(object):
         return list(set(self._get_column_values(column_index)))
 
     def _get_num_rows(self):
-        sheet = self.get_first_sheet()
+        sheet = self._get_first_sheet()
         return sheet.nrows
 
     def _get_row(self, index):
-        sheet = self.get_first_sheet()
+        sheet = self._get_first_sheet()
         return self._row_values(sheet, index)
 
     @property
@@ -193,6 +196,52 @@ class ExcelFile(object):
         row_count = self.max_row
         for i in range(row_count):
             yield self._get_row(i)
+
+
+class WorksheetWrapper(object):
+
+    def __init__(self, worksheet):
+        """
+        raises ImporterError or one of its subtypes
+        if there's a problem with the excel file
+
+        """
+        self.worksheet = worksheet
+
+    @classmethod
+    def from_workbook(cls, workbook):
+        if not isinstance(workbook, Workbook):
+            raise AssertionError(
+                "WorksheetWrapper.from_workbook called without Workbook object")
+        elif not workbook.worksheets:
+            raise AssertionError(
+                "WorksheetWrapper.from_workbook called with Workbook with no sheets")
+        else:
+            return cls(workbook.worksheets[0])
+
+    def get_header_columns(self):
+        if self.worksheet.max_row > 0:
+            return self.iter_rows().next()
+        else:
+            return []
+
+    def _get_column_values(self, column_index):
+        rows = self.iter_rows()
+        # skip first row (header row)
+        rows.next()
+        for row in rows:
+            yield row[column_index]
+
+    def get_unique_column_values(self, column_index):
+        return list(set(self._get_column_values(column_index)))
+
+    @property
+    def max_row(self):
+        return self.worksheet.max_row
+
+    def iter_rows(self):
+        for row in self.worksheet.iter_rows():
+            yield [cell.value for cell in row]
 
 
 def convert_custom_fields_to_struct(config):
@@ -301,7 +350,8 @@ def parse_search_id(config, columns, row):
     search_column = config.search_column
     search_column_index = columns.index(search_column)
 
-    search_id = row[search_column_index]
+    search_id = row[search_column_index] or ''
+
     try:
         # if the spreadsheet gives a number, strip any decimals off
         # float(x) is more lenient in conversion from string so both
@@ -407,10 +457,30 @@ def populate_updated_fields(config, columns, row):
     return fields_to_update
 
 
-def get_spreadsheet(download_ref, column_headers=True):
+def open_spreadsheet_download_ref(download_ref, column_headers=True):
+    """
+    open a spreadsheet download ref just to test there are no errors opening it
+    """
     if not download_ref:
         raise ImporterRefError('null download ref')
-    return ExcelFile(download_ref.get_filename(), column_headers)
+    with get_spreadsheet(download_ref.get_filename(), column_headers):
+        pass
+
+
+@contextmanager
+def get_spreadsheet(filename, column_headers):
+    if not column_headers:
+        yield ExcelFile(filename, column_headers)
+    else:
+        try:
+            with open_any_workbook(filename) as workbook:
+                yield WorksheetWrapper.from_workbook(workbook)
+        except SpreadsheetFileEncrypted as e:
+            raise ImporterExcelFileEncrypted(e.message)
+        except SpreadsheetFileNotFound as e:
+            raise ImporterFileNotFound(e.message)
+        except SpreadsheetFileInvalidError as e:
+            raise ImporterExcelError(e.message)
 
 
 def is_valid_location_owner(owner, domain):
@@ -505,7 +575,5 @@ def get_importer_error_message(e):
                  'Please choose a file that is not password protected.')
     elif isinstance(e, ImporterExcelError):
         return _("The file uploaded has the following error: {}").format(e.message)
-    elif isinstance(e, ImporterError):
-        return _("The session containing the file you uploaded has expired - please upload a new one.")
     else:
         return _("Error: {}").format(e.message)

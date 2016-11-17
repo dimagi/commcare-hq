@@ -69,14 +69,6 @@ class ImporterTest(TestCase):
         self.assertEqual(0, len(get_case_ids_in_domain(self.domain)))
 
     @run_with_all_backends
-    def testImporterErrors(self):
-        with mock.patch('corehq.apps.case_importer_v1.tasks.importer_util.get_spreadsheet', side_effect=ImporterError()):
-            res = bulk_import_async(self._config(), self.domain, None)
-            self.assertEqual('The session containing the file you uploaded has expired - please upload a new one.',
-                             unicode(res['errors']))
-            self.assertEqual(0, len(get_case_ids_in_domain(self.domain)))
-
-    @run_with_all_backends
     def testImportBasic(self):
         config = self._config(self.default_headers)
         file = ExcelFileFake(header_columns=self.default_headers, num_rows=5)
