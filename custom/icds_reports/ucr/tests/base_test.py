@@ -72,4 +72,5 @@ class BaseICDSDatasourceTest(TestCase, TestFileMixin):
             row = query.all()[index]._asdict()
             self.assertEqual(row['month'], start_date + relativedelta(months=index))
             for key, value in test_values:
-                self.assertEqual(row[key], value, str(index) + ":" + key+' ' + str(row[key]) + '!=' + str(value))
+                self.assertEqual(row[key], value,
+                                 str(index) + ":" + key + ' ' + str(row[key]) + '!=' + str(value))
