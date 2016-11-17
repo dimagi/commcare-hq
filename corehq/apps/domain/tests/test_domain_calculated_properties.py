@@ -16,4 +16,5 @@ class DomainCalculatedPropertiesTest(TestCase):
 
     def test_sanity(self):
         all_stats = _all_domain_stats()
-        calced_props = _calced_props(self.domain.name, self.domain._id, all_stats)
+        props = _calced_props(self.domain.name, self.domain._id, all_stats)
+        self.assertFalse(props['cp_has_app'])
