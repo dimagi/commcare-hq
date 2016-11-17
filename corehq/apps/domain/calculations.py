@@ -313,7 +313,7 @@ def dom_calc(calc_tag, dom, extra_arg=''):
     return ans
 
 
-def _all_domain_stats():
+def all_domain_stats():
     webuser_counts = defaultdict(lambda: 0)
     commcare_counts = defaultdict(lambda: 0)
 
@@ -332,7 +332,7 @@ def _all_domain_stats():
     }
 
 
-def _calced_props(dom, id, all_stats):
+def calced_props(dom, id, all_stats):
     return {
         "_id": id,
         "cp_n_web_users": int(all_stats["web_users"].get(dom, 0)),

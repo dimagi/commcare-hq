@@ -32,8 +32,8 @@ from soil import DownloadBase
 from soil.util import expose_file_download, expose_cached_download
 
 from corehq.apps.domain.calculations import (
-    _all_domain_stats,
-    _calced_props,
+    all_domain_stats,
+    calced_props,
     CALC_FNS,
     total_distinct_users,
 )
@@ -170,14 +170,14 @@ def rebuild_export_async(config, schema):
 @periodic_task(run_every=crontab(hour="22", minute="0", day_of_week="*"), queue='background_queue')
 def update_calculated_properties():
     results = DomainES().fields(["name", "_id", "cp_last_updated"]).scroll()
-    all_stats = _all_domain_stats()
+    all_stats = all_domain_stats()
     for r in results:
         dom = r["name"]
         try:
             last_form_submission = CALC_FNS["last_form_submission"](dom, False)
             if _skip_updating_domain_stats(r.get("cp_last_updated"), last_form_submission):
                 continue
-            calced_props = _calced_props(dom, r["_id"], all_stats)
+            calced_props = calced_props(dom, r["_id"], all_stats)
             if calced_props['cp_first_form'] is None:
                 del calced_props['cp_first_form']
             if calced_props['cp_last_form'] is None:

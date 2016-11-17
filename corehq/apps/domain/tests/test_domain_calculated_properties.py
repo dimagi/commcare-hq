@@ -3,7 +3,7 @@ from __future__ import print_function, unicode_literals
 from django.test import TestCase
 
 from corehq.apps.domain.models import Domain
-from corehq.apps.domain.calculations import _all_domain_stats, _calced_props
+from corehq.apps.domain.calculations import all_domain_stats, calced_props
 
 class DomainCalculatedPropertiesTest(TestCase):
 
@@ -15,6 +15,6 @@ class DomainCalculatedPropertiesTest(TestCase):
         self.domain.delete()
 
     def test_sanity(self):
-        all_stats = _all_domain_stats()
-        props = _calced_props(self.domain.name, self.domain._id, all_stats)
+        all_stats = all_domain_stats()
+        props = calced_props(self.domain.name, self.domain._id, all_stats)
         self.assertFalse(props['cp_has_app'])
