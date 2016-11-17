@@ -26,7 +26,8 @@ from corehq.util.datadog.utils import (
     update_datadog_metrics,
     DATADOG_DOMAINS_EXCEEDING_FORMS_GAUGE,
     DATADOG_WEB_USERS_GAUGE,
-    DATADOG_HUBSPOT_SENT_FORM_METRIC
+    DATADOG_HUBSPOT_SENT_FORM_METRIC,
+    DATADOG_HUBSPOT_TRACK_DATA_POST_METRIC
 )
 
 from dimagi.utils.logging import notify_exception
@@ -117,14 +118,15 @@ def _hubspot_post(url, data):
         headers = {
             'content-type': 'application/json'
         }
-        response = requests.post(
-            url,
-            params={'hapikey': api_key},
-            data=data,
-            headers=headers
-        )
+        params = {'hapikey': api_key}
+        response = _send_post_data(url, params, data, headers)
         _log_response('HS', data, response)
         response.raise_for_status()
+
+
+@count_by_response_code(DATADOG_HUBSPOT_TRACK_DATA_POST_METRIC)
+def _send_post_data(url, params, data, headers):
+    return requests.post(url, params=params, data=data, headers=headers)
 
 
 def _get_user_hubspot_id(webuser):

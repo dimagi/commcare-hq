@@ -16,6 +16,7 @@ WILDCARD = '*'
 DATADOG_WEB_USERS_GAUGE = 'commcare.hubspot.web_users_processed'
 DATADOG_DOMAINS_EXCEEDING_FORMS_GAUGE = 'commcare.hubspot.domains_with_forms_gt_threshold'
 DATADOG_HUBSPOT_SENT_FORM_METRIC = 'commcare.hubspot.sent_form'
+DATADOG_HUBSPOT_TRACK_DATA_POST_METRIC = 'commcare.hubspot.track_data_post'
 
 
 def count_by_response_code(metric_prefix):
@@ -92,6 +93,6 @@ def get_url_group(url):
     return default
 
 
-def update_datadog_metrics(metrics={}):
+def update_datadog_metrics(metrics):
     for metric, value in metrics.items():
         statsd.gauge(metric, value)
