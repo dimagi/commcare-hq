@@ -14,8 +14,6 @@ from corehq.apps.case_importer_v1.exceptions import (
     ImporterFileNotFound,
     ImporterRefError,
     InvalidCustomFieldNameException,
-    InvalidDateException,
-    InvalidIntegerException,
     ImporterError)
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CouchUser
@@ -39,7 +37,6 @@ class ImporterConfig(namedtuple('ImporterConfig', [
     'excel_fields',
     'case_fields',
     'custom_fields',
-    'type_fields',
     'search_column',
     'key_column',
     'value_column',
@@ -74,7 +71,6 @@ class ImporterConfig(namedtuple('ImporterConfig', [
             excel_fields=request.POST.getlist('excel_field[]'),
             case_fields=request.POST.getlist('case_field[]'),
             custom_fields=request.POST.getlist('custom_field[]'),
-            type_fields=request.POST.getlist('type_field[]'),
             search_column=request.POST['search_column'],
             key_column=request.POST['key_column'],
             value_column=request.POST['value_column'],
@@ -139,10 +135,16 @@ class ExcelFile(object):
         return [self._fmt_value(cell) for cell in sheet.row(index)]
 
     def _fmt_value(self, cell):
-        # Explicitly format integers, since xlrd treats all numbers as decimals (adds ".0")
-        if cell.ctype == xlrd.XL_CELL_NUMBER and int(cell.value) == cell.value:
-            return int(cell.value)
-        return cell.value
+        if cell.ctype == xlrd.XL_CELL_NUMBER:
+            if int(cell.value) == cell.value:
+                # Explicitly cast integers, since xlrd treats all numbers as floats
+                return int(cell.value)
+            else:
+                return cell.value
+        elif cell.ctype == xlrd.XL_CELL_DATE:
+            return date(*xlrd.xldate_as_tuple(cell.value, self.workbook.datemode)[:3])
+        else:
+            return cell.value
 
     def get_first_sheet(self):
         return self.workbook.sheet_by_index(0)
@@ -197,14 +199,11 @@ def convert_custom_fields_to_struct(config):
     excel_fields = config.excel_fields
     case_fields = config.case_fields
     custom_fields = config.custom_fields
-    type_fields = config.type_fields
 
     field_map = {}
     for i, field in enumerate(excel_fields):
         if field:
-            field_map[field] = {
-                'type_field': type_fields[i]
-            }
+            field_map[field] = {}
 
             if case_fields[i]:
                 field_map[field]['field_name'] = case_fields[i]
@@ -219,7 +218,6 @@ def convert_custom_fields_to_struct(config):
     # didn't explicitly put it there
     if config.search_column not in field_map and config.search_field == EXTERNAL_ID:
         field_map[config.search_column] = {
-            'type_field': 'plain',
             'field_name': EXTERNAL_ID
         }
     return field_map
@@ -286,16 +284,6 @@ class ImportErrorDetail(object):
 
     def as_dict(self):
         return dict(self.errors)
-
-
-def parse_excel_date(date_val, datemode):
-    """ Convert field value from excel to a date value """
-    if date_val:
-        parsed_date = str(date(*xlrd.xldate_as_tuple(date_val, datemode)[:3]))
-    else:
-        parsed_date = ''
-
-    return parsed_date
 
 
 def convert_field_value(value):
@@ -378,7 +366,7 @@ def lookup_case(search_field, search_id, domain, case_type):
         return (None, LookupErrors.NotFound)
 
 
-def populate_updated_fields(config, columns, row, datemode):
+def populate_updated_fields(config, columns, row):
     """
     Returns a dict map of fields that were marked to be updated
     due to the import. This can be then used to pass to the CaseBlock
@@ -412,18 +400,7 @@ def populate_updated_fields(config, columns, row, datemode):
             # This is to be consistent with how the case export works.
             update_value = ''
         elif update_value is not None:
-            if field_map[key]['type_field'] == 'date':
-                try:
-                    update_value = parse_excel_date(update_value, datemode)
-                except Exception:
-                    raise InvalidDateException(key)
-            elif field_map[key]['type_field'] == 'integer' and str(update_value).strip() != '':
-                try:
-                    update_value = str(int(update_value))
-                except ValueError:
-                    raise InvalidIntegerException(key)
-            else:
-                update_value = convert_field_value(update_value)
+            update_value = convert_field_value(update_value)
 
         fields_to_update[update_field_name] = update_value
 
