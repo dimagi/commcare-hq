@@ -15,7 +15,7 @@ from corehq.apps.case_importer_v1.exceptions import (
     ImporterFileNotFound,
     ImporterRefError,
     InvalidCustomFieldNameException,
-    ImporterError)
+)
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username

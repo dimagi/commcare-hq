@@ -1,9 +1,7 @@
 from django.test import TestCase
-import mock
 from casexml.apps.case.mock import CaseFactory, CaseStructure
 from casexml.apps.case.tests.util import delete_all_cases
 from corehq.apps.case_importer_v1.const import ImportErrors
-from corehq.apps.case_importer_v1.exceptions import ImporterError
 from corehq.apps.case_importer_v1.tasks import bulk_import_async, do_import
 from corehq.apps.case_importer_v1.tests.fakes import ExcelFileFake
 from corehq.apps.case_importer_v1.util import ImporterConfig

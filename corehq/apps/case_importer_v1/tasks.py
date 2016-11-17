@@ -1,7 +1,6 @@
 from celery.task import task
 from corehq.apps.case_importer_v1.exceptions import ImporterRefError, ImporterError
 from corehq.apps.case_importer_v1.util import get_importer_error_message
-from corehq.util.spreadsheets_v2 import SpreadsheetFileError
 from dimagi.utils.couch.database import is_bigcouch
 from casexml.apps.case.mock import CaseBlock, CaseBlockError
 from corehq.apps.hqcase.utils import submit_case_blocks
