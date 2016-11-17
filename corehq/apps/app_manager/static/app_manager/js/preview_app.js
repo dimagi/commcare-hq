@@ -125,7 +125,9 @@ hqDefine('app_manager/js/preview_app.js', function() {
             _private.triggerPreviewEvent('refresh');
         });
         $(document).ajaxComplete(function(e, xhr, options) {
-            if (/edit_form_attr/.test(options.url)) {
+            if (/edit_form_attr/.test(options.url) ||
+                /edit_module_attr/.test(options.url) ||
+                /patch_xform/.test(options.url)) {
                 $(module.SELECTORS.BTN_REFRESH).addClass('app-out-of-date');
             }
         });
