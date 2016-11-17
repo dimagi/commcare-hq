@@ -26,9 +26,9 @@ hqDefine('app_manager/js/preview_app.js', function() {
     };
 
     module.DATA = {
-        OPEN: 'isopen',
+        OPEN: 'preview-isopen',
         POSITION: 'position',
-        TABLET: 'tablet',
+        TABLET: 'preview-tablet',
     };
 
     _private.showAppPreview = function() {
