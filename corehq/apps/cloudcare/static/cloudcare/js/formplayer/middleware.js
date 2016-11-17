@@ -24,10 +24,24 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
     var clearVersionInfo = function(name) {
         FormplayerFrontend.trigger('setVersionInfo', '');
     };
+    var setScrollableMaxHeight = function() {
+        var maxHeight,
+            maxHeightForm;
+        maxHeight = ($(window).height() -
+            FormplayerFrontend.regions.phoneModeNavigation.$el.height() -
+            FormplayerFrontend.regions.breadcrumb.$el.height());
+        maxHeightForm = ($(window).height() -
+            FormplayerFrontend.regions.phoneModeNavigation.$el.height());
+
+        $('.scrollable-container').css('max-height', maxHeight + 'px');
+        $('.form-scrollable-container').css('min-height', maxHeightForm + 'px');
+        $('.form-scrollable-container').css('max-height', maxHeightForm + 'px');
+    };
 
     SessionNavigate.Middleware.middlewares = [
         logRouteMiddleware,
         clearFormMiddleware,
         clearVersionInfo,
+        setScrollableMaxHeight,
     ];
 });
