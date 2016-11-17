@@ -59,3 +59,20 @@ def _get_current_case_types_and_properties(domain):
             properties[case_type].add(prop.name)
 
     return case_types, properties
+
+
+def add_properties_to_data_dictionary(domain, case_type, properties):
+    case_type_obj, created = CaseType.objects.get_or_create(domain=domain, name=case_type)
+    if not created:
+        old_properties = CaseProperty.objects.filter(case_type=case_type_obj)
+        old_properties = {p.name for p in old_properties}
+    else:
+        old_properties = set()
+    new_properties = []
+
+    for case_property in properties:
+        if case_property not in old_properties:
+            old_properties.add(case_property)
+            new_properties.append(CaseProperty(name=case_property, case_type=case_type_obj))
+
+    CaseProperty.objects.bulk_create(new_properties)
