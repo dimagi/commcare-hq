@@ -1,5 +1,3 @@
-import json
-
 from django.core.urlresolvers import reverse
 from django.db.models.query import Prefetch
 from django.http import JsonResponse

@@ -13,11 +13,9 @@ def generate_data_dictionary(domain):
                 current_properties[case_type] = {prop.name}
             else:
                 current_properties[case_type].add(prop.name)
-    current_case_types = current_properties.keys()
 
     properties = _get_all_case_properties(domain)
     new_case_properties = []
-    new_case_types = []
     for case_type, properties in properties.items():
         if not case_type:
             continue
