@@ -22,11 +22,11 @@ from corehq.toggles import deterministic_random
 from corehq.util.decorators import analytics_task
 from corehq.util.soft_assert import soft_assert
 from corehq.util.datadog.utils import (
-    increment_metric,
-    notify_datadog,
-    DATADOG_USER_MAX_FORMS_LIMIT,
-    DATADOG_EXCEEDING_MAX_FORMS_COUNT,
-    DATADOG_MOBILE_USER_COUNT
+    count_by_response_code,
+    update_datadog_metrics,
+    DATADOG_DOMAINS_EXCEEDING_FORMS_GAUGE,
+    DATADOG_WEB_USERS_GAUGE,
+    DATADOG_HUBSPOT_SENT_FORM_METRIC
 )
 
 from dimagi.utils.logging import notify_exception
@@ -50,6 +50,7 @@ HUBSPOT_EXISTING_USER_INVITE_FORM = "7533717e-3095-4072-85ff-96b139bcb147"
 HUBSPOT_CLICKED_SIGNUP_FORM = "06b39b74-62b3-4387-b323-fe256dc92720"
 HUBSPOT_CLICKED_PREVIEW_FORM_ID = "43124a42-972b-479e-a01a-6b92a484f7bc"
 HUBSPOT_COOKIE = 'hubspotutk'
+HUBSPOT_THRESHOLD = 300
 
 
 def _raise_for_urllib3_response(response):
@@ -151,7 +152,6 @@ def _get_client_ip(meta):
     return ip
 
 
-@increment_metric('sent_form_to_hubspot')
 def _send_form_to_hubspot(form_id, webuser, cookies, meta, extra_fields=None, email=False):
     """
     This sends hubspot the user's first and last names and tracks everything they did
@@ -175,12 +175,14 @@ def _send_form_to_hubspot(form_id, webuser, cookies, meta, extra_fields=None, em
         if extra_fields:
             data.update(extra_fields)
 
-        response = requests.post(
-            url,
-            data=data
-        )
+        response = _send_hubspot_form_request(url, data)
         _log_response('HS', data, response)
         response.raise_for_status()
+
+
+@count_by_response_code(DATADOG_HUBSPOT_SENT_FORM_METRIC)
+def _send_hubspot_form_request(url, data):
+    return requests.post(url, data=data)
 
 
 @analytics_task()
@@ -351,9 +353,9 @@ def track_periodic_data():
     # Keep track of india and www data seperately
     env = get_instance_string()
 
-    # Track no of users and users with max_forms greater than DATADOG_NOTIFY_MAX_FORMS
+    # Track no of users and domains with max_forms greater than HUBSPOT_THRESHOLD
     number_of_users = 0
-    number_of_users_exceeding_max_forms = 0
+    number_of_domains_with_forms_gt_threshold = 0
 
     # For each web user, iterate through their domains and select the max number of form submissions and
     # max number of mobile workers
@@ -375,8 +377,8 @@ def track_periodic_data():
                 max_workers = domains_to_mobile_users[domain]
 
         project_spaces_created = ", ".join(get_domains_created_by_user(email))
-        if max_forms > DATADOG_USER_MAX_FORMS_LIMIT:
-            number_of_users_exceeding_max_forms += 1
+        if max_forms > HUBSPOT_THRESHOLD:
+            number_of_domains_with_forms_gt_threshold += 1
 
         user_json = {
             'email': email,
@@ -394,8 +396,8 @@ def track_periodic_data():
                     'value': project_spaces_created,
                 },
                 {
-                    'property': '{}over_300_form_submissions'.format(env),
-                    'value': max_forms > 300
+                    'property': '{}over_{}_form_submissions'.format(env, HUBSPOT_THRESHOLD),
+                    'value': max_forms > HUBSPOT_THRESHOLD
                 },
                 {
                     'property': '{}date_created'.format(env),
@@ -408,9 +410,9 @@ def track_periodic_data():
     submit_json = json.dumps(submit)
 
     submit_data_to_hub_and_kiss(submit_json)
-    notify_datadog({
-        DATADOG_MOBILE_USER_COUNT: number_of_users,
-        DATADOG_EXCEEDING_MAX_FORMS_COUNT: number_of_users_exceeding_max_forms
+    update_datadog_metrics({
+        DATADOG_WEB_USERS_GAUGE: number_of_users,
+        DATADOG_DOMAINS_EXCEEDING_FORMS_GAUGE: number_of_domains_with_forms_gt_threshold
     })
 
 
