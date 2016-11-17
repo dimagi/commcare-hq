@@ -11,7 +11,12 @@ def open_xls_workbook(filename):
         with xlrd.open_workbook(filename) as xlrd_workbook:
             yield _XLSWorkbookAdaptor(xlrd_workbook).to_workbook()
     except xlrd.XLRDError as e:
-        raise SpreadsheetFileError(e.message)
+        if e.message == u'Workbook is encrypted':
+            raise SpreadsheetFileEncrypted(e.message)
+        else:
+            raise SpreadsheetFileInvalidError(e.message)
+    except IOError as e:
+        raise SpreadsheetFileNotFound(e.message)
 
 
 class _XLSWorksheetAdaptor(object):

@@ -1,19 +1,18 @@
 from datetime import datetime, date, time
 from itertools import izip_longest
-import os
 from django.test import SimpleTestCase
 from corehq.util.spreadsheets_v2 import (
     open_xls_workbook,
     open_xlsx_workbook,
-    SpreadsheetFileError,
     Workbook,
     Worksheet,
     Cell,
 )
+from corehq.util.spreadsheets_v2.tests.utils import get_file, run_on_all_adapters
+from corehq.util.test_utils import make_make_path
 
 
-def _make_path(*args):
-    return os.path.join(os.path.dirname(__file__), *args)
+_make_path = make_make_path(__file__)
 
 
 class ExcelCellTypeTest(SimpleTestCase):
@@ -63,18 +62,7 @@ class ExcelCellTypeTest(SimpleTestCase):
                 )
             )
 
-    def test_xlsx_types(self):
-        self._test_types(_make_path('files', 'xlsx', 'types.xlsx'), open_xlsx_workbook)
 
-    def test_xls_types(self):
-        self._test_types(_make_path('files', 'xls', 'types.xls'), open_xls_workbook)
-
-    def test_xls_empty_file(self):
-        with self.assertRaises(SpreadsheetFileError):
-            with open_xls_workbook(_make_path('files', 'xls', 'empty_file.xls')):
-                pass
-
-    def test_xlsx_empty_file(self):
-        with self.assertRaises(SpreadsheetFileError):
-            with open_xlsx_workbook(_make_path('files', 'xlsx', 'empty_file.xlsx')):
-                pass
+@run_on_all_adapters(ExcelCellTypeTest)
+def test_xlsx_types(self, open_workbook, ext):
+    self._test_types(get_file('types', ext), open_workbook)

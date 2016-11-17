@@ -4,16 +4,36 @@ from datetime import datetime, time
 import openpyxl
 from openpyxl.utils.datetime import from_excel
 from openpyxl.utils.exceptions import InvalidFileException
-from corehq.util.spreadsheets_v2 import Worksheet, Cell, Workbook, SpreadsheetFileError
+from corehq.util.spreadsheets_v2 import Worksheet, Cell, Workbook, \
+    SpreadsheetFileNotFound, SpreadsheetFileInvalidError, SpreadsheetFileEncrypted
+
+# Got this from running hexdump and then googling
+# which matched something on https://en.wikipedia.org/wiki/List_of_file_signatures:
+#     Compound File Binary Format,
+#     a container format used for document by older versions of Microsoft Office.
+#     It is however an open format used by other programs as well.
+# Also checked that it's not used non-encrypted xlsx files, which are just .zip files
+XLSX_ENCRYPTED_MARKER = '\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1'
 
 
 @contextmanager
 def open_xlsx_workbook(filename):
-    with open(filename) as f:
+    try:
+        f = open(filename)
+    except IOError as e:
+        raise SpreadsheetFileNotFound(e.message)
+
+    with f as f:
         try:
             openpyxl_workbook = openpyxl.load_workbook(f, read_only=True, data_only=True)
-        except (BadZipfile, InvalidFileException) as e:
-            raise SpreadsheetFileError(e.message)
+        except InvalidFileException as e:
+            raise SpreadsheetFileInvalidError(e.message)
+        except BadZipfile as e:
+            f.seek(0)
+            if f.read(8) == XLSX_ENCRYPTED_MARKER:
+                raise SpreadsheetFileEncrypted(u'Workbook is encrypted')
+            else:
+                raise SpreadsheetFileInvalidError(e.message)
         yield _XLSXWorkbookAdaptor(openpyxl_workbook).to_workbook()
 
 
