@@ -972,6 +972,9 @@ class Beneficiary(OPMCaseRow):
         if self.total_cash == 0:
             raise InvalidRow("Case does not require payment")
 
+        if self.case_is_out_of_range:
+            raise InvalidRow("Child age is greater than 36 months")
+
         self.payment_last_month = numeric_fn(self.last_month_row.total_cash if self.last_month_row else 0)
 
 
