@@ -1,13 +1,12 @@
 from collections import namedtuple
-import os
 from django.test import SimpleTestCase
 from corehq.apps.fixtures.exceptions import FixtureUploadError
 from corehq.apps.fixtures.upload import validate_fixture_file_format
 from corehq.apps.fixtures.upload.failure_messages import FAILURE_MESSAGES
+from corehq.util.test_utils import make_make_path
 
 
-def _make_path(*args):
-    return os.path.join(os.path.dirname(__file__), *args)
+_make_path = make_make_path(__file__)
 
 
 UploadTestConfig = namedtuple('UploadTestConfig', ['upload_file', 'error_messages'])
