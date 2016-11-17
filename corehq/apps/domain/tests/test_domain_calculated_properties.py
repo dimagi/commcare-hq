@@ -5,6 +5,7 @@ from django.test import TestCase
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.calculations import _all_domain_stats, _calced_props
 
+
 class DomainCalculatedPropertiesTest(TestCase):
 
     def setUp(self):
