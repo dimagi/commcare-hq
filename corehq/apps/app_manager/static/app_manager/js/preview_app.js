@@ -55,6 +55,17 @@ hqDefine('app_manager/js/preview_app.js', function() {
         }, window.location.origin);
     };
 
+    _private.toggleTabletView = function() {
+        var $appPreview = $(module.SELECTORS.PREVIEW_WINDOW);
+        if ($appPreview.hasClass('preview-tablet-mode')) {
+            $appPreview.removeClass('preview-tablet-mode');
+            _private.triggerPreviewEvent('phone-view');
+        } else {
+            $appPreview.addClass('preview-tablet-mode');
+            _private.triggerPreviewEvent('tablet-view');
+        }
+    };
+
     _private.toggleAppPreview = function (e) {
         e.preventDefault();
         if (localStorage.getItem(module.DATA.OPEN) === module.DATA.OPEN) {
@@ -119,6 +130,7 @@ hqDefine('app_manager/js/preview_app.js', function() {
         };
         $(window).on(module.EVENTS.RESIZE, _resizeAppPreview);
         layoutController.utils.setBalancePreviewFn(_resizeAppPreview);
+        $('.js-preview-toggle-tablet-view').click(_private.toggleTabletView);
         $('.js-preview-back').click(_private.triggerPreviewEvent.bind(this, 'back'));
         $('.js-preview-refresh').click(function() {
             $(module.SELECTORS.BTN_REFRESH).removeClass('app-out-of-date');
