@@ -53,6 +53,7 @@ class DataDictionaryView(BaseDomainView):
     urlname = 'data_dictionary'
 
     @method_decorator(login_and_domain_required)
+    @toggles.DATA_DICTIONARY.required_decorator()
     def dispatch(self, request, *args, **kwargs):
         return super(DataDictionaryView, self).dispatch(request, *args, **kwargs)
 
