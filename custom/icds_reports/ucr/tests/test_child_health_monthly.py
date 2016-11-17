@@ -915,7 +915,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
                  ('ebf_no_bf_pregnant_again', 0),
                  ('ebf_no_bf_child_too_old', 0),
                  ('ebf_no_bf_mother_sick', 0)]
-            ),
+             ),
             (1, [('ebf_eligible', 1),
                  ('ebf_in_month', 1),
                  ('ebf_not_breastfeeding_reason', None),
@@ -977,7 +977,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
 
         #Dec: not EBF, Jan: EBF
         self._submit_pnc_form(
-            form_date=datetime(2015,12,14),
+            form_date=datetime(2015, 12, 14),
             case_id=case_id,
             is_ebf='no',
             other_milk_to_child='yes',
@@ -1001,7 +1001,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
                  ('ebf_no_bf_pregnant_again', 0),
                  ('ebf_no_bf_child_too_old', 0),
                  ('ebf_no_bf_mother_sick', 0)]
-            ),
+             ),
             (1, [('ebf_eligible', 1),
                  ('ebf_in_month', 1),
                  ('ebf_not_breastfeeding_reason', None),
@@ -1091,7 +1091,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
                  ('ebf_no_bf_pregnant_again', 1),
                  ('ebf_no_bf_child_too_old', 0),
                  ('ebf_no_bf_mother_sick', 0)]
-            ),
+             ),
             (1, [('ebf_eligible', 1),
                  ('ebf_in_month', 0),
                  ('ebf_not_breastfeeding_reason', 'child_too_old'),

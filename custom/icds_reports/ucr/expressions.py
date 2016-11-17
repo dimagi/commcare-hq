@@ -18,7 +18,8 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('icds_ccs_pregnant', 'custom.icds_reports.ucr.expressions.ccs_pregnant'),
     ('icds_ccs_lactating', 'custom.icds_reports.ucr.expressions.ccs_lactating'),
     ('icds_child_age_in_days', 'custom.icds_reports.ucr.expressions.child_age_in_days'),
-    ('icds_child_age_in_months_month_start', 'custom.icds_reports.ucr.expressions.child_age_in_months_month_start'),
+    ('icds_child_age_in_months_month_start',
+     'custom.icds_reports.ucr.expressions.child_age_in_months_month_start'),
     ('icds_child_age_in_months_month_end', 'custom.icds_reports.ucr.expressions.child_age_in_months_month_end'),
     ('icds_child_valid_in_month', 'custom.icds_reports.ucr.expressions.child_valid_in_month'),
 ]
