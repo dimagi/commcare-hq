@@ -30,6 +30,12 @@ FormplayerFrontend.module("HQ.Events", function(Events, FormplayerFrontend) {
         }
 
         switch (data.action) {
+        case Events.Actions.TABLET_VIEW:
+            FormplayerFrontend.trigger('view:tablet');
+            break;
+        case Events.Actions.PHONE_VIEW:
+            FormplayerFrontend.trigger('view:phone');
+            break;
         case Events.Actions.BACK:
             FormplayerFrontend.trigger('navigation:back');
             break;
@@ -43,5 +49,7 @@ FormplayerFrontend.module("HQ.Events", function(Events, FormplayerFrontend) {
     Events.Actions = {
         BACK: 'back',
         REFRESH: 'refresh',
+        PHONE_VIEW: 'phone-view',
+        TABLET_VIEW: 'tablet-view',
     };
 });
