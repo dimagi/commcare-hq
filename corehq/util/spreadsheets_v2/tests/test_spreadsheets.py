@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date, time
 from itertools import izip_longest
 import os
 from django.test import SimpleTestCase
@@ -42,9 +42,12 @@ class ExcelCellTypeTest(SimpleTestCase):
                 workbook,
                 Workbook(
                     worksheets=[
-                        Worksheet(title='Sheet1', max_row=12, iter_rows=lambda: [
+                        Worksheet(title='Sheet1', max_row=15, iter_rows=lambda: [
                             [Cell(u'String'), Cell(u'Danny')],
-                            [Cell(u'Date'), Cell(datetime(1988, 7, 7, 0, 0))],
+                            [Cell(u'Date'), Cell(date(1988, 7, 7))],
+                            [Cell(u'Date Time'), Cell(datetime(2016, 1, 1, 12, 0))],
+                            [Cell(u'Time'), Cell(time(12, 0))],
+                            [Cell(u'Midnight'), Cell(time(0, 0))],
                             [Cell(u'Int'), Cell(28)],
                             [Cell(u'Int.0'), Cell(5)],
                             [Cell(u'Float'), Cell(5.1)],

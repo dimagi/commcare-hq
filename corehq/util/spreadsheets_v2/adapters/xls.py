@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import datetime, time, date
 import xlrd
 from corehq.util.spreadsheets_v2 import Worksheet, Cell, Workbook, SpreadsheetFileError
 
@@ -25,7 +25,13 @@ class _XLSWorksheetAdaptor(object):
             else:
                 return cell.value
         elif cell.ctype == xlrd.XL_CELL_DATE:
-            return datetime(*xlrd.xldate_as_tuple(cell.value, self._sheet.book.datemode))
+            datetime_tuple = xlrd.xldate_as_tuple(cell.value, self._sheet.book.datemode)
+            if datetime_tuple[:3] == (0, 0, 0):
+                return time(*datetime_tuple[3:])
+            elif datetime_tuple[3:] == (0, 0, 0):
+                return date(*datetime_tuple[:3])
+            else:
+                return datetime(*datetime_tuple)
         elif cell.ctype == xlrd.XL_CELL_BOOLEAN:
             return bool(cell.value)
         elif cell.ctype == xlrd.XL_CELL_EMPTY:
