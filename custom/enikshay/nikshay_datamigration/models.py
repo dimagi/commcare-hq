@@ -3,30 +3,30 @@ from django.db import models
 
 class PatientDetail(models.Model):
     PregId = models.CharField(max_length=255, primary_key=True) # need to remove trailing whitespace in Excel
-    Stocode = models.CharField(max_length=255, null=True)
+    scode = models.CharField(max_length=255, null=True, default='default')
     Dtocode = models.CharField(max_length=255, null=True)
-    Tbunitcode = models.IntegerField(null=True)
+    Tbunitcode = models.CharField(max_length=255, null=True)
     pname = models.CharField(max_length=255, null=True)
-    pgender = models.CharField(max_length=255)
-    page = models.IntegerField(null=True)
-    poccupation = models.IntegerField(null=True)
+    pgender = models.CharField(max_length=255, null=True)
+    page = models.CharField(max_length=255, null=True)
+    poccupation = models.CharField(max_length=255, null=True)
     paadharno = models.CharField(max_length=255, null=True) # big ints (scientific notation) and nulls. requires some formatting
     paddress = models.CharField(max_length=255, null=True)
     pmob = models.CharField(max_length=255, null=True)  # contains " ", big ints
-    plandline = models.BigIntegerField(null=True)
+    plandline = models.CharField(max_length=255, null=True)
     ptbyr = models.CharField(max_length=255, null=True)  # dates, but not clean
-    pregdate1 = models.DateField()  # remove time in Excel (format as DD-MM-YYYY)
+    pregdate1 = models.CharField(max_length=255, null=True)  # remove time in Excel (format as DD-MM-YYYY)
     cname = models.CharField(max_length=255, null=True)
     caddress = models.CharField(max_length=255, null=True)
     cmob = models.CharField(max_length=255, null=True)  # contains "  ", big ints
-    clandline = models.BigIntegerField(null=True)
+    clandline = models.CharField(max_length=255, null=True)
     cvisitedby = models.CharField(max_length=255, null=True)
     cvisitedDate1 = models.CharField(max_length=255, null=True)  # datetimes, look like they're all midnight
     dcpulmunory = models.CharField(
         max_length=255, choices=(
             ('y', 'y'),
             ('N', 'N'),
-        )
+        ), null=True
     )  # y or N
     dcexpulmunory = models.CharField(max_length=255, null=True)
     dcpulmunorydet = models.CharField(max_length=255, null=True)
@@ -34,15 +34,15 @@ class PatientDetail(models.Model):
     dotdesignation = models.CharField(max_length=255, null=True)
     dotmob = models.CharField(max_length=255, null=True)
     dotlandline = models.CharField(max_length=255, null=True)
-    dotpType = models.IntegerField()
+    dotpType = models.CharField(max_length=255, null=True)
     dotcenter = models.CharField(max_length=255, null=True)
-    PHI = models.IntegerField()
+    PHI = models.CharField(max_length=255, null=True)
     dotmoname = models.CharField(max_length=255, null=True)
     dotmosignDate = models.CharField(max_length=255, null=True)  # datetimes, look like they're all midnight. also have a bunch of 1/1/1990
     atbtreatment = models.CharField(max_length=255, choices=(
         ('Y', 'Y'),
         ('N', 'N'),
-    ))  # Y or N
+    ), null=True)  # Y or N
     atbduration = models.CharField(max_length=255, null=True)  # some int, some # months poorly formatted
     atbsource = models.CharField(max_length=255, null=True, choices=(
         ('G', 'G'),
@@ -50,9 +50,9 @@ class PatientDetail(models.Model):
         ('P', 'P'),
     ))
     atbregimen = models.CharField(max_length=255, null=True)
-    atbyr = models.IntegerField(null=True)
-    Ptype = models.IntegerField()
-    pcategory = models.IntegerField()
+    atbyr = models.CharField(max_length=255, null=True)
+    Ptype = models.CharField(max_length=255, null=True)
+    pcategory = models.CharField(max_length=255, null=True)
     InitiationDate1 = models.CharField(max_length=255, null=True)  # datetimes, look like they're all midnight
 
     @property
