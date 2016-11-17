@@ -209,22 +209,24 @@ class HqdbContext(DatabaseContext):
             databases = {app_name: uri for app_name, uri in databases}
         self.apps = [self.verify_test_db(*item) for item in databases.items()]
 
-        if self.skip_setup_for_reuse_db:
-            from django.db import connections
-            for connection in connections.all():
-                db = connection.settings_dict
-                assert db["NAME"].startswith(TEST_DATABASE_PREFIX), db["NAME"]
-                try:
-                    connection.ensure_connection()
-                except OperationalError:
-                    break  # cannot connect; resume normal setup
-            else:
-                return  # skip remaining setup
+        if self.skip_setup_for_reuse_db and self._databases_ok():
+            return  # skip remaining setup
 
         sys.__stdout__.write("\n")  # newline for creating database message
         if "REUSE_DB" in os.environ:
             sys.__stdout__.write("REUSE_DB={REUSE_DB!r} ".format(**os.environ))
         super(HqdbContext, self).setup()
+
+    def _databases_ok(self):
+        from django.db import connections
+        for connection in connections.all():
+            db = connection.settings_dict
+            assert db["NAME"].startswith(TEST_DATABASE_PREFIX), db["NAME"]
+            try:
+                connection.ensure_connection()
+            except OperationalError:
+                return False
+        return True
 
     def teardown(self):
         if self.should_skip_test_setup():
