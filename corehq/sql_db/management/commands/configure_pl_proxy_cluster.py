@@ -70,6 +70,11 @@ def _update_pl_proxy_cluster(existing_config, verbose):
     existing_shards = _get_current_shards(existing_config)
     new_shard_configs = partition_config.get_shards()
 
+    if verbose:
+        print '{0} Existing config {0}'.format('-' * 42)
+        print existing_config
+        print '-' * 100
+
     shards_to_update = get_shards_to_update(existing_shards, new_shard_configs)
 
     if not shards_to_update:
@@ -87,7 +92,7 @@ def _update_pl_proxy_cluster(existing_config, verbose):
             if verbose:
                 print alter_sql
 
-            with connections[config.get_proxy_db()].cursor() as cursor:
+            with connections[partition_config.get_proxy_db()].cursor() as cursor:
                 cursor.execute(alter_sql)
         else:
             print 'Abort'

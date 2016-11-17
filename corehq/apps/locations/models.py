@@ -114,6 +114,12 @@ class LocationType(models.Model):
     )  # levels below this location type that we start expanding from
     _expand_from_root = models.BooleanField(default=False, db_column='expand_from_root')
     expand_to = models.ForeignKey('self', null=True, related_name='+', on_delete=models.CASCADE)  # levels above this type that are synced
+    include_without_expanding = models.ForeignKey(
+        'self',
+        null=True,
+        related_name='+',
+        on_delete=models.SET_NULL,
+    )  # include all leves of this type and their ancestors
     last_modified = models.DateTimeField(auto_now=True)
 
     emergency_level = StockLevelField(default=0.5)
@@ -279,6 +285,8 @@ class LocationQueriesMixin(object):
             return self.all()
 
         users_location = user.get_sql_location(domain)
+        if not users_location:
+            return self.none()  # No locations are accessible to this user
         return self.all() & users_location.get_descendants(include_self=True)
 
 

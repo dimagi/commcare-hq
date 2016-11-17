@@ -269,7 +269,7 @@ class FundamentalCaseTests(TestCase):
 
         post_case_blocks([case.as_xml()], domain='some-domain')
         # update the date_opened to date type to check for value on restore
-        case['update']['date_opened'] = case['update']['date_opened'].date()
+        case.date_opened = case.date_opened.date()
         check_user_has_case(self, user, case.as_xml())
 
     @run_with_all_backends

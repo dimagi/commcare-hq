@@ -2,12 +2,14 @@ import json
 from StringIO import StringIO
 
 from django.test import SimpleTestCase
+from django.core.cache import cache
 from elasticsearch.exceptions import ConnectionError
 from mock import patch
 from openpyxl import load_workbook
 
 from corehq.apps.export.const import (
     DEID_DATE_TRANSFORM,
+    CASE_NAME_TRANSFORM,
 )
 from corehq.apps.export.export import (
     _get_writer,
@@ -482,7 +484,7 @@ class ExportTest(SimpleTestCase):
             cls.es = get_es_new()
             initialize_index_and_mapping(cls.es, CASE_INDEX_INFO)
 
-        case = new_case(foo="apple", bar="banana", date='2016-4-24')
+        case = new_case(_id='robin', name='batman', foo="apple", bar="banana", date='2016-4-24')
         send_to_elasticsearch('cases', case.to_json())
 
         case = new_case(owner_id="some_other_owner", foo="apple", bar="banana", date='2016-4-04')
@@ -495,10 +497,12 @@ class ExportTest(SimpleTestCase):
         send_to_elasticsearch('cases', case.to_json())
 
         cls.es.indices.refresh(CASE_INDEX_INFO.index)
+        cache.clear()
 
     @classmethod
     def tearDownClass(cls):
         ensure_index_deleted(CASE_INDEX_INFO.index)
+        cache.clear()
         super(ExportTest, cls).tearDownClass()
 
     def test_get_export_file(self):
@@ -546,6 +550,58 @@ class ExportTest(SimpleTestCase):
                             [u'apple', u'banana'],
                             [u'apple', u'banana'],
                         ],
+                    }
+                }
+            )
+
+    def test_case_name_transform(self):
+        docs = [
+            {
+                'domain': 'my-domain',
+                '_id': '1234',
+                "form": {
+                    "caseid": "robin",
+                },
+            },
+            {
+                'domain': 'my-domain',
+                '_id': '1234',
+                "form": {
+                    "caseid": "i-do-not-exist",
+                },
+            }
+        ]
+        export_instance = FormExportInstance(
+            export_format=Format.JSON,
+            tables=[
+                TableConfiguration(
+                    label="My table",
+                    selected=True,
+                    columns=[
+                        ExportColumn(
+                            label="case_name",
+                            item=ScalarItem(
+                                path=[PathNode(name='form'), PathNode(name='caseid')],
+                                transform=CASE_NAME_TRANSFORM,
+                            ),
+                            selected=True
+                        ),
+                    ]
+                )
+            ]
+        )
+        writer = _get_writer([export_instance])
+        with writer.open([export_instance]):
+            _write_export_instance(writer, export_instance, docs)
+
+        with ExportFile(writer.path, writer.format) as export:
+            self.assertEqual(
+                json.loads(export),
+                {
+                    u'My table': {
+                        u'headers': [u'case_name'],
+                        u'rows': [[u'batman'], [MISSING_VALUE]],
+
                     }
                 }
             )

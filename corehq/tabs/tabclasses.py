@@ -1,5 +1,6 @@
 from urllib import urlencode
 from django.core.urlresolvers import reverse
+from django.conf import settings
 from django.http import Http404
 from django.utils.html import strip_tags
 from django.utils.safestring import mark_safe, mark_for_escaping
@@ -9,7 +10,6 @@ from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.accounting.models import BillingAccount, Invoice
 from corehq.apps.accounting.utils import domain_has_privilege, is_accounting_admin
 from corehq.apps.app_manager.dbaccessors import domain_has_apps, get_brief_apps_in_domain
-from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.hqadmin.reports import RealProjectSpacesReport, \
     CommConnectProjectSpacesReport, CommTrackProjectSpacesReport, \
@@ -25,7 +25,6 @@ from corehq.apps.reports.models import ReportConfig
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from corehq.apps.userreports.util import has_report_builder_access
 from corehq.apps.users.permissions import can_view_form_exports, can_view_case_exports
-from corehq.apps.users.models import Permissions
 from corehq.form_processor.utils import use_new_exports
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown
@@ -114,8 +113,7 @@ class ProjectReportsTab(UITab):
                 filtered_sidebar_items.append((section, filtered_items))
         return filtered_sidebar_items
 
-    @property
-    def dropdown_items(self):
+    def _get_saved_reports_dropdown(self):
         saved_report_header = dropdown_dict(_('My Saved Reports'), is_header=True)
         saved_reports_list = list(ReportConfig.by_domain_and_owner(
                                   self.domain,
@@ -136,24 +134,36 @@ class ProjectReportsTab(UITab):
         ] if len(saved_reports_list) > MAX_DISPLAYABLE_SAVED_REPORTS else []
 
         if first_five_items:
-            saved_reports_dropdown = ([saved_report_header] + first_five_items + rest_as_second_level_items)
+            return ([saved_report_header] + first_five_items + rest_as_second_level_items)
         else:
-            saved_reports_dropdown = []
-
-        reports = sidebar_to_dropdown(
-            ProjectReportDispatcher.navigation_sections(
-                request=self._request, domain=self.domain),
-            current_url=self.url)
-
-        return saved_reports_dropdown + reports + self._get_configurable_reports_dropdown()
-
-    def _get_configurable_reports_dropdown(self):
-        """Returns all the configurable reports turned on for that user only if that
-        user is restricted by location.
-        """
-        if self.can_access_all_locations:
             return []
 
+    @property
+    def dropdown_items(self):
+        if self.can_access_all_locations:
+            reports = sidebar_to_dropdown(
+                ProjectReportDispatcher.navigation_sections(
+                    request=self._request, domain=self.domain),
+                current_url=self.url)
+            return self._get_saved_reports_dropdown() + reports
+
+        else:
+            return (self._get_saved_reports_dropdown()
+                    + self._get_configurable_reports_dropdown()
+                    + self._get_all_sidebar_items_as_dropdown())
+
+    def _get_all_sidebar_items_as_dropdown(self):
+        def show(page):
+            page['show_in_dropdown'] = True
+            return page
+        return sidebar_to_dropdown([
+            (header, map(show, pages))
+            for header, pages in self.sidebar_items
+        ])
+
+    def _get_configurable_reports_dropdown(self):
+        """Returns all the configurable reports turned on for that user
+        """
         from corehq.reports import _safely_get_report_configs, _make_report_class
         configurable_reports = [
             _make_report_class(config, show_in_dropdown=True)
@@ -314,7 +324,6 @@ class SetupTab(UITab):
 
         if self.project.commtrack_enabled:
             commcare_supply_setup = [
-                # products
                 {
                     'title': ProductListView.page_title,
                     'url': reverse(ProductListView.urlname, args=[self.domain]),
@@ -333,7 +342,6 @@ class SetupTab(UITab):
                         },
                     ]
                 },
-                # programs
                 {
                     'title': ProgramListView.page_title,
                     'url': reverse(ProgramListView.urlname, args=[self.domain]),
@@ -348,27 +356,24 @@ class SetupTab(UITab):
                         },
                     ]
                 },
-                # sms
                 {
                     'title': SMSSettingsView.page_title,
                     'url': reverse(SMSSettingsView.urlname, args=[self.domain]),
                 },
-                # consumption
                 {
                     'title': DefaultConsumptionView.page_title,
                     'url': reverse(DefaultConsumptionView.urlname, args=[self.domain]),
                 },
-                # settings
                 {
                     'title': CommTrackSettingsView.page_title,
                     'url': reverse(CommTrackSettingsView.urlname, args=[self.domain]),
                 },
-                # stock levels
-                {
+            ]
+            if toggles.LOCATION_TYPE_STOCK_RATES.enabled(self.domain):
+                commcare_supply_setup.append({
                     'title': StockLevelsView.page_title,
                     'url': reverse(StockLevelsView.urlname, args=[self.domain]),
-                },
-            ]
+                })
             return [[_('CommCare Supply Setup'), commcare_supply_setup]]
 
 
@@ -656,11 +661,17 @@ class ApplicationsTab(UITab):
 
 
 class CloudcareTab(UITab):
-    view = "corehq.apps.cloudcare.views.default"
-
     url_prefix_formats = ('/a/{domain}/cloudcare/',)
 
     ga_tracker = GaTracker('CloudCare', 'Click Cloud-Care top-level nav')
+
+    @property
+    def view(self):
+        from corehq.apps.cloudcare.views import FormplayerMain
+        if toggles.USE_FORMPLAYER_FRONTEND.enabled(self.domain):
+            return FormplayerMain.urlname
+        else:
+            return "corehq.apps.cloudcare.views.default"
 
     @property
     def title(self):
@@ -1171,16 +1182,18 @@ class ProjectSettingsTab(UITab):
         items.append((_('Project Information'), project_info))
 
         if user_is_admin:
-            administration = [
-                {
-                    'title': _('CommCare Exchange'),
-                    'url': reverse('domain_snapshot_settings', args=[self.domain])
-                },
-                {
-                    'title': _('Multimedia Sharing'),
-                    'url': reverse('domain_manage_multimedia', args=[self.domain])
-                }
-            ]
+            administration = []
+            if not settings.ENTERPRISE_MODE:
+                administration.extend([
+                    {
+                        'title': _('CommCare Exchange'),
+                        'url': reverse('domain_snapshot_settings', args=[self.domain])
+                    },
+                    {
+                        'title': _('Multimedia Sharing'),
+                        'url': reverse('domain_manage_multimedia', args=[self.domain])
+                    }
+                ])
 
             if toggles.SYNC_SEARCH_CASE_CLAIM.enabled(self.domain):
                 administration.append({
@@ -1229,7 +1242,7 @@ class ProjectSettingsTab(UITab):
 
         from corehq.apps.users.models import WebUser
         if isinstance(self.couch_user, WebUser):
-            if user_is_billing_admin or self.couch_user.is_superuser:
+            if (user_is_billing_admin or self.couch_user.is_superuser) and not settings.ENTERPRISE_MODE:
                 from corehq.apps.domain.views import (
                     DomainSubscriptionView, EditExistingBillingAccountView,
                     DomainBillingStatementsView, ConfirmSubscriptionRenewalView,

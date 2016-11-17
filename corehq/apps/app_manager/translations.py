@@ -6,7 +6,6 @@ from lxml import etree
 import copy
 import re
 from lxml.etree import XMLSyntaxError, Element
-from openpyxl.utils.exceptions import InvalidFileException
 
 from corehq.apps.app_manager.exceptions import (
     FormNotFoundException,
@@ -15,7 +14,8 @@ from corehq.apps.app_manager.exceptions import (
 from corehq.apps.app_manager.models import ReportModule
 from corehq.apps.app_manager.util import save_xform
 from corehq.apps.app_manager.xform import namespaces, WrappedNode, ItextValue, ItextOutput
-from corehq.util.spreadsheets.excel import HeaderValueError, WorkbookJSONReader, JSONReaderError
+from corehq.util.spreadsheets.excel import HeaderValueError, WorkbookJSONReader, JSONReaderError, \
+    InvalidExcelFileException
 
 from django.contrib import messages
 from django.utils.translation import ugettext as _
@@ -60,7 +60,8 @@ def process_bulk_app_translation_upload(app, f):
 
     try:
         workbook = WorkbookJSONReader(f)
-    except (HeaderValueError, InvalidFileException) as e:
+    # todo: HeaderValueError does not belong here
+    except (HeaderValueError, InvalidExcelFileException) as e:
         msgs.append(
             (messages.error, _(
                 "App Translation Failed! "

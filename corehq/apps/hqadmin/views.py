@@ -788,15 +788,16 @@ def _lookup_id_in_database(doc_id, db_name=None):
         'deleted': 'danger',
     })
 
+    response = {"doc_id": doc_id}
     if db_name:
         dbs = [_get_db_from_db_name(db_name)]
+        response['selected_db'] = db_name
     else:
         couch_dbs = couch_config.all_dbs_by_slug.values()
         sql_dbs = _SQL_DBS.values()
         dbs = couch_dbs + sql_dbs
 
     db_results = []
-    response = {"doc_id": doc_id}
     for db in dbs:
         try:
             doc = db.get(doc_id)
@@ -877,6 +878,15 @@ def raw_doc(request):
     context = _lookup_id_in_database(doc_id, db_name) if doc_id else {}
     other_couch_dbs = sorted(filter(None, couch_config.all_dbs_by_slug.keys()))
     context['all_databases'] = ['commcarehq'] + other_couch_dbs + _SQL_DBS.keys()
+    context['use_code_mirror'] = request.GET.get('code_mirror', 'true').lower() == 'true'
+
+    if request.GET.get("raw", False):
+        if 'doc' in context:
+            return HttpResponse(context['doc'], content_type="application/json")
+        else:
+            return HttpResponse(json.dumps({"status": "missing"}),
+                                content_type="application/json", status=404)
+
     return render(request, "hqadmin/raw_couch.html", context)
 
 

@@ -11,8 +11,30 @@
 <script src="{% static 'cloudcare/js/formplayer/spec/menu_list_test.js' %}"></script>
 <script src="{% static 'cloudcare/js/formplayer/spec/user_spec.js' %}"></script>
 <script src="{% static 'cloudcare/js/formplayer/spec/session_middleware_spec.js' %}"></script>
+<script src="{% static 'cloudcare/js/formplayer/spec/util_spec.js' %}"></script>
+<script src="{% static 'cloudcare/js/formplayer/spec/integration_spec.js' %}"></script>
 {% endblock %}
 
 {% block fixtures %}
-{% include "formplayer/case_list.html" %}
+    {% include "formplayer/case_list.html" %}
+
+    <div id="restore-as-region"></div>
+    <div id="phone-mode-navigation"></div>
+    <div id="breadcrumb-region"></div>
+    <div id="persistent-case-tile" class="container"></div>
+    <div id="menu-region" class="container"></div>
+
+    {% include 'form_entry/templates.html' %}
+    {% include 'formplayer/grid_view.html' %}
+    {% include 'formplayer/settings_view.html' %}
+    {% include 'formplayer/case_detail.html' %}
+    {% include 'formplayer/case_list.html' %}
+    {% include 'formplayer/menu_list.html' %}
+    {% include 'formplayer/users.html' %}
+    {% include 'formplayer/session_list.html' %}
+    {% include 'formplayer/query_view.html' %}
+    {% include 'formplayer/confirmation_modal.html' %}
+    {% include 'formplayer/progress.html' %}
+    {% include 'formplayer/navigation.html' %}
+
 {% endblock %}

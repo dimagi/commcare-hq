@@ -161,18 +161,33 @@ class QuarterFilter(BaseFilter):
             'years': self.years
         }
 
-    @memoized
-    def value(self, **kwargs):
-        year = kwargs[self.year_param_name]
-        quarter = kwargs[self.quarter_param_name]
-
-        quarter_to_date_dict = {
+    def get_quarter(self, year, quarter):
+        return {
             1: DateSpan(datetime(year, 1, 1), datetime(year, 4, 1), inclusive=False),
             2: DateSpan(datetime(year, 4, 1), datetime(year, 7, 1), inclusive=False),
             3: DateSpan(datetime(year, 7, 1), datetime(year, 10, 1), inclusive=False),
             4: DateSpan(datetime(year, 10, 1), datetime(year + 1, 1, 1), inclusive=False),
-        }
-        return quarter_to_date_dict[quarter]
+        }[quarter]
+
+    @property
+    def default_year(self):
+        return datetime.utcnow().year
+
+    def default_value(self, request_user=None):
+        return self.get_quarter(self.default_year, 1)
+
+    @memoized
+    def value(self, **kwargs):
+        try:
+            year = int(kwargs[self.year_param_name])
+            quarter = int(kwargs[self.quarter_param_name])
+        except ValueError:
+            raise FilterValueException()
+
+        if not (1 <= quarter <= 4):
+            raise FilterValueException()
+
+        return self.get_quarter(year, quarter)
 
 
 class NumericFilter(BaseFilter):

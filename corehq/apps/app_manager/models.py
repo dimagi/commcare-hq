@@ -63,6 +63,7 @@ from couchdbkit.resource import ResourceNotFound
 from corehq import toggles, privileges
 from corehq.blobs.mixin import BlobMixin
 from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
+from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import ServerTime
@@ -1863,6 +1864,9 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     # If True, a small tile will display the case name after selection.
     persist_case_context = BooleanProperty()
     persistent_case_context_xml = StringProperty(default='case_name')
+
+    # Custom variables to add into the <variables /> node
+    custom_variables = StringProperty()
 
     # If True, use case tiles in the case list
     use_case_tiles = BooleanProperty()
@@ -4892,6 +4896,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     def save(self, response_json=None, increment_version=None, **params):
         if not self._rev and not domain_has_apps(self.domain):
             domain_has_apps.clear(self.domain)
+        user = getattr(view_utils.get_request(), 'couch_user', None)
+        if user and user.days_since_created == 0:
+            track_workflow(user.get_email(), 'Saved the App Builder within first 24 hours')
         super(ApplicationBase, self).save(
             response_json=response_json, increment_version=increment_version, **params)
 

@@ -15,11 +15,11 @@
         "filters": [
             {
                 "compare_as_string": false,
-                "datatype": "string",
+                "datatype": "datetime",
                 "required": false,
                 "display": "Case Open Date",
-                "field": "patient_registration_date",
-                "type": "date",
+                "field": "opened_on",
+                "type": "quarter",
                 "slug": "patient_registration_date"
             },
             {

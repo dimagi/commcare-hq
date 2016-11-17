@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import base64
 import jsonfield
 import uuid
 from dimagi.ext.couchdbkit import *
@@ -1330,7 +1331,7 @@ class SelfRegistrationInvitation(models.Model):
         it gives the user the option to install the given app.
         """
         app_info_url = cls.get_app_info_url(domain, app_id)
-        return '[commcare app - do not delete] %s' % app_info_url
+        return '[commcare app - do not delete] %s' % base64.b64encode(app_info_url)
 
     def send_step2_android_sms(self, custom_message=None):
         from corehq.apps.sms.api import send_sms

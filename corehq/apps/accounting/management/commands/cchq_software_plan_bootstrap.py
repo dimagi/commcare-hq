@@ -13,9 +13,7 @@ from corehq.apps.accounting.bootstrap.config.cchq_software_plan_bootstrap import
     BOOTSTRAP_CONFIG, BOOTSTRAP_CONFIG_TESTING
 )
 from corehq.apps.accounting.bootstrap.utils import ensure_plans
-
-
-logger = logging.getLogger(__name__)
+from corehq.apps.accounting.utils import log_accounting_info
 
 
 class Command(BaseCommand):
@@ -31,10 +29,12 @@ class Command(BaseCommand):
     )
 
     def handle(self, dry_run=False, verbose=False, testing=False, *args, **options):
-        logger.info('Bootstrapping standard plans. Custom plans will have to be created via the admin UIs.')
+        log_accounting_info(
+            'Bootstrapping standard plans. Custom plans will have to be created via the admin UIs.'
+        )
 
         if testing:
-            logger.info("Initializing Plans and Roles for Testing")
+            log_accounting_info("Initializing Plans and Roles for Testing")
             config = BOOTSTRAP_CONFIG_TESTING
         else:
             config = BOOTSTRAP_CONFIG

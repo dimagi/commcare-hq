@@ -1,6 +1,8 @@
 import os
 ####### Database config. This assumes Postgres ####### 
 
+INTERNAL_IPS = ['127.0.0.1']
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
@@ -201,6 +203,10 @@ LOCAL_APPS = (
 #    'testapps.test_pillowtop',
 )
 
+LOCAL_MIDDLEWARE_CLASSES = [
+    # 'debug_toolbar.middleware.DebugToolbarMiddleware',
+]
+
 # list of domains to enable ADM reporting on
 ADM_ENABLED_PROJECTS = []
 
@@ -226,7 +232,6 @@ ELASTICSEARCH_PORT = 9200
 
 # our production logstash aggregation
 LOGSTASH_DEVICELOG_PORT = 10777
-LOGSTASH_COUCHLOG_PORT = 10888
 LOGSTASH_AUDITCARE_PORT = 10999
 LOGSTASH_HOST = 'localhost'
 

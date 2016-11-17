@@ -15,7 +15,7 @@ from corehq.apps.userreports.models import (
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.reports.factory import ReportFactory, ReportColumnFactory
 from corehq.apps.userreports.reports.specs import FieldColumn, PercentageColumn, AggregateDateColumn
-from corehq.apps.userreports.sql.columns import _expand_column
+from corehq.apps.userreports.sql.columns import expand_column
 from corehq.apps.userreports.tests.utils import run_with_all_ucr_backends
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.sql_db.connections import connection_manager, UCR_ENGINE_ID
@@ -79,6 +79,7 @@ class TestFieldColumn(SimpleTestCase):
 
 class ChoiceListColumnDbTest(TestCase):
 
+    @run_with_all_ucr_backends
     def test_column_uniqueness_when_truncated(self):
         problem_spec = {
             "display_name": "practicing_lessons",
@@ -108,6 +109,7 @@ class ChoiceListColumnDbTest(TestCase):
             'doc_type': 'CommCareCase',
             'long_column': 'duplicate_choice_1',
         })
+        adapter.refresh_table()
         # and query it back
         q = adapter.get_query_object()
         self.assertEqual(1, q.count())
@@ -195,6 +197,9 @@ class TestExpandedColumn(TestCase):
         report_config.save()
         self.addCleanup(report_config.delete)
         data_source = ReportFactory.from_spec(report_config)
+        adapter = get_indicator_adapter(data_source_config)
+        if build_data_source:
+            adapter.refresh_table()
 
         return data_source, data_source.top_level_columns[0]
 
@@ -253,6 +258,7 @@ class TestExpandedColumn(TestCase):
         self.assertListEqual(distinct_vals, [])
         self.assertFalse(too_many_values)
 
+    @run_with_all_ucr_backends
     def test_expansion(self):
         column = ReportColumnFactory.from_spec(dict(
             type="expanded",
@@ -261,12 +267,13 @@ class TestExpandedColumn(TestCase):
             format="default",
             description="foo"
         ))
-        cols = _expand_column(column, ["positive", "negative"], "en")
+        cols = expand_column(column, ["positive", "negative"], "en")
 
         self.assertEqual(len(cols), 2)
         self.assertEqual(type(cols[0].view), SumWhen)
         self.assertEqual(cols[1].view.whens, {'negative': 1})
 
+    @run_with_all_ucr_backends
     def test_none_in_values(self):
         """
         Confirm that expanded columns work when one of the distinct values is None.

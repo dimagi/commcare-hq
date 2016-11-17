@@ -34,6 +34,7 @@ class FormQuestion(JsonObject):
     calculate = StringProperty()
     relevant = StringProperty()
     required = BooleanProperty()
+    comment = StringProperty()
 
     @property
     def icon(self):

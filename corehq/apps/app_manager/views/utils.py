@@ -51,7 +51,7 @@ def back_to_main(request, domain, app_id=None, module_id=None, form_id=None,
         view_name = page
     else:
         view_name = {
-            1: 'view_app',
+            1: 'default_app',
             2: 'view_app',
             3: 'view_module',
             4: 'form_designer' if toggles.APP_MANAGER_V2.enabled(domain) else 'view_form',
@@ -59,7 +59,7 @@ def back_to_main(request, domain, app_id=None, module_id=None, form_id=None,
 
     return HttpResponseRedirect(
         "%s%s" % (
-            reverse('corehq.apps.app_manager.views.%s' % view_name, args=args),
+            reverse(view_name, args=args),
             "?%s" % urlencode(params) if params else ""
         )
     )

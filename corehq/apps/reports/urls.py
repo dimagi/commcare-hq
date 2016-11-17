@@ -1,6 +1,6 @@
 import logging
 
-from django.conf.urls import include, patterns, url
+from django.conf.urls import include, url
 from django.core.exceptions import ImproperlyConfigured
 from corehq.apps.userreports.reports.view import (
     ConfigurableReport,
@@ -41,11 +41,11 @@ from .views import (
     download_cases_internal)
 
 
-custom_report_urls = patterns('',
+custom_report_urls = [
     CustomProjectReportDispatcher.url_pattern(),
-)
+]
 
-urlpatterns = patterns('corehq.apps.reports.views',
+urlpatterns = [
     ConfigurableReport.url_pattern(),
     CustomConfigurableReportDispatcher.url_pattern(),
 
@@ -142,17 +142,17 @@ urlpatterns = patterns('corehq.apps.reports.views',
     url(r'^custom/', include(custom_report_urls)),
     url(r'^filters/', include(filter_urls)),
     ProjectReportDispatcher.url_pattern(),
-)
+]
 
-report_urls = patterns('',
+report_urls = [
     BasicReportDispatcher.url_pattern(),
-)
+]
 
 for module in get_installed_custom_modules():
     module_name = module.__name__.split('.')[-1]
     try:
-        custom_report_urls += patterns('',
-             (r"^%s/" % module_name, include('{0}.urls'.format(module.__name__))),
-        )
+        custom_report_urls += [
+             url(r"^%s/" % module_name, include('{0}.urls'.format(module.__name__))),
+        ]
     except ImproperlyConfigured:
         logging.info("Module %s does not provide urls" % module_name)

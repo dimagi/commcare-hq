@@ -85,6 +85,7 @@ def generate_for_all_ranges(slug, filters):
 
 def diagnosis_filter(diagnosis, classification):
     return [
+        RawFilter('patient_type IS NOT NULL'),
         RawFilter("basis_of_diagnosis = '%s'" % diagnosis),
         RawFilter("disease_classification = '%s'" % classification)
     ]
@@ -106,7 +107,10 @@ class CaseFindingSqlData(EnikshaySqlData):
                 'pulmonary_clinical', self.filters + diagnosis_filter('clinical', 'pulmonary')
             ) +
             generate_for_all_patient_types(
-                'extra_pulmonary', self.filters + [RawFilter("disease_classification = 'extra_pulmonary'")]
+                'extra_pulmonary', self.filters + [
+                    RawFilter('patient_type IS NOT NULL'),
+                    RawFilter("disease_classification = 'extra_pulmonary'")
+                ]
             ) +
             generate_for_all_patient_types(
                 'total', self.filters + [RawFilter("patient_type IS NOT NULL")]
@@ -157,7 +161,9 @@ class CaseFindingSqlData(EnikshaySqlData):
                     '',
                     CountColumn(
                         'doc_id',
-                        filters=self.filters + [RawFilter("hiv_status = 'reactive'")],
+                        filters=self.filters + [
+                            RawFilter("hiv_status = 'reactive'"), RawFilter("cpt_initiated = 'yes'")
+                        ],
                         alias='hiv_reactive_cpt'
                     )
                 ),

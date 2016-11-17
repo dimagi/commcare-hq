@@ -20,7 +20,6 @@ from fnmatch import fnmatch
 
 from django.apps import apps
 
-import couchlog.signals
 from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django import loading
 from mock import patch, Mock
@@ -42,7 +41,6 @@ class HqTestFinderPlugin(Plugin):
     INCLUDE_DIRS = [
         "corehq/ex-submodules/*",
         "submodules/auditcare-src",
-        "submodules/couchlog-src",
         "submodules/dimagi-utils-src",
         "submodules/django-digest-src",
         "submodules/toggle",
@@ -132,10 +130,6 @@ class ErrorOnDbAccessContext(object):
         self.original_db_enabled = settings.DB_ENABLED
         settings.DB_ENABLED = False
 
-        # do not log request exceptions to couch for non-database tests
-        couchlog.signals.got_request_exception.disconnect(
-            couchlog.signals.log_request_exception)
-
         self.db_patch = patch('django.db.backends.utils.CursorWrapper')
         db_mock = self.db_patch.start()
         error = RuntimeError(
@@ -160,8 +154,6 @@ class ErrorOnDbAccessContext(object):
         settings.DB_ENABLED = self.original_db_enabled
         for cls in self.db_classes:
             del cls._db
-        couchlog.signals.got_request_exception.connect(
-            couchlog.signals.log_request_exception)
         self.db_patch.stop()
 
 

@@ -214,6 +214,9 @@ class ResumableBulkElasticPillowReindexer(Reindexer):
         _clean_index(self.es, self.index_info)
 
     def reindex(self):
+        if not self.es.indices.exists(self.index_info.index):
+            self.reset = True  # if the index doesn't exist always reset the processing
+
         processor = BulkDocProcessor(
             self.doc_provider,
             self.doc_processor,

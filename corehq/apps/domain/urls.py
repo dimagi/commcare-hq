@@ -1,5 +1,5 @@
 import sys
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 from django.contrib.auth.views import (
     password_reset, password_change, password_change_done, password_reset_done,
     password_reset_complete,
@@ -34,6 +34,8 @@ from corehq.apps.domain.views import (
     EditOpenClinicaSettingsView,
     autocomplete_fields, test_repeater, drop_repeater, set_published_snapshot,
     calculated_properties,
+    toggle_diff,
+    select,
 )
 from corehq.apps.repeaters.views import AddCaseRepeaterView, RepeatRecordView
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
@@ -81,48 +83,45 @@ def auth_pages_path(page):
 def extend(d1, d2):
     return dict(d1.items() + d2.items())
 
-urlpatterns =\
-    patterns('corehq.apps.domain.views',
-        url(r'^domain/select/$', 'select', name='domain_select'),
-        url(r'^domain/autocomplete/(?P<field>\w+)/$', autocomplete_fields, name='domain_autocomplete_fields'),
-        url(r'^domain/transfer/(?P<guid>\w+)/activate$',
-            ActivateTransferDomainView.as_view(), name='activate_transfer_domain'),
-        url(r'^domain/transfer/(?P<guid>\w+)/deactivate$',
-            DeactivateTransferDomainView.as_view(), name='deactivate_transfer_domain'),
-    ) +\
-    patterns('django.contrib.auth.views',
-        url(r'^accounts/password_change/$', password_change, auth_pages_path('password_change_form.html'), name='password_change'),
-        url(r'^accounts/password_change_done/$', password_change_done,
-            extend(auth_pages_path('password_change_done.html'),
-                   {'extra_context': {'current_page': {'page_name': _('Password Change Complete')}}}),
-            name='password_change_done'),
+urlpatterns =[
+    url(r'^domain/select/$', select, name='domain_select'),
+    url(r'^domain/autocomplete/(?P<field>\w+)/$', autocomplete_fields, name='domain_autocomplete_fields'),
+    url(r'^domain/transfer/(?P<guid>\w+)/activate$',
+        ActivateTransferDomainView.as_view(), name='activate_transfer_domain'),
+    url(r'^domain/transfer/(?P<guid>\w+)/deactivate$',
+        DeactivateTransferDomainView.as_view(), name='deactivate_transfer_domain'),
+] + [
+    url(r'^accounts/password_change/$', password_change, auth_pages_path('password_change_form.html'), name='password_change'),
+    url(r'^accounts/password_change_done/$', password_change_done,
+        extend(auth_pages_path('password_change_done.html'),
+               {'extra_context': {'current_page': {'page_name': _('Password Change Complete')}}}),
+        name='password_change_done'),
 
-        url(r'^accounts/password_reset_email/$', exception_safe_password_reset,
-            extend(auth_pages_path('password_reset_form.html'),
-                   {'password_reset_form': ConfidentialPasswordResetForm,
-                    'from_email': settings.DEFAULT_FROM_EMAIL,
-                    'extra_context': {'current_page': {'page_name': _('Password Reset')}}}),
-            name='password_reset_email'),
-        url(r'^accounts/password_reset_email/done/$', password_reset_done,
-            extend(auth_pages_path('password_reset_done.html'),
-                   {'extra_context': {'current_page': {'page_name': _('Reset My Password')}}}),
-            name='password_reset_done'),
+    url(r'^accounts/password_reset_email/$', exception_safe_password_reset,
+        extend(auth_pages_path('password_reset_form.html'),
+               {'password_reset_form': ConfidentialPasswordResetForm,
+                'from_email': settings.DEFAULT_FROM_EMAIL,
+                'extra_context': {'current_page': {'page_name': _('Password Reset')}}}),
+        name='password_reset_email'),
+    url(r'^accounts/password_reset_email/done/$', password_reset_done,
+        extend(auth_pages_path('password_reset_done.html'),
+               {'extra_context': {'current_page': {'page_name': _('Reset My Password')}}}),
+        name='password_reset_done'),
 
-        url(r'^accounts/password_reset_confirm/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>.+)/$',
-            PasswordResetView.as_view(),  extend(auth_pages_path('password_reset_confirm.html'),
-                                                    {'set_password_form': HQSetPasswordForm,
-                                                    'extra_context': {'current_page':
-                                                        {'page_name': _('Password Reset Confirmation')}}}),
-            name=PasswordResetView.urlname),
-        url(r'^accounts/password_reset_confirm/done/$', password_reset_complete,
-            extend(auth_pages_path('password_reset_complete.html'),
-                   {'extra_context': {'current_page': {'page_name': _('Password Reset Complete')}}}),
-            name='password_reset_complete')
-    )
+    url(r'^accounts/password_reset_confirm/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>.+)/$',
+        PasswordResetView.as_view(),  extend(auth_pages_path('password_reset_confirm.html'),
+                                                {'set_password_form': HQSetPasswordForm,
+                                                'extra_context': {'current_page':
+                                                    {'page_name': _('Password Reset Confirmation')}}}),
+        name=PasswordResetView.urlname),
+    url(r'^accounts/password_reset_confirm/done/$', password_reset_complete,
+        extend(auth_pages_path('password_reset_complete.html'),
+               {'extra_context': {'current_page': {'page_name': _('Password Reset Complete')}}}),
+        name='password_reset_complete')
+]
 
 
-domain_settings = patterns(
-    'corehq.apps.domain.views',
+domain_settings = [
     url(r'^$', DefaultProjectSettingsView.as_view(), name=DefaultProjectSettingsView.urlname),
     url(r'^my_settings/$', EditMyProjectSettingsView.as_view(), name=EditMyProjectSettingsView.urlname),
     url(r'^basic/$', EditBasicProjectInfoView.as_view(), name=EditBasicProjectInfoView.urlname),
@@ -187,6 +186,7 @@ domain_settings = patterns(
     url(r'^internal/calculated_properties/$', calculated_properties, name='calculated_properties'),
     url(r'^previews/$', FeaturePreviewsView.as_view(), name=FeaturePreviewsView.urlname),
     url(r'^flags/$', FeatureFlagsView.as_view(), name=FeatureFlagsView.urlname),
+    url(r'^toggle_diff/$', toggle_diff, name='toggle_diff'),
     url(r'^sms_rates/$', SMSRatesView.as_view(), name=SMSRatesView.urlname),
     DomainReportDispatcher.url_pattern()
-)
+]

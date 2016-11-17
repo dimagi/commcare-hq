@@ -6,7 +6,7 @@ Vellum
 Vellum is a JavaRosa [XForm](http://en.wikipedia.org/wiki/XForms) designer used
 in [CommCare HQ](http://github.com/dimagi/commcare-hq).
 
-![](http://i.imgur.com/Eoi3XE3.png)
+![](http://i.imgur.com/PvrL8Rr.jpg)
 
 Image courtesy of the [ReMIND
 project](https://www.commcarehq.org/exchange/325775003aa58cfcefbc75cfdf132e4d/info/).
@@ -59,7 +59,7 @@ If not present, bundled versions will be loaded.  -->
 ```
 
 See
-[here](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/app_manager/templates/app_manager/form_designer.html)
+[here](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/app_manager/templates/app_manager/v1/form_designer.html)
 and `tests/main.js` for example options usage.
 
 Vellum targets modern browsers.  IE8 and earlier are not supported.

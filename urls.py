@@ -64,7 +64,7 @@ domain_specific = patterns('',
     (r'^case/', include('corehq.apps.case_search.urls')),
     (r'^cloudcare/', include('corehq.apps.cloudcare.urls')),
     (r'^fixtures/', include('corehq.apps.fixtures.urls')),
-    (r'^importer/', include('corehq.apps.importer.urls')),
+    (r'^importer/', include('corehq.apps.case_importer_v1.urls')),
     (r'^fri/', include('custom.fri.urls')),
     (r'^ilsgateway/', include('custom.ilsgateway.urls')),
     (r'^ewsghana/', include('custom.ewsghana.urls')),
@@ -107,7 +107,6 @@ urlpatterns = patterns('',
     (r'^hq/pillow_errors/', include('corehq.apps.hqpillow_retry.urls')),
     (r'^hq/tour/', include('corehq.apps.tour.urls')),
     (r'^hq/notifications/', include('corehq.apps.notifications.urls')),
-    (r'^couchlog/', include('couchlog.urls')),
     (r'^unicel/', include('corehq.messaging.smsbackends.unicel.urls')),
     (r'^smsgh/', include('corehq.messaging.smsbackends.smsgh.urls')),
     (r'^push/', include('corehq.messaging.smsbackends.push.urls')),
@@ -158,6 +157,14 @@ if settings.ENABLE_PRELOGIN_SITE:
     urlpatterns += patterns('', *PRELOGIN_APP_URLS)
 
 if settings.DEBUG:
+    try:
+        from debug_toolbar import urls as debug_toolbar_urls
+        urlpatterns += [
+            url(r'^__debug__/', include(debug_toolbar_urls)),
+        ]
+    except ImportError:
+        pass
+
     urlpatterns += patterns('',
         url(r'^mocha/', include('corehq.apps.mocha.urls')),
     )

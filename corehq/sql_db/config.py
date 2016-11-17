@@ -85,7 +85,7 @@ class PartitionConfig(object):
         num_shards = len(shards_seen)
 
         if not _is_power_of_2(num_shards):
-            raise NotPowerOf2Error('Total number of shards must be a power of 2')
+            raise NotPowerOf2Error('Total number of shards must be a power of 2: {}'.format(num_shards))
 
     @property
     def partition_config(self):

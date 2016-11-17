@@ -125,9 +125,9 @@ def redirect_to_default(req, domain=None):
                     url = reverse(HomePublicView.urlname)
                 except ImportError:
                     # this happens when the prelogin app is not included.
-                    url = reverse('landing_page')
+                    url = reverse('login')
             else:
-                url = reverse('landing_page')
+                url = reverse('login')
     elif domain and _two_factor_needed(domain, req):
         return TemplateResponse(
             request=req,
@@ -166,16 +166,6 @@ def _two_factor_needed(domain_name, request):
     domain = Domain.get_by_name(domain_name)
     if domain:
         return domain.two_factor_auth and not request.user.is_verified()
-
-
-def landing_page(req, template_name="home.html"):
-    # this view, and the one below, is overridden because
-    # we need to set the base template to use somewhere
-    # somewhere that the login page can access it.
-    if req.user.is_authenticated():
-        return HttpResponseRedirect(reverse('homepage'))
-    req.base_template = settings.BASE_TEMPLATE
-    return HQLoginView.as_view()(req)
 
 
 def yui_crossdomain(req):
@@ -302,7 +292,10 @@ def _login(req, domain_name, template_name):
     req.base_template = settings.BASE_TEMPLATE
 
     context = {}
-    if domain_name:
+    custom_landing_page = getattr(settings, 'CUSTOM_LANDING_TEMPLATE', False)
+    if custom_landing_page:
+        template_name = custom_landing_page
+    elif domain_name:
         domain = Domain.get_by_name(domain_name)
         req_params = req.GET if req.method == 'GET' else req.POST
         context.update({

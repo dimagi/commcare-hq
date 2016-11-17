@@ -152,6 +152,7 @@ MIDDLEWARE_CLASSES = [
     'corehq.middleware.OpenRosaMiddleware',
     'corehq.util.global_request.middleware.GlobalRequestMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
+    'corehq.apps.domain.middleware.DomainMigrationMiddleware',
     'corehq.middleware.TimeoutMiddleware',
     'corehq.apps.domain.middleware.CCHQPRBACMiddleware',
     'corehq.apps.domain.middleware.DomainHistoryMiddleware',
@@ -195,6 +196,7 @@ TEMPLATE_CONTEXT_PROCESSORS = [
     "corehq.util.context_processors.base_template",
     "corehq.util.context_processors.js_api_keys",
     'corehq.util.context_processors.websockets_override',
+    "corehq.util.context_processors.enterprise_mode",
     'django.core.context_processors.i18n',
 ]
 
@@ -259,7 +261,6 @@ HQ_APPS = (
     'corehq.apps.dump_reload',
     'corehq.apps.hqadmin',
     'corehq.apps.hqcase',
-    'corehq.apps.hqcouchlog',
     'corehq.apps.hqwebapp',
     'corehq.apps.hqmedia',
     'corehq.apps.locations',
@@ -275,7 +276,6 @@ HQ_APPS = (
     'corehq.sql_proxy_accessors',
     'couchforms',
     'couchexport',
-    'couchlog',
     'dimagi.utils',
     'formtranslate',
     'langcodes',
@@ -289,7 +289,7 @@ HQ_APPS = (
     'corehq.apps.app_manager',
     'corehq.apps.es',
     'corehq.apps.fixtures',
-    'corehq.apps.importer',
+    'corehq.apps.case_importer_v1',
     'corehq.apps.reminders',
     'corehq.apps.translations',
     'corehq.apps.tour',
@@ -329,7 +329,6 @@ HQ_APPS = (
     'corehq.apps.notifications',
     'corehq.apps.cachehq',
     'corehq.apps.toggle_ui',
-    'corehq.apps.sofabed',
     'corehq.apps.hqpillow_retry',
     'corehq.couchapps',
     'corehq.preindex',
@@ -387,6 +386,7 @@ HQ_APPS = (
     'custom.care_pathways',
     'custom.common',
 
+    'custom.icds',
     'custom.icds_reports',
     'custom.pnlppgi',
 
@@ -437,7 +437,7 @@ INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
 
 # after login, django redirects to this URL
 # rather than the default 'accounts/profile'
-LOGIN_REDIRECT_URL = '/'
+LOGIN_REDIRECT_URL = 'homepage'
 
 
 REPORT_CACHE = 'default'  # or e.g. 'redis'
@@ -573,7 +573,12 @@ GET_URL_BASE = 'dimagi.utils.web.get_url_base'
 # celery
 BROKER_URL = 'django://'  # default django db based
 
-CELERY_ANNOTATIONS = {'*': {'on_failure': helper.celery_failure_handler}}
+CELERY_ANNOTATIONS = {
+    '*': {
+        'on_failure': helper.celery_failure_handler,
+        'trail': False,
+    }
+}
 
 CELERY_MAIN_QUEUE = 'celery'
 
@@ -614,30 +619,6 @@ HQ_ACCOUNT_ROOT = "commcarehq.org"
 
 XFORMS_PLAYER_URL = "http://localhost:4444/"  # touchform's setting
 FORMPLAYER_URL = 'http://localhost:8080'
-
-####### Couchlog config #######
-
-COUCHLOG_BLUEPRINT_HOME = "%s%s" % (
-    STATIC_URL, "hqwebapp/stylesheets/blueprint/")
-COUCHLOG_DATATABLES_LOC = "%s%s" % (
-    STATIC_URL, "hqwebapp/js/lib/datatables-1.9/js/jquery.dataTables.min.js")
-
-# These allow HQ to override what shows up in couchlog (add a domain column)
-COUCHLOG_TABLE_CONFIG = {"id_column": 0,
-                         "archived_column": 1,
-                         "date_column": 2,
-                         "message_column": 4,
-                         "actions_column": 8,
-                         "email_column": 9,
-                         "no_cols": 10}
-COUCHLOG_DISPLAY_COLS = ["id", "archived?", "date", "exception type", "message",
-                         "domain", "user", "url", "actions", "report"]
-COUCHLOG_RECORD_WRAPPER = "corehq.apps.hqcouchlog.wrapper"
-COUCHLOG_DATABASE_NAME = "commcarehq-couchlog"
-COUCHLOG_AUTH_DECORATOR = 'corehq.apps.domain.decorators.require_superuser_or_developer'
-
-# couchlog/case search
-LUCENE_ENABLED = False
 
 ####### SMS Queue Settings #######
 
@@ -786,7 +767,6 @@ PRELOGIN_APPS = (
 
 # our production logstash aggregation
 LOGSTASH_DEVICELOG_PORT = 10777
-LOGSTASH_COUCHLOG_PORT = 10888
 LOGSTASH_AUDITCARE_PORT = 10999
 LOGSTASH_HOST = 'localhost'
 
@@ -908,6 +888,10 @@ KAFKA_URL = 'localhost:9092'
 MOBILE_INTEGRATION_TEST_TOKEN = None
 
 OVERRIDE_UCR_BACKEND = None
+
+ENTERPRISE_MODE = False
+
+CUSTOM_LANDING_PAGE = False
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -1238,7 +1222,7 @@ COUCHDB_APPS = [
     'hqcase',
     'hqmedia',
     'hope',
-    'importer',
+    'case_importer_v1',
     'indicators',
     'locations',
     'mobile_auth',
@@ -1248,7 +1232,6 @@ COUCHDB_APPS = [
     'programs',
     'reminders',
     'reports',
-    'sofabed',
     'sms',
     'smsforms',
     'telerivet',
@@ -1276,7 +1259,6 @@ COUCHDB_APPS = [
     'ilsgateway',
     'ewsghana',
     ('auditcare', 'auditcare'),
-    ('couchlog', 'couchlog'),
     ('performance_sms', 'meta'),
     ('repeaters', 'receiverwrapper'),
     ('userreports', 'meta'),
@@ -1682,13 +1664,14 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_timely_home_visits.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_ccs_record_cases.json'),
 
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'case_finding.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_notification_register.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'sputum_conversion.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'treatment_outcome.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_hiv.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'lab_monthly_summary.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_lab_register.json')
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_lab_register.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'new_patient_summary.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'mdr_suspects.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'patient_overview_mobile.json')
 ]
 
 
@@ -1872,11 +1855,11 @@ TRAVIS_TEST_GROUPS = (
         'accounting', 'api', 'app_manager', 'appstore',
         'auditcare', 'bihar', 'builds', 'cachehq', 'callcenter',
         'case', 'casegroups', 'cleanup', 'cloudcare', 'commtrack', 'consumption',
-        'couchapps', 'couchlog', 'crud', 'django_digest',
+        'couchapps', 'crud', 'django_digest',
         'domain', 'domainsync', 'export',
         'facilities', 'fixtures', 'fluff_filter', 'formplayer',
         'formtranslate', 'fri', 'grapevine', 'groups', 'gsid', 'hope',
-        'hqadmin', 'hqcase', 'hqcouchlog', 'hqmedia',
+        'hqadmin', 'hqcase', 'hqmedia',
         'care_pathways', 'common', 'compressor', 'smsbillables', 'ilsgateway'
     ),
 )

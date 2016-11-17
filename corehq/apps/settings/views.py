@@ -232,7 +232,7 @@ class MyProjectsList(BaseMyAccountView):
         if not request.couch_user.is_web_user():
             raise Http404
 
-        return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)
+        return super(MyProjectsList, self).dispatch(request, *args, **kwargs)
 
     @property
     def all_domains(self):
@@ -278,7 +278,7 @@ class ChangeMyPasswordView(BaseMyAccountView):
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator
-        return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)
+        return super(ChangeMyPasswordView, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized
@@ -310,7 +310,7 @@ class TwoFactorProfileView(BaseMyAccountView, ProfileView):
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator
-        return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)
+        return super(TwoFactorProfileView, self).dispatch(request, *args, **kwargs)
 
 
 class TwoFactorSetupView(BaseMyAccountView, SetupView):
@@ -330,7 +330,7 @@ class TwoFactorSetupView(BaseMyAccountView, SetupView):
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator
-        return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)
+        return super(TwoFactorSetupView, self).dispatch(request, *args, **kwargs)
 
 
 class TwoFactorSetupCompleteView(BaseMyAccountView, SetupCompleteView):
@@ -341,7 +341,7 @@ class TwoFactorSetupCompleteView(BaseMyAccountView, SetupCompleteView):
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator
-        return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)
+        return super(TwoFactorSetupCompleteView, self).dispatch(request, *args, **kwargs)
 
 
 class TwoFactorBackupTokensView(BaseMyAccountView, BackupTokensView):
@@ -352,7 +352,7 @@ class TwoFactorBackupTokensView(BaseMyAccountView, BackupTokensView):
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator
-        return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)
+        return super(TwoFactorBackupTokensView, self).dispatch(request, *args, **kwargs)
 
 
 class TwoFactorDisableView(BaseMyAccountView, DisableView):
@@ -363,7 +363,7 @@ class TwoFactorDisableView(BaseMyAccountView, DisableView):
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator
-        return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)
+        return super(TwoFactorDisableView, self).dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
         return DisableView.get(self, request, *args, **kwargs)
@@ -382,7 +382,7 @@ class TwoFactorPhoneSetupView(BaseMyAccountView, PhoneSetupView):
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator
-        return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)
+        return super(TwoFactorPhoneSetupView, self).dispatch(request, *args, **kwargs)
 
 
 class NewPhoneView(TwoFactorSetupView):
@@ -398,7 +398,7 @@ class NewPhoneView(TwoFactorSetupView):
 
     def get(self, request, *args, **kwargs):
         default_device(request.user).delete()
-        return super(TwoFactorSetupView, self).get(request, *args, **kwargs)
+        return super(NewPhoneView, self).get(request, *args, **kwargs)
 
 
 class BaseProjectDataView(BaseDomainView):

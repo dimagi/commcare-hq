@@ -1,4 +1,4 @@
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.views import (
     IndicatorAdminCRUDFormView,
@@ -8,7 +8,7 @@ from corehq.apps.indicators.views import (
     default_admin,
 )
 
-urlpatterns = patterns('corehq.apps.indicators.views',
+urlpatterns = [
    url(r'^$', default_admin, name="default_indicator_admin"),
    url(r'^export/$', BulkExportIndicatorsView.as_view(),
        name=BulkExportIndicatorsView.urlname),
@@ -18,5 +18,4 @@ urlpatterns = patterns('corehq.apps.indicators.views',
    url(r'^form/(?P<form_type>[\w_]+)/(?P<action>[(update)|(new)|(delete)]+)/((?P<item_id>[\w_]+)/)?$',
        IndicatorAdminCRUDFormView.as_view(), name="indicator_def_form"),
    IndicatorAdminInterfaceDispatcher.url_pattern(),
-)
-
+]

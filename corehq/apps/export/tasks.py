@@ -4,6 +4,8 @@ from celery.task import task
 
 from corehq.apps.export.export import get_export_file, rebuild_export
 from corehq.apps.export.utils import convert_saved_export_to_export_instance
+from corehq.apps.export.dbaccessors import get_inferred_schema
+from corehq.apps.export.system_properties import MAIN_CASE_TABLE_PROPERTIES
 from couchexport.models import Format
 from couchexport.tasks import escape_quotes
 from soil.util import expose_cached_download
@@ -67,6 +69,46 @@ def async_convert_saved_export_to_export_instance(domain, legacy_export, dryrun=
 
     for column_meta in meta.skipped_columns:
         _log_conversion_meta(meta, column_meta, 'column')
+
+
+@task(queue='background_queue')
+def add_inferred_export_properties(sender, domain, case_type, properties):
+    from corehq.apps.export.models import MAIN_TABLE, PathNode, InferredSchema, ScalarItem
+    """
+    Adds inferred properties to the inferred schema for a case type.
+
+    :param: sender - The signal sender
+    :param: domain
+    :param: case_type
+    :param: properties - An iterable of case properties to add to the inferred schema
+    """
+
+    assert domain, 'Must have domain'
+    assert case_type, 'Must have case type'
+    assert all(map(lambda prop: '.' not in prop, properties)), 'Properties should not have periods'
+    inferred_schema = get_inferred_schema(domain, case_type)
+    if not inferred_schema:
+        inferred_schema = InferredSchema(
+            domain=domain,
+            case_type=case_type,
+        )
+    group_schema = inferred_schema.put_group_schema(MAIN_TABLE)
+
+    for case_property in properties:
+        path = [PathNode(name=case_property)]
+        system_property_column = filter(
+            lambda column: column.item.path == path,
+            MAIN_CASE_TABLE_PROPERTIES,
+        )
+
+        if system_property_column:
+            assert len(system_property_column) == 1
+            column = system_property_column[0]
+            group_schema.put_item(path, inferred_from=sender, item_cls=column.item.__class__)
+        else:
+            group_schema.put_item(path, inferred_from=sender, item_cls=ScalarItem)
+
+    inferred_schema.save()
 
 
 def _log_conversion_meta(meta, conversion_meta, type_):

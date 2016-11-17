@@ -320,7 +320,8 @@ class Currency(models.Model):
 
 DEFAULT_ACCOUNT_FORMAT = 'Account for Project %s'
 
-class BillingAccount(models.Model):
+
+class BillingAccount(ValidateModelMixin, models.Model):
     """
     The key model that links a Subscription to its financial source and methods of payment.
     """
@@ -332,10 +333,10 @@ class BillingAccount(models.Model):
         null=True,
         help_text="This is how we link to the salesforce account",
     )
-    created_by = models.CharField(max_length=80)
+    created_by = models.CharField(max_length=80, blank=True)
     created_by_domain = models.CharField(max_length=256, null=True, blank=True)
     date_created = models.DateTimeField(auto_now_add=True)
-    dimagi_contact = models.CharField(max_length=80, null=True, blank=True)
+    dimagi_contact = models.EmailField(blank=True)
     currency = models.ForeignKey(Currency, on_delete=models.PROTECT)
     is_auto_invoiceable = models.BooleanField(default=False)
     date_confirmed_extra_charges = models.DateTimeField(null=True, blank=True)
@@ -350,7 +351,7 @@ class BillingAccount(models.Model):
         default=EntryPoint.NOT_SET,
         choices=EntryPoint.CHOICES,
     )
-    auto_pay_user = models.CharField(max_length=80, null=True)
+    auto_pay_user = models.CharField(max_length=80, null=True, blank=True)
     last_modified = models.DateTimeField(auto_now=True)
     last_payment_method = models.CharField(
         max_length=25,

@@ -3,7 +3,6 @@ import io
 import json
 from collections import defaultdict
 from datetime import datetime
-from zipfile import BadZipfile
 
 from django.conf import settings
 from django.contrib import messages
@@ -24,7 +23,6 @@ from django.views.generic import View, TemplateView
 from braces.views import JsonRequestResponseMixin
 from couchdbkit import ResourceNotFound
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
-from openpyxl.utils.exceptions import InvalidFileException
 import re
 
 from couchexport.models import Format
@@ -85,7 +83,8 @@ from corehq.apps.users.views import BaseUserSettingsView, BaseEditUserView, get_
 from corehq.const import USER_DATE_FORMAT, GOOGLE_PLAY_STORE_COMMCARE_URL
 from corehq.util.couch import get_document_or_404
 from corehq.util.spreadsheets.excel import JSONReaderError, HeaderValueError, \
-    WorksheetNotFound, WorkbookJSONReader, enforce_string_type, StringTypeRequiredError
+    WorksheetNotFound, WorkbookJSONReader, enforce_string_type, StringTypeRequiredError, \
+    InvalidExcelFileException
 from soil import DownloadBase
 from .custom_data_fields import UserFieldsView
 
@@ -902,7 +901,7 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
         upload = request.FILES.get('bulk_upload_file')
         try:
             self.workbook = WorkbookJSONReader(upload)
-        except (InvalidFileException, BadZipfile):
+        except InvalidExcelFileException:
             try:
                 csv.DictReader(io.StringIO(upload.read().decode('ascii'),
                                            newline=None))

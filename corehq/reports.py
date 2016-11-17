@@ -40,7 +40,7 @@ import toggles
 from django.utils.translation import ugettext_noop as _, ugettext_lazy
 from corehq.apps.indicators.admin import document_indicators, couch_indicators, dynamic_indicators
 from corehq.apps.data_interfaces.interfaces import CaseReassignmentInterface, BulkFormManagementInterface
-from corehq.apps.importer.base import ImportCases
+from corehq.apps.case_importer_v1.base import ImportCases
 from corehq.apps.accounting.interface import (
     AccountingInterface,
     SubscriptionInterface,

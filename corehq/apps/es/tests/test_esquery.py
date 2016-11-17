@@ -1,3 +1,4 @@
+from copy import deepcopy
 from unittest import TestCase
 from mock import patch
 
@@ -204,3 +205,59 @@ class TestESQuery(ElasticTestMixin, TestCase):
             {"timeStart": {"order": "asc"}},
         ]
         self.checkQuery(query.sort('timeStart', reset_sort=False), json_output)
+
+    def test_cleanup_before_run(self):
+        json_output = {
+            "query": {
+                "filtered": {
+                    "filter": {
+                        "and": [
+                            {"match_all": {}}
+                        ]
+                    },
+                    "query": {"match_all": {}}
+                }
+            },
+            "aggs": {
+                "by_day": {
+                    "date_histogram": {
+                        "field": "date",
+                        "interval": "day",
+                        "time_zone": "-01:00"
+                    }
+                }
+            },
+            "size": SIZE_LIMIT
+        }
+        expected_output = deepcopy(json_output)
+        expected_output['size'] = 0
+        query = HQESQuery('forms').date_histogram('by_day', 'date', 'day', '-01:00')
+        self.checkQuery(query, json_output)
+        self.checkQuery(query._clean_before_run(), expected_output)
+
+    def test_exclude_source(self):
+        json_output = {
+            "query": {
+                "filtered": {
+                    "filter": {
+                        "and": [
+                            {
+                                "term": {
+                                    "domain.exact": "test-exclude"
+                                }
+                            },
+                            {
+                                "match_all": {}
+                            }
+                        ]
+                    },
+                    "query": {
+                        "match_all": {}
+                    }
+                }
+            },
+            "_source": False,
+            "size": SIZE_LIMIT,
+        }
+        query = HQESQuery('forms').domain('test-exclude').exclude_source()
+        self.checkQuery(query, json_output)

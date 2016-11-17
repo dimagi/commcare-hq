@@ -1,10 +1,16 @@
-import logging
+from django.conf import settings
 
 from dimagi.utils.couch.database import iter_docs
 
 from corehq.apps.commtrack.helpers import make_supply_point
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.form_processor.abstract_models import AbstractSupplyInterface
+from corehq.util.soft_assert import soft_assert
+
+_supply_point_dynamically_created = soft_assert(
+    to='{}@{}'.format('skelly', 'dimagi.com'),
+    exponential_backoff=False,
+)
 
 
 class SupplyPointCouch(AbstractSupplyInterface):
@@ -15,14 +21,12 @@ class SupplyPointCouch(AbstractSupplyInterface):
         if not sp:
             sp = make_supply_point(location.domain, location)
 
-            # todo: if you come across this after july 2015 go search couchlog
-            # and see how frequently this is happening.
-            # if it's not happening at all we should remove it.
-            logging.warning('supply_point_dynamically_created, {}, {}, {}'.format(
-                location.name,
-                sp.case_id,
-                location.domain,
-            ))
+            if not settings.UNIT_TESTING:
+                _supply_point_dynamically_created(False, 'supply_point_dynamically_created, {}, {}, {}'.format(
+                    location.name,
+                    sp.case_id,
+                    location.domain,
+                ))
 
         return sp
 

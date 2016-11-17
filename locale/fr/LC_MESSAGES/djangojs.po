@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-10-27 12:46+0000\n"
+"POT-Creation-Date: 2016-11-02 19:11+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,6 +17,11 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: bower_components/bower_components/underscore-legacy/test/utility.js:67
+#: bower_components/underscore-legacy/test/utility.js:67
+msgid "champ"
+msgstr ""
 
 #: bower_components/jquery-ui/jquery-ui.min.js:8
 msgid "'"
@@ -44,7 +49,7 @@ msgstr ""
 msgid "Auto-set by "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:576
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:581
 msgid "Select One"
 msgstr ""
 
@@ -75,16 +80,16 @@ msgstr ""
 msgid "Save"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:136
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:138
 msgid "Form successfully saved"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:219
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:298
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/entities/menu.js:75
 msgid "Waiting for server progress"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:259
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:342
 msgid "Please wait..."
 msgstr ""
 
@@ -124,6 +129,14 @@ msgstr ""
 msgid ""
 "Unable to connect to form playing service. Please report an issue if you "
 "continue to see this message."
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:45
+msgid "Log in as "
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/users/views.js:49
+msgid "Yes, log in as this user"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/util.js:93

@@ -15,12 +15,12 @@
         "filters": [
             {
                 "compare_as_string": false,
-                "datatype": "string",
+                "datatype": "datetime",
                 "required": false,
                 "display": "Case Open Date",
                 "field": "opened_on",
-                "type": "date",
-                "slug": "date"
+                "slug": "date",
+                "type": "quarter"
             },
             {
                 "compare_as_string": false,
@@ -37,11 +37,10 @@
         ],
         "columns": [
             {
-                "display": "Number of patients registered during given date",
-                "column_id": "person_id",
+                "display": "Number of patients registered during quarter",
                 "type": "field",
-                "field": "person_id",
-                "aggregation": "count",
+                "field": "episode_type_patient",
+                "aggregation": "sum",
                 "sortable": false,
                 "description": null,
                 "format": "default",

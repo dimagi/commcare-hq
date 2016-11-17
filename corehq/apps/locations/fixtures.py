@@ -159,6 +159,8 @@ def get_all_locations_to_sync(user):
                     # We sync all ancestors of the highest location
                     all_locations.add(ancestor)
 
+            all_locations |= _get_include_without_expanding_locations(user.domain, location_type)
+
         return LocationSet(all_locations)
 
 
@@ -201,6 +203,27 @@ def _get_children(domain, root, expand_to):
         children = children.filter(level__lte=expand_to_level.pop())
 
     return children
+
+
+def _get_include_without_expanding_locations(domain, location_type):
+    """returns all locations set for inclusion along with their ancestors
+    """
+    include_without_expanding = location_type.include_without_expanding
+    if include_without_expanding is not None:
+        # add in other "forced" locations the user should have, along with their ancestors
+        forced_locations = set(SQLLocation.active_objects.filter(
+            domain__exact=domain,
+            location_type=include_without_expanding
+        ))
+        forced_ancestors = {
+            ancestor
+            for location in forced_locations
+            for ancestor in location.get_ancestors()
+        }
+
+        return forced_locations | forced_ancestors
+
+    return set()
 
 
 def _valid_parent_type(location):

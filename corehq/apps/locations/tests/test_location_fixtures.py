@@ -201,6 +201,18 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
                     flat=True,
                 )
 
+    def test_include_without_expanding(self, uses_locations):
+        self.user.set_location(self.locations['Boston'].couch_location)
+        location_type = self.locations['Boston'].location_type
+        location_type.expand_from = self.locations['Suffolk'].location_type
+        location_type.include_without_expanding = self.locations['Massachusetts'].location_type
+        location_type.save()
+
+        self._assert_fixture_has_locations(
+            'include_without_expanding',
+            ['Massachusetts', 'Suffolk', 'Boston', 'Revere', 'New York']
+        )
+
 
 @mock.patch.object(Domain, 'uses_locations', return_value=True)  # removes dependency on accounting
 class ForkedHierarchyLocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):

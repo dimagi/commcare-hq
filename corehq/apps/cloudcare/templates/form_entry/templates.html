@@ -18,7 +18,7 @@
 </script>
 
 <script type="text/html" id="form-navigation-ko-template">
-  <h2 class="formnav-title" data-bind="text: title, visible: showInFormNavigation"></h2>
+  <h1 class="formnav-title page-header" data-bind="text: title, visible: showInFormNavigation"></h1>
   <div class="formnav-container" data-bind="visible: showInFormNavigation">
     <button type="button"
             class="btn btn-formnav"
@@ -56,6 +56,8 @@
       <div class="page-header" data-bind="visible: !showInFormNavigation()">
         <h1 class="title" data-bind="text: title"></h1>
       </div>
+      <div class="webforms-nav"
+           data-bind="template: { name: 'form-navigation-ko-template' }"></div>
 
       <div class="row">
         <div class="col-sm-12">
@@ -92,9 +94,9 @@
             ">
             <!-- Tab title -->
             <div class="debugger-tab-title">
-                <i class="fa fa-bug"></i>
-                <span class="debugger-title">{% trans "CloudCare Debugger" %}</span>
-                <a class="pull-right" data-bind="click: toggleState">{% trans "Show Debugger" %}</a>
+                <i class="fa fa-table"></i>
+                <span class="debugger-title">{% trans "Data Preview" %}</span>
+                <a class="pull-right" data-bind="click: toggleState">{% trans "Show Data Preview" %}</a>
             </div>
 
             <!-- Debugger content -->
@@ -151,7 +153,7 @@
                 <!-- tab content -->
                 <div class="tab-content debugger-content">
                     <div role="tabpanel" class="tab-pane active" id="debugger-form-data">
-                        <div id="question-viewer-pretty">{% trans "Answer a question to show data" %}</div>
+                        <div data-bind="html: formattedQuestionsHtml" id="question-viewer-pretty"></div>
                     </div>
                     <div role="tabpanel" class="tab-pane" id="debugger-xml-instance">
                         <div id="xml-viewer-pretty">{% trans "Answer a question to show data" %}</div>
@@ -170,7 +172,7 @@
                                         <input id="auto-sync-control" type="checkbox" checked="checked">{% trans "Auto Sync" %}
                                         <span class="help-block">
                                         {% blocktrans %}
-                                            When this is checked, the CloudCare Debug tool will auto sync your XML after every question answered. On slow connetions, uncheck this.
+                                            When this is checked, the Data Preview tool will auto sync your XML after every question answered. On slow connetions, uncheck this.
                                         {% endblocktrans %}
                                         </span>
                                     </label>
@@ -190,9 +192,10 @@
                 <div class="input-group">
                     <input
                         id="xpath"
-                        class="form-control debugger-code"
+                        class="form-control debugger-code at-who-input"
                         name="xpath"
                         placeholder="/data/[your path here]"
+                        autocomplete="off"
                         data-bind="value: xpath" />
                     <span class="input-group-btn">
                         <button class="btn btn-default" id="evaluate-button">{% trans "Evaluate" %}</button>

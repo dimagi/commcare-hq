@@ -1,4 +1,4 @@
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 
 from corehq.apps.domain.utils import grandfathered_domain_re
 from .views import (
@@ -21,7 +21,7 @@ from .views.mobile.users import (
     download_commcare_users, set_commcare_user_group)
 
 
-urlpatterns = patterns('corehq.apps.users.views',
+urlpatterns = [
     url(r'^$', DefaultProjectUserSettingsView.as_view(), name=DefaultProjectUserSettingsView.urlname),
     url(r'^change_password/(?P<login_id>[ \w-]+)/$', change_password, name="change_password"),
     url(r'^domain_accounts/(?P<couch_user_id>[ \w-]+)/$', domain_accounts, name='domain_accounts'),
@@ -53,8 +53,7 @@ urlpatterns = patterns('corehq.apps.users.views',
     url(r'^register_fcm_device_token/(?P<couch_user_id>[ \w-]+)/(?P<device_token>[ \w-]+)/$',
         register_fcm_device_token, name='register_fcm_device_token'),
     url(r'^httpdigest/?$', test_httpdigest, name='test_httpdigest'),
-) + \
-patterns("corehq.apps.users.views.mobile.users",
+] + [
     url(r'^commcare/$',
         MobileWorkerListView.as_view(),
         name=MobileWorkerListView.urlname),
@@ -90,10 +89,9 @@ patterns("corehq.apps.users.views.mobile.users",
         name=ConfirmBillingAccountForExtraUsersView.urlname),
     url(r'^commcare/register/(?P<token>[\w-]+)/$', CommCareUserSelfRegistrationView.as_view(),
         name=CommCareUserSelfRegistrationView.urlname),
-) +\
-patterns("corehq.apps.users.views.mobile.groups",
+] + [
     url(r'^groups/$', GroupsListView.as_view(), name=GroupsListView.urlname),
     url(r'^groups/(?P<group_id>[ \w-]+)/$', EditGroupMembersView.as_view(), name=EditGroupMembersView.urlname),
     url(r'^groups/sms_verification/(?P<group_id>[ \w-]+)$', BulkSMSVerificationView.as_view(),
         name=BulkSMSVerificationView.urlname),
-)
+]

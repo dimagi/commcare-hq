@@ -271,6 +271,8 @@ def download_file(request, domain, app_id, path):
                 request.app.save()
                 return download_file(request, domain, app_id, path)
             elif path in ('CommCare.jad', 'CommCare.jar'):
+                if not request.app.build_spec.supports_j2me():
+                    raise Http404()
                 request.app.create_jadjar_from_build_files(save=True)
                 try:
                     request.app.save(increment_version=False)
@@ -344,6 +346,7 @@ def download_index(request, domain, app_id, template="app_manager/v1/download_in
     return render(request, template, {
         'app': request.app,
         'files': [{'name': f[0], 'source': f[1]} for f in files],
+        'supports_j2me': request.app.build_spec.supports_j2me(),
     })
 
 

@@ -1,0 +1,52 @@
+{% extends 'reports/async/basic.html' %}
+{% load report_tags %}
+{% load i18n %}
+
+{% block page_content %}
+    {% include 'case_importer_v1/partials/help_message.html' %}
+
+    <form class="form-horizontal form-report"
+          action="{% url "corehq.apps.case_importer_v1.views.excel_config" domain %}"
+          method="post"
+          enctype="multipart/form-data">
+        {% csrf_token %}
+        <fieldset>
+            <legend>
+                {% trans "Upload an Excel File From Your Computer to Import From" %}
+            </legend>
+
+            <div class="form-group">
+                <label class="control-label col-sm-3" for="file">
+                    {% trans "Select a file to upload" %}
+                </label>
+                <div class="col-sm-6">
+                    <input class="form-control" name="file" id="file" type="file" />
+                    <p class="help-block">{% trans "File must be .xls file and not .xlsx file" %}
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="control-label col-sm-3">
+                    {% trans "File to Upload" %}
+                </label>
+                <div class="col-sm-6">
+                    <label class="checkbox" for="named_columns">
+                        <input type="checkbox"
+                               id="named_columns"
+                               name="named_columns"
+                               checked="checked" />
+                        {% trans "This file contains column headers" %}
+                    </label>
+                </div>
+            </div>
+        </fieldset>
+
+        <div class="form-actions">
+            <div class="col-sm-offset-3">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fa fa-forward"></i> {% trans "Next step" %}
+                </button>
+            </div>
+        </div>
+    </form>
+{% endblock %}
