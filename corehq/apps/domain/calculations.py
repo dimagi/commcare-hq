@@ -332,6 +332,51 @@ def _all_domain_stats():
     }
 
 
+def _calced_props(dom, id, all_stats):
+    return {
+        "_id": id,
+        "cp_n_web_users": int(all_stats["web_users"].get(dom, 0)),
+        "cp_n_active_cc_users": int(CALC_FNS["mobile_users"](dom)),
+        "cp_n_cc_users": int(all_stats["commcare_users"].get(dom, 0)),
+        "cp_n_active_cases": int(CALC_FNS["cases_in_last"](dom, 120)),
+        "cp_n_users_submitted_form": total_distinct_users([dom]),
+        "cp_n_inactive_cases": int(CALC_FNS["inactive_cases_in_last"](dom, 120)),
+        "cp_n_30_day_cases": int(CALC_FNS["cases_in_last"](dom, 30)),
+        "cp_n_60_day_cases": int(CALC_FNS["cases_in_last"](dom, 60)),
+        "cp_n_90_day_cases": int(CALC_FNS["cases_in_last"](dom, 90)),
+        "cp_n_cases": int(CALC_FNS["cases"](dom)),
+        "cp_n_forms": int(CALC_FNS["forms"](dom)),
+        "cp_n_forms_30_d": int(CALC_FNS["forms_in_last"](dom, 30)),
+        "cp_n_forms_60_d": int(CALC_FNS["forms_in_last"](dom, 60)),
+        "cp_n_forms_90_d": int(CALC_FNS["forms_in_last"](dom, 90)),
+        "cp_first_domain_for_user": CALC_FNS["first_domain_for_user"](dom),
+        "cp_first_form": CALC_FNS["first_form_submission"](dom, False),
+        "cp_last_form": last_form_submission,
+        "cp_is_active": CALC_FNS["active"](dom),
+        "cp_has_app": CALC_FNS["has_app"](dom),
+        "cp_last_updated": json_format_datetime(datetime.utcnow()),
+        "cp_n_in_sms": int(CALC_FNS["sms"](dom, "I")),
+        "cp_n_out_sms": int(CALC_FNS["sms"](dom, "O")),
+        "cp_n_sms_ever": int(CALC_FNS["sms_in_last"](dom)),
+        "cp_n_sms_30_d": int(CALC_FNS["sms_in_last"](dom, 30)),
+        "cp_n_sms_60_d": int(CALC_FNS["sms_in_last"](dom, 60)),
+        "cp_n_sms_90_d": int(CALC_FNS["sms_in_last"](dom, 90)),
+        "cp_sms_ever": int(CALC_FNS["sms_in_last_bool"](dom)),
+        "cp_sms_30_d": int(CALC_FNS["sms_in_last_bool"](dom, 30)),
+        "cp_n_sms_in_30_d": int(CALC_FNS["sms_in_in_last"](dom, 30)),
+        "cp_n_sms_in_60_d": int(CALC_FNS["sms_in_in_last"](dom, 60)),
+        "cp_n_sms_in_90_d": int(CALC_FNS["sms_in_in_last"](dom, 90)),
+        "cp_n_sms_out_30_d": int(CALC_FNS["sms_out_in_last"](dom, 30)),
+        "cp_n_sms_out_60_d": int(CALC_FNS["sms_out_in_last"](dom, 60)),
+        "cp_n_sms_out_90_d": int(CALC_FNS["sms_out_in_last"](dom, 90)),
+        "cp_n_j2me_30_d": int(CALC_FNS["j2me_forms_in_last"](dom, 30)),
+        "cp_n_j2me_60_d": int(CALC_FNS["j2me_forms_in_last"](dom, 60)),
+        "cp_n_j2me_90_d": int(CALC_FNS["j2me_forms_in_last"](dom, 90)),
+        "cp_j2me_90_d_bool": int(CALC_FNS["j2me_forms_in_last_bool"](dom, 90)),
+        "cp_300th_form": CALC_FNS["300th_form_submission"](dom)
+    }
+
+
 def total_distinct_users(domains=None):
     """
     Get total number of users who've ever submitted a form.
