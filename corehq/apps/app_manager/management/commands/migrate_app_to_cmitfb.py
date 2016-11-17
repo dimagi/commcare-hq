@@ -32,7 +32,7 @@ class Command(BaseCommand):
             logger.info('migrating {} apps in domain {}'.format(len(app_ids), args[0]))
 
         for app_id in app_ids:
-            logger.info('migrating app {}'.format(app_id))
+            logger.info('migrating app {} in domain {}'.format(app_id, args[0]))
             self.migrate_app(app_id)
 
         logger.info('done with migrate_app_to_cmitfb')
