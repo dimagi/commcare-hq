@@ -223,7 +223,7 @@
             <label>
                 <input name="incl_form_ids"
                        type="checkbox"
-                       data-bind="value: uniqueId, checked: $parent.selectedModule().includedFormIds"/>
+                       data-bind="value: uniqueId, checked: $parent.includedFormIds"/>
                 <span data-bind="text: name"></span>
             </label>
         </div>
@@ -262,7 +262,9 @@
         {% include "app_manager/v1/partials/module_view_settings.html" %}
     </div>
     <div class="tab-pane" id="case-settings">
-        {% include "app_manager/v1/partials/module_view_case_management.html" %}
+        {% block case-management-tab-content %}
+            {% include "app_manager/v1/partials/module_view_case_management.html" %}
+        {% endblock %}
     </div>
 
     {% for detail in details %}
