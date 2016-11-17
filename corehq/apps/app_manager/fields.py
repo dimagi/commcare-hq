@@ -405,9 +405,13 @@ class ApplicationDataRMIHelper(object):
         item_name = None
         if has_app and item is not None:
             for app_lang in app_langs:
-                item_name = item['name'].get(app_lang) or item['name'].get('en')
+                item_name = item['name'].get(app_lang)
                 if item_name:
                     break
+
+            # As last resort try english
+            if not item_name:
+                item_name = item['name'].get('en')
         return item_name or default_name
 
     def _get_modules_and_forms(self, as_dict=True):
