@@ -4,7 +4,7 @@ from xml.etree import ElementTree
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from casexml.apps.case.const import CASE_INDEX_CHILD
 from casexml.apps.case.mock import CaseStructure, CaseIndex
-from custom.icds_reports.ucr.tests.base_test import BaseICDSDatasourceTest, create_element_with_value
+from custom.icds_reports.ucr.tests.base_test import BaseICDSDatasourceTest, add_element
 
 XMNLS_BP_FORM = 'http://openrosa.org/formdesigner/2864010F-B1B1-4711-8C59-D5B2B81D65DB'
 XMLNS_THR_FORM = 'http://openrosa.org/formdesigner/F1B73934-8B70-4CEE-B462-3E4C81F80E4A'
@@ -102,7 +102,7 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         form.attrib['xmlns:jrm'] = 'http://openrosa.org/jr/xforms'
 
         meta = ElementTree.Element('meta')
-        meta.append(create_element_with_value('timeEnd', form_date.isoformat()))
+        add_element(meta, 'timeEnd', form_date.isoformat())
         form.append(meta)
 
         case = ElementTree.Element('case')
@@ -111,27 +111,26 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         case.attrib['xmlns'] = 'http://commcarehq.org/case/transaction/v2'
         form.append(case)
 
-        form.append(create_element_with_value('play_family_planning_vid', counsel_fp_vid))
-        form.append(create_element_with_value('conceive', counsel_immediate_conception))
+        add_element(form, 'play_family_planning_vid', counsel_fp_vid)
+        add_element(form, 'conceive', counsel_immediate_conception)
 
         bp1 = ElementTree.Element('bp1')
-        bp1.append(create_element_with_value('using_ifa', using_ifa))
+        add_element(bp1, 'using_ifa', using_ifa)
         if using_ifa == 'yes':
-            bp1.append(create_element_with_value('ifa_last_seven_days', num_ifa_consumed_last_seven_days))
-        bp1.append(create_element_with_value('anemia', anemia))
-        bp1.append(create_element_with_value('eating_extra', extra_meal))
-        bp1.append(create_element_with_value('resting', resting_during_pregnancy))
+            add_element(bp1, 'ifa_last_seven_days', num_ifa_consumed_last_seven_days)
+        add_element(bp1, 'anemia', anemia)
+        add_element(bp1, 'eating_extra', extra_meal)
+        add_element(bp1, 'resting', resting_during_pregnancy)
         form.append(bp1)
 
         bp2 = ElementTree.Element('bp2')
-        bp2.append(create_element_with_value('immediate_breastfeeding', counsel_immediate_bf))
-        bp2.append(create_element_with_value('play_birth_preparedness_vid', counsel_bp_vid))
-        bp2.append(create_element_with_value('counsel_preparation', counsel_preparation))
+        add_element(bp2, 'immediate_breastfeeding', counsel_immediate_bf)
+        add_element(bp2, 'play_birth_preparedness_vid', counsel_bp_vid)
+        add_element(bp2, 'counsel_preparation', counsel_preparation)
         form.append(bp2)
 
         fp_group = ElementTree.Element('family_planning_group')
-        fp_group.append(
-            create_element_with_value('counsel_accessible_ppfp', counsel_accessible_postpartum_fp))
+        add_element(fp_group, 'counsel_accessible_ppfp', counsel_accessible_postpartum_fp)
         form.append(fp_group)
 
         submit_form_locally(ElementTree.tostring(form), self.domain, **{})
@@ -144,7 +143,7 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         form.attrib['xmlns:jrm'] = 'http://openrosa.org/jr/xforms'
 
         meta = ElementTree.Element('meta')
-        meta.append(create_element_with_value('timeEnd', form_date.isoformat()))
+        add_element(meta, 'timeEnd', form_date.isoformat())
         form.append(meta)
 
         case = ElementTree.Element('case')
@@ -153,11 +152,11 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         case.attrib['xmlns'] = 'http://commcarehq.org/case/transaction/v2'
         form.append(case)
 
-        form.append(create_element_with_value('thr_given_mother', thr_given_mother))
+        add_element(form, 'thr_given_mother', thr_given_mother)
 
         if thr_given_mother == '1':
             mother_thr = ElementTree.Element('mother_thr')
-            mother_thr.append(create_element_with_value('days_ration_given_mother', rations_distributed))
+            add_element(mother_thr, 'days_ration_given_mother', rations_distributed)
             form.append(mother_thr)
 
         submit_form_locally(ElementTree.tostring(form), self.domain, **{})
@@ -169,7 +168,7 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         form.attrib['xmlns:jrm'] = 'http://openrosa.org/jr/xforms'
 
         meta = ElementTree.Element('meta')
-        meta.append(create_element_with_value('timeEnd', form_date.isoformat()))
+        add_element(meta, 'timeEnd', form_date.isoformat())
         form.append(meta)
 
         case = ElementTree.Element('case')
@@ -178,7 +177,7 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         case.attrib['xmlns'] = 'http://commcarehq.org/case/transaction/v2'
         form.append(case)
 
-        form.append(create_element_with_value('counsel_methods', counsel_methods))
+        add_element(form, 'counsel_methods', counsel_methods)
 
         submit_form_locally(ElementTree.tostring(form), self.domain, **{})
 
@@ -189,7 +188,7 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         form.attrib['xmlns:jrm'] = 'http://openrosa.org/jr/xforms'
 
         meta = ElementTree.Element('meta')
-        meta.append(create_element_with_value('timeEnd', form_date.isoformat()))
+        add_element(meta, 'timeEnd', form_date.isoformat())
         form.append(meta)
 
         case = ElementTree.Element('case')
@@ -198,7 +197,7 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         case.attrib['xmlns'] = 'http://commcarehq.org/case/transaction/v2'
         form.append(case)
 
-        form.append(create_element_with_value('counsel_methods', counsel_methods))
+        add_element(form, 'counsel_methods', counsel_methods)
 
         submit_form_locally(ElementTree.tostring(form), self.domain, **{})
 

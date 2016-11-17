@@ -4,7 +4,7 @@ from xml.etree import ElementTree
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from casexml.apps.case.const import CASE_INDEX_CHILD
 from casexml.apps.case.mock import CaseStructure, CaseIndex
-from custom.icds_reports.ucr.tests.base_test import BaseICDSDatasourceTest, create_element_with_value
+from custom.icds_reports.ucr.tests.base_test import BaseICDSDatasourceTest, add_element
 
 XMNLS_BP_FORM = 'http://openrosa.org/formdesigner/2864010F-B1B1-4711-8C59-D5B2B81D65DB'
 XMLNS_THR_FORM = 'http://openrosa.org/formdesigner/F1B73934-8B70-4CEE-B462-3E4C81F80E4A'
@@ -119,7 +119,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         form.attrib['xmlns:jrm'] = 'http://openrosa.org/jr/xforms'
 
         meta = ElementTree.Element('meta')
-        meta.append(create_element_with_value('timeEnd', form_date.isoformat()))
+        add_element(meta, 'timeEnd', form_date.isoformat())
         form.append(meta)
 
         case = ElementTree.Element('case')
@@ -128,7 +128,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         case.attrib['xmlns'] = 'http://commcarehq.org/case/transaction/v2'
         if nutrition_status is not None:
             case_update = ElementTree.Element('update')
-            case_update.append(create_element_with_value('zscore_grading_wfa', nutrition_status))
+            add_element(case_update, 'zscore_grading_wfa', nutrition_status)
             case.append(case_update)
         form.append(case)
 
@@ -142,7 +142,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         form.attrib['xmlns:jrm'] = 'http://openrosa.org/jr/xforms'
 
         meta = ElementTree.Element('meta')
-        meta.append(create_element_with_value('timeEnd', form_date.isoformat()))
+        add_element(meta, 'timeEnd', form_date.isoformat())
         form.append(meta)
 
         case = ElementTree.Element('case')
@@ -161,7 +161,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         form.attrib['xmlns:jrm'] = 'http://openrosa.org/jr/xforms'
 
         meta = ElementTree.Element('meta')
-        meta.append(create_element_with_value('timeEnd', form_date.isoformat()))
+        add_element(meta, 'timeEnd', form_date.isoformat())
         form.append(meta)
 
         case = ElementTree.Element('case')
@@ -170,26 +170,136 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         case.attrib['xmlns'] = 'http://commcarehq.org/case/transaction/v2'
         form.append(case)
 
-        form.append(create_element_with_value('thr_given_child', '1'))
+        add_element(form, 'thr_given_child', '1')
 
         child_thr = ElementTree.Element('child_thr')
         child_thr_persons = ElementTree.Element('child_persons')
         child_thr_repeat1 = ElementTree.Element('item')
-        if case_id_2 is not None:
-            child_thr_repeat1.append(create_element_with_value('child_health_case_id', case_id_2))
-            child_thr_repeat1.append(create_element_with_value('days_ration_given_child', 25))
-            child_thr_repeat1.append(create_element_with_value('distribute_ration_child', 'yes'))
-            child_thr_persons.append(child_thr_repeat1)
-        child_thr_repeat2 = ElementTree.Element('item')
-        child_thr_repeat2.append(create_element_with_value('child_health_case_id', case_id))
+        add_element(child_thr_repeat1, 'child_health_case_id', case_id)
         if rations_distributed > 0:
-            child_thr_repeat2.append(create_element_with_value('days_ration_given_child', rations_distributed))
-            child_thr_repeat2.append(create_element_with_value('distribute_ration_child', 'yes'))
+            add_element(child_thr_repeat1, 'days_ration_given_child', rations_distributed)
+            add_element(child_thr_repeat1, 'distribute_ration_child', 'yes')
         else:
-            child_thr_repeat2.append(create_element_with_value('distribute_ration_child', 'no'))
-        child_thr_persons.append(child_thr_repeat2)
+            add_element(child_thr_repeat1, 'distribute_ration_child', 'no')
+        child_thr_persons.append(child_thr_repeat1)
+        if case_id_2 is not None:
+            child_thr_repeat2 = ElementTree.Element('item')
+            add_element(child_thr_repeat2, 'child_health_case_id', case_id_2)
+            add_element(child_thr_repeat2, 'days_ration_given_child', 25)
+            add_element(child_thr_repeat2, 'distribute_ration_child', 'yes')
+            child_thr_persons.append(child_thr_repeat2)
         child_thr.append(child_thr_persons)
         form.append(child_thr)
+
+        submit_form_locally(ElementTree.tostring(form), self.domain, **{})
+
+    def _submit_ebf_form(
+            self, form_date, case_id, is_ebf=None, water_or_milk=None,
+            tea_other=None, eating=None, not_breastfeeding=None, case_id_2=None):
+
+        form = ElementTree.Element('data')
+        form.attrib['xmlns'] = XMLNS_EBF_FORM
+        form.attrib['xmlns:jrm'] = 'http://openrosa.org/jr/xforms'
+
+        meta = ElementTree.Element('meta')
+        add_element(meta, 'timeEnd', form_date.isoformat())
+        form.append(meta)
+
+        case = ElementTree.Element('case')
+        case.attrib['date_modified'] = form_date.isoformat()
+        case.attrib['case_id'] = case_id
+        case.attrib['xmlns'] = 'http://commcarehq.org/case/transaction/v2'
+        form.append(case)
+
+        child = ElementTree.Element('child')
+        child_repeat1 = ElementTree.Element('item')
+        add_element(child_repeat1, 'child_health_case_id', case_id)
+        add_element(child_repeat1, 'is_ebf', is_ebf)
+        add_element(child_repeat1, 'water_or_milk', water_or_milk)
+        add_element(child_repeat1, 'tea_other', tea_other)
+        add_element(child_repeat1, 'eating', eating)
+        add_element(child_repeat1, 'not_breastfeeding', not_breastfeeding)
+        child.append(child_repeat1)
+        if case_id_2 is not None:
+            child_repeat2 = ElementTree.Element('item')
+            add_element(child_repeat2, 'child_health_case_id', case_id_2)
+            add_element(child_repeat2, 'is_ebf', 'no')
+            add_element(child_repeat2, 'water_or_milk', 'yes')
+            add_element(child_repeat2, 'tea_other', 'yes')
+            add_element(child_repeat2, 'eating', 'yes')
+            add_element(child_repeat2, 'not_breastfeeding', 'pregnant_again')
+            child.append(child_repeat2)
+        form.append(child)
+
+        submit_form_locally(ElementTree.tostring(form), self.domain, **{})
+
+    def _submit_pnc_form(self, form_date, case_id, is_ebf=None, other_milk_to_child=None, case_id_2=None):
+
+        form = ElementTree.Element('data')
+        form.attrib['xmlns'] = XMLNS_PNC_FORM
+        form.attrib['xmlns:jrm'] = 'http://openrosa.org/jr/xforms'
+
+        meta = ElementTree.Element('meta')
+        add_element(meta, 'timeEnd', form_date.isoformat())
+        form.append(meta)
+
+        case = ElementTree.Element('case')
+        case.attrib['date_modified'] = form_date.isoformat()
+        case.attrib['case_id'] = case_id
+        case.attrib['xmlns'] = 'http://commcarehq.org/case/transaction/v2'
+        form.append(case)
+
+        child = ElementTree.Element('child')
+        child_repeat1 = ElementTree.Element('item')
+        add_element(child_repeat1, 'child_health_case_id', case_id)
+        add_element(child_repeat1, 'is_ebf', is_ebf)
+        add_element(child_repeat1, 'other_milk_to_child', other_milk_to_child)
+        child.append(child_repeat1)
+        if case_id_2 is not None:
+            child_repeat2 = ElementTree.Element('item')
+            add_element(child_repeat2, 'child_health_case_id', case_id_2)
+            add_element(child_repeat2, 'is_ebf', 'no')
+            add_element(child_repeat2, 'other_milk_to_child', 'yes')
+            child.append(child_repeat2)
+        form.append(child)
+
+        submit_form_locally(ElementTree.tostring(form), self.domain, **{})
+
+    def _submit_cf_form(
+            self, form_date, case_id, comp_feeding=None, diet_diversity=None,
+            diet_quantity=None, handwashing=None, demo_comp_feeding=None, case_id_2=None):
+
+        form = ElementTree.Element('data')
+        form.attrib['xmlns'] = XMLNS_EBF_FORM
+        form.attrib['xmlns:jrm'] = 'http://openrosa.org/jr/xforms'
+
+        meta = ElementTree.Element('meta')
+        add_element(meta, 'timeEnd', form_date.isoformat())
+        form.append(meta)
+
+        case = ElementTree.Element('case')
+        case.attrib['date_modified'] = form_date.isoformat()
+        case.attrib['case_id'] = case_id
+        case.attrib['xmlns'] = 'http://commcarehq.org/case/transaction/v2'
+        case_update = ElementTree.Element('update')
+        add_element(case_update, 'comp_feeding', comp_feeding)
+        add_element(case_update, 'diet_diversity', diet_diversity)
+        add_element(case_update, 'diet_diversity', diet_quantity)
+        add_element(case_update, 'handwashing', handwashing)
+        case.append(case_update)
+        form.append(case)
+
+        child = ElementTree.Element('child')
+        child_repeat1 = ElementTree.Element('item')
+        add_element(child_repeat1, 'child_health_case_id', case_id)
+        add_element(child_repeat1, 'demo_comp_feeding', demo_comp_feeding)
+        child.append(child_repeat1)
+        if case_id_2 is not None:
+            child_repeat2 = ElementTree.Element('item')
+            add_element(child_repeat2, 'child_health_case_id', case_id_2)
+            add_element(child_repeat1, 'demo_comp_feeding', 'no')
+            child.append(child_repeat2)
+        form.append(child)
 
         submit_form_locally(ElementTree.tostring(form), self.domain, **{})
 
@@ -754,6 +864,263 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
             (3, [('born_in_month', 0),
                  ('low_birth_weight_born_in_month', 0),
                  ('bf_at_birth_born_in_month', 0)],
+             ),
+        ]
+        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
+
+    def test_ebf_ebf_form(self):
+        case_id = uuid.uuid4().hex
+        case_id_2 = uuid.uuid4().hex
+        self._create_case(
+            case_id=case_id,
+            dob=date(2015, 11, 12),
+            date_opened=datetime(2015, 11, 14),
+            date_modified=datetime(2016, 3, 12),
+        )
+        self._create_case(
+            case_id=case_id_2,
+            dob=date(2015, 11, 12),
+            date_opened=datetime(2015, 11, 14),
+            date_modified=datetime(2016, 3, 12),
+        )
+
+        #Dec: No data, Jan: EBF, Mar: Not EBF
+        self._submit_ebf_form(
+            form_date=datetime(2016, 1, 10),
+            case_id=case_id,
+            is_ebf='yes',
+            water_or_milk='no',
+            tea_other='no',
+            eating='no',
+            case_id_2=case_id_2,
+        )
+        self._submit_ebf_form(
+            form_date=datetime(2016, 3, 10),
+            case_id=case_id,
+            is_ebf='no',
+            water_or_milk='yes',
+            tea_other='yes',
+            eating='yes',
+            not_breastfeeding='not_enough_milk',
+            case_id_2=case_id_2,
+        )
+
+        cases = [
+            (0, [('ebf_eligible', 1),
+                 ('ebf_in_month', 0),
+                 ('ebf_not_breastfeeding_reason', None),
+                 ('ebf_drinking_liquid', 0),
+                 ('ebf_eating', 0),
+                 ('ebf_no_bf_no_milk', 0),
+                 ('ebf_no_bf_pregnant_again', 0),
+                 ('ebf_no_bf_child_too_old', 0),
+                 ('ebf_no_bf_mother_sick', 0)]
+            ),
+            (1, [('ebf_eligible', 1),
+                 ('ebf_in_month', 1),
+                 ('ebf_not_breastfeeding_reason', None),
+                 ('ebf_drinking_liquid', 0),
+                 ('ebf_eating', 0),
+                 ('ebf_no_bf_no_milk', 0),
+                 ('ebf_no_bf_pregnant_again', 0),
+                 ('ebf_no_bf_child_too_old', 0),
+                 ('ebf_no_bf_mother_sick', 0)]
+             ),
+            (2, [('ebf_eligible', 1),
+                 ('ebf_in_month', 1),
+                 ('ebf_not_breastfeeding_reason', None),
+                 ('ebf_drinking_liquid', 0),
+                 ('ebf_eating', 0),
+                 ('ebf_no_bf_no_milk', 0),
+                 ('ebf_no_bf_pregnant_again', 0),
+                 ('ebf_no_bf_child_too_old', 0),
+                 ('ebf_no_bf_mother_sick', 0)]
+             ),
+            (3, [('ebf_eligible', 1),
+                 ('ebf_in_month', 0),
+                 ('ebf_not_breastfeeding_reason', 'not_enough_milk'),
+                 ('ebf_drinking_liquid', 1),
+                 ('ebf_eating', 1),
+                 ('ebf_no_bf_no_milk', 1),
+                 ('ebf_no_bf_pregnant_again', 0),
+                 ('ebf_no_bf_child_too_old', 0),
+                 ('ebf_no_bf_mother_sick', 0)]
+             ),
+            (4, [('ebf_eligible', 1),
+                 ('ebf_in_month', 0),
+                 ('ebf_not_breastfeeding_reason', 'not_enough_milk'),
+                 ('ebf_drinking_liquid', 1),
+                 ('ebf_eating', 1),
+                 ('ebf_no_bf_no_milk', 1),
+                 ('ebf_no_bf_pregnant_again', 0),
+                 ('ebf_no_bf_child_too_old', 0),
+                 ('ebf_no_bf_mother_sick', 0)]
+             ),
+        ]
+        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
+
+    def test_ebf_pnc_form(self):
+        case_id = uuid.uuid4().hex
+        case_id_2 = uuid.uuid4().hex
+        self._create_case(
+            case_id=case_id,
+            dob=date(2015, 12, 12),
+            date_opened=datetime(2015, 12, 14),
+            date_modified=datetime(2016, 3, 12),
+        )
+        self._create_case(
+            case_id=case_id_2,
+            dob=date(2015, 12, 12),
+            date_opened=datetime(2015, 12, 14),
+            date_modified=datetime(2016, 3, 12),
+        )
+
+        #Dec: not EBF, Jan: EBF
+        self._submit_pnc_form(
+            form_date=datetime(2015,12,14),
+            case_id=case_id,
+            is_ebf='no',
+            other_milk_to_child='yes',
+            case_id_2=case_id_2,
+        )
+        self._submit_pnc_form(
+            form_date=datetime(2016, 1, 2),
+            case_id=case_id,
+            is_ebf='yes',
+            other_milk_to_child='no',
+            case_id_2=case_id_2,
+        )
+
+        cases = [
+            (0, [('ebf_eligible', 1),
+                 ('ebf_in_month', 0),
+                 ('ebf_not_breastfeeding_reason', None),
+                 ('ebf_drinking_liquid', 1),
+                 ('ebf_eating', 0),
+                 ('ebf_no_bf_no_milk', 0),
+                 ('ebf_no_bf_pregnant_again', 0),
+                 ('ebf_no_bf_child_too_old', 0),
+                 ('ebf_no_bf_mother_sick', 0)]
+            ),
+            (1, [('ebf_eligible', 1),
+                 ('ebf_in_month', 1),
+                 ('ebf_not_breastfeeding_reason', None),
+                 ('ebf_drinking_liquid', 0),
+                 ('ebf_eating', 0),
+                 ('ebf_no_bf_no_milk', 0),
+                 ('ebf_no_bf_pregnant_again', 0),
+                 ('ebf_no_bf_child_too_old', 0),
+                 ('ebf_no_bf_mother_sick', 0)]
+             ),
+            (2, [('ebf_eligible', 1),
+                 ('ebf_in_month', 1),
+                 ('ebf_not_breastfeeding_reason', None),
+                 ('ebf_drinking_liquid', 0),
+                 ('ebf_eating', 0),
+                 ('ebf_no_bf_no_milk', 0),
+                 ('ebf_no_bf_pregnant_again', 0),
+                 ('ebf_no_bf_child_too_old', 0),
+                 ('ebf_no_bf_mother_sick', 0)]
+             ),
+        ]
+        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
+
+    def test_ebf_no_ebf_reasons(self):
+        case_id = uuid.uuid4().hex
+        case_id_2 = uuid.uuid4().hex
+        self._create_case(
+            case_id=case_id,
+            dob=date(2015, 11, 12),
+            date_opened=datetime(2015, 11, 14),
+            date_modified=datetime(2016, 3, 12),
+        )
+        self._create_case(
+            case_id=case_id_2,
+            dob=date(2015, 11, 12),
+            date_opened=datetime(2015, 11, 14),
+            date_modified=datetime(2016, 3, 12),
+        )
+
+        self._submit_ebf_form(
+            form_date=datetime(2015, 12, 10),
+            case_id=case_id,
+            is_ebf='no',
+            water_or_milk='yes',
+            tea_other='no',
+            eating='no',
+            not_breastfeeding='pregnant_again',
+            case_id_2=case_id_2,
+        )
+        self._submit_ebf_form(
+            form_date=datetime(2016, 1, 10),
+            case_id=case_id,
+            is_ebf='no',
+            water_or_milk='no',
+            tea_other='yes',
+            eating='yes',
+            not_breastfeeding='child_too_old',
+            case_id_2=case_id_2,
+        )
+        self._submit_ebf_form(
+            form_date=datetime(2016, 2, 10),
+            case_id=case_id,
+            is_ebf='no',
+            water_or_milk='no',
+            tea_other='no',
+            eating='no',
+            not_breastfeeding='child_mother_sick',
+            case_id_2=case_id_2,
+        )
+        self._submit_ebf_form(
+            form_date=datetime(2016, 3, 10),
+            case_id=case_id,
+            is_ebf='yes',
+            water_or_milk='no',
+            tea_other='no',
+            eating='no',
+            case_id_2=case_id_2,
+        )
+
+        cases = [
+            (0, [('ebf_eligible', 1),
+                 ('ebf_in_month', 0),
+                 ('ebf_not_breastfeeding_reason', 'pregnant_again'),
+                 ('ebf_drinking_liquid', 1),
+                 ('ebf_eating', 0),
+                 ('ebf_no_bf_no_milk', 0),
+                 ('ebf_no_bf_pregnant_again', 1),
+                 ('ebf_no_bf_child_too_old', 0),
+                 ('ebf_no_bf_mother_sick', 0)]
+            ),
+            (1, [('ebf_eligible', 1),
+                 ('ebf_in_month', 0),
+                 ('ebf_not_breastfeeding_reason', 'child_too_old'),
+                 ('ebf_drinking_liquid', 1),
+                 ('ebf_eating', 1),
+                 ('ebf_no_bf_no_milk', 0),
+                 ('ebf_no_bf_pregnant_again', 0),
+                 ('ebf_no_bf_child_too_old', 1),
+                 ('ebf_no_bf_mother_sick', 0)]
+             ),
+            (2, [('ebf_eligible', 1),
+                 ('ebf_in_month', 0),
+                 ('ebf_not_breastfeeding_reason', 'child_mother_sick'),
+                 ('ebf_drinking_liquid', 0),
+                 ('ebf_eating', 0),
+                 ('ebf_no_bf_no_milk', 0),
+                 ('ebf_no_bf_pregnant_again', 0),
+                 ('ebf_no_bf_child_too_old', 0),
+                 ('ebf_no_bf_mother_sick', 1)]
+             ),
+            (3, [('ebf_eligible', 1),
+                 ('ebf_in_month', 1),
+                 ('ebf_not_breastfeeding_reason', None),
+                 ('ebf_drinking_liquid', 0),
+                 ('ebf_eating', 0),
+                 ('ebf_no_bf_no_milk', 0),
+                 ('ebf_no_bf_pregnant_again', 0),
+                 ('ebf_no_bf_child_too_old', 0),
+                 ('ebf_no_bf_mother_sick', 0)]
              ),
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)

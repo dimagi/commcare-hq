@@ -21,10 +21,11 @@ def _safe_text(input_value):
         return ''
 
 
-def create_element_with_value(element_name, value):
-    elem = ElementTree.Element(element_name)
-    elem.text = _safe_text(value)
-    return elem
+def add_element(element, element_name, value):
+    if value is not None:
+        elem = ElementTree.Element(element_name)
+        elem.text = _safe_text(value)
+        element.append(elem)
 
 
 class BaseICDSDatasourceTest(TestCase, TestFileMixin):
@@ -71,4 +72,4 @@ class BaseICDSDatasourceTest(TestCase, TestFileMixin):
             row = query.all()[index]._asdict()
             self.assertEqual(row['month'], start_date+relativedelta(months=index))
             for key, value in test_values:
-                self.assertEqual(row[key], value)
+                self.assertEqual(row[key], value, str(index)+":"+key+' '+str(row[key])+'!='+str(value))
