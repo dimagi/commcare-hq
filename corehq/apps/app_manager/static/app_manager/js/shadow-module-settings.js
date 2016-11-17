@@ -12,20 +12,27 @@ hqDefine('app_manager/js/shadow-module-settings.js', function () {
             self.selectedModule = ko.pureComputed(function () {
                 return _.findWhere(self.modules(), {uniqueId: self.selectedModuleId()});
             });
-            self.allForms = ko.pureComputed(function() {
-                return _.flatten(_.map(self.modules(), function(m) { return m.forms(); }));
+            // Find all forms that could potentially be included in the current module:
+            // Forms belonging to the source module and to the source module's children
+            self.sourceForms = ko.pureComputed(function() {
+                return self.selectedModule().forms().concat(_.flatten(_.map(_.filter(self.modules(), function(m) {
+                    return m.rootId === self.selectedModuleId();
+                }), function(m) {
+                    return m.forms();
+                })));
             });
             self.includedFormIds = ko.observableArray();
             self.excludedFormIds = ko.pureComputed(function () {
-                var exclForms = _.filter(self.allForms(), function (form) {
+                var exclForms = _.filter(self.sourceForms(), function (form) {
                     return self.includedFormIds().indexOf(form.uniqueId) === -1;
                 });
                 return _.map(exclForms, function (form) { return form.uniqueId; });
             });
 
-            var SourceModule = function (uniqueId, name) {
+            var SourceModule = function (uniqueId, name, rootId) {
                 this.uniqueId = uniqueId;
                 this.name = name;
+                this.rootId = rootId;
                 this.forms = ko.observableArray();
             };
 
@@ -38,7 +45,7 @@ hqDefine('app_manager/js/shadow-module-settings.js', function () {
             self.modules.push(sourceModule);
             for (var i = 0; i < modules.length; i++) {
                 var mod = modules[i];
-                sourceModule = new SourceModule(mod.unique_id, mod.name);
+                sourceModule = new SourceModule(mod.unique_id, mod.name, mod.root_module_id);
                 for (var j = 0; j < mod.forms.length; j++) {
                     var form = mod.forms[j];
                     var sourceModuleForm = new SourceModuleForm(form.unique_id, form.name);
