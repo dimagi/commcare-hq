@@ -2,6 +2,7 @@ import urllib
 import logging
 from celery.task import task
 
+from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.export.export import get_export_file, rebuild_export
 from corehq.apps.export.utils import convert_saved_export_to_export_instance
 from corehq.apps.export.dbaccessors import get_inferred_schema
@@ -67,6 +68,13 @@ def add_inferred_export_properties(sender, domain, case_type, properties):
             case_type=case_type,
         )
     group_schema = inferred_schema.put_group_schema(MAIN_TABLE)
+    case_type_obj, created = CaseType.objects.get_or_create(domain=domain, name=case_type)
+    if not created:
+        old_properties = CaseProperty.objects.filter(case_type=case_type_obj)
+        old_properties = {p.name for p in old_properties}
+    else:
+        old_properties = set()
+    new_properties = []
 
     for case_property in properties:
         path = [PathNode(name=case_property)]
@@ -81,5 +89,10 @@ def add_inferred_export_properties(sender, domain, case_type, properties):
             group_schema.put_item(path, inferred_from=sender, item_cls=column.item.__class__)
         else:
             group_schema.put_item(path, inferred_from=sender, item_cls=ScalarItem)
+        if case_property not in old_properties:
+            old_properties.add(case_property)
+            new_properties.append(CaseProperty(name=case_property, case_type=case_type_obj))
+
+    CaseProperty.objects.bulk_create(new_properties)
 
     inferred_schema.save()
