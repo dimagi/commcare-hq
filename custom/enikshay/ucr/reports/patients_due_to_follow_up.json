@@ -1,0 +1,155 @@
+{
+    "domains": [
+        "enikshay-test",
+        "enikshay-test-test"
+    ],
+    "data_source_table": "episode",
+    "report_id": "patients_due_to_follow_up",
+    "config": {
+        "description": "",
+        "title": "Patients Due for Follow-Up",
+        "sort_expression": [],
+        "visible": false,
+        "configured_charts": [],
+        "aggregation_columns": ["doc_id"],
+        "filters": [
+            {
+                "compare_as_string": false,
+                "datatype": "datetime",
+                "required": false,
+                "display": "Date",
+                "field": "opened_on",
+                "slug": "date",
+                "type": "date"
+            },
+            {
+                "compare_as_string": false,
+                "datatype": "string",
+                "type": "dynamic_choice_list",
+                "slug": "village",
+                "field": "person_owner_id",
+                "choice_provider": {
+                    "include_descendants": true,
+                    "type": "location"
+                },
+                "display": "Location"
+            }
+        ],
+        "columns": [
+            {
+                "display": "Nikshay ID",
+                "type": "field",
+                "field": "nikshay_id",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "calculate_total": false
+            },
+            {
+                "display": "Patient Name",
+                "type": "field",
+                "field": "person_name",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "calculate_total": false
+            },
+            {
+                "display": "Patient Phone",
+                "type": "field",
+                "field": "mobile_number",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "calculate_total": false
+            },
+            {
+                "display": "Age",
+                "type": "field",
+                "field": "age",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "calculate_total": false
+            },
+            {
+                "display": "Sex",
+                "type": "field",
+                "field": "sex",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "calculate_total": false
+            },
+            {
+                "display": "District",
+                "type": "field",
+                "field": "current_address_district_choice",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "calculate_total": false
+            },
+            {
+                "display": "TU",
+                "type": "field",
+                "field": "tu",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "calculate_total": false
+            },
+            {
+                "display": "PHI",
+                "type": "field",
+                "field": "phi",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "calculate_total": false
+            },
+            {
+                "display": "Treatment status/Phase",
+                "type": "field",
+                "field": "treatment_status",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "calculate_total": false
+            },
+            {
+                "display": "TB HV",
+                "type": "field",
+                "field": "person_owner_id",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "calculate_total": false,
+                "transform": {
+                    "type": "custom",
+                    "custom_type": "owner_display"
+                }
+            },
+            {
+                "display": "DOT Provider",
+                "type": "field",
+                "field": "treatment_supporter_name",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "calculate_total": false
+            }
+        ]
+    }
+}
