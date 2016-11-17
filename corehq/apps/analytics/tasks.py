@@ -396,7 +396,7 @@ def track_periodic_data():
                     'value': project_spaces_created,
                 },
                 {
-                    'property': '{}over_{}_form_submissions'.format(env, HUBSPOT_THRESHOLD),
+                    'property': '{}over_300_form_submissions'.format(env),
                     'value': max_forms > HUBSPOT_THRESHOLD
                 },
                 {
