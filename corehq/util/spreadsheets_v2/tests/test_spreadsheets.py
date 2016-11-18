@@ -4,7 +4,7 @@ from django.test import SimpleTestCase
 from corehq.util.spreadsheets_v2 import (
     Workbook,
     Worksheet,
-    Cell,
+    make_worksheet,
 )
 from corehq.util.spreadsheets_v2.tests.utils import get_file, run_on_all_adapters
 from corehq.util.test_utils import make_make_path
@@ -42,23 +42,23 @@ def test_xlsx_types(self, open_workbook, ext):
             workbook,
             Workbook(
                 worksheets=[
-                    Worksheet(title='Sheet1', max_row=15, iter_rows=lambda: [
-                        [Cell(u'String'), Cell(u'Danny')],
-                        [Cell(u'Date'), Cell(date(1988, 7, 7))],
-                        [Cell(u'Date Time'), Cell(datetime(2016, 1, 1, 12, 0))],
-                        [Cell(u'Time'), Cell(time(12, 0))],
-                        [Cell(u'Midnight'), Cell(time(0, 0))],
-                        [Cell(u'Int'), Cell(28)],
-                        [Cell(u'Int.0'), Cell(5)],
-                        [Cell(u'Float'), Cell(5.1)],
-                        [Cell(u'Bool-F'), Cell(False)],
-                        [Cell(u'Bool-T'), Cell(True)],
-                        [Cell(u'Empty'), Cell(None)],
-                        [Cell(u'Percent'), Cell(0.49)],
-                        [Cell(u'Calculation'), Cell(2)],
-                        [Cell(u'Styled'), Cell(u'Styled')],
-                        [Cell(u'Empty Date'), Cell(None)],
-                    ])
+                    make_worksheet(title='Sheet1', rows=[
+                        [u'String', u'Danny'],
+                        [u'Date', date(1988, 7, 7)],
+                        [u'Date Time', datetime(2016, 1, 1, 12, 0)],
+                        [u'Time', time(12, 0)],
+                        [u'Midnight', time(0, 0)],
+                        [u'Int', 28],
+                        [u'Int.0', 5],
+                        [u'Float', 5.1],
+                        [u'Bool-F', False],
+                        [u'Bool-T', True],
+                        [u'Empty', None],
+                        [u'Percent', 0.49],
+                        [u'Calculation', 2],
+                        [u'Styled', u'Styled'],
+                        [u'Empty Date', None],
+                    ]),
                 ]
             )
         )
