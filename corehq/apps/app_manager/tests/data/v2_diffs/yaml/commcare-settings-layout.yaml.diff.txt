@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -75,6 +75,7 @@
+@@ -73,6 +73,7 @@
    id: app-settings-advanced
    collapse: true
    settings:
