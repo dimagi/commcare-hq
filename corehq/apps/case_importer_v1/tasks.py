@@ -29,18 +29,12 @@ def bulk_import_async(config, domain, excel_id):
 
     try:
         with importer_util.get_spreadsheet(excel_ref.get_filename(), config.named_columns) as spreadsheet:
-            try:
-                result = do_import(spreadsheet, config, domain, task=bulk_import_async)
-            except Exception as e:
-                raise
-                return {
-                    'errors': 'Error: ' + e.message
-                }
+            result = do_import(spreadsheet, config, domain, task=bulk_import_async)
 
-            # return compatible with soil
-            return {
-                'messages': result
-            }
+        # return compatible with soil
+        return {
+            'messages': result
+        }
     except ImporterError as e:
         return {'errors': get_importer_error_message(e)}
 
