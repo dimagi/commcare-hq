@@ -757,6 +757,14 @@ class ConfigureReport(ReportBuilderView):
             func = report_type_funcs[report_data_['chart']]
             return func(report_data_['columns'])
 
+        def get_builder_report_type(report_data_):
+            # builder_report_type = StringProperty(choices=['chart', 'list', 'table', 'worker', 'map'])
+            assert report_data_['report_type'] in ('list', 'agg', 'map')
+            if report_data_['report_type'] in ('list', 'map'):
+                return report_data_['report_type']
+            elif report_data_['report_type'] == 'agg':
+                return 'table' if report_data_['chart'] == 'none' else 'chart'
+
         self._confirm_report_limit()
 
         report_name = request.GET['report_name']
@@ -788,7 +796,7 @@ class ConfigureReport(ReportBuilderView):
                 configured_charts=get_report_charts(report_data),
                 report_meta=ReportMeta(
                     created_by_builder=True,
-                    builder_report_type=report_data['report_type'],
+                    builder_report_type=get_builder_report_type(report_data),
                 )
             )
             report_configuration.validate()
