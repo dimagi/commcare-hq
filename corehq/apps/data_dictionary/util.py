@@ -23,8 +23,7 @@ def generate_data_dictionary(domain):
         case_type_obj, _ = CaseType.objects.get_or_create(domain=domain, name=case_type)
 
         for prop in properties:
-            if (not current_properties or
-                    case_type not in current_properties or
+            if (case_type not in current_properties or
                     prop not in current_properties[case_type]):
                 new_case_properties.append(CaseProperty(
                     case_type=case_type_obj, name=prop
