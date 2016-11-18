@@ -41,7 +41,7 @@ class ImporterTest(TestCase):
         super(ImporterTest, self).tearDown()
 
     def _config(self, col_names=None, search_column=None, case_type=None,
-                search_field='case_id', named_columns=False, create_new_cases=True):
+                search_field='case_id', create_new_cases=True):
         col_names = col_names or self.default_headers
         case_type = case_type or self.default_case_type
         search_column = search_column or col_names[0]
@@ -53,7 +53,7 @@ class ImporterTest(TestCase):
             custom_fields=col_names,
             search_column=search_column,
             search_field=search_field,
-            named_columns=named_columns,
+            named_columns=True,
             create_new_cases=create_new_cases,
             key_column='',
             value_column='',
@@ -90,20 +90,20 @@ class ImporterTest(TestCase):
 
     @run_with_all_backends
     def testImportNamedColumns(self):
-        config = self._config(self.default_headers, named_columns=True)
-        file = ExcelFileFake(header_columns=self.default_headers, num_rows=5)
+        config = self._config(self.default_headers)
+        file = ExcelFileFake(header_columns=self.default_headers, num_rows=4)
         res = do_import(file, config, self.domain)
-        # we create 1 less since we knock off the header column
+
         self.assertEqual(4, res['created_count'])
         self.assertEqual(4, len(self.accessor.get_case_ids_in_domain()))
 
     @run_with_all_backends
     def testImportTrailingWhitespace(self):
         cols = ['case_id', 'age', u'sex\xa0', 'location']
-        config = self._config(cols, named_columns=True)
-        file = ExcelFileFake(header_columns=cols, num_rows=2)
+        config = self._config(cols)
+        file = ExcelFileFake(header_columns=cols, num_rows=1)
         res = do_import(file, config, self.domain)
-        # we create 1 less since we knock off the header column
+
         self.assertEqual(1, res['created_count'])
         case_ids = self.accessor.get_case_ids_in_domain()
         self.assertEqual(1, len(case_ids))
@@ -213,10 +213,11 @@ class ImporterTest(TestCase):
             num_rows=2,
             row_generator=id_match_generator(external_id)
         )
+
         res = do_import(file, config, self.domain)
+        self.assertFalse(res['errors'])
         self.assertEqual(1, res['created_count'])
         self.assertEqual(1, res['match_count'])
-        self.assertFalse(res['errors'])
         case_ids = self.accessor.get_case_ids_in_domain()
         self.assertEqual(1, len(case_ids))
         case = self.accessor.get_case(case_ids[0])
@@ -350,19 +351,19 @@ class ImporterTest(TestCase):
         error_message = ImportErrors.DuplicateLocationName
         error_column_name = None
         self.assertIn(error_message, res['errors'])
-        self.assertEqual(res['errors'][error_message][error_column_name]['rows'], [4])
+        self.assertEqual(res['errors'][error_message][error_column_name]['rows'], [5])
 
         error_message = ImportErrors.InvalidOwnerId
         self.assertIn(error_message, res['errors'])
         error_column_name = 'owner_id'
-        self.assertEqual(res['errors'][error_message][error_column_name]['rows'], [5])
+        self.assertEqual(res['errors'][error_message][error_column_name]['rows'], [6])
 
 
-def blank_row_generator(excel_file, index):
-    return [''.format(row=index, col=col) for col in excel_file.header_columns]
+def blank_row_generator(header_row, index):
+    return [''.format(row=index, col=col) for col in header_row]
 
 
 def id_match_generator(id):
-    def match(excel_file, index):
-        return [id] + ['{col}-{row}'.format(row=index, col=col) for col in excel_file.header_columns[1:]]
+    def match(header_row, index):
+        return [id] + ['{col}-{row}'.format(row=index, col=col) for col in header_row[1:]]
     return match

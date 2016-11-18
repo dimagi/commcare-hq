@@ -126,10 +126,7 @@ class WorksheetWrapper(object):
             if self._column_headers:
                 return self.iter_rows().next()
             else:
-                columns = []
-                for i in range(self.max_row):
-                    columns.append("Column {!d}".format(i))
-                return columns
+                return ["Column {}".format(i) for i in range(self.max_row)]
         else:
             return []
 
