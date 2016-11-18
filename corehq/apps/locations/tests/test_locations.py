@@ -167,10 +167,6 @@ class LocationsTest(LocationTestBase):
             test_state1.parent._id
         )
 
-        # is_root
-        self.assertTrue(self.user.location.is_root)
-        self.assertFalse(test_state1.is_root)
-
         # Location.root_locations
         compare(
             [self.user.location],
