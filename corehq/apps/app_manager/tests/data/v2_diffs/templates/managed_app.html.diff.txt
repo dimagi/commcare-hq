@@ -1,5 +1,11 @@
 --- 
 +++ 
+@@ -1,4 +1,4 @@
+-{% extends "app_manager/v1/apps_base.html" %}
++{% extends "app_manager/v2/apps_base.html" %}
+ {% load xforms_extras %}
+ {% load url_extras %}
+ {% load hq_shared_tags %}
 @@ -46,13 +46,10 @@
      <script>
          $(function () {
@@ -79,12 +85,12 @@
 +
 +      <div class="{% if not module %}active {% endif %}appnav-name-wrapper{% if release_manager %} active{% endif %}">
 +          <div class="appnav-name-settings">
-+              <a href="{% url "view_app" domain app.id %}" class="{% if is_app_settings_page %}active{% endif %}">
++              <a href="{% url "app_settings" domain app.id %}" class="{% if is_app_settings_page %}active{% endif %}">
 +                  <i class="fa fa-gear"></i>
 +              </a>
 +          </div>
 +          <h2 class="appnav-name">
-+            <a id="demand-releases" href="{% url "view_app" domain app.id %}releases/">
++            <a id="demand-releases" href="{% url "view_app" domain app.id %}">
 +                {{ app.name }}
              </a>
 -        </li>

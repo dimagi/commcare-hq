@@ -13,6 +13,7 @@ hqDefine('app_manager/js/preview_app.js', function() {
         APP_MANAGER_BODY: '#js-appmanager-body',
         PREVIEW_ACTION_TEXT_SHOW: '.js-preview-action-show',
         PREVIEW_ACTION_TEXT_HIDE: '.js-preview-action-hide',
+        BTN_REFRESH: '.js-preview-refresh',
     };
 
     module.EVENTS = {
@@ -39,10 +40,18 @@ hqDefine('app_manager/js/preview_app.js', function() {
     };
 
     _private.navigateBack = function() {
+        _private.triggerPreviewEvent('back');
+    };
+
+    _private.refresh = function() {
+        _private.triggerPreviewEvent('refresh');
+    };
+
+    _private.triggerPreviewEvent = function(action) {
         var $appPreviewIframe = $(module.SELECTORS.PREVIEW_WINDOW_IFRAME),
             previewWindow = $appPreviewIframe[0].contentWindow;
         previewWindow.postMessage({
-            action: 'back',
+            action: action,
         }, window.location.origin);
     };
 
@@ -110,7 +119,18 @@ hqDefine('app_manager/js/preview_app.js', function() {
         };
         $(window).on(module.EVENTS.RESIZE, _resizeAppPreview);
         layoutController.utils.setBalancePreviewFn(_resizeAppPreview);
-        $('.js-preview-back').click(_private.navigateBack);
+        $('.js-preview-back').click(_private.triggerPreviewEvent.bind(this, 'back'));
+        $('.js-preview-refresh').click(function() {
+            $(module.SELECTORS.BTN_REFRESH).removeClass('app-out-of-date');
+            _private.triggerPreviewEvent('refresh');
+        });
+        $(document).ajaxComplete(function(e, xhr, options) {
+            if (/edit_form_attr/.test(options.url) ||
+                /edit_module_attr/.test(options.url) ||
+                /patch_xform/.test(options.url)) {
+                $(module.SELECTORS.BTN_REFRESH).addClass('app-out-of-date');
+            }
+        });
 
     };
 
