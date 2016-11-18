@@ -62,6 +62,7 @@ PARTIAL_DIFFS = {
         {'path': ('indices', '[*]', 'case_id')},
         {'diff_type': 'diff', 'path': ('owner_id',), 'old_value': ''},
         {'diff_type': 'type', 'path': ('owner_id',), 'old_value': None},
+        {'diff_type': 'set_mismatch', 'path': ('xform_ids', '[*]'), 'old_value': ''},
     ],
     'LedgerValue': [
         {'path': ('_id',)},
@@ -145,6 +146,7 @@ def filter_case_diffs(couch_case, sql_case, diffs):
     filtered_diffs = _filter_user_case_diffs(couch_case, filtered_diffs)
     filtered_diffs = _filter_xform_id_diffs(couch_case, sql_case, filtered_diffs)
     filtered_diffs = _filter_case_attachment_diffs(filtered_diffs)
+    filtered_diffs = _filter_case_index_diffs(filtered_diffs)
     return filtered_diffs
 
 
@@ -275,3 +277,6 @@ def _filter_case_attachment_diffs(diffs):
 
     return diffs
 
+
+def _filter_case_index_diffs(diffs):
+    # sort indices and then re-do normal diff
