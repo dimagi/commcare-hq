@@ -178,8 +178,8 @@ class HqdbContext(DatabaseContext):
       rebuilt.
     - `REUSE_DB=teardown` : skip database setup; do normal teardown after
       running tests.
-    - `REUSE_DB=migrate` : skip normal database setup except for running
-      migrations.
+    - `REUSE_DB=migrate` : same as `REUSE_DB=1` except migrate databases
+      before running tests.
     """
 
     def __init__(self, tests, runner):
