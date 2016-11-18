@@ -267,10 +267,7 @@ class ImporterTest(TestCase):
         config = self._config(['case_id', 'age', 'sex', 'location'], create_new_cases=True)
         file = make_worksheet_wrapper(
             ['case_id', 'age', 'sex', 'location'],
-            ['', '', '', ''],
-            ['', '', '', ''],
-            ['', '', '', ''],
-            ['', '', '', ''],
+            [None, None, None, None],
             ['', '', '', ''],
         )
         res = do_import(file, config, self.domain)
