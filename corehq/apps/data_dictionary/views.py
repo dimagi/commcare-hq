@@ -32,7 +32,7 @@ def data_dictionary_json(request, domain, case_type_name=None):
         queryset = queryset.filter(name=case_type_name)
     for case_type in queryset:
         p = {
-            "type": case_type.name,
+            "name": case_type.name,
             "properties": [],
         }
         for prop in case_type.properties.all():
@@ -42,7 +42,7 @@ def data_dictionary_json(request, domain, case_type_name=None):
                 "type": prop.type,
             })
         props.append(p)
-    return JsonResponse({'properties': props})
+    return JsonResponse({'case_types': props})
 
 
 class DataDictionaryView(BaseDomainView):

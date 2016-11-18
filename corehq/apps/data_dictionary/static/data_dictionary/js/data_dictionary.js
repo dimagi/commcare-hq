@@ -25,10 +25,10 @@
         self.init = function () {
             $.getJSON(dataUrl)
             .done(function (data) {
-                _.each(data.properties, function (property) {
-                    var caseType = new CaseType(property.type);
-                    caseType.init(property.properties);
-                    self.caseTypes.push(caseType);
+                _.each(data.case_types, function (caseType) {
+                    var caseTypeObj = new CaseType(caseType.name);
+                    caseTypeObj.init(caseType.properties);
+                    self.caseTypes.push(caseTypeObj);
                 });
                 self.activeCaseType(self.caseTypes()[0].name());
             });
