@@ -1,10 +1,15 @@
 from collections import namedtuple
 from datetime import datetime
+
+from django.conf import settings
+
 from pillowtop.exceptions import PillowtopCheckpointReset
 from pillowtop.logger import pillow_logging
 from pillowtop.models import DjangoPillowCheckpoint
 from pillowtop.pillow.interface import ChangeEventHandler
 
+MAX_CHECKPOINT_DELAY = 300
+DELAY_SENTINEL = object()
 
 DEFAULT_EMPTY_CHECKPOINT_SEQUENCE = '0'
 
@@ -79,12 +84,17 @@ class PillowCheckpoint(object):
 
 class PillowCheckpointEventHandler(ChangeEventHandler):
 
-    def __init__(self, checkpoint, checkpoint_frequency, max_checkpoint_delay=300):
+    def __init__(self, checkpoint, checkpoint_frequency, max_checkpoint_delay=MAX_CHECKPOINT_DELAY):
         """
         :param checkpoint: PillowCheckpoint object
         :param checkpoint_frequency: Number of changes between checkpoint updates
         :param max_checkpoint_delay: Max number of seconds between checkpoint updates
         """
+        # check settings to make it easy to override in tests
+        override_delay = getattr(settings, 'PTOP_CHECKPOINT_DELAY_OVERRIDE', DELAY_SENTINEL)
+        if override_delay != DELAY_SENTINEL:
+            max_checkpoint_delay = override_delay
+
         self.checkpoint = checkpoint
         self.checkpoint_frequency = checkpoint_frequency
         self.max_checkpoint_delay = max_checkpoint_delay
@@ -92,7 +102,10 @@ class PillowCheckpointEventHandler(ChangeEventHandler):
 
     def should_update_checkpoint(self, context):
         frequency_hit = context.changes_seen % self.checkpoint_frequency == 0
-        time_hit = (datetime.utcnow() - self.last_update).total_seconds() >= self.max_checkpoint_delay
+        time_hit = False
+        if self.max_checkpoint_delay:
+            seconds_since_last_update = (datetime.utcnow() - self.last_update).total_seconds()
+            time_hit = seconds_since_last_update >= self.max_checkpoint_delay
         return context.do_set_checkpoint and (frequency_hit or time_hit)
 
     def fire_change_processed(self, change, context):
