@@ -119,6 +119,23 @@ preview_app/less */
   top: -5px;
 }
 
+.btn-preview-refresh::after {
+  content: '✔';
+  color: green;
+  width: 10px;
+  height: 10px;
+  display: block;
+  position: absolute;
+  top: -3px;
+  right: -3px;
+}
+
+.btn-preview-refresh.app-out-of-date::after {
+  content: ' ';
+  background-color: red;
+  border-radius: 10px;
+}
+
 .hardware-buttons {
   position: absolute;
   bottom: 0;

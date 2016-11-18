@@ -213,6 +213,11 @@ FormplayerFrontend.on("start", function (options) {
             } else {
                 FormplayerFrontend.trigger("apps:list", options.apps);
             }
+            if (user.displayOptions.phoneMode) {
+                // Refresh on start of preview mode so it ensures we're on the latest app
+                // since app updates do not work.
+                FormplayerFrontend.trigger('refreshApplication', appId);
+            }
         }
     }
 
@@ -324,18 +329,6 @@ FormplayerFrontend.on("sync", function () {
     $.ajax(options);
 });
 
-FormplayerFrontend.on('phone:back:hide', function() {
-    if (FormplayerFrontend.regions.phoneModeNavigation.currentView) {
-        FormplayerFrontend.regions.phoneModeNavigation.currentView.hideBackButton();
-    }
-});
-
-FormplayerFrontend.on('phone:back:show', function() {
-    if (FormplayerFrontend.regions.phoneModeNavigation.currentView) {
-        FormplayerFrontend.regions.phoneModeNavigation.currentView.showBackButton();
-    }
-});
-
 /**
  * retry
  *
@@ -382,6 +375,10 @@ FormplayerFrontend.on('clearProgress', function() {
     }, progressFinishTimeout);
 });
 
+
+FormplayerFrontend.on('setVersionInfo', function(versionInfo) {
+    $("#version-info").text(versionInfo || '');
+});
 
 /**
  * refreshApplication
