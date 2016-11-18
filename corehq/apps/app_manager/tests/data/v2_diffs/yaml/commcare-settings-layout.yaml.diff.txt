@@ -1,5 +1,20 @@
 --- 
 +++ 
+@@ -1,4 +1,4 @@
+-- title: 'Basic'
++- title: 'Data and Sharing'
+   id: app-settings-basic
+   settings:
+     - hq.name # won't actually be rendered here
+@@ -15,7 +15,7 @@
+     - hq.profile_url
+     - hq.manage_urls
+ 
+-- title: General Settings
++- title: Build Settings
+   id: app-settings-general
+   collapse: true
+   settings:
 @@ -75,6 +75,7 @@
    id: app-settings-advanced
    collapse: true
