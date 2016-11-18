@@ -196,6 +196,7 @@ function BaseMediaReference (ref) {
     self.m_id = ko.observable();
     self.uid = ko.observable();
     self.url = ko.observable();
+    self.humanized_content_length = ko.observable();
 
     self.status_icon = ko.computed(function () {
         return (self.is_matched()) ? "fa fa-check media-status-ok" : "fa fa-exclamation-triangle media-status-warning";
@@ -222,6 +223,7 @@ function BaseMediaReference (ref) {
             self.m_id(obj_ref.m_id);
             self.uid(obj_ref.uid);
             self.url(obj_ref.url);
+            self.humanized_content_length(obj_ref.humanized_content_length);
             $('.media-totals').trigger('refMediaAdded', self);
             self.is_matched(true);
         }
