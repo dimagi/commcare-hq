@@ -17,6 +17,8 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('ext_parent_id', 'custom.ucr_ext.expressions.parent_id'),
     ('ext_open_in_month', 'custom.ucr_ext.expressions.open_in_month'),
     ('ext_get_case_forms_by_date', 'custom.ucr_ext.expressions.get_case_forms_by_date'),
+    ('ext_get_case_history_by_date', 'custom.ucr_ext.expressions.get_case_history_by_date'),
+    ('ext_get_last_case_property_update', 'custom.ucr_ext.expressions.get_last_case_property_update'),
 ]
 
 
@@ -50,6 +52,21 @@ class GetCaseFormsByDateSpec(JsonObject):
     start_date = DefaultProperty(required=False)
     end_date = DefaultProperty(required=False)
     form_filter = DefaultProperty(required=False)
+
+
+class GetCaseHistoryByDateSpec(JsonObject):
+    type = TypeProperty('ext_get_case_history_by_date')
+    start_date = DefaultProperty(required=False)
+    end_date = DefaultProperty(required=False)
+    filter = DefaultProperty(required=False)
+
+
+class GetLastCasePropertyUpdateSpec(JsonObject):
+    type = TypeProperty('ext_get_last_case_property_update')
+    case_property = StringProperty(required=True)
+    start_date = DefaultProperty(required=False)
+    end_date = DefaultProperty(required=False)
+    filter = DefaultProperty(required=False)
 
 
 def diff_calendar_months(spec, context):
@@ -403,4 +420,128 @@ def get_case_forms_by_date(spec, context):
                 "case_id_expression": case_id_expression
             }
         }
+    return ExpressionFactory.from_spec(spec, context)
+
+
+def get_case_history_by_date(spec, context):
+    GetCaseHistoryByDateSpec.wrap(spec)
+
+    filters = []
+    if spec['start_date'] is not None:
+        start_date_filter = {
+            'operator': 'gte',
+            'expression': {
+                'datatype': 'integer',
+                'from_date_expression': spec['start_date'],
+                'type': 'diff_days',
+                'to_date_expression': {
+                    'datatype': 'date',
+                    'type': 'property_name',
+                    'property_name': 'date'
+                }
+            },
+            'type': 'boolean_expression',
+            'property_value': 0
+        }
+        filters.append(start_date_filter)
+    if spec['end_date'] is not None:
+        end_date_filter = {
+            'operator': 'gte',
+            'expression': {
+                'datatype': 'integer',
+                'from_date_expression': {
+                    'datatype': 'date',
+                    'type': 'property_name',
+                    'property_name': 'date'
+                },
+                'type': 'diff_days',
+                'to_date_expression': spec['end_date']
+            },
+            'type': 'boolean_expression',
+            'property_value': 0
+        }
+        filters.append(end_date_filter)
+    if spec['filter'] is not None:
+        filters.append(spec['filter'])
+
+    if len(filters) > 0:
+        spec = {
+            "type": "sort_items",
+            "sort_expression": {
+                'datatype': 'date',
+                'type': 'property_name',
+                'property_name': 'date'
+            },
+            'items_expression': {
+                'filter_expression': {
+                    'type': 'and',
+                    'filters': filters
+                },
+                'type': 'filter_items',
+                'items_expression': {
+                    'datatype': 'array',
+                    'type': 'ext_root_property_name',
+                    'property_name': 'actions'
+                }
+            }
+        }
+    else:
+        spec = {
+            'type': 'sort_items',
+            'sort_expression': {
+                'datatype': 'date',
+                'type': 'property_name',
+                'property_name': 'date'
+            },
+            'items_expression': {
+                'datatype': 'array',
+                'type': 'ext_root_property_name',
+                'property_name': 'actions'
+            }
+        }
+    return ExpressionFactory.from_spec(spec, context)
+
+
+def get_last_case_property_update(spec, context):
+    GetLastCasePropertyUpdateSpec.wrap(spec)
+    spec = {
+        'type': 'nested',
+        'argument_expression': {
+            'type': 'reduce_items',
+            'aggregation_fn': 'last_item',
+            'items_expression': {
+                'type': 'filter_items',
+                'items_expression': {
+                    'type': 'ext_get_case_history_by_date',
+                    'start_date': spec['start_date'],
+                    'end_date': spec['end_date'],
+                    'filter': spec['filter'],
+                },
+                'filter_expression': {
+                    'filter': {
+                        'operator': 'in',
+                        'type': 'boolean_expression',
+                        'expression': {
+                            'type': 'property_path',
+                            'property_path': [
+                                'updated_unknown_properties',
+                                spec['case_property'],
+                            ]
+                        },
+                        'property_value': [
+                            None
+                        ]
+                    },
+                    'type': 'not'
+                }
+            }
+        },
+        'value_expression':{
+            'type': 'property_path',
+            'property_path': [
+                'updated_unknown_properties',
+                spec['case_property'],
+            ]
+        }
+    }
     return ExpressionFactory.from_spec(spec, context)

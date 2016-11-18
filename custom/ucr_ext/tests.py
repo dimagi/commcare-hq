@@ -379,3 +379,295 @@ class TestGetCaseFormsExpressionTest(TestCase):
             }
         })
         self.assertEqual(2, expression({"some_field", "some_value"}, context))
+
+
+class TestGetCaseHistoryExpressionTest(TestCase):
+
+    def setUp(self):
+        self.case = {
+            '_id': uuid.uuid4().hex,
+            'opened_on': datetime(2014, 12, 10),
+            'modified_on': datetime(2015, 3, 10),
+            'type': 'test_case',
+            'actions': [
+                {
+                    'action_type': 'update',
+                    'date': datetime(2015, 1, 10),
+                    'updated_unknown_properties': {
+                        'foo': 'a'
+                    },
+                },
+                {
+                    'action_type': 'update',
+                    'date': datetime(2015, 1, 11),
+                    'updated_unknown_properties': {
+                        'foo': 'a'
+                    },
+                },
+                {
+                    'action_type': 'update',
+                    'date': datetime(2015, 1, 12),
+                    'updated_unknown_properties': {
+                        'foo': 'b'
+                    },
+                },
+                {
+                    'action_type': 'update',
+                    'date': datetime(2015, 2, 3),
+                    'updated_unknown_properties': {
+                        'foo': 'b'
+                    },
+                },
+                {
+                    'action_type': 'update',
+                    'date': datetime(2015, 3, 4),
+                    'updated_unknown_properties': {
+                        'foo': 'c'
+                    },
+                },
+            ]
+        }
+
+    def test_all_history(self):
+        expression = ExpressionFactory.from_spec({
+            "type": "reduce_items",
+            "aggregation_fn": "count",
+            "items_expression": {
+                "type": "ext_get_case_history_by_date",
+            }
+        })
+        self.assertEqual(
+            5,
+            expression(
+                {"some_item": "item_value"},
+                context=EvaluationContext(self.case, 0),
+            )
+        )
+
+    def test_start_end(self):
+        expression = ExpressionFactory.from_spec({
+            "type": "reduce_items",
+            "aggregation_fn": "count",
+            "items_expression": {
+                "type": "ext_get_case_history_by_date",
+                "start_date": {
+                    "type": "ext_month_start",
+                },
+                "end_date": {
+                    "type": "ext_month_end",
+                },
+            }
+        })
+        # iteration 3 is march
+        self.assertEqual(
+            1,
+            expression(
+                {"some_item": "item_value"},
+                context=EvaluationContext(self.case, 3),
+            )
+        )
+
+    def test_end(self):
+        expression = ExpressionFactory.from_spec({
+            "type": "reduce_items",
+            "aggregation_fn": "count",
+            "items_expression": {
+                "type": "ext_get_case_history_by_date",
+                "end_date": {
+                    "type": "ext_month_end",
+                },
+            }
+        })
+        # iteration 2 is february
+        self.assertEqual(
+            4,
+            expression(
+                {"some_item": "item_value"},
+                context=EvaluationContext(self.case, 2),
+            )
+        )
+
+    def test_filter(self):
+        expression = ExpressionFactory.from_spec({
+            "type": "reduce_items",
+            "aggregation_fn": "count",
+            "items_expression": {
+                "type": "ext_get_case_history_by_date",
+                "filter": {
+                    "type": "boolean_expression",
+                    "operator": "eq",
+                    "expression": {
+                        "type": "property_path",
+                        "property_path": ["updated_unknown_properties", "foo"]
+                    },
+                    "property_value": "b"
+                }
+            }
+        })
+        self.assertEqual(
+            2,
+            expression(
+                {"some_item": "item_value"},
+                context=EvaluationContext(self.case, 0),
+            )
+        )
+
+class TestGetLastCasePropertyUpdateTest(TestCase):
+    def test_no_update(self):
+        case = {
+            '_id': uuid.uuid4().hex,
+            'opened_on': datetime(2015, 1, 10),
+            'modified_on': datetime(2015, 3, 10),
+            'type': 'test_case',
+            'actions': []
+        }
+
+        expression = ExpressionFactory.from_spec({
+            "type": "ext_get_last_case_property_update",
+            "case_property": "foo",
+        })
+        self.assertEqual(
+            None,
+            expression(
+                {"some_item": "item_value"},
+                context=EvaluationContext(case, 0),
+            )
+        )
+
+    def test_blank_update(self):
+        case = {
+            '_id': uuid.uuid4().hex,
+            'opened_on': datetime(2015, 1, 10),
+            'modified_on': datetime(2015, 3, 10),
+            'type': 'test_case',
+            'actions': [
+                {
+                    'action_type': 'update',
+                    'date': datetime(2015, 1, 10),
+                    'updated_unknown_properties': {
+                        'foo': 'a'
+                    },
+                },
+                {
+                    'action_type': 'update',
+                    'date': datetime(2015, 1, 11),
+                    'updated_unknown_properties': {
+                        'foo': ''
+                    },
+                },
+            ]
+        }
+
+        expression = ExpressionFactory.from_spec({
+            "type": "ext_get_last_case_property_update",
+            "case_property": "foo",
+        })
+        self.assertEqual(
+            "",
+            expression(
+                {"some_item": "item_value"},
+                context=EvaluationContext(case, 0),
+            )
+        )
+
+    def test_value_update(self):
+        case = {
+            '_id': uuid.uuid4().hex,
+            'opened_on': datetime(2015, 1, 10),
+            'modified_on': datetime(2015, 3, 10),
+            'type': 'test_case',
+            'actions': [
+                {
+                    'action_type': 'update',
+                    'date': datetime(2015, 1, 10),
+                    'updated_unknown_properties': {
+                        'foo': 'a'
+                    },
+                },
+                {
+                    'action_type': 'update',
+                    'date': datetime(2015, 1, 11),
+                    'updated_unknown_properties': {
+                        'foo': ''
+                    },
+                },
+                {
+                    'action_type': 'update',
+                    'date': datetime(2015, 1, 12),
+                    'updated_unknown_properties': {
+                        'foo': 'e'
+                    },
+                },
+            ]
+        }
+
+        expression = ExpressionFactory.from_spec({
+            "type": "ext_get_last_case_property_update",
+            "case_property": "foo",
+        })
+        self.assertEqual(
+            "e",
+            expression(
+                {"some_item": "item_value"},
+                context=EvaluationContext(case, 0),
+            )
+        )
+
+    def test_filtered_update(self):
+        case = {
+            '_id': uuid.uuid4().hex,
+            'opened_on': datetime(2015, 1, 10),
+            'modified_on': datetime(2015, 3, 10),
+            'type': 'test_case',
+            'actions': [
+                {
+                    'action_type': 'update',
+                    'date': datetime(2015, 1, 10),
+                    'updated_unknown_properties': {
+                        'foo': 'a'
+                    },
+                },
+                {
+                    'action_type': 'update',
+                    'date': datetime(2015, 1, 11),
+                    'updated_unknown_properties': {
+                        'foo': 'b'
+                    },
+                },
+                {
+                    'action_type': 'update',
+                    'date': datetime(2015, 1, 12),
+                    'updated_unknown_properties': {
+                        'foo': ''
+                    },
+                },
+            ]
+        }
+
+        expression = ExpressionFactory.from_spec({
+            "type": "ext_get_last_case_property_update",
+            "case_property": "foo",
+            "filter": {
+                "type": "not",
+                "filter":
+                {
+                    "type": "boolean_expression",
+                    "operator": "in",
+                    "expression": {
+                        "type": "property_path",
+                        "property_path": ["updated_unknown_properties", "foo"]
+                    },
+                    "property_value": [
+                        "",
+                        None,
+                    ]
+                }
+            }
+        })
+        self.assertEqual(
+            "b",
+            expression(
+                {"some_item": "item_value"},
+                context=EvaluationContext(case, 0),
+            )
+        )
