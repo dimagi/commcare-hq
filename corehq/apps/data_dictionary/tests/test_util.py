@@ -1,3 +1,5 @@
+import uuid
+
 from django.test import TestCase
 from mock import patch
 
@@ -6,7 +8,7 @@ from corehq.apps.data_dictionary.util import generate_data_dictionary
 
 
 class GenerateDictionaryTest(TestCase):
-    domain = 'data-dictionary'
+    domain = uuid.uuid4()
 
     def tearDown(self):
         CaseType.objects.filter(domain=self.domain).delete()
