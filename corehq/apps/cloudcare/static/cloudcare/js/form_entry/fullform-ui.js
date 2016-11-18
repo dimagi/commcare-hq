@@ -748,6 +748,9 @@ Formplayer.Utils.getIconFromType = function(type) {
     case 'Repeat Group':
         icon = 'fa fa-retweet';
         break;
+    case 'Function':
+        icon = 'fa fa-calculator';
+        break;
     }
     return icon;
 };
