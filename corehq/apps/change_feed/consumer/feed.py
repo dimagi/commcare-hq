@@ -155,7 +155,7 @@ class MultiTopicCheckpointEventHandler(PillowCheckpointEventHandler):
             checkpoint_doc.save()
 
     def fire_change_processed(self, change, context):
-        if context.changes_seen % self.checkpoint_frequency == 0 and context.do_set_checkpoint:
+        if self.should_update_checkpoint(context):
             updated_to = self.change_feed.get_current_checkpoint_offsets()
             self.checkpoint.update_to(json.dumps(updated_to))
 

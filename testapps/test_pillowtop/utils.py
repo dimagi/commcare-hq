@@ -1,6 +1,7 @@
 import uuid
 
 from django.conf import settings
+from django.test.utils import override_settings
 
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 from corehq.apps.change_feed.topics import get_topic_offset, get_multi_topic_offset
@@ -12,9 +13,8 @@ from pillowtop import get_pillow_by_name
 class process_kafka_changes(ContextDecorator):
     def __init__(self, pillow_name_or_instance):
         if isinstance(pillow_name_or_instance, basestring):
-            with real_pillow_settings():
+            with real_pillow_settings(), override_settings(PTOP_CHECKPOINT_DELAY_OVERRIDE=None):
                 self.pillow = get_pillow_by_name(pillow_name_or_instance, instantiate=True)
-
         else:
             self.pillow = pillow_name_or_instance
 
