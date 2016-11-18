@@ -754,7 +754,7 @@ class ConfigureReport(ReportBuilderView):
                 }],
                 'none': lambda cols: [],
             }
-            func = report_type_funcs[report_data_['report_type']]
+            func = report_type_funcs[report_data_['chart']]
             return func(report_data_['columns'])
 
         self._confirm_report_limit()
