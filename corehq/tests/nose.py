@@ -215,10 +215,7 @@ class HqdbContext(DatabaseContext):
 
         if self.skip_setup_for_reuse_db and self._databases_ok():
             if self.run_migrations_for_reuse_db:
-                call_command(
-                    'migrate_multi',
-                    interactive=False,
-                )
+                call_command('migrate_multi', interactive=False)
             return  # skip remaining setup
 
         sys.__stdout__.write("\n")  # newline for creating database message
