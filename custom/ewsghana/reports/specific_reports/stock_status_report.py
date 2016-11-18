@@ -378,7 +378,15 @@ class StockStatus(MultiReport):
         locations_ids = locations.values_list('supply_point_id', flat=True)
 
         if not locations_ids:
-            return {}
+            return {
+                'without_stock': {},
+                'with_stock': {},
+                'all': 0,
+                'months_of_stock': {},
+                'stockouts': {},
+                'unique_products': [],
+                'stockout_table_supply_points': []
+            }
 
         unique_products = self.unique_products(locations)
         transactions = self.get_stock_transactions_for_supply_points_and_products(
