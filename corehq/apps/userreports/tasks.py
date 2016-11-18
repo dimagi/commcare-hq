@@ -105,7 +105,7 @@ def _iteratively_build_table(config, last_id=None, resume_helper=None):
                 current_config.save()
 
 
-@task(queue='ucr-queue')
+@task(queue='ucr_queue')
 def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column, sort_order, params):
     from corehq.apps.userreports.laboratory.experiment import UCRExperiment
 
