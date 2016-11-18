@@ -158,6 +158,8 @@ def edit_advanced_form_actions(request, domain, app_id, module_id, form_id):
     json_loads = json.loads(request.POST.get('actions'))
     actions = AdvancedFormActions.wrap(json_loads)
     form.actions = actions
+    for action in actions.load_update_cases:
+        add_properties_to_data_dictionary(domain, action.case_type, action.case_properties.keys())
     if advanced_actions_use_usercase(form.actions) and not is_usercase_in_use(domain):
         enable_usercase(domain)
     response_json = {}
