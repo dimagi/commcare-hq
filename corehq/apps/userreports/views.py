@@ -837,8 +837,11 @@ class ReportPreview(BaseDomainView):
             aggregation_columns=aggregation_columns,
             columns=[to_report_column(c) for c in report_data['columns']],
             report_meta=ReportMeta(created_by_builder=True),
-        )
-        return json_response(table[0][1])
+        )  # is None if report configuration doesn't make sense
+        if table:
+            return json_response(table[0][1])
+        else:
+            return json_response({'status': 'error', 'message': 'Invalid report configuration'}, status_code=400)
 
 
 class ConfigureMapReport(ConfigureReport):

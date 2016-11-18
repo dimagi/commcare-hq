@@ -540,9 +540,15 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
         view._domain = domain
         view._lang = "en"
         view._report_config_id = tmp_report_config._id
-        table = view.export_table
-        tmp_report_config.delete()
-        return table
+        try:
+            table = view.export_table
+        except UserReportsError:
+            # User posted an invalid report configuration
+            return None
+        else:
+            return table
+        finally:
+            tmp_report_config.delete()
 
 
 # Base class for classes that provide custom rendering for UCRs
