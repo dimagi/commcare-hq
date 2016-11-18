@@ -769,6 +769,23 @@ def filter_for_archived(locations, include_archive_ancestors):
         return locations.filter(is_archived=False)
 
 
+def make_location(**kwargs):
+    """API compatabile with `Location.__init__`, but returns a SQLLocation"""
+    loc_type_name = kwargs.pop('location_type')
+    try:
+        sql_location_type = LocationType.objects.get(
+            domain=kwargs['domain'],
+            name=loc_type_name,
+        )
+    except LocationType.DoesNotExist:
+        msg = "You can't create a location without a real location type"
+        raise LocationType.DoesNotExist(msg)
+    kwargs['location_type'] = sql_location_type
+    parent = kwargs.pop('parent', None)
+    kwargs['parent'] = parent.sql_location if parent else None
+    return SQLLocation(**kwargs)
+
+
 class Location(CachedCouchDocumentMixin, Document):
     domain = StringProperty()
     name = StringProperty()
