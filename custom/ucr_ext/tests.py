@@ -512,6 +512,7 @@ class TestGetCaseHistoryExpressionTest(TestCase):
             )
         )
 
+
 class TestGetLastCasePropertyUpdateTest(TestCase):
     def test_no_update(self):
         case = {

@@ -536,7 +536,7 @@ def get_last_case_property_update(spec, context):
                 }
             }
         },
-        'value_expression':{
+        'value_expression': {
             'type': 'property_path',
             'property_path': [
                 'updated_unknown_properties',
