@@ -240,18 +240,18 @@ var reportBuilder = function () {
         });
         self.saveButton.ui.appendTo($("#saveButtonHolder"));
 
-        $("#btnSaveView").click(function (event) {
+        $("#btnSaveView").click(function () {
             $.ajax({
                 url: window.location.href,
                 type: "POST",
                 data: JSON.stringify(self.serialize()),
-                success: function (data, textStatus, jqXHR) {
+                success: function (data) {
                     // Redirect to the newly-saved report
                     self.saveButton.setState('saved');
                     window.location.href = data['report_url'];
                 },
                 dataType: 'json',
-            })
+            });
         });
 
         return self;
