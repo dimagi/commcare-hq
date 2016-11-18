@@ -141,7 +141,6 @@ hqDefine('style/ko/components/inline_edit.js', function() {
                             attr: {name: name, id: id, placeholder: placeholder, rows: rows, cols: cols},\
                             value: value,\
                             hasFocus: isEditing(),\
-                            event: {blur: blur},\
                         "></textarea>\
                     <!-- /ko -->\
                     <!-- ko if: nodeName === "input" -->\
@@ -149,7 +148,6 @@ hqDefine('style/ko/components/inline_edit.js', function() {
                             attr: {name: name, id: id, placeholder: placeholder, rows: rows, cols: cols},\
                             value: value,\
                             hasFocus: isEditing(),\
-                            event: {blur: blur},\
                         " />\
                     <!-- /ko -->\
                     <!-- ko if: lang -->\
