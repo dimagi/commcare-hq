@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime
 
 import settings
-from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.case.xform import get_all_extensions_to_close, CaseProcessingResult
 from corehq.apps.couch_sql_migration.diff import filter_form_diffs, filter_case_diffs, filter_ledger_diffs
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_type
@@ -135,14 +135,19 @@ class CouchSqlDomainMigrator(object):
         for change in self._with_progress(doc_types, changes):
             couch_case = CommCareCase.wrap(change.get_document())
             self.log_debug('Processing doc: {}({})'.format(couch_case['doc_type'], change.id))
+            try:
+                first_action = couch_case.actions[0]
+            except IndexError:
+                first_action = CommCareCaseAction()
+
             sql_case = CommCareCaseSQL(
                 case_id=couch_case.case_id,
                 domain=self.domain,
-                type=couch_case.type,
+                type=couch_case.type or '',
                 name=couch_case.name,
-                owner_id=couch_case.owner_id,
-                opened_on=couch_case.opened_on,
-                opened_by=couch_case.opened_by,
+                owner_id=couch_case.owner_id or couch_case.user_id,
+                opened_on=couch_case.opened_on or first_action.date,
+                opened_by=couch_case.opened_by or first_action.user_id,
                 modified_on=couch_case.modified_on,
                 modified_by=couch_case.modified_by,
                 server_modified_on=couch_case.server_modified_on,
