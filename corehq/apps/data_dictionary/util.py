@@ -4,15 +4,7 @@ from corehq.apps.export.models.new import CaseExportDataSchema
 
 
 def generate_data_dictionary(domain):
-    current_properties = {}
-    if CaseType.objects.filter(domain=domain).count() != 0:
-        props = CaseProperty.objects.filter(case_type__domain=domain).prefetch_related('case_type')
-        for prop in props:
-            case_type = prop.case_type.name
-            if case_type not in current_properties:
-                current_properties[case_type] = {prop.name}
-            else:
-                current_properties[case_type].add(prop.name)
+    current_case_types, current_properties = _get_current_case_types_and_properties(domain)
 
     properties = _get_all_case_properties(domain)
     new_case_properties = []
@@ -20,7 +12,10 @@ def generate_data_dictionary(domain):
         if not case_type:
             continue
 
-        case_type_obj, _ = CaseType.objects.get_or_create(domain=domain, name=case_type)
+        if case_type in current_case_types:
+            case_type_obj = current_case_types[case_type]
+        else:
+            case_type_obj = CaseType.objects.create(domain=domain, name=case_type)
 
         for prop in properties:
             if (case_type not in current_properties or
@@ -49,3 +44,18 @@ def _get_all_case_properties(domain):
         case_type_to_properties[case_type] = list(properties)
 
     return case_type_to_properties
+
+
+def _get_current_case_types_and_properties(domain):
+    properties = {}
+    case_types = {}
+
+    db_case_types = CaseType.objects.filter(domain=domain).prefetch_related('properties')
+    for case_type in db_case_types:
+        case_types[case_type.name] = case_type
+        properties[case_type.name] = set()
+        for prop in case_type.properties.all():
+            case_type = prop.case_type.name
+            properties[case_type].add(prop.name)
+
+    return case_types, properties
