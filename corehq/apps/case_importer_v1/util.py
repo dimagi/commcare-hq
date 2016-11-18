@@ -104,112 +104,14 @@ def open_workbook(filename=None, **kwargs):
 ALLOWED_EXTENSIONS = ['xls', 'xlsx']
 
 
-class ExcelFile(object):
-    """
-    Class to deal with Excel files.
-
-    xlrd support for .xlsx isn't complete
-    NOTE: other code makes the assumption that this is the only supported
-    extension so if you fix this you should also fix these assumptions
-    (see get_spreadsheet)
-    """
-
-    file_path = ''
-    workbook = None
-    column_headers = False
-
-    def __init__(self, file_path, column_headers):
-        """
-        raises ImporterError or one of its subtypes
-        if there's a problem with the excel file
-
-        """
-        self.file_path = file_path
-        self.column_headers = column_headers
-
-        self.workbook = open_workbook(self.file_path)
-        if not self.workbook:
-            raise AssertionError("open_workbook failed to return a Book object")
-
-    def _col_values(self, sheet, index):
-        return [self._fmt_value(cell) for cell in sheet.col(index)]
-
-    def _row_values(self, sheet, index):
-        return [self._fmt_value(cell) for cell in sheet.row(index)]
-
-    def _fmt_value(self, cell):
-        if cell.ctype == xlrd.XL_CELL_NUMBER:
-            if int(cell.value) == cell.value:
-                # Explicitly cast integers, since xlrd treats all numbers as floats
-                return int(cell.value)
-            else:
-                return cell.value
-        elif cell.ctype == xlrd.XL_CELL_DATE:
-            return date(*xlrd.xldate_as_tuple(cell.value, self.workbook.datemode)[:3])
-        else:
-            return cell.value
-
-    def _get_first_sheet(self):
-        return self.workbook.sheet_by_index(0)
-
-    def get_header_columns(self):
-        sheet = self._get_first_sheet()
-
-        if sheet.ncols > 0:
-            columns = []
-
-            # get columns
-            if self.column_headers:
-                columns = self._row_values(sheet, 0)
-            else:
-                for colnum in range(sheet.ncols):
-                    columns.append("Column %i" % (colnum,))
-
-            return columns
-        else:
-            return []
-
-    def _get_column_values(self, column_index):
-        sheet = self._get_first_sheet()
-
-        if self.column_headers:
-            return self._col_values(sheet, column_index)[1:]
-        else:
-            return self._col_values(sheet, column_index)
-
-    def get_unique_column_values(self, column_index):
-        return list(set(self._get_column_values(column_index)))
-
-    def _get_num_rows(self):
-        sheet = self._get_first_sheet()
-        return sheet.nrows
-
-    def _get_row(self, index):
-        sheet = self._get_first_sheet()
-        return self._row_values(sheet, index)
-
-    @property
-    def max_row(self):
-        return self._get_num_rows()
-
-    def iter_rows(self):
-        row_count = self.max_row
-        for i in range(row_count):
-            yield self._get_row(i)
-
-
 class WorksheetWrapper(object):
 
-    def __init__(self, worksheet):
-        """
-        raises ImporterError or one of its subtypes
-        if there's a problem with the excel file
-
-        """
-        self.worksheet = worksheet
+    def __init__(self, worksheet, column_headers):
+        self._worksheet = worksheet
+        self._column_headers = column_headers
 
     @classmethod
-    def from_workbook(cls, workbook):
+    def from_workbook(cls, workbook, column_headers):
         if not isinstance(workbook, Workbook):
             raise AssertionError(
                 "WorksheetWrapper.from_workbook called without Workbook object")
@@ -217,18 +119,25 @@ class WorksheetWrapper(object):
             raise AssertionError(
                 "WorksheetWrapper.from_workbook called with Workbook with no sheets")
         else:
-            return cls(workbook.worksheets[0])
+            return cls(workbook.worksheets[0], column_headers)
 
     def get_header_columns(self):
-        if self.worksheet.max_row > 0:
-            return self.iter_rows().next()
+        if self.max_row > 0:
+            if self._column_headers:
+                return self.iter_rows().next()
+            else:
+                columns = []
+                for i in range(self.max_row):
+                    columns.append("Column {!d}".format(i))
+                return columns
         else:
             return []
 
     def _get_column_values(self, column_index):
         rows = self.iter_rows()
         # skip first row (header row)
-        rows.next()
+        if self._column_headers:
+            rows.next()
         for row in rows:
             yield row[column_index]
 
@@ -237,10 +146,10 @@ class WorksheetWrapper(object):
 
     @property
     def max_row(self):
-        return self.worksheet.max_row
+        return self._worksheet.max_row
 
     def iter_rows(self):
-        for row in self.worksheet.iter_rows():
+        for row in self._worksheet.iter_rows():
             yield [cell.value for cell in row]
 
 
@@ -469,18 +378,15 @@ def open_spreadsheet_download_ref(download_ref, column_headers=True):
 
 @contextmanager
 def get_spreadsheet(filename, column_headers):
-    if not column_headers:
-        yield ExcelFile(filename, column_headers)
-    else:
-        try:
-            with open_any_workbook(filename) as workbook:
-                yield WorksheetWrapper.from_workbook(workbook)
-        except SpreadsheetFileEncrypted as e:
-            raise ImporterExcelFileEncrypted(e.message)
-        except SpreadsheetFileNotFound as e:
-            raise ImporterFileNotFound(e.message)
-        except SpreadsheetFileInvalidError as e:
-            raise ImporterExcelError(e.message)
+    try:
+        with open_any_workbook(filename) as workbook:
+            yield WorksheetWrapper.from_workbook(workbook, column_headers)
+    except SpreadsheetFileEncrypted as e:
+        raise ImporterExcelFileEncrypted(e.message)
+    except SpreadsheetFileNotFound as e:
+        raise ImporterFileNotFound(e.message)
+    except SpreadsheetFileInvalidError as e:
+        raise ImporterExcelError(e.message)
 
 
 def is_valid_location_owner(owner, domain):
