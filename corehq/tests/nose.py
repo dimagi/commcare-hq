@@ -225,6 +225,7 @@ class HqdbContext(DatabaseContext):
 
     def _databases_ok(self):
         from django.db import connections
+        old_names = []
         for connection in connections.all():
             db = connection.settings_dict
             assert db["NAME"].startswith(TEST_DATABASE_PREFIX), db["NAME"]
@@ -232,6 +233,9 @@ class HqdbContext(DatabaseContext):
                 connection.ensure_connection()
             except OperationalError:
                 return False
+            old_names.append((connection, db["NAME"], True))
+
+        self.old_names = old_names, []
         return True
 
     def teardown(self):
