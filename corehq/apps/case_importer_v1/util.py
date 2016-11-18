@@ -1,9 +1,6 @@
 from contextlib import contextmanager
 import json
 from collections import defaultdict, namedtuple
-from datetime import date
-
-import xlrd
 from django.utils.translation import ugettext_lazy as _
 from couchdbkit import NoResultFound
 
@@ -23,7 +20,6 @@ from corehq.apps.locations.models import SQLLocation, Location
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils.general import should_use_sql_backend
-from corehq.util.soft_assert import soft_assert
 from corehq.util.spreadsheets_v2 import open_any_workbook, Workbook, \
     SpreadsheetFileEncrypted, SpreadsheetFileNotFound, SpreadsheetFileInvalidError
 from couchexport.export import SCALAR_NEVER_WAS
@@ -83,23 +79,6 @@ class ImporterConfig(namedtuple('ImporterConfig', [
             create_new_cases=request.POST['create_new_cases'] == 'True',
         )
 
-
-def open_workbook(filename=None, **kwargs):
-    _soft_assert = soft_assert(notify_admins=True)
-    try:
-        return xlrd.open_workbook(filename=filename, **kwargs)
-    except xlrd.XLRDError as e:
-        message = unicode(e)
-        if message == u'Workbook is encrypted':
-            raise ImporterExcelFileEncrypted(message)
-        else:
-            _soft_assert(False, 'displaying XLRDError directly to user', e)
-            raise ImporterExcelError(message)
-    except IOError as e:
-        raise ImporterFileNotFound(unicode(e))
-    except Exception as e:
-        _soft_assert(False, 'xlrd.open_workbook raised unaccounted for error', e)
-        raise ImporterFileNotFound(unicode(e))
 
 ALLOWED_EXTENSIONS = ['xls', 'xlsx']
 
