@@ -811,8 +811,8 @@ class ConfigureReport(ReportBuilderView):
                 # 'default_filters': getattr(self.report_form, 'default_filters', 'Not set'),
             })
             return self.get(request, domain)
-        return HttpResponseRedirect(
-            reverse(ConfigurableReport.slug, args=[self.domain, report_configuration._id])
+        return json_response(
+            {'report_url': reverse(ConfigurableReport.slug, args=[self.domain, report_configuration._id])}
         )
 
     def _confirm_report_limit(self):
