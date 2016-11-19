@@ -17,7 +17,6 @@
                 </a>
             </legend>
             <div class="collapse" data-bind="foreach: settings, attr: {id: id}, css: {'in': !reallyCollapse()}">
-                <!-- ko if: widget !== 'none' -->
                 <div class="form-group" data-bind="
                     visible: visible,
                     css: {error: hasError()}
@@ -55,7 +54,6 @@
                         </div>
                     </div>
                 </div>
-                <!-- /ko -->
             </div>
         </fieldset>
     </div>

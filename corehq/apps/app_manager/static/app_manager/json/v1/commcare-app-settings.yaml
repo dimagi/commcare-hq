@@ -1,7 +1,3 @@
-- id: name
-  name: Name
-  widget: none
-
 - id: application_version
   name: "App Version"
   description: ""
@@ -166,7 +162,3 @@
   default: 'none'
   since: '2.24'
   toggle: GRID_MENUS
-
-- id: comment
-  name: 'Comment'
-  widget: none

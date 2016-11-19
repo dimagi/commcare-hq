@@ -1,8 +1,6 @@
 - title: 'Data and Sharing'
   id: app-settings-basic
   settings:
-    - hq.name # won't actually be rendered here
-    - hq.comment # won't actually be rendered here
     - hq.application_version # App Version (disabled)
     # Application
     - hq.case_sharing  # Case Sharing
