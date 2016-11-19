@@ -42,6 +42,9 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
          * @param options: Array of strings.
          */
         setUpAutocomplete: function($elem, options){
+            if (!_.contains(options, $elem.value)) {
+                options.unshift($elem.value);
+            }
             $elem.$edit_view.select2({
                 minimumInputLength: 0,
                 delay: 0,
