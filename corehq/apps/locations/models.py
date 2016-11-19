@@ -895,14 +895,10 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
         return list(SQLLocation.root_locations(domain).couch_locations())
 
     @property
-    def is_root(self):
-        return not self.lineage
-
-    @property
     def parent_location_id(self):
-        if self.is_root:
-            return None
-        return self.lineage[0]
+        if self.lineage:
+            return self.lineage[0]
+        return None
 
     @property
     def parent_id(self):
