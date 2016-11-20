@@ -717,13 +717,6 @@ USE_FORMPLAYER = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-FORMPLAYER_EXPERIMENT = StaticToggle(
-    'use_formplayer_experiment',
-    'Do formplayer experimenting with Science',
-    TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN],
-)
-
 FIXTURE_CASE_SELECTION = StaticToggle(
     'fixture_case',
     'Allow a configurable case list that is filtered based on a fixture type and fixture selection (Due List)',
