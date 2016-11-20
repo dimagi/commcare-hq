@@ -186,12 +186,12 @@ class LocationRestrictedEmwfOptionsMixin(object):
     def data_sources(self):
         # data sources for options for selection in filter
         sources = []
-        if self.include_locations_in_options():
-            sources.append((self.get_locations_size, self.get_locations))
         if self.request.can_access_all_locations:
             sources.append((self.get_static_options_size, self.get_static_options))
             sources.append((self.get_groups_size, self.get_groups))
-        sources.extend(self.extra_data_sources())
+            sources.extend(self.extra_data_sources())
+        if self.include_locations_in_options():
+            sources.append((self.get_locations_size, self.get_locations))
         # appending this in the end to avoid long list of users delaying
         # locations, groups etc in the list on pagination
         sources.append((self.get_users_size, self.get_users))
