@@ -29,7 +29,7 @@ class BaseSessionDataHelper(object):
         session_data.update(get_user_contributions_to_touchforms_session(self.couch_user))
         return session_data
 
-    def filter_cases(self, xpath, additional_filters=None, auth=None, extra_instances=None, use_formplayer=False):
+    def filter_cases(self, xpath, additional_filters=None, auth=None, extra_instances=None):
         """
         Filter a list of cases by an xpath expression + additional filters
         """
@@ -62,8 +62,6 @@ class BaseSessionDataHelper(object):
         session_data["additional_filters"] = {"footprint": True}
         session_data.update(session_extras)
         xform_url = reverse("xform_player_proxy")
-        if session_data.get('domain') and toggles.USE_FORMPLAYER.enabled(session_data.get('domain')):
-            xform_url = settings.FORMPLAYER_URL
         ret = {
             "session_data": session_data,
             "xform_url": xform_url,

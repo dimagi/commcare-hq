@@ -130,7 +130,6 @@ FormplayerFrontend.on('startForm', function (data) {
     data.domain = user.domain;
     data.username = user.username;
     data.restoreAs = user.restoreAs;
-    data.formplayerEnabled = true;
     data.displayOptions = $.extend(true, {}, user.displayOptions);
     data.onerror = function (resp) {
         showError(resp.human_readable_message || resp.message, $("#cloudcare-notifications"));

@@ -710,13 +710,6 @@ USE_FORMPLAYER_FRONTEND = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-USE_FORMPLAYER = StaticToggle(
-    'use_formplayer',
-    'Use the new formplayer server',
-    TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN],
-)
-
 FORMPLAYER_EXPERIMENT = StaticToggle(
     'use_formplayer_experiment',
     'Do formplayer experimenting with Science',
