@@ -107,7 +107,7 @@ class RemoteRequestFactory(object):
         default_query_datums = [
             QueryData(
                 key='case_type',
-                ref="'{}'".format(self.module.case_type)
+                ref=u"'{}'".format(self.module.case_type)
             ),
             QueryData(
                 key='include_closed',
@@ -115,7 +115,7 @@ class RemoteRequestFactory(object):
             )
         ]
         extra_query_datums = [
-            QueryData(key="{}".format(c.property), ref="{}".format(c.defaultValue))
+            QueryData(key=u"{}".format(c.property), ref=u"{}".format(c.defaultValue))
             for c in self.module.search_config.default_properties
         ]
         return default_query_datums + extra_query_datums

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from django.test import SimpleTestCase
 from mock import patch
 
@@ -30,11 +31,11 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             ],
             default_properties=[
                 DefaultCaseSearchProperty(
-                    property='name',
+                    property=u'ɨŧsȺŧɍȺᵽ',
                     defaultValue=(
-                        "instance('casedb')/case"
-                        "[@case_id='instance('commcaresession')/session/data/case_id']"
-                        "/some_property")
+                        u"instance('casedb')/case"
+                        u"[@case_id='instance('commcaresession')/session/data/case_id']"
+                        u"/ɨŧsȺŧɍȺᵽ")
                 ),
                 DefaultCaseSearchProperty(
                     property='name',
