@@ -7,13 +7,13 @@ from corehq.apps.data_dictionary.models import CaseType, CaseProperty
 from corehq.apps.data_dictionary.util import generate_data_dictionary
 
 
+@patch('corehq.apps.data_dictionary.util._get_all_case_properties')
 class GenerateDictionaryTest(TestCase):
     domain = uuid.uuid4()
 
     def tearDown(self):
         CaseType.objects.filter(domain=self.domain).delete()
 
-    @patch('corehq.apps.data_dictionary.util._get_all_case_properties')
     def test_no_types(self, mock):
         mock.return_value = {}
         with self.assertNumQueries(1):
@@ -22,7 +22,6 @@ class GenerateDictionaryTest(TestCase):
         self.assertEqual(CaseType.objects.filter(domain=self.domain).count(), 0)
         self.assertEqual(CaseProperty.objects.filter(case_type__domain=self.domain).count(), 0)
 
-    @patch('corehq.apps.data_dictionary.util._get_all_case_properties')
     def test_empty_type(self, mock):
         mock.return_value = {'': ['prop']}
         with self.assertNumQueries(1):
@@ -31,7 +30,6 @@ class GenerateDictionaryTest(TestCase):
         self.assertEqual(CaseType.objects.filter(domain=self.domain).count(), 0)
         self.assertEqual(CaseProperty.objects.filter(case_type__domain=self.domain).count(), 0)
 
-    @patch('corehq.apps.data_dictionary.util._get_all_case_properties')
     def test_no_properties(self, mock):
         mock.return_value = {'type': []}
         with self.assertNumQueries(2):
@@ -40,7 +38,6 @@ class GenerateDictionaryTest(TestCase):
         self.assertEqual(CaseType.objects.filter(domain=self.domain).count(), 1)
         self.assertEqual(CaseProperty.objects.filter(case_type__domain=self.domain).count(), 0)
 
-    @patch('corehq.apps.data_dictionary.util._get_all_case_properties')
     def test_one_type(self, mock):
         mock.return_value = {'type': ['property']}
         with self.assertNumQueries(3):
@@ -49,7 +46,6 @@ class GenerateDictionaryTest(TestCase):
         self.assertEqual(CaseType.objects.filter(domain=self.domain).count(), 1)
         self.assertEqual(CaseProperty.objects.filter(case_type__domain=self.domain).count(), 1)
 
-    @patch('corehq.apps.data_dictionary.util._get_all_case_properties')
     def test_two_types(self, mock):
         mock.return_value = {'type': ['property'], 'type2': ['property']}
         with self.assertNumQueries(4):
@@ -58,7 +54,6 @@ class GenerateDictionaryTest(TestCase):
         self.assertEqual(CaseType.objects.filter(domain=self.domain).count(), 2)
         self.assertEqual(CaseProperty.objects.filter(case_type__domain=self.domain).count(), 2)
 
-    @patch('corehq.apps.data_dictionary.util._get_all_case_properties')
     def test_two_properties(self, mock):
         mock.return_value = {'type': ['property', 'property2']}
         with self.assertNumQueries(3):
@@ -67,7 +62,6 @@ class GenerateDictionaryTest(TestCase):
         self.assertEqual(CaseType.objects.filter(domain=self.domain).count(), 1)
         self.assertEqual(CaseProperty.objects.filter(case_type__domain=self.domain).count(), 2)
 
-    @patch('corehq.apps.data_dictionary.util._get_all_case_properties')
     def test_already_existing_property(self, mock):
         mock.return_value = {'type': ['property']}
         case_type = CaseType(domain=self.domain, name='type')
