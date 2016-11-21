@@ -196,6 +196,9 @@ class ExpandedColumn(ReportColumn):
     def get_column_config(self, data_source_config, lang):
         return get_expanded_column_config(data_source_config, self, lang)
 
+    def aggregations(self, data_source_config, lang):
+        return [c.aggregation.aggregation for c in self.get_column_config(data_source_config, lang).columns]
+
 
 class AggregateDateColumn(ReportColumn):
     """

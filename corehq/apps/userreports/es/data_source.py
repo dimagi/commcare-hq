@@ -144,8 +144,7 @@ class ConfigurableReportEsDataSource(ConfigurableReportDataSourceMixin, ReportDa
         aggregations = []
         for col in self.top_level_columns:
             if col.type == 'expanded':
-                for sub_col in get_expanded_column_config(self.config, col, 'en').columns:
-                    aggregations.append(sub_col.aggregation.aggregation)
+                aggregations.extend(col.aggregations(self.config, col))
             elif col.type == 'field':
                 # todo push this to the column
                 if col.aggregation == 'sum':
