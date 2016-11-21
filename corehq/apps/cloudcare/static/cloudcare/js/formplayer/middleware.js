@@ -34,8 +34,10 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             FormplayerFrontend.regions.phoneModeNavigation.$el.height());
 
         $('.scrollable-container').css('max-height', maxHeight + 'px');
-        $('.form-scrollable-container').css('min-height', maxHeightForm + 'px');
-        $('.form-scrollable-container').css('max-height', maxHeightForm + 'px');
+        $('.form-scrollable-container').css({
+            'min-height': maxHeightForm + 'px',
+            'max-height': maxHeightForm + 'px',
+        });
     };
 
     SessionNavigate.Middleware.middlewares = [
