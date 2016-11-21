@@ -49,7 +49,6 @@ branches:
 #  - bmb/appmanager-v2-001  #bmb 10/26 if you pull master into this, please rebase
   - django19
   - bmb/currentind-string # Biyeun 11/12
-  - nh/new_rb # Norman 11/21
 #  - np/110/TEMPLATES
   - location_export # Manish 11/2
   - mk-241177-remove_location_bugfix # Manish 11/14
