@@ -26,8 +26,9 @@ hqDefine('app_manager/js/preview_app.js', function() {
     };
 
     module.DATA = {
-        OPEN: 'isopen',
+        OPEN: 'preview-isopen',
         POSITION: 'position',
+        TABLET: 'preview-tablet',
     };
 
     _private.showAppPreview = function() {
@@ -37,6 +38,18 @@ hqDefine('app_manager/js/preview_app.js', function() {
     _private.hideAppPreview = function() {
         $(module.SELECTORS.PREVIEW_ACTION_TEXT_SHOW).removeClass('hide');
         $(module.SELECTORS.PREVIEW_ACTION_TEXT_HIDE).addClass('hide');
+    };
+
+    _private.tabletView = function() {
+        var $appPreview = $(module.SELECTORS.PREVIEW_WINDOW);
+        $appPreview.addClass('preview-tablet-mode');
+        _private.triggerPreviewEvent('tablet-view');
+    };
+
+    _private.phoneView = function() {
+        var $appPreview = $(module.SELECTORS.PREVIEW_WINDOW);
+        $appPreview.removeClass('preview-tablet-mode');
+        _private.triggerPreviewEvent('phone-view');
     };
 
     _private.navigateBack = function() {
@@ -55,13 +68,26 @@ hqDefine('app_manager/js/preview_app.js', function() {
         }, window.location.origin);
     };
 
+    _private.toggleTabletView = function() {
+        _private.toggleLocalStorageDatum(module.DATA.TABLET);
+        if (localStorage.getItem(module.DATA.TABLET)) {
+            _private.tabletView();
+        } else {
+            _private.phoneView();
+        }
+    };
+
+    _private.toggleLocalStorageDatum = function(datum) {
+        if (localStorage.getItem(datum) === datum) {
+            localStorage.removeItem(datum);
+        } else {
+            localStorage.setItem(datum, datum);
+        }
+    };
+
     _private.toggleAppPreview = function (e) {
         e.preventDefault();
-        if (localStorage.getItem(module.DATA.OPEN) === module.DATA.OPEN) {
-            localStorage.removeItem(module.DATA.OPEN);
-        } else {
-            localStorage.setItem(module.DATA.OPEN, module.DATA.OPEN);
-        }
+        _private.toggleLocalStorageDatum(module.DATA.OPEN);
         $(window).trigger(module.EVENTS.RESIZE);
         if (localStorage.getItem(module.DATA.OPEN)) {
             _private.showAppPreview();
@@ -119,6 +145,7 @@ hqDefine('app_manager/js/preview_app.js', function() {
         };
         $(window).on(module.EVENTS.RESIZE, _resizeAppPreview);
         layoutController.utils.setBalancePreviewFn(_resizeAppPreview);
+        $('.js-preview-toggle-tablet-view').click(_private.toggleTabletView);
         $('.js-preview-back').click(_private.triggerPreviewEvent.bind(this, 'back'));
         $('.js-preview-refresh').click(function() {
             $(module.SELECTORS.BTN_REFRESH).removeClass('app-out-of-date');
@@ -129,6 +156,13 @@ hqDefine('app_manager/js/preview_app.js', function() {
                 /edit_module_attr/.test(options.url) ||
                 /patch_xform/.test(options.url)) {
                 $(module.SELECTORS.BTN_REFRESH).addClass('app-out-of-date');
+            }
+        });
+        $(module.SELECTORS.PREVIEW_WINDOW_IFRAME).load(function() {
+            if (localStorage.getItem(module.DATA.TABLET)) {
+                _private.tabletView();
+            } else {
+                _private.phoneView();
             }
         });
 
