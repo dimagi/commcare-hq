@@ -50,16 +50,16 @@ class RemoteRequestFactory(object):
 
     def _build_remote_request_post(self):
         return RemoteRequestPost(
-                url=absolute_reverse('claim_case', args=[self.domain]),
-                relevant=self.module.search_config.relevant,
-                data=[
-                    QueryData(
-                        key='case_id',
-                        ref=QuerySessionXPath('case_id').instance(),
-                        # e.g. instance('querysession')/session/data/case_id
-                    ),
-                ]
-            )
+            url=absolute_reverse('claim_case', args=[self.domain]),
+            relevant=self.module.search_config.relevant,
+            data=[
+                QueryData(
+                    key='case_id',
+                    ref=QuerySessionXPath('case_id').instance(),
+                    # e.g. instance('querysession')/session/data/case_id
+                ),
+            ]
+        )
 
     def _build_command(self):
         return Command(
