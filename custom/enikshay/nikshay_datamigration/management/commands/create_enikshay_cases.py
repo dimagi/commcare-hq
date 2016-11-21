@@ -6,7 +6,7 @@ from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
-from custom.enikshay.nikshay_datamigration.models import PatientDetail, Outcome, Followup
+from custom.enikshay.nikshay_datamigration.models import APatientDetail, Outcome, Followup
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -202,7 +202,7 @@ class Command(BaseCommand):
 
     def handle(self, domain, *args, **options):
         counter = 0
-        for patient_detail in PatientDetail.objects.all():
+        for patient_detail in APatientDetail.objects.all():
             case_factory = EnikshayCaseFactory(domain, patient_detail)
             case_factory.create_cases()
             counter += 1

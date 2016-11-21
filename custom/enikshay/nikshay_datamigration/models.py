@@ -1,7 +1,7 @@
 from django.db import models
 
 
-class PatientDetail(models.Model):
+class APatientDetail(models.Model):
     PregId = models.CharField(max_length=255, primary_key=True) # need to remove trailing whitespace in Excel
     scode = models.CharField(max_length=255, null=True, default='default')
     Dtocode = models.CharField(max_length=255, null=True)
@@ -15,13 +15,13 @@ class PatientDetail(models.Model):
     pmob = models.CharField(max_length=255, null=True)  # contains " ", big ints
     plandline = models.CharField(max_length=255, null=True)
     ptbyr = models.CharField(max_length=255, null=True)  # dates, but not clean
-    pregdate1 = models.CharField(max_length=255, null=True)  # remove time in Excel (format as DD-MM-YYYY)
+    # pregdate1 = models.CharField(max_length=255, null=True)  # remove time in Excel (format as DD-MM-YYYY)
     cname = models.CharField(max_length=255, null=True)
     caddress = models.CharField(max_length=255, null=True)
     cmob = models.CharField(max_length=255, null=True)  # contains "  ", big ints
     clandline = models.CharField(max_length=255, null=True)
     cvisitedby = models.CharField(max_length=255, null=True)
-    cvisitedDate1 = models.CharField(max_length=255, null=True)  # datetimes, look like they're all midnight
+    # cvisitedDate1 = models.CharField(max_length=255, null=True)  # datetimes, look like they're all midnight
     dcpulmunory = models.CharField(
         max_length=255, choices=(
             ('y', 'y'),
@@ -38,7 +38,8 @@ class PatientDetail(models.Model):
     dotcenter = models.CharField(max_length=255, null=True)
     PHI = models.CharField(max_length=255, null=True)
     dotmoname = models.CharField(max_length=255, null=True)
-    dotmosignDate = models.CharField(max_length=255, null=True)  # datetimes, look like they're all midnight. also have a bunch of 1/1/1990
+    dotmosdone = models.CharField(max_length=255, null=True)
+    # dotmosignDate = models.CharField(max_length=255, null=True)  # datetimes, look like they're all midnight. also have a bunch of 1/1/1990
     atbtreatment = models.CharField(max_length=255, choices=(
         ('Y', 'Y'),
         ('N', 'N'),
@@ -53,7 +54,14 @@ class PatientDetail(models.Model):
     atbyr = models.CharField(max_length=255, null=True)
     Ptype = models.CharField(max_length=255, null=True)
     pcategory = models.CharField(max_length=255, null=True)
+    regBy = models.CharField(max_length=255, null=True)
+    regDate = models.CharField(max_length=255, null=True)
+    isRntcp = models.CharField(max_length=255, null=True)
+    dotprovider_id = models.CharField(max_length=255, null=True)
+    pregdate1 = models.CharField(max_length=255, null=True)
+    cvisitedDate1 = models.CharField(max_length=255, null=True)
     InitiationDate1 = models.CharField(max_length=255, null=True)  # datetimes, look like they're all midnight
+    dotmosignDate1 = models.CharField(max_length=255, null=True)
 
     @property
     def first_name(self):
@@ -81,9 +89,9 @@ class PatientDetail(models.Model):
 
 
 class Outcome(models.Model):
-    PatientId = models.ForeignKey(PatientDetail, primary_key=True)
+    PatientId = models.ForeignKey(APatientDetail, primary_key=True)
     Outcome = models.CharField(max_length=255, null=True)
-    OutcomeDate1 = models.CharField(max_length=255, null=True)
+    OutcomeDate = models.CharField(max_length=255, null=True)
     MO = models.CharField(max_length=255, null=True)
     XrayEPTests = models.CharField(max_length=255, null=True)
     MORemark = models.CharField(max_length=255, null=True)
@@ -93,26 +101,35 @@ class Outcome(models.Model):
     ARTCentreDate = models.CharField(max_length=255, null=True)
     InitiatedOnART = models.CharField(max_length=255, null=True)
     InitiatedDate = models.CharField(max_length=255, null=True)
+    userName = models.CharField(max_length=255, null=True)
+    loginDate = models.CharField(max_length=255, null=True)
+    OutcomeDate1 = models.CharField(max_length=255, null=True)
 
 
 class Followup(models.Model):
-    PatientID = models.ForeignKey(PatientDetail)  # requires trimming whitespace in excel and moving to end of CSV
+    id = models.AutoField(primary_key=True)
+    PatientID = models.ForeignKey(APatientDetail)  # requires trimming whitespace in excel and moving to end of CSV
     IntervalId = models.CharField(max_length=255, null=True)
     TestDate = models.CharField(max_length=255, null=True)
     DMC = models.CharField(max_length=255, null=True)
     LabNo = models.CharField(max_length=255, null=True)
     SmearResult = models.CharField(max_length=255, null=True)
     PatientWeight = models.CharField(max_length=255, null=True)
+    DmcStoCode = models.CharField(max_length=255, null=True)
+    DmcDtoCode = models.CharField(max_length=255, null=True)
+    DmcTbuCode = models.CharField(max_length=255, null=True)
+    RegBy = models.CharField(max_length=255, null=True)
+    regdate = models.CharField(max_length=255, null=True)
 
 
-class Household(models.Model):
-    PatientID = models.ForeignKey(PatientDetail)  # have to move to end of excel CSV
-    Name = models.CharField(max_length=255, null=True)
-    Dosage = models.CharField(max_length=255, null=True)
-    Weight = models.CharField(max_length=255, null=True)
-    M1 = models.CharField(max_length=255, null=True)
-    M2 = models.CharField(max_length=255, null=True)
-    M3 = models.CharField(max_length=255, null=True)
-    M4 = models.CharField(max_length=255, null=True)
-    M5 = models.CharField(max_length=255, null=True)
-    M6 = models.CharField(max_length=255, null=True)
+# class Household(models.Model):
+#     PatientID = models.ForeignKey(APatientDetail)  # have to move to end of excel CSV
+#     Name = models.CharField(max_length=255, null=True)
+#     Dosage = models.CharField(max_length=255, null=True)
+#     Weight = models.CharField(max_length=255, null=True)
+#     M1 = models.CharField(max_length=255, null=True)
+#     M2 = models.CharField(max_length=255, null=True)
+#     M3 = models.CharField(max_length=255, null=True)
+#     M4 = models.CharField(max_length=255, null=True)
+#     M5 = models.CharField(max_length=255, null=True)
+#     M6 = models.CharField(max_length=255, null=True)
