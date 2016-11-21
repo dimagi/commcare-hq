@@ -240,7 +240,7 @@ var reportBuilder = function () {
                     data: JSON.stringify(self.serialize()),
                     dataType: 'json',
                 });
-            }
+            },
         });
         self.saveButton.ui.appendTo($("#saveButtonHolder"));
 
@@ -283,7 +283,7 @@ ko.bindingHandlers.sortableList = {
                 }
                 ui.item.remove();
                 item.notifyButton();
-            }
+            },
         });
-    }
+    },
 };
