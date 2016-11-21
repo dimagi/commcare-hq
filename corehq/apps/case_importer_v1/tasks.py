@@ -43,7 +43,6 @@ def bulk_import_async(config, domain, excel_id):
 
 
 def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKSIZE):
-    row_count = spreadsheet.get_num_rows()
     columns = spreadsheet.get_header_columns()
     match_count = created_count = too_many_matches = num_chunks = 0
     errors = importer_util.ImportErrorDetail()
@@ -99,7 +98,8 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
                     )
         return err
 
-    for i in range(row_count):
+    row_count = spreadsheet.max_row
+    for i, row in enumerate(spreadsheet.iter_rows()):
         if task:
             DownloadBase.set_progress(task, i, row_count)
 
@@ -114,28 +114,15 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
                 # increment so we can't possibly prime on next iteration
                 prime_offset += 1
 
-        row = spreadsheet.get_row(i)
         search_id = importer_util.parse_search_id(config, columns, row)
         if config.search_field == 'external_id' and not search_id:
             # do not allow blank external id since we save this
             errors.add(ImportErrors.BlankExternalId, i + 1)
             continue
 
-        try:
-            fields_to_update = importer_util.populate_updated_fields(
-                config,
-                columns,
-                row,
-                spreadsheet.workbook.datemode
-            )
-            if not any(fields_to_update.values()):
-                # if the row was blank, just skip it, no errors
-                continue
-        except importer_util.InvalidDateException as e:
-            errors.add(ImportErrors.InvalidDate, i + 1, e.column)
-            continue
-        except importer_util.InvalidIntegerException as e:
-            errors.add(ImportErrors.InvalidInteger, i + 1, e.column)
+        fields_to_update = importer_util.populate_updated_fields(config, columns, row)
+        if not any(fields_to_update.values()):
+            # if the row was blank, just skip it, no errors
             continue
 
         external_id = fields_to_update.pop('external_id', None)

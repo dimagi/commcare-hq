@@ -1,4 +1,4 @@
-from corehq.util.spreadsheets.excel import IteratorJSONReader
+from corehq.util.spreadsheets_v1.excel import IteratorJSONReader
 from corehq.util.dates import iso_string_to_datetime, iso_string_to_date
 
 __test__ = {

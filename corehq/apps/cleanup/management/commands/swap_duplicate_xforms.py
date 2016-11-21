@@ -20,7 +20,7 @@ class Command(BaseCommand):
     help = 'Replace xforms missing attachments with xfrom duplicates containing attachments.'
     args = '<ids_file_path> <log_path>'
 
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option(
             '--dry-run',
             action='store_true',

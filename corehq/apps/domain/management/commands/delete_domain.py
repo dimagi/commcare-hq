@@ -9,11 +9,13 @@ class Command(BaseCommand):
     help = "Deletes the given domain and its contents"
     args = '<domain>'
 
-    option_list = BaseCommand.option_list + (make_option('--noinput',
-                                                         action='store_true',
-                                                         dest='noinput',
-                                                         default=False,
-                                                         help='Skip important confirmation warnings.'),)
+    option_list = (
+        make_option('--noinput',
+            action='store_true',
+            dest='noinput',
+            default=False,
+            help='Skip important confirmation warnings.'),
+    )
 
     def handle(self, *args, **options):
         domain_name = args[0].strip()

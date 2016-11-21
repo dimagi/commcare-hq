@@ -6,7 +6,7 @@ class Command(BaseCommand):
     """
     Set cleanliness flags for a domain, or for all domains
     """
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option('--force',
                     action='store_true',
                     dest='force',

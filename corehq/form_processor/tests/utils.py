@@ -17,7 +17,7 @@ from corehq.form_processor.interfaces.processor import FormProcessorInterface, P
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, CaseTransaction, Attachment
 from corehq.form_processor.parsers.form import process_xform_xml
 from corehq.form_processor.utils.general import should_use_sql_backend
-from corehq.sql_db.config import partition_config
+from corehq.sql_db.config import get_sql_db_aliases_in_use
 from corehq.util.test_utils import unit_testing_only, run_with_multiple_configs, RunConfig
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import safe_delete
@@ -88,7 +88,7 @@ class FormProcessorTestUtils(object):
             LedgerAccessorSQL.delete_ledger_values(case_id)
 
         if not domain:
-            for db in _get_db_list_to_query():
+            for db in get_sql_db_aliases_in_use():
                 for ledger in LedgerReindexAccessor().get_docs(db, None, limit=10000):
                     _delete_ledgers_for_case(ledger.case_id)
         else:
@@ -167,12 +167,6 @@ run_with_all_backends = functools.partial(
         ),
     ]
 )
-
-
-def _get_db_list_to_query():
-    if settings.USE_PARTITIONED_DATABASE:
-        return partition_config.get_form_processing_dbs()
-    return [None]
 
 
 @unit_testing_only

@@ -1,8 +1,6 @@
 from datetime import datetime
 
-from django.conf import settings
-
-from corehq.sql_db.config import partition_config
+from corehq.sql_db.config import get_sql_db_aliases_in_use
 from corehq.util.doc_processor.interface import DocumentProvider
 from corehq.util.pagination import ResumableFunctionIterator, ArgsProvider
 
@@ -10,7 +8,7 @@ from corehq.util.pagination import ResumableFunctionIterator, ArgsProvider
 class SqlModelArgsProvider(ArgsProvider):
     def __init__(self, model_filter_attribute):
         self.model_filter_attribute = model_filter_attribute
-        self.db_list = _get_db_aliases_to_query()
+        self.db_list = get_sql_db_aliases_in_use()
 
     def get_initial_args(self):
         return [self.db_list[0], datetime.min, None], {}
@@ -88,12 +86,5 @@ class SqlDocumentProvider(DocumentProvider):
     def get_total_document_count(self):
         return sum(
             self.reindex_accessor.get_doc_count(from_db)
-            for from_db in _get_db_aliases_to_query()
+            for from_db in get_sql_db_aliases_in_use()
         )
-
-
-def _get_db_aliases_to_query():
-    if not settings.USE_PARTITIONED_DATABASE:
-        return [None]  # use the default database
-    else:
-        return partition_config.get_form_processing_dbs()

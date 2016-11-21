@@ -19,7 +19,7 @@ from corehq.apps.accounting.utils import log_accounting_info
 class Command(BaseCommand):
     help = 'Populate a fresh db with standard set of Software Plans.'
 
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option('--dry-run', action='store_true', default=False,
                     help='Do not actually modify the database, just verbosely log what happen'),
         make_option('--verbose', action='store_true', default=False,

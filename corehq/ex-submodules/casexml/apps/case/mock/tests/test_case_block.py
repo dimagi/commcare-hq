@@ -8,6 +8,7 @@ class CaseBlockTest(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(CaseBlockTest, cls).setUpClass()
         cls.NOW = datetime(year=2012, month=1, day=24)
         cls.FIVE_DAYS_FROM_NOW = datetime(year=2012, month=1, day=29)
         cls.CASE_ID = 'test-case-id'

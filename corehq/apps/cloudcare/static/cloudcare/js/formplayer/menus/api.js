@@ -57,7 +57,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 "query_dictionary": params.queryDict,
                 "previewCommand": params.previewCommand,
                 "installReference": params.installReference,
-                "oneQuestionPerScreen": ko.utils.unwrapObservable(displayOptions.oneQuestionPerScreen),
+                "oneQuestionPerScreen": displayOptions.oneQuestionPerScreen,
             });
             options.url = formplayerUrl + '/navigate_menu';
 

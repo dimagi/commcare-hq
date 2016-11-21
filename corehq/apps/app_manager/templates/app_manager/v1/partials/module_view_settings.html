@@ -28,11 +28,11 @@
                 </label>
                 <div class="col-sm-4"
                      data-bind="template: {name: 'module-forms-template',
-                                           foreach: selectedModule().forms()}"></div>
+                                           foreach: sourceForms()}"></div>
                 <div class="hidden">
                     <select name="excl_form_ids"
                             multiple="multiple"
-                            data-bind="options: selectedModule().forms,
+                            data-bind="options: sourceForms,
                                        optionsText: 'name',
                                        optionsValue: 'uniqueId',
                                        selectedOptions: excludedFormIds"></select>

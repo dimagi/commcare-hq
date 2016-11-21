@@ -86,7 +86,7 @@ from pillowtop.utils import get_all_pillows_json, get_pillow_json, get_pillow_co
 from . import service_checks, escheck
 from .forms import AuthenticateAsForm, BrokenBuildsForm, SuperuserManagementForm, ReprocessMessagingCaseUpdatesForm
 from .history import get_recent_changes, download_changes
-from .models import HqDeploy, VCMMigration
+from .models import HqDeploy
 from .reporting.reports import get_project_spaces, get_stats_data
 from .utils import get_celery_stats
 from corehq.apps.es.domains import DomainES
@@ -537,131 +537,6 @@ class ManagementCommandsView(BaseAdminSectionView):
         return context
 
 
-class VCMMigrationView(BaseAdminSectionView):
-    urlname = 'vcm_migration'
-    page_title = ugettext_lazy("Vellum Case Management Migration")
-    template_name = 'hqadmin/vcm_migration.html'
-    email_template_html = 'hqadmin/vcm_email_content.html'
-    email_template_txt = 'hqadmin/vcm_email_content.txt'
-
-    email_subject = _("CommCare Easy References Upgrade")
-    email_from = settings.REPORT_BUILDER_ADD_ON_EMAIL
-
-    @property
-    def migration_date(self):
-        return force_to_date(datetime.now() + timedelta(days=14))
-
-    @property
-    def page_context(self):
-        context = get_hqadmin_base_context(self.request)
-        context.update({
-            'audits': VCMMigration.objects.order_by('-migrated', '-emailed', 'domain'),
-            'email_body': render_to_string(self.email_template_html, {
-                'domain': 'DOMAIN',
-                'migration_date': self.migration_date,
-                'email': self.email_from,
-            }),
-            'email_subject': self.email_subject,
-            'url': reverse(self.urlname),
-        })
-        return context
-
-    @method_decorator(require_superuser)
-    def dispatch(self, request, *args, **kwargs):
-        return super(VCMMigrationView, self).dispatch(request, *args, **kwargs)
-
-    def post(self, request, *args, **kwargs):
-        action = self.request.POST['action']
-
-        # Ajax request
-        if action == 'notes':
-            migration = VCMMigration.objects.get(domain=self.request.POST['domain'])
-            migration.notes = self.request.POST['notes']
-            migration.save()
-            return json_response({'success': 'success'})
-
-        # Form submission
-        if action == 'add':
-            emails = self.request.POST['items'].split(",")
-            notes = self.request.POST['notes']
-            errors = []
-            successes = []
-            for email in emails:
-                user = CouchUser.get_by_username(email)
-                if not user:
-                    errors.append("User {} not found".format(email))
-                else:
-                    for domain in user.domains:
-                        try:
-                            migration = VCMMigration.objects.get(domain=domain)
-                            successes.append("Updated domain {} for {}".format(domain, email))
-                        except VCMMigration.DoesNotExist:
-                            migration = VCMMigration.objects.create(domain=domain)
-                            successes.append("Added domain {} for {}".format(domain, email))
-                        finally:
-                            if notes:
-                                if migration.notes:
-                                    migration.notes = migration.notes + '; '
-                                else:
-                                    migration.notes = ''
-                                migration.notes = migration.notes + notes
-                                migration.save()
-            if len(successes):
-                messages.success(request, mark_safe("<br>".join(successes)), extra_tags='html')
-            if len(errors):
-                messages.error(request, mark_safe("<br>".join(errors)), extra_tags='html')
-        else:
-            domains = self.request.POST['items'].split(",")
-            errors = set([])
-            successes = set([])
-            for domain in domains:
-                migration = VCMMigration.objects.get(domain=domain)
-                if not migration.notes:
-                    migration.notes = ''
-                app_count = 0
-                if action == 'email':
-                    email_context = {
-                        'domain': domain,
-                        'migration_date': self.migration_date,
-                        'email': self.email_from,
-                    }
-                    html_content = render_to_string(self.email_template_html, email_context)
-                    text_content = render_to_string(self.email_template_txt, email_context)
-                    send_html_email_async.delay(
-                        self.email_subject,
-                        migration.admins,
-                        html_content,
-                        text_content=text_content,
-                        email_from=self.email_from)
-                    migration.emailed = datetime.now()
-                    migration.save()
-                    successes.add(domain)
-                elif action == 'migrate':
-                    for app_id in get_app_ids_in_domain(domain):
-                        try:
-                            management.call_command('migrate_app_to_cmitfb', app_id)
-                            app_count = app_count + 1
-                        except Exception:
-                            if migration.notes:
-                                migration.notes = migration.notes + '; '
-                            migration.notes = migration.notes + "failed on app {}".format(app_id)
-                            errors.add(domain)
-                    if domain not in errors:
-                        if migration.notes:
-                            migration.notes = migration.notes + '; '
-                        migration.notes = migration.notes + "successfully migrated {} domains".format(app_count)
-                        successes.add(domain)
-                    migration.migrated = datetime.now()
-                    migration.save()
-            if len(successes):
-                messages.success(request, "Succeeded with the following {} domains: {}".format(
-                                 len(successes), ", ".join(successes)))
-            if len(errors):
-                messages.error(request, "Errors in the following {} domains: {}".format(
-                               len(errors), ", ".join(errors)))
-        return self.get(request, *args, **kwargs)
-
-
 @require_POST
 @require_superuser
 def run_command(request):
@@ -876,9 +751,6 @@ def raw_doc(request):
     if db_name and "__" in db_name:
         db_name = db_name.split("__")[-1]
     context = _lookup_id_in_database(doc_id, db_name) if doc_id else {}
-    other_couch_dbs = sorted(filter(None, couch_config.all_dbs_by_slug.keys()))
-    context['all_databases'] = ['commcarehq'] + other_couch_dbs + _SQL_DBS.keys()
-    context['use_code_mirror'] = request.GET.get('code_mirror', 'true').lower() == 'true'
 
     if request.GET.get("raw", False):
         if 'doc' in context:
@@ -887,6 +759,9 @@ def raw_doc(request):
             return HttpResponse(json.dumps({"status": "missing"}),
                                 content_type="application/json", status=404)
 
+    other_couch_dbs = sorted(filter(None, couch_config.all_dbs_by_slug.keys()))
+    context['all_databases'] = ['commcarehq'] + other_couch_dbs + _SQL_DBS.keys()
+    context['use_code_mirror'] = request.GET.get('code_mirror', 'true').lower() == 'true'
     return render(request, "hqadmin/raw_couch.html", context)
 
 

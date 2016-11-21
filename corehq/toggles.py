@@ -281,13 +281,6 @@ ADD_USERS_FROM_LOCATION = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-DEMO_REPORTS = StaticToggle(
-    'demo-reports',
-    'Access to map-based demo reports',
-    TAG_PREVIEW,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
 DETAIL_LIST_TABS = StaticToggle(
     'detail-list-tabs',
     'Tabs in the case detail list',
@@ -383,7 +376,7 @@ SYNC_ALL_LOCATIONS = StaticToggle(
 FLAT_LOCATION_FIXTURE = StaticToggle(
     'flat_location_fixture',
     'Sync the location fixture in a flat format.',
-    TAG_ONE_OFF,  # todo: this should change to product path once we are signed off on format
+    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
 
@@ -842,6 +835,13 @@ NEW_EXPORTS = StaticToggle(
     'new_exports',
     'Use new backend export infrastructure',
     TAG_PRODUCT_CORE,
+    [NAMESPACE_DOMAIN]
+)
+
+OLD_EXPORTS = StaticToggle(
+    'old_exports',
+    'Use old backend export infrastructure',
+    TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )
 

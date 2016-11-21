@@ -131,7 +131,7 @@ FormplayerFrontend.on('startForm', function (data) {
     data.username = user.username;
     data.restoreAs = user.restoreAs;
     data.formplayerEnabled = true;
-    data.displayOptions = user.displayOptions;
+    data.displayOptions = $.extend(true, {}, user.displayOptions);
     data.onerror = function (resp) {
         showError(resp.human_readable_message || resp.message, $("#cloudcare-notifications"));
     };
@@ -195,7 +195,11 @@ FormplayerFrontend.on("start", function (options) {
                 model: user,
             })
         );
-        if (user.displayOptions.phoneMode) {
+        if (user.displayOptions.singleAppMode) {
+            appId = options.apps[0]['_id'];
+        }
+
+        if (user.displayOptions.phoneMode && user.displayOptions.singleAppMode) {
             FormplayerFrontend.regions.phoneModeNavigation.show(
                 new FormplayerFrontend.Layout.Views.PhoneNavigation({ appId: appId })
             );
@@ -204,12 +208,15 @@ FormplayerFrontend.on("start", function (options) {
         // will be the same for every domain. TODO: get domain/username/pass from django
         if (this.getCurrentRoute() === "") {
             if (user.displayOptions.singleAppMode) {
-                appId = options.apps[0]['_id'];
-
                 FormplayerFrontend.trigger('setAppDisplayProperties', options.apps[0]);
                 FormplayerFrontend.trigger("app:singleApp", appId);
             } else {
                 FormplayerFrontend.trigger("apps:list", options.apps);
+            }
+            if (user.displayOptions.phoneMode) {
+                // Refresh on start of preview mode so it ensures we're on the latest app
+                // since app updates do not work.
+                FormplayerFrontend.trigger('refreshApplication', appId);
             }
         }
     }
@@ -322,18 +329,6 @@ FormplayerFrontend.on("sync", function () {
     $.ajax(options);
 });
 
-FormplayerFrontend.on('phone:back:hide', function() {
-    if (FormplayerFrontend.regions.phoneModeNavigation.currentView) {
-        FormplayerFrontend.regions.phoneModeNavigation.currentView.hideBackButton();
-    }
-});
-
-FormplayerFrontend.on('phone:back:show', function() {
-    if (FormplayerFrontend.regions.phoneModeNavigation.currentView) {
-        FormplayerFrontend.regions.phoneModeNavigation.currentView.showBackButton();
-    }
-});
-
 /**
  * retry
  *
@@ -381,6 +376,10 @@ FormplayerFrontend.on('clearProgress', function() {
 });
 
 
+FormplayerFrontend.on('setVersionInfo', function(versionInfo) {
+    $("#version-info").text(versionInfo || '');
+});
+
 /**
  * refreshApplication
  *
@@ -391,6 +390,9 @@ FormplayerFrontend.on('clearProgress', function() {
  * @param {String} appId - The id of the application to refresh
  */
 FormplayerFrontend.on('refreshApplication', function(appId) {
+    if (!appId) {
+        throw new Error('Attempt to refresh application for null appId');
+    }
     var user = FormplayerFrontend.request('currentUser'),
         formplayer_url = user.formplayer_url,
         resp,

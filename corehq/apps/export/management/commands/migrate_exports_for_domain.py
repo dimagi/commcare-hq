@@ -7,7 +7,7 @@ from corehq.apps.export.utils import migrate_domain
 class Command(BaseCommand):
     help = "Migrates old exports to new ones for a given domain"
 
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option(
             '--dry-run',
             action='store_true',

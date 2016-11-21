@@ -101,14 +101,15 @@ class DomainLoader(DataLoader):
 
         domain_name = domain_dict['name']
         try:
-            Domain.get_by_name(domain_name)
+            existing_domain = Domain.get_by_name(domain_name, strict=True)
         except ResourceNotFound:
             pass
         else:
-            if force:
-                self.stderr.write('Loading data for existing domain: {}'.format(domain_name))
-            else:
-                raise DataExistsException("Domain: {}".format(domain_name))
+            if existing_domain:
+                if force:
+                    self.stderr.write('Loading data for existing domain: {}'.format(domain_name))
+                else:
+                    raise DataExistsException("Domain: {}".format(domain_name))
 
         Domain.get_db().bulk_save([domain_dict], new_edits=False)
         self.stdout.write('Loaded Domain')

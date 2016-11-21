@@ -44,7 +44,7 @@
         ],
         "columns": [
             {
-                "display": "# of total occurence cases where episode_type = patient",
+                "display": "Number of total patients",
                 "type": "field",
                 "field": "doc_id",
                 "aggregation": "count",
@@ -56,7 +56,7 @@
                 "calculate_total": false
             },
             {
-                "display": "# of episode cases where history of att = no, and episode_type = patient",
+                "display": "Number Cat I patients",
                 "type": "field",
                 "field": "cat1",
                 "aggregation": "sum",
@@ -68,7 +68,7 @@
                 "calculate_total": false
             },
             {
-                "display": "# of episode cases where history of att = yes, and episode_type = patient",
+                "display": "Number Cat II patients",
                 "type": "field",
                 "field": "cat2",
                 "aggregation": "sum",
@@ -79,92 +79,8 @@
                 },
                 "calculate_total": false
             },
-            {
-                "display": "# of active patients who sex = male",
-                "type": "field",
-                "field": "male",
-                "aggregation": "sum",
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {
-                },
-                "calculate_total": false
-            },
-            {
-                "display": "# of active patients who sex = female",
-                "type": "field",
-                "field": "female",
-                "aggregation": "sum",
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {
-                },
-                "calculate_total": false
-            },
-            {
-                "display": "# of active patients who sex = transgender",
-                "type": "field",
-                "field": "transgender",
-                "aggregation": "sum",
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {
-                },
-                "calculate_total": false
-            },
-            {
-                "display": "# of active patients who age =< 14",
-                "type": "field",
-                "field": "under_15",
-                "aggregation": "sum",
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {
-                },
-                "calculate_total": false
-            },
-            {
-                "display": "# of active patients who age => 15",
-                "type": "field",
-                "field": "over_15",
-                "aggregation": "sum",
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {
-                },
-                "calculate_total": false
-            },
-            {
-                "display": "# of active patients where HIV status = reactive",
-                "type": "field",
-                "field": "hiv_positive",
-                "aggregation": "sum",
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {
-                },
-                "calculate_total": false
-            },
-            {
-                "display": "# of active patients where diabetes status = diabetic",
-                "type": "field",
-                "field": "diabetic",
-                "aggregation": "sum",
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {
-                },
-                "calculate_total": false
-            },
-            {
-                "display": "# of patients where type of treatment adherence = DOTS, and dots_provider = commcareuser",
+                        {
+                "display": "Total number of DOTS patients",
                 "type": "field",
                 "field": "dots_commcareuser",
                 "aggregation": "sum",
@@ -176,7 +92,7 @@
                 "calculate_total": false
             },
             {
-                "display": "# of patients where type of treatment adherence = DOTS, and dots_provider = commcareuser, and history of att = no",
+                "display": "Number Cat I DOTS",
                 "type": "field",
                 "field": "dots_commcareuser_cat1",
                 "aggregation": "sum",
@@ -188,9 +104,93 @@
                 "calculate_total": false
             },
             {
-                "display": "# of patients where type of treatment adherence = DOTS, and dots_provider = commcareuser, and history of att = yes",
+                "display": "Number Cat II DOTS",
                 "type": "field",
                 "field": "dots_commcareuser_cat2",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number male patients",
+                "type": "field",
+                "field": "male",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number female patients",
+                "type": "field",
+                "field": "female",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number transgender patients",
+                "type": "field",
+                "field": "transgender",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number pediatric patients (14 and under)",
+                "type": "field",
+                "field": "under_15",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of adult patients (15+)",
+                "type": "field",
+                "field": "over_15",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of patients with HIV",
+                "type": "field",
+                "field": "hiv_positive",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of patients with DM",
+                "type": "field",
+                "field": "diabetic",
                 "aggregation": "sum",
                 "sortable": false,
                 "description": null,

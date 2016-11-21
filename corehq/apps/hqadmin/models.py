@@ -81,15 +81,3 @@ class ESRestorePillowCheckpoints(models.Model):
             cls.objects.create(seq=db_seq,
                                checkpoint_id=checkpoint.checkpoint_id,
                                date_updated=date.today())
-
-
-class VCMMigration(models.Model):
-    domain = models.CharField(max_length=255, null=False, unique=True)
-    emailed = models.DateTimeField(null=True)
-    migrated = models.DateTimeField(null=True)
-    notes = models.TextField(null=True)
-
-    @property
-    @memoized
-    def admins(self):
-        return [admin.email or admin.username for admin in WebUser.get_admins_by_domain(self.domain)]

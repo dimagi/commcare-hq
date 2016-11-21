@@ -202,6 +202,7 @@ def _get_shadow_module_view_context(app, module, lang=None):
         return {
             'unique_id': mod.unique_id,
             'name': trans(mod.name, langs),
+            'root_module_id': mod.root_module_id,
             'forms': [{'unique_id': f.unique_id, 'name': trans(f.name, langs)} for f in mod.get_forms()]
         }
 
@@ -554,7 +555,7 @@ def _new_report_module(request, domain, app, name, lang):
         ReportAppConfig(
             report_id=report._id,
             header={lang: report.title},
-            description={lang: report.description},
+            description={lang: report.description} if report.description else None,
         )
         for report in ReportConfiguration.by_domain(domain)
     ]

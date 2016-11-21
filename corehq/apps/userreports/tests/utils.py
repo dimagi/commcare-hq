@@ -9,7 +9,7 @@ from mock import patch
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed import data_sources
-from corehq.apps.userreports.const import UCR_SQL_BACKEND
+from corehq.apps.userreports.const import UCR_SQL_BACKEND, UCR_ES_BACKEND
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 from dimagi.utils.parsing import json_format_datetime
 from pillowtop.feed.interface import Change, ChangeMeta
@@ -102,11 +102,11 @@ run_with_all_ucr_backends = functools.partial(
     run_with_multiple_configs,
     run_configs=[
         RunConfig(
-            settings={'OVERRIDE_UCR_BACKEND': "SQL"},
+            settings={'OVERRIDE_UCR_BACKEND': UCR_SQL_BACKEND},
             post_run=post_run_with_sql_backend
         ),
         RunConfig(
-            settings={'OVERRIDE_UCR_BACKEND': "ES"},
+            settings={'OVERRIDE_UCR_BACKEND': UCR_ES_BACKEND},
             pre_run=pre_run_with_es_backend,
         ),
     ]
