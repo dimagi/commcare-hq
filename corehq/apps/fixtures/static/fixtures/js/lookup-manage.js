@@ -138,19 +138,16 @@ $(function () {
                     }
                     self.original_visibility = self.is_global();
                     self.original_tag = self.tag();
-                    var indicesToRemoveAt = [];
+                    var keptFields = [];
                     for (var i = 0; i < self.fields().length; i += 1) {
                         var field = self.fields()[i];
-                        field.original_tag(field.tag());
-                        field.is_new(false);
-                        if (field.remove() == true){
-                            indicesToRemoveAt.push(i);
+                        if (!field.remove()) {
+                            field.original_tag(field.tag());
+                            field.is_new(false);
+                            keptFields.push(field);
                         }
                     }
-                    for (var j = 0; j < indicesToRemoveAt.length; j += 1){
-                        var index = indicesToRemoveAt[j];
-                        self.fields.remove(self.fields()[index]);
-                    }
+                    self.fields(keptFields);
                 }
             });
             self.saveState('saving');
