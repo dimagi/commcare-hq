@@ -32,21 +32,15 @@
 
                 data = $.extend(data, {
                     onsubmit: function (xml) {
-                        if (options.formplayerEnabled) {
-                            $target.html(alertHtml('Form successfully submitted!', 'alert-success'));
-                            options.onsubmit();
-                        } else {
-                            // post to receiver
-                            $.ajax({
-                                type: 'POST',
-                                url: options.submitUrl,
-                                data: xml.output,
-                                success: function () {
-                                    $target.html(alertHtml('Form successfully submitted!', 'alert-success'));
-                                    options.onsubmit();
-                                },
-                            });
-                        }
+                        $.ajax({
+                            type: 'POST',
+                            url: options.submitUrl,
+                            data: xml.output,
+                            success: function () {
+                                $target.html(alertHtml('Form successfully submitted!', 'alert-success'));
+                                options.onsubmit();
+                            },
+                        });
                     },
                     onerror: function (resp) {
                         $target.html(alertHtml(
@@ -61,7 +55,6 @@
                 data.onLoading = onLoading;
                 data.onLoadingComplete = onLoadingComplete;
                 data.uses_sql_backend = options.uses_sql_backend;
-                data.formplayerEnabled = options.formplayerEnabled;
                 data.post_url = options.submitUrl;
                 data.domain = options.domain;
                 var sess = new WebFormSession(data);

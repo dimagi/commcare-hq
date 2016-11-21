@@ -12,16 +12,11 @@
         GMAPS_API_KEY = '{{ maps_api_key|safe }}'; // maps api is a global variable depended on by touchforms
         var edit_context = {{ edit_context|JSON }};
         var uses_sql_backend = {{ use_sqlite_backend|JSON }};
-        var formplayerEnabled = false;
-        {% if request|toggle_enabled:"USE_FORMPLAYER" %}
-        formplayerEnabled = true;
-        {% endif %}
         $('#edit-container').inlineTouchform({
             formUrl: edit_context.formUrl,
             submitUrl: edit_context.submitUrl,
             sessionData: edit_context.sessionData,
             uses_sql_backend: uses_sql_backend,
-            formplayerEnabled: formplayerEnabled,
             domain: edit_context.domain,
             onsubmit: function () {
                 window.location.href = edit_context.returnUrl;
