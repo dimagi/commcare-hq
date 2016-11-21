@@ -207,7 +207,7 @@ def _get_shadow_module_view_context(app, module, lang=None):
         }
 
     return {
-        'modules': [get_mod_dict(m) for m in app.modules if m.module_type == 'basic'],
+        'modules': [get_mod_dict(m) for m in app.modules if m.module_type in ['basic', 'advanced']],
         'excluded_form_ids': module.excluded_form_ids,
     }
 
