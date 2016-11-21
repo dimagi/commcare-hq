@@ -31,7 +31,11 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             default_properties=[
                 DefaultCaseSearchProperty(
                     property='name',
-                    defaultValue="instance('casedb')/case[@case_id='instance('commcaresession')/session/data/case_id']/some_property")
+                    defaultValue="instance('casedb')/case[@case_id='instance('commcaresession')/session/data/case_id']/some_property"),
+                DefaultCaseSearchProperty(
+                    property='name',
+                    defaultValue="instance('locations')/locations/location[@id=123]/@type",
+                ),
             ],
         )
 

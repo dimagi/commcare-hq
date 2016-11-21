@@ -16,13 +16,14 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     RemoteRequestSession,
     Text,
 )
+from corehq.apps.app_manager.suite_xml.post_process.instances import EntryInstances
 from corehq.apps.app_manager.util import module_offers_search
 from corehq.apps.app_manager.xpath import CaseTypeXpath, InstanceXpath
 from corehq.util.view_utils import absolute_reverse
 
 
 RESULTS_INSTANCE = 'results'  # The name of the instance where search results are stored
-SESSION_INSTANCE = 'querysession'
+SESSION_INSTANCE = 'commcaresession'
 
 
 class QuerySessionXPath(InstanceXpath):
@@ -72,37 +73,13 @@ class RemoteRequestContributor(SuiteContributorByModule):
                         text=Text(locale_id=id_strings.case_search_locale(module)),
                     ),
                 ),
-
-                instances=[
-                    Instance(
-                        id=SESSION_INSTANCE,
-                        src='jr://instance/session'
-                    ),
-                    Instance(
-                        id='casedb',
-                        src='jr://instance/casedb'
-                    ),
-                ],
-
                 session=RemoteRequestSession(
                     queries=[
                         RemoteRequestQuery(
                             url=absolute_reverse('remote_search', args=[domain]),
                             storage_instance=RESULTS_INSTANCE,
                             template='case',
-                            data=([
-                                QueryData(
-                                    key='case_type',
-                                    ref="'{}'".format(module.case_type)
-                                ),
-                                QueryData(
-                                    key='include_closed',
-                                    ref="'{}'".format(module.search_config.include_closed)
-                                )
-                            ] + [
-                                QueryData(key="{}".format(c.property), ref="{}".format(c.defaultValue))
-                                for c in module.search_config.default_properties
-                            ]),
+                            data=_get_query_data(module),
                             prompts=[
                                 QueryPrompt(
                                     key=p.name,
@@ -125,6 +102,10 @@ class RemoteRequestContributor(SuiteContributorByModule):
 
                 stack=Stack(),
             )
+            instances, unknown_instances = EntryInstances.get_all_instances(domain, [
+                datum.ref for datum in _get_query_data(module)
+            ])
+            remote_request.instances = list(instances)
 
             frame = PushFrame()
             frame.add_rewind(QuerySessionXPath('case_id').instance())
@@ -132,3 +113,19 @@ class RemoteRequestContributor(SuiteContributorByModule):
 
             return [remote_request]
         return []
+
+
+def _get_query_data(module):
+    return ([
+        QueryData(
+            key='case_type',
+            ref="'{}'".format(module.case_type)
+        ),
+        QueryData(
+            key='include_closed',
+            ref="'{}'".format(module.search_config.include_closed)
+        )
+    ] + [
+        QueryData(key="{}".format(c.property), ref="{}".format(c.defaultValue))
+        for c in module.search_config.default_properties
+    ])

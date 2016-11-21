@@ -2,7 +2,7 @@
   <remote-request>
     <post url="https://www.example.com/a/test_domain/phone/claim-case/"
           relevant="count(instance('casedb')/casedb/case[@case_id=instance('querysession')/session/data/case_id]) = 0">
-      <data key="case_id" ref="instance('querysession')/session/data/case_id"/>
+      <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
     </post>
     <command id="search_command.m0">
       <display>
@@ -11,8 +11,9 @@
         </text>
       </display>
     </command>
-    <instance id="querysession" src="jr://instance/session"/>
     <instance id="casedb" src="jr://instance/casedb"/>
+    <instance id="locations" src="jr://fixture/commtrack:locations"/>
+    <instance id="commcaresession" src="jr://instance/session"/>
     <session>
       <query url="https://www.example.com/a/test_domain/phone/search/"
              storage-instance="results"
@@ -20,6 +21,7 @@
         <data key="case_type" ref="'case'"/>
         <data key="include_closed" ref="'False'"/>
         <data key="name" ref="instance('casedb')/case[@case_id='instance('commcaresession')/session/data/case_id']/some_property"/>
+        <data key="name" ref="instance('locations')/locations/location[@id=123]/@type"/>
         <prompt key="name">
           <display>
             <text>
@@ -43,7 +45,7 @@
     </session>
     <stack>
       <push>
-        <rewind value="instance('querysession')/session/data/case_id"/>
+        <rewind value="instance('commcaresession')/session/data/case_id"/>
       </push>
     </stack>
   </remote-request>
