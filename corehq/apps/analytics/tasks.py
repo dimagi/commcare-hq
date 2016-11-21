@@ -359,6 +359,10 @@ def track_periodic_data():
     number_of_users = 0
     number_of_domains_with_forms_gt_threshold = 0
 
+    for num_forms in domains_to_forms.values():
+        if num_forms > HUBSPOT_THRESHOLD:
+            number_of_domains_with_forms_gt_threshold += 1
+
     # For each web user, iterate through their domains and select the max number of form submissions and
     # max number of mobile workers
     submit = []
@@ -379,8 +383,6 @@ def track_periodic_data():
                 max_workers = domains_to_mobile_users[domain]
 
         project_spaces_created = ", ".join(get_domains_created_by_user(email))
-        if max_forms > HUBSPOT_THRESHOLD:
-            number_of_domains_with_forms_gt_threshold += 1
 
         user_json = {
             'email': email,
