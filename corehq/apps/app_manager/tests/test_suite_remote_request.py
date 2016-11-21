@@ -1,7 +1,13 @@
 from django.test import SimpleTestCase
 from mock import patch
 
-from corehq.apps.app_manager.models import Application, Module, CaseSearch, CaseSearchProperty
+from corehq.apps.app_manager.models import (
+    Application,
+    Module,
+    CaseSearch,
+    CaseSearchProperty,
+    DefaultCaseSearchProperty
+)
 from corehq.apps.app_manager.tests.util import TestXmlMixin, SuiteMixin
 
 
@@ -21,7 +27,12 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             properties=[
                 CaseSearchProperty(name='name', label={'en': 'Name'}),
                 CaseSearchProperty(name='dob', label={'en': 'Date of birth'})
-            ]
+            ],
+            default_properties=[
+                DefaultCaseSearchProperty(
+                    property='name',
+                    defaultValue="instance('casedb')/case[@case_id='instance('commcaresession')/session/data/case_id']/some_property")
+            ],
         )
 
     def test_remote_request(self):

@@ -19,6 +19,7 @@
              template="case">
         <data key="case_type" ref="'case'"/>
         <data key="include_closed" ref="'False'"/>
+        <data key="name" ref="instance('casedb')/case[@case_id='instance('commcaresession')/session/data/case_id']/some_property"/>
         <prompt key="name">
           <display>
             <text>
