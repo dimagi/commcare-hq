@@ -180,7 +180,9 @@ class RelatedDocExpressionSpec(JsonObject):
     value_expression = DictProperty(required=True)
 
     def configure(self, doc_id_expression, value_expression):
-        if get_db_by_doc_type(self.related_doc_type) is None:
+        non_couch_doc_types = ('Location')
+        if (self.related_doc_type not in non_couch_doc_types
+                and get_db_by_doc_type(self.related_doc_type) is None):
             raise BadSpecError(u'Cannot determine database for document type {}!'.format(self.related_doc_type))
 
         self._doc_id_expression = doc_id_expression
