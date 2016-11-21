@@ -15,15 +15,6 @@
         "filters": [
             {
                 "compare_as_string": false,
-                "datatype": "datetime",
-                "required": false,
-                "display": "Case Open Date",
-                "field": "opened_on",
-                "type": "quarter",
-                "slug": "opened_on"
-            },
-            {
-                "compare_as_string": false,
                 "datatype": "string",
                 "type": "dynamic_choice_list",
                 "slug": "village",
