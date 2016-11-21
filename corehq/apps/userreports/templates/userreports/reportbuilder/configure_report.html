@@ -59,14 +59,17 @@
         <table class="table">
           <thead data-bind="fadeVisible: isAggregationEnabled">
             <tr>
+              <th>&nbsp;</th>
               <th>{% trans 'Indicator' %}</th>
               <th>{% trans 'Format' %}</th>
               <th>&nbsp;</th>
             </tr>
           </thead>
-          <tbody>
-            <!-- ko foreach: selectedColumns -->
+          <tbody data-bind="foreach: selectedColumns, sortableList: selectedColumns">
             <tr>
+              <td>
+                <i class="grip fa fa-arrows-v icon-blue" style="cursor: move"></i>
+              </td>
               <td data-bind="text: label"></td>
               <td>
                 <select data-bind="fadeVisible: $parent.isAggregationEnabled,
@@ -85,8 +88,10 @@
                         data-bind="click: $parent.removeColumn"><i class="fa fa-remove"></i></button>
               </td>
             </tr>
-            <!-- /ko -->
+          </tbody>
+          <tbody>
             <tr>
+              <td>&nbsp;</td>
               <td>
                 <select data-bind="options: columns,
                                    optionsText: 'label',

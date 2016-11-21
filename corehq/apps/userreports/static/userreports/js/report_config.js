@@ -45,6 +45,10 @@ var reportBuilder = function () {
             parent.refreshPreview();
         });
 
+        self.notifyButton = function () {
+            parent.saveButton.fire('change');
+        };
+
         self.serialize = function () {
             return {
                 "column_id": self.columnId,
@@ -260,3 +264,26 @@ var reportBuilder = function () {
     return self;
 
 }();
+
+
+// Copied verbatim from detail-screen-config.js
+// TODO: DRY. Put this in a common place used by both -- COMMCAREHQ?
+ko.bindingHandlers.sortableList = {
+    init: function(element, valueAccessor) {
+        var list = valueAccessor();
+        $(element).sortable({
+            handle: '.grip',
+            cursor: 'move',
+            update: function(event, ui) {
+                var item = ko.dataFor(ui.item.get(0));
+                var position = ko.utils.arrayIndexOf(ui.item.parent().children(), ui.item[0]);
+                if (position >= 0) {
+                    list.remove(item);
+                    list.splice(position, 0, item);  // TODO: Inserts in ViewModel but not in UI!?
+                }
+                ui.item.remove();
+                item.notifyButton();
+            }
+        });
+    }
+};
