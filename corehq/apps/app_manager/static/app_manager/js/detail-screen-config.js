@@ -219,12 +219,26 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
             var self = this;
             self.name = ko.observable(name);
             self.label = ko.observable(label);
+
+            self.name.subscribe(function () {
+                saveButton.fire('change');
+            });
+            self.label.subscribe(function () {
+                saveButton.fire('change');
+            });
         };
 
         var DefaultProperty = function (property, defaultValue) {
             var self = this;
             self.property = ko.observable(property);
             self.defaultValue = ko.observable(defaultValue);
+
+            self.property.subscribe(function () {
+                saveButton.fire('change');
+            });
+            self.defaultValue.subscribe(function () {
+                saveButton.fire('change');
+            });
         };
 
         self.relevant = ko.observable();
@@ -245,9 +259,6 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         } else {
             self.searchProperties.push(new SearchProperty('', ''));
         }
-        self.searchProperties.subscribe(function () {
-            saveButton.fire('change');
-        });
 
         self.addProperty = function () {
             self.searchProperties.push(new SearchProperty('', ''));
@@ -281,9 +292,6 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         } else {
             self.defaultProperties.push(new DefaultProperty('', ''));
         }
-        self.defaultProperties.subscribe(function () {
-            saveButton.fire('change');
-        });
         self.addDefaultProperty = function () {
             self.defaultProperties.push(new DefaultProperty('',''));
         };
@@ -323,10 +331,17 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                 default_properties: self._getDefaultProperties(),
             };
         };
+
         self.includeClosed.subscribe(function () {
             saveButton.fire('change');
         });
         self.default_relevant.subscribe(function () {
+            saveButton.fire('change');
+        });
+        self.searchProperties.subscribe(function () {
+            saveButton.fire('change');
+        });
+        self.defaultProperties.subscribe(function () {
             saveButton.fire('change');
         });
     };
