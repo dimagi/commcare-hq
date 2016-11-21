@@ -1,3 +1,4 @@
+import sys
 from urllib import urlencode
 from urllib2 import urlopen
 
@@ -89,7 +90,7 @@ class SQLICDSBackend(SQLSMSBackend):
         assert begin_response != -1
         end_response = response[begin_response:].find('&')
         assert end_response != -1
-        return respone[begin_response:end_response]
+        return response[begin_response:end_response]
 
     def handle_error(self, response_code):
         exception_message = "Error with ICDS backend. Http respone code: %s, %s" % (
@@ -124,6 +125,6 @@ class SQLICDSBackend(SQLSMSBackend):
             msg = "Error sending message from backend: '{}'\n\n{}".format(self.pk, str(e))
             raise BackendProcessingException(msg), None, sys.exc_info()[2]
 
-        response_code = get_response_code(response)
+        response_code = self.get_response_code(response)
         if response_code != '000':
             self.handle_error(response_code)
