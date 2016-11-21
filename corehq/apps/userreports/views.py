@@ -30,6 +30,7 @@ from corehq.apps.analytics.tasks import update_hubspot_properties
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
+from corehq.apps.userreports.reports.builder.columns import ColumnOption
 from corehq.util import reverse
 from corehq.util.quickcache import quickcache
 from couchexport.export import export_from_tables
@@ -583,7 +584,7 @@ class EditReportInBuilder(View):
         raise Http404("Report was not created by the report builder")
 
 
-def to_report_column(column):
+def to_report_column(column, index):
     """
     column is the JSON that we get when saving or previewing a report. Return a column spec we can use to create a
     ReportConfiguration.
@@ -597,13 +598,12 @@ def to_report_column(column):
     #         u'is_group_by_column': False,
     #         u'aggregation': None,
     #     }
-    return {
-        'aggregation': column.get('aggregation') or 'simple',
-        'field': column['column_id'],
-        'display': column['label'],
-        'type': 'field',
-        'format': 'default',
-    }
+
+    # Some wrangling in order to reused ColumnOption
+    reverse_map = {v: k for k, v in ColumnOption.aggregation_map.items()}
+    aggregation = reverse_map[column.get('aggregation') or 'simple']
+    column_option = ColumnOption('unused', 'unused', column['column_id'], not column['is_numeric'])
+    return column_option.to_column_dicts(index, column['label'], aggregation)[0]
 
 
 class ConfigureReport(ReportBuilderView):
@@ -791,7 +791,7 @@ class ConfigureReport(ReportBuilderView):
                 config_id=data_source_config_id,
                 title=report_name,
                 aggregation_columns=aggregation_columns,
-                columns=[to_report_column(c) for c in report_data['columns']],
+                columns=[to_report_column(c, i) for i, c in enumerate(report_data['columns'])],
                 filters=[],  # TODO: report_data['user_filters'] + report_data['default_filters']
                 configured_charts=get_report_charts(report_data),
                 report_meta=ReportMeta(
@@ -843,7 +843,7 @@ class ReportPreview(BaseDomainView):
             title='{}_{}_{}'.format(TEMP_REPORT_PREFIX, domain, data_source),
             description='',
             aggregation_columns=aggregation_columns,
-            columns=[to_report_column(c) for c in report_data['columns']],
+            columns=[to_report_column(c, i) for i, c in enumerate(report_data['columns'])],
             report_meta=ReportMeta(created_by_builder=True),
         )  # is None if report configuration doesn't make sense
         if table:
