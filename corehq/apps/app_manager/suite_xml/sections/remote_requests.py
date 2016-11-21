@@ -4,7 +4,6 @@ from corehq.apps.app_manager.suite_xml.sections.details import DetailsHelper
 from corehq.apps.app_manager.suite_xml.xml_models import (
     Command,
     Display,
-    Instance,
     PushFrame,
     QueryData,
     QueryPrompt,
@@ -34,6 +33,111 @@ class QuerySessionXPath(InstanceXpath):
         return 'session/data/{}'.format(self)
 
 
+class RemoteRequestFactory(object):
+    def __init__(self, domain, app, module):
+        self.domain = domain
+        self.app = app
+        self.module = module
+
+    def build_remote_request(self):
+        return RemoteRequest(
+            post=self._build_remote_request_post(),
+            command=self._build_command(),
+            instances=self._build_instances(),
+            session=self._build_session(),
+            stack=self._build_stack(),
+        )
+
+    def _build_remote_request_post(self):
+        return RemoteRequestPost(
+                url=absolute_reverse('claim_case', args=[self.domain]),
+                relevant=self.module.search_config.relevant,
+                data=[
+                    QueryData(
+                        key='case_id',
+                        ref=QuerySessionXPath('case_id').instance(),
+                        # e.g. instance('querysession')/session/data/case_id
+                    ),
+                ]
+            )
+
+    def _build_command(self):
+        return Command(
+            id=id_strings.search_command(self.module),
+            display=Display(
+                text=Text(locale_id=id_strings.case_search_locale(self.module)),
+            ),
+        )
+
+    def _build_instances(self):
+        instances, unknown_instances = EntryInstances.get_all_instances(self.domain, [
+            datum.ref for datum in self._get_remote_request_query_datums()
+        ])
+        return list(instances)
+
+    def _build_session(self):
+        return RemoteRequestSession(
+            queries=self._build_remote_request_queries(),
+            data=self._build_remote_request_datums(),
+        )
+
+    def _build_remote_request_queries(self):
+        return [
+            RemoteRequestQuery(
+                url=absolute_reverse('remote_search', args=[self.app.domain]),
+                storage_instance=RESULTS_INSTANCE,
+                template='case',
+                data=self._get_remote_request_query_datums(),
+                prompts=self._build_query_prompts()
+            )
+        ]
+
+    def _build_remote_request_datums(self):
+        details_helper = DetailsHelper(self.app)
+        return [SessionDatum(
+            id='case_id',
+            nodeset=(CaseTypeXpath(self.module.case_type)
+                     .case(instance_name=RESULTS_INSTANCE)),
+            value='./@case_id',
+            detail_select=details_helper.get_detail_id_safe(self.module, 'case_short'),
+            detail_confirm=details_helper.get_detail_id_safe(self.module, 'case_long'),
+        )]
+
+    def _get_remote_request_query_datums(self):
+        default_query_datums = [
+            QueryData(
+                key='case_type',
+                ref="'{}'".format(self.module.case_type)
+            ),
+            QueryData(
+                key='include_closed',
+                ref="'{}'".format(self.module.search_config.include_closed)
+            )
+        ]
+        extra_query_datums = [
+            QueryData(key="{}".format(c.property), ref="{}".format(c.defaultValue))
+            for c in self.module.search_config.default_properties
+        ]
+        return default_query_datums + extra_query_datums
+
+    def _build_query_prompts(self):
+        return [
+            QueryPrompt(
+                key=p.name,
+                display=Display(
+                    text=Text(locale_id=id_strings.search_property_locale(self.module, p.name)),
+                ),
+            ) for p in self.module.search_config.properties
+        ]
+
+    def _build_stack(self):
+        stack = Stack()
+        frame = PushFrame()
+        frame.add_rewind(QuerySessionXPath('case_id').instance())
+        stack.add_frame(frame)
+        return stack
+
+
 class RemoteRequestContributor(SuiteContributorByModule):
     """
     Adds a remote-request node, which sets the URL and query details for
@@ -47,85 +151,7 @@ class RemoteRequestContributor(SuiteContributorByModule):
     .. _CommCare 2.0 Suite Definition: https://github.com/dimagi/commcare/wiki/Suite20#remote-request
 
     """
-
     def get_module_contributions(self, module):
         if module_offers_search(module):
-            domain = self.app.domain
-
-            details_helper = DetailsHelper(self.app)
-
-            remote_request = RemoteRequest(
-                post=RemoteRequestPost(
-                    url=absolute_reverse('claim_case', args=[domain]),
-                    relevant=module.search_config.relevant,
-                    data=[
-                        QueryData(
-                            key='case_id',
-                            ref=QuerySessionXPath('case_id').instance(),
-                            # e.g. instance('querysession')/session/data/case_id
-                        ),
-                    ]
-                ),
-
-                command=Command(
-                    id=id_strings.search_command(module),
-                    display=Display(
-                        text=Text(locale_id=id_strings.case_search_locale(module)),
-                    ),
-                ),
-                session=RemoteRequestSession(
-                    queries=[
-                        RemoteRequestQuery(
-                            url=absolute_reverse('remote_search', args=[domain]),
-                            storage_instance=RESULTS_INSTANCE,
-                            template='case',
-                            data=_get_query_data(module),
-                            prompts=[
-                                QueryPrompt(
-                                    key=p.name,
-                                    display=Display(
-                                        text=Text(locale_id=id_strings.search_property_locale(module, p.name)),
-                                    ),
-                                ) for p in module.search_config.properties
-                            ]
-                        )
-                    ],
-                    data=[SessionDatum(
-                        id='case_id',
-                        nodeset=(CaseTypeXpath(module.case_type)
-                                 .case(instance_name=RESULTS_INSTANCE)),
-                        value='./@case_id',
-                        detail_select=details_helper.get_detail_id_safe(module, 'case_short'),
-                        detail_confirm=details_helper.get_detail_id_safe(module, 'case_long'),
-                    )],
-                ),
-
-                stack=Stack(),
-            )
-            instances, unknown_instances = EntryInstances.get_all_instances(domain, [
-                datum.ref for datum in _get_query_data(module)
-            ])
-            remote_request.instances = list(instances)
-
-            frame = PushFrame()
-            frame.add_rewind(QuerySessionXPath('case_id').instance())
-            remote_request.stack.add_frame(frame)
-
-            return [remote_request]
+            return [RemoteRequestFactory(self.app.domain, self.app, module).build_remote_request()]
         return []
-
-
-def _get_query_data(module):
-    return ([
-        QueryData(
-            key='case_type',
-            ref="'{}'".format(module.case_type)
-        ),
-        QueryData(
-            key='include_closed',
-            ref="'{}'".format(module.search_config.include_closed)
-        )
-    ] + [
-        QueryData(key="{}".format(c.property), ref="{}".format(c.defaultValue))
-        for c in module.search_config.default_properties
-    ])
