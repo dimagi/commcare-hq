@@ -73,7 +73,7 @@ class ConfigurableReportEsDataSource(ConfigurableReportDataSourceMixin, ReportDa
                 if report_column.type == 'expanded':
                     # todo aggregation only supports # of docs matching
                     counter = 0
-                    for sub_col in get_expanded_column_config(self.config, report_column, 'en').columns:
+                    for sub_col in get_expanded_column_config(self.config, report_column, self.lang).columns:
                         ui_col = report_column.column_id + "-" + str(counter)
                         # todo move interpretation of data into column config
                         if row[report_column.column_id] == sub_col.expand_value:
