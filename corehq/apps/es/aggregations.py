@@ -263,6 +263,22 @@ class MinAggregation(SumAggregation):
     type = "min"
 
 
+class MaxAggregation(SumAggregation):
+    type = "max"
+
+
+class AvgAggregation(SumAggregation):
+    type = "avg"
+
+
+class ValueCountAggregation(SumAggregation):
+    type = "value_count"
+
+
+class CardinalityAggregation(SumAggregation):
+    type = "cardinality"
+
+
 class MissingAggregation(Aggregation):
     """
     A field data based single bucket aggregation, that creates a bucket of all

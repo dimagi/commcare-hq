@@ -32,6 +32,7 @@ from corehq.apps.userreports.columns import ColumnConfig, get_expanded_column_co
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.userreports.transforms.factory import TransformFactory
 from corehq.apps.userreports.util import localize
+from corehq.apps.es import aggregations
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -45,6 +46,18 @@ SQLAGG_COLUMN_MAP = {
     'sum': SumColumn,
     'simple': SimpleColumn,
     'year': YearColumn,
+}
+
+ES_AGG_MAP = {
+    'avg': aggregations.AvgAggregation,
+    'count': aggregations.ValueCountAggregation,
+    'count_unique': aggregations.CardinalityAggregation,
+    'min': aggregations.MinAggregation,
+    'max': aggregations.MaxAggregation,
+    'sum': aggregations.SumAggregation,
+    'simple': lambda x, y: None,  # this is not an aggregation
+    # 'month': MonthColumn,
+    # 'year': YearColumn,
 }
 
 
@@ -71,6 +84,9 @@ class BaseReportColumn(JsonObject):
         return [self.column_id]
 
     def get_column_config(self, data_source_config, lang):
+        raise NotImplementedError('subclasses must override this')
+
+    def aggregations(self, data_source_config, lang):
         raise NotImplementedError('subclasses must override this')
 
 
@@ -148,6 +164,9 @@ class FieldColumn(ReportColumn):
                 help_text=self.description
             )
         ])
+
+    def aggregations(self, data_source_config, lang):
+        return filter(None, [ES_AGG_MAP[self.aggregation](self.column_id, self.field)])
 
     def get_query_column_ids(self):
         return [self.column_id]

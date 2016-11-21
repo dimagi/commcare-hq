@@ -143,14 +143,7 @@ class ConfigurableReportEsDataSource(ConfigurableReportDataSourceMixin, ReportDa
 
         aggregations = []
         for col in self.top_level_columns:
-            if col.type == 'expanded':
-                aggregations.extend(col.aggregations(self.config, col))
-            elif col.type == 'field':
-                # todo push this to the column
-                if col.aggregation == 'sum':
-                    aggregations.append(SumAggregation(col.column_id, col.field))
-                elif col.aggregation == 'min':
-                    aggregations.append(MinAggregation(col.column_id, col.field))
+            aggregations += col.aggregations(self.config, self.lang)
 
         for agg in aggregations:
             top_agg = top_agg.aggregation(agg)
