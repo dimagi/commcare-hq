@@ -8,7 +8,7 @@ from dimagi.utils.couch.undo import DELETED_SUFFIX
 from couchexport.models import SavedExportSchema
 from toggle.shortcuts import toggle_enabled, clear_toggle_cache, set_toggle
 
-from corehq.toggles import NEW_EXPORTS, NAMESPACE_DOMAIN
+from corehq.toggles import OLD_EXPORTS, NAMESPACE_DOMAIN
 from corehq.util.test_utils import TestFileMixin, generate_cases
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.export.models import (
@@ -65,16 +65,16 @@ class TestMigrateDomain(TestCase):
     def setUp(self):
         self.project = Domain(name=self.domain)
         self.project.save()
-        clear_toggle_cache(NEW_EXPORTS.slug, self.domain, namespace=NAMESPACE_DOMAIN)
-        set_toggle(NEW_EXPORTS.slug, self.domain, False, namespace=NAMESPACE_DOMAIN)
+        clear_toggle_cache(OLD_EXPORTS.slug, self.domain, namespace=NAMESPACE_DOMAIN)
+        set_toggle(OLD_EXPORTS.slug, self.domain, False, namespace=NAMESPACE_DOMAIN)
 
     def tearDown(self):
         self.project.delete()
 
     def test_toggle_turned_on(self, _):
-        self.assertFalse(toggle_enabled(NEW_EXPORTS.slug, self.domain, namespace=NAMESPACE_DOMAIN))
+        self.assertFalse(toggle_enabled(OLD_EXPORTS.slug, self.domain, namespace=NAMESPACE_DOMAIN))
         migrate_domain(self.domain)
-        self.assertTrue(toggle_enabled(NEW_EXPORTS.slug, self.domain, namespace=NAMESPACE_DOMAIN))
+        self.assertTrue(toggle_enabled(OLD_EXPORTS.slug, self.domain, namespace=NAMESPACE_DOMAIN))
 
 
 class TestIsFormStockExportQuestion(SimpleTestCase):

@@ -831,13 +831,6 @@ GRID_MENUS = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Grid+Views',
 )
 
-NEW_EXPORTS = StaticToggle(
-    'new_exports',
-    'Use new backend export infrastructure',
-    TAG_PRODUCT_CORE,
-    [NAMESPACE_DOMAIN]
-)
-
 OLD_EXPORTS = StaticToggle(
     'old_exports',
     'Use old backend export infrastructure',
