@@ -108,7 +108,6 @@ class TestUpdatePatientRepeater(ENikshayRepeaterTestBase):
         )
         self.repeater.white_listed_case_types = ['person']
         self.repeater.save()
-        self.create_case_structure()
 
     def _update_person(self, case_properties):
         return self.create_case(
@@ -123,6 +122,7 @@ class TestUpdatePatientRepeater(ENikshayRepeaterTestBase):
 
     @run_with_all_backends
     def test_trigger(self):
+        self.create_case_structure()
         self._update_person({'phone_number': '999999999', })
         self.assertEqual(0, len(self.repeat_records().all()))
 
@@ -139,6 +139,7 @@ class TestUpdatePatientRepeater(ENikshayRepeaterTestBase):
     def test_trigger_multiple_cases(self):
         """Submitting a form with noop case blocks was throwing an exception
         """
+        self.create_case_structure()
         self._create_99dots_registered_case()
 
         empty_case = CaseStructure(
@@ -154,6 +155,14 @@ class TestUpdatePatientRepeater(ENikshayRepeaterTestBase):
 
         self.factory.create_or_update_cases([empty_case, person_case])
         self.assertEqual(1, len(self.repeat_records().all()))
+
+    @run_with_all_backends
+    def test_create_person_no_episode(self):
+        """On registration this was failing hard if a phone number was added but no episode was created
+        http://manage.dimagi.com/default.asp?241290#1245284
+        """
+        self.create_case(self.person)
+        self.assertEqual(0, len(self.repeat_records().all()))
 
 
 class TestRegisterPatientPayloadGenerator(ENikshayCaseStructureMixin, TestCase):
