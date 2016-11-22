@@ -1,4 +1,3 @@
-import sys
 from urllib import urlencode
 from urllib2 import urlopen
 
@@ -6,7 +5,6 @@ from crispy_forms import layout as crispy
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
-from corehq.apps.sms.mixin import BackendProcessingException
 from corehq.apps.sms.models import SQLSMSBackend
 from corehq.apps.sms.forms import BackendForm
 from corehq.apps.sms.util import strip_plus
@@ -119,12 +117,8 @@ class SQLICDSBackend(SQLSMSBackend):
         }
         url_params = urlencode(params)
         url = 'https://smsgw.sms.gov.in/failsafe/HttpLink?%s' % url_params
-        try:
-            response = urlopen("%s?%s" % (url, url_params),
-                               timeout=settings.SMS_GATEWAY_TIMEOUT).read()
-        except Exception as e:
-            msg = "Error sending message from backend: '{}'\n\n{}".format(self.pk, str(e))
-            raise BackendProcessingException(msg), None, sys.exc_info()[2]
+        response = urlopen("%s?%s" % (url, url_params),
+                           timeout=settings.SMS_GATEWAY_TIMEOUT).read()
 
         response_code = self.get_response_code(response)
         if response_code != '000':
