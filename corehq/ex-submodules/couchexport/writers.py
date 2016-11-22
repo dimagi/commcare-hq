@@ -297,7 +297,7 @@ class ZippedExportWriter(OnDiskExportWriter):
         self.file.seek(0)
 
     def _get_archive_filename(self, name):
-        return os.path.join(self.archive_basepath, '{}{}'.format(name, self.table_file_extension))
+        return os.path.join(self.archive_basepath, u'{}{}'.format(name, self.table_file_extension))
 
 
 class CsvExportWriter(ZippedExportWriter):
