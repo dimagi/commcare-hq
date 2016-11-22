@@ -89,9 +89,15 @@ class BaseReportColumn(JsonObject):
         raise NotImplementedError('subclasses must override this')
 
     def aggregations(self, data_source_config, lang):
+        """
+        Returns a list of aggregations to be used in an ES query
+        """
         raise NotImplementedError('subclasses must override this')
 
     def get_es_data(self, row, data_source_config, lang):
+        """
+        Returns a dictionary of the data of this column from an ES query
+        """
         raise NotImplementedError('subclasses must override this')
 
 
