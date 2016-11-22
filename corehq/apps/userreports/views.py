@@ -57,6 +57,7 @@ from corehq.apps.style.decorators import (
     use_datatables,
     use_jquery_ui,
     use_angular_js,
+    use_nvd3,
 )
 from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source, _clean_table_name
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
@@ -615,6 +616,8 @@ class ConfigureReport(ReportBuilderView):
     existing_report = None
 
     @use_jquery_ui
+    @use_datatables
+    @use_nvd3
     def dispatch(self, request, *args, **kwargs):
         return super(ConfigureReport, self).dispatch(request, *args, **kwargs)
 
