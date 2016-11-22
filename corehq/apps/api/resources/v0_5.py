@@ -4,7 +4,7 @@ from tastypie import http
 from tastypie.authentication import ApiKeyAuthentication
 from tastypie.authorization import ReadOnlyAuthorization
 from tastypie.exceptions import BadRequest, ImmediateHttpResponse, NotFound
-from tastypie.http import HttpForbidden
+from tastypie.http import HttpForbidden, HttpUnauthorized
 from tastypie.paginator import Paginator
 from tastypie.resources import convert_post_to_patch, ModelResource, Resource
 from tastypie.utils import dict_strip_unicode_keys
@@ -783,6 +783,17 @@ class UserDomainsResource(Resource):
         authentication = ApiKeyAuthentication()
         object_class = UserDomain
         include_resource_uri = False
+
+    def dispatch_list(self, request, **kwargs):
+        try:
+            return super(UserDomainsResource, self).dispatch_list(request, **kwargs)
+        except ImmediateHttpResponse as immediate_http_response:
+            if isinstance(immediate_http_response.response, HttpUnauthorized):
+                raise ImmediateHttpResponse(
+                    response=HttpUnauthorized(content='Username or API Key is incorrect')
+                )
+            else:
+                raise
 
     def obj_get_list(self, bundle, **kwargs):
         return self.get_object_list(bundle.request)

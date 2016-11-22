@@ -19,7 +19,7 @@
                 "required": false,
                 "display": "Case Open Date",
                 "field": "opened_on",
-                "type": "quarter",
+                "type": "date",
                 "slug": "opened_on"
             },
             {

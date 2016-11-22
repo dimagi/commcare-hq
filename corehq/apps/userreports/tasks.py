@@ -4,7 +4,7 @@ from celery.task import task
 from couchdbkit import ResourceConflict
 from django.utils.translation import ugettext as _
 from corehq import toggles
-from corehq.apps.userreports.const import UCR_ES_BACKEND, UCR_SQL_BACKEND
+from corehq.apps.userreports.const import UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_CELERY_QUEUE
 from corehq.apps.userreports.document_stores import get_document_store
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.apps.userreports.models import (
@@ -39,7 +39,7 @@ def _build_indicators(config, document_store, relevant_ids, resume_helper):
         resume_helper.add_id(last_id)
 
 
-@task(queue='ucr_queue', ignore_result=True)
+@task(queue=UCR_CELERY_QUEUE, ignore_result=True)
 def rebuild_indicators(indicator_config_id, initiated_by=None):
     config = _get_config_by_id(indicator_config_id)
     success = _('Your UCR table {} has finished rebuilding').format(config.table_id)
@@ -58,7 +58,7 @@ def rebuild_indicators(indicator_config_id, initiated_by=None):
         _iteratively_build_table(config)
 
 
-@task(queue='ucr_queue', ignore_result=True, acks_late=True)
+@task(queue=UCR_CELERY_QUEUE, ignore_result=True, acks_late=True)
 def resume_building_indicators(indicator_config_id, initiated_by=None):
     config = _get_config_by_id(indicator_config_id)
     success = _('Your UCR table {} has finished rebuilding').format(config.table_id)
@@ -105,7 +105,7 @@ def _iteratively_build_table(config, last_id=None, resume_helper=None):
                 current_config.save()
 
 
-@task(queue='ucr_queue')
+@task(queue=UCR_CELERY_QUEUE)
 def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column, sort_order, params):
     from corehq.apps.userreports.laboratory.experiment import UCRExperiment
 

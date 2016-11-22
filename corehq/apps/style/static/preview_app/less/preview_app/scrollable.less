@@ -1,11 +1,18 @@
 .scrollable-container {
+  transition: width 1s;
   overflow-x: hidden;
   overflow-y: scroll;
-  max-height: 363px;
-  width: 265px;
+  // 15px is the approximate width of the scrollbar. This is how we hide it
+  width: @preview-phone-width + 15px;
   &:hover {
     cursor: -webkit-grab;
     cursor: -moz-grab;
     cursor: grab;
+  }
+}
+
+.preview-tablet-mode {
+  .scrollable-container {
+    width: @preview-tablet-width + 15px;
   }
 }
