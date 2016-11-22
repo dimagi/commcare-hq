@@ -279,9 +279,8 @@ def _copy_form_properties(domain, sql_form, couch_form):
     else:
         sql_form.state = doc_type_to_state[couch_form.doc_type]
 
-    if couch_form.is_deleted:
-        sql_form.deletion_id = couch_form.deletion_id
-        sql_form.deleted_on = couch_form.deletion_date
+    sql_form.deletion_id = couch_form.deletion_id
+    sql_form.deleted_on = couch_form.deletion_date
 
     if couch_form.is_error:
         # doc_type != XFormInstance (includes deleted)
