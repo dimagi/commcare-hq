@@ -36,9 +36,9 @@
 {% block page_content %}
     <table id="data-dictionary-table" class="table">
         <thead>
-            <th>Case Property</th>
-            <th>Type</th>
-            <th>Description</th>
+            <th>{% trans "Case Property" %}</th>
+            <th>{% trans "Type" %}</th>
+            <th>{% trans "Description" %}</th>
         </thead>
         <tbody data-bind="foreach: activeCaseTypeData">
             <tr>
