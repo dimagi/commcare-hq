@@ -75,11 +75,15 @@ FormplayerFrontend.module("Apps.Views", function (Views, FormplayerFrontend, Bac
             this.appId = options.appId;
         },
         templateHelpers: function() {
+            var currentApp = FormplayerFrontend.request("appselect:getApp", this.appId),
+                appName;
+            appName = currentApp.get('name');
             return {
                 showIncompleteForms: function () {
                     return FormplayerFrontend
                         .request('getAppDisplayProperties')['cc-show-incomplete'] === 'yes';
                 },
+                appName: appName,
             };
         },
         startApp: function(e) {
