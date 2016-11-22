@@ -1107,7 +1107,7 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
              # WARNING: Django 1.7 passes this in automatically. do not remove
              html_email_template_name=None,
              use_https=False, token_generator=default_token_generator,
-             from_email=None, request=None):
+             from_email=None, request=None, **kwargs):
         """
         Generates a one-use only link for resetting password and sends to the
         user.
