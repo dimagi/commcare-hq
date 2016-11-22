@@ -96,7 +96,7 @@ class SQLICDSBackend(SQLSMSBackend):
         exception_message = "Error with ICDS backend. Http respone code: %s, %s" % (
             response_code, ERROR_CODES[response_code]
         )
-        if response_code in RETRY_ERROR_CODES:
+        if response_code in RETRY_ERROR_CODES or response_code not in ERROR_CODES:
             raise ICDSException(exception_message)
 
     def send(self, msg, orig_phone_number=None, *args, **kwargs):
