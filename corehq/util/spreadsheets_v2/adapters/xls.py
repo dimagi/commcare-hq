@@ -1,7 +1,8 @@
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import datetime, time, date
 import xlrd
-from corehq.util.spreadsheets_v2 import Worksheet, Cell, Workbook, SpreadsheetFileError
+from corehq.util.spreadsheets_v2 import Worksheet, Cell, Workbook, SpreadsheetFileInvalidError, \
+    SpreadsheetFileNotFound, SpreadsheetFileEncrypted
 
 
 @contextmanager
@@ -10,7 +11,12 @@ def open_xls_workbook(filename):
         with xlrd.open_workbook(filename) as xlrd_workbook:
             yield _XLSWorkbookAdaptor(xlrd_workbook).to_workbook()
     except xlrd.XLRDError as e:
-        raise SpreadsheetFileError(e.message)
+        if e.message == u'Workbook is encrypted':
+            raise SpreadsheetFileEncrypted(e.message)
+        else:
+            raise SpreadsheetFileInvalidError(e.message)
+    except IOError as e:
+        raise SpreadsheetFileNotFound(e.message)
 
 
 class _XLSWorksheetAdaptor(object):
@@ -25,7 +31,13 @@ class _XLSWorksheetAdaptor(object):
             else:
                 return cell.value
         elif cell.ctype == xlrd.XL_CELL_DATE:
-            return datetime(*xlrd.xldate_as_tuple(cell.value, self._sheet.book.datemode))
+            datetime_tuple = xlrd.xldate_as_tuple(cell.value, self._sheet.book.datemode)
+            if datetime_tuple[:3] == (0, 0, 0):
+                return time(*datetime_tuple[3:])
+            elif datetime_tuple[3:] == (0, 0, 0):
+                return date(*datetime_tuple[:3])
+            else:
+                return datetime(*datetime_tuple)
         elif cell.ctype == xlrd.XL_CELL_BOOLEAN:
             return bool(cell.value)
         elif cell.ctype == xlrd.XL_CELL_EMPTY:

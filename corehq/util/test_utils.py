@@ -504,3 +504,20 @@ def update_case(domain, case_id, case_properties, user_id=None):
     post_case_blocks(
         [CaseBlock(**kwargs).as_xml()], domain=domain
     )
+
+
+def make_make_path(current_directory):
+    """
+    returns a utility function for generating absolute paths
+    from paths relative to `current_directory`
+
+    example:
+
+        _make_path = make_make_path(__file__)
+        _make_path('files', 'myfile.txt')
+    """
+
+    def _make_path(*args):
+        return os.path.join(os.path.dirname(current_directory), *args)
+
+    return _make_path

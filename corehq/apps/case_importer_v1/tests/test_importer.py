@@ -1,78 +1,18 @@
-import mock
-from django.test import TestCase, SimpleTestCase
-from django.test.utils import override_settings
+from django.test import TestCase
 from casexml.apps.case.mock import CaseFactory, CaseStructure
 from casexml.apps.case.tests.util import delete_all_cases
-
+from corehq.apps.case_importer_v1.const import ImportErrors
+from corehq.apps.case_importer_v1.tasks import bulk_import_async, do_import
+from corehq.apps.case_importer_v1.util import ImporterConfig, WorksheetWrapper
 from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
-from corehq.apps.export.models import (
-    CaseExportDataSchema,
-    ExportGroupSchema,
-    PathNode,
-    ExportItem,
-    MAIN_TABLE,
-)
-from corehq.apps.case_importer_v1.exceptions import ImporterError
-from corehq.apps.case_importer_v1.tasks import do_import, bulk_import_async
-from corehq.apps.case_importer_v1.util import ImporterConfig, is_valid_owner, get_case_properties_for_case_type
 from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.tests.util import delete_all_locations
-from corehq.apps.users.models import WebUser, CommCareUser, DomainMembership
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.apps.users.models import WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-
-from .const import ImportErrors
-
-
-class ExcelFileFake(object):
-    """
-    Provides the minimal API of ExcelFile used by the importer
-    """
-    class Workbook(object):
-
-        def __init__(self):
-            self._datemode = 0
-
-        @property
-        def datemode(self):
-            return self._datemode
-
-    def __init__(self, header_columns=None, num_rows=0, has_errors=False, row_generator=None):
-        self.header_columns = header_columns or []
-        self.num_rows = num_rows
-        self.row_generator = row_generator or default_row_generator
-        self.workbook = self.Workbook()
-
-    def get_header_columns(self):
-        return self.header_columns
-
-    @property
-    def max_row(self):
-        return self.num_rows
-
-    def iter_rows(self):
-        for i in range(self.max_row):
-            yield self._get_row(i)
-
-    def _get_row(self, index):
-        return self.row_generator(self, index)
-
-
-def default_row_generator(excel_file, index):
-    # by default, just return [propertyname-rowid] for every cell
-    return [u'{col}-{row}'.format(row=index, col=col) for col in excel_file.header_columns]
-
-
-def blank_row_generator(excel_file, index):
-    return [''.format(row=index, col=col) for col in excel_file.header_columns]
-
-
-def id_match_generator(id):
-    def match(excel_file, index):
-        return [id] + ['{col}-{row}'.format(row=index, col=col) for col in excel_file.header_columns[1:]]
-    return match
+from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.util.spreadsheets_v2 import make_worksheet
 
 
 class ImporterTest(TestCase):
@@ -81,7 +21,6 @@ class ImporterTest(TestCase):
         super(ImporterTest, self).setUp()
         self.domain = create_domain("importer-test").name
         self.default_case_type = 'importer-test-casetype'
-        self.default_headers = ['case_id', 'age', 'sex', 'location']
 
         self.couch_user = WebUser.create(None, "test", "foobar")
         self.couch_user.add_domain_membership(self.domain, is_admin=True)
@@ -100,9 +39,9 @@ class ImporterTest(TestCase):
         LocationType.objects.all().delete()
         super(ImporterTest, self).tearDown()
 
-    def _config(self, col_names=None, search_column=None, case_type=None,
-                search_field='case_id', named_columns=False, create_new_cases=True):
-        col_names = col_names or self.default_headers
+    def _config(self, col_names, search_column=None, case_type=None,
+                search_field='case_id', create_new_cases=True):
+        col_names = col_names
         case_type = case_type or self.default_case_type
         search_column = search_column or col_names[0]
         return ImporterConfig(
@@ -113,7 +52,7 @@ class ImporterTest(TestCase):
             custom_fields=col_names,
             search_column=search_column,
             search_field=search_field,
-            named_columns=named_columns,
+            named_columns=True,
             create_new_cases=create_new_cases,
             key_column='',
             value_column='',
@@ -121,23 +60,22 @@ class ImporterTest(TestCase):
 
     @run_with_all_backends
     def testImportNone(self):
-        res = bulk_import_async(self._config(), self.domain, None)
+        res = bulk_import_async(self._config(['anything']), self.domain, None)
         self.assertEqual('Sorry, your session has expired. Please start over and try again.',
                          unicode(res['errors']))
         self.assertEqual(0, len(get_case_ids_in_domain(self.domain)))
 
     @run_with_all_backends
-    def testImporterErrors(self):
-        with mock.patch('corehq.apps.case_importer_v1.tasks.importer_util.get_spreadsheet', side_effect=ImporterError()):
-            res = bulk_import_async(self._config(), self.domain, None)
-            self.assertEqual('The session containing the file you uploaded has expired - please upload a new one.',
-                             unicode(res['errors']))
-            self.assertEqual(0, len(get_case_ids_in_domain(self.domain)))
-
-    @run_with_all_backends
     def testImportBasic(self):
-        config = self._config(self.default_headers)
-        file = ExcelFileFake(header_columns=self.default_headers, num_rows=5)
+        config = self._config(['case_id', 'age', 'sex', 'location'])
+        file = make_worksheet_wrapper(
+            ['case_id', 'age', 'sex', 'location'],
+            [u'case_id-0', u'age-0', u'sex-0', u'location-0'],
+            [u'case_id-1', u'age-1', u'sex-1', u'location-1'],
+            [u'case_id-2', u'age-2', u'sex-2', u'location-2'],
+            [u'case_id-3', u'age-3', u'sex-3', u'location-3'],
+            [u'case_id-4', u'age-4', u'sex-4', u'location-4'],
+        )
         res = do_import(file, config, self.domain)
         self.assertEqual(5, res['created_count'])
         self.assertEqual(0, res['match_count'])
@@ -151,27 +89,36 @@ class ImporterTest(TestCase):
             self.assertEqual(self.couch_user._id, case.user_id)
             self.assertEqual(self.couch_user._id, case.owner_id)
             self.assertEqual(self.default_case_type, case.type)
-            for prop in self.default_headers[1:]:
+            for prop in ['age', 'sex', 'location']:
                 self.assertTrue(prop in case.get_case_property(prop))
                 self.assertFalse(case.get_case_property(prop) in properties_seen)
                 properties_seen.add(case.get_case_property(prop))
 
     @run_with_all_backends
     def testImportNamedColumns(self):
-        config = self._config(self.default_headers, named_columns=True)
-        file = ExcelFileFake(header_columns=self.default_headers, num_rows=5)
+        config = self._config(['case_id', 'age', 'sex', 'location'])
+        file = make_worksheet_wrapper(
+            ['case_id', 'age', 'sex', 'location'],
+            [u'case_id-0', u'age-0', u'sex-0', u'location-0'],
+            [u'case_id-1', u'age-1', u'sex-1', u'location-1'],
+            [u'case_id-2', u'age-2', u'sex-2', u'location-2'],
+            [u'case_id-3', u'age-3', u'sex-3', u'location-3'],
+        )
         res = do_import(file, config, self.domain)
-        # we create 1 less since we knock off the header column
+
         self.assertEqual(4, res['created_count'])
         self.assertEqual(4, len(self.accessor.get_case_ids_in_domain()))
 
     @run_with_all_backends
     def testImportTrailingWhitespace(self):
         cols = ['case_id', 'age', u'sex\xa0', 'location']
-        config = self._config(cols, named_columns=True)
-        file = ExcelFileFake(header_columns=cols, num_rows=2)
+        config = self._config(cols)
+        file = make_worksheet_wrapper(
+            ['case_id', 'age', u'sex\xa0', 'location'],
+            [u'case_id-0', u'age-0', u'sex\xa0-0', u'location-0'],
+        )
         res = do_import(file, config, self.domain)
-        # we create 1 less since we knock off the header column
+
         self.assertEqual(1, res['created_count'])
         case_ids = self.accessor.get_case_ids_in_domain()
         self.assertEqual(1, len(case_ids))
@@ -187,11 +134,12 @@ class ImporterTest(TestCase):
         }))
         self.assertEqual(1, len(self.accessor.get_case_ids_in_domain()))
 
-        config = self._config(self.default_headers)
-        file = ExcelFileFake(
-            header_columns=self.default_headers,
-            num_rows=3,
-            row_generator=id_match_generator(case.case_id)
+        config = self._config(['case_id', 'age', 'sex', 'location'])
+        file = make_worksheet_wrapper(
+            ['case_id', 'age', 'sex', 'location'],
+            [case.case_id, 'age-0', 'sex-0', 'location-0'],
+            [case.case_id, 'age-1', 'sex-1', 'location-1'],
+            [case.case_id, 'age-2', 'sex-2', 'location-2'],
         )
         res = do_import(file, config, self.domain)
         self.assertEqual(0, res['created_count'])
@@ -202,7 +150,7 @@ class ImporterTest(TestCase):
         case_ids = self.accessor.get_case_ids_in_domain()
         self.assertEqual(1, len(case_ids))
         [case] = self.accessor.get_cases(case_ids)
-        for prop in self.default_headers[1:]:
+        for prop in ['age', 'sex', 'location']:
             self.assertTrue(prop in case.get_case_property(prop))
 
         # shouldn't touch existing properties
@@ -215,9 +163,13 @@ class ImporterTest(TestCase):
             'case_type': 'nonmatch-type',
         }))
         self.assertEqual(1, len(self.accessor.get_case_ids_in_domain()))
-        config = self._config(self.default_headers)
-        file = ExcelFileFake(header_columns=self.default_headers, num_rows=3,
-                             row_generator=id_match_generator(case.case_id))
+        config = self._config(['case_id', 'age', 'sex', 'location'])
+        file = make_worksheet_wrapper(
+            ['case_id', 'age', 'sex', 'location'],
+            [case.case_id, 'age-0', 'sex-0', 'location-0'],
+            [case.case_id, 'age-1', 'sex-1', 'location-1'],
+            [case.case_id, 'age-2', 'sex-2', 'location-2'],
+        )
         res = do_import(file, config, self.domain)
         # because the type is wrong these shouldn't match
         self.assertEqual(3, res['created_count'])
@@ -231,11 +183,12 @@ class ImporterTest(TestCase):
             'create': True,
         }))
         self.assertEqual(0, len(self.accessor.get_case_ids_in_domain()))
-        config = self._config(self.default_headers)
-        file = ExcelFileFake(
-            header_columns=self.default_headers,
-            num_rows=3,
-            row_generator=id_match_generator(case.case_id)
+        config = self._config(['case_id', 'age', 'sex', 'location'])
+        file = make_worksheet_wrapper(
+            ['case_id', 'age', 'sex', 'location'],
+            [case.case_id, 'age-0', 'sex-0', 'location-0'],
+            [case.case_id, 'age-1', 'sex-1', 'location-1'],
+            [case.case_id, 'age-2', 'sex-2', 'location-2'],
         )
         res = do_import(file, config, self.domain)
 
@@ -258,10 +211,11 @@ class ImporterTest(TestCase):
 
         headers = ['external_id', 'age', 'sex', 'location']
         config = self._config(headers, search_field='external_id')
-        file = ExcelFileFake(
-            header_columns=headers,
-            num_rows=3,
-            row_generator=id_match_generator(external_id)
+        file = make_worksheet_wrapper(
+            ['external_id', 'age', 'sex', 'location'],
+            ['importer-test-external-id', 'age-0', 'sex-0', 'location-0'],
+            ['importer-test-external-id', 'age-1', 'sex-1', 'location-1'],
+            ['importer-test-external-id', 'age-2', 'sex-2', 'location-2'],
         )
         res = do_import(file, config, self.domain)
         self.assertEqual(0, res['created_count'])
@@ -276,23 +230,31 @@ class ImporterTest(TestCase):
         headers = ['id_column', 'age', 'sex', 'location']
         external_id = 'external-id-test'
         config = self._config(headers[1:], search_column='id_column', search_field='external_id')
-        file = ExcelFileFake(
-            header_columns=headers,
-            num_rows=2,
-            row_generator=id_match_generator(external_id)
+        file = make_worksheet_wrapper(
+            ['id_column', 'age', 'sex', 'location'],
+            ['external-id-test', 'age-0', 'sex-0', 'location-0'],
+            ['external-id-test', 'age-1', 'sex-1', 'location-1'],
         )
+
         res = do_import(file, config, self.domain)
+        self.assertFalse(res['errors'])
         self.assertEqual(1, res['created_count'])
         self.assertEqual(1, res['match_count'])
-        self.assertFalse(res['errors'])
         case_ids = self.accessor.get_case_ids_in_domain()
         self.assertEqual(1, len(case_ids))
         case = self.accessor.get_case(case_ids[0])
         self.assertEqual(external_id, case.external_id)
 
     def testNoCreateNew(self):
-        config = self._config(self.default_headers, create_new_cases=False)
-        file = ExcelFileFake(header_columns=self.default_headers, num_rows=5)
+        config = self._config(['case_id', 'age', 'sex', 'location'], create_new_cases=False)
+        file = make_worksheet_wrapper(
+            ['case_id', 'age', 'sex', 'location'],
+            [u'case_id-0', u'age-0', u'sex-0', u'location-0'],
+            [u'case_id-1', u'age-1', u'sex-1', u'location-1'],
+            [u'case_id-2', u'age-2', u'sex-2', u'location-2'],
+            [u'case_id-3', u'age-3', u'sex-3', u'location-3'],
+            [u'case_id-4', u'age-4', u'sex-4', u'location-4'],
+        )
         res = do_import(file, config, self.domain)
 
         # no matching and no create new set - should do nothing
@@ -302,11 +264,11 @@ class ImporterTest(TestCase):
 
     def testBlankRows(self):
         # don't create new cases for rows left blank
-        config = self._config(self.default_headers, create_new_cases=True)
-        file = ExcelFileFake(
-            header_columns=self.default_headers,
-            num_rows=5,
-            row_generator=blank_row_generator
+        config = self._config(['case_id', 'age', 'sex', 'location'], create_new_cases=True)
+        file = make_worksheet_wrapper(
+            ['case_id', 'age', 'sex', 'location'],
+            [None, None, None, None],
+            ['', '', '', ''],
         )
         res = do_import(file, config, self.domain)
 
@@ -316,8 +278,15 @@ class ImporterTest(TestCase):
         self.assertEqual(0, len(get_case_ids_in_domain(self.domain)))
 
     def testBasicChunking(self):
-        config = self._config(self.default_headers)
-        file = ExcelFileFake(header_columns=self.default_headers, num_rows=5)
+        config = self._config(['case_id', 'age', 'sex', 'location'])
+        file = make_worksheet_wrapper(
+            ['case_id', 'age', 'sex', 'location'],
+            [u'case_id-0', u'age-0', u'sex-0', u'location-0'],
+            [u'case_id-1', u'age-1', u'sex-1', u'location-1'],
+            [u'case_id-2', u'age-2', u'sex-2', u'location-2'],
+            [u'case_id-3', u'age-3', u'sex-3', u'location-3'],
+            [u'case_id-4', u'age-4', u'sex-4', u'location-4'],
+        )
         res = do_import(file, config, self.domain, chunksize=2)
         # 5 cases in chunks of 2 = 3 chunks
         self.assertEqual(3, res['num_chunks'])
@@ -331,8 +300,12 @@ class ImporterTest(TestCase):
 
         headers = ['external_id', 'age', 'sex', 'location']
         config = self._config(headers, search_field='external_id')
-        file = ExcelFileFake(header_columns=headers, num_rows=3,
-                             row_generator=id_match_generator(external_id))
+        file = make_worksheet_wrapper(
+            ['external_id', 'age', 'sex', 'location'],
+            ['importer-test-external-id', 'age-0', 'sex-0', 'location-0'],
+            ['importer-test-external-id', 'age-1', 'sex-1', 'location-1'],
+            ['importer-test-external-id', 'age-2', 'sex-2', 'location-2'],
+        )
 
         # the first one should create the case, and the remaining two should update it
         res = do_import(file, config, self.domain)
@@ -346,7 +319,7 @@ class ImporterTest(TestCase):
         self.assertEqual(1, len(case_ids))
         [case] = self.accessor.get_cases(case_ids)
         self.assertEqual(external_id, case.external_id)
-        for prop in self.default_headers[1:]:
+        for prop in ['age', 'sex', 'location']:
             self.assertTrue(prop in case.get_case_property(prop))
 
     @run_with_all_backends
@@ -357,11 +330,18 @@ class ImporterTest(TestCase):
         [parent_case] = self.factory.create_or_update_case(CaseStructure(attrs={'create': True}))
         self.assertEqual(1, len(self.accessor.get_case_ids_in_domain()))
 
-        file = ExcelFileFake(header_columns=headers,
-                             num_rows=rows,
-                             row_generator=id_match_generator(parent_case.case_id))
-        file_missing = ExcelFileFake(header_columns=headers,
-                                     num_rows=rows)
+        file = make_worksheet_wrapper(
+            ['parent_id', 'name', 'case_id'],
+            [parent_case.case_id, 'name-0', 'case_id-0'],
+            [parent_case.case_id, 'name-1', 'case_id-1'],
+            [parent_case.case_id, 'name-2', 'case_id-2'],
+        )
+        file_missing = make_worksheet_wrapper(
+            ['parent_id', 'name', 'case_id'],
+            [u'parent_id-0', u'name-0', u'case_id-0'],
+            [u'parent_id-1', u'name-1', u'case_id-1'],
+            [u'parent_id-2', u'name-2', u'case_id-2'],
+        )
 
         # Should successfully match on `rows` cases
         res = do_import(file, config, self.domain)
@@ -376,13 +356,7 @@ class ImporterTest(TestCase):
 
     def import_mock_file(self, rows):
         config = self._config(rows[0])
-        case_rows = rows[1:]
-        num_rows = len(case_rows)
-        xls_file = ExcelFileFake(
-            header_columns=rows[0],
-            num_rows=num_rows,
-            row_generator=lambda _, i: case_rows[i],
-        )
+        xls_file = make_worksheet_wrapper(*rows)
         return do_import(xls_file, config, self.domain)
 
     @run_with_all_backends
@@ -418,63 +392,13 @@ class ImporterTest(TestCase):
         error_message = ImportErrors.DuplicateLocationName
         error_column_name = None
         self.assertIn(error_message, res['errors'])
-        self.assertEqual(res['errors'][error_message][error_column_name]['rows'], [4])
+        self.assertEqual(res['errors'][error_message][error_column_name]['rows'], [5])
 
         error_message = ImportErrors.InvalidOwnerId
         self.assertIn(error_message, res['errors'])
         error_column_name = 'owner_id'
-        self.assertEqual(res['errors'][error_message][error_column_name]['rows'], [5])
+        self.assertEqual(res['errors'][error_message][error_column_name]['rows'], [6])
 
 
-class ImporterUtilsTest(SimpleTestCase):
-
-    def test_user_owner_match(self):
-        self.assertTrue(is_valid_owner(_mk_user(domain='match'), 'match'))
-
-    def test_user_owner_nomatch(self):
-        self.assertFalse(is_valid_owner(_mk_user(domain='match'), 'nomatch'))
-
-    def test_web_user_owner_match(self):
-        self.assertTrue(is_valid_owner(_mk_web_user(domains=['match', 'match2']), 'match'))
-        self.assertTrue(is_valid_owner(_mk_web_user(domains=['match', 'match2']), 'match2'))
-
-    def test_web_user_owner_nomatch(self):
-        self.assertFalse(is_valid_owner(_mk_web_user(domains=['match', 'match2']), 'nomatch'))
-
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
-    def test_get_case_properties_for_case_type(self):
-        schema = CaseExportDataSchema(
-            group_schemas=[
-                ExportGroupSchema(
-                    path=MAIN_TABLE,
-                    items=[
-                        ExportItem(
-                            path=[PathNode(name='name')],
-                            label='name',
-                            last_occurrences={},
-                        ),
-                        ExportItem(
-                            path=[PathNode(name='color')],
-                            label='color',
-                            last_occurrences={},
-                        ),
-                    ],
-                    last_occurrences={},
-                ),
-            ],
-        )
-
-        with mock.patch(
-                'corehq.apps.export.models.new.CaseExportDataSchema.generate_schema_from_builds',
-                return_value=schema):
-            case_types = get_case_properties_for_case_type('test-domain', 'case-type')
-
-        self.assertEqual(sorted(case_types), ['color', 'name'])
-
-
-def _mk_user(domain):
-    return CommCareUser(domain=domain, domain_membership=DomainMembership(domain=domain))
-
-
-def _mk_web_user(domains):
-    return WebUser(domains=domains, domain_memberships=[DomainMembership(domain=domain) for domain in domains])
+def make_worksheet_wrapper(*rows):
+    return WorksheetWrapper(make_worksheet(rows), True)
