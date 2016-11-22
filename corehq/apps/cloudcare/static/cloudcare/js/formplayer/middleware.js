@@ -28,10 +28,8 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         var maxHeight,
             maxHeightForm;
         maxHeight = ($(window).height() -
-            FormplayerFrontend.regions.phoneModeNavigation.$el.height() -
             FormplayerFrontend.regions.breadcrumb.$el.height());
-        maxHeightForm = ($(window).height() -
-            FormplayerFrontend.regions.phoneModeNavigation.$el.height());
+        maxHeightForm = $(window).height();
 
         $('.scrollable-container').css('max-height', maxHeight + 'px');
         $('.form-scrollable-container').css({
