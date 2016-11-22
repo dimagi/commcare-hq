@@ -85,10 +85,13 @@ class SQLICDSBackend(SQLSMSBackend):
 
     def get_response_code(self, response):
         api_code_string = "~code=API"
-        begin_response = response.find(api_code_string) + len(api_code_string)
-        assert begin_response != -1
+        begin_response = response.find(api_code_string)
+        if begin_response == -1:
+            return None
+        begin_response += len(api_code_string)
         end_response = response[begin_response:].find('&')
-        assert end_response != -1
+        if end_response == -1:
+            return None
         return response[begin_response:end_response]
 
     def handle_error(self, response_code):
