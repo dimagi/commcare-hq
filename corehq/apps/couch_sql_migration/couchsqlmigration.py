@@ -282,11 +282,14 @@ def _copy_form_properties(domain, sql_form, couch_form):
     sql_form.deletion_id = couch_form.deletion_id
     sql_form.deleted_on = couch_form.deletion_date
 
+    sql_form.deprecated_form_id = getattr(couch_form, 'deprecated_form_id', None)
+
     if couch_form.is_error:
         # doc_type != XFormInstance (includes deleted)
         sql_form.problem = getattr(couch_form, 'problem', None)
         sql_form.orig_id = getattr(couch_form, 'orig_id', None)
 
+    sql_form.edited_on = getattr(couch_form, 'edited_on', None)
     if couch_form.is_deprecated or couch_form.is_deleted:
         sql_form.edited_on = getattr(couch_form, 'deprecated_date', None)
 
