@@ -56,6 +56,8 @@ ES_AGG_MAP = {
     'max': aggregations.MaxAggregation,
     'sum': aggregations.SumAggregation,
     'simple': lambda x, y: None,  # this is not an aggregation
+    # these can be implemented, but will need some python level interpretation
+    # should use date aggregation with a format and merge equal key_as_string
     # 'month': MonthColumn,
     # 'year': YearColumn,
 }
