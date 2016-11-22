@@ -179,7 +179,7 @@ var reportBuilder = function () {
                         chartSpecs = [{
                             "type": "multibar",
                             "chart_id": "5221328456932991781",
-                            "title": null,  # Using the report title looks dumb in the UI; just leave it out.
+                            "title": null,  // Using the report title looks dumb in the UI; just leave it out.
                             "y_axis_columns": aggColumnsSpec,
                             "x_axis_column": groupByNames[0],
                             "is_stacked": false,
