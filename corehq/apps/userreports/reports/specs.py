@@ -94,7 +94,7 @@ class BaseReportColumn(JsonObject):
         """
         raise NotImplementedError('subclasses must override this')
 
-    def get_es_data(self, row, data_source_config, lang):
+    def get_es_data(self, row, data_source_config, lang, from_aggregation=True):
         """
         Returns a dictionary of the data of this column from an ES query
         """
@@ -179,8 +179,10 @@ class FieldColumn(ReportColumn):
     def aggregations(self, data_source_config, lang):
         return filter(None, [ES_AGG_MAP[self.aggregation](self.column_id, self.field)])
 
-    def get_es_data(self, row, data_source_config, lang):
-        if self.aggregation == 'simple':
+    def get_es_data(self, row, data_source_config, lang, from_aggregation=True):
+        if not from_aggregation:
+            value = row[self.field]
+        elif self.aggregation == 'simple':
             value = row['key']
         else:
             value = int(row[self.column_id]['value'])
@@ -237,10 +239,22 @@ class ExpandedColumn(ReportColumn):
     def aggregations(self, data_source_config, lang):
         return [c.aggregation for c in self.get_column_config(data_source_config, lang).columns]
 
-    def get_es_data(self, row, data_source_config, lang):
+    def get_es_data(self, row, data_source_config, lang, from_aggregation=True):
+        sub_columns = self.get_column_config(data_source_config, lang).columns
         r = {}
-        for sub_col in self.get_column_config(data_source_config, lang).columns:
-            r[sub_col.ui_alias] = sub_col.get_es_data(row)
+
+        if not from_aggregation:
+            counter = 0
+            for sub_col in sub_columns:
+                ui_col = self.column_id + "-" + str(counter)
+                if row[self.column_id] == sub_col.expand_value:
+                    r[ui_col] = 1
+                else:
+                    r[ui_col] = 0
+                counter += 1
+        else:
+            for sub_col in sub_columns:
+                r[sub_col.ui_alias] = sub_col.get_es_data(row)
         return r
 
 
