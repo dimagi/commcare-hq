@@ -72,6 +72,14 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         if self.case.modified_on is None or modified_on > self.case.modified_on:
             self.case.modified_on = modified_on
 
+        # edge case if form updates case before it's been created (or creation form archived)
+        if not self.case.opened_on:
+            self.case.opened_on = case_update.guess_modified_on()
+        if not self.case.opened_by:
+            self.case.opened_by = case_update.user_id
+        if not self.case.owner_id:
+            self.case.owner_id = case_update.user_id
+
     def _apply_action(self, case_update, action, xform):
         if action.action_type_slug == const.CASE_ACTION_CREATE:
             self._apply_create_action(case_update, action)
@@ -96,13 +104,6 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
 
     def _apply_create_action(self, case_update, create_action):
         self._update_known_properties(create_action)
-
-        if not self.case.opened_on:
-            self.case.opened_on = case_update.guess_modified_on()
-        if not self.case.opened_by:
-            self.case.opened_by = case_update.user_id
-        if not self.case.owner_id:
-            self.case.owner_id = case_update.user_id
 
     def _apply_update_action(self, update_action):
         self._update_known_properties(update_action)
