@@ -5,10 +5,11 @@ from crispy_forms import layout as crispy
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
-from corehq.apps.sms.models import SQLSMSBackend
+from corehq.apps.sms.models import SQLSMSBackend, SMS
 from corehq.apps.sms.forms import BackendForm
 from corehq.apps.sms.util import strip_plus
 from dimagi.utils.django.fields import TrimmedCharField
+from dimagi.utils.logging import notify_exception
 
 ERROR_CODES = {
     "-2": "Invalid credentials",
@@ -94,12 +95,14 @@ class SQLICDSBackend(SQLSMSBackend):
             return None
         return response[begin_response:end_response]
 
-    def handle_error(self, response_code):
-        exception_message = "Error with ICDS backend. Http respone code: %s, %s" % (
+    def handle_error(self, response_code, msg):
+        exception_message = "Error with ICDS backend. HTTP response code: %s, %s" % (
             response_code, ERROR_CODES.get(response_code, 'Unknown Error')
         )
         if response_code in RETRY_ERROR_CODES or response_code not in ERROR_CODES:
             raise ICDSException(exception_message)
+        msg.set_system_error(SMS.ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS)
+        notify_exception(None, exception_message)
 
     def send(self, msg, orig_phone_number=None, *args, **kwargs):
         config = self.config
@@ -126,4 +129,4 @@ class SQLICDSBackend(SQLSMSBackend):
 
         response_code = self.get_response_code(response)
         if response_code != '000':
-            self.handle_error(response_code)
+            self.handle_error(response_code, msg)
