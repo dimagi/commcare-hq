@@ -116,7 +116,7 @@ class ConfigurableReportEsDataSource(ConfigurableReportDataSourceMixin, ReportDa
                 if report_column.type == 'expanded':
                     # todo aggregation only supports # of docs matching
                     for sub_col in get_expanded_column_config(self.config, report_column, 'en').columns:
-                        r[sub_col.ui_alias] = sub_col.aggregation.get_data(row)
+                        r[sub_col.ui_alias] = sub_col.get_data(row)
                 elif report_column.field == self.aggregation_columns[0]:
                     r[report_column.column_id] = row['key']
                 elif report_column.aggregation == 'sum':
