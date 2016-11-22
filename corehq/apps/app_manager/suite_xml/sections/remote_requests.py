@@ -76,7 +76,8 @@ class RemoteRequestFactory(object):
             self.domain,
             query_xpaths + claim_relevant_xpaths
         )
-        return list(instances)
+        # sorted list to prevent intermittent test failures
+        return sorted(list(instances), key=lambda i: i.id)
 
     def _build_session(self):
         return RemoteRequestSession(
