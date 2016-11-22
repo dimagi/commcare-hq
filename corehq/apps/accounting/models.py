@@ -1043,7 +1043,6 @@ class Subscription(models.Model):
     skip_auto_downgrade = models.BooleanField(default=False)
 
     objects = SubscriptionManager()
-    api_objects = Manager()
 
     class Meta:
         app_label = 'accounting'
