@@ -384,49 +384,84 @@ class TestGetCaseFormsExpressionTest(TestCase):
 class TestGetCaseHistoryExpressionTest(TestCase):
 
     def setUp(self):
-        self.case = {
-            '_id': uuid.uuid4().hex,
-            'opened_on': datetime(2014, 12, 10),
-            'modified_on': datetime(2015, 3, 10),
-            'type': 'test_case',
-            'actions': [
-                {
-                    'action_type': 'update',
-                    'date': datetime(2015, 1, 10),
-                    'updated_unknown_properties': {
-                        'foo': 'a'
-                    },
-                },
-                {
-                    'action_type': 'update',
-                    'date': datetime(2015, 1, 11),
-                    'updated_unknown_properties': {
-                        'foo': 'a'
-                    },
-                },
-                {
-                    'action_type': 'update',
-                    'date': datetime(2015, 1, 12),
-                    'updated_unknown_properties': {
-                        'foo': 'b'
-                    },
-                },
-                {
-                    'action_type': 'update',
-                    'date': datetime(2015, 2, 3),
-                    'updated_unknown_properties': {
-                        'foo': 'b'
-                    },
-                },
-                {
-                    'action_type': 'update',
-                    'date': datetime(2015, 3, 4),
-                    'updated_unknown_properties': {
-                        'foo': 'c'
-                    },
-                },
-            ]
+        super(TestGetCaseHistoryExpressionTest, self).setUp()
+        self.domain = uuid.uuid4().hex
+        factory = CaseFactory(domain=self.domain)
+        self.test_case_id = uuid.uuid4().hex
+        factory.create_or_update_case(CaseStructure(
+            case_id=self.test_case_id,
+            attrs={
+                'case_type': 'test',
+                'create': True,
+                'date_opened': datetime(2015, 1, 10),
+                'date_modified': datetime(2015, 3, 10),
+            },
+        ))
+        self._submit_form(form_date=datetime(2015, 1, 10), case_id=self.test_case_id,
+                          case_path='a', xmlns="xmlns_a", foo="a")
+        self._submit_form(form_date=datetime(2015, 1, 11), case_id=self.test_case_id,
+                          case_path='a', xmlns="xmlns_a", foo="a")
+        self._submit_form(form_date=datetime(2015, 1, 12), case_id=self.test_case_id,
+                          case_path='b', xmlns="xmlns_b", foo="")
+        self._submit_form(form_date=datetime(2015, 2, 3), case_id=self.test_case_id,
+                          case_path='b', xmlns="xmlns_b", foo="b")
+        self._submit_form(form_date=datetime(2015, 3, 4), case_id=self.test_case_id,
+                          case_path='c', xmlns="xmlns_c", foo="c")
+
+        self.xmlns_map = {
+            'xmlns_a': {
+                'type': 'property_path',
+                'property_path': [
+                    'form',
+                    'a',
+                    'case'
+                ]
+            },
+            'xmlns_b': {
+                'type': 'property_path',
+                'property_path': [
+                    'form',
+                    'b',
+                    'case'
+                ]
+            },
+            'xmlns_c': {
+                'type': 'property_path',
+                'property_path': [
+                    'form',
+                    'c',
+                    'case'
+                ]
+            },
         }
+
+    def tearDown(self):
+        delete_all_xforms()
+        delete_all_cases()
+        super(TestGetCaseHistoryExpressionTest, self).tearDown()
+
+    def _submit_form(self, form_date, case_id, xmlns, case_path, foo='no'):
+        form = ElementTree.Element('data')
+        form.attrib['xmlns'] = xmlns
+        form.attrib['xmlns:jrm'] = 'http://openrosa.org/jr/xforms'
+
+        meta = ElementTree.Element('meta')
+        meta.append(_create_element_with_value('timeEnd', form_date.isoformat()))
+        form.append(meta)
+
+        case_path = ElementTree.Element(case_path)
+        case = ElementTree.Element('case')
+        case.attrib['date_modified'] = form_date.isoformat()
+        case.attrib['case_id'] = case_id
+        case.attrib['xmlns'] = 'http://commcarehq.org/case/transaction/v2'
+        case_update = ElementTree.Element('update')
+        case_update.append(_create_element_with_value('foo', foo))
+        case.append(case_update)
+        case_path.append(case)
+        form.append(case_path)
+
+        form.append(_create_element_with_value('foo', foo))
+        submit_form_locally(ElementTree.tostring(form), self.domain, **{})
 
     def test_all_history(self):
         expression = ExpressionFactory.from_spec({
@@ -434,56 +469,18 @@ class TestGetCaseHistoryExpressionTest(TestCase):
             "aggregation_fn": "count",
             "items_expression": {
                 "type": "ext_get_case_history_by_date",
+                "case_id_expression": {
+                    "type": "constant",
+                    "constant": self.test_case_id
+                },
+                "xmlns_map": self.xmlns_map
             }
         })
         self.assertEqual(
             5,
             expression(
                 {"some_item": "item_value"},
-                context=EvaluationContext(self.case, 0),
-            )
-        )
-
-    def test_start_end(self):
-        expression = ExpressionFactory.from_spec({
-            "type": "reduce_items",
-            "aggregation_fn": "count",
-            "items_expression": {
-                "type": "ext_get_case_history_by_date",
-                "start_date": {
-                    "type": "ext_month_start",
-                },
-                "end_date": {
-                    "type": "ext_month_end",
-                },
-            }
-        })
-        # iteration 3 is march
-        self.assertEqual(
-            1,
-            expression(
-                {"some_item": "item_value"},
-                context=EvaluationContext(self.case, 3),
-            )
-        )
-
-    def test_end(self):
-        expression = ExpressionFactory.from_spec({
-            "type": "reduce_items",
-            "aggregation_fn": "count",
-            "items_expression": {
-                "type": "ext_get_case_history_by_date",
-                "end_date": {
-                    "type": "ext_month_end",
-                },
-            }
-        })
-        # iteration 2 is february
-        self.assertEqual(
-            4,
-            expression(
-                {"some_item": "item_value"},
-                context=EvaluationContext(self.case, 2),
+                context=EvaluationContext({"domain": self.domain}, 0),
             )
         )
 
@@ -493,14 +490,19 @@ class TestGetCaseHistoryExpressionTest(TestCase):
             "aggregation_fn": "count",
             "items_expression": {
                 "type": "ext_get_case_history_by_date",
+                "case_id_expression": {
+                    "type": "constant",
+                    "constant": self.test_case_id
+                },
+                "xmlns_map": self.xmlns_map,
                 "filter": {
                     "type": "boolean_expression",
                     "operator": "eq",
                     "expression": {
-                        "type": "property_path",
-                        "property_path": ["updated_unknown_properties", "foo"]
+                        "type": "property_name",
+                        "property_name": "foo"
                     },
-                    "property_value": "b"
+                    "property_value": "a"
                 }
             }
         })
@@ -508,167 +510,256 @@ class TestGetCaseHistoryExpressionTest(TestCase):
             2,
             expression(
                 {"some_item": "item_value"},
-                context=EvaluationContext(self.case, 0),
+                context=EvaluationContext({"domain": self.domain}, 0),
             )
         )
 
+    def test_incorrect_map(self):
+        expression = ExpressionFactory.from_spec({
+            "type": "reduce_items",
+            "aggregation_fn": "count",
+            "items_expression": {
+                "type": "ext_get_case_history_by_date",
+                "case_id_expression": {
+                    "type": "constant",
+                    "constant": self.test_case_id
+                },
+                "xmlns_map": {
+                    'xmlns_a': {
+                        'type': 'property_path',
+                        'property_path': [
+                            'form',
+                            'n'
+                        ]
+                    }
+                },
+            }
+        })
+        self.assertEqual(
+            0,
+            expression(
+                {"some_item": "item_value"},
+                context=EvaluationContext({"domain": self.domain}, 0),
+            )
+        )
 
-class TestGetLastCasePropertyUpdateTest(TestCase):
-    def test_no_update(self):
-        case = {
-            '_id': uuid.uuid4().hex,
-            'opened_on': datetime(2015, 1, 10),
-            'modified_on': datetime(2015, 3, 10),
-            'type': 'test_case',
-            'actions': []
-        }
+    def test_partial_map(self):
+        expression = ExpressionFactory.from_spec({
+            "type": "reduce_items",
+            "aggregation_fn": "count",
+            "items_expression": {
+                "type": "ext_get_case_history_by_date",
+                "case_id_expression": {
+                    "type": "constant",
+                    "constant": self.test_case_id
+                },
+                "xmlns_map": {
+                    'xmlns_a': {
+                        'type': 'property_path',
+                        'property_path': [
+                            'form',
+                            'a',
+                            'case'
+                        ]
+                    },
+                    'xmlns_b': {
+                        'type': 'property_path',
+                        'property_path': [
+                            'form',
+                            'b',
+                            'case'
+                        ]
+                    },
+                    'xmlns_c': {
+                        'type': 'property_path',
+                        'property_path': [
+                            'form',
+                            'x',
+                            'case'
+                        ]
+                    },
+                },
+            }
+        })
+        self.assertEqual(
+            4,
+            expression(
+                {"some_item": "item_value"},
+                context=EvaluationContext({"domain": self.domain}, 0),
+            )
+        )
 
+    def test_start_end(self):
+        context = EvaluationContext(
+            {"domain": self.domain, "start_date": "2015-03-01", "end_date": "2015-03-31"},
+            0)
+        expression = ExpressionFactory.from_spec({
+            "type": "reduce_items",
+            "aggregation_fn": "count",
+            "items_expression": {
+                "type": "ext_get_case_history_by_date",
+                "case_id_expression": {
+                    "type": "constant",
+                    "constant": self.test_case_id
+                },
+                'xmlns_map': self.xmlns_map,
+                "start_date": {
+                    "type": "ext_root_property_name",
+                    "property_name": "start_date",
+                    "datatype": "date",
+                },
+                "end_date": {
+                    "type": "ext_root_property_name",
+                    "property_name": "end_date",
+                    "datatype": "date",
+                }
+            }
+        })
+        self.assertEqual(
+            1,
+            expression(
+                {"some_item": "item_value"},
+                context=context
+            )
+        )
+
+    def test_end(self):
+        context = EvaluationContext(
+            {"domain": self.domain, "end_date": "2015-02-28"},
+            0)
+        expression = ExpressionFactory.from_spec({
+            "type": "reduce_items",
+            "aggregation_fn": "count",
+            "items_expression": {
+                "type": "ext_get_case_history_by_date",
+                "case_id_expression": {
+                    "type": "constant",
+                    "constant": self.test_case_id
+                },
+                'xmlns_map': self.xmlns_map,
+                "end_date": {
+                    "type": "ext_root_property_name",
+                    "property_name": "end_date",
+                    "datatype": "date",
+                },
+            }
+        })
+        self.assertEqual(
+            4,
+            expression(
+                {"some_item": "item_value"},
+                context=context,
+            )
+        )
+
+    def test_last_update_none(self):
         expression = ExpressionFactory.from_spec({
             "type": "ext_get_last_case_property_update",
-            "case_property": "foo",
+            "case_id_expression": {
+                "type": "constant",
+                "constant": self.test_case_id
+            },
+            'xmlns_map': self.xmlns_map,
+            "case_property": "bar",
         })
         self.assertEqual(
             None,
             expression(
                 {"some_item": "item_value"},
-                context=EvaluationContext(case, 0),
+                context=EvaluationContext({"domain": self.domain}, 0),
             )
         )
 
-    def test_blank_update(self):
-        case = {
-            '_id': uuid.uuid4().hex,
-            'opened_on': datetime(2015, 1, 10),
-            'modified_on': datetime(2015, 3, 10),
-            'type': 'test_case',
-            'actions': [
-                {
-                    'action_type': 'update',
-                    'date': datetime(2015, 1, 10),
-                    'updated_unknown_properties': {
-                        'foo': 'a'
-                    },
-                },
-                {
-                    'action_type': 'update',
-                    'date': datetime(2015, 1, 11),
-                    'updated_unknown_properties': {
-                        'foo': ''
-                    },
-                },
-            ]
-        }
-
+    def test_last_update_blank(self):
+        context = EvaluationContext(
+            {"domain": self.domain, "end_date": "2015-01-31"},
+            0)
         expression = ExpressionFactory.from_spec({
             "type": "ext_get_last_case_property_update",
+            "case_id_expression": {
+                "type": "constant",
+                "constant": self.test_case_id
+            },
             "case_property": "foo",
+            "xmlns_map": self.xmlns_map,
+            "end_date": {
+                "type": "ext_root_property_name",
+                "property_name": "end_date",
+                "datatype": "date",
+            },
         })
         self.assertEqual(
             "",
             expression(
                 {"some_item": "item_value"},
-                context=EvaluationContext(case, 0),
+                context=context,
             )
         )
 
-    def test_value_update(self):
-        case = {
-            '_id': uuid.uuid4().hex,
-            'opened_on': datetime(2015, 1, 10),
-            'modified_on': datetime(2015, 3, 10),
-            'type': 'test_case',
-            'actions': [
-                {
-                    'action_type': 'update',
-                    'date': datetime(2015, 1, 10),
-                    'updated_unknown_properties': {
-                        'foo': 'a'
-                    },
-                },
-                {
-                    'action_type': 'update',
-                    'date': datetime(2015, 1, 11),
-                    'updated_unknown_properties': {
-                        'foo': ''
-                    },
-                },
-                {
-                    'action_type': 'update',
-                    'date': datetime(2015, 1, 12),
-                    'updated_unknown_properties': {
-                        'foo': 'e'
-                    },
-                },
-            ]
-        }
-
+    def test_last_update_value(self):
+        context = EvaluationContext(
+            {"domain": self.domain, "end_date": "2015-02-28"},
+            0)
         expression = ExpressionFactory.from_spec({
             "type": "ext_get_last_case_property_update",
+            "case_id_expression": {
+                "type": "constant",
+                "constant": self.test_case_id
+            },
             "case_property": "foo",
-        })
-        self.assertEqual(
-            "e",
-            expression(
-                {"some_item": "item_value"},
-                context=EvaluationContext(case, 0),
-            )
-        )
-
-    def test_filtered_update(self):
-        case = {
-            '_id': uuid.uuid4().hex,
-            'opened_on': datetime(2015, 1, 10),
-            'modified_on': datetime(2015, 3, 10),
-            'type': 'test_case',
-            'actions': [
-                {
-                    'action_type': 'update',
-                    'date': datetime(2015, 1, 10),
-                    'updated_unknown_properties': {
-                        'foo': 'a'
-                    },
-                },
-                {
-                    'action_type': 'update',
-                    'date': datetime(2015, 1, 11),
-                    'updated_unknown_properties': {
-                        'foo': 'b'
-                    },
-                },
-                {
-                    'action_type': 'update',
-                    'date': datetime(2015, 1, 12),
-                    'updated_unknown_properties': {
-                        'foo': ''
-                    },
-                },
-            ]
-        }
-
-        expression = ExpressionFactory.from_spec({
-            "type": "ext_get_last_case_property_update",
-            "case_property": "foo",
-            "filter": {
-                "type": "not",
-                "filter":
-                {
-                    "type": "boolean_expression",
-                    "operator": "in",
-                    "expression": {
-                        "type": "property_path",
-                        "property_path": ["updated_unknown_properties", "foo"]
-                    },
-                    "property_value": [
-                        "",
-                        None,
-                    ]
-                }
-            }
+            "xmlns_map": self.xmlns_map,
+            "end_date": {
+                "type": "ext_root_property_name",
+                "property_name": "end_date",
+                "datatype": "date",
+            },
         })
         self.assertEqual(
             "b",
             expression(
                 {"some_item": "item_value"},
-                context=EvaluationContext(case, 0),
+                context=context,
+            )
+        )
+
+    def test_last_update_filtered(self):
+        context = EvaluationContext(
+            {"domain": self.domain, "end_date": "2015-01-31"},
+            0)
+        expression = ExpressionFactory.from_spec({
+            "type": "ext_get_last_case_property_update",
+            "case_id_expression": {
+                "type": "constant",
+                "constant": self.test_case_id
+            },
+            "xmlns_map": self.xmlns_map,
+            "case_property": "foo",
+            "end_date": {
+                "type": "ext_root_property_name",
+                "property_name": "end_date",
+                "datatype": "date",
+            },
+            "filter": {
+                "type": "not",
+                "filter":
+                    {
+                        "type": "boolean_expression",
+                        "operator": "in",
+                        "expression": {
+                            "type": "property_name",
+                            "property_name": "foo",
+                        },
+                        "property_value": [
+                            "",
+                            None,
+                        ]
+                    }
+            }
+        })
+        self.assertEqual(
+            "a",
+            expression(
+                {"some_item": "item_value"},
+                context=context,
             )
         )
