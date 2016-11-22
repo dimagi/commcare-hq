@@ -9,6 +9,7 @@ from django.utils.translation import ugettext_lazy as _
 from corehq.apps.sms.mixin import BackendProcessingException
 from corehq.apps.sms.models import SQLSMSBackend
 from corehq.apps.sms.forms import BackendForm
+from corehq.apps.sms.util import strip_plus
 from dimagi.utils.django.fields import TrimmedCharField
 
 ERROR_CODES = {
@@ -101,7 +102,7 @@ class SQLICDSBackend(SQLSMSBackend):
 
     def send(self, msg, orig_phone_number=None, *args, **kwargs):
         config = self.config
-        phone_number = msg.phone_number
+        phone_number = strip_plus(msg.phone_number)
         try:
             text = msg.text.encode("iso-8859-1")
             msg_type = "PM"
