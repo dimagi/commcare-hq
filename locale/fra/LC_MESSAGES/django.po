@@ -23093,7 +23093,7 @@ msgstr "Filtre numérique"
 #: corehq/apps/reports_core/filters.py:293
 #, python-brace-format
 msgid "Choice \"{choice}\" not found in choices: {choices}"
-msgstr "Choix \"{choix}\" non trouvé dans les choix: {choix}"
+msgstr "Choix \"{choice}\" non trouvé dans les choix: {choices}"
 
 #: corehq/apps/reports_core/templates/reports_core/base_template_new.html:66
 msgid "Showing the current page of data. Switch pages to see more data."
