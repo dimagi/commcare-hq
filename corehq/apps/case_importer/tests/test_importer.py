@@ -12,7 +12,7 @@ from corehq.apps.locations.tests.util import delete_all_locations
 from corehq.apps.users.models import WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
-from corehq.util.spreadsheets_v2 import make_worksheet
+from corehq.util.workbook_reading import make_worksheet
 
 
 class ImporterTest(TestCase):

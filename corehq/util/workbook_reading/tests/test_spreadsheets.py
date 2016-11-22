@@ -1,12 +1,12 @@
 from datetime import datetime, date, time
 from itertools import izip_longest
 from django.test import SimpleTestCase
-from corehq.util.spreadsheets_v2 import (
+from corehq.util.workbook_reading import (
     Workbook,
     Worksheet,
     make_worksheet,
 )
-from corehq.util.spreadsheets_v2.tests.utils import get_file, run_on_all_adapters
+from corehq.util.workbook_reading.tests.utils import get_file, run_on_all_adapters
 from corehq.util.test_utils import make_make_path
 
 

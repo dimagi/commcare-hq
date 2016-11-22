@@ -4,7 +4,7 @@ from datetime import datetime, time
 import openpyxl
 from openpyxl.utils.datetime import from_excel
 from openpyxl.utils.exceptions import InvalidFileException
-from corehq.util.spreadsheets_v2 import Worksheet, Cell, Workbook, \
+from corehq.util.workbook_reading import Worksheet, Cell, Workbook, \
     SpreadsheetFileNotFound, SpreadsheetFileInvalidError, SpreadsheetFileEncrypted
 
 # Got this from running hexdump and then googling

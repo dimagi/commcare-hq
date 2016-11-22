@@ -1,4 +1,4 @@
-from corehq.util.spreadsheets_v2 import open_xls_workbook, open_xlsx_workbook, \
+from corehq.util.workbook_reading import open_xls_workbook, open_xlsx_workbook, \
     open_any_workbook
 from corehq.util.test_utils import generate_cases, make_make_path
 

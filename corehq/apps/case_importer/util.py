@@ -20,7 +20,7 @@ from corehq.apps.locations.models import SQLLocation, Location
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils.general import should_use_sql_backend
-from corehq.util.spreadsheets_v2 import open_any_workbook, Workbook, \
+from corehq.util.workbook_reading import open_any_workbook, Workbook, \
     SpreadsheetFileEncrypted, SpreadsheetFileNotFound, SpreadsheetFileInvalidError
 from couchexport.export import SCALAR_NEVER_WAS
 

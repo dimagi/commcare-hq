@@ -1,4 +1,4 @@
-from corehq.util.spreadsheets_v2 import Cell, Worksheet
+from corehq.util.workbook_reading import Cell, Worksheet
 
 
 def make_worksheet(rows=None, title=None):

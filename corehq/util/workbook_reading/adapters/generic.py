@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from corehq.util.spreadsheets_v2 import SpreadsheetFileExtError
+from corehq.util.workbook_reading import SpreadsheetFileExtError
 from .xls import open_xls_workbook
 from .xlsx import open_xlsx_workbook
 

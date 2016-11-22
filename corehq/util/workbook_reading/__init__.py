@@ -1,4 +1,4 @@
-from corehq.util.spreadsheets_v2.exceptions import (
+from corehq.util.workbook_reading.exceptions import (
     SpreadsheetFileError,
     SpreadsheetFileExtError,
     SpreadsheetFileInvalidError,

@@ -1,4 +1,4 @@
-from corehq.util.spreadsheets_v1.excel import WorkbookJSONReader
+from corehq.util.workbook_json.excel import WorkbookJSONReader
 from soil import DownloadBase
 
 

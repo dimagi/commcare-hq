@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 from datetime import datetime, time, date
 import xlrd
-from corehq.util.spreadsheets_v2 import Worksheet, Cell, Workbook, SpreadsheetFileInvalidError, \
+from corehq.util.workbook_reading import Worksheet, Cell, Workbook, SpreadsheetFileInvalidError, \
     SpreadsheetFileNotFound, SpreadsheetFileEncrypted
 
 

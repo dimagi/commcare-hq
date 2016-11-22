@@ -1,8 +1,8 @@
 from django.test import SimpleTestCase
 
-from corehq.util.spreadsheets_v2 import SpreadsheetFileNotFound, SpreadsheetFileInvalidError, \
+from corehq.util.workbook_reading import SpreadsheetFileNotFound, SpreadsheetFileInvalidError, \
     SpreadsheetFileExtError, open_any_workbook, SpreadsheetFileEncrypted
-from corehq.util.spreadsheets_v2.tests.utils import run_on_all_adapters, get_file
+from corehq.util.workbook_reading.tests.utils import run_on_all_adapters, get_file
 
 
 class SpreadsheetErrorsTest(SimpleTestCase):
