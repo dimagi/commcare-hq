@@ -116,7 +116,8 @@ class SQLICDSBackend(SQLSMSBackend):
             "mnumber": phone_number,
             "message": text,
             "signature": config.sender_id,
-            "msgType": msg_type
+            "msgType": msg_type,
+            "splitAlgm": "concat",
         }
         url_params = urlencode(params)
         url = 'https://smsgw.sms.gov.in/failsafe/HttpLink?%s' % url_params
