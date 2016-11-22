@@ -154,7 +154,12 @@ var reportBuilder = function () {
             $('#preview').show();
 
             if (self.selectedChart() !== "none") {
-                var aaData = data;
+                if (data) {
+                    var columnNames = _.map(self.selectedColumns(), function (c) { return c.name; });
+                    var aaData = _.map(data.slice(1), function (d) { return _.object([columnNames, d]); });
+                } else {
+                    var aaData = [];
+                }
 
                 var aggColumns = _.filter(self.selectedColumns(), function (c) {
                     return self.isAggregationEnabled && c.isNumeric && !c.isGroupByColumn;
@@ -174,7 +179,7 @@ var reportBuilder = function () {
                         chartSpecs = [{
                             "type": "multibar",
                             "chart_id": "5221328456932991781",
-                            "title": null,
+                            "title": null,  # Using the report title looks dumb in the UI; just leave it out.
                             "y_axis_columns": aggColumnsSpec,
                             "x_axis_column": groupByNames[0],
                             "is_stacked": false,
