@@ -1,6 +1,6 @@
 from itertools import groupby
 
-from corehq.apps.tzmigration.timezonemigration import is_datetime_string, FormJsonDiff
+from corehq.apps.tzmigration.timezonemigration import is_datetime_string, FormJsonDiff, json_diff
 
 PARTIAL_DIFFS = {
     'XFormInstance*': [
@@ -146,7 +146,7 @@ def filter_case_diffs(couch_case, sql_case, diffs):
     filtered_diffs = _filter_user_case_diffs(couch_case, filtered_diffs)
     filtered_diffs = _filter_xform_id_diffs(couch_case, sql_case, filtered_diffs)
     filtered_diffs = _filter_case_attachment_diffs(filtered_diffs)
-    filtered_diffs = _filter_case_index_diffs(filtered_diffs)
+    filtered_diffs = _filter_case_index_diffs(couch_case, sql_case, filtered_diffs)
     return filtered_diffs
 
 
@@ -252,6 +252,7 @@ def _filter_xform_id_diffs(couch_case, sql_case, diffs):
 
 
 def _filter_case_attachment_diffs(diffs):
+    """Attachment JSON format is different between Couch and SQL so need to normalize prior to comparison"""
     attachment_diffs = [diff for diff in diffs if diff.path[0] == 'case_attachments']
     if not attachment_diffs:
         return diffs
@@ -278,5 +279,25 @@ def _filter_case_attachment_diffs(diffs):
     return diffs
 
 
-def _filter_case_index_diffs(diffs):
-    # sort indices and then re-do normal diff
+def _filter_case_index_diffs(couch_case, sql_case, diffs):
+    """Indices may be in different order - re-sort and compare again.
+    """
+    index_diffs = [diff for diff in diffs if diff.path[0] == 'indices']
+    if not index_diffs:
+        return diffs
+
+    couch_indices = couch_case['indices']
+    sql_indices = sql_case['indices']
+
+    if len(couch_indices) > 1:
+        diffs = [diff for diff in diffs if diff not in index_diffs]
+        couch_indices = sorted(couch_indices, key=lambda i: i['identifier'])
+        sql_indices = sorted(sql_indices, key=lambda i: i['identifier'])
+        index_diffs = json_diff(couch_indices, sql_indices, track_list_indices=False)
+        for diff in index_diffs:
+            diff_dict = diff._asdict()
+            # convert the path back to what it should be
+            diff_dict['path'] = tuple(['indices'] + list(diff.path))
+            diffs.append(FormJsonDiff(**diff_dict))
+
+    return diffs

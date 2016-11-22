@@ -1,10 +1,12 @@
+from copy import deepcopy
+
 from django.test import SimpleTestCase
 
 from corehq.apps.couch_sql_migration.diff import (
     filter_form_diffs, FORM_IGNORED_DIFFS, PARTIAL_DIFFS,
     filter_case_diffs, CASE_IGNORED_DIFFS, filter_ledger_diffs
 )
-from corehq.apps.tzmigration.timezonemigration import FormJsonDiff
+from corehq.apps.tzmigration.timezonemigration import FormJsonDiff, json_diff
 from corehq.util.test_utils import softer_assert
 
 DATE_DIFFS = [
@@ -162,3 +164,97 @@ class DiffTestCases(SimpleTestCase):
         diffs = rename_date_diffs + REAL_DIFFS
         filtered = filter_case_diffs(couch_case, {}, diffs)
         self.assertEqual(filtered, REAL_DIFFS)
+
+    def test_case_indices_order(self):
+        couch_case = {
+            'doc_type': 'CommCareCase',
+            'indices': [
+                {
+                    "case_id": "fb698d47-4832-42b2-b28c-86d13adb45a2",
+                    "identifier": "parent",
+                    "referenced_id": "7ab03ccc-e5b7-4c8f-b88f-43ee3b0543a5",
+                    "referenced_type": "Patient",
+                    "relationship": "child"
+                },
+                {
+                    "case_id": "fb698d47-4832-42b2-b28c-86d13adb45a2",
+                    "identifier": "goal",
+                    "referenced_id": "c2e938d9-7406-4fdf-87ab-67d92296705e",
+                    "referenced_type": "careplan_goal",
+                    "relationship": "child"
+                }
+            ]
+        }
+
+        sql_case = {
+            'doc_type': 'CommCareCase',
+            'indices': list(reversed(couch_case['indices']))
+        }
+
+        diffs = json_diff(couch_case, sql_case, track_list_indices=False)
+        self.assertEqual(6, len(diffs))
+        filtered_diffs = filter_case_diffs(couch_case, sql_case, diffs)
+        self.assertEqual([], filtered_diffs)
+
+    def test_multiple_case_indices_real_diff(self):
+        couch_case = {
+            'doc_type': 'CommCareCase',
+            'indices': [
+                {
+                    "case_id": "fb698d47-4832-42b2-b28c-86d13adb45a2",
+                    "identifier": "parent",
+                    "referenced_id": "7ab03ccc-e5b7-4c8f-b88f-43ee3b0543a5",
+                    "referenced_type": "Patient",
+                    "relationship": "child"
+                },
+                {
+                    "case_id": "fb698d47-4832-42b2-b28c-86d13adb45a2",
+                    "identifier": "goal",
+                    "referenced_id": "c2e938d9-7406-4fdf-87ab-67d92296705e",
+                    "referenced_type": "careplan_goal",
+                    "relationship": "child"
+                }
+            ]
+        }
+
+        sql_case = {
+            'doc_type': 'CommCareCase',
+            'indices': deepcopy(couch_case['indices'])
+        }
+        sql_case['indices'][0]['identifier'] = 'mother'
+
+        expected_diffs = [
+            FormJsonDiff(
+                diff_type='diff', path=('indices', '[*]', 'identifier'),
+                old_value=u'parent', new_value=u'mother')
+        ]
+        diffs = json_diff(couch_case, sql_case, track_list_indices=False)
+        filtered_diffs = filter_case_diffs(couch_case, sql_case, diffs)
+        self.assertEqual(expected_diffs, filtered_diffs)
+
+    def test_single_case_indices_real_diff(self):
+        couch_case = {
+            'doc_type': 'CommCareCase',
+            'indices': [
+                {
+                    "case_id": "fb698d47-4832-42b2-b28c-86d13adb45a2",
+                    "identifier": "parent",
+                    "referenced_id": "7ab03ccc-e5b7-4c8f-b88f-43ee3b0543a5",
+                    "referenced_type": "Patient",
+                    "relationship": "child"
+                }
+            ]
+        }
+
+        sql_case = {
+            'doc_type': 'CommCareCase',
+            'indices': deepcopy(couch_case['indices'])
+        }
+        sql_case['indices'][0]['relationship'] = 'extension'
+
+        expected_diffs = [
+            FormJsonDiff(diff_type='diff', path=('indices', '[*]', 'relationship'), old_value=u'child', new_value=u'extension')
+        ]
+        diffs = json_diff(couch_case, sql_case, track_list_indices=False)
+        filtered_diffs = filter_case_diffs(couch_case, sql_case, diffs)
+        self.assertEqual(expected_diffs, filtered_diffs)
