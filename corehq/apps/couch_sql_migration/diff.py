@@ -4,62 +4,48 @@ from corehq.apps.tzmigration.timezonemigration import is_datetime_string, FormJs
 
 PARTIAL_DIFFS = {
     'XFormInstance*': [
-        {'path': ('_rev',)},
-        {'path': ('migrating_blobs_from_couch',)},
-        {'path': ('#export_tag',)},
-        {'path': ('computed_',)},
-        {'path': ('state',)},
-        {'path': ('computed_modified_on_',)},
-        {'path': ('deprecated_form_id',)},
-        {'path': ('path',)},
-        {'path': ('user_id',)},
-        {'path': ('external_blobs',)},
+        {'path': ('_rev',)},  # couch only
+        {'path': ('migrating_blobs_from_couch',)},  # couch only
+        {'path': ('#export_tag',)},  # couch only
+        {'path': ('computed_',)},  # couch only
+        {'path': ('state',)},  # SQL only
+        {'path': ('computed_modified_on_',)},  # couch only
+        {'path': ('deprecated_form_id',), 'old_value': Ellipsis, 'new_value': None},  # SQL always has this
+        {'path': ('path',)},  # couch only
+        {'path': ('user_id',)},  # couch only
+        {'path': ('external_blobs',)},  # couch only
         {'diff_type': 'type', 'path': ('openrosa_headers', 'HTTP_X_OPENROSA_VERSION')},
+        {'path': ('problem',), 'old_value': Ellipsis, 'new_value': None},
+        {'path': ('orig_id',), 'old_value': Ellipsis, 'new_value': None},
+        {'path': ('edited_on',), 'old_value': Ellipsis, 'new_value': None},
     ],
-    'XFormInstance': [
-        {'path': ('problem',)},
-        {'path': ('orig_id',)},
-        {'path': ('edited_on',)},
-    ],
-    'XFormInstance-Deleted': [
-        {'path': ('problem',)},
-        {'path': ('orig_id',)},
-        {'path': ('edited_on',)},
-    ],
-    'HQSubmission': [
-        {'path': ('problem',)},
-        {'path': ('orig_id',)},
-        {'path': ('edited_on',)},
-    ],
-    'XFormArchived': [
-        {'path': ('edited_on',)},
-    ],
-    'XFormError': [
-        {'path': ('edited_on',)},
-    ],
-    'XFormDuplicate': [
-        {'path': ('edited_on',)},
-    ],
+    'XFormInstance': [],
+    'XFormInstance-Deleted': [],
+    'HQSubmission': [],
+    'XFormArchived': [],
+    'XFormError': [],
+    'XFormDuplicate': [],
     'XFormDeprecated': [],
     'CommCareCase*': [
-        {'path': ('_rev',)},
-        {'path': ('initial_processing_complete',)},
-        {'path': ('actions', '[*]')},
-        {'path': ('id',)},
-        {'path': ('@xmlns',)},
-        {'path': ('_attachments',)},
-        {'path': ('#export_tag',)},
-        {'path': ('computed_',)},
-        {'path': ('version',)},
-        {'path': ('case_attachments',)},
-        {'path': ('deleted',)},
-        {'path': ('export_tag',)},
-        {'path': ('computed_modified_on_',)},
-        {'path': ('case_id',)},
-        {'path': ('@case_id',)},
-        {'path': ('case_json',)},
-        {'path': ('modified_by',)},
+        {'path': ('_rev',)},  # couch only
+        {'path': ('initial_processing_complete',)},  # couch only
+        {'path': ('actions', '[*]')},  # ignore case actions
+        {'path': ('id',)},  # SQL only
+        {'path': ('@xmlns',)},  # legacy
+        {'path': ('_attachments',)},  # couch only
+        {'path': ('#export_tag',)},  # couch only
+        {'path': ('computed_',)},  # couch only
+        {'path': ('version',)},  # couch only
+        {'path': ('deleted',)},  # SQL only
+        {'path': ('export_tag',)},  # couch only
+        {'path': ('computed_modified_on_',)},  # couch only
+        {'path': ('case_id',)},  # legacy
+        {'path': ('@case_id',)},  # legacy
+        {'path': ('case_json',)},  # SQL only
+        {'path': ('modified_by',)},  # SQL only
+        # SQL JSON has case_id field in indices which couch JSON doesn't
         {'path': ('indices', '[*]', 'case_id')},
+        # legacy bug left cases with no owner_id
         {'diff_type': 'diff', 'path': ('owner_id',), 'old_value': ''},
         {'diff_type': 'type', 'path': ('owner_id',), 'old_value': None},
         # form has case block with no actions
@@ -72,17 +58,17 @@ PARTIAL_DIFFS = {
     ],
     'CommCareCase-Deleted': [],
     'LedgerValue': [
-        {'path': ('_id',)},
+        {'path': ('_id',)},  # couch only
     ],
     'case_attachment': [
-        {'path': ('doc_type',)},
-        {'path': ('attachment_properties',)},
-        {'path': ('attachment_from',)},
-        {'path': ('attachment_src',)},
-        {'path': ('content_type',)},
-        {'path': ('server_mime',)},
-        {'path': ('attachment_name',)},
-        {'path': ('server_md5',)},
+        {'path': ('doc_type',)},  # couch only
+        {'path': ('attachment_properties',)},  # couch only
+        {'path': ('attachment_from',)},  # couch only
+        {'path': ('attachment_src',)},  # couch only
+        {'path': ('content_type',)},  # couch only
+        {'path': ('server_mime',)},  # couch only
+        {'path': ('attachment_name',)},  # couch only
+        {'path': ('server_md5',)},  # couch only
     ]
 }
 
