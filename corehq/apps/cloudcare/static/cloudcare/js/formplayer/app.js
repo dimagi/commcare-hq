@@ -124,8 +124,7 @@ FormplayerFrontend.on('startForm', function (data) {
     FormplayerFrontend.request("clearMenu");
     var urlObject = Util.currentUrlToObject();
     urlObject.setSessionId(data.session_id);
-    var encodedUrl = Util.objectToEncodedUrl(urlObject.toJson());
-    FormplayerFrontend.navigate(encodedUrl);
+    Util.setUrlToObject(urlObject);
     data.onLoading = tfLoading;
     data.onLoadingComplete = tfLoadingComplete;
     var user = FormplayerFrontend.request('currentUser');
@@ -234,9 +233,7 @@ FormplayerFrontend.on("start", function (options) {
 });
 
 FormplayerFrontend.reqres.setHandler('getCurrentSessionId', function() {
-    // First attempt to grab app id from URL
-    var urlObject = Util.currentUrlToObject();
-    return urlObject.sessionId;
+    return Util.currentUrlToObject().sessionId;
 });
 
 FormplayerFrontend.reqres.setHandler('getCurrentAppId', function() {
