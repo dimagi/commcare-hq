@@ -962,3 +962,10 @@ DATA_MIGRATION = StaticToggle(
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )
+
+DATA_DICTIONARY = StaticToggle(
+    'data_dictionary',
+    'Domain level data dictionary of cases',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)

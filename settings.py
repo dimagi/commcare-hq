@@ -281,6 +281,7 @@ HQ_APPS = (
     'dimagi.utils',
     'formtranslate',
     'langcodes',
+    'corehq.apps.data_dictionary',
     'corehq.apps.analytics',
     'corehq.apps.callcenter',
     'corehq.apps.change_feed',

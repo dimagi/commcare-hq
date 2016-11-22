@@ -59,6 +59,7 @@ from dimagi.utils.web import json_response
 from corehq.apps.domain.decorators import (
     login_or_digest, api_domain_view
 )
+from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import (
     AdvancedForm,
@@ -79,6 +80,7 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
+from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
 from corehq.apps.tour import tours
 
 
@@ -156,6 +158,8 @@ def edit_advanced_form_actions(request, domain, app_id, module_id, form_id):
     json_loads = json.loads(request.POST.get('actions'))
     actions = AdvancedFormActions.wrap(json_loads)
     form.actions = actions
+    for action in actions.load_update_cases:
+        add_properties_to_data_dictionary(domain, action.case_type, action.case_properties.keys())
     if advanced_actions_use_usercase(form.actions) and not is_usercase_in_use(domain):
         enable_usercase(domain)
     response_json = {}
@@ -168,9 +172,11 @@ def edit_advanced_form_actions(request, domain, app_id, module_id, form_id):
 @require_can_edit_apps
 def edit_form_actions(request, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
-    form = app.get_module(module_id).get_form(form_id)
+    module = app.get_module(module_id)
+    form = module.get_form(form_id)
     old_load_from_form = form.actions.load_from_form
     form.actions = FormActions.wrap(json.loads(request.POST['actions']))
+    add_properties_to_data_dictionary(domain, module.case_type, form.actions.update_case.update.keys())
     if old_load_from_form:
         form.actions.load_from_form = old_load_from_form
 
@@ -178,8 +184,11 @@ def edit_form_actions(request, domain, app_id, module_id, form_id):
         if isinstance(condition.answer, basestring):
             condition.answer = condition.answer.strip('"\'')
     form.requires = request.POST.get('requires', form.requires)
-    if actions_use_usercase(form.actions) and not is_usercase_in_use(domain):
-        enable_usercase(domain)
+    if actions_use_usercase(form.actions):
+        if not is_usercase_in_use(domain):
+            enable_usercase(domain)
+        add_properties_to_data_dictionary(domain, USERCASE_TYPE, form.actions.usercase_update.update.keys())
+
     response_json = {}
     app.save(response_json)
     response_json['propertiesMap'] = get_all_case_properties(app)

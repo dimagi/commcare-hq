@@ -1,0 +1,51 @@
+{% extends "style/two_column.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block title %}{% trans "Data Dictionary" %}{% endblock %}\
+
+{% block js %}
+<script src="{% static 'data_dictionary/js/data_dictionary.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}
+<script>
+    $(function () {
+        $('#hq-content').parent().initializeDataDictionary("{% url 'data_dictionary_json' domain%}");
+    });
+</script>
+{% endblock %}
+
+{% block page_breadcrumbs %}
+    <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
+        <li>
+            <a href="{% url 'data_dictionary' domain %}"><strong>{% trans "Data Dictionary" %}</strong></a>
+        </li>
+    </ol>
+{% endblock %}
+
+{% block page_navigation %}
+    <h2 class="text-hq-nav-header">{% trans "Data Dictionary" %}</h2>
+    <ul class="nav nav-hq-sidebar" data-bind="foreach: caseTypes">
+        <li data-bind="css: { active: $data.name() == $root.activeCaseType() }">
+            <a href="#" data-bind="text: $data.name(), click: $root.goToCaseType"></a>
+        </li>
+    </ul>
+{% endblock %}
+
+{% block page_content %}
+    <table id="data-dictionary-table" class="table">
+        <thead>
+            <th>Case Property</th>
+            <th>Type</th>
+            <th>Description</th>
+        </thead>
+        <tbody data-bind="foreach: activeCaseTypeData">
+            <tr>
+                <td data-bind="text: name"></td>
+                <td data-bind="text: type"></td>
+                <td data-bind="text: description"></td>
+            </tr>
+        </tbody>
+    </table>
+{% endblock %}

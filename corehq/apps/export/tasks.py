@@ -2,6 +2,7 @@ import urllib
 import logging
 from celery.task import task
 
+from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
 from corehq.apps.export.export import get_export_file, rebuild_export
 from corehq.apps.export.utils import convert_saved_export_to_export_instance
 from corehq.apps.export.dbaccessors import get_inferred_schema
@@ -67,6 +68,7 @@ def add_inferred_export_properties(sender, domain, case_type, properties):
             case_type=case_type,
         )
     group_schema = inferred_schema.put_group_schema(MAIN_TABLE)
+    add_properties_to_data_dictionary(domain, case_type, properties)
 
     for case_property in properties:
         path = [PathNode(name=case_property)]
