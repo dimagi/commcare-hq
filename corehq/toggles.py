@@ -935,13 +935,6 @@ DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-REFRESH_CASE_MANAGEMENT = StaticToggle(
-    'refresh_case_management',
-    'Show a button to refresh case management',
-    TAG_PREVIEW,
-    [NAMESPACE_USER, NAMESPACE_DOMAIN],
-)
-
 CLOUDCARE_LATEST_BUILD = StaticToggle(
     'use_latest_build_cloudcare',
     'Uses latest build for cloudcare instead of latest starred',
