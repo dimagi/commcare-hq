@@ -24,7 +24,7 @@ class UCRExpandEsDatabaseSubcolumn(UCRExpandDatabaseSubcolumn):
             self.es_alias, filters.term(self.data_source_field, self.expand_value)
         )
 
-    def get_data(self, row):
+    def get_es_data(self, row):
         return row[self.es_alias]['doc_count']
 
 

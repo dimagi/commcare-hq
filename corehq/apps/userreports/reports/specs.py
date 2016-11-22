@@ -91,6 +91,9 @@ class BaseReportColumn(JsonObject):
     def aggregations(self, data_source_config, lang):
         raise NotImplementedError('subclasses must override this')
 
+    def get_es_data(self, row, data_source_config, lang):
+        raise NotImplementedError('subclasses must override this')
+
 
 class ReportColumn(BaseReportColumn):
     transform = DictProperty()
@@ -170,6 +173,14 @@ class FieldColumn(ReportColumn):
     def aggregations(self, data_source_config, lang):
         return filter(None, [ES_AGG_MAP[self.aggregation](self.column_id, self.field)])
 
+    def get_es_data(self, row, data_source_config, lang):
+        if self.aggregation == 'simple':
+            value = row['key']
+        else:
+            value = int(row[self.column_id]['value'])
+
+        return {self.column_id: value}
+
     def get_query_column_ids(self):
         return [self.column_id]
 
@@ -219,6 +230,12 @@ class ExpandedColumn(ReportColumn):
 
     def aggregations(self, data_source_config, lang):
         return [c.aggregation for c in self.get_column_config(data_source_config, lang).columns]
+
+    def get_es_data(self, row, data_source_config, lang):
+        r = {}
+        for sub_col in self.get_column_config(data_source_config, lang).columns:
+            r[sub_col.ui_alias] = sub_col.get_es_data(row)
+        return r
 
 
 class AggregateDateColumn(ReportColumn):

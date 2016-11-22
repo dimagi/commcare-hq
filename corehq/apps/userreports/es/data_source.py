@@ -113,18 +113,7 @@ class ConfigurableReportEsDataSource(ConfigurableReportDataSourceMixin, ReportDa
         for row in hits:
             r = {}
             for report_column in self.top_level_columns:
-                if report_column.type == 'expanded':
-                    # todo aggregation only supports # of docs matching
-                    for sub_col in get_expanded_column_config(self.config, report_column, 'en').columns:
-                        r[sub_col.ui_alias] = sub_col.get_data(row)
-                elif report_column.field == self.aggregation_columns[0]:
-                    r[report_column.column_id] = row['key']
-                elif report_column.aggregation == 'sum':
-                    r[report_column.column_id] = int(row[report_column.column_id]['value'])
-                elif report_column.aggregation == 'min':
-                    r[report_column.column_id] = int(row[report_column.column_id]['value'])
-                else:
-                    r[report_column.column_id] = row[report_column.column_id]['doc_count']
+                r.update(report_column.get_es_data(row, self.config, self.lang))
             ret.append(r)
 
         return ret
