@@ -13,4 +13,5 @@ class PreviewAppView(TemplateView):
         return self.render_to_response({
             'app': app,
             'formplayer_url': settings.FORMPLAYER_URL,
+            "maps_api_key": settings.GMAPS_API_KEY,
         })
