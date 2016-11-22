@@ -122,7 +122,10 @@ FormplayerFrontend.reqres.setHandler('handleNotification', function(notification
 
 FormplayerFrontend.on('startForm', function (data) {
     FormplayerFrontend.request("clearMenu");
-
+    var urlObject = Util.currentUrlToObject();
+    urlObject.setSessionId(data.session_id);
+    var encodedUrl = Util.objectToEncodedUrl(urlObject.toJson());
+    FormplayerFrontend.navigate(encodedUrl);
     data.onLoading = tfLoading;
     data.onLoadingComplete = tfLoadingComplete;
     var user = FormplayerFrontend.request('currentUser');
@@ -228,6 +231,12 @@ FormplayerFrontend.on("start", function (options) {
             false
         );
     }
+});
+
+FormplayerFrontend.reqres.setHandler('getCurrentSessionId', function() {
+    // First attempt to grab app id from URL
+    var urlObject = Util.currentUrlToObject();
+    return urlObject.sessionId;
 });
 
 FormplayerFrontend.reqres.setHandler('getCurrentAppId', function() {
@@ -393,16 +402,18 @@ FormplayerFrontend.on('refreshApplication', function(appId) {
     if (!appId) {
         throw new Error('Attempt to refresh application for null appId');
     }
+    var sessionId = FormplayerFrontend.request('getCurrentSessionId');
     var user = FormplayerFrontend.request('currentUser'),
         formplayer_url = user.formplayer_url,
         resp,
         options = {
-            url: formplayer_url + "/delete_application_dbs",
+            url: formplayer_url + "/update",
             data: JSON.stringify({
                 app_id: appId,
                 domain: user.domain,
                 username: user.username,
                 restoreAs: user.restoreAs,
+                sessionId: sessionId,
             }),
         };
     Util.setCrossDomainAjaxOptions(options);
@@ -412,7 +423,12 @@ FormplayerFrontend.on('refreshApplication', function(appId) {
         tfLoadingComplete(true);
     }).done(function() {
         tfLoadingComplete();
-        FormplayerFrontend.trigger('navigateHome');
+        if (typeof resp.responseJSON.tree !== 'undefined') {
+            FormplayerFrontend.trigger('startForm', resp.responseJSON);
+        } else {
+            FormplayerFrontend.trigger('navigateHome');
+        }
+
     });
 });
 
