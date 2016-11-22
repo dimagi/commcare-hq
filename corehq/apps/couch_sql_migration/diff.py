@@ -41,7 +41,7 @@ PARTIAL_DIFFS = {
         {'path': ('edited_on',)},
     ],
     'XFormDeprecated': [],
-    'CommCareCase': [
+    'CommCareCase*': [
         {'path': ('_rev',)},
         {'path': ('initial_processing_complete',)},
         {'path': ('actions', '[*]')},
@@ -64,10 +64,13 @@ PARTIAL_DIFFS = {
         {'diff_type': 'type', 'path': ('owner_id',), 'old_value': None},
         # form has case block with no actions
         {'diff_type': 'set_mismatch', 'path': ('xform_ids', '[*]'), 'old_value': ''},
+    ],
+    'CommCareCase': [
         # couch case was deleted and then restored - SQL case won't have deletion properties
         {'diff_type': 'missing', 'path': ('-deletion_id',), 'new_value': Ellipsis},
         {'diff_type': 'missing', 'path': ('-deletion_date',), 'new_value': Ellipsis},
     ],
+    'CommCareCase-Deleted': [],
     'LedgerValue': [
         {'path': ('_id',)},
     ],
@@ -144,7 +147,7 @@ def filter_form_diffs(doc_type, diffs):
 def filter_case_diffs(couch_case, sql_case, diffs):
     doc_type = couch_case['doc_type']
     filtered_diffs = _filter_exact_matches(diffs, CASE_IGNORED_DIFFS)
-    filtered_diffs = _filter_partial_matches(filtered_diffs, PARTIAL_DIFFS['CommCareCase'])
+    filtered_diffs = _filter_partial_matches(filtered_diffs, PARTIAL_DIFFS[doc_type] + PARTIAL_DIFFS['CommCareCase*'])
     filtered_diffs = _filter_renamed_fields(filtered_diffs, doc_type)
     filtered_diffs = _filter_date_diffs(filtered_diffs)
     filtered_diffs = _filter_user_case_diffs(couch_case, filtered_diffs)
