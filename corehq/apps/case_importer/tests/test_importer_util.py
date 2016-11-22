@@ -1,6 +1,6 @@
 from django.test import SimpleTestCase, override_settings
 import mock
-from corehq.apps.case_importer_v1.util import is_valid_owner, \
+from corehq.apps.case_importer.util import is_valid_owner, \
     get_case_properties_for_case_type
 from corehq.apps.export.models import CaseExportDataSchema, ExportGroupSchema, \
     MAIN_TABLE, ExportItem, PathNode

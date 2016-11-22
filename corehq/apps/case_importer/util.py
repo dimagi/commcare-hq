@@ -4,9 +4,9 @@ from collections import defaultdict, namedtuple
 from django.utils.translation import ugettext_lazy as _
 from couchdbkit import NoResultFound
 
-from corehq.apps.case_importer_v1.const import LookupErrors, ImportErrors
+from corehq.apps.case_importer.const import LookupErrors, ImportErrors
 from corehq.apps.groups.models import Group
-from corehq.apps.case_importer_v1.exceptions import (
+from corehq.apps.case_importer.exceptions import (
     ImporterExcelFileEncrypted,
     ImporterExcelError,
     ImporterFileNotFound,

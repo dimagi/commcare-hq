@@ -3492,7 +3492,7 @@ msgstr ""
 #: corehq/apps/accounting/user_text.py:27
 #: corehq/apps/app_manager/templates/app_manager/v1/form_view_base.html:353
 #: corehq/apps/app_manager/templates/app_manager/v1/partials/module_view_case_management.html:38
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/excel_config.html:135
+#: corehq/apps/case_importer/templates/case_importer/excel_config.html:135
 #: corehq/apps/prelogin/templates/prelogin/_sections/pricing/lead.html:67
 #: corehq/apps/prelogin/templates/prelogin/_sections/pricing/partials/section_plan_headers.html:20
 #: corehq/apps/prelogin/templates/prelogin/_sections/services/bundles.html:106
@@ -4492,7 +4492,7 @@ msgstr "Problèmes: "
 #: corehq/apps/app_manager/templates/app_manager/v2/partials/case_config_careplan.html:25
 #: corehq/apps/app_manager/templates/app_manager/v2/partials/case_search_properties.html:35
 #: corehq/apps/app_manager/templates/app_manager/v2/partials/case_search_properties.html:61
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/excel_fields.html:156
+#: corehq/apps/case_importer/templates/case_importer/excel_fields.html:156
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html:41
 #: corehq/apps/reminders/forms.py:1661
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_attachments.html:7
@@ -9995,56 +9995,56 @@ msgstr "Site d'utilisateur [site]"
 msgid "user's location's parent [location]"
 msgstr ""
 
-#: corehq/apps/case_importer_v1/base.py:6
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/excel_commit.html:11
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/excel_config.html:45
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/excel_fields.html:125
+#: corehq/apps/case_importer/base.py:6
+#: corehq/apps/case_importer/templates/case_importer/excel_commit.html:11
+#: corehq/apps/case_importer/templates/case_importer/excel_config.html:45
+#: corehq/apps/case_importer/templates/case_importer/excel_fields.html:125
 msgid "Import Cases from Excel"
 msgstr "Importer les dossiers à partir d'Excel"
 
-#: corehq/apps/case_importer_v1/base.py:8
+#: corehq/apps/case_importer/base.py:8
 msgid "Import case data from an external Excel file"
 msgstr "Importer les données de dossier à partir du fichier Excel externe"
 
-#: corehq/apps/case_importer_v1/const.py:9
+#: corehq/apps/case_importer/const.py:9
 msgid "Invalid Owner Name"
 msgstr "Nom de propriétaire invalide"
 
-#: corehq/apps/case_importer_v1/const.py:10
+#: corehq/apps/case_importer/const.py:10
 msgid "Invalid Owner ID"
 msgstr "Identifiant de propriétaire invalide"
 
-#: corehq/apps/case_importer_v1/const.py:11
+#: corehq/apps/case_importer/const.py:11
 msgid "Invalid Parent ID"
 msgstr "Identifiant parent non valide"
 
-#: corehq/apps/case_importer_v1/const.py:12
+#: corehq/apps/case_importer/const.py:12
 msgid "Invalid Date"
 msgstr "Date invalide"
 
-#: corehq/apps/case_importer_v1/const.py:13
+#: corehq/apps/case_importer/const.py:13
 msgid "Blank External ID"
 msgstr "Identifiant externe vide"
 
-#: corehq/apps/case_importer_v1/const.py:14
+#: corehq/apps/case_importer/const.py:14
 msgid "Case Generation Error"
 msgstr "Erreur de génération de dossier"
 
-#: corehq/apps/case_importer_v1/const.py:15
+#: corehq/apps/case_importer/const.py:15
 msgid "Duplicated Location Name"
 msgstr "Nom de l'emplacement dupliqué"
 
-#: corehq/apps/case_importer_v1/const.py:16
+#: corehq/apps/case_importer/const.py:16
 msgid "Invalid Integer"
 msgstr "Entier non valide"
 
-#: corehq/apps/case_importer_v1/const.py:17
+#: corehq/apps/case_importer/const.py:17
 msgid "Import Error"
 msgstr "Importer Erreur"
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/excel_commit.html:8
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/excel_config.html:42
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/excel_fields.html:122
+#: corehq/apps/case_importer/templates/case_importer/excel_commit.html:8
+#: corehq/apps/case_importer/templates/case_importer/excel_config.html:42
+#: corehq/apps/case_importer/templates/case_importer/excel_fields.html:122
 #: corehq/apps/dashboard/views.py:227
 #: corehq/apps/data_interfaces/interfaces.py:26
 #: corehq/apps/data_interfaces/views.py:82
@@ -10055,12 +10055,12 @@ msgstr "Importer Erreur"
 msgid "Data"
 msgstr "Données"
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/excel_commit.html:14
+#: corehq/apps/case_importer/templates/case_importer/excel_commit.html:14
 msgid "Importing Cases..."
 msgstr "Importation des dossiers"
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/excel_commit.html:42
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/partials/import_status.html:70
+#: corehq/apps/case_importer/templates/case_importer/excel_commit.html:42
+#: corehq/apps/case_importer/templates/case_importer/partials/import_status.html:70
 #: corehq/apps/fixtures/views.py:357 corehq/apps/locations/views.py:733
 #: corehq/apps/products/views.py:324
 #: corehq/apps/style/templates/style/partials/download_status.html:19
@@ -10068,69 +10068,69 @@ msgstr "Importation des dossiers"
 msgid "Importing your data. This may take some time..."
 msgstr "Importation de vos données. Cela pourrait prendre un moment..."
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/excel_config.html:48
+#: corehq/apps/case_importer/templates/case_importer/excel_config.html:48
 msgid "Case Options"
 msgstr "Options de dossiers"
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/excel_config.html:63
+#: corehq/apps/case_importer/templates/case_importer/excel_config.html:63
 msgid "Case Type to Update/Create"
 msgstr "Type de dossier à mettre à jour / créer"
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/excel_config.html:66
+#: corehq/apps/case_importer/templates/case_importer/excel_config.html:66
 #: corehq/apps/domain/templates/domain/admin/partials/case_search_templates.html:16
 msgid "Case type"
 msgstr "Type de dossier"
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/excel_config.html:70
+#: corehq/apps/case_importer/templates/case_importer/excel_config.html:70
 msgid "Used in existing applications:"
 msgstr "Utilisé dans les applications existantes :"
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/excel_config.html:75
+#: corehq/apps/case_importer/templates/case_importer/excel_config.html:75
 msgid "From unknown or deleted applications:"
 msgstr "À partir d'application inconnues ou supprimées :"
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/excel_config.html:85
+#: corehq/apps/case_importer/templates/case_importer/excel_config.html:85
 msgid "Identifying Cases to Update/Create"
 msgstr "Identification de dossiers à uploader/ créer"
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/excel_config.html:88
+#: corehq/apps/case_importer/templates/case_importer/excel_config.html:88
 msgid "Excel column"
 msgstr "Colonne Excel"
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/excel_config.html:103
+#: corehq/apps/case_importer/templates/case_importer/excel_config.html:103
 msgid "Corresponding case field"
 msgstr "Champ de dossier correspondant"
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/excel_config.html:108
+#: corehq/apps/case_importer/templates/case_importer/excel_config.html:108
 #: corehq/ex-submodules/casexml/apps/case/templatetags/case_tags.py:92
 #: custom/opm/beneficiary.py:877 custom/opm/beneficiary.py:960
 #: custom/opm/beneficiary.py:985
 msgid "Case ID"
 msgstr "Identifiant de dossier"
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/excel_config.html:111
+#: corehq/apps/case_importer/templates/case_importer/excel_config.html:111
 #: corehq/apps/data_interfaces/views.py:347
 msgid "External ID"
 msgstr "Identifiant externe"
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/excel_config.html:119
+#: corehq/apps/case_importer/templates/case_importer/excel_config.html:119
 msgid "Handle New Records"
 msgstr "Gérer nouveaux rapports"
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/excel_config.html:126
+#: corehq/apps/case_importer/templates/case_importer/excel_config.html:126
 msgid "Create new records if there is no matching case"
 msgstr "Créer de nouveaux dossiers s'il n'y a aucun dossier correspondant"
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/excel_config.html:141
+#: corehq/apps/case_importer/templates/case_importer/excel_config.html:141
 msgid "Advanced Update"
 msgstr "Mise à jour avancée"
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/excel_config.html:148
+#: corehq/apps/case_importer/templates/case_importer/excel_config.html:148
 msgid "Update Cases Using Multiple Key/Value Pairs"
 msgstr ""
 "Mettre à jour les dossiers utilisant des clefs/paires de valeurs multiples"
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/excel_config.html:156
+#: corehq/apps/case_importer/templates/case_importer/excel_config.html:156
 msgid ""
 "\n"
 "                                Instructions can be found on our\n"
@@ -10150,15 +10150,15 @@ msgstr ""
 "</a>\n"
 "pour cette partie de la fonctionnalité."
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/excel_config.html:166
+#: corehq/apps/case_importer/templates/case_importer/excel_config.html:166
 msgid "Corresponding Key/Value fields from Excel"
 msgstr "Champs clé / valeur correspondants à partir d'Excel"
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/excel_config.html:168
+#: corehq/apps/case_importer/templates/case_importer/excel_config.html:168
 msgid "Key/Value Pairs"
 msgstr "Paires Clef/Valeur"
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/excel_config.html:169
+#: corehq/apps/case_importer/templates/case_importer/excel_config.html:169
 msgid ""
 "The Excel file must be formatted with three columns. The first, identified "
 "in the Identifying Cases section above, contains the case to update. The "
@@ -10166,16 +10166,16 @@ msgid ""
 "the values to change. "
 msgstr ""
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/excel_config.html:181
+#: corehq/apps/case_importer/templates/case_importer/excel_config.html:181
 msgid "Case Properties column"
 msgstr "Colonne propriétés du dossier"
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/excel_config.html:196
+#: corehq/apps/case_importer/templates/case_importer/excel_config.html:196
 msgid "Value column"
 msgstr "Colonne valeur"
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/excel_config.html:217
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/excel_fields.html:182
+#: corehq/apps/case_importer/templates/case_importer/excel_config.html:217
+#: corehq/apps/case_importer/templates/case_importer/excel_fields.html:182
 #: corehq/apps/domain/templates/error.html:18
 #: corehq/apps/domain/templates/login_and_password/two_factor/_wizard_actions.html:6
 #: corehq/apps/settings/forms.py:107 corehq/apps/settings/forms.py:137
@@ -10184,68 +10184,68 @@ msgstr "Colonne valeur"
 msgid "Back"
 msgstr "Retour"
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/excel_config.html:221
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/import_cases.html:46
+#: corehq/apps/case_importer/templates/case_importer/excel_config.html:221
+#: corehq/apps/case_importer/templates/case_importer/import_cases.html:46
 msgid "Next step"
 msgstr "Étape suivante"
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/excel_fields.html:128
+#: corehq/apps/case_importer/templates/case_importer/excel_fields.html:128
 msgid "Matchings"
 msgstr "Correspondances"
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/excel_fields.html:150
+#: corehq/apps/case_importer/templates/case_importer/excel_fields.html:150
 msgid "Match Excel Columns to Case Properties"
 msgstr "Faire correspondre les colonnes Excel aux propriétés de dossier"
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/excel_fields.html:154
+#: corehq/apps/case_importer/templates/case_importer/excel_fields.html:154
 msgid "Excel Field"
 msgstr "Champ Excel"
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/excel_fields.html:156
+#: corehq/apps/case_importer/templates/case_importer/excel_fields.html:156
 msgid "Auto Fill"
 msgstr "Remplissage automatique"
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/excel_fields.html:169
+#: corehq/apps/case_importer/templates/case_importer/excel_fields.html:169
 msgid "Modify"
 msgstr "Modifier"
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/excel_fields.html:173
+#: corehq/apps/case_importer/templates/case_importer/excel_fields.html:173
 msgid "Add another matching"
 msgstr "Ajouter un autre élément correspondant"
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/excel_fields.html:186
+#: corehq/apps/case_importer/templates/case_importer/excel_fields.html:186
 msgid "Confirm Import"
 msgstr "Confirmer l'importation"
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/import_cases.html:15
+#: corehq/apps/case_importer/templates/case_importer/import_cases.html:15
 msgid "Upload an Excel File From Your Computer to Import From"
 msgstr "Uploader un fichier Excel de votre ordinateur à partir duquel importer"
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/import_cases.html:20
+#: corehq/apps/case_importer/templates/case_importer/import_cases.html:20
 msgid "Select a file to upload"
 msgstr "Sélectionner un fichier à uploader."
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/import_cases.html:29
+#: corehq/apps/case_importer/templates/case_importer/import_cases.html:29
 msgid "File to Upload"
 msgstr "Fichier à charger"
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/import_cases.html:37
+#: corehq/apps/case_importer/templates/case_importer/import_cases.html:37
 msgid "This file contains column headers"
 msgstr "Ce fichier contient des en-têtes de colonnes"
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/partials/excel_field_row.html:13
+#: corehq/apps/case_importer/templates/case_importer/partials/excel_field_row.html:13
 msgid "Select field from excel..."
 msgstr "Sélectionner un champ à partir d'Excel..."
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/partials/excel_field_row.html:40
+#: corehq/apps/case_importer/templates/case_importer/partials/excel_field_row.html:40
 msgid "Select property name..."
 msgstr "Sélectionnez un nom de propriété..."
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/partials/excel_field_row.html:54
+#: corehq/apps/case_importer/templates/case_importer/partials/excel_field_row.html:54
 msgid "Create a new property instead"
 msgstr "Créer plutôt une nouvelle propriété"
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/partials/help_message.html:5
+#: corehq/apps/case_importer/templates/case_importer/partials/help_message.html:5
 msgid ""
 "\n"
 "            Case importer is a tool for advanced users that\n"
@@ -10264,7 +10264,7 @@ msgstr ""
 "            pourraient compromettre vos rapports ou vos applications. \n"
 "            user de prudence."
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/partials/help_message.html:15
+#: corehq/apps/case_importer/templates/case_importer/partials/help_message.html:15
 msgid ""
 "\n"
 "            Documentation and instructions can be found on our\n"
@@ -10281,7 +10281,7 @@ msgstr ""
 "pages d'aide pour cette fonctionnalité.\n"
 "</a>"
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/partials/import_error.html:8
+#: corehq/apps/case_importer/templates/case_importer/partials/import_error.html:8
 #, fuzzy
 #| msgid ""
 #| "\n"
@@ -10302,16 +10302,16 @@ msgstr ""
 "<a href=\"#modalReportIssue\"\n"
 "data-toggle=\"modal\"> reporter un problème</a>."
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/partials/import_error.html:18
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/partials/import_status.html:65
+#: corehq/apps/case_importer/templates/case_importer/partials/import_error.html:18
+#: corehq/apps/case_importer/templates/case_importer/partials/import_status.html:65
 msgid "Return to import cases"
 msgstr "Retour à l'importation des dossiers"
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/partials/import_status.html:4
+#: corehq/apps/case_importer/templates/case_importer/partials/import_status.html:4
 msgid "Import complete"
 msgstr "Importation terminée"
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/partials/import_status.html:8
+#: corehq/apps/case_importer/templates/case_importer/partials/import_status.html:8
 #, python-format
 msgid ""
 "\n"
@@ -10325,7 +10325,7 @@ msgstr ""
 "liées par correspondance et\n"
 "                        mises à jour."
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/partials/import_status.html:17
+#: corehq/apps/case_importer/templates/case_importer/partials/import_status.html:17
 #, python-format
 msgid ""
 "\n"
@@ -10343,11 +10343,11 @@ msgstr ""
 "                        ont été créés. Si les case_id ont été utilisés, ceux-"
 "ci ont été ignorés."
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/partials/import_status.html:27
+#: corehq/apps/case_importer/templates/case_importer/partials/import_status.html:27
 msgid "No cases were created or updated during this import."
 msgstr "Aucun dossier n'a été créé ou mis à jour pendant cette importation."
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/partials/import_status.html:33
+#: corehq/apps/case_importer/templates/case_importer/partials/import_status.html:33
 #, python-format
 msgid ""
 "\n"
@@ -10365,15 +10365,15 @@ msgstr ""
 "                        dans votre système portent le même identifiant "
 "externe."
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/partials/import_status.html:47
+#: corehq/apps/case_importer/templates/case_importer/partials/import_status.html:47
 msgid "in column"
 msgstr "dans la colonne"
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/partials/import_status.html:53
+#: corehq/apps/case_importer/templates/case_importer/partials/import_status.html:53
 msgid "Affected rows:"
 msgstr "Rangés affectées"
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/partials/import_status.html:74
+#: corehq/apps/case_importer/templates/case_importer/partials/import_status.html:74
 msgid ""
 "\n"
 "            Task processor not detected.\n"
@@ -10390,24 +10390,24 @@ msgstr ""
 "            veuillez contacter l'assistance pour obtenir de l'aide.\n"
 "        "
 
-#: corehq/apps/case_importer_v1/templates/case_importer_v1/partials/import_status.html:93
+#: corehq/apps/case_importer/templates/case_importer/partials/import_status.html:93
 msgid "Imported"
 msgstr "Importé"
 
-#: corehq/apps/case_importer_v1/util.py:164
+#: corehq/apps/case_importer/util.py:164
 msgid ""
 "Owner ID was used in the mapping but there were errors when uploading "
 "because of these values. Make sure the values in this column are ID's for "
 "users or case sharing groups or locations."
 msgstr ""
 
-#: corehq/apps/case_importer_v1/util.py:169
+#: corehq/apps/case_importer/util.py:169
 msgid ""
 "Owner name was used in the mapping but there were errors when uploading "
 "because of these values."
 msgstr ""
 
-#: corehq/apps/case_importer_v1/util.py:173
+#: corehq/apps/case_importer/util.py:173
 msgid ""
 "Date fields were specified that caused an error during conversion. This is "
 "likely caused by a value from excel having the wrong type or not being "
@@ -10417,7 +10417,7 @@ msgstr ""
 "été spécifiés. Ceci est probablement dû à des valeurs excel de mauvais type "
 "ou qui n'ont pas été formatées correctement."
 
-#: corehq/apps/case_importer_v1/util.py:178
+#: corehq/apps/case_importer/util.py:178
 msgid ""
 "Blank external ids were found in these rows causing as error when importing "
 "cases."
@@ -10425,45 +10425,45 @@ msgstr ""
 "Des identifiants externes vides ont été trouvés dans ces rangées causant des "
 "erreurs dans l'importation des dossiers."
 
-#: corehq/apps/case_importer_v1/util.py:182
+#: corehq/apps/case_importer/util.py:182
 msgid "These rows failed to generate cases for unknown reasons"
 msgstr "Ces rangées n'ont pas pu générer de dossier pour des raisons inconnues"
 
-#: corehq/apps/case_importer_v1/util.py:185
+#: corehq/apps/case_importer/util.py:185
 msgid "An invalid or unknown parent case was specified for the uploaded case."
 msgstr "Un dossier parent inconnu a été spécifié pour le dossier chargé."
 
-#: corehq/apps/case_importer_v1/util.py:189
+#: corehq/apps/case_importer/util.py:189
 msgid ""
 "Owner ID was used in the mapping, but there were errors when uploading "
 "because of these values. There are multiple locations with this same name, "
 "try using site-code instead."
 msgstr ""
 
-#: corehq/apps/case_importer_v1/util.py:194
+#: corehq/apps/case_importer/util.py:194
 msgid ""
 "Integer values were specified, but the values in excel were not all integers"
 msgstr ""
 "Des valeurs entières ont été spécifiées, mais les valeurs dans excel "
 "n'étaient pas toutes des valeurs entières"
 
-#: corehq/apps/case_importer_v1/util.py:198
+#: corehq/apps/case_importer/util.py:198
 msgid "Problems in importing cases. Please check the excel file."
 msgstr ""
 "Problèmes dans l'importation des dossiers. Veuillez vérifier le fichier "
 "excel."
 
-#: corehq/apps/case_importer_v1/util.py:330
+#: corehq/apps/case_importer/util.py:330
 msgid "Field name \"{}\" is reserved"
 msgstr "Le nom de champ \"{}\" est réservé"
 
-#: corehq/apps/case_importer_v1/util.py:451
-#: corehq/apps/case_importer_v1/views.py:312
+#: corehq/apps/case_importer/util.py:451
+#: corehq/apps/case_importer/views.py:312
 msgid "Sorry, your session has expired. Please start over and try again."
 msgstr ""
 "Désolé, votre session est expirée. Veuillez redémarrer et essayer à nouveau."
 
-#: corehq/apps/case_importer_v1/util.py:453
+#: corehq/apps/case_importer/util.py:453
 msgid ""
 "The session containing the file you uploaded has expired - please upload a "
 "new one."
@@ -10471,7 +10471,7 @@ msgstr ""
 "La session comportant le fichier que vous avez uploadé est expiré. Veuillez "
 "en uploader un nouveau."
 
-#: corehq/apps/case_importer_v1/util.py:456
+#: corehq/apps/case_importer/util.py:456
 msgid ""
 "The file you want to import is password protected. Please choose a file that "
 "is not password protected."
@@ -10479,15 +10479,15 @@ msgstr ""
 "Le fichier que vous souhaitez importer est protégé par un mot de passe. "
 "Veuillez choisir un fichier qui n'est pas protégé par un mot de passe."
 
-#: corehq/apps/case_importer_v1/util.py:459
+#: corehq/apps/case_importer/util.py:459
 msgid "The file uploaded has the following error: {}"
 msgstr "Le fichier chargé contient l'erreur suivante: {}"
 
-#: corehq/apps/case_importer_v1/util.py:461
+#: corehq/apps/case_importer/util.py:461
 msgid "Error: {}"
 msgstr "Erreur: {}"
 
-#: corehq/apps/case_importer_v1/views.py:165
+#: corehq/apps/case_importer/views.py:165
 msgid ""
 "It looks like you may have accessed this page from a stale page. Please "
 "start over."

@@ -1,6 +1,6 @@
 from django.conf.urls import url
 
-from corehq.apps.case_importer_v1.views import (
+from corehq.apps.case_importer.views import (
     excel_commit,
     excel_config,
     excel_fields,

@@ -1,9 +1,9 @@
 from django.test import TestCase
 from casexml.apps.case.mock import CaseFactory, CaseStructure
 from casexml.apps.case.tests.util import delete_all_cases
-from corehq.apps.case_importer_v1.const import ImportErrors
-from corehq.apps.case_importer_v1.tasks import bulk_import_async, do_import
-from corehq.apps.case_importer_v1.util import ImporterConfig, WorksheetWrapper
+from corehq.apps.case_importer.const import ImportErrors
+from corehq.apps.case_importer.tasks import bulk_import_async, do_import
+from corehq.apps.case_importer.util import ImporterConfig, WorksheetWrapper
 from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain

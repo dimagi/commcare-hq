@@ -2,13 +2,13 @@ import os.path
 from django.http import HttpResponseRedirect
 from django.utils.datastructures import MultiValueDictKeyError
 from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
-from corehq.apps.case_importer_v1 import base
-from corehq.apps.case_importer_v1 import util as importer_util
-from corehq.apps.case_importer_v1.exceptions import ImporterError
-from corehq.apps.case_importer_v1.tasks import bulk_import_async
+from corehq.apps.case_importer import base
+from corehq.apps.case_importer import util as importer_util
+from corehq.apps.case_importer.exceptions import ImporterError
+from corehq.apps.case_importer.tasks import bulk_import_async
 from django.views.decorators.http import require_POST
 
-from corehq.apps.case_importer_v1.util import get_case_properties_for_case_type, get_importer_error_message
+from corehq.apps.case_importer.util import get_case_properties_for_case_type, get_importer_error_message
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -104,7 +104,7 @@ def excel_config(request, domain):
 
     return render(
         request,
-        "case_importer_v1/excel_config.html", {
+        "case_importer/excel_config.html", {
             'named_columns': named_columns,
             'columns': columns,
             'unrecognized_case_types': unrecognized_case_types,
@@ -223,7 +223,7 @@ def excel_fields(request, domain):
 
     return render(
         request,
-        "case_importer_v1/excel_fields.html", {
+        "case_importer/excel_fields.html", {
             'named_columns': named_columns,
             'case_type': case_type,
             'search_column': search_column,
@@ -281,9 +281,9 @@ def excel_commit(request, domain):
 
     return render(
         request,
-        "case_importer_v1/excel_commit.html", {
+        "case_importer/excel_commit.html", {
             'download_id': download.download_id,
-            'template': 'case_importer_v1/partials/import_status.html',
+            'template': 'case_importer/partials/import_status.html',
             'domain': domain,
             'report': {
                 'name': 'Import: Completed'
@@ -294,13 +294,13 @@ def excel_commit(request, domain):
 
 
 @require_can_edit_data
-def importer_job_poll(request, domain, download_id, template="case_importer_v1/partials/import_status.html"):
+def importer_job_poll(request, domain, download_id, template="case_importer/partials/import_status.html"):
     try:
         download_context = get_download_context(download_id, check_state=True)
     except TaskFailedError as e:
         context = RequestContext(request)
         context.update({'error': e.errors, 'url': base.ImportCases.get_url(domain=domain)})
-        return render_to_response('case_importer_v1/partials/import_error.html', context_instance=context)
+        return render_to_response('case_importer/partials/import_error.html', context_instance=context)
     else:
         context = RequestContext(request)
         context.update(download_context)
