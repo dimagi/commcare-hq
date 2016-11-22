@@ -106,7 +106,7 @@ class SQLICDSBackend(SQLSMSBackend):
             text = msg.text.encode("iso-8859-1")
             msg_type = "PM"
         except UnicodeEncodeError:
-            text = msg.text.encode("utf-8")
+            text = msg.text.encode("utf_16_be").encode('hex').upper()
             msg_type = "UC"
         params = {
             "username": config.username,
