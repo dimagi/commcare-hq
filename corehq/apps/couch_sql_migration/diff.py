@@ -62,6 +62,7 @@ PARTIAL_DIFFS = {
         {'path': ('indices', '[*]', 'case_id')},
         {'diff_type': 'diff', 'path': ('owner_id',), 'old_value': ''},
         {'diff_type': 'type', 'path': ('owner_id',), 'old_value': None},
+        # form has case block with no actions
         {'diff_type': 'set_mismatch', 'path': ('xform_ids', '[*]'), 'old_value': ''},
         # couch case was deleted and then restored - SQL case won't have deletion properties
         {'diff_type': 'missing', 'path': ('-deletion_id',), 'new_value': Ellipsis},
