@@ -1,78 +1,20 @@
+from django.test import TestCase
 import mock
-from django.test import TestCase, SimpleTestCase
-from django.test.utils import override_settings
 from casexml.apps.case.mock import CaseFactory, CaseStructure
 from casexml.apps.case.tests.util import delete_all_cases
-
+from corehq.apps.case_importer_v1.const import ImportErrors
+from corehq.apps.case_importer_v1.exceptions import ImporterError
+from corehq.apps.case_importer_v1.tasks import bulk_import_async, do_import
+from corehq.apps.case_importer_v1.tests.fakes import ExcelFileFake
+from corehq.apps.case_importer_v1.util import ImporterConfig
 from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
-from corehq.apps.export.models import (
-    CaseExportDataSchema,
-    ExportGroupSchema,
-    PathNode,
-    ExportItem,
-    MAIN_TABLE,
-)
-from corehq.apps.case_importer_v1.exceptions import ImporterError
-from corehq.apps.case_importer_v1.tasks import do_import, bulk_import_async
-from corehq.apps.case_importer_v1.util import ImporterConfig, is_valid_owner, get_case_properties_for_case_type
 from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.tests.util import delete_all_locations
-from corehq.apps.users.models import WebUser, CommCareUser, DomainMembership
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.apps.users.models import WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-
-from .const import ImportErrors
-
-
-class ExcelFileFake(object):
-    """
-    Provides the minimal API of ExcelFile used by the importer
-    """
-    class Workbook(object):
-
-        def __init__(self):
-            self._datemode = 0
-
-        @property
-        def datemode(self):
-            return self._datemode
-
-    def __init__(self, header_columns=None, num_rows=0, has_errors=False, row_generator=None):
-        self.header_columns = header_columns or []
-        self.num_rows = num_rows
-        self.row_generator = row_generator or default_row_generator
-        self.workbook = self.Workbook()
-
-    def get_header_columns(self):
-        return self.header_columns
-
-    @property
-    def max_row(self):
-        return self.num_rows
-
-    def iter_rows(self):
-        for i in range(self.max_row):
-            yield self._get_row(i)
-
-    def _get_row(self, index):
-        return self.row_generator(self, index)
-
-
-def default_row_generator(excel_file, index):
-    # by default, just return [propertyname-rowid] for every cell
-    return [u'{col}-{row}'.format(row=index, col=col) for col in excel_file.header_columns]
-
-
-def blank_row_generator(excel_file, index):
-    return [''.format(row=index, col=col) for col in excel_file.header_columns]
-
-
-def id_match_generator(id):
-    def match(excel_file, index):
-        return [id] + ['{col}-{row}'.format(row=index, col=col) for col in excel_file.header_columns[1:]]
-    return match
+from corehq.form_processor.tests.utils import run_with_all_backends
 
 
 class ImporterTest(TestCase):
@@ -426,55 +368,11 @@ class ImporterTest(TestCase):
         self.assertEqual(res['errors'][error_message][error_column_name]['rows'], [5])
 
 
-class ImporterUtilsTest(SimpleTestCase):
-
-    def test_user_owner_match(self):
-        self.assertTrue(is_valid_owner(_mk_user(domain='match'), 'match'))
-
-    def test_user_owner_nomatch(self):
-        self.assertFalse(is_valid_owner(_mk_user(domain='match'), 'nomatch'))
-
-    def test_web_user_owner_match(self):
-        self.assertTrue(is_valid_owner(_mk_web_user(domains=['match', 'match2']), 'match'))
-        self.assertTrue(is_valid_owner(_mk_web_user(domains=['match', 'match2']), 'match2'))
-
-    def test_web_user_owner_nomatch(self):
-        self.assertFalse(is_valid_owner(_mk_web_user(domains=['match', 'match2']), 'nomatch'))
-
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
-    def test_get_case_properties_for_case_type(self):
-        schema = CaseExportDataSchema(
-            group_schemas=[
-                ExportGroupSchema(
-                    path=MAIN_TABLE,
-                    items=[
-                        ExportItem(
-                            path=[PathNode(name='name')],
-                            label='name',
-                            last_occurrences={},
-                        ),
-                        ExportItem(
-                            path=[PathNode(name='color')],
-                            label='color',
-                            last_occurrences={},
-                        ),
-                    ],
-                    last_occurrences={},
-                ),
-            ],
-        )
-
-        with mock.patch(
-                'corehq.apps.export.models.new.CaseExportDataSchema.generate_schema_from_builds',
-                return_value=schema):
-            case_types = get_case_properties_for_case_type('test-domain', 'case-type')
-
-        self.assertEqual(sorted(case_types), ['color', 'name'])
+def blank_row_generator(excel_file, index):
+    return [''.format(row=index, col=col) for col in excel_file.header_columns]
 
 
-def _mk_user(domain):
-    return CommCareUser(domain=domain, domain_membership=DomainMembership(domain=domain))
-
-
-def _mk_web_user(domains):
-    return WebUser(domains=domains, domain_memberships=[DomainMembership(domain=domain) for domain in domains])
+def id_match_generator(id):
+    def match(excel_file, index):
+        return [id] + ['{col}-{row}'.format(row=index, col=col) for col in excel_file.header_columns[1:]]
+    return match
