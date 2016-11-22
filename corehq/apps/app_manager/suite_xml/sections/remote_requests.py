@@ -56,7 +56,6 @@ class RemoteRequestFactory(object):
                 QueryData(
                     key='case_id',
                     ref=QuerySessionXPath('case_id').instance(),
-                    # e.g. instance('querysession')/session/data/case_id
                 ),
             ]
         )
@@ -70,9 +69,13 @@ class RemoteRequestFactory(object):
         )
 
     def _build_instances(self):
-        instances, unknown_instances = EntryInstances.get_all_instances(self.domain, [
-            datum.ref for datum in self._get_remote_request_query_datums()
-        ])
+        query_xpaths = [datum.ref for datum in self._get_remote_request_query_datums()]
+        claim_relevant_xpaths = [self.module.search_config.relevant]
+
+        instances, unknown_instances = EntryInstances.get_all_instances(
+            self.domain,
+            query_xpaths + claim_relevant_xpaths
+        )
         return list(instances)
 
     def _build_session(self):

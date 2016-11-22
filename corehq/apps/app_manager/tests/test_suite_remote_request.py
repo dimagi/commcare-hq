@@ -2,6 +2,7 @@
 from django.test import SimpleTestCase
 from mock import patch
 
+from corehq.apps.app_manager.const import CLAIM_DEFAULT_RELEVANT_CONDITION
 from corehq.apps.app_manager.models import (
     Application,
     Module,
@@ -29,6 +30,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 CaseSearchProperty(name='name', label={'en': 'Name'}),
                 CaseSearchProperty(name='dob', label={'en': 'Date of birth'})
             ],
+            relevant="{} and {}".format("instance('groups')/groups/group", CLAIM_DEFAULT_RELEVANT_CONDITION),
             default_properties=[
                 DefaultCaseSearchProperty(
                     property=u'ɨŧsȺŧɍȺᵽ',

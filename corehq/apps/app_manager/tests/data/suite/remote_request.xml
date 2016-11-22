@@ -1,7 +1,7 @@
 <partial>
   <remote-request>
     <post url="https://www.example.com/a/test_domain/phone/claim-case/"
-          relevant="count(instance('casedb')/casedb/case[@case_id=instance('querysession')/session/data/case_id]) = 0">
+          relevant="instance('groups')/groups/group and count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0">
       <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
     </post>
     <command id="search_command.m0">
@@ -11,9 +11,10 @@
         </text>
       </display>
     </command>
-    <instance id="casedb" src="jr://instance/casedb"/>
     <instance id="locations" src="jr://fixture/commtrack:locations"/>
+    <instance id="casedb" src="jr://instance/casedb"/>
     <instance id="commcaresession" src="jr://instance/session"/>
+    <instance id="groups" src="jr://fixture/user-groups"/>
     <session>
       <query url="https://www.example.com/a/test_domain/phone/search/"
              storage-instance="results"

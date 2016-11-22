@@ -213,7 +213,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
 
     var searchViewModel = function (searchProperties, includeClosed, defaultProperties, lang, saveButton) {
         var self = this,
-            DEFAULT_CLAIM_RELEVANT= "count(instance('casedb')/casedb/case[@case_id=instance('querysession')/session/data/case_id]) = 0";
+            DEFAULT_CLAIM_RELEVANT= "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0";
 
         var SearchProperty = function (name, label) {
             var self = this;
