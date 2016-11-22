@@ -414,6 +414,7 @@ FormplayerFrontend.on('refreshApplication', function(appId) {
                 username: user.username,
                 restoreAs: user.restoreAs,
                 sessionId: sessionId,
+                updateMode: "save",
             }),
         };
     Util.setCrossDomainAjaxOptions(options);
