@@ -237,6 +237,7 @@ class DiffTestCases(SimpleTestCase):
             'doc_type': 'CommCareCase',
             'indices': [
                 {
+                    "doc_type": "CommCareCaseIndex",
                     "case_id": "fb698d47-4832-42b2-b28c-86d13adb45a2",
                     "identifier": "parent",
                     "referenced_id": "7ab03ccc-e5b7-4c8f-b88f-43ee3b0543a5",
@@ -250,6 +251,7 @@ class DiffTestCases(SimpleTestCase):
             'doc_type': 'CommCareCase',
             'indices': deepcopy(couch_case['indices'])
         }
+        del sql_case['indices'][0]['doc_type']
         sql_case['indices'][0]['relationship'] = 'extension'
 
         expected_diffs = [

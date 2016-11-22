@@ -43,8 +43,6 @@ PARTIAL_DIFFS = {
         {'path': ('@case_id',)},  # legacy
         {'path': ('case_json',)},  # SQL only
         {'path': ('modified_by',)},  # SQL only
-        # SQL JSON has case_id field in indices which couch JSON doesn't
-        {'path': ('indices', '[*]', 'case_id')},
         # legacy bug left cases with no owner_id
         {'diff_type': 'diff', 'path': ('owner_id',), 'old_value': ''},
         {'diff_type': 'type', 'path': ('owner_id',), 'old_value': None},
@@ -57,6 +55,20 @@ PARTIAL_DIFFS = {
         {'diff_type': 'missing', 'path': ('-deletion_date',), 'new_value': Ellipsis},
     ],
     'CommCareCase-Deleted': [],
+    'CommCareCaseIndex': [
+        # SQL JSON has case_id field in indices which couch JSON doesn't
+        {'path': ('indices', '[*]', 'case_id')},
+        # SQL indices don't have doc_type
+        {
+            'diff_type': 'missing', 'path': ('indices', '[*]', 'doc_type'),
+            'old_value': 'CommCareCaseIndex', 'new_value': Ellipsis
+        },
+        # defaulted on SQL
+        {
+            'diff_type': 'missing', 'path': ('indices', '[*]', 'relationship'),
+            'old_value': Ellipsis, 'new_value': 'child'
+        },
+    ],
     'LedgerValue': [
         {'path': ('_id',)},  # couch only
     ],
@@ -94,9 +106,6 @@ CASE_IGNORED_DIFFS = (
     FormJsonDiff(diff_type=u'type', path=(u'name',), old_value=u'', new_value=None),
     FormJsonDiff(diff_type=u'type', path=(u'closed_by',), old_value=u'', new_value=None),
     FormJsonDiff(diff_type=u'missing', path=(u'location_id',), old_value=Ellipsis, new_value=None),
-    FormJsonDiff(
-        diff_type=u'missing', path=(u'indices', u'[*]', u'doc_type'),
-        old_value=u'CommCareCaseIndex', new_value=Ellipsis),
     FormJsonDiff(diff_type=u'missing', path=(u'referrals',), old_value=[], new_value=Ellipsis),
     FormJsonDiff(diff_type=u'missing', path=(u'location_',), old_value=[], new_value=Ellipsis),
     FormJsonDiff(diff_type=u'type', path=(u'type',), old_value=None, new_value=u''),
@@ -105,10 +114,6 @@ CASE_IGNORED_DIFFS = (
     FormJsonDiff(diff_type=u'missing', path=(u'closed_by',), old_value=Ellipsis, new_value=None),
     FormJsonDiff(diff_type=u'type', path=(u'external_id',), old_value=u'', new_value=None),
     FormJsonDiff(diff_type=u'missing', path=(u'deleted_on',), old_value=Ellipsis, new_value=None),
-    FormJsonDiff(
-        diff_type=u'missing', path=(u'indices', u'[*]', u'relationship'),
-        old_value=Ellipsis, new_value=u'child'
-    ),
     FormJsonDiff(diff_type=u'missing', path=(u'backend_id',), old_value=Ellipsis, new_value=u'sql'),
 )
 
@@ -133,7 +138,8 @@ def filter_form_diffs(doc_type, diffs):
 def filter_case_diffs(couch_case, sql_case, diffs):
     doc_type = couch_case['doc_type']
     filtered_diffs = _filter_exact_matches(diffs, CASE_IGNORED_DIFFS)
-    filtered_diffs = _filter_partial_matches(filtered_diffs, PARTIAL_DIFFS[doc_type] + PARTIAL_DIFFS['CommCareCase*'])
+    partial_filters = PARTIAL_DIFFS[doc_type] + PARTIAL_DIFFS['CommCareCase*'] + PARTIAL_DIFFS['CommCareCaseIndex']
+    filtered_diffs = _filter_partial_matches(filtered_diffs, partial_filters)
     filtered_diffs = _filter_renamed_fields(filtered_diffs, doc_type)
     filtered_diffs = _filter_date_diffs(filtered_diffs)
     filtered_diffs = _filter_user_case_diffs(couch_case, filtered_diffs)
@@ -284,13 +290,16 @@ def _filter_case_index_diffs(couch_case, sql_case, diffs):
 
     if len(couch_indices) > 1:
         diffs = [diff for diff in diffs if diff not in index_diffs]
+        new_index_diffs = []
         couch_indices = sorted(couch_indices, key=lambda i: i['identifier'])
         sql_indices = sorted(sql_indices, key=lambda i: i['identifier'])
-        index_diffs = json_diff(couch_indices, sql_indices, track_list_indices=False)
-        for diff in index_diffs:
+        for diff in json_diff(couch_indices, sql_indices, track_list_indices=False):
             diff_dict = diff._asdict()
             # convert the path back to what it should be
             diff_dict['path'] = tuple(['indices'] + list(diff.path))
-            diffs.append(FormJsonDiff(**diff_dict))
+            new_index_diffs.append(FormJsonDiff(**diff_dict))
+
+        new_index_diffs = _filter_partial_matches(new_index_diffs, PARTIAL_DIFFS['CommCareCaseIndex'])
+        diffs.extend(new_index_diffs)
 
     return diffs
