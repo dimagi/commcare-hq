@@ -66,15 +66,15 @@ class TestMigrateDomain(TestCase):
         self.project = Domain(name=self.domain)
         self.project.save()
         clear_toggle_cache(OLD_EXPORTS.slug, self.domain, namespace=NAMESPACE_DOMAIN)
-        set_toggle(OLD_EXPORTS.slug, self.domain, False, namespace=NAMESPACE_DOMAIN)
+        set_toggle(OLD_EXPORTS.slug, self.domain, True, namespace=NAMESPACE_DOMAIN)
 
     def tearDown(self):
         self.project.delete()
 
     def test_toggle_turned_on(self, _):
-        self.assertFalse(toggle_enabled(OLD_EXPORTS.slug, self.domain, namespace=NAMESPACE_DOMAIN))
-        migrate_domain(self.domain)
         self.assertTrue(toggle_enabled(OLD_EXPORTS.slug, self.domain, namespace=NAMESPACE_DOMAIN))
+        migrate_domain(self.domain)
+        self.assertFalse(toggle_enabled(OLD_EXPORTS.slug, self.domain, namespace=NAMESPACE_DOMAIN))
 
 
 class TestIsFormStockExportQuestion(SimpleTestCase):
