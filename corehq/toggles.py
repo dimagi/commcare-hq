@@ -942,13 +942,6 @@ APP_MANAGER_V2 = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-RESTORE_AS_CLOUDCARE = StaticToggle(
-    'restore_as_cloudcare',
-    'Restore as a different user for cloudcare',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_USER, NAMESPACE_DOMAIN],
-)
-
 DATA_MIGRATION = StaticToggle(
     'data_migration',
     'Disable submissions and restores during a data migration',
