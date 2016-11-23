@@ -15,6 +15,9 @@ class BaseTestLocationQuerysetMethods(LocationHierarchyTestCase):
             ('Suffolk', [
                 ('Boston', []),
             ])
+         ]),
+        ('California', [
+             ('Los Angeles', []),
         ])
     ]
 
@@ -68,7 +71,7 @@ class TestLocationScopedQueryset(BaseTestLocationQuerysetMethods):
         )
         self.assertItemsEqual(self.locations.values(), all_locs)
 
-    def test_location_restricted(self):
+    def test_primary_location_assigned_and_descendants(self):
         self.restrict_user_to_location(self.web_user)
         accessible_locs = (
             SQLLocation.objects.accessible_to_user(self.domain, self.web_user)
@@ -76,6 +79,19 @@ class TestLocationScopedQueryset(BaseTestLocationQuerysetMethods):
 
         self.assertItemsEqual(
             [self.locations[location] for location in ["Middlesex", "Cambridge", "Somerville"]],
+            accessible_locs
+        )
+
+    def test_location_assigned_and_their_descendants(self):
+        self.web_user.add_to_assigned_locations(self.domain, self.locations['California'])
+        self.restrict_user_to_location(self.web_user)
+        accessible_locs = (
+            SQLLocation.objects.accessible_to_user(self.domain, self.web_user)
+        )
+
+        accessible_loc_names = ["Middlesex", "Cambridge", "Somerville", "California", "Los Angeles"]
+        self.assertItemsEqual(
+            [self.locations[location] for location in accessible_loc_names],
             accessible_locs
         )
 
