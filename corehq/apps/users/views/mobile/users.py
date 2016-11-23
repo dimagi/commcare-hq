@@ -84,6 +84,7 @@ from corehq.apps.users.tasks import bulk_upload_async, turn_on_demo_mode_task, r
 from corehq.apps.users.util import can_add_extra_mobile_workers, format_username
 from corehq.apps.users.views import BaseUserSettingsView, BaseEditUserView, get_domain_languages
 from corehq.const import USER_DATE_FORMAT, GOOGLE_PLAY_STORE_COMMCARE_URL
+from corehq.toggles import SUPPORT
 from corehq.util.couch import get_document_or_404
 from corehq.util.spreadsheets_v1.excel import JSONReaderError, HeaderValueError, \
     WorksheetNotFound, WorkbookJSONReader, enforce_string_type, StringTypeRequiredError, \
@@ -792,15 +793,16 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         }
 
 
-@location_safe
 class DeletedMobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
     template_name = 'users/deleted_mobile_workers.html'
     urlname = 'deleted_mobile_workers'
     page_title = ugettext_noop("Deleted Mobile Workers")
 
     @method_decorator(require_can_edit_commcare_users)
-    def dispatch(self, *args, **kwargs):
-        return super(DeletedMobileWorkerListView, self).dispatch(*args, **kwargs)
+    def dispatch(self, request, *args, **kwargs):
+        if not SUPPORT.enabled(request.user.username):
+            raise Http404()
+        return super(DeletedMobileWorkerListView, self).dispatch(request, *args, **kwargs)
 
     @property
     def page_context(self):
