@@ -11,6 +11,8 @@ from .models import DemoUserRestore
 from dimagi.utils.web import json_response
 from corehq.apps.domain.auth import get_username_and_password_from_request, determine_authtype_from_request
 from corehq.apps.users.decorators import ensure_active_user_by_username
+from corehq.apps.locations.permissions import user_can_access_other_user
+
 
 def turn_off_demo_mode(commcare_user):
     """
@@ -104,9 +106,7 @@ def is_permitted_to_restore(domain, couch_user, as_user, has_data_cleanup_privel
         message = u"{} was not in the domain {}".format(couch_user.username, domain)
     elif couch_user.is_web_user() and domain not in couch_user.domains and not couch_user.is_superuser:
         message = u"{} was not in the domain {}".format(couch_user.username, domain)
-    elif (couch_user.is_web_user() and
-            couch_user.is_member_of(domain) and
-            as_user is not None):
+    elif (couch_user.is_member_of(domain) and as_user is not None):
         if not has_data_cleanup_privelege and not couch_user.is_superuser:
             message = u"{} does not have permissions to restore as {}".format(
                 couch_user.username,
@@ -118,7 +118,6 @@ def is_permitted_to_restore(domain, couch_user, as_user, has_data_cleanup_privel
             user_domain = as_user.split('@')[1]
         except IndexError:
             message = u"Invalid to restore user {}. Format is <user>@<domain>".format(as_user)
-
         else:
             if user_domain != domain:
                 # In this case we may be dealing with a WebUser
@@ -127,6 +126,14 @@ def is_permitted_to_restore(domain, couch_user, as_user, has_data_cleanup_privel
                     message = None
                 else:
                     message = u"{} was not in the domain {}".format(username, domain)
+
+        # If it's a commcare user ensure that we check location restrictions
+        if couch_user.is_commcare_user():
+            as_user_obj = CommCareUser.get_by_username('{}.commcarehq.org'.format(as_user))
+            if not as_user_obj:
+                message = u'Invalid restore user {}'.format(as_user)
+            elif not user_can_access_other_user(domain, couch_user, as_user_obj):
+                message = u'Restore user {} not in allowed locations'.format(as_user)
 
     return message is None, message
 
@@ -142,9 +149,7 @@ def get_restore_user(domain, couch_user, as_user):
     :returns: An instance of OTARestoreUser
     """
     restore_user = None
-    if couch_user.is_commcare_user():
-        restore_user = couch_user.to_ota_restore_user()
-    elif (couch_user.is_web_user() and as_user is not None):
+    if as_user is not None:
         if '@' in as_user:
             _, user_domain = as_user.split('@')
         else:
@@ -163,7 +168,8 @@ def get_restore_user(domain, couch_user, as_user):
             elif not user.is_member_of(domain):
                 return None
             restore_user = user.to_ota_restore_user(domain)
-
+    elif couch_user.is_commcare_user():
+        restore_user = couch_user.to_ota_restore_user()
     elif couch_user.is_web_user():
         restore_user = couch_user.to_ota_restore_user(domain)
 

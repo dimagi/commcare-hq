@@ -319,6 +319,19 @@ def user_can_access_any_location_id(domain, user, location_ids):
             .exists())
 
 
+def user_can_access_other_user(domain, user, other_user):
+    if user.has_permission(domain, 'access_all_locations'):
+        return True
+
+    accessible_location_ids = (SQLLocation.objects .accessible_to_user(domain, user) .values_list('id', flat=True))
+
+    other_user_locations = other_user.sql_locations
+    return any(map(
+        lambda location_id: location_id in accessible_location_ids,
+        other_user_locations.values_list('id', flat=True) if other_user_locations else []
+    ))
+
+
 def can_edit_location(view_fn):
     """
     Decorator controlling a user's access to a specific location.
