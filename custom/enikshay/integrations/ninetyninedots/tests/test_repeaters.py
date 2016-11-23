@@ -11,7 +11,7 @@ from casexml.apps.case.tests.util import delete_all_cases
 
 from custom.enikshay.tests.utils import ENikshayCaseStructureMixin
 from custom.enikshay.integrations.ninetyninedots.repeater_generators import RegisterPatientPayloadGenerator
-from custom.enikshay.const import PRIMARY_PHONE_NUMBER, BACKUP_PHONE_NUMBER
+from custom.enikshay.const import PRIMARY_PHONE_NUMBER
 from custom.enikshay.integrations.ninetyninedots.repeaters import (
     NinetyNineDotsRegisterPatientRepeater,
     NinetyNineDotsUpdatePatientRepeater
@@ -123,7 +123,7 @@ class TestUpdatePatientRepeater(ENikshayRepeaterTestBase):
     @run_with_all_backends
     def test_trigger(self):
         self.create_case_structure()
-        self._update_person({'phone_number': '999999999', })
+        self._update_person({PRIMARY_PHONE_NUMBER: '999999999', })
         self.assertEqual(0, len(self.repeat_records().all()))
 
         self._create_99dots_registered_case()
@@ -132,7 +132,7 @@ class TestUpdatePatientRepeater(ENikshayRepeaterTestBase):
         self._update_person({'name': 'Elrond', })
         self.assertEqual(0, len(self.repeat_records().all()))
 
-        self._update_person({'phone_number': '999999999', })
+        self._update_person({PRIMARY_PHONE_NUMBER: '999999999', })
         self.assertEqual(1, len(self.repeat_records().all()))
 
     @run_with_all_backends
@@ -149,7 +149,7 @@ class TestUpdatePatientRepeater(ENikshayRepeaterTestBase):
             case_id=self.person_id,
             attrs={
                 'case_type': 'person',
-                'update': {'phone_number': '9999999999'}
+                'update': {PRIMARY_PHONE_NUMBER: '9999999999'}
             }
         )
 
@@ -203,8 +203,7 @@ class TestRegisterPatientPayloadGenerator(ENikshayCaseStructureMixin, TestCase):
     def test_get_payload_secondary_number_only(self):
         self.primary_phone_number = None
         cases = self.create_case_structure()
-        person = cases[self.person_id].dynamic_case_properties()
-        self._assert_payload_equal(cases, u"+91{}".format(person.get(BACKUP_PHONE_NUMBER).replace("0", "")))
+        self._assert_payload_equal(cases, u"+91{}".format(self.secondary_phone_number.replace("0", "")))
 
     @run_with_all_backends
     def test_handle_success(self):
