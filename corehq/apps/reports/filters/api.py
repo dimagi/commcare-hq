@@ -17,7 +17,7 @@ from dimagi.utils.logging import notify_exception
 
 from corehq.apps.reports.filters.users import EmwfUtils
 from corehq.apps.es import UserES, GroupES, groups
-from corehq.apps.locations.models import LocationType, SQLLocation
+from corehq.apps.locations.models import SQLLocation
 
 logger = logging.getLogger(__name__)
 

@@ -618,7 +618,8 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloa
             return ReceivedOnRangeFilter(gte=datespan.startdate, lt=datespan.enddate + timedelta(days=1))
 
     def get_multimedia_task_kwargs(self, export, download_id, mobile_user_and_group_slugs):
-        kwargs = super(EmwfFilterFormExport, self).get_multimedia_task_kwargs(export, download_id, mobile_user_and_group_slugs)
+        kwargs = (super(EmwfFilterFormExport, self)
+                  .get_multimedia_task_kwargs(export, download_id, mobile_user_and_group_slugs))
         kwargs['export_is_legacy'] = False
         return kwargs
 
