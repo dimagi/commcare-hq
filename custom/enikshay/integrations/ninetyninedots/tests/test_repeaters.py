@@ -169,32 +169,48 @@ class TestRegisterPatientPayloadGenerator(ENikshayCaseStructureMixin, TestCase):
 
     def setUp(self):
         super(TestRegisterPatientPayloadGenerator, self).setUp()
-        self.cases = self.create_case_structure()
 
     def tearDown(self):
         super(TestRegisterPatientPayloadGenerator, self).tearDown()
         delete_all_cases()
 
-    @run_with_all_backends
-    def test_get_payload(self):
-        payload_generator = RegisterPatientPayloadGenerator(None)
-        person = self.cases[self.person_id].dynamic_case_properties()
-        expected_numbers = u"+91{}, +91{}".format(
-            person[PRIMARY_PHONE_NUMBER].replace("0", ""),
-            person[BACKUP_PHONE_NUMBER].replace("0", "")
-        )
+    def _assert_payload_equal(self, casedb, expected_numbers):
         expected_payload = json.dumps({
             'beneficiary_id': self.person_id,
             'phone_numbers': expected_numbers,
-            'merm_id': person['merm_id']
+            'merm_id': casedb[self.person_id].dynamic_case_properties().get('merm_id')
         })
-        actual_payload = payload_generator.get_payload(None, self.cases[self.episode_id])
+        actual_payload = RegisterPatientPayloadGenerator(None).get_payload(None, casedb[self.episode_id])
         self.assertEqual(expected_payload, actual_payload)
 
     @run_with_all_backends
+    def test_get_payload(self):
+        cases = self.create_case_structure()
+        expected_numbers = u"+91{}, +91{}".format(
+            self.primary_phone_number.replace("0", ""),
+            self.secondary_phone_number.replace("0", "")
+        )
+        self._assert_payload_equal(cases, expected_numbers)
+
+    @run_with_all_backends
+    def test_get_payload_no_numbers(self):
+        self.primary_phone_number = None
+        self.secondary_phone_number = None
+        cases = self.create_case_structure()
+        self._assert_payload_equal(cases, None)
+
+    @run_with_all_backends
+    def test_get_payload_secondary_number_only(self):
+        self.primary_phone_number = None
+        cases = self.create_case_structure()
+        person = cases[self.person_id].dynamic_case_properties()
+        self._assert_payload_equal(cases, u"+91{}".format(person.get(BACKUP_PHONE_NUMBER).replace("0", "")))
+
+    @run_with_all_backends
     def test_handle_success(self):
+        cases = self.create_case_structure()
         payload_generator = RegisterPatientPayloadGenerator(None)
-        payload_generator.handle_success(MockResponse(201, {"success": "hooray"}), self.cases[self.episode_id])
+        payload_generator.handle_success(MockResponse(201, {"success": "hooray"}), cases[self.episode_id])
         updated_episode_case = CaseAccessors(self.domain).get_case(self.episode_id)
         self.assertEqual(
             updated_episode_case.dynamic_case_properties().get('dots_99_registered'),
@@ -207,11 +223,12 @@ class TestRegisterPatientPayloadGenerator(ENikshayCaseStructureMixin, TestCase):
 
     @run_with_all_backends
     def test_handle_failure(self):
+        cases = self.create_case_structure()
         payload_generator = RegisterPatientPayloadGenerator(None)
         error = {
             "error": "Something went terribly wrong",
         }
-        payload_generator.handle_failure(MockResponse(400, error), self.cases[self.episode_id])
+        payload_generator.handle_failure(MockResponse(400, error), cases[self.episode_id])
         updated_episode_case = CaseAccessors(self.domain).get_case(self.episode_id)
         self.assertEqual(
             updated_episode_case.dynamic_case_properties().get('dots_99_registered'),
