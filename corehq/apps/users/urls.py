@@ -18,7 +18,7 @@ from .views.mobile.users import (
     CreateCommCareUserModal, DemoRestoreStatusView,
     update_user_data, update_user_groups, archive_commcare_user, delete_commcare_user, restore_commcare_user,
     toggle_demo_mode, reset_demo_user_restore, demo_restore_job_poll, user_upload_job_poll,
-    download_commcare_users, set_commcare_user_group)
+    download_commcare_users, set_commcare_user_group, DeletedMobileWorkerListView)
 
 
 urlpatterns = [
@@ -57,6 +57,9 @@ urlpatterns = [
     url(r'^commcare/$',
         MobileWorkerListView.as_view(),
         name=MobileWorkerListView.urlname),
+    url(r'^commcare/deleted/$',
+        DeletedMobileWorkerListView.as_view(),
+        name=DeletedMobileWorkerListView.urlname),
     url(r'^commcare/fields/$', UserFieldsView.as_view(), name=UserFieldsView.urlname),
     url(r'^commcare/account/(?P<couch_user_id>[ \w-]+)/$', EditCommCareUserView.as_view(),
         name=EditCommCareUserView.urlname),

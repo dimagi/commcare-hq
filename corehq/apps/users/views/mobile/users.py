@@ -44,10 +44,12 @@ from corehq.apps.accounting.models import (
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.custom_data_fields import CustomDataEditor
 from corehq.apps.custom_data_fields.models import CUSTOM_DATA_FIELD_PREFIX
+from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin
 from corehq.apps.groups.models import Group
+from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.analytics import users_have_locations
@@ -70,6 +72,7 @@ from corehq.apps.users.bulkupload import (
     GroupNameError,
     UserUploadError,
 )
+from corehq.apps.users.dbaccessors.all_commcare_users import get_mobile_user_ids
 from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.forms import (
     CommCareAccountForm, UpdateCommCareUserInfoForm, CommtrackUserForm,
@@ -786,6 +789,26 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
         return {
             'error': _("Forms did not validate"),
+        }
+
+
+@location_safe
+class DeletedMobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
+    template_name = 'users/deleted_mobile_workers.html'
+    urlname = 'deleted_mobile_workers'
+    page_title = ugettext_noop("Deleted Mobile Workers")
+
+    @method_decorator(require_can_edit_commcare_users)
+    def dispatch(self, *args, **kwargs):
+        return super(DeletedMobileWorkerListView, self).dispatch(*args, **kwargs)
+
+    @property
+    def page_context(self):
+        mobile_users = get_mobile_user_ids(self.domain)
+        everyone = set(get_doc_ids_in_domain_by_class(self.domain, CommCareUser))
+        deleted = everyone - mobile_users
+        return {
+            'deleted_mobile_workers': [get_doc_info_by_id(self.domain, id_) for id_ in deleted]
         }
 
 
