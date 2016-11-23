@@ -2,23 +2,57 @@ from django.conf.urls import url
 
 from corehq.apps.domain.utils import grandfathered_domain_re
 from .views import (
-    DefaultProjectUserSettingsView, DomainRequestView, EditWebUserView,
-    ListWebUsersView, InviteWebUserView, change_password,
-    domain_accounts, delete_phone_number, make_phone_number_default, verify_phone_number, add_domain_membership,
-    remove_web_user, undo_remove_web_user, delete_invitation, reinvite_web_user, delete_request,
-    location_restriction_for_users, accept_invitation, post_user_role, delete_user_role, register_fcm_device_token,
-    test_httpdigest)
+    accept_invitation,
+    add_domain_membership,
+    change_password,
+    DefaultProjectUserSettingsView,
+    delete_invitation,
+    delete_phone_number,
+    delete_request,
+    delete_user_role,
+    domain_accounts,
+    DomainRequestView,
+    EditWebUserView,
+    InviteWebUserView,
+    ListWebUsersView,
+    location_restriction_for_users,
+    make_phone_number_default,
+    post_user_role,
+    register_fcm_device_token,
+    reinvite_web_user,
+    remove_web_user,
+    test_httpdigest,
+    undo_remove_web_user,
+    verify_phone_number,
+)
 from .views.mobile.custom_data_fields import UserFieldsView
-from .views.mobile.groups import (GroupsListView, EditGroupMembersView,
-    BulkSMSVerificationView)
+from .views.mobile.groups import (
+    BulkSMSVerificationView,
+    EditGroupMembersView,
+    GroupsListView,
+)
 from .views.mobile.users import (
-    UploadCommCareUsers, EditCommCareUserView,
-    ConfirmBillingAccountForExtraUsersView, UserUploadStatusView,
-    CommCareUserSelfRegistrationView, MobileWorkerListView,
-    CreateCommCareUserModal, DemoRestoreStatusView,
-    update_user_data, update_user_groups, archive_commcare_user, delete_commcare_user, restore_commcare_user,
-    toggle_demo_mode, reset_demo_user_restore, demo_restore_job_poll, user_upload_job_poll,
-    download_commcare_users, set_commcare_user_group, DeletedMobileWorkerListView)
+    archive_commcare_user,
+    CommCareUserSelfRegistrationView,
+    ConfirmBillingAccountForExtraUsersView,
+    CreateCommCareUserModal,
+    delete_commcare_user,
+    DeletedMobileWorkerListView,
+    demo_restore_job_poll,
+    DemoRestoreStatusView,
+    download_commcare_users,
+    EditCommCareUserView,
+    MobileWorkerListView,
+    reset_demo_user_restore,
+    restore_commcare_user,
+    set_commcare_user_group,
+    toggle_demo_mode,
+    update_user_data,
+    update_user_groups,
+    UploadCommCareUsers,
+    user_upload_job_poll,
+    UserUploadStatusView,
+)
 
 
 urlpatterns = [
