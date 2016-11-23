@@ -802,21 +802,24 @@ class CommtrackUserForm(forms.Form):
         from corehq.apps.locations.views import base_queryset_for_domain_and_user, get_locations_paylod_from_ids
 
         self.domain = None
+        populate_with = None
         if 'domain' in kwargs:
             self.domain = kwargs['domain']
             del kwargs['domain']
 
         if 'user' in kwargs:
             self.user = kwargs['user']
+            base_queryset = base_queryset_for_domain_and_user(self.domain, self.user)
+            assigned_location_ids = kwargs['initial']['assigned_locations'].split(',')
+            populate_with = json.dumps(
+                get_locations_paylod_from_ids(assigned_location_ids, self.domain,base_queryset)
+            )
             del kwargs['user']
 
         super(CommtrackUserForm, self).__init__(*args, **kwargs)
-        base_queryset = base_queryset_for_domain_and_user(self.domain, self.user)
-        assigned_location_ids = kwargs['initial']['assigned_locations'].split(',')
         self.fields['assigned_locations'].widget = SupplyPointSelectWidget(
             domain=self.domain, multiselect=True, id='id_assigned_locations',
-            populate_with=json.dumps(get_locations_paylod_from_ids(assigned_location_ids, self.domain,
-                                                               base_queryset))
+            populate_with=populate_with
         )
         self.fields['primary_location'].widget = PrimaryLocationWidget(
             css_id='id_primary_location',
