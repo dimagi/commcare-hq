@@ -131,6 +131,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
             add_element(case_update, 'zscore_grading_wfa', nutrition_status)
             case.append(case_update)
         form.append(case)
+        add_element(form, 'zscore_grading_wfa', nutrition_status)
 
         submit_form_locally(ElementTree.tostring(form), self.domain, **{})
 
@@ -191,6 +192,50 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         child_thr.append(child_thr_persons)
         form.append(child_thr)
 
+        submit_form_locally(ElementTree.tostring(form), self.domain, **{})
+
+    def _submit_delivery_form(
+            self, form_date, case_id, nutrition_status=None, case_id_2=None):
+
+        form = ElementTree.Element('data')
+        form.attrib['xmlns'] = XMLNS_DELIVERY_FORM
+        form.attrib['xmlns:jrm'] = 'http://openrosa.org/jr/xforms'
+
+        meta = ElementTree.Element('meta')
+        add_element(meta, 'timeEnd', form_date.isoformat())
+        form.append(meta)
+
+        child_repeat1 = ElementTree.Element('child')
+        child_open_child_health_repeat1 = ElementTree.Element('case_open_child_health_3')
+        case_repeat1 = ElementTree.Element('case')
+        case_repeat1.attrib['date_modified'] = form_date.isoformat()
+        case_repeat1.attrib['case_id'] = case_id
+        case_repeat1.attrib['xmlns'] = 'http://commcarehq.org/case/transaction/v2'
+        if nutrition_status is not None:
+            case_update_repeat1 = ElementTree.Element('update')
+            add_element(case_update_repeat1, 'zscore_grading_wfa', nutrition_status)
+            case_repeat1.append(case_update_repeat1)
+        child_open_child_health_repeat1.append(case_repeat1)
+        child_repeat1.append(child_open_child_health_repeat1)
+        add_element(child_repeat1, 'zscore_grading_wfa', nutrition_status)
+        form.append(child_repeat1)
+
+        if case_id_2 is not None:
+            child_repeat2 = ElementTree.Element('child')
+            child_open_child_health_repeat2 = ElementTree.Element('case_open_child_health_3')
+            case_repeat2 = ElementTree.Element('case')
+            case_repeat2.attrib['date_modified'] = form_date.isoformat()
+            case_repeat2.attrib['case_id'] = case_id_2
+            case_repeat2.attrib['xmlns'] = 'http://commcarehq.org/case/transaction/v2'
+            case_update_repeat2 = ElementTree.Element('update')
+            add_element(case_update_repeat2, 'zscore_grading_wfa', nutrition_status)
+            case_repeat2.append(case_update_repeat2)
+            child_open_child_health_repeat2.append(case_repeat2)
+            child_repeat2.append(child_open_child_health_repeat2)
+            add_element(child_repeat2, 'zscore_grading_wfa', NUTRITION_STATUS_SEVERE)
+            form.append(child_repeat2)
+
+        ElementTree.dump(form)
         submit_form_locally(ElementTree.tostring(form), self.domain, **{})
 
     def _submit_ebf_form(
@@ -665,7 +710,72 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    def test_nutrition_status(self):
+    def test_nutrition_status_delivery(self):
+        case_id = uuid.uuid4().hex
+        case_id_2 = uuid.uuid4().hex
+        self._create_case(
+            case_id=case_id,
+            dob=date(2016, 1, 1),
+            date_opened=datetime(2016, 1, 10),
+            date_modified=datetime(2016, 3, 12),
+        )
+        self._create_case(
+            case_id=case_id_2,
+            dob=date(2016, 1, 1),
+            date_opened=datetime(2016, 1, 10),
+            date_modified=datetime(2016, 3, 12),
+        )
+
+        self._submit_delivery_form(
+            form_date=datetime(2016, 1, 10),
+            case_id=case_id,
+            nutrition_status=NUTRITION_STATUS_MODERATE,
+            case_id_2=case_id_2,
+        ),
+        self._submit_gmp_form(
+            form_date=datetime(2016, 3, 4),
+            case_id=case_id,
+            nutrition_status=NUTRITION_STATUS_SEVERE
+        )
+
+        cases = [
+            (0, [('nutrition_status_last_recorded', None),
+                 ('current_month_nutrition_status', None),
+                 ('nutrition_status_severely_underweight', 0),
+                 ('nutrition_status_moderately_underweight', 0),
+                 ('nutrition_status_normal', 0),
+                 ('nutrition_status_weighed', 0),
+                 ('nutrition_status_unweighed', 0)],
+             ),
+            (1, [('nutrition_status_last_recorded', "moderately_underweight"),
+                 ('current_month_nutrition_status', "moderately_underweight"),
+                 ('nutrition_status_severely_underweight', 0),
+                 ('nutrition_status_moderately_underweight', 1),
+                 ('nutrition_status_normal', 0),
+                 ('nutrition_status_weighed', 1),
+                 ('nutrition_status_unweighed', 0)],
+             ),
+            (2, [('nutrition_status_last_recorded', "moderately_underweight"),
+                 ('current_month_nutrition_status', "unweighed"),
+                 ('nutrition_status_severely_underweight', 0),
+                 ('nutrition_status_moderately_underweight', 1),
+                 ('nutrition_status_normal', 0),
+                 ('nutrition_status_weighed', 0),
+                 ('nutrition_status_unweighed', 1)],
+             ),
+            (3, [('nutrition_status_last_recorded', "severely_underweight"),
+                 ('current_month_nutrition_status', "severely_underweight"),
+                 ('nutrition_status_severely_underweight', 1),
+                 ('nutrition_status_moderately_underweight', 0),
+                 ('nutrition_status_normal', 0),
+                 ('nutrition_status_weighed', 1),
+                 ('nutrition_status_unweighed', 0)],
+             ),
+        ]
+        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
+
+
+    def test_nutrition_status_gmp(self):
         case_id = uuid.uuid4().hex
         self._create_case(
             case_id=case_id,

@@ -1951,18 +1951,22 @@
         }
       },
       "nutrition_status_last_recorded": {
-        "type": "switch",
-        "switch_on": {
-          "type": "nested",
-          "argument_expression": {
+        "type": "conditional",
+        "test": {
+          "type": "boolean_expression",
+          "operator": "gt",
+          "expression": {
             "type": "reduce_items",
-            "aggregation_fn": "last_item",
+            "aggregation_fn": "count",
             "items_expression": {
-              "type": "icds_get_case_history_by_date",
+              "type": "icds_get_case_forms_by_date",
               "end_date": {
                 "type": "icds_month_end"
               },
-              "filter": {
+              "xmlns": [
+                "http://openrosa.org/formdesigner/b183124a25f2a0ceab266e4564d3526199ac4d75"
+              ],
+              "form_filter": {
                 "type": "not",
                 "filter": {
                   "operator": "in",
@@ -1970,7 +1974,7 @@
                   "expression": {
                     "type": "property_path",
                     "property_path": [
-                      "updated_unknown_properties",
+                      "form",
                       "zscore_grading_wfa"
                     ]
                   },
@@ -1982,53 +1986,148 @@
               }
             }
           },
-          "value_expression": {
-            "type": "property_path",
-            "property_path": [
-              "updated_unknown_properties",
-              "zscore_grading_wfa"
-            ]
+          "property_value": 0
+        },
+        "expression_if_true": {
+          "type": "switch",
+          "switch_on": {
+            "type": "nested",
+            "value_expression": {
+              "type": "property_path",
+              "property_path": [
+                "form",
+                "zscore_grading_wfa"
+              ]
+            },
+            "argument_expression": {
+              "type": "reduce_items",
+              "aggregation_fn": "last_item",
+              "items_expression": {
+                "type": "icds_get_case_forms_by_date",
+                "end_date": {
+                  "type": "icds_month_end"
+                },
+                "xmlns": [
+                  "http://openrosa.org/formdesigner/b183124a25f2a0ceab266e4564d3526199ac4d75"
+                ],
+                "form_filter": {
+                  "type": "not",
+                  "filter": {
+                    "operator": "in",
+                    "type": "boolean_expression",
+                    "expression": {
+                      "type": "property_path",
+                      "property_path": [
+                        "form",
+                        "zscore_grading_wfa"
+                      ]
+                    },
+                    "property_value": [
+                      "",
+                      null
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "cases": {
+            "red": {
+              "type": "constant",
+              "constant": "severely_underweight"
+            },
+            "yellow": {
+              "type": "constant",
+              "constant": "moderately_underweight"
+            },
+            "green": {
+              "type": "constant",
+              "constant": "normal"
+            },
+            "white": {
+              "type": "constant",
+              "constant": "normal"
+            }
+          },
+          "default": {
+            "type": "constant",
+            "constant": "unknown"
           }
         },
-        "cases": {
-          "red": {
-            "type": "constant",
-            "constant": "severely_underweight"
+        "expression_if_false": {
+          "type": "switch",
+          "switch_on": {
+            "type": "nested",
+            "value_expression": {
+              "type": "property_name",
+              "property_name": "zscore_grading_wfa"
+            },
+            "argument_expression": {
+              "type": "icds_get_last_form_repeat",
+              "forms_expression": {
+                "type": "icds_get_case_forms_by_date",
+                "end_date": {
+                  "type": "icds_month_end"
+                },
+                "xmlns": [
+                  "http://openrosa.org/formdesigner/376FA2E1-6FD1-4C9E-ACB4-E046038CD5E2"
+                ]
+              },
+              "repeat_path": [
+                "form",
+                "child"
+              ],
+              "case_id_path": [
+                "case_open_child_health_3",
+                "case",
+                "@case_id"
+              ]
+            }
           },
-          "yellow": {
-            "type": "constant",
-            "constant": "moderately_underweight"
+          "cases": {
+            "red": {
+              "type": "constant",
+              "constant": "severely_underweight"
+            },
+            "yellow": {
+              "type": "constant",
+              "constant": "moderately_underweight"
+            },
+            "green": {
+              "type": "constant",
+              "constant": "normal"
+            },
+            "white": {
+              "type": "constant",
+              "constant": "normal"
+            }
           },
-          "green": {
+          "default": {
             "type": "constant",
-            "constant": "normal"
-          },
-          "white": {
-            "type": "constant",
-            "constant": "normal"
+            "constant": "unknown"
           }
-        },
-        "default": {
-          "type": "constant",
-          "constant": "unknown"
         }
       },
       "current_month_nutrition_status": {
-        "type": "switch",
-        "switch_on": {
-          "type": "nested",
-          "argument_expression": {
+        "type": "conditional",
+        "test": {
+          "type": "boolean_expression",
+          "operator": "gt",
+          "expression": {
             "type": "reduce_items",
-            "aggregation_fn": "last_item",
+            "aggregation_fn": "count",
             "items_expression": {
-              "type": "icds_get_case_history_by_date",
+              "type": "icds_get_case_forms_by_date",
               "start_date": {
                 "type": "icds_month_start"
               },
               "end_date": {
                 "type": "icds_month_end"
               },
-              "filter": {
+              "xmlns": [
+                "http://openrosa.org/formdesigner/b183124a25f2a0ceab266e4564d3526199ac4d75"
+              ],
+              "form_filter": {
                 "type": "not",
                 "filter": {
                   "operator": "in",
@@ -2036,7 +2135,7 @@
                   "expression": {
                     "type": "property_path",
                     "property_path": [
-                      "updated_unknown_properties",
+                      "form",
                       "zscore_grading_wfa"
                     ]
                   },
@@ -2048,35 +2147,132 @@
               }
             }
           },
-          "value_expression": {
-            "type": "property_path",
-            "property_path": [
-              "updated_unknown_properties",
-              "zscore_grading_wfa"
-            ]
+          "property_value": 0
+        },
+        "expression_if_true": {
+          "type": "switch",
+          "switch_on": {
+            "type": "nested",
+            "value_expression": {
+              "type": "property_path",
+              "property_path": [
+                "form",
+                "zscore_grading_wfa"
+              ]
+            },
+            "argument_expression": {
+              "type": "reduce_items",
+              "aggregation_fn": "last_item",
+              "items_expression": {
+                "type": "icds_get_case_forms_by_date",
+                "start_date": {
+                  "type": "icds_month_start"
+                },
+                "end_date": {
+                  "type": "icds_month_end"
+                },
+                "xmlns": [
+                  "http://openrosa.org/formdesigner/b183124a25f2a0ceab266e4564d3526199ac4d75"
+                ],
+                "form_filter": {
+                  "type": "not",
+                  "filter": {
+                    "operator": "in",
+                    "type": "boolean_expression",
+                    "expression": {
+                      "type": "property_path",
+                      "property_path": [
+                        "form",
+                        "zscore_grading_wfa"
+                      ]
+                    },
+                    "property_value": [
+                      "",
+                      null
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "cases": {
+            "red": {
+              "type": "constant",
+              "constant": "severely_underweight"
+            },
+            "yellow": {
+              "type": "constant",
+              "constant": "moderately_underweight"
+            },
+            "green": {
+              "type": "constant",
+              "constant": "normal"
+            },
+            "white": {
+              "type": "constant",
+              "constant": "normal"
+            }
+          },
+          "default": {
+            "type": "constant",
+            "constant": "unweighed"
           }
         },
-        "cases": {
-          "red": {
-            "type": "constant",
-            "constant": "severely_underweight"
+        "expression_if_false": {
+          "type": "switch",
+          "switch_on": {
+            "type": "nested",
+            "value_expression": {
+              "type": "property_name",
+              "property_name": "zscore_grading_wfa"
+            },
+            "argument_expression": {
+              "type": "icds_get_last_form_repeat",
+              "forms_expression": {
+                "type": "icds_get_case_forms_by_date",
+                "start_date": {
+                  "type": "icds_month_start"
+                },
+                "end_date": {
+                  "type": "icds_month_end"
+                },
+                "xmlns": [
+                  "http://openrosa.org/formdesigner/376FA2E1-6FD1-4C9E-ACB4-E046038CD5E2"
+                ]
+              },
+              "repeat_path": [
+                "form",
+                "child"
+              ],
+              "case_id_path": [
+                "case_open_child_health_3",
+                "case",
+                "@case_id"
+              ]
+            }
           },
-          "yellow": {
-            "type": "constant",
-            "constant": "moderately_underweight"
+          "cases": {
+            "red": {
+              "type": "constant",
+              "constant": "severely_underweight"
+            },
+            "yellow": {
+              "type": "constant",
+              "constant": "moderately_underweight"
+            },
+            "green": {
+              "type": "constant",
+              "constant": "normal"
+            },
+            "white": {
+              "type": "constant",
+              "constant": "normal"
+            }
           },
-          "green": {
+          "default": {
             "type": "constant",
-            "constant": "normal"
-          },
-          "white": {
-            "type": "constant",
-            "constant": "normal"
+            "constant": "unweighed"
           }
-        },
-        "default": {
-          "type": "constant",
-          "constant": "unweighed"
         }
       },
       "pse_days": {
