@@ -2157,20 +2157,6 @@ class InvitationAppInfoView(View, DomainViewMixin):
         return HttpResponse(response)
 
 
-class IncomingBackendView(View):
-
-    def dispatch(self, request, api_key, *args, **kwargs):
-        try:
-            api_user = ApiUser.get('ApiUser-%s' % api_key)
-        except ResourceNotFound:
-            return HttpResponse(status=401)
-
-        if api_user.doc_type != 'ApiUser' or not api_user.has_permission(PERMISSION_POST_SMS):
-            return HttpResponse(status=401)
-
-        return super(IncomingBackendView, self).dispatch(request, api_key, *args, **kwargs)
-
-
 class NewIncomingBackendView(View):
 
     def __init__(self, *args, **kwargs):
