@@ -5,6 +5,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from crispy_forms.layout import Div, Fieldset, HTML, Layout, Submit
 import datetime
+import json
 from dimagi.utils.django.fields import TrimmedCharField
 from django import forms
 from django.core.exceptions import ValidationError
@@ -738,11 +739,13 @@ class AngularLocationSelectWidget(forms.Widget):
 
 class SupplyPointSelectWidget(forms.Widget):
 
-    def __init__(self, attrs=None, domain=None, id='supply-point', multiselect=False):
+    def __init__(self, attrs=None, domain=None, id='supply-point', multiselect=False, populate_with=None):
         super(SupplyPointSelectWidget, self).__init__(attrs)
         self.domain = domain
         self.id = id
         self.multiselect = multiselect
+        self.load_on_render = 'true' if populate_with is None else 'false'
+        self.populate_with = populate_with
 
     def render(self, name, value, attrs=None):
         return get_template('locations/manage/partials/autocomplete_select_widget.html').render(Context({
@@ -751,6 +754,8 @@ class SupplyPointSelectWidget(forms.Widget):
             'value': value or '',
             'query_url': reverse('corehq.apps.locations.views.child_locations_for_select2', args=[self.domain]),
             'multiselect': self.multiselect,
+            'load_on_render': self.load_on_render,
+            'populate_with': self.populate_with
         }))
 
 
@@ -794,13 +799,24 @@ class CommtrackUserForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
+        from corehq.apps.locations.views import base_queryset_for_domain_and_user, get_locations_paylod_from_ids
+
         self.domain = None
         if 'domain' in kwargs:
             self.domain = kwargs['domain']
             del kwargs['domain']
+
+        if 'user' in kwargs:
+            self.user = kwargs['user']
+            del kwargs['user']
+
         super(CommtrackUserForm, self).__init__(*args, **kwargs)
+        base_queryset = base_queryset_for_domain_and_user(self.domain, self.user)
+        assigned_location_ids = kwargs['initial']['assigned_locations'].split(',')
         self.fields['assigned_locations'].widget = SupplyPointSelectWidget(
-            domain=self.domain, multiselect=True, id='id_assigned_locations'
+            domain=self.domain, multiselect=True, id='id_assigned_locations',
+            populate_with=json.dumps(get_locations_paylod_from_ids(assigned_location_ids, self.domain,
+                                                               base_queryset))
         )
         self.fields['primary_location'].widget = PrimaryLocationWidget(
             css_id='id_primary_location',
