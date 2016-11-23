@@ -24,6 +24,7 @@ AGE_RANGES = (
 PATIENT_TYPES = (
     'new',
     'recurrent',
+    'transfer-in',
     'treatment_after_failure',
     'treatment_after_lfu',
     'other_previously_treated'
