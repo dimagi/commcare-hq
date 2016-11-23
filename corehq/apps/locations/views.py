@@ -53,7 +53,7 @@ from .permissions import (
 from .models import Location, LocationType, SQLLocation, filter_for_archived
 from .forms import LocationForm, UsersAtLocationForm
 from .tree_utils import assert_no_cycles
-from .util import load_locs_json, location_hierarchy_config, dump_locations
+from .util import load_locs_json, location_hierarchy_config, dump_locations, loc_to_payload
 
 
 logger = logging.getLogger(__name__)
@@ -834,6 +834,16 @@ def location_export(request, domain):
     return response
 
 
+def get_locations_paylod_from_ids(ids, domain, base_queryset):
+    from corehq.apps.locations.util import get_locations_from_ids
+    locations = get_locations_from_ids(ids, domain, base_queryset=base_queryset)
+    return [loc_to_payload(loc) for loc in locations]
+
+
+def base_queryset_for_domain_and_user(domain, user):
+    return SQLLocation.objects.accessible_to_user(domain, user)
+
+
 @locations_access_required
 @location_safe
 def child_locations_for_select2(request, domain):
@@ -842,10 +852,7 @@ def child_locations_for_select2(request, domain):
     query = request.GET.get('name', '').lower()
     user = request.couch_user
 
-    base_queryset = SQLLocation.objects.accessible_to_user(domain, user)
-
-    def loc_to_payload(loc):
-        return {'id': loc.location_id, 'name': loc.display_name}
+    base_queryset = base_queryset_for_domain_and_user(domain, user)
 
     if id:
         try:
@@ -860,16 +867,14 @@ def child_locations_for_select2(request, domain):
         else:
             return json_response(loc_to_payload(loc))
     elif ids:
-        from corehq.apps.locations.util import get_locations_from_ids
         ids = json.loads(ids)
         try:
-            locations = get_locations_from_ids(ids, domain, base_queryset=base_queryset)
+            return json_response(get_locations_paylod_from_ids(ids, domain, base_queryset))
         except SQLLocation.DoesNotExist:
             return json_response(
                 {'message': 'one or more locations not found'},
                 status_code=404,
             )
-        return json_response([loc_to_payload(loc) for loc in locations])
     else:
         locs = []
         user_loc = user.get_sql_location(domain)
