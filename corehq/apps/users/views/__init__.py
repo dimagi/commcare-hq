@@ -227,6 +227,7 @@ class BaseEditUserView(BaseUserSettingsView):
         assigned_locations = ','.join(user_domain_membership.assigned_location_ids)
         return CommtrackUserForm(
             domain=self.domain,
+            user=self.editable_user,
             initial={
                 'primary_location': linked_loc,
                 'program_id': linked_prog,
