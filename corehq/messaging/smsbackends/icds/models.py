@@ -90,10 +90,10 @@ class SQLICDSBackend(SQLSMSBackend):
         if begin_response == -1:
             return None
         begin_response += len(api_code_string)
-        end_response = response[begin_response:].find('&')
+        end_response = response.find('&', begin_response)
         if end_response == -1:
             return None
-        return response[begin_response:end_response]
+        return response[begin_response:end_response].strip()
 
     def handle_error(self, response_code, msg):
         exception_message = "Error with ICDS backend. HTTP response code: %s, %s" % (
@@ -123,7 +123,7 @@ class SQLICDSBackend(SQLSMSBackend):
             "splitAlgm": "concat",
         }
         url_params = urlencode(params)
-        url = 'https://smsgw.sms.gov.in/failsafe/HttpLink?%s' % url_params
+        url = 'https://smsgw.sms.gov.in/failsafe/HttpLink'
         response = urlopen("%s?%s" % (url, url_params),
                            timeout=settings.SMS_GATEWAY_TIMEOUT).read()
 
