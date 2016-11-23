@@ -1106,14 +1106,11 @@
                 "type": "nested",
                 "argument_expression": {
                   "type": "named",
-                  "name": "get_latest_cf_update"
+                  "name": "get_latest_cf_repeat"
                 },
                 "value_expression": {
-                  "type": "property_path",
-                  "property_path": [
-                    "updated_unknown_properties",
-                    "comp_feeding"
-                  ]
+                  "type": "property_name",
+                  "property_name": "comp_feeding"
                 }
               }
             },
@@ -1139,14 +1136,11 @@
                 "type": "nested",
                 "argument_expression": {
                   "type": "named",
-                  "name": "get_latest_cf_update"
+                  "name": "get_latest_cf_repeat"
                 },
                 "value_expression": {
-                  "type": "property_path",
-                  "property_path": [
-                    "updated_unknown_properties",
-                    "diet_diversity"
-                  ]
+                  "type": "property_name",
+                  "property_name": "diet_diversity"
                 }
               }
             },
@@ -1172,14 +1166,11 @@
                 "type": "nested",
                 "argument_expression": {
                   "type": "named",
-                  "name": "get_latest_cf_update"
+                  "name": "get_latest_cf_repeat"
                 },
                 "value_expression": {
-                  "type": "property_path",
-                  "property_path": [
-                    "updated_unknown_properties",
-                    "diet_quantity"
-                  ]
+                  "type": "property_name",
+                  "property_name": "diet_quantity"
                 }
               }
             },
@@ -1200,19 +1191,16 @@
             {
               "type": "boolean_expression",
               "operator": "eq",
-              "property_value": "yes",
+              "property_value": "1",
               "expression": {
                 "type": "nested",
                 "argument_expression": {
                   "type": "named",
-                  "name": "get_latest_cf_update"
+                  "name": "get_latest_cf_repeat"
                 },
                 "value_expression": {
-                  "type": "property_path",
-                  "property_path": [
-                    "updated_unknown_properties",
-                    "hand_wash"
-                  ]
+                  "type": "property_name",
+                  "property_name": "hand_wash"
                 }
               }
             },
@@ -2530,36 +2518,25 @@
           "child_health_case_id"
         ]
       },
-      "get_latest_cf_update": {
-        "type": "reduce_items",
-        "aggregation_fn": "last_item",
-        "items_expression": {
-          "type": "icds_get_case_history_by_date",
-          "start_date": {
-            "type": "icds_month_start"
-          },
+      "get_latest_cf_repeat": {
+        "type": "icds_get_last_form_repeat",
+        "forms_expression": {
+          "type": "icds_get_case_forms_by_date",
+          "xmlns": [
+            "http://openrosa.org/formdesigner/792DAF2B-E117-424A-A673-34E1513ABD88"
+          ],
           "end_date": {
             "type": "icds_month_end"
-          },
-          "filter": {
-            "type": "not",
-            "filter": {
-              "operator": "in",
-              "type": "boolean_expression",
-              "expression": {
-                "type": "property_path",
-                "property_path": [
-                  "updated_unknown_properties",
-                  "comp_feeding"
-                ]
-              },
-              "property_value": [
-                "",
-                null
-              ]
-            }
           }
-        }
+        },
+        "repeat_path": [
+          "form",
+          "child",
+          "item"
+        ],
+        "case_id_path": [
+          "child_health_case_id"
+        ]
       },
       "get_all_cf_repeats": {
         "type": "icds_get_all_forms_repeats",
@@ -2578,7 +2555,7 @@
           "item"
         ],
         "case_id_path": [
-          "@id"
+          "child_health_case_id"
         ]
       },
       "get_all_ebf_repeats": {
