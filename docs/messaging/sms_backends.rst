@@ -10,7 +10,7 @@ and the code for each backend has two main parts:
   `corehq.apps.sms.models.SQLSMSBackend <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/sms/models.py>`_
 
 * The inbound part of the backend which is represented by a view that subclasses
-  `corehq.apps.sms.views.NewIncomingBackendView <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/sms/views.py>`_
+  `corehq.apps.sms.views.IncomingBackendView <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/sms/views.py>`_
 
 
 Outbound
@@ -91,7 +91,7 @@ Gateway expects so that the gateway can connect to CommCareHQ and notify us of i
 
 To write the inbound backend code:
 
-#. Create a subclass of `corehq.apps.sms.views.NewIncomingBackendView <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/sms/views.py>`_,
+#. Create a subclass of `corehq.apps.sms.views.IncomingBackendView <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/sms/views.py>`_,
    and implement the unimplemented property:
     backend_class
         should return the subclass of SQLSMSBackend that was written above

@@ -2157,10 +2157,10 @@ class InvitationAppInfoView(View, DomainViewMixin):
         return HttpResponse(response)
 
 
-class NewIncomingBackendView(View):
+class IncomingBackendView(View):
 
     def __init__(self, *args, **kwargs):
-        super(NewIncomingBackendView, self).__init__(*args, **kwargs)
+        super(IncomingBackendView, self).__init__(*args, **kwargs)
         self.domain = None
         self.backend_couch_id = None
 
@@ -2181,4 +2181,4 @@ class NewIncomingBackendView(View):
         except SQLMobileBackend.DoesNotExist:
             return HttpResponse(status=401)
 
-        return super(NewIncomingBackendView, self).dispatch(request, api_key, *args, **kwargs)
+        return super(IncomingBackendView, self).dispatch(request, api_key, *args, **kwargs)

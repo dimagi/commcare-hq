@@ -1,10 +1,10 @@
 from corehq.apps.sms.api import incoming
-from corehq.apps.sms.views import NewIncomingBackendView
+from corehq.apps.sms.views import IncomingBackendView
 from corehq.messaging.smsbackends.smsgh.models import SQLSMSGHBackend
 from django.http import HttpResponse, HttpResponseBadRequest
 
 
-class SMSGHIncomingView(NewIncomingBackendView):
+class SMSGHIncomingView(IncomingBackendView):
     urlname = 'smsgh_sms_in'
 
     @property
