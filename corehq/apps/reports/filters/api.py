@@ -216,7 +216,7 @@ class CaseListFilterOptions(LocationRestrictedEmwfOptionsMixin, EmwfOptionsView)
         return CaseListFilterUtils(self.domain)
 
     def include_locations_in_options(self):
-        return LocationType.objects.filter(domain=self.domain, shares_cases=True).exists()
+        return True
 
     def extra_data_sources(self):
         return [(self.get_sharing_groups_size, self.get_sharing_groups)]
