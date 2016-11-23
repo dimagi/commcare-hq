@@ -18,6 +18,7 @@ class ZippedExportWriterTests(SimpleTestCase):
         self.path_mock.get_path.return_value = 'tmp'
 
         self.writer = ZippedExportWriter()
+        self.writer.archive_basepath = 'path'
         self.writer.tables = [self.path_mock]
         self.writer.file = Mock()
 
