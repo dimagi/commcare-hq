@@ -18,6 +18,7 @@ from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.locations.permissions import locations_access_required, user_can_edit_any_location
 from corehq.apps.products.models import Product
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.util import loc_to_payload
 from corehq.apps.users.models import WebUser
 from custom.common import ALL_OPTION
 from custom.ewsghana.forms import InputStockForm, EWSUserSettings
@@ -208,10 +209,6 @@ def configure_in_charge(request, domain):
         FacilityInCharge.objects.get_or_create(user_id=user_id, location=location)
     FacilityInCharge.objects.filter(location=location).exclude(user_id__in=in_charge_ids).delete()
     return HttpResponse('OK')
-
-
-def loc_to_payload(loc):
-    return {'id': loc.location_id, 'name': loc.display_name}
 
 
 @locations_access_required
