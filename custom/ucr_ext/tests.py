@@ -394,7 +394,7 @@ class TestGetCaseHistoryExpressionTest(TestCase):
                 'case_type': 'test',
                 'create': True,
                 'date_opened': datetime(2015, 1, 10),
-                'date_modified': datetime(2015, 3, 10),
+                'date_modified': datetime(2015, 1, 10),
             },
         ))
         self._submit_form(form_date=datetime(2015, 1, 10), case_id=self.test_case_id,
@@ -407,33 +407,6 @@ class TestGetCaseHistoryExpressionTest(TestCase):
                           case_path='b', xmlns="xmlns_b", foo="b")
         self._submit_form(form_date=datetime(2015, 3, 4), case_id=self.test_case_id,
                           case_path='c', xmlns="xmlns_c", foo="c")
-
-        self.xmlns_map = {
-            'xmlns_a': {
-                'type': 'property_path',
-                'property_path': [
-                    'form',
-                    'a',
-                    'case'
-                ]
-            },
-            'xmlns_b': {
-                'type': 'property_path',
-                'property_path': [
-                    'form',
-                    'b',
-                    'case'
-                ]
-            },
-            'xmlns_c': {
-                'type': 'property_path',
-                'property_path': [
-                    'form',
-                    'c',
-                    'case'
-                ]
-            },
-        }
 
     def tearDown(self):
         delete_all_xforms()
@@ -468,16 +441,15 @@ class TestGetCaseHistoryExpressionTest(TestCase):
             "type": "reduce_items",
             "aggregation_fn": "count",
             "items_expression": {
-                "type": "ext_get_case_history_by_date",
+                "type": "ext_get_case_history",
                 "case_id_expression": {
                     "type": "constant",
                     "constant": self.test_case_id
                 },
-                "xmlns_map": self.xmlns_map
             }
         })
         self.assertEqual(
-            5,
+            6,
             expression(
                 {"some_item": "item_value"},
                 context=EvaluationContext({"domain": self.domain}, 0),
@@ -494,13 +466,12 @@ class TestGetCaseHistoryExpressionTest(TestCase):
                     "type": "constant",
                     "constant": self.test_case_id
                 },
-                "xmlns_map": self.xmlns_map,
                 "filter": {
                     "type": "boolean_expression",
                     "operator": "eq",
                     "expression": {
-                        "type": "property_name",
-                        "property_name": "foo"
+                        "type": "property_path",
+                        "property_path": ["update", "foo"]
                     },
                     "property_value": "a"
                 }
@@ -508,81 +479,6 @@ class TestGetCaseHistoryExpressionTest(TestCase):
         })
         self.assertEqual(
             2,
-            expression(
-                {"some_item": "item_value"},
-                context=EvaluationContext({"domain": self.domain}, 0),
-            )
-        )
-
-    def test_incorrect_map(self):
-        expression = ExpressionFactory.from_spec({
-            "type": "reduce_items",
-            "aggregation_fn": "count",
-            "items_expression": {
-                "type": "ext_get_case_history_by_date",
-                "case_id_expression": {
-                    "type": "constant",
-                    "constant": self.test_case_id
-                },
-                "xmlns_map": {
-                    'xmlns_a': {
-                        'type': 'property_path',
-                        'property_path': [
-                            'form',
-                            'n'
-                        ]
-                    }
-                },
-            }
-        })
-        self.assertEqual(
-            0,
-            expression(
-                {"some_item": "item_value"},
-                context=EvaluationContext({"domain": self.domain}, 0),
-            )
-        )
-
-    def test_partial_map(self):
-        expression = ExpressionFactory.from_spec({
-            "type": "reduce_items",
-            "aggregation_fn": "count",
-            "items_expression": {
-                "type": "ext_get_case_history_by_date",
-                "case_id_expression": {
-                    "type": "constant",
-                    "constant": self.test_case_id
-                },
-                "xmlns_map": {
-                    'xmlns_a': {
-                        'type': 'property_path',
-                        'property_path': [
-                            'form',
-                            'a',
-                            'case'
-                        ]
-                    },
-                    'xmlns_b': {
-                        'type': 'property_path',
-                        'property_path': [
-                            'form',
-                            'b',
-                            'case'
-                        ]
-                    },
-                    'xmlns_c': {
-                        'type': 'property_path',
-                        'property_path': [
-                            'form',
-                            'x',
-                            'case'
-                        ]
-                    },
-                },
-            }
-        })
-        self.assertEqual(
-            4,
             expression(
                 {"some_item": "item_value"},
                 context=EvaluationContext({"domain": self.domain}, 0),
@@ -602,7 +498,6 @@ class TestGetCaseHistoryExpressionTest(TestCase):
                     "type": "constant",
                     "constant": self.test_case_id
                 },
-                'xmlns_map': self.xmlns_map,
                 "start_date": {
                     "type": "ext_root_property_name",
                     "property_name": "start_date",
@@ -636,7 +531,6 @@ class TestGetCaseHistoryExpressionTest(TestCase):
                     "type": "constant",
                     "constant": self.test_case_id
                 },
-                'xmlns_map': self.xmlns_map,
                 "end_date": {
                     "type": "ext_root_property_name",
                     "property_name": "end_date",
@@ -645,7 +539,7 @@ class TestGetCaseHistoryExpressionTest(TestCase):
             }
         })
         self.assertEqual(
-            4,
+            5,
             expression(
                 {"some_item": "item_value"},
                 context=context,
@@ -659,7 +553,6 @@ class TestGetCaseHistoryExpressionTest(TestCase):
                 "type": "constant",
                 "constant": self.test_case_id
             },
-            'xmlns_map': self.xmlns_map,
             "case_property": "bar",
         })
         self.assertEqual(
@@ -681,7 +574,6 @@ class TestGetCaseHistoryExpressionTest(TestCase):
                 "constant": self.test_case_id
             },
             "case_property": "foo",
-            "xmlns_map": self.xmlns_map,
             "end_date": {
                 "type": "ext_root_property_name",
                 "property_name": "end_date",
@@ -707,7 +599,6 @@ class TestGetCaseHistoryExpressionTest(TestCase):
                 "constant": self.test_case_id
             },
             "case_property": "foo",
-            "xmlns_map": self.xmlns_map,
             "end_date": {
                 "type": "ext_root_property_name",
                 "property_name": "end_date",
@@ -732,7 +623,6 @@ class TestGetCaseHistoryExpressionTest(TestCase):
                 "type": "constant",
                 "constant": self.test_case_id
             },
-            "xmlns_map": self.xmlns_map,
             "case_property": "foo",
             "end_date": {
                 "type": "ext_root_property_name",
@@ -746,8 +636,11 @@ class TestGetCaseHistoryExpressionTest(TestCase):
                         "type": "boolean_expression",
                         "operator": "in",
                         "expression": {
-                            "type": "property_name",
-                            "property_name": "foo",
+                            "type": "property_path",
+                            "property_path": [
+                                "update",
+                                "foo",
+                            ]
                         },
                         "property_value": [
                             "",
