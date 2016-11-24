@@ -2092,7 +2092,7 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
     template_name = 'domain/admin/case_search.html'
 
     @method_decorator(domain_admin_required)
-    @toggles.CUSTOM_CALENDAR_FIXTURE.required_decorator()
+    @toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
     def dispatch(self, request, *args, **kwargs):
         return super(CaseSearchConfigView, self).dispatch(request, *args, **kwargs)
 
