@@ -47,6 +47,11 @@ class RestorePermissionsTest(LocationHierarchyTestCase):
             domain=cls.domain,
             password='***',
         )
+        cls.no_edit_commcare_user = CommCareUser.create(
+            username=format_username('noedit', cls.domain),
+            domain=cls.domain,
+            password='***',
+        )
         cls.location_user = CommCareUser.create(
             username=format_username('location', cls.domain),
             domain=cls.domain,
@@ -59,6 +64,7 @@ class RestorePermissionsTest(LocationHierarchyTestCase):
         )
 
         cls.commcare_user.set_location(cls.locations['usa'])
+        cls.no_edit_commcare_user.set_location(cls.locations['usa'])
         cls.location_user.set_location(cls.locations['ma'])
         cls.wrong_location_user.set_location(cls.locations['montreal'])
 
@@ -170,6 +176,16 @@ class RestorePermissionsTest(LocationHierarchyTestCase):
         )
         self.assertTrue(is_permitted)
         self.assertIsNone(message)
+
+    def test_commcare_user_as_user_disallow_no_edit_data(self):
+        is_permitted, message = is_permitted_to_restore(
+            self.domain,
+            self.no_edit_commcare_user,
+            u'{}@{}'.format(self.location_user.raw_username, self.domain),
+            True,
+        )
+        self.assertFalse(is_permitted)
+        self.assertIsNotNone(message)
 
     def test_commcare_user_as_user_in_location(self):
         is_permitted, message = is_permitted_to_restore(
