@@ -45,12 +45,7 @@ class CalendarFixtureProvider(object):
 
 
 def get_calendar_range(domain):
-    try:
-        calendar_settings = CalendarFixtureSettings.objects.get(domain=domain)
-    except CalendarFixtureSettings.DoesNotExist:
-        # this will use the default values in the models
-        calendar_settings = CalendarFixtureSettings()
-
+    calendar_settings = CalendarFixtureSettings.for_domain(domain=domain)
     today = datetime.datetime.today()
     return (
         today - datetime.timedelta(days=calendar_settings.days_before),
