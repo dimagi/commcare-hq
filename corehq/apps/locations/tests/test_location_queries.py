@@ -15,9 +15,9 @@ class BaseTestLocationQuerysetMethods(LocationHierarchyTestCase):
             ('Suffolk', [
                 ('Boston', []),
             ])
-         ]),
+        ]),
         ('California', [
-             ('Los Angeles', []),
+            ('Los Angeles', []),
         ])
     ]
 
