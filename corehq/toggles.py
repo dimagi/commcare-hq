@@ -908,8 +908,8 @@ ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
 
 CUSTOM_CALENDAR_FIXTURE = StaticToggle(
     'custom_calendar_fixture',
-    'Send a calendar fixture down to all users (UATBC/eNikshay one off)',
-    TAG_ONE_OFF,
+    'Send a calendar fixture down to all users (R&D)',
+    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN],
 )
 
