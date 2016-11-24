@@ -2092,9 +2092,8 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
     template_name = 'domain/admin/case_search.html'
 
     @method_decorator(domain_admin_required)
+    @toggles.CUSTOM_CALENDAR_FIXTURE.required_decorator()
     def dispatch(self, request, *args, **kwargs):
-        if not toggles.SYNC_SEARCH_CASE_CLAIM.enabled(request.domain):
-            raise Http404
         return super(CaseSearchConfigView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
