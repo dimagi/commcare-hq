@@ -1140,9 +1140,7 @@ class ProjectSettingsTab(UITab):
 
     @property
     def sidebar_items(self):
-        from corehq.apps.domain.views import (FeatureFlagsView,
-                                              FeaturePreviewsView,
-                                              TransferDomainView)
+        from corehq.apps.domain.views import FeatureFlagsView
 
         items = []
         user_is_admin = self.couch_user.is_domain_admin(self.domain)
@@ -1274,7 +1272,7 @@ class ProjectSettingsTab(UITab):
 
 
 def _get_administration_section(domain):
-    from corehq.apps.domain.views import (FeaturePreviewsView, TransferDomainView)
+    from corehq.apps.domain.views import FeaturePreviewsView, TransferDomainView
 
     administration = []
     if not settings.ENTERPRISE_MODE:
