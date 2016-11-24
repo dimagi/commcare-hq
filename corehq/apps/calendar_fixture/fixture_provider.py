@@ -1,7 +1,7 @@
-from xml.etree.ElementTree import Element
 import datetime
-from corehq.toggles import CUSTOM_CALENDAR_FIXTURE
+from xml.etree.ElementTree import Element
 from django.utils.translation import ugettext as _
+from corehq.toggles import CUSTOM_CALENDAR_FIXTURE
 
 
 class CalendarFixtureProvider(object):
@@ -40,5 +40,6 @@ class CalendarFixtureProvider(object):
             current_day += datetime.timedelta(days=1)
 
         return [root_node]
+
 
 calendar_fixture_generator = CalendarFixtureProvider()
