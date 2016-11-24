@@ -1182,6 +1182,10 @@ class ProjectSettingsTab(UITab):
         if user_is_admin:
             items.append((_('Project Administration'), _get_administration_section(self.domain)))
 
+        feature_flag_items = _get_feature_flag_items(self.domain)
+        if feature_flag_items:
+            items.append((_('Pre-release Features'), feature_flag_items))
+
         from corehq.apps.users.models import WebUser
         if isinstance(self.couch_user, WebUser):
             if (user_is_billing_admin or self.couch_user.is_superuser) and not settings.ENTERPRISE_MODE:
@@ -1270,7 +1274,7 @@ class ProjectSettingsTab(UITab):
 
 
 def _get_administration_section(domain):
-    from corehq.apps.domain.views import (FeatureFlagsView, FeaturePreviewsView, TransferDomainView)
+    from corehq.apps.domain.views import (FeaturePreviewsView, TransferDomainView)
 
     administration = []
     if not settings.ENTERPRISE_MODE:
@@ -1284,12 +1288,6 @@ def _get_administration_section(domain):
                 'url': reverse('domain_manage_multimedia', args=[domain])
             }
         ])
-
-    if toggles.SYNC_SEARCH_CASE_CLAIM.enabled(domain):
-        administration.append({
-            'title': _('Case Search'),
-            'url': reverse('case_search_config', args=[domain])
-        })
 
     def forward_name(repeater_type=None, **context):
         if repeater_type == 'FormRepeater':
@@ -1329,6 +1327,16 @@ def _get_administration_section(domain):
             'url': reverse(TransferDomainView.urlname, args=[domain])
         })
     return administration
+
+
+def _get_feature_flag_items(domain):
+    feature_flag_items = []
+    if toggles.SYNC_SEARCH_CASE_CLAIM.enabled(domain):
+        feature_flag_items.append({
+            'title': _('Case Search'),
+            'url': reverse('case_search_config', args=[domain])
+        })
+    return feature_flag_items
 
 
 class MySettingsTab(UITab):
