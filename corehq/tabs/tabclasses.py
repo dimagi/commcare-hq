@@ -1180,63 +1180,7 @@ class ProjectSettingsTab(UITab):
         items.append((_('Project Information'), project_info))
 
         if user_is_admin:
-            administration = []
-            if not settings.ENTERPRISE_MODE:
-                administration.extend([
-                    {
-                        'title': _('CommCare Exchange'),
-                        'url': reverse('domain_snapshot_settings', args=[self.domain])
-                    },
-                    {
-                        'title': _('Multimedia Sharing'),
-                        'url': reverse('domain_manage_multimedia', args=[self.domain])
-                    }
-                ])
-
-            if toggles.SYNC_SEARCH_CASE_CLAIM.enabled(self.domain):
-                administration.append({
-                    'title': _('Case Search'),
-                    'url': reverse('case_search_config', args=[self.domain])
-                })
-
-            def forward_name(repeater_type=None, **context):
-                if repeater_type == 'FormRepeater':
-                    return _("Forward Forms")
-                elif repeater_type == 'ShortFormRepeater':
-                    return _("Forward Form Stubs")
-                elif repeater_type == 'CaseRepeater':
-                    return _("Forward Cases")
-
-            administration.extend([
-                {'title': _('Data Forwarding'),
-                 'url': reverse('domain_forwarding', args=[self.domain]),
-                 'subpages': [
-                     {
-                         'title': forward_name,
-                         'urlname': 'add_repeater',
-                     },
-                     {
-                         'title': forward_name,
-                         'urlname': 'add_form_repeater',
-                     },
-                ]},
-                {
-                    'title': _('Data Forwarding Records'),
-                    'url': reverse('domain_report_dispatcher', args=[self.domain, 'repeat_record_report'])
-                }
-            ])
-
-            administration.append({
-                'title': _(FeaturePreviewsView.page_title),
-                'url': reverse(FeaturePreviewsView.urlname, args=[self.domain])
-            })
-
-            if toggles.TRANSFER_DOMAIN.enabled(self.domain):
-                administration.append({
-                    'title': _(TransferDomainView.page_title),
-                    'url': reverse(TransferDomainView.urlname, args=[self.domain])
-                })
-            items.append((_('Project Administration'), administration))
+            items.append((_('Project Administration'), _get_administration_section(self.domain)))
 
         from corehq.apps.users.models import WebUser
         if isinstance(self.couch_user, WebUser):
@@ -1323,6 +1267,68 @@ class ProjectSettingsTab(UITab):
             items.append((_('Internal Data (Dimagi Only)'), internal_admin))
 
         return items
+
+
+def _get_administration_section(domain):
+    from corehq.apps.domain.views import (FeatureFlagsView, FeaturePreviewsView, TransferDomainView)
+
+    administration = []
+    if not settings.ENTERPRISE_MODE:
+        administration.extend([
+            {
+                'title': _('CommCare Exchange'),
+                'url': reverse('domain_snapshot_settings', args=[domain])
+            },
+            {
+                'title': _('Multimedia Sharing'),
+                'url': reverse('domain_manage_multimedia', args=[domain])
+            }
+        ])
+
+    if toggles.SYNC_SEARCH_CASE_CLAIM.enabled(domain):
+        administration.append({
+            'title': _('Case Search'),
+            'url': reverse('case_search_config', args=[domain])
+        })
+
+    def forward_name(repeater_type=None, **context):
+        if repeater_type == 'FormRepeater':
+            return _("Forward Forms")
+        elif repeater_type == 'ShortFormRepeater':
+            return _("Forward Form Stubs")
+        elif repeater_type == 'CaseRepeater':
+            return _("Forward Cases")
+
+    administration.extend([
+        {'title': _('Data Forwarding'),
+         'url': reverse('domain_forwarding', args=[domain]),
+         'subpages': [
+             {
+                 'title': forward_name,
+                 'urlname': 'add_repeater',
+             },
+             {
+                 'title': forward_name,
+                 'urlname': 'add_form_repeater',
+             },
+        ]},
+        {
+            'title': _('Data Forwarding Records'),
+            'url': reverse('domain_report_dispatcher', args=[domain, 'repeat_record_report'])
+        }
+    ])
+
+    administration.append({
+        'title': _(FeaturePreviewsView.page_title),
+        'url': reverse(FeaturePreviewsView.urlname, args=[domain])
+    })
+
+    if toggles.TRANSFER_DOMAIN.enabled(domain):
+        administration.append({
+            'title': _(TransferDomainView.page_title),
+            'url': reverse(TransferDomainView.urlname, args=[domain])
+        })
+    return administration
 
 
 class MySettingsTab(UITab):
