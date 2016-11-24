@@ -128,6 +128,11 @@ def _ensure_accessible_location(domain, couch_user, as_user):
             raise RestorePermissionDenied(u'Restore user {} not in allowed locations'.format(as_user))
 
 
+def _ensure_edit_data_permission(domain, couch_user):
+    if couch_user.is_commcare_user() and not couch_user.has_permission(domain, 'edit_data'):
+        raise RestorePermissionDenied(u'{} does not have permission to edit data'.format(couch_user.username))
+
+
 def is_permitted_to_restore(domain, couch_user, as_user, has_data_cleanup_privilege):
     """
     This function determines if the couch_user is permitted to restore
@@ -146,6 +151,7 @@ def is_permitted_to_restore(domain, couch_user, as_user, has_data_cleanup_privil
             _ensure_cleanup_permission(domain, couch_user, as_user, has_data_cleanup_privilege)
             _ensure_valid_restore_as_user(domain, couch_user, as_user)
             _ensure_accessible_location(domain, couch_user, as_user)
+            _ensure_edit_data_permission(domain, couch_user)
     except RestorePermissionDenied as e:
         return False, unicode(e)
     else:
