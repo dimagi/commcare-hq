@@ -109,7 +109,7 @@ def _ensure_valid_restore_as_user(domain, couch_user, as_user):
         user_domain = as_user.split('@')[1]
     except IndexError:
         raise RestorePermissionDenied(
-            u"Invalid to restore user {}. Format is <user>@<domain>".format(as_user)
+            u"Invalid restore user {}. Format is <user>@<domain>".format(as_user)
         )
     else:
         if user_domain != domain:

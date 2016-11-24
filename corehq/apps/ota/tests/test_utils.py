@@ -101,7 +101,7 @@ class RestorePermissionsTest(LocationHierarchyTestCase):
             False,
         )
         self.assertFalse(is_permitted)
-        self.assertIsNotNone(message)
+        self.assertRegexpMatches(message, 'was not in the domain')
 
     def test_web_user_permitted(self):
         is_permitted, message = is_permitted_to_restore(
@@ -123,7 +123,7 @@ class RestorePermissionsTest(LocationHierarchyTestCase):
         self.assertTrue(is_permitted)
         self.assertIsNone(message)
 
-    def test_web_user_as_user_bad_privelege(self):
+    def test_web_user_as_user_bad_privilege(self):
         is_permitted, message = is_permitted_to_restore(
             self.domain,
             self.web_user,
@@ -131,7 +131,7 @@ class RestorePermissionsTest(LocationHierarchyTestCase):
             False,
         )
         self.assertFalse(is_permitted)
-        self.assertIsNotNone(message)
+        self.assertRegexpMatches(message, 'does not have permissions')
 
     def test_web_user_as_user_bad_username(self):
         is_permitted, message = is_permitted_to_restore(
@@ -141,7 +141,7 @@ class RestorePermissionsTest(LocationHierarchyTestCase):
             True,
         )
         self.assertFalse(is_permitted)
-        self.assertIsNotNone(message)
+        self.assertRegexpMatches(message, 'Invalid restore user')
 
     def test_web_user_as_user_bad_domain(self):
         is_permitted, message = is_permitted_to_restore(
@@ -151,7 +151,7 @@ class RestorePermissionsTest(LocationHierarchyTestCase):
             True,
         )
         self.assertFalse(is_permitted)
-        self.assertIsNotNone(message)
+        self.assertRegexpMatches(message, 'was not in the domain')
 
     def test_web_user_as_other_web_user(self):
         is_permitted, message = is_permitted_to_restore(
@@ -185,7 +185,7 @@ class RestorePermissionsTest(LocationHierarchyTestCase):
             True,
         )
         self.assertFalse(is_permitted)
-        self.assertIsNotNone(message)
+        self.assertRegexpMatches(message, 'does not have permission')
 
     def test_commcare_user_as_user_in_location(self):
         is_permitted, message = is_permitted_to_restore(
@@ -204,7 +204,7 @@ class RestorePermissionsTest(LocationHierarchyTestCase):
             True,
         )
         self.assertFalse(is_permitted)
-        self.assertIsNotNone(message)
+        self.assertRegexpMatches(message, 'not in allowed locations')
 
 
 class GetRestoreUserTest(TestCase):
