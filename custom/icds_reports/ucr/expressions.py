@@ -11,7 +11,6 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('icds_parent_parent_id', 'custom.icds_reports.ucr.expressions.parent_parent_id'),
     ('icds_open_in_month', 'custom.icds_reports.ucr.expressions.open_in_month'),
     ('icds_get_case_forms_by_date', 'custom.icds_reports.ucr.expressions.get_case_forms_by_date'),
-    ('icds_get_case_history_by_date', 'custom.icds_reports.ucr.expressions.get_case_history_by_date'),
     ('icds_get_all_forms_repeats', 'custom.icds_reports.ucr.expressions.get_all_forms_repeats'),
     ('icds_get_last_form_repeat', 'custom.icds_reports.ucr.expressions.get_last_form_repeat'),
     ('icds_alive_in_month', 'custom.icds_reports.ucr.expressions.alive_in_month'),
@@ -32,13 +31,6 @@ class GetCaseFormsByDateSpec(JsonObject):
     start_date = DefaultProperty(required=False)
     end_date = DefaultProperty(required=False)
     form_filter = DefaultProperty(required=False)
-
-
-class GetCaseHistoryByDateSpec(JsonObject):
-    type = TypeProperty('icds_get_case_history_by_date')
-    start_date = DefaultProperty(required=False)
-    end_date = DefaultProperty(required=False)
-    filter = DefaultProperty(required=False)
 
 
 class GetAllFormsRepeatsSpec(JsonObject):
@@ -390,76 +382,6 @@ def get_case_forms_by_date(spec, context):
                 "type": "get_case_forms",
                 "case_id_expression": case_id_expression
             }
-        }
-    return ExpressionFactory.from_spec(spec, context)
-
-
-def get_case_history_by_date(spec, context):
-    GetCaseHistoryByDateSpec.wrap(spec)
-
-    filters = []
-    if spec['start_date'] is not None:
-        start_date_filter = {
-            'operator': 'gte',
-            'expression': {
-                'datatype': 'integer',
-                'from_date_expression': spec['start_date'],
-                'type': 'diff_days',
-                'to_date_expression': {
-                    'datatype': 'date',
-                    'type': 'property_name',
-                    'property_name': "date"
-                }
-            },
-            'type': 'boolean_expression',
-            'property_value': 0
-        }
-        filters.append(start_date_filter)
-    if spec['end_date'] is not None:
-        end_date_filter = {
-            'operator': 'gte',
-            'expression': {
-                'datatype': 'integer',
-                'from_date_expression': {
-                    'datatype': 'date',
-                    'type': 'property_name',
-                    'property_name': "date"
-                },
-                'type': 'diff_days',
-                'to_date_expression': spec['end_date']
-            },
-            'type': 'boolean_expression',
-            'property_value': 0
-        }
-        filters.append(end_date_filter)
-    if spec['filter'] is not None:
-        filters.append(spec['filter'])
-
-    spec = {
-        'type': 'sort_items',
-        'sort_expression': {
-            'type': 'property_name',
-            'property_name': 'date',
-            'datatype': 'date'
-        },
-        'items_expression': {
-            'type': 'root_doc',
-            'expression': {
-                'datatype': 'array',
-                'type': 'property_name',
-                'property_name': 'actions'
-            }
-        }
-    }
-
-    if len(filters) > 0:
-        spec = {
-            'type': 'filter_items',
-            'filter_expression': {
-                'type': 'and',
-                'filters': filters
-            },
-            'items_expression': spec
         }
     return ExpressionFactory.from_spec(spec, context)
 
