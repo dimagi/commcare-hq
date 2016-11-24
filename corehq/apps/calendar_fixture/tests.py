@@ -1,5 +1,5 @@
 import uuid
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 from django.test import TestCase
 from casexml.apps.case.xml import V2
 from corehq.apps.calendar_fixture.fixture_provider import calendar_fixture_generator
