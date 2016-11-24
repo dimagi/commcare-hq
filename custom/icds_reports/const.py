@@ -1,4 +1,4 @@
-TABLEAU_ROOT = "https://icds.commcarehq.org/"
+TABLEAU_ROOT = "https://www.icds-cas.gov.in/reports/"
 TABLEU_TICKET_URL = TABLEAU_ROOT + "trusted/"
 TABLEAU_VIEW_URL = TABLEAU_ROOT + "#/views/"
 TABLEAU_USERNAME = "reportviewer"
