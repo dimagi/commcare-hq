@@ -72,7 +72,7 @@ class TestLocationScopedQueryset(BaseTestLocationQuerysetMethods):
         self.assertItemsEqual(self.locations.values(), all_locs)
 
     def test_primary_location_assigned_and_descendants(self):
-        self.restrict_user_to_location(self.web_user)
+        self.restrict_user_to_assigned_locations(self.web_user)
         accessible_locs = (
             SQLLocation.objects.accessible_to_user(self.domain, self.web_user)
         )
@@ -84,7 +84,7 @@ class TestLocationScopedQueryset(BaseTestLocationQuerysetMethods):
 
     def test_location_assigned_and_their_descendants(self):
         self.web_user.add_to_assigned_locations(self.domain, self.locations['California'])
-        self.restrict_user_to_location(self.web_user)
+        self.restrict_user_to_assigned_locations(self.web_user)
         accessible_locs = (
             SQLLocation.objects.accessible_to_user(self.domain, self.web_user)
         )
@@ -98,14 +98,14 @@ class TestLocationScopedQueryset(BaseTestLocationQuerysetMethods):
     def test_location_restricted_but_unassigned(self):
         # unassigned users shouldn't be able to access any locations
         unassigned_user = WebUser.create(self.domain, 'unassigned', 'password')
-        self.restrict_user_to_location(unassigned_user)
+        self.restrict_user_to_assigned_locations(unassigned_user)
         self.assertItemsEqual(
             [],
             SQLLocation.objects.accessible_to_user(self.domain, unassigned_user)
         )
 
     def test_filter_path_by_user_input(self):
-        self.restrict_user_to_location(self.web_user)
+        self.restrict_user_to_assigned_locations(self.web_user)
 
         # User searching for higher in the hierarchy is only given the items
         # they are allowed to see
