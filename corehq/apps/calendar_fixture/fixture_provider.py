@@ -1,6 +1,7 @@
 import datetime
 from xml.etree.ElementTree import Element
 from django.utils.translation import ugettext as _
+from corehq.apps.calendar_fixture.models import CalendarFixtureSettings
 from corehq.toggles import CUSTOM_CALENDAR_FIXTURE
 
 
@@ -15,14 +16,15 @@ class CalendarFixtureProvider(object):
         root_node = Element('fixture', {'id': self.id, 'user_id': restore_user.user_id})
         calendar_node = Element('calendar')
         root_node.append(calendar_node)
-        current_day = _get_calendar_start_date(restore_user.domain)
-        end_date = _get_calendar_end_date(restore_user.domain)
+        current_day, end_date = get_calendar_range(restore_user.domain)
         last_day = current_day - datetime.timedelta(days=1)
-        while current_day < end_date:
-            if current_day.year != last_day.year:
+        current_month_element = None
+        current_year_element = None
+        while current_day <= end_date:
+            if current_year_element is None or current_day.year != last_day.year:
                 current_year_element = Element('year', {'number': str(current_day.year)})
                 calendar_node.append(current_year_element)
-            if current_day.month != last_day.month:
+            if current_month_element is None or current_day.month != last_day.month:
                 current_month_element = Element('month', {
                     'number': str(current_day.month),
                     'name': _(current_day.strftime('%B'))
@@ -42,12 +44,18 @@ class CalendarFixtureProvider(object):
         return [root_node]
 
 
-def _get_calendar_start_date(domain):
-    return datetime.date(datetime.datetime.now().year, 1, 1)
+def get_calendar_range(domain):
+    try:
+        calendar_settings = CalendarFixtureSettings.objects.get(domain=domain)
+    except CalendarFixtureSettings.DoesNotExist:
+        # this will use the default values in the models
+        calendar_settings = CalendarFixtureSettings()
 
-
-def _get_calendar_end_date(domain):
-    return datetime.date(datetime.datetime.now().year + 1, 1, 1)
+    today = datetime.datetime.today()
+    return (
+        today - datetime.timedelta(days=calendar_settings.days_before),
+        today + datetime.timedelta(days=calendar_settings.days_after),
+    )
 
 
 calendar_fixture_generator = CalendarFixtureProvider()

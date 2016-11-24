@@ -1,9 +1,9 @@
 import uuid
-from xml.etree import ElementTree
-from datetime import date
+from datetime import date, datetime, timedelta
 from django.test import TestCase
 from casexml.apps.case.xml import V2
 from corehq.apps.calendar_fixture.fixture_provider import calendar_fixture_generator
+from corehq.apps.calendar_fixture.models import DEFAULT_DAYS_BEFORE, DEFAULT_DAYS_AFTER
 from corehq.apps.users.models import CommCareUser
 from corehq.toggles import CUSTOM_CALENDAR_FIXTURE
 from corehq.util.decorators import temporarily_enable_toggle
@@ -16,12 +16,13 @@ class TestFixture(TestCase):
         self.assertEqual([], calendar_fixture_generator(user, V2))
 
     @temporarily_enable_toggle(CUSTOM_CALENDAR_FIXTURE, 'test-calendar')
-    def test_fixture_enabled(self):
+    def test_fixture_defaults(self):
         user = CommCareUser(_id=uuid.uuid4().hex, domain='test-calendar')
         fixture = calendar_fixture_generator(user, V2)[0]
         self.assertEqual(user._id, fixture.attrib['user_id'])
-        self._check_first_date(fixture, date(2016, 1, 1))
-        self._check_last_date(fixture, date(2016, 12, 31))
+        today = datetime.today()
+        self._check_first_date(fixture, today - timedelta(days=DEFAULT_DAYS_BEFORE))
+        self._check_last_date(fixture, today + timedelta(days=DEFAULT_DAYS_AFTER))
 
     def _check_first_date(self, fixture, expected_date):
         year_element = fixture[0][0]
