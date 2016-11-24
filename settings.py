@@ -290,6 +290,7 @@ HQ_APPS = (
     'corehq.apps.app_manager',
     'corehq.apps.es',
     'corehq.apps.fixtures',
+    'corehq.apps.calendar_fixture',
     'corehq.apps.case_importer_v1',
     'corehq.apps.reminders',
     'corehq.apps.translations',
