@@ -15,10 +15,10 @@ class CalendarFixtureProvider(object):
         root_node = Element('fixture', {'id': self.id, 'user_id': restore_user.user_id})
         calendar_node = Element('calendar')
         root_node.append(calendar_node)
-        current_year = datetime.datetime.today().year
-        current_day = datetime.date(current_year, 1, 1)
+        current_day = _get_calendar_start_date(restore_user.domain)
+        end_date = _get_calendar_end_date(restore_user.domain)
         last_day = current_day - datetime.timedelta(days=1)
-        while current_day.year == current_year:
+        while current_day < end_date:
             if current_day.year != last_day.year:
                 current_year_element = Element('year', {'number': str(current_day.year)})
                 calendar_node.append(current_year_element)
@@ -40,6 +40,14 @@ class CalendarFixtureProvider(object):
             current_day += datetime.timedelta(days=1)
 
         return [root_node]
+
+
+def _get_calendar_start_date(domain):
+    return datetime.date(datetime.datetime.now().year, 1, 1)
+
+
+def _get_calendar_end_date(domain):
+    return datetime.date(datetime.datetime.now().year + 1, 1, 1)
 
 
 calendar_fixture_generator = CalendarFixtureProvider()
