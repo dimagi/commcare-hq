@@ -231,7 +231,7 @@ def can_use_restore_as(request):
         return False
 
     if (request.couch_user.is_commcare_user() and
-            not request.couch_user.has_permission(request.domain, 'edit_data')):
+            not request.couch_user.can_edit_data()):
         return False
 
     return True
