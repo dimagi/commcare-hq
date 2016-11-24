@@ -1328,11 +1328,17 @@ def _get_administration_section(domain):
 
 
 def _get_feature_flag_items(domain):
+    from corehq.apps.domain.views import CalendarFixtureConfigView
     feature_flag_items = []
     if toggles.SYNC_SEARCH_CASE_CLAIM.enabled(domain):
         feature_flag_items.append({
             'title': _('Case Search'),
             'url': reverse('case_search_config', args=[domain])
+        })
+    if toggles.CUSTOM_CALENDAR_FIXTURE.enabled(domain):
+        feature_flag_items.append({
+            'title': _('Calendar Fixture'),
+            'url': reverse(CalendarFixtureConfigView.urlname, args=[domain])
         })
     return feature_flag_items
 

@@ -34,6 +34,8 @@ from django.contrib.auth.models import User
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.apps.calendar_fixture.forms import CalendarFixtureForm
+from corehq.apps.calendar_fixture.models import CalendarFixtureSettings
 from corehq.apps.case_search.models import (
     CaseSearchConfig,
     CaseSearchConfigJSON,
@@ -2141,6 +2143,32 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
                 'config': current_values.config if current_values else {}
             }
         }
+
+
+class CalendarFixtureConfigView(BaseAdminProjectSettingsView):
+    urlname = 'calendar_fixture_config'
+    page_title = ugettext_lazy('Calendar Fixture')
+    template_name = 'domain/admin/calendar_fixture.html'
+
+    @method_decorator(domain_admin_required)
+    @toggles.CUSTOM_CALENDAR_FIXTURE.required_decorator()
+    def dispatch(self, request, *args, **kwargs):
+        return super(CalendarFixtureConfigView, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        calendar_settings = CalendarFixtureSettings.for_domain(self.domain)
+        form = CalendarFixtureForm(request.POST, instance=calendar_settings)
+        if form.is_valid():
+            form.save()
+            messages.success(request, _("Case search configuration updated successfully"))
+
+        return self.get(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        calendar_settings = CalendarFixtureSettings.for_domain(self.domain)
+        form = CalendarFixtureForm(instance=calendar_settings)
+        return {'form': form}
 
 
 class DomainForwardingRepeatRecords(GenericTabularReport):
