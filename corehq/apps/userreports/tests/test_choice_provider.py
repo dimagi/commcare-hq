@@ -187,7 +187,7 @@ class LocationChoiceProviderTest(ChoiceProviderTestMixin, LocationHierarchyTestC
 
     def test_scoped_to_location_search(self):
         self.web_user.set_location(self.domain, self.locations['Middlesex'])
-        self.restrict_user_to_location(self.web_user)
+        self.restrict_user_to_assigned_locations(self.web_user)
         scoped_choices = [
             SearchableChoice(
                 location.location_id,

@@ -281,13 +281,15 @@ class LocationQueriesMixin(object):
         return locations
 
     def accessible_to_user(self, domain, user):
+        from corehq.apps.locations.util import get_locations_and_children
+
         if user.has_permission(domain, 'access_all_locations'):
             return self.all()
 
-        users_location = user.get_sql_location(domain)
-        if not users_location:
+        assigned_location_ids = user.get_location_ids(domain)
+        if not assigned_location_ids:
             return self.none()  # No locations are accessible to this user
-        return self.all() & users_location.get_descendants(include_self=True)
+        return self.all() & get_locations_and_children(assigned_location_ids)
 
 
 class LocationQuerySet(LocationQueriesMixin, models.query.QuerySet):
