@@ -32,6 +32,7 @@ from PIL import Image
 from django.utils.translation import ugettext as _, ugettext_lazy
 from django.contrib.auth.models import User
 
+from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.case_search.models import (
     CaseSearchConfig,
@@ -2092,6 +2093,8 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
 
     @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
+        if not toggles.SYNC_SEARCH_CASE_CLAIM.enabled(request.domain):
+            raise Http404
         return super(CaseSearchConfigView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
