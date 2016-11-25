@@ -98,7 +98,7 @@ class HierarchicalLocationSerializer(object):
 class FlatLocationSerializer(object):
 
     def get_xml_nodes(self, fixture_id, restore_user, all_locations):
-        if not toggles.FLAT_LOCATION_FIXTURE.enabled(restore_user.domain):
+        if not should_sync_flat_fixture(restore_user.domain):
             return []
 
         all_types = LocationType.objects.filter(domain=restore_user.domain).values_list(
@@ -125,6 +125,10 @@ class FlatLocationSerializer(object):
             outer_node.append(location_node)
 
         return [root_node]
+
+
+def should_sync_flat_fixture(domain):
+    return toggles.FLAT_LOCATION_FIXTURE.enabled(domain)
 
 
 location_fixture_generator = LocationFixtureProvider(
