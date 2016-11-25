@@ -71,7 +71,7 @@ class RestorePermissionsTest(LocationHierarchyTestCase):
         cls.restrict_user_to_location(cls.commcare_user)
 
         role = cls.commcare_user.get_role(cls.domain)
-        role.permissions.edit_data = True
+        role.permissions.edit_commcare_users = True
         role.save()
 
         cls.commcare_user.set_role(cls.domain, role.get_qualified_id())

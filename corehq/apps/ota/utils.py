@@ -154,8 +154,10 @@ def _ensure_accessible_location(domain, couch_user, as_user):
 
 
 def _ensure_edit_data_permission(domain, couch_user):
-    if couch_user.is_commcare_user() and not couch_user.has_permission(domain, 'edit_data'):
-        raise RestorePermissionDenied(_(u'{} does not have permission to edit data').format(couch_user.username))
+    if couch_user.is_commcare_user() and not couch_user.has_permission(domain, 'edit_commcare_users'):
+        raise RestorePermissionDenied(
+            _(u'{} does not have permission to edit commcare users').format(couch_user.username)
+        )
 
 
 def get_restore_user(domain, couch_user, as_user):
