@@ -1,3 +1,5 @@
+/* globals Formplayer */
+
 /**
  * The base Object for all entries. Each entry takes a question object and options
  * @param {Object} question - A question object
@@ -146,6 +148,7 @@ function FreeTextEntry(question, options) {
     } else {
         self.templateType = 'text';
     }
+    self.datatype = question.datatype();
     self.domain = question.domain ? question.domain() : 'full';
     self.lengthLimit = options.lengthLimit || 100000;
     self.prose = question.domain_meta ? question.domain_meta().longtext : false;
@@ -163,7 +166,15 @@ function FreeTextEntry(question, options) {
     };
 
     self.helpText = function() {
-        return isPassword ? 'Password' : 'Free response';
+        if (isPassword) {
+            return gettext('Password');
+        }
+        switch (self.datatype) {
+        case Formplayer.Const.BARCODE:
+            return gettext('Barcode');
+        default:
+            return gettext('Free response');
+        }
     };
 }
 FreeTextEntry.prototype = Object.create(EntrySingleAnswer.prototype);
@@ -520,6 +531,7 @@ function getEntry(question) {
 
     switch (question.datatype()) {
         case Formplayer.Const.STRING:
+        case Formplayer.Const.BARCODE:
             rawStyle = question.style ? ko.utils.unwrapObservable(question.style.raw) === 'numeric' : false;
             if (rawStyle) {
                 entry = new PhoneEntry(question, { enableAutoUpdate: isPhoneMode });
