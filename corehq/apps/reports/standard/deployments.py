@@ -158,19 +158,8 @@ class ApplicationStatusReport(DeploymentsReport):
                     xform_dict.get('version'),
                     xform_dict['form']['meta'],
                 )
-                build_html = _build_html(app_version_info)
-                commcare_version = (
-                    'CommCare {}'.format(app_version_info.commcare_version)
-                    if app_version_info.commcare_version
-                    else _("Unknown CommCare Version")
-                )
-                commcare_version_html = mark_safe('<span class="label label-info">{}</span>'.format(
-                    commcare_version)
-                )
-                app_name = app_name or _("Unknown App")
-                app_name = format_html(
-                    u'{} {} {}', app_name, mark_safe(build_html), commcare_version_html
-                )
+                app_name = _construct_app_name_html_from_name_and_version_info(app_name, app_version_info)
+
 
             if app_name is None and self.selected_app_id:
                 continue
@@ -199,6 +188,22 @@ class ApplicationStatusReport(DeploymentsReport):
             # Last sync
             row[2] = _fmt_timestamp(row[2])
         return result
+
+
+def _construct_app_name_html_from_name_and_version_info(app_name, app_version_info):
+    build_html = _build_html(app_version_info)
+    commcare_version = (
+        'CommCare {}'.format(app_version_info.commcare_version)
+        if app_version_info.commcare_version
+        else _("Unknown CommCare Version")
+    )
+    commcare_version_html = mark_safe('<span class="label label-info">{}</span>'.format(
+        commcare_version)
+    )
+    app_name = app_name or _("Unknown App")
+    return format_html(
+        u'{} {} {}', app_name, mark_safe(build_html), commcare_version_html
+    )
 
 
 class SyncHistoryReport(DeploymentsReport):
