@@ -950,6 +950,24 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
         return self.location_type_object.name
 
 
+class LocationFixtureConfiguration(models.Model):
+    domain = models.CharField(primary_key=True, max_length=255)
+    sync_flat_fixture = models.BooleanField(default=True)
+    sync_hierarchical_fixture = models.BooleanField(default=True)
+
+    def __repr__(self):
+        return u'{}: flat: {}, hierarchical: {}'.format(
+            self.domain, self.sync_flat_fixture, self.sync_heirarchical_fixture
+        )
+
+    @classmethod
+    def for_domain(cls, domain):
+        try:
+            return cls.objects.get(domain=domain)
+        except cls.DoesNotExist:
+            return cls(domain=domain)
+
+
 def _unassign_users_from_location(domain, location_id):
     """
     Unset location for all users assigned to that location.
