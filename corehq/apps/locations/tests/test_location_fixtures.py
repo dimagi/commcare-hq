@@ -377,7 +377,7 @@ class ShouldSyncLocationFixturesTest(TestCase):
         )
 
 
-class LocaitonFixtureSyncSettingsTest(TestCase):
+class LocationFixtureSyncSettingsTest(TestCase):
 
     def test_should_sync_flat_format_default(self):
         self.assertEqual(False, should_sync_flat_fixture('some-domain'))
