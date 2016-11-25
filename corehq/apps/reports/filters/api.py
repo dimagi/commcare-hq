@@ -154,10 +154,6 @@ class EmwfOptionsView(LoginAndDomainMixin, JSONResponseMixin, View):
 
 
 class LocationRestrictedEmwfOptionsMixin(object):
-    def include_locations_in_options(self):
-        # to render locations for filtering or not
-        raise NotImplementedError('Not implemented yet')
-
     def extra_data_sources(self):
         # extra data sources to be included for filtering
         raise NotImplementedError('Not implemented yet')
@@ -190,8 +186,8 @@ class LocationRestrictedEmwfOptionsMixin(object):
             sources.append((self.get_static_options_size, self.get_static_options))
             sources.append((self.get_groups_size, self.get_groups))
             sources.extend(self.extra_data_sources())
-        if self.include_locations_in_options():
-            sources.append((self.get_locations_size, self.get_locations))
+
+        sources.append((self.get_locations_size, self.get_locations))
         # appending this in the end to avoid long list of users delaying
         # locations, groups etc in the list on pagination
         sources.append((self.get_users_size, self.get_users))
@@ -200,9 +196,6 @@ class LocationRestrictedEmwfOptionsMixin(object):
 
 @location_safe
 class LocationRestrictedEmwfOptions(LocationRestrictedEmwfOptionsMixin, EmwfOptionsView):
-    def include_locations_in_options(self):
-        return toggles.LOCATIONS_IN_REPORTS.enabled(self.domain)
-
     def extra_data_sources(self):
         return []
 
@@ -214,9 +207,6 @@ class CaseListFilterOptions(LocationRestrictedEmwfOptionsMixin, EmwfOptionsView)
     @memoized
     def utils(self):
         return CaseListFilterUtils(self.domain)
-
-    def include_locations_in_options(self):
-        return True
 
     def extra_data_sources(self):
         return [(self.get_sharing_groups_size, self.get_sharing_groups)]
