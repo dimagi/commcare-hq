@@ -3,6 +3,7 @@ from jsonobject.base_properties import DefaultProperty
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.userreports.expressions.getters import transform_date
 from dimagi.ext.jsonobject import JsonObject, ListProperty, StringProperty
+from casexml.apps.case.xform import extract_case_blocks
 
 
 NUM_FUTURE_MONTHS = 3
@@ -76,26 +77,12 @@ class GetCaseHistorySpec(JsonObject):
 
         case_history = []
         for f in forms:
-            case_history.append(_get_case_block(case_id, f))
-
+            case_blocks = extract_case_blocks(f)
+            case_history.append(
+                next(case_block for case_block in case_blocks
+                     if case_block['@case_id'] == case_id))
         context.set_cache_value(cache_key, case_history)
         return case_history
-
-
-def _get_case_block(case_id, obj):
-    if isinstance(obj, list):
-        for val in obj:
-            result = _get_case_block(case_id, val)
-            if result is not None:
-                return result
-    elif hasattr(obj, 'iteritems'):
-        for key, val in obj.iteritems():
-            if key == 'case' and isinstance(val, dict) and val['@case_id'] == case_id:
-                result = val
-            else:
-                result = _get_case_block(case_id, val)
-            if result is not None:
-                return result
 
 
 class GetCaseHistoryByDateSpec(JsonObject):
