@@ -28,7 +28,7 @@ class TestFixture(TestCase):
         user = CommCareUser(_id=uuid.uuid4().hex, domain='test-calendar-settings')
         days_before = 50
         days_after = 10
-        CalendarFixtureSettings.objects.create(
+        calendar_settings = CalendarFixtureSettings.objects.create(
             domain='test-calendar-settings',
             days_before=days_before,
             days_after=days_after,
@@ -38,6 +38,7 @@ class TestFixture(TestCase):
         today = datetime.today()
         self._check_first_date(fixture, today - timedelta(days=days_before))
         self._check_last_date(fixture, today + timedelta(days=days_after))
+        self.addCleanup(calendar_settings.delete)
 
     def _check_first_date(self, fixture, expected_date):
         year_element = fixture[0][0]
