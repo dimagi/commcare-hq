@@ -1,11 +1,6 @@
 {% extends "style/base_section.html" %}
-{% load hq_shared_tags %}
-{% load hqstyle_tags %}
 {% load crispy_forms_tags %}
 {% load i18n %}
-{% block js-inline %}{{ block.super }}
-{% endblock %}
-
 {% block page_content %}
     <h1>{% trans "Calendar Fixture Settings" %}</h1>
     {% crispy form %}
