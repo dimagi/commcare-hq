@@ -18,4 +18,4 @@ class CalendarFixtureSettings(models.Model):
         try:
             return cls.objects.get(domain=domain)
         except cls.DoesNotExist:
-            return CalendarFixtureSettings(domain=domain)
+            return cls(domain=domain)
