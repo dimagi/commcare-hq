@@ -957,7 +957,7 @@ class LocationFixtureConfiguration(models.Model):
 
     def __repr__(self):
         return u'{}: flat: {}, hierarchical: {}'.format(
-            self.domain, self.sync_flat_fixture, self.sync_heirarchical_fixture
+            self.domain, self.sync_flat_fixture, self.sync_hierarchical_fixture
         )
 
     @classmethod
