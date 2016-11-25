@@ -25,7 +25,7 @@ from .util import (
     LocationTypeStructure,
 )
 from ..fixtures import _location_to_fixture, LocationSet, should_sync_locations, location_fixture_generator, \
-    flat_location_fixture_generator, should_sync_flat_fixture
+    flat_location_fixture_generator, should_sync_flat_fixture, should_sync_hierarchichal_fixture
 from ..models import SQLLocation, LocationType, Location
 
 
@@ -378,6 +378,18 @@ class ShouldSyncLocationFixturesTest(TestCase):
 
 
 class LocationFixtureSyncSettingsTest(TestCase):
+
+    def test_should_sync_hierarchical_format_default(self):
+        self.assertEqual(False, should_sync_hierarchichal_fixture(Domain()))
+
+    def test_should_sync_hierarchical_format_if_location_types_exist(self):
+        domain = 'sync-hierarchical-locations-test'
+        project = Domain(name='sync-hierarchical-locations-test')
+        project.save()
+        location_type = LocationType.objects.create(domain=domain, name='test-type')
+        self.assertEqual(False, should_sync_hierarchichal_fixture(Domain(name=domain)))
+        self.addCleanup(project.delete)
+        self.addCleanup(location_type.delete)
 
     def test_should_sync_flat_format_default(self):
         self.assertEqual(False, should_sync_flat_fixture('some-domain'))
