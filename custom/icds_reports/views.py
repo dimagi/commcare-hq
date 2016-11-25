@@ -102,7 +102,7 @@ def get_tableau_access_token(tableau_user, client_ip):
     r = requests.post(
         const.TABLEU_TICKET_URL,
         data={'username': tableau_user, 'client_ip': client_ip},
-        # ignore SSL
+        # ignore SSL; ToDO: remove after testing NIC cloud
         verify=False,
     )
 
