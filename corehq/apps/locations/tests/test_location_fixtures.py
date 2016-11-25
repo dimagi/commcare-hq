@@ -25,7 +25,7 @@ from .util import (
     LocationTypeStructure,
 )
 from ..fixtures import _location_to_fixture, LocationSet, should_sync_locations, location_fixture_generator, \
-    flat_location_fixture_generator
+    flat_location_fixture_generator, should_sync_flat_fixture
 from ..models import SQLLocation, LocationType, Location
 
 
@@ -375,3 +375,13 @@ class ShouldSyncLocationFixturesTest(TestCase):
         self.assertFalse(
             should_sync_locations(SyncLog(date=after_archive), location_db, self.user.to_ota_restore_user())
         )
+
+
+class LocaitonFixtureSyncSettingsTest(TestCase):
+
+    def test_should_sync_flat_format_default(self):
+        self.assertEqual(False, should_sync_flat_fixture('some-domain'))
+
+    def test_should_sync_flat_format_enabled(self):
+        with flag_enabled('FLAT_LOCATION_FIXTURE'):
+            self.assertEqual(True, should_sync_flat_fixture('some-domain'))
