@@ -1,3 +1,4 @@
+import uuid
 import mock
 import os
 from xml.etree import ElementTree
@@ -382,12 +383,13 @@ class LocationFixtureSyncSettingsTest(TestCase):
     def test_should_sync_hierarchical_format_default(self):
         self.assertEqual(False, should_sync_hierarchichal_fixture(Domain()))
 
+    @mock.patch('corehq.apps.accounting.utils.domain_has_privilege', lambda x, y: True)
     def test_should_sync_hierarchical_format_if_location_types_exist(self):
-        domain = 'sync-hierarchical-locations-test'
-        project = Domain(name='sync-hierarchical-locations-test')
+        domain = uuid.uuid4().hex
+        project = Domain(name=domain)
         project.save()
         location_type = LocationType.objects.create(domain=domain, name='test-type')
-        self.assertEqual(False, should_sync_hierarchichal_fixture(Domain(name=domain)))
+        self.assertEqual(True, should_sync_hierarchichal_fixture(project))
         self.addCleanup(project.delete)
         self.addCleanup(location_type.delete)
 
