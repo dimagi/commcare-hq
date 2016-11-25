@@ -2,7 +2,7 @@ from itertools import groupby
 from collections import defaultdict
 from xml.etree.ElementTree import Element
 from casexml.apps.phone.models import OTARestoreUser
-from corehq.apps.locations.models import SQLLocation, LocationType
+from corehq.apps.locations.models import SQLLocation, LocationType, LocationFixtureConfiguration
 from corehq import toggles
 
 
@@ -128,11 +128,17 @@ class FlatLocationSerializer(object):
 
 
 def should_sync_hierarchichal_fixture(project):
-    return project.uses_locations
+    return (
+        project.uses_locations and
+        LocationFixtureConfiguration.for_domain(project.name).sync_hierarchical_fixture
+    )
 
 
 def should_sync_flat_fixture(domain):
-    return toggles.FLAT_LOCATION_FIXTURE.enabled(domain)
+    return (
+        toggles.FLAT_LOCATION_FIXTURE.enabled(domain) and
+        LocationFixtureConfiguration.for_domain(domain).sync_flat_fixture
+    )
 
 
 location_fixture_generator = LocationFixtureProvider(
