@@ -323,13 +323,16 @@ def user_can_access_other_user(domain, user, other_user):
     if user.has_permission(domain, 'access_all_locations'):
         return True
 
-    accessible_location_ids = (SQLLocation.objects .accessible_to_user(domain, user) .values_list('id', flat=True))
+    accessible_location_ids = (SQLLocation.objects
+        .accessible_to_user(domain, user)
+        .values_list('id', flat=True))
 
     other_user_locations = other_user.sql_locations
-    return any(map(
-        lambda location_id: location_id in accessible_location_ids,
-        other_user_locations.values_list('id', flat=True) if other_user_locations else []
-    ))
+
+    if other_user_locations:
+        return other_user_locations.filter(id__in=accessible_location_ids).count() > 0
+
+    return False
 
 
 def can_edit_location(view_fn):
