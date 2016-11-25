@@ -5,8 +5,7 @@ from casexml.apps.case.xml import V2
 from corehq.apps.calendar_fixture.fixture_provider import calendar_fixture_generator
 from corehq.apps.calendar_fixture.models import DEFAULT_DAYS_BEFORE, DEFAULT_DAYS_AFTER, CalendarFixtureSettings
 from corehq.apps.users.models import CommCareUser
-from corehq.toggles import CUSTOM_CALENDAR_FIXTURE
-from corehq.util.decorators import temporarily_enable_toggle
+from corehq.util.test_utils import flag_enabled
 
 
 class TestFixture(TestCase):
@@ -15,7 +14,7 @@ class TestFixture(TestCase):
         user = CommCareUser(_id=uuid.uuid4().hex, domain='not-enabled')
         self.assertEqual([], calendar_fixture_generator(user, V2))
 
-    @temporarily_enable_toggle(CUSTOM_CALENDAR_FIXTURE, 'test-calendar-defaults')
+    @flag_enabled('CUSTOM_CALENDAR_FIXTURE')
     def test_fixture_defaults(self):
         user = CommCareUser(_id=uuid.uuid4().hex, domain='test-calendar-defaults')
         fixture = calendar_fixture_generator(user, V2)[0]
@@ -24,7 +23,7 @@ class TestFixture(TestCase):
         self._check_first_date(fixture, today - timedelta(days=DEFAULT_DAYS_BEFORE))
         self._check_last_date(fixture, today + timedelta(days=DEFAULT_DAYS_AFTER))
 
-    @temporarily_enable_toggle(CUSTOM_CALENDAR_FIXTURE, 'test-calendar-settings')
+    @flag_enabled('CUSTOM_CALENDAR_FIXTURE')
     def test_fixture_customization(self):
         user = CommCareUser(_id=uuid.uuid4().hex, domain='test-calendar-settings')
         days_before = 50
