@@ -2160,7 +2160,7 @@ class CalendarFixtureConfigView(BaseAdminProjectSettingsView):
         form = CalendarFixtureForm(request.POST, instance=calendar_settings)
         if form.is_valid():
             form.save()
-            messages.success(request, _("Case search configuration updated successfully"))
+            messages.success(request, _("Calendar configuration updated successfully"))
 
         return self.get(request, *args, **kwargs)
 
