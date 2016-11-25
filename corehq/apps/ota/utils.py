@@ -90,6 +90,31 @@ def demo_restore_date_created(commcare_user):
             return restore.timestamp_created
 
 
+def is_permitted_to_restore(domain, couch_user, as_user, has_data_cleanup_privilege):
+    """
+    This function determines if the couch_user is permitted to restore
+    for the domain and/or as_user
+    :param domain: Domain of restore
+    :param couch_user: The couch user attempting authentication
+    :param as_user: a string <user>@<domain> that the couch_user is attempting to get
+        a restore for. If None will get restore of the couch_user.
+    :param has_data_cleanup_privelege: Whether the user has permissions to do DATA_CLEANUP
+    :returns: a tuple - first a boolean if the user is permitted,
+        secondly a message explaining why a user was rejected if not permitted
+    """
+    try:
+        _ensure_valid_domain(domain, couch_user)
+        if as_user is not None:
+            _ensure_cleanup_permission(domain, couch_user, as_user, has_data_cleanup_privilege)
+            _ensure_valid_restore_as_user(domain, couch_user, as_user)
+            _ensure_accessible_location(domain, couch_user, as_user)
+            _ensure_edit_data_permission(domain, couch_user)
+    except RestorePermissionDenied as e:
+        return False, unicode(e)
+    else:
+        return True, None
+
+
 def _ensure_valid_domain(domain, couch_user):
     if not couch_user.is_member_of(domain):
         raise RestorePermissionDenied(u"{} was not in the domain {}".format(couch_user.username, domain))
@@ -131,31 +156,6 @@ def _ensure_accessible_location(domain, couch_user, as_user):
 def _ensure_edit_data_permission(domain, couch_user):
     if couch_user.is_commcare_user() and not couch_user.has_permission(domain, 'edit_data'):
         raise RestorePermissionDenied(u'{} does not have permission to edit data'.format(couch_user.username))
-
-
-def is_permitted_to_restore(domain, couch_user, as_user, has_data_cleanup_privilege):
-    """
-    This function determines if the couch_user is permitted to restore
-    for the domain and/or as_user
-    :param domain: Domain of restore
-    :param couch_user: The couch user attempting authentication
-    :param as_user: a string <user>@<domain> that the couch_user is attempting to get
-        a restore for. If None will get restore of the couch_user.
-    :param has_data_cleanup_privelege: Whether the user has permissions to do DATA_CLEANUP
-    :returns: a tuple - first a boolean if the user is permitted,
-        secondly a message explaining why a user was rejected if not permitted
-    """
-    try:
-        _ensure_valid_domain(domain, couch_user)
-        if as_user is not None:
-            _ensure_cleanup_permission(domain, couch_user, as_user, has_data_cleanup_privilege)
-            _ensure_valid_restore_as_user(domain, couch_user, as_user)
-            _ensure_accessible_location(domain, couch_user, as_user)
-            _ensure_edit_data_permission(domain, couch_user)
-    except RestorePermissionDenied as e:
-        return False, unicode(e)
-    else:
-        return True, None
 
 
 def get_restore_user(domain, couch_user, as_user):
