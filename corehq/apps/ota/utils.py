@@ -117,12 +117,12 @@ def is_permitted_to_restore(domain, couch_user, as_user, has_data_cleanup_privil
 
 def _ensure_valid_domain(domain, couch_user):
     if not couch_user.is_member_of(domain):
-        raise RestorePermissionDenied(u"{} was not in the domain {}".format(couch_user.username, domain))
+        raise RestorePermissionDenied(_(u"{} was not in the domain {}").format(couch_user.username, domain))
 
 
 def _ensure_cleanup_permission(domain, couch_user, as_user, has_data_cleanup_privilege):
     if not has_data_cleanup_privilege and not couch_user.is_superuser:
-        raise RestorePermissionDenied(u"{} does not have permissions to restore as {}".format(
+        raise RestorePermissionDenied(_(u"{} does not have permissions to restore as {}").format(
             couch_user.username,
             as_user,
         ))
@@ -134,28 +134,28 @@ def _ensure_valid_restore_as_user(domain, couch_user, as_user):
         user_domain = as_user.split('@')[1]
     except IndexError:
         raise RestorePermissionDenied(
-            u"Invalid restore user {}. Format is <user>@<domain>".format(as_user)
+            _(u"Invalid restore user {}. Format is <user>@<domain>").format(as_user)
         )
     else:
         if user_domain != domain:
             # In this case we may be dealing with a WebUser
             user = WebUser.get_by_username(as_user)
             if not user or not user.is_member_of(domain):
-                raise RestorePermissionDenied(u"{} was not in the domain {}".format(username, domain))
+                raise RestorePermissionDenied(_(u"{} was not in the domain {}").format(username, domain))
 
 
 def _ensure_accessible_location(domain, couch_user, as_user):
     if couch_user.is_commcare_user():
         as_user_obj = CommCareUser.get_by_username('{}.commcarehq.org'.format(as_user))
         if not as_user_obj:
-            raise RestorePermissionDenied(u'Invalid restore user {}'.format(as_user))
+            raise RestorePermissionDenied(_(u'Invalid restore user {}').format(as_user))
         elif not user_can_access_other_user(domain, couch_user, as_user_obj):
-            raise RestorePermissionDenied(u'Restore user {} not in allowed locations'.format(as_user))
+            raise RestorePermissionDenied(_(u'Restore user {} not in allowed locations').format(as_user))
 
 
 def _ensure_edit_data_permission(domain, couch_user):
     if couch_user.is_commcare_user() and not couch_user.has_permission(domain, 'edit_data'):
-        raise RestorePermissionDenied(u'{} does not have permission to edit data'.format(couch_user.username))
+        raise RestorePermissionDenied(_(u'{} does not have permission to edit data').format(couch_user.username))
 
 
 def get_restore_user(domain, couch_user, as_user):
