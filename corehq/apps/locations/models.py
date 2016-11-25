@@ -119,7 +119,7 @@ class LocationType(models.Model):
         null=True,
         related_name='+',
         on_delete=models.SET_NULL,
-    )  # include all leves of this type and their ancestors
+    )  # include all levels of this type and their ancestors
     last_modified = models.DateTimeField(auto_now=True)
 
     emergency_level = StockLevelField(default=0.5)
