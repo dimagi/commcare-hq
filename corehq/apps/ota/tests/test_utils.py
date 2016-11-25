@@ -24,6 +24,7 @@ class RestorePermissionsTest(LocationHierarchyTestCase):
 
     @classmethod
     def setUpClass(cls):
+        delete_all_users()
         super(RestorePermissionsTest, cls).setUpClass()
         delete_all_users()
 
@@ -68,14 +69,7 @@ class RestorePermissionsTest(LocationHierarchyTestCase):
         cls.location_user.set_location(cls.locations['ma'])
         cls.wrong_location_user.set_location(cls.locations['montreal'])
 
-        cls.restrict_user_to_location(cls.commcare_user)
-
-        role = cls.commcare_user.get_role(cls.domain)
-        role.permissions.edit_commcare_users = True
-        role.save()
-
-        cls.commcare_user.set_role(cls.domain, role.get_qualified_id())
-        cls.commcare_user.save()
+        cls.restrict_user_to_assigned_locations(cls.commcare_user)
 
     @classmethod
     def tearDownClass(cls):
