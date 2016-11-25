@@ -7,7 +7,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.util import namedtupledict
 from corehq.apps.users.models import CommCareUser
-from corehq.util import remove_dups
+from corehq.util import remove_dups, flatten_list
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.commtrack.models import SQLLocation
 
@@ -342,7 +342,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
                 group=group,
                 simplified=True
             )
-        users_in_groups = [user for sublist in user_dict.values() for user in sublist]
+        users_in_groups = flatten_list(user_dict.values())
         users_by_group = user_dict
         combined_users = remove_dups(all_users + users_in_groups, "user_id")
 
@@ -370,6 +370,21 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             cls.slug: 'g__%s' % group_id
         }
 
+    def _get_assigned_locations_default(self):
+        user_assigned_locations = self.request.couch_user.get_assigned_sql_locations(
+            self.request.domain
+        )
+        return map(self.utils.location_tuple, user_assigned_locations)
+
+
+class LocationRestrictedMobileWorkerFilter(ExpandedMobileWorkerFilter):
+    options_url = 'new_emwf_options'
+
+    def get_default_selections(self):
+        if self.request.can_access_all_locations:
+            return super(LocationRestrictedMobileWorkerFilter, self).get_default_selections()
+        else:
+            return self._get_assigned_locations_default()
 
 def get_user_toggle(request):
     ufilter = group = individual = show_commtrack = None
