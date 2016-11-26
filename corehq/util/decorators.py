@@ -166,17 +166,3 @@ def analytics_task(default_retry_delay=10, max_retries=3, queue='background_queu
                     self.retry(exc=e)
         return _inner
     return decorator
-
-
-class temporarily_enable_toggle(ContextDecorator):
-
-    def __init__(self, toggle, item, namespace=NAMESPACE_DOMAIN):
-        self.toggle_slug = toggle.slug
-        self.item = item
-        self.namespace = namespace
-
-    def __enter__(self):
-        update_toggle_cache(self.toggle_slug, self.item, True, namespace=self.namespace)
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        clear_toggle_cache(self.toggle_slug, self.item, self.namespace)
