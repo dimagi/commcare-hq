@@ -778,6 +778,15 @@ class CommentMixin(DocumentSchema):
         return self.comment if len(self.comment) <= 500 else self.comment[:497] + '...'
 
 
+def _render_xform_vary_on(self, build_profile_id=None):
+    def _hash(val):
+        return hashlib.md5(val).hexdigest()
+    return [
+        _hash(self.source.encode('utf-8')),
+        build_profile_id,
+    ]
+
+
 class FormBase(DocumentSchema):
     """
     Part of a Managed Application; configuration for a form.
@@ -978,6 +987,7 @@ class FormBase(DocumentSchema):
         xform.strip_vellum_ns_attributes()
         xform.set_version(self.get_version())
 
+    @quickcache(_render_xform_vary_on, timeout=5 * 60 * 60)
     def render_xform(self, build_profile_id=None):
         xform = XForm(self.source)
         self.add_stuff_to_xform(xform, build_profile_id)
@@ -4562,6 +4572,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return '/a/%s/api/custom/pact_formdata/v1/' % self.domain
 
     @absolute_url_property
+    @quickcache(['self.domain', 'self._id'], timeout=5 * 60 * 60)
     def hq_profile_url(self):
         # RemoteApp already has a property called "profile_url",
         # Application.profile_url just points here to stop the conflict
@@ -5563,6 +5574,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             return []
         return form.get_questions(self.langs)
 
+    @quickcache(['self._id', 'self.domain'], timeout=5 * 60 * 60)
     def check_subscription(self):
 
         def app_uses_usercase(app):
