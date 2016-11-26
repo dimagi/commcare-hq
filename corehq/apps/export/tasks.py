@@ -7,6 +7,7 @@ from corehq.apps.export.export import get_export_file, rebuild_export
 from corehq.apps.export.utils import convert_saved_export_to_export_instance
 from corehq.apps.export.dbaccessors import get_inferred_schema
 from corehq.apps.export.system_properties import MAIN_CASE_TABLE_PROPERTIES
+from corehq.util.decorators import serial_task
 from couchexport.models import Format
 from couchexport.tasks import escape_quotes
 from soil.util import expose_cached_download
@@ -46,7 +47,7 @@ def rebuild_export_task(export_instance, last_access_cutoff=None, filter=None):
     rebuild_export(export_instance, last_access_cutoff, filter)
 
 
-@task(queue='background_queue')
+@serial_task('{domain}-{case_type}', queue='background_queue')
 def add_inferred_export_properties(sender, domain, case_type, properties):
     from corehq.apps.export.models import MAIN_TABLE, PathNode, InferredSchema, ScalarItem
     """
