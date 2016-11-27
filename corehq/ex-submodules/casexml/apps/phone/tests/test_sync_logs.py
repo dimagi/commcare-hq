@@ -1,3 +1,4 @@
+import uuid
 from django.test import TestCase, SimpleTestCase
 from casexml.apps.case.xml import V1, V2
 from casexml.apps.phone.models import SyncLog, CaseState
@@ -117,7 +118,7 @@ class SyncLogModelTest(TestCase):
     def setUpClass(cls):
         cls.project = Domain(name=cls.domain)
         cls.project.save()
-        cls.restore_user = create_restore_user(cls.domain)
+        cls.restore_user = create_restore_user(cls.domain, username=uuid.uuid4().hex)
 
     @classmethod
     def tearDownClass(cls):
