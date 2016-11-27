@@ -84,7 +84,7 @@ class LocationFixtureProvider(object):
 class HierarchicalLocationSerializer(object):
 
     def get_xml_nodes(self, fixture_id, restore_user, all_locations):
-        if not should_sync_hierarchichal_fixture(restore_user.project):
+        if not should_sync_hierarchical_fixture(restore_user.project):
             return []
 
         root_node = Element('fixture', {'id': fixture_id, 'user_id': restore_user.user_id})
@@ -127,7 +127,7 @@ class FlatLocationSerializer(object):
         return [root_node]
 
 
-def should_sync_hierarchichal_fixture(project):
+def should_sync_hierarchical_fixture(project):
     return (
         project.uses_locations and
         LocationFixtureConfiguration.for_domain(project.name).sync_hierarchical_fixture

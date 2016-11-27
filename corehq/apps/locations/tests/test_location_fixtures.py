@@ -26,7 +26,7 @@ from .util import (
     LocationTypeStructure,
 )
 from ..fixtures import _location_to_fixture, LocationSet, should_sync_locations, location_fixture_generator, \
-    flat_location_fixture_generator, should_sync_flat_fixture, should_sync_hierarchichal_fixture
+    flat_location_fixture_generator, should_sync_flat_fixture, should_sync_hierarchical_fixture
 from ..models import SQLLocation, LocationType, Location, LocationFixtureConfiguration
 
 
@@ -381,7 +381,7 @@ class ShouldSyncLocationFixturesTest(TestCase):
 class LocationFixtureSyncSettingsTest(TestCase):
 
     def test_should_sync_hierarchical_format_default(self):
-        self.assertEqual(False, should_sync_hierarchichal_fixture(Domain()))
+        self.assertEqual(False, should_sync_hierarchical_fixture(Domain()))
 
     @mock.patch('corehq.apps.accounting.utils.domain_has_privilege', lambda x, y: True)
     def test_should_sync_hierarchical_format_if_location_types_exist(self):
@@ -389,7 +389,7 @@ class LocationFixtureSyncSettingsTest(TestCase):
         project = Domain(name=domain)
         project.save()
         location_type = LocationType.objects.create(domain=domain, name='test-type')
-        self.assertEqual(True, should_sync_hierarchichal_fixture(project))
+        self.assertEqual(True, should_sync_hierarchical_fixture(project))
         self.addCleanup(project.delete)
         self.addCleanup(location_type.delete)
 
@@ -417,9 +417,9 @@ class LocationFixtureSyncSettingsTest(TestCase):
         location_settings = LocationFixtureConfiguration.objects.create(
             domain=domain, sync_hierarchical_fixture=False
         )
-        self.assertEqual(False, should_sync_hierarchichal_fixture(project))
+        self.assertEqual(False, should_sync_hierarchical_fixture(project))
         with flag_enabled('FLAT_LOCATION_FIXTURE'):
-            self.assertEqual(False, should_sync_hierarchichal_fixture(project))
+            self.assertEqual(False, should_sync_hierarchical_fixture(project))
         self.addCleanup(project.delete)
         self.addCleanup(location_type.delete)
         self.addCleanup(location_settings.delete)
