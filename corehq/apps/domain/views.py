@@ -43,6 +43,8 @@ from corehq.apps.case_search.models import (
     disable_case_search,
 )
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
+from corehq.apps.locations.forms import LocationFixtureForm
+from corehq.apps.locations.models import LocationFixtureConfiguration
 from corehq.apps.repeaters.repeater_generators import RegisterGenerator
 
 from corehq.const import USER_DATE_FORMAT
@@ -2168,6 +2170,32 @@ class CalendarFixtureConfigView(BaseAdminProjectSettingsView):
     def page_context(self):
         calendar_settings = CalendarFixtureSettings.for_domain(self.domain)
         form = CalendarFixtureForm(instance=calendar_settings)
+        return {'form': form}
+
+
+class LocationFixtureConfigView(BaseAdminProjectSettingsView):
+    urlname = 'location_fixture_config'
+    page_title = ugettext_lazy('Location Fixture')
+    template_name = 'domain/admin/location_fixture.html'
+
+    @method_decorator(domain_admin_required)
+    @toggles.FLAT_LOCATION_FIXTURE.required_decorator()
+    def dispatch(self, request, *args, **kwargs):
+        return super(LocationFixtureConfigView, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        location_settings = LocationFixtureConfiguration.for_domain(self.domain)
+        form = LocationFixtureForm(request.POST, instance=location_settings)
+        if form.is_valid():
+            form.save()
+            messages.success(request, _("Location configuration updated successfully"))
+
+        return self.get(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        location_settings = LocationFixtureConfiguration.for_domain(self.domain)
+        form = LocationFixtureForm(instance=location_settings)
         return {'form': form}
 
 

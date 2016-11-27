@@ -1328,7 +1328,7 @@ def _get_administration_section(domain):
 
 
 def _get_feature_flag_items(domain):
-    from corehq.apps.domain.views import CalendarFixtureConfigView
+    from corehq.apps.domain.views import CalendarFixtureConfigView, LocationFixtureConfigView
     feature_flag_items = []
     if toggles.SYNC_SEARCH_CASE_CLAIM.enabled(domain):
         feature_flag_items.append({
@@ -1339,6 +1339,11 @@ def _get_feature_flag_items(domain):
         feature_flag_items.append({
             'title': _('Calendar Fixture'),
             'url': reverse(CalendarFixtureConfigView.urlname, args=[domain])
+        })
+    if toggles.FLAT_LOCATION_FIXTURE.enabled(domain):
+        feature_flag_items.append({
+            'title': _('Location Fixture'),
+            'url': reverse(LocationFixtureConfigView.urlname, args=[domain])
         })
     return feature_flag_items
 
