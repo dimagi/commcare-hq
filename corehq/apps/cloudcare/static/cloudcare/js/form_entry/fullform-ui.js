@@ -437,6 +437,7 @@ Formplayer.ViewModels.CloudCareDebugger = function() {
             self.formattedQuestionsHtml(resp.formattedQuestions);
             self.instanceXml(resp.instanceXml);
             self.evalXPath.autocomplete(resp.questionList);
+            self.evalXPath.recentXPathQueries(resp.recentXPathQueries || []);
         });
     });
 
@@ -484,6 +485,7 @@ Formplayer.ViewModels.EvaluateXPath = function() {
     var self = this;
     self.xpath = ko.observable('');
     self.selectedXPath = ko.observable('');
+    self.recentXPathQueries = ko.observableArray();
     self.$xpath = null;
     self.result = ko.observable('');
     self.success = ko.observable(true);
@@ -500,6 +502,10 @@ Formplayer.ViewModels.EvaluateXPath = function() {
         };
         $.publish('formplayer.' + Formplayer.Const.EVALUATE_XPATH, [xpath, callback]);
     };
+
+    self.isSuccess = function(query) {
+        return query.status === 'accepted';
+    }
 
     self.onMouseUp = function() {
         var text = window.getSelection().toString();

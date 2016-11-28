@@ -215,6 +215,24 @@
                       css: { 'text-danger': !success() }
               "></p>
           </div>
+          <div class="col-sm-12" data-bind="foreach: recentXPathQueries">
+            <div class="row">
+              <div class="col-sm-1">
+                <span><i class="fa" data-bind="
+                    css: {
+                      'fa-check': $parent.isSuccess($data),
+                      'fa-times': !$parent.isSuccess($data)
+                    }
+                    "></i></span>
+              </div>
+              <div class="col-sm-8">
+                <span data-bind="text: xpath"></span>
+              </div>
+              <div class="col-sm-3">
+                <span data-bind="text: output"></span>
+              </div>
+            </div>
+          </div>
       </form>
     </div>
 </script>
