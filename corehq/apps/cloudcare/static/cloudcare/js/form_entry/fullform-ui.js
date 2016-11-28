@@ -502,6 +502,15 @@ Formplayer.ViewModels.EvaluateXPath = function() {
         return match ? match[2] : null;
     };
 
+    self.focusArgs = function() {
+        var text = self.$xpath.val();
+        var startIndex = text.indexOf("${");
+        var endIndex = startIndex + 4;
+        if (startIndex > 0) {
+            self.$xpath.selectRange(startIndex, endIndex);
+        }
+    }
+
     /**
      * Set autocomplete for xpath input.
      *
@@ -524,8 +533,39 @@ Formplayer.ViewModels.EvaluateXPath = function() {
                 matcher: self.matcher,
             },
         });
+        self.$xpath.on("inserted.atwho", function() {
+            self.focusArgs();
+        });
+
+        self.$xpath.keypress(function (e) {
+            if (e.which == 13) {
+                self.focusArgs();
+                e.preventDefault();
+            }
+        });
     };
 };
+
+$.fn.selectRange = function(start, end) {
+    if(end === undefined) {
+        end = start;
+    }
+    return this.each(function() {
+        if('selectionStart' in this) {
+            this.selectionStart = start;
+            this.selectionEnd = end;
+        } else if(this.setSelectionRange) {
+            this.setSelectionRange(start, end);
+        } else if(this.createTextRange) {
+            var range = this.createTextRange();
+            range.collapse(true);
+            range.moveEnd('character', end);
+            range.moveStart('character', start);
+            range.select();
+        }
+    });
+};
+
 
 /**
  * Used to compare if questions are equal to each other by looking at their index
