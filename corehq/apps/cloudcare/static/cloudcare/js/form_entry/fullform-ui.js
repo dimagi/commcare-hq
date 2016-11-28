@@ -517,14 +517,14 @@ Formplayer.ViewModels.EvaluateXPath = function() {
     /**
      * Set autocomplete for xpath input.
      *
-     * @param {Array} questionData - List of questions to be autocompleted for the xpath input
+     * @param {Array} autocompleteData - List of questions to be autocompleted for the xpath input
      */
-    self.autocomplete = function(questionData) {
+    self.autocomplete = function(autocompleteData) {
         self.$xpath = $('#xpath');
         self.$xpath.atwho('setIframe', window.frameElement, true);
         self.$xpath.atwho({
             at: '',
-            data: questionData,
+            data: autocompleteData,
             searchKey: 'value',
             maxLen: Infinity,
             displayTpl: function(d) {
