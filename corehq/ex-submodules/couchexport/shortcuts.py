@@ -69,10 +69,14 @@ def export_response(file, format, filename, checkpoint=None):
             logging.exception("Error with filename: %r" % filename)
             filename = "data"
         finally:
-            response['Content-Disposition'] = 'attachment; filename="{filename}.{format.extension}"'.format(
+            header_value = 'attachment; filename="{filename}.{format.extension}"'.format(
                 filename=filename,
                 format=format
             )
+            # HTTP headers shouldn't contain newlines
+            header_value.replace("\n", " ")
+            header_value.replace("\r", " ")
+            response['Content-Disposition'] = header_value
 
     if checkpoint:
         response['X-CommCareHQ-Export-Token'] = checkpoint.get_id
