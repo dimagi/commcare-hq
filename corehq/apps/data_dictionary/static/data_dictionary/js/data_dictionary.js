@@ -1,5 +1,6 @@
 (function ($, _) {
-    var CaseProperty = function (data) {
+    var CaseProperty = function (caseType, data) {
+        this.caseType = ko.observable(caseType);
         this.name = ko.observable(data.name);
         this.type = ko.observable(data.type);
         this.description = ko.observable(data.description);
@@ -12,7 +13,7 @@
 
         self.init = function (properties) {
             _.each(properties, function (property) {
-                self.properties.push(new CaseProperty(property));
+                self.properties.push(new CaseProperty(self.name, property));
             });
         };
     };
@@ -30,7 +31,7 @@
                     caseTypeObj.init(caseType.properties);
                     self.caseTypes.push(caseTypeObj);
                 });
-                self.activeCaseType(self.caseTypes()[0].name());
+                self.goToCaseType(self.caseTypes()[0]);
             });
         };
 
