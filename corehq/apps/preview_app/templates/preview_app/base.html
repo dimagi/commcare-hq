@@ -194,6 +194,11 @@
             $('.dragscroll').on('scroll', function () {
               $('.form-control').blur();
             });
+            // Adjust for those pesky scrollbars
+            _.each($('.scrollable-container'), function (sc) {
+              var scrollWidth = $(sc).prop('offsetWidth') - $(sc).prop('clientWidth');
+              $(sc).addClass('has-scrollbar-'+scrollWidth);
+            });
         });
         </script>
         {% include 'form_entry/templates.html' %}
