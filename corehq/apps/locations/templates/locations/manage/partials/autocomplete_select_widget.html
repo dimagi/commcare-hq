@@ -33,10 +33,15 @@ $("#{{ id }}").select2({
         }
 
         if (val !== "") {
-            $.get("{{ query_url }}", payload).done(function(data) {
-                callback(data);
+            if({{ load_on_render }}) {
+                $.get("{{ query_url }}", payload).done(function(data) {
+                    callback(data);
+                    $(element).trigger('select-ready');
+                });
+            } else {
+                callback({{populate_with|safe}});
                 $(element).trigger('select-ready');
-            });
+            }
         }
     },
     formatResult: function(e) { return e.name; },

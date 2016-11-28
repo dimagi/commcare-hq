@@ -340,3 +340,7 @@ def get_lineage_from_location_id(location_id):
 
 def get_lineage_from_location(location):
     return list(reversed(location.path))
+
+
+def loc_to_payload(loc):
+    return {'id': loc.location_id, 'name': loc.display_name}
