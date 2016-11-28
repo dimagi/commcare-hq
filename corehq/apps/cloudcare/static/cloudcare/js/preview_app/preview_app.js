@@ -1,6 +1,6 @@
 /* globals FormplayerFrontend */
 
-hqDefine('preview_app/js/preview_app.js', function() {
+hqDefine('cloudcare/js/preview_app/preview_app.js', function() {
 
     var start = function(options) {
 
