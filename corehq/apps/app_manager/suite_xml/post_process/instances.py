@@ -15,8 +15,9 @@ class EntryInstances(PostProcessor):
     def add_entry_instances(self, entry):
         xpaths = self._get_all_xpaths_for_entry(entry)
         instances, unknown_instance_ids = get_all_instances_referenced_in_xpaths(self.app.domain, xpaths)
-        instances |= self._get_custom_instances(entry, unknown_instance_ids)
-        entry.require_instances(instances=instances, instance_ids=unknown_instance_ids)
+        custom_instances, unknown_instance_ids = self._get_custom_instances(entry, unknown_instance_ids)
+        all_instances = instances | custom_instances
+        entry.require_instances(instances=all_instances, instance_ids=unknown_instance_ids)
 
     def _get_all_xpaths_for_entry(self, entry):
         relevance_by_menu, menu_by_command = self._get_menu_relevance_mapping()
@@ -75,14 +76,11 @@ class EntryInstances(PostProcessor):
 
         for instance in custom_instances:
             # Remove custom instances from unknown instances, but add them even if they aren't referenced anywhere
-            try:
-                required_instances.remove(instance.instance_id)
-            except KeyError:
-                pass
+            required_instances.discard(instance.instance_id)
 
         return {
             Instance(id=instance.instance_id, src=instance.instance_path) for instance in custom_instances
-        }
+        }, required_instances
 
     @memoized
     def _custom_instances_by_xmlns(self):
