@@ -80,7 +80,7 @@ class OTARestoreUser(object):
     @property
     def sql_location(self):
         "User's primary SQLLocation"
-        raise NotImplementedError()
+        return self._couch_user.get_sql_location(self.domain)
 
     def get_fixture_data_items(self):
         raise NotImplementedError()
@@ -122,10 +122,6 @@ class OTARestoreWebUser(OTARestoreUser):
         super(OTARestoreWebUser, self).__init__(domain, couch_user, **kwargs)
 
     @property
-    def sql_location(self):
-        return None
-
-    @property
     def locations(self):
         return []
 
@@ -165,10 +161,6 @@ class OTARestoreCommCareUser(OTARestoreUser):
 
         assert isinstance(couch_user, CommCareUser)
         super(OTARestoreCommCareUser, self).__init__(domain, couch_user, **kwargs)
-
-    @property
-    def sql_location(self):
-        return self._couch_user.sql_location
 
     @property
     def locations(self):
