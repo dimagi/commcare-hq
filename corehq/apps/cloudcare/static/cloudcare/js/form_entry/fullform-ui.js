@@ -508,7 +508,7 @@ Formplayer.ViewModels.EvaluateXPath = function() {
 
     self.isSuccess = function(query) {
         return query.status === 'accepted';
-    }
+    };
 
     self.onMouseUp = function() {
         var text = window.getSelection().toString();
@@ -530,6 +530,7 @@ Formplayer.ViewModels.EvaluateXPath = function() {
      */
     self.autocomplete = function(autocompleteData) {
         self.$xpath = $('#xpath');
+        self.$xpath.atwho('destroy');
         self.$xpath.atwho('setIframe', window.frameElement, true);
         self.$xpath.atwho({
             at: '',
