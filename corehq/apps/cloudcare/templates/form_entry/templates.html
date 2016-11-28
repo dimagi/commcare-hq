@@ -187,7 +187,7 @@
 
 <script type="text/html" id="debugger-eval-ko-template">
     <div class="col-sm-12">
-      <form class="form-horizontal" data-bind="submit: evaluate">
+      <form class="form-horizontal" data-bind="submit: onSubmitXPath">
           <div class="form-group">
               <textarea
                   id="xpath"
@@ -195,10 +195,15 @@
                   name="xpath"
                   placeholder="XPath Expression"
                   autocomplete="off"
-                  data-bind="value: xpath" ></textarea>
+                  data-bind="value: xpath, event: { mouseup: onMouseUp }" ></textarea>
           </div>
           <div class="form-group">
-                <input class="btn btn-default" id="evaluate-button" value="Evaluate" type="submit"/>
+                <input class="btn btn-success" id="evaluate-button" value="Evaluate" type="submit"/>
+                <input
+                    class="btn btn-default"
+                    value="Evaluate Selection"
+                    type="button"
+                    data-bind="css: { disabled: !selectedXPath() }, click: onClickSelectedXPath"/>
           </div>
           <div class="col-sm-12">
               <p

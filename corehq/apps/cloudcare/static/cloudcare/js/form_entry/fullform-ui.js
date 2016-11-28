@@ -483,15 +483,27 @@ Formplayer.ViewModels.CloudCareDebugger = function() {
 Formplayer.ViewModels.EvaluateXPath = function() {
     var self = this;
     self.xpath = ko.observable('');
+    self.selectedXPath = ko.observable('');
     self.$xpath = null;
     self.result = ko.observable('');
     self.success = ko.observable(true);
-    self.evaluate = function(form) {
+    self.onSubmitXPath = function() {
+        self.evaluate(self.xpath());
+    };
+    self.onClickSelectedXPath = function() {
+        self.evaluate(self.selectedXPath());
+    };
+    self.evaluate = function(xpath) {
         var callback = function(result, status) {
             self.result(result);
             self.success(status === "accepted");
         };
-        $.publish('formplayer.' + Formplayer.Const.EVALUATE_XPATH, [self.xpath(), callback]);
+        $.publish('formplayer.' + Formplayer.Const.EVALUATE_XPATH, [xpath, callback]);
+    };
+
+    self.onMouseUp = function() {
+        var text = window.getSelection().toString();
+        self.selectedXPath(text);
     };
 
     self.matcher = function(flag, subtext) {
