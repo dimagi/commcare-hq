@@ -582,6 +582,7 @@ Formplayer.Const = {
     DATETIME: 'datetime',
     GEO: 'geo',
     INFO: 'info',
+    BARCODE: 'barcode',
 
     // Note it's important to differentiate these two
     NO_PENDING_ANSWER: undefined,
