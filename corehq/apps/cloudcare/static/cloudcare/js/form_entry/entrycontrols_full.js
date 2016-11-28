@@ -571,7 +571,7 @@ function getEntry(question) {
         entry = new InfoEntry(question, {});
         break;
     default:
-        console.warn('No active entry for: ' + question.datatype());
+        window.console.warn('No active entry for: ' + question.datatype());
         entry = new UnsupportedEntry(question, options);
     }
     return entry;
