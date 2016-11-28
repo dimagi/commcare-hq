@@ -1638,9 +1638,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     @property
     def sql_locations(self):
         from corehq.apps.locations.models import SQLLocation
-        if self.assigned_location_ids:
-            return list(SQLLocation.objects.filter(location_id__in=self.assigned_location_ids))
-        return []
+        return SQLLocation.objects.filter(location_id__in=self.assigned_location_ids)
 
     def get_location_ids(self, domain):
         return self.assigned_location_ids
