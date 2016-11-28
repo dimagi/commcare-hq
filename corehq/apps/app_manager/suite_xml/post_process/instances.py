@@ -1,6 +1,7 @@
 from collections import defaultdict
 import re
 from corehq import toggles
+from corehq.apps.app_manager.exceptions import DuplicateInstanceIdError
 from corehq.apps.app_manager.suite_xml.contributors import PostProcessor
 from corehq.apps.app_manager.suite_xml.xml_models import Instance
 from dimagi.utils.decorators.memoized import memoized
@@ -14,9 +15,9 @@ class EntryInstances(PostProcessor):
 
     def add_entry_instances(self, entry):
         xpaths = self._get_all_xpaths_for_entry(entry)
-        instances, unknown_instance_ids = get_all_instances_referenced_in_xpaths(self.app.domain, xpaths)
-        custom_instances, unknown_instance_ids = self._get_custom_instances(entry, unknown_instance_ids)
-        all_instances = instances | custom_instances
+        known_instances, unknown_instance_ids = get_all_instances_referenced_in_xpaths(self.app.domain, xpaths)
+        custom_instances, unknown_instance_ids = self._get_custom_instances(entry, known_instances, unknown_instance_ids)
+        all_instances = known_instances | custom_instances
         entry.require_instances(instances=all_instances, instance_ids=unknown_instance_ids)
 
     def _get_all_xpaths_for_entry(self, entry):
@@ -68,16 +69,18 @@ class EntryInstances(PostProcessor):
 
         return relevance_by_menu, menu_by_command
 
-    def _get_custom_instances(self, entry, required_instances):
+    def _get_custom_instances(self, entry, known_instances, required_instances):
+        known_instance_ids = [instance.id for instance in known_instances]
         try:
             custom_instances = self._custom_instances_by_xmlns()[entry.form]
         except KeyError:
             custom_instances = []
 
         for instance in custom_instances:
-            # Remove custom instances from unknown instances, but add them even if they aren't referenced anywhere
+            if instance.instance_id in known_instance_ids:
+                raise DuplicateInstanceIdError(instance.instance_id)
+            # Remove custom instances from required instances, but add them even if they aren't referenced anywhere
             required_instances.discard(instance.instance_id)
-
         return {
             Instance(id=instance.instance_id, src=instance.instance_path) for instance in custom_instances
         }, required_instances
