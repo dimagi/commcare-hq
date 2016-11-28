@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.core.urlresolvers import reverse
 from django.db.models.query import Prefetch
 from django.http import JsonResponse
@@ -55,11 +56,19 @@ def update_case_property(request, domain):
     prop = CaseProperty.objects.filter(
         name=name, case_type__name=case_type, case_type__domain=domain
     ).first()
+    if not prop:
+        return JsonResponse({
+            'status': "failed",
+            "error": "property does not exist"
+        }, status=404)
     if type:
         prop.type = type
     if description:
         prop.description = description
-    prop.full_clean()
+    try:
+        prop.full_clean()
+    except ValidationError as e:
+        return JsonResponse({"status": "failed", "error": unicode(e)}, status=400)
     prop.save()
     return JsonResponse({"status": "success"})
 

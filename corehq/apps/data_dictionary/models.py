@@ -13,7 +13,7 @@ PROPERTY_TYPE_CHOICES = (
 class CaseType(models.Model):
     domain = models.CharField(max_length=255, default=None)
     name = models.CharField(max_length=255, default=None)
-    description = models.TextField(default='')
+    description = models.TextField(default='', blank=True)
 
     class Meta:
         unique_together = ('domain', 'name')
@@ -27,12 +27,13 @@ class CaseProperty(models.Model):
         related_query_name='property'
     )
     name = models.CharField(max_length=255, default=None)
-    description = models.TextField(default='')
+    description = models.TextField(default='', blank=True)
     deprecated = models.BooleanField(default=False)
     type = models.CharField(
         choices=PROPERTY_TYPE_CHOICES,
         max_length=20,
-        default=''
+        default='',
+        blank=True
     )
 
     class Meta:
