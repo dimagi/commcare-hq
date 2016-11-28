@@ -1,6 +1,7 @@
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from jsonobject.base_properties import DefaultProperty
 from corehq.apps.userreports.specs import TypeProperty
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from dimagi.ext.jsonobject import JsonObject, ListProperty
 
 
@@ -21,6 +22,7 @@ CUSTOM_UCR_EXPRESSIONS = [
      'custom.icds_reports.ucr.expressions.child_age_in_months_month_start'),
     ('icds_child_age_in_months_month_end', 'custom.icds_reports.ucr.expressions.child_age_in_months_month_end'),
     ('icds_child_valid_in_month', 'custom.icds_reports.ucr.expressions.child_valid_in_month'),
+    ('icds_get_child_cases', 'custom.icds_reports.ucr.expressions.get_child_cases'),
 ]
 
 
@@ -49,6 +51,36 @@ class GetLastFormRepeatSpec(JsonObject):
     case_id_path = ListProperty(required=True)
     repeat_filter = DefaultProperty(required=False)
     case_id_expression = DefaultProperty(required=False)
+
+
+class GetChildCasesSpec(JsonObject):
+    type = TypeProperty('icds_get_child_cases')
+    case_id_expression = DefaultProperty(required=True)
+
+    def configure(self, case_id_expression):
+        self._case_id_expression = case_id_expression
+
+    def __call__(self, item, context=None):
+        case_id = self._case_id_expression(item, context)
+
+        if not case_id:
+            return []
+
+        assert context.root_doc['domain']
+        return self._get_child_cases(case_id, context)
+
+    def _get_child_cases(self, case_id, context):
+        domain = context.root_doc['domain']
+
+        cache_key = (self.__class__.__name__, case_id)
+        if context.get_cache_value(cache_key) is not None:
+            return context.get_cache_value(cache_key)
+
+        related_cases = CaseAccessors(domain).get_reverse_indexed_cases([case_id])
+        related_cases = [c.to_json() for c in related_cases if c.domain == domain]
+
+        context.set_cache_value(cache_key, related_cases)
+        return related_cases
 
 
 def month_start(spec, context):
@@ -846,3 +878,11 @@ def child_valid_in_month(spec, context):
         }
     }
     return ExpressionFactory.from_spec(spec, context)
+
+
+def get_child_cases(spec, context):
+    wrapped = GetChildCasesSpec.wrap(spec)
+    wrapped.configure(
+        case_id_expression=ExpressionFactory.from_spec(wrapped.case_id_expression, context),
+    )
+    return wrapped
