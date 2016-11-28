@@ -145,12 +145,13 @@ def _ensure_valid_restore_as_user(domain, couch_user, as_user):
 
 
 def _ensure_accessible_location(domain, couch_user, as_user):
-    if couch_user.is_commcare_user():
-        as_user_obj = CommCareUser.get_by_username('{}.commcarehq.org'.format(as_user))
-        if not as_user_obj:
-            raise RestorePermissionDenied(_(u'Invalid restore user {}').format(as_user))
-        elif not user_can_access_other_user(domain, couch_user, as_user_obj):
-            raise RestorePermissionDenied(_(u'Restore user {} not in allowed locations').format(as_user))
+    as_user_obj = CommCareUser.get_by_username('{}.commcarehq.org'.format(as_user))
+    if not as_user_obj:
+        as_user_obj = WebUser.get_by_username(as_user)
+    if not as_user_obj:
+        raise RestorePermissionDenied(_(u'Invalid restore user {}').format(as_user))
+    elif not user_can_access_other_user(domain, couch_user, as_user_obj):
+        raise RestorePermissionDenied(_(u'Restore user {} not in allowed locations').format(as_user))
 
 
 def _ensure_edit_data_permission(domain, couch_user):

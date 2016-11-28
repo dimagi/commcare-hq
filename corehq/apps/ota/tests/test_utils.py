@@ -61,13 +61,20 @@ class RestorePermissionsTest(LocationHierarchyTestCase):
             domain=cls.domain,
             password='***',
         )
+        cls.web_location_user = WebUser.create(
+            username='web-location@location.com',
+            domain=cls.domain,
+            password='***',
+        )
 
         cls.commcare_user.set_location(cls.locations['usa'])
+        cls.web_location_user.set_location(cls.domain, cls.locations['usa'])
         cls.no_edit_commcare_user.set_location(cls.locations['usa'])
         cls.location_user.set_location(cls.locations['ma'])
         cls.wrong_location_user.set_location(cls.locations['montreal'])
 
         cls.restrict_user_to_assigned_locations(cls.commcare_user)
+        cls.restrict_user_to_assigned_locations(cls.web_location_user)
 
     @classmethod
     def tearDownClass(cls):
@@ -192,6 +199,25 @@ class RestorePermissionsTest(LocationHierarchyTestCase):
         is_permitted, message = is_permitted_to_restore(
             self.domain,
             self.commcare_user,
+            u'{}@{}'.format(self.wrong_location_user.raw_username, self.domain),
+            True,
+        )
+        self.assertFalse(is_permitted)
+        self.assertRegexpMatches(message, 'not in allowed locations')
+
+    def test_web_user_as_user_in_location(self):
+        is_permitted, message = is_permitted_to_restore(
+            self.domain,
+            self.web_location_user,
+            u'{}@{}'.format(self.location_user.raw_username, self.domain),
+            True,
+        )
+        self.assertTrue(is_permitted)
+        self.assertIsNone(message)
+
+        is_permitted, message = is_permitted_to_restore(
+            self.domain,
+            self.web_location_user,
             u'{}@{}'.format(self.wrong_location_user.raw_username, self.domain),
             True,
         )

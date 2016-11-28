@@ -327,7 +327,7 @@ def user_can_access_other_user(domain, user, other_user):
         .accessible_to_user(domain, user)
         .values_list('id', flat=True))
 
-    return other_user.sql_locations.filter(id__in=accessible_location_ids).count() > 0
+    return other_user.get_sql_locations(domain).filter(id__in=accessible_location_ids).exists()
 
 
 def can_edit_location(view_fn):

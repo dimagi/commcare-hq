@@ -227,14 +227,10 @@ def is_new_cloudcare(request):
 
 @register.filter
 def can_use_restore_as(request):
-    if not has_privilege(request, privileges.DATA_CLEANUP):
-        return False
-
-    if (request.couch_user.is_commcare_user() and
-            not request.couch_user.can_edit_commcare_users()):
-        return False
-
-    return True
+    return (
+        request.couch_user.can_edit_commcare_users() and
+        has_privilege(request, privileges.DATA_CLEANUP)
+    )
 
 
 @register.simple_tag
