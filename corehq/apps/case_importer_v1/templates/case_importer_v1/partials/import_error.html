@@ -2,7 +2,15 @@
 
 <div class="alert alert-danger">
     <p>
+        {% if error %}
         {{ error }}
+        {% else %}
+            {% blocktrans %}
+                Our system failed unexpectedly while importing your cases.
+                Please <a href="#modalReportIssue" data-toggle="modal">report an issue</a> and accept our apologies
+                while we work to fix this issue.
+            {% endblocktrans %}
+        {% endif %}
     </p>
 </div>
 

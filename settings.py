@@ -113,8 +113,6 @@ DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 ACCOUNTING_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.accounting.log")
 ANALYTICS_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.analytics.log")
 DATADOG_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.datadog.log")
-FORMPLAYER_TIMING_FILE = "%s/%s" % (FILEPATH, "formplayer.timing.log")
-FORMPLAYER_DIFF_FILE = "%s/%s" % (FILEPATH, "formplayer.diff.log")
 UCR_TIMING_FILE = "%s/%s" % (FILEPATH, "ucr.timing.log")
 UCR_DIFF_FILE = "%s/%s" % (FILEPATH, "ucr.diff.log")
 UCR_EXCEPTION_FILE = "%s/%s" % (FILEPATH, "ucr.exception.log")
@@ -281,6 +279,7 @@ HQ_APPS = (
     'dimagi.utils',
     'formtranslate',
     'langcodes',
+    'corehq.apps.data_dictionary',
     'corehq.apps.analytics',
     'corehq.apps.callcenter',
     'corehq.apps.change_feed',
@@ -291,6 +290,7 @@ HQ_APPS = (
     'corehq.apps.app_manager',
     'corehq.apps.es',
     'corehq.apps.fixtures',
+    'corehq.apps.calendar_fixture',
     'corehq.apps.case_importer_v1',
     'corehq.apps.reminders',
     'corehq.apps.translations',
@@ -543,11 +543,12 @@ FIXTURE_GENERATORS = {
         "corehq.apps.products.fixtures.product_fixture_generator",
         "corehq.apps.programs.fixtures.program_fixture_generator",
         "corehq.apps.app_manager.fixtures.report_fixture_generator",
+        "corehq.apps.calendar_fixture.fixture_provider.calendar_fixture_generator",
         # custom
         "custom.bihar.reports.indicators.fixtures.generator",
         "custom.m4change.fixtures.report_fixtures.generator",
         "custom.m4change.fixtures.location_fixtures.generator",
-        "custom.enikshay.fixtures.calendar_fixture_generator",
+
     ],
     # fixtures that must be sent along with the phones cases
     'case': [
@@ -895,6 +896,8 @@ ENTERPRISE_MODE = False
 
 CUSTOM_LANDING_PAGE = False
 
+TABLEAU_URL_ROOT = "https://icds.commcarehq.org/"
+
 try:
     # try to see if there's an environmental variable set for local_settings
     custom_settings = os.environ.get('CUSTOMSETTINGS', None)
@@ -935,12 +938,6 @@ LOGGING = {
         },
         'datadog': {
             'format': '%(metric)s %(created)s %(value)s metric_type=%(metric_type)s %(message)s'
-        },
-        'formplayer_timing': {
-            'format': '%(asctime)s, %(action)s, %(control_duration)s, %(candidate_duration)s'
-        },
-        'formplayer_diff': {
-            'format': '%(asctime)s, %(action)s, %(request)s, %(control)s, %(candidate)s'
         },
         'ucr_timing': {
             'format': '%(asctime)s\t%(domain)s\t%(report_config_id)s\t%(filter_values)s\t%(control_duration)s\t%(candidate_duration)s'
@@ -1006,22 +1003,6 @@ LOGGING = {
             'class': 'cloghandler.ConcurrentRotatingFileHandler',
             'formatter': 'datadog',
             'filename': DATADOG_LOG_FILE,
-            'maxBytes': 10 * 1024 * 1024,  # 10 MB
-            'backupCount': 20  # Backup 200 MB of logs
-        },
-        'formplayer_diff': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'formatter': 'formplayer_diff',
-            'filename': FORMPLAYER_DIFF_FILE,
-            'maxBytes': 10 * 1024 * 1024,  # 10 MB
-            'backupCount': 20  # Backup 200 MB of logs
-        },
-        'formplayer_timing': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'formatter': 'formplayer_timing',
-            'filename': FORMPLAYER_TIMING_FILE,
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 20  # Backup 200 MB of logs
         },
@@ -1120,16 +1101,6 @@ LOGGING = {
             'handlers': ['datadog'],
             'level': 'INFO',
             'propogate': False,
-        },
-        'formplayer_timing': {
-            'handlers': ['formplayer_timing'],
-            'level': 'INFO',
-            'propogate': True,
-        },
-        'formplayer_diff': {
-            'handlers': ['formplayer_diff'],
-            'level': 'INFO',
-            'propogate': True,
         },
         'ucr_timing': {
             'handlers': ['ucr_timing'],
@@ -1415,6 +1386,7 @@ SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.apposit.models.SQLAppositBackend',
     'corehq.messaging.smsbackends.grapevine.models.SQLGrapevineBackend',
     'corehq.messaging.smsbackends.http.models.SQLHttpBackend',
+    'corehq.messaging.smsbackends.icds.models.SQLICDSBackend',
     'corehq.messaging.smsbackends.mach.models.SQLMachBackend',
     'corehq.messaging.smsbackends.megamobile.models.SQLMegamobileBackend',
     'corehq.messaging.smsbackends.push.models.PushBackend',

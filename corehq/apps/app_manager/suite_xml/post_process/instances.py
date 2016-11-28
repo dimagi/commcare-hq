@@ -57,11 +57,19 @@ class EntryInstances(PostProcessor):
                     for datum in frame.datums:
                         xpaths.add(datum.value)
         xpaths.discard(None)
-        instances, unknown_instance_ids = EntryInstances.get_required_instances(xpaths)
-
-        instances, unknown_instance_ids = self._add_custom_referenced_instances(instances, unknown_instance_ids)
+        instances, unknown_instance_ids = EntryInstances.get_all_instances(self.app.domain, xpaths)
 
         entry.require_instances(instances=instances, instance_ids=unknown_instance_ids)
+
+    @staticmethod
+    def get_all_instances(domain, xpaths):
+        instances, unknown_instance_ids = EntryInstances.get_required_instances(xpaths)
+        instances, unknown_instance_ids = EntryInstances._add_custom_referenced_instances(
+            domain,
+            instances,
+            unknown_instance_ids
+        )
+        return instances, unknown_instance_ids
 
     @staticmethod
     def get_required_instances(xpaths):
@@ -88,21 +96,22 @@ class EntryInstances(PostProcessor):
                     unknown_instance_ids.add(instance_name)
         return instances, unknown_instance_ids
 
-    def _add_custom_referenced_instances(self, instances, unknown_instance_ids):
+    @staticmethod
+    def _add_custom_referenced_instances(domain, instances, unknown_instance_ids):
         def _add_custom_instance(instance_name):
             if instance_name in unknown_instance_ids:
                 instances.add(Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name)))
                 unknown_instance_ids.remove(instance_name)
 
-        if toggles.CUSTOM_CALENDAR_FIXTURE.enabled(self.app.domain):
+        if toggles.CUSTOM_CALENDAR_FIXTURE.enabled(domain):
             _add_custom_instance('enikshay:calendar')
 
-        if toggles.MOBILE_UCR.enabled(self.app.domain):
+        if toggles.MOBILE_UCR.enabled(domain):
             _add_custom_instance('commcare:reports')
 
         instance_name = 'locations'
         if instance_name in unknown_instance_ids:
-            if toggles.FLAT_LOCATION_FIXTURE.enabled(self.app.domain):
+            if toggles.FLAT_LOCATION_FIXTURE.enabled(domain):
                 instances.add(Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name)))
             else:
                 instances.add(Instance(id=instance_name, src='jr://fixture/commtrack:{}'.format(instance_name)))

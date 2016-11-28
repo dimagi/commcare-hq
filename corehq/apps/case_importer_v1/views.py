@@ -62,11 +62,11 @@ def excel_config(request, domain):
     # views if your worker changes, so we have to store it elsewhere
     # using the soil framework.
 
-    if extension not in importer_util.ExcelFile.ALLOWED_EXTENSIONS:
+    if extension not in importer_util.ALLOWED_EXTENSIONS:
         return render_error(request, domain,
-                            'The Excel file you chose could not be processed. '
+                            'The file you chose could not be processed. '
                             'Please check that it is saved as a Microsoft '
-                            'Excel 97/2000 .xls file.')
+                            'Excel file.')
 
     # stash content in the default storage for subsequent views
     file_ref = expose_cached_download(
@@ -76,12 +76,13 @@ def excel_config(request, domain):
     )
     request.session[EXCEL_SESSION_ID] = file_ref.download_id
     try:
-        spreadsheet = importer_util.get_spreadsheet(file_ref, named_columns)
+        importer_util.open_spreadsheet_download_ref(file_ref, named_columns)
     except ImporterError as e:
         return render_error(request, domain, get_importer_error_message(e))
 
-    columns = spreadsheet.get_header_columns()
-    row_count = spreadsheet.max_row
+    with importer_util.get_spreadsheet(file_ref.get_filename(), named_columns) as spreadsheet:
+        columns = spreadsheet.get_header_columns()
+        row_count = spreadsheet.max_row
 
     if row_count == 0:
         return render_error(request, domain,
@@ -174,31 +175,32 @@ def excel_fields(request, domain):
     download_ref = DownloadBase.get(request.session.get(EXCEL_SESSION_ID))
 
     try:
-        spreadsheet = importer_util.get_spreadsheet(download_ref, named_columns)
+        importer_util.open_spreadsheet_download_ref(download_ref, named_columns)
     except ImporterError as e:
         return render_error(request, domain, get_importer_error_message(e))
 
-    columns = spreadsheet.get_header_columns()
+    with importer_util.get_spreadsheet(download_ref.get_filename(), named_columns) as spreadsheet:
+        columns = spreadsheet.get_header_columns()
 
-    if key_value_columns:
-        key_column = request.POST['key_column']
-        value_column = request.POST['value_column']
+        if key_value_columns:
+            key_column = request.POST['key_column']
+            value_column = request.POST['value_column']
 
-        excel_fields = []
-        key_column_index = columns.index(key_column)
+            excel_fields = []
+            key_column_index = columns.index(key_column)
 
-        # if key/value columns were specified, get all the unique keys listed
-        if key_column_index:
-            excel_fields = spreadsheet.get_unique_column_values(key_column_index)
+            # if key/value columns were specified, get all the unique keys listed
+            if key_column_index:
+                excel_fields = spreadsheet.get_unique_column_values(key_column_index)
 
-        # concatenate unique key fields with the rest of the columns
-        excel_fields = columns + excel_fields
-        # remove key/value column names from list
-        excel_fields.remove(key_column)
-        if value_column in excel_fields:
-            excel_fields.remove(value_column)
-    else:
-        excel_fields = columns
+            # concatenate unique key fields with the rest of the columns
+            excel_fields = columns + excel_fields
+            # remove key/value column names from list
+            excel_fields.remove(key_column)
+            if value_column in excel_fields:
+                excel_fields.remove(value_column)
+        else:
+            excel_fields = columns
 
     case_fields = get_case_properties_for_case_type(domain, case_type)
 
@@ -261,7 +263,7 @@ def excel_commit(request, domain):
 
     excel_ref = DownloadBase.get(excel_id)
     try:
-        importer_util.get_spreadsheet(excel_ref, config.named_columns)
+        importer_util.open_spreadsheet_download_ref(excel_ref, config.named_columns)
     except ImporterError as e:
         return render_error(request, domain, get_importer_error_message(e))
 
