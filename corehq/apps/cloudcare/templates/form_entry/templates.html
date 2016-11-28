@@ -186,8 +186,8 @@
 </script>
 
 <script type="text/html" id="debugger-eval-ko-template">
-    <div class="col-sm-12">
       <form class="form-horizontal" data-bind="submit: onSubmitXPath">
+          <div class="col-sm-12">
           <div class="form-group">
               <textarea
                   id="xpath"
@@ -197,6 +197,8 @@
                   autocomplete="off"
                   data-bind="value: xpath, event: { mouseup: onMouseUp }" ></textarea>
           </div>
+          </div>
+          <div class="col-sm-12">
           <div class="form-group">
                 <input class="btn btn-success" id="evaluate-button" value="Evaluate" type="submit"/>
                 <input
@@ -205,36 +207,44 @@
                     type="button"
                     data-bind="css: { disabled: !selectedXPath() }, click: onClickSelectedXPath"/>
           </div>
+          </div>
           <div class="col-sm-12">
-              <p
+              <div
                   id="evaluate-result"
                   type="text"
-                  style="display: block;"
                   data-bind="
                       text: result,
                       css: { 'text-danger': !success() }
-              "></p>
-          </div>
-          <div class="col-sm-12" data-bind="foreach: recentXPathQueries">
-            <div class="row">
-              <div class="col-sm-1">
-                <span><i class="fa" data-bind="
-                    css: {
-                      'fa-check': $parent.isSuccess($data),
-                      'fa-times': !$parent.isSuccess($data)
-                    }
-                    "></i></span>
-              </div>
-              <div class="col-sm-8">
-                <span data-bind="text: xpath"></span>
-              </div>
-              <div class="col-sm-3">
-                <span data-bind="text: output"></span>
-              </div>
-            </div>
+              "></div>
           </div>
       </form>
-    </div>
+      <div class="row">
+        <div class="col-sm-12">
+          <h3>{% trans "Recent Queries" %}</h3>
+        </div>
+      </div>
+      <table class="table table-striped table-hover">
+        <tbody data-bind="foreach: recentXPathQueries">
+          <tr class="query-container" data-bind="click: $parent.onClickSavedQuery">
+            <td class="col-sm-1 query-status">
+              <span><i class="fa" data-bind="
+                  css: {
+                    'fa-check': $parent.isSuccess($data),
+                    'fa-times': !$parent.isSuccess($data),
+                    'text-success': $parent.isSuccess($data),
+                    'text-danger': !$parent.isSuccess($data)
+                  }
+                  "></i></span>
+            </td>
+            <td class="col-sm-8 debugger-code">
+              <span data-bind="text: xpath"></span>
+            </td>
+            <td class="col-sm-3">
+              <span data-bind="text: output"></span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
 </script>
 
 <script type="text/html" id="question-fullform-ko-template">

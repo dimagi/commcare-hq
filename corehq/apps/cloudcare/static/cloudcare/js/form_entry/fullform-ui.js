@@ -495,6 +495,9 @@ Formplayer.ViewModels.EvaluateXPath = function() {
     self.onClickSelectedXPath = function() {
         self.evaluate(self.selectedXPath());
     };
+    self.onClickSavedQuery = function(query) {
+        self.xpath(query.xpath);
+    };
     self.evaluate = function(xpath) {
         var callback = function(result, status) {
             self.result(result);
