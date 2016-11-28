@@ -45,6 +45,20 @@ def data_dictionary_json(request, domain, case_type_name=None):
     return JsonResponse({'case_types': props})
 
 
+@login_and_domain_required
+@toggles.DATA_DICTIONARY.required_decorator()
+def update_case_property_description(request, domain):
+    case_type = request.POST.get('caseType')
+    name = request.POST.get('name')
+    description = request.POST.get('description')
+    prop = CaseProperty.objects.filter(
+        name=name, case_type__name=case_type, case_type__domain=domain
+    ).first()
+    prop.description = description
+    prop.save()
+    return JsonResponse({"status": "success"})
+
+
 class DataDictionaryView(BaseDomainView):
     section_name = _("Data Dictionary")
     template_name = "data_dictionary/base.html"
