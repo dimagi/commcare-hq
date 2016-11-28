@@ -16,7 +16,11 @@ class EntryInstances(PostProcessor):
     def add_entry_instances(self, entry):
         xpaths = self._get_all_xpaths_for_entry(entry)
         known_instances, unknown_instance_ids = get_all_instances_referenced_in_xpaths(self.app.domain, xpaths)
-        custom_instances, unknown_instance_ids = self._get_custom_instances(entry, known_instances, unknown_instance_ids)
+        custom_instances, unknown_instance_ids = self._get_custom_instances(
+            entry,
+            known_instances,
+            unknown_instance_ids
+        )
         all_instances = known_instances | custom_instances
         entry.require_instances(instances=all_instances, instance_ids=unknown_instance_ids)
 
@@ -88,6 +92,7 @@ class EntryInstances(PostProcessor):
     @memoized
     def _custom_instances_by_xmlns(self):
         return {form.xmlns: form.custom_instances for form in self.app.get_forms() if form.custom_instances}
+
 
 def get_instance_factory(scheme):
     return get_instance_factory._factory_map.get(scheme, preset_instances)
