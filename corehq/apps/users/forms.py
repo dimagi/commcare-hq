@@ -886,7 +886,7 @@ class CommtrackUserForm(forms.Form):
         cleaned_data = super(CommtrackUserForm, self).clean()
 
         primary_location_id = cleaned_data['primary_location']
-        assigned_location_ids = cleaned_data['assigned_locations']
+        assigned_location_ids = cleaned_data.get('assigned_locations', [])
         if primary_location_id:
             if primary_location_id not in assigned_location_ids:
                 self.add_error('primary_location',
