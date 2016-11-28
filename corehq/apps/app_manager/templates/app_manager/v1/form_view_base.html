@@ -267,12 +267,13 @@
                 {% endif %}
             });
         {% endif %}
-            {% if request|toggle_enabled:"CUSTOM_INSTANCES"%}
-            var customInstances = hqImport('app_manager/js/custom_intances.js').wrap({customInstances:[
-                {instanceId: "hello", instancePath:"jr://fixture"},
-            ] })
+        {% if request|toggle_enabled:"CUSTOM_INSTANCES"%}
+            var customInstances = hqImport('app_manager/js/custom_intances.js').wrap(
+                {
+                    customInstances:{{ custom_instances|JSON }}
+                })
             $('#custom-instances').koApplyBindings(customInstances);
-            {% endif %}
+        {% endif %}
         });
     </script>
     <script>
