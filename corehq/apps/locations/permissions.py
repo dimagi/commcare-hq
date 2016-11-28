@@ -323,11 +323,10 @@ def user_can_access_other_user(domain, user, other_user):
     if user.has_permission(domain, 'access_all_locations'):
         return True
 
-    accessible_location_ids = (SQLLocation.objects
-        .accessible_to_user(domain, user)
-        .values_list('id', flat=True))
-
-    return other_user.get_sql_locations(domain).filter(id__in=accessible_location_ids).exists()
+    return (other_user
+            .get_sql_locations(domain)
+            .accessible_to_user(domain, user)
+            .exists())
 
 
 def can_edit_location(view_fn):
