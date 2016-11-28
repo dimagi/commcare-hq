@@ -25,9 +25,9 @@
                         'name': self.name,
                         'type': newType,
                     },
-                    success: function (data) { },
-                    error: function () { },
+                    success: function () { },
                     // todo show errors
+                    error: function () { },
                 });
             }
         }, self);
