@@ -25,7 +25,8 @@ class HandlerTest(BaseSMSTest):
         self.create_account_and_subscription(self.domain)
         self.domain_obj = Domain.get_by_name(self.domain)
         self.loc = make_loc(code="garms", name="Test RMS", type="Regional Medical Store", domain=self.domain)
-        self.user = bootstrap_user(username='testuser', phone_number='323232', domain=self.domain, home_loc=self.loc)
+        self.user = bootstrap_user(username='testuser', phone_number='323232', domain=self.domain,
+            home_loc=self.loc)
 
     def tearDown(self):
         delete_domain_phone_numbers(self.domain)
