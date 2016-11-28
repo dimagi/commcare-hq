@@ -189,11 +189,13 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         for prop, default_value in KNOWN_PROPERTIES.items():
             setattr(self.case, prop, default_value)
 
-        self.case.closed = False
+        self.case.opened_on = None
+        self.case.opened_by = ''
         self.case.modified_on = None
+        self.case.modified_by = ''
+        self.case.closed = False
         self.case.closed_on = None
         self.case.closed_by = ''
-        self.case.opened_by = None
 
     def rebuild_from_transactions(self, transactions, rebuild_transaction, unarchived_form_id=None):
         """
