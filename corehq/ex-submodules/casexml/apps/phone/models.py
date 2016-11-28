@@ -160,12 +160,6 @@ class OTARestoreCommCareUser(OTARestoreUser):
     def locations(self):
         return self._couch_user.locations
 
-    def add_to_assigned_locations(self, location):
-        return self._couch_user.add_to_assigned_locations(location)
-
-    def set_location(self, location):
-        return self._couch_user.set_location(location)
-
     def get_fixture_data_items(self):
         from corehq.apps.fixtures.models import FixtureDataItem
 
@@ -202,11 +196,6 @@ class OTARestoreCommCareUser(OTARestoreUser):
         from corehq.apps.fixtures.models import UserFixtureType
 
         return self._couch_user.fixture_status(UserFixtureType.LOCATION)
-
-    @memoized
-    def get_locations_to_sync(self):
-        from corehq.apps.locations.fixtures import get_all_locations_to_sync
-        return get_all_locations_to_sync(self)
 
 
 class CaseState(LooselyEqualDocumentSchema, IndexHoldingMixIn):
