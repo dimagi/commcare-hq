@@ -17,6 +17,7 @@ from corehq.apps.app_manager.models import (
     ReportModule,
     SortElement,
     UpdateCaseAction,
+    CustomInstance,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import SuiteMixin, TestXmlMixin, commtrack_enabled
@@ -784,4 +785,20 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             """.format(short_variables=short_custom_variables, long_variables=long_custom_variables),
             factory.app.create_suite(),
             "detail/variables"
+        )
+
+    def test_custom_instances(self):
+        factory = AppFactory()
+        module, form = factory.new_basic_module('m0', 'case1')
+        instance_id = "foo"
+        instance_path = "jr://foo/bar"
+        form.custom_instances = [CustomInstance(instance_id=instance_id, instance_path=instance_path)]
+        self.assertXmlPartialEqual(
+            u"""
+            <partial>
+                <instance id='{}' src='{}' />
+            </partial>
+            """.format(instance_id, instance_path),
+            factory.app.create_suite(),
+            "entry/instance"
         )
