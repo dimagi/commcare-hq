@@ -12,7 +12,7 @@
 <script>
     $(function () {
         $('#hq-content').parent().initializeDataDictionary(
-            "{% url 'data_dictionary_json' domain%}",
+            "{% url 'data_dictionary_json' domain %}",
             "{% url 'update_case_property' domain %}"
         );
     });
