@@ -619,6 +619,13 @@ INSTANCE_VIEWER = StaticToggle(
     namespaces=[NAMESPACE_USER, NAMESPACE_DOMAIN],
 )
 
+CUSTOM_INSTANCES = StaticToggle(
+    'custom_instances',
+    'Inject custom instance declarations',
+    TAG_EXPERIMENTAL,
+    namespaces=[NAMESPACE_USER, NAMESPACE_DOMAIN],
+)
+
 LOCATIONS_IN_REPORTS = StaticToggle(
     'LOCATIONS_IN_REPORTS',
     "Include locations in report filters",
