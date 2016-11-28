@@ -12,7 +12,7 @@ from couchforms.dbaccessors import get_form_ids_by_type
 
 
 class Command(BaseCommand):
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option('--BEGIN', action='store_true', default=False),
         make_option('--COMMIT', action='store_true', default=False),
         make_option('--ABORT', action='store_true', default=False),
@@ -26,9 +26,8 @@ class Command(BaseCommand):
 
     @staticmethod
     def require_only_option(sole_option, options):
-        base_options = {option.dest for option in BaseCommand.option_list}
         assert all(not value for key, value in options.items()
-                   if key not in base_options and key != sole_option)
+                   if key != sole_option)
 
     def handle(self, domain, **options):
         if should_use_sql_backend(domain):

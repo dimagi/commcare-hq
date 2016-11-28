@@ -89,17 +89,9 @@ def _process_form(request, domain, app_id, user_id, authenticated,
         openrosa_headers=couchforms.get_openrosa_headers(request),
     ).get_response()
     if response.status_code == 400:
-        db_response = get_db('couchlog').save_doc({
-            'request': unicode(request),
-            'response': unicode(response),
-        })
         logging.error(
             'Status code 400 for a form submission. '
             'Response is: \n{0}\n'
-            'See couchlog db for more info: {1}'.format(
-                unicode(response),
-                db_response['id'],
-            )
         )
     return response
 

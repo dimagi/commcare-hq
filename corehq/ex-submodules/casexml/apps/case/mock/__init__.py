@@ -1,10 +1,9 @@
-from .case_block import CaseBlock, CaseBlockError
+from .case_block import CaseBlock, CaseBlockError, ChildIndexAttrs, IndexAttrs
+
 from .mock import (
     CaseFactory,
     CaseIndex,
     CaseStructure,
-    ChildIndexAttrs,
-    IndexAttrs,
 )
 
 __all__ = [

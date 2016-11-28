@@ -1,8 +1,6 @@
+from contextlib import contextmanager
 import json
-from collections import defaultdict
-from datetime import date
-
-import xlrd
+from collections import defaultdict, namedtuple
 from django.utils.translation import ugettext_lazy as _
 from couchdbkit import NoResultFound
 
@@ -14,9 +12,7 @@ from corehq.apps.case_importer_v1.exceptions import (
     ImporterFileNotFound,
     ImporterRefError,
     InvalidCustomFieldNameException,
-    InvalidDateException,
-    InvalidIntegerException,
-    ImporterError)
+)
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
@@ -24,7 +20,8 @@ from corehq.apps.locations.models import SQLLocation, Location
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils.general import should_use_sql_backend
-from corehq.util.soft_assert import soft_assert
+from corehq.util.spreadsheets_v2 import open_any_workbook, Workbook, \
+    SpreadsheetFileEncrypted, SpreadsheetFileNotFound, SpreadsheetFileInvalidError
 from couchexport.export import SCALAR_NEVER_WAS
 
 
@@ -33,54 +30,27 @@ from couchexport.export import SCALAR_NEVER_WAS
 RESERVED_FIELDS = ('type',)
 EXTERNAL_ID = 'external_id'
 
-class ImporterConfig(object):
+
+class ImporterConfig(namedtuple('ImporterConfig', [
+    'couch_user_id',
+    'excel_fields',
+    'case_fields',
+    'custom_fields',
+    'search_column',
+    'key_column',
+    'value_column',
+    'named_columns',
+    'case_type',
+    'search_field',
+    'create_new_cases',
+])):
     """
     Class for storing config values from the POST in a format that can
     be pickled and passed to celery tasks.
     """
 
-    def __init__(self,
-        couch_user_id=None,
-        excel_fields=None,
-        case_fields=None,
-        custom_fields=None,
-        type_fields=None,
-        search_column=None,
-        key_column=None,
-        value_column=None,
-        named_columns=None,
-        case_type=None,
-        search_field=None,
-        create_new_cases=None
-    ):
-        self.couch_user_id=couch_user_id
-        self.excel_fields=excel_fields
-        self.case_fields=case_fields
-        self.custom_fields=custom_fields
-        self.type_fields=type_fields
-        self.search_column=search_column
-        self.key_column=key_column
-        self.value_column=value_column
-        self.named_columns=named_columns
-        self.case_type=case_type
-        self.search_field=search_field
-        self.create_new_cases=create_new_cases
-
     def to_dict(self):
-        return {
-            'couch_user_id': self.couch_user_id,
-            'excel_fields': self.excel_fields,
-            'case_fields': self.case_fields,
-            'custom_fields': self.custom_fields,
-            'type_fields': self.type_fields,
-            'search_column': self.search_column,
-            'key_column': self.key_column,
-            'value_column': self.value_column,
-            'named_columns': self.named_columns,
-            'case_type': self.case_type,
-            'search_field': self.search_field,
-            'create_new_cases': self.create_new_cases,
-        }
+        return self._asdict()
 
     def to_json(self):
         return json.dumps(self.to_dict())
@@ -95,12 +65,11 @@ class ImporterConfig(object):
 
     @classmethod
     def from_request(cls, request):
-        return ImporterConfig(
+        return cls(
             couch_user_id=request.couch_user._id,
             excel_fields=request.POST.getlist('excel_field[]'),
             case_fields=request.POST.getlist('case_field[]'),
             custom_fields=request.POST.getlist('custom_field[]'),
-            type_fields=request.POST.getlist('type_field[]'),
             search_column=request.POST['search_column'],
             key_column=request.POST['key_column'],
             value_column=request.POST['value_column'],
@@ -108,129 +77,67 @@ class ImporterConfig(object):
             case_type=request.POST['case_type'],
             search_field=request.POST['search_field'],
             create_new_cases=request.POST['create_new_cases'] == 'True',
-
         )
 
 
-def open_workbook(filename=None, **kwargs):
-    _soft_assert = soft_assert(notify_admins=True)
-    try:
-        return xlrd.open_workbook(filename=filename, **kwargs)
-    except xlrd.XLRDError as e:
-        message = unicode(e)
-        if message == u'Workbook is encrypted':
-            raise ImporterExcelFileEncrypted(message)
+ALLOWED_EXTENSIONS = ['xls', 'xlsx']
+
+
+class WorksheetWrapper(object):
+
+    def __init__(self, worksheet, column_headers):
+        self._worksheet = worksheet
+        self._column_headers = column_headers
+
+    @classmethod
+    def from_workbook(cls, workbook, column_headers):
+        if not isinstance(workbook, Workbook):
+            raise AssertionError(
+                "WorksheetWrapper.from_workbook called without Workbook object")
+        elif not workbook.worksheets:
+            raise AssertionError(
+                "WorksheetWrapper.from_workbook called with Workbook with no sheets")
         else:
-            _soft_assert(False, 'displaying XLRDError directly to user', e)
-            raise ImporterExcelError(message)
-    except IOError as e:
-        raise ImporterFileNotFound(unicode(e))
-    except Exception as e:
-        _soft_assert(False, 'xlrd.open_workbook raised unaccounted for error', e)
-        raise ImporterFileNotFound(unicode(e))
-
-
-class ExcelFile(object):
-    """
-    Class to deal with Excel files.
-
-    xlrd support for .xlsx isn't complete
-    NOTE: other code makes the assumption that this is the only supported
-    extension so if you fix this you should also fix these assumptions
-    (see get_spreadsheet)
-    """
-
-    ALLOWED_EXTENSIONS = ['xls']
-
-    file_path = ''
-    workbook = None
-    column_headers = False
-
-    def __init__(self, file_path, column_headers):
-        """
-        raises ImporterError or one of its subtypes
-        if there's a problem with the excel file
-
-        """
-        self.file_path = file_path
-        self.column_headers = column_headers
-
-        self.workbook = open_workbook(self.file_path)
-
-    def _col_values(self, sheet, index):
-        return [self._fmt_value(cell) for cell in sheet.col(index)]
-
-    def _row_values(self, sheet, index):
-        return [self._fmt_value(cell) for cell in sheet.row(index)]
-
-    def _fmt_value(self, cell):
-        # Explicitly format integers, since xlrd treats all numbers as decimals (adds ".0")
-        if cell.ctype == xlrd.XL_CELL_NUMBER and int(cell.value) == cell.value:
-            return int(cell.value)
-        return cell.value
-
-    def get_first_sheet(self):
-        if self.workbook:
-            return self.workbook.sheet_by_index(0)
-        else:
-            return None
+            return cls(workbook.worksheets[0], column_headers)
 
     def get_header_columns(self):
-        sheet = self.get_first_sheet()
-
-        if sheet and sheet.ncols > 0:
-            columns = []
-
-            # get columns
-            if self.column_headers:
-                columns = self._row_values(sheet, 0)
+        if self.max_row > 0:
+            if self._column_headers:
+                return self.iter_rows().next()
             else:
-                for colnum in range(sheet.ncols):
-                    columns.append("Column %i" % (colnum,))
-
-            return columns
+                return ["Column {}".format(i) for i in range(self.max_row)]
         else:
             return []
 
-    def get_column_values(self, column_index):
-        sheet = self.get_first_sheet()
-
-        if sheet:
-            if self.column_headers:
-                return self._col_values(sheet, column_index)[1:]
-            else:
-                return self._col_values(sheet, column_index)
-        else:
-            return []
+    def _get_column_values(self, column_index):
+        rows = self.iter_rows()
+        # skip first row (header row)
+        if self._column_headers:
+            rows.next()
+        for row in rows:
+            yield row[column_index]
 
     def get_unique_column_values(self, column_index):
-        return list(set(self.get_column_values(column_index)))
+        return list(set(self._get_column_values(column_index)))
 
-    def get_num_rows(self):
-        sheet = self.get_first_sheet()
+    @property
+    def max_row(self):
+        return self._worksheet.max_row
 
-        if sheet:
-            return sheet.nrows
-
-    def get_row(self, index):
-        sheet = self.get_first_sheet()
-
-        if sheet:
-            return self._row_values(sheet, index)
+    def iter_rows(self):
+        for row in self._worksheet.iter_rows():
+            yield [cell.value for cell in row]
 
 
 def convert_custom_fields_to_struct(config):
     excel_fields = config.excel_fields
     case_fields = config.case_fields
     custom_fields = config.custom_fields
-    type_fields = config.type_fields
 
     field_map = {}
     for i, field in enumerate(excel_fields):
         if field:
-            field_map[field] = {
-                'type_field': type_fields[i]
-            }
+            field_map[field] = {}
 
             if case_fields[i]:
                 field_map[field]['field_name'] = case_fields[i]
@@ -245,7 +152,6 @@ def convert_custom_fields_to_struct(config):
     # didn't explicitly put it there
     if config.search_column not in field_map and config.search_field == EXTERNAL_ID:
         field_map[config.search_column] = {
-            'type_field': 'plain',
             'field_name': EXTERNAL_ID
         }
     return field_map
@@ -314,16 +220,6 @@ class ImportErrorDetail(object):
         return dict(self.errors)
 
 
-def parse_excel_date(date_val, datemode):
-    """ Convert field value from excel to a date value """
-    if date_val:
-        parsed_date = str(date(*xlrd.xldate_as_tuple(date_val, datemode)[:3]))
-    else:
-        parsed_date = ''
-
-    return parsed_date
-
-
 def convert_field_value(value):
     # coerce to string unless it's a unicode string then we want that
     if isinstance(value, unicode):
@@ -339,7 +235,8 @@ def parse_search_id(config, columns, row):
     search_column = config.search_column
     search_column_index = columns.index(search_column)
 
-    search_id = row[search_column_index]
+    search_id = row[search_column_index] or ''
+
     try:
         # if the spreadsheet gives a number, strip any decimals off
         # float(x) is more lenient in conversion from string so both
@@ -404,7 +301,7 @@ def lookup_case(search_field, search_id, domain, case_type):
         return (None, LookupErrors.NotFound)
 
 
-def populate_updated_fields(config, columns, row, datemode):
+def populate_updated_fields(config, columns, row):
     """
     Returns a dict map of fields that were marked to be updated
     due to the import. This can be then used to pass to the CaseBlock
@@ -438,28 +335,34 @@ def populate_updated_fields(config, columns, row, datemode):
             # This is to be consistent with how the case export works.
             update_value = ''
         elif update_value is not None:
-            if field_map[key]['type_field'] == 'date':
-                try:
-                    update_value = parse_excel_date(update_value, datemode)
-                except Exception:
-                    raise InvalidDateException(key)
-            elif field_map[key]['type_field'] == 'integer' and str(update_value).strip() != '':
-                try:
-                    update_value = str(int(update_value))
-                except ValueError:
-                    raise InvalidIntegerException(key)
-            else:
-                update_value = convert_field_value(update_value)
+            update_value = convert_field_value(update_value)
 
         fields_to_update[update_field_name] = update_value
 
     return fields_to_update
 
 
-def get_spreadsheet(download_ref, column_headers=True):
+def open_spreadsheet_download_ref(download_ref, column_headers=True):
+    """
+    open a spreadsheet download ref just to test there are no errors opening it
+    """
     if not download_ref:
         raise ImporterRefError('null download ref')
-    return ExcelFile(download_ref.get_filename(), column_headers)
+    with get_spreadsheet(download_ref.get_filename(), column_headers):
+        pass
+
+
+@contextmanager
+def get_spreadsheet(filename, column_headers):
+    try:
+        with open_any_workbook(filename) as workbook:
+            yield WorksheetWrapper.from_workbook(workbook, column_headers)
+    except SpreadsheetFileEncrypted as e:
+        raise ImporterExcelFileEncrypted(e.message)
+    except SpreadsheetFileNotFound as e:
+        raise ImporterFileNotFound(e.message)
+    except SpreadsheetFileInvalidError as e:
+        raise ImporterExcelError(e.message)
 
 
 def is_valid_location_owner(owner, domain):
@@ -554,7 +457,5 @@ def get_importer_error_message(e):
                  'Please choose a file that is not password protected.')
     elif isinstance(e, ImporterExcelError):
         return _("The file uploaded has the following error: {}").format(e.message)
-    elif isinstance(e, ImporterError):
-        return _("The session containing the file you uploaded has expired - please upload a new one.")
     else:
         return _("Error: {}").format(e.message)

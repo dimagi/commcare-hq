@@ -153,13 +153,13 @@
         <section id="case-crumbs" style="width: 800px"></section>
         <section id="cases"></section>
         <div id="menu-container">
-            <div id="phone-mode-navigation"></div>
             <div id="formplayer-progress-container"></div>
             <section id="cloudcare-notifications" class="notifications-container"></section>
             <div id="restore-as-region"></div>
             <div id="breadcrumb-region"></div>
             <div class="scrollable-container dragscroll">
               <div id="menu-region" class="content menu-content"></div>
+              <small id="version-info"></small>
             </div>
         </div>
         <div class="scrollable-container dragscroll form-scrollable-container">
@@ -202,7 +202,6 @@
         {% include 'formplayer/case_list.html' %}
         {% include 'formplayer/menu_list.html' %}
         {% include 'formplayer/session_list.html' %}
-        {% include 'formplayer/navigation.html' %}
         {% include 'formplayer/confirmation_modal.html' %}
         {% include 'formplayer/users.html' %}
         {% include 'formplayer/progress.html' %}

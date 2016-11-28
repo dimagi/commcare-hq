@@ -12,7 +12,7 @@ from corehq.apps.userreports.ui.fields import ReportDataSourceField, JsonField
 from corehq.apps.userreports.util import get_table_name
 from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.style import crispy as hqcrispy
-from corehq.apps.userreports.const import UCR_ES_BACKEND, UCR_SQL_BACKEND
+from corehq.apps.userreports.const import UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_LABORATORY_BACKEND
 
 
 class DocumentFormBase(forms.Form):
@@ -128,6 +128,7 @@ DOC_TYPE_CHOICES = (
 BACKEND_CHOICES = (
     (UCR_SQL_BACKEND, 'Postgres'),
     (UCR_ES_BACKEND, 'ElasticSearch'),
+    (UCR_LABORATORY_BACKEND, 'Laboratory'),
 )
 
 

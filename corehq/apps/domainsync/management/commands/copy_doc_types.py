@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 class Command(BaseCommand):
     help = "Copies all docs of some types from one database to another. Pretty brute force and single-threaded."
     args = '<sourcedb> <destdb> [<doc_type>, ...]'
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option('--doc-types',
                     action='store',
                     dest='doc_types',

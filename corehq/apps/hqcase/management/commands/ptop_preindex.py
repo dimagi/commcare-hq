@@ -72,7 +72,7 @@ class Command(BaseCommand):
     help = ("Preindex ES pillows. "
             "Only run reindexer if the index doesn't exist.")
 
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option('--reset',
                     action='store_true',
                     dest='reset',

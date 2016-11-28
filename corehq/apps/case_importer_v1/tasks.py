@@ -1,5 +1,5 @@
 from celery.task import task
-from xml.etree import ElementTree
+from corehq.apps.case_importer_v1.exceptions import ImporterRefError, ImporterError
 from corehq.apps.case_importer_v1.util import get_importer_error_message
 from dimagi.utils.couch.database import is_bigcouch
 from casexml.apps.case.mock import CaseBlock, CaseBlockError
@@ -13,6 +13,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from soil import DownloadBase
 from dimagi.utils.prime_views import prime_views
 from couchdbkit.exceptions import ResourceNotFound
+from corehq.util.soft_assert import soft_assert
 import uuid
 
 POOL_SIZE = 10
@@ -23,26 +24,22 @@ CASEBLOCK_CHUNKSIZE = 100
 @task
 def bulk_import_async(config, domain, excel_id):
     excel_ref = DownloadBase.get(excel_id)
-    try:
-        spreadsheet = importer_util.get_spreadsheet(excel_ref, config.named_columns)
-    except Exception as e:
-        return {'errors': get_importer_error_message(e)}
+    if not excel_ref:
+        return {'errors': get_importer_error_message(ImporterRefError('null download ref'))}
 
     try:
-        result = do_import(spreadsheet, config, domain, task=bulk_import_async)
-    except Exception as e:
+        with importer_util.get_spreadsheet(excel_ref.get_filename(), config.named_columns) as spreadsheet:
+            result = do_import(spreadsheet, config, domain, task=bulk_import_async)
+
+        # return compatible with soil
         return {
-            'errors': 'Error: ' + e.message
+            'messages': result
         }
-
-    # return compatible with soil
-    return {
-        'messages': result
-    }
+    except ImporterError as e:
+        return {'errors': get_importer_error_message(e)}
 
 
 def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKSIZE):
-    row_count = spreadsheet.get_num_rows()
     columns = spreadsheet.get_header_columns()
     match_count = created_count = too_many_matches = num_chunks = 0
     errors = importer_util.ImportErrorDetail()
@@ -82,15 +79,24 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
                 )
             else:
                 properties = set().union(*map(lambda c: set(c.dynamic_case_properties().keys()), cases))
-                add_inferred_export_properties.delay(
-                    'CaseImporter',
-                    domain,
-                    case_type,
-                    properties,
-                )
+                if case_type and len(properties):
+                    add_inferred_export_properties.delay(
+                        'CaseImporter',
+                        domain,
+                        case_type,
+                        properties,
+                    )
+                else:
+                    _soft_assert = soft_assert(notify_admins=True)
+                    _soft_assert(
+                        len(properties) == 0,
+                        'error adding inferred export properties in domain '
+                        '({}): {}'.format(domain, ", ".join(properties))
+                    )
         return err
 
-    for i in range(row_count):
+    row_count = spreadsheet.max_row
+    for i, row in enumerate(spreadsheet.iter_rows()):
         if task:
             DownloadBase.set_progress(task, i, row_count)
 
@@ -105,28 +111,15 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
                 # increment so we can't possibly prime on next iteration
                 prime_offset += 1
 
-        row = spreadsheet.get_row(i)
         search_id = importer_util.parse_search_id(config, columns, row)
         if config.search_field == 'external_id' and not search_id:
             # do not allow blank external id since we save this
             errors.add(ImportErrors.BlankExternalId, i + 1)
             continue
 
-        try:
-            fields_to_update = importer_util.populate_updated_fields(
-                config,
-                columns,
-                row,
-                spreadsheet.workbook.datemode
-            )
-            if not any(fields_to_update.values()):
-                # if the row was blank, just skip it, no errors
-                continue
-        except importer_util.InvalidDateException as e:
-            errors.add(ImportErrors.InvalidDate, i + 1, e.column)
-            continue
-        except importer_util.InvalidIntegerException as e:
-            errors.add(ImportErrors.InvalidInteger, i + 1, e.column)
+        fields_to_update = importer_util.populate_updated_fields(config, columns, row)
+        if not any(fields_to_update.values()):
+            # if the row was blank, just skip it, no errors
             continue
 
         external_id = fields_to_update.pop('external_id', None)

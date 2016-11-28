@@ -5,7 +5,7 @@ from corehq.apps.locations.const import LOCATION_TYPE_SHEET_HEADERS, LOCATION_SH
 from corehq.apps.domain.models import Domain
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.util.quickcache import quickcache
-from corehq.util.spreadsheets.excel import flatten_json, json_to_headers
+from corehq.util.spreadsheets_v1.excel import flatten_json, json_to_headers
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.couch.loosechange import map_reduce
 from couchexport.writers import Excel2007ExportWriter

@@ -1865,6 +1865,9 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     persist_case_context = BooleanProperty()
     persistent_case_context_xml = StringProperty(default='case_name')
 
+    # Custom variables to add into the <variables /> node
+    custom_variables = StringProperty()
+
     # If True, use case tiles in the case list
     use_case_tiles = BooleanProperty()
     # If given, use this string for the case tile markup instead of the default temaplte

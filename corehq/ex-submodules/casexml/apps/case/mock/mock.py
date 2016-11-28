@@ -1,16 +1,10 @@
 from __future__ import absolute_import
 import copy
-from collections import namedtuple
 import uuid
-from functools import partial
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS, CASE_INDEX_CHILD
-
-
-IndexAttrs = namedtuple('IndexAttrs', ['case_type', 'case_id', 'relationship'])
-ChildIndexAttrs = partial(IndexAttrs, relationship='child')
 
 
 class CaseStructure(object):

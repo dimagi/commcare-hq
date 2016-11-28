@@ -2,6 +2,7 @@ from datetime import datetime
 
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
+from custom.enikshay.const import PRIMARY_PHONE_NUMBER, BACKUP_PHONE_NUMBER
 
 
 class ENikshayCaseStructureMixin(object):
@@ -13,6 +14,8 @@ class ENikshayCaseStructureMixin(object):
         self.person_id = u"person"
         self.occurrence_id = u"occurrence"
         self.episode_id = u"episode"
+        self.primary_phone_number = "0123456789"
+        self.secondary_phone_number = "0999999999"
 
     @property
     def person(self):
@@ -21,14 +24,14 @@ class ENikshayCaseStructureMixin(object):
             attrs={
                 "case_type": "person",
                 "create": True,
-                "update": dict(
-                    name="Pippin",
-                    aadhaar_number="499118665246",
-                    phone_number="0123456789",
-                    backup_number="0999999999",
-                    merm_id="123456789",
-                    dob="1987-08-15",
-                )
+                "update": {
+                    'name': "Pippin",
+                    'aadhaar_number': "499118665246",
+                    PRIMARY_PHONE_NUMBER: self.primary_phone_number,
+                    BACKUP_PHONE_NUMBER: self.secondary_phone_number,
+                    'merm_id': "123456789",
+                    'dob': "1987-08-15",
+                }
             },
         )
 

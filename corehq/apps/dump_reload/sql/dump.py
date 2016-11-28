@@ -13,34 +13,35 @@ from corehq.apps.dump_reload.util import get_model_label
 from corehq.sql_db.config import partition_config
 from corehq.util.decorators import ContextDecorator
 
-APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = {
-    'locations.LocationType': SimpleFilter('domain'),
-    'locations.SQLLocation': SimpleFilter('domain'),
-    'form_processor.XFormInstanceSQL': SimpleFilter('domain'),
-    'form_processor.XFormAttachmentSQL': SimpleFilter('form__domain'),
-    'form_processor.XFormOperationSQL': SimpleFilter('form__domain'),
-    'form_processor.CommCareCaseSQL': SimpleFilter('domain'),
-    'form_processor.CommCareCaseIndexSQL': SimpleFilter('domain'),
-    'form_processor.CaseAttachmentSQL': SimpleFilter('case__domain'),
-    'form_processor.CaseTransaction': SimpleFilter('case__domain'),
-    'form_processor.LedgerValue': SimpleFilter('domain'),
-    'form_processor.LedgerTransaction': SimpleFilter('case__domain'),
-    'case_search.CaseSearchConfig': SimpleFilter('domain'),
-    'data_interfaces.AutomaticUpdateRule': SimpleFilter('domain'),
-    'data_interfaces.AutomaticUpdateRuleCriteria': SimpleFilter('rule__domain'),
-    'data_interfaces.AutomaticUpdateAction': SimpleFilter('rule__domain'),
-    'auth.User': UsernameFilter(),
-    'phonelog.DeviceReportEntry': SimpleFilter('domain'),
-    'phonelog.ForceCloseEntry': SimpleFilter('domain'),
-    'phonelog.UserErrorEntry': SimpleFilter('domain'),
-    'phonelog.UserEntry': UserIDFilter('user_id'),
-    'ota.DemoUserRestore': UserIDFilter('demo_user_id', include_web_users=False),
-    'tzmigration.TimezoneMigrationProgress': SimpleFilter('domain'),
-    'products.SQLProduct': SimpleFilter('domain'),
-    'sms.MessagingEvent': SimpleFilter('domain'),
-    'sms.MessagingSubEvent': SimpleFilter('parent__domain'),
-    'sms.PhoneNumber': SimpleFilter('domain'),
-}
+# order is important here for foreign key constraints
+APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = OrderedDict([
+    ('locations.LocationType', SimpleFilter('domain')),
+    ('locations.SQLLocation', SimpleFilter('domain')),
+    ('form_processor.XFormInstanceSQL', SimpleFilter('domain')),
+    ('form_processor.XFormAttachmentSQL', SimpleFilter('form__domain')),
+    ('form_processor.XFormOperationSQL', SimpleFilter('form__domain')),
+    ('form_processor.CommCareCaseSQL', SimpleFilter('domain')),
+    ('form_processor.CommCareCaseIndexSQL', SimpleFilter('domain')),
+    ('form_processor.CaseAttachmentSQL', SimpleFilter('case__domain')),
+    ('form_processor.CaseTransaction', SimpleFilter('case__domain')),
+    ('form_processor.LedgerValue', SimpleFilter('domain')),
+    ('form_processor.LedgerTransaction', SimpleFilter('case__domain')),
+    ('case_search.CaseSearchConfig', SimpleFilter('domain')),
+    ('data_interfaces.AutomaticUpdateRule', SimpleFilter('domain')),
+    ('data_interfaces.AutomaticUpdateRuleCriteria', SimpleFilter('rule__domain')),
+    ('data_interfaces.AutomaticUpdateAction', SimpleFilter('rule__domain')),
+    ('auth.User', UsernameFilter()),
+    ('phonelog.DeviceReportEntry', SimpleFilter('domain')),
+    ('phonelog.ForceCloseEntry', SimpleFilter('domain')),
+    ('phonelog.UserErrorEntry', SimpleFilter('domain')),
+    ('phonelog.UserEntry', UserIDFilter('user_id')),
+    ('ota.DemoUserRestore', UserIDFilter('demo_user_id', include_web_users=False)),
+    ('tzmigration.TimezoneMigrationProgress', SimpleFilter('domain')),
+    ('products.SQLProduct', SimpleFilter('domain')),
+    ('sms.MessagingEvent', SimpleFilter('domain')),
+    ('sms.MessagingSubEvent', SimpleFilter('parent__domain')),
+    ('sms.PhoneNumber', SimpleFilter('domain')),
+])
 
 
 class allow_form_processing_queries(ContextDecorator):
@@ -66,7 +67,7 @@ class SqlDataDumper(DataDumper):
         JsonLinesSerializer().serialize(
             objects,
             use_natural_foreign_keys=False,
-            use_natural_primary_keys=False,
+            use_natural_primary_keys=True,
             stream=output_stream
         )
         return stats
@@ -83,11 +84,11 @@ def get_objects_to_dump(domain, excludes, stats_counter=None, stdout=None):
         stats_counter = Counter()
     for model_class, query in get_querysets_to_dump(domain, excludes):
         model_label = get_model_label(model_class)
-        if stdout:
-            stdout.write('Dumping {}\n'.format(model_label))
         for obj in query.iterator():
             stats_counter.update([model_label])
             yield obj
+        if stdout:
+            stdout.write('Dumped {} {}\n'.format(stats_counter[model_label], model_label))
 
 
 def get_querysets_to_dump(domain, excludes):

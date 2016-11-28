@@ -246,6 +246,13 @@ CASE_LIST_CUSTOM_XML = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+CASE_LIST_CUSTOM_VARIABLES = StaticToggle(
+    'case_list_custom_variables',
+    'Show text area for entering custom variables',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
+
 CASE_LIST_TILE = StaticToggle(
     'case_list_tile',
     'Allow configuration of case list tiles',
@@ -272,13 +279,6 @@ ADD_USERS_FROM_LOCATION = StaticToggle(
     "Allow users to add new mobile workers from the locations page",
     TAG_PRODUCT_CORE,
     [NAMESPACE_DOMAIN]
-)
-
-DEMO_REPORTS = StaticToggle(
-    'demo-reports',
-    'Access to map-based demo reports',
-    TAG_PREVIEW,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
 DETAIL_LIST_TABS = StaticToggle(
@@ -376,7 +376,7 @@ SYNC_ALL_LOCATIONS = StaticToggle(
 FLAT_LOCATION_FIXTURE = StaticToggle(
     'flat_location_fixture',
     'Sync the location fixture in a flat format.',
-    TAG_ONE_OFF,  # todo: this should change to product path once we are signed off on format
+    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
 
@@ -717,13 +717,6 @@ USE_FORMPLAYER = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-FORMPLAYER_EXPERIMENT = StaticToggle(
-    'use_formplayer_experiment',
-    'Do formplayer experimenting with Science',
-    TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN],
-)
-
 FIXTURE_CASE_SELECTION = StaticToggle(
     'fixture_case',
     'Allow a configurable case list that is filtered based on a fixture type and fixture selection (Due List)',
@@ -838,6 +831,13 @@ NEW_EXPORTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+OLD_EXPORTS = StaticToggle(
+    'old_exports',
+    'Use old backend export infrastructure',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
 TF_DOES_NOT_USE_SQLITE_BACKEND = StaticToggle(
     'not_tf_sql_backend',
     'Domains that do not use a SQLite backend for Touchforms',
@@ -908,8 +908,8 @@ ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
 
 CUSTOM_CALENDAR_FIXTURE = StaticToggle(
     'custom_calendar_fixture',
-    'Send a calendar fixture down to all users (UATBC/eNikshay one off)',
-    TAG_ONE_OFF,
+    'Send a calendar fixture down to all users (R&D)',
+    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN],
 )
 
@@ -953,5 +953,12 @@ DATA_MIGRATION = StaticToggle(
     'data_migration',
     'Disable submissions and restores during a data migration',
     TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
+DATA_DICTIONARY = StaticToggle(
+    'data_dictionary',
+    'Domain level data dictionary of cases',
+    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )

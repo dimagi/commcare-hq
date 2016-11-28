@@ -322,6 +322,7 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
             ]]
         )
 
+    # todo @run_with_all_ucr_backends
     def test_total_row(self):
         report_config = self._create_report(
             aggregation_columns=['indicator_col_id_first_name'],
@@ -370,6 +371,7 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
             ]]
         )
 
+    @run_with_all_ucr_backends
     def test_no_total_row(self):
         report_config = self._create_report(
             aggregation_columns=['indicator_col_id_first_name'],
@@ -417,6 +419,7 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
             ]]
         )
 
+    # todo @run_with_all_ucr_backends
     def test_total_row_first_column_value(self):
         report_config = self._create_report(
             aggregation_columns=['indicator_col_id_first_name'],
@@ -465,6 +468,7 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
             ]]
         )
 
+    # todo @run_with_all_ucr_backends
     def test_totaling_noninteger_column(self):
         report_config = self._create_report(
             aggregation_columns=['indicator_col_id_first_name'],
@@ -484,6 +488,7 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
         with self.assertRaises(UserReportsError):
             view.export_table
 
+    # todo @run_with_all_ucr_backends
     def test_total_row_with_expanded_column(self):
         report_config = self._create_report(
             aggregation_columns=['indicator_col_id_first_name'],

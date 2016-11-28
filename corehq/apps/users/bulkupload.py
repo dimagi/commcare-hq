@@ -5,7 +5,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.utils.translation import ugettext as _
-from corehq.util.spreadsheets.excel import flatten_json, json_to_headers, \
+from corehq.util.spreadsheets_v1.excel import flatten_json, json_to_headers, \
     alphanumeric_sort_key
 from dimagi.utils.parsing import string_to_boolean
 

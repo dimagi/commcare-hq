@@ -13,7 +13,7 @@ class Command(BaseCommand):
     args = ""
     label = ""
 
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option('--flip_all_aliases',
                     action='store_true',
                     dest='flip_all',

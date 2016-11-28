@@ -113,9 +113,9 @@ DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 ACCOUNTING_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.accounting.log")
 ANALYTICS_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.analytics.log")
 DATADOG_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.datadog.log")
-FORMPLAYER_TIMING_FILE = "%s/%s" % (FILEPATH, "formplayer.timing.log")
-FORMPLAYER_DIFF_FILE = "%s/%s" % (FILEPATH, "formplayer.diff.log")
-EXPORT_MIGRATION_LOG_FILE = "%s/%s" % (FILEPATH, "export_migration.log")
+UCR_TIMING_FILE = "%s/%s" % (FILEPATH, "ucr.timing.log")
+UCR_DIFF_FILE = "%s/%s" % (FILEPATH, "ucr.diff.log")
+UCR_EXCEPTION_FILE = "%s/%s" % (FILEPATH, "ucr.exception.log")
 
 LOCAL_LOGGING_HANDLERS = {}
 LOCAL_LOGGING_LOGGERS = {}
@@ -261,7 +261,6 @@ HQ_APPS = (
     'corehq.apps.dump_reload',
     'corehq.apps.hqadmin',
     'corehq.apps.hqcase',
-    'corehq.apps.hqcouchlog',
     'corehq.apps.hqwebapp',
     'corehq.apps.hqmedia',
     'corehq.apps.locations',
@@ -277,10 +276,10 @@ HQ_APPS = (
     'corehq.sql_proxy_accessors',
     'couchforms',
     'couchexport',
-    'couchlog',
     'dimagi.utils',
     'formtranslate',
     'langcodes',
+    'corehq.apps.data_dictionary',
     'corehq.apps.analytics',
     'corehq.apps.callcenter',
     'corehq.apps.change_feed',
@@ -291,6 +290,7 @@ HQ_APPS = (
     'corehq.apps.app_manager',
     'corehq.apps.es',
     'corehq.apps.fixtures',
+    'corehq.apps.calendar_fixture',
     'corehq.apps.case_importer_v1',
     'corehq.apps.reminders',
     'corehq.apps.translations',
@@ -543,11 +543,12 @@ FIXTURE_GENERATORS = {
         "corehq.apps.products.fixtures.product_fixture_generator",
         "corehq.apps.programs.fixtures.program_fixture_generator",
         "corehq.apps.app_manager.fixtures.report_fixture_generator",
+        "corehq.apps.calendar_fixture.fixture_provider.calendar_fixture_generator",
         # custom
         "custom.bihar.reports.indicators.fixtures.generator",
         "custom.m4change.fixtures.report_fixtures.generator",
         "custom.m4change.fixtures.location_fixtures.generator",
-        "custom.enikshay.fixtures.calendar_fixture_generator",
+
     ],
     # fixtures that must be sent along with the phones cases
     'case': [
@@ -621,30 +622,6 @@ HQ_ACCOUNT_ROOT = "commcarehq.org"
 
 XFORMS_PLAYER_URL = "http://localhost:4444/"  # touchform's setting
 FORMPLAYER_URL = 'http://localhost:8080'
-
-####### Couchlog config #######
-
-COUCHLOG_BLUEPRINT_HOME = "%s%s" % (
-    STATIC_URL, "hqwebapp/stylesheets/blueprint/")
-COUCHLOG_DATATABLES_LOC = "%s%s" % (
-    STATIC_URL, "hqwebapp/js/lib/datatables-1.9/js/jquery.dataTables.min.js")
-
-# These allow HQ to override what shows up in couchlog (add a domain column)
-COUCHLOG_TABLE_CONFIG = {"id_column": 0,
-                         "archived_column": 1,
-                         "date_column": 2,
-                         "message_column": 4,
-                         "actions_column": 8,
-                         "email_column": 9,
-                         "no_cols": 10}
-COUCHLOG_DISPLAY_COLS = ["id", "archived?", "date", "exception type", "message",
-                         "domain", "user", "url", "actions", "report"]
-COUCHLOG_RECORD_WRAPPER = "corehq.apps.hqcouchlog.wrapper"
-COUCHLOG_DATABASE_NAME = "commcarehq-couchlog"
-COUCHLOG_AUTH_DECORATOR = 'corehq.apps.domain.decorators.require_superuser_or_developer'
-
-# couchlog/case search
-LUCENE_ENABLED = False
 
 ####### SMS Queue Settings #######
 
@@ -793,7 +770,6 @@ PRELOGIN_APPS = (
 
 # our production logstash aggregation
 LOGSTASH_DEVICELOG_PORT = 10777
-LOGSTASH_COUCHLOG_PORT = 10888
 LOGSTASH_AUDITCARE_PORT = 10999
 LOGSTASH_HOST = 'localhost'
 
@@ -920,6 +896,8 @@ ENTERPRISE_MODE = False
 
 CUSTOM_LANDING_PAGE = False
 
+TABLEAU_URL_ROOT = "https://icds.commcarehq.org/"
+
 try:
     # try to see if there's an environmental variable set for local_settings
     custom_settings = os.environ.get('CUSTOMSETTINGS', None)
@@ -961,12 +939,15 @@ LOGGING = {
         'datadog': {
             'format': '%(metric)s %(created)s %(value)s metric_type=%(metric_type)s %(message)s'
         },
-        'formplayer_timing': {
-            'format': '%(asctime)s, %(action)s, %(control_duration)s, %(candidate_duration)s'
+        'ucr_timing': {
+            'format': '%(asctime)s\t%(domain)s\t%(report_config_id)s\t%(filter_values)s\t%(control_duration)s\t%(candidate_duration)s'
         },
-        'formplayer_diff': {
-            'format': '%(asctime)s, %(action)s, %(request)s, %(control)s, %(candidate)s'
-        }
+        'ucr_diff': {
+            'format': '%(asctime)s\t%(domain)s\t%(report_config_id)s\t%(filter_values)s\t%(control)s\t%(diff)s'
+        },
+        'ucr_exception': {
+            'format': '%(asctime)s\t%(domain)s\t%(report_config_id)s\t%(filter_values)s\t%(candidate)s'
+        },
     },
     'filters': {
         'hqcontext': {
@@ -1025,27 +1006,27 @@ LOGGING = {
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 20  # Backup 200 MB of logs
         },
-        'formplayer_diff': {
+        'ucr_diff': {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
-            'formatter': 'formplayer_diff',
-            'filename': FORMPLAYER_DIFF_FILE,
+            'formatter': 'ucr_diff',
+            'filename': UCR_DIFF_FILE,
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 20  # Backup 200 MB of logs
         },
-        'formplayer_timing': {
+        'ucr_exception': {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
-            'formatter': 'formplayer_timing',
-            'filename': FORMPLAYER_TIMING_FILE,
+            'formatter': 'ucr_exception',
+            'filename': UCR_EXCEPTION_FILE,
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 20  # Backup 200 MB of logs
         },
-        'export_migration': {
+        'ucr_timing': {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
-            'formatter': 'simple',
-            'filename': EXPORT_MIGRATION_LOG_FILE,
+            'formatter': 'ucr_timing',
+            'filename': UCR_TIMING_FILE,
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 20  # Backup 200 MB of logs
         },
@@ -1121,19 +1102,20 @@ LOGGING = {
             'level': 'INFO',
             'propogate': False,
         },
-        'formplayer_timing': {
-            'handlers': ['formplayer_timing'],
+        'ucr_timing': {
+            'handlers': ['ucr_timing'],
             'level': 'INFO',
             'propogate': True,
         },
-        'formplayer_diff': {
-            'handlers': ['formplayer_diff'],
+        'ucr_diff': {
+            'handlers': ['ucr_diff'],
             'level': 'INFO',
             'propogate': True,
         },
-        'export_migration': {
-            'handlers': ['export_migration'],
+        'ucr_exception': {
+            'handlers': ['ucr_exception'],
             'level': 'INFO',
+            'propogate': True,
         },
         'boto3': {
             'handlers': ['console'],
@@ -1286,7 +1268,6 @@ COUCHDB_APPS = [
     'ilsgateway',
     'ewsghana',
     ('auditcare', 'auditcare'),
-    ('couchlog', 'couchlog'),
     ('performance_sms', 'meta'),
     ('repeaters', 'receiverwrapper'),
     ('userreports', 'meta'),
@@ -1405,6 +1386,7 @@ SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.apposit.models.SQLAppositBackend',
     'corehq.messaging.smsbackends.grapevine.models.SQLGrapevineBackend',
     'corehq.messaging.smsbackends.http.models.SQLHttpBackend',
+    'corehq.messaging.smsbackends.icds.models.SQLICDSBackend',
     'corehq.messaging.smsbackends.mach.models.SQLMachBackend',
     'corehq.messaging.smsbackends.megamobile.models.SQLMegamobileBackend',
     'corehq.messaging.smsbackends.push.models.PushBackend',
@@ -1698,6 +1680,11 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'lab_monthly_summary.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_lab_register.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'new_patient_summary.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'mdr_suspects.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'patient_overview_mobile.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'patients_due_to_follow_up.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'treatment_outcome_mobile.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'case_finding_mobile.json')
 ]
 
 
@@ -1881,11 +1868,11 @@ TRAVIS_TEST_GROUPS = (
         'accounting', 'api', 'app_manager', 'appstore',
         'auditcare', 'bihar', 'builds', 'cachehq', 'callcenter',
         'case', 'casegroups', 'cleanup', 'cloudcare', 'commtrack', 'consumption',
-        'couchapps', 'couchlog', 'crud', 'django_digest',
+        'couchapps', 'crud', 'django_digest',
         'domain', 'domainsync', 'export',
         'facilities', 'fixtures', 'fluff_filter', 'formplayer',
         'formtranslate', 'fri', 'grapevine', 'groups', 'gsid', 'hope',
-        'hqadmin', 'hqcase', 'hqcouchlog', 'hqmedia',
+        'hqadmin', 'hqcase', 'hqmedia',
         'care_pathways', 'common', 'compressor', 'smsbillables', 'ilsgateway'
     ),
 )

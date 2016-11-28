@@ -221,6 +221,11 @@ class XFormInstanceSQL(DisabledDbMixin, models.Model, RedisLockableMixIn, Attach
     # for compatability with corehq.blobs.mixin.DeferredBlobMixin interface
     persistent_blobs = None
 
+    def natural_key(self):
+        # necessary for dumping models from a sharded DB so that we exclude the
+        # SQL 'id' field which won't be unique across all the DB's
+        return self.form_id
+
     @classmethod
     def get_obj_id(cls, obj):
         return obj.form_id
@@ -407,6 +412,11 @@ class AbstractAttachment(DisabledDbMixin, models.Model, SaveStateMixin):
 
     properties = JSONField(default=dict)
 
+    def natural_key(self):
+        # necessary for dumping models from a sharded DB so that we exclude the
+        # SQL 'id' field which won't be unique across all the DB's
+        return self.attachment_id
+
     def write_content(self, content):
         if not self.name:
             raise InvalidAttachment("cannot save attachment without name")
@@ -494,6 +504,11 @@ class XFormOperationSQL(DisabledDbMixin, models.Model):
     user_id = models.CharField(max_length=255, null=True)
     operation = models.CharField(max_length=255, default=None)
     date = models.DateTimeField(auto_now_add=True)
+
+    def natural_key(self):
+        # necessary for dumping models from a sharded DB so that we exclude the
+        # SQL 'id' field which won't be unique across all the DB's
+        return self.form, self.user_id, self.date
 
     @property
     def user(self):
@@ -588,6 +603,11 @@ class CommCareCaseSQL(DisabledDbMixin, models.Model, RedisLockableMixIn,
     location_id = models.CharField(max_length=255, null=True)
 
     case_json = JSONField(default=dict)
+
+    def natural_key(self):
+        # necessary for dumping models from a sharded DB so that we exclude the
+        # SQL 'id' field which won't be unique across all the DB's
+        return self.case_id
 
     @property
     def doc_type(self):
@@ -966,6 +986,11 @@ class CommCareCaseIndexSQL(DisabledDbMixin, models.Model, SaveStateMixin):
     referenced_type = models.CharField(max_length=255, default=None)
     relationship_id = models.PositiveSmallIntegerField(choices=RELATIONSHIP_CHOICES)
 
+    def natural_key(self):
+        # necessary for dumping models from a sharded DB so that we exclude the
+        # SQL 'id' field which won't be unique across all the DB's
+        return self.domain, self.case, self.identifier
+
     @property
     @memoized
     def referenced_case(self):
@@ -1058,6 +1083,11 @@ class CaseTransaction(DisabledDbMixin, SaveStateMixin, models.Model):
     type = models.PositiveSmallIntegerField(choices=TYPE_CHOICES)
     revoked = models.BooleanField(default=False, null=False)
     details = JSONField(default=dict)
+
+    def natural_key(self):
+        # necessary for dumping models from a sharded DB so that we exclude the
+        # SQL 'id' field which won't be unique across all the DB's
+        return self.case, self.form_id, self.type
 
     @staticmethod
     def _should_process(transaction_type):
@@ -1291,6 +1321,11 @@ class LedgerValue(DisabledDbMixin, models.Model, TrackRelatedChanges):
     last_modified_form_id = models.CharField(max_length=100, null=True, default=None)
     daily_consumption = models.DecimalField(max_digits=20, decimal_places=5, null=True)
 
+    def natural_key(self):
+        # necessary for dumping models from a sharded DB so that we exclude the
+        # SQL 'id' field which won't be unique across all the DB's
+        return self.case, self.section_id, self.entry_id
+
     @property
     def last_modified_date(self):
         return self.last_modified
@@ -1362,6 +1397,11 @@ class LedgerTransaction(DisabledDbMixin, SaveStateMixin, models.Model):
     delta = models.IntegerField(default=0)
     # new balance
     updated_balance = models.IntegerField(default=0)
+
+    def natural_key(self):
+        # necessary for dumping models from a sharded DB so that we exclude the
+        # SQL 'id' field which won't be unique across all the DB's
+        return self.case, self.form_id, self.section_id, self.entry_id
 
     def get_consumption_transactions(self, exclude_inferred_receipts=False):
         """

@@ -16,7 +16,7 @@
         {% endcompress %}
 
         {# CodeMirror uses granular resources as a means of config #}
-        {% if not raw %}
+        {% if use_code_mirror %}
         <link rel="stylesheet" href="{% static 'codemirror/lib/codemirror.css' %}" />
         <link rel="stylesheet" href="{% static 'codemirror/addon/fold/foldgutter.css' %}"/>
         <script src="{% static 'codemirror/lib/codemirror.js' %}"></script>
@@ -83,11 +83,7 @@
                              title="Open in HQ" />
                     </a>
                     <a href="{% url 'doc_in_es' %}?id={{ doc_id }}" target="_blank" title="Search in ES"><i class="fa fa-search"></i></a>
-                    {% if raw %}
-                        <a href="{% url "raw_couch" %}?id={{ doc_id }}&db_name={{ selected_db }}" title="Enable CodeMirror"><i class="fa fa-code"></i></a>
-                    {% else %}
-                        <a href="{% url "raw_couch" %}?id={{ doc_id }}&db_name={{ selected_db }}&raw=true" title="Disable CodeMirror"><i class="fa fa-code"></i></a>
-                    {% endif %}
+                    <a href="{% url "raw_couch" %}?id={{ doc_id }}&db_name={{ selected_db }}&raw=true" title="Load raw json doc"><i class="fa fa-code"></i></a>
                     <div>
                         <h3>Raw Doc:</h3>
                         <pre id="couch-document">{{ doc }}</pre>
@@ -99,8 +95,8 @@
 
         <script>
             // don't break if offline (Also why I left it as a <pre/>)
-            var raw = {{ raw|JSON  }};
-            if (!raw && window.CodeMirror) {
+            var use_code_mirror = {{ use_code_mirror|JSON  }};
+            if (use_code_mirror && window.CodeMirror) {
                 var couchDocElement = document.getElementById('couch-document');
                 var myCodeMirror = CodeMirror(function(elt) {
                     couchDocElement.parentNode.replaceChild(elt, couchDocElement);

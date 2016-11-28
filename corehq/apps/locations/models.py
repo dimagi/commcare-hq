@@ -114,6 +114,12 @@ class LocationType(models.Model):
     )  # levels below this location type that we start expanding from
     _expand_from_root = models.BooleanField(default=False, db_column='expand_from_root')
     expand_to = models.ForeignKey('self', null=True, related_name='+', on_delete=models.CASCADE)  # levels above this type that are synced
+    include_without_expanding = models.ForeignKey(
+        'self',
+        null=True,
+        related_name='+',
+        on_delete=models.SET_NULL,
+    )  # include all levels of this type and their ancestors
     last_modified = models.DateTimeField(auto_now=True)
 
     emergency_level = StockLevelField(default=0.5)
@@ -275,13 +281,15 @@ class LocationQueriesMixin(object):
         return locations
 
     def accessible_to_user(self, domain, user):
+        from corehq.apps.locations.util import get_locations_and_children
+
         if user.has_permission(domain, 'access_all_locations'):
             return self.all()
 
-        users_location = user.get_sql_location(domain)
-        if not users_location:
+        assigned_location_ids = user.get_location_ids(domain)
+        if not assigned_location_ids:
             return self.none()  # No locations are accessible to this user
-        return self.all() & users_location.get_descendants(include_self=True)
+        return self.all() & get_locations_and_children(assigned_location_ids)
 
 
 class LocationQuerySet(LocationQueriesMixin, models.query.QuerySet):
@@ -889,14 +897,10 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
         return list(SQLLocation.root_locations(domain).couch_locations())
 
     @property
-    def is_root(self):
-        return not self.lineage
-
-    @property
     def parent_location_id(self):
-        if self.is_root:
-            return None
-        return self.lineage[0]
+        if self.lineage:
+            return self.lineage[0]
+        return None
 
     @property
     def parent_id(self):
@@ -946,6 +950,24 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
     @property
     def location_type_name(self):
         return self.location_type_object.name
+
+
+class LocationFixtureConfiguration(models.Model):
+    domain = models.CharField(primary_key=True, max_length=255)
+    sync_flat_fixture = models.BooleanField(default=True)
+    sync_hierarchical_fixture = models.BooleanField(default=True)
+
+    def __repr__(self):
+        return u'{}: flat: {}, hierarchical: {}'.format(
+            self.domain, self.sync_flat_fixture, self.sync_hierarchical_fixture
+        )
+
+    @classmethod
+    def for_domain(cls, domain):
+        try:
+            return cls.objects.get(domain=domain)
+        except cls.DoesNotExist:
+            return cls(domain=domain)
 
 
 def _unassign_users_from_location(domain, location_id):

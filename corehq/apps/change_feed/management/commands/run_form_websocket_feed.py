@@ -12,7 +12,7 @@ from corehq.util.quickcache import quickcache
 
 
 class Command(BaseCommand):
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option('--from',
                     action='store',
                     dest='from',

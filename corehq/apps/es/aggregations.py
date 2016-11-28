@@ -253,6 +253,16 @@ class SumAggregation(Aggregation):
         }
 
 
+class MinAggregation(SumAggregation):
+    """
+    Bucket aggregation that returns the minumum value of a field
+
+    :param name: aggregation name
+    :param field: name of the field to min
+    """
+    type = "min"
+
+
 class MissingAggregation(Aggregation):
     """
     A field data based single bucket aggregation, that creates a bucket of all

@@ -62,17 +62,13 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 FormplayerFrontend.regions.breadcrumb.empty();
             }
             if (menuResponse.appVersion) {
-                Menus.Controller.showAppVersion(menuResponse.appVersion);
+                FormplayerFrontend.trigger('setVersionInfo', menuResponse.appVersion);
             }
         },
 
         showPersistentCaseTile: function (persistentCaseTile) {
             var detailView = Menus.Controller.getCaseTile(persistentCaseTile);
             FormplayerFrontend.regions.persistentCaseTile.show(detailView.render());
-        },
-
-        showAppVersion: function (appVersion) {
-            $("#version-info").text(appVersion);
         },
 
         showBreadcrumbs: function (breadcrumbs) {

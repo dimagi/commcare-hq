@@ -470,6 +470,8 @@ class SqlModelMigrator(Migrator):
                 for model_class, queryset in get_all_model_querysets_for_domain(self.model_class, self.domain):
                     for obj in queryset.iterator():
                         migrator.process_object(obj)
+                        if migrator.total_blobs % chunk_size == 0:
+                            print("Processed {} {} objects".format(migrator.total_blobs, self.slug))
 
         return migrator.total_blobs, 0
 

@@ -15,6 +15,7 @@ from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.messaging.smsbackends.apposit.models import SQLAppositBackend
 from corehq.messaging.smsbackends.grapevine.models import SQLGrapevineBackend
 from corehq.messaging.smsbackends.http.models import SQLHttpBackend
+from corehq.messaging.smsbackends.icds.models import SQLICDSBackend
 from corehq.messaging.smsbackends.mach.models import SQLMachBackend
 from corehq.messaging.smsbackends.megamobile.models import SQLMegamobileBackend
 from corehq.messaging.smsbackends.push.models import PushBackend
@@ -151,6 +152,13 @@ class AllBackendTest(BaseSMSTest):
         )
         self.push_backend.save()
 
+        self.icds_backend = SQLICDSBackend(
+            name="ICDS",
+            is_global=True,
+            hq_api_id=SQLICDSBackend.get_api_id()
+        )
+        self.icds_backend.save()
+
     def _test_outbound_backend(self, backend, msg_text, mock_send):
         SQLMobileBackendMapping.set_default_domain_backend(self.domain_obj.name, backend)
 
@@ -233,8 +241,10 @@ class AllBackendTest(BaseSMSTest):
     @patch('corehq.messaging.smsbackends.sislog.models.SQLSislogBackend.send')
     @patch('corehq.messaging.smsbackends.yo.models.SQLYoBackend.send')
     @patch('corehq.messaging.smsbackends.push.models.PushBackend.send')
+    @patch('corehq.messaging.smsbackends.icds.models.SQLICDSBackend.send')
     def test_outbound_sms(
             self,
+            icds_send,
             push_send,
             yo_send,
             sislog_send,
@@ -263,6 +273,7 @@ class AllBackendTest(BaseSMSTest):
         self._test_outbound_backend(self.sislog_backend, 'sislog test', sislog_send)
         self._test_outbound_backend(self.yo_backend, 'yo test', yo_send)
         self._test_outbound_backend(self.push_backend, 'push test', push_send)
+        self._test_outbound_backend(self.icds_backend, 'icds test', icds_send)
 
     @run_with_all_backends
     def test_unicel_inbound_sms(self):
@@ -408,6 +419,7 @@ class AllBackendTest(BaseSMSTest):
         self.sislog_backend.delete()
         self.yo_backend.delete()
         self.push_backend.delete()
+        self.icds_backend.delete()
         super(AllBackendTest, self).tearDown()
 
 

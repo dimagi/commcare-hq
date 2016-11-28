@@ -6,18 +6,22 @@ describe('HQ.Events', function() {
             Actions = FormplayerFrontend.HQ.Events.Actions,
             origin = 'myorigin',
             triggerSpy,
+            requestSpy,
             dummyEvent;
         beforeEach(function() {
             triggerSpy = sinon.spy();
+            requestSpy = sinon.spy();
             dummyEvent = {
                 origin: origin,
                 data: {},
             };
             sinon.stub(FormplayerFrontend, 'trigger', triggerSpy);
+            sinon.stub(FormplayerFrontend, 'request', requestSpy);
         });
 
         afterEach(function() {
             FormplayerFrontend.trigger.restore();
+            FormplayerFrontend.request.restore();
         });
 
         it('should allow the back action', function() {
@@ -25,6 +29,15 @@ describe('HQ.Events', function() {
             dummyEvent.data.action = Actions.BACK;
 
             receiver(dummyEvent);
+            assert.isTrue(triggerSpy.called);
+        });
+
+        it('should allow the refresh action', function() {
+            var receiver = new Receiver(origin);
+            dummyEvent.data.action = Actions.REFRESH;
+
+            receiver(dummyEvent);
+            assert.isTrue(requestSpy.called);
             assert.isTrue(triggerSpy.called);
         });
 

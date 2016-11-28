@@ -107,7 +107,15 @@ with NodeJS. An up-to-date version is available on the NodeSource repository.
 3. Run bower with:
 
         $ bower install
+        
 
+### Install JS-XPATH
+
+This is required for the server side xpath validation. See [package.json](package.json) for exact version.
+
+```
+npm install dimagi/js-xpath#v0.0.2-rc1
+```
 
 ### Using LESS: 3 Options
 

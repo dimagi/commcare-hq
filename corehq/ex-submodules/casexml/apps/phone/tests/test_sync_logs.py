@@ -1,7 +1,12 @@
+import uuid
 from django.test import TestCase, SimpleTestCase
 from casexml.apps.case.xml import V1, V2
 from casexml.apps.phone.models import SyncLog, CaseState
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
+from casexml.apps.phone.restore import RestoreParams, RestoreConfig
+from casexml.apps.phone.tests.utils import create_restore_user, generate_restore_payload
+from corehq.apps.app_manager.models import Application
+from corehq.apps.domain.models import Domain
 from corehq.form_processor.tests.utils import run_with_all_backends
 
 
@@ -104,3 +109,41 @@ class CachingReponseTest(TestCase):
         self.assertFalse(log.has_cached_payload(V2))
         self.assertEqual(None, log.get_cached_payload(V1))
         self.assertEqual(None, log.get_cached_payload(V2))
+
+
+class SyncLogModelTest(TestCase):
+    domain = 'sync-log-model-test'
+
+    @classmethod
+    def setUpClass(cls):
+        cls.project = Domain(name=cls.domain)
+        cls.project.save()
+        cls.restore_user = create_restore_user(cls.domain, username=uuid.uuid4().hex)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.project.delete()
+
+    def test_basic_properties(self):
+        # kick off a restore to generate the sync log
+        generate_restore_payload(self.project, self.restore_user, items=True)
+        sync_log = SyncLog.last_for_user(self.restore_user.user_id)
+        self.assertEqual(self.restore_user.user_id, sync_log.user_id)
+        self.assertEqual(self.restore_user.domain, sync_log.domain)
+
+    def test_build_id(self):
+        app = Application(domain=self.domain)
+        app.save()
+        config = RestoreConfig(
+            project=self.project,
+            restore_user=self.restore_user,
+            params=RestoreParams(
+                app=app,
+            ),
+        )
+        config.get_payload()  # this generates the sync log
+        sync_log = SyncLog.last_for_user(self.restore_user.user_id)
+        self.assertEqual(self.restore_user.user_id, sync_log.user_id)
+        self.assertEqual(self.restore_user.domain, sync_log.domain)
+        self.assertEqual(app._id, sync_log.build_id)
+        self.addCleanup(app.delete)

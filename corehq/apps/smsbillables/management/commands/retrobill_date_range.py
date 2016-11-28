@@ -13,7 +13,7 @@ def str_to_int_tuple(string_tuple):
 class Command(BaseCommand):
     help = 'Create SmsBillables for all SMSs in the given datetime range'
 
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option('--create', action='store_true', default=False, help='Save SmsBillables in the database'),
     )
 

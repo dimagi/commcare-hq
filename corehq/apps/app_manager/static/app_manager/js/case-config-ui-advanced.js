@@ -1,4 +1,4 @@
-/*globals $, COMMCAREHQ, _, ko, console*/
+/*globals $, COMMCAREHQ, _, ko */
 hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
     'use strict';
     var caseConfigUtils = hqImport('app_manager/js/case-config-utils.js');
@@ -15,7 +15,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
         var self = this;
 
         self.home = params.home;
-        self.questions = params.questions;
+        self.questions = ko.observable(params.questions);
         self.save_url = params.save_url;
         self.caseType = params.caseType;
         self.module_id = params.module_id;
@@ -54,7 +54,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
         });
 
         var questionScores = {};
-        _(self.questions).each(function (question, i) {
+        _(self.questions()).each(function (question, i) {
             questionScores[question.value] = i;
         });
         self.questionScores = questionScores;
@@ -123,7 +123,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
         };
 
         var questionMap = {};
-        _(self.questions).each(function (question) {
+        _(self.questions()).each(function (question) {
             questionMap[question.value] = question;
         });
         self.get_repeat_context = function(path) {
@@ -139,10 +139,15 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
         };
 
         self.getQuestions = function (filter, excludeHidden, includeRepeat) {
-            return caseConfigUtils.getQuestions(self.questions, filter, excludeHidden, includeRepeat);
+            return caseConfigUtils.getQuestions(self.questions(), filter, excludeHidden, includeRepeat);
         };
+
+        self.refreshQuestions = function(url, moduleId, formId, event){
+            return caseConfigUtils.refreshQuestions(self.questions,url, moduleId, formId, event);
+        };
+
         self.getAnswers = function (condition) {
-            return caseConfigUtils.getAnswers(self.questions, condition);
+            return caseConfigUtils.getAnswers(self.questions(), condition);
         };
 
         self.change = function () {

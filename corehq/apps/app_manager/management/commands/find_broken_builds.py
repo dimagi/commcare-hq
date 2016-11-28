@@ -73,7 +73,7 @@ CHECK_FUNCTIONS = {
 class Command(BaseCommand):
     help = "Print a list of broken builds"
     args = '<check_function>'
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option('--ids',
                     action='store',
                     dest='build_ids',

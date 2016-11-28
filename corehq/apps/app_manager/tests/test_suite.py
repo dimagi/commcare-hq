@@ -763,3 +763,25 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
         with self.assertRaises(SuiteValidationError):
             factory.app.create_suite()
+
+    def test_custom_variables(self):
+        factory = AppFactory()
+        module, form = factory.new_basic_module('m0', 'case1')
+        short_custom_variables = "<variable function='true()' /><foo function='bar'/>"
+        long_custom_variables = "<bar function='true()' /><baz function='buzz'/>"
+        module.case_details.short.custom_variables = short_custom_variables
+        module.case_details.long.custom_variables = long_custom_variables
+        self.assertXmlPartialEqual(
+            u"""
+            <partial>
+                <variables>
+                    {short_variables}
+                </variables>
+                <variables>
+                    {long_variables}
+                </variables>
+            </partial>
+            """.format(short_variables=short_custom_variables, long_variables=long_custom_variables),
+            factory.app.create_suite(),
+            "detail/variables"
+        )
