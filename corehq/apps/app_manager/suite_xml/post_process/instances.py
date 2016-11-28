@@ -61,62 +61,6 @@ class EntryInstances(PostProcessor):
 
         entry.require_instances(instances=instances, instance_ids=unknown_instance_ids)
 
-    @staticmethod
-    def get_all_instances(domain, xpaths):
-        instances, unknown_instance_ids = EntryInstances.get_required_instances(xpaths)
-        instances, unknown_instance_ids = EntryInstances._add_custom_referenced_instances(
-            domain,
-            instances,
-            unknown_instance_ids
-        )
-        return instances, unknown_instance_ids
-
-    @staticmethod
-    def get_required_instances(xpaths):
-        instance_re = r"""instance\(['"]([\w\-:]+)['"]\)"""
-        instances = set()
-        unknown_instance_ids = set()
-        for xpath in xpaths:
-            instance_names = re.findall(instance_re, xpath)
-            for instance_name in instance_names:
-                try:
-                    scheme, _ = instance_name.split(':', 1)
-                except ValueError:
-                    scheme = None
-
-                factory = get_instance_factory(scheme)
-                instance = factory(instance_name)
-                if instance:
-                    instances.add(instance)
-                else:
-                    class UnicodeWithContext(unicode):
-                        pass
-                    instance_name = UnicodeWithContext(instance_name)
-                    instance_name.xpath = xpath
-                    unknown_instance_ids.add(instance_name)
-        return instances, unknown_instance_ids
-
-    @staticmethod
-    def _add_custom_referenced_instances(domain, instances, unknown_instance_ids):
-        def _add_custom_instance(instance_name):
-            if instance_name in unknown_instance_ids:
-                instances.add(Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name)))
-                unknown_instance_ids.remove(instance_name)
-
-        if toggles.CUSTOM_CALENDAR_FIXTURE.enabled(domain):
-            _add_custom_instance('enikshay:calendar')
-
-        if toggles.MOBILE_UCR.enabled(domain):
-            _add_custom_instance('commcare:reports')
-
-        instance_name = 'locations'
-        if instance_name in unknown_instance_ids:
-            if toggles.FLAT_LOCATION_FIXTURE.enabled(domain):
-                instances.add(Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name)))
-            else:
-                instances.add(Instance(id=instance_name, src='jr://fixture/commtrack:{}'.format(instance_name)))
-            unknown_instance_ids.remove(instance_name)
-        return instances, unknown_instance_ids
 
 
 def get_instance_factory(scheme):
@@ -153,3 +97,66 @@ def preset_instances(instance_name):
 @memoized
 def generic_fixture_instances(instance_name):
     return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
+
+
+def get_all_instances_referenced_in_xpaths(domain, xpaths):
+    known_instances, unknown_instance_ids = _get_known_instances(xpaths)
+    feature_flag_instances = _get_feature_flag_instances(domain, required_instances=unknown_instance_ids)
+    known_instances |= feature_flag_instances
+    return known_instances, unknown_instance_ids
+
+
+def _get_known_instances(xpaths):
+    instance_re = r"""instance\(['"]([\w\-:]+)['"]\)"""
+    instances = set()
+    unknown_instance_ids = set()
+    for xpath in xpaths:
+        instance_names = re.findall(instance_re, xpath)
+        for instance_name in instance_names:
+            try:
+                scheme, _ = instance_name.split(':', 1)
+            except ValueError:
+                scheme = None
+
+            factory = get_instance_factory(scheme)
+            instance = factory(instance_name)
+            if instance:
+                instances.add(instance)
+            else:
+                class UnicodeWithContext(unicode):
+                    pass
+                instance_name = UnicodeWithContext(instance_name)
+                instance_name.xpath = xpath
+                unknown_instance_ids.add(instance_name)
+    return instances, unknown_instance_ids
+
+
+def _get_feature_flag_instances(domain, required_instances):
+    feature_flag_instances = set()
+
+    def _add_instance(instance_id):
+        if instance_id in required_instances:
+            feature_flag_instances.add(
+                Instance(id=instance_id, src='jr://fixture/{}'.format(instance_id))
+            )
+            required_instances.remove(instance_id)
+
+    if toggles.CUSTOM_CALENDAR_FIXTURE.enabled(domain):
+        _add_instance('enikshay:calendar')
+    if toggles.MOBILE_UCR.enabled(domain) and 'commcare:reports' in required_instances:
+        _add_instance('commcare:reports')
+
+    LOCATIONS = 'locations'
+    if LOCATIONS in required_instances:
+        if toggles.FLAT_LOCATION_FIXTURE.enabled(domain):
+            feature_flag_instances.add(
+                Instance(id=LOCATIONS, src='jr://fixture/{}'.format(LOCATIONS))
+            )
+        else:
+            feature_flag_instances.add(
+                Instance(id=LOCATIONS, src='jr://fixture/commtrack:{}'.format(LOCATIONS))
+            )
+        required_instances.remove(LOCATIONS)
+
+
+    return feature_flag_instances
