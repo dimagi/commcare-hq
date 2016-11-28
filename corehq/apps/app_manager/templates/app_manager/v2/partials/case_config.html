@@ -81,9 +81,7 @@
 
 <div id="case-config-ko">
     <div data-bind="saveButton: saveButton"></div>
-    {% if request|toggle_enabled:"REFRESH_CASE_MANAGEMENT" %}
-        <div data-bind="template: 'case-config:refresh-form-questions'"></div>
-    {% endif %}
+    <div data-bind="template: 'case-config:refresh-form-questions'"></div>
     <div data-bind="with: caseConfigViewModel">
         {% if app.advanced_app_builder %}
             <div class="form-inline container-fluid">

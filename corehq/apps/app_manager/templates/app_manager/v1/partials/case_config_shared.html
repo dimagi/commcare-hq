@@ -174,7 +174,7 @@
 
 <script type="text/html" id="case-config:refresh-form-questions">
     <div style="margin-right: 1em;"
-         class="btn btn-success refresh-form-questions pull-right"
+         class="btn btn-info refresh-form-questions pull-right"
          data-bind="click: function(data, event){
                     refreshQuestions('{% url 'get_form_questions' domain app.id %}', '{{module.id}}', '{{form.id}}', event);
                     analytics.usage('Refresh case management', 'Button Clicked');

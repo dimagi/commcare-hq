@@ -531,7 +531,7 @@ class RepeatRecord(Document):
         self.failure_reason = unicode(exception)
         self.save()
         if reraise:
-            raise exception
+            raise
 
     def fire(self, max_tries=3, force_send=False):
         headers = self.repeater.get_headers(self)

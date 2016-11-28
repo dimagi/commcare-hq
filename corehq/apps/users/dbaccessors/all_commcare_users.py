@@ -50,6 +50,19 @@ def get_mobile_user_count(domain, include_inactive=True):
     ])
 
 
+def get_mobile_user_ids(domain, include_inactive=True):
+    return {
+        row['id']
+        for row in _get_all_user_rows(
+            domain,
+            include_web_users=False,
+            include_mobile_users=True,
+            include_inactive=include_inactive,
+            count_only=False
+        ) if row
+    }
+
+
 def _get_all_user_rows(domain, include_web_users=True, include_mobile_users=True,
                        include_inactive=True, count_only=False):
     from corehq.apps.users.models import CommCareUser, WebUser

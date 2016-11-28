@@ -14,6 +14,8 @@ XMLNS_EBF_FORM = 'http://openrosa.org/formdesigner/89097FB1-6C08-48BA-95B2-67BCF
 XMLNS_CF_FORM = 'http://openrosa.org/formdesigner/792DAF2B-E117-424A-A673-34E1513ABD88'
 XMLNS_GMP_FORM = 'http://openrosa.org/formdesigner/b183124a25f2a0ceab266e4564d3526199ac4d75'
 XMLNS_DAILYFEEDING_FORM = 'http://openrosa.org/formdesigner/66d52f84d606567ea29d5fae88f569d2763b8b62'
+XMLNS_HH_REG_FORM = 'http://openrosa.org/formdesigner/1D568275-1D19-46DB-8C54-2C9765DF6335'
+XMLNS_ADD_MEMBER_FORM = 'http://openrosa.org/formdesigner/756ec44475658f3f463f8012632def2bc9fbe731'
 
 NUTRITION_STATUS_NORMAL = "green"
 NUTRITION_STATUS_MODERATE = "yellow"
@@ -131,6 +133,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
             add_element(case_update, 'zscore_grading_wfa', nutrition_status)
             case.append(case_update)
         form.append(case)
+        add_element(form, 'zscore_grading_wfa', nutrition_status)
 
         submit_form_locally(ElementTree.tostring(form), self.domain, **{})
 
@@ -191,6 +194,50 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         child_thr.append(child_thr_persons)
         form.append(child_thr)
 
+        submit_form_locally(ElementTree.tostring(form), self.domain, **{})
+
+    def _submit_delivery_form(
+            self, form_date, case_id, nutrition_status=None, case_id_2=None):
+
+        form = ElementTree.Element('data')
+        form.attrib['xmlns'] = XMLNS_DELIVERY_FORM
+        form.attrib['xmlns:jrm'] = 'http://openrosa.org/jr/xforms'
+
+        meta = ElementTree.Element('meta')
+        add_element(meta, 'timeEnd', form_date.isoformat())
+        form.append(meta)
+
+        child_repeat1 = ElementTree.Element('child')
+        child_open_child_health_repeat1 = ElementTree.Element('case_open_child_health_3')
+        case_repeat1 = ElementTree.Element('case')
+        case_repeat1.attrib['date_modified'] = form_date.isoformat()
+        case_repeat1.attrib['case_id'] = case_id
+        case_repeat1.attrib['xmlns'] = 'http://commcarehq.org/case/transaction/v2'
+        if nutrition_status is not None:
+            case_update_repeat1 = ElementTree.Element('update')
+            add_element(case_update_repeat1, 'zscore_grading_wfa', nutrition_status)
+            case_repeat1.append(case_update_repeat1)
+        child_open_child_health_repeat1.append(case_repeat1)
+        child_repeat1.append(child_open_child_health_repeat1)
+        add_element(child_repeat1, 'zscore_grading_wfa', nutrition_status)
+        form.append(child_repeat1)
+
+        if case_id_2 is not None:
+            child_repeat2 = ElementTree.Element('child')
+            child_open_child_health_repeat2 = ElementTree.Element('case_open_child_health_3')
+            case_repeat2 = ElementTree.Element('case')
+            case_repeat2.attrib['date_modified'] = form_date.isoformat()
+            case_repeat2.attrib['case_id'] = case_id_2
+            case_repeat2.attrib['xmlns'] = 'http://commcarehq.org/case/transaction/v2'
+            case_update_repeat2 = ElementTree.Element('update')
+            add_element(case_update_repeat2, 'zscore_grading_wfa', nutrition_status)
+            case_repeat2.append(case_update_repeat2)
+            child_open_child_health_repeat2.append(case_repeat2)
+            child_repeat2.append(child_open_child_health_repeat2)
+            add_element(child_repeat2, 'zscore_grading_wfa', NUTRITION_STATUS_SEVERE)
+            form.append(child_repeat2)
+
+        ElementTree.dump(form)
         submit_form_locally(ElementTree.tostring(form), self.domain, **{})
 
     def _submit_ebf_form(
@@ -267,10 +314,10 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
 
     def _submit_cf_form(
             self, form_date, case_id, comp_feeding=None, diet_diversity=None,
-            diet_quantity=None, handwashing=None, demo_comp_feeding=None, case_id_2=None):
+            diet_quantity=None, hand_wash=None, demo_comp_feeding=None, case_id_2=None):
 
         form = ElementTree.Element('data')
-        form.attrib['xmlns'] = XMLNS_EBF_FORM
+        form.attrib['xmlns'] = XMLNS_CF_FORM
         form.attrib['xmlns:jrm'] = 'http://openrosa.org/jr/xforms'
 
         meta = ElementTree.Element('meta')
@@ -281,23 +328,25 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         case.attrib['date_modified'] = form_date.isoformat()
         case.attrib['case_id'] = case_id
         case.attrib['xmlns'] = 'http://commcarehq.org/case/transaction/v2'
-        case_update = ElementTree.Element('update')
-        add_element(case_update, 'comp_feeding', comp_feeding)
-        add_element(case_update, 'diet_diversity', diet_diversity)
-        add_element(case_update, 'diet_diversity', diet_quantity)
-        add_element(case_update, 'handwashing', handwashing)
-        case.append(case_update)
         form.append(case)
 
         child = ElementTree.Element('child')
         child_repeat1 = ElementTree.Element('item')
         add_element(child_repeat1, 'child_health_case_id', case_id)
         add_element(child_repeat1, 'demo_comp_feeding', demo_comp_feeding)
+        add_element(child_repeat1, 'comp_feeding', comp_feeding)
+        add_element(child_repeat1, 'diet_diversity', diet_diversity)
+        add_element(child_repeat1, 'diet_quantity', diet_quantity)
+        add_element(child_repeat1, 'hand_wash', hand_wash)
         child.append(child_repeat1)
         if case_id_2 is not None:
             child_repeat2 = ElementTree.Element('item')
             add_element(child_repeat2, 'child_health_case_id', case_id_2)
-            add_element(child_repeat1, 'demo_comp_feeding', 'no')
+            add_element(child_repeat2, 'demo_comp_feeding', 'no')
+            add_element(child_repeat2, 'comp_feeding', 'no')
+            add_element(child_repeat2, 'diet_diversity', 'no')
+            add_element(child_repeat2, 'diet_quantity', 'no')
+            add_element(child_repeat2, 'hand_wash', '0')
             child.append(child_repeat2)
         form.append(child)
 
@@ -665,7 +714,71 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-    def test_nutrition_status(self):
+    def test_nutrition_status_delivery(self):
+        case_id = uuid.uuid4().hex
+        case_id_2 = uuid.uuid4().hex
+        self._create_case(
+            case_id=case_id,
+            dob=date(2016, 1, 1),
+            date_opened=datetime(2016, 1, 10),
+            date_modified=datetime(2016, 3, 12),
+        )
+        self._create_case(
+            case_id=case_id_2,
+            dob=date(2016, 1, 1),
+            date_opened=datetime(2016, 1, 10),
+            date_modified=datetime(2016, 3, 12),
+        )
+
+        self._submit_delivery_form(
+            form_date=datetime(2016, 1, 10),
+            case_id=case_id,
+            nutrition_status=NUTRITION_STATUS_MODERATE,
+            case_id_2=case_id_2,
+        ),
+        self._submit_gmp_form(
+            form_date=datetime(2016, 3, 4),
+            case_id=case_id,
+            nutrition_status=NUTRITION_STATUS_SEVERE
+        )
+
+        cases = [
+            (0, [('nutrition_status_last_recorded', None),
+                 ('current_month_nutrition_status', None),
+                 ('nutrition_status_severely_underweight', 0),
+                 ('nutrition_status_moderately_underweight', 0),
+                 ('nutrition_status_normal', 0),
+                 ('nutrition_status_weighed', 0),
+                 ('nutrition_status_unweighed', 0)],
+             ),
+            (1, [('nutrition_status_last_recorded', "moderately_underweight"),
+                 ('current_month_nutrition_status', "moderately_underweight"),
+                 ('nutrition_status_severely_underweight', 0),
+                 ('nutrition_status_moderately_underweight', 1),
+                 ('nutrition_status_normal', 0),
+                 ('nutrition_status_weighed', 1),
+                 ('nutrition_status_unweighed', 0)],
+             ),
+            (2, [('nutrition_status_last_recorded', "moderately_underweight"),
+                 ('current_month_nutrition_status', "unweighed"),
+                 ('nutrition_status_severely_underweight', 0),
+                 ('nutrition_status_moderately_underweight', 1),
+                 ('nutrition_status_normal', 0),
+                 ('nutrition_status_weighed', 0),
+                 ('nutrition_status_unweighed', 1)],
+             ),
+            (3, [('nutrition_status_last_recorded', "severely_underweight"),
+                 ('current_month_nutrition_status', "severely_underweight"),
+                 ('nutrition_status_severely_underweight', 1),
+                 ('nutrition_status_moderately_underweight', 0),
+                 ('nutrition_status_normal', 0),
+                 ('nutrition_status_weighed', 1),
+                 ('nutrition_status_unweighed', 0)],
+             ),
+        ]
+        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
+
+    def test_nutrition_status_gmp(self):
         case_id = uuid.uuid4().hex
         self._create_case(
             case_id=case_id,
@@ -884,7 +997,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
             date_modified=datetime(2016, 3, 12),
         )
 
-        #Dec: No data, Jan: EBF, Mar: Not EBF
+        # Dec: No data, Jan: EBF, Mar: Not EBF
         self._submit_ebf_form(
             form_date=datetime(2016, 1, 10),
             case_id=case_id,
@@ -975,7 +1088,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
             date_modified=datetime(2016, 3, 12),
         )
 
-        #Dec: not EBF, Jan: EBF
+        # Dec: not EBF, Jan: EBF
         self._submit_pnc_form(
             form_date=datetime(2015, 12, 14),
             case_id=case_id,
@@ -1121,6 +1234,76 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
                  ('ebf_no_bf_pregnant_again', 0),
                  ('ebf_no_bf_child_too_old', 0),
                  ('ebf_no_bf_mother_sick', 0)]
+             ),
+        ]
+        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
+
+    def test_cf(self):
+        case_id = uuid.uuid4().hex
+        case_id_2 = uuid.uuid4().hex
+        self._create_case(
+            case_id=case_id,
+            dob=date(2015, 5, 12),
+            date_opened=datetime(2015, 5, 14),
+            date_modified=datetime(2016, 3, 12),
+        )
+        self._create_case(
+            case_id=case_id_2,
+            dob=date(2015, 05, 12),
+            date_opened=datetime(2015, 5, 14),
+            date_modified=datetime(2016, 3, 12),
+        )
+
+        # Dec: No data, Jan: CF, Mar: Not CF
+        self._submit_cf_form(
+            form_date=datetime(2016, 1, 10),
+            case_id=case_id,
+            comp_feeding='yes',
+            diet_diversity='yes',
+            diet_quantity='yes',
+            hand_wash='1',
+            demo_comp_feeding='yes',
+            case_id_2=case_id_2,
+        )
+        self._submit_cf_form(
+            form_date=datetime(2016, 3, 10),
+            case_id=case_id,
+            comp_feeding='no',
+            diet_diversity='no',
+            diet_quantity='no',
+            hand_wash='0',
+            demo_comp_feeding='no',
+            case_id_2=case_id_2,
+        )
+
+        cases = [
+            (0, [('cf_eligible', 1),
+                 ('cf_in_month', 0),
+                 ('cf_diet_diversity', 0),
+                 ('cf_diet_quantity', 0),
+                 ('cf_handwashing', 0),
+                 ('cf_demo', 0)]
+             ),
+            (1, [('cf_eligible', 1),
+                 ('cf_in_month', 1),
+                 ('cf_diet_diversity', 1),
+                 ('cf_diet_quantity', 1),
+                 ('cf_handwashing', 1),
+                 ('cf_demo', 1)]
+             ),
+            (2, [('cf_eligible', 1),
+                 ('cf_in_month', 1),
+                 ('cf_diet_diversity', 1),
+                 ('cf_diet_quantity', 1),
+                 ('cf_handwashing', 1),
+                 ('cf_demo', 1)]
+             ),
+            (3, [('cf_eligible', 1),
+                 ('cf_in_month', 0),
+                 ('cf_diet_diversity', 0),
+                 ('cf_diet_quantity', 0),
+                 ('cf_handwashing', 0),
+                 ('cf_demo', 1)]
              ),
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)

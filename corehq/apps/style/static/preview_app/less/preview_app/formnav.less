@@ -22,7 +22,8 @@
 }
 
 .formnav-container {
-  width: 250px;
+  transition: width 1s;
+  width: @preview-phone-width;
   background-color: @cc-bg;
   box-sizing: border-box;
   height: 35px;
@@ -62,7 +63,8 @@
 }
 
 .btn-formnav-submit {
-  width: 204px;
+  transition: width 1s;
+  width: @preview-phone-width - 46px;
   text-transform: uppercase;
   padding: 9px 10px;
   border: none;
@@ -70,4 +72,13 @@
 
   .border-top-radius(0);
   .border-bottom-radius(0);
+}
+
+.preview-tablet-mode {
+  .formnav-container {
+    width: @preview-tablet-width;
+  }
+  .btn-formnav-submit {
+    width: @preview-tablet-width - 46px;
+  }
 }

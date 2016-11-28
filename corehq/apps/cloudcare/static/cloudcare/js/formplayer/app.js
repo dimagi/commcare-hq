@@ -22,7 +22,6 @@ FormplayerFrontend.on("before:start", function () {
             loadingProgress: "#formplayer-progress-container",
             breadcrumb: "#breadcrumb-region",
             persistentCaseTile: "#persistent-case-tile",
-            phoneModeNavigation: '#phone-mode-navigation',
             restoreAsBanner: '#restore-as-region',
         },
     });
@@ -201,12 +200,6 @@ FormplayerFrontend.on("start", function (options) {
             appId = options.apps[0]['_id'];
         }
 
-        if (user.displayOptions.phoneMode && user.displayOptions.singleAppMode) {
-            FormplayerFrontend.regions.phoneModeNavigation.show(
-                new FormplayerFrontend.Layout.Views.PhoneNavigation({ appId: appId })
-            );
-            FormplayerFrontend.trigger('phone:back:hide');
-        }
         // will be the same for every domain. TODO: get domain/username/pass from django
         if (this.getCurrentRoute() === "") {
             if (user.displayOptions.singleAppMode) {
@@ -361,6 +354,13 @@ FormplayerFrontend.on("retry", function(response, retryFn, progressMessage) {
     setTimeout(retryFn, retryTimeout);
 });
 
+FormplayerFrontend.on('view:tablet', function() {
+    $('body').addClass('preview-tablet-mode');
+});
+
+FormplayerFrontend.on('view:phone', function() {
+    $('body').removeClass('preview-tablet-mode');
+});
 
 /**
  * clearProgress
