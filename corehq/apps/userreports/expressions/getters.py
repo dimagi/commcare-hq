@@ -53,6 +53,8 @@ class NestedDictGetter(object):
 def safe_recursive_lookup(item, path):
     """
     Like recursive_lookup but returns `None` on any expected errors.
+
+    :raises ValueError if path is empty
     """
     if not isinstance(item, dict):
         return None
@@ -67,7 +69,10 @@ def safe_recursive_lookup(item, path):
 def recursive_lookup(dict_object, keys):
     """
     Given a dict object and list of keys, nest into those keys.
-    Raises KeyError if the path isn't found.
+
+    :raises KeyError if the path isn't found.
+    :raises ValueError if keys is an empty list
+
     >>> recursive_lookup({'foo': 1}, ['foo'])
     1
     >>> recursive_lookup({'foo': {'bar': 1}}, ['foo'])
