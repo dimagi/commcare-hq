@@ -1,24 +1,51 @@
 (function ($, _) {
-    var CaseProperty = function (caseType, data) {
-        this.caseType = ko.observable(caseType);
-        this.name = ko.observable(data.name);
-        this.type = ko.observable(data.type);
-        this.description = ko.observable(data.description);
+    var CaseProperty = function (caseType, data, casePropertyUrl) {
+        var self = this;
+
+        self.caseType = ko.observable(caseType);
+        self.name = ko.observable(data.name);
+        self.type = ko.observable(data.type);
+        self.description = ko.observable(data.description);
+        self.availableDataTypes = ko.observableArray([
+            {value: 'date', display: 'Date'},
+            {value: 'plain', display: 'Plain'},
+            {value: 'number', display: 'Number'},
+            {value: 'select', display: 'Select'},
+            {value: 'integer', display: 'Integer'},
+        ]);
+
+        self.type.subscribe(function (newType) {
+            if (newType) {
+                $.ajax({
+                    url: casePropertyUrl,
+                    type: 'POST',
+                    dataType: 'JSON',
+                    data: {
+                        'caseType': self.caseType(),
+                        'name': self.name,
+                        'type': newType,
+                    },
+                    success: function (data) { },
+                    error: function () { },
+                    // todo show errors
+                });
+            }
+        }, self);
     };
 
-    var CaseType = function (name) {
+    var CaseType = function (name, casePropertyUrl) {
         var self = this;
         self.name = ko.observable(name);
         self.properties = ko.observableArray();
 
         self.init = function (properties) {
             _.each(properties, function (property) {
-                self.properties.push(new CaseProperty(self.name, property));
+                self.properties.push(new CaseProperty(self.name, property, casePropertyUrl));
             });
         };
     };
 
-    var DataDictionaryModel = function (dataUrl) {
+    var DataDictionaryModel = function (dataUrl, casePropertyUrl) {
         var self = this;
         self.caseTypes = ko.observableArray();
         self.activeCaseType = ko.observable();
@@ -27,7 +54,7 @@
             $.getJSON(dataUrl)
             .done(function (data) {
                 _.each(data.case_types, function (caseType) {
-                    var caseTypeObj = new CaseType(caseType.name);
+                    var caseTypeObj = new CaseType(caseType.name, casePropertyUrl);
                     caseTypeObj.init(caseType.properties);
                     self.caseTypes.push(caseTypeObj);
                 });
@@ -53,8 +80,8 @@
         };
     };
 
-    $.fn.initializeDataDictionary = function (dataUrl) {
-        var viewModel = new DataDictionaryModel(dataUrl);
+    $.fn.initializeDataDictionary = function (dataUrl, casePropertyUrl) {
+        var viewModel = new DataDictionaryModel(dataUrl, casePropertyUrl);
         viewModel.init();
         $(this).koApplyBindings(viewModel);
         return viewModel;

@@ -11,7 +11,10 @@
 {% block js-inline %}
 <script>
     $(function () {
-        $('#hq-content').parent().initializeDataDictionary("{% url 'data_dictionary_json' domain%}");
+        $('#hq-content').parent().initializeDataDictionary(
+            "{% url 'data_dictionary_json' domain%}",
+            "{% url 'update_case_property' domain %}"
+        );
     });
 </script>
 {% endblock %}
@@ -45,13 +48,21 @@
                 <tbody data-bind="foreach: activeCaseTypeData">
                     <tr>
                         <td data-bind="text: name"></td>
-                        <td data-bind="text: type"></td>
+                        <td>
+                            <select data-bind="
+                                options: availableDataTypes,
+                                optionsCaption: 'Select a data type',
+                                optionsText: 'display',
+                                optionsValue: 'value',
+                                value: type,
+                            "></select>
+                        </td>
                         <td>
                             <inline-edit params="
                               value: $data && $data.description,
                               rows: 1,
                               placeholder: '{% trans "Click here to add a description"|escapejs %}',
-                              url: '{% url "update_case_property_description" domain %}',
+                              url: '{% url "update_case_property" domain %}',
                               saveParams: {'caseType': $data && $data.caseType, 'name':  $data && $data.name },
                               saveValueName: 'description',
                               errorMessage: '{% trans "Error updating description. Please try again."|escapejs %}',

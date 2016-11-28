@@ -47,14 +47,19 @@ def data_dictionary_json(request, domain, case_type_name=None):
 
 @login_and_domain_required
 @toggles.DATA_DICTIONARY.required_decorator()
-def update_case_property_description(request, domain):
+def update_case_property(request, domain):
     case_type = request.POST.get('caseType')
     name = request.POST.get('name')
     description = request.POST.get('description')
+    type = request.POST.get('type')
     prop = CaseProperty.objects.filter(
         name=name, case_type__name=case_type, case_type__domain=domain
     ).first()
-    prop.description = description
+    if type:
+        prop.type = type
+    if description:
+        prop.description = description
+    prop.full_clean()
     prop.save()
     return JsonResponse({"status": "success"})
 
