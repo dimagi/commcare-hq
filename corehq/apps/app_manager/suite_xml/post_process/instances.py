@@ -9,28 +9,17 @@ from dimagi.utils.decorators.memoized import memoized
 class EntryInstances(PostProcessor):
 
     def update_suite(self):
-        details_by_id = self.get_detail_mapping()
-        relevance_by_menu, menu_by_command = self.get_menu_relevance_mapping()
         for entry in self.suite.entries:
-            self.add_referenced_instances(entry, details_by_id, relevance_by_menu, menu_by_command)
+            self.add_entry_instances(entry)
 
-    def get_detail_mapping(self):
-        return {detail.id: detail for detail in self.suite.details}
+    def add_entry_instances(self, entry):
+        xpaths = self._get_all_xpaths_for_entry(entry)
+        instances, unknown_instance_ids = get_all_instances_referenced_in_xpaths(self.app.domain, xpaths)
+        entry.require_instances(instances=instances, instance_ids=unknown_instance_ids)
 
-    def get_menu_relevance_mapping(self):
-        relevance_by_menu = defaultdict(list)
-        menu_by_command = {}
-        for menu in self.suite.menus:
-            for command in menu.commands:
-                menu_by_command[command.id] = menu.id
-                if command.relevant:
-                    relevance_by_menu[menu.id].append(command.relevant)
-            if menu.relevant:
-                relevance_by_menu[menu.id].append(menu.relevant)
-
-        return relevance_by_menu, menu_by_command
-
-    def add_referenced_instances(self, entry, details_by_id, relevance_by_menu, menu_by_command):
+    def _get_all_xpaths_for_entry(self, entry):
+        relevance_by_menu, menu_by_command = self._get_menu_relevance_mapping()
+        details_by_id = self._get_detail_mapping()
         detail_ids = set()
         xpaths = set()
 
@@ -57,9 +46,26 @@ class EntryInstances(PostProcessor):
                     for datum in frame.datums:
                         xpaths.add(datum.value)
         xpaths.discard(None)
-        instances, unknown_instance_ids = EntryInstances.get_all_instances(self.app.domain, xpaths)
+        return xpaths
 
-        entry.require_instances(instances=instances, instance_ids=unknown_instance_ids)
+    @memoized
+    def _get_detail_mapping(self):
+        return {detail.id: detail for detail in self.suite.details}
+
+    @memoized
+    def _get_menu_relevance_mapping(self):
+        relevance_by_menu = defaultdict(list)
+        menu_by_command = {}
+        for menu in self.suite.menus:
+            for command in menu.commands:
+                menu_by_command[command.id] = menu.id
+                if command.relevant:
+                    relevance_by_menu[menu.id].append(command.relevant)
+            if menu.relevant:
+                relevance_by_menu[menu.id].append(menu.relevant)
+
+        return relevance_by_menu, menu_by_command
+
 
 
 
