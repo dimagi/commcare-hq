@@ -530,48 +530,49 @@ function getEntry(question) {
     var isPhoneMode = ko.utils.unwrapObservable(displayOptions.phoneMode);
 
     switch (question.datatype()) {
-        case Formplayer.Const.STRING:
-        case Formplayer.Const.BARCODE:
-            rawStyle = question.style ? ko.utils.unwrapObservable(question.style.raw) === 'numeric' : false;
-            if (rawStyle) {
-                entry = new PhoneEntry(question, { enableAutoUpdate: isPhoneMode });
-            } else {
-                entry = new FreeTextEntry(question, { enableAutoUpdate: isPhoneMode });
-            }
-            break;
-        case Formplayer.Const.INT:
-            entry = new IntEntry(question, { enableAutoUpdate: isPhoneMode });
-            break;
-        case Formplayer.Const.LONGINT:
-            entry = new IntEntry(question, { lengthLimit: 15, enableAutoUpdate: isPhoneMode  });
-            break;
-        case Formplayer.Const.FLOAT:
-            entry = new FloatEntry(question, { enableAutoUpdate: isPhoneMode });
-            break;
-        case Formplayer.Const.SELECT:
-            entry = new SingleSelectEntry(question, {});
-            break;
-        case Formplayer.Const.MULTI_SELECT:
-            entry = new MultiSelectEntry(question, {});
-            break;
-        case Formplayer.Const.DATE:
-            entry = new DateEntry(question, {});
-            break;
-        case Formplayer.Const.TIME:
-            entry = new TimeEntry(question, {});
-            break;
-        case Formplayer.Const.DATETIME:
-            entry = new DateTimeEntry(question, {});
-            break;
-        case Formplayer.Const.GEO:
-            entry = new GeoPointEntry(question, {});
-            break;
-        case Formplayer.Const.INFO:
-            entry = new InfoEntry(question, {});
-            break;
-        default:
-            console.warn('No active entry for: ' + question.datatype());
-            entry = new UnsupportedEntry(question, options);
+    case Formplayer.Const.STRING:
+    // Barcode uses text box for CloudCare so it's possible to still enter a barcode field
+    case Formplayer.Const.BARCODE:
+        rawStyle = question.style ? ko.utils.unwrapObservable(question.style.raw) === 'numeric' : false;
+        if (rawStyle) {
+            entry = new PhoneEntry(question, { enableAutoUpdate: isPhoneMode });
+        } else {
+            entry = new FreeTextEntry(question, { enableAutoUpdate: isPhoneMode });
+        }
+        break;
+    case Formplayer.Const.INT:
+        entry = new IntEntry(question, { enableAutoUpdate: isPhoneMode });
+        break;
+    case Formplayer.Const.LONGINT:
+        entry = new IntEntry(question, { lengthLimit: 15, enableAutoUpdate: isPhoneMode  });
+        break;
+    case Formplayer.Const.FLOAT:
+        entry = new FloatEntry(question, { enableAutoUpdate: isPhoneMode });
+        break;
+    case Formplayer.Const.SELECT:
+        entry = new SingleSelectEntry(question, {});
+        break;
+    case Formplayer.Const.MULTI_SELECT:
+        entry = new MultiSelectEntry(question, {});
+        break;
+    case Formplayer.Const.DATE:
+        entry = new DateEntry(question, {});
+        break;
+    case Formplayer.Const.TIME:
+        entry = new TimeEntry(question, {});
+        break;
+    case Formplayer.Const.DATETIME:
+        entry = new DateTimeEntry(question, {});
+        break;
+    case Formplayer.Const.GEO:
+        entry = new GeoPointEntry(question, {});
+        break;
+    case Formplayer.Const.INFO:
+        entry = new InfoEntry(question, {});
+        break;
+    default:
+        console.warn('No active entry for: ' + question.datatype());
+        entry = new UnsupportedEntry(question, options);
     }
     return entry;
 }
