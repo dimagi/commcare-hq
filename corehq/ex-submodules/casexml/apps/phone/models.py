@@ -82,6 +82,9 @@ class OTARestoreUser(object):
         "User's primary SQLLocation"
         return self._couch_user.get_sql_location(self.domain)
 
+    def get_sql_locations(self, domain):
+        return self._couch_user.get_sql_locations(domain)
+
     def get_fixture_data_items(self):
         raise NotImplementedError()
 
