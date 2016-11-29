@@ -193,8 +193,9 @@ class Select2Ajax(forms.TextInput):
         }
         js = ('select2-3.5.2-legacy/select2.js',)
 
-    def __init__(self, attrs=None, page_size=20):
+    def __init__(self, attrs=None, page_size=20, multiple=False):
         self.page_size = page_size
+        self.multiple = multiple
         super(Select2Ajax, self).__init__(attrs)
 
     def set_url(self, url):
@@ -202,8 +203,12 @@ class Select2Ajax(forms.TextInput):
 
     def _clean_initial(self, val):
         if isinstance(val, collections.Sequence) and not isinstance(val, (str, unicode)):
+            # if its a tuple or list
             return {"id": val[0], "text": val[1]}
+        elif val is None:
+            return None
         else:
+            # if its a scalar
             return {"id": val, "text": val}
 
     def render(self, name, value, attrs=None):
@@ -215,6 +220,7 @@ class Select2Ajax(forms.TextInput):
                 'initial': self._clean_initial(value),
                 'endpoint': self.url,
                 'page_size': self.page_size,
+                'multiple': self.multiple,
             }
         )
         return mark_safe(output)
