@@ -220,6 +220,8 @@
 
 <script type="text/html" id="question-fullform-ko-template">
     <!-- ko if: datatype() !== 'info' -->
+    <div class="form-group-required-label"
+         data-bind="visible: $data.required">{% trans 'Required' %}</div>
     <div class="q form-group" data-bind="
             css: {
                 error: error,
