@@ -223,7 +223,7 @@ class SimplifiedInventoryReport(GenericTabularReport, CommtrackReportMixin):
     @property
     @memoized
     def products(self):
-        products = SQLProduct.objects.filter(domain=self.domain)
+        products = SQLProduct.active_objects.filter(domain=self.domain)
         if self.program_id:
             products = products.filter(program_id=self.program_id)
         return list(products.order_by('name'))
