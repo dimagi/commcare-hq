@@ -164,3 +164,9 @@ class FixtureDataTest(TestCase):
                 self.domain, self.tag, 'state_name')
             delhi_id = fixtures['Delhi_state']['district_id']
             self.assertEqual(delhi_id, 'Delhi_id')
+
+    def test_get_item_by_field_value(self):
+        self.assertEqual(
+            FixtureDataItem.by_field_value(self.domain, self.data_type, 'state_name', 'Delhi_state').one().get_id,
+            self.data_item.get_id
+        )

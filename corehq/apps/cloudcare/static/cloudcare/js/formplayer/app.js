@@ -22,7 +22,6 @@ FormplayerFrontend.on("before:start", function () {
             loadingProgress: "#formplayer-progress-container",
             breadcrumb: "#breadcrumb-region",
             persistentCaseTile: "#persistent-case-tile",
-            phoneModeNavigation: '#phone-mode-navigation',
             restoreAsBanner: '#restore-as-region',
         },
     });
@@ -199,12 +198,6 @@ FormplayerFrontend.on("start", function (options) {
             appId = options.apps[0]['_id'];
         }
 
-        if (user.displayOptions.phoneMode && user.displayOptions.singleAppMode) {
-            FormplayerFrontend.regions.phoneModeNavigation.show(
-                new FormplayerFrontend.Layout.Views.PhoneNavigation({ appId: appId })
-            );
-            FormplayerFrontend.trigger('phone:back:hide');
-        }
         // will be the same for every domain. TODO: get domain/username/pass from django
         if (this.getCurrentRoute() === "") {
             if (user.displayOptions.singleAppMode) {
@@ -212,6 +205,11 @@ FormplayerFrontend.on("start", function (options) {
                 FormplayerFrontend.trigger("app:singleApp", appId);
             } else {
                 FormplayerFrontend.trigger("apps:list", options.apps);
+            }
+            if (user.displayOptions.phoneMode) {
+                // Refresh on start of preview mode so it ensures we're on the latest app
+                // since app updates do not work.
+                FormplayerFrontend.trigger('refreshApplication', appId);
             }
         }
     }
@@ -324,18 +322,6 @@ FormplayerFrontend.on("sync", function () {
     $.ajax(options);
 });
 
-FormplayerFrontend.on('phone:back:hide', function() {
-    if (FormplayerFrontend.regions.phoneModeNavigation.currentView) {
-        FormplayerFrontend.regions.phoneModeNavigation.currentView.hideBackButton();
-    }
-});
-
-FormplayerFrontend.on('phone:back:show', function() {
-    if (FormplayerFrontend.regions.phoneModeNavigation.currentView) {
-        FormplayerFrontend.regions.phoneModeNavigation.currentView.showBackButton();
-    }
-});
-
 /**
  * retry
  *
@@ -362,6 +348,13 @@ FormplayerFrontend.on("retry", function(response, retryFn, progressMessage) {
     setTimeout(retryFn, retryTimeout);
 });
 
+FormplayerFrontend.on('view:tablet', function() {
+    $('body').addClass('preview-tablet-mode');
+});
+
+FormplayerFrontend.on('view:phone', function() {
+    $('body').removeClass('preview-tablet-mode');
+});
 
 /**
  * clearProgress
@@ -382,6 +375,10 @@ FormplayerFrontend.on('clearProgress', function() {
     }, progressFinishTimeout);
 });
 
+
+FormplayerFrontend.on('setVersionInfo', function(versionInfo) {
+    $("#version-info").text(versionInfo || '');
+});
 
 /**
  * refreshApplication

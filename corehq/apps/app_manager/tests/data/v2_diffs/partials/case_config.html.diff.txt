@@ -9,7 +9,7 @@
  
  <script type="text/html" id="remove-subcase-modal-template">
      <div class="modal-dialog">
-@@ -63,6 +63,21 @@
+@@ -63,76 +63,97 @@
      </div>
  </script>
  
@@ -31,9 +31,7 @@
  
  <div id="case-config-ko">
      <div data-bind="saveButton: saveButton"></div>
-@@ -70,71 +85,77 @@
-         <div data-bind="template: 'case-config:refresh-form-questions'"></div>
-     {% endif %}
+     <div data-bind="template: 'case-config:refresh-form-questions'"></div>
      <div data-bind="with: caseConfigViewModel">
 -        <div class="form-inline container-fluid">
 -            {% trans "This form " %}

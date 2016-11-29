@@ -21,7 +21,8 @@ from phonelog.models import UserErrorEntry
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app, get_brief_apps_in_domain
 from corehq.apps.es import UserES
-from corehq.apps.receiverwrapper.util import get_meta_appversion_text, BuildVersionSource, get_app_version_info
+from corehq.apps.receiverwrapper.util import get_meta_appversion_text, BuildVersionSource, get_app_version_info, \
+    get_version_from_build_id, AppVersionInfo
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import user_display_string
 from corehq.const import USER_DATE_FORMAT
@@ -135,7 +136,7 @@ class ApplicationStatusReport(DeploymentsReport):
 
         for user in self.users:
             xform_dict = last_seen = last_sync = app_name = None
-
+            app_version_info_from_form = app_version_info_from_sync = None
             if user_xform_dicts_map.get(user.user_id):
                 xform_dict = user_xform_dicts_map[user.user_id][0]
 
@@ -152,24 +153,11 @@ class ApplicationStatusReport(DeploymentsReport):
                 else:
                     app_name = get_meta_appversion_text(xform_dict['form']['meta'])
 
-                app_version_info = get_app_version_info(
+                app_version_info_from_form = get_app_version_info(
                     self.domain,
                     xform_dict.get('build_id'),
                     xform_dict.get('version'),
                     xform_dict['form']['meta'],
-                )
-                build_html = _build_html(app_version_info)
-                commcare_version = (
-                    'CommCare {}'.format(app_version_info.commcare_version)
-                    if app_version_info.commcare_version
-                    else _("Unknown CommCare Version")
-                )
-                commcare_version_html = mark_safe('<span class="label label-info">{}</span>'.format(
-                    commcare_version)
-                )
-                app_name = app_name or _("Unknown App")
-                app_name = format_html(
-                    u'{} {} {}', app_name, mark_safe(build_html), commcare_version_html
                 )
 
             if app_name is None and self.selected_app_id:
@@ -178,6 +166,19 @@ class ApplicationStatusReport(DeploymentsReport):
             last_sync_log = SyncLog.last_for_user(user.user_id)
             if last_sync_log:
                 last_sync = last_sync_log.date
+                if last_sync_log.build_id:
+                    build_version = get_version_from_build_id(self.domain, last_sync_log.build_id)
+                    app_version_info_from_sync = AppVersionInfo(
+                        build_version,
+                        app_version_info_from_form.commcare_version if app_version_info_from_form else None,
+                        BuildVersionSource.BUILD_ID
+                    )
+
+            app_version_info_to_use = _choose_latest_version(
+                app_version_info_from_sync, app_version_info_from_form,
+            )
+            if app_version_info_to_use is not None:
+                app_name = _construct_app_name_html_from_name_and_version_info(app_name, app_version_info_to_use)
 
             rows.append(
                 [user.username_in_report, _fmt_date(last_seen), _fmt_date(last_sync), app_name or "---"]
@@ -199,6 +200,32 @@ class ApplicationStatusReport(DeploymentsReport):
             # Last sync
             row[2] = _fmt_timestamp(row[2])
         return result
+
+
+def _construct_app_name_html_from_name_and_version_info(app_name, app_version_info):
+    build_html = _build_html(app_version_info)
+    commcare_version = (
+        'CommCare {}'.format(app_version_info.commcare_version)
+        if app_version_info.commcare_version
+        else _("Unknown CommCare Version")
+    )
+    commcare_version_html = mark_safe('<span class="label label-info">{}</span>'.format(
+        commcare_version)
+    )
+    app_name = app_name or _("Unknown App")
+    return format_html(
+        u'{} {} {}', app_name, mark_safe(build_html), commcare_version_html
+    )
+
+
+def _choose_latest_version(*app_versions):
+    """
+    Chooses the latest version from a list of AppVersion objects - choosing the first one passed
+    in with the highest version number.
+    """
+    usable_versions = filter(None, app_versions)
+    if usable_versions:
+        return sorted(usable_versions, key=lambda v: v.build_version)[-1]
 
 
 class SyncHistoryReport(DeploymentsReport):

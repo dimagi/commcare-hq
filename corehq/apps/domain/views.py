@@ -32,7 +32,10 @@ from PIL import Image
 from django.utils.translation import ugettext as _, ugettext_lazy
 from django.contrib.auth.models import User
 
+from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.apps.calendar_fixture.forms import CalendarFixtureForm
+from corehq.apps.calendar_fixture.models import CalendarFixtureSettings
 from corehq.apps.case_search.models import (
     CaseSearchConfig,
     CaseSearchConfigJSON,
@@ -40,6 +43,8 @@ from corehq.apps.case_search.models import (
     disable_case_search,
 )
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
+from corehq.apps.locations.forms import LocationFixtureForm
+from corehq.apps.locations.models import LocationFixtureConfiguration
 from corehq.apps.repeaters.repeater_generators import RegisterGenerator
 
 from corehq.const import USER_DATE_FORMAT
@@ -2091,6 +2096,7 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
     template_name = 'domain/admin/case_search.html'
 
     @method_decorator(domain_admin_required)
+    @toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
     def dispatch(self, request, *args, **kwargs):
         return super(CaseSearchConfigView, self).dispatch(request, *args, **kwargs)
 
@@ -2139,6 +2145,58 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
                 'config': current_values.config if current_values else {}
             }
         }
+
+
+class CalendarFixtureConfigView(BaseAdminProjectSettingsView):
+    urlname = 'calendar_fixture_config'
+    page_title = ugettext_lazy('Calendar Fixture')
+    template_name = 'domain/admin/calendar_fixture.html'
+
+    @method_decorator(domain_admin_required)
+    @toggles.CUSTOM_CALENDAR_FIXTURE.required_decorator()
+    def dispatch(self, request, *args, **kwargs):
+        return super(CalendarFixtureConfigView, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        calendar_settings = CalendarFixtureSettings.for_domain(self.domain)
+        form = CalendarFixtureForm(request.POST, instance=calendar_settings)
+        if form.is_valid():
+            form.save()
+            messages.success(request, _("Calendar configuration updated successfully"))
+
+        return self.get(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        calendar_settings = CalendarFixtureSettings.for_domain(self.domain)
+        form = CalendarFixtureForm(instance=calendar_settings)
+        return {'form': form}
+
+
+class LocationFixtureConfigView(BaseAdminProjectSettingsView):
+    urlname = 'location_fixture_config'
+    page_title = ugettext_lazy('Location Fixture')
+    template_name = 'domain/admin/location_fixture.html'
+
+    @method_decorator(domain_admin_required)
+    @toggles.FLAT_LOCATION_FIXTURE.required_decorator()
+    def dispatch(self, request, *args, **kwargs):
+        return super(LocationFixtureConfigView, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        location_settings = LocationFixtureConfiguration.for_domain(self.domain)
+        form = LocationFixtureForm(request.POST, instance=location_settings)
+        if form.is_valid():
+            form.save()
+            messages.success(request, _("Location configuration updated successfully"))
+
+        return self.get(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        location_settings = LocationFixtureConfiguration.for_domain(self.domain)
+        form = LocationFixtureForm(instance=location_settings)
+        return {'form': form}
 
 
 class DomainForwardingRepeatRecords(GenericTabularReport):
@@ -2653,6 +2711,10 @@ class ProBonoStaticView(ProBonoMixin, BasePageView):
     urlname = 'pro_bono_static'
     use_domain_field = True
 
+    @use_select2
+    def dispatch(self, request, *args, **kwargs):
+        return super(ProBonoStaticView, self).dispatch(request, *args, **kwargs)
+
     @property
     def requesting_domain(self):
         return self.pro_bono_form.cleaned_data['domain']
@@ -2662,6 +2724,10 @@ class ProBonoView(ProBonoMixin, DomainAccountingSettings):
     template_name = 'domain/pro_bono/domain.html'
     urlname = 'pro_bono'
     use_domain_field = False
+
+    @use_select2
+    def dispatch(self, request, *args, **kwargs):
+        return super(ProBonoView, self).dispatch(request, *args, **kwargs)
 
     @property
     def requesting_domain(self):

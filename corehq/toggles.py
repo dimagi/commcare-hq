@@ -717,13 +717,6 @@ USE_FORMPLAYER = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-FORMPLAYER_EXPERIMENT = StaticToggle(
-    'use_formplayer_experiment',
-    'Do formplayer experimenting with Science',
-    TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN],
-)
-
 FIXTURE_CASE_SELECTION = StaticToggle(
     'fixture_case',
     'Allow a configurable case list that is filtered based on a fixture type and fixture selection (Due List)',
@@ -831,13 +824,6 @@ GRID_MENUS = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Grid+Views',
 )
 
-NEW_EXPORTS = StaticToggle(
-    'new_exports',
-    'Use new backend export infrastructure',
-    TAG_PRODUCT_CORE,
-    [NAMESPACE_DOMAIN]
-)
-
 OLD_EXPORTS = StaticToggle(
     'old_exports',
     'Use old backend export infrastructure',
@@ -915,8 +901,8 @@ ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
 
 CUSTOM_CALENDAR_FIXTURE = StaticToggle(
     'custom_calendar_fixture',
-    'Send a calendar fixture down to all users (UATBC/eNikshay one off)',
-    TAG_ONE_OFF,
+    'Send a calendar fixture down to all users (R&D)',
+    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN],
 )
 
@@ -933,13 +919,6 @@ DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
     'Disable column limit in UCR',
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
-)
-
-REFRESH_CASE_MANAGEMENT = StaticToggle(
-    'refresh_case_management',
-    'Show a button to refresh case management',
-    TAG_PREVIEW,
-    [NAMESPACE_USER, NAMESPACE_DOMAIN],
 )
 
 CLOUDCARE_LATEST_BUILD = StaticToggle(
@@ -967,5 +946,12 @@ DATA_MIGRATION = StaticToggle(
     'data_migration',
     'Disable submissions and restores during a data migration',
     TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
+DATA_DICTIONARY = StaticToggle(
+    'data_dictionary',
+    'Domain level data dictionary of cases',
+    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )

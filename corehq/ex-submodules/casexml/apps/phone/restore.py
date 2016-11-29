@@ -354,6 +354,10 @@ class RestoreParams(object):
         self.include_item_count = include_item_count
         self.app = app
 
+    @property
+    def app_id(self):
+        return self.app._id if self.app else None
+
 
 class RestoreCacheSettings(object):
     """
@@ -505,6 +509,8 @@ class RestoreState(object):
         previous_log_rev = None if self.is_initial else self.last_sync_log._rev
         last_seq = str(get_db().info()["update_seq"])
         new_synclog = SyncLog(
+            domain=self.restore_user.domain,
+            build_id=self.params.app_id,
             user_id=self.restore_user.user_id,
             last_seq=last_seq,
             owner_ids_on_phone=list(self.owner_ids),

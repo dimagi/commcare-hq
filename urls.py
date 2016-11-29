@@ -60,6 +60,7 @@ domain_specific = [
     url(r'^indicators/', include('corehq.apps.indicators.urls')),
     url(r'^reports/', include('corehq.apps.reports.urls')),
     url(r'^data/', include('corehq.apps.data_interfaces.urls')),
+    url(r'^data_dictionary/', include('corehq.apps.data_dictionary.urls')),
     url(r'^', include(hqwebapp_domain_specific)),
     url(r'^case/', include('corehq.apps.hqcase.urls')),
     url(r'^case/', include('corehq.apps.case_search.urls')),
@@ -75,7 +76,6 @@ domain_specific = [
     url(r'^dashboard/', include('corehq.apps.dashboard.urls')),
     url(r'^configurable_reports/', include('corehq.apps.userreports.urls')),
     url(r'^performance_messaging/', include('corehq.apps.performance_sms.urls')),
-    url(r'^preview_app/', include('corehq.apps.preview_app.urls')),
     url(r'^', include('custom.icds_reports.urls')),
     url(r'^', include('custom.enikshay.urls')),
     url(r'^_base_template/$', login_and_domain_required(

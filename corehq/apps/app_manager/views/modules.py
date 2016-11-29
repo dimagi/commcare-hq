@@ -207,7 +207,7 @@ def _get_shadow_module_view_context(app, module, lang=None):
         }
 
     return {
-        'modules': [get_mod_dict(m) for m in app.modules if m.module_type == 'basic'],
+        'modules': [get_mod_dict(m) for m in app.modules if m.module_type in ['basic', 'advanced']],
         'excluded_form_ids': module.excluded_form_ids,
     }
 
@@ -555,7 +555,7 @@ def _new_report_module(request, domain, app, name, lang):
         ReportAppConfig(
             report_id=report._id,
             header={lang: report.title},
-            description={lang: report.description},
+            description={lang: report.description} if report.description else None,
         )
         for report in ReportConfiguration.by_domain(domain)
     ]

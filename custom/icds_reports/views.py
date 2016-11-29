@@ -100,7 +100,7 @@ def get_tableau_access_token(tableau_user, client_ip):
                    if this is empty, the token returned can be redeemed on any IP address
     """
     r = requests.post(
-        const.TABLEU_TICKET_URL,
+        const.TABLEAU_TICKET_URL,
         data={'username': tableau_user, 'client_ip': client_ip}
     )
 

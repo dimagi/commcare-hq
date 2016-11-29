@@ -274,7 +274,7 @@ def get_apps_base_context(request, domain, app):
 @require_can_edit_apps
 def app_source(request, domain, app_id):
     app = get_app(domain, app_id)
-    return HttpResponse(app.export_json())
+    return json_response(app.export_json(dump_json=False))
 
 
 @require_can_edit_apps

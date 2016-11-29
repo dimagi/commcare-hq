@@ -2,7 +2,7 @@ from itertools import groupby
 from collections import defaultdict
 from xml.etree.ElementTree import Element
 from casexml.apps.phone.models import OTARestoreUser
-from corehq.apps.locations.models import SQLLocation, LocationType
+from corehq.apps.locations.models import SQLLocation, LocationType, LocationFixtureConfiguration
 from corehq import toggles
 
 
@@ -84,7 +84,7 @@ class LocationFixtureProvider(object):
 class HierarchicalLocationSerializer(object):
 
     def get_xml_nodes(self, fixture_id, restore_user, all_locations):
-        if not restore_user.project.uses_locations:
+        if not should_sync_hierarchical_fixture(restore_user.project):
             return []
 
         root_node = Element('fixture', {'id': fixture_id, 'user_id': restore_user.user_id})
@@ -98,7 +98,7 @@ class HierarchicalLocationSerializer(object):
 class FlatLocationSerializer(object):
 
     def get_xml_nodes(self, fixture_id, restore_user, all_locations):
-        if not toggles.FLAT_LOCATION_FIXTURE.enabled(restore_user.domain):
+        if not should_sync_flat_fixture(restore_user.domain):
             return []
 
         all_types = LocationType.objects.filter(domain=restore_user.domain).values_list(
@@ -125,6 +125,20 @@ class FlatLocationSerializer(object):
             outer_node.append(location_node)
 
         return [root_node]
+
+
+def should_sync_hierarchical_fixture(project):
+    return (
+        project.uses_locations and
+        LocationFixtureConfiguration.for_domain(project.name).sync_hierarchical_fixture
+    )
+
+
+def should_sync_flat_fixture(domain):
+    return (
+        toggles.FLAT_LOCATION_FIXTURE.enabled(domain) and
+        LocationFixtureConfiguration.for_domain(domain).sync_flat_fixture
+    )
 
 
 location_fixture_generator = LocationFixtureProvider(

@@ -8,7 +8,7 @@
  
  <script type="text/html" id="CommcareSettings.widgets.select">
      <span>
-@@ -152,117 +153,61 @@
+@@ -152,115 +153,61 @@
      </aside>
  </script>
  
@@ -48,7 +48,6 @@
 -                    </a>
 -                </legend>
 -                <div class="collapse" data-bind="foreach: settings, attr: {id: id}, css: {'in': !reallyCollapse()}">
--                    <!-- ko if: widget !== 'none' -->
 -                    <div class="form-group" data-bind="
 -                        visible: visible,
 -                        css: {error: hasError()}
@@ -86,7 +85,6 @@
 -                            </div>
 -                        </div>
 -                    </div>
--                    <!-- /ko -->
 +<div class="tabbable">
 +    <ul class="nav nav-tabs">
 +        <li class="active"><a href="#commcare-settings" data-toggle="tab">{% trans "Settings" %}</a></li>

@@ -42,6 +42,9 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
          * @param options: Array of strings.
          */
         setUpAutocomplete: function($elem, options){
+            if (!_.contains(options, $elem.value)) {
+                options.unshift($elem.value);
+            }
             $elem.$edit_view.select2({
                 minimumInputLength: 0,
                 delay: 0,
@@ -210,18 +213,32 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
 
     var searchViewModel = function (searchProperties, includeClosed, defaultProperties, lang, saveButton) {
         var self = this,
-            DEFAULT_CLAIM_RELEVANT= "count(instance('casedb')/casedb/case[@case_id=instance('querysession')/session/data/case_id]) = 0";
+            DEFAULT_CLAIM_RELEVANT= "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0";
 
         var SearchProperty = function (name, label) {
             var self = this;
             self.name = ko.observable(name);
             self.label = ko.observable(label);
+
+            self.name.subscribe(function () {
+                saveButton.fire('change');
+            });
+            self.label.subscribe(function () {
+                saveButton.fire('change');
+            });
         };
 
         var DefaultProperty = function (property, defaultValue) {
             var self = this;
             self.property = ko.observable(property);
             self.defaultValue = ko.observable(defaultValue);
+
+            self.property.subscribe(function () {
+                saveButton.fire('change');
+            });
+            self.defaultValue.subscribe(function () {
+                saveButton.fire('change');
+            });
         };
 
         self.relevant = ko.observable();
@@ -242,9 +259,6 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         } else {
             self.searchProperties.push(new SearchProperty('', ''));
         }
-        self.searchProperties.subscribe(function () {
-            saveButton.fire('change');
-        });
 
         self.addProperty = function () {
             self.searchProperties.push(new SearchProperty('', ''));
@@ -278,9 +292,6 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         } else {
             self.defaultProperties.push(new DefaultProperty('', ''));
         }
-        self.defaultProperties.subscribe(function () {
-            saveButton.fire('change');
-        });
         self.addDefaultProperty = function () {
             self.defaultProperties.push(new DefaultProperty('',''));
         };
@@ -320,10 +331,17 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                 default_properties: self._getDefaultProperties(),
             };
         };
+
         self.includeClosed.subscribe(function () {
             saveButton.fire('change');
         });
         self.default_relevant.subscribe(function () {
+            saveButton.fire('change');
+        });
+        self.searchProperties.subscribe(function () {
+            saveButton.fire('change');
+        });
+        self.defaultProperties.subscribe(function () {
             saveButton.fire('change');
         });
     };

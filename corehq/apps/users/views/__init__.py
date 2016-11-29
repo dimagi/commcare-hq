@@ -248,14 +248,19 @@ class BaseEditUserView(BaseUserSettingsView):
         return True
 
     def post(self, request, *args, **kwargs):
+        saved = False
         if self.request.POST['form_type'] == "commtrack":
             if self.commtrack_form.is_valid():
                 self.commtrack_form.save(self.editable_user)
+                saved = True
         elif self.request.POST['form_type'] == "update-user":
             if all([self.update_user(), self.custom_user_is_valid()]):
                 messages.success(self.request, _('Changes saved for user "%s"') % self.editable_user.raw_username)
-
-        return self.get(request, *args, **kwargs)
+                saved = True
+        if saved:
+            return HttpResponseRedirect(self.page_url)
+        else:
+            return self.get(request, *args, **kwargs)
 
 
 class EditWebUserView(BaseEditUserView):

@@ -1107,7 +1107,7 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
              # WARNING: Django 1.7 passes this in automatically. do not remove
              html_email_template_name=None,
              use_https=False, token_generator=default_token_generator,
-             from_email=None, request=None):
+             from_email=None, request=None, **kwargs):
         """
         Generates a one-use only link for resetting password and sends to the
         user.
@@ -1514,7 +1514,7 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
 
 
 class ProBonoForm(forms.Form):
-    contact_email = forms.EmailField(label=ugettext_lazy("Contact email"))
+    contact_email = forms.CharField(label=ugettext_lazy("Email To"))
     organization = forms.CharField(label=ugettext_lazy("Organization"))
     project_overview = forms.CharField(widget=forms.Textarea, label="Project overview")
     airtime_expense = forms.CharField(label=ugettext_lazy("Estimated annual expenditures on airtime:"))

@@ -21,6 +21,7 @@ class TestSubscriptionProperties(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestSubscriptionProperties, cls).setUpClass()
         generator.instantiate_accounting()
 
         cls.base_domain = Domain(name="base", is_active=True)
@@ -28,7 +29,6 @@ class TestSubscriptionProperties(TestCase):
         cls.user = WebUser.create(cls.base_domain.name, "tarso", "*****")
         cls.user.save()
 
-        cls._to_delete = []
         cls.community = Domain(name="community", is_active=True)
         cls.community.save()
         cls._setup_subscription(cls.community.name, SoftwarePlanEdition.COMMUNITY)
@@ -53,15 +53,14 @@ class TestSubscriptionProperties(TestCase):
             date_start=datetime.date.today() - datetime.timedelta(days=1),
             date_end=datetime.date.today() + datetime.timedelta(days=5))
         subscription.save()
-        cls._to_delete.append(account)
-        cls._to_delete.append(subscription)
 
     @classmethod
     def tearDownClass(cls):
-        SubscriptionAdjustment.objects.all().delete()
-        for obj in [cls.base_domain, cls.community, cls.enterprise] + cls._to_delete:
-            obj.delete()
+        generator.delete_all_subscriptions()
+        generator.delete_all_accounts()
+        cls.base_domain.delete()
         cls.user.delete()
+        super(TestSubscriptionProperties, cls).tearDownClass()
 
     def test_properties(self):
         properties = get_subscription_properties_by_user(self.user)

@@ -9,12 +9,11 @@ from corehq.apps.export.filters import FormSubmittedByFilter
 from corehq.apps.export.forms import FilterFormESExportDownloadForm
 
 
-@patch('corehq.apps.reports.util.get_first_form_submission_received', lambda x: datetime.datetime(2015, 1, 1))
 class TestFilterFormESExportDownloadForm(SimpleTestCase):
 
     def setUp(self):
-        DomainObject = namedtuple('DomainObject', ['uses_locations', 'name'])
-        self.project = DomainObject(False, "foo")
+        DomainObject = namedtuple('DomainObject', ['uses_locations', 'name', 'date_created'])
+        self.project = DomainObject(False, "foo", datetime.datetime(2015, 1, 1))
 
     def test_get_datespan_filter(self):
         form_data = {'date_range': '2015-06-25 to 2016-02-19'}
