@@ -915,11 +915,11 @@ TEMPLATES = [
                 'corehq.util.context_processors.websockets_override',
             ],
             'debug': DEBUG,
-            'loaders': [
+            'loaders': (
                 'django.template.loaders.filesystem.Loader',
                 'django.template.loaders.app_directories.Loader',
                 'django.template.loaders.eggs.Loader',
-            ]
+            )
         },
     },
 ]
@@ -1146,7 +1146,10 @@ if DEBUG:
     warnings.simplefilter('default')
     os.environ['PYTHONWARNINGS'] = 'd'  # Show DeprecationWarning
 else:
-    TEMPLATES[0]['OPTIONS']['loaders'].append('django.template.loaders.cached.Loader')
+    TEMPLATES[0]['OPTIONS']['loaders'] = (
+        'django.template.loaders.cached.Loader',
+        TEMPLATES[0]['OPTIONS']['loaders']
+    )
 
 if helper.is_testing():
     helper.assign_test_db_names(DATABASES)
