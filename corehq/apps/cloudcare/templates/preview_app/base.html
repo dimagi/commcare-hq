@@ -1,6 +1,7 @@
 {% load hq_shared_tags %}
 {% load compress %}
 {% load statici18n %}
+<!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE }}">
     <head>
         <meta charset="utf-8">
@@ -142,7 +143,7 @@
         {% endcompress %}
 
         {% compress js %}
-        <script src="{% static 'preview_app/js/dragscroll.js' %}"></script>
+        <script src="{% static 'cloudcare/js/preview_app/dragscroll.js' %}"></script>
         {% endcompress %}
 
         <style id="case-tiles-style"></style>
@@ -176,7 +177,8 @@
 
         <script>
         $(function () {
-            hqImport('preview_app/js/preview_app.js').start({
+            window.GMAPS_API_KEY = '{{ maps_api_key|safe }}'; // maps api is loaded on-demand
+            hqImport('cloudcare/js/preview_app/preview_app.js').start({
                 apps: [{{ app|JSON }}],
                 language: "{{ request.user.language|default:'en' }}",
                 username: "{{ request.user.username  }}",
@@ -207,6 +209,6 @@
         {% include 'formplayer/progress.html' %}
         {% include 'formplayer/dependencies.html' %}
         {% include "style/includes/ko.html" %}
-        <script src="{% static 'preview_app/js/preview_app.js' %}"></script>
+        <script src="{% static 'cloudcare/js/preview_app/preview_app.js' %}"></script>
     </body>
 </html>

@@ -103,12 +103,16 @@ preview_app/less */
   .preview-phone-container {
     width: @preview-tablet-width + (@preview-phone-case-offset-x * 2);
     height: @preview-tablet-height + (@preview-phone-case-offset-y * 2);
+    max-height: 95vh;
     margin-top: -(@preview-tablet-height + (@preview-phone-case-offset-y * 2))/2;
   }
 
   .preview-phone-window {
     width: @preview-tablet-width;
     height: @preview-tablet-height;
+    max-height: -webkit-calc(~"95vh - 2 * " @preview-phone-case-offset-y);
+    max-height: -moz-calc(~"95vh - 2 * " @preview-phone-case-offset-y);
+    max-height: calc(~"95vh - 2 * " @preview-phone-case-offset-y);
   }
   .preview-tablet-icon {
     display: none;

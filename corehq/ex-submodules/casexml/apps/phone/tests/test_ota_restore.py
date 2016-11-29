@@ -98,9 +98,8 @@ class BaseOtaRestoreTest(TestCase, TestFileMixin):
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
 class OtaRestoreTest(BaseOtaRestoreTest):
-    """Tests OTA Restore"""
 
-    def testUserRestore(self):
+    def test_user_restore(self):
         self.assertEqual(0, SyncLog.view(
             "phone/sync_logs_by_user",
             include_docs=True,

@@ -36,9 +36,9 @@ class TestEmwfFilterFormExport(TestCase):
     filter = form.dynamic_filter_class
 
     def setUp(self):
-        DomainObject = namedtuple('DomainObject', ['uses_locations', 'name'])
+        DomainObject = namedtuple('DomainObject', ['uses_locations', 'name', 'date_created'])
         self.domain = Domain(name="testapp", is_active=True)
-        self.project = DomainObject(False, "foo")
+        self.project = DomainObject(False, "foo", datetime.datetime(2015, 1, 1))
         self.subject = self.form
 
     def test_attributes(self):

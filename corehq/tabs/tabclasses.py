@@ -1140,9 +1140,7 @@ class ProjectSettingsTab(UITab):
 
     @property
     def sidebar_items(self):
-        from corehq.apps.domain.views import (FeatureFlagsView,
-                                              FeaturePreviewsView,
-                                              TransferDomainView)
+        from corehq.apps.domain.views import FeatureFlagsView
 
         items = []
         user_is_admin = self.couch_user.is_domain_admin(self.domain)
@@ -1180,63 +1178,11 @@ class ProjectSettingsTab(UITab):
         items.append((_('Project Information'), project_info))
 
         if user_is_admin:
-            administration = []
-            if not settings.ENTERPRISE_MODE:
-                administration.extend([
-                    {
-                        'title': _('CommCare Exchange'),
-                        'url': reverse('domain_snapshot_settings', args=[self.domain])
-                    },
-                    {
-                        'title': _('Multimedia Sharing'),
-                        'url': reverse('domain_manage_multimedia', args=[self.domain])
-                    }
-                ])
+            items.append((_('Project Administration'), _get_administration_section(self.domain)))
 
-            if toggles.SYNC_SEARCH_CASE_CLAIM.enabled(self.domain):
-                administration.append({
-                    'title': _('Case Search'),
-                    'url': reverse('case_search_config', args=[self.domain])
-                })
-
-            def forward_name(repeater_type=None, **context):
-                if repeater_type == 'FormRepeater':
-                    return _("Forward Forms")
-                elif repeater_type == 'ShortFormRepeater':
-                    return _("Forward Form Stubs")
-                elif repeater_type == 'CaseRepeater':
-                    return _("Forward Cases")
-
-            administration.extend([
-                {'title': _('Data Forwarding'),
-                 'url': reverse('domain_forwarding', args=[self.domain]),
-                 'subpages': [
-                     {
-                         'title': forward_name,
-                         'urlname': 'add_repeater',
-                     },
-                     {
-                         'title': forward_name,
-                         'urlname': 'add_form_repeater',
-                     },
-                ]},
-                {
-                    'title': _('Data Forwarding Records'),
-                    'url': reverse('domain_report_dispatcher', args=[self.domain, 'repeat_record_report'])
-                }
-            ])
-
-            administration.append({
-                'title': _(FeaturePreviewsView.page_title),
-                'url': reverse(FeaturePreviewsView.urlname, args=[self.domain])
-            })
-
-            if toggles.TRANSFER_DOMAIN.enabled(self.domain):
-                administration.append({
-                    'title': _(TransferDomainView.page_title),
-                    'url': reverse(TransferDomainView.urlname, args=[self.domain])
-                })
-            items.append((_('Project Administration'), administration))
+        feature_flag_items = _get_feature_flag_items(self.domain)
+        if feature_flag_items:
+            items.append((_('Pre-release Features'), feature_flag_items))
 
         from corehq.apps.users.models import WebUser
         if isinstance(self.couch_user, WebUser):
@@ -1323,6 +1269,83 @@ class ProjectSettingsTab(UITab):
             items.append((_('Internal Data (Dimagi Only)'), internal_admin))
 
         return items
+
+
+def _get_administration_section(domain):
+    from corehq.apps.domain.views import FeaturePreviewsView, TransferDomainView
+
+    administration = []
+    if not settings.ENTERPRISE_MODE:
+        administration.extend([
+            {
+                'title': _('CommCare Exchange'),
+                'url': reverse('domain_snapshot_settings', args=[domain])
+            },
+            {
+                'title': _('Multimedia Sharing'),
+                'url': reverse('domain_manage_multimedia', args=[domain])
+            }
+        ])
+
+    def forward_name(repeater_type=None, **context):
+        if repeater_type == 'FormRepeater':
+            return _("Forward Forms")
+        elif repeater_type == 'ShortFormRepeater':
+            return _("Forward Form Stubs")
+        elif repeater_type == 'CaseRepeater':
+            return _("Forward Cases")
+
+    administration.extend([
+        {'title': _('Data Forwarding'),
+         'url': reverse('domain_forwarding', args=[domain]),
+         'subpages': [
+             {
+                 'title': forward_name,
+                 'urlname': 'add_repeater',
+             },
+             {
+                 'title': forward_name,
+                 'urlname': 'add_form_repeater',
+             },
+        ]},
+        {
+            'title': _('Data Forwarding Records'),
+            'url': reverse('domain_report_dispatcher', args=[domain, 'repeat_record_report'])
+        }
+    ])
+
+    administration.append({
+        'title': _(FeaturePreviewsView.page_title),
+        'url': reverse(FeaturePreviewsView.urlname, args=[domain])
+    })
+
+    if toggles.TRANSFER_DOMAIN.enabled(domain):
+        administration.append({
+            'title': _(TransferDomainView.page_title),
+            'url': reverse(TransferDomainView.urlname, args=[domain])
+        })
+    return administration
+
+
+def _get_feature_flag_items(domain):
+    from corehq.apps.domain.views import CalendarFixtureConfigView, LocationFixtureConfigView
+    feature_flag_items = []
+    if toggles.SYNC_SEARCH_CASE_CLAIM.enabled(domain):
+        feature_flag_items.append({
+            'title': _('Case Search'),
+            'url': reverse('case_search_config', args=[domain])
+        })
+    if toggles.CUSTOM_CALENDAR_FIXTURE.enabled(domain):
+        feature_flag_items.append({
+            'title': _('Calendar Fixture'),
+            'url': reverse(CalendarFixtureConfigView.urlname, args=[domain])
+        })
+    if toggles.FLAT_LOCATION_FIXTURE.enabled(domain):
+        feature_flag_items.append({
+            'title': _('Location Fixture'),
+            'url': reverse(LocationFixtureConfigView.urlname, args=[domain])
+        })
+    return feature_flag_items
 
 
 class MySettingsTab(UITab):

@@ -824,13 +824,6 @@ GRID_MENUS = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Grid+Views',
 )
 
-NEW_EXPORTS = StaticToggle(
-    'new_exports',
-    'Use new backend export infrastructure',
-    TAG_PRODUCT_CORE,
-    [NAMESPACE_DOMAIN]
-)
-
 OLD_EXPORTS = StaticToggle(
     'old_exports',
     'Use old backend export infrastructure',
@@ -908,8 +901,8 @@ ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
 
 CUSTOM_CALENDAR_FIXTURE = StaticToggle(
     'custom_calendar_fixture',
-    'Send a calendar fixture down to all users (UATBC/eNikshay one off)',
-    TAG_ONE_OFF,
+    'Send a calendar fixture down to all users (R&D)',
+    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN],
 )
 
