@@ -100,8 +100,11 @@ class CouchSqlDomainMigrator(object):
         if sql_form.initial_processing_complete:
             case_stock_result = _get_case_and_ledger_updates(self.domain, sql_form)
             if len(case_stock_result.case_models):
-                case_actions = list(itertools.chain(*[u.actions for u in get_case_updates(couch_form)]))
-                if len(case_actions) == 1 and isinstance(case_actions[0], CaseNoopAction):
+                touch_updates = [
+                    update for update in get_case_updates(couch_form)
+                    if len(update.actions) == 1 and isinstance(update.actions[0], CaseNoopAction)
+                ]
+                if len(touch_updates):
                     # record these for later use when filtering case diffs. See ``_filter_forms_touch_case``
                     self.forms_that_touch_cases_without_actions.add(couch_form.form_id)
 

@@ -435,6 +435,12 @@ class MigrationTestCase(BaseMigrationTestCase):
                     <date>2011-06-07</date>
                     <n0:case case_id="{case_id}" user_id="user1" date_modified="{date}" xmlns:n0="http://commcarehq.org/case/transaction/v2">
                     </n0:case>
+                    <n0:case case_id="case-123" user_id="user-abc" date_modified="{date}" xmlns:n0="http://commcarehq.org/case/transaction/v2">
+                        <n0:create>
+                            <n0:case_type_id>cc_bc_demo</n0:case_type_id>
+                            <n0:case_name>fgg</n0:case_name>
+                        </n0:create>
+                    </n0:case>
                     <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
                         <n1:deviceID>354957031935664</n1:deviceID>
                         <n1:timeStart>{date}</n1:timeStart>
@@ -449,14 +455,15 @@ class MigrationTestCase(BaseMigrationTestCase):
             case_id=case_id
         )
         _, _, cases = submit_form_locally(xml, self.domain_name)
-        cases[0].xform_ids.remove(form_id)  # legacy bug that didn't include these form IDs in the case
-        cases[0].save()
+        case = [case for case in cases if case.case_id == case_id][0]
+        case.xform_ids.remove(form_id)  # legacy bug that didn't include these form IDs in the case
+        case.save()
 
         self.assertEqual(2, len(self._get_form_ids()))
-        self.assertEqual(1, len(self._get_case_ids()))
+        self.assertEqual(2, len(self._get_case_ids()))
         self._do_migration_and_assert_flags(self.domain_name)
         self.assertEqual(2, len(self._get_form_ids()))
-        self.assertEqual(1, len(self._get_case_ids()))
+        self.assertEqual(2, len(self._get_case_ids()))
         self._compare_diffs([])
 
     def test_xform_ids_diff(self):
