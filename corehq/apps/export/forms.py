@@ -15,7 +15,6 @@ from corehq.apps.es.users import user_ids_at_locations_and_descendants
 from corehq.apps.reports.filters.case_list import CaseListFilter
 from corehq.apps.reports.filters.users import LocationRestrictedMobileWorkerFilter
 from corehq.apps.groups.models import Group
-from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.util import (
     group_filter,
