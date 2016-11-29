@@ -4,8 +4,8 @@
 
         self.caseType = ko.observable(caseType);
         self.name = ko.observable(data.name);
-        self.type = ko.observable(data.type);
         self.description = ko.observable(data.description);
+        self.dataType = ko.observable(data.type);
         self.availableDataTypes = ko.observableArray([
             {value: 'date', display: 'Date'},
             {value: 'plain', display: 'Plain'},
@@ -14,7 +14,7 @@
             {value: 'integer', display: 'Integer'},
         ]);
 
-        self.type.subscribe(function (newType) {
+        self.dataType.subscribe(function (newType) {
             if (newType) {
                 $.ajax({
                     url: casePropertyUrl,

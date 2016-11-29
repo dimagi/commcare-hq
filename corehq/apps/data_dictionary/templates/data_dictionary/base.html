@@ -42,7 +42,7 @@
             <table id="data-dictionary-table" class="table">
                 <thead>
                     <th>{% trans "Case Property" %}</th>
-                    <th>{% trans "Type" %}</th>
+                    <th>{% trans "Data Type" %}</th>
                     <th>{% trans "Description" %}</th>
                 </thead>
                 <tbody data-bind="foreach: activeCaseTypeData">
@@ -54,18 +54,18 @@
                                 optionsCaption: 'Select a data type',
                                 optionsText: 'display',
                                 optionsValue: 'value',
-                                value: type,
+                                value: dataType,
                             "></select>
                         </td>
                         <td>
                             <inline-edit params="
                               value: $data && $data.description,
                               rows: 1,
-                              placeholder: '{% trans "Click here to add a description"|escapejs %}',
+                              placeholder: '{% trans "Click here to add a description" %}',
                               url: '{% url "update_case_property" domain %}',
                               saveParams: {'caseType': $data && $data.caseType, 'name':  $data && $data.name },
                               saveValueName: 'description',
-                              errorMessage: '{% trans "Error updating description. Please try again."|escapejs %}',
+                              errorMessage: '{% trans "Error updating description. Please try again." %}',
                             "></inline-edit>
                         </td>
                     </tr>

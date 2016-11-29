@@ -11,7 +11,7 @@ from corehq.util.test_utils import flag_enabled
 
 @flag_enabled('DATA_DICTIONARY')
 class UpdateCasePropertyViewTest(TestCase):
-    domain_name = str(uuid.uuid4())
+    domain_name = uuid.uuid4().hex
 
     @classmethod
     def setUpClass(cls):
