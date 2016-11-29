@@ -2,7 +2,9 @@
 import hashlib
 import re
 from django.test import SimpleTestCase
-from corehq.apps.app_manager.exceptions import SuiteValidationError
+from corehq.util.test_utils import flag_enabled
+
+from corehq.apps.app_manager.exceptions import SuiteValidationError, DuplicateInstanceIdError
 from corehq.apps.app_manager.models import (
     AdvancedModule,
     Application,
@@ -787,6 +789,10 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             "detail/variables"
         )
 
+
+class InstanceTests(SimpleTestCase, TestXmlMixin, SuiteMixin):
+    file_path = ('data', 'suite')
+
     def test_custom_instances(self):
         factory = AppFactory()
         module, form = factory.new_basic_module('m0', 'case1')
@@ -799,6 +805,53 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 <instance id='{}' src='{}' />
             </partial>
             """.format(instance_id, instance_path),
+            factory.app.create_suite(),
+            "entry/instance"
+        )
+
+    def test_duplicate_custom_instances(self):
+        factory = AppFactory()
+        module, form = factory.new_basic_module('m0', 'case1')
+        factory.form_requires_case(form)
+        instance_id = "casedb"
+        instance_path = "jr://casedb/bar"
+        # Use form_filter to add instances
+        form.form_filter = "count(instance('casedb')/casedb/case[@case_id='123']) > 0"
+        form.custom_instances = [CustomInstance(instance_id=instance_id, instance_path=instance_path)]
+        with self.assertRaises(DuplicateInstanceIdError):
+            factory.app.create_suite()
+
+    def test_location_instances(self):
+        factory = AppFactory()
+        module, form = factory.new_basic_module('m0', 'case1')
+        form.form_filter = "instance('locations')/locations/"
+        with flag_enabled('FLAT_LOCATION_FIXTURE'):
+            self.assertXmlPartialEqual(
+                u"""
+                <partial>
+                    <instance id='locations' src='jr://fixture/locations' />
+                </partial>
+                """,
+                factory.app.create_suite(),
+                "entry/instance")
+
+        self.assertXmlPartialEqual(
+            u"""
+            <partial>
+                <instance id='locations' src='jr://fixture/commtrack:locations' />
+            </partial>
+            """,
+            factory.app.create_suite(),
+            "entry/instance"
+        )
+
+        form.form_filter = "instance('commtrack:locations')/locations/"
+        self.assertXmlPartialEqual(
+            u"""
+            <partial>
+                <instance id='commtrack:locations' src='jr://fixture/commtrack:locations' />
+            </partial>
+            """,
             factory.app.create_suite(),
             "entry/instance"
         )
