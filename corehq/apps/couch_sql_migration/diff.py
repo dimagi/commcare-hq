@@ -17,6 +17,7 @@ PARTIAL_DIFFS = {
         {'path': ('problem',), 'old_value': '', 'new_value': None},
         {'path': ('orig_id',), 'old_value': Ellipsis, 'new_value': None},
         {'path': ('edited_on',), 'old_value': Ellipsis, 'new_value': None},
+        # {'path': ('form_migrated_from_undefined_xmlns',), 'new_value': Ellipsis}, ???
     ],
     'XFormInstance': [],
     'XFormInstance-Deleted': [],
