@@ -169,7 +169,9 @@ def _filter_forms_touch_case(diffs, forms_that_touch_cases_without_actions):
         form_ids = diff.new_value.split(',')
         diff_ids = [form_id for form_id in form_ids if form_id not in forms_that_touch_cases_without_actions]
         if diff_ids:
-            diff.new_value = ','.join(diff_ids)
+            diff_dict = diff._asdict()
+            diff_dict['new_value'] = ','.join(diff_ids)
+            diffs.append(FormJsonDiff(**diff_dict))
 
     return diffs
 
