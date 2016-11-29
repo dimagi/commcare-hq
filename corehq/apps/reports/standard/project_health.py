@@ -58,6 +58,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
                  delta_high_performers=0, delta_low_performers=0):
         self._previous_summary = previous_summary
         self._next_summary = None
+        self._is_final = None
 
         base_queryset = MALTRow.objects.filter(
             domain_name=domain,
@@ -192,8 +193,18 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
             ) for row in self._user_stat_from_malt
         }
 
+    def finalize(self):
+        """
+        Before a summary is "finalized" certain fields can't be accessed.
+        """
+        self._is_final = True
+
     @memoized
     def _get_all_user_stubs_with_extra_data(self):
+        if not self._is_final:
+            # intentionally fail-hard with developer-facing error
+            raise Exception("User stubs accessed before finalized. "
+                            "Please call finalize() before calling this method.")
         if self._previous_summary:
             previous_stubs = self._previous_summary._get_all_user_stubs()
             next_stubs = self._next_summary._get_all_user_stubs() if self._next_summary else {}
@@ -370,6 +381,7 @@ class ProjectHealthDashboard(ProjectReport):
             last_month_summary = this_month_summary
 
         for summary in six_month_summary:
+            summary.finalize()
             summary.set_num_inactive_users(len(summary.get_dropouts()))
 
         return six_month_summary[1:]
