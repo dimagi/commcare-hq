@@ -14,6 +14,7 @@ PARTIAL_DIFFS = {
         {'path': ('external_blobs',)},  # couch only
         {'diff_type': 'type', 'path': ('openrosa_headers', 'HTTP_X_OPENROSA_VERSION')},
         {'path': ('problem',), 'old_value': Ellipsis, 'new_value': None},
+        {'path': ('problem',), 'old_value': '', 'new_value': None},
         {'path': ('orig_id',), 'old_value': Ellipsis, 'new_value': None},
         {'path': ('edited_on',), 'old_value': Ellipsis, 'new_value': None},
     ],
