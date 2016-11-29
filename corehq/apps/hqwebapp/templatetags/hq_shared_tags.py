@@ -232,7 +232,8 @@ def can_use_restore_as(request):
 
     return (
         request.couch_user.can_edit_commcare_users() and
-        has_privilege(request, privileges.DATA_CLEANUP)
+        has_privilege(request, privileges.DATA_CLEANUP) and
+        has_privilege(request, privileges.CLOUDCARE)
     )
 
 
