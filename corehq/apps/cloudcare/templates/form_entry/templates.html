@@ -144,6 +144,14 @@
                                 {% trans "Evaluate XPath" %}
                             </a>
                         </li>
+                          <li role="presentation">
+                              <a href="#fixture-xml-instance" role="tab"
+                                 id="fixture-xml-instance-tab"
+                                 data-toggle="tab">
+                                  {% trans "Fixture Viewer" %}
+                              </a>
+                              <select id="instance-select" data-bind="options: externalInstanceNames, value: selectedInstance"></select>
+                          </li>
                         <li role="presentation">
                             <a href="#debugger-settings" aria-controls="debugger-settings" role="tab" data-toggle="tab">
                                 {% trans "Settings" %}
@@ -167,6 +175,9 @@
                             name: 'debugger-eval-ko-template',
                             data: evalXPath }">
                         </div>
+                    </div>
+                    <div role="tabpanel" class="tab-pane" id="fixture-xml-instance">
+                        <div id="fixture-viewer-pretty">{% trans "Answer a question to show data" %}</div>
                     </div>
                     <div role="tabpanel" class="tab-pane" id="debugger-settings">
                         <form class="form-horizontal debug-controls">

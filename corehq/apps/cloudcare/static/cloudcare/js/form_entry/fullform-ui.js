@@ -413,16 +413,17 @@ Question.prototype.fromJS = function(json) {
     };
 
     ko.mapping.fromJS(json, mapping, self);
-}
-
+};
 
 Formplayer.ViewModels.CloudCareDebugger = function() {
     var self = this;
-
     self.evalXPath = new Formplayer.ViewModels.EvaluateXPath();
     self.isMinimized = ko.observable(true);
     self.instanceXml = ko.observable('');
     self.formattedQuestionsHtml = ko.observable('');
+    self.externalInstanceNames = ko.observable('');
+    self.selectedInstance = ko.observable('');
+    self.externalInstanceList = ko.observable('');
     self.toggleState = function() {
         self.isMinimized(!self.isMinimized());
         // Wait to set the content heigh until after the CSS animation has completed.
@@ -437,8 +438,47 @@ Formplayer.ViewModels.CloudCareDebugger = function() {
             self.formattedQuestionsHtml(resp.formattedQuestions);
             self.instanceXml(resp.instanceXml);
             self.evalXPath.autocomplete(resp.questionList);
+            self.externalInstances(resp.instanceList);
         });
     });
+
+
+    self.externalInstances = function(instanceList) {
+        self.selectedInstance = ko.observable();
+
+        self.selectedInstance.subscribe(function(selectedInstance) {
+            for (var i = 0; i < instanceList.length; i++) {
+                var name = instanceList[i].instanceName;
+                if (name === selectedInstance) {
+                    var newXml = instanceList[i].instanceXml;
+                    console.log("selecting instance " + name);
+                    var $instanceTab = $('#fixture-xml-instance-tab'),
+                        codeMirror;
+
+                    codeMirror = CodeMirror(function (el) {
+                        $('#fixture-viewer-pretty').html(el);
+                    }, {
+                        value: newXml,
+                        mode: 'xml',
+                        viewportMargin: Infinity,
+                        readOnly: true,
+                        lineNumbers: true,
+                    });
+                    $instanceTab.off();
+                    $instanceTab.on('shown.bs.tab', function () {
+                        codeMirror.refresh();
+                    });
+                }
+            }
+        });
+
+        var names = [];
+        for (var i = 0; i < instanceList.length; i++) {
+            names.push(instanceList[i].instanceName);
+        }
+        self.externalInstanceNames(names);
+        self.externalInstanceList(instanceList);
+    };
 
     self.setContentHeight = function() {
         var contentHeight;
