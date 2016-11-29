@@ -125,11 +125,8 @@ class DiffTestCases(SimpleTestCase):
             'xform_ids': ['456', '123']
         }
 
-        diffs = [
-            FormJsonDiff(diff_type=u'diff', path=('xform_ids', '[*]'), old_value=u'123', new_value=u'456'),
-            FormJsonDiff(diff_type=u'diff', path=('xform_ids', '[*]'), old_value=u'455', new_value=u'123')
-        ]
-
+        diffs = json_diff(couch_case, sql_case, track_list_indices=False)
+        self.assertEqual(2, len(diffs))
         filtered = filter_case_diffs(couch_case, sql_case, diffs + REAL_DIFFS)
         self.assertEqual(filtered, REAL_DIFFS)
 
@@ -143,6 +140,8 @@ class DiffTestCases(SimpleTestCase):
             'xform_ids': ['123', 'abc']
         }
 
+        diffs = json_diff(couch_case, sql_case, track_list_indices=False)
+        self.assertEqual(1, len(diffs))
         diffs = [
             FormJsonDiff(diff_type=u'diff', path=('xform_ids', '[*]'), old_value=u'456', new_value=u'abc')
         ]
@@ -190,14 +189,18 @@ class DiffTestCases(SimpleTestCase):
         self.assertEqual(filtered, REAL_DIFFS)
 
     def test_filter_combo_fields(self):
-        couch_case = {'doc_type': 'CommCareCase'}
-        rename_date_diffs = [
-            FormJsonDiff(diff_type='missing', path=('@date_modified',), old_value='2015-03-23T14:36:53Z', new_value=Ellipsis),
-            FormJsonDiff(diff_type='missing', path=('modified_on',), old_value=Ellipsis, new_value='2015-03-23T14:36:53.073000Z'),
-        ]
-        diffs = rename_date_diffs + REAL_DIFFS
-        filtered = filter_case_diffs(couch_case, {}, diffs)
-        self.assertEqual(filtered, REAL_DIFFS)
+        couch_case = {
+            'doc_type': 'CommCareCase',
+            '@date_modified': '2015-03-23T14:36:53Z'
+        }
+        sql_case = {
+            'doc_type': 'CommCareCase',
+            'modified_on': '2015-03-23T14:36:53.073000Z'
+        }
+        rename_date_diffs = json_diff(couch_case, sql_case)
+        self.assertEqual(2, len(rename_date_diffs))
+        filtered = filter_case_diffs(couch_case, sql_case, rename_date_diffs)
+        self.assertEqual(filtered, [])
 
     def test_case_indices_order(self):
         couch_case = {
