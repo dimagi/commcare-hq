@@ -42,11 +42,11 @@
     listExportsApp.constant('modelType', {{ model_type|JSON }});
     listExportsApp.constant('staticModelType', {{ static_model_type|JSON }});
     listExportsApp.constant('filterFormElements', {
-        group: function () {
-            return $('#id_group');
+        emwf_form_filter: function () {
+            return $('#id_emwf_form_filter');
         },
-        user_type: function () {
-            return $('#id_user_types');
+        emwf_case_filter: function () {
+            return $('#id_emwf_case_filter');
         }
     });
     listExportsApp.constant('filterFormModalElement', function () {

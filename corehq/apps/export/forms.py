@@ -13,8 +13,10 @@ from corehq.apps.export.filters import (
 )
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.es.users import user_ids_at_locations_and_descendants, user_ids_at_locations
-from corehq.apps.reports.filters.case_list import CaseListFilter
-from corehq.apps.reports.filters.users import LocationRestrictedMobileWorkerFilter
+from corehq.apps.export.models.new import DatePeriod, CaseExportInstance
+from corehq.apps.export.models.new import ExportInstanceFilters
+from corehq.apps.reports.filters.case_list import CaseListFilter, CaseListFilterUtils
+from corehq.apps.reports.filters.users import LocationRestrictedMobileWorkerFilter, EmwfUtils
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.util import (
@@ -32,6 +34,7 @@ from corehq.apps.style.forms.widgets import (
     Select2MultipleChoiceWidget,
     DateRangePickerWidget,
     Select2,
+    Select2Ajax,
 )
 from corehq.pillows import utils
 from couchexport.util import SerializableFunction
@@ -411,11 +414,20 @@ def _date_help_text(field):
     )
 
 
-class DashboardFeedFilterForm(BaseFilterExportDownloadForm):
+class DashboardFeedFilterForm(forms.Form):
     """
     A form used to configure the filters on a Dashboard Feed export
     """
-
+    emwf_case_filter = forms.Field(
+        label=ugettext_lazy("Groups or Users"),
+        required=False,
+        widget=Select2Ajax(multiple=True),
+    )
+    emwf_form_filter = forms.Field(
+        label=ugettext_lazy("Groups or Users"),
+        required=False,
+        widget=Select2Ajax(multiple=True),
+    )
     date_range = forms.ChoiceField(
         label=ugettext_lazy("Date Range"),
         required=True,
@@ -447,10 +459,32 @@ class DashboardFeedFilterForm(BaseFilterExportDownloadForm):
         help_text=_date_help_text("end_date"),
     )
 
+    def __init__(self, domain_object, *args, **kwargs):
+        self.domain_object = domain_object
+        super(DashboardFeedFilterForm, self).__init__(*args, **kwargs)
+
+        self.fields['emwf_case_filter'].widget.set_url(
+            reverse(CaseListFilter.options_url, args=(self.domain_object.name,))
+        )
+        self.fields['emwf_form_filter'].widget.set_url(
+            reverse(LocationRestrictedMobileWorkerFilter.options_url, args=(self.domain_object.name,))
+        )
+
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.label_class = 'col-sm-3 col-md-2 col-lg-2'
+        self.helper.field_class = 'col-sm-9 col-md-10 col-lg-10'
+        self.helper.layout = Layout(*self.layout_fields)
+
     def clean(self):
         cleaned_data = super(DashboardFeedFilterForm, self).clean()
-        date_range = cleaned_data['date_range']
         errors = []
+
+        if cleaned_data['emwf_form_filter'] and cleaned_data['emwf_case_filter']:
+            # This should only happen if a user builds the reqest manually or there is an error rendering the form
+            forms.ValidationError(_("Cannot submit case and form users and groups filter"))
+
+        date_range = cleaned_data['date_range']
         if date_range in ("since", "range") and not cleaned_data.get('start_date', None):
             errors.append(
                 forms.ValidationError(_("A valid start date is required"))
@@ -462,9 +496,35 @@ class DashboardFeedFilterForm(BaseFilterExportDownloadForm):
         if errors:
             raise forms.ValidationError(errors)
 
+    def format_export_data(self, export):
+        return {
+            'domain': self.domain_object.name,
+            'sheet_name': export.name,
+            'export_id': export.get_id,
+            'export_type': self._export_type,
+            'name': export.name,
+            'edit_url': self.get_edit_url(export),
+        }
+
     @property
-    def extra_fields(self):
+    def layout_fields(self):
         return [
+            crispy.Div(
+                crispy.Field(
+                    'emwf_case_filter',
+                    # ng_model='formData.emwf_case_filter',
+                    # ng_model_options="{ getterSetter: true }",
+                ),
+                ng_show="modelType === 'case'"
+            ),
+            crispy.Div(
+                crispy.Field(
+                    'emwf_form_filter',
+                    # ng_model='formData.emwf_form_filter',
+                    # ng_model_options="{ getterSetter: true }",
+                ),
+                ng_show="modelType === 'form'"
+            ),
             crispy.Field(
                 'date_range',
                 ng_model='formData.date_range',
@@ -494,10 +554,28 @@ class DashboardFeedFilterForm(BaseFilterExportDownloadForm):
             )
         ]
 
-    def to_export_instance_filters(self):
+    def to_export_instance_filters(self, can_access_all_locations, accessible_location_ids):
         """
         Serialize the bound form as an ExportInstanceFilters object.
         """
+
+        # Only one of these fields should have any data in it.
+        emwf_field = 'emwf_form_filter' if self.cleaned_data['emwf_form_filter'] else 'emwf_case_filter'
+        emwf_selections = [x['id'] for x in self.cleaned_data[emwf_field]]
+
+        if self.cleaned_data['emwf_form_filter']:
+            # its a from export
+            emwf_class = LocationRestrictedMobileWorkerFilter
+            sharing_groups = []
+            show_all_data = None
+            show_project_data = None
+        else:
+            # its a case export
+            emwf_class = CaseListFilter
+            sharing_groups = emwf_class.selected_sharing_group_ids(emwf_selections)
+            show_all_data = emwf_class.show_all_data(emwf_selections)
+            emwf_class.show_project_data(emwf_selections)
+
         return ExportInstanceFilters(
             date_period=DatePeriod(
                 period_type=self.cleaned_data['date_range'],
@@ -505,13 +583,19 @@ class DashboardFeedFilterForm(BaseFilterExportDownloadForm):
                 begin=self.cleaned_data['start_date'],
                 end=self.cleaned_data['end_date'],
             ),
-            type_or_group=self.cleaned_data['type_or_group'],
-            user_types=self.cleaned_data['user_types'],
-            group=self.cleaned_data['group']
+            users=emwf_class.selected_user_ids(emwf_selections),
+            reporting_groups=emwf_class.selected_reporting_group_ids(emwf_selections),
+            sharing_groups=sharing_groups,
+            locations=emwf_class.selected_location_ids(emwf_selections),
+            user_types=emwf_class.selected_user_types(emwf_selections),
+            can_access_all_locations=can_access_all_locations,
+            accessible_location_ids=accessible_location_ids,
+            show_all_data=show_all_data,
+            show_project_data=show_project_data,
         )
 
     @classmethod
-    def get_form_data_from_export_instance_filters(cls, export_instance_filters):
+    def get_form_data_from_export_instance_filters(cls, export_instance_filters, domain, export_type):
         """
         Return a dictionary representing the form data from a given ExportInstanceFilters.
         This is used to populate a form from an existing export instance
@@ -520,14 +604,25 @@ class DashboardFeedFilterForm(BaseFilterExportDownloadForm):
         """
         if export_instance_filters:
             date_period = export_instance_filters.date_period
+
+            selected_items = (
+                export_instance_filters.users +
+                export_instance_filters.reporting_groups +
+                export_instance_filters.sharing_groups +
+                export_instance_filters.locations +
+                export_instance_filters.user_types
+            )
+            emwf_utils_class = CaseListFilterUtils if export_type is CaseExportInstance else EmwfUtils
+            emwf_data = [emwf_utils_class(domain).id_to_choice_tuple(str(x)) for x in selected_items]
+            emwf_data = [{"id": x[0], "text": x[1]} for x in emwf_data]
+
             return {
                 "date_range": date_period.period_type if date_period else None,
                 "days": date_period.days if date_period else None,
                 "start_date": date_period.begin if date_period else None,
                 "end_date": date_period.end if date_period else None,
-                "type_or_group": export_instance_filters['type_or_group'],
-                "user_types": export_instance_filters['user_types'],
-                "group": export_instance_filters['group'],
+                "emwf_form_filter": emwf_data,
+                "emwf_case_filter": emwf_data,
             }
         else:
             return None
@@ -722,9 +817,16 @@ class AbstractExportFilterBuilder(object):
             return self.export_user_filter(user_ids)
 
     def _get_datespan_filter(self, datespan):
-        if datespan.is_valid():
-            datespan.set_timezone(self.timezone)
+        if datespan:
+            try:
+                if not datespan.is_valid():
+                    return
+                datespan.set_timezone(self.timezone)
+            except AttributeError:
+                # Some date_intervals (e.g. DatePeriod instances) don't have a set_timezone() or is_valid() methods.
+                pass
             return self.date_filter_class(gte=datespan.startdate, lt=datespan.enddate + timedelta(days=1))
+
 
     def _get_locations_filter(self, location_ids):
         """
@@ -761,7 +863,8 @@ class FormExportFilterBuilder(AbstractExportFilterBuilder):
             form_filters.append(FormSubmittedByFilter(user_ids))
             return form_filters
 
-    def get_filter(self, can_access_all_locations, accessible_location_ids, group_ids, user_types, user_ids, location_ids, date_range):
+    def get_filter(self, can_access_all_locations, accessible_location_ids, group_ids, user_types, user_ids,
+                   location_ids, date_range):
         form_filters = []
         if can_access_all_locations:
             form_filters += filter(None, [
@@ -776,7 +879,9 @@ class FormExportFilterBuilder(AbstractExportFilterBuilder):
 
         form_filters = flatten_non_iterable_list(form_filters)
         form_filters = [OR(*form_filters)]
-        form_filters.append(self._get_datespan_filter(date_range))
+        date_filter = self._get_datespan_filter(date_range)
+        if date_filter:
+            form_filters.append(date_filter)
         if not can_access_all_locations:
             form_filters.append(self._scope_filter(accessible_location_ids))
         return form_filters
@@ -792,8 +897,8 @@ class CaseExportFilterBuilder(AbstractExportFilterBuilder):
     export_user_filter = OwnerFilter
     date_filter_class = ModifiedOnRangeFilter
 
-    def get_filter(self, can_access_all_locations, accessible_location_ids, show_all_data, show_project_data, selected_user_types, datespan,
-                   group_ids, location_ids, user_ids):
+    def get_filter(self, can_access_all_locations, accessible_location_ids, show_all_data, show_project_data,
+                   selected_user_types, datespan, group_ids, location_ids, user_ids):
         """
         Taking reference from CaseListMixin allow filters depending on locations access
         :param can_access_all_locations: if request user has full organization access permission

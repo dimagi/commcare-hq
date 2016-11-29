@@ -11,14 +11,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 
 from corehq.apps.export.export import get_export_download, get_export_size
-from corehq.apps.export.filters import (
-    FormSubmittedByFilter,
-    OwnerFilter,
-    LastModifiedByFilter,
-    OR
-)
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.locations.permissions import location_safe
+from corehq.apps.locations.permissions import location_safe, location_restricted_response
 from corehq.apps.reports.filters.case_list import CaseListFilter
 from corehq.apps.reports.filters.users import LocationRestrictedMobileWorkerFilter
 from corehq.apps.reports.views import should_update_export, \
@@ -99,7 +93,6 @@ from corehq.apps.users.decorators import get_permission_name
 from corehq.apps.users.models import Permissions
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
     DEID_EXPORT_PERMISSION, has_permission_to_view_report
-from corehq.apps.es.users import user_ids_at_locations
 from corehq.util.couch import get_document_or_404_lite
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.soft_assert import soft_assert
@@ -1036,7 +1029,7 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
     def fmt_emailed_export_data(self, group_id=None, index=None,
                                 has_file=False, file_id=None, size=0,
                                 last_updated=None, last_accessed=None,
-                                download_url=None, filters=None):
+                                download_url=None, filters=None, export_type=None):
         """
         Return a dictionary containing details about an emailed export.
         This will eventually be passed to an Angular controller.
@@ -1052,7 +1045,8 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
             'hasFile': has_file,
             'index': index,  # This can be removed when we're off legacy exports
             'fileData': file_data,
-            'filters': DashboardFeedFilterForm.get_form_data_from_export_instance_filters(filters)
+            'filters': DashboardFeedFilterForm.get_form_data_from_export_instance_filters(filters, self.domain, export_type),
+            'isLocationSafeForUser': filters.is_location_safe_for_user(self.request),
         }
 
     def fmt_legacy_emailed_export_data(self, group_id=None, index=None,
@@ -1087,6 +1081,7 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
             'hasFile': has_file,
             'index': index,  # This can be removed when we're off legacy exports
             'fileData': file_data,
+            'isLocationSafeForUser': self.request.can_access_all_locations,
         }
 
     def _fmt_emailed_export_fileData(self, has_file, fileId, size, last_updated,
@@ -1141,6 +1136,7 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
             download_url=self.request.build_absolute_uri(reverse(
                 'download_daily_saved_export', args=[self.domain, export._id]
             )),
+            export_type=type(export),
         )
 
     @allow_remote_invocation
@@ -1243,6 +1239,7 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
         })
 
 
+@location_safe
 class DailySavedExportListView(BaseExportListView):
     urlname = 'list_daily_saved_exports'
     template_name = 'export/daily_saved_export_list.html'
@@ -1399,7 +1396,17 @@ class DailySavedExportListView(BaseExportListView):
             export = get_properly_wrapped_export_instance(export_id)
             filter_form = DashboardFeedFilterForm(self.domain_object, form_data)
             if filter_form.is_valid():
-                filters = filter_form.to_export_instance_filters()
+                if not self.request.can_access_all_locations:
+                    accessible_location_ids = (SQLLocation.active_objects.accessible_location_ids(
+                        self.request.domain,
+                        self.request.couch_user)
+                    )
+                else:
+                    accessible_location_ids = None
+                filters = filter_form.to_export_instance_filters(
+                    self.request.can_access_all_locations,
+                    accessible_location_ids
+                )
                 if export.filters != filters:
                     export.filters = filters
                     export.save()
@@ -1416,6 +1423,7 @@ class DailySavedExportListView(BaseExportListView):
             )
 
 
+@location_safe
 class DashboardFeedListView(DailySavedExportListView):
     template_name = 'export/dashboard_feed_list.html'
     urlname = 'list_dashboard_feeds'
@@ -1607,6 +1615,7 @@ class _DeidMixin(object):
         return [x for x in get_form_export_instances(self.domain) if x.is_safe]
 
 
+@location_safe
 class DeIdDailySavedExportListView(_DeidMixin, DailySavedExportListView):
     urlname = 'list_deid_daily_saved_exports'
     page_title = ugettext_noop("Export De-Identified Daily Saved Exports")
@@ -1616,6 +1625,7 @@ class DeIdDailySavedExportListView(_DeidMixin, DailySavedExportListView):
         return [x for x in exports if x.is_daily_saved_export and not x.export_format == "html"]
 
 
+@location_safe
 class DeIdDashboardFeedListView(_DeidMixin, DashboardFeedListView):
     urlname = 'list_deid_dashboard_feeds'
     page_title = ugettext_noop("Export De-Identified Dashboard Feeds")
@@ -2224,6 +2234,9 @@ def download_daily_saved_export(req, domain, export_instance_id):
     elif export_instance.is_daily_saved_export:
         if not domain_has_privilege(domain, DAILY_SAVED_EXPORT):
             raise Http404
+
+    if not export_instance.filters.is_location_safe_for_user(req):
+        return location_restricted_response(req)
 
     if should_update_export(export_instance.last_accessed):
         try:

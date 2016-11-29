@@ -9,6 +9,7 @@ from couchdbkit.ext.django.schema import IntegerProperty
 from django.utils.translation import ugettext as _
 
 from corehq.apps.export.esaccessors import get_ledger_section_entry_combinations
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.daterange import get_daterange_start_end_dates
 from corehq.util.timezones.utils import get_timezone_for_domain
 from dimagi.utils.decorators.memoized import memoized
@@ -506,9 +507,28 @@ class DatePeriod(DocumentSchema):
 
 class ExportInstanceFilters(DocumentSchema):
     date_period = SchemaProperty(DatePeriod, default=None)
-    type_or_group = StringProperty()
-    user_types = ListProperty(StringProperty)
-    group = StringProperty()
+    users = ListProperty(StringProperty)
+    reporting_groups = ListProperty(StringProperty)
+    sharing_groups = ListProperty(StringProperty)
+    locations = ListProperty(StringProperty)
+    user_types = ListProperty(IntegerProperty)
+    can_access_all_locations = BooleanProperty(default=True)
+    accessible_location_ids = ListProperty(StringProperty)
+    show_all_data = BooleanProperty()
+    show_project_data = BooleanProperty()
+
+    def is_location_safe_for_user(self, request):
+        """
+        Return True if the couch_user of the given request has permission to export data with this filter.
+        """
+        if self.can_access_all_locations and not request.can_access_all_locations:
+            return False
+        elif not self.can_access_all_locations:
+            users_accessible_locations = SQLLocation.active_objects.accessible_location_ids(request.domain, request.couch_user)
+            if not set(self.accessible_location_ids).issubset(users_accessible_locations):
+                return False
+        return True
+
 
 
 class ExportInstance(BlobMixin, Document):
@@ -781,16 +801,19 @@ class CaseExportInstance(ExportInstance):
 
     def get_filters(self):
         if self.filters:
-            from corehq.apps.export.filter_builders import ESCaseExportFilterBuilder
-            filter_builder = ESCaseExportFilterBuilder(
-                self.domain,
-                get_timezone_for_domain(self.domain),
-                self.filters.type_or_group,
-                self.filters.group,
+            from corehq.apps.export.forms import CaseExportFilterBuilder
+            filter_builder = CaseExportFilterBuilder(self.domain, get_timezone_for_domain(self.domain))
+            return filter_builder.get_filter(
+                self.filters.can_access_all_locations,
+                self.filters.accessible_location_ids,
+                self.filters.show_all_data,
+                self.filters.show_project_data,
                 self.filters.user_types,
-                self.filters.date_period
+                self.filters.date_period,
+                self.filters.sharing_groups + self.filters.reporting_groups,
+                self.filters.locations,
+                self.filters.users,
             )
-            return filter_builder.get_filter()
         return []
 
 
@@ -816,16 +839,17 @@ class FormExportInstance(ExportInstance):
 
     def get_filters(self):
         if self.filters:
-            from corehq.apps.export.filter_builders import ESFormExportFilterBuilder
-            filter_builder = ESFormExportFilterBuilder(
-                self.domain,
-                get_timezone_for_domain(self.domain),
-                self.filters.type_or_group,
-                self.filters.group,
+            from corehq.apps.export.forms import FormExportFilterBuilder
+            filter_builder = FormExportFilterBuilder(self.domain, get_timezone_for_domain(self.domain))
+            return filter_builder.get_filter(
+                self.filters.can_access_all_locations,
+                self.filters.accessible_location_ids,
+                self.filters.sharing_groups + self.filters.reporting_groups,
                 self.filters.user_types,
-                self.filters.date_period
+                self.filters.users,
+                self.filters.locations,
+                self.filters.date_period,
             )
-            return filter_builder.get_filter()
         return []
 
 
