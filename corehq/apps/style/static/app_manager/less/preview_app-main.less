@@ -168,14 +168,16 @@ preview_app/less */
 }
 
 .btn-preview-refresh::after {
-  content: '✔';
-  color: green;
+  content: "\f00c";
+  font-family: "FontAwesome";
+  color: @cc-att-pos-mid;
   width: 10px;
   height: 10px;
   display: block;
   position: absolute;
-  top: -3px;
-  right: -3px;
+  top: 2px;
+  margin-left: 28px;
+  font-size: 1.4rem;
 }
 
 .btn-preview-refresh.app-out-of-date::after {
@@ -185,10 +187,38 @@ preview_app/less */
 }
 
 .hardware-buttons {
+  width: @preview-phone-width;
   position: absolute;
-  bottom: 0;
+  left: 50%;
+  bottom: 1px;
+  margin-left: -@preview-phone-width/2;
+  text-align: center;
 
   .btn-hardware {
     display: inline-block;
+    background-color: transparent;
+    color: darken(white, 20);
+    .transition(1s color);
+    font-size: 1.8rem;
+    width: 25%;
+    &:focus {
+      outline: none;
+    }
+
+    .fa-mobile {
+      font-size: 2.3rem;
+      top: 9px;
+      position: absolute;
+    }
+
+    .fa-tablet {
+      font-size: 1.9rem;
+      top: 11px;
+      position: absolute;
+    }
+
+    &:hover {
+      color: white;
+    }
   }
 }
