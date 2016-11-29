@@ -134,7 +134,7 @@ def filter_form_diffs(couch_form, sql_form, diffs):
     return filtered
 
 
-def filter_case_diffs(couch_case, sql_case, diffs):
+def filter_case_diffs(couch_case, sql_case, diffs, forms_that_touch_cases_without_actions=None):
     doc_type = couch_case['doc_type']
     filtered_diffs = _filter_exact_matches(diffs, CASE_IGNORED_DIFFS)
     partial_filters = PARTIAL_DIFFS[doc_type] + PARTIAL_DIFFS['CommCareCase*'] + PARTIAL_DIFFS['CommCareCaseIndex']
@@ -145,7 +145,31 @@ def filter_case_diffs(couch_case, sql_case, diffs):
     filtered_diffs = _filter_case_attachment_diffs(couch_case, sql_case, filtered_diffs)
     filtered_diffs = _filter_case_index_diffs(couch_case, sql_case, filtered_diffs)
     filtered_diffs = _filter_renamed_fields(filtered_diffs, couch_case, sql_case)
+    filtered_diffs = _filter_forms_touch_case(filtered_diffs, forms_that_touch_cases_without_actions)
     return filtered_diffs
+
+
+def _filter_forms_touch_case(diffs, forms_that_touch_cases_without_actions):
+    """Legacy bug in case processing would not add the form ID to the list of xform_ids for the case
+    if the case block had no actions"""
+    if not forms_that_touch_cases_without_actions:
+        return diffs
+
+    form_id_diffs = [
+        diff for diff in diffs
+        if diff.diff_type == 'set_mismatch' and  diff.path[0] == ('xform_ids')
+    ]
+    if not len(form_id_diffs):
+        return diffs
+
+    for diff in form_id_diffs:
+        diffs.remove(diff)
+        form_ids = diff.new_value.split(',')
+        diff_ids = [form_id for form_id in form_ids if form_id not in forms_that_touch_cases_without_actions]
+        if diff_ids:
+            diff.new_value = ','.join(diff_ids)
+
+    return diffs
 
 
 def filter_ledger_diffs(diffs):

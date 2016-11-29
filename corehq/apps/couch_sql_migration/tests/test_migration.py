@@ -424,6 +424,41 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.assertTrue(child_transactions[0].is_case_create)
         self.assertTrue(child_transactions[1].is_case_index)
 
+    def test_form_touches_case_without_updates(self):
+        case_id = uuid.uuid4().hex
+        create_and_save_a_case(self.domain_name, case_id=case_id, case_name='touched by a form', user_id='user1')
+
+        form_id = uuid.uuid4().hex
+        xml = """<?xml version='1.0' ?>
+                <data uiVersion="1" version="1" name="" xmlns="http://openrosa.org/formdesigner/123">
+                    <name>fgg</name>
+                    <date>2011-06-07</date>
+                    <n0:case case_id="{case_id}" user_id="user1" date_modified="{date}" xmlns:n0="http://commcarehq.org/case/transaction/v2">
+                    </n0:case>
+                    <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
+                        <n1:deviceID>354957031935664</n1:deviceID>
+                        <n1:timeStart>{date}</n1:timeStart>
+                        <n1:timeEnd>{date}</n1:timeEnd>
+                        <n1:username>bcdemo</n1:username>
+                        <n1:userID>user1</n1:userID>
+                        <n1:instanceID>{form_id}</n1:instanceID>
+                    </n1:meta>
+                </data>""".format(
+            date=datetime.utcnow(),
+            form_id=form_id,
+            case_id=case_id
+        )
+        _, _, cases = submit_form_locally(xml, self.domain_name)
+        cases[0].xform_ids.remove(form_id)  # legacy bug that didn't include these form IDs in the case
+        cases[0].save()
+
+        self.assertEqual(2, len(self._get_form_ids()))
+        self.assertEqual(1, len(self._get_case_ids()))
+        self._do_migration_and_assert_flags(self.domain_name)
+        self.assertEqual(2, len(self._get_form_ids()))
+        self.assertEqual(1, len(self._get_case_ids()))
+        self._compare_diffs([])
+
     def test_xform_ids_diff(self):
         case_id = uuid.uuid4().hex
         submit_case_blocks(

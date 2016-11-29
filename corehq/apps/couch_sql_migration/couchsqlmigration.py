@@ -2,9 +2,12 @@ import os
 import uuid
 from datetime import datetime
 
+import itertools
+
 import settings
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
-from casexml.apps.case.xform import get_all_extensions_to_close, CaseProcessingResult
+from casexml.apps.case.xform import get_all_extensions_to_close, CaseProcessingResult, get_case_updates
+from casexml.apps.case.xml.parser import CaseNoopAction
 from corehq.apps.couch_sql_migration.diff import filter_form_diffs, filter_case_diffs, filter_ledger_diffs
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_type
 from corehq.apps.domain.models import Domain
@@ -50,6 +53,7 @@ class CouchSqlDomainMigrator(object):
         self.diff_db = DiffDB.init(db_filepath)
 
         self.errors_with_normal_doc_type = []
+        self.forms_that_touch_cases_without_actions = set()
 
     def log_debug(self, message):
         if self.debug:
@@ -95,6 +99,12 @@ class CouchSqlDomainMigrator(object):
         case_stock_result = None
         if sql_form.initial_processing_complete:
             case_stock_result = _get_case_and_ledger_updates(self.domain, sql_form)
+            if len(case_stock_result.case_models):
+                case_actions = list(itertools.chain(*[u.actions for u in get_case_updates(couch_form)]))
+                if len(case_actions) == 1 and isinstance(case_actions[0], CaseNoopAction):
+                    # record these for later use when filtering case diffs. See ``_filter_forms_touch_case``
+                    self.forms_that_touch_cases_without_actions.add(couch_form.form_id)
+
         _save_migrated_models(sql_form, case_stock_result)
 
     def _copy_unprocessed_forms(self):
@@ -191,7 +201,7 @@ class CouchSqlDomainMigrator(object):
             diffs = json_diff(couch_case, sql_case_json, track_list_indices=False)
             self.diff_db.add_diffs(
                 couch_case['doc_type'], sql_case.case_id,
-                filter_case_diffs(couch_case, sql_case_json, diffs)
+                filter_case_diffs(couch_case, sql_case_json, diffs, self.forms_that_touch_cases_without_actions)
             )
 
         self._diff_ledgers(case_ids)
