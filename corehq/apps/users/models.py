@@ -833,6 +833,11 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         else:
             return self.username
 
+
+    @property
+    def username_in_report(self):
+        return user_display_string(self.username, self.first_name, self.last_name)
+
     def html_username(self):
         username = self.raw_username
         if '@' in username:
@@ -1468,10 +1473,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     @property
     def project(self):
         return Domain.get_by_name(self.domain)
-
-    @property
-    def username_in_report(self):
-        return user_display_string(self.username, self.first_name, self.last_name)
 
     def is_commcare_user(self):
         return True
