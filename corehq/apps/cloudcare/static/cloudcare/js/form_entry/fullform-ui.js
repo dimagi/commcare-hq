@@ -192,10 +192,10 @@ function Form(json) {
         self.atLastIndex(isAtLastIndex);
     };
 
-    self.showInFormNavigation = ko.observable(
-        self.displayOptions.oneQuestionPerScreen !== undefined
+    self.showInFormNavigation = ko.computed(function () {
+        return self.displayOptions.oneQuestionPerScreen !== undefined
         && self.displayOptions.oneQuestionPerScreen() === true
-    );
+    });
 
     self.isCurrentRequiredSatisfied = ko.computed(function () {
         if (!self.showInFormNavigation()) return true;
