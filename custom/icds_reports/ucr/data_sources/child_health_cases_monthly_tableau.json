@@ -832,6 +832,15 @@
         "type": "boolean"
       },
       {
+        "column_id": "pnc_eligible",
+        "display_name": null,
+        "filter": {
+          "name": "pnc_eligible",
+          "type": "named"
+        },
+        "type": "boolean"
+      },
+      {
         "column_id": "ebf_eligible",
         "display_name": null,
         "filter": {
