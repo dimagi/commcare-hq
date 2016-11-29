@@ -335,9 +335,17 @@ def _edit_form_attr(request, domain, app_id, unique_form_id, attr):
         instances = json.loads(request.POST.get('custom_instances'))
         try:         # validate that custom instances can be added into the XML
             for instance in instances:
-                etree.fromstring("<instance id='{}' src='{}' />".format(instance.get('instanceId'), instance.get('instancePath')))
+                etree.fromstring(
+                    "<instance id='{}' src='{}' />".format(
+                        instance.get('instanceId'),
+                        instance.get('instancePath')
+                    )
+                )
         except etree.XMLSyntaxError as error:
-            return json_response({'message': _("There was an issue with your custom instances: {}").format(error.message)}, status_code=400)
+            return json_response(
+                {'message': _("There was an issue with your custom instances: {}").format(error.message)},
+                status_code=400
+            )
 
         form.custom_instances = [
             CustomInstance(
