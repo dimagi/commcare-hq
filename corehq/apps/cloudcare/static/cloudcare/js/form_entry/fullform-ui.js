@@ -508,8 +508,10 @@ Formplayer.ViewModels.EvaluateXPath = function() {
         var endIndex = startIndex + 4;
         if (startIndex > 0) {
             self.$xpath.selectRange(startIndex, endIndex);
+            return true;
         }
-    }
+        return false;
+    };
 
     /**
      * Set autocomplete for xpath input.
@@ -518,6 +520,7 @@ Formplayer.ViewModels.EvaluateXPath = function() {
      */
     self.autocomplete = function(questionData) {
         self.$xpath = $('#xpath');
+        self.questionData = questionData;
         self.$xpath.atwho('setIframe', window.frameElement, true);
         self.$xpath.atwho({
             at: '',
@@ -526,21 +529,32 @@ Formplayer.ViewModels.EvaluateXPath = function() {
             maxLen: Infinity,
             displayTpl: function(d) {
                 var icon = Formplayer.Utils.getIconFromType(d.type);
-                return '<li><i class="' + icon + '"></i> ${value}</li>';
+                return '<li><i class="' + icon + ' autocompletable"></i> ${value}</li>';
             },
             insertTpl: '${value}',
+            highlightFirst: false,
             callbacks: {
                 matcher: self.matcher,
             },
         });
-        self.$xpath.on("inserted.atwho", function() {
+
+        self.$xpath.on("inserted.atwho", function(e, $li) {
             self.focusArgs();
+            for (var i = 0; i < self.questionData.length; ++i) {
+                if (self.questionData[i].value !== $li.text().trim())
+                    continue;
+                $('#eval-docs').html(questionData[i].documentation.replace(/(?:\r\n|\r|\n)/g, '<br />'));
+            }
         });
 
         self.$xpath.keypress(function (e) {
             if (e.which == 13) {
-                self.focusArgs();
-                e.preventDefault();
+                var hasArgument = self.focusArgs();
+                if(!hasArgument) {
+                    $("#evaluate-button").click();
+                } else {
+                    e.preventDefault();
+                }
             }
         });
     };
