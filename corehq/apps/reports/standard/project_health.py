@@ -366,9 +366,12 @@ class ProjectHealthDashboard(ProjectReport):
             six_month_summary.append(this_month_summary)
             if last_month_summary is not None:
                 last_month_summary.set_next_month_summary(this_month_summary)
-                this_month_summary.set_num_inactive_users(len(this_month_summary.get_dropouts()))
             this_month_summary.set_percent_active()
             last_month_summary = this_month_summary
+
+        for summary in six_month_summary:
+            summary.set_num_inactive_users(len(summary.get_dropouts()))
+
         return six_month_summary[1:]
 
     def export_summary(self, six_months):
