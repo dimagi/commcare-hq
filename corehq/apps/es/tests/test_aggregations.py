@@ -446,6 +446,6 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
                 AggregationTerm('app_id', 'app_id'),
                 AggregationTerm('user_id', 'user_id')
             ],
-            bottom_level_aggregation=SumAggregation('balance', 'balance')
+            inner_most_aggregation=SumAggregation('balance', 'balance')
         ).query
         self.checkQuery(query, json_output)

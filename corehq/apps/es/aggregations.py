@@ -547,23 +547,23 @@ class NestedTermAggregationsHelper(object):
         terms=[
             AggregationTerm('entry_id', 'entry_id'),
         ],
-        bottom_level_aggregation=SumAggregation('balance', 'balance'),
+        inner_most_aggregation=SumAggregation('balance', 'balance'),
     ).get_data()
     """
 
-    def __init__(self, base_query, terms, bottom_level_aggregation=None):
+    def __init__(self, base_query, terms, inner_most_aggregation=None):
         self.base_query = base_query
         self.terms = terms
-        self.bottom_level_aggregation = bottom_level_aggregation
+        self.inner_most_aggregation = inner_most_aggregation
 
     @property
     def query(self):
         previous_term = None
 
-        if self.bottom_level_aggregation is not None:
-            if not isinstance(self.bottom_level_aggregation, SumAggregation):
+        if self.inner_most_aggregation is not None:
+            if not isinstance(self.inner_most_aggregation, SumAggregation):
                 raise ValueError('currently only SumAggregations and its children are supported')
-            term = self.bottom_level_aggregation
+            term = self.inner_most_aggregation
             previous_term = term
 
         for name, field in reversed(self.terms):
@@ -582,18 +582,18 @@ class NestedTermAggregationsHelper(object):
                     _add_terms(bucket, remaining_terms[0], remaining_terms[1:], current_counts, current_key=key)
                 else:
                     # base case
-                    if self.bottom_level_aggregation is None:
+                    if self.inner_most_aggregation is None:
                         current_counts[key] += bucket.doc_count
                     else:
-                        current_counts[key] += getattr(bucket, self.bottom_level_aggregation.name).value
+                        current_counts[key] += getattr(bucket, self.inner_most_aggregation.name).value
 
         counts = defaultdict(lambda: 0)
         _add_terms(self.query.size(0).run().aggregations, self.terms[0], self.terms[1:], current_counts=counts)
         return self._format_counts(counts)
 
     def _format_counts(self, counts):
-        final_aggregation_name = ('doc_count' if self.bottom_level_aggregation is None
-                                  else self.bottom_level_aggregation.name)
+        final_aggregation_name = ('doc_count' if self.inner_most_aggregation is None
+                                  else self.inner_most_aggregation.name)
         row_class = namedtuple('NestedQueryRow', [term.name for term in self.terms] + [final_aggregation_name])
         for combined_key, count in counts.items():
             yield row_class(*(combined_key + (count,)))
