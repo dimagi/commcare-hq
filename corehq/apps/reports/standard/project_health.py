@@ -91,7 +91,6 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
             domain=domain,
             performance_threshold=performance_threshold,
             active=num_active_users,
-            inactive=0,
             total_users_by_month=0,
             percent_active=0,
             performing=num_performing_users,
@@ -101,9 +100,6 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
 
     def set_next_month_summary(self, next_month_summary):
         self._next_summary = next_month_summary
-
-    def set_num_inactive_users(self, num_inactive_users):
-        self.inactive = num_inactive_users
 
     def set_percent_active(self):
         self.total_users_by_month = self.number_of_inactive_users + self.number_of_active_users
@@ -123,6 +119,12 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
     @property
     def number_of_active_users(self):
         return self.active
+
+    @property
+    @memoized
+    def inactive(self):
+        dropouts = self.get_dropouts()
+        return len(dropouts) if dropouts else 0
 
     @property
     def number_of_inactive_users(self):
@@ -379,11 +381,11 @@ class ProjectHealthDashboard(ProjectReport):
                 last_month_summary.set_next_month_summary(this_month_summary)
             last_month_summary = this_month_summary
 
+        # these steps have to be done in a second outer loop so that 'next month summary' is available
+        # whenever it is needed
         for summary in six_month_summary:
             summary.finalize()
-            summary.set_num_inactive_users(len(summary.get_dropouts()))
             summary.set_percent_active()
-
 
         return six_month_summary[1:]
 
