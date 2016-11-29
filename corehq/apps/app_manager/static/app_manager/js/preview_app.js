@@ -15,7 +15,7 @@ hqDefine('app_manager/js/preview_app.js', function() {
         PREVIEW_ACTION_TEXT_HIDE: '.js-preview-action-hide',
         BTN_REFRESH: '.js-preview-refresh',
         OFFSET_FOR_PREVIEW: '.offset-for-preview',
-        FORMDESIGNER: '#formdesigner'
+        FORMDESIGNER: '#formdesigner',
     };
 
     module.EVENTS = {
