@@ -144,7 +144,7 @@ preview_app/less */
   margin: 0 auto;
   display: block;
   background-color: lighten(@cc-text, 20);
-  border-color: lighten(@cc-text, 30);
+  border: none;
   .border-top-radius(@preview-close-size/2);
   .border-bottom-radius(@preview-close-size/2);
   width: @preview-close-size;
@@ -156,6 +156,10 @@ preview_app/less */
   font-size: 1.6rem;
   padding-left: 1px;
   .transition(all .6s);
+  &:hover {
+    background-color: lighten(@cc-text, 10);
+    color: white;
+  }
 
   position: absolute;
   left: -5px;
