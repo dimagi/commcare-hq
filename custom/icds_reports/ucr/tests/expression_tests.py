@@ -1,5 +1,5 @@
 import uuid
-from datetime import date, datetime
+from datetime import datetime
 from django.test import TestCase
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.specs import EvaluationContext
@@ -7,6 +7,7 @@ from corehq.form_processor.tests.utils import run_with_all_backends
 from casexml.apps.case.mock import CaseStructure, CaseFactory, CaseIndex
 from casexml.apps.case.const import CASE_INDEX_CHILD
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
+
 
 class GetChildCasesExpressionTest(TestCase):
 
