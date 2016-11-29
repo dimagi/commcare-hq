@@ -1,5 +1,3 @@
-from itertools import groupby
-
 from corehq.apps.tzmigration.timezonemigration import is_datetime_string, FormJsonDiff, json_diff
 
 PARTIAL_DIFFS = {
@@ -126,12 +124,13 @@ RENAMED_FIELDS = {
 }
 
 
-def filter_form_diffs(doc_type, diffs):
+def filter_form_diffs(couch_form, sql_form, diffs):
+    doc_type = couch_form['doc_type']
     filtered = _filter_exact_matches(diffs, FORM_IGNORED_DIFFS)
     partial_diffs = PARTIAL_DIFFS[doc_type] + PARTIAL_DIFFS['XFormInstance*']
     filtered = _filter_partial_matches(filtered, partial_diffs)
-    filtered = _filter_renamed_fields(filtered, doc_type)
     filtered = _filter_date_diffs(filtered)
+    filtered = _filter_renamed_fields(filtered, couch_form, sql_form)
     return filtered
 
 
@@ -140,12 +139,12 @@ def filter_case_diffs(couch_case, sql_case, diffs):
     filtered_diffs = _filter_exact_matches(diffs, CASE_IGNORED_DIFFS)
     partial_filters = PARTIAL_DIFFS[doc_type] + PARTIAL_DIFFS['CommCareCase*'] + PARTIAL_DIFFS['CommCareCaseIndex']
     filtered_diffs = _filter_partial_matches(filtered_diffs, partial_filters)
-    filtered_diffs = _filter_renamed_fields(filtered_diffs, doc_type)
     filtered_diffs = _filter_date_diffs(filtered_diffs)
     filtered_diffs = _filter_user_case_diffs(couch_case, filtered_diffs)
     filtered_diffs = _filter_xform_id_diffs(couch_case, sql_case, filtered_diffs)
-    filtered_diffs = _filter_case_attachment_diffs(filtered_diffs)
+    filtered_diffs = _filter_case_attachment_diffs(couch_case, sql_case, filtered_diffs)
     filtered_diffs = _filter_case_index_diffs(couch_case, sql_case, filtered_diffs)
+    filtered_diffs = _filter_renamed_fields(filtered_diffs, couch_case, sql_case)
     return filtered_diffs
 
 
@@ -176,29 +175,32 @@ def _filter_partial_matches(diffs, partial_diffs_to_exclude):
     ]
 
 
-def _filter_renamed_fields(diffs, doc_type):
+def _filter_renamed_fields(diffs, couch_doc, sql_doc, doc_type_override=None):
+    doc_type = doc_type_override or couch_doc['doc_type']
     if doc_type in RENAMED_FIELDS:
         renames = RENAMED_FIELDS[doc_type]
         for rename in renames:
-            _check_renamed_fields(diffs, *rename)
+            diffs = _check_renamed_fields(diffs, couch_doc, sql_doc, *rename)
 
     return diffs
 
 
-def _check_renamed_fields(filtered_diffs, couch_field_name, sql_field_name):
+def _check_renamed_fields(filtered_diffs, couch_doc, sql_doc, couch_field_name, sql_field_name):
     from corehq.apps.tzmigration.timezonemigration import FormJsonDiff
-    sql_fields = [diff for diff in filtered_diffs if diff.path[0] == sql_field_name]
-    couch_fields = [diff for diff in filtered_diffs if diff.path[0] == couch_field_name]
-    if sql_fields and couch_fields:
-        sql_field = sql_fields[0]
-        couch_field = couch_fields[0]
-        filtered_diffs.remove(sql_field)
-        filtered_diffs.remove(couch_field)
-        if couch_field.old_value != sql_field.new_value:
-            filtered_diffs.append(FormJsonDiff(
+    remaining_diffs = [
+        diff for diff in filtered_diffs
+        if diff.path[0] != sql_field_name and diff.path[0] != couch_field_name
+    ]
+    if len(remaining_diffs) != len(filtered_diffs):
+        sql_field = sql_doc.get(sql_field_name, Ellipsis)
+        couch_field = couch_doc.get(couch_field_name, Ellipsis)
+        if sql_field != couch_field:
+            remaining_diffs.append(FormJsonDiff(
                 diff_type='complex', path=(couch_field_name, sql_field_name),
-                old_value=couch_field.old_value, new_value=sql_field.new_value
+                old_value=couch_field, new_value=sql_field
             ))
+
+    return remaining_diffs
 
 
 def _filter_date_diffs(diffs):
@@ -250,32 +252,31 @@ def _filter_xform_id_diffs(couch_case, sql_case, diffs):
     return [diff for diff in diffs if diff not in xform_id_diffs]
 
 
-def _filter_case_attachment_diffs(diffs):
-    """Attachment JSON format is different between Couch and SQL so need to normalize prior to comparison"""
-    attachment_diffs = [diff for diff in diffs if diff.path[0] == 'case_attachments']
-    if not attachment_diffs:
-        return diffs
+def _filter_case_attachment_diffs(couch_case, sql_case, diffs):
+    """Attachment JSON format is different between Couch and SQL"""
+    remaining_diffs = [diff for diff in diffs if diff.path[0] != 'case_attachments']
+    if len(remaining_diffs) != len(diffs):
+        couch_attachments = couch_case.get('case_attachments', {})
+        sql_attachments = sql_case.get('case_attachments', {})
 
-    diffs = [diff for diff in diffs if diff not in attachment_diffs]
+        for name, couch_att in couch_attachments.items():
+            sql_att = sql_attachments.get(name, Ellipsis)
+            if sql_att == Ellipsis:
+                remaining_diffs.append(FormJsonDiff(
+                    diff_type='missing', path=('case_attachments', name),
+                    old_value=couch_att, new_value=sql_att
+                ))
+            else:
+                att_diffs = json_diff(couch_att, sql_att)
+                filtered = _filter_partial_matches(att_diffs, PARTIAL_DIFFS['case_attachment'])
+                filtered = _filter_renamed_fields(filtered, couch_att, sql_att, 'case_attachment')
+                for diff in filtered:
+                    diff_dict = diff._asdict()
+                    # convert the path back to what it should be
+                    diff_dict['path'] = tuple(['case_attachments', name] + list(diff.path))
+                    remaining_diffs.append(FormJsonDiff(**diff_dict))
 
-    grouped_diffs = groupby(attachment_diffs, lambda diff: diff.path[1])
-    for name, group in grouped_diffs:
-        group = list(group)
-        normalized_diffs = [
-            FormJsonDiff(diff_type=diff.diff_type, path=(diff.path[-1],), old_value=diff.old_value, new_value=diff.new_value)
-            for diff in group
-        ]
-        filtered = _filter_partial_matches(normalized_diffs, PARTIAL_DIFFS['case_attachment'])
-        filtered = _filter_renamed_fields(filtered, 'case_attachment')
-        if filtered:
-            diffs.extend([
-                FormJsonDiff(
-                    diff_type=diff.diff_type, path=(u'case_attachments', name, diff.path[-1]),
-                    old_value=diff.old_value, new_value=diff.new_value
-                ) for diff in filtered
-            ])
-
-    return diffs
+    return remaining_diffs
 
 
 def _filter_case_index_diffs(couch_case, sql_case, diffs):

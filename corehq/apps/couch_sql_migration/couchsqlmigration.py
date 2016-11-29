@@ -23,7 +23,6 @@ from corehq.form_processor.utils.general import set_local_domain_sql_backend_ove
     clear_local_domain_sql_backend_override
 from corehq.util.log import with_progress_bar
 from couchforms.models import XFormInstance, doc_types as form_doc_types, all_known_formlike_doc_types
-from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from fluff.management.commands.ptop_reindexer_fluff import ReindexEventHandler
@@ -85,10 +84,12 @@ class CouchSqlDomainMigrator(object):
         _migrate_form_attachments(sql_form, couch_form)
         _migrate_form_operations(sql_form, couch_form)
 
-        diffs = json_diff(couch_form.to_json(), sql_form.to_json(), track_list_indices=False)
+        couch_form_json = couch_form.to_json()
+        sql_form_json = sql_form.to_json()
+        diffs = json_diff(couch_form_json, sql_form_json, track_list_indices=False)
         self.diff_db.add_diffs(
             couch_form.doc_type, couch_form.form_id,
-            filter_form_diffs(couch_form.doc_type, diffs)
+            filter_form_diffs(couch_form_json, sql_form_json, diffs)
         )
 
         case_stock_result = None
@@ -121,10 +122,12 @@ class CouchSqlDomainMigrator(object):
         _migrate_form_operations(sql_form, couch_form)
 
         if couch_form.doc_type != 'SubmissionErrorLog':
-            diffs = json_diff(couch_form.to_json(), sql_form.to_json(), track_list_indices=False)
+            couch_form_json = couch_form.to_json()
+            sql_form_json = sql_form.to_json()
+            diffs = json_diff(couch_form_json, sql_form_json, track_list_indices=False)
             self.diff_db.add_diffs(
                 couch_form.doc_type, couch_form.form_id,
-                filter_form_diffs(couch_form.doc_type, diffs)
+                filter_form_diffs(couch_form_json, sql_form_json, diffs)
             )
 
         _save_migrated_models(sql_form)

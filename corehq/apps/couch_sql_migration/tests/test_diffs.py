@@ -51,37 +51,54 @@ class DiffTestCases(SimpleTestCase):
         self.softer_assert_context.__exit__(None, None, None)
         super(DiffTestCases, self).tearDown()
 
-    def _test_form_diff_filter(self, doc_type, diffs, expected):
-        filtered = filter_form_diffs(doc_type, diffs)
+    def _test_form_diff_filter(self, couch_form, sql_form, diffs, expected):
+        filtered = filter_form_diffs(couch_form, sql_form, diffs)
         self.assertEqual(filtered, expected)
 
     def test_filter_form_diffs(self):
         partial_diffs = _get_partial_diffs('XFormInstance')
 
         self._test_form_diff_filter(
-            'XFormInstance',
+            {'doc_type': 'XFormInstance'}, {'doc_type': 'XFormInstance'},
             list(FORM_IGNORED_DIFFS) + partial_diffs + DATE_DIFFS + REAL_DIFFS,
             REAL_DIFFS
         )
 
-    def test_filter_form_rename_fields(self):
-        good_rename_diffs = [
-            FormJsonDiff(diff_type='missing', path=('deprecated_date',), old_value='abc', new_value=Ellipsis),
-            FormJsonDiff(diff_type='missing', path=('edited_on',), old_value=Ellipsis, new_value='abc'),
-        ]
-        bad_rename_diffs = [
-            FormJsonDiff(diff_type='missing', path=('deprecated_date',), old_value='abc', new_value=Ellipsis),
-            FormJsonDiff(diff_type='missing', path=('edited_on',), old_value=Ellipsis, new_value='123'),
-        ]
+    def test_filter_form_rename_fields_good(self):
+        couch_form = {
+            'doc_type': 'XFormDeprecated',
+            'deprecated_date': 'abc',
+        }
+        sql_form = {
+            'doc_type': 'XFormDeprecated',
+            'edited_on': 'abc',
+        }
+        diffs = json_diff(couch_form, sql_form, track_list_indices=False)
         self._test_form_diff_filter(
-            'XFormDeprecated',
-            good_rename_diffs + bad_rename_diffs + REAL_DIFFS,
-            bad_rename_diffs + REAL_DIFFS
+            couch_form, sql_form,
+            diffs + REAL_DIFFS,
+            REAL_DIFFS
+        )
+
+    def test_filter_form_rename_fields_bad(self):
+        couch_form = {
+            'doc_type': 'XFormDeprecated',
+            'deprecated_date': 'abc',
+        }
+        sql_form = {
+            'doc_type': 'XFormDeprecated',
+            'edited_on': '123',
+        }
+        diffs = json_diff(couch_form, sql_form, track_list_indices=False)
+        self._test_form_diff_filter(
+            couch_form, sql_form,
+            diffs,
+            [FormJsonDiff(diff_type='complex', path=('deprecated_date', 'edited_on'), old_value='abc', new_value='123')]
         )
 
     def test_filter_form_deletion_fields(self):
         self._test_form_diff_filter(
-            'XFormInstance-Deleted',
+            {'doc_type': 'XFormInstance-Deleted'}, {'doc_type': 'XFormInstance-Deleted'},
             DELETION_DIFFS + REAL_DIFFS,
             REAL_DIFFS
         )
@@ -135,6 +152,23 @@ class DiffTestCases(SimpleTestCase):
         ]
         filtered = filter_case_diffs(couch_case, sql_case, diffs + REAL_DIFFS)
         self.assertEqual(filtered, expected_diffs)
+
+    def test_filter_case_user_id(self):
+        couch_case = {
+            'doc_type': 'CommCareCase',
+            'user_id': u'e7ad965c70802884a7a67add763939e8',
+            '@user_id': u'e7ad965c70802884a7a67add763939e8',
+            '@case_id': u'5ac45838-da5b-49f5-b236-0675ff924e9f'
+        }
+        sql_case = {
+            'doc_type': 'CommCareCase',
+            'user_id': u'e7ad965c70802884a7a67add763939e8',
+            'case_id': u'5ac45838-da5b-49f5-b236-0675ff924e9f'
+        }
+
+        diffs = json_diff(couch_case, sql_case, track_list_indices=False)
+        filtered = filter_case_diffs(couch_case, sql_case, diffs)
+        self.assertEqual(filtered, [])
 
     def test_filter_usercase_diff(self):
         couch_case = {

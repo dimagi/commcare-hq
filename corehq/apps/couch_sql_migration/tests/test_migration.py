@@ -1,6 +1,5 @@
 import os
 import uuid
-
 from datetime import datetime
 
 from couchdbkit.exceptions import ResourceNotFound
@@ -17,8 +16,8 @@ from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
+from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.tzmigration.models import TimezoneMigrationProgress
 from corehq.apps.tzmigration.timezonemigration import FormJsonDiff
 from corehq.blobs import get_blob_db
