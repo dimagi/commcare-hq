@@ -768,11 +768,13 @@ class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, GenericFilterCaseExp
             default_filters = [OwnerFilter(ids_to_include)]
         else:
             default_filters = []
-        # filters for cases owned by users at locations and locations itself
+        # filters for cases owned by users at selected locations and their descendants
         default_filters.append(self._get_locations_filter(mobile_user_and_group_slugs))
+        # filters for cases owned by selected locations
         default_filters.append(self.export_user_filter(self._get_locations_ids(mobile_user_and_group_slugs)))
 
         default_filters.append(self._get_users_filter(mobile_user_and_group_slugs))
+        default_filters.append(LastModifiedByFilter(self._get_user_ids(mobile_user_and_group_slugs)))
         return filter(None, default_filters)
 
     @property
