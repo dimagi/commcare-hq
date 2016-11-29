@@ -63,7 +63,7 @@ def export_response(file, format, filename, checkpoint=None):
         response = StreamingHttpResponse(FileWrapper(file), content_type=format.mimetype)
 
     if format.download:
-        filename = '{filename}.{format.extension}'.format(
+        filename = u'{filename}.{format.extension}'.format(
             filename=filename,
             format=format
         )
