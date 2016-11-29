@@ -793,38 +793,37 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 class InstanceTests(SimpleTestCase, TestXmlMixin, SuiteMixin):
     file_path = ('data', 'suite')
 
+    def setUp(self):
+        super(InstanceTests, self).setUp()
+        self.factory = AppFactory(include_xmlns=True)
+        self.module, self.form = self.factory.new_basic_module('m0', 'case1')
+
     def test_custom_instances(self):
-        factory = AppFactory()
-        module, form = factory.new_basic_module('m0', 'case1')
         instance_id = "foo"
         instance_path = "jr://foo/bar"
-        form.custom_instances = [CustomInstance(instance_id=instance_id, instance_path=instance_path)]
+        self.form.custom_instances = [CustomInstance(instance_id=instance_id, instance_path=instance_path)]
         self.assertXmlPartialEqual(
             u"""
             <partial>
                 <instance id='{}' src='{}' />
             </partial>
             """.format(instance_id, instance_path),
-            factory.app.create_suite(),
+            self.factory.app.create_suite(),
             "entry/instance"
         )
 
     def test_duplicate_custom_instances(self):
-        factory = AppFactory()
-        module, form = factory.new_basic_module('m0', 'case1')
-        factory.form_requires_case(form)
+        self.factory.form_requires_case(self.form)
         instance_id = "casedb"
         instance_path = "jr://casedb/bar"
         # Use form_filter to add instances
-        form.form_filter = "count(instance('casedb')/casedb/case[@case_id='123']) > 0"
-        form.custom_instances = [CustomInstance(instance_id=instance_id, instance_path=instance_path)]
+        self.form.form_filter = "count(instance('casedb')/casedb/case[@case_id='123']) > 0"
+        self.form.custom_instances = [CustomInstance(instance_id=instance_id, instance_path=instance_path)]
         with self.assertRaises(DuplicateInstanceIdError):
-            factory.app.create_suite()
+            self.factory.app.create_suite()
 
     def test_location_instances(self):
-        factory = AppFactory()
-        module, form = factory.new_basic_module('m0', 'case1')
-        form.form_filter = "instance('locations')/locations/"
+        self.form.form_filter = "instance('locations')/locations/"
         with flag_enabled('FLAT_LOCATION_FIXTURE'):
             self.assertXmlPartialEqual(
                 u"""
@@ -832,7 +831,7 @@ class InstanceTests(SimpleTestCase, TestXmlMixin, SuiteMixin):
                     <instance id='locations' src='jr://fixture/locations' />
                 </partial>
                 """,
-                factory.app.create_suite(),
+                self.factory.app.create_suite(),
                 "entry/instance")
 
         self.assertXmlPartialEqual(
@@ -841,17 +840,17 @@ class InstanceTests(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 <instance id='locations' src='jr://fixture/commtrack:locations' />
             </partial>
             """,
-            factory.app.create_suite(),
+            self.factory.app.create_suite(),
             "entry/instance"
         )
 
-        form.form_filter = "instance('commtrack:locations')/locations/"
+        self.form.form_filter = "instance('commtrack:locations')/locations/"
         self.assertXmlPartialEqual(
             u"""
             <partial>
                 <instance id='commtrack:locations' src='jr://fixture/commtrack:locations' />
             </partial>
             """,
-            factory.app.create_suite(),
+            self.factory.app.create_suite(),
             "entry/instance"
         )
