@@ -200,7 +200,7 @@ def is_datetime_string(string):
     if not isinstance(string, basestring):
         return False
     try:
-        iso_string_to_datetime(string)
+        iso_string_to_datetime(string, strict=True)
     except (ValueError, OverflowError, TypeError):
         return False
     else:
