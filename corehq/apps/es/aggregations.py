@@ -556,21 +556,25 @@ class NestedTermAggregationsHelper(object):
         self.terms = terms
         self.bottom_level_aggregation = bottom_level_aggregation
 
-    def get_data(self):
+    @property
+    def query(self):
         previous_term = None
+
+        if self.bottom_level_aggregation is not None:
+            if not isinstance(self.bottom_level_aggregation, SumAggregation):
+                raise ValueError('currently only SumAggregations and its children are supported')
+            term = self.bottom_level_aggregation
+            previous_term = term
+
         for name, field in reversed(self.terms):
             term = TermsAggregation(name, field)
             if previous_term is not None:
                 term = term.aggregation(previous_term)
             previous_term = term
 
-        if self.bottom_level_aggregation is not None:
-            if not isinstance(self.bottom_level_aggregation, SumAggregation):
-                raise ValueError('currently only SumAggregations are supported')
-            term = term.aggregation(self.bottom_level_aggregation)
+        return self.base_query.aggregation(term)
 
-        query = self.base_query.aggregation(term)
-
+    def get_data(self):
         def _add_terms(aggregation_bucket, term, remaining_terms, current_counts, current_key=None):
             for bucket in getattr(aggregation_bucket, term.name).buckets_list:
                 key = (bucket.key,) if current_key is None else current_key + (bucket.key,)
@@ -584,7 +588,7 @@ class NestedTermAggregationsHelper(object):
                         current_counts[key] += getattr(bucket, self.bottom_level_aggregation.name).value
 
         counts = defaultdict(lambda: 0)
-        _add_terms(query.size(0).run().aggregations, self.terms[0], self.terms[1:], current_counts=counts)
+        _add_terms(self.query.size(0).run().aggregations, self.terms[0], self.terms[1:], current_counts=counts)
         return self._format_counts(counts)
 
     def _format_counts(self, counts):
