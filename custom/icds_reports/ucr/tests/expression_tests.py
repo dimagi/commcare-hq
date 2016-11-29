@@ -3,6 +3,7 @@ from datetime import date, datetime
 from django.test import TestCase
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.specs import EvaluationContext
+from corehq.form_processor.tests.utils import run_with_all_backends
 from casexml.apps.case.mock import CaseStructure, CaseFactory, CaseIndex
 from casexml.apps.case.const import CASE_INDEX_CHILD
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
@@ -75,6 +76,7 @@ class GetChildCasesExpressionTest(TestCase):
         delete_all_cases()
         super(GetChildCasesExpressionTest, self).tearDown()
 
+    @run_with_all_backends
     def test_all_child_cases(self):
         context = EvaluationContext({"domain": self.domain}, 0)
         expression = ExpressionFactory.from_spec({
@@ -90,6 +92,7 @@ class GetChildCasesExpressionTest(TestCase):
         })
         self.assertEqual(2, expression({"some_field", "some_value"}, context))
 
+    @run_with_all_backends
     def test_no_child_cases(self):
         context = EvaluationContext({"domain": self.domain}, 0)
         expression = ExpressionFactory.from_spec({
@@ -105,6 +108,7 @@ class GetChildCasesExpressionTest(TestCase):
         })
         self.assertEqual(0, expression({"some_field", "some_value"}, context))
 
+    @run_with_all_backends
     def test_filtered_child_cases(self):
         context = EvaluationContext({"domain": self.domain}, 0)
         expression = ExpressionFactory.from_spec({

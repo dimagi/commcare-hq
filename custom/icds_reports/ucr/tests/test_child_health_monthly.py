@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime, date
 from xml.etree import ElementTree
 from corehq.apps.receiverwrapper.util import submit_form_locally
+from corehq.form_processor.tests.utils import run_with_all_backends
 from casexml.apps.case.const import CASE_INDEX_CHILD
 from casexml.apps.case.mock import CaseStructure, CaseIndex
 from custom.icds_reports.ucr.tests.base_test import BaseICDSDatasourceTest, add_element
@@ -372,6 +373,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
 
         submit_form_locally(ElementTree.tostring(form), self.domain, **{})
 
+    @run_with_all_backends
     def test_demographic_data(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -397,6 +399,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
+    @run_with_all_backends
     def test_open_in_month(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -416,6 +419,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
+    @run_with_all_backends
     def test_alive_in_month(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -434,6 +438,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
+    @run_with_all_backends
     def test_valid_in_month(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -452,6 +457,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
+    @run_with_all_backends
     def test_age_in_months(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -469,6 +475,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
+    @run_with_all_backends
     def test_age_tranche_0_to_6(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -485,6 +492,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
+    @run_with_all_backends
     def test_age_tranche_6_to_12(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -501,6 +509,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
+    @run_with_all_backends
     def test_age_tranche_12_to_24(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -516,6 +525,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
+    @run_with_all_backends
     def test_age_tranche_24_to_36(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -531,6 +541,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
+    @run_with_all_backends
     def test_age_tranche_36_to_48(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -546,6 +557,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
+    @run_with_all_backends
     def test_age_tranche_48_to_60(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -561,6 +573,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
+    @run_with_all_backends
     def test_age_tranche_60_to_72(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -576,6 +589,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
+    @run_with_all_backends
     def test_age_tranche_72_to_null(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -591,6 +605,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
+    @run_with_all_backends
     def test_wer_eligible(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -609,6 +624,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
+    @run_with_all_backends
     def test_thr_eligible_6mo(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -627,6 +643,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
+    @run_with_all_backends
     def test_thr_eligible_36mo(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -645,6 +662,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
+    @run_with_all_backends
     def test_ebf_eligible(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -663,6 +681,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
+    @run_with_all_backends
     def test_cf_eligible_6mo(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -681,6 +700,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
+    @run_with_all_backends
     def test_cf_eligible_24mo(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -699,6 +719,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
+    @run_with_all_backends
     def test_pse_eligible_36mo(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -717,6 +738,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
+    @run_with_all_backends
     def test_pse_eligible_72mo(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -734,6 +756,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
+    @run_with_all_backends
     def test_nutrition_status_delivery(self):
         case_id = uuid.uuid4().hex
         case_id_2 = uuid.uuid4().hex
@@ -798,6 +821,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
+    @run_with_all_backends
     def test_nutrition_status_gmp(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -872,6 +896,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
+    @run_with_all_backends
     def test_thr_rations(self):
         case_id = uuid.uuid4().hex
         case_id_2 = uuid.uuid4().hex
@@ -915,6 +940,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
+    @run_with_all_backends
     def test_pse(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -949,6 +975,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
+    @run_with_all_backends
     def test_born_in_month_positive(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -976,6 +1003,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
+    @run_with_all_backends
     def test_born_in_month_negative(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -1001,6 +1029,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
+    @run_with_all_backends
     def test_ebf_ebf_form(self):
         case_id = uuid.uuid4().hex
         case_id_2 = uuid.uuid4().hex
@@ -1106,6 +1135,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
+    @run_with_all_backends
     def test_pnc_form(self):
         case_id = uuid.uuid4().hex
         case_id_2 = uuid.uuid4().hex
@@ -1190,6 +1220,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
+    @run_with_all_backends
     def test_ebf_no_ebf_reasons(self):
         case_id = uuid.uuid4().hex
         case_id_2 = uuid.uuid4().hex
@@ -1290,6 +1321,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
+    @run_with_all_backends
     def test_cf(self):
         case_id = uuid.uuid4().hex
         case_id_2 = uuid.uuid4().hex
@@ -1381,6 +1413,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
+    @run_with_all_backends
     def test_fully_immunized_eligible(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -1397,6 +1430,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
+    @run_with_all_backends
     def test_fully_immunized_on_time(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -1420,6 +1454,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
+    @run_with_all_backends
     def test_fully_immunized_late(self):
         case_id = uuid.uuid4().hex
         self._create_case(
