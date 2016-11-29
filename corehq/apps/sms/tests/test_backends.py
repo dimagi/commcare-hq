@@ -364,15 +364,14 @@ class AllBackendTest(BaseSMSTest):
 
     @run_with_all_backends
     def test_smsgh_inbound_sms(self):
-        user = ApiUser.create('smsgh-api-key', 'smsgh-api-key', permissions=[PERMISSION_POST_SMS])
-        user.save()
-
-        self._simulate_inbound_request('/smsgh/sms/smsgh-api-key/', phone_param='snr',
-            msg_param='msg', msg_text='smsgh test')
+        self._simulate_inbound_request(
+            '/smsgh/sms/{}/'.format(self.smsgh_backend.inbound_api_key),
+            phone_param='snr',
+            msg_param='msg',
+            msg_text='smsgh test'
+        )
 
         self._verify_inbound_request('SMSGH', 'smsgh test')
-
-        user.delete()
 
     @run_with_all_backends
     def test_apposit_inbound_sms(self):
