@@ -140,7 +140,7 @@ def filter_case_diffs(couch_case, sql_case, diffs):
     partial_filters = PARTIAL_DIFFS[doc_type] + PARTIAL_DIFFS['CommCareCase*'] + PARTIAL_DIFFS['CommCareCaseIndex']
     filtered_diffs = _filter_partial_matches(filtered_diffs, partial_filters)
     filtered_diffs = _filter_date_diffs(filtered_diffs)
-    filtered_diffs = _filter_user_case_diffs(couch_case, filtered_diffs)
+    filtered_diffs = _filter_user_case_diffs(couch_case, sql_case, filtered_diffs)
     filtered_diffs = _filter_xform_id_diffs(couch_case, sql_case, filtered_diffs)
     filtered_diffs = _filter_case_attachment_diffs(couch_case, sql_case, filtered_diffs)
     filtered_diffs = _filter_case_index_diffs(couch_case, sql_case, filtered_diffs)
@@ -214,18 +214,23 @@ def _filter_date_diffs(diffs):
     ]
 
 
-def _filter_user_case_diffs(couch_case, diffs):
+def _filter_user_case_diffs(couch_case, sql_case, diffs):
     """SQL cases store the hq_user_id property in ``external_id`` for easier querying"""
     if 'hq_user_id' not in couch_case:
         return diffs
 
-    hq_user_id = couch_case['hq_user_id']
-    external_id_diffs = [diff for diff in diffs if diff.diff_type == 'diff' and diff.path == (u'external_id',)]
-    for diff in external_id_diffs:
-        if diff.old_value in ('', Ellipsis, None) and diff.new_value == hq_user_id:
-            diffs.remove(diff)
-
-    return diffs
+    filtered_diffs = [
+        diff for diff in diffs
+        if diff.path[0] not in ('external_id', 'hq_user_id')
+    ]
+    hq_user_id_couch = couch_case['hq_user_id']
+    hq_user_id_sql = sql_case.get('external_id', Ellipsis)
+    if hq_user_id_sql != hq_user_id_couch:
+        filtered_diffs.append(FormJsonDiff(
+            diff_type='complex', path=('hq_user_id', 'external_id'),
+            old_value=hq_user_id_couch, new_value=hq_user_id_sql
+        ))
+    return filtered_diffs
 
 
 def _filter_xform_id_diffs(couch_case, sql_case, diffs):

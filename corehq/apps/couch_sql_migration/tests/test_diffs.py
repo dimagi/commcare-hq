@@ -177,11 +177,38 @@ class DiffTestCases(SimpleTestCase):
             'type': 'commcare-user'
         }
 
-        user_case_diffs = [
-            FormJsonDiff(diff_type=u'diff', path=(u'external_id',), old_value=u'', new_value=u'123')
-        ]
-        filtered = filter_case_diffs(couch_case, {}, user_case_diffs + REAL_DIFFS)
+        sql_case = {
+            'doc_type': 'CommCareCase',
+            'external_id': '123',
+            'type': 'commcare-user'
+        }
+
+        user_case_diffs = json_diff(couch_case, sql_case)
+        self.assertEqual(2, len(user_case_diffs))
+        filtered = filter_case_diffs(couch_case, sql_case, user_case_diffs + REAL_DIFFS)
         self.assertEqual(filtered, REAL_DIFFS)
+
+    def test_filter_usercase_diff_bad(self):
+        couch_case = {
+            'doc_type': 'CommCareCase',
+            'hq_user_id': '123',
+            'type': 'commcare-user'
+        }
+
+        sql_case = {
+            'doc_type': 'CommCareCase',
+            'type': 'commcare-user'
+        }
+
+        user_case_diffs = json_diff(couch_case, sql_case)
+        self.assertEqual(1, len(user_case_diffs))
+        filtered = filter_case_diffs(couch_case, sql_case, user_case_diffs)
+        self.assertEqual(filtered, [
+            FormJsonDiff(
+                diff_type='complex', path=('hq_user_id', 'external_id'),
+                old_value='123', new_value=Ellipsis
+            )
+        ])
 
     def test_filter_ledger_diffs(self):
         partial_diffs = _get_partial_diffs('LedgerValue')
