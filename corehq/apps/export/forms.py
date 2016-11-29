@@ -741,20 +741,13 @@ class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, GenericFilterCaseExp
         if can_access_all_locations:
             group_ids = self._get_group_ids(mobile_user_and_group_slugs)
 
+        owner_filter_ids = []
+        last_modified_filter_ids = []
         if group_ids:
             groups_static_user_ids = Group.get_static_user_ids_for_groups(group_ids)
             groups_static_user_ids = flatten_non_iterable_list(groups_static_user_ids)
             owner_filter_ids = group_ids + groups_static_user_ids
             last_modified_filter_ids = groups_static_user_ids
-        else:
-            if can_access_all_locations:
-                # case sharing groups returns case sharing groups and locations wrapped as Group
-                case_sharing_ids = [g.get_id for g in
-                                    Group.get_case_sharing_groups(self.domain_object.name)]
-            else:
-                case_sharing_ids = SQLLocation.get_case_sharing_locations_ids(self.domain_object.name)
-            owner_filter_ids = case_sharing_ids
-            last_modified_filter_ids = case_sharing_ids
 
         return [OR(
             OwnerFilter(owner_filter_ids),
