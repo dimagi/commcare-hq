@@ -127,42 +127,6 @@ ADMIN_MEDIA_PREFIX = '/static/admin/'
 # Make this unique, and don't share it with anybody - put into localsettings.py
 SECRET_KEY = 'you should really change this'
 
-_location = lambda x: os.path.join(FILEPATH, x)
-
-TEMPLATES = [
-    {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [
-            _location('corehq/apps/domain/templates/login_and_password'),
-        ],
-        'OPTIONS': {
-            'context_processors': [
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-                'django.core.context_processors.request',
-                'django.template.context_processors.debug',
-                'django.template.context_processors.i18n',
-                'django.template.context_processors.media',
-                'django.template.context_processors.static',
-                'django.template.context_processors.tz',
-
-                'corehq.util.context_processors.base_template',
-                'corehq.util.context_processors.current_url_name',
-                'corehq.util.context_processors.domain',
-                'corehq.util.context_processors.enterprise_mode',
-                'corehq.util.context_processors.js_api_keys',
-                'corehq.util.context_processors.websockets_override',
-            ],
-            'debug': DEBUG,
-            'loaders': [
-                'django.template.loaders.filesystem.Loader',
-                'django.template.loaders.app_directories.Loader',
-                'django.template.loaders.eggs.Loader',
-            ],
-        },
-    },
-]
-
 # Add this to localsettings and set it to False, so that CSRF protection is enabled on localhost
 CSRF_SOFT_MODE = True
 
@@ -923,6 +887,42 @@ except ImportError as error:
         raise error
     # fallback in case nothing else is found - used for readthedocs
     from dev_settings import *
+
+_location = lambda x: os.path.join(FILEPATH, x)
+
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [
+            _location('corehq/apps/domain/templates/login_and_password'),
+        ],
+        'OPTIONS': {
+            'context_processors': [
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+                'django.core.context_processors.request',
+                'django.template.context_processors.debug',
+                'django.template.context_processors.i18n',
+                'django.template.context_processors.media',
+                'django.template.context_processors.static',
+                'django.template.context_processors.tz',
+
+                'corehq.util.context_processors.base_template',
+                'corehq.util.context_processors.current_url_name',
+                'corehq.util.context_processors.domain',
+                'corehq.util.context_processors.enterprise_mode',
+                'corehq.util.context_processors.js_api_keys',
+                'corehq.util.context_processors.websockets_override',
+            ],
+            'debug': DEBUG,
+            'loaders': [
+                'django.template.loaders.filesystem.Loader',
+                'django.template.loaders.app_directories.Loader',
+                'django.template.loaders.eggs.Loader',
+            ],
+        },
+    },
+]
 
 LOGGING = {
     'version': 1,
