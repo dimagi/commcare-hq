@@ -102,7 +102,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         self._next_summary = next_month_summary
 
     def set_percent_active(self):
-        self.total_users_by_month = self.number_of_inactive_users + self.number_of_active_users
+        self.total_users_by_month = self.inactive + self.number_of_active_users
         if self.total_users_by_month:
             self.percent_active = float(self.number_of_active_users) / float(self.total_users_by_month)
         else:
@@ -125,10 +125,6 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
     def inactive(self):
         dropouts = self.get_dropouts()
         return len(dropouts) if dropouts else 0
-
-    @property
-    def number_of_inactive_users(self):
-        return self.inactive
 
     @property
     def previous_month(self):
@@ -179,9 +175,9 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
     @property
     def delta_inactive_pct(self):
         if self.delta_inactive and self._previous_summary:
-            if self._previous_summary.number_of_inactive_users == 0:
+            if self._previous_summary.inactive == 0:
                 return self.delta_inactive * 100.
-            return float(self.delta_inactive / float(self._previous_summary.number_of_inactive_users)) * 100.
+            return float(self.delta_inactive / float(self._previous_summary.inactive)) * 100.
 
     def _get_all_user_stubs(self):
         return {
