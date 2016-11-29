@@ -1146,10 +1146,10 @@ if DEBUG:
     warnings.simplefilter('default')
     os.environ['PYTHONWARNINGS'] = 'd'  # Show DeprecationWarning
 else:
-    TEMPLATES[0]['OPTIONS']['loaders'] = (
+    TEMPLATES[0]['OPTIONS']['loaders'] = [(
         'django.template.loaders.cached.Loader',
         TEMPLATES[0]['OPTIONS']['loaders']
-    )
+    )]
 
 if helper.is_testing():
     helper.assign_test_db_names(DATABASES)
