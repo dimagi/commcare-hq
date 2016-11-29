@@ -110,6 +110,8 @@ preview_app/less */
   .preview-phone-window {
     width: @preview-tablet-width;
     height: @preview-tablet-height;
+    max-height: -webkit-calc(~"95vh - 2 * " @preview-phone-case-offset-y);
+    max-height: -moz-calc(~"95vh - 2 * " @preview-phone-case-offset-y);
     max-height: calc(~"95vh - 2 * " @preview-phone-case-offset-y);
   }
   .preview-tablet-icon {
