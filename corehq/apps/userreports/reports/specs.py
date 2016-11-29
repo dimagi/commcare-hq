@@ -241,21 +241,19 @@ class ExpandedColumn(ReportColumn):
 
     def get_es_data(self, row, data_source_config, lang, from_aggregation=True):
         sub_columns = self.get_column_config(data_source_config, lang).columns
-        r = {}
+        ret = {}
 
         if not from_aggregation:
-            counter = 0
-            for sub_col in sub_columns:
+            for counter, sub_col in enumerate(sub_columns):
                 ui_col = self.column_id + "-" + str(counter)
                 if row[self.column_id] == sub_col.expand_value:
-                    r[ui_col] = 1
+                    ret[ui_col] = 1
                 else:
-                    r[ui_col] = 0
-                counter += 1
+                    ret[ui_col] = 0
         else:
             for sub_col in sub_columns:
-                r[sub_col.ui_alias] = sub_col.get_es_data(row)
-        return r
+                ret[sub_col.ui_alias] = sub_col.get_es_data(row)
+        return ret
 
 
 class AggregateDateColumn(ReportColumn):
