@@ -7,11 +7,11 @@
         self.description = ko.observable(data.description);
         self.dataType = ko.observable(data.type);
         self.availableDataTypes = ko.observableArray([
-            {value: 'date', display: 'Date'},
-            {value: 'plain', display: 'Plain'},
-            {value: 'number', display: 'Number'},
-            {value: 'select', display: 'Select'},
-            {value: 'integer', display: 'Integer'},
+            {value: 'date', display: django.gettext('Date')},
+            {value: 'plain', display: django.gettext('Plain')},
+            {value: 'number', display: django.gettext('Number')},
+            {value: 'select', display: django.gettext('Select')},
+            {value: 'integer', display: django.gettext('Integer')},
         ]);
 
         self.dataType.subscribe(function (newType) {
