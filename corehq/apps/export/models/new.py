@@ -1,3 +1,4 @@
+import codecs
 from copy import copy
 from datetime import datetime
 from itertools import groupby
@@ -29,6 +30,7 @@ from corehq.apps.reports.display import xmlns_to_name
 from corehq.blobs.mixin import BlobMixin
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.util.global_request import get_request
+from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import absolute_reverse
 from couchexport.models import Format
 from couchexport.transforms import couch_to_excel_datetime
@@ -407,15 +409,24 @@ class TableConfiguration(DocumentSchema):
 
             row_data = []
             for col in self.selected_columns:
-                val = col.get_value(
-                    domain,
-                    document_id,
-                    doc,
-                    self.path,
-                    row_index=row_index,
-                    split_column=split_columns,
-                    transform_dates=transform_dates,
-                )
+                try:
+                    val = col.get_value(
+                        domain,
+                        document_id,
+                        doc,
+                        self.path,
+                        row_index=row_index,
+                        split_column=split_columns,
+                        transform_dates=transform_dates,
+                    )
+                except ValueError:
+                    # self.path exhausted before looking up item. Error in export definition?
+                    norman = codecs.encode('aubbcre.qvzntv.pbz', 'rot_13').replace('.', '@', 1)
+                    _assert = soft_assert(norman)
+                    _assert(False, 'Invalid path "{}" to look up item "{}". '
+                                   'Row: {}. Doc ID: {}'.format(self.path, doc, row_index, document_id))
+                    val = None
+
                 if isinstance(val, list):
                     row_data.extend(val)
                 else:
