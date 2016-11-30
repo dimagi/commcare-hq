@@ -102,9 +102,9 @@ $(document).on("ajaxStart", function () {
 
 FormplayerFrontend.on('showError', function (errorMessage, isHTML) {
     if (isHTML) {
-        showHTMLError(errorMessage, $("#cloudcare-notifications"), 10000);
+        showHTMLError(errorMessage, $("#cloudcare-notifications"));
     } else {
-        showError(errorMessage, $("#cloudcare-notifications"), 10000);
+        showError(errorMessage, $("#cloudcare-notifications"));
     }
 });
 
