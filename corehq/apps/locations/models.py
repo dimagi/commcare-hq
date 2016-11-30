@@ -554,14 +554,12 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
         SQL ONLY FULL DELETE
         Delete this location and it's descendants.
         """
-        ids_to_delete = self.get_descendants(include_self=True).location_ids()
+        to_delete = self.get_descendants(include_self=True)
 
-        for loc_id in ids_to_delete:
-            loc = SQLLocation.objects.prefetch_related(
-                'location_type').get(location_id=loc_id)
+        for loc in to_delete:
             loc._sql_close_case_and_remove_users()
 
-        self.get_descendants(include_self=True).delete()
+        to_delete.delete()
 
     def _sql_close_case_and_remove_users(self):
         """
