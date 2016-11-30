@@ -84,7 +84,11 @@ class CouchSqlDomainMigrator(object):
             form_received = wrapped_form.received_on
             assert last_received_on <= form_received
             last_received_on = form_received
-            self._migrate_form_and_associated_models(wrapped_form)
+            try:
+                self._migrate_form_and_associated_models(wrapped_form)
+            except:
+                self.log_error("Unable to migrate form: {}".format(change.id))
+                raise
 
     def _migrate_form_and_associated_models(self, couch_form):
         from corehq.apps.tzmigration.timezonemigration import json_diff
