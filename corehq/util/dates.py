@@ -84,3 +84,14 @@ def get_previous_month_date_range(reference_date=None):
 
     last_month_year, last_month = add_months(reference_date.year, reference_date.month, -1)
     return get_first_last_days(last_month_year, last_month)
+
+
+def get_quarter_date_range(year, quarter):
+    """
+    Returns a daterange for the quarter, that ends on the _first_ of the following month..
+    """
+    assert quarter in (1, 2, 3, 4)
+    return (
+        datetime.datetime(year, quarter * 3 - 2, 1),
+        datetime.datetime(year + quarter * 3 / 12, (quarter * 3 + 1) % 12, 1)
+    )
