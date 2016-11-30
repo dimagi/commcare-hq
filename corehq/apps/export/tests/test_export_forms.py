@@ -21,7 +21,6 @@ from corehq.apps.export.forms import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.reports.filters.case_list import CaseListFilter
 from corehq.apps.groups.models import Group
-from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.models import HQUserType
 
 
