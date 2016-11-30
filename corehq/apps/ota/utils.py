@@ -129,6 +129,15 @@ def _ensure_cleanup_permission(domain, couch_user, as_user, has_data_cleanup_pri
 
 
 def _ensure_valid_restore_as_user(domain, couch_user, as_user):
+    username, user_domain = _parse_restore_as_user(as_user)
+    if user_domain != domain:
+        # In this case we may be dealing with a WebUser
+        user = WebUser.get_by_username(as_user)
+        if not user or not user.is_member_of(domain):
+            raise RestorePermissionDenied(_(u"{} was not in the domain {}").format(username, domain))
+
+
+def _parse_restore_as_user(as_user):
     try:
         username = as_user.split('@')[0]
         user_domain = as_user.split('@')[1]
@@ -136,12 +145,7 @@ def _ensure_valid_restore_as_user(domain, couch_user, as_user):
         raise RestorePermissionDenied(
             _(u"Invalid restore user {}. Format is <user>@<domain>").format(as_user)
         )
-    else:
-        if user_domain != domain:
-            # In this case we may be dealing with a WebUser
-            user = WebUser.get_by_username(as_user)
-            if not user or not user.is_member_of(domain):
-                raise RestorePermissionDenied(_(u"{} was not in the domain {}").format(username, domain))
+    return username, user_domain
 
 
 def _ensure_accessible_location(domain, couch_user, as_user):
