@@ -526,7 +526,7 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
         Delete a location and its dependants.
         This also unassigns users assigned to the location.
         """
-        to_delete = self.get_descendants(include_self=True).couch_locations()
+        to_delete = list(self.get_descendants(include_self=True).couch_locations())
         # if there are errors deleting couch locations, roll back sql delete
         with transaction.atomic():
             self.sql_full_delete()
