@@ -423,7 +423,7 @@ FormplayerFrontend.on('refreshApplication', function(appId) {
         tfLoadingComplete(true);
     }).done(function() {
         tfLoadingComplete();
-        if (typeof resp.responseJSON.tree !== 'undefined') {
+        if (!_.isUndefined(resp.responseJSON.tree)) {
             FormplayerFrontend.trigger('startForm', resp.responseJSON);
         } else {
             FormplayerFrontend.trigger('navigateHome');
