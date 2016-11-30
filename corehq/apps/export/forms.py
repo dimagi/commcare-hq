@@ -12,6 +12,7 @@ from corehq.apps.export.filters import (
     ModifiedOnRangeFilter, FormSubmittedByFilter, NOT
 )
 from corehq.apps.es.users import user_ids_at_locations_and_descendants
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.filters.case_list import CaseListFilter
 from corehq.apps.reports.filters.users import LocationRestrictedMobileWorkerFilter
 from corehq.apps.groups.models import Group
@@ -754,6 +755,10 @@ class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, GenericFilterCaseExp
             *self._get_group_independent_filters(mobile_user_and_group_slugs, can_access_all_locations)
         )]
 
+    def _get_selected_locations_and_descendants_ids(self, mobile_user_and_group_slugs):
+        selected_location_ids = self._get_locations_ids(mobile_user_and_group_slugs)
+        return SQLLocation.objects.get_locations_and_children_ids(selected_location_ids)
+
     def _get_group_independent_filters(self, mobile_user_and_group_slugs, can_access_all_locations):
         # filters for location and users for both and user type in case of full access
         if can_access_all_locations:
@@ -769,8 +774,10 @@ class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, GenericFilterCaseExp
             default_filters = []
         # filters for cases owned by users at selected locations and their descendants
         default_filters.append(self._get_locations_filter(mobile_user_and_group_slugs))
-        # filters for cases owned by selected locations
-        default_filters.append(self.export_user_filter(self._get_locations_ids(mobile_user_and_group_slugs)))
+        # filters for cases owned by selected locations and their descendants
+        default_filters.append(
+            self.export_user_filter(self._get_selected_locations_and_descendants_ids(mobile_user_and_group_slugs))
+        )
 
         default_filters.append(self._get_users_filter(mobile_user_and_group_slugs))
         default_filters.append(LastModifiedByFilter(self._get_user_ids(mobile_user_and_group_slugs)))
