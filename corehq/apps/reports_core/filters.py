@@ -4,7 +4,7 @@ from corehq.apps.reports_core.exceptions import FilterValueException
 from corehq.apps.userreports.expressions.getters import transform_from_datatype
 from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE, CHOICE_DELIMITER
 from corehq.apps.userreports.util import localize
-from corehq.util.dates import iso_string_to_date
+from corehq.util.dates import iso_string_to_date, get_quarter_date_range
 
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
@@ -163,12 +163,7 @@ class QuarterFilter(BaseFilter):
 
     @staticmethod
     def get_quarter(year, quarter):
-        return {
-            1: DateSpan(datetime(year, 1, 1), datetime(year, 4, 1), inclusive=False),
-            2: DateSpan(datetime(year, 4, 1), datetime(year, 7, 1), inclusive=False),
-            3: DateSpan(datetime(year, 7, 1), datetime(year, 10, 1), inclusive=False),
-            4: DateSpan(datetime(year, 10, 1), datetime(year + 1, 1, 1), inclusive=False),
-        }[quarter]
+        return DateSpan(*get_quarter_date_range(year, quarter), inclusive=False)
 
     @property
     def default_year(self):
