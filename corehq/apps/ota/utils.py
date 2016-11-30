@@ -3,6 +3,7 @@ from django.utils.translation import ugettext as _
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 from corehq.apps.domain.models import Domain
+from corehq.apps.users.util import format_username
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.users.models import CommCareUser, WebUser
@@ -192,12 +193,12 @@ def get_restore_user(domain, couch_user, as_user):
     restore_user = None
     if as_user is not None:
         if '@' in as_user:
-            _, user_domain = as_user.split('@')
+            username, user_domain = _parse_restore_as_user(as_user)
         else:
             user_domain = None
         # Likely a mobile worker because username contains domain
         if domain == user_domain:
-            user = CommCareUser.get_by_username('{}.commcarehq.org'.format(as_user))
+            user = CommCareUser.get_by_username(format_username(username, domain))
             if not user:
                 return None
             restore_user = user.to_ota_restore_user()
