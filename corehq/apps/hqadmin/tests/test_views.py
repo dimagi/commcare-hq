@@ -24,7 +24,8 @@ class AdminRestoreViewTests(SimpleTestCase):
             self.assertEqual(context, {
                 'foo': 'bar',
                 'view': 'AdminRestoreView',
-                'payload': '<error>bad response</error>',
+                'payload': '<error>Unexpected restore response 500: bad response. If you believe this is a bug '
+                           'please report an issue.</error>',
                 'restore_id': None,
                 'status_code': 500,
                 'timing_data': [],

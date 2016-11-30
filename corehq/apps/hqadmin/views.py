@@ -499,8 +499,14 @@ class AdminRestoreView(TemplateView):
             num_cases = len(xml_payload.findall('{http://commcarehq.org/case/transaction/v2}case'))
             formatted_payload = etree.tostring(xml_payload, pretty_print=True)
         else:
-            # response is HttpResponse 500
-            error = E.error(response.content)
+            # get_restore_response return HttpResponse 401 (permissions), 404 (user not found) or 412
+            if response.status_code in (401, 404):
+                message = response.content
+            else:
+                message = _('Unexpected restore response {}: {}. '
+                            'If you believe this is a bug please report an issue.').format(response.status_code,
+                                                                                           response.content)
+            error = E.error(message)
             formatted_payload = etree.tostring(error)
             restore_id_element = None
             num_cases = 0
