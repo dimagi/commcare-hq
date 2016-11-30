@@ -47,6 +47,9 @@ PARTIAL_DIFFS = {
         # legacy bug left cases with no owner_id
         {'diff_type': 'diff', 'path': ('owner_id',), 'old_value': ''},
         {'diff_type': 'type', 'path': ('owner_id',), 'old_value': None},
+        {'diff_type': 'type', 'path': ('user_id',), 'old_value': None},
+        {'diff_type': 'type', 'path': ('opened_on',), 'old_value': None},
+        {'diff_type': 'type', 'path': ('opened_by',), 'old_value': Ellipsis},
         # form has case block with no actions
         {'diff_type': 'set_mismatch', 'path': ('xform_ids', '[*]'), 'old_value': ''},
         {'diff_type': 'missing', 'path': ('case_attachments',), 'old_value': Ellipsis, 'new_value': {}},
