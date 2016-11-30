@@ -1,7 +1,9 @@
+from django.conf import settings
 from django.utils.translation import ugettext as _
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 from corehq.apps.domain.models import Domain
+from corehq.apps.users.util import format_username
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.users.models import CommCareUser, WebUser
@@ -151,6 +153,9 @@ def _parse_restore_as_user(as_user):
     try:
         username = as_user.split('@')[0]
         user_domain = as_user.split('@')[1]
+        hq_suffix = '.{}'.format(settings.HQ_ACCOUNT_ROOT)
+        if user_domain.endswith(settings.HQ_ACCOUNT_ROOT):
+            user_domain = user_domain[:-len(hq_suffix)]
     except IndexError:
         raise RestorePermissionDenied(
             _(u"Invalid restore user {}. Format is <user>@<domain>").format(as_user)
@@ -159,7 +164,10 @@ def _parse_restore_as_user(as_user):
 
 
 def _ensure_accessible_location(domain, couch_user, as_user):
-    as_user_obj = CommCareUser.get_by_username('{}.commcarehq.org'.format(as_user))
+    as_user_obj = None
+    if '@' in as_user:
+        username, user_domain = _parse_restore_as_user(as_user)
+        as_user_obj = CommCareUser.get_by_username(format_username(username, user_domain))
     if not as_user_obj:
         as_user_obj = WebUser.get_by_username(as_user)
     if not as_user_obj:
@@ -188,12 +196,12 @@ def get_restore_user(domain, couch_user, as_user):
     restore_user = None
     if as_user is not None:
         if '@' in as_user:
-            _, user_domain = as_user.split('@')
+            username, user_domain = _parse_restore_as_user(as_user)
         else:
             user_domain = None
         # Likely a mobile worker because username contains domain
         if domain == user_domain:
-            user = CommCareUser.get_by_username('{}.commcarehq.org'.format(as_user))
+            user = CommCareUser.get_by_username(format_username(username, domain))
             if not user:
                 return None
             restore_user = user.to_ota_restore_user()
