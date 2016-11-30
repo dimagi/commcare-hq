@@ -6,7 +6,6 @@ from pillowtop.dao.interface import ReadOnlyDocumentStore
 from .models import SQLLocation
 from pillowtop.feed.interface import ChangeMeta
 
-from corehq.apps.change_feed import data_sources
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.producer import producer
 
@@ -36,8 +35,8 @@ class ReadonlyLocationDocumentStore(ReadOnlyDocumentStore):
 def publish_location_saved(domain, location_id, is_deletion=False):
     change_meta = ChangeMeta(
         document_id=location_id,
-        data_source_type=data_sources.LOCATION,
-        data_source_name=data_sources.LOCATION,
+        data_source_type='location',
+        data_source_name='location',
         document_type=LOCATION_DOC_TYPE,
         domain=domain,
         is_deletion=is_deletion,
