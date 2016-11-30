@@ -1,3 +1,4 @@
+from corehq.apps.locations.document_store import ReadonlyLocationDocumentStore, LOCATION_DOC_TYPE
 from corehq.form_processor.document_stores import ReadonlyFormDocumentStore, ReadonlyCaseDocumentStore
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.util.couch import get_db_by_doc_type
@@ -10,6 +11,8 @@ def get_document_store(domain, doc_type):
         return ReadonlyFormDocumentStore(domain)
     elif use_sql and doc_type == 'CommCareCase':
         return ReadonlyCaseDocumentStore(domain)
+    elif doc_type == LOCATION_DOC_TYPE:
+        return ReadonlyLocationDocumentStore(domain)
     else:
         # all other types still live in couchdb
         return CouchDocumentStore(
