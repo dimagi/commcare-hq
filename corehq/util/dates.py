@@ -95,3 +95,8 @@ def get_quarter_date_range(year, quarter):
         datetime.datetime(year, quarter * 3 - 2, 1),
         datetime.datetime(year + quarter * 3 / 12, (quarter * 3 + 1) % 12, 1)
     )
+
+
+def get_quarter_for_date(date):
+    quarter = (date.month - 1) / 3 + 1
+    return date.year, quarter
