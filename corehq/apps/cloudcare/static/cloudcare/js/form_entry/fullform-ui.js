@@ -235,7 +235,6 @@ function Form(json) {
     });
 
     self.clickedNextOnRequired = function () {
-        console.log('force next');
         self.forceRequiredVisible(true);
     };
 
