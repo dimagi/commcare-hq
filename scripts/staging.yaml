@@ -54,6 +54,7 @@ branches:
   - nh/new_rb  # Norman 11/22
 #  - location_export # Manish 11/2
 #  - jquery-3-retry # Jenny 11/11
+  - es/location-ucr  # Ethan 11/30
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
