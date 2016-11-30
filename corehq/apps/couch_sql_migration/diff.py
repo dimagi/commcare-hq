@@ -145,7 +145,7 @@ def filter_form_diffs(couch_form, sql_form, diffs):
 def _filter_text_xmlns(diffs):
     return [
         diff for diff in diffs
-        if diff.path[-1] in ('#text', '@xmlns') and diff.old_value in ('', Ellipsis)
+        if not (diff.path[-1] in ('#text', '@xmlns') and diff.old_value in ('', Ellipsis))
     ]
 
 
