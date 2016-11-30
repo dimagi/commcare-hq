@@ -235,7 +235,9 @@ def _check_renamed_fields(filtered_diffs, couch_doc, sql_doc, couch_field_name, 
     if len(remaining_diffs) != len(filtered_diffs):
         sql_field = sql_doc.get(sql_field_name, Ellipsis)
         couch_field = couch_doc.get(couch_field_name, Ellipsis)
-        if sql_field != couch_field and not _both_dates(couch_field, sql_field):
+        if sql_field != couch_field \
+                and not _both_dates(couch_field, sql_field) \
+                and not (couch_field == Ellipsis and sql_field == ''):
             remaining_diffs.append(FormJsonDiff(
                 diff_type='complex', path=(couch_field_name, sql_field_name),
                 old_value=couch_field, new_value=sql_field
