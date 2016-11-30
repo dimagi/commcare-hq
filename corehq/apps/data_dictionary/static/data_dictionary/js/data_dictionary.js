@@ -1,3 +1,4 @@
+/* globals django */
 (function ($, _) {
     var CaseProperty = function (caseType, data, casePropertyUrl) {
         var self = this;
