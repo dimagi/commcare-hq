@@ -1,4 +1,5 @@
 from lxml import etree
+from lxml.builder import E
 
 import HTMLParser
 import json
@@ -27,7 +28,8 @@ from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseNotFound,
-    JsonResponse
+    JsonResponse,
+    StreamingHttpResponse,
 )
 from restkit import Resource
 from restkit.errors import Unauthorized
@@ -490,11 +492,18 @@ class AdminRestoreView(TemplateView):
         context = super(AdminRestoreView, self).get_context_data(**kwargs)
         response, timing_context = self._get_restore_response()
         timing_context = timing_context or TimingContext(self.user.username)
-        string_payload = ''.join(response.streaming_content)
-        xml_payload = etree.fromstring(string_payload)
-        restore_id_element = xml_payload.find('{{{0}}}Sync/{{{0}}}restore_id'.format(SYNC_XMLNS))
-        num_cases = len(xml_payload.findall('{http://commcarehq.org/case/transaction/v2}case'))
-        formatted_payload = etree.tostring(xml_payload, pretty_print=True)
+        if isinstance(response, StreamingHttpResponse):
+            string_payload = ''.join(response.streaming_content)
+            xml_payload = etree.fromstring(string_payload)
+            restore_id_element = xml_payload.find('{{{0}}}Sync/{{{0}}}restore_id'.format(SYNC_XMLNS))
+            num_cases = len(xml_payload.findall('{http://commcarehq.org/case/transaction/v2}case'))
+            formatted_payload = etree.tostring(xml_payload, pretty_print=True)
+        else:
+            # response is HttpResponse 500
+            error = E.error(response.content)
+            formatted_payload = etree.tostring(error)
+            restore_id_element = None
+            num_cases = 0
         context.update({
             'payload': formatted_payload,
             'restore_id': restore_id_element.text if restore_id_element is not None else None,
