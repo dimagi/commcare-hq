@@ -42,34 +42,32 @@ class UpdateCasePropertyViewTest(TestCase):
 
     def _assert_type(self, value=''):
         prop = self._get_property()
-        self.assertEqual(prop.type, value)
+        self.assertEqual(prop.data_type, value)
 
     def test_nonexistant_case_type(self):
         self._assert_type()
-        post_data = {'caseType': 'somethingelse', 'name': 'property', 'type': 'date'}
+        post_data = {'caseType': 'somethingelse', 'name': 'property', 'data_type': 'date'}
         response = self.client.post(self.url, post_data)
         self.assertEqual(response.status_code, 404)
         self._assert_type()
 
     def test_nonexistant_case_property(self):
         self._assert_type()
-        post_data = {'caseType': 'caseType', 'name': 'otherproperty', 'type': 'date'}
+        post_data = {'caseType': 'caseType', 'name': 'otherproperty', 'data_type': 'date'}
         response = self.client.post(self.url, post_data)
         self.assertEqual(response.status_code, 404)
         self._assert_type()
 
     def test_update_with_incorrect_data_type(self):
         self._assert_type()
-        post_data = {'caseType': 'caseType', 'name': 'property', 'type': 'blah'}
+        post_data = {'caseType': 'caseType', 'name': 'property', 'data_type': 'blah'}
         response = self.client.post(self.url, post_data)
         self.assertEqual(response.status_code, 400)
         self._assert_type()
 
     def test_update_of_correct_data_type(self):
         self._assert_type()
-        prop = self._get_property()
-        self.assertEqual(prop.type, '')
-        post_data = {'caseType': 'caseType', 'name': 'property', 'type': 'date'}
+        post_data = {'caseType': 'caseType', 'name': 'property', 'data_type': 'date'}
         response = self.client.post(self.url, post_data)
         self.assertEqual(response.status_code, 200)
         self._assert_type('date')

@@ -6,7 +6,7 @@
         self.caseType = ko.observable(caseType);
         self.name = ko.observable(data.name);
         self.description = ko.observable(data.description);
-        self.dataType = ko.observable(data.type);
+        self.dataType = ko.observable(data.data_type);
         self.availableDataTypes = ko.observableArray([
             {value: 'date', display: django.gettext('Date')},
             {value: 'plain', display: django.gettext('Plain')},
@@ -24,7 +24,7 @@
                     data: {
                         'caseType': self.caseType(),
                         'name': self.name,
-                        'type': newType,
+                        'data_type': newType,
                     },
                     success: function () { },
                     // todo show errors

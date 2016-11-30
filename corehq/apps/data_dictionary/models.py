@@ -29,7 +29,7 @@ class CaseProperty(models.Model):
     name = models.CharField(max_length=255, default=None)
     description = models.TextField(default='', blank=True)
     deprecated = models.BooleanField(default=False)
-    type = models.CharField(
+    data_type = models.CharField(
         choices=PROPERTY_TYPE_CHOICES,
         max_length=20,
         default='',

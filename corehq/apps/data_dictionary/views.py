@@ -40,7 +40,7 @@ def data_dictionary_json(request, domain, case_type_name=None):
             p['properties'].append({
                 "description": prop.description,
                 "name": prop.name,
-                "type": prop.type,
+                "data_type": prop.data_type,
             })
         props.append(p)
     return JsonResponse({'case_types': props})
@@ -52,7 +52,7 @@ def update_case_property(request, domain):
     case_type = request.POST.get('caseType')
     name = request.POST.get('name')
     description = request.POST.get('description')
-    type = request.POST.get('type')
+    data_type = request.POST.get('data_type')
     try:
         prop = CaseProperty.objects.get(
             name=name, case_type__name=case_type, case_type__domain=domain
@@ -62,8 +62,8 @@ def update_case_property(request, domain):
             'status': "failed",
             "error": "property does not exist"
         }, status=404)
-    if type:
-        prop.type = type
+    if data_type:
+        prop.data_type = data_type
     if description:
         prop.description = description
     try:
