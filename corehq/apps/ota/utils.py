@@ -152,6 +152,9 @@ def _parse_restore_as_user(as_user):
     try:
         username = as_user.split('@')[0]
         user_domain = as_user.split('@')[1]
+        hq_suffix = '.{}'.format(settings.HQ_ACCOUNT_ROOT)
+        if user_domain.endswith(settings.HQ_ACCOUNT_ROOT):
+            user_domain = user_domain[:-len(hq_suffix)]
     except IndexError:
         raise RestorePermissionDenied(
             _(u"Invalid restore user {}. Format is <user>@<domain>").format(as_user)
