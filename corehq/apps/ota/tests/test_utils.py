@@ -24,6 +24,7 @@ class RestorePermissionsTest(LocationHierarchyTestCase):
 
     @classmethod
     def setUpClass(cls):
+        delete_all_users()
         super(RestorePermissionsTest, cls).setUpClass()
 
         cls.other_project = Domain(name=cls.other_domain)
@@ -179,6 +180,25 @@ class RestorePermissionsTest(LocationHierarchyTestCase):
         self.assertTrue(is_permitted)
         self.assertIsNone(message)
 
+    def test_commcare_user_as_self(self):
+        is_permitted, message = is_permitted_to_restore(
+            self.domain,
+            self.commcare_user,
+            self.commcare_user.username,
+            True,
+        )
+        self.assertTrue(is_permitted)
+        self.assertIsNone(message)
+
+        is_permitted, message = is_permitted_to_restore(
+            self.domain,
+            self.commcare_user,
+            u'{}@{}'.format(self.commcare_user.raw_username, self.domain),
+            True,
+        )
+        self.assertTrue(is_permitted)
+        self.assertIsNone(message)
+
     def test_super_user_as_user_other_domain(self):
         """
         Superusers should be able to restore as other mobile users even if it's the wrong domain
@@ -303,6 +323,7 @@ class GetRestoreUserTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        delete_all_users()
         super(GetRestoreUserTest, cls).setUpClass()
         cls.project = Domain(name=cls.domain)
         cls.project.save()
