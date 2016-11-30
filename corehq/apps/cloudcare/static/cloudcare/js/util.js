@@ -88,11 +88,11 @@ hqDefine('cloudcare/js/util.js', function () {
         return field ? field.startsWith('parent/') : false;
     };
 
-    var showError = function (message, $el, autoHideTime) {
+    var showError = function (message, $el) {
         if (message === undefined) {
             message = gettext("Sorry, an error occurred while processing that request.");
         }
-        _show(message, $el, autoHideTime, "alert alert-danger");
+        _show(message, $el, null, "alert alert-danger");
     };
 
     var showHTMLError = function (message, $el, autoHideTime) {
