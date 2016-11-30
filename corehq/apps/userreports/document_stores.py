@@ -1,30 +1,8 @@
-from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.document_store import ReadonlyLocationDocumentStore, LOCATION_DOC_TYPE
 from corehq.form_processor.document_stores import ReadonlyFormDocumentStore, ReadonlyCaseDocumentStore
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.util.couch import get_db_by_doc_type
 from pillowtop.dao.couch import CouchDocumentStore
-from pillowtop.dao.exceptions import DocumentNotFoundError
-from pillowtop.dao.interface import ReadOnlyDocumentStore
-
-
-class ReadonlyLocationDocumentStore(ReadOnlyDocumentStore):
-
-    def __init__(self, domain):
-        self.domain = domain
-        self.queryset = SQLLocation.objects.filter(domain=domain)
-
-    def get_document(self, doc_id):
-        try:
-            return self.queryset.get(location_id=doc_id).to_json()
-        except SQLLocation.DoesNotExist as e:
-            raise DocumentNotFoundError(e)
-
-    def iter_document_ids(self, last_id=None):
-        return iter(self.queryset.location_ids())
-
-    def iter_documents(self, ids):
-        for location in self.queryset.filter(location_id__in=ids):
-            yield location.to_json()
 
 
 def get_document_store(domain, doc_type):
@@ -33,7 +11,7 @@ def get_document_store(domain, doc_type):
         return ReadonlyFormDocumentStore(domain)
     elif use_sql and doc_type == 'CommCareCase':
         return ReadonlyCaseDocumentStore(domain)
-    elif doc_type == 'Location':
+    elif doc_type == LOCATION_DOC_TYPE:
         return ReadonlyLocationDocumentStore(domain)
     else:
         # all other types still live in couchdb
