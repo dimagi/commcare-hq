@@ -245,8 +245,6 @@ class TestEmwfFilterFormExportFormFilters(TestCase):
 @patch.object(FilterCaseESExportDownloadForm, '_get_datespan_filter', lambda x: [])
 @patch.object(FilterCaseESExportDownloadForm, '_get_group_ids')
 @patch.object(Group, 'get_static_user_ids_for_groups')
-@patch.object(Group, 'get_case_sharing_groups')
-@patch.object(SQLLocation, 'get_case_sharing_locations_ids')
 class TestFilterCaseESExportDownloadForm(TestCase):
     form = FilterCaseESExportDownloadForm
     filter = form.dynamic_filter_class
@@ -294,36 +292,30 @@ class TestFilterCaseESExportDownloadForm(TestCase):
         self.assertEqual(case_filters[0].operand_filter.owner_id, ['123'])
 
     @patch.object(form, '_get_group_independent_filters', lambda x, y, z: [])
-    def test_get_filters_from_slugs_for_all_locations_access(self, case_sharing_locations_ids_patch,
-                                                             case_sharing_groups_patch,
-                                                             static_user_ids_for_group_patch, group_ids_patch):
+    def test_get_filters_from_slugs_for_all_locations_access(self, static_user_ids_for_group_patch,
+                                                             group_ids_patch):
         group_ids_patch.return_value = self.group_ids
         self.export_filter = self.subject(self.domain, pytz.utc)
         self.export_filter.get_case_filter(self.group_ids_slug, True)
 
         group_ids_patch.assert_called_once_with(self.group_ids_slug)
         static_user_ids_for_group_patch.assert_called_once_with(self.group_ids)
-        assert not case_sharing_groups_patch.called
-        assert not case_sharing_locations_ids_patch.called
 
     @patch.object(form, '_get_group_independent_filters', lambda x, y, z: [])
-    def test_get_filters_from_slugs_for_restricted_locations_access(self, case_sharing_locations_ids_patch,
-                                                                    case_sharing_groups_patch,
-                                                                    static_user_ids_for_group_patch,
+    def test_get_filters_from_slugs_for_restricted_locations_access(self, static_user_ids_for_group_patch,
                                                                     group_ids_patch):
         self.export_filter = self.subject(self.domain, pytz.utc)
         self.export_filter.get_case_filter(self.group_ids_slug, False)
 
         assert not group_ids_patch.called
         assert not static_user_ids_for_group_patch.called
-        assert not case_sharing_groups_patch.called
-        case_sharing_locations_ids_patch.assert_called_once_with(self.domain.name)
 
     @patch.object(filter, 'selected_user_types')
     @patch.object(form, '_get_locations_filter')
-    @patch.object(form, '_get_locations_ids')
+    @patch.object(form, '_get_selected_locations_and_descendants_ids')
     @patch.object(form, '_get_users_filter')
-    def test_get_group_independent_filters_for_all_access(self, get_users_filter, get_locations_ids,
+    @patch.object(form, '_get_user_ids')
+    def test_get_group_independent_filters_for_all_access(self, get_user_ids, get_users_filter, get_locations_ids,
                                                           get_locations_filter, get_es_user_types, *patches):
         self.export_filter = self.subject(self.domain, pytz.utc)
         self.export_filter.get_case_filter(self.group_ids_slug, True)
@@ -331,12 +323,15 @@ class TestFilterCaseESExportDownloadForm(TestCase):
         get_locations_filter.assert_called_once_with(self.group_ids_slug)
         get_locations_ids.assert_called_once_with(self.group_ids_slug)
         get_users_filter.assert_called_once_with(self.group_ids_slug)
+        get_user_ids.assert_called_once_with(self.group_ids_slug)
 
     @patch.object(filter, 'selected_user_types')
     @patch.object(form, '_get_locations_filter')
-    @patch.object(form, '_get_locations_ids')
+    @patch.object(form, '_get_selected_locations_and_descendants_ids')
     @patch.object(form, '_get_users_filter')
-    def test_get_group_independent_filters_for_restricted_access(self, get_users_filter, get_locations_ids,
+    @patch.object(form, '_get_user_ids')
+    def test_get_group_independent_filters_for_restricted_access(self, get_user_ids, get_users_filter,
+                                                                 get_locations_ids,
                                                                  get_locations_filter, get_es_user_types, *mocks):
         self.export_filter = self.subject(self.domain, pytz.utc)
         self.export_filter.get_case_filter(self.group_ids_slug, False)
@@ -344,3 +339,4 @@ class TestFilterCaseESExportDownloadForm(TestCase):
         get_locations_filter.assert_called_once_with(self.group_ids_slug)
         get_locations_ids.assert_called_once_with(self.group_ids_slug)
         get_users_filter.assert_called_once_with(self.group_ids_slug)
+        get_user_ids.assert_called_once_with(self.group_ids_slug)
