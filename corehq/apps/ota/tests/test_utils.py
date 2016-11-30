@@ -24,7 +24,6 @@ class RestorePermissionsTest(LocationHierarchyTestCase):
 
     @classmethod
     def setUpClass(cls):
-        delete_all_users()
         super(RestorePermissionsTest, cls).setUpClass()
 
         cls.other_project = Domain(name=cls.other_domain)
@@ -323,7 +322,6 @@ class GetRestoreUserTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        delete_all_users()
         super(GetRestoreUserTest, cls).setUpClass()
         cls.project = Domain(name=cls.domain)
         cls.project.save()
