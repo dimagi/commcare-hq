@@ -14,6 +14,7 @@ from custom.enikshay.case_utils import (
     get_occurrence_case_from_episode,
     get_person_case_from_occurrence,
 )
+from custom.enikshay.const import PRIMARY_PHONE_NUMBER, BACKUP_PHONE_NUMBER
 
 
 class PatientPayload(jsonobject.JsonObject):
@@ -126,20 +127,23 @@ def _update_episode_case(domain, case_id, updated_properties):
 
 
 def _get_phone_numbers(case_properties):
-    primary_number = _parse_number(case_properties.get('phone_number'))
-    backup_number = _parse_number(case_properties.get('backup_number'))
-    if backup_number is not None:
+    primary_number = _parse_number(case_properties.get(PRIMARY_PHONE_NUMBER))
+    backup_number = _parse_number(case_properties.get(BACKUP_PHONE_NUMBER))
+    if primary_number and backup_number:
         return ", ".join([_format_number(primary_number), _format_number(backup_number)])
-    return _format_number(primary_number)
+    elif primary_number:
+        return _format_number(primary_number)
+    elif backup_number:
+        return _format_number(backup_number)
 
 
 def _parse_number(number):
-    if number is not None:
+    if number:
         return phonenumbers.parse(number, "IN")
 
 
 def _format_number(phonenumber):
-    if phonenumber is not None:
+    if phonenumber:
         return phonenumbers.format_number(
             phonenumber,
             phonenumbers.PhoneNumberFormat.INTERNATIONAL

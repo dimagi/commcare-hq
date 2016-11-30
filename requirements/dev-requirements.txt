@@ -15,6 +15,7 @@ fixture
 sniffer
 psutil  # for memory profiling
 django-extensions
-ipdb
+ipython==4.2.1
+ipdb==0.9.4
 
 --requirement=test-requirements.txt

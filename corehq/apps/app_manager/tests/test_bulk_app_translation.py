@@ -7,7 +7,7 @@ from StringIO import StringIO
 
 from mock import patch
 
-from corehq.util.spreadsheets.excel import WorkbookJSONReader
+from corehq.util.spreadsheets_v1.excel import WorkbookJSONReader
 
 from couchexport.export import export_raw
 from couchexport.models import Format

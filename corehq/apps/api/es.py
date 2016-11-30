@@ -1,33 +1,31 @@
-import logging
-import json
-import six
 import copy
 import datetime
+import json
+import logging
 
+import six
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator, classonlymethod
 from django.views.generic import View
-from elasticsearch.exceptions import ElasticsearchException
+from elasticsearch.exceptions import ElasticsearchException, NotFoundError
 
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.es.utils import flatten_field_dict
+from corehq.apps.api.models import ESCase, ESXFormInstance
 from corehq.apps.api.resources.v0_1 import TASTYPIE_RESERVED_GET_PARAMS
+from corehq.apps.api.util import object_does_not_exist
+from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.es.utils import flatten_field_dict
+from corehq.apps.reports.filters.forms import FormsByApplicationFilter
+from corehq.elastic import ESError, get_es_new
+from corehq.pillows.base import restore_property_dict, VALUE_TAG
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
-from dimagi.utils.parsing import ISO_DATE_FORMAT
-
 from dimagi.utils.logging import notify_exception
-
-from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.reports.filters.forms import FormsByApplicationFilter
-from corehq.elastic import ESError, get_es_new
-from corehq.pillows.base import restore_property_dict, VALUE_TAG
-
+from dimagi.utils.parsing import ISO_DATE_FORMAT
 from no_exceptions.exceptions import Http400
-
 
 logger = logging.getLogger('es')
 
@@ -71,6 +69,8 @@ class ESView(View):
     index = ""
     domain = ""
     es = None
+    doc_type = None
+    model = None
 
     http_method_names = ['get', 'post', 'head', ]
 
@@ -111,8 +111,20 @@ class ESView(View):
         def view(request, domain, *args, **kwargs):
             self = cls(domain)
             return self.dispatch(request, domain, *args, **kwargs)
-        
+
         return view
+
+    def get_document(self, doc_id):
+        try:
+            result = self.es.get(self.index, doc_id)
+        except NotFoundError:
+            raise object_does_not_exist(self.doc_type, doc_id)
+
+        doc = result['_source']
+        if doc.get('domain') != self.domain:
+            raise object_does_not_exist(self.doc_type, doc_id)
+
+        return self.model(doc) if self.model else doc
 
     def run_query(self, es_query, es_type=None):
         """
@@ -231,14 +243,20 @@ class CaseES(ESView):
     Which this should be the final say on ES access for Casedocs
     """
     index = CASE_INDEX
+    doc_type = "CommCareCase"
+    model = ESCase
 
 
 class ReportCaseES(ESView):
     index = REPORT_CASE_INDEX
+    doc_type = "CommCareCase"
+    model = ESCase
 
 
 class XFormES(ESView):
     index = XFORM_INDEX
+    doc_type = "XFormInstance"
+    model = ESXFormInstance
 
     def base_query(self, terms=None, doc_type='xforminstance', fields=None, start=0, size=DEFAULT_SIZE):
         """
@@ -292,6 +310,7 @@ class UserES(ESView):
     self.run_query accepts a structured elasticsearch query
     """
     index = USER_INDEX
+    doc_type = "CommCareUser"
 
     def validate_query(self, query):
         if 'password' in query['fields']:
@@ -363,6 +382,8 @@ def report_term_filter(terms, mapping):
 
 class ReportXFormES(XFormES):
     index = REPORT_XFORM_INDEX
+    doc_type = "XFormInstance"
+    model = ESXFormInstance
 
     def base_query(self, terms=None, doc_type='xforminstance', fields=None, start=0, size=DEFAULT_SIZE):
         """

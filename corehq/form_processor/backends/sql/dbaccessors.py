@@ -101,6 +101,8 @@ class ShardAccessor(object):
 
     @staticmethod
     def hash_doc_id_python(doc_id):
+        if isinstance(doc_id, unicode):
+            doc_id = doc_id.encode('utf-8')
         digest = csiphash.siphash24(ShardAccessor.hash_key, doc_id)
         hash_long = struct.unpack("<Q", digest)[0]  # convert byte string to long
         # convert 64 bit hash to 32 bit to match Postgres

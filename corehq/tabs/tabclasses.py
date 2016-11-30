@@ -1,5 +1,6 @@
 from urllib import urlencode
 from django.core.urlresolvers import reverse
+from django.conf import settings
 from django.http import Http404
 from django.utils.html import strip_tags
 from django.utils.safestring import mark_safe, mark_for_escaping
@@ -9,7 +10,6 @@ from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.accounting.models import BillingAccount, Invoice
 from corehq.apps.accounting.utils import domain_has_privilege, is_accounting_admin
 from corehq.apps.app_manager.dbaccessors import domain_has_apps, get_brief_apps_in_domain
-from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.hqadmin.reports import RealProjectSpacesReport, \
     CommConnectProjectSpacesReport, CommTrackProjectSpacesReport, \
@@ -25,7 +25,6 @@ from corehq.apps.reports.models import ReportConfig
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from corehq.apps.userreports.util import has_report_builder_access
 from corehq.apps.users.permissions import can_view_form_exports, can_view_case_exports
-from corehq.apps.users.models import Permissions
 from corehq.form_processor.utils import use_new_exports
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
@@ -324,7 +323,6 @@ class SetupTab(UITab):
 
         if self.project.commtrack_enabled:
             commcare_supply_setup = [
-                # products
                 {
                     'title': ProductListView.page_title,
                     'url': reverse(ProductListView.urlname, args=[self.domain]),
@@ -343,7 +341,6 @@ class SetupTab(UITab):
                         },
                     ]
                 },
-                # programs
                 {
                     'title': ProgramListView.page_title,
                     'url': reverse(ProgramListView.urlname, args=[self.domain]),
@@ -358,27 +355,24 @@ class SetupTab(UITab):
                         },
                     ]
                 },
-                # sms
                 {
                     'title': SMSSettingsView.page_title,
                     'url': reverse(SMSSettingsView.urlname, args=[self.domain]),
                 },
-                # consumption
                 {
                     'title': DefaultConsumptionView.page_title,
                     'url': reverse(DefaultConsumptionView.urlname, args=[self.domain]),
                 },
-                # settings
                 {
                     'title': CommTrackSettingsView.page_title,
                     'url': reverse(CommTrackSettingsView.urlname, args=[self.domain]),
                 },
-                # stock levels
-                {
+            ]
+            if toggles.LOCATION_TYPE_STOCK_RATES.enabled(self.domain):
+                commcare_supply_setup.append({
                     'title': StockLevelsView.page_title,
                     'url': reverse(StockLevelsView.urlname, args=[self.domain]),
-                },
-            ]
+                })
             return [[_('CommCare Supply Setup'), commcare_supply_setup]]
 
 
@@ -790,11 +784,17 @@ class ApplicationsTab(UITab):
 
 
 class CloudcareTab(UITab):
-    view = "corehq.apps.cloudcare.views.default"
-
     url_prefix_formats = ('/a/{domain}/cloudcare/',)
 
     ga_tracker = GaTracker('CloudCare', 'Click Cloud-Care top-level nav')
+
+    @property
+    def view(self):
+        from corehq.apps.cloudcare.views import FormplayerMain
+        if toggles.USE_FORMPLAYER_FRONTEND.enabled(self.domain):
+            return FormplayerMain.urlname
+        else:
+            return "corehq.apps.cloudcare.views.default"
 
     @property
     def title(self):
@@ -1265,9 +1265,7 @@ class ProjectSettingsTab(UITab):
 
     @property
     def sidebar_items(self):
-        from corehq.apps.domain.views import (FeatureFlagsView,
-                                              FeaturePreviewsView,
-                                              TransferDomainView)
+        from corehq.apps.domain.views import FeatureFlagsView
 
         items = []
         user_is_admin = self.couch_user.is_domain_admin(self.domain)
@@ -1305,65 +1303,15 @@ class ProjectSettingsTab(UITab):
         items.append((_('Project Information'), project_info))
 
         if user_is_admin:
-            administration = [
-                {
-                    'title': _('CommCare Exchange'),
-                    'url': reverse('domain_snapshot_settings', args=[self.domain])
-                },
-                {
-                    'title': _('Multimedia Sharing'),
-                    'url': reverse('domain_manage_multimedia', args=[self.domain])
-                }
-            ]
+            items.append((_('Project Administration'), _get_administration_section(self.domain)))
 
-            if toggles.SYNC_SEARCH_CASE_CLAIM.enabled(self.domain):
-                administration.append({
-                    'title': _('Case Search'),
-                    'url': reverse('case_search_config', args=[self.domain])
-                })
-
-            def forward_name(repeater_type=None, **context):
-                if repeater_type == 'FormRepeater':
-                    return _("Forward Forms")
-                elif repeater_type == 'ShortFormRepeater':
-                    return _("Forward Form Stubs")
-                elif repeater_type == 'CaseRepeater':
-                    return _("Forward Cases")
-
-            administration.extend([
-                {'title': _('Data Forwarding'),
-                 'url': reverse('domain_forwarding', args=[self.domain]),
-                 'subpages': [
-                     {
-                         'title': forward_name,
-                         'urlname': 'add_repeater',
-                     },
-                     {
-                         'title': forward_name,
-                         'urlname': 'add_form_repeater',
-                     },
-                ]},
-                {
-                    'title': _('Data Forwarding Records'),
-                    'url': reverse('domain_report_dispatcher', args=[self.domain, 'repeat_record_report'])
-                }
-            ])
-
-            administration.append({
-                'title': _(FeaturePreviewsView.page_title),
-                'url': reverse(FeaturePreviewsView.urlname, args=[self.domain])
-            })
-
-            if toggles.TRANSFER_DOMAIN.enabled(self.domain):
-                administration.append({
-                    'title': _(TransferDomainView.page_title),
-                    'url': reverse(TransferDomainView.urlname, args=[self.domain])
-                })
-            items.append((_('Project Administration'), administration))
+        feature_flag_items = _get_feature_flag_items(self.domain)
+        if feature_flag_items:
+            items.append((_('Pre-release Features'), feature_flag_items))
 
         from corehq.apps.users.models import WebUser
         if isinstance(self.couch_user, WebUser):
-            if user_is_billing_admin or self.couch_user.is_superuser:
+            if (user_is_billing_admin or self.couch_user.is_superuser) and not settings.ENTERPRISE_MODE:
                 from corehq.apps.domain.views import (
                     DomainSubscriptionView, EditExistingBillingAccountView,
                     DomainBillingStatementsView, ConfirmSubscriptionRenewalView,
@@ -1446,6 +1394,83 @@ class ProjectSettingsTab(UITab):
             items.append((_('Internal Data (Dimagi Only)'), internal_admin))
 
         return items
+
+
+def _get_administration_section(domain):
+    from corehq.apps.domain.views import FeaturePreviewsView, TransferDomainView
+
+    administration = []
+    if not settings.ENTERPRISE_MODE:
+        administration.extend([
+            {
+                'title': _('CommCare Exchange'),
+                'url': reverse('domain_snapshot_settings', args=[domain])
+            },
+            {
+                'title': _('Multimedia Sharing'),
+                'url': reverse('domain_manage_multimedia', args=[domain])
+            }
+        ])
+
+    def forward_name(repeater_type=None, **context):
+        if repeater_type == 'FormRepeater':
+            return _("Forward Forms")
+        elif repeater_type == 'ShortFormRepeater':
+            return _("Forward Form Stubs")
+        elif repeater_type == 'CaseRepeater':
+            return _("Forward Cases")
+
+    administration.extend([
+        {'title': _('Data Forwarding'),
+         'url': reverse('domain_forwarding', args=[domain]),
+         'subpages': [
+             {
+                 'title': forward_name,
+                 'urlname': 'add_repeater',
+             },
+             {
+                 'title': forward_name,
+                 'urlname': 'add_form_repeater',
+             },
+        ]},
+        {
+            'title': _('Data Forwarding Records'),
+            'url': reverse('domain_report_dispatcher', args=[domain, 'repeat_record_report'])
+        }
+    ])
+
+    administration.append({
+        'title': _(FeaturePreviewsView.page_title),
+        'url': reverse(FeaturePreviewsView.urlname, args=[domain])
+    })
+
+    if toggles.TRANSFER_DOMAIN.enabled(domain):
+        administration.append({
+            'title': _(TransferDomainView.page_title),
+            'url': reverse(TransferDomainView.urlname, args=[domain])
+        })
+    return administration
+
+
+def _get_feature_flag_items(domain):
+    from corehq.apps.domain.views import CalendarFixtureConfigView, LocationFixtureConfigView
+    feature_flag_items = []
+    if toggles.SYNC_SEARCH_CASE_CLAIM.enabled(domain):
+        feature_flag_items.append({
+            'title': _('Case Search'),
+            'url': reverse('case_search_config', args=[domain])
+        })
+    if toggles.CUSTOM_CALENDAR_FIXTURE.enabled(domain):
+        feature_flag_items.append({
+            'title': _('Calendar Fixture'),
+            'url': reverse(CalendarFixtureConfigView.urlname, args=[domain])
+        })
+    if toggles.FLAT_LOCATION_FIXTURE.enabled(domain):
+        feature_flag_items.append({
+            'title': _('Location Fixture'),
+            'url': reverse(LocationFixtureConfigView.urlname, args=[domain])
+        })
+    return feature_flag_items
 
 
 class MySettingsTab(UITab):
@@ -1643,8 +1668,7 @@ class AdminTab(UITab):
         admin_operations = []
 
         if self.couch_user and self.couch_user.is_staff:
-            from corehq.apps.hqadmin.views import (AuthenticateAs, VCMMigrationView,
-                ReprocessMessagingCaseUpdatesView)
+            from corehq.apps.hqadmin.views import (AuthenticateAs, ReprocessMessagingCaseUpdatesView)
             admin_operations.extend([
                 {'title': _('PillowTop Errors'),
                  'url': reverse('admin_report_dispatcher',
@@ -1659,8 +1683,6 @@ class AdminTab(UITab):
                  'url': reverse('callcenter_ucr_check')},
                 {'title': _('Grant superuser privileges'),
                  'url': reverse('superuser_management')},
-                {'title': _('Manage VCM Migration'),
-                 'url': reverse(VCMMigrationView.urlname)},
                 {'title': _('Reprocess Messaging Case Updates'),
                  'url': reverse(ReprocessMessagingCaseUpdatesView.urlname)},
             ])

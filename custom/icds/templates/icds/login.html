@@ -1,0 +1,78 @@
+{% extends "style/base_page.html" %}
+{% load i18n %}
+{% load staticfiles %}
+
+{% block title %}{% trans "Login to ICDS CAS" %}{% endblock title %}
+
+<!-- get rid of navigation menu -->
+{% block navigation %}
+{% endblock navigation %}
+
+
+{% block page_content %}
+	<div class="container">
+		<div class="row">
+			<div class="col-sm-1">
+				<a href="{% url "homepage" %}" class="navbar-brand">
+			    <img src="{% static 'icds/img/cas-logo.png' %}" alt="CommCare HQ Logo" />
+				</a>
+			</div>
+			<div class="col-sm-9">
+				{% blocktrans %}
+				<h4>Government of India</h4>
+				<h2>MINISTRY OF WOMEN AND CHILD DEVELOPMENT</h2>
+				{% endblocktrans %}
+			</div>
+		</div>
+	</div>
+
+	<div class="container">
+	    <div class="row">
+	    <div class="col-sm-1">
+	    </div>
+	    <div class="col-sm-9">
+	    {% blocktrans %}
+	        <h5>
+				ICDS Systems Strengthening & Nutrition Improvement Project (ISSNIP)
+	        </h5>
+	        <h5>
+				Information and Communication Technology enabled Real Time Monitoring of ICDS-CAS (ICT-RTM)
+	        </h5>
+	    {% endblocktrans %}
+	    </div>
+	    </div>
+	</div>
+
+	<div class="container">
+		<div class="row">
+			<div class="col-sm-1"></div>
+			<div class="col-lg-4">
+				<img style="height:300px" src="{% static 'icds/img/mobile.png' %}">
+			</div>
+			<div class="col-sm-6">
+				{% include "login_and_password/two_factor/core/login.html" %}
+		  </div>
+		</div>
+	</div>
+
+
+    {% block login-content %}
+	<div class="row">
+		<div class="col-sm-1"></div>
+		<div class="col-sm-9">
+			<h1>{% trans 'Welcome to ICT-RTM' %}</h1>
+		</div>
+	</div>
+    {% endblock %}
+
+    <div class="row" style="margin-top:60px">
+		<div class="col-md-6 col-md-offset-4">
+			<h6>{% trans 'Content Managed by Ministry of Women and Child Development, GOI' %}</h6>
+		</div>
+		<hr width="70%" style="background-color: black; height: 3px; border: 0;">
+</div>
+{% endblock page_content %}
+
+<!-- get rid of footer -->
+{% block footer %}
+{% endblock footer %}

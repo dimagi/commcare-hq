@@ -8,6 +8,7 @@ import os
 
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends, FormProcessorTestUtils
+from corehq.util.test_utils import flag_enabled
 from dimagi.utils.post import tmpfile
 from couchforms.signals import successful_form_received
 
@@ -122,3 +123,11 @@ class SubmissionErrorTest(TestCase):
         self.assertIn(message, log.problem)
         with open(file) as f:
             self.assertEqual(f.read(), log.get_xml())
+
+    @run_with_all_backends
+    @flag_enabled('DATA_MIGRATION')
+    def test_data_migration(self):
+        file, res = self._submit('simple_form.xml')
+        self.assertEqual(503, res.status_code)
+        message = "Service Temporarily Unavailable"
+        self.assertIn(message, res.content)

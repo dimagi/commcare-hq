@@ -19,7 +19,7 @@ from .models import ZapierSubscription
 
 class SubscribeView(View):
 
-    urlname = 'subscribe'
+    urlname = 'zapier_subscribe'
 
     @method_decorator(login_or_api_key)
     @method_decorator(csrf_exempt)
@@ -56,7 +56,7 @@ class SubscribeView(View):
 
 class UnsubscribeView(View):
 
-    urlname = 'unsubscribe'
+    urlname = 'zapier_unsubscribe'
 
     # Zapier recommends not requiring authentication for unsubscribe endpoint
     @method_decorator(csrf_exempt)

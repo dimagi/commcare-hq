@@ -3,6 +3,7 @@ from elasticsearch import NotFoundError
 from corehq.apps.userreports.util import get_table_name
 from corehq.apps.userreports.adapter import IndicatorAdapter
 from corehq.apps.es.es_query import HQESQuery
+from corehq.apps.es.aggregations import MissingAggregation
 from corehq.elastic import get_es_new, ESError
 from dimagi.utils.decorators.memoized import memoized
 from pillowtop.es_utils import INDEX_STANDARD_SETTINGS
@@ -101,9 +102,16 @@ class ESAlchemy(object):
         return self.es.count()
 
     def distinct_values(self, column, size):
+        # missing aggregation can be removed on upgrade to ES 2.0
+        missing_agg_name = column + '_missing'
         query = self.es.terms_aggregation(column, column, size=size).size(0)
+        query = query.aggregation(MissingAggregation(missing_agg_name, column))
         results = query.run()
-        return getattr(results.aggregations, column).keys
+        missing_result = getattr(results.aggregations, missing_agg_name).result
+        result = getattr(results.aggregations, column).keys
+        if missing_result['doc_count'] > 0:
+            result.append(None)
+        return result
 
 
 class IndicatorESAdapter(IndicatorAdapter):

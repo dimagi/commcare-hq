@@ -95,8 +95,8 @@ def _get_expanded_column(data_source_config, report_column, values, lang):
     from corehq.apps.userreports.sql.columns import expand_column as sql_expand_column
     from corehq.apps.userreports.es.columns import expand_column as es_expand_column
     backend_id = get_backend_id(data_source_config)
-    if backend_id == UCR_SQL_BACKEND:
-        fn = sql_expand_column
-    elif backend_id == UCR_ES_BACKEND:
+    if backend_id == UCR_ES_BACKEND:
         fn = es_expand_column
+    else:
+        fn = sql_expand_column
     return fn(report_column, values, lang)

@@ -181,7 +181,7 @@ class OTARestoreCommCareUser(OTARestoreUser):
 
     @property
     def sql_locations(self):
-        return self._couch_user.sql_locations
+        return self._couch_user.get_assigned_sql_locations()
 
     @property
     def locations(self):
@@ -277,8 +277,10 @@ LOG_FORMAT_SIMPLIFIED = 'simplified'
 
 class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
     date = DateTimeProperty()
-    # domain = StringProperty()
+    domain = StringProperty()  # this is only added as of 11/2016 - not guaranteed to be set
     user_id = StringProperty()
+    build_id = StringProperty()  # this is only added as of 11/2016 and only works with app-aware sync
+
     previous_log_id = StringProperty()  # previous sync log, forming a chain
     duration = IntegerProperty()  # in seconds
     log_format = StringProperty()

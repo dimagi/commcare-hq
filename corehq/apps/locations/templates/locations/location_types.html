@@ -124,6 +124,16 @@
                                           {% endblocktrans %}">
                                     </span>
                                 </th>
+                                <th data-bind="visible: advanced_mode">
+                                    {% trans "Include without expanding"%}
+                                    <span class="hq-help-template"
+                                          data-title="{% trans "Include without expanding" %}"
+                                          data-content="{% blocktrans %}
+                                                        <p>Force sync all locations of this level and their ancestors.</p>
+                                                        <p>This is useful if you require some high level information in your app, like all the state names, but don't want to sync all the descendants of that location</p>
+                                          {% endblocktrans %}">
+                                    </span>
+                                </th>
                                 {% if commtrack_enabled %}
                                 <th>
                                     {% trans "Tracks Stock" %}
@@ -211,6 +221,15 @@
                                                    optionsValue: 'pk',
                                                    value: expand_to,
                                                    optionsCaption: '\u2013{%trans 'default'%} (' + $data.expand_to_options().leaf.name() + ')\u2013'">
+                                </select>
+                            </td>
+                            <td class="form-group" data-bind="visible: $parent.advanced_mode">
+                                <select class="form-control"
+                                        data-bind="options: $data.include_without_expanding_options(),
+                                                   optionsText: 'name',
+                                                   optionsValue: 'pk',
+                                                   value: include_without_expanding,
+                                                   optionsCaption: '\u2013{%trans 'none'%}\u2013'">
                                 </select>
                             </td>
                             {% if commtrack_enabled %}

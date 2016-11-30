@@ -1,4 +1,4 @@
-/*global CodeMirror */
+/*global Formplayer */
 
 // IE compliance
 if (!Array.prototype.indexOf) {
@@ -161,10 +161,10 @@ WebFormSession.prototype.serverRequest = function (requestParams, callback, bloc
             crossDomain: {crossDomain: true},
             xhrFields: {withCredentials: true},
             success: function(resp) {
-                self.handleSuccess(resp, callback);
+                self.handleSuccess(resp, requestParams.action, callback);
             },
             error: function(resp, textStatus) {
-                self.handleFailure(resp, textStatus);
+                self.handleFailure(resp, requestParams.action, textStatus);
             },
         });
     } else {
@@ -174,38 +174,13 @@ WebFormSession.prototype.serverRequest = function (requestParams, callback, bloc
             data: JSON.stringify(requestParams),
             dataType: "text",  // we don't use JSON because of a weird bug: http://manage.dimagi.com/default.asp?190983
             success: function(resp) {
-                self.handleSuccess(JSON.parse(resp), callback);
+                self.handleSuccess(JSON.parse(resp), requestParams.action, callback);
             },
             error: function(resp, textStatus) {
-                self.handleFailure(JSON.parse(resp), textStatus);
+                self.handleFailure(JSON.parse(resp), requestParams.action, textStatus);
             },
         });
     }
-};
-
-WebFormSession.prototype.displayInstanceXml = function(resp) {
-    var $instanceTab = $('#debugger-xml-instance-tab'),
-        self = this,
-        codeMirror;
-
-    if (!self.debuggerEnabled || !resp.instanceXml || !resp.instanceXml.output) {
-        return;
-    }
-
-    codeMirror = CodeMirror(function(el) {
-        $('#xml-viewer-pretty').html(el);
-    }, {
-        value: resp.instanceXml.output,
-        mode: 'xml',
-        viewportMargin: Infinity,
-        readOnly: true,
-        lineNumbers: true,
-    });
-
-    $instanceTab.off();
-    $instanceTab.on('shown.bs.tab', function() {
-        codeMirror.refresh();
-    });
 };
 
 /*
@@ -213,7 +188,7 @@ WebFormSession.prototype.displayInstanceXml = function(resp) {
  * @param {Object} response - touchforms response object
  * @param {function} callback - callback to be called if no errors occured
  */
-WebFormSession.prototype.handleSuccess = function(resp, callback) {
+WebFormSession.prototype.handleSuccess = function(resp, action, callback) {
     var self = this;
     if (resp.status === 'error' || resp.error) {
         self.onerror(resp);
@@ -226,7 +201,9 @@ WebFormSession.prototype.handleSuccess = function(resp, callback) {
 
         try {
             callback(resp);
-            self.displayInstanceXml(resp);
+            if (self.shouldUpdateDebugger(action)) {
+                $.publish('debugger.update');
+            }
         } catch (err) {
             console.error(err);
             self.onerror({message: Formplayer.Utils.touchformsError(err)});
@@ -245,7 +222,7 @@ WebFormSession.prototype.handleSuccess = function(resp, callback) {
     }
 };
 
-WebFormSession.prototype.handleFailure = function(resp, textStatus) {
+WebFormSession.prototype.handleFailure = function(resp, action, textStatus) {
     var errorMessage;
     if (textStatus === 'timeout') {
         errorMessage = Formplayer.Errors.TIMEOUT_ERROR;
@@ -272,6 +249,7 @@ WebFormSession.prototype.applyListeners = function() {
         'formplayer.' + Formplayer.Const.NEXT_QUESTION,
         'formplayer.' + Formplayer.Const.PREV_QUESTION,
         'formplayer.' + Formplayer.Const.QUESTIONS_FOR_INDEX,
+        'formplayer.' + Formplayer.Const.FORMATTED_QUESTIONS,
     ].join(' '));
     $.subscribe('formplayer.' + Formplayer.Const.SUBMIT, function(e, form) {
         self.submitForm(form);
@@ -296,6 +274,9 @@ WebFormSession.prototype.applyListeners = function() {
     });
     $.subscribe('formplayer.' + Formplayer.Const.QUESTIONS_FOR_INDEX, function(e, index) {
         self.getQuestionsForIndex(index);
+    });
+    $.subscribe('formplayer.' + Formplayer.Const.FORMATTED_QUESTIONS, function(e, callback) {
+        self.getFormattedQuestions(callback);
     });
 };
 
@@ -395,6 +376,15 @@ WebFormSession.prototype.evaluateXPath = function(xpath, callback) {
         });
 };
 
+WebFormSession.prototype.getFormattedQuestions = function(callback) {
+    this.serverRequest({
+        'action': Formplayer.Const.FORMATTED_QUESTIONS,
+    },
+    function(resp) {
+        callback(resp);
+    });
+};
+
 WebFormSession.prototype.newRepeat = function(repeat) {
     this.serverRequest({
             'action': Formplayer.Const.NEW_REPEAT,
@@ -473,6 +463,15 @@ WebFormSession.prototype.submitForm = function(form) {
         true);
 };
 
+WebFormSession.prototype.shouldUpdateDebugger = function(action) {
+    return _.contains([
+        Formplayer.Const.NEW_FORM,
+        Formplayer.Const.ANSWER,
+        Formplayer.Const.NEW_REPEAT,
+        Formplayer.Const.DELETE_REPEAT,
+    ], action) && this.debuggerEnabled;
+};
+
 WebFormSession.prototype.serverError = function(q, resp) {
     if (resp.type === "required") {
         q.serverError("An answer is required");
@@ -493,5 +492,7 @@ WebFormSession.prototype.renderFormXml = function (resp, $form) {
     var self = this;
     self.session_id = self.session_id || resp.session_id;
     self.form = Formplayer.Utils.initialRender(resp, self.resourceMap, $form);
-    self.displayInstanceXml(resp);
+    if (self.debuggerEnabled) {
+        $.publish('debugger.update');
+    }
 };

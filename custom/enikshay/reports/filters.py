@@ -88,6 +88,12 @@ class QuarterFilter(BaseReportFilter):
 
     @classmethod
     def get_value(cls, request, domain):
+        year = request.GET.get('datespan-year')
+        quarter = request.GET.get('datespan-quarter')
+
+        if not year or not quarter:
+            return cls.quarter_filter().default_value()
+
         try:
             return cls.quarter_filter().value(
                 **{

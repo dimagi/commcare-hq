@@ -30,10 +30,12 @@ class TestResumableDocsByTypeIterator(TestCase):
     def setUpClass(cls):
         cls.db = get_db()
         cls.docs = []
+        cls.domain1 = uuid.uuid4().hex
+        cls.domain2 = uuid.uuid4().hex
         for i in range(3):
-            cls.create_doc("Foo", i)
-            cls.create_doc("Bar", i)
-            cls.create_doc("Baz", i)
+            cls.create_doc("Foo", i, cls.domain1)
+            cls.create_doc("Bar", i, cls.domain1)
+            cls.create_doc("Baz", i, cls.domain2)
         cls.doc_types = ["Foo", "Bar", "Baz"]
 
     @classmethod
@@ -49,6 +51,12 @@ class TestResumableDocsByTypeIterator(TestCase):
         self.sorted_keys = ["{}-{}".format(n, i)
             for n in ["foo", "bar", "baz"]
             for i in range(3)]
+        self.sorted_keys_domain1 = ["{}-{}".format(n, i)
+            for n in ["foo", "bar"]
+            for i in range(3)]
+        self.sorted_keys_domain2 = ["baz-{}".format(i)
+            for i in range(3)]
+
         self.iteration_key = uuid.uuid4().hex
         self.itr = self.get_iterator()
 
@@ -56,10 +64,11 @@ class TestResumableDocsByTypeIterator(TestCase):
         self.itr.discard_state()
 
     @classmethod
-    def create_doc(cls, doc_type, ident):
+    def create_doc(cls, doc_type, ident, domain):
         doc = {
             "_id": "{}-{}".format(doc_type.lower(), ident),
             "doc_type": doc_type,
+            "domain": domain
         }
         cls.docs.append(doc)
         try:
@@ -68,8 +77,10 @@ class TestResumableDocsByTypeIterator(TestCase):
             pass
         return doc
 
-    def get_iterator(self, chunk_size=2):
-        return resumable_docs_by_type_iterator(self.db, self.doc_types, self.iteration_key, chunk_size)
+    def get_iterator(self, chunk_size=2, domain=None):
+        return resumable_docs_by_type_iterator(
+            self.db, self.doc_types, self.iteration_key, chunk_size, domain=domain
+        )
 
     def test_iteration(self):
         self.assertEqual([doc["_id"] for doc in self.itr], self.sorted_keys)
@@ -107,6 +118,14 @@ class TestResumableDocsByTypeIterator(TestCase):
         self.assertEqual(doc["_id"], "foo-0")
         self.assertEqual(["foo-0"] + [d["_id"] for d in itr],
                          self.sorted_keys + ["foo-0"])
+
+    def test_iteration_with_domain(self):
+        itr_domain1 = self.get_iterator(domain=self.domain1)
+        self.assertEqual([doc["_id"] for doc in itr_domain1], self.sorted_keys_domain1)
+        itr_domain1.discard_state()
+
+        itr_domain2 = self.get_iterator(domain=self.domain2)
+        self.assertEqual([doc["_id"] for doc in itr_domain2], self.sorted_keys_domain2)
 
 
 class SimulateDeleteReindexAccessor(ReindexAccessor):

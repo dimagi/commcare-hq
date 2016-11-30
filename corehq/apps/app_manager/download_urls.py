@@ -1,4 +1,4 @@
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 
 from corehq.apps.app_manager.views import (
     download_index, download_suite, download_media_suite, download_profile,
@@ -7,7 +7,7 @@ from corehq.apps.app_manager.views import (
     download_jar,
 )
 
-urlpatterns = patterns('corehq.apps.app_manager.views',
+urlpatterns = [
     url(r'^$', download_index, {}, 'download_index'),
     url(r'^suite.xml$', download_suite, {}, 'download_suite'),
     url(r'^media_suite.xml$', download_media_suite, {}, 'download_media_suite'),
@@ -20,4 +20,4 @@ urlpatterns = patterns('corehq.apps.app_manager.views',
     url(r'^CommCare.jad$', download_jad, {}, 'download_jad'),
     url(r'^CommCare_raw.jar$', download_raw_jar, {}, 'download_raw_jar'),
     url(r'^CommCare.jar$', download_jar, {}, 'download_jar'),
-)
+]

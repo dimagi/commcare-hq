@@ -68,7 +68,7 @@ from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.soft_assert import soft_assert
-from corehq.util.spreadsheets.excel import WorkbookJSONReader
+from corehq.util.spreadsheets_v1.excel import WorkbookJSONReader
 from corehq.util.timezones.conversions import ServerTime, UserTime
 from corehq.util.quickcache import quickcache
 from django.contrib import messages

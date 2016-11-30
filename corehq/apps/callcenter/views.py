@@ -41,7 +41,6 @@ class _CallCenterOwnerOptionsUtils(object):
         return []
 
 
-@location_safe
 class CallCenterOwnerOptionsView(EmwfOptionsView):
     url_name = "call_center_owner_options"
 
@@ -53,8 +52,7 @@ class CallCenterOwnerOptionsView(EmwfOptionsView):
     def get_locations_query(self, query):
         return (SQLLocation.objects
                 .filter_path_by_user_input(self.domain, query)
-                .filter(location_type__shares_cases=True)
-                .accessible_to_user(self.domain, self.request.couch_user))
+                .filter(location_type__shares_cases=True))
 
     def group_es_query(self, query):
         return super(CallCenterOwnerOptionsView, self).group_es_query(query, "case_sharing")

@@ -1,3 +1,5 @@
+/* globals Formplayer */
+
 /**
  * The base Object for all entries. Each entry takes a question object and options
  * @param {Object} question - A question object
@@ -87,20 +89,20 @@ EntrySingleAnswer = function(question, options) {
     var self = this;
 
     Entry.call(self, question, options);
-    var extensions = {};
-    var displayOptions = _getDisplayOptions(question)
     self.valueUpdate = undefined;
-    if (options.enableRateLimit && ko.utils.unwrapObservable(displayOptions.phoneMode)) {
-        extensions.rateLimit = {
-            timeout: Formplayer.Const.KO_ENTRY_TIMEOUT,
-            method: "notifyWhenChangesStop"
-        };
-        self.valueUpdate = 'keyup';
-    }
-    self.rawAnswer = ko.observable(question.answer() || Formplayer.Const.NO_ANSWER)
-        .extend(extensions);
+    self.rawAnswer = ko.observable(question.answer() || Formplayer.Const.NO_ANSWER);
 
     self.rawAnswer.subscribe(self.onPreProcess.bind(self));
+
+    if (options.enableAutoUpdate) {
+        self.valueUpdate = 'keyup';
+        self.answer.extend({
+            rateLimit: {
+                timeout: Formplayer.Const.KO_ENTRY_TIMEOUT,
+                method: "notifyWhenChangesStop"
+            }
+        });
+    }
 }
 EntrySingleAnswer.prototype = Object.create(Entry.prototype);
 EntrySingleAnswer.prototype.constructor = Entry;
@@ -146,6 +148,7 @@ function FreeTextEntry(question, options) {
     } else {
         self.templateType = 'text';
     }
+    self.datatype = question.datatype();
     self.domain = question.domain ? question.domain() : 'full';
     self.lengthLimit = options.lengthLimit || 100000;
     self.prose = question.domain_meta ? question.domain_meta().longtext : false;
@@ -163,7 +166,15 @@ function FreeTextEntry(question, options) {
     };
 
     self.helpText = function() {
-        return isPassword ? 'Password' : 'Free response';
+        if (isPassword) {
+            return gettext('Password');
+        }
+        switch (self.datatype) {
+        case Formplayer.Const.BARCODE:
+            return gettext('Barcode');
+        default:
+            return gettext('Free response');
+        }
     };
 }
 FreeTextEntry.prototype = Object.create(EntrySingleAnswer.prototype);
@@ -515,48 +526,53 @@ function getEntry(question) {
     var options = {};
     var rawStyle;
 
+    var displayOptions = _getDisplayOptions(question);
+    var isPhoneMode = ko.utils.unwrapObservable(displayOptions.phoneMode);
+
     switch (question.datatype()) {
-        case Formplayer.Const.STRING:
-            rawStyle = question.style ? ko.utils.unwrapObservable(question.style.raw) === 'numeric' : false;
-            if (rawStyle) {
-                entry = new PhoneEntry(question, { enableRateLimit: true });
-            } else {
-                entry = new FreeTextEntry(question, { enableRateLimit: true });
-            }
-            break;
-        case Formplayer.Const.INT:
-            entry = new IntEntry(question, { enableRateLimit: true });
-            break;
-        case Formplayer.Const.LONGINT:
-            entry = new IntEntry(question, { lengthLimit: 15, enableRateLimit: true  });
-            break;
-        case Formplayer.Const.FLOAT:
-            entry = new FloatEntry(question, { enableRateLimit: true });
-            break;
-        case Formplayer.Const.SELECT:
-            entry = new SingleSelectEntry(question, {});
-            break;
-        case Formplayer.Const.MULTI_SELECT:
-            entry = new MultiSelectEntry(question, {});
-            break;
-        case Formplayer.Const.DATE:
-            entry = new DateEntry(question, {});
-            break;
-        case Formplayer.Const.TIME:
-            entry = new TimeEntry(question, {});
-            break;
-        case Formplayer.Const.DATETIME:
-            entry = new DateTimeEntry(question, {});
-            break;
-        case Formplayer.Const.GEO:
-            entry = new GeoPointEntry(question, {});
-            break;
-        case Formplayer.Const.INFO:
-            entry = new InfoEntry(question, {});
-            break;
-        default:
-            console.warn('No active entry for: ' + question.datatype());
-            entry = new UnsupportedEntry(question, options);
+    case Formplayer.Const.STRING:
+    // Barcode uses text box for CloudCare so it's possible to still enter a barcode field
+    case Formplayer.Const.BARCODE:
+        rawStyle = question.style ? ko.utils.unwrapObservable(question.style.raw) === 'numeric' : false;
+        if (rawStyle) {
+            entry = new PhoneEntry(question, { enableAutoUpdate: isPhoneMode });
+        } else {
+            entry = new FreeTextEntry(question, { enableAutoUpdate: isPhoneMode });
+        }
+        break;
+    case Formplayer.Const.INT:
+        entry = new IntEntry(question, { enableAutoUpdate: isPhoneMode });
+        break;
+    case Formplayer.Const.LONGINT:
+        entry = new IntEntry(question, { lengthLimit: 15, enableAutoUpdate: isPhoneMode  });
+        break;
+    case Formplayer.Const.FLOAT:
+        entry = new FloatEntry(question, { enableAutoUpdate: isPhoneMode });
+        break;
+    case Formplayer.Const.SELECT:
+        entry = new SingleSelectEntry(question, {});
+        break;
+    case Formplayer.Const.MULTI_SELECT:
+        entry = new MultiSelectEntry(question, {});
+        break;
+    case Formplayer.Const.DATE:
+        entry = new DateEntry(question, {});
+        break;
+    case Formplayer.Const.TIME:
+        entry = new TimeEntry(question, {});
+        break;
+    case Formplayer.Const.DATETIME:
+        entry = new DateTimeEntry(question, {});
+        break;
+    case Formplayer.Const.GEO:
+        entry = new GeoPointEntry(question, {});
+        break;
+    case Formplayer.Const.INFO:
+        entry = new InfoEntry(question, {});
+        break;
+    default:
+        window.console.warn('No active entry for: ' + question.datatype());
+        entry = new UnsupportedEntry(question, options);
     }
     return entry;
 }

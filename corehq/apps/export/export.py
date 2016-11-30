@@ -56,6 +56,12 @@ class _Writer(object):
 
         # Create and open a temp file
         assert self._path is None
+
+        if len(export_instances) == 1:
+            name = export_instances[0].name
+        else:
+            name = ''
+
         fd, self._path = tempfile.mkstemp()
         with os.fdopen(fd, 'wb') as file:
 
@@ -68,7 +74,7 @@ class _Writer(object):
                     for t in instance.selected_tables
                 ]
                 table_titles.update({t: t.label for t in instance.selected_tables})
-            self.writer.open(headers, file, table_titles=table_titles)
+            self.writer.open(headers, file, table_titles=table_titles, archive_basepath=name)
             yield
             self.writer.close()
 

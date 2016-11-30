@@ -1,4 +1,5 @@
-from django.conf.urls import patterns, url
+from django.conf.urls import url
+
 from corehq.apps.reminders.views import (
     CreateScheduledReminderView,
     EditScheduledReminderView,
@@ -17,7 +18,7 @@ from corehq.apps.reminders.views import (
     rule_progress,
 )
 
-urlpatterns = patterns('corehq.apps.reminders.views',
+urlpatterns = [
     url(r'^list/$', RemindersListView.as_view(), name=RemindersListView.urlname),
     url(r'^broadcasts/$', BroadcastListView.as_view(), name=BroadcastListView.urlname),
     url(r'^broadcasts/add/$', CreateBroadcastView.as_view(), name=CreateBroadcastView.urlname),
@@ -43,4 +44,4 @@ urlpatterns = patterns('corehq.apps.reminders.views',
     url(r'^keywords/normal/edit/(?P<keyword_id>[\w-]+)/$',
         EditNormalKeywordView.as_view(), name=EditNormalKeywordView.urlname),
     url(r'^rule_progress/$', rule_progress, name='reminder_rule_progress'),
-)
+]

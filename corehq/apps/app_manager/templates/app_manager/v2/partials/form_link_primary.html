@@ -1,0 +1,41 @@
+{% load i18n %}
+{% load xforms_extras %}
+{% load hq_shared_tags %}
+
+{# For APP BUILDER PROTOTYPE use only #}
+
+<a id="view_form_{{ module.id }}_{{ form.id }}_sidebar"
+   href="{% url "form_source" domain app.id module.id form.id %}"
+   data-moduleid="{{ module.id }}"
+   data-formid="{{ form.id }}"
+   data-updateprop="href"
+   data-updatevalue="{% url "form_source" domain app.id 'replacewithmoduleid' 'replacewithformid' %}"
+   class="appnav-title
+          {% if not form.no_vellum %}appnav-title-secondary {% endif %}
+          {% if form.get_action_type == 'open' %}appnav-title-no-delete  appnav-title-registration
+          {% elif form.get_action_type == 'close' or form.get_action_type == 'update' %} appnav-title-followup
+          {% else %}appnav-title-survey
+          {% endif %}">
+    {% if form.get_action_type != 'open' %}
+        <i class="drag_handle appnav-drag-icon"></i>
+    {% endif %}
+    <i
+    {% if form.get_action_type == 'open' %}
+        class="fcc fcc-app-createform appnav-primary-icon appnav-primary-icon-lg"
+    {% elif form.get_action_type == 'close' %}
+        class="fcc fcc-app-completeform appnav-primary-icon appnav-primary-icon-lg"
+    {% elif form.get_action_type == 'update' %}
+        class="fcc fcc-app-updateform appnav-primary-icon appnav-primary-icon-lg"
+    {% else %}
+        class="fa fa-file-o appnav-primary-icon"
+    {% endif %}
+        title="{{ form.get_icon_help_text }}"
+        data-toggle="tooltip"
+        data-placement="right"
+        data-container="body"
+        >
+    </i>
+    <span {% if form == selected_form %}class="variable-form_name"{% endif %}>
+    {{ form.name|html_trans_prefix:langs }}
+    </span>
+</a>

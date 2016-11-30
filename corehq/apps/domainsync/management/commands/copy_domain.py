@@ -32,7 +32,7 @@ class Command(BaseCommand):
            "If targetdb is not specified, the target is the database " \
            "specified by COUCH_DATABASE in your settings."
     args = '<sourcedb> <domain> [<targetdb>]'
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option('--include',
                     action='store',
                     dest='doc_types',
@@ -100,7 +100,7 @@ class Command(BaseCommand):
             raise CommandError('Usage is copy_domain %s' % self.args)
         self.exclude_dbs = (
             # these have data we don't want to copy
-            'receiverwrapper', 'couchlog', 'auditcare', 'fluff-bihar', 'fluff-opm',
+            'receiverwrapper', 'auditcare', 'fluff-bihar', 'fluff-opm',
             'fluff-mc', 'fluff-cvsu', 'mvp-indicators', 'm4change',
             # todo: missing domain/docs, but probably want to add back
             'meta',

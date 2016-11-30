@@ -1,0 +1,233 @@
+{
+    "domains": [
+        "enikshay-test",
+        "enikshay-test-test"
+    ],
+    "data_source_table": "episode",
+    "report_id": "case_finding_mobile",
+    "config": {
+        "description": "",
+        "title": "Case Finding - Mobile Report",
+        "sort_expression": [],
+        "visible": false,
+        "configured_charts": [],
+        "aggregation_columns": [],
+        "filters": [
+            {
+                "compare_as_string": false,
+                "datatype": "datetime",
+                "required": false,
+                "display": "Case Open Date",
+                "field": "opened_on",
+                "type": "quarter",
+                "slug": "patient_registration_date"
+            },
+            {
+                "compare_as_string": false,
+                "datatype": "string",
+                "type": "dynamic_choice_list",
+                "slug": "village",
+                "field": "person_owner_id",
+                "choice_provider": {
+                    "include_descendants": true,
+                    "type": "location"
+                },
+                "display": "Location"
+            }
+        ],
+        "columns": [
+            {
+                "display": "Suspects referred to DMC",
+                "type": "field",
+                "field": "lab_requests",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Suspects who got tested at the DMC",
+                "type": "field",
+                "field": "lab_results",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of diagnostic tests",
+                "type": "field",
+                "field": "diagnostic_tests",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of follow-up tests",
+                "type": "field",
+                "field": "follow_up_tests",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of New Cases",
+                "type": "field",
+                "field": "new",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of New Cases - pediatric (0-14)",
+                "type": "field",
+                "field": "new_under_15",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of New Cases - non pediatric (15+)",
+                "type": "field",
+                "field": "new_over_15",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of New Female Cases",
+                "type": "field",
+                "field": "new_female",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of New Male Cases",
+                "type": "field",
+                "field": "new_male",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of New Transgender Cases",
+                "type": "field",
+                "field": "new_transgender",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of Retreatment Cases",
+                "type": "field",
+                "field": "retreatment",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of Retreatment Cases - pediatric (0-14)",
+                "type": "field",
+                "field": "retreatment_under_15",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of Retreatment Cases - non pediatric (15+)",
+                "type": "field",
+                "field": "retreatment_over_15",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of Retreatment Female Cases",
+                "type": "field",
+                "field": "retreatment_female",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of Retreatment Male Cases",
+                "type": "field",
+                "field": "retreatment_male",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of Retreatment Transgender Cases",
+                "type": "field",
+                "field": "retreatment_transgender",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            }
+        ]
+    }
+}

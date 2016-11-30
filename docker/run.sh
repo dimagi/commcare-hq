@@ -63,7 +63,8 @@ function _run_tests() {
             couchforms \
             casexml.apps.case \
             casexml.apps.phone \
-            corehq.apps.receiverwrapper"
+            corehq.apps.receiverwrapper \
+            corehq.apps.dump_reload.tests.test_sql_dump_load:TestSQLDumpLoadShardedModels"
     else
         TESTS=""
     fi

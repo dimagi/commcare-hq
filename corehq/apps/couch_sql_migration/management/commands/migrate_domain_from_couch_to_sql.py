@@ -14,6 +14,7 @@ from corehq.apps.tzmigration.api import set_migration_started, set_migration_not
     MigrationStatus, set_migration_complete
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.utils import should_use_sql_backend
+from corehq.util.markup import shell_green, shell_red
 from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import doc_types, XFormInstance
 
@@ -129,7 +130,7 @@ class Command(LabelCommand):
                 )
 
         if diffs_only and not has_diffs:
-            print green("No differences found between old and new docs!")
+            print shell_green("No differences found between old and new docs!")
 
     def _print_status(self, name, ids_in_couch, ids_in_sql, diff_count, short, diffs_only):
         n_couch = len(ids_in_couch)
@@ -140,7 +141,7 @@ class Command(LabelCommand):
             return False
 
         def _highlight(text):
-            return red(text) if has_diff else text
+            return shell_red(text) if has_diff else text
 
         row = "{:^40} | {:^40}"
         doc_count_row = row.format(n_couch, n_sql)
@@ -187,12 +188,3 @@ def _blow_away_migration(domain):
 
     sql_case_ids = CaseAccessorSQL.get_deleted_case_ids_in_domain(domain)
     CaseAccessorSQL.hard_delete_cases(domain, sql_case_ids)
-
-
-def _color_template(color_code):
-    def inner(text):
-        return "\033[%sm%s\033[0m" % (color_code, text)
-    return inner
-
-red = _color_template('31')
-green = _color_template('32')

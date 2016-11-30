@@ -20,9 +20,9 @@ from fnmatch import fnmatch
 
 from django.apps import apps
 
-import couchlog.signals
 from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django import loading
+from django.core.management import call_command
 from mock import patch, Mock
 from nose.plugins import Plugin
 from django.apps import AppConfig
@@ -42,7 +42,6 @@ class HqTestFinderPlugin(Plugin):
     INCLUDE_DIRS = [
         "corehq/ex-submodules/*",
         "submodules/auditcare-src",
-        "submodules/couchlog-src",
         "submodules/dimagi-utils-src",
         "submodules/django-digest-src",
         "submodules/toggle",
@@ -132,10 +131,6 @@ class ErrorOnDbAccessContext(object):
         self.original_db_enabled = settings.DB_ENABLED
         settings.DB_ENABLED = False
 
-        # do not log request exceptions to couch for non-database tests
-        couchlog.signals.got_request_exception.disconnect(
-            couchlog.signals.log_request_exception)
-
         self.db_patch = patch('django.db.backends.utils.CursorWrapper')
         db_mock = self.db_patch.start()
         error = RuntimeError(
@@ -160,8 +155,6 @@ class ErrorOnDbAccessContext(object):
         settings.DB_ENABLED = self.original_db_enabled
         for cls in self.db_classes:
             del cls._db
-        couchlog.signals.got_request_exception.connect(
-            couchlog.signals.log_request_exception)
         self.db_patch.stop()
 
 
@@ -185,12 +178,15 @@ class HqdbContext(DatabaseContext):
       rebuilt.
     - `REUSE_DB=teardown` : skip database setup; do normal teardown after
       running tests.
+    - `REUSE_DB=migrate` : same as `REUSE_DB=1` except migrate databases
+      before running tests.
     """
 
     def __init__(self, tests, runner):
         reuse_db = os.environ.get("REUSE_DB")
         self.skip_setup_for_reuse_db = reuse_db and reuse_db != "reset"
         self.skip_teardown_for_reuse_db = reuse_db and reuse_db != "teardown"
+        self.run_migrations_for_reuse_db = reuse_db and reuse_db == "migrate"
         super(HqdbContext, self).__init__(tests, runner)
 
     @classmethod
@@ -217,25 +213,30 @@ class HqdbContext(DatabaseContext):
             databases = {app_name: uri for app_name, uri in databases}
         self.apps = [self.verify_test_db(*item) for item in databases.items()]
 
-        if self.skip_setup_for_reuse_db:
-            from django.db import connections
-            old_names = []
-            for connection in connections.all():
-                db = connection.settings_dict
-                assert db["NAME"].startswith(TEST_DATABASE_PREFIX), db["NAME"]
-                try:
-                    connection.ensure_connection()
-                except OperationalError:
-                    break  # cannot connect; resume normal setup
-                old_names.append((connection, db["NAME"], True))
-            else:
-                self.old_names = old_names, []
-                return  # skip remaining setup
+        if self.skip_setup_for_reuse_db and self._databases_ok():
+            if self.run_migrations_for_reuse_db:
+                call_command('migrate_multi', interactive=False)
+            return  # skip remaining setup
 
         sys.__stdout__.write("\n")  # newline for creating database message
         if "REUSE_DB" in os.environ:
             sys.__stdout__.write("REUSE_DB={REUSE_DB!r} ".format(**os.environ))
         super(HqdbContext, self).setup()
+
+    def _databases_ok(self):
+        from django.db import connections
+        old_names = []
+        for connection in connections.all():
+            db = connection.settings_dict
+            assert db["NAME"].startswith(TEST_DATABASE_PREFIX), db["NAME"]
+            try:
+                connection.ensure_connection()
+            except OperationalError:
+                return False
+            old_names.append((connection, db["NAME"], True))
+
+        self.old_names = old_names, []
+        return True
 
     def teardown(self):
         if self.should_skip_test_setup():

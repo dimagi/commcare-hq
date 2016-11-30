@@ -1,4 +1,4 @@
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 from corehq.apps.export.views import (
     CreateCustomFormExportView,
     CreateCustomCaseExportView,
@@ -36,9 +36,7 @@ from corehq.apps.export.views import (
     DailySavedExportPaywall,
 )
 
-urlpatterns = patterns(
-    'corehq.apps.export.views',
-
+urlpatterns = [
     # Export list views
     url(r"^custom/form/$",
         FormExportListView.as_view(),
@@ -152,4 +150,4 @@ urlpatterns = patterns(
     url(r"^daily_saved/paywall/$",
         DailySavedExportPaywall.as_view(),
         name=DailySavedExportPaywall.urlname),
-)
+]

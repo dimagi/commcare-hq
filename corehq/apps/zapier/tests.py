@@ -121,7 +121,7 @@ class TestZapierIntegration(TestCase):
             "application": self.application.get_id,
             "form": FORM_XMLNS
         }
-        response = self.client.post(reverse('zapier:subscribe', kwargs={'domain': self.domain}),
+        response = self.client.post(reverse('zapier_subscribe', kwargs={'domain': self.domain}),
                                     data=json.dumps(data),
                                     content_type='application/json; charset=utf-8',
                                     HTTP_AUTHORIZATION='ApiKey test:{}'.format(self.api_key))
@@ -150,7 +150,7 @@ class TestZapierIntegration(TestCase):
             "subscription_url": ZAPIER_URL,
             "target_url": ZAPIER_URL
         }
-        response = self.client.post(reverse('zapier:unsubscribe', kwargs={'domain': self.domain}),
+        response = self.client.post(reverse('zapier_unsubscribe', kwargs={'domain': self.domain}),
                                     data=json.dumps(data),
                                     content_type='application/json; charset=utf-8',
                                     HTTP_AUTHORIZATION='ApiKey test:{}'.format(self.api_key))
@@ -166,12 +166,12 @@ class TestZapierIntegration(TestCase):
             "application": self.application.get_id,
             "form": FORM_XMLNS
         }
-        response = self.client.post(reverse('zapier:subscribe', kwargs={'domain': self.domain}),
+        response = self.client.post(reverse('zapier_subscribe', kwargs={'domain': self.domain}),
                                     data=json.dumps(data),
                                     content_type='application/json; charset=utf-8',
                                     HTTP_AUTHORIZATION='ApiKey test:{}'.format(self.api_key))
         self.assertEqual(response.status_code, 200)
-        response = self.client.post(reverse('zapier:subscribe', kwargs={'domain': self.domain}),
+        response = self.client.post(reverse('zapier_subscribe', kwargs={'domain': self.domain}),
                                     data=json.dumps(data),
                                     content_type='application/json; charset=utf-8',
                                     HTTP_AUTHORIZATION='ApiKey test:{}'.format(self.api_key))

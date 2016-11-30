@@ -887,6 +887,11 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         username = self.username.split("@")[0]
         return "%s <%s>" % (self.full_name, username) if self.full_name else username
 
+    @property
+    def days_since_created(self):
+        # Note this does not round, but returns the floor of days since creation
+        return (datetime.utcnow() - self.created_on).days
+
     formatted_name = full_name
     name = full_name
 
@@ -1634,16 +1639,14 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def sql_locations(self):
         from corehq.apps.locations.models import SQLLocation
         if self.assigned_location_ids:
-            try:
-                return SQLLocation.objects.filter(location_id__in=self.assigned_location_ids)
-            except SQLLocation.DoesNotExist:
-                pass
-        return []
+            return SQLLocation.objects.filter(location_id__in=self.assigned_location_ids)
+        else:
+            return SQLLocation.objects.none()
 
-    def get_location_ids(self, domain):
+    def get_assigned_location_ids(self, domain):
         return self.assigned_location_ids
 
-    def get_sql_locations(self, domain):
+    def get_assigned_sql_locations(self, domain=None):
         return self.sql_locations
 
     def add_to_assigned_locations(self, location):
@@ -1717,14 +1720,14 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         """
         from corehq.apps.fixtures.models import UserFixtureType
         from corehq.apps.locations.models import SQLLocation
-
         old_primary_location_id = self.location_id
-        self.assigned_location_ids.remove(old_primary_location_id)
-        self.get_domain_membership(self.domain).assigned_location_ids.remove(old_primary_location_id)
+        if old_primary_location_id:
+            self.assigned_location_ids.remove(old_primary_location_id)
+            self.get_domain_membership(self.domain).assigned_location_ids.remove(old_primary_location_id)
 
         if self.assigned_location_ids:
             self.user_data['commcare_location_ids'] = user_location_data(self.assigned_location_ids)
-        else:
+        elif self.user_data.get('commcare_location_ids'):
             self.user_data.pop('commcare_location_ids')
 
         if self.assigned_location_ids and fall_back_to_next:
@@ -2093,7 +2096,8 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         """
         membership = self.get_domain_membership(domain)
         old_location_id = membership.location_id
-        membership.assigned_location_ids.remove(old_location_id)
+        if old_location_id:
+            membership.assigned_location_ids.remove(old_location_id)
         if membership.assigned_location_ids and fall_back_to_next:
             membership.location_id = membership.assigned_location_ids[0]
         else:
@@ -2130,6 +2134,18 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         if loc_id:
             return SQLLocation.objects.get_or_None(domain=domain, location_id=loc_id)
 
+    def get_assigned_location_ids(self, domain):
+        return getattr(self.get_domain_membership(domain), 'assigned_location_ids', None)
+
+    @memoized
+    def get_assigned_sql_locations(self, domain=None):
+        from corehq.apps.locations.models import SQLLocation
+        loc_ids = self.get_assigned_location_ids(domain)
+        if loc_ids:
+            return SQLLocation.objects.get_locations(loc_ids)
+        else:
+            return []
+
     @memoized
     def get_location(self, domain):
         from corehq.apps.locations.models import Location
@@ -2140,13 +2156,6 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             except ResourceNotFound:
                 pass
         return None
-
-    def get_location_ids(self, domain):
-        return self.get_domain_membership(domain).assigned_location_ids
-
-    def get_sql_locations(self, domain):
-        from corehq.apps.locations.models import SQLLocation
-        return SQLLocation.objects.filter(location_id__in=self.get_location_ids(domain))
 
     def is_locked_out(self):
         return self.login_attempts >= MAX_LOGIN_ATTEMPTS

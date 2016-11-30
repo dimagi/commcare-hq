@@ -42,7 +42,7 @@ class EditDataInterfaceDispatcher(ReportDispatcher):
     @method_decorator(require_can_edit_data)
     @datespan_default
     def dispatch(self, request, *args, **kwargs):
-        from corehq.apps.importer.base import ImportCases
+        from corehq.apps.case_importer_v1.base import ImportCases
         from .interfaces import BulkFormManagementInterface
 
         if kwargs['report_slug'] == ImportCases.slug:
@@ -63,7 +63,7 @@ class EditDataInterfaceDispatcher(ReportDispatcher):
 
     def permissions_check(self, report, request, domain=None, is_navigation_check=False):
         if is_navigation_check:
-            from corehq.apps.importer.base import ImportCases
+            from corehq.apps.case_importer_v1.base import ImportCases
             from corehq.apps.data_interfaces.interfaces import BulkFormManagementInterface
             report_name = report.split('.')[-1]
             if report_name == ImportCases.__name__:

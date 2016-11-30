@@ -1,8 +1,6 @@
-- title: 'Basic'
+- title: 'Data and Sharing'
   id: app-settings-basic
   settings:
-    - hq.name # won't actually be rendered here
-    - hq.comment # won't actually be rendered here
     - hq.application_version # App Version (disabled)
     # Application
     - hq.case_sharing  # Case Sharing
@@ -15,7 +13,7 @@
     - hq.profile_url
     - hq.manage_urls
 
-- title: General Settings
+- title: Build Settings
   id: app-settings-general
   collapse: true
   settings:

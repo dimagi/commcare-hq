@@ -375,7 +375,9 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         if self.server_modified_on >= sync_log.date:
             # check all of the actions since last sync for one that had a different sync token
             return any(filter(
-                lambda action: action.server_date > sync_log.date and action.sync_log_id != sync_log._id,
+                lambda action: action.server_date is not None and
+                               action.server_date > sync_log.date and
+                               action.sync_log_id != sync_log._id,
                 self.actions,
             ))
         return False

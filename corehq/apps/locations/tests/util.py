@@ -154,7 +154,7 @@ class LocationHierarchyTestCase(TestCase):
         delete_all_locations()
 
     @classmethod
-    def restrict_user_to_location(cls, user):
+    def restrict_user_to_assigned_locations(cls, user):
         role = UserRole(
             domain=cls.domain,
             name='Regional Supervisor',

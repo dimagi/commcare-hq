@@ -7,6 +7,7 @@ from django.core.urlresolvers import reverse
 from corehq.apps.domain.tests.test_utils import delete_all_domains
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.util.test_utils import flag_enabled
 
 
 class DigestOtaRestoreTest(TestCase):
@@ -48,6 +49,12 @@ class DigestOtaRestoreTest(TestCase):
         uri, client = self._set_restore_client(self.wrong_domain, self.web_user.username)
         resp = client.get(uri, follow=True)
         self.assertEqual(resp.status_code, 401)
+
+    @flag_enabled('DATA_MIGRATION')
+    def test_web_user_restore_during_migration(self):
+        uri, client = self._set_restore_client(self.domain, self.web_user.username)
+        resp = client.get(uri, follow=True)
+        self.assertEqual(resp.status_code, 503)
 
     def _set_restore_client(self, with_domain, auth_username):
         uri = reverse('ota_restore', args=[with_domain])

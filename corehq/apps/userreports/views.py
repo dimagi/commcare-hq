@@ -982,7 +982,7 @@ class EditDataSourceView(BaseEditDataSourceView):
 
     @property
     def page_name(self):
-        return "Edit {}".format(self.config.display_name)
+        return u"Edit {}".format(self.config.display_name)
 
 
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()

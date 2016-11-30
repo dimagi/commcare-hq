@@ -1,14 +1,13 @@
 /*global FormplayerFrontend, Util */
 
-FormplayerFrontend.module("SessionNavigate.Users", function(Users, FormplayerFrontend, Backbone, Marionette, $){
-    Users.Views = {};
+FormplayerFrontend.module("Users.Views", function(Views, FormplayerFrontend, Backbone, Marionette, $){
     /**
      * RestoreAsBanner
      *
      * This View represents the banner that indicates what user your are
      * currently logged in (or restoring) as.
      */
-    Users.Views.RestoreAsBanner = Marionette.ItemView.extend({
+    Views.RestoreAsBanner = Marionette.ItemView.extend({
         template: '#restore-as-banner-template',
         className: 'restore-as-banner-container',
         ui: {
@@ -33,7 +32,7 @@ FormplayerFrontend.module("SessionNavigate.Users", function(Users, FormplayerFro
      *
      * Represents a single row in the Log In As User list
      */
-    Users.Views.UserRowView = Marionette.ItemView.extend({
+    Views.UserRowView = Marionette.ItemView.extend({
         template: '#user-row-view-template',
         className: 'formplayer-request js-user',
         tagName: 'tr',
@@ -51,7 +50,7 @@ FormplayerFrontend.module("SessionNavigate.Users", function(Users, FormplayerFro
                     FormplayerFrontend.Utils.Users.logInAsUser(this.model.get('username'));
                     FormplayerFrontend.trigger('navigateHome');
                     FormplayerFrontend.regions.restoreAsBanner.show(
-                        new FormplayerFrontend.SessionNavigate.Users.Views.RestoreAsBanner({
+                        new FormplayerFrontend.Users.Views.RestoreAsBanner({
                             model: FormplayerFrontend.request('currentUser'),
                         })
                     );
@@ -66,8 +65,8 @@ FormplayerFrontend.module("SessionNavigate.Users", function(Users, FormplayerFro
      * Renders all possible users to log in as. Equipped with pagination
      * and custom querying.
      */
-    Users.Views.RestoreAsView = Marionette.CompositeView.extend({
-        childView: Users.Views.UserRowView,
+    Views.RestoreAsView = Marionette.CompositeView.extend({
+        childView: Views.UserRowView,
         childViewContainer: 'tbody',
         template: '#restore-as-view-template',
         limit: 10,

@@ -1,7 +1,7 @@
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 
 from custom.fri.views import upload_message_bank
 
-urlpatterns = patterns('custom.fri.views',
+urlpatterns = [
     url(r'^upload_message_bank/$', upload_message_bank, name='fri_upload_message_bank'),
-)
+]

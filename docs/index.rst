@@ -18,7 +18,7 @@ Welcome to CommCareHQ's documentation!
    :maxdepth: 2
 
    reporting
-   change_feed
+   change_feeds
    api
    maps
    ui_helpers

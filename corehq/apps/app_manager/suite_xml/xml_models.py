@@ -442,6 +442,7 @@ class RemoteRequestQuery(OrderedXmlObject, XmlObject):
 
     url = StringField('@url')
     storage_instance = StringField('@storage-instance')
+    template = StringField('@template')
     data = NodeListField('data', QueryData)
     prompts = NodeListField('prompt', QueryPrompt)
 

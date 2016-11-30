@@ -27,11 +27,6 @@
   min-height: 367px;
 }
 
-.form-scrollable-container {
-  min-height: 403px;
-  max-height: 403px;
-}
-
 .form-container .form-actions {
   background-color: transparent;
   border-top: none;
@@ -50,5 +45,28 @@
     right: 12px;
     font-size: 14px;
     top: 2px;
+  }
+}
+
+.form-group {
+  padding: 10px 0;
+  label {
+    margin-right: 10px;
+  }
+}
+
+.form-group.required {
+  background-color: fade(@cc-att-pos-hi, 50);
+
+  label:before {
+    float: none;
+    position: static;
+    display: inline-block;
+    font-size: 2rem;
+    padding-top: 7px;
+    padding-right: 2px;
+    padding-left: 0;
+    vertical-align: top;
+    line-height: 12px;
   }
 }

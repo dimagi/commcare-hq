@@ -1,18 +1,20 @@
-from functools import partial
-import traceback
-import requests
 import json
-from copy import deepcopy
+import traceback
 from collections import defaultdict, namedtuple
+from copy import deepcopy
+from functools import partial
 from time import sleep
+
+import requests
 from couchdbkit import ResourceNotFound, BulkSaveError, Document
+from django.conf import settings
 from django.http import Http404
 from jsonobject.exceptions import WrappingAttributeError
+
 from corehq.util.exceptions import DocumentClassNotFound
 from dimagi.utils.chunked import chunked
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.requestskit import get_auth
-from django.conf import settings
 
 
 class DocumentNotFound(Exception):
@@ -134,6 +136,18 @@ def categorize_bulk_save_errors(error):
     return result_map
 
 
+class IterDBCallback(object):
+
+    def post_commit(self, operation, committed_docs, success_ids, errors):
+        """
+        :param operation: 'save' or 'delete'
+        :param committed_docs: List of all docs in this commit operation
+        :param success_ids: List of IDs that were processed successfully
+        :param errors: List of error dictionaries with keys: ('id', 'reason', 'error'
+        """
+        pass
+
+
 class IterDB(object):
     """
     Bulk save docs in chunks.
@@ -149,7 +163,7 @@ class IterDB(object):
     """
 
     def __init__(self, database, chunksize=100, throttle_secs=None,
-                 new_edits=None):
+                 new_edits=None, callback=None):
         self.db = database
         self.chunksize = chunksize
         self.throttle_secs = throttle_secs
@@ -158,23 +172,37 @@ class IterDB(object):
         self.error_ids = set()
         self.errors_by_type = defaultdict(list)
         self.new_edits = new_edits
+        self.callback = callback
 
     def __enter__(self):
         self.to_save = []
         self.to_delete = []
         return self
 
-    def _write(self, cmd, docs):
+    def _write(self, op_slug, cmd, docs):
+        categorized_errors = {}
         try:
             results = cmd(docs)
         except BulkSaveError as e:
             categorized_errors = categorize_bulk_save_errors(e)
-            success_ids = {r['id'] for r in categorized_errors.pop(None, [])}
-            for error_type, error_ids in categorized_errors.items():
-                self.errors_by_type[error_type].extend(error_ids)
-            self.error_ids.update(d['id'] for d in e.errors)
+            for error_type, errors in categorized_errors.items():
+                self.errors_by_type[error_type].extend(errors)
+            error_ids = {d['id'] for d in e.errors}
+            self.error_ids.update(error_ids)
+            if not self.new_edits:
+                # only errors returned in this mode
+                success_ids = {doc['_id'] for doc in docs if doc['_id'] not in error_ids}
+            else:
+                success_ids = {r['id'] for r in categorized_errors.pop(None, [])}
         else:
-            success_ids = {d['id'] for d in results}
+            if self.new_edits or self.new_edits is None:
+                success_ids = {d['id'] for d in results}
+            else:
+                # only errors returned in this mode
+                success_ids = {d['_id'] for d in docs}
+
+        if self.callback:
+            self.callback.post_commit(op_slug, docs, success_ids, categorized_errors.values())
 
         if self.throttle_secs:
             sleep(self.throttle_secs)
@@ -182,12 +210,12 @@ class IterDB(object):
 
     def _commit_save(self):
         bulk_save = partial(self.db.bulk_save, new_edits=self.new_edits)
-        success_ids = self._write(bulk_save, self.to_save)
+        success_ids = self._write('save', bulk_save, self.to_save)
         self.saved_ids.update(success_ids)
         self.to_save = []
 
     def _commit_delete(self):
-        success_ids = self._write(self.db.bulk_delete, self.to_delete)
+        success_ids = self._write('delete', self.db.bulk_delete, self.to_delete)
         self.deleted_ids.update(success_ids)
         self.to_delete = []
 

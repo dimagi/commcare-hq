@@ -11,7 +11,7 @@ class Command(BaseCommand):
     help = "Load a user configurable report data source or report spec from a json file"
     args = '<filename>'
     label = ""
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option('--rebuild',
                     action='store_true',
                     dest='rebuild',

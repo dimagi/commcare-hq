@@ -192,6 +192,7 @@ def update_calculated_properties():
                 "cp_n_forms_30_d": int(CALC_FNS["forms_in_last"](dom, 30)),
                 "cp_n_forms_60_d": int(CALC_FNS["forms_in_last"](dom, 60)),
                 "cp_n_forms_90_d": int(CALC_FNS["forms_in_last"](dom, 90)),
+                "cp_first_domain_for_user": CALC_FNS["first_domain_for_user"](dom),
                 "cp_first_form": CALC_FNS["first_form_submission"](dom, False),
                 "cp_last_form": last_form_submission,
                 "cp_is_active": CALC_FNS["active"](dom),

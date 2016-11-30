@@ -22,7 +22,6 @@ FormplayerFrontend.on("before:start", function () {
             loadingProgress: "#formplayer-progress-container",
             breadcrumb: "#breadcrumb-region",
             persistentCaseTile: "#persistent-case-tile",
-            phoneModeNavigation: '#phone-mode-navigation',
             restoreAsBanner: '#restore-as-region',
         },
     });
@@ -76,7 +75,7 @@ FormplayerFrontend.reqres.setHandler('gridPolyfillPath', function(path) {
 
 FormplayerFrontend.reqres.setHandler('currentUser', function () {
     if (!FormplayerFrontend.currentUser) {
-        FormplayerFrontend.currentUser = new FormplayerFrontend.Entities.UserModel();
+        FormplayerFrontend.currentUser = new FormplayerFrontend.Users.Models.CurrentUser();
     }
     return FormplayerFrontend.currentUser;
 });
@@ -84,6 +83,8 @@ FormplayerFrontend.reqres.setHandler('currentUser', function () {
 FormplayerFrontend.on('clearForm', function () {
     $('#webforms').html("");
     $('#webforms-nav').html("");
+    $('#cloudcare-debugger').html("");
+    $('.atwho-container').remove();
 });
 
 FormplayerFrontend.reqres.setHandler('clearMenu', function () {
@@ -129,7 +130,7 @@ FormplayerFrontend.on('startForm', function (data) {
     data.username = user.username;
     data.restoreAs = user.restoreAs;
     data.formplayerEnabled = true;
-    data.displayOptions = user.displayOptions;
+    data.displayOptions = $.extend(true, {}, user.displayOptions);
     data.onerror = function (resp) {
         showError(resp.human_readable_message || resp.message, $("#cloudcare-notifications"));
     };
@@ -180,6 +181,7 @@ FormplayerFrontend.on("start", function (options) {
         FormplayerFrontend.Constants.ALLOWED_SAVED_OPTIONS
     );
     user.displayOptions = _.defaults(savedDisplayOptions, {
+        singleAppMode: options.singleAppMode,
         phoneMode: options.phoneMode,
         oneQuestionPerScreen: options.oneQuestionPerScreen,
     });
@@ -188,20 +190,26 @@ FormplayerFrontend.on("start", function (options) {
     if (Backbone.history) {
         Backbone.history.start();
         FormplayerFrontend.regions.restoreAsBanner.show(
-            new FormplayerFrontend.SessionNavigate.Users.Views.RestoreAsBanner({
+            new FormplayerFrontend.Users.Views.RestoreAsBanner({
                 model: user,
             })
         );
+        if (user.displayOptions.singleAppMode) {
+            appId = options.apps[0]['_id'];
+        }
+
         // will be the same for every domain. TODO: get domain/username/pass from django
         if (this.getCurrentRoute() === "") {
-            if (options.phoneMode) {
-                appId = options.apps[0]['_id'];
-                user.previewAppId = appId;
-
+            if (user.displayOptions.singleAppMode) {
                 FormplayerFrontend.trigger('setAppDisplayProperties', options.apps[0]);
                 FormplayerFrontend.trigger("app:singleApp", appId);
             } else {
                 FormplayerFrontend.trigger("apps:list", options.apps);
+            }
+            if (user.displayOptions.phoneMode) {
+                // Refresh on start of preview mode so it ensures we're on the latest app
+                // since app updates do not work.
+                FormplayerFrontend.trigger('refreshApplication', appId);
             }
         }
     }
@@ -275,7 +283,7 @@ FormplayerFrontend.on('clearRestoreAsUser', function() {
     );
     user.restoreAs = null;
     FormplayerFrontend.regions.restoreAsBanner.show(
-        new FormplayerFrontend.SessionNavigate.Users.Views.RestoreAsBanner({
+        new FormplayerFrontend.Users.Views.RestoreAsBanner({
             model: user,
         })
     );
@@ -314,18 +322,6 @@ FormplayerFrontend.on("sync", function () {
     $.ajax(options);
 });
 
-FormplayerFrontend.on('phone:back:hide', function() {
-    if (FormplayerFrontend.regions.phoneModeNavigation.currentView) {
-        FormplayerFrontend.regions.phoneModeNavigation.currentView.hideBackButton();
-    }
-});
-
-FormplayerFrontend.on('phone:back:show', function() {
-    if (FormplayerFrontend.regions.phoneModeNavigation.currentView) {
-        FormplayerFrontend.regions.phoneModeNavigation.currentView.showBackButton();
-    }
-});
-
 /**
  * retry
  *
@@ -342,7 +338,7 @@ FormplayerFrontend.on("retry", function(response, retryFn, progressMessage) {
     progressMessage = progressMessage || gettext('Please wait...');
 
     if (!progressView) {
-        progressView = new FormplayerFrontend.Utils.Views.ProgressView({
+        progressView = new FormplayerFrontend.Layout.Views.ProgressView({
             progressMessage: progressMessage,
         });
         FormplayerFrontend.regions.loadingProgress.show(progressView);
@@ -352,6 +348,13 @@ FormplayerFrontend.on("retry", function(response, retryFn, progressMessage) {
     setTimeout(retryFn, retryTimeout);
 });
 
+FormplayerFrontend.on('view:tablet', function() {
+    $('body').addClass('preview-tablet-mode');
+});
+
+FormplayerFrontend.on('view:phone', function() {
+    $('body').removeClass('preview-tablet-mode');
+});
 
 /**
  * clearProgress
@@ -373,6 +376,10 @@ FormplayerFrontend.on('clearProgress', function() {
 });
 
 
+FormplayerFrontend.on('setVersionInfo', function(versionInfo) {
+    $("#version-info").text(versionInfo || '');
+});
+
 /**
  * refreshApplication
  *
@@ -383,6 +390,9 @@ FormplayerFrontend.on('clearProgress', function() {
  * @param {String} appId - The id of the application to refresh
  */
 FormplayerFrontend.on('refreshApplication', function(appId) {
+    if (!appId) {
+        throw new Error('Attempt to refresh application for null appId');
+    }
     var user = FormplayerFrontend.request('currentUser'),
         formplayer_url = user.formplayer_url,
         resp,
@@ -412,7 +422,7 @@ FormplayerFrontend.on('navigateHome', function() {
         currentUser = FormplayerFrontend.request('currentUser');
     urlObject.clearExceptApp();
     FormplayerFrontend.regions.breadcrumb.empty();
-    if (currentUser.displayOptions.phoneMode) {
+    if (currentUser.displayOptions.singleAppMode) {
         appId = FormplayerFrontend.request('getCurrentAppId');
         FormplayerFrontend.navigate("/single_app/" + appId, { trigger: true });
     } else {

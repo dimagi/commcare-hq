@@ -11,7 +11,7 @@ class Command(BaseCommand):
     args = '[message]'
     help = 'Send args as a one-shot email to the admins.'
 
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option('--subject', help='Subject', default='Mail from the console'),
         make_option('--stdin', action='store_true', default=False, help='Read message body from stdin'),
         make_option('--html', action='store_true', default=False, help='HTML payload'),

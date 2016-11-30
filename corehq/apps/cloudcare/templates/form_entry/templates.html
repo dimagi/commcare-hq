@@ -5,7 +5,7 @@
     <div class="gr">
         <fieldset class="gr-header">
             <legend>
-                <span class="caption" data-bind="html: caption_markdown() || caption()"></span>
+                <span class="caption" data-bind="html: ko.utils.unwrapObservable($data.caption_markdown) || caption()"></span>
                 <button class="btn btn-xs btn-danger del pull-right" href="#" data-bind="
                     visible: isRepetition,
                     click: deleteRepeat
@@ -94,9 +94,13 @@
             ">
             <!-- Tab title -->
             <div class="debugger-tab-title">
-                <i class="fa fa-bug"></i>
-                <span class="debugger-title">{% trans "CloudCare Debugger" %}</span>
-                <a class="pull-right" data-bind="click: toggleState">{% trans "Show Debugger" %}</a>
+                <i class="fa fa-table"></i>
+                <span class="debugger-title">{% trans "Data Preview" %}</span>
+                <a class="pull-right" data-bind="
+                    click: toggleState,
+                    text: isMinimized() ? gettext('Show Data Preview') : gettext('Hide Data Preview')
+                    ">
+                </a>
             </div>
 
             <!-- Debugger content -->
@@ -153,7 +157,7 @@
                 <!-- tab content -->
                 <div class="tab-content debugger-content">
                     <div role="tabpanel" class="tab-pane active" id="debugger-form-data">
-                        <div id="question-viewer-pretty">{% trans "Answer a question to show data" %}</div>
+                        <div data-bind="html: formattedQuestionsHtml" id="question-viewer-pretty"></div>
                     </div>
                     <div role="tabpanel" class="tab-pane" id="debugger-xml-instance">
                         <div id="xml-viewer-pretty">{% trans "Answer a question to show data" %}</div>
@@ -172,7 +176,7 @@
                                         <input id="auto-sync-control" type="checkbox" checked="checked">{% trans "Auto Sync" %}
                                         <span class="help-block">
                                         {% blocktrans %}
-                                            When this is checked, the CloudCare Debug tool will auto sync your XML after every question answered. On slow connetions, uncheck this.
+                                            When this is checked, the Data Preview tool will auto sync your XML after every question answered. On slow connetions, uncheck this.
                                         {% endblocktrans %}
                                         </span>
                                     </label>
@@ -186,33 +190,32 @@
 </script>
 
 <script type="text/html" id="debugger-eval-ko-template">
-    <form class="form-horizontal" data-bind="submit: evaluate">
-        <div class="form-group">
-            <div class="col-sm-12">
-                <div class="input-group">
-                    <input
-                        id="xpath"
-                        class="form-control debugger-code"
-                        name="xpath"
-                        placeholder="/data/[your path here]"
-                        data-bind="value: xpath" />
-                    <span class="input-group-btn">
-                        <button class="btn btn-default" id="evaluate-button">{% trans "Evaluate" %}</button>
-                    </span>
-                </div>
-            </div>
-        </div>
-        <div class="col-sm-12">
-            <p
-                id="evaluate-result"
-                type="text"
-                style="display: block;"
-                data-bind="
-                    text: result,
-                    css: { 'text-danger': !success() }
-            "></p>
-        </div>
-    </form>
+    <div class="col-sm-12">
+      <form class="form-horizontal" data-bind="submit: evaluate">
+          <div class="form-group">
+              <textarea
+                  id="xpath"
+                  class="form-control debugger-code at-who-input"
+                  name="xpath"
+                  placeholder="XPath Expression"
+                  autocomplete="off"
+                  data-bind="value: xpath" ></textarea>
+          </div>
+          <div class="form-group">
+                <input class="btn btn-default" id="evaluate-button" value="Evaluate" type="submit"/>
+          </div>
+          <div class="col-sm-12">
+              <p
+                  id="evaluate-result"
+                  type="text"
+                  style="display: block;"
+                  data-bind="
+                      text: result,
+                      css: { 'text-danger': !success() }
+              "></p>
+          </div>
+      </form>
+    </div>
 </script>
 
 <script type="text/html" id="question-fullform-ko-template">
@@ -224,7 +227,7 @@
             }
         ">
         <label class="caption control-label" data-bind="
-            html: caption_markdown() || caption(),
+            html: ko.utils.unwrapObservable($data.caption_markdown) || caption(),
             css: Formplayer.Const.LABEL_WIDTH
             "></label>
         <div class="widget-container controls" data-bind="css: Formplayer.Const.CONTROL_WIDTH">
@@ -252,14 +255,14 @@
             "></div>
         </div>
         <span class="ix" data-bind="text: ixInfo($data)"></span>
-        <div class="eoq"></div/>
+        <div class="eoq"></div>
     </div>
     <!-- /ko -->
     <!-- ko if: datatype() === 'info' -->
     <div class="info panel panel-default">
         <div class="panel-body">
             <span class="ix" data-bind="text: ixInfo($data)">></span>
-            <span class="caption" data-bind="html: caption_markdown() || caption()"></span>
+            <span class="caption" data-bind="html: ko.utils.unwrapObservable($data.caption_markdown) || caption()"></span>
             <div class="widget-multimedia" data-bind="
                 template: { name: 'widget-multimedia-ko-template', data: $data }"
                 >

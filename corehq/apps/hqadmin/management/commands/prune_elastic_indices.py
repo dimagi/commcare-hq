@@ -9,7 +9,7 @@ from corehq.apps.userreports.util import get_ucr_es_indices
 class Command(BaseCommand):
     help = 'Close all unreferenced elasticsearch indices.'
 
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option('--verbose', help='Additional logging.', action='store_true',
                     default=False),
         make_option('--noinput', help='Do not prompt user for input', action='store_true',
