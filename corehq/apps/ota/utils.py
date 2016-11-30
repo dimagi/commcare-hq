@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.utils.translation import ugettext as _
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
@@ -159,7 +160,7 @@ def _parse_restore_as_user(as_user):
 
 
 def _ensure_accessible_location(domain, couch_user, as_user):
-    as_user_obj = CommCareUser.get_by_username('{}.commcarehq.org'.format(as_user))
+    as_user_obj = CommCareUser.get_by_username('{}.{}'.format(as_user, settings.HQ_ACCOUNT_ROOT))
     if not as_user_obj:
         as_user_obj = WebUser.get_by_username(as_user)
     if not as_user_obj:
