@@ -80,6 +80,14 @@ _soft_assert_domain_not_loaded = soft_assert(
     exponential_backoff=False,
 )
 
+_soft_assert_contact_emails_missing = soft_assert(
+    to=['{}@{}'.format(email, 'dimagi.com') for email in [
+        'accounts',
+        'billing-dev',
+    ]],
+    exponential_backoff=False,
+)
+
 
 class BillingAccountType(object):
     CONTRACT = "CONTRACT"
@@ -1821,12 +1829,18 @@ class Invoice(InvoiceBase):
             contact_emails = []
 
         if not contact_emails:
+            from corehq.apps.accounting.views import ManageBillingAccountView
             admins = WebUser.get_admins_by_domain(self.get_domain())
             contact_emails = [admin.email if admin.email else admin.username for admin in admins]
-            log_accounting_error(
+            _soft_assert_contact_emails_missing(
+                False,
                 "Could not find an email to send the invoice "
                 "email to for the domain %s. Sending to domain admins instead: %s."
-                % (self.get_domain(), ', '.join(contact_emails))
+                " Add client contact emails here: %s" % (
+                    self.get_domain(),
+                    ', '.join(contact_emails),
+                    absolute_reverse(ManageBillingAccountView.urlname, args=[self.account.id]),
+                )
             )
         return contact_emails
 

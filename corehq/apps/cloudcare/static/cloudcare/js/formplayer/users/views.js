@@ -118,7 +118,11 @@ FormplayerFrontend.module("Users.Views", function(Views, FormplayerFrontend, Bac
                     limit: this.limit,
                     page: this.model.get('page'),
                 }),
-            }).done(this.render.bind(this));
+            })
+            .done(this.render.bind(this))
+            .fail(function(xhr){
+                FormplayerFrontend.trigger('showError', xhr.responseText);
+            });
         },
         onClickNext: function(e) {
             e.preventDefault();

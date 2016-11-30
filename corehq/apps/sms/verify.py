@@ -78,9 +78,11 @@ def send_verification(domain, user, phone_number, logged_event):
     subevent.completed()
 
 
-def process_verification(v, msg):
+def process_verification(v, msg, verification_keywords=None):
     if not v or v.verified:
-        return
+        return False
+
+    verification_keywords = verification_keywords or ['123']
 
     logged_event = MessagingEvent.get_current_verification_event(
         v.domain, v.owner_id, v.phone_number)
@@ -102,9 +104,9 @@ def process_verification(v, msg):
 
     if (
         not domain_has_privilege(msg.domain, privileges.INBOUND_SMS) or
-        not verification_response_ok(msg.text)
+        not verification_response_ok(msg.text, verification_keywords)
     ):
-        return
+        return False
 
     v.verified = True
     v.save()
@@ -122,15 +124,12 @@ def process_verification(v, msg):
     send_sms_to_verified_number(v, message,
         metadata=MessageMetadata(messaging_subevent_id=subevent.pk))
     subevent.completed()
+    return True
 
 
-def verification_response_ok(text):
+def verification_response_ok(text, verification_keywords):
     if not isinstance(text, basestring):
         return False
 
-    parts = text.split()
-
-    if len(parts) == 0:
-        return False
-
-    return parts[0] == '123'
+    text = text.lower()
+    return any([keyword in text for keyword in verification_keywords])

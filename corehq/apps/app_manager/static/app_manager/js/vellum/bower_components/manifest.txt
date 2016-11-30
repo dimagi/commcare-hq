@@ -8,11 +8,11 @@
 ├─┬ bootstrap#3.3.7 (latest is 4.0.0-alpha.5)
 │ └── jquery#3.1.1
 ├── chai#3.5.0 (4.0.0-canary.1 available)
-├── codemirror#5.19.0
+├── codemirror#5.19.0 (latest is 5.21.0)
 ├── equivalent-xml-js#7de21be295
 ├── fuse.js#2.5.0
 ├── jquery#3.1.1
-├── jsdiff#2.2.2
+├── jsdiff#3.1.0
 ├─┬ jstree#3.3.3
 │ └── jquery#3.1.1
 ├── jstree-actions#0.1.0 extraneous

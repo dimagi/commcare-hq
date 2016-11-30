@@ -10,7 +10,7 @@ from corehq.apps.app_manager.const import RETURN_TO
 from corehq.apps.app_manager.id_strings import callout_header_locale
 from corehq.apps.app_manager.suite_xml.const import FIELD_TYPE_LEDGER
 from corehq.apps.app_manager.suite_xml.contributors import SectionContributor
-from corehq.apps.app_manager.suite_xml.post_process.instances import EntryInstances
+from corehq.apps.app_manager.suite_xml.post_process.instances import get_all_instances_referenced_in_xpaths
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.app_manager.suite_xml.xml_models import (
     Action,
@@ -415,7 +415,7 @@ def get_instances_for_module(app, module, additional_xpaths=None):
     for detail_id in detail_ids:
         xpaths.update(details_by_id[detail_id].get_all_xpaths())
 
-    instances, _ = EntryInstances.get_required_instances(xpaths)
+    instances, _ = get_all_instances_referenced_in_xpaths(app.domain, xpaths)
     return instances
 
 

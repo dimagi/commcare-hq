@@ -82,6 +82,7 @@ FormplayerFrontend.reqres.setHandler('currentUser', function () {
 
 FormplayerFrontend.on('clearForm', function () {
     $('#webforms').html("");
+    $('#menu-container').removeClass('hide');
     $('#webforms-nav').html("");
     $('#cloudcare-debugger').html("");
     $('.atwho-container').remove();
@@ -164,6 +165,7 @@ FormplayerFrontend.on('startForm', function (data) {
     };
     var sess = new WebFormSession(data);
     sess.renderFormXml(data, $('#webforms'));
+    $('#menu-container').addClass('hide');
 });
 
 FormplayerFrontend.on("start", function (options) {

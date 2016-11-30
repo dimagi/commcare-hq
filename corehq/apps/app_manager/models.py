@@ -764,6 +764,15 @@ class FormSchedule(DocumentSchema):
     termination_condition = SchemaProperty(FormActionCondition)
 
 
+class CustomInstance(DocumentSchema):
+    """Custom instances to add to the instance block
+    instance_id: 	The ID of the instance
+    instance_path: 	The path where the instance can be found
+    """
+    instance_id = StringProperty(required=True)
+    instance_path = StringProperty(required=True)
+
+
 class CommentMixin(DocumentSchema):
     """
     Documentation comment for app builders and maintainers
@@ -803,6 +812,7 @@ class FormBase(DocumentSchema):
     no_vellum = BooleanProperty(default=False)
     form_links = SchemaListProperty(FormLink)
     schedule_form_id = StringProperty()
+    custom_instances = SchemaListProperty(CustomInstance)
 
     @classmethod
     def wrap(cls, data):

@@ -14,6 +14,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.cache import cache_page
 from django.views.generic import View
+from django.views.generic.base import TemplateView
 
 from couchdbkit import ResourceConflict
 
@@ -39,11 +40,13 @@ from corehq.apps.app_manager.dbaccessors import (
     get_current_app,
     wrap_app,
 )
+from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.exceptions import FormNotFoundException, ModuleNotFoundException
 from corehq.apps.app_manager.models import Application, ApplicationBase, RemoteApp
 from corehq.apps.app_manager.suite_xml.sections.details import get_instances_for_module
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.app_manager.util import get_cloudcare_session_data
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.cloudcare.api import (
     api_closed_to_status,
     CaseAPIResult,
@@ -233,6 +236,7 @@ class CloudcareMain(View):
             return render(request, "cloudcare/cloudcare_home.html", context)
 
 
+@location_safe
 class FormplayerMain(View):
 
     preview = False
@@ -338,6 +342,19 @@ class FormplayerPreviewSingleApp(View):
             "home_url": reverse(self.urlname, args=[domain, app_id]),
         }
         return render(request, "cloudcare/formplayer_home.html", context)
+
+
+class PreviewAppView(TemplateView):
+    template_name = 'preview_app/base.html'
+    urlname = 'preview_app'
+
+    def get(self, request, *args, **kwargs):
+        app = get_app(request.domain, kwargs.pop('app_id'))
+        return self.render_to_response({
+            'app': app,
+            'formplayer_url': settings.FORMPLAYER_URL,
+            "maps_api_key": settings.GMAPS_API_KEY,
+        })
 
 
 @login_and_domain_required

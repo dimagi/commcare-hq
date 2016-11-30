@@ -14,6 +14,8 @@ hqDefine('app_manager/js/preview_app.js', function() {
         PREVIEW_ACTION_TEXT_SHOW: '.js-preview-action-show',
         PREVIEW_ACTION_TEXT_HIDE: '.js-preview-action-hide',
         BTN_REFRESH: '.js-preview-refresh',
+        OFFSET_FOR_PREVIEW: '.offset-for-preview',
+        FORMDESIGNER: '#formdesigner',
     };
 
     module.EVENTS = {
@@ -31,24 +33,36 @@ hqDefine('app_manager/js/preview_app.js', function() {
         TABLET: 'preview-tablet',
     };
 
+    _private.isFormdesigner = false;
+
     _private.showAppPreview = function() {
         $(module.SELECTORS.PREVIEW_ACTION_TEXT_SHOW).addClass('hide');
         $(module.SELECTORS.PREVIEW_ACTION_TEXT_HIDE).removeClass('hide');
+        if (_private.isFormdesigner) {
+            $(module.SELECTORS.FORMDESIGNER).addClass('offset-for-preview');
+        }
+
+
     };
     _private.hideAppPreview = function() {
         $(module.SELECTORS.PREVIEW_ACTION_TEXT_SHOW).removeClass('hide');
         $(module.SELECTORS.PREVIEW_ACTION_TEXT_HIDE).addClass('hide');
+        if (_private.isFormdesigner) {
+            $(module.SELECTORS.FORMDESIGNER).removeClass('offset-for-preview');
+        }
     };
 
     _private.tabletView = function() {
         var $appPreview = $(module.SELECTORS.PREVIEW_WINDOW);
         $appPreview.addClass('preview-tablet-mode');
+        $(module.SELECTORS.OFFSET_FOR_PREVIEW).addClass('offset-for-tablet');
         _private.triggerPreviewEvent('tablet-view');
     };
 
     _private.phoneView = function() {
         var $appPreview = $(module.SELECTORS.PREVIEW_WINDOW);
         $appPreview.removeClass('preview-tablet-mode');
+        $(module.SELECTORS.OFFSET_FOR_PREVIEW).removeClass('offset-for-tablet');
         _private.triggerPreviewEvent('phone-view');
     };
 
@@ -103,6 +117,8 @@ hqDefine('app_manager/js/preview_app.js', function() {
             $togglePreviewBtn = $(module.SELECTORS.BTN_TOGGLE_PREVIEW),
             $messages = $(layoutController.selector.messages);
 
+        _private.isFormdesigner = $(module.SELECTORS.FORMDESIGNER).length > 0;
+
         $appPreview.data(module.DATA.POSITION, module.POSITION.FIXED);
 
         if (localStorage.getItem(module.DATA.OPEN)) {
@@ -118,11 +134,11 @@ hqDefine('app_manager/js/preview_app.js', function() {
 
             if (localStorage.getItem(module.DATA.OPEN)) {
                 $appPreview.addClass('open');
-                if ($('#formdesigner').length === 0) $appBody.addClass('offset-for-preview');
+                if (!_private.isFormdesigner) $appBody.addClass('offset-for-preview');
                 $messages.addClass('offset-for-preview');
             } else {
                 $appPreview.removeClass('open');
-                if ($('#formdesigner').length === 0) $appBody.removeClass('offset-for-preview');
+                if (!_private.isFormdesigner) $appBody.removeClass('offset-for-preview');
                 $messages.removeClass('offset-for-preview');
             }
 
@@ -154,6 +170,9 @@ hqDefine('app_manager/js/preview_app.js', function() {
         $(document).ajaxComplete(function(e, xhr, options) {
             if (/edit_form_attr/.test(options.url) ||
                 /edit_module_attr/.test(options.url) ||
+                /edit_module_detail_screens/.test(options.url) ||
+                /edit_app_attr/.test(options.url) ||
+                /edit_form_actions/.test(options.url) ||
                 /patch_xform/.test(options.url)) {
                 $(module.SELECTORS.BTN_REFRESH).addClass('app-out-of-date');
             }

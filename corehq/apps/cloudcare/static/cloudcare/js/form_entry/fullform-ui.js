@@ -192,10 +192,10 @@ function Form(json) {
         self.atLastIndex(isAtLastIndex);
     };
 
-    self.showInFormNavigation = ko.observable(
-        self.displayOptions.oneQuestionPerScreen !== undefined
+    self.showInFormNavigation = ko.computed(function () {
+        return self.displayOptions.oneQuestionPerScreen !== undefined
         && self.displayOptions.oneQuestionPerScreen() === true
-    );
+    });
 
     self.isCurrentRequiredSatisfied = ko.computed(function () {
         if (!self.showInFormNavigation()) return true;
@@ -425,6 +425,10 @@ Formplayer.ViewModels.CloudCareDebugger = function() {
     self.formattedQuestionsHtml = ko.observable('');
     self.toggleState = function() {
         self.isMinimized(!self.isMinimized());
+        // Wait to set the content heigh until after the CSS animation has completed.
+        // In order to support multiple heights, we set the height with javascript since
+        // a div inside a fixed position element cannot scroll unless a height is explicitly set.
+        setTimeout(self.setContentHeight, 1001);
     };
 
     $.unsubscribe('debugger.update');
@@ -435,6 +439,18 @@ Formplayer.ViewModels.CloudCareDebugger = function() {
             self.evalXPath.autocomplete(resp.questionList);
         });
     });
+
+    self.setContentHeight = function() {
+        var contentHeight;
+        if (self.isMinimized()) {
+            $('.debugger-content').outerHeight(0);
+        } else {
+            contentHeight = ($('.debugger').outerHeight() -
+                $('.debugger-tab-title').outerHeight() -
+                $('.debugger-navbar').outerHeight());
+            $('.debugger-content').outerHeight(contentHeight);
+        }
+    };
 
     self.instanceXml.subscribe(function(newXml) {
         var $instanceTab = $('#debugger-xml-instance-tab'),
@@ -493,6 +509,7 @@ Formplayer.ViewModels.EvaluateXPath = function() {
      */
     self.autocomplete = function(questionData) {
         self.$xpath = $('#xpath');
+        self.$xpath.atwho('setIframe', window.frameElement, true);
         self.$xpath.atwho({
             at: '',
             data: questionData,
