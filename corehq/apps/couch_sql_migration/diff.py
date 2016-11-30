@@ -133,9 +133,17 @@ def filter_form_diffs(couch_form, sql_form, diffs):
     filtered = _filter_exact_matches(diffs, FORM_IGNORED_DIFFS)
     partial_diffs = PARTIAL_DIFFS[doc_type] + PARTIAL_DIFFS['XFormInstance*']
     filtered = _filter_partial_matches(filtered, partial_diffs)
+    filtered = _filter_text_xmlns(filtered)
     filtered = _filter_date_diffs(filtered)
     filtered = _filter_renamed_fields(filtered, couch_form, sql_form)
     return filtered
+
+
+def _filter_text_xmlns(diffs):
+    return [
+        diff for diff in diffs
+        if diff.path[-1] in ('#text', '@xmlns') and diff.old_value in ('', Ellipsis)
+    ]
 
 
 def filter_case_diffs(couch_case, sql_case, diffs, forms_that_touch_cases_without_actions=None):
