@@ -164,7 +164,10 @@ def _parse_restore_as_user(as_user):
 
 
 def _ensure_accessible_location(domain, couch_user, as_user):
-    as_user_obj = CommCareUser.get_by_username('{}.{}'.format(as_user, settings.HQ_ACCOUNT_ROOT))
+    as_user_obj = None
+    if '@' in as_user:
+        username, user_domain = _parse_restore_as_user(as_user)
+        as_user_obj = CommCareUser.get_by_username(format_username(username, user_domain))
     if not as_user_obj:
         as_user_obj = WebUser.get_by_username(as_user)
     if not as_user_obj:
