@@ -49,13 +49,14 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
             self.case.track_create(transaction)
 
     def _apply_case_update(self, case_update, xformdoc):
-        if case_update.has_referrals():
+        from corehq.apps.tzmigration.api import timezone_migration_in_progress
+        if case_update.has_referrals() and not timezone_migration_in_progress(xformdoc.domain):
             logging.error('Form {} touching case {} in domain {} is still using referrals'.format(
                 xformdoc.form_id, case_update.id, getattr(xformdoc, 'domain', None))
             )
             raise UsesReferrals(_('Sorry, referrals are no longer supported!'))
 
-        if case_update.version and case_update.version != V2:
+        if case_update.version and case_update.version != V2 and not timezone_migration_in_progress(xformdoc.domain):
             raise VersionNotSupported
 
         if xformdoc.is_deprecated:
