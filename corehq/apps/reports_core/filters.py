@@ -161,7 +161,8 @@ class QuarterFilter(BaseFilter):
             'years': self.years
         }
 
-    def get_quarter(self, year, quarter):
+    @staticmethod
+    def get_quarter(year, quarter):
         return {
             1: DateSpan(datetime(year, 1, 1), datetime(year, 4, 1), inclusive=False),
             2: DateSpan(datetime(year, 4, 1), datetime(year, 7, 1), inclusive=False),
