@@ -4,6 +4,8 @@ from datetime import datetime
 
 import itertools
 
+from django.db.utils import IntegrityError
+
 import settings
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.case.xform import get_all_extensions_to_close, CaseProcessingResult, get_case_updates
@@ -58,6 +60,9 @@ class CouchSqlDomainMigrator(object):
     def log_debug(self, message):
         if self.debug:
             print '[DEBUG] {}'.format(message)
+
+    def log_error(self, message):
+        print '[ERROR] {}'.format(message)
 
     def migrate(self):
         self._process_main_forms()
@@ -179,7 +184,10 @@ class CouchSqlDomainMigrator(object):
             _migrate_case_actions(couch_case, sql_case)
             _migrate_case_indices(couch_case, sql_case)
             _migrate_case_attachments(couch_case, sql_case)
-            CaseAccessorSQL.save_case(sql_case)
+            try:
+                CaseAccessorSQL.save_case(sql_case)
+            except IntegrityError as e:
+                self.log_error("Unable to migrate case:\n{}\n{}".format(couch_case.case_id, e))
 
     def _calculate_case_diffs(self):
         cases = {}
