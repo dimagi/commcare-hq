@@ -100,3 +100,15 @@ def get_quarter_date_range(year, quarter):
 def get_quarter_for_date(date):
     quarter = (date.month - 1) / 3 + 1
     return date.year, quarter
+
+
+def get_current_quarter_date_range():
+    return get_quarter_date_range(*get_quarter_for_date(datetime.datetime.utcnow()))
+
+
+def get_previous_quarter_date_range():
+    year, quarter = get_quarter_for_date(datetime.datetime.utcnow())
+    if quarter == 1:
+        return get_quarter_date_range(year - 1, 4)
+    else:
+        return get_quarter_date_range(year, quarter - 1)
