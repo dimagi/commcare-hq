@@ -7,6 +7,7 @@ from corehq.apps.export.models.new import CaseExportDataSchema
 def generate_data_dictionary(domain):
     properties = _get_all_case_properties(domain)
     _create_properties_for_case_types(domain, properties)
+    CaseType.objects.filter(domain=domain, name__in=properties.keys()).update(fully_generated=True)
 
 
 def _get_all_case_properties(domain):
