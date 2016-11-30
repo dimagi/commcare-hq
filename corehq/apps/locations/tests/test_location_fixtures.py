@@ -216,6 +216,59 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
 
 
 @mock.patch.object(Domain, 'uses_locations', return_value=True)  # removes dependency on accounting
+class WebUserLocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
+
+    location_type_names = ['state', 'county', 'city']
+    location_structure = [
+        ('Massachusetts', [
+            ('Middlesex', [
+                ('Cambridge', []),
+                ('Somerville', []),
+            ]),
+            ('Suffolk', [
+                ('Boston', []),
+                ('Revere', []),
+            ])
+        ]),
+        ('New York', [
+            ('New York City', [
+                ('Manhattan', []),
+                ('Brooklyn', []),
+                ('Queens', []),
+            ]),
+        ]),
+    ]
+
+    def setUp(self):
+        super(WebUserLocationFixturesTest, self).setUp()
+        delete_all_users()
+        self.user = create_restore_user(self.domain, 'web_user', '123', is_mobile_user=False)
+
+    def test_no_user_locations_returns_empty(self, uses_locations):
+        empty_fixture = "<fixture id='commtrack:locations' user_id='{}' />".format(self.user.user_id)
+        fixture = ElementTree.tostring(location_fixture_generator(self.user, V2)[0])
+        self.assertXmlEqual(empty_fixture, fixture)
+
+    def test_simple_location_fixture(self, uses_locations):
+        self.user._couch_user.set_location(self.domain, self.locations['Suffolk'].couch_location)
+
+        self._assert_fixture_has_locations(
+            'simple_fixture',
+            ['Massachusetts', 'Suffolk', 'Boston', 'Revere']
+        )
+
+    def test_multiple_locations(self, uses_locations):
+        self.user._couch_user.add_to_assigned_locations(self.domain, self.locations['Suffolk'].couch_location)
+        self.user._couch_user.add_to_assigned_locations(self.domain, self.locations['New York City'].couch_location)
+
+        self._assert_fixture_has_locations(
+            'multiple_locations',
+            ['Massachusetts', 'Suffolk', 'Boston', 'Revere', 'New York',
+             'New York City', 'Manhattan', 'Queens', 'Brooklyn']
+        )
+
+
+@mock.patch.object(Domain, 'uses_locations', return_value=True)  # removes dependency on accounting
 class ForkedHierarchyLocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
     """
     - State
