@@ -259,7 +259,10 @@ class WebUserLocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsM
 
     def test_multiple_locations(self, uses_locations):
         self.user._couch_user.add_to_assigned_locations(self.domain, self.locations['Suffolk'].couch_location)
-        self.user._couch_user.add_to_assigned_locations(self.domain, self.locations['New York City'].couch_location)
+        self.user._couch_user.add_to_assigned_locations(
+            self.domain,
+            self.locations['New York City'].couch_location
+        )
 
         self._assert_fixture_has_locations(
             'multiple_locations',
