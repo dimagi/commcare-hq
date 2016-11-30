@@ -19,4 +19,4 @@ class Command(BaseCommand):
         print "Rebuilding {} tables".format(len(tables))
 
         for table in tables:
-            tasks.rebuild_indicators(table.config_id)
+            tasks.rebuild_indicators(table._id)
