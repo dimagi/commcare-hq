@@ -832,6 +832,15 @@
         "type": "boolean"
       },
       {
+        "column_id": "pnc_eligible",
+        "display_name": null,
+        "filter": {
+          "name": "pnc_eligible",
+          "type": "named"
+        },
+        "type": "boolean"
+      },
+      {
         "column_id": "ebf_eligible",
         "display_name": null,
         "filter": {
@@ -1331,6 +1340,10 @@
             {
               "name": "fully_immunized_eligible",
               "type": "named"
+            },
+            {
+              "name": "immun_date_before_month_end",
+              "type": "named"
             }
           ]
         },
@@ -1406,6 +1419,10 @@
             },
             {
               "name": "fully_immunized_eligible",
+              "type": "named"
+            },
+            {
+              "name": "immun_date_before_month_end",
               "type": "named"
             }
           ]
@@ -2308,193 +2325,51 @@
         }
       },
       "task_case_id": {
-        "type": "conditional",
-        "test": {
-          "type": "boolean_expression",
-          "operator": "gt",
-          "expression": {
-            "type": "reduce_items",
-            "aggregation_fn": "count",
-            "items_expression": {
-              "type": "icds_get_case_forms_by_date",
-              "xmlns": [
-                "http://openrosa.org/formdesigner/1D568275-1D19-46DB-8C54-2C9765DF6335"
-              ]
-            }
-          },
-          "property_value": 0
-        },
-        "expression_if_true": {
-          "type": "nested",
-          "argument_expression": {
-            "type": "reduce_items",
-            "aggregation_fn": "last_item",
-            "items_expression": {
-              "type": "filter_items",
-              "items_expression": {
-                "type": "map_items",
-                "items_expression": {
-                  "type": "icds_get_case_forms_by_date",
-                  "xmlns": [
-                    "http://openrosa.org/formdesigner/1D568275-1D19-46DB-8C54-2C9765DF6335"
-                  ]
+        "type": "nested",
+        "argument_expression": {
+          "type": "reduce_items",
+          "aggregation_fn": "last_item",
+          "items_expression": {
+            "type": "filter_items",
+            "filter_expression": {
+              "type": "and",
+              "filters": [
+                {
+                  "type": "boolean_expression",
+                  "operator": "eq",
+                  "expression": {
+                    "type": "property_name",
+                    "property_name": "type"
+                  },
+                  "property_value": "tasks"
                 },
-                "map_expression": {
-                  "type": "property_path",
-                  "property_path": [
-                    "form",
-                    "hh_member_update"
-                  ]
+                {
+                  "type": "boolean_expression",
+                  "operator": "eq",
+                  "expression": {
+                    "type": "property_name",
+                    "property_name": "tasks_type",
+                    "datatype": "string"
+                  },
+                  "property_value": "child"
                 }
-              },
-              "filter_expression": {
-                "type": "boolean_expression",
-                "operator": "eq",
+              ]
+            },
+            "items_expression": {
+              "type": "icds_get_child_cases",
+              "case_id_expression": {
+                "type": "root_doc",
                 "expression": {
                   "type": "property_name",
-                  "property_name": "hh_member_number"
-                },
-                "property_value": {
-                  "value_expression": {
-                    "datatype": null,
-                    "type": "property_name",
-                    "property_name": "hh_member_number"
-                  },
-                  "type": "related_doc",
-                  "related_doc_type": "CommCareCase",
-                  "doc_id_expression": {
-                    "type": "icds_parent_id"
-                  }
+                  "property_name": "_id"
                 }
               }
             }
-          },
-          "value_expression": {
-            "type": "property_path",
-            "property_path": [
-              "child_health",
-              "tasks",
-              "case",
-              "@case_id"
-            ]
           }
         },
-        "expression_if_false": {
-          "type": "conditional",
-          "test": {
-            "type": "boolean_expression",
-            "operator": "gt",
-            "expression": {
-              "type": "reduce_items",
-              "aggregation_fn": "count",
-              "items_expression": {
-                "type": "icds_get_case_forms_by_date",
-                "xmlns": [
-                  "http://openrosa.org/formdesigner/756ec44475658f3f463f8012632def2bc9fbe731"
-                ]
-              }
-            },
-            "property_value": 0
-          },
-          "expression_if_true": {
-            "type": "nested",
-            "argument_expression": {
-              "type": "reduce_items",
-              "aggregation_fn": "last_item",
-              "items_expression": {
-                "type": "icds_get_case_forms_by_date",
-                "xmlns": [
-                  "http://openrosa.org/formdesigner/756ec44475658f3f463f8012632def2bc9fbe731"
-                ]
-              }
-            },
-            "value_expression": {
-              "type": "property_path",
-              "property_path": [
-                "hh_member_register",
-                "child_health",
-                "tasks",
-                "case",
-                "@case_id"
-              ]
-            }
-          },
-          "expression_if_false": {
-            "type": "conditional",
-            "test": {
-              "type": "boolean_expression",
-              "operator": "gt",
-              "expression": {
-                "type": "reduce_items",
-                "aggregation_fn": "count",
-                "items_expression": {
-                  "type": "icds_get_case_forms_by_date",
-                  "xmlns": [
-                    "http://openrosa.org/formdesigner/376FA2E1-6FD1-4C9E-ACB4-E046038CD5E2"
-                  ]
-                }
-              },
-              "property_value": 0
-            },
-            "expression_if_true": {
-              "type": "nested",
-              "argument_expression": {
-                "type": "reduce_items",
-                "aggregation_fn": "last_item",
-                "items_expression": {
-                  "type": "filter_items",
-                  "items_expression": {
-                    "type": "map_items",
-                    "items_expression": {
-                      "type": "icds_get_case_forms_by_date",
-                      "xmlns": [
-                        "http://openrosa.org/formdesigner/376FA2E1-6FD1-4C9E-ACB4-E046038CD5E2"
-                      ]
-                    },
-                    "map_expression": {
-                      "type": "property_path",
-                      "property_path": [
-                        "form",
-                        "child"
-                      ]
-                    }
-                  },
-                  "filter_expression": {
-                    "type": "boolean_expression",
-                    "operator": "eq",
-                    "expression": {
-                      "type": "property_path",
-                      "property_path": [
-                        "case_open_child_health_3",
-                        "case",
-                        "@case_id"
-                      ]
-                    },
-                    "property_value": {
-                      "type": "root_doc",
-                      "expression": {
-                        "datatype": null,
-                        "type": "property_name",
-                        "property_name": "_id"
-                      }
-                    }
-                  }
-                }
-              },
-              "value_expression": {
-                "type": "property_path",
-                "property_path": [
-                  "case_open_tasks_3",
-                  "case",
-                  "@case_id"
-                ]
-              }
-            },
-            "expression_if_false": {
-              "type": "property_name",
-              "property_name": "not_exist"
-            }
-          }
+        "value_expression": {
+          "type": "property_name",
+          "property_name": "_id"
         }
       },
       "get_latest_ebf_repeat": {
@@ -2901,6 +2776,59 @@
             "property_value": 24,
             "expression": {
               "type": "icds_child_age_in_months_month_start"
+            }
+          }
+        ]
+      },
+      "immun_date_before_month_end": {
+        "type": "and",
+        "filters": [
+          {
+            "type": "not",
+            "filter": {
+              "operator": "in",
+              "type": "boolean_expression",
+              "expression": {
+                "type": "related_doc",
+                "datatype": "date",
+                "related_doc_type": "CommCareCase",
+                "doc_id_expression": {
+                  "type": "named",
+                  "name": "task_case_id"
+                },
+                "value_expression": {
+                  "type": "property_name",
+                  "property_name": "immun_one_year_date"
+                }
+              },
+              "property_value": [
+                "",
+                null
+              ]
+            }
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "gte",
+            "property_value": 0,
+            "expression": {
+              "from_date_expression": {
+                "type": "related_doc",
+                "datatype": "date",
+                "related_doc_type": "CommCareCase",
+                "doc_id_expression": {
+                  "type": "named",
+                  "name": "task_case_id"
+                },
+                "value_expression": {
+                  "type": "property_name",
+                  "property_name": "immun_one_year_date"
+                }
+              },
+              "to_date_expression": {
+                "type": "icds_month_end"
+              },
+              "type": "diff_days"
             }
           }
         ]
