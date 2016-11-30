@@ -22,7 +22,7 @@ def bootstrap_apposit_gateway(apps=None):
     )
 
     SmsGatewayFee.create_new(
-        SQLSMSGHBackend.get_api_id(),
+        SQLAppositBackend.get_api_id(),
         OUTGOING,
         Decimal('0.02'),
         currency=usd_currency,
