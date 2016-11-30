@@ -22,7 +22,6 @@ from corehq.apps.export.forms import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.reports.filters.case_list import CaseListFilter
 from corehq.apps.groups.models import Group
-from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.models import HQUserType
 from mock import patch, MagicMock
 
@@ -71,7 +70,7 @@ class TestDashboardFeedFilterForm(SimpleTestCase):
             'start_date': '1992-01-30',
             'end_date': '2016-10-01',
         }
-        form = DashboardFeedFilterForm(DomainObject([], 'my domain'), data=data)
+        form = DashboardFeedFilterForm(DomainObject([], 'my-domain'), data=data)
         self.assertTrue(form.is_valid())
 
     def test_missing_fields(self):
@@ -80,7 +79,7 @@ class TestDashboardFeedFilterForm(SimpleTestCase):
             'date_range': 'range',
             'start_date': '1992-01-30',
         }
-        form = DashboardFeedFilterForm(DomainObject([], 'my domain'), data=data)
+        form = DashboardFeedFilterForm(DomainObject([], 'my-domain'), data=data)
         self.assertFalse(form.is_valid())
 
     def test_bad_dates(self):
@@ -90,7 +89,7 @@ class TestDashboardFeedFilterForm(SimpleTestCase):
             'start_date': '1992-01-30',
             'end_date': 'banana',
         }
-        form = DashboardFeedFilterForm(DomainObject([], 'my domain'), data=data)
+        form = DashboardFeedFilterForm(DomainObject([], 'my-domain'), data=data)
         self.assertFalse(form.is_valid())
 
 
@@ -322,8 +321,6 @@ class TestEmwfFilterFormExportFormFilters(TestCase):
 @patch.object(CaseExportFilterBuilder, '_get_datespan_filter', lambda self, x: [])
 @patch.object(FilterCaseESExportDownloadForm, '_get_group_ids')
 @patch.object(Group, 'get_static_user_ids_for_groups')
-@patch.object(Group, 'get_case_sharing_groups')
-@patch.object(SQLLocation, 'get_case_sharing_locations_ids')
 class TestFilterCaseESExportDownloadForm(TestCase):
     form = FilterCaseESExportDownloadForm
     filter_builder = CaseExportFilterBuilder
@@ -373,9 +370,8 @@ class TestFilterCaseESExportDownloadForm(TestCase):
         self.assertEqual(case_filters[0].operand_filter.owner_id, ['123'])
 
     @patch.object(filter_builder, '_get_group_independent_filters', lambda x, y, z, a, b: [])
-    def test_get_filters_from_slugs_for_all_locations_access(self, case_sharing_locations_ids_patch,
-                                                             case_sharing_groups_patch,
-                                                             static_user_ids_for_group_patch, group_ids_patch):
+    def test_get_filters_from_slugs_for_all_locations_access(self, static_user_ids_for_group_patch,
+                                                             group_ids_patch):
         data = {'date_range': '1992-01-30 to 2016-11-28'}
         group_ids_patch.return_value = self.group_ids
         self.export_filter = self.subject(self.domain, pytz.utc, data=data)
@@ -384,12 +380,9 @@ class TestFilterCaseESExportDownloadForm(TestCase):
 
         group_ids_patch.assert_called_once_with(self.group_ids_slug)
         static_user_ids_for_group_patch.assert_called_once_with(self.group_ids)
-        assert not case_sharing_groups_patch.called
-        assert not case_sharing_locations_ids_patch.called
 
-    def test_get_filters_from_slugs_for_restricted_locations_access(self, case_sharing_locations_ids_patch,
-                                                                    case_sharing_groups_patch,
-                                                                    static_user_ids_for_group_patch,
+    @patch.object(filter_builder, '_get_group_independent_filters', lambda x, y, z, a, b: [])
+    def test_get_filters_from_slugs_for_restricted_locations_access(self, static_user_ids_for_group_patch,
                                                                     group_ids_patch):
         data = {'date_range': '1992-01-30 to 2016-11-28'}
         self.export_filter = self.subject(self.domain, pytz.utc, data=data)
@@ -397,14 +390,13 @@ class TestFilterCaseESExportDownloadForm(TestCase):
         self.export_filter.get_case_filter(self.group_ids_slug, False, ["some", "location", "ids"])
 
         assert not static_user_ids_for_group_patch.called
-        assert not case_sharing_groups_patch.called
-        case_sharing_locations_ids_patch.assert_called_once_with(self.domain.name)
 
     @patch.object(filter, 'selected_user_types')
     @patch.object(filter_builder, '_get_locations_filter')
-    @patch.object(form, '_get_locations_ids')
+    @patch.object(filter_builder, '_get_selected_locations_and_descendants_ids')
     @patch.object(filter_builder, '_get_users_filter')
-    def test_get_group_independent_filters_for_all_access(self, get_users_filter, get_locations_ids,
+    @patch.object(form, '_get_user_ids')
+    def test_get_group_independent_filters_for_all_access(self, get_user_ids, get_users_filter, get_locations_ids,
                                                           get_locations_filter, get_es_user_types, *patches):
         data = {'date_range': '1992-01-30 to 2016-11-28'}
         self.export_filter = self.subject(self.domain, pytz.utc, data=data)
@@ -413,13 +405,17 @@ class TestFilterCaseESExportDownloadForm(TestCase):
         self.export_filter.get_case_filter(self.group_ids_slug, True, None)
         get_es_user_types.assert_called_once_with(self.group_ids_slug)
         get_locations_ids.assert_called_once_with(self.group_ids_slug)
-        get_users_filter.assert_called_once_with([])
+        get_users_filter.assert_called_once_with(self.group_ids_slug)
+        get_user_ids.assert_called_once_with(self.group_ids_slug)
+
 
     @patch.object(filter, 'selected_user_types')
     @patch.object(filter_builder, '_get_locations_filter')
-    @patch.object(form, '_get_locations_ids')
+    @patch.object(filter_builder, '_get_selected_locations_and_descendants_ids')
     @patch.object(filter_builder, '_get_users_filter')
-    def test_get_group_independent_filters_for_restricted_access(self, get_users_filter, get_locations_ids,
+    @patch.object(form, '_get_user_ids')
+    def test_get_group_independent_filters_for_restricted_access(self, get_user_ids, get_users_filter,
+                                                                 get_locations_ids,
                                                                  get_locations_filter, get_es_user_types, *mocks):
         data = {'date_range': '1992-01-30 to 2016-11-28'}
         self.export_filter = self.subject(self.domain, pytz.utc, data=data)
@@ -428,3 +424,4 @@ class TestFilterCaseESExportDownloadForm(TestCase):
         self.export_filter.get_case_filter(self.group_ids_slug, False, ['some', 'location', 'ids'])
         get_locations_ids.assert_called_once_with(self.group_ids_slug)
         get_users_filter.assert_called_once_with([])
+        get_user_ids.assert_called_once_with(self.group_ids_slug)
