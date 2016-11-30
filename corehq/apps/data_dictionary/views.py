@@ -53,10 +53,11 @@ def update_case_property(request, domain):
     name = request.POST.get('name')
     description = request.POST.get('description')
     type = request.POST.get('type')
-    prop = CaseProperty.objects.get(
-        name=name, case_type__name=case_type, case_type__domain=domain
-    )
-    if not prop:
+    try:
+        prop = CaseProperty.objects.get(
+            name=name, case_type__name=case_type, case_type__domain=domain
+        )
+    except:
         return JsonResponse({
             'status': "failed",
             "error": "property does not exist"
