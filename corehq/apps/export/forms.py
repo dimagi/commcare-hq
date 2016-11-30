@@ -1145,7 +1145,7 @@ class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, GenericFilterCaseExp
             accessible_location_ids,
             self.dynamic_filter_class.show_all_data(mobile_user_and_group_slugs),
             self.dynamic_filter_class.show_project_data(mobile_user_and_group_slugs),
-            self._get_es_user_types(mobile_user_and_group_slugs),
+            self.dynamic_filter_class.selected_user_types(mobile_user_and_group_slugs),
             self.cleaned_data['date_range'],
             self._get_group_ids(mobile_user_and_group_slugs),
             self._get_locations_ids(mobile_user_and_group_slugs),

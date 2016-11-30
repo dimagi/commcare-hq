@@ -224,7 +224,7 @@ class TestEmwfFilterFormExportFilters(TestCase):
     @patch.object(filter_builder, 'get_user_ids_for_user_types')
     def test_get_user_type_filter_for_mobile(self, fetch_user_ids_patch):
         self.filter_export = self.subject(self.domain, pytz.utc)
-        es_user_types = self.filter_export._get_es_user_types('')
+        es_user_types = self.filter_export._get_selected_es_user_types('')
         user_filters = self.filter_builder(None, None)._get_user_type_filter(es_user_types)
         fetch_user_ids_patch.assert_called_once_with(admin=False, demo=False, unknown=False, commtrack=False)
         self.assertIsInstance(user_filters[0], UserTypeFilter)
@@ -236,7 +236,7 @@ class TestEmwfFilterFormExportFilters(TestCase):
         self.filter_export = self.subject(self.domain, pytz.utc)
         self.user_ids = ['e80c5e54ab552245457d2546d0cdbb03', 'e80c5e54ab552245457d2546d0cdbb04']
         fetch_user_ids_patch.return_value = self.user_ids
-        es_user_types = self.filter_export._get_es_user_types('')
+        es_user_types = self.filter_export._get_selected_es_user_types('')
         user_filters = self.filter_builder(None, None)._get_user_type_filter(es_user_types)
         fetch_user_ids_patch.assert_called_once_with(admin=True, demo=False, unknown=False, commtrack=False)
         self.assertIsInstance(user_filters[0], FormSubmittedByFilter)
@@ -248,7 +248,7 @@ class TestEmwfFilterFormExportFilters(TestCase):
         self.filter_export = self.subject(self.domain, pytz.utc)
         self.user_ids = ['e80c5e54ab552245457d2546d0cdbb03', 'e80c5e54ab552245457d2546d0cdbb04']
         fetch_user_ids_patch.return_value = self.user_ids
-        es_user_types = self.filter_export._get_es_user_types('')
+        es_user_types = self.filter_export._get_selected_es_user_types('')
         user_filters = self.filter_builder(None, None)._get_user_type_filter(es_user_types)
         fetch_user_ids_patch.assert_called_once_with(admin=True, demo=False, unknown=False, commtrack=False)
 
@@ -264,7 +264,7 @@ class TestEmwfFilterFormExportFilters(TestCase):
         self.filter_export = self.subject(self.domain, pytz.utc)
         self.user_ids = ['e80c5e54ab552245457d2546d0cdbb03', 'e80c5e54ab552245457d2546d0cdbb04']
         fetch_user_ids_patch.return_value = self.user_ids
-        es_user_types = self.filter_export._get_es_user_types('')
+        es_user_types = self.filter_export._get_selected_es_user_types('')
         user_filters = self.filter_builder(None, None)._get_user_type_filter(es_user_types)
         fetch_user_ids_patch.assert_called_once_with(admin=False, demo=False, unknown=True, commtrack=False)
         self.assertIsInstance(user_filters[0], FormSubmittedByFilter)
@@ -397,15 +397,15 @@ class TestFilterCaseESExportDownloadForm(TestCase):
     @patch.object(filter_builder, '_get_users_filter')
     @patch.object(form, '_get_user_ids')
     def test_get_group_independent_filters_for_all_access(self, get_user_ids, get_users_filter, get_locations_ids,
-                                                          get_locations_filter, get_es_user_types, *patches):
+                                                          get_locations_filter, selected_user_types, *patches):
         data = {'date_range': '1992-01-30 to 2016-11-28'}
         self.export_filter = self.subject(self.domain, pytz.utc, data=data)
         self.assertTrue(self.export_filter.is_valid())
 
         self.export_filter.get_case_filter(self.group_ids_slug, True, None)
-        get_es_user_types.assert_called_once_with(self.group_ids_slug)
-        get_locations_ids.assert_called_once_with(self.group_ids_slug)
-        get_users_filter.assert_called_once_with(self.group_ids_slug)
+        selected_user_types.assert_called_once_with(self.group_ids_slug)
+        get_locations_ids.assert_called_once_with([])
+        get_users_filter.assert_called_once_with(get_user_ids.return_value)
         get_user_ids.assert_called_once_with(self.group_ids_slug)
 
 
@@ -422,6 +422,6 @@ class TestFilterCaseESExportDownloadForm(TestCase):
         self.assertTrue(self.export_filter.is_valid())
 
         self.export_filter.get_case_filter(self.group_ids_slug, False, ['some', 'location', 'ids'])
-        get_locations_ids.assert_called_once_with(self.group_ids_slug)
-        get_users_filter.assert_called_once_with([])
+        get_locations_ids.assert_called_once_with([])
+        get_users_filter.assert_called_once_with(get_user_ids.return_value)
         get_user_ids.assert_called_once_with(self.group_ids_slug)
