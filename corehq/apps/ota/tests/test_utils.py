@@ -198,6 +198,16 @@ class RestorePermissionsTest(LocationHierarchyTestCase):
         self.assertTrue(is_permitted)
         self.assertIsNone(message)
 
+    def test_web_user_as_self(self):
+        is_permitted, message = is_permitted_to_restore(
+            self.domain,
+            self.web_user,
+            self.web_user.username,
+            True,
+        )
+        self.assertTrue(is_permitted)
+        self.assertIsNone(message)
+
     def test_super_user_as_user_other_domain(self):
         """
         Superusers should be able to restore as other mobile users even if it's the wrong domain
