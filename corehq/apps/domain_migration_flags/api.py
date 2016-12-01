@@ -8,8 +8,7 @@ def set_migration_started(domain, slug):
     if progress.migration_status == MigrationStatus.NOT_STARTED:
         progress.migration_status = MigrationStatus.IN_PROGRESS
         progress.save()
-        # reset cache
-        get_migration_status(domain, slug, strict=True)
+        clear_caches(domain, slug)
     else:
         raise DomainMigrationProgressError(
             'Cannot start a migration that is already in state {}'
@@ -22,8 +21,7 @@ def set_migration_not_started(domain, slug):
     if progress.migration_status == MigrationStatus.IN_PROGRESS:
         progress.migration_status = MigrationStatus.NOT_STARTED
         progress.save()
-        # reset cache
-        get_migration_status(domain, slug, strict=True)
+        clear_caches(domain, slug)
     else:
         raise DomainMigrationProgressError(
             'Cannot abort a migration that is in state {}'
@@ -36,8 +34,7 @@ def set_migration_complete(domain, slug):
     if progress.migration_status != MigrationStatus.COMPLETE:
         progress.migration_status = MigrationStatus.COMPLETE
         progress.save()
-        # reset cache
-        get_migration_status(domain, slug, strict=True)
+        clear_caches(domain, slug)
 
 
 def get_migration_complete(domain, slug):
@@ -55,3 +52,15 @@ def get_migration_status(domain, slug, strict=False):
 
 def migration_in_progress(domain, slug):
     return get_migration_status(domain, slug) == MigrationStatus.IN_PROGRESS
+
+
+@skippable_quickcache(['domain'], skip_arg='strict')
+def any_migrations_in_progress(domain, strict=False):
+    return DomainMigrationProgress.objects.filter(
+        domain=domain, migration_status=MigrationStatus.IN_PROGRESS
+    ).exists()
+
+
+def clear_caches(domain, slug):
+    any_migrations_in_progress(domain, strict=True)
+    get_migration_status(domain, slug, strict=True)

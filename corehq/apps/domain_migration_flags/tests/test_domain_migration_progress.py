@@ -8,7 +8,7 @@ from corehq.apps.domain_migration_flags.api import (
     set_migration_complete,
     set_migration_not_started,
     set_migration_started,
-)
+    any_migrations_in_progress)
 from corehq.apps.domain_migration_flags.models import MigrationStatus
 
 
@@ -48,3 +48,13 @@ class DomainMigrationProgressTest(TestCase):
         self.assertFalse(get_migration_complete('yellow', self.slug))
         self.assertEqual(get_migration_status('yellow', self.slug),
                          MigrationStatus.NOT_STARTED)
+
+    def test_any_migrations_in_progress(self):
+        self.assertFalse(any_migrations_in_progress('purple'))
+        set_migration_started('purple', self.slug)
+        self.assertTrue(any_migrations_in_progress('purple'))
+        set_migration_started('purple', 'other_slug')
+        set_migration_not_started('purple', self.slug)
+        self.assertTrue(any_migrations_in_progress('purple'))
+        set_migration_complete('purple', 'other_slug')
+        self.assertFalse(any_migrations_in_progress('purple'))
