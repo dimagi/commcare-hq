@@ -120,11 +120,14 @@ def is_permitted_to_restore(domain, couch_user, as_user, has_data_cleanup_privil
 
 def _restoring_as_yourself(couch_user, as_user):
     username, domain = _parse_restore_as_user(as_user)
-    return (
-        isinstance(couch_user, CommCareUser)
-        and couch_user.raw_username == username
-        and couch_user.domain == domain
-    )
+    if isinstance(couch_user, CommCareUser):
+        return (
+            couch_user.raw_username == username
+            and couch_user.domain == domain
+        )
+    else:
+        # Must be dealing with web user
+        return couch_user.username == as_user
 
 
 def _ensure_valid_domain(domain, couch_user):
