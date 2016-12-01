@@ -4,7 +4,7 @@ from django.views.decorators.http import require_GET
 from corehq.apps.domain.decorators import login_or_digest_or_basic_or_apikey, domain_admin_required
 from corehq.apps.mobile_auth.utils import new_key_record, get_mobile_auth_payload, bump_expiry
 from corehq.apps.mobile_auth.models import MobileAuthKeyRecord
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, DeviceIdLastUsed
 from dimagi.utils.parsing import string_to_datetime
 
 
@@ -64,7 +64,25 @@ def fetch_key_records(request, domain):
         last_issued = string_to_datetime(last_issued).replace(tzinfo=None)
     user_id = request.couch_user.user_id
     payload = FetchKeyRecords(domain, user_id, last_issued).get_payload()
+    device_id = request.GET.get('device_id')
+    if device_id:
+        _touch_user_device_id_last_used(request.couch_user, device_id)
     return HttpResponse(payload)
+
+
+def _touch_user_device_id_last_used(couch_user, device_id):
+    if isinstance(couch_user, CommCareUser) and device_id:
+        now = datetime.datetime.utcnow()
+        for user_device_id_last_used in couch_user.device_ids:
+            if user_device_id_last_used.device_id == device_id:
+                user_device_id_last_used.last_used = now
+                break
+        else:
+            couch_user.device_ids.append(DeviceIdLastUsed(
+                device_id=device_id,
+                last_used=now
+            ))
+        couch_user.save()
 
 
 @login_or_digest_or_basic_or_apikey()
