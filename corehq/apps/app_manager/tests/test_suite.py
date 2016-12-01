@@ -28,20 +28,11 @@ from corehq.apps.app_manager.xpath import (
 )
 from corehq.apps.hqmedia.models import HQMediaMapItem
 from corehq.apps.userreports.models import ReportConfiguration
-from corehq.toggles import NAMESPACE_DOMAIN
-from corehq.feature_previews import MODULE_FILTER
-from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
 import commcare_translations
 
 
 class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     file_path = ('data', 'suite')
-
-    def setUp(self):
-        update_toggle_cache(MODULE_FILTER.slug, 'domain', True, NAMESPACE_DOMAIN)
-
-    def tearDown(self):
-        clear_toggle_cache(MODULE_FILTER.slug, 'domain', NAMESPACE_DOMAIN)
 
     def test_normal_suite(self):
         self._test_generic_suite('app', 'normal-suite')
