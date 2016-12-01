@@ -1,21 +1,30 @@
 from django.test import TestCase
 
 from corehq.apps.users.models import WebUser, CommCareUser
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.util import format_username
 from corehq.apps.domain.models import Domain
+from corehq.apps.locations.tests.util import LocationHierarchyTestCase
 
 from corehq.apps.ota.utils import is_permitted_to_restore, get_restore_user
 
 
-class RestorePermissionsTest(TestCase):
+class RestorePermissionsTest(LocationHierarchyTestCase):
     domain = 'goats'
     other_domain = 'sheep'
+    location_type_names = ['country', 'state']
+    location_structure = [
+        ('usa', [
+            ('ma', []),
+        ]),
+        ('canada', [
+            ('montreal', []),
+        ]),
+    ]
 
     @classmethod
     def setUpClass(cls):
         super(RestorePermissionsTest, cls).setUpClass()
-        cls.project = Domain(name=cls.domain)
-        cls.project.save()
 
         cls.other_project = Domain(name=cls.other_domain)
         cls.other_project.save()
@@ -37,14 +46,40 @@ class RestorePermissionsTest(TestCase):
             domain=cls.domain,
             password='***',
         )
+        cls.no_edit_commcare_user = CommCareUser.create(
+            username=format_username('noedit', cls.domain),
+            domain=cls.domain,
+            password='***',
+        )
+        cls.location_user = CommCareUser.create(
+            username=format_username('location', cls.domain),
+            domain=cls.domain,
+            password='***',
+        )
+        cls.wrong_location_user = CommCareUser.create(
+            username=format_username('wrong-location', cls.domain),
+            domain=cls.domain,
+            password='***',
+        )
+        cls.web_location_user = WebUser.create(
+            username='web-location@location.com',
+            domain=cls.domain,
+            password='***',
+        )
+
+        cls.commcare_user.set_location(cls.locations['usa'])
+        cls.web_location_user.set_location(cls.domain, cls.locations['usa'])
+        cls.no_edit_commcare_user.set_location(cls.locations['usa'])
+        cls.location_user.set_location(cls.locations['ma'])
+        cls.wrong_location_user.set_location(cls.locations['montreal'])
+
+        cls.restrict_user_to_assigned_locations(cls.commcare_user)
+        cls.restrict_user_to_assigned_locations(cls.web_location_user)
 
     @classmethod
     def tearDownClass(cls):
         super(RestorePermissionsTest, cls).tearDownClass()
-        cls.web_user.delete()
-        cls.commcare_user.delete()
-        cls.super_user.delete()
-        cls.project.delete()
+        delete_all_users()
         cls.other_project.delete()
 
     def test_commcare_user_permitted(self):
@@ -65,7 +100,7 @@ class RestorePermissionsTest(TestCase):
             False,
         )
         self.assertFalse(is_permitted)
-        self.assertIsNotNone(message)
+        self.assertRegexpMatches(message, 'was not in the domain')
 
     def test_web_user_permitted(self):
         is_permitted, message = is_permitted_to_restore(
@@ -87,7 +122,15 @@ class RestorePermissionsTest(TestCase):
         self.assertTrue(is_permitted)
         self.assertIsNone(message)
 
-    def test_web_user_as_user_bad_privelege(self):
+        is_permitted, message = is_permitted_to_restore(
+            self.domain,
+            self.web_user,
+            self.commcare_user.username,
+            True,
+        )
+        self.assertTrue(is_permitted)
+
+    def test_web_user_as_user_bad_privilege(self):
         is_permitted, message = is_permitted_to_restore(
             self.domain,
             self.web_user,
@@ -95,7 +138,16 @@ class RestorePermissionsTest(TestCase):
             False,
         )
         self.assertFalse(is_permitted)
-        self.assertIsNotNone(message)
+        self.assertRegexpMatches(message, 'does not have permissions')
+
+        is_permitted, message = is_permitted_to_restore(
+            self.domain,
+            self.web_user,
+            self.commcare_user.username,
+            False,
+        )
+        self.assertFalse(is_permitted)
+        self.assertRegexpMatches(message, 'does not have permissions')
 
     def test_web_user_as_user_bad_username(self):
         is_permitted, message = is_permitted_to_restore(
@@ -105,7 +157,7 @@ class RestorePermissionsTest(TestCase):
             True,
         )
         self.assertFalse(is_permitted)
-        self.assertIsNotNone(message)
+        self.assertRegexpMatches(message, 'Invalid restore user')
 
     def test_web_user_as_user_bad_domain(self):
         is_permitted, message = is_permitted_to_restore(
@@ -115,13 +167,32 @@ class RestorePermissionsTest(TestCase):
             True,
         )
         self.assertFalse(is_permitted)
-        self.assertIsNotNone(message)
+        self.assertRegexpMatches(message, 'was not in the domain')
 
     def test_web_user_as_other_web_user(self):
         is_permitted, message = is_permitted_to_restore(
             self.domain,
             self.web_user,
             self.web_user.username,
+            True,
+        )
+        self.assertTrue(is_permitted)
+        self.assertIsNone(message)
+
+    def test_commcare_user_as_self(self):
+        is_permitted, message = is_permitted_to_restore(
+            self.domain,
+            self.commcare_user,
+            self.commcare_user.username,
+            True,
+        )
+        self.assertTrue(is_permitted)
+        self.assertIsNone(message)
+
+        is_permitted, message = is_permitted_to_restore(
+            self.domain,
+            self.commcare_user,
+            u'{}@{}'.format(self.commcare_user.raw_username, self.domain),
             True,
         )
         self.assertTrue(is_permitted)
@@ -140,6 +211,108 @@ class RestorePermissionsTest(TestCase):
         )
         self.assertTrue(is_permitted)
         self.assertIsNone(message)
+
+        is_permitted, message = is_permitted_to_restore(
+            self.domain,
+            self.super_user,
+            self.commcare_user.username,
+            False,
+        )
+        self.assertTrue(is_permitted)
+        self.assertIsNone(message)
+
+    def test_commcare_user_as_user_disallow_no_edit_data(self):
+        is_permitted, message = is_permitted_to_restore(
+            self.domain,
+            self.no_edit_commcare_user,
+            u'{}@{}'.format(self.location_user.raw_username, self.domain),
+            True,
+        )
+        self.assertFalse(is_permitted)
+        self.assertRegexpMatches(message, 'does not have permission')
+
+        is_permitted, message = is_permitted_to_restore(
+            self.domain,
+            self.no_edit_commcare_user,
+            self.location_user.username,
+            True,
+        )
+        self.assertFalse(is_permitted)
+        self.assertRegexpMatches(message, 'does not have permission')
+
+    def test_commcare_user_as_user_in_location(self):
+        is_permitted, message = is_permitted_to_restore(
+            self.domain,
+            self.commcare_user,
+            u'{}@{}'.format(self.location_user.raw_username, self.domain),
+            True,
+        )
+        self.assertTrue(is_permitted)
+        self.assertIsNone(message)
+
+        is_permitted, message = is_permitted_to_restore(
+            self.domain,
+            self.commcare_user,
+            u'{}@{}'.format(self.wrong_location_user.raw_username, self.domain),
+            True,
+        )
+        self.assertFalse(is_permitted)
+        self.assertRegexpMatches(message, 'not in allowed locations')
+
+        is_permitted, message = is_permitted_to_restore(
+            self.domain,
+            self.commcare_user,
+            self.location_user.username,
+            True,
+        )
+        self.assertTrue(is_permitted)
+        self.assertIsNone(message)
+
+        is_permitted, message = is_permitted_to_restore(
+            self.domain,
+            self.commcare_user,
+            self.wrong_location_user.username,
+            True,
+        )
+        self.assertFalse(is_permitted)
+        self.assertRegexpMatches(message, 'not in allowed locations')
+
+    def test_web_user_as_user_in_location(self):
+        is_permitted, message = is_permitted_to_restore(
+            self.domain,
+            self.web_location_user,
+            u'{}@{}'.format(self.location_user.raw_username, self.domain),
+            True,
+        )
+        self.assertTrue(is_permitted)
+        self.assertIsNone(message)
+
+        is_permitted, message = is_permitted_to_restore(
+            self.domain,
+            self.web_location_user,
+            u'{}@{}'.format(self.wrong_location_user.raw_username, self.domain),
+            True,
+        )
+        self.assertFalse(is_permitted)
+        self.assertRegexpMatches(message, 'not in allowed locations')
+
+        is_permitted, message = is_permitted_to_restore(
+            self.domain,
+            self.web_location_user,
+            self.location_user.username,
+            True,
+        )
+        self.assertTrue(is_permitted)
+        self.assertIsNone(message)
+
+        is_permitted, message = is_permitted_to_restore(
+            self.domain,
+            self.web_location_user,
+            self.wrong_location_user.username,
+            True,
+        )
+        self.assertFalse(is_permitted)
+        self.assertRegexpMatches(message, 'not in allowed locations')
 
 
 class GetRestoreUserTest(TestCase):
@@ -166,6 +339,11 @@ class GetRestoreUserTest(TestCase):
             domain=cls.domain,
             password='***',
         )
+        cls.other_commcare_user = CommCareUser.create(
+            username=format_username('john', cls.domain),
+            domain=cls.domain,
+            password='***',
+        )
         cls.super_user = WebUser.create(
             username='super@woman.com',
             domain=cls.other_domain,
@@ -177,11 +355,7 @@ class GetRestoreUserTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         super(GetRestoreUserTest, cls).tearDownClass()
-        cls.web_user.delete()
-        cls.commcare_user.delete()
-        cls.super_user.delete()
-        cls.other_project.delete()
-        cls.project.delete()
+        delete_all_users()
 
     def test_get_restore_user_web_user(self):
         self.assertIsNotNone(get_restore_user(self.domain, self.web_user, None))
@@ -224,3 +398,11 @@ class GetRestoreUserTest(TestCase):
                 '{}@wrong-domain'.format(self.commcare_user.raw_username, self.domain)
             )
         )
+
+    def test_get_restore_user_as_user_for_commcare_user(self):
+        user = get_restore_user(
+            self.domain,
+            self.commcare_user,
+            '{}@{}'.format(self.other_commcare_user.raw_username, self.domain)
+        )
+        self.assertEquals(user.user_id, self.other_commcare_user._id)

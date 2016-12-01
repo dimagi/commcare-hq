@@ -210,7 +210,7 @@ hqDefine('cloudcare/js/backbone/apps.js', function () {
                             showSuccess(translatedStrings.deleteSuccess, $("#cloudcare-notifications"), 10000);
                         },
                         error: function(model, response) {
-                            showError(translatedStrings.deleteError, $("#cloudcare-notifications"), 10000);
+                            showError(translatedStrings.deleteError, $("#cloudcare-notifications"));
                         }
                     });
                 }

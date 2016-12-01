@@ -57,7 +57,7 @@
                             lastClientY = e.clientY;
 
                             // monkeypatch
-                            if (!$(e.srcElement).hasClass('form-control')) {
+                            if (!($(e.srcElement).hasClass('form-control') || $(e.target).hasClass('form-control'))) {
                                 e.preventDefault();
                                 $('.form-control').blur();
                             }
