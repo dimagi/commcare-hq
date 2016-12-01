@@ -533,14 +533,31 @@ class MigrationTestCase(BaseMigrationTestCase):
                 <userID>XT3XPMS</userID>
                 <uid>WXJYZ</uid>
                 </meta>
-            </data>
-        """
-        _, form, cases = submit_form_locally(xml, self.domain_name)
+            </data>"""
+        submit_form_locally(xml, self.domain_name)
 
-        self.assertEqual(1, len(self._get_form_ids()))
+        update_xml = """<?xml version="1.0" ?>
+            <data name="pregnancy checklist" uiVersion="1" version="1" xmlns="http://openrosa.org/formdesigner/42461CD4-06D8-4FE5-BCEC-006130F7764F" xmlns:jrm="http://dev.commcarehq.org/jr/xforms">
+                <case>
+                    <case_id>P0YJ</case_id>
+                    <date_modified>2012-02-24T00:51:07.836+05:30</date_modified>
+                    <close/>
+                </case>
+                <meta>
+                    <deviceID>44AV</deviceID>
+                    <timeStart>2012-02-24T00:46:43.007+05:30</timeStart>
+                    <timeEnd>2012-02-24T00:51:07.841+05:30</timeEnd>
+                    <username>rek</username>
+                    <userID>L53SD</userID>
+                    <uid>Z75H7</uid>
+                </meta>
+            </data>"""
+        submit_form_locally(update_xml, self.domain_name)
+
+        self.assertEqual(2, len(self._get_form_ids()))
         self.assertEqual(1, len(self._get_case_ids()))
         self._do_migration_and_assert_flags(self.domain_name)
-        self.assertEqual(1, len(self._get_form_ids()))
+        self.assertEqual(2, len(self._get_form_ids()))
         self.assertEqual(1, len(self._get_case_ids()))
         self._compare_diffs([])
 
