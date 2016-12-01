@@ -1,61 +1,41 @@
 import threading
+
 from django.conf import settings
-from corehq.apps.tzmigration.exceptions import TimezoneMigrationProgressError
-from corehq.util.quickcache import skippable_quickcache
+
+from corehq.apps.domain_migration_flags.api import (
+    set_migration_started, set_migration_not_started,
+    set_migration_complete, get_migration_complete,
+    get_migration_status, migration_in_progress
+)
 from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import get_request
-from models import TimezoneMigrationProgress, MigrationStatus
+from models import MigrationStatus
+
+TZMIGRATION_SLUG = 'tzmigration'
 
 
-def set_migration_started(domain):
-    progress, _ = TimezoneMigrationProgress.objects.get_or_create(pk=domain)
-    if progress.migration_status == MigrationStatus.NOT_STARTED:
-        progress.migration_status = MigrationStatus.IN_PROGRESS
-        progress.save()
-        # reset cache
-        get_migration_status(domain, strict=True)
-    else:
-        raise TimezoneMigrationProgressError(
-            'Cannot start a migration that is already in state {}'
-            .format(progress.migration_status)
-        )
+def set_tz_migration_started(domain):
+    return set_migration_started(domain, TZMIGRATION_SLUG)
 
 
-def set_migration_not_started(domain):
-    progress, _ = TimezoneMigrationProgress.objects.get_or_create(pk=domain)
-    if progress.migration_status == MigrationStatus.IN_PROGRESS:
-        progress.migration_status = MigrationStatus.NOT_STARTED
-        progress.save()
-        # reset cache
-        get_migration_status(domain, strict=True)
-    else:
-        raise TimezoneMigrationProgressError(
-            'Cannot abort a migration that is in state {}'
-            .format(progress.migration_status)
-        )
+def set_tz_migration_not_started(domain):
+    return set_migration_not_started(domain, TZMIGRATION_SLUG)
 
 
-def set_migration_complete(domain):
-    progress, _ = TimezoneMigrationProgress.objects.get_or_create(pk=domain)
-    if progress.migration_status != MigrationStatus.COMPLETE:
-        progress.migration_status = MigrationStatus.COMPLETE
-        progress.save()
-        # reset cache
-        get_migration_status(domain, strict=True)
+def set_tz_migration_complete(domain):
+    set_migration_complete(domain, TZMIGRATION_SLUG)
 
 
-def get_migration_complete(domain):
-    return get_migration_status(domain) == MigrationStatus.COMPLETE
+def get_tz_migration_complete(domain):
+    return get_migration_complete(domain, TZMIGRATION_SLUG)
 
 
-@skippable_quickcache(['domain'], skip_arg='strict')
-def get_migration_status(domain, strict=False):
-    progress, _ = TimezoneMigrationProgress.objects.get_or_create(pk=domain)
-    return progress.migration_status
+def get_tz_migration_status(domain, strict=False):
+    return get_migration_status(domain, TZMIGRATION_SLUG, strict=strict)
 
 
 def timezone_migration_in_progress(domain):
-    return get_migration_status(domain) == MigrationStatus.IN_PROGRESS
+    return migration_in_progress(domain, TZMIGRATION_SLUG)
 
 
 def phone_timezones_have_been_processed():
@@ -120,7 +100,7 @@ def _get_migration_status_from_threadlocals():
             domain = request.domain
         except AttributeError:
             return _default
-        return get_migration_status(domain)
+        return get_tz_migration_status(domain)
     except Exception as e:
         _assert(False, 'Error in _get_migration_status', e)
         return _default
