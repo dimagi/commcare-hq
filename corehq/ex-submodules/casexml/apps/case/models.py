@@ -73,9 +73,10 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
     def from_parsed_action(cls, date, user_id, xformdoc, action):
         if not action.action_type_slug in const.CASE_ACTIONS:
             raise ValueError("%s not a valid case action!" % action.action_type_slug)
-        
+
+        user_id = user_id or xformdoc.user_id
         ret = CommCareCaseAction(action_type=action.action_type_slug, date=date, user_id=user_id)
-        
+
         ret.server_date = xformdoc.received_on
         ret.xform_id = xformdoc.form_id
         ret.xform_xmlns = xformdoc.xmlns

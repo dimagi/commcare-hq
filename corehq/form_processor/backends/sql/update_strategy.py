@@ -59,6 +59,10 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         if case_update.version and case_update.version != V2 and not timezone_migration_in_progress(xformdoc.domain):
             raise VersionNotSupported
 
+        if not case_update.user_id:
+            # hack for migration from V1 case blocks
+            case_update.user_id = xformdoc.user_id
+
         if xformdoc.is_deprecated:
             return
 
