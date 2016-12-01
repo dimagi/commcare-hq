@@ -196,10 +196,17 @@ def filter_ledger_diffs(diffs):
 
 
 def _filter_exact_matches(diffs, diffs_to_ignore):
-    return [
-        diff for diff in diffs
-        if diff not in diffs_to_ignore
-    ]
+    filtered = []
+    for diff in diffs:
+        try:
+            if diff not in diffs_to_ignore:
+                filtered.append(diff)
+        except TypeError:
+            # not all diffs support hashing, do slow comparison
+            diff_dict = diff._asdict()
+            if not any(diff_dict == ignore._asdict() for ignore in diffs_to_ignore):
+                filtered.append(diff)
+    return filtered
 
 
 def _filter_partial_matches(diffs, partial_diffs_to_exclude):
@@ -255,7 +262,7 @@ def _both_dates(old, new):
 def _filter_date_diffs(diffs):
     return [
         diff for diff in diffs
-        if diff.diff_type not in ('diff',) or not _both_dates(diff.old_value, diff.new_value)
+        if diff.diff_type != 'diff' or not _both_dates(diff.old_value, diff.new_value)
     ]
 
 
@@ -281,10 +288,10 @@ def _filter_user_case_diffs(couch_case, sql_case, diffs):
 def _filter_xform_id_diffs(couch_case, sql_case, diffs):
     """Some couch docs have the xform ID's out of order so assume that
     if both docs contain the same set of xform IDs then they are the same"""
-    xform_id_diffs = {
-        diff for diff in diffs if diff.path == ('xform_ids', '[*]')
-    }
-    if not xform_id_diffs:
+    remaining_diffs = [
+        diff for diff in diffs if diff.path != ('xform_ids', '[*]')
+    ]
+    if len(remaining_diffs) == len(diffs):
         return diffs
 
     ids_in_couch = set(couch_case['xform_ids'])
@@ -292,15 +299,15 @@ def _filter_xform_id_diffs(couch_case, sql_case, diffs):
     if ids_in_couch ^ ids_in_sql:
         couch_only = ','.join(list(ids_in_couch - ids_in_sql))
         sql_only = ','.join(list(ids_in_sql - ids_in_couch))
-        diffs.append(
+        remaining_diffs.append(
             FormJsonDiff(diff_type='set_mismatch', path=('xform_ids', '[*]'), old_value=couch_only, new_value=sql_only)
         )
     else:
-        diffs.append(
+        remaining_diffs.append(
             FormJsonDiff(diff_type='list_order', path=('xform_ids', '[*]'), old_value=None, new_value=None)
         )
 
-    return [diff for diff in diffs if diff not in xform_id_diffs]
+    return remaining_diffs
 
 
 def _filter_case_attachment_diffs(couch_case, sql_case, diffs):
@@ -333,15 +340,17 @@ def _filter_case_attachment_diffs(couch_case, sql_case, diffs):
 def _filter_case_index_diffs(couch_case, sql_case, diffs):
     """Indices may be in different order - re-sort and compare again.
     """
-    index_diffs = [diff for diff in diffs if diff.path[0] == 'indices']
-    if not index_diffs and 'indices' in couch_case:
+    if 'indices' not in couch_case:
+        return diffs
+
+    remaining_diffs = [diff for diff in diffs if diff.path[0] != 'indices']
+    if len(remaining_diffs) == len(diffs):
         return diffs
 
     couch_indices = couch_case['indices']
     sql_indices = sql_case['indices']
 
     if len(couch_indices) > 1:
-        diffs = [diff for diff in diffs if diff not in index_diffs]
         new_index_diffs = []
         couch_indices = sorted(couch_indices, key=lambda i: i['identifier'])
         sql_indices = sorted(sql_indices, key=lambda i: i['identifier'])
@@ -352,6 +361,7 @@ def _filter_case_index_diffs(couch_case, sql_case, diffs):
             new_index_diffs.append(FormJsonDiff(**diff_dict))
 
         new_index_diffs = _filter_partial_matches(new_index_diffs, PARTIAL_DIFFS['CommCareCaseIndex'])
-        diffs.extend(new_index_diffs)
-
-    return diffs
+        remaining_diffs.extend(new_index_diffs)
+        return remaining_diffs
+    else:
+        return diffs
