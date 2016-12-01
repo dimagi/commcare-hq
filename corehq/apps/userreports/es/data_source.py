@@ -70,19 +70,7 @@ class ConfigurableReportEsDataSource(ConfigurableReportDataSourceMixin, ReportDa
         for row in hits:
             r = {}
             for report_column in self.top_level_db_columns:
-                if report_column.type == 'expanded':
-                    # todo aggregation only supports # of docs matching
-                    counter = 0
-                    for sub_col in get_expanded_column_config(self.config, report_column, 'en').columns:
-                        ui_col = report_column.column_id + "-" + str(counter)
-                        # todo move interpretation of data into column config
-                        if row[report_column.column_id] == sub_col.expand_value:
-                            r[ui_col] = 1
-                        else:
-                            r[ui_col] = 0
-                        counter += 1
-                else:
-                    r[report_column.column_id] = row[report_column.field]
+                r.update(report_column.get_es_data(row, self.config, self.lang, from_aggregation=False))
             ret.append(r)
 
         return ret
@@ -113,19 +101,7 @@ class ConfigurableReportEsDataSource(ConfigurableReportDataSourceMixin, ReportDa
         for row in hits:
             r = {}
             for report_column in self.top_level_columns:
-                if report_column.type == 'expanded':
-                    # todo aggregation only supports # of docs matching
-                    for sub_col in get_expanded_column_config(self.config, report_column, 'en').columns:
-                        # todo move interpretation of data into column config
-                        r[sub_col.ui_alias] = row[sub_col.es_alias]['doc_count']
-                elif report_column.field == self.aggregation_columns[0]:
-                    r[report_column.column_id] = row['key']
-                elif report_column.aggregation == 'sum':
-                    r[report_column.column_id] = int(row[report_column.column_id]['value'])
-                elif report_column.aggregation == 'min':
-                    r[report_column.column_id] = int(row[report_column.column_id]['value'])
-                else:
-                    r[report_column.column_id] = row[report_column.column_id]['doc_count']
+                r.update(report_column.get_es_data(row, self.config, self.lang))
             ret.append(r)
 
         return ret
@@ -144,15 +120,7 @@ class ConfigurableReportEsDataSource(ConfigurableReportDataSourceMixin, ReportDa
 
         aggregations = []
         for col in self.top_level_columns:
-            if col.type == 'expanded':
-                for sub_col in get_expanded_column_config(self.config, col, 'en').columns:
-                    aggregations.append(sub_col.aggregation)
-            elif col.type == 'field':
-                # todo push this to the column
-                if col.aggregation == 'sum':
-                    aggregations.append(SumAggregation(col.column_id, col.field))
-                elif col.aggregation == 'min':
-                    aggregations.append(MinAggregation(col.column_id, col.field))
+            aggregations += col.aggregations(self.config, self.lang)
 
         for agg in aggregations:
             top_agg = top_agg.aggregation(agg)

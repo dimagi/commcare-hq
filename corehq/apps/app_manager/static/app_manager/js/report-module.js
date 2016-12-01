@@ -251,7 +251,9 @@ hqDefine('app_manager/js/report-module.js', function () {
             'username',
             'user_id'
         ];
-        this.date_range_options = ['last7', 'last30', 'thismonth', 'lastmonth', 'lastyear'];
+        this.date_range_options = [
+            'last7', 'last30', 'thismonth', 'lastmonth', 'lastyear', 'thisquarter', 'lastquarter',
+        ];
         this.date_operators = ['=', '<', '<=', '>', '>=', 'between'];
         this.numeric_operators = ['=', '!=', '<', '<=', '>', '>='];
     }
@@ -422,7 +424,6 @@ hqDefine('app_manager/js/report-module.js', function () {
             self.reports.push(report);
         }
     }
-
     return {
         ReportModule: ReportModule,
         select2Separator: select2Separator

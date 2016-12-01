@@ -1558,7 +1558,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         # get faked location group objects
         groups = []
         for sql_location in self.sql_locations:
-            groups.extend(self.sql_location.get_case_sharing_groups(self._id))
+            groups.extend(sql_location.get_case_sharing_groups(self._id))
 
         groups += [group for group in Group.by_user(self) if group.case_sharing]
         return groups

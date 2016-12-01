@@ -46,6 +46,7 @@ from corehq.apps.app_manager.models import Application, ApplicationBase, RemoteA
 from corehq.apps.app_manager.suite_xml.sections.details import get_instances_for_module
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.app_manager.util import get_cloudcare_session_data
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.cloudcare.api import (
     api_closed_to_status,
     CaseAPIResult,
@@ -235,6 +236,7 @@ class CloudcareMain(View):
             return render(request, "cloudcare/cloudcare_home.html", context)
 
 
+@location_safe
 class FormplayerMain(View):
 
     preview = False

@@ -84,3 +84,31 @@ def get_previous_month_date_range(reference_date=None):
 
     last_month_year, last_month = add_months(reference_date.year, reference_date.month, -1)
     return get_first_last_days(last_month_year, last_month)
+
+
+def get_quarter_date_range(year, quarter):
+    """
+    Returns a daterange for the quarter, that ends on the _first_ of the following month..
+    """
+    assert quarter in (1, 2, 3, 4)
+    return (
+        datetime.datetime(year, quarter * 3 - 2, 1),
+        datetime.datetime(year + quarter * 3 / 12, (quarter * 3 + 1) % 12, 1)
+    )
+
+
+def get_quarter_for_date(date):
+    quarter = (date.month - 1) / 3 + 1
+    return date.year, quarter
+
+
+def get_current_quarter_date_range():
+    return get_quarter_date_range(*get_quarter_for_date(datetime.datetime.utcnow()))
+
+
+def get_previous_quarter_date_range():
+    year, quarter = get_quarter_for_date(datetime.datetime.utcnow())
+    if quarter == 1:
+        return get_quarter_date_range(year - 1, 4)
+    else:
+        return get_quarter_date_range(year, quarter - 1)

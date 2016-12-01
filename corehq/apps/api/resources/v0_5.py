@@ -791,7 +791,7 @@ class UserDomainsResource(Resource):
             if isinstance(immediate_http_response.response, HttpUnauthorized):
                 raise ImmediateHttpResponse(
                     response=HttpUnauthorized(
-                        content='Username or API Key is incorrect', content_type='plain/text'
+                        content='Username or API Key is incorrect', content_type='text/plain'
                     )
                 )
             else:

@@ -1,5 +1,7 @@
 import re
 from corehq.apps.sms.api import send_sms_to_verified_number
+from corehq.apps.sms.models import MessagingEvent
+from corehq.apps.sms.verify import process_verification, send_verification
 from custom.ewsghana.handlers import INVALID_MESSAGE
 from custom.ewsghana.handlers.help import HelpHandler
 from custom.ewsghana.handlers.receipts import ReceiptsHandler
@@ -13,18 +15,28 @@ from custom.ilsgateway.tanzania.handlers.language import LanguageHandler
 from custom.ilsgateway.tanzania.handlers.notdelivered import NotDeliveredHandler
 from custom.ilsgateway.tanzania.handlers.notsubmitted import NotSubmittedHandler
 
+VERIFICATION_KEYWORDS = ['yes']
+
 
 def handle(verified_contact, text, msg):
-    if not (verified_contact and verified_contact.verified):
-        return False
-
-    user = verified_contact.owner if verified_contact else None
-    domain = user.domain
+    domain = msg.domain
     if not domain:
         return False
 
     if not EWSGhanaConfig.for_domain(domain):
         return False
+
+    if not verified_contact:
+        return False
+
+    user = verified_contact.owner
+
+    if not verified_contact.verified:
+        if not process_verification(verified_contact, msg, VERIFICATION_KEYWORDS):
+            logged_event = MessagingEvent.get_current_verification_event(
+                domain, verified_contact.owner_id, verified_contact.phone_number)
+            send_verification(domain, user, verified_contact.phone_number, logged_event)
+        return True
 
     args = text.split()
     if not args:

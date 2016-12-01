@@ -15,14 +15,13 @@ class UCRExperiment(laboratory.Experiment):
         control = result.control
         candidate = result.observations[0]
 
-        self.log_timing(control, candidate)
-
         control_value = control.value
         try:
             candidate_value = candidate.value
         except AttributeError:
             self.log_exception(control_value, candidate.exc_info)
         else:
+            self.log_timing(control, candidate)
             if cmp(control_value, candidate_value) != 0:
                 self.log_diff(control_value, candidate_value)
 
