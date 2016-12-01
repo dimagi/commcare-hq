@@ -15,7 +15,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     RemoteRequestSession,
     Text,
 )
-from corehq.apps.app_manager.suite_xml.post_process.instances import EntryInstances
+from corehq.apps.app_manager.suite_xml.post_process.instances import get_all_instances_referenced_in_xpaths
 from corehq.apps.app_manager.util import module_offers_search
 from corehq.apps.app_manager.xpath import CaseTypeXpath, InstanceXpath
 from corehq.util.view_utils import absolute_reverse
@@ -72,7 +72,7 @@ class RemoteRequestFactory(object):
         query_xpaths = [datum.ref for datum in self._get_remote_request_query_datums()]
         claim_relevant_xpaths = [self.module.search_config.relevant]
 
-        instances, unknown_instances = EntryInstances.get_all_instances(
+        instances, unknown_instances = get_all_instances_referenced_in_xpaths(
             self.domain,
             query_xpaths + claim_relevant_xpaths
         )

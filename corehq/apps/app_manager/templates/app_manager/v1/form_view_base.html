@@ -57,6 +57,9 @@
     {% if allow_form_workflow %}
         <script src="{% static 'app_manager/js/form_workflow.js' %}"></script>
     {% endif %}
+    {% if request|toggle_enabled:"CUSTOM_INSTANCES"%}
+        <script src="{% static 'app_manager/js/custom_instances.js' %}"></script>
+    {% endif %}
     <script>
         $(function(){
             // Do file upload check
@@ -263,6 +266,13 @@
                     analytics.workflow('Clicked "Preview Form" within first 24 hours');
                 {% endif %}
             });
+        {% endif %}
+        {% if request|toggle_enabled:"CUSTOM_INSTANCES"%}
+            var customInstances = hqImport('app_manager/js/custom_intances.js').wrap(
+                {
+                    customInstances:{{ custom_instances|JSON }}
+                })
+            $('#custom-instances').koApplyBindings(customInstances);
         {% endif %}
         });
     </script>

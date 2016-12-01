@@ -39,7 +39,7 @@
             {% trans "Inactive Users" %}
             <p class="text-muted"><small>{% blocktrans %}Users who submitted no forms last month.{% endblocktrans %}</small></p>
         </td>
-        <td>{{ last_month.number_of_inactive_users }}</td>
+        <td>{{ last_month.inactive }}</td>
         <td>
             {% reverse_chevron last_month.delta_inactive_pct %}
             {{ last_month.delta_inactive_pct|floatformat }} %

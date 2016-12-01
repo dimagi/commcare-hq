@@ -4,3 +4,7 @@ class PrimeRestoreException(Exception):
 
 class PrimeRestoreUserException(PrimeRestoreException):
     pass
+
+
+class RestorePermissionDenied(Exception):
+    """ Raised when the user is not permitted to restore """

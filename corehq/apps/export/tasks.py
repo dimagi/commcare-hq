@@ -4,7 +4,6 @@ from celery.task import task
 
 from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
 from corehq.apps.export.export import get_export_file, rebuild_export
-from corehq.apps.export.utils import convert_saved_export_to_export_instance
 from corehq.apps.export.dbaccessors import get_inferred_schema
 from corehq.apps.export.system_properties import MAIN_CASE_TABLE_PROPERTIES
 from corehq.util.decorators import serial_task
