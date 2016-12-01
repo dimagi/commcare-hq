@@ -272,6 +272,12 @@ class Instance(IdNode, OrderedXmlObject):
 
     src = StringField('@src')
 
+    def __eq__(self, other):
+        return self.src == other.src and self.id == other.id
+
+    def __hash__(self):
+        return hash((self.src, self.id))
+
 
 class SessionDatum(IdNode, OrderedXmlObject):
     ROOT_NAME = 'datum'
