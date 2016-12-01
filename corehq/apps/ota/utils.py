@@ -106,12 +106,11 @@ def is_permitted_to_restore(domain, couch_user, as_user, has_data_cleanup_privil
     """
     try:
         _ensure_valid_domain(domain, couch_user)
-        if as_user is not None:
-            if not _restoring_as_yourself(couch_user, as_user):
-                _ensure_cleanup_permission(domain, couch_user, as_user, has_data_cleanup_privilege)
-                _ensure_valid_restore_as_user(domain, couch_user, as_user)
-                _ensure_accessible_location(domain, couch_user, as_user)
-                _ensure_edit_data_permission(domain, couch_user)
+        if as_user is not None and not _restoring_as_yourself(couch_user, as_user):
+            _ensure_cleanup_permission(domain, couch_user, as_user, has_data_cleanup_privilege)
+            _ensure_valid_restore_as_user(domain, couch_user, as_user)
+            _ensure_accessible_location(domain, couch_user, as_user)
+            _ensure_edit_data_permission(domain, couch_user)
     except RestorePermissionDenied as e:
         return False, unicode(e)
     else:
