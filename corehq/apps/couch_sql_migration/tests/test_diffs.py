@@ -128,7 +128,9 @@ class DiffTestCases(SimpleTestCase):
         diffs = json_diff(couch_case, sql_case, track_list_indices=False)
         self.assertEqual(2, len(diffs))
         filtered = filter_case_diffs(couch_case, sql_case, diffs + REAL_DIFFS)
-        self.assertEqual(filtered, REAL_DIFFS)
+        self.assertEqual(set(filtered), set([
+            FormJsonDiff(diff_type='list_order', path=('xform_ids', '[*]'), old_value=None, new_value=None)
+        ] + REAL_DIFFS))
 
     def test_filter_case_xform_id_diffs_bad(self):
         couch_case = {
