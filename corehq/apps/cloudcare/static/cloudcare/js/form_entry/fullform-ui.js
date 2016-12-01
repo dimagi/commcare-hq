@@ -205,6 +205,11 @@ function Form(json) {
                 || q.answer() !== null;
         });
     });
+    self.isCurrentRequiredSatisfied.subscribe(function (isSatisfied) {
+        if (isSatisfied) {
+            self.forceRequiredVisible(false);
+        }
+    });
 
     self.enableNextButton = ko.computed(function () {
         if (!self.showInFormNavigation()) return false;
@@ -221,6 +226,24 @@ function Form(json) {
     self.enablePreviousButton = ko.computed(function () {
         if (!self.showInFormNavigation()) return false;
         return self.currentIndex() !== "0" && self.currentIndex() !== "-1";
+    });
+
+    self.forceRequiredVisible = ko.observable(false);
+
+    self.showRequiredNotice = ko.computed(function () {
+        return !self.isCurrentRequiredSatisfied() && self.forceRequiredVisible();
+    });
+
+    self.clickedNextOnRequired = function () {
+        self.forceRequiredVisible(true);
+    };
+
+    self.enableForceNextButton = ko.computed(function () {
+        return !self.isCurrentRequiredSatisfied() && !self.enableNextButton();
+    });
+
+    self.disableNextButton = ko.computed(function () {
+        return !self.enableNextButton() && !self.enableForceNextButton();
     });
 
     self.showSubmitButton = ko.computed(function () {
