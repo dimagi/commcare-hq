@@ -25,12 +25,26 @@ class EnikshayLocationFilter(BaseMultipleOptionFilter):
 
     @property
     def selected(self):
-        selected = super(EnikshayLocationFilter, self).selected
+        location_ids = self.request.GET.getlist(self.slug)
         choice_provider = LocationChoiceProvider(StubReport(domain=self.domain), None)
+        choice_provider.configure({'include_descendants': False})
+        choices = choice_provider.get_choices_for_known_values(location_ids)
+        if not choices:
+            return self.default_options
+        else:
+            return [
+                {'id': location.value, 'text': location.display}
+                for location in choices
+            ]
+
+    @classmethod
+    def get_value(cls, request, domain):
+        selected = super(EnikshayLocationFilter, cls).get_value(request, domain)
+        choice_provider = LocationChoiceProvider(StubReport(domain=domain), None)
         choice_provider.configure({'include_descendants': True})
         return [
-            {'id': location.value, 'text': location.display}
-            for location in choice_provider.get_choices_for_known_values(selected)
+            choice.value
+            for choice in choice_provider.get_choices_for_known_values(selected)
         ]
 
     @property
