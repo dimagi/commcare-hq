@@ -124,6 +124,7 @@ CASE_IGNORED_DIFFS = (
 )
 
 RENAMED_FIELDS = {
+    'XFormInstance': [('uid', 'instanceID')],
     'XFormDeprecated': [('deprecated_date', 'edited_on')],
     'XFormInstance-Deleted': [('-deletion_id', 'deletion_id'), ('-deletion_date', 'deleted_on')],
     'CommCareCase': [('@user_id', 'user_id'), ('@date_modified', 'modified_on')],
