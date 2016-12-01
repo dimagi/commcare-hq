@@ -1,5 +1,6 @@
 from django.test import TestCase
 
+from corehq.apps.domain_migration_flags.models import MigrationStatus
 from corehq.apps.tzmigration.api import (
     get_tz_migration_complete,
     get_tz_migration_status,
@@ -7,7 +8,6 @@ from corehq.apps.tzmigration.api import (
     set_tz_migration_not_started,
     set_tz_migration_started,
 )
-from corehq.apps.tzmigration.models import MigrationStatus
 
 
 class TimezoneMigrationProgressTest(TestCase):

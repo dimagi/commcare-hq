@@ -94,7 +94,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('locations', 'SQLLocation', 'domain'),
     ModelDeletion('locations', 'LocationType', 'domain'),
     ModelDeletion('stock', 'DocDomainMapping', 'domain_name'),
-    ModelDeletion('tzmigration', 'TimezoneMigrationProgress', 'domain'),
+    ModelDeletion('domain_migration_flags', 'DomainMigrationProgress', 'domain'),
     ModelDeletion('sms', 'SMS', 'domain'),
     ModelDeletion('sms', 'SQLLastReadMessage', 'domain'),
     ModelDeletion('sms', 'ExpectedCallback', 'domain'),

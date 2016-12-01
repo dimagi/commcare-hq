@@ -7,9 +7,9 @@ from corehq.apps.domain_migration_flags.api import (
     set_migration_complete, get_migration_complete,
     get_migration_status, migration_in_progress
 )
+from corehq.apps.domain_migration_flags.models import MigrationStatus
 from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import get_request
-from models import MigrationStatus
 
 TZMIGRATION_SLUG = 'tzmigration'
 
