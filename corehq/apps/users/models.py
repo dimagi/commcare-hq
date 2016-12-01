@@ -1556,7 +1556,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         from corehq.apps.groups.models import Group
         # get faked location group objects
         groups = []
-        for sql_location in self._sql_locations:
+        for sql_location in self.get_sql_locations(self.domain):
             groups.extend(sql_location.get_case_sharing_groups(self._id))
 
         groups += [group for group in Group.by_user(self) if group.case_sharing]
@@ -1635,19 +1635,15 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 pass
         return None
 
-    @property
-    def _sql_locations(self):
+    def get_location_ids(self, domain):
+        return self.assigned_location_ids
+
+    def get_sql_locations(self, domain):
         from corehq.apps.locations.models import SQLLocation
         if self.assigned_location_ids:
             return SQLLocation.objects.filter(location_id__in=self.assigned_location_ids)
         else:
             return SQLLocation.objects.none()
-
-    def get_location_ids(self, domain):
-        return self.assigned_location_ids
-
-    def get_sql_locations(self, domain):
-        return self._sql_locations
 
     def add_to_assigned_locations(self, location):
         if self.location_id:
