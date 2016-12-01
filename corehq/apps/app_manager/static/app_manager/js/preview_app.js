@@ -33,6 +33,12 @@ hqDefine('app_manager/js/preview_app.js', function() {
         TABLET: 'preview-tablet',
     };
 
+    module.configureAnalytics = function (isEnabled, kmq, google) {
+        _private.useAnalytics = isEnabled;
+        _private.kmq = kmq;
+        _private.google = google;
+    }
+
     _private.isFormdesigner = false;
 
     _private.showAppPreview = function() {
@@ -41,7 +47,10 @@ hqDefine('app_manager/js/preview_app.js', function() {
         if (_private.isFormdesigner) {
             $(module.SELECTORS.FORMDESIGNER).addClass('offset-for-preview');
         }
-
+        if (_private.useAnalytics) {
+            _private.google.workflow("Clicked Show App Preview");
+            _private.kmq.push(["trackClick", "show_app_preview", "Clicked Show App Preview"]);
+        }
 
     };
     _private.hideAppPreview = function() {
@@ -49,6 +58,10 @@ hqDefine('app_manager/js/preview_app.js', function() {
         $(module.SELECTORS.PREVIEW_ACTION_TEXT_HIDE).addClass('hide');
         if (_private.isFormdesigner) {
             $(module.SELECTORS.FORMDESIGNER).removeClass('offset-for-preview');
+        }
+        if (_private.useAnalytics) {
+            _private.google.workflow("Clicked Hide App Preview");
+            _private.kmq.push(["trackClick", "hide_app_preview", "Clicked Hide App Preview"]);
         }
     };
 
@@ -74,6 +87,11 @@ hqDefine('app_manager/js/preview_app.js', function() {
 
     _private.refresh = function() {
         _private.triggerPreviewEvent('refresh');
+
+        if (_private.useAnalytics) {
+            _private.google.workflow("Clicked Refresh");
+            _private.kmq.push(["trackClick", "refresh_app_preview", "Clicked Refresh App Preview"]);
+        }
     };
 
     _private.triggerPreviewEvent = function(action) {
