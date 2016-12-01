@@ -497,19 +497,21 @@ class AdminRestoreView(TemplateView):
             xml_payload = etree.fromstring(string_payload)
             restore_id_element = xml_payload.find('{{{0}}}Sync/{{{0}}}restore_id'.format(SYNC_XMLNS))
             num_cases = len(xml_payload.findall('{http://commcarehq.org/case/transaction/v2}case'))
-            formatted_payload = etree.tostring(xml_payload, pretty_print=True)
         else:
-            # get_restore_response return HttpResponse 401 (permissions), 404 (user not found) or 412
             if response.status_code in (401, 404):
-                message = response.content
+                # corehq.apps.ota.views.get_restore_response couldn't find user or user didn't have perms
+                xml_payload = E.error(response.content)
+            elif response.status_code == 412:
+                # RestoreConfig.get_response returned HttpResponse 412. Response content is already XML
+                xml_payload = response.content
             else:
                 message = _('Unexpected restore response {}: {}. '
                             'If you believe this is a bug please report an issue.').format(response.status_code,
                                                                                            response.content)
-            error = E.error(message)
-            formatted_payload = etree.tostring(error)
+                xml_payload = E.error(message)
             restore_id_element = None
             num_cases = 0
+        formatted_payload = etree.tostring(xml_payload, pretty_print=True)
         context.update({
             'payload': formatted_payload,
             'restore_id': restore_id_element.text if restore_id_element is not None else None,
