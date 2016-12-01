@@ -9,7 +9,7 @@ def generate_data_dictionary(domain):
 
     properties = _get_all_case_properties(domain)
     new_case_properties = []
-    for case_type, properties in properties.items():
+    for case_type, props in properties.items():
         if not case_type:
             continue
 
@@ -18,7 +18,7 @@ def generate_data_dictionary(domain):
         else:
             case_type_obj = CaseType.objects.create(domain=domain, name=case_type)
 
-        for prop in properties:
+        for prop in props:
             if (case_type not in current_properties or
                     prop not in current_properties[case_type]):
                 new_case_properties.append(CaseProperty(
