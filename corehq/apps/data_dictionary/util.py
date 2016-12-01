@@ -1,4 +1,5 @@
 from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
+from corehq.apps.app_manager.util import all_case_properties_by_domain
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.export.models.new import CaseExportDataSchema
 
@@ -29,6 +30,9 @@ def generate_data_dictionary(domain):
 
 def _get_all_case_properties(domain):
     case_type_to_properties = {}
+    case_properties_from_apps = all_case_properties_by_domain(
+        domain, include_parent_properties=False
+    )
 
     for case_type in get_case_types_from_apps(domain):
         properties = set()
@@ -41,7 +45,10 @@ def _get_all_case_properties(domain):
                     name = '/'.join([p.name for p in item.path])
                 properties.add(name)
 
-        case_type_to_properties[case_type] = list(properties)
+        case_type_props_from_app = case_properties_from_apps.get(case_type, {})
+        properties |= set(case_type_props_from_app)
+
+        case_type_to_properties[case_type] = properties
 
     return case_type_to_properties
 
