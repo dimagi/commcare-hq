@@ -39,3 +39,14 @@ class ABTest(object):
             'name': self.name,
             'version': self.version,
         }
+
+
+LIVE_PREVIEW_ENABLED = 'live_preview_enabled'
+LIVE_PREVIEW_DISABLED = 'live_preview_disabled'
+
+
+LIVE_PREVIEW = ABTestConfig(
+    'Live Preview',
+    'live_preview_dec2016',
+    (LIVE_PREVIEW_ENABLED, LIVE_PREVIEW_DISABLED)
+)
