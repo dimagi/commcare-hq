@@ -332,7 +332,7 @@ def _filter_case_index_diffs(couch_case, sql_case, diffs):
     """Indices may be in different order - re-sort and compare again.
     """
     index_diffs = [diff for diff in diffs if diff.path[0] == 'indices']
-    if not index_diffs:
+    if not index_diffs and 'indices' in couch_case:
         return diffs
 
     couch_indices = couch_case['indices']
