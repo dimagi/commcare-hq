@@ -7,8 +7,10 @@ from sqlalchemy.exc import OperationalError
 
 from corehq.apps.couch_sql_migration.couchsqlmigration import (
     do_couch_to_sql_migration, delete_diff_db, get_diff_db)
-from corehq.apps.couch_sql_migration.progress import set_couch_sql_migration_started, couch_sql_migration_in_progress, \
+from corehq.apps.couch_sql_migration.progress import (
+    set_couch_sql_migration_started, couch_sql_migration_in_progress,
     set_couch_sql_migration_not_started, set_couch_sql_migration_complete
+)
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
