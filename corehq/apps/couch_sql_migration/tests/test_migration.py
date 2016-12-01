@@ -504,6 +504,46 @@ class MigrationTestCase(BaseMigrationTestCase):
         call_command('migrate_domain_from_couch_to_sql', self.domain_name, COMMIT=True, no_input=True)
         self.assertTrue(Domain.get_by_name(self.domain_name).use_sql_backend)
 
+    def test_v1_case(self):
+        xml = """<?xml version="1.0" ?>
+            <data name="pregnancy checklist" uiVersion="1" version="1"
+                  xmlns="http://openrosa.org/formdesigner/42461CD4-06D8-4FE5-BCEC-006130F7764F1"
+                  xmlns:jrm="http://dev.commcarehq.org/jr/xforms">
+                <name>RITA</name>
+                <age>26</age>
+                <number>918</number>
+                <case>
+                    <case_id>P0YJ</case_id>
+                    <date_modified>2011-05-20T12:27:34.823+05:30</date_modified>
+                    <create>
+                        <case_type_id>pregnant_mother</case_type_id>
+                        <case_name>RITA</case_name>
+                        <user_id>XT3XPMS</user_id>
+                        <external_id>RITA</external_id>
+                    </create>
+                    <update>
+                        <name>RITA</name>
+                    </update>
+                </case>
+                <meta>
+                <deviceID>8D24OUKK3AR4ZG7NF9CYSQFAT</deviceID>
+                <timeStart>2011-05-20T12:25:17.882+05:30</timeStart>
+                <timeEnd>2011-05-20T12:27:34.831+05:30</timeEnd>
+                <username>adevi</username>
+                <userID>XT3XPMS</userID>
+                <uid>WXJYZ</uid>
+                </meta>
+            </data>
+        """
+        _, form, cases = submit_form_locally(xml, self.domain_name)
+
+        self.assertEqual(1, len(self._get_form_ids()))
+        self.assertEqual(1, len(self._get_case_ids()))
+        self._do_migration_and_assert_flags(self.domain_name)
+        self.assertEqual(1, len(self._get_form_ids()))
+        self.assertEqual(1, len(self._get_case_ids()))
+        self._compare_diffs([])
+
 
 class LedgerMigrationTests(BaseMigrationTestCase):
     def setUp(self):
