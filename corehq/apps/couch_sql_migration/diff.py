@@ -19,6 +19,7 @@ PARTIAL_DIFFS = {
         {'path': ('edited_on',), 'old_value': Ellipsis, 'new_value': None},
         {'path': ('repeats',), 'new_value': Ellipsis},  # report records save in form
         {'path': ('form_migrated_from_undefined_xmlns',), 'new_value': Ellipsis},
+        {'diff_type': 'missing', 'old_value': None, 'new_value': Ellipsis},
     ],
     'XFormInstance': [],
     'XFormInstance-Deleted': [],
