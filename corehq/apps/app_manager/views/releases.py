@@ -158,15 +158,7 @@ def release_build(request, domain, app_id, saved_app_id):
     app_post_release.send(Application, application=saved_app)
 
     if is_released:
-        track_workflow(request.couch_user.username, 'User starred a build', properties={
-            'domain': domain,
-            'app_id': app_id,
-            'is_dimagi': request.couch_user.is_dimagi,
-            'preview_app_enabled': (
-                toggles.PREVIEW_APP.enabled(domain) or
-                toggles.PREVIEW_APP.enabled(request.couch_user.username)
-            )
-        })
+        _track_build_for_app_preview(domain, request.couch_user, app_id, 'User starred a build')
 
     if ajax:
         return json_response({'is_released': is_released})
@@ -205,15 +197,7 @@ def save_copy(request, domain, app_id):
             if app.is_remote_app():
                 app.save(increment_version=True)
 
-        track_workflow(request.couch_user.username, 'User created a build', properties={
-            'domain': domain,
-            'app_id': app_id,
-            'is_dimagi': request.couch_user.is_dimagi,
-            'preview_app_enabled': (
-                toggles.PREVIEW_APP.enabled(domain) or
-                toggles.PREVIEW_APP.enabled(request.couch_user.username)
-            )
-        })
+        _track_build_for_app_preview(domain, request.couch_user, app_id, 'User created a build')
 
     else:
         copy = None
@@ -236,6 +220,19 @@ def save_copy(request, domain, app_id):
             'lang': lang
         }),
     })
+
+
+def _track_build_for_app_preview(domain, couch_user, app_id, message):
+    track_workflow(couch_user.username, message, properties={
+        'domain': domain,
+        'app_id': app_id,
+        'is_dimagi': couch_user.is_dimagi,
+        'preview_app_enabled': (
+            toggles.PREVIEW_APP.enabled(domain) or
+            toggles.PREVIEW_APP.enabled(couch_user.username)
+        )
+    })
+
 
 
 @no_conflict_require_POST
