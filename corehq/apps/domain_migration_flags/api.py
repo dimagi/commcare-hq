@@ -46,8 +46,11 @@ def get_migration_complete(domain, slug):
 
 @skippable_quickcache(['domain', 'slug'], skip_arg='strict')
 def get_migration_status(domain, slug, strict=False):
-    progress, _ = DomainMigrationProgress.objects.get_or_create(domain=domain, migration_slug=slug)
-    return progress.migration_status
+    try:
+        progress = DomainMigrationProgress.objects.get(domain=domain, migration_slug=slug)
+        return progress.migration_status
+    except DomainMigrationProgress.DoesNotExist:
+        return MigrationStatus.NOT_STARTED
 
 
 def migration_in_progress(domain, slug):
