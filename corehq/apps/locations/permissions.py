@@ -324,7 +324,7 @@ def user_can_access_other_user(domain, user, other_user):
         return True
 
     return (other_user
-            .get_sql_locations(domain)
+            .get_assigned_sql_locations(domain)
             .accessible_to_user(domain, user)
             .exists())
 
