@@ -64,7 +64,16 @@ def fetch_key_records(request, domain):
         last_issued = string_to_datetime(last_issued).replace(tzinfo=None)
     user_id = request.couch_user.user_id
     payload = FetchKeyRecords(domain, user_id, last_issued).get_payload()
+    device_id = request.GET.get('device_id')
+    if device_id:
+        _add_device_id_to_user_if_necessary(request.couch_user, device_id)
     return HttpResponse(payload)
+
+
+def _add_device_id_to_user_if_necessary(couch_user, device_id):
+    if isinstance(couch_user, CommCareUser) and device_id and device_id not in couch_user.device_ids:
+        couch_user.device_ids.append(device_id)
+        couch_user.save()
 
 
 @login_or_digest_or_basic_or_apikey()
