@@ -54,6 +54,7 @@ PARTIAL_DIFFS = {
         # form has case block with no actions
         {'diff_type': 'set_mismatch', 'path': ('xform_ids', '[*]'), 'old_value': ''},
         {'diff_type': 'missing', 'path': ('case_attachments',), 'old_value': Ellipsis, 'new_value': {}},
+        {'diff_type': 'missing', 'old_value': None, 'new_value': Ellipsis},
     ],
     'CommCareCase': [
         # couch case was deleted and then restored - SQL case won't have deletion properties
