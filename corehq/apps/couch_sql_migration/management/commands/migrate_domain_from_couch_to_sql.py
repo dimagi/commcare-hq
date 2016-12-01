@@ -51,7 +51,9 @@ class Command(LabelCommand):
             self.require_only_option('MIGRATE', options)
             set_migration_started(domain)
             do_couch_to_sql_migration(domain, with_progress=not self.no_input, debug=self.debug)
-            self.print_stats(domain, short=options['stats_short'], diffs_only=True)
+            has_diffs = self.print_stats(domain, short=True, diffs_only=True)
+            if has_diffs:
+                print "\nUse '--stats-short', '--stats-long', '--show-diffs' to see more info.\n"
         if options['blow_away']:
             self.require_only_option('blow_away', options)
             if not self.no_input:
@@ -131,6 +133,7 @@ class Command(LabelCommand):
 
         if diffs_only and not has_diffs:
             print shell_green("No differences found between old and new docs!")
+        return has_diffs
 
     def _print_status(self, name, ids_in_couch, ids_in_sql, diff_count, short, diffs_only):
         n_couch = len(ids_in_couch)
