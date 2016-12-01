@@ -134,13 +134,13 @@ def _get_saved_exports(domain, has_deid_permissions, old_exports_getter, new_exp
 
 def _get_case_exports_by_domain(domain, has_deid_permissions):
     old_exports_getter = CaseExportSchema.get_stale_exports
-    new_exports_getter = get_form_export_instances
+    new_exports_getter = get_case_export_instances
     return _get_saved_exports(domain, has_deid_permissions, old_exports_getter, new_exports_getter)
 
 
 def _get_form_exports_by_domain(domain, has_deid_permissions):
     old_exports_getter = FormExportSchema.get_stale_exports
-    new_exports_getter = get_case_export_instances
+    new_exports_getter = get_form_export_instances
     return _get_saved_exports(domain, has_deid_permissions, old_exports_getter, new_exports_getter)
 
 
@@ -1502,7 +1502,7 @@ class FormExportListView(BaseExportListView):
 
     @memoized
     def get_saved_exports(self):
-        exports = _get_case_exports_by_domain(self.domain, self.has_deid_view_permissions)
+        exports = _get_form_exports_by_domain(self.domain, self.has_deid_view_permissions)
         if use_new_exports(self.domain):
             # New exports display daily saved exports in their own view
             exports = filter(lambda x: not x.is_daily_saved_export, exports)
@@ -2083,7 +2083,9 @@ class GenericDownloadNewExportMixin(object):
     filter_form_class = None
     # To serve filters for export from mobile_user_and_group_slugs
     export_filter_class = None
-    mobile_user_and_group_slugs_regex = re.compile('(emw=){1}([^&]*)(&){0,1}')
+    mobile_user_and_group_slugs_regex = re.compile(
+        '(emw=|case_list_filter=|location_restricted_mobile_worker=){1}([^&]*)(&){0,1}'
+    )
 
     def _get_download_task(self, in_data):
         export_filters, export_specs = self._process_filters_and_specs(in_data)

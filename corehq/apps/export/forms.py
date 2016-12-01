@@ -574,7 +574,7 @@ class DashboardFeedFilterForm(forms.Form):
             emwf_class = CaseListFilter
             sharing_groups = emwf_class.selected_sharing_group_ids(emwf_selections)
             show_all_data = emwf_class.show_all_data(emwf_selections)
-            emwf_class.show_project_data(emwf_selections)
+            show_project_data = emwf_class.show_project_data(emwf_selections)
 
         return ExportInstanceFilters(
             date_period=DatePeriod(
