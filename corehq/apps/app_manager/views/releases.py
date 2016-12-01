@@ -158,7 +158,7 @@ def release_build(request, domain, app_id, saved_app_id):
     app_post_release.send(Application, application=saved_app)
 
     if is_released:
-        track_workflow(request.couch_user.username, 'User created a build', properties={
+        track_workflow(request.couch_user.username, 'User starred a build', properties={
             'domain': domain,
             'app_id': app_id,
             'is_dimagi': request.couch_user.is_dimagi,
