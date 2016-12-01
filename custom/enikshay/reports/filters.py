@@ -25,17 +25,20 @@ class EnikshayLocationFilter(BaseMultipleOptionFilter):
 
     @property
     def selected(self):
+        """
+        Values returned by this method are displayed in select box
+        It should return locations passed in GET parameters without their descendants
+        :return: Selected locations without their descendants
+        """
         location_ids = self.request.GET.getlist(self.slug)
         choice_provider = LocationChoiceProvider(StubReport(domain=self.domain), None)
+        # We don't include descendants here because they will show up in select box
         choice_provider.configure({'include_descendants': False})
         choices = choice_provider.get_choices_for_known_values(location_ids)
         if not choices:
             return self.default_options
         else:
-            return [
-                {'id': location.value, 'text': location.display}
-                for location in choices
-            ]
+            return location_ids
 
     @classmethod
     def get_value(cls, request, domain):
