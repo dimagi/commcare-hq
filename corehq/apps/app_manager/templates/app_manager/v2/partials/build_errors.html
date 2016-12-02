@@ -25,12 +25,6 @@
                         {% case "validation error" %}
                             {{ error.validation_message|linebreaksbr }} in form
                             {% include "app_manager/v2/partials/form_error_message.html" %}
-                        {% case "missing instances" %}
-                            {% blocktrans %}
-                            The form is missing some instance declarations:<br/>
-                            {% endblocktrans %}
-                            {{ error.validation_message }}
-                            {% if not not_actual_build %}in form {% include "app_manager/v2/partials/form_error_message.html" %}{% endif %}
                         {% case "no form links" %}
                             {% blocktrans %}
                             Link to other form is selected, but no form links have been provided.

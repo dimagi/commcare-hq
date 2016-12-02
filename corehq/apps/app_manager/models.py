@@ -116,7 +116,7 @@ from corehq.apps.app_manager.util import (
     xpath_references_user_case,
     module_case_hierarchy_has_circular_reference)
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
-    validate_xform, check_for_missing_instances
+    validate_xform
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from .exceptions import (
     AppEditingError,
@@ -931,10 +931,6 @@ class FormBase(DocumentSchema):
                     error = {'type': 'validation error', 'validation_message': unicode(e)}
                     error.update(meta)
                     errors.append(error)
-                else:
-                    error = check_for_missing_instances(self.source, meta)
-                    if error:
-                        errors.append(error)
 
         if self.post_form_workflow == WORKFLOW_FORM:
             if not self.form_links:
