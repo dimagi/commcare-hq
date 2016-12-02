@@ -71,6 +71,8 @@ def _create_properties_for_case_types(domain, case_type_to_prop):
             case_type_obj = CaseType.objects.create(domain=domain, name=case_type)
 
         for prop in props:
+            if '/' in prop:
+                continue
             if (case_type not in current_properties or
                     prop not in current_properties[case_type]):
                 new_case_properties.append(CaseProperty(

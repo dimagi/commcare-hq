@@ -76,3 +76,11 @@ class GenerateDictionaryTest(TestCase):
 
         self.assertEqual(CaseType.objects.filter(domain=self.domain).count(), 1)
         self.assertEqual(CaseProperty.objects.filter(case_type__domain=self.domain).count(), 1)
+
+    def test_parent_property(self, mock):
+        mock.return_value = {'type': ['property', 'parent/property']}
+        with self.assertNumQueries(4):
+            generate_data_dictionary(self.domain)
+
+        self.assertEqual(CaseType.objects.filter(domain=self.domain).count(), 1)
+        self.assertEqual(CaseProperty.objects.filter(case_type__domain=self.domain).count(), 1)
