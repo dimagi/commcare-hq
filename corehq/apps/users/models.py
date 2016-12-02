@@ -830,10 +830,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         ):
             # device_ids property was only set once, on creation, with a single string, so we only need to worry
             # about one item in the list
-            data['device_ids'] = [DeviceIdLastUsed(
-                device_id=data['device_ids'][0],
-                last_used=data.get('created_on')  # Not accurate, but good enough
-            )]
+            data['device_ids'] = [{
+                'device_id': data['device_ids'][0],
+                'last_used': data.get('created_on'),
+            }]
         return data
 
     class AccountTypeError(Exception):
