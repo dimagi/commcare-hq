@@ -155,7 +155,7 @@ def get_all_locations_to_sync(user):
     else:
         all_locations = set()
 
-        user_locations = set(user.sql_locations)
+        user_locations = set(user.get_sql_locations(user.domain))
         # old flagged multi-locations, ToDo remove in next phase
         user_locations |= {location for location in _gather_multiple_locations(user)}
         for user_location in user_locations:

@@ -80,12 +80,10 @@ class OTARestoreUser(object):
     @property
     def sql_location(self):
         "User's primary SQLLocation"
-        raise NotImplementedError()
+        return self._couch_user.get_sql_location(self.domain)
 
-    @property
-    def sql_locations(self):
-        "SQLLocation objects of all locations the user is assigned to"
-        raise NotImplementedError()
+    def get_sql_locations(self, domain):
+        return self._couch_user.get_sql_locations(domain)
 
     def get_fixture_data_items(self):
         raise NotImplementedError()
@@ -111,11 +109,10 @@ class OTARestoreUser(object):
     def get_ucr_filter_value(self, ucr_filter, ui_filter):
         return ucr_filter.get_filter_value(self._couch_user, ui_filter)
 
+    @memoized
     def get_locations_to_sync(self):
-        """
-        Returns a LocationSet object contianing all locations that should sync
-        """
-        raise NotImplementedError()
+        from corehq.apps.locations.fixtures import get_all_locations_to_sync
+        return get_all_locations_to_sync(self)
 
 
 class OTARestoreWebUser(OTARestoreUser):
@@ -125,14 +122,6 @@ class OTARestoreWebUser(OTARestoreUser):
 
         assert isinstance(couch_user, WebUser)
         super(OTARestoreWebUser, self).__init__(domain, couch_user, **kwargs)
-
-    @property
-    def sql_location(self):
-        return None
-
-    @property
-    def sql_locations(self):
-        return []
 
     @property
     def locations(self):
@@ -161,11 +150,6 @@ class OTARestoreWebUser(OTARestoreUser):
 
         return UserFixtureStatus.DEFAULT_LAST_MODIFIED
 
-    def get_locations_to_sync(self):
-        # todo: not yet implemented for web users
-        from corehq.apps.locations.fixtures import LocationSet
-        return LocationSet()
-
 
 class OTARestoreCommCareUser(OTARestoreUser):
 
@@ -176,22 +160,8 @@ class OTARestoreCommCareUser(OTARestoreUser):
         super(OTARestoreCommCareUser, self).__init__(domain, couch_user, **kwargs)
 
     @property
-    def sql_location(self):
-        return self._couch_user.sql_location
-
-    @property
-    def sql_locations(self):
-        return self._couch_user.sql_locations
-
-    @property
     def locations(self):
         return self._couch_user.locations
-
-    def add_to_assigned_locations(self, location):
-        return self._couch_user.add_to_assigned_locations(location)
-
-    def set_location(self, location):
-        return self._couch_user.set_location(location)
 
     def get_fixture_data_items(self):
         from corehq.apps.fixtures.models import FixtureDataItem
@@ -229,11 +199,6 @@ class OTARestoreCommCareUser(OTARestoreUser):
         from corehq.apps.fixtures.models import UserFixtureType
 
         return self._couch_user.fixture_status(UserFixtureType.LOCATION)
-
-    @memoized
-    def get_locations_to_sync(self):
-        from corehq.apps.locations.fixtures import get_all_locations_to_sync
-        return get_all_locations_to_sync(self)
 
 
 class CaseState(LooselyEqualDocumentSchema, IndexHoldingMixIn):
