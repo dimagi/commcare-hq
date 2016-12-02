@@ -73,12 +73,12 @@ def fetch_key_records(request, domain):
 def _touch_user_device_id_last_used(couch_user, device_id):
     if isinstance(couch_user, CommCareUser) and device_id:
         now = datetime.datetime.utcnow()
-        for user_device_id_last_used in couch_user.device_ids:
+        for user_device_id_last_used in couch_user.devices:
             if user_device_id_last_used.device_id == device_id:
                 user_device_id_last_used.last_used = now
                 break
         else:
-            couch_user.device_ids.append(DeviceIdLastUsed(
+            couch_user.devices.append(DeviceIdLastUsed(
                 device_id=device_id,
                 last_used=now
             ))

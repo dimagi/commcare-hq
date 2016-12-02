@@ -788,7 +788,14 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     A user (for web and commcare)
     """
     base_doc = 'CouchUser'
-    device_ids = SchemaListProperty(DeviceIdLastUsed)
+
+    # todo: it looks like this is only ever set to a useless string and we should probably just remove it
+    # https://github.com/dimagi/commcare-hq/pull/14087#discussion_r90423396
+    device_ids = ListProperty()
+
+    # this is the real list of devices
+    devices = SchemaListProperty(DeviceIdLastUsed)
+
     phone_numbers = ListProperty()
     created_on = DateTimeProperty(default=datetime(year=1900, month=1, day=1))
     #    For now, 'status' is things like:
@@ -814,27 +821,12 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             should_save = True
 
         data = cls.migrate_eula(data)
-        data = cls.migrate_device_ids(data)
 
         couch_user = super(CouchUser, cls).wrap(data)
         if should_save:
             couch_user.save()
 
         return couch_user
-
-    @classmethod
-    def migrate_device_ids(cls, data):
-        if (
-            data.get('device_ids') and
-            isinstance(data['device_ids'][0], basestring)
-        ):
-            # device_ids property was only set once, on creation, with a single string, so we only need to worry
-            # about one item in the list
-            data['device_ids'] = [{
-                'device_id': data['device_ids'][0],
-                'last_used': data.get('created_on'),
-            }]
-        return data
 
     class AccountTypeError(Exception):
         pass
@@ -1473,10 +1465,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         device_id = kwargs.get('device_id', '')
         # populate the couch user
         commcare_user.domain = domain
-        commcare_user.device_ids = [DeviceIdLastUsed(
-            device_id=device_id,
-            last_used=commcare_user.created_on
-        )]
+        commcare_user.device_ids = [device_id]
         commcare_user.registering_device_id = device_id
 
         commcare_user.domain_membership = DomainMembership(domain=domain, **kwargs)
