@@ -1999,7 +1999,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         Does NOT save the user object.
         """
-        when = when or datetime.datetime.utcnow()
+        when = when or datetime.utcnow()
         for user_device_id_last_used in self.devices:
             if user_device_id_last_used.device_id == device_id:
                 user_device_id_last_used.last_used = when
