@@ -779,6 +779,9 @@ class DeviceIdLastUsed(DocumentSchema):
     device_id = StringProperty()
     last_used = DateTimeProperty()
 
+    def __eq__(self, other):
+        return all(getattr(self, p) == getattr(other, p) for p in self.properties())
+
 
 class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMixin):
     """
