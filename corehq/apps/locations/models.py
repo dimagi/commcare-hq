@@ -432,8 +432,9 @@ class SQLLocation(MPTTModel):
     def save(self, *args, **kwargs):
         from corehq.apps.commtrack.models import sync_supply_point
         from .document_store import publish_location_saved
-        self.supply_point_id = sync_supply_point(self)
         set_site_code_if_needed(self)
+        if self.location_id:
+            self.supply_point_id = sync_supply_point(self)
 
         sync_to_couch = kwargs.pop('sync_to_couch', True)
 
