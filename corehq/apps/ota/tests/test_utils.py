@@ -1,12 +1,13 @@
-from django.test import TestCase
+from django.test import TestCase, SimpleTestCase
 
+from corehq.util.test_utils import generate_cases
 from corehq.apps.users.models import WebUser, CommCareUser
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.util import format_username
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
 
-from corehq.apps.ota.utils import is_permitted_to_restore, get_restore_user
+from corehq.apps.ota.utils import is_permitted_to_restore, get_restore_user, _restoring_as_yourself
 
 
 class RestorePermissionsTest(LocationHierarchyTestCase):
@@ -193,6 +194,16 @@ class RestorePermissionsTest(LocationHierarchyTestCase):
             self.domain,
             self.commcare_user,
             u'{}@{}'.format(self.commcare_user.raw_username, self.domain),
+            True,
+        )
+        self.assertTrue(is_permitted)
+        self.assertIsNone(message)
+
+    def test_web_user_as_self(self):
+        is_permitted, message = is_permitted_to_restore(
+            self.domain,
+            self.web_user,
+            self.web_user.username,
             True,
         )
         self.assertTrue(is_permitted)
@@ -406,3 +417,19 @@ class GetRestoreUserTest(TestCase):
             '{}@{}'.format(self.other_commcare_user.raw_username, self.domain)
         )
         self.assertEquals(user.user_id, self.other_commcare_user._id)
+
+
+class TestRestoringAsYourself(SimpleTestCase):
+    '''Test that it properly figures out when you are restoring as yourself'''
+
+
+@generate_cases([
+    ((WebUser(username='john@self.com', domain='doe'), 'john@self.com'), True),
+    ((WebUser(username='john@self.com', domain='doe'), 'jane@self.com'), False),
+    ((CommCareUser(username='john', domain='doe'), 'john@doe.commcarehq.org'), True),
+    ((CommCareUser(username='john', domain='doe'), 'john@doe'), True),
+    ((CommCareUser(username='john', domain='doe'), 'john@jane.commcarehq.org'), False),
+    ((CommCareUser(username='john', domain='doe'), 'john@jane'), False),
+], TestRestoringAsYourself)
+def test_restore_as_yourself(self, args, expected):
+    self.assertEqual(_restoring_as_yourself(*args), expected)
