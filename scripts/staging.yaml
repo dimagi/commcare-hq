@@ -59,7 +59,7 @@ submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
-    branches: [2.31.0-jars]
+    branches: []
   submodules/formtranslate-src:
     branches: []
   submodules/django-digest-src:
