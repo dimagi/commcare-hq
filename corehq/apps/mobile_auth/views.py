@@ -65,24 +65,10 @@ def fetch_key_records(request, domain):
     user_id = request.couch_user.user_id
     payload = FetchKeyRecords(domain, user_id, last_issued).get_payload()
     device_id = request.GET.get('device_id')
-    if device_id:
-        _touch_user_device_id_last_used(request.couch_user, device_id)
+    if device_id and isinstance(request.couch_user, CommCareUser):
+        request.couch_user.update_device_id_last_used()
+        request.couch_user.save()
     return HttpResponse(payload)
-
-
-def _touch_user_device_id_last_used(couch_user, device_id):
-    if isinstance(couch_user, CommCareUser) and device_id:
-        now = datetime.datetime.utcnow()
-        for user_device_id_last_used in couch_user.devices:
-            if user_device_id_last_used.device_id == device_id:
-                user_device_id_last_used.last_used = now
-                break
-        else:
-            couch_user.devices.append(DeviceIdLastUsed(
-                device_id=device_id,
-                last_used=now
-            ))
-        couch_user.save()
 
 
 @login_or_digest_or_basic_or_apikey()

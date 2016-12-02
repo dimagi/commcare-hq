@@ -1993,6 +1993,23 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         case = CaseAccessors(self.domain).get_case_by_domain_hq_user_id(self._id, USERCASE_TYPE)
         return case.case_id if case else None
 
+    def update_device_id_last_used(self, device_id, when=None):
+        """
+        Sets the last_used date for the device to be the current time
+
+        Does NOT save the user object.
+        """
+        when = when or datetime.datetime.utcnow()
+        for user_device_id_last_used in self.devices:
+            if user_device_id_last_used.device_id == device_id:
+                user_device_id_last_used.last_used = when
+                break
+        else:
+            self.devices.append(DeviceIdLastUsed(
+                device_id=device_id,
+                last_used=when
+            ))
+
 
 class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     program_id = StringProperty()
