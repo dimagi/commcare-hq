@@ -111,7 +111,9 @@ class ConfigurableReportEsDataSource(ConfigurableReportDataSourceMixin, ReportDa
             ret['past_bucket_values'] = copy.deepcopy(past_bucket_info)
             return [ret]
 
-        def _parse_buckets(buckets, remaining_agg_columns, current_bucket_name, past_bucket_info=dict()):
+        def _parse_buckets(buckets, remaining_agg_columns, current_bucket_name, past_bucket_info=None):
+            past_bucket_info = past_bucket_info or {}
+
             ret = []
             for bucket in buckets:
                 ret += _parse_bucket(bucket, remaining_agg_columns, current_bucket_name, past_bucket_info)
@@ -151,6 +153,8 @@ class ConfigurableReportEsDataSource(ConfigurableReportDataSourceMixin, ReportDa
                 innermost_agg.aggregation(agg)
 
         top_agg = innermost_agg
+        # go through aggregations in reverse order so that they are nested properly
+        # todo: Refactor NestedTermAggregationsHelper to support this use case
         for agg_column in self.aggregation_columns[:-1][::-1]:
             top_agg = TermsAggregation(agg_column, agg_column).aggregation(top_agg)
 
