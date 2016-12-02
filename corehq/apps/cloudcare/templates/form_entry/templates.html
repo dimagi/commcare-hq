@@ -407,11 +407,13 @@
             </label>
         </div>
     </div>
+    {% if not request|toggle_enabled:"USE_FORMPLAYER_FRONTEND" %}
     <div class="help-block clear-container">
         <button class="btn btn-default btn-xs clear" data-bind="
             click: onClear
         ">Clear choices</button>
     </div>
+    {% endif %}
 </script>
 <script type="text/html" id="date-entry-ko-template">
     <div class="input-group">
