@@ -5,6 +5,7 @@ from django.test import TestCase
 
 from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.locations.tests.util import delete_all_locations
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.management.commands import add_multi_location_property
 from corehq.util.test_utils import generate_cases
@@ -24,8 +25,7 @@ class CCUserLocationAssignmentTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.domain_obj.delete()
-        for l in [cls.loc1, cls.loc2]:
-            l.delete()
+        delete_all_locations()
 
     def setUp(self):
         super(CCUserLocationAssignmentTest, self).setUp()
@@ -132,8 +132,7 @@ class WebUserLocationAssignmentTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.domain_obj.delete()
-        for l in [cls.loc1, cls.loc2]:
-            l.delete()
+        delete_all_locations()
 
     def setUp(self):
         super(WebUserLocationAssignmentTest, self).setUp()
