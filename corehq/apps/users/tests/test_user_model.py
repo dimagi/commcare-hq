@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from django.test import TestCase, SimpleTestCase
 
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.models import CommCareUser, DeviceIdLastUsed
+from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.utils import get_simple_wrapped_form, TestFormMetadata
 from corehq.form_processor.tests.utils import run_with_all_backends, FormProcessorTestUtils
 
