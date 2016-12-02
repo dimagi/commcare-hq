@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.core.urlresolvers import reverse
 from django.db.models.query import Prefetch
 from django.http import JsonResponse
@@ -39,10 +40,38 @@ def data_dictionary_json(request, domain, case_type_name=None):
             p['properties'].append({
                 "description": prop.description,
                 "name": prop.name,
-                "type": prop.type,
+                "data_type": prop.data_type,
             })
         props.append(p)
     return JsonResponse({'case_types': props})
+
+
+@login_and_domain_required
+@toggles.DATA_DICTIONARY.required_decorator()
+def update_case_property(request, domain):
+    case_type = request.POST.get('caseType')
+    name = request.POST.get('name')
+    description = request.POST.get('description')
+    data_type = request.POST.get('data_type')
+    try:
+        prop = CaseProperty.objects.get(
+            name=name, case_type__name=case_type, case_type__domain=domain
+        )
+    except CaseProperty.DoesNotExist:
+        return JsonResponse({
+            'status': "failed",
+            "error": "property does not exist"
+        }, status=404)
+    if data_type:
+        prop.data_type = data_type
+    if description:
+        prop.description = description
+    try:
+        prop.full_clean()
+    except ValidationError as e:
+        return JsonResponse({"status": "failed", "error": unicode(e)}, status=400)
+    prop.save()
+    return JsonResponse({"status": "success"})
 
 
 class DataDictionaryView(BaseDomainView):
