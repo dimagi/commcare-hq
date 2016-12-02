@@ -1,3 +1,4 @@
+from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
 from corehq.apps.app_manager.util import all_case_properties_by_domain
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
@@ -5,9 +6,12 @@ from corehq.apps.export.models.new import CaseExportDataSchema
 
 
 def generate_data_dictionary(domain):
+    if toggles.OLD_EXPORTS.enabled(domain):
+        return False
     properties = _get_all_case_properties(domain)
     _create_properties_for_case_types(domain, properties)
     CaseType.objects.filter(domain=domain, name__in=properties.keys()).update(fully_generated=True)
+    return True
 
 
 def _get_all_case_properties(domain):

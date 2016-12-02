@@ -18,7 +18,10 @@ from corehq.tabs.tabclasses import ApplicationsTab
 @login_and_domain_required
 @toggles.DATA_DICTIONARY.required_decorator()
 def generate_data_dictionary(request, domain):
-    util.generate_data_dictionary(domain)
+    if not util.generate_data_dictionary(domain):
+        return JsonResponse({
+            "failed": "Data Dictionary requires access to new exports"
+        }, status=400)
     return JsonResponse({"status": "success"})
 
 
