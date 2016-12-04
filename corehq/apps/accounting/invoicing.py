@@ -277,11 +277,7 @@ class DomainWireInvoiceFactory(object):
             date_paid__exact=None,
         ).order_by('-date_start')
 
-        account = BillingAccount.get_or_create_account_by_domain(
-            self.domain.name,
-            created_by=self.__class__.__name__,
-            entry_point=EntryPoint.SELF_STARTED,
-        )[0]
+        account = Subscription.get_subscribed_plan_by_domain(self.domain)[1].account
 
         # If no start date supplied, default earliest start date of unpaid invoices
         if self.date_start:

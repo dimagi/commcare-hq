@@ -15,7 +15,8 @@ from corehq.apps.accounting.models import (
     FeatureType,
     PreOrPostPay,
     StripePaymentMethod,
-    LastPayment
+    LastPayment,
+    Subscription,
 )
 from corehq.apps.accounting.user_text import get_feature_name
 from corehq.apps.accounting.utils import (
@@ -79,7 +80,8 @@ class BaseStripePaymentHandler(object):
         is_saved_card = request.POST.get('selectedCardType') == 'saved'
         save_card = request.POST.get('saveCard') and not is_saved_card
         autopay = request.POST.get('autopayCard')
-        billing_account = BillingAccount.get_account_by_domain(self.domain)
+        current_subscription = Subscription.get_subscribed_plan_by_domain(self.domain)[1]
+        billing_account = current_subscription.account if current_subscription else None
         generic_error = {
             'error': {
                 'message': _(
@@ -278,7 +280,7 @@ class BulkStripePaymentHandler(BaseStripePaymentHandler):
                 invoice.update_balance()
                 invoice.save()
         if amount:
-            account = BillingAccount.get_or_create_account_by_domain(self.domain)
+            account = Subscription.get_subscribed_plan_by_domain(self.domain)[1].account
             CreditLine.add_credit(
                 amount, account=account,
                 payment_record=payment_record,

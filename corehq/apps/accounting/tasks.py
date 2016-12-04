@@ -354,11 +354,8 @@ def create_wire_credits_invoice(domain_name,
                                 amount,
                                 invoice_items,
                                 contact_emails):
-    account = BillingAccount.get_or_create_account_by_domain(
-        domain_name,
-        created_by=account_created_by,
-        entry_point=account_entry_point
-    )[0]
+    current_subscription = Subscription.get_subscribed_plan_by_domain(domain_name)[1]
+    account = current_subscription.account
     wire_invoice = WirePrepaymentInvoice.objects.create(
         domain=domain_name,
         date_start=datetime.datetime.utcnow(),
@@ -607,7 +604,7 @@ def assign_explicit_community_subscription(domain_name, start_date):
         end_date = None
 
     return Subscription.new_domain_subscription(
-        account=BillingAccount.get_or_create_account_by_domain(
+        account=BillingAccount.get_or_create_account_by_domain( # this maybe should stay
             domain_name,
             created_by='assign_explicit_community_subscriptions',
             entry_point=EntryPoint.SELF_STARTED,
