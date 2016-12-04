@@ -128,7 +128,7 @@ class TestExpandedMobileWorkerFilter(TestCase):
         self.request.couch_user = WebUser()
         self.request.domain = self.domain
 
-    @patch('corehq.apps.users.models.WebUser.get_assigned_sql_locations')
+    @patch('corehq.apps.users.models.WebUser.get_sql_locations')
     def test_get_assigned_locations_default(self, assigned_locations_patch):
         assigned_locations_patch.return_value = self.user_assigned_locations
         emwf = ExpandedMobileWorkerFilter(self.request)
@@ -152,7 +152,7 @@ class TestLocationRestrictedMobileWorkerFilter(TestCase):
     def test_attributes(self):
         self.assertEqual(self.subject.options_url, 'new_emwf_options')
 
-    @patch('corehq.apps.users.models.WebUser.get_assigned_sql_locations')
+    @patch('corehq.apps.users.models.WebUser.get_sql_locations')
     def test_default_selections_for_full_access(self, assigned_locations_patch):
         self.request.can_access_all_locations = True
         self.request.project = self.domain
@@ -160,7 +160,7 @@ class TestLocationRestrictedMobileWorkerFilter(TestCase):
         emwf.get_default_selections()
         assert not assigned_locations_patch.called
 
-    @patch('corehq.apps.users.models.WebUser.get_assigned_sql_locations')
+    @patch('corehq.apps.users.models.WebUser.get_sql_locations')
     def test_default_selections_for_restricted_access(self, assigned_locations_patch):
         self.request.can_access_all_locations = False
         self.request.project = self.domain
@@ -182,7 +182,7 @@ class TestCaseListFilter(TestCase):
         self.request.couch_user = WebUser()
         self.request.domain = self.domain
 
-    @patch('corehq.apps.users.models.WebUser.get_assigned_sql_locations')
+    @patch('corehq.apps.users.models.WebUser.get_sql_locations')
     def test_default_selections_for_full_access(self, assigned_locations_patch):
         self.request.can_access_all_locations = True
         self.request.project = self.domain
@@ -191,7 +191,7 @@ class TestCaseListFilter(TestCase):
         self.assertEqual(default_selections, emwf.default_selections)
         assert not assigned_locations_patch.called
 
-    @patch('corehq.apps.users.models.WebUser.get_assigned_sql_locations')
+    @patch('corehq.apps.users.models.WebUser.get_sql_locations')
     def test_default_selections_for_restricted_access(self, assigned_locations_patch):
         self.request.can_access_all_locations = False
         self.request.project = self.domain

@@ -284,7 +284,7 @@ class LocationQueriesMixin(object):
         if user.has_permission(domain, 'access_all_locations'):
             return self.all()
 
-        assigned_location_ids = user.get_assigned_location_ids(domain)
+        assigned_location_ids = user.get_location_ids(domain)
         if not assigned_location_ids:
             return self.none()  # No locations are assigned to this user
         return self.all() & SQLLocation.active_objects.get_locations_and_children(assigned_location_ids)
