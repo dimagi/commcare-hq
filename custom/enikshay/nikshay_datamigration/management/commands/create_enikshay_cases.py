@@ -1,5 +1,4 @@
 from django.core.management import BaseCommand
-from django.db import transaction
 
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
@@ -21,7 +20,6 @@ class EnikshayCaseFactory(object):
         self.factory = CaseFactory(domain=domain)
         self.case_accessor = CaseAccessors(domain)
 
-    @transaction.atomic
     def create_cases(self):
         self.create_person_case()
         self.create_occurrence_cases()
