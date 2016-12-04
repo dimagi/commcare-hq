@@ -208,3 +208,6 @@ class Command(BaseCommand):
             counter += 1
             print counter
         print 'All patient cases created'
+
+    def add_arguments(self, parser):
+        parser.add_argument('domain')
