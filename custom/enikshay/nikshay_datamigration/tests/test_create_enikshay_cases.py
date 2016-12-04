@@ -128,12 +128,12 @@ class TestCreateEnikshayCases(TestCase):
         test_case_ids = set(self.case_accessor.get_case_ids_in_domain(type='test'))
         self.assertEqual(5, len(test_case_ids))
         # for test_case_id in test_case_ids:
-        self.assertSetEqual(
-            set([
+        self.assertItemsEqual(
+            [
                 self.case_accessor.get_case(test_case_id).dynamic_case_properties()
                 for test_case_id in test_case_ids
-            ]),
-            set([
+            ],
+            [
                 OrderedDict([
                     ('date_tested', ''),
                     ('migration_created_case', 'True'),
@@ -159,5 +159,5 @@ class TestCreateEnikshayCases(TestCase):
                     ('migration_created_case', 'True'),
                     ('migration_followup_id', str(5)),
                 ]),
-            ])
+            ]
         )
