@@ -24,7 +24,7 @@
     "HTTP_DATE": "Mon, 11 Apr 2011 18:24:43 GMT"
   },
   "partial_submission": false,
-  "path": "/a/submit/receiver",
+  "path": "/a/submit/receiver/",
   "submit_ip": "127.0.0.1",
   "xmlns": null
 }
