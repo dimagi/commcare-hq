@@ -1573,7 +1573,7 @@ class Subscription(models.Model):
             return None
 
     @classmethod
-    def get_subscribed_plan_by_domain(cls, domain):
+    def get_subscribed_plan_by_domain(cls, domain): # should take domain name
         """
         Returns SoftwarePlanVersion for the given domain.
         """
@@ -1750,7 +1750,8 @@ class WireInvoice(InvoiceBase):
     @property
     @memoized
     def account(self):
-        return BillingAccount.get_account_by_domain(self.domain)
+        current_subscription = Subscription.get_subscribed_plan_by_domain(self.domain)[1]
+        return current_subscription.account if current_subscription else None
 
     @property
     def subtotal(self):

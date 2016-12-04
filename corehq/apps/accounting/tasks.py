@@ -599,12 +599,11 @@ def assign_explicit_community_subscription(domain_name, start_date, account=None
     else:
         end_date = None
 
-    if account is None:
-        account = BillingAccount.get_or_create_account_by_domain(
-            domain_name,
-            created_by='assign_explicit_community_subscriptions',
-            entry_point=EntryPoint.SELF_STARTED,
-        )[0]
+    account = account or BillingAccount.get_or_create_account_by_domain(
+        domain_name,
+        created_by='assign_explicit_community_subscriptions',
+        entry_point=EntryPoint.SELF_STARTED,
+    )[0]
 
     return Subscription.new_domain_subscription(
         account=account,

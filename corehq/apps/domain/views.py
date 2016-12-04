@@ -642,9 +642,12 @@ class DomainAccountingSettings(BaseProjectSettingsView):
     @property
     @memoized
     def account(self):
-        return BillingAccount.get_account_by_domain(self.domain)
+        if self.current_subscription:
+            return self.current_subscription.account
+        return None
 
     @property
+    @memoized
     def current_subscription(self):
         return Subscription.get_active_subscription_by_domain(self.domain)
 
@@ -1104,13 +1107,8 @@ class CreditsStripePaymentView(BaseStripePaymentView):
     @property
     @memoized
     def account(self):
-        return BillingAccount.get_or_create_account_by_domain(
-            self.domain,
-            created_by=self.request.user.username,
-            account_type=BillingAccountType.USER_CREATED,
-            entry_point=EntryPoint.SELF_STARTED,
-            last_payment_method=LastPayment.CC_ONE_TIME,
-        )[0]
+        current_subscription = Subscription.get_subscribed_plan_by_domain(self.domain)[1]
+        return current_subscription.account if current_subscription else None
 
     def get_payment_handler(self):
         return CreditStripePaymentHandler(
@@ -1195,7 +1193,10 @@ class BulkStripePaymentView(BaseStripePaymentView):
 
     @property
     def account(self):
-        return BillingAccount.get_account_by_domain(self.domain)
+        current_subscription = Subscription.get_subscribed_plan_by_domain(self.domain)[1]
+        if current_subscription:
+            return current_subscription.account
+        return None
 
     def get_payment_handler(self):
         return BulkStripePaymentHandler(
@@ -1599,13 +1600,14 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
     def account(self):
         if self.current_subscription:
             return self.current_subscription.account
-        account, self.is_new = BillingAccount.get_or_create_account_by_domain(
-            self.domain,
-            created_by=self.request.couch_user.username,
-            account_type=BillingAccountType.USER_CREATED,
-            entry_point=EntryPoint.SELF_STARTED,
-        )
-        return account
+        return None
+        # account, self.is_new = BillingAccount.get_or_create_account_by_domain(
+        #     self.domain,
+        #     created_by=self.request.couch_user.username,
+        #     account_type=BillingAccountType.USER_CREATED,
+        #     entry_point=EntryPoint.SELF_STARTED,
+        # )
+        # return account
 
     @property
     def payment_method(self):
