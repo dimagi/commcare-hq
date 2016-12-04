@@ -7,7 +7,7 @@ from django.test import TestCase
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from custom.enikshay.nikshay_datamigration.models import Followup, Household, Outcome, APatientDetail
+from custom.enikshay.nikshay_datamigration.models import Followup, Outcome, APatientDetail
 
 
 class TestCreateEnikshayCases(TestCase):
@@ -37,9 +37,9 @@ class TestCreateEnikshayCases(TestCase):
             PatientId=patient_detail,
             HIVStatus='negative',
         )
-        Household.objects.create(
-            PatientID=patient_detail,
-        )
+        # Household.objects.create(
+        #     PatientID=patient_detail,
+        # )
         for i in range(5):
             Followup.objects.create(
                 id=i+1,
@@ -67,7 +67,7 @@ class TestCreateEnikshayCases(TestCase):
     def tearDown(self):
         Outcome.objects.all().delete()
         Followup.objects.all().delete()
-        Household.objects.all().delete()
+        # Household.objects.all().delete()
         APatientDetail.objects.all().delete()
 
         self.domain.delete()
