@@ -183,7 +183,7 @@ class FieldColumn(ReportColumn):
         if not from_aggregation:
             value = row[self.field]
         elif self.aggregation == 'simple':
-            value = row['key']
+            value = row['past_bucket_values'][self.field]
         else:
             value = int(row[self.column_id]['value'])
 

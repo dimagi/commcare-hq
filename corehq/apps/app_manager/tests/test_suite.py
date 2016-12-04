@@ -822,6 +822,22 @@ class InstanceTests(SimpleTestCase, TestXmlMixin, SuiteMixin):
         with self.assertRaises(DuplicateInstanceIdError):
             self.factory.app.create_suite()
 
+    def test_duplicate_regular_instances(self):
+        """Make sure instances aren't getting added multiple times if they are referenced multiple times
+        """
+        self.factory.form_requires_case(self.form)
+        self.form.form_filter = "instance('casedb') instance('casedb') instance('locations') instance('locations')"
+        self.assertXmlPartialEqual(
+            u"""
+            <partial>
+                <instance id='casedb' src='jr://instance/casedb' />
+                <instance id='locations' src='jr://fixture/commtrack:locations' />
+            </partial>
+            """,
+            self.factory.app.create_suite(),
+            "entry/instance"
+        )
+
     def test_location_instances(self):
         self.form.form_filter = "instance('locations')/locations/"
         with flag_enabled('FLAT_LOCATION_FIXTURE'):

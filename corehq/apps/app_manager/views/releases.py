@@ -21,6 +21,7 @@ from phonelog.models import UserErrorEntry
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_built_app_on_hubspot
+from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import LoginAndDomainMixin, DomainViewMixin
@@ -155,6 +156,10 @@ def release_build(request, domain, app_id, saved_app_id):
     saved_app.save(increment_version=False)
     from corehq.apps.app_manager.signals import app_post_release
     app_post_release.send(Application, application=saved_app)
+
+    if is_released:
+        _track_build_for_app_preview(domain, request.couch_user, app_id, 'User starred a build')
+
     if ajax:
         return json_response({'is_released': is_released})
     else:
@@ -191,6 +196,9 @@ def save_copy(request, domain, app_id):
             # To make a RemoteApp always available for building
             if app.is_remote_app():
                 app.save(increment_version=True)
+
+        _track_build_for_app_preview(domain, request.couch_user, app_id, 'User created a build')
+
     else:
         copy = None
     copy = copy and SavedAppBuild.wrap(copy.to_json()).to_saved_build_json(
@@ -212,6 +220,19 @@ def save_copy(request, domain, app_id):
             'lang': lang
         }),
     })
+
+
+def _track_build_for_app_preview(domain, couch_user, app_id, message):
+    track_workflow(couch_user.username, message, properties={
+        'domain': domain,
+        'app_id': app_id,
+        'is_dimagi': couch_user.is_dimagi,
+        'preview_app_enabled': (
+            toggles.PREVIEW_APP.enabled(domain) or
+            toggles.PREVIEW_APP.enabled(couch_user.username)
+        )
+    })
+
 
 
 @no_conflict_require_POST

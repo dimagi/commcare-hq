@@ -5,7 +5,6 @@ from corehq.apps.reports.filters.select import YearFilter
 from corehq.apps.reports.standard import CustomProjectReport
 from custom.icds_reports.asr_sqldata import ASRIdentification, ASROperationalization, ASRPopulation, Annual, \
     DisabledChildren, Infrastructure, Equipment
-from custom.icds_reports import const
 from custom.icds_reports.filters import ICDSMonthFilter, IcdsLocationFilter
 from custom.icds_reports.mpr_sqldata import MPRIdentification, MPRSectors, MPRPopulation, MPRBirthsAndDeaths, \
     MPRAWCDetails, MPRSupplementaryNutrition, MPRUsingSalt, MPRProgrammeCoverage, MPRPreschoolEducation, \
@@ -76,4 +75,10 @@ class TableauReport(CustomProjectReport):
 
     @classmethod
     def get_url(cls, domain=None, **kwargs):
-        return reverse('icds_tableau', args=[domain, const.WORKBOOK_NAME, const.DEFAULT_WORKSHEET])
+        domain_to_workbook_mapping = {
+            'icds-test': 'DashboardTest',
+            'icds-cas': 'DashboardR5',
+        }
+        workbook_name = domain_to_workbook_mapping.get(domain, domain_to_workbook_mapping['icds-cas'])
+        worksheet_name = 'Dashboard'
+        return reverse('icds_tableau', args=[domain, workbook_name, worksheet_name])

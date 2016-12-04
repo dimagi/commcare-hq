@@ -775,12 +775,27 @@ class EulaMixin(DocumentSchema):
         return current_eula
 
 
+class DeviceIdLastUsed(DocumentSchema):
+    device_id = StringProperty()
+    last_used = DateTimeProperty()
+
+    def __eq__(self, other):
+        return all(getattr(self, p) == getattr(other, p) for p in self.properties())
+
+
 class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMixin):
     """
     A user (for web and commcare)
     """
     base_doc = 'CouchUser'
+
+    # todo: it looks like this is only ever set to a useless string and we should probably just remove it
+    # https://github.com/dimagi/commcare-hq/pull/14087#discussion_r90423396
     device_ids = ListProperty()
+
+    # this is the real list of devices
+    devices = SchemaListProperty(DeviceIdLastUsed)
+
     phone_numbers = ListProperty()
     created_on = DateTimeProperty(default=datetime(year=1900, month=1, day=1))
     #    For now, 'status' is things like:
@@ -1556,7 +1571,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         from corehq.apps.groups.models import Group
         # get faked location group objects
         groups = []
-        for sql_location in self.sql_locations:
+        for sql_location in self.get_sql_locations(self.domain):
             groups.extend(sql_location.get_case_sharing_groups(self._id))
 
         groups += [group for group in Group.by_user(self) if group.case_sharing]
@@ -1635,19 +1650,15 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 pass
         return None
 
-    @property
-    def sql_locations(self):
+    def get_location_ids(self, domain):
+        return self.assigned_location_ids
+
+    def get_sql_locations(self, domain):
         from corehq.apps.locations.models import SQLLocation
         if self.assigned_location_ids:
             return SQLLocation.objects.filter(location_id__in=self.assigned_location_ids)
         else:
             return SQLLocation.objects.none()
-
-    def get_assigned_location_ids(self, domain):
-        return self.assigned_location_ids
-
-    def get_assigned_sql_locations(self, domain=None):
-        return self.sql_locations
 
     def add_to_assigned_locations(self, location):
         if self.location_id:
@@ -1977,6 +1988,23 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def get_usercase_id(self):
         case = CaseAccessors(self.domain).get_case_by_domain_hq_user_id(self._id, USERCASE_TYPE)
         return case.case_id if case else None
+
+    def update_device_id_last_used(self, device_id, when=None):
+        """
+        Sets the last_used date for the device to be the current time
+
+        Does NOT save the user object.
+        """
+        when = when or datetime.utcnow()
+        for user_device_id_last_used in self.devices:
+            if user_device_id_last_used.device_id == device_id:
+                user_device_id_last_used.last_used = when
+                break
+        else:
+            self.devices.append(DeviceIdLastUsed(
+                device_id=device_id,
+                last_used=when
+            ))
 
 
 class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):

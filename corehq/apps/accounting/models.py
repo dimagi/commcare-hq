@@ -1543,8 +1543,13 @@ class Subscription(models.Model):
                 if BillingContactInfo.objects.filter(account=self.account).exists() else []
             )
             if not billing_contact_emails:
-                log_accounting_error(
-                    "Billing account %d doesn't have any contact emails" % self.account.id
+                from corehq.apps.accounting.views import ManageBillingAccountView
+                _soft_assert_contact_emails_missing(
+                    False,
+                    'Billing Account for project %s is missing client contact emails: %s' % (
+                        domain_name,
+                        absolute_reverse(ManageBillingAccountView.urlname, args=[self.account.id])
+                    )
                 )
             emails |= {billing_contact_email for billing_contact_email in billing_contact_emails}
         return emails
