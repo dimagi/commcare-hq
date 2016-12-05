@@ -8,7 +8,7 @@
 				</data>
 			</instance>
 			<itext>
-				<translation lang="en" default="" />
+				<translation lang="{{ lang }}" default="" />
 			</itext>
 		</model>
 	</h:head>

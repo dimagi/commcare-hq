@@ -377,7 +377,8 @@ def new_form(request, domain, app_id, module_id):
 
     blank_form = render_to_string("app_manager/blank_form.xml", context={
         'xmlns': str(uuid.uuid4()).upper(),
-        'name': form.name[lang]
+        'name': form.name[lang],
+        'lang': lang,
     })
     form.source = blank_form
 
