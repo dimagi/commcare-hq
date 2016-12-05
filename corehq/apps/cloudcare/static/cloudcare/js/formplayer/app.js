@@ -124,7 +124,7 @@ FormplayerFrontend.on('startForm', function (data) {
     FormplayerFrontend.request("clearMenu");
     var urlObject = Util.currentUrlToObject();
     urlObject.setSessionId(data.session_id);
-    Util.setUrlToObject(urlObject);
+    Util.setUrlToObject(urlObject, true);
     data.onLoading = tfLoading;
     data.onLoadingComplete = tfLoadingComplete;
     var user = FormplayerFrontend.request('currentUser');
