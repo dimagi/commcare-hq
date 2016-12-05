@@ -136,7 +136,6 @@ def should_sync_hierarchical_fixture(project):
 
 def should_sync_flat_fixture(domain):
     return (
-        toggles.FLAT_LOCATION_FIXTURE.enabled(domain) and
         LocationFixtureConfiguration.for_domain(domain).sync_flat_fixture
     )
 
