@@ -1,5 +1,7 @@
 import os
+import uuid
 
+from django.template.loader import render_to_string
 from django.test.testcases import SimpleTestCase
 
 from corehq.util.test_utils import TestFileMixin
@@ -214,3 +216,13 @@ class GetFormQuestionsTest(SimpleTestCase, TestFileMixin):
             questions,
         )[0]
         self.assertEqual(repeat_question['repeat'], '/data/repeat_name')
+
+    def test_blank_form(self):
+        blank_form = render_to_string("app_manager/blank_form.xml", context={
+            'xmlns': str(uuid.uuid4()).upper()
+        })
+        form = self.app.new_form(self.app.get_module(0).id, 'blank', 'en')
+        form.source = blank_form
+
+        questions = form.get_questions(['en'])
+        self.assertEqual([], questions)
