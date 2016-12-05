@@ -54,7 +54,6 @@ branches:
 #  - location_export # Manish 11/2
 #  - jquery-3-retry # Jenny 11/11
   - es/location-ucr  # Ethan 11/30
-  - br/locations-in-webuser-restore  # Ben 12/2
   - sk/blank-form-xml  # Simon 12/5
   - nc/export-conflict-resolution-2016-11-30  # Noah 12/5
   - nc/exports-rrr  # Noah 12/5
