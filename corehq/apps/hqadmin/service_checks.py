@@ -185,15 +185,15 @@ def check_formplayer():
         return ServiceStatus(res.ok, msg)
 
 
-checks = (
-    check_kafka,
-    check_redis,
-    check_postgres,
-    check_couch,
-    check_celery,
-    check_heartbeat,
-    check_touchforms,
-    check_elasticsearch,
-    check_blobdb,
-    check_formplayer,
-)
+CHECKS = {
+    'kafka': check_kafka,
+    'redis': check_redis,
+    'postgres': check_postgres,
+    'couch': check_couch,
+    'celery': check_celery,
+    'heartbeat': check_heartbeat,
+    'touchforms': check_touchforms,
+    'elasticsearch': check_elasticsearch,
+    'blobdb': check_blobdb,
+    'formplayer': check_formplayer,
+}
