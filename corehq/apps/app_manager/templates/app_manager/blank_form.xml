@@ -7,9 +7,6 @@
 				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/{{ xmlns }}" uiVersion="1" version="1" name="{{ name }}">
 				</data>
 			</instance>
-			<itext>
-				<translation lang="{{ lang }}" default="" />
-			</itext>
 		</model>
 	</h:head>
 	<h:body>
