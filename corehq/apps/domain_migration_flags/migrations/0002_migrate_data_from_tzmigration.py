@@ -3,6 +3,8 @@ from __future__ import unicode_literals
 
 from django.db import migrations, models
 
+from corehq.sql_db.operations import HqRunSQL
+
 
 class Migration(migrations.Migration):
 
@@ -12,7 +14,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunSQL(
+        HqRunSQL(
             """
             INSERT INTO domain_migration_flags_domainmigrationprogress (domain, migration_slug, migration_status)
             SELECT domain, 'tzmigration' as migration_slug, migration_status
