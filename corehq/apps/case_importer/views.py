@@ -296,7 +296,7 @@ def excel_commit(request, domain):
 @require_can_edit_data
 def importer_job_poll(request, domain, download_id, template="case_importer/partials/import_status.html"):
     try:
-        download_context = get_download_context(download_id, check_state=True)
+        download_context = get_download_context(download_id)
     except TaskFailedError as e:
         context = RequestContext(request)
         context.update({'error': e.errors, 'url': base.ImportCases.get_url(domain=domain)})
