@@ -40,6 +40,7 @@ from corehq.apps.reports.util import friendly_timedelta, format_datatables_data
 from corehq.apps.reports.analytics.esaccessors import get_form_counts_by_user_xmlns
 from corehq.apps.users.models import CommCareUser
 from corehq.const import SERVER_DATETIME_FORMAT
+from corehq.util import flatten_list
 from corehq.util.timezones.conversions import ServerTime, PhoneTime
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch.safe_index import safe_index
@@ -1419,7 +1420,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             ret = [util._report_user_dict(u) for u in list(CommCareUser.by_domain(self.domain))]
             return ret
         else:
-            all_users = [user for sublist in self.users_by_group.values() for user in sublist]
+            all_users = flatten_list(self.users_by_group.values())
             all_users.extend([user for user in self.get_users_by_mobile_workers().values()])
             all_users.extend([user for user in self.get_admins_and_demo_users()])
             return dict([(user['user_id'], user) for user in all_users]).values()
