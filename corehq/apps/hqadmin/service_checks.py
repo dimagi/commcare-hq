@@ -63,8 +63,12 @@ def check_kafka():
     client = get_kafka_client_or_none()
     if not client:
         return ServiceStatus(False, "Could not connect to Kafka")
-    # TODO elaborate?
-    return ServiceStatus(True, "Kafka's fine. Probably.")
+    elif len(client.brokers) == 0:
+        return ServiceStatus(False, "No Kafka brokers found")
+    elif len(client.topics) == 0:
+        return ServiceStatus(False, "No Kafka topics found")
+    else:
+        return ServiceStatus(True, "Kafka seems to be in order")
 
 
 def check_touchforms():
