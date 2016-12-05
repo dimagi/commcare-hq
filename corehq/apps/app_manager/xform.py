@@ -4,17 +4,19 @@ import logging
 from django.utils.translation import ugettext_lazy as _
 from casexml.apps.case.xml import V2_NAMESPACE
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
+from corehq.apps import nimbus_api
 from corehq.apps.app_manager.const import (
     SCHEDULE_PHASE, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE,
     CASE_ID, USERCASE_ID, SCHEDULE_UNSCHEDULED_VISIT, SCHEDULE_CURRENT_VISIT_NUMBER,
     SCHEDULE_GLOBAL_NEXT_VISIT_DATE, SCHEDULE_NEXT_DUE, APP_V2)
 from lxml import etree as ET
+
+from corehq.apps.nimbus_api.exceptions import NimbusAPIException
 from corehq.util.view_utils import get_request
 from dimagi.utils.decorators.memoized import memoized
 from .xpath import CaseIDXPath, session_var, CaseTypeXpath, QualifiedScheduleFormXPath
 from .exceptions import XFormException, CaseError, XFormValidationError, BindNotFound
 import collections
-import formtranslate.api
 import re
 
 
@@ -543,7 +545,11 @@ def validate_xform(source):
         source = source.encode("utf-8")
     # normalize and strip comments
     source = ET.tostring(parse_xml(source))
-    validation_results = formtranslate.api.validate(source)
+    try:
+        validation_results = nimbus_api.validate_form(source)
+    except NimbusAPIException:
+        return
+
     if not validation_results.success:
         raise XFormValidationError(
             fatal_error=validation_results.fatal_error,
