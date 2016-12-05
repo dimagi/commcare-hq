@@ -7,7 +7,6 @@ from corehq.apps.app_manager.util import (is_usercase_in_use, xpath_references_c
     xpath_references_user_case)
 from corehq.apps.app_manager.xpath import (interpolate_xpath, CaseIDXPath, session_var,
     QualifiedScheduleFormXPath)
-from corehq.feature_previews import MODULE_FILTER
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -69,10 +68,7 @@ class MenuContributor(SuiteContributorByModule):
             if hasattr(module, 'case_list') and module.case_list.show:
                 yield Command(id=id_strings.case_list_command(module))
 
-        supports_module_filter = (
-            self.app.domain and MODULE_FILTER.enabled(self.app.domain) and
-            self.app.enable_module_filtering and getattr(module, 'module_filter', None)
-        )
+        supports_module_filter = self.app.enable_module_filtering and getattr(module, 'module_filter', None)
 
         menus = []
         if hasattr(module, 'get_menus'):

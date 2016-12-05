@@ -15,10 +15,10 @@ from corehq.apps.couch_sql_migration.couchsqlmigration import get_diff_db
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.domain_migration_flags.models import DomainMigrationProgress
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.apps.tzmigration.models import TimezoneMigrationProgress
 from corehq.apps.tzmigration.timezonemigration import FormJsonDiff
 from corehq.blobs import get_blob_db
 from corehq.blobs.tests.util import TemporaryS3BlobDB
@@ -49,7 +49,7 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
         self.domain_name = uuid.uuid4().hex
         self.domain = create_domain(self.domain_name)
         # all new domains are set complete when they are created
-        TimezoneMigrationProgress.objects.filter(domain=self.domain_name).delete()
+        DomainMigrationProgress.objects.filter(domain=self.domain_name).delete()
         self.assertFalse(should_use_sql_backend(self.domain_name))
 
     def tearDown(self):

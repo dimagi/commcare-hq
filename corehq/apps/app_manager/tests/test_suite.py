@@ -28,20 +28,11 @@ from corehq.apps.app_manager.xpath import (
 )
 from corehq.apps.hqmedia.models import HQMediaMapItem
 from corehq.apps.userreports.models import ReportConfiguration
-from corehq.toggles import NAMESPACE_DOMAIN
-from corehq.feature_previews import MODULE_FILTER
-from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
 import commcare_translations
 
 
 class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     file_path = ('data', 'suite')
-
-    def setUp(self):
-        update_toggle_cache(MODULE_FILTER.slug, 'domain', True, NAMESPACE_DOMAIN)
-
-    def tearDown(self):
-        clear_toggle_cache(MODULE_FILTER.slug, 'domain', NAMESPACE_DOMAIN)
 
     def test_normal_suite(self):
         self._test_generic_suite('app', 'normal-suite')
@@ -821,6 +812,22 @@ class InstanceTests(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.form.custom_instances = [CustomInstance(instance_id=instance_id, instance_path=instance_path)]
         with self.assertRaises(DuplicateInstanceIdError):
             self.factory.app.create_suite()
+
+    def test_duplicate_regular_instances(self):
+        """Make sure instances aren't getting added multiple times if they are referenced multiple times
+        """
+        self.factory.form_requires_case(self.form)
+        self.form.form_filter = "instance('casedb') instance('casedb') instance('locations') instance('locations')"
+        self.assertXmlPartialEqual(
+            u"""
+            <partial>
+                <instance id='casedb' src='jr://instance/casedb' />
+                <instance id='locations' src='jr://fixture/commtrack:locations' />
+            </partial>
+            """,
+            self.factory.app.create_suite(),
+            "entry/instance"
+        )
 
     def test_location_instances(self):
         self.form.form_filter = "instance('locations')/locations/"

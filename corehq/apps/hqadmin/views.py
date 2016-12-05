@@ -1,4 +1,5 @@
 from lxml import etree
+from lxml.builder import E
 
 import HTMLParser
 import json
@@ -27,7 +28,8 @@ from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseNotFound,
-    JsonResponse
+    JsonResponse,
+    StreamingHttpResponse,
 )
 from restkit import Resource
 from restkit.errors import Unauthorized
@@ -490,10 +492,25 @@ class AdminRestoreView(TemplateView):
         context = super(AdminRestoreView, self).get_context_data(**kwargs)
         response, timing_context = self._get_restore_response()
         timing_context = timing_context or TimingContext(self.user.username)
-        string_payload = ''.join(response.streaming_content)
-        xml_payload = etree.fromstring(string_payload)
-        restore_id_element = xml_payload.find('{{{0}}}Sync/{{{0}}}restore_id'.format(SYNC_XMLNS))
-        num_cases = len(xml_payload.findall('{http://commcarehq.org/case/transaction/v2}case'))
+        if isinstance(response, StreamingHttpResponse):
+            string_payload = ''.join(response.streaming_content)
+            xml_payload = etree.fromstring(string_payload)
+            restore_id_element = xml_payload.find('{{{0}}}Sync/{{{0}}}restore_id'.format(SYNC_XMLNS))
+            num_cases = len(xml_payload.findall('{http://commcarehq.org/case/transaction/v2}case'))
+        else:
+            if response.status_code in (401, 404):
+                # corehq.apps.ota.views.get_restore_response couldn't find user or user didn't have perms
+                xml_payload = E.error(response.content)
+            elif response.status_code == 412:
+                # RestoreConfig.get_response returned HttpResponse 412. Response content is already XML
+                xml_payload = response.content
+            else:
+                message = _('Unexpected restore response {}: {}. '
+                            'If you believe this is a bug please report an issue.').format(response.status_code,
+                                                                                           response.content)
+                xml_payload = E.error(message)
+            restore_id_element = None
+            num_cases = 0
         formatted_payload = etree.tostring(xml_payload, pretty_print=True)
         context.update({
             'payload': formatted_payload,

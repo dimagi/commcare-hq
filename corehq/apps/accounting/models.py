@@ -1259,8 +1259,8 @@ class Subscription(models.Model):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
         today = datetime.date.today()
-        assert is_active_subscription(self.date_start, self.date_end, today=today) and self.is_active
-        assert date_end is None or date_end > today
+        assert self.is_active
+        assert date_end is None or date_end >= today
 
         self.date_end = today
         if self.date_delay_invoicing is not None and self.date_delay_invoicing > today:
@@ -1543,8 +1543,13 @@ class Subscription(models.Model):
                 if BillingContactInfo.objects.filter(account=self.account).exists() else []
             )
             if not billing_contact_emails:
-                log_accounting_error(
-                    "Billing account %d doesn't have any contact emails" % self.account.id
+                from corehq.apps.accounting.views import ManageBillingAccountView
+                _soft_assert_contact_emails_missing(
+                    False,
+                    'Billing Account for project %s is missing client contact emails: %s' % (
+                        domain_name,
+                        absolute_reverse(ManageBillingAccountView.urlname, args=[self.account.id])
+                    )
                 )
             emails |= {billing_contact_email for billing_contact_email in billing_contact_emails}
         return emails

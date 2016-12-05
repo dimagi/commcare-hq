@@ -38,12 +38,17 @@
     <button type="button"
             disabled="disabled"
             class="btn btn-formnav disabled btn-formnav-next"
-            data-bind="visible: !enableNextButton() && !atLastIndex()">
+            data-bind="visible: disableNextButton() && !atLastIndex()">
       <i class="fa fa-chevron-right"></i>
     </button>
     <button type="button"
             class="btn btn-formnav btn-formnav-next"
             data-bind="click: nextQuestion, visible: enableNextButton() && !atLastIndex()">
+      <i class="fa fa-chevron-right"></i>
+    </button>
+    <button type="button"
+            class="btn btn-formnav btn-formnav-next"
+            data-bind="click: clickedNextOnRequired, visible: enableForceNextButton() && !atLastIndex()">
       <i class="fa fa-chevron-right"></i>
     </button>
 
@@ -227,12 +232,11 @@
 
 <script type="text/html" id="question-fullform-ko-template">
     <!-- ko if: datatype() !== 'info' -->
-    <div class="form-group-required-label"
-         data-bind="visible: $data.required">{% trans 'Required' %}</div>
     <div class="q form-group" data-bind="
             css: {
                 error: error,
                 required: $data.required,
+                on: $root.forceRequiredVisible,
             }
         ">
         <label class="caption control-label" data-bind="
@@ -266,6 +270,10 @@
         <span class="ix" data-bind="text: ixInfo($data)"></span>
         <div class="eoq"></div>
     </div>
+    <div class="form-group-required-label"
+         data-bind="visible: $data.required, css: {
+                      on: $root.forceRequiredVisible,
+                    }">{% trans 'Sorry, this response is required!' %}</div>
     <!-- /ko -->
     <!-- ko if: datatype() === 'info' -->
     <div class="info panel panel-default">
@@ -399,11 +407,13 @@
             </label>
         </div>
     </div>
+    {% if not request|toggle_enabled:"USE_FORMPLAYER_FRONTEND" %}
     <div class="help-block clear-container">
         <button class="btn btn-default btn-xs clear" data-bind="
             click: onClear
         ">Clear choices</button>
     </div>
+    {% endif %}
 </script>
 <script type="text/html" id="date-entry-ko-template">
     <div class="input-group">
