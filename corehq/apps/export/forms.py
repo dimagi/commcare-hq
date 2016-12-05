@@ -814,7 +814,7 @@ class AbstractExportFilterBuilder(object):
         :return: User filter set by inheriting class
         """
         if user_ids:
-            return self.export_user_filter(user_ids)
+            return self.export_user_filter(list(user_ids))
 
     def _get_datespan_filter(self, datespan):
         if datespan:
@@ -843,7 +843,7 @@ class FormExportFilterBuilder(AbstractExportFilterBuilder):
 
     def _get_group_filter(self, group_ids):
         if group_ids:
-            return GroupFormSubmittedByFilter(group_ids)
+            return GroupFormSubmittedByFilter(list(group_ids))
 
     def _get_user_type_filter(self, user_types):
         """
@@ -953,7 +953,7 @@ class CaseExportFilterBuilder(AbstractExportFilterBuilder):
             last_modified_filter_ids = groups_static_user_ids
 
         return [OR(
-            OwnerFilter(owner_filter_ids),
+            OwnerFilter(list(owner_filter_ids)),
             LastModifiedByFilter(last_modified_filter_ids),
             *self._get_group_independent_filters(can_access_all_locations, selected_user_types, location_ids, user_ids)
         )]
@@ -979,8 +979,8 @@ class CaseExportFilterBuilder(AbstractExportFilterBuilder):
             self.export_user_filter(self._get_selected_locations_and_descendants_ids(location_ids))
         )
 
-        default_filters.append(self._get_users_filter(user_ids))
-        default_filters.append(LastModifiedByFilter(user_ids))
+        default_filters.append(self._get_users_filter(list(user_ids)))
+        default_filters.append(LastModifiedByFilter(list(user_ids)))
         return filter(None, default_filters)
 
     def _get_selected_locations_and_descendants_ids(self, location_ids):
