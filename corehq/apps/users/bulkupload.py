@@ -728,7 +728,7 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache):
             'language': user.language,
             'user_id': user._id,
             'is_active': str(user.is_active),
-            'devices': _get_devices(user),
+            'User IMEIs (read only)': _get_devices(user),
             'location_code': location_cache.get(user.location_id),
             'role': role.name if role else '',
         }
@@ -745,7 +745,7 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache):
 
     user_headers = [
         'username', 'password', 'name', 'phone-number', 'email',
-        'language', 'role', 'user_id', 'is_active', 'devices',
+        'language', 'role', 'user_id', 'is_active', 'User IMEIs (read only)',
     ]
     if domain_has_privilege(domain, privileges.LOCATIONS):
         user_headers.append('location_code')
