@@ -385,7 +385,11 @@ FormplayerFrontend.on('clearProgress', function() {
 
 
 FormplayerFrontend.on('setVersionInfo', function(versionInfo) {
+    var user = FormplayerFrontend.request('currentUser');
     $("#version-info").text(versionInfo || '');
+    if (versionInfo) {
+        user.set('versionInfo',  versionInfo);
+    }
 });
 
 /**
