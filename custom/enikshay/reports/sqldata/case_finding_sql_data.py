@@ -46,7 +46,7 @@ def generate_for_all_ranges(slug, filters):
     columns = []
     for lower_bound, upper_bound in AGE_RANGES[:-1]:
         age_filter = RawFilter(
-            'age_in_days BETWEEN %d AND %d' % (lower_bound * DAYS_IN_YEARS, upper_bound * DAYS_IN_YEARS)
+            'age BETWEEN %d AND %d' % (lower_bound, upper_bound)
         )
         columns.append(
             DatabaseColumn(

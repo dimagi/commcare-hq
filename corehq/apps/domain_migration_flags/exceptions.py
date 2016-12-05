@@ -1,0 +1,2 @@
+class DomainMigrationProgressError(Exception):
+    pass

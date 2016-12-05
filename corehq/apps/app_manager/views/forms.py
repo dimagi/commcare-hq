@@ -532,7 +532,6 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         app.save()
 
     form_has_schedule = isinstance(form, AdvancedForm) and form.get_module().has_schedule
-    module_filter_preview = feature_previews.MODULE_FILTER.enabled(request.domain)
     context = {
         'nav_form': form,
         'xform_languages': languages,
@@ -543,14 +542,12 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         'xform_validation_errored': xform_validation_errored,
         'allow_cloudcare': isinstance(form, Form),
         'allow_form_copy': isinstance(form, (Form, AdvancedForm)),
-        'allow_form_filtering': (module_filter_preview or
-            (not isinstance(form, CareplanForm) and not form_has_schedule)),
+        'allow_form_filtering': not isinstance(form, CareplanForm) and not form_has_schedule,
         'allow_form_workflow': not isinstance(form, CareplanForm),
         'uses_form_workflow': form.post_form_workflow == WORKFLOW_FORM,
         'allow_usercase': domain_has_privilege(request.domain, privileges.USER_CASE),
         'is_usercase_in_use': is_usercase_in_use(request.domain),
-        'is_module_filter_enabled': (feature_previews.MODULE_FILTER.enabled(request.domain) and
-                                     app.enable_module_filtering),
+        'is_module_filter_enabled': app.enable_module_filtering,
         'edit_name_url': reverse('edit_form_attr', args=[app.domain, app.id, form.unique_id, 'name']),
         'case_xpath_pattern_matches': CASE_XPATH_PATTERN_MATCHES,
         'case_xpath_substring_matches': CASE_XPATH_SUBSTRING_MATCHES,
