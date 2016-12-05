@@ -708,6 +708,10 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache):
             user_data_model.get_model_and_uncategorized(user.user_data)
         )
         role = user.get_role(domain)
+        try:
+            location_code = location_cache.get(user.location_id)
+        except SQLLocation.DoesNotExist:
+            location_code = None
         return {
             'data': model_data,
             'uncategorized_data': uncategorized_data,
@@ -720,7 +724,7 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache):
             'language': user.language,
             'user_id': user._id,
             'is_active': str(user.is_active),
-            'location_code': location_cache.get(user.location_id),
+            'location_code': location_code,
             'role': role.name if role else '',
         }
 
