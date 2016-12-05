@@ -406,7 +406,7 @@ FormplayerFrontend.on('refreshApplication', function(appId) {
         formplayer_url = user.formplayer_url,
         resp,
         options = {
-            url: formplayer_url + "/update",
+            url: formplayer_url + "/delete_application_dbs",
             data: JSON.stringify({
                 app_id: appId,
                 domain: user.domain,
