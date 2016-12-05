@@ -289,6 +289,12 @@ class LocationQueriesMixin(object):
             return self.none()  # No locations are assigned to this user
         return self.all() & SQLLocation.active_objects.get_locations_and_children(assigned_location_ids)
 
+    def delete(self, *args, **kwargs):
+        from .document_store import publish_location_saved
+        for domain, location_id in self.values_list('domain', 'location_id'):
+            publish_location_saved(domain, location_id, is_deletion=True)
+        return super(LocationQueriesMixin, self).delete(*args, **kwargs)
+
 
 class LocationQuerySet(LocationQueriesMixin, models.query.QuerySet):
     pass
@@ -414,6 +420,7 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
     @transaction.atomic()
     def save(self, *args, **kwargs):
         from corehq.apps.commtrack.models import sync_supply_point
+        from .document_store import publish_location_saved
         self.supply_point_id = sync_supply_point(self)
 
         sync_to_couch = kwargs.pop('sync_to_couch', True)
@@ -421,6 +428,8 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
         super(SQLLocation, self).save(*args, **kwargs)
         if sync_to_couch:
             self._migration_do_sync()
+
+        publish_location_saved(self.domain, self.location_id)
 
     def to_json(self):
         return {
@@ -554,14 +563,12 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
         SQL ONLY FULL DELETE
         Delete this location and it's descendants.
         """
-        ids_to_delete = self.get_descendants(include_self=True).location_ids()
+        to_delete = self.get_descendants(include_self=True)
 
-        for loc_id in ids_to_delete:
-            loc = SQLLocation.objects.prefetch_related(
-                'location_type').get(location_id=loc_id)
+        for loc in to_delete:
             loc._sql_close_case_and_remove_users()
 
-        self.get_descendants(include_self=True).delete()
+        to_delete.delete()
 
     def _sql_close_case_and_remove_users(self):
         """
