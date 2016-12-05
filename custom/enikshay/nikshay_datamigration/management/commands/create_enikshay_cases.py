@@ -56,18 +56,38 @@ class EnikshayCaseFactory(object):
             attrs={
                 'create': True,
                 'case_type': 'person',
-                'owner_id': self._location.location_id,
+                # 'owner_id': self._location.location_id,
                 'update': {
-                    'name': self.patient_detail.pname,
-                    'aadhaar_number': self.patient_detail.paadharno,
+                    'nikshay_id': self.patient_detail.PregId,
+
+                    'current_address_state_choice': self.patient_detail.scode,
+                    'permanent_address_state_choice': self.patient_detail.scode,
+
+                    'current_address_district_choice': self.patient_detail.Dtocode,
+                    'permanent_address_district_choice': self.patient_detail.Dtocode,
+
+                    'tu_choice': self.patient_detail.Tbunitcode,
+
                     'phi': self.patient_detail.PHI,
+
+                    'name': self.patient_detail.pname,
                     'first_name': self.patient_detail.first_name,
                     'middle_name': self.patient_detail.middle_name,
                     'last_name': self.patient_detail.last_name,
-                    'age': self.patient_detail.page,
+
                     'sex': self.patient_detail.sex,
-                    'current_address': self.patient_detail.paddress,
-                    'mobile_number': self.patient_detail.pmob,
+
+                    'age_entered': self.patient_detail.page,
+
+                    # poccupation
+
+                    'aadhaar_number': self.patient_detail.paadharno,
+
+                    'current_address': self.patient_detail.paddress, # not exactly clear which address field is right
+
+                    # 'date_reported'
+
+                    # 'mobile_number': self.patient_detail.pmob, # not used in eNikshay
                     'migration_created_case': True,
                 },
             },
@@ -112,7 +132,14 @@ class EnikshayCaseFactory(object):
                 'case_type': 'episode',
                 'update': {
                     'treatment_supporter_mobile_number': outcome.PatientId.cmob,
+
+                    'date_reported': self.patient_detail.pregdate1, # is this right?
+
+                    'disease_classification': self.patient_detail.dcexpulmunory,
+
                     'migration_created_case': True,
+
+                    # poccupation
                 },
             },
             'indices': [CaseIndex(
@@ -200,7 +227,7 @@ class Command(BaseCommand):
 
     def handle(self, domain, *args, **options):
         counter = 0
-        for patient_detail in APatientDetail.objects.all():
+        for patient_detail in APatientDetail.objects.all()[0:100]:
             case_factory = EnikshayCaseFactory(domain, patient_detail)
             case_factory.create_cases()
             counter += 1
