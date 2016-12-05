@@ -1088,10 +1088,11 @@ class XForm(WrappedNode):
         data_nodes = {}
 
         def for_each_data_node(parent, path_context=""):
-            for child in parent.findall('*'):
+            children = parent.findall('*')
+            for child in children:
                 path = self.resolve_path(child.tag_name, path_context)
                 for_each_data_node(child, path_context=path)
-            if not parent.findall('*') and path_context:
+            if not children and path_context:
                 data_nodes[path_context] = parent
 
         for_each_data_node(self.data_node)
