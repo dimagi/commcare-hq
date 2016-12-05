@@ -878,7 +878,10 @@ class FormExportFilterBuilder(AbstractExportFilterBuilder):
         ])
 
         form_filters = flatten_non_iterable_list(form_filters)
-        form_filters = [OR(*form_filters)]
+        if form_filters:
+            form_filters = [OR(*form_filters)]
+        else:
+            form_filters = []
         date_filter = self._get_datespan_filter(date_range)
         if date_filter:
             form_filters.append(date_filter)
