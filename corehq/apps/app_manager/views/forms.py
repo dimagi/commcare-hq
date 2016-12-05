@@ -2,11 +2,13 @@ import logging
 import hashlib
 import re
 import json
+import uuid
 from xml.dom.minidom import parseString
 from couchdbkit import ResourceNotFound
 from django.shortcuts import render
 import itertools
 
+from django.template.loader import render_to_string
 from lxml import etree
 from diff_match_patch import diff_match_patch
 from django.utils.translation import ugettext as _
@@ -372,6 +374,12 @@ def new_form(request, domain, app_id, module_id):
     lang = request.COOKIES.get('lang', app.langs[0])
     name = request.POST.get('name')
     form = app.new_form(module_id, name, lang)
+
+    blank_form = render_to_string("app_manager/blank_form.xml", context={
+        'xmlns': str(uuid.uuid4()).upper(),
+        'name': form.name[lang]
+    })
+    form.source = blank_form
 
     if toggles.APP_MANAGER_V2.enabled(domain):
         case_action = request.POST.get('case_action', 'none')
