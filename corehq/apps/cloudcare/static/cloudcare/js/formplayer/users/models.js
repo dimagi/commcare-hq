@@ -13,7 +13,7 @@ FormplayerFrontend.module("Users.Models", function(Models, FormplayerFrontend, B
 
         trackVersionChange: function(model) {
             window.analytics.workflow(
-                'App preview version changed',
+                '[app-preview] App version changed',
                 {
                     previousVersion: model.previous('versionInfo'),
                     currentVersion: model.get('versionInfo'),
