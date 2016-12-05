@@ -58,10 +58,6 @@ def check_rabbitmq():
         return ServiceStatus(False, "RabbitMQ Not configured")
 
 
-def check_pillowtop():
-    return ServiceStatus(False, "Not implemented")
-
-
 @change_log_level('kafka.client', logging.WARNING)
 def check_kafka():
     client = get_kafka_client_or_none()
@@ -96,10 +92,6 @@ def check_elasticsearch():
     if doc in hits:
         return ServiceStatus(True, "Successfully sent a doc to ES and read it back")
     return ServiceStatus(False, "Something went wrong sending a doc to ES")
-
-
-def check_shared_dir():
-    return ServiceStatus(False, "Not implemented")
 
 
 def check_blobdb():
@@ -190,7 +182,6 @@ def check_formplayer():
 
 
 checks = (
-    check_pillowtop,
     check_kafka,
     check_redis,
     check_postgres,
@@ -199,7 +190,6 @@ checks = (
     check_heartbeat,
     check_touchforms,
     check_elasticsearch,
-    check_shared_dir,
     check_blobdb,
     check_formplayer,
 )
