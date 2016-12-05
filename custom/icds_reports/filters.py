@@ -2,7 +2,7 @@ from datetime import datetime
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.util import load_locs_json
-from corehq.apps.reports.filters.fixtures import AsyncDrillableFilter, AsyncLocationFilter
+from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import MonthFilter
 from dimagi.utils.decorators.memoized import memoized
 
@@ -10,7 +10,9 @@ from dimagi.utils.decorators.memoized import memoized
 def location_hierarchy_config(domain):
     return [
         (loc_type.name, [loc_type.parent_type.name if loc_type.parent_type else None])
-        for loc_type in Domain.get_by_name(domain).location_types if loc_type.code in ['state', 'district', 'block']
+        for loc_type in Domain.get_by_name(
+            domain
+        ).location_types if loc_type.code in ['state', 'district', 'block']
     ]
 
 
