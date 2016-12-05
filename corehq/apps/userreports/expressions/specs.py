@@ -1,5 +1,6 @@
 import json
 from simpleeval import InvalidExpression
+from corehq.apps.locations.document_store import LOCATION_DOC_TYPE
 from corehq.apps.userreports.document_stores import get_document_store
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -180,7 +181,7 @@ class RelatedDocExpressionSpec(JsonObject):
     value_expression = DictProperty(required=True)
 
     def configure(self, doc_id_expression, value_expression):
-        non_couch_doc_types = ('Location')
+        non_couch_doc_types = (LOCATION_DOC_TYPE,)
         if (self.related_doc_type not in non_couch_doc_types
                 and get_db_by_doc_type(self.related_doc_type) is None):
             raise BadSpecError(u'Cannot determine database for document type {}!'.format(self.related_doc_type))
