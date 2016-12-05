@@ -35,7 +35,7 @@ class IcdsBaseReport(CustomProjectReport, ProjectReportParametersMixin, MonthYea
         state = self.request.GET.get('icds_state_id', None)
         district = self.request.GET.get('icds_district_id', None)
         block = self.request.GET.get('icds_state_id', None)
-        location_id = ''
+        location_id = self.request.GET.get('location_id', None)
         if state:
             location_id = state
         if district:
