@@ -32,8 +32,8 @@ class ReadonlyLocationDocumentStore(ReadOnlyDocumentStore):
             yield location.to_json()
 
 
-def publish_location_saved(domain, location_id, is_deletion=False):
-    change_meta = ChangeMeta(
+def get_location_change_meta(domain, location_id, is_deletion=False):
+    return ChangeMeta(
         document_id=location_id,
         data_source_type='location',
         data_source_name='location',
@@ -41,4 +41,8 @@ def publish_location_saved(domain, location_id, is_deletion=False):
         domain=domain,
         is_deletion=is_deletion,
     )
+
+
+def publish_location_saved(domain, location_id, is_deletion=False):
+    change_meta = get_location_change_meta(domain, location_id, is_deletion)
     producer.send_change(topics.LOCATION, change_meta)
