@@ -13,7 +13,6 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.files import file_extention_from_filename
-from soil.exceptions import TaskFailedError
 from django.template.context import RequestContext
 
 from django.contrib import messages
@@ -285,21 +284,22 @@ def excel_commit(request, domain):
 @require_can_edit_data
 def importer_job_poll(request, domain, download_id, template="case_importer/partials/import_status.html"):
     case_upload = CaseUpload.get(download_id)
-    try:
-        task_status = case_upload.get_task_status()
-    except TaskFailedError as e:
+    task_status = case_upload.get_task_status()
+    if task_status.failed():
         context = RequestContext(request)
-        context.update({'error': e.errors, 'url': base.ImportCases.get_url(domain=domain)})
+        context.update({'error': task_status.error, 'url': base.ImportCases.get_url(domain=domain)})
         return render_to_response('case_importer/partials/import_error.html', context_instance=context)
     else:
         context = RequestContext(request)
+        from soil.heartbeat import heartbeat_enabled, is_alive
+
         context.update({
             'result': task_status.result,
             'error': task_status.error,
-            'is_ready': task_status.is_ready,
-            'is_alive': task_status.is_alive,
+            'is_ready': task_status.success(),
             'progress': task_status.progress,
             'download_id': case_upload.upload_id,
+            'is_alive': is_alive() if heartbeat_enabled() else True,
         })
         context['url'] = base.ImportCases.get_url(domain=domain)
         return render_to_response(template, context_instance=context)

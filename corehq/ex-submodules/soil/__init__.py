@@ -126,8 +126,8 @@ class DownloadBase(object):
 
     @property
     def task(self):
-        from celery.task.base import Task
-        return Task.AsyncResult(self.task_id)
+        from soil.util import get_task
+        return get_task(self.task_id)
 
     def get_progress(self):
         task_progress = get_task_progress(self.task)

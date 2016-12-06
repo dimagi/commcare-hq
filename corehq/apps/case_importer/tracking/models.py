@@ -1,13 +1,20 @@
 from django.db import models
 from dimagi.ext import jsonobject
+from dimagi.utils.decorators.memoized import memoized
+from soil.util import get_task
 
 
 class CaseUploadRecord(models.Model):
     domain = models.CharField(max_length=256)
     created = models.DateTimeField(auto_now_add=True)
 
-    upload_id = models.UUIDField()
-    task_id = models.UUIDField()
+    upload_id = models.UUIDField(unique=True)
+    task_id = models.UUIDField(unique=True)
+
+    @property
+    @memoized
+    def task(self):
+        return get_task(self.task_id)
 
 
 class CaseUploadJSON(jsonobject.JsonObject):

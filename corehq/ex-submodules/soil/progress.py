@@ -2,15 +2,31 @@ import logging
 from collections import namedtuple
 from django.conf import settings
 from django.db import IntegrityError
-from soil.exceptions import TaskFailedError
-from soil.heartbeat import heartbeat_enabled, is_alive
+
 
 TaskProgress = namedtuple('TaskProgress',
                           ['current', 'total', 'percent', 'error', 'error_message'])
 
 
-TaskStatus = namedtuple('TaskStatus',
-                        ['result', 'error', 'is_ready', 'is_alive', 'progress'])
+class STATES(object):
+    not_started = 0
+    started = 1
+    success = 2
+    failed = 3
+
+
+class TaskStatus(namedtuple('TaskStatus', ['result', 'error', 'state', 'progress'])):
+    def not_started(self):
+        return self.state == STATES.not_started
+
+    def started(self):
+        return self.state == STATES.started
+
+    def success(self):
+        return self.state == STATES.success
+
+    def failed(self):
+        return self.state == STATES.failed
 
 
 def get_task_progress(task):
@@ -68,10 +84,11 @@ def get_multiple_task_progress(task):
     )
 
 
-def get_task_status(task, require_result=False, is_multiple_download_task=False):
+def get_task_status(task, is_multiple_download_task=False):
     context_result = None
     context_error = None
     is_ready = False
+    failed = False
     if is_multiple_download_task:
         if task.ready():
             context_result, context_error = _get_download_context_multiple_tasks(task)
@@ -79,7 +96,7 @@ def get_task_status(task, require_result=False, is_multiple_download_task=False)
     else:
         try:
             if task.failed():
-                raise TaskFailedError()
+                failed = True
         except (TypeError, NotImplementedError):
             # no result backend / improperly configured
             pass
@@ -89,12 +106,9 @@ def get_task_status(task, require_result=False, is_multiple_download_task=False)
                 result = task.result
                 context_result = result and result.get('messages')
                 if result and result.get('errors'):
-                    raise TaskFailedError(result.get('errors'))
+                    failed = True
+                    context_error = result.get('errors')
         progress = get_task_progress(task)
-
-    alive = True
-    if heartbeat_enabled():
-        alive = is_alive()
 
     def progress_complete():
         return (
@@ -104,13 +118,20 @@ def get_task_status(task, require_result=False, is_multiple_download_task=False)
         )
 
     is_ready = is_ready or progress_complete()
-    if require_result:
-        is_ready = is_ready and context_result is not None
+
+    if failed:
+        state = STATES.failed
+    elif is_ready:
+        state = STATES.success
+    elif progress.percent is None:
+        state = STATES.not_started
+    else:
+        state = STATES.started
+
     return TaskStatus(
+        state=state,
         result=context_result,
         error=context_error,
-        is_ready=is_ready,
-        is_alive=alive,
         progress=progress,
     )
 
