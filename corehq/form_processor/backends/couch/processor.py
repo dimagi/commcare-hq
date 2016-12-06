@@ -117,7 +117,7 @@ class FormProcessorCouch(object):
         sorted_forms = sorted(xforms, key=lambda f: 0 if f.is_deprecated else 1)
         # don't process error forms which are being deprecated since they were never processed in the first place.
         # see http://manage.dimagi.com/default.asp?243382
-        filtered_sorted_forms = filter(lambda form: not (form.is_deprecated and form.is_error), sorted_forms)
+        filtered_sorted_forms = filter(lambda form: not (form.is_deprecated and form.problem), sorted_forms)
         touched_cases = {}
         for xform in filtered_sorted_forms:
             for case_update in get_case_updates(xform):
