@@ -4,7 +4,6 @@ import uuid
 
 from PIL import Image
 from django.db import transaction
-from casexml.apps.case.exceptions import CommCareCaseError
 from casexml.apps.case.xform import get_case_updates
 from corehq.form_processor.backends.sql.dbaccessors import (
     FormAccessorSQL, CaseAccessorSQL, LedgerAccessorSQL
