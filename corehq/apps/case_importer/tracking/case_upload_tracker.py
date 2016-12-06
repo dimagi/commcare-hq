@@ -6,7 +6,7 @@ from soil.util import expose_cached_download
 
 
 class CaseUpload(object):
-    _expiry = 1*60*60
+    _expiry = 1 * 60 * 60
 
     def __init__(self, upload_id):
         self.upload_id = upload_id
