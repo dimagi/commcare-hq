@@ -66,7 +66,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             )
         column = table.c[column]
 
-        query = self.session_helper.Session.query(column).limit(limit + 1).distinct()
+        query = self.session_helper.Session.query(column).order_by(column).limit(limit + 1).distinct()
         result = query.all()
         distinct_values = [x[0] for x in result]
         if len(distinct_values) > limit:

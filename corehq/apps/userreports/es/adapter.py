@@ -104,7 +104,7 @@ class ESAlchemy(object):
     def distinct_values(self, column, size):
         # missing aggregation can be removed on upgrade to ES 2.0
         missing_agg_name = column + '_missing'
-        query = self.es.terms_aggregation(column, column, size=size).size(0)
+        query = self.es.terms_aggregation(column, column, size=size, sort_field="_term").size(0)
         query = query.aggregation(MissingAggregation(missing_agg_name, column))
         results = query.run()
         missing_result = getattr(results.aggregations, missing_agg_name).result
