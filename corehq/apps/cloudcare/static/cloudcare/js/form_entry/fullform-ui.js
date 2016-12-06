@@ -518,6 +518,7 @@ Formplayer.ViewModels.EvaluateXPath = function() {
     self.onClickSelectedXPath = function() {
         if (self.selectedXPath()) {
             self.evaluate(self.selectedXPath());
+            self.selectedXPath('');
         }
     };
     self.onClickSavedQuery = function(query) {
