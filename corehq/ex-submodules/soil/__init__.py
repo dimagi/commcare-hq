@@ -204,7 +204,7 @@ class CachedDownload(DownloadBase):
             # can revisit when loading a whole file into memory becomes a
             # serious concern
             payload = ''.join(payload)
-        download_id = uuid.uuid4().hex
+        download_id = str(uuid.uuid4())
         ret = cls(download_id, **kwargs)
         cache.caches[ret.cache_backend].set(download_id, payload, expiry)
         return ret
