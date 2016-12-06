@@ -1,5 +1,7 @@
 import logging
 
+from django.db.models.query import QuerySet
+
 from dimagi.ext.couchdbkit import Document
 from dimagi.ext.jsonobject import JsonObject
 from django.db.models.signals import post_save
@@ -28,7 +30,12 @@ def model_to_json(instance):
     class DummyObject(JsonObject):
         pass
 
-    return DummyObject(**model_to_dict(instance)).to_json()
+    json_model = model_to_dict(instance)
+    for key, value in json_model.items():
+        if isinstance(value, QuerySet):
+            json_model[key] = list(value)
+
+    return DummyObject(json_model).to_json()
 
 
 def django_audit_save(sender, instance, created, raw=False, **kwargs):
