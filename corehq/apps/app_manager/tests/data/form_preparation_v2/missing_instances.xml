@@ -26,7 +26,7 @@
             <instance src="jr://instance/casedb" id="casedb" />
             <instance src="jr://custom_instance" id="custom1" />
             <bind nodeset="/data/follow_up_intervals" />
-            <bind nodeset="/data/follow_up_intervals/referral_incomplete" calculate="1" />
+            <bind nodeset="/data/follow_up_intervals/referral_incomplete" calculate="instance('casebd')/casedb/case[@case_id = instance('commcaresession')/session/data/case_id]/complete" />
             <bind nodeset="/data/follow_up_intervals/illness_follow_up" calculate="10" />
             <bind nodeset="/data/follow_up_intervals/malnutrition_follow_up" calculate="5" />
             <bind nodeset="/data/update_malnutrition_case" relevant="count(instance('casebd')/casedb/case[@status = 'open'][@case_type = &quot;malnutrition&quot;][index/parent = instance('commcaresession')/session/data/case_id]) &gt; 0" />

@@ -2149,7 +2149,7 @@ def find_missing_instances(form_source):
     return missing_instances, missing_unknown_instance
 
 
-def check_for_missing_instances(form_source, error_meta):
+def check_for_missing_instances(form_source):
     missing_instances, missing_unknown_instances = find_missing_instances(form_source)
     message_parts = []
     if missing_instances:
@@ -2160,6 +2160,7 @@ def check_for_missing_instances(form_source, error_meta):
         message_parts.append(_("Unknown instances: '{}'").format(instance_ids))
 
     if message_parts:
-        error = {'type': 'missing instances', 'validation_message': ' '.join(message_parts)}
-        error.update(error_meta)
-        return error
+        raise XFormValidationError(
+            'The form is missing some instance declarations: h{}'.format(', '.join(message_parts)),
+            validation_problems=[]
+        )

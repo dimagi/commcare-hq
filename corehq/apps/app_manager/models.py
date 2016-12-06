@@ -931,10 +931,6 @@ class FormBase(DocumentSchema):
                     error = {'type': 'validation error', 'validation_message': unicode(e)}
                     error.update(meta)
                     errors.append(error)
-                else:
-                    error = check_for_missing_instances(self.source, meta)
-                    if error:
-                        errors.append(error)
 
         if self.post_form_workflow == WORKFLOW_FORM:
             if not self.form_links:
@@ -995,7 +991,9 @@ class FormBase(DocumentSchema):
     def render_xform(self, build_profile_id=None):
         xform = XForm(self.source)
         self.add_stuff_to_xform(xform, build_profile_id)
-        return xform.render()
+        rendered = xform.render()
+        check_for_missing_instances(rendered)
+        return rendered
 
     @quickcache(['self.source', 'langs', 'include_triggers', 'include_groups', 'include_translations'])
     def get_questions(self, langs, include_triggers=False,
