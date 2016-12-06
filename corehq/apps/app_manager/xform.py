@@ -3,7 +3,7 @@ from functools import wraps
 import logging
 from django.utils.translation import ugettext_lazy as _
 
-import formtranslate
+import formtranslate.api
 from casexml.apps.case.xml import V2_NAMESPACE
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from corehq.apps import nimbus_api
