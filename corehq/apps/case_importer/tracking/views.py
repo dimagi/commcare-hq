@@ -1,5 +1,6 @@
 from corehq.apps.case_importer.tracking.dbaccessors import get_case_uploads
 from corehq.apps.case_importer.views import require_can_edit_data
+from corehq.apps.users.dbaccessors.couch_users import get_display_name_for_user_id
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_request
 from dimagi.utils.web import json_response
@@ -27,7 +28,9 @@ def case_uploads(request, domain):
                 'progress': {
                     'percent': task_status.progress.percent,
                 }
-            }
+            },
+            'user': get_display_name_for_user_id(
+                domain, case_upload.couch_user_id, default='')
         }
 
     case_uploads = [to_user_json(case_upload)

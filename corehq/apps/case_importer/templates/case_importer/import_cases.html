@@ -100,15 +100,15 @@
     <h2>Recent Uploads</h2>
     <div id="recent-uploads" class="ko-template">
         <!--ko if: state() == states.SUCCESS && case_uploads()-->
-        <table class="table">
+        <table class="table table-striped">
             <tr>
-                <th>{% trans "Time" %}</th>
-                <th>{% trans "Status" %}</th>
+                <th class="col-md-4">{% trans "Status" %}</th>
+                <th class="col-md-4">{% trans "Uploaded by" %}</th>
+                <th class="col-md-4">{% trans "Time" %}</th>
             </tr>
             <!--ko foreach: case_uploads-->
             <tr>
-                <td data-bind="text: created"></td>
-                <td>
+                <td class="col-md-4">
                     <!--ko if: task_status.state == $root.states.SUCCESS-->
                     <span class="label label-success">{% trans "Success" %}</span>
                     <!--/ko-->
@@ -129,6 +129,10 @@
                     </div>
                     <!--/ko-->
                 </td>
+                <td class="col-md-4">
+                    <!--ko text: user--><!--/ko-->
+                </td>
+                <td class="col-md-4" data-bind="text: created"></td>
             </tr>
             <!--/ko-->
         </table>

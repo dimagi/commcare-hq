@@ -53,7 +53,7 @@ class CaseUpload(object):
             domain=domain,
             upload_id=self.upload_id,
             task_id=task.task_id,
-
+            couch_user_id=config.couch_user_id,
         ).save()
 
     def get_task_status(self):
