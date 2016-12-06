@@ -287,7 +287,7 @@ class LocationQueriesMixin(object):
         assigned_location_ids = user.get_location_ids(domain)
         if not assigned_location_ids:
             return self.none()  # No locations are assigned to this user
-        return self.all() & SQLLocation.active_objects.get_locations_and_children(assigned_location_ids)
+        return self.all() & SQLLocation.objects.get_locations_and_children(assigned_location_ids)
 
 
 class LocationQuerySet(LocationQueriesMixin, models.query.QuerySet):
@@ -347,8 +347,8 @@ class LocationManager(LocationQueriesMixin, TreeManager):
         Takes a set of location ids and returns a django queryset of those
         locations and their children.
         """
-        return SQLLocation.objects.get_queryset_descendants(
-            SQLLocation.objects.filter(location_id__in=location_ids),
+        return self.get_queryset_descendants(
+            self.filter(location_id__in=location_ids),
             include_self=True
         )
 
