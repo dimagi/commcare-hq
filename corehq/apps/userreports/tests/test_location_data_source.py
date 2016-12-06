@@ -1,11 +1,13 @@
 import uuid
 from django.test import TestCase
+from kafka.common import KafkaUnavailableError
 from pillowtop.feed.interface import Change
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.document_store import get_location_change_meta
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.locations.tests.util import delete_all_locations
+from corehq.util.test_utils import trap_extra_setup
 
 from corehq.apps.userreports.app_manager import _clean_table_name
 from corehq.apps.userreports.models import DataSourceConfiguration
@@ -46,6 +48,8 @@ class TestLocationDataSource(TestCase):
 
         self.pillow = get_kafka_ucr_pillow()
         self.pillow.bootstrap(configs=[self.data_source_config])
+        with trap_extra_setup(KafkaUnavailableError):
+            self.pillow.get_change_feed().get_current_offsets()
 
     def tearDown(self):
         self.domain_obj.delete()
@@ -55,17 +59,6 @@ class TestLocationDataSource(TestCase):
     def _make_loc(self, name, location_type):
         return SQLLocation.objects.create(
             domain=self.domain, name=name, site_code=name, location_type=location_type)
-
-    @staticmethod
-    def location_to_change(location, is_deletion=False):
-        change_meta = get_location_change_meta(location.domain, location.location_id, is_deletion)
-        return Change(
-            id=location.location_id,
-            sequence_id='0',
-            deleted=is_deletion,
-            document=location.to_json(),
-            metadata=change_meta,
-        )
 
     def assertDataSourceAccurate(self, expected_locations):
         adapter = get_indicator_adapter(self.data_source_config)
@@ -87,19 +80,20 @@ class TestLocationDataSource(TestCase):
         self.assertDataSourceAccurate(["Westworld", "Sweetwater", "Las Mudas"])
 
         # Insert new location
+        since = self.pillow.get_change_feed().get_current_offsets()
         blood_arroyo = self._make_loc("Blood Arroyo", self.town)
-        self.pillow.process_change(self.location_to_change(blood_arroyo))
-        self.assertDataSourceAccurate(["Westworld", "Sweetwater", "Las Mudas", "Blood Arroyo"])
 
         # Change an existing location
         sweetwater.name = "Pariah"
         sweetwater.save()
-        self.pillow.process_change(self.location_to_change(sweetwater))
+
+        # Process both changes together and verify that they went through
+        self.pillow.process_changes(since=since, forever=False)
         self.assertDataSourceAccurate(["Westworld", "Pariah", "Las Mudas", "Blood Arroyo"])
 
         # Delete a location
-        change = self.location_to_change(las_mudas, is_deletion=True)
+        since = self.pillow.get_change_feed().get_current_offsets()
         las_mudas.delete()
-        self.pillow.process_change(change)
+        self.pillow.process_changes(since=since, forever=False)
         # No actual change - deletions are not yet processed
         self.assertDataSourceAccurate(["Westworld", "Pariah", "Las Mudas", "Blood Arroyo"])
