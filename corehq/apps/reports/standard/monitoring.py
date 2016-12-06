@@ -397,7 +397,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             rows.sort(key=lambda row: row.user.raw_username)
 
         self.total_row = self._total_row
-        if len(rows) == self.pagination.count:
+        if len(rows) <= self.pagination.count:
             return map(self._format_row, rows)
         else:
             start = self.pagination.start
