@@ -2129,3 +2129,37 @@ def infer_vellum_type(control, bind):
         })
         return None
     return result['name']
+
+
+def find_missing_instances(form_source):
+    from corehq.apps.app_manager.suite_xml.post_process.instances import get_all_instances_referenced_in_xpaths
+    instance_declaration_re = r"""<instance.*id=\"([\w\-:]+)\""""
+    instance_declarations = set(re.findall(instance_declaration_re, form_source))
+
+    missing_instances = set()
+    missing_unknown_instance = set()
+    instances, unknown_instance_ids = get_all_instances_referenced_in_xpaths('', [form_source])
+    for instance in instances:
+        if instance.id not in instance_declarations:
+            missing_instances.add(instance.id)
+    for instance_id in unknown_instance_ids:
+        if instance_id not in instance_declarations:
+            missing_unknown_instance.add(instance_id)
+
+    return missing_instances, missing_unknown_instance
+
+
+def check_for_missing_instances(form_source, error_meta):
+    missing_instances, missing_unknown_instances = find_missing_instances(form_source)
+    message_parts = []
+    if missing_instances:
+        instance_ids = "','".join(missing_instances)
+        message_parts.append(_("Known instances: '{}'").format(instance_ids))
+    if missing_unknown_instances:
+        instance_ids = "','".join(missing_unknown_instances)
+        message_parts.append(_("Unknown instances: '{}'").format(instance_ids))
+
+    if message_parts:
+        error = {'type': 'missing instances', 'validation_message': ' '.join(message_parts)}
+        error.update(error_meta)
+        return error
