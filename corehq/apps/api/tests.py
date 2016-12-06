@@ -18,6 +18,8 @@ from tastypie.resources import Resource
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import post_case_blocks
+
+from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.api.models import ESCase, ESXFormInstance
 from corehq.apps.userreports.models import ReportConfiguration, \
     DataSourceConfiguration
@@ -95,15 +97,7 @@ class FakeXFormES(object):
         return doc
 
 
-def set_up_subscription(cls):
-    cls.account = BillingAccount.get_or_create_account_by_domain(cls.domain.name, created_by="automated-test")[0]
-    plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.ADVANCED)
-    cls.subscription = Subscription.new_domain_subscription(cls.account, cls.domain.name, plan)
-    cls.subscription.is_active = True
-    cls.subscription.save()
-
-
-class APIResourceTest(TestCase):
+class APIResourceTest(TestCase, DomainSubscriptionMixin):
     """
     Base class for shared API tests. Sets up a domain and user and provides
     some helper methods and properties for accessing the API
@@ -123,7 +117,7 @@ class APIResourceTest(TestCase):
         cls.user = WebUser.create(cls.domain.name, cls.username, cls.password)
         cls.user.set_role(cls.domain.name, 'admin')
         cls.user.save()
-        set_up_subscription(cls)
+        cls.setup_subscription(cls.domain.name, SoftwarePlanEdition.ADVANCED)
         cls.domain = Domain.get(cls.domain._id)
         cls.api_key, _ = ApiKey.objects.get_or_create(user=WebUser.get_django_user(cls.user))
 
@@ -138,13 +132,7 @@ class APIResourceTest(TestCase):
     def tearDownClass(cls):
         cls.user.delete()
 
-        SubscriptionAdjustment.objects.all().delete()
-
-        if cls.subscription:
-            cls.subscription.delete()
-
-        if cls.account:
-            cls.account.delete()
+        cls.teardown_subscription()
 
         for domain in Domain.get_all():
             domain.delete()
@@ -1505,7 +1493,8 @@ class TestBulkUserAPI(APIResourceTest):
         cls.fake_user_es = FakeUserES()
         v0_5.MOCK_BULK_USER_ES = cls.mock_es_wrapper
         cls.make_users()
-        set_up_subscription(cls)
+        cls.setup_subscription(cls.domain.name, SoftwarePlanEdition.ADVANCED)
+
         cls.domain = Domain.get(cls.domain._id)
 
         django_user = WebUser.get_django_user(cls.user)
@@ -1514,13 +1503,8 @@ class TestBulkUserAPI(APIResourceTest):
     @classmethod
     def tearDownClass(cls):
         cls.user.delete()
-        SubscriptionAdjustment.objects.all().delete()
 
-        if cls.subscription:
-            cls.subscription.delete()
-
-        if cls.account:
-            cls.account.delete()
+        cls.teardown_subscription()
 
         for domain in Domain.get_all():
             domain.delete()
