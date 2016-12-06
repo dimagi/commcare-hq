@@ -24,6 +24,7 @@ from corehq.apps.app_manager.models import (
 from .test_form_versioning import BLANK_TEMPLATE
 
 
+@patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
 class TestViews(TestCase):
     app = None
     build = None
@@ -53,7 +54,7 @@ class TestViews(TestCase):
             cls.app.delete()
         cls.domain.delete()
 
-    def test_download_file_bad_xform_404(self):
+    def test_download_file_bad_xform_404(self, mock):
         '''
         This tests that the `download_file` view returns
         HTTP code 404 for XML that cannot be generated...
@@ -79,7 +80,7 @@ class TestViews(TestCase):
                                                                             path='modules-0/forms-0.xml')))
         self.assertEqual(response.status_code, 404)
 
-    def test_edit_commcare_profile(self):
+    def test_edit_commcare_profile(self, mock):
         app = Application.new_app(self.domain.name, "TestApp")
         app.save()
         data = {
@@ -124,7 +125,6 @@ class TestViews(TestCase):
         self.assertEqual(response.status_code, 200)
         return json.loads(response.content)
 
-    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
     def test_basic_app(self, mock):
         module = self.app.add_module(Module.new_module("Module0", "en"))
         form = self.app.new_form(module.id, "Form0", "en", attachment=BLANK_TEMPLATE.format(xmlns='xmlns-0.0'))
@@ -162,7 +162,7 @@ class TestViews(TestCase):
         kwargs['form_id'] = form.id
         self._test_status_codes(['view_form', 'form_source'], kwargs)
 
-    def test_advanced_module(self):
+    def test_advanced_module(self, mock):
         module = self.app.add_module(AdvancedModule.new_module("Module0", "en"))
         self.app.save()
         self._test_status_codes(['view_module'], {
@@ -171,7 +171,7 @@ class TestViews(TestCase):
             'module_id': module.id,
         })
 
-    def test_report_module(self):
+    def test_report_module(self, mockh):
         module = self.app.add_module(ReportModule.new_module("Module0", "en"))
         self.app.save()
         self._test_status_codes(['view_module'], {
@@ -180,7 +180,7 @@ class TestViews(TestCase):
             'module_id': module.id,
         })
 
-    def test_shadow_module(self):
+    def test_shadow_module(self, mockh):
         module = self.app.add_module(ShadowModule.new_module("Module0", "en"))
         self.app.save()
         self._test_status_codes(['view_module'], {
@@ -189,7 +189,7 @@ class TestViews(TestCase):
             'module_id': module.id,
         })
 
-    def test_careplan_module(self):
+    def test_careplan_module(self, mock):
         target_module = self.app.add_module(Module.new_module("Module0", "en"))
         target_module.case_type = 'person'
 
@@ -202,7 +202,7 @@ class TestViews(TestCase):
             'module_id': module.id,
         })
 
-    def test_dashboard(self):
+    def test_dashboard(self, mock):
         self._test_status_codes(['dashboard_new_user'], {
             'domain': self.domain.name,
         })
