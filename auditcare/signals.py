@@ -35,7 +35,7 @@ def model_to_json(instance):
         if isinstance(value, QuerySet):
             json_model[key] = list(value)
 
-    return DummyObject(json_model).to_json()
+    return DummyObject(**json_model).to_json()
 
 
 def django_audit_save(sender, instance, created, raw=False, **kwargs):
