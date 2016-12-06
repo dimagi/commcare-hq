@@ -369,15 +369,16 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
     @property
     def rows(self):
-        def _fill_out_buckets(buckets, rows):
+        def _unmatched_buckets(buckets):
+            # ES doesn't return buckets that don't have any docs matching docs
+            # we expect a bucket for each relevant user id so add empty buckets
             returned_user_ids = {b.key for b in buckets}
             not_returned_user_ids = set(self.paginated_user_ids) - returned_user_ids
             extra_rows = []
             for user_id in not_returned_user_ids:
                 extra_rows.append(self.Row(self, self.users_by_id[user_id], {}))
             extra_rows.sort(key=lambda row: row.user.raw_username)
-            rows.extend(extra_rows)
-            return rows
+            return extra_rows
 
         es_results = self.es_queryset(
             user_ids=self.paginated_user_ids,
@@ -391,7 +392,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             user = self.users_by_id[bucket.key]
             rows.append(self.Row(self, user, bucket))
 
-        rows = _fill_out_buckets(buckets, rows)
+        rows.extend(_unmatched_buckets(buckets))
         if self.should_sort_by_username:
             # ES handles sorting for all other columns
             rows.sort(key=lambda row: row.user.raw_username)
