@@ -4,6 +4,7 @@ import uuid
 
 from PIL import Image
 from django.db import transaction
+from casexml.apps.case.exceptions import CommCareCaseError
 from casexml.apps.case.xform import get_case_updates
 from corehq.form_processor.backends.sql.dbaccessors import (
     FormAccessorSQL, CaseAccessorSQL, LedgerAccessorSQL
@@ -171,7 +172,12 @@ class FormProcessorSQL(object):
             for xform in xforms:
                 if xform.is_deprecated:
                     deprecated_form = xform
-                affected_cases.update(case_update.id for case_update in get_case_updates(xform))
+                if not (xform.is_deprecated and xform.problem):
+                    # don't process deprecatd forms which have errors.
+                    # see http://manage.dimagi.com/default.asp?243382 for context.
+                    # note that we have to use .problem instead of .is_error because applying
+                    # the state=DEPRECATED overrides state=ERROR
+                    affected_cases.update(case_update.id for case_update in get_case_updates(xform))
 
             rebuild_detail = FormEditRebuild(deprecated_form_id=deprecated_form.form_id)
             for case_id in affected_cases:
