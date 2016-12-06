@@ -81,7 +81,6 @@
         });
         {% if show_live_preview %}
             var previewApp = hqImport('app_manager/js/preview_app.js');
-            previewApp.configureAnalytics({{ is_onboarding_domain|JSON }}, _kmq, analytics);
             previewApp.initPreviewWindow(hqLayout);
         {% endif %}
 
