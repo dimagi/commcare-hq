@@ -136,7 +136,7 @@ from .exceptions import (
     ScheduleError,
     CaseXPathValidationError,
     UserCaseXPathValidationError,
-)
+    XFormValidationFailed)
 from corehq.apps.reports.daterange import get_daterange_start_end_dates, get_simple_dateranges
 from jsonpath_rw import jsonpath, parse
 
@@ -931,6 +931,8 @@ class FormBase(DocumentSchema):
                     error = {'type': 'validation error', 'validation_message': unicode(e)}
                     error.update(meta)
                     errors.append(error)
+                except XFormValidationFailed:
+                    pass  # ignore this here as it gets picked up in other places
 
         if self.post_form_workflow == WORKFLOW_FORM:
             if not self.form_links:
@@ -5319,6 +5321,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             form = form_stuff['form']
             try:
                 files[filename] = self.fetch_xform(form=form, build_profile_id=build_profile_id)
+            except XFormValidationFailed:
+                raise XFormException(_('Unable to validate the forms due to a server error. '
+                                       'Please try again later.'))
             except XFormException as e:
                 raise XFormException(_('Error in form "{}": {}').format(trans(form.name), unicode(e)))
         return files

@@ -15,7 +15,7 @@ from corehq.apps.nimbus_api.exceptions import NimbusAPIException
 from corehq.util.view_utils import get_request
 from dimagi.utils.decorators.memoized import memoized
 from .xpath import CaseIDXPath, session_var, CaseTypeXpath, QualifiedScheduleFormXPath
-from .exceptions import XFormException, CaseError, XFormValidationError, BindNotFound
+from .exceptions import XFormException, CaseError, XFormValidationError, BindNotFound, XFormValidationFailed
 import collections
 import re
 
@@ -548,7 +548,7 @@ def validate_xform(source):
     try:
         validation_results = nimbus_api.validate_form(source)
     except NimbusAPIException:
-        return
+        raise XFormValidationFailed("Unable to validate form")
 
     if not validation_results.success:
         raise XFormValidationError(
