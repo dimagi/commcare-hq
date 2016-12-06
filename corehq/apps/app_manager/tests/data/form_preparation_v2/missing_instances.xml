@@ -21,9 +21,7 @@
                         </update_referral_case>
                     </update_malnutrition_case>
                 </data>
-            </instance>
-            <instance src="jr://instance/session" id="commcaresession" />
-            <instance src="jr://instance/casedb" id="casedb" />
+            </instance><instance id="commcaresession" src="jr://instance/session"/><instance id="casedb" src="jr://instance/casedb"/>
             <instance src="jr://custom_instance" id="custom1" />
             <bind nodeset="/data/follow_up_intervals" />
             <bind nodeset="/data/follow_up_intervals/referral_incomplete" calculate="instance('casebd')/casedb/case[@case_id = instance('commcaresession')/session/data/case_id]/complete" />

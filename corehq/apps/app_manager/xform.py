@@ -2133,7 +2133,7 @@ def infer_vellum_type(control, bind):
 
 def find_missing_instances(form_source):
     from corehq.apps.app_manager.suite_xml.post_process.instances import get_all_instances_referenced_in_xpaths
-    instance_declaration_re = r"""<instance.*id=\"([\w\-:]+)\""""
+    instance_declaration_re = r"""<instance[^>]*id=\"([\w\-:]+)\""""
     instance_declarations = set(re.findall(instance_declaration_re, form_source))
 
     missing_instances = set()
