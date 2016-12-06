@@ -473,6 +473,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         if self.sort_column:
             order = "desc" if self.pagination.desc else "asc"
             top_level_aggregation = top_level_aggregation.order(self.sort_column, order)
+            top_level_aggregation = top_level_aggregation.order("_term", order, reset=False)
 
         query = (
             case_es.CaseES()
