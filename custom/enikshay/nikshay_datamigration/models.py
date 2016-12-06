@@ -1,7 +1,7 @@
 from django.db import models
 
 
-class APatientDetail(models.Model):
+class PatientDetail(models.Model):
     PregId = models.CharField(max_length=255, primary_key=True) # need to remove trailing whitespace in Excel
     scode = models.CharField(max_length=255, null=True, default='default')
     Dtocode = models.CharField(max_length=255, null=True)
@@ -89,7 +89,7 @@ class APatientDetail(models.Model):
 
 
 class Outcome(models.Model):
-    PatientId = models.OneToOneField(APatientDetail, primary_key=True)
+    PatientId = models.OneToOneField(PatientDetail, primary_key=True)
     Outcome = models.CharField(max_length=255, null=True)
     OutcomeDate = models.CharField(max_length=255, null=True)
     MO = models.CharField(max_length=255, null=True)
@@ -108,7 +108,7 @@ class Outcome(models.Model):
 
 class Followup(models.Model):
     id = models.AutoField(primary_key=True)
-    PatientID = models.ForeignKey(APatientDetail)  # requires trimming whitespace in excel and moving to end of CSV
+    PatientID = models.ForeignKey(PatientDetail)  # requires trimming whitespace in excel and moving to end of CSV
     IntervalId = models.CharField(max_length=255, null=True)
     TestDate = models.CharField(max_length=255, null=True)
     DMC = models.CharField(max_length=255, null=True)

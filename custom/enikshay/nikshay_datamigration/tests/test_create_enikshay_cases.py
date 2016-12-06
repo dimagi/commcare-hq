@@ -7,7 +7,7 @@ from django.test import TestCase
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from custom.enikshay.nikshay_datamigration.models import Followup, Outcome, APatientDetail
+from custom.enikshay.nikshay_datamigration.models import Followup, Outcome, PatientDetail
 
 
 class TestCreateEnikshayCases(TestCase):
@@ -15,7 +15,7 @@ class TestCreateEnikshayCases(TestCase):
     def setUp(self):
         super(TestCreateEnikshayCases, self).setUp()
 
-        patient_detail = APatientDetail.objects.create(
+        patient_detail = PatientDetail.objects.create(
             PregId='MH-ABD-05-16-0001',
             pname='A B C',
             pgender='M',
@@ -68,7 +68,7 @@ class TestCreateEnikshayCases(TestCase):
         Outcome.objects.all().delete()
         Followup.objects.all().delete()
         # Household.objects.all().delete()
-        APatientDetail.objects.all().delete()
+        PatientDetail.objects.all().delete()
 
         self.domain.delete()
 

@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='APatientDetail',
+            name='PatientDetail',
             fields=[
                 ('PregId', models.CharField(max_length=255, serialize=False, primary_key=True)),
                 ('scode', models.CharField(default=b'default', max_length=255, null=True)),
@@ -64,7 +64,7 @@ class Migration(migrations.Migration):
             name='Followup',
             fields=[
                 ('id', models.AutoField(serialize=False, primary_key=True)),
-                ('PatientID', models.ForeignKey(to='nikshay_datamigration.APatientDetail')),
+                ('PatientID', models.ForeignKey(to='nikshay_datamigration.PatientDetail')),
                 ('IntervalId', models.CharField(max_length=255, null=True)),
                 ('TestDate', models.CharField(max_length=255, null=True)),
                 ('DMC', models.CharField(max_length=255, null=True)),
@@ -81,7 +81,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Outcome',
             fields=[
-                ('PatientId', models.OneToOneField(primary_key=True, serialize=False, to='nikshay_datamigration.APatientDetail')),
+                ('PatientId', models.OneToOneField(primary_key=True, serialize=False, to='nikshay_datamigration.PatientDetail')),
                 ('Outcome', models.CharField(max_length=255, null=True)),
                 ('OutcomeDate', models.CharField(max_length=255, null=True)),
                 ('MO', models.CharField(max_length=255, null=True)),
@@ -101,6 +101,6 @@ class Migration(migrations.Migration):
         # migrations.AddField(
         #     model_name='followup',
         #     name='PatientID',
-        #     field=models.ForeignKey(to='nikshay_datamigration.APatientDetail'),
+        #     field=models.ForeignKey(to='nikshay_datamigration.PatientDetail'),
         # ),
     ]
