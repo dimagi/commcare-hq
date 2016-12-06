@@ -383,7 +383,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
         if self.should_sort_by_username:
             # ES handles sorting for all other columns
-            rows.sort(key=lambda row: row.user)
+            rows.sort(key=lambda row: row.user.raw_username)
 
         self.total_row = self._total_row
         if len(rows) == self.pagination.count:
