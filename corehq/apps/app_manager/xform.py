@@ -2,6 +2,8 @@ from collections import defaultdict, OrderedDict
 from functools import wraps
 import logging
 from django.utils.translation import ugettext_lazy as _
+
+import formtranslate
 from casexml.apps.case.xml import V2_NAMESPACE
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from corehq.apps import nimbus_api
@@ -12,6 +14,7 @@ from corehq.apps.app_manager.const import (
 from lxml import etree as ET
 
 from corehq.apps.nimbus_api.exceptions import NimbusAPIException
+from corehq.toggles import NIMBUS_FORM_VALIDATION
 from corehq.util.view_utils import get_request
 from dimagi.utils.decorators.memoized import memoized
 from .xpath import CaseIDXPath, session_var, CaseTypeXpath, QualifiedScheduleFormXPath
@@ -540,15 +543,18 @@ def autoset_owner_id_for_advanced_action(action):
     return False
 
 
-def validate_xform(source):
+def validate_xform(domain, source):
     if isinstance(source, unicode):
         source = source.encode("utf-8")
     # normalize and strip comments
     source = ET.tostring(parse_xml(source))
-    try:
-        validation_results = nimbus_api.validate_form(source)
-    except NimbusAPIException:
-        raise XFormValidationFailed("Unable to validate form")
+    if NIMBUS_FORM_VALIDATION.enabled(domain):
+        try:
+            validation_results = nimbus_api.validate_form(source)
+        except NimbusAPIException:
+            raise XFormValidationFailed("Unable to validate form")
+    else:
+        validation_results = formtranslate.api.validate(source)
 
     if not validation_results.success:
         raise XFormValidationError(
@@ -578,10 +584,6 @@ class XForm(WrappedNode):
 
     def __str__(self):
         return ET.tostring(self.xml) if self.xml is not None else ''
-
-    def validate(self):
-        validate_xform(ET.tostring(self.xml) if self.xml is not None else '')
-        return self
 
     @property
     @raise_if_none("Can't find <model>")

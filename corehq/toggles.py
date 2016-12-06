@@ -955,3 +955,11 @@ DATA_DICTIONARY = StaticToggle(
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
+
+NIMBUS_FORM_VALIDATION = PredictablyRandomToggle(
+    'nimbus_form_validation',
+    'Use Nimbus to validate XForms',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+    randomness=0.1
+)
