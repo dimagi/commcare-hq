@@ -98,9 +98,4 @@ class Migration(migrations.Migration):
                 ('OutcomeDate1', models.CharField(max_length=255, null=True)),
             ],
         ),
-        # migrations.AddField(
-        #     model_name='followup',
-        #     name='PatientID',
-        #     field=models.ForeignKey(to='nikshay_datamigration.PatientDetail'),
-        # ),
     ]
