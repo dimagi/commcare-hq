@@ -942,6 +942,13 @@ APP_MANAGER_V2 = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+SHOW_PREVIEW_APP_SETTINGS = StaticToggle(
+    'preview_app_settings',
+    'Show preview app settings button',
+    TAG_PRODUCT_CORE,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
 DATA_MIGRATION = StaticToggle(
     'data_migration',
     'Disable submissions and restores during a data migration',
