@@ -4,6 +4,8 @@ import re
 
 from django.core.urlresolvers import reverse
 from django.test import TestCase
+from mock import patch
+
 from corehq.apps.app_manager.tests.util import add_build
 from corehq.apps.app_manager.util import new_careplan_module
 from corehq.apps.app_manager.views import AppSummaryView
@@ -122,7 +124,8 @@ class TestViews(TestCase):
         self.assertEqual(response.status_code, 200)
         return json.loads(response.content)
 
-    def test_basic_app(self):
+    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+    def test_basic_app(self, mock):
         module = self.app.add_module(Module.new_module("Module0", "en"))
         form = self.app.new_form(module.id, "Form0", "en", attachment=BLANK_TEMPLATE.format(xmlns='xmlns-0.0'))
         self.app.save()
