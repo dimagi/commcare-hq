@@ -369,6 +369,13 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
     @property
     def rows(self):
+        def _fill_out_buckets(buckets, rows):
+            returned_user_ids = {b.key for b in buckets}
+            not_returned_user_ids = set(self.paginated_user_ids) - returned_user_ids
+            for user_id in not_returned_user_ids:
+                rows.append(self.Row(self, self.users_by_id[user_id], {}))
+            return rows
+
         es_results = self.es_queryset(
             user_ids=self.paginated_user_ids,
             size=self.pagination.start + self.pagination.count
@@ -381,6 +388,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             user = self.users_by_id[bucket.key]
             rows.append(self.Row(self, user, bucket))
 
+        rows = _fill_out_buckets(buckets, rows)
         if self.should_sort_by_username:
             # ES handles sorting for all other columns
             rows.sort(key=lambda row: row.user.raw_username)
