@@ -372,8 +372,11 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         def _fill_out_buckets(buckets, rows):
             returned_user_ids = {b.key for b in buckets}
             not_returned_user_ids = set(self.paginated_user_ids) - returned_user_ids
+            extra_rows = []
             for user_id in not_returned_user_ids:
-                rows.append(self.Row(self, self.users_by_id[user_id], {}))
+                extra_rows.append(self.Row(self, self.users_by_id[user_id], {}))
+            extra_rows.sort(key=lambda row: row.user.raw_username)
+            rows.extend(extra_rows)
             return rows
 
         es_results = self.es_queryset(
