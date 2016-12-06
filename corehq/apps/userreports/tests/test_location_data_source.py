@@ -1,10 +1,8 @@
 import uuid
 from django.test import TestCase
 from kafka.common import KafkaUnavailableError
-from pillowtop.feed.interface import Change
 
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.locations.document_store import get_location_change_meta
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.locations.tests.util import delete_all_locations
 from corehq.util.test_utils import trap_extra_setup
@@ -81,7 +79,7 @@ class TestLocationDataSource(TestCase):
 
         # Insert new location
         since = self.pillow.get_change_feed().get_current_offsets()
-        blood_arroyo = self._make_loc("Blood Arroyo", self.town)
+        self._make_loc("Blood Arroyo", self.town)
 
         # Change an existing location
         sweetwater.name = "Pariah"
