@@ -47,7 +47,7 @@ domain_specific = [
     url(r'^api/', include('corehq.apps.api.urls')),
     # the receiver needs to accept posts at an endpoint that might
     # not have a slash, so don't include it at the root urlconf
-    url(r'^receiver', include('corehq.apps.receiverwrapper.urls')),
+    url(r'^receiver/', include('corehq.apps.receiverwrapper.urls')),
     url(r'^settings/', include(settings_domain_specific)),
     url(r'^users/', include(users_redirect)),
     url(r'^domain/', include(domain_redirect)),

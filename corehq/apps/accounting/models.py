@@ -1259,8 +1259,8 @@ class Subscription(models.Model):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
         today = datetime.date.today()
-        assert is_active_subscription(self.date_start, self.date_end, today=today) and self.is_active
-        assert date_end is None or date_end > today
+        assert self.is_active
+        assert date_end is None or date_end >= today
 
         self.date_end = today
         if self.date_delay_invoicing is not None and self.date_delay_invoicing > today:

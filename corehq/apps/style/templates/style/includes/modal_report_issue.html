@@ -17,6 +17,11 @@
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{% trans 'Close' %}</span></button>
                     <h4 class="modal-title">{% trans "Report an Issue with CommCare HQ" %}</h4>
+                    <br/>
+                    <p>
+                        <b>{% trans "Please submit this report from page where issue is occurring" %}</b>
+                    </p>
+
                 </div>
                 <div class="modal-body">
                     <div class="form-horizontal">
@@ -42,7 +47,7 @@
                                           class="form-control"
                                           id="bug-report-message"
                                           rows="3"
-                                          placeholder="{% trans "Please try to include as much information as possible." %}"></textarea>
+                                          placeholder="{% trans "Please describe the issue and list any steps you took to see this issue." %}"></textarea>
                             </div>
                         </div>
 

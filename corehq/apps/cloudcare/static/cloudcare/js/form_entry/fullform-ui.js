@@ -460,6 +460,7 @@ Formplayer.ViewModels.CloudCareDebugger = function() {
             self.formattedQuestionsHtml(resp.formattedQuestions);
             self.instanceXml(resp.instanceXml);
             self.evalXPath.autocomplete(resp.questionList);
+            self.evalXPath.recentXPathQueries(resp.recentXPathQueries || []);
         });
     });
 
@@ -506,15 +507,37 @@ Formplayer.ViewModels.CloudCareDebugger = function() {
 Formplayer.ViewModels.EvaluateXPath = function() {
     var self = this;
     self.xpath = ko.observable('');
+    self.selectedXPath = ko.observable('');
+    self.recentXPathQueries = ko.observableArray();
     self.$xpath = null;
     self.result = ko.observable('');
     self.success = ko.observable(true);
-    self.evaluate = function(form) {
+    self.onSubmitXPath = function() {
+        self.evaluate(self.xpath());
+    };
+    self.onClickSelectedXPath = function() {
+        if (self.selectedXPath()) {
+            self.evaluate(self.selectedXPath());
+        }
+    };
+    self.onClickSavedQuery = function(query) {
+        self.xpath(query.xpath);
+    };
+    self.evaluate = function(xpath) {
         var callback = function(result, status) {
             self.result(result);
             self.success(status === "accepted");
         };
-        $.publish('formplayer.' + Formplayer.Const.EVALUATE_XPATH, [self.xpath(), callback]);
+        $.publish('formplayer.' + Formplayer.Const.EVALUATE_XPATH, [xpath, callback]);
+    };
+
+    self.isSuccess = function(query) {
+        return query.status === 'accepted';
+    };
+
+    self.onMouseUp = function() {
+        var text = window.getSelection().toString();
+        self.selectedXPath(text);
     };
 
     self.matcher = function(flag, subtext) {
@@ -528,14 +551,15 @@ Formplayer.ViewModels.EvaluateXPath = function() {
     /**
      * Set autocomplete for xpath input.
      *
-     * @param {Array} questionData - List of questions to be autocompleted for the xpath input
+     * @param {Array} autocompleteData - List of questions to be autocompleted for the xpath input
      */
-    self.autocomplete = function(questionData) {
+    self.autocomplete = function(autocompleteData) {
         self.$xpath = $('#xpath');
+        self.$xpath.atwho('destroy');
         self.$xpath.atwho('setIframe', window.frameElement, true);
         self.$xpath.atwho({
             at: '',
-            data: questionData,
+            data: autocompleteData,
             searchKey: 'value',
             maxLen: Infinity,
             displayTpl: function(d) {
