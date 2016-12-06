@@ -89,7 +89,7 @@ class APatientDetail(models.Model):
 
 
 class Outcome(models.Model):
-    PatientId = models.ForeignKey(APatientDetail, primary_key=True)
+    PatientId = models.OneToOneField(APatientDetail, primary_key=True)
     Outcome = models.CharField(max_length=255, null=True)
     OutcomeDate = models.CharField(max_length=255, null=True)
     MO = models.CharField(max_length=255, null=True)

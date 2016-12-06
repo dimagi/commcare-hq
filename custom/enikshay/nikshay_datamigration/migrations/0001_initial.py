@@ -81,7 +81,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Outcome',
             fields=[
-                ('PatientId', models.ForeignKey(primary_key=True, serialize=False, to='nikshay_datamigration.APatientDetail')),
+                ('PatientId', models.OneToOneField(primary_key=True, serialize=False, to='nikshay_datamigration.APatientDetail')),
                 ('Outcome', models.CharField(max_length=255, null=True)),
                 ('OutcomeDate', models.CharField(max_length=255, null=True)),
                 ('MO', models.CharField(max_length=255, null=True)),
