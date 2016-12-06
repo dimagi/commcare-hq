@@ -375,7 +375,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         )
         buckets = es_results.aggregations.users.buckets_list
         if self.missing_users:
-            buckets[None] = es_results.aggregations.missing_users.bucket
+            buckets.append(es_results.aggregations.missing_users.bucket)
         rows = []
         for bucket in buckets:
             user = self.users_by_id[bucket.key]
