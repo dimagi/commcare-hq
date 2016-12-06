@@ -11,6 +11,7 @@ class CaseUploadRecord(models.Model):
     upload_id = models.UUIDField(unique=True)
     task_id = models.UUIDField(unique=True)
     couch_user_id = models.CharField(max_length=256)
+    case_type = models.CharField(max_length=256)
 
     @property
     @memoized
@@ -26,6 +27,7 @@ class CaseUploadJSON(jsonobject.JsonObject):
     upload_id = jsonobject.StringProperty(required=True)
     task_id = jsonobject.StringProperty(required=True)
     couch_user_id = jsonobject.StringProperty(required=True)
+    case_type = jsonobject.StringProperty(required=True)
 
     @classmethod
     def from_model(cls, other):
@@ -35,4 +37,5 @@ class CaseUploadJSON(jsonobject.JsonObject):
             upload_id=unicode(other.upload_id),
             task_id=unicode(other.task_id),
             couch_user_id=other.couch_user_id,
+            case_type=other.case_type,
         )

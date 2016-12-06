@@ -102,13 +102,14 @@
         <!--ko if: state() == states.SUCCESS && case_uploads()-->
         <table class="table table-striped">
             <tr>
-                <th class="col-md-4">{% trans "Status" %}</th>
-                <th class="col-md-4">{% trans "Uploaded by" %}</th>
-                <th class="col-md-4">{% trans "Time" %}</th>
+                <th class="col-md-3">{% trans "Status" %}</th>
+                <th class="col-md-3">{% trans "Case Type" %}</th>
+                <th class="col-md-3">{% trans "Uploaded by" %}</th>
+                <th class="col-md-3">{% trans "Time" %}</th>
             </tr>
             <!--ko foreach: case_uploads-->
             <tr>
-                <td class="col-md-4">
+                <td class="col-md-3">
                     <!--ko if: task_status.state == $root.states.SUCCESS-->
                     <span class="label label-success">{% trans "Success" %}</span>
                     <!--/ko-->
@@ -129,10 +130,13 @@
                     </div>
                     <!--/ko-->
                 </td>
-                <td class="col-md-4">
+                <td class="col-md-3">
+                    <!--ko text: case_type--><!--/ko-->
+                </td>
+                <td class="col-md-3">
                     <!--ko text: user--><!--/ko-->
                 </td>
-                <td class="col-md-4" data-bind="text: created"></td>
+                <td class="col-md-3" data-bind="text: created"></td>
             </tr>
             <!--/ko-->
         </table>

@@ -16,13 +16,12 @@ def case_uploads(request, domain):
         limit = 10
 
     def to_user_json(case_upload):
-        case_upload_json = case_upload.to_json()
         tz = get_timezone_for_request()
-        task_status = get_task_status(get_task(case_upload_json['task_id']))
+        task_status = get_task_status(get_task(case_upload.task_id))
         return {
             'created': ServerTime(case_upload.created).user_time(tz).ui_string(),
-            'domain': case_upload_json['domain'],
-            'upload_id': case_upload_json['upload_id'],
+            'domain': case_upload.domain,
+            'upload_id': case_upload.upload_id,
             'task_status': {
                 'state': task_status.state,
                 'progress': {
@@ -30,7 +29,8 @@ def case_uploads(request, domain):
                 }
             },
             'user': get_display_name_for_user_id(
-                domain, case_upload.couch_user_id, default='')
+                domain, case_upload.couch_user_id, default=''),
+            'case_type': case_upload.case_type,
         }
 
     case_uploads = [to_user_json(case_upload)
