@@ -667,10 +667,10 @@ class FormSource(object):
             app.lazy_put_attachment(old_contents, filename)
             del form['contents']
 
-        try:
-            source = app.lazy_fetch_attachment(filename)
-        except ResourceNotFound:
+        if not app.has_attachment(filename):
             source = ''
+        else:
+            source = app.lazy_fetch_attachment(filename)
 
         return source
 
@@ -4100,6 +4100,9 @@ class LazyBlobDoc(BlobMixin):
         cache.delete(self.__attachment_cache_key(name))
         self._LAZY_ATTACHMENTS_CACHE.pop(name, None)
         return super(LazyBlobDoc, self).put_attachment(content, name, *args, **kw)
+
+    def has_attachment(self, name):
+        return name in self.lazy_list_attachments()
 
     def lazy_put_attachment(self, content, name=None, content_type=None,
                             content_length=None):
