@@ -347,8 +347,8 @@ class LocationManager(LocationQueriesMixin, TreeManager):
         Takes a set of location ids and returns a django queryset of those
         locations and their children.
         """
-        return SQLLocation.objects.get_queryset_descendants(
-            SQLLocation.objects.filter(location_id__in=location_ids),
+        return self.get_queryset_descendants(
+            self.filter(location_id__in=location_ids),
             include_self=True
         )
 
