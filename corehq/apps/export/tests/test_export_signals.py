@@ -1,4 +1,5 @@
 from django.test import TestCase
+from django.core.cache import caches
 
 from corehq.apps.data_dictionary.models import CaseType, CaseProperty
 from corehq.apps.export.tasks import add_inferred_export_properties
@@ -13,6 +14,8 @@ class InferredSchemaSignalTest(TestCase):
     def tearDown(self):
         delete_all_inferred_schemas()
         CaseType.objects.filter(domain=self.domain, name=self.case_type).delete()
+        caches['locmem'].clear()
+        caches['default'].clear()
 
     def _add_props(self, props, num_queries=5):
         # should be 3, but the transaction in tests adds two when creating a case type
@@ -68,3 +71,8 @@ class InferredSchemaSignalTest(TestCase):
         self.assertEqual(len(group_schema.items), 1)
         self.assertEqual(group_schema.items[0].__class__, ExportItem)
         self._check_sql_props(props)
+
+    def test_cache_add_inferred_export_properties(self):
+        props = set(['one', 'two'])
+        self._add_props(props)
+        self._add_props(props, 0)
