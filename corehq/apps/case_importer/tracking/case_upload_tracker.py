@@ -1,10 +1,9 @@
+from corehq.apps.case_importer.exceptions import ImporterRefError
+from corehq.apps.case_importer.tracking.filestorage import transient_file_store
 from corehq.apps.case_importer.tracking.models import CaseUploadRecord
 from corehq.apps.case_importer.util import open_spreadsheet_download_ref, get_spreadsheet
-from corehq.util.files import file_extention_from_filename
 from dimagi.utils.decorators.memoized import memoized
-from soil import DownloadBase
 from soil.progress import get_task_status
-from soil.util import expose_cached_download
 
 
 class CaseUpload(object):
@@ -15,10 +14,8 @@ class CaseUpload(object):
 
     @classmethod
     def create(cls, file_object, filename):
-        file_extension = file_extention_from_filename(filename)
-        soil_download = expose_cached_download(
-            file_object.read(), expiry=cls._expiry, file_extension=file_extension)
-        return cls(soil_download.download_id)
+        upload_id = transient_file_store.write_file(file_object, filename)
+        return cls(upload_id)
 
     @classmethod
     def get(cls, upload_id):
@@ -26,16 +23,11 @@ class CaseUpload(object):
 
     @property
     @memoized
-    def _soil_download(self):
-        return DownloadBase.get(self.upload_id)
-
-    @property
-    @memoized
     def _case_upload_record(self):
         return CaseUploadRecord.objects.get(upload_id=self.upload_id)
 
-    def get_filename(self):
-        return self._soil_download.get_filename()
+    def get_tempfile(self):
+        return transient_file_store.get_tempfile(self.upload_id)
 
     def check_file(self, named_columns):
         """
@@ -43,10 +35,13 @@ class CaseUpload(object):
 
         :raise ImporterError subtypes
         """
-        open_spreadsheet_download_ref(self._soil_download, named_columns)
+        tempfile = self.get_tempfile()
+        if not tempfile:
+            raise ImporterRefError('file not found in cache')
+        open_spreadsheet_download_ref(tempfile, named_columns)
 
     def get_spreadsheet(self, named_columns):
-        return get_spreadsheet(self.get_filename(), named_columns)
+        return get_spreadsheet(self.get_tempfile(), named_columns)
 
     def trigger_upload(self, domain, config):
         from corehq.apps.case_importer.tasks import bulk_import_async
