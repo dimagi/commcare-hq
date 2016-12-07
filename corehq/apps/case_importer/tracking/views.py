@@ -26,7 +26,8 @@ def case_uploads(request, domain):
                 'state': task_status.state,
                 'progress': {
                     'percent': task_status.progress.percent,
-                }
+                },
+                'result': task_status.result
             },
             'user': get_display_name_for_user_id(
                 domain, case_upload.couch_user_id, default=''),

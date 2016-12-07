@@ -102,16 +102,22 @@
         <!--ko if: state() == states.SUCCESS && case_uploads()-->
         <table class="table table-striped">
             <tr>
-                <th class="col-md-3">{% trans "Status" %}</th>
-                <th class="col-md-3">{% trans "Case Type" %}</th>
-                <th class="col-md-3">{% trans "Uploaded by" %}</th>
-                <th class="col-md-3">{% trans "Time" %}</th>
+                <th class="col-md-2">{% trans "Status" %}</th>
+                <th class="col-md-1">{% trans "Case Type" %}</th>
+                <th class="col-md-1">{% trans "Uploaded by" %}</th>
+                <th class="col-md-6">{% trans "Success Message" %}</th>
+                <th class="col-md-2">{% trans "Time" %}</th>
             </tr>
             <!--ko foreach: case_uploads-->
             <tr>
-                <td class="col-md-3">
+                <td class="col-md-2">
                     <!--ko if: task_status.state == $root.states.SUCCESS-->
-                    <span class="label label-success">{% trans "Success" %}</span>
+                        <!--ko if: _.isEmpty(task_status.result.errors)-->
+                        <span class="label label-success">{% trans "Success" %}</span>
+                        <!--/ko-->
+                        <!--ko if: !_.isEmpty(task_status.result.errors)-->
+                        <span class="label label-warning">{% trans "Success with warnings" %}</span>
+                        <!--/ko-->
                     <!--/ko-->
                     <!--ko if: task_status.state == $root.states.FAILED-->
                     <span class="label label-danger">{% trans "Failed" %}</span>
@@ -130,13 +136,16 @@
                     </div>
                     <!--/ko-->
                 </td>
-                <td class="col-md-3">
+                <td class="col-md-1">
                     <!--ko text: case_type--><!--/ko-->
                 </td>
-                <td class="col-md-3">
+                <td class="col-md-1">
                     <!--ko text: user--><!--/ko-->
                 </td>
-                <td class="col-md-3" data-bind="text: created"></td>
+                <td class="col-md-6" data-bind="with: task_status">
+                    {% include 'case_importer/partials/ko_import_status.html' %}
+                </td>
+                <td class="col-md-2" data-bind="text: created"></td>
             </tr>
             <!--/ko-->
         </table>
