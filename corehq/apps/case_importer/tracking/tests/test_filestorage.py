@@ -1,19 +1,34 @@
 from django.test import TestCase
-from corehq.apps.case_importer.tracking.filestorage import write_case_import_file, \
-    read_case_import_file
+from corehq.apps.case_importer.tracking.filestorage import transient_file_store, persistent_file_store
 
 
 class FilestorageTest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.filename = '/tmp/test_file.txt'
+        cls.content = 'this is the message\n'
 
-    def test_write_read_from_file(self):
-        filename = '/tmp/test_file.txt'
-        content = 'this is the message\n'
+        with open(cls.filename, 'w') as f:
+            f.write(cls.content)
 
-        with open(filename, 'w') as f:
-            f.write(content)
+    @classmethod
+    def tearDownClass(cls):
+        pass
 
-        with open(filename, 'r') as f:
-            identifier = write_case_import_file(f)
+    def test_transient(self):
+        with open(self.filename, 'r') as f:
+            identifier = transient_file_store.write_file(f)
 
-        self.assertEqual(read_case_import_file(identifier).read(), content)
-        self.assertEqual(''.join(read_case_import_file(identifier)), content)
+        tmpfile = transient_file_store.get_filename(identifier, 'txt')
+
+        with open(tmpfile) as f:
+            self.assertEqual(f.read(), self.content)
+
+    def test_persistent(self):
+        with open(self.filename, 'r') as f:
+            identifier = persistent_file_store.write_file(f)
+
+        tmpfile = persistent_file_store.get_filename(identifier, 'txt')
+
+        with open(tmpfile) as f:
+            self.assertEqual(f.read(), self.content)
