@@ -126,8 +126,8 @@ class DownloadBase(object):
 
     @property
     def task(self):
-        from celery.task.base import Task
-        return Task.AsyncResult(self.task_id)
+        from soil.util import get_task
+        return get_task(self.task_id)
 
     def get_progress(self):
         task_progress = get_task_progress(self.task)
@@ -204,7 +204,7 @@ class CachedDownload(DownloadBase):
             # can revisit when loading a whole file into memory becomes a
             # serious concern
             payload = ''.join(payload)
-        download_id = uuid.uuid4().hex
+        download_id = str(uuid.uuid4())
         ret = cls(download_id, **kwargs)
         cache.caches[ret.cache_backend].set(download_id, payload, expiry)
         return ret
