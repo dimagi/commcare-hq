@@ -112,14 +112,15 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
                 prime_offset += 1
 
         search_id = importer_util.parse_search_id(config, columns, row)
-        if config.search_field == 'external_id' and not search_id:
-            # do not allow blank external id since we save this
-            errors.add(ImportErrors.BlankExternalId, i + 1)
-            continue
 
         fields_to_update = importer_util.populate_updated_fields(config, columns, row)
         if not any(fields_to_update.values()):
             # if the row was blank, just skip it, no errors
+            continue
+
+        if config.search_field == 'external_id' and not search_id:
+            # do not allow blank external id since we save this
+            errors.add(ImportErrors.BlankExternalId, i + 1)
             continue
 
         external_id = fields_to_update.pop('external_id', None)
