@@ -28,4 +28,4 @@ class TestRealBuild(SimpleTestCase):
         app.create_all_files()
 
     def test_real_build(self):
-        self.fetch_and_build_app('adra-asotry-spce', '7c162ad69c378e7e47c0a5aa4531d277')
+        self.fetch_and_build_app('commcare-tests', 'ae3c6e073262360f89d2630cfd220bd3')
