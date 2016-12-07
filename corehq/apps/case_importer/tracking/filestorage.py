@@ -54,7 +54,10 @@ class TransientFileStore(object):
 
     @memoized
     def get_tempfile(self, identifier):
-        filename, content = self._cache.get(self._get_key(identifier))
+        try:
+            filename, content = self._cache.get(self._get_key(identifier))
+        except (TypeError, ValueError):
+            return None
         suffix = file_extention_from_filename(filename)
         return make_temp_file(content, suffix)
 
