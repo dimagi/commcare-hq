@@ -4,6 +4,7 @@ from corehq.apps.locations.models import Location, SQLLocation
 from corehq.apps.locations.const import LOCATION_TYPE_SHEET_HEADERS, LOCATION_SHEET_HEADERS
 from corehq.apps.domain.models import Domain
 from corehq.form_processor.interfaces.supply import SupplyInterface
+from corehq.util import remove_empty_strings_from_list
 from corehq.util.quickcache import quickcache
 from corehq.util.workbook_json.excel import flatten_json, json_to_headers
 from dimagi.utils.decorators.memoized import memoized
@@ -307,6 +308,7 @@ def get_locations_from_ids(location_ids, domain, base_queryset=None):
     if any of the locations do not match the given domain or are not
     found.
     """
+    location_ids = remove_empty_strings_from_list(location_ids)
     if not base_queryset:
         base_queryset = SQLLocation.objects
 
