@@ -52,6 +52,14 @@ from corehq.apps.userreports.sql import get_column_name
 from corehq.apps.userreports.ui.fields import JsonField
 from dimagi.utils.decorators.memoized import memoized
 
+# This dict maps filter types from the report builder frontend to UCR filter types
+REPORT_BUILDER_FILTER_TYPE_MAP = {
+    'Choice': 'dynamic_choice_list',
+    'Date': 'date',
+    'Numeric': 'numeric',
+    'Value': 'pre',
+}
+
 
 class FilterField(JsonField):
     """
@@ -62,7 +70,7 @@ class FilterField(JsonField):
     def validate(self, value):
         super(FilterField, self).validate(value)
         for filter_conf in value:
-            if filter_conf.get('format', None) not in ['', 'Value', 'Choice', 'Date', 'Numeric']:
+            if filter_conf.get('format', None) not in REPORT_BUILDER_FILTER_TYPE_MAP.keys() + [""]:
                 raise forms.ValidationError("Invalid filter format!")
 
 
@@ -990,13 +998,6 @@ class ConfigureNewReportBase(forms.Form):
         Return the dict filter configurations to be used by the
         ReportConfiguration that this form produces.
         """
-        filter_type_map = {
-            'Choice': 'dynamic_choice_list',
-            'Date': 'date',
-            'Numeric': 'numeric',
-            'Value': 'pre',
-        }
-
         def _make_report_filter(conf, index):
             property = self.data_source_properties[conf["property"]]
             col_id = property.column_id
@@ -1013,7 +1014,7 @@ class ConfigureNewReportBase(forms.Form):
                         property.source[1]
                     )
             else:
-                filter_format = filter_type_map[selected_filter_type]
+                filter_format = REPORT_BUILDER_FILTER_TYPE_MAP[selected_filter_type]
 
             ret = {
                 "field": col_id,
