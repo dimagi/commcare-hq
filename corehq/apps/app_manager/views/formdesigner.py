@@ -151,12 +151,12 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         'is_onboarding_domain': domain_obj.is_onboarding_domain,
         'show_live_preview': (
             toggles.PREVIEW_APP.enabled(domain)
-            or (
-            domain_obj.is_onboarding_domain and live_preview_ab.version == ab_tests.LIVE_PREVIEW_ENABLED)
+            or (domain_obj.is_onboarding_domain
+                and live_preview_ab.version == ab_tests.LIVE_PREVIEW_ENABLED)
         )
     })
 
-    response =  render(request, 'app_manager/v1/form_designer.html', context)
+    response = render(request, 'app_manager/v1/form_designer.html', context)
     live_preview_ab.update_response(response)
     return response
 
