@@ -48,8 +48,12 @@ def rebuild_export_task(export_instance, last_access_cutoff=None, filter=None):
 
 
 @serial_task('{domain}-{case_type}', queue='background_queue')
-@quickcache(['sender', 'domain', 'case_type', 'properties'], timeout=60 * 60)
 def add_inferred_export_properties(sender, domain, case_type, properties):
+    _cached_add_inferred_export_properties(sender, domain, case_type, properties)
+
+
+@quickcache(['sender', 'domain', 'case_type', 'properties'], timeout=60 * 60)
+def _cached_add_inferred_export_properties(sender, domain, case_type, properties):
     from corehq.apps.export.models import MAIN_TABLE, PathNode, InferredSchema, ScalarItem
     """
     Adds inferred properties to the inferred schema for a case type.
