@@ -71,15 +71,15 @@ class ApplicationStatusReport(DeploymentsReport):
             DataTablesColumn(_("Last Sync"),
                              sort_type=DTSortType.NUMERIC),
             DataTablesColumn(_("Application"),
-                help_text=_("""Displays application of last submitted form""")),
+                             help_text=_("Displays application of last submitted form")),
             DataTablesColumn(_("Application Version"),
-                help_text=_("""Displays application version of the last submitted form;
-                            The currently deployed version may be different."""),
-                sort_type=DTSortType.NUMERIC),
+                             help_text=_("""Displays application version of the last submitted form;
+                                         The currently deployed version may be different."""),
+                             sort_type=DTSortType.NUMERIC),
             DataTablesColumn(_("CommCare Version"),
-                help_text=_("""Displays CommCare version the user last submitted with;
-                            The currently deployed version may be different."""),
-                sort_type=DTSortType.NUMERIC),
+                             help_text=_("""Displays CommCare version the user last submitted with;
+                                         The currently deployed version may be different."""),
+                             sort_type=DTSortType.NUMERIC),
         )
         headers.custom_sort = [[1, 'desc']]
         return headers
