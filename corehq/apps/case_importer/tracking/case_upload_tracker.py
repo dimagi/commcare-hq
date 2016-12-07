@@ -14,10 +14,10 @@ class CaseUpload(object):
         self.upload_id = upload_id
 
     @classmethod
-    def create(cls, payload, filename):
+    def create(cls, file_object, filename):
         file_extension = file_extention_from_filename(filename)
         soil_download = expose_cached_download(
-            payload, expiry=cls._expiry, file_extension=file_extension)
+            file_object.read(), expiry=cls._expiry, file_extension=file_extension)
         return cls(soil_download.download_id)
 
     @classmethod
