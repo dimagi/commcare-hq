@@ -175,7 +175,7 @@ def _filter_forms_touch_case(diffs, forms_that_touch_cases_without_actions):
 
     form_id_diffs = [
         diff for diff in diffs
-        if diff.diff_type == 'set_mismatch' and  diff.path[0] == ('xform_ids')
+        if diff.diff_type == 'set_mismatch' and diff.path[0] == ('xform_ids')
     ]
     if not len(form_id_diffs):
         return diffs

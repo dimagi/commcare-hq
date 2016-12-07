@@ -311,7 +311,8 @@ class MigrationTestCase(BaseMigrationTestCase):
         <data uiVersion="1" version="1" name="" xmlns="http://openrosa.org/formdesigner/123">
             <name>fgg</name>
             <date>2011-06-07</date>
-            <n0:case case_id="case-123" user_id="user-abc" date_modified="{date}" xmlns:n0="http://commcarehq.org/case/transaction/v2">
+            <n0:case case_id="case-123" user_id="user-abc" date_modified="{date}"
+                xmlns:n0="http://commcarehq.org/case/transaction/v2">
                 <n0:create>
                     <n0:case_type_id>cc_bc_demo</n0:case_type_id>
                     <n0:case_name>fgg</n0:case_name>
@@ -433,9 +434,11 @@ class MigrationTestCase(BaseMigrationTestCase):
                 <data uiVersion="1" version="1" name="" xmlns="http://openrosa.org/formdesigner/123">
                     <name>fgg</name>
                     <date>2011-06-07</date>
-                    <n0:case case_id="{case_id}" user_id="user1" date_modified="{date}" xmlns:n0="http://commcarehq.org/case/transaction/v2">
+                    <n0:case case_id="{case_id}" user_id="user1" date_modified="{date}"
+                        xmlns:n0="http://commcarehq.org/case/transaction/v2">
                     </n0:case>
-                    <n0:case case_id="case-123" user_id="user-abc" date_modified="{date}" xmlns:n0="http://commcarehq.org/case/transaction/v2">
+                    <n0:case case_id="case-123" user_id="user-abc" date_modified="{date}"
+                        xmlns:n0="http://commcarehq.org/case/transaction/v2">
                         <n0:create>
                             <n0:case_type_id>cc_bc_demo</n0:case_type_id>
                             <n0:case_name>fgg</n0:case_name>
@@ -537,7 +540,9 @@ class MigrationTestCase(BaseMigrationTestCase):
         submit_form_locally(xml, self.domain_name)
 
         update_xml = """<?xml version="1.0" ?>
-            <data name="pregnancy checklist" uiVersion="1" version="1" xmlns="http://openrosa.org/formdesigner/42461CD4-06D8-4FE5-BCEC-006130F7764F" xmlns:jrm="http://dev.commcarehq.org/jr/xforms">
+            <data name="pregnancy checklist" uiVersion="1" version="1"
+                xmlns="http://openrosa.org/formdesigner/42461CD4-06D8-4FE5-BCEC-006130F7764F"
+                xmlns:jrm="http://dev.commcarehq.org/jr/xforms">
                 <case>
                     <case_id>P0YJ</case_id>
                     <date_modified>2012-02-24T00:51:07.836+05:30</date_modified>

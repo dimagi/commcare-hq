@@ -93,7 +93,10 @@ class DiffTestCases(SimpleTestCase):
         self._test_form_diff_filter(
             couch_form, sql_form,
             diffs,
-            [FormJsonDiff(diff_type='complex', path=('deprecated_date', 'edited_on'), old_value='abc', new_value='123')]
+            [FormJsonDiff(
+                diff_type='complex', path=('deprecated_date', 'edited_on'),
+                old_value='abc', new_value='123'
+            )]
         )
 
     def test_filter_form_deletion_fields(self):

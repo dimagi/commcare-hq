@@ -2,8 +2,6 @@ import os
 import uuid
 from datetime import datetime
 
-import itertools
-
 from django.db.utils import IntegrityError
 
 import settings
