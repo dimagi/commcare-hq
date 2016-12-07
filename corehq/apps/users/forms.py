@@ -738,11 +738,15 @@ class AngularLocationSelectWidget(forms.Widget):
 
 class SupplyPointSelectWidget(forms.Widget):
 
-    def __init__(self, domain, attrs=None, id='supply-point', multiselect=False):
+    def __init__(self, domain, attrs=None, id='supply-point', multiselect=False, query_url=None):
         super(SupplyPointSelectWidget, self).__init__(attrs)
         self.domain = domain
         self.id = id
         self.multiselect = multiselect
+        if query_url:
+            self.query_url = query_url
+        else:
+            self.query_url = reverse('corehq.apps.locations.views.child_locations_for_select2', args=[domain])
 
     def render(self, name, value, attrs=None):
         location_ids = value.split(',') if value else []
@@ -757,7 +761,7 @@ class SupplyPointSelectWidget(forms.Widget):
             'id': self.id,
             'name': name,
             'value': value or '',
-            'query_url': reverse('corehq.apps.locations.views.child_locations_for_select2', args=[self.domain]),
+            'query_url': self.query_url,
             'multiselect': self.multiselect,
             'initial_data': initial_data,
         }))
