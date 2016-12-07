@@ -69,11 +69,5 @@ def make_temp_file(content, suffix):
     return filename
 
 
-def get_suffix(filename):
-    try:
-        return filename.split('.')[-1]
-    except IndexError:
-        return None
-
 persistent_file_store = PersistentFileStore(BUCKET, CaseUploadFileMeta)
 transient_file_store = TransientFileStore(BUCKET, timeout=1 * 60 * 60)
