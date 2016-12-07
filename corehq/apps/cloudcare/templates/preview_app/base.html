@@ -214,6 +214,8 @@
         {% include 'formplayer/progress.html' %}
         {% include 'formplayer/dependencies.html' %}
         {% include "style/includes/ko.html" %}
+        {% include 'style/includes/analytics_all.html' %}
         <script src="{% static 'cloudcare/js/preview_app/preview_app.js' %}"></script>
+        {% block js-inline %}{% endblock %}
     </body>
 </html>

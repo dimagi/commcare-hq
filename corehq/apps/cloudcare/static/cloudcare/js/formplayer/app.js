@@ -124,7 +124,7 @@ FormplayerFrontend.on('startForm', function (data) {
     FormplayerFrontend.request("clearMenu");
     var urlObject = Util.currentUrlToObject();
     urlObject.setSessionId(data.session_id);
-    Util.setUrlToObject(urlObject);
+    Util.setUrlToObject(urlObject, true);
     data.onLoading = tfLoading;
     data.onLoadingComplete = tfLoadingComplete;
     var user = FormplayerFrontend.request('currentUser');
@@ -385,7 +385,11 @@ FormplayerFrontend.on('clearProgress', function() {
 
 
 FormplayerFrontend.on('setVersionInfo', function(versionInfo) {
+    var user = FormplayerFrontend.request('currentUser');
     $("#version-info").text(versionInfo || '');
+    if (versionInfo) {
+        user.set('versionInfo',  versionInfo);
+    }
 });
 
 /**
@@ -406,7 +410,7 @@ FormplayerFrontend.on('refreshApplication', function(appId) {
         formplayer_url = user.formplayer_url,
         resp,
         options = {
-            url: formplayer_url + "/update",
+            url: formplayer_url + "/delete_application_dbs",
             data: JSON.stringify({
                 app_id: appId,
                 domain: user.domain,

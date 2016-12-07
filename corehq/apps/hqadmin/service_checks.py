@@ -58,17 +58,17 @@ def check_rabbitmq():
         return ServiceStatus(False, "RabbitMQ Not configured")
 
 
-def check_pillowtop():
-    return ServiceStatus(False, "Not implemented")
-
-
 @change_log_level('kafka.client', logging.WARNING)
 def check_kafka():
     client = get_kafka_client_or_none()
     if not client:
         return ServiceStatus(False, "Could not connect to Kafka")
-    # TODO elaborate?
-    return ServiceStatus(True, "Kafka's fine. Probably.")
+    elif len(client.brokers) == 0:
+        return ServiceStatus(False, "No Kafka brokers found")
+    elif len(client.topics) == 0:
+        return ServiceStatus(False, "No Kafka topics found")
+    else:
+        return ServiceStatus(True, "Kafka seems to be in order")
 
 
 def check_touchforms():
@@ -96,10 +96,6 @@ def check_elasticsearch():
     if doc in hits:
         return ServiceStatus(True, "Successfully sent a doc to ES and read it back")
     return ServiceStatus(False, "Something went wrong sending a doc to ES")
-
-
-def check_shared_dir():
-    return ServiceStatus(False, "Not implemented")
 
 
 def check_blobdb():
@@ -189,17 +185,15 @@ def check_formplayer():
         return ServiceStatus(res.ok, msg)
 
 
-checks = (
-    check_pillowtop,
-    check_kafka,
-    check_redis,
-    check_postgres,
-    check_couch,
-    check_celery,
-    check_heartbeat,
-    check_touchforms,
-    check_elasticsearch,
-    check_shared_dir,
-    check_blobdb,
-    check_formplayer,
-)
+CHECKS = {
+    'kafka': check_kafka,
+    'redis': check_redis,
+    'postgres': check_postgres,
+    'couch': check_couch,
+    'celery': check_celery,
+    'heartbeat': check_heartbeat,
+    'touchforms': check_touchforms,
+    'elasticsearch': check_elasticsearch,
+    'blobdb': check_blobdb,
+    'formplayer': check_formplayer,
+}
