@@ -72,6 +72,20 @@
                         </div>
                         {% endif %}
 
+                        {% if request.couch_user.is_domain_admin %}
+                        <div class="form-group">
+                            <label for="bug-report-project-description"
+                                   class="col-sm-3 control-label">{% trans "Project Description" %}</label>
+                            <div class="col-sm-9">
+                                <textarea name="project_description"
+                                          class="form-control"
+                                          id="bug-report-project-description"
+                                          rows="3"
+                                          placeholder="{% trans "Please provide a short description of your project." %}">{{ request.project.project_description }}</textarea>
+                            </div>
+                        </div>
+                        {% endif %}
+
                         <div class="form-group" id="bug-report-cc-form-group">
                             <label for="bug-report-cc"
                                    class="col-sm-3 control-label">{% trans "Other recipients (optional)" %}</label>
