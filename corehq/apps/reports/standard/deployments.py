@@ -52,34 +52,6 @@ class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParame
         return super(DeploymentsReport, cls).show_in_navigation(domain, project, user)
 
 
-def _build_html(version_info):
-    version = version_info.build_version or _("Unknown")
-
-    def fmt(title, extra_class=u'label-default', extra_text=u''):
-        return format_html(
-            u'<span class="label{extra_class}" title="{title}">'
-            u'{extra_text}{version}</span>',
-            version=version,
-            title=title,
-            extra_class=extra_class,
-            extra_text=extra_text,
-        )
-
-    if version_info.source == BuildVersionSource.BUILD_ID:
-        return fmt(title=_("This was taken from build id"),
-                   extra_class=u' label-success')
-    elif version_info.source == BuildVersionSource.APPVERSION_TEXT:
-        return fmt(title=_("This was taken from appversion text"))
-    elif version_info.source == BuildVersionSource.XFORM_VERSION:
-        return fmt(title=_("This was taken from xform version"),
-                   extra_text=u'≥ ')
-    elif version_info.source == BuildVersionSource.NONE:
-        return fmt(title=_("Unable to determine the build version"))
-    else:
-        raise AssertionError('version_source must be '
-                             'a BuildVersionSource constant')
-
-
 class ApplicationStatusReport(DeploymentsReport):
     name = ugettext_noop("Application Status")
     slug = "app_status"
@@ -98,9 +70,16 @@ class ApplicationStatusReport(DeploymentsReport):
                              sort_type=DTSortType.NUMERIC),
             DataTablesColumn(_("Last Sync"),
                              sort_type=DTSortType.NUMERIC),
-            DataTablesColumn(_("Application (Deployed Version)"),
+            DataTablesColumn(_("Application"),
+                help_text=_("""Displays application of last submitted form""")),
+            DataTablesColumn(_("Application Version"),
                 help_text=_("""Displays application version of the last submitted form;
-                            The currently deployed version may be different."""))
+                            The currently deployed version may be different."""),
+                sort_type=DTSortType.NUMERIC),
+            DataTablesColumn(_("CommCare Version"),
+                help_text=_("""Displays CommCare version the user last submitted with;
+                            The currently deployed version may be different."""),
+                sort_type=DTSortType.NUMERIC),
         )
         headers.custom_sort = [[1, 'desc']]
         return headers
@@ -177,12 +156,14 @@ class ApplicationStatusReport(DeploymentsReport):
             app_version_info_to_use = _choose_latest_version(
                 app_version_info_from_sync, app_version_info_from_form,
             )
-            if app_version_info_to_use is not None:
-                app_name = _construct_app_name_html_from_name_and_version_info(app_name, app_version_info_to_use)
 
-            rows.append(
-                [user.username_in_report, _fmt_date(last_seen), _fmt_date(last_sync), app_name or "---"]
-            )
+            commcare_version = _get_commcare_version(app_version_info_to_use)
+            build_version = _get_build_version(app_version_info_to_use)
+
+            rows.append([
+                user.username_in_report, _fmt_date(last_seen), _fmt_date(last_sync),
+                app_name or "---", build_version, commcare_version
+            ])
         return rows
 
     @property
@@ -202,20 +183,16 @@ class ApplicationStatusReport(DeploymentsReport):
         return result
 
 
-def _construct_app_name_html_from_name_and_version_info(app_name, app_version_info):
-    build_html = _build_html(app_version_info)
-    commcare_version = (
+def _get_commcare_version(app_version_info):
+    return (
         'CommCare {}'.format(app_version_info.commcare_version)
         if app_version_info.commcare_version
         else _("Unknown CommCare Version")
     )
-    commcare_version_html = mark_safe('<span class="label label-info">{}</span>'.format(
-        commcare_version)
-    )
-    app_name = app_name or _("Unknown App")
-    return format_html(
-        u'{} {} {}', app_name, mark_safe(build_html), commcare_version_html
-    )
+
+
+def _get_build_version(app_version_info):
+    return app_version_info.build_version or _("Unknown")
 
 
 def _choose_latest_version(*app_versions):
