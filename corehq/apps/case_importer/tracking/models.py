@@ -19,6 +19,12 @@ class CaseUploadRecord(models.Model):
         return get_task(self.task_id)
 
 
+class CaseUploadFileMeta(models.Model):
+    identifier = models.CharField(max_length=256, unique=True)
+    filename = models.CharField(max_length=256)
+    length = models.IntegerField()
+
+
 class CaseUploadJSON(jsonobject.JsonObject):
     _allow_dynamic_properties = False
 
