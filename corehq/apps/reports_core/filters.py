@@ -156,7 +156,7 @@ class QuarterFilter(BaseFilter):
         years = [(str(y), y) for y in range(start_year, datetime.utcnow().year + 1)]
         years.reverse()
         if self.show_all:
-            years += [(SHOW_ALL_CHOICE, 'Show all')]
+            years += [(SHOW_ALL_CHOICE, _('Show all'))]
         return years
 
     def filter_context(self):
