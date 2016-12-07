@@ -19,21 +19,12 @@ class TestRealBuild(SimpleTestCase):
         return os.environ['TRAVIS_HQ_PASSWORD']
 
     def fetch_and_build_app(self, domain, app_id):
-        source_path = os.path.join(tempfile.gettempdir(), '{}.{}.json'.format(domain, app_id))
-        if os.path.isfile(source_path):
-            with open(source_path, 'r') as f:
-                app_source = json.load(f)
-        else:
-            url = "https://www.commcarehq.org/a/{}/apps/source/{}/".format(
-                domain, app_id
-            )
-            response = requests.get(url, auth=HTTPDigestAuth(self.username, self.password))
-            response.raise_for_status()
-            with open(source_path, 'w') as f:
-                app_source = response.json()
-                json.dump(app_source, f)
-
-        app = Application.wrap(app_source)
+        url = "https://www.commcarehq.org/a/{}/apps/source/{}/".format(
+            domain, app_id
+        )
+        response = requests.get(url, auth=HTTPDigestAuth(self.username, self.password))
+        response.raise_for_status()
+        app = Application.wrap(response.json())
         app.create_all_files()
 
     def test_real_build(self):
