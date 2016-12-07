@@ -1,6 +1,7 @@
 from django.test import TestCase
 from corehq.apps.case_importer.tracking.filestorage import transient_file_store, persistent_file_store
 from corehq.util.files import file_extention_from_filename
+from corehq.util.test_utils import generate_cases
 
 
 class FilestorageTest(TestCase):
@@ -16,20 +17,16 @@ class FilestorageTest(TestCase):
     def tearDownClass(cls):
         pass
 
-    def test_transient(self):
-        with open(self.filename, 'r') as f:
-            identifier = transient_file_store.write_file(f, 'test_file.txt')
 
-        tmpfile = transient_file_store.get_tempfile(identifier)
-        self.assertEqual(file_extention_from_filename(tmpfile), '.txt')
-        with open(tmpfile) as f:
-            self.assertEqual(f.read(), self.content)
+@generate_cases([(transient_file_store,),
+                 (persistent_file_store,)], FilestorageTest)
+def test_transient(self, file_store):
+    with open(self.filename, 'r') as f:
+        identifier = file_store.write_file(f, 'test_file.txt')
 
-    def test_persistent(self):
-        with open(self.filename, 'r') as f:
-            identifier = persistent_file_store.write_file(f, 'test_file.txt')
+    tmpfile = file_store.get_tempfile(identifier)
+    self.assertEqual(file_extention_from_filename(tmpfile), '.txt')
+    with open(tmpfile) as f:
+        self.assertEqual(f.read(), self.content)
 
-        tmpfile = persistent_file_store.get_tempfile(identifier)
-        self.assertEqual(file_extention_from_filename(tmpfile), '.txt')
-        with open(tmpfile) as f:
-            self.assertEqual(f.read(), self.content)
+    self.assertEqual(file_store.get_filename(identifier), 'test_file.txt')

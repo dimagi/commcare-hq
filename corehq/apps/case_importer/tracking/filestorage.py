@@ -29,10 +29,14 @@ class PersistentFileStore(object):
 
     @memoized
     def get_tempfile(self, identifier):
-        filename = self._meta_model.objects.values_list('filename', flat=True).get(identifier=identifier)
+        filename = self.get_filename(identifier)
         suffix = file_extention_from_filename(filename)
         content = self._db.get(identifier, bucket=self._bucket).read()
         return make_temp_file(content, suffix)
+
+    @memoized
+    def get_filename(self, identifier):
+        return self._meta_model.objects.values_list('filename', flat=True).get(identifier=identifier)
 
 
 class TransientFileStore(object):
@@ -52,14 +56,21 @@ class TransientFileStore(object):
         self._cache.set(self._get_key(identifier), (filename, f.read()), timeout=self._timeout)
         return identifier
 
-    @memoized
     def get_tempfile(self, identifier):
         try:
-            filename, content = self._cache.get(self._get_key(identifier))
+            filename, content = self._get_filename_content(identifier)
         except (TypeError, ValueError):
             return None
         suffix = file_extention_from_filename(filename)
         return make_temp_file(content, suffix)
+
+    def get_filename(self, identifier):
+        filename, _ = self._get_filename_content(identifier)
+        return filename
+
+    @memoized
+    def _get_filename_content(self, identifier):
+        return self._cache.get(self._get_key(identifier))
 
 
 def make_temp_file(content, suffix):
