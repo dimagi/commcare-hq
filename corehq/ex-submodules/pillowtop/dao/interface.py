@@ -20,7 +20,7 @@ class DocumentStore(object):
     def delete_document(self, doc_id):
         pass
 
-    def iter_document_ids(self):
+    def iter_document_ids(self, last_id=None):
         # todo: can convert to @abstractmethod once subclasses handle it
         raise NotImplementedError('this function not yet implemented')
 
