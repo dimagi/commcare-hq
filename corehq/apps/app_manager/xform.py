@@ -645,6 +645,13 @@ class XForm(WrappedNode):
         inline_video = self.media_references_by_lang(lang=lang, form="video-inline")
         return images + video + audio + inline_video
 
+    def get_instance_ids(self):
+        return [
+            instance.attrib['id']
+            for instance in self.model_node.findall('{f}instance')
+            if 'id' in instance.attrib
+        ]
+
     def set_name(self, new_name):
         title = self.find('{h}head/{h}title')
         if title.exists():
@@ -2133,9 +2140,7 @@ def infer_vellum_type(control, bind):
 
 def find_missing_instances(form_source):
     from corehq.apps.app_manager.suite_xml.post_process.instances import get_all_instances_referenced_in_xpaths
-    instance_declaration_re = r"""<instance[^>]*id=\"([\w\-:]+)\""""
-    instance_declarations = set(re.findall(instance_declaration_re, form_source))
-
+    instance_declarations = XForm(form_source).get_instance_ids()
     missing_instances = set()
     missing_unknown_instance = set()
     instances, unknown_instance_ids = get_all_instances_referenced_in_xpaths('', [form_source])
