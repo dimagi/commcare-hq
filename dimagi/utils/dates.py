@@ -378,6 +378,9 @@ class DateSpan(object):
         start = end - datetime.timedelta(days=days)
         return DateSpan(start, end, format, inclusive, timezone)
 
+    @classmethod
+    def max(cls):
+        return cls(datetime.datetime.min, datetime.datetime.max, inclusive=False)
 
     @classmethod
     def from_month(cls, month=None, year=None, format=ISO_DATE_FORMAT,
