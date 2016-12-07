@@ -226,6 +226,7 @@ HQ_APPS = (
     'corehq.apps.data_analytics',
     'corehq.apps.domain',
     'corehq.apps.domainsync',
+    'corehq.apps.domain_migration_flags',
     'corehq.apps.dump_reload',
     'corehq.apps.hqadmin',
     'corehq.apps.hqcase',
@@ -259,7 +260,7 @@ HQ_APPS = (
     'corehq.apps.es',
     'corehq.apps.fixtures',
     'corehq.apps.calendar_fixture',
-    'corehq.apps.case_importer_v1',
+    'corehq.apps.case_importer',
     'corehq.apps.reminders',
     'corehq.apps.translations',
     'corehq.apps.tour',
@@ -1236,7 +1237,7 @@ COUCHDB_APPS = [
     'hqcase',
     'hqmedia',
     'hope',
-    'case_importer_v1',
+    'case_importer',
     'indicators',
     'locations',
     'mobile_auth',
@@ -1864,23 +1865,6 @@ DOMAIN_MODULE_MAP = {
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True
-
-# arbitrarily split up tests into two chunks
-# that have approximately equal run times,
-# the group shown here, plus a second group consisting of everything else
-TRAVIS_TEST_GROUPS = (
-    (
-        'accounting', 'api', 'app_manager', 'appstore',
-        'auditcare', 'bihar', 'builds', 'cachehq', 'callcenter',
-        'case', 'casegroups', 'cleanup', 'cloudcare', 'commtrack', 'consumption',
-        'couchapps', 'crud', 'django_digest',
-        'domain', 'domainsync', 'export',
-        'facilities', 'fixtures', 'fluff_filter', 'formplayer',
-        'formtranslate', 'fri', 'grapevine', 'groups', 'gsid', 'hope',
-        'hqadmin', 'hqcase', 'hqmedia',
-        'care_pathways', 'common', 'compressor', 'smsbillables', 'ilsgateway'
-    ),
-)
 
 #### Django Compressor Stuff after localsettings overrides ####
 

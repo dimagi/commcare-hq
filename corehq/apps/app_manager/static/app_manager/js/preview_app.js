@@ -57,6 +57,7 @@ hqDefine('app_manager/js/preview_app.js', function() {
         $appPreview.addClass('preview-tablet-mode');
         $(module.SELECTORS.OFFSET_FOR_PREVIEW).addClass('offset-for-tablet');
         _private.triggerPreviewEvent('tablet-view');
+        window.analytics.workflow('[app-preview] User turned on tablet mode');
     };
 
     _private.phoneView = function() {
@@ -64,6 +65,7 @@ hqDefine('app_manager/js/preview_app.js', function() {
         $appPreview.removeClass('preview-tablet-mode');
         $(module.SELECTORS.OFFSET_FOR_PREVIEW).removeClass('offset-for-tablet');
         _private.triggerPreviewEvent('phone-view');
+        window.analytics.workflow('[app-preview] User turned off tablet mode');
     };
 
     _private.navigateBack = function() {

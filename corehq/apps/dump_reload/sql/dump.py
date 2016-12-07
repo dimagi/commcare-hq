@@ -36,7 +36,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = OrderedDict([
     ('phonelog.UserErrorEntry', SimpleFilter('domain')),
     ('phonelog.UserEntry', UserIDFilter('user_id')),
     ('ota.DemoUserRestore', UserIDFilter('demo_user_id', include_web_users=False)),
-    ('tzmigration.TimezoneMigrationProgress', SimpleFilter('domain')),
+    ('domain_migration_flags.DomainMigrationProgress', SimpleFilter('domain')),
     ('products.SQLProduct', SimpleFilter('domain')),
     ('sms.MessagingEvent', SimpleFilter('domain')),
     ('sms.MessagingSubEvent', SimpleFilter('parent__domain')),

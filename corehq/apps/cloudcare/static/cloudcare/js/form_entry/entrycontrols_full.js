@@ -321,7 +321,8 @@ function DateTimeEntryBase(question, options) {
         thisYear = new Date().getFullYear(),
         minDate,
         maxDate,
-        displayOpts = _getDisplayOptions(question);
+        displayOpts = _getDisplayOptions(question),
+        isPhoneMode = ko.utils.unwrapObservable(displayOpts.phoneMode);
 
     EntrySingleAnswer.call(self, question, options);
     // Set max date to 10 years in the future
@@ -370,11 +371,11 @@ function DateTimeEntryBase(question, options) {
 
                 $dt.find('.xdsoft_label i').addClass('fa fa-caret-down');
 
-                if (displayOpts.phoneMode() && !self.datepicker && self.timepicker) {
+                if (isPhoneMode && !self.datepicker && self.timepicker) {
                     $dt.find('.xdsoft_time_box').addClass('time-box-full');
                 }
 
-                if (displayOpts.phoneMode() && self.timepicker && self.datepicker) {
+                if (isPhoneMode && self.timepicker && self.datepicker) {
                     $dt.find('.xdsoft_save_selected')
                         .show().text(django.gettext('Save'))
                         .addClass('btn btn-primary')

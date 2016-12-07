@@ -3,12 +3,13 @@ from django.test import TestCase
 from django.test.utils import override_settings
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.tests.util import delete_all_xforms, delete_all_cases
+from corehq.apps.domain_migration_flags.models import DomainMigrationProgress
 from corehq.util.test_utils import TestFileMixin
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.dbaccessors import get_cases_in_domain
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
-from corehq.apps.tzmigration.api import set_migration_complete, \
-    set_migration_started, TimezoneMigrationProgress, MigrationStatus
+from corehq.apps.tzmigration.api import set_tz_migration_complete, \
+    set_tz_migration_started, MigrationStatus, TZMIGRATION_SLUG
 from corehq.apps.tzmigration.timezonemigration import \
     run_timezone_migration_for_domain, _run_timezone_migration_for_domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
@@ -40,7 +41,7 @@ class TimeZoneMigrationTest(TestCase, TestFileMixin):
         super(TimeZoneMigrationTest, self).setUp()
         self.domain = 'foo'
         self.domain_object = create_domain(self.domain)
-        tzp, _ = TimezoneMigrationProgress.objects.get_or_create(pk=self.domain)
+        tzp, _ = DomainMigrationProgress.objects.get_or_create(domain=self.domain, migration_slug=TZMIGRATION_SLUG)
         tzp.migration_status = MigrationStatus.NOT_STARTED
         tzp.save()
 
@@ -48,7 +49,7 @@ class TimeZoneMigrationTest(TestCase, TestFileMixin):
         delete_all_xforms()
         delete_all_cases()
         self.domain_object.delete()
-        TimezoneMigrationProgress.objects.all().delete()
+        DomainMigrationProgress.objects.all().delete()
         super(TimeZoneMigrationTest, self).tearDown()
 
     def _compare_forms(self, actual_json, expected_json, msg):
@@ -114,10 +115,10 @@ class TimeZoneMigrationTest(TestCase, TestFileMixin):
 
     def test_pause(self):
         xform = self.get_xml('form')
-        set_migration_started(self.domain)
+        set_tz_migration_started(self.domain)
         with self.assertRaisesRegexp(LocalSubmissionError, 'status code 503'):
             submit_form_locally(xform, self.domain)
         _run_timezone_migration_for_domain(self.domain)
-        set_migration_complete(self.domain)
+        set_tz_migration_complete(self.domain)
         # no issue
         submit_form_locally(xform, self.domain)

@@ -15,11 +15,11 @@ from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from corehq.apps.commtrack.helpers import make_product
 from corehq.apps.commtrack.tests.util import get_single_balance_block
 from corehq.apps.domain.models import Domain
+from corehq.apps.domain_migration_flags.models import DomainMigrationProgress
 from corehq.apps.dump_reload.sql import SqlDataLoader, SqlDataDumper
 from corehq.apps.dump_reload.sql.dump import get_objects_to_dump, get_querysets_to_dump
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.products.models import SQLProduct
-from corehq.apps.tzmigration.models import TimezoneMigrationProgress
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.form_processor.models import (
@@ -37,7 +37,7 @@ class BaseDumpLoadTest(TestCase):
         cls.domain.save()
 
         cls.default_objects_counts = Counter({
-            TimezoneMigrationProgress: 1
+            DomainMigrationProgress: 1
         })
 
     @classmethod
@@ -438,7 +438,6 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
     def test_location(self):
         from corehq.apps.locations.models import LocationType, SQLLocation
         from corehq.apps.locations.tests.util import setup_locations_and_types
-        from corehq.apps.locations.util import get_locations_and_children
         expected_object_counts = Counter({LocationType: 3, SQLLocation: 11})
 
         location_type_names = ['province', 'district', 'city']
@@ -471,14 +470,14 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         self._dump_and_load(expected_object_counts)
 
         names = ['Cape Winelands', 'Paarl', 'Cape Town']
-        result = get_locations_and_children([locations[name].location_id
-                                             for name in names])
+        location_ids = [locations[name].location_id for name in names]
+        result = SQLLocation.objects.get_locations_and_children(location_ids)
         self.assertItemsEqual(
             [loc.name for loc in result],
             ['Cape Winelands', 'Stellenbosch', 'Paarl', 'Cape Town', 'Cape Town City']
         )
 
-        result = get_locations_and_children([locations['Gauteng'].location_id])
+        result = SQLLocation.objects.get_locations_and_children([locations['Gauteng'].location_id])
         self.assertItemsEqual(
             [loc.name for loc in result],
             ['Gauteng', 'Ekurhuleni ', 'Alberton', 'Benoni', 'Springs']

@@ -133,14 +133,14 @@ class LocationStub(object):
                  do_delete, external_id, latitude, longitude, custom_data, uncategorized_data,
                  index):
         self.name = name
-        self.site_code = site_code
+        self.site_code = str(site_code) if isinstance(site_code, int) else site_code
         self.location_type = location_type
         self.location_id = location_id
-        self.parent_code = parent_code or ROOT_LOCATION_TYPE
+        self.parent_code = str(parent_code) if isinstance(parent_code, int) else parent_code or ROOT_LOCATION_TYPE
         self.latitude = latitude or None
         self.longitude = longitude or None
         self.do_delete = do_delete
-        self.external_id = external_id
+        self.external_id = str(external_id) if isinstance(external_id, int) else external_id
         self.index = index
         self.custom_data = custom_data or {}
         self.uncategorized_data = uncategorized_data or {}

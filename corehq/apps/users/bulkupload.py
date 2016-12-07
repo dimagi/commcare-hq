@@ -5,7 +5,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.utils.translation import ugettext as _
-from corehq.util.spreadsheets_v1.excel import flatten_json, json_to_headers, \
+from corehq.util.workbook_json.excel import flatten_json, json_to_headers, \
     alphanumeric_sort_key
 from dimagi.utils.parsing import string_to_boolean
 
@@ -716,6 +716,10 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache):
             user_data_model.get_model_and_uncategorized(user.user_data)
         )
         role = user.get_role(domain)
+        try:
+            location_code = location_cache.get(user.location_id)
+        except SQLLocation.DoesNotExist:
+            location_code = None
         return {
             'data': model_data,
             'uncategorized_data': uncategorized_data,
@@ -729,7 +733,7 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache):
             'user_id': user._id,
             'is_active': str(user.is_active),
             'User IMEIs (read only)': _get_devices(user),
-            'location_code': location_cache.get(user.location_id),
+            'location_code': location_code,
             'role': role.name if role else '',
         }
 
