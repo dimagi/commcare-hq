@@ -99,7 +99,7 @@
 
     <h2>Recent Uploads</h2>
     <div id="recent-uploads" class="ko-template">
-        <!--ko if: state() == states.SUCCESS && case_uploads()-->
+        <!--ko if: state() == states.SUCCESS && !_.isEmpty(case_uploads())-->
         <table class="table table-striped">
             <tr>
                 <th class="col-md-2">{% trans "Status" %}</th>
@@ -150,7 +150,7 @@
             <!--/ko-->
         </table>
         <!--/ko-->
-        <!--ko if: state() === states.SUCCESS && !case_uploads()-->
+        <!--ko if: state() === states.SUCCESS && _.isEmpty(case_uploads())-->
         <div class="alert alert-info">
             You have no recent uploads.
         </div>
