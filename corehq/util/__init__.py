@@ -26,3 +26,7 @@ def flatten_non_iterable_list(elements):
         else:
             items.append(element)
     return items
+
+
+def remove_empty_strings_from_list(elements):
+    return [element for element in elements if element != '']
