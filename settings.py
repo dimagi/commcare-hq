@@ -867,6 +867,8 @@ CUSTOM_LANDING_PAGE = False
 
 TABLEAU_URL_ROOT = "https://icds.commcarehq.org/"
 
+ONBOARDING_DOMAIN_TEST_DATE = ()
+
 try:
     # try to see if there's an environmental variable set for local_settings
     custom_settings = os.environ.get('CUSTOMSETTINGS', None)
