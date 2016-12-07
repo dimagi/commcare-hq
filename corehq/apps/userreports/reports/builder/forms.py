@@ -62,7 +62,7 @@ class FilterField(JsonField):
     def validate(self, value):
         super(FilterField, self).validate(value)
         for filter_conf in value:
-            if filter_conf.get('format', None) not in ['', 'Choice', 'Date', 'Numeric']:
+            if filter_conf.get('format', None) not in ['', 'Value', 'Choice', 'Date', 'Numeric']:
                 raise forms.ValidationError("Invalid filter format!")
 
 
