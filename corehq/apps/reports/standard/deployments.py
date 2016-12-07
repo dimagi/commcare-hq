@@ -36,7 +36,7 @@ from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, D
 from corehq.apps.reports.filters.select import SelectApplicationFilter
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import ProjectReportParametersMixin, ProjectReport
-from corehq.apps.reports.util import format_datatables_data
+from corehq.apps.reports.util import format_datatables_data, numcell
 
 
 class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
@@ -184,15 +184,22 @@ class ApplicationStatusReport(DeploymentsReport):
 
 
 def _get_commcare_version(app_version_info):
-    return (
-        'CommCare {}'.format(app_version_info.commcare_version)
-        if app_version_info.commcare_version
-        else _("Unknown CommCare Version")
-    )
+    commcare_version = (_("Unknown CommCare Version"), 0)
+    if app_version_info:
+        version_text = (
+            'CommCare {}'.format(app_version_info.commcare_version)
+            if app_version_info.commcare_version
+            else _("Unknown CommCare Version")
+        )
+        commcare_version = (version_text, app_version_info.commcare_version or 0)
+    return numcell(commcare_version[0], commcare_version[1], convert="float")
 
 
 def _get_build_version(app_version_info):
-    return app_version_info.build_version or _("Unknown")
+    build_version = (_("Unknown"), 0)
+    if app_version_info and app_version_info.build_version:
+        build_version = (app_version_info.build_version, app_version_info.build_version)
+    return numcell(build_version[0], value=build_version[1])
 
 
 def _choose_latest_version(*app_versions):
