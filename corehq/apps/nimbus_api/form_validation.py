@@ -1,11 +1,11 @@
 import jsonobject
 import requests
-from django.conf import settings
 from requests import HTTPError
 from requests import RequestException
 
 from corehq.apps.nimbus_api import const
 from corehq.apps.nimbus_api.exceptions import NimbusRequestException, NimbusAPIException
+from corehq.apps.nimbus_api.utils import get_nimbus_url
 from dimagi.utils.logging import notify_exception
 
 
@@ -40,7 +40,7 @@ class FormValidationResult(object):
 def validate_form(form_xml):
     try:
         response = requests.post(
-            settings.FORMPLAYER_URL + const.ENDPOINT_VALIDATE_FORM,
+            get_nimbus_url() + const.ENDPOINT_VALIDATE_FORM,
             data=form_xml,
             headers={'Content-Type': 'application/xml'}
         )
