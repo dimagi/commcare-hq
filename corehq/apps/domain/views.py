@@ -450,6 +450,8 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
                 messages.success(request, _("Project settings saved!"))
             else:
                 messages.error(request, _("There seems to have been an error saving your settings. Please try again!"))
+            return HttpResponseRedirect(self.page_url)
+
         return self.get(request, *args, **kwargs)
 
 
