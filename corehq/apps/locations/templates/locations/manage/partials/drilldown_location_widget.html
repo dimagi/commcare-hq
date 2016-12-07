@@ -15,6 +15,10 @@ $(function() {
             data: {'results': $(e).select2('data')},
         }
         $('#{{ css_id }}').select2(options);
+        option_ids = _.map(options.data.results, function(option) { return option.id })
+        if(!option_ids.includes($('#{{ css_id }}').val())) {
+            $('#{{ css_id }}').val(null);
+        }
     };
 
     // This custom event is fired in autocomplete_select_widget.html
