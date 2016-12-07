@@ -738,7 +738,7 @@ class AngularLocationSelectWidget(forms.Widget):
 
 class SupplyPointSelectWidget(forms.Widget):
 
-    def __init__(self, attrs=None, domain=None, id='supply-point', multiselect=False):
+    def __init__(self, domain, attrs=None, id='supply-point', multiselect=False):
         super(SupplyPointSelectWidget, self).__init__(attrs)
         self.domain = domain
         self.id = id
@@ -809,7 +809,7 @@ class CommtrackUserForm(forms.Form):
             del kwargs['domain']
         super(CommtrackUserForm, self).__init__(*args, **kwargs)
         self.fields['assigned_locations'].widget = SupplyPointSelectWidget(
-            domain=self.domain, multiselect=True, id='id_assigned_locations'
+            self.domain, multiselect=True, id='id_assigned_locations'
         )
         self.fields['primary_location'].widget = PrimaryLocationWidget(
             css_id='id_primary_location',
