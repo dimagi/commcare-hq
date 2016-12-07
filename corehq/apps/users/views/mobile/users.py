@@ -206,6 +206,7 @@ class EditCommCareUserView(BaseEditUserView):
         assigned_locations = ','.join(self.editable_user.assigned_location_ids)
         return CommtrackUserForm(
             domain=self.domain,
+            user=self.editable_user,
             initial={
                 'primary_location': initial_id,
                 'program_id': program_id,
