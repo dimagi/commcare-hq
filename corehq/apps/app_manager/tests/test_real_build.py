@@ -1,6 +1,4 @@
-import json
 import os
-import tempfile
 
 import requests
 from django.test import SimpleTestCase
