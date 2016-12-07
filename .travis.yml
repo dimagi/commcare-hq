@@ -12,8 +12,8 @@ env:
     - TEST=python NOSE_DIVIDED_WE_RUN=bf JS_SETUP=yes
     - TEST=python-sharded
   global:
-    - secure: RJDjxqjf/EPPpkY6mRrrNMvElb/hjOPoon0m2wlnS8WL+TWHpaYagX7UEosFzF7+o8pbj5yFzL1ALvPq4kbl+d6wx1rnR6FgqFgPdcJ0zaSBtLzZKJH1aezr4p25dqTWDA9uOpadg0CYqbFxFlfp5VIcx5sXjHVoLiI15Cazl8k=
-    - secure: Nnbd5C/9tM7cFfP3uj1XnAkub26A0VjR/5nW6DXrzSU/+EOGTxf/DBqKd3kR5x7qoLdGwmkFtkv3+tzb9BVtqsXwj45inWtUzFVWwjOxp98NTsMUaw/gGjFG+Kos7+DdKy302d/Gqd20NOpVvJdEsDVJQsu7yH9UbdIl7xSrVdE=
+    - secure: "ZgEgDh9FmLQm7b9YGrS3FM3MB2r3OattT6652nb/XIFcrVE/ExA2llJY7i/mNwfDy39r6Od5IkOk+mMRyu7NqEicxRXDhlZc68IEvszNdfTvVXFvpjSGAZrDXO2HQ4EhDuSMvPQ80BQ+YTN69OkuPUq0oGeednXcULvMEf2mf1M="
+    - secure: "Wvw0prb0itY8FHgl9yzy4MB3P3yUQdbR1/4Nb39S+SLG18NiiRn3Jhi5tcrRHc3uaOSJJxnF8RIADdz5p6Cqn4JwTJ10dL5eK8cipl4vr+hawIPxIq5+XKZpGxA5isKlvS0+EIyhdW3sP295U4fjPico6LKc2ElsOp0ZtvaAs1k="
 before_install:
   # get newer version of docker-compose for variable substitution in compose files
   - curl -L https://github.com/docker/compose/releases/download/1.5.2/docker-compose-`uname -s`-`uname -m` > docker-compose
