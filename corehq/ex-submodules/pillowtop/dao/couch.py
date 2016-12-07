@@ -1,4 +1,6 @@
-from couchdbkit import ResourceNotFound
+import json
+
+from couchdbkit import ResourceNotFound, resource
 from dimagi.utils.couch.database import iter_docs
 from .interface import DocumentStore
 from pillowtop.dao.exceptions import DocumentNotFoundError
@@ -16,7 +18,20 @@ class CouchDocumentStore(DocumentStore):
 
     def get_document(self, doc_id):
         try:
-            return self._couch_db.get(doc_id)
+            # return self._couch_db.get(doc_id)
+            # temporary change to get more debug info on 'empty' responses
+            docid = resource.escape_docid(doc_id)
+            response = self._couch_db.res.get(docid)
+            doc = response.json_body
+            if not doc:
+                details = json.dumps({
+                    'status': response.status,
+                    'headers': response.headers,
+                    'url': response.final_url,
+                    'body': doc,
+                })
+                raise DocumentNotFoundError("Doc returned by Couch is empty. Details:\n{}".format(details))
+            return doc
         except ResourceNotFound:
             raise DocumentNotFoundError()
 
