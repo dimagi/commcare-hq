@@ -793,6 +793,7 @@ SMS_PERFORMANCE_FEEDBACK = StaticToggle(
     'Enable SMS-based performance feedback',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
+    help_link='https://docs.google.com/document/d/1YvbYLV4auuf8gVdYZ6jFZTsOLfJdxm49XhvWkska4GE/edit#',
 )
 
 LEGACY_SYNC_SUPPORT = StaticToggle(
