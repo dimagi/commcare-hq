@@ -34,6 +34,14 @@ $(function() {
             $('#{{ css_id }}').val(null);
         }
     }).trigger('change');
+
+    $('#{{ submit_form_id }}').on('submit', function() {
+         // Notify user in case the source list has options but none selected
+         if(!!$('#{{ source_css_id }}').val() && !$('#{{ css_id }}').val()) {
+             alert("{{ empty_primary_location_message|safe }}");
+             return false;
+         }
+    })
 });
 
 </script>
