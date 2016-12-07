@@ -314,7 +314,7 @@
                 "expression": {
                     "datatype": "string",
                     "type": "property_name",
-                    "property_name": "reg_weight"
+                    "property_name": "weight"
                 },
                 "column_id": "weight"
             },
@@ -330,7 +330,7 @@
                     "value_expression": {
                         "datatype": "string",
                         "type": "property_name",
-                        "property_name": "phone_number"
+                        "property_name": "contact_phone_number"
                     },
                     "type": "related_doc",
                     "related_doc_type": "CommCareCase",
@@ -408,6 +408,17 @@
                     "name": "cat2"
                 },
                 "column_id": "cat2"
+            },
+            {
+                "display_name": "key_populations",
+                "datatype": "string",
+                "type": "expression",
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "key_populations"
+                },
+                "column_id": "key_populations"
             },
             {
                 "display_name": "person/tu",
@@ -535,6 +546,63 @@
                     "property_name": "case_definition"
                 },
                 "column_id": "basis_of_diagnosis"
+            },
+            {
+                "display_name": "not_microbiological_basis_of_diagnosis",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "operator": "eq",
+                        "expression": {
+                            "type": "property_name",
+                            "property_name": "case_definition"
+                        },
+                        "type": "boolean_expression",
+                        "property_value": "microbiological"
+                    },
+                    "expression_if_true": {
+                        "type": "constant",
+                        "constant": ""
+                    },
+                    "expression_if_false": {
+                        "type": "property_name",
+                        "property_name": "case_definition"
+                    }
+                },
+                "column_id": "not_microbiological_basis_of_diagnosis"
+            },
+            {
+                "column_id": "date_of_sample_dst",
+                "datatype": "string",
+                "type": "expression",
+                "expression": {
+                    "type": "constant",
+                    "constant": ""
+                }
+            },
+            {
+                "column_id": "result_of_dst",
+                "datatype": "string",
+                "type": "expression",
+                "expression": {
+                    "type": "constant",
+                    "constant": ""
+                }
+            },
+            {
+                "column_id": "status_of_treatment",
+                "datatype": "string",
+                "type": "expression",
+                "expression": {
+                    "type": "constant",
+                    "constant": ""
+                }
             },
             {
                 "type": "boolean",
@@ -668,6 +736,68 @@
                         "type": "property_name",
                         "property_name": "result"
                     }
+                }
+            },
+            {
+                "display_name": "diagnostic_test_location_name",
+                "column_id": "diagnostic_test_location_name",
+                "datatype": "string",
+                "type": "expression",
+                "expression": {
+                    "value_expression":{
+                        "type":"property_name",
+                        "property_name":"name"
+                    },
+                    "type":"related_doc",
+                    "related_doc_type":"Location",
+                    "doc_id_expression":{
+                        "type": "nested",
+                        "argument_expression": {
+                            "type": "reduce_items",
+                            "items_expression": {
+                                "type": "sort_items",
+                                "items_expression": {
+                                    "type": "filter_items",
+                                    "items_expression": {
+                                        "type": "get_case_forms",
+                                        "case_id_expression": {
+                                            "type": "nested",
+                                            "argument_expression": {
+                                                "type": "named",
+                                                "name": "latest_diagnostic_test_case"
+                                            },
+                                            "value_expression": {
+                                                "type": "property_name",
+                                                "property_name": "_id"
+                                            }
+                                        }
+                                    },
+                                    "filter_expression": {
+                                        "type": "boolean_expression",
+                                        "operator": "eq",
+                                        "expression": {
+                                            "type": "property_name",
+                                            "property_name": "xmlns"
+                                        },
+                                        "property_value": "http://openrosa.org/formdesigner/826B0458-C4ED-4A58-8AFD-F8E437C3646F"
+                                    }
+                                },
+                                "sort_expression": {
+                                    "type": "property_name",
+                                    "property_name": "received_on"
+                                }
+                            },
+                            "aggregation_fn": "last_item"
+                        },
+                        "value_expression": {
+                            "type": "property_path",
+                            "property_path": [
+                                "form",
+                                "user_location_id"
+                            ]
+                        }
+                    }
+
                 }
             },
             {
