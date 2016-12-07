@@ -132,9 +132,10 @@ class DatespanFilter(BaseFilter):
 class QuarterFilter(BaseFilter):
     template = 'reports_core/filters/quarter_filter.html'
 
-    def __init__(self, name, label=_('Quarter'), css_id=None):
+    def __init__(self, name, label=_('Quarter'), css_id=None, show_all=False):
         self.label = label
         self.css_id = css_id or name
+        self.show_all = show_all
         params = [
             FilterParam(self.quarter_param_name, True),
             FilterParam(self.year_param_name, True),
@@ -154,6 +155,8 @@ class QuarterFilter(BaseFilter):
         start_year = getattr(settings, 'START_YEAR', 2008)
         years = [(str(y), y) for y in range(start_year, datetime.utcnow().year + 1)]
         years.reverse()
+        if self.show_all:
+            years += [(SHOW_ALL_CHOICE, 'Show all')]
         return years
 
     def filter_context(self):
@@ -174,6 +177,10 @@ class QuarterFilter(BaseFilter):
 
     @memoized
     def value(self, **kwargs):
+        selected_year = kwargs[self.year_param_name]
+        if selected_year == SHOW_ALL_CHOICE:
+            # no filter translates to not filtering the dates at all
+            return DateSpan.max()
         try:
             year = int(kwargs[self.year_param_name])
             quarter = int(kwargs[self.quarter_param_name])
