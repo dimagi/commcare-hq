@@ -745,12 +745,21 @@ class SupplyPointSelectWidget(forms.Widget):
         self.multiselect = multiselect
 
     def render(self, name, value, attrs=None):
+        location_ids = value.split(',') if value else []
+        from corehq.apps.locations.util import get_locations_from_ids
+        try:
+            locations = get_locations_from_ids(location_ids, self.domain)
+        except SQLLocation.DoesNotExist:
+            locations = []
+        initial_data = [{'id': loc.location_id, 'name': loc.display_name} for loc in locations]
+
         return get_template('locations/manage/partials/autocomplete_select_widget.html').render(Context({
             'id': self.id,
             'name': name,
             'value': value or '',
             'query_url': reverse('corehq.apps.locations.views.child_locations_for_select2', args=[self.domain]),
             'multiselect': self.multiselect,
+            'initial_data': initial_data,
         }))
 
 
