@@ -798,7 +798,8 @@ class CommtrackUserForm(forms.Form):
     )
     primary_location = forms.CharField(
         label=ugettext_noop("Primary Location"),
-        required=False
+        required=False,
+        help_text=ugettext_lazy('Primary Location must always be set to one of above locations')
     )
     program_id = forms.ChoiceField(
         label=ugettext_noop("Program"),
