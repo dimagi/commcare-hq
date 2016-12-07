@@ -2444,7 +2444,7 @@ class BroadcastForm(Form):
         self.fields['case_group_id'].choices = case_group_choices(self.domain)
         self.fields['user_group_id'].choices = user_group_choices(self.domain)
         self.fields['location_ids'].widget = SupplyPointSelectWidget(
-            domain=self.domain,
+            self.domain,
             multiselect=True,
         )
 
