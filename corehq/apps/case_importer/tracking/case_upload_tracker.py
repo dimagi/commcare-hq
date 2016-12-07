@@ -1,5 +1,6 @@
 from corehq.apps.case_importer.tracking.models import CaseUploadRecord
 from corehq.apps.case_importer.util import open_spreadsheet_download_ref, get_spreadsheet
+from corehq.util.files import file_extention_from_filename
 from dimagi.utils.decorators.memoized import memoized
 from soil import DownloadBase
 from soil.progress import get_task_status
@@ -13,7 +14,8 @@ class CaseUpload(object):
         self.upload_id = upload_id
 
     @classmethod
-    def create(cls, payload, file_extension):
+    def create(cls, payload, filename):
+        file_extension = file_extention_from_filename(filename)
         soil_download = expose_cached_download(
             payload, expiry=cls._expiry, file_extension=file_extension)
         return cls(soil_download.download_id)
