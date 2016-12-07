@@ -55,12 +55,17 @@ class ScheduleError(XFormException):
     pass
 
 
+class XFormValidationFailed(XFormException):
+    """Unable to communicate with validation service or validation service errored"""
+    pass
+
+
 class XFormValidationError(XFormException):
 
     def __init__(self, fatal_error, version=APP_V2, validation_problems=None):
         self.fatal_error = fatal_error
         self.version = version
-        self.validation_problems = validation_problems
+        self.validation_problems = validation_problems or []
 
     def __str__(self):
         fatal_error_text = self.format_v1(self.fatal_error)

@@ -2,7 +2,7 @@
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.xform import XForm, XFormException, ItextValue, \
-    WrappedNode
+    WrappedNode, validate_xform
 
 
 class XFormParsingTest(SimpleTestCase, TestXmlMixin):
@@ -11,11 +11,11 @@ class XFormParsingTest(SimpleTestCase, TestXmlMixin):
     def setUp(self):
         self.xforms = {}
         for filename in ("label_form", "itext_form"):
-            self.xforms[filename] = XForm(self.get_xml(filename))
-            self.xforms[filename].validate()
+            xml = self.get_xml(filename)
+            self.xforms[filename] = XForm(xml)
 
     def test_properties(self):
-        for _,xform in self.xforms.items():
+        for _, xform in self.xforms.items():
             xform.data_node
             xform.model_node
             xform.instance_node
