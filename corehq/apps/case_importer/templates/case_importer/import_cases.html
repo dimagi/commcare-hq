@@ -32,7 +32,7 @@
                             case_upload.task_status.state === self.states.NOT_STARTED;
                 });
                 if (anyInProgress) {
-                    _.delay(self.fetchCaseUploads, 15000);
+                    _.delay(self.fetchCaseUploads, 5000);
                 }
             }).error(function () {
                 self.state(self.states.FAILED);
