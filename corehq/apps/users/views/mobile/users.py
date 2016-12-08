@@ -1054,7 +1054,7 @@ def user_upload_job_poll(request, domain, download_id, template="users/mobile/pa
     class _BulkUploadResponseWrapper(object):
 
         def __init__(self, context):
-            results = context.get('result', defaultdict(lambda: []))
+            results = context.get('result') or defaultdict(lambda: [])
             self.response_rows = results['rows']
             self.response_errors = results['errors']
             self.problem_rows = [r for r in self.response_rows if r['flag'] not in ('updated', 'created')]
