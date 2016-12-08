@@ -1274,8 +1274,12 @@ class XForm(WrappedNode):
         If the id already exists, DOES NOT overwrite.
 
         """
-        conflicting = self.model_node.find('{f}instance[@id="%s"]' % id)
-        if not conflicting.exists():
+        instance_xpath = 'instance[@id="%s"]' % id
+        conflicting = (
+            self.model_node.find('{f}%s' % instance_xpath).exists() or
+            self.model_node.find(instance_xpath).exists()
+        )
+        if not conflicting:
             # insert right after the main <instance> block
             first_instance = self.model_node.find('{f}instance')
             first_instance.addnext(_make_elem('instance', {'id': id, 'src': src}))
