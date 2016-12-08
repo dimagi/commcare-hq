@@ -32,6 +32,8 @@ def case_uploads(request, domain):
             'user': get_display_name_for_user_id(
                 domain, case_upload.couch_user_id, default=''),
             'case_type': case_upload.case_type,
+            'upload_file_name': case_upload.upload_file_name,
+            'upload_file_length': case_upload.upload_file_length,
         }
 
     case_uploads = [to_user_json(case_upload)

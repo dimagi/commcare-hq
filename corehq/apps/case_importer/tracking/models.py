@@ -13,6 +13,8 @@ class CaseUploadRecord(models.Model):
     couch_user_id = models.CharField(max_length=256)
     case_type = models.CharField(max_length=256)
 
+    upload_file_meta = models.ForeignKey('CaseUploadFileMeta', null=True)
+
     @property
     @memoized
     def task(self):
@@ -35,6 +37,9 @@ class CaseUploadJSON(jsonobject.JsonObject):
     couch_user_id = jsonobject.StringProperty(required=True)
     case_type = jsonobject.StringProperty(required=True)
 
+    upload_file_name = jsonobject.StringProperty()
+    upload_file_length = jsonobject.IntegerProperty()
+
     @classmethod
     def from_model(cls, other):
         return cls(
@@ -44,4 +49,6 @@ class CaseUploadJSON(jsonobject.JsonObject):
             task_id=unicode(other.task_id),
             couch_user_id=other.couch_user_id,
             case_type=other.case_type,
+            upload_file_name=other.upload_file_meta.filename if other.upload_file_meta else None,
+            upload_file_length=other.upload_file_meta.length if other.upload_file_meta else None,
         )
