@@ -97,7 +97,7 @@
 +          </h2>
 +      </div>
  
--        {% if request|toggle_enabled:"PREVIEW_APP" %}
+-        {% if show_live_preview %}
 -        <li>
 -          <a class="js-preview-toggle">
 -              <i class="fa fa-mobile-phone preview-icon"></i>

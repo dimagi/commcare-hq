@@ -41,6 +41,7 @@ from corehq.apps.app_manager.models import (
     ModuleNotFoundException,
 )
 from django_prbac.utils import has_privilege
+from corehq.apps.analytics import ab_tests
 
 
 @retry_resource(3)
@@ -253,7 +254,19 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
             },
         })
 
+    live_preview_ab = ab_tests.ABTest(ab_tests.LIVE_PREVIEW, request)
+    domain_obj = Domain.get_by_name(domain)
+    context.update({
+        'live_preview_ab': live_preview_ab.context,
+        'is_onboarding_domain': domain_obj.is_onboarding_domain,
+        'show_live_preview': (
+            toggles.PREVIEW_APP.enabled(domain)
+            or (domain_obj.is_onboarding_domain and live_preview_ab.version == ab_tests.LIVE_PREVIEW_ENABLED)
+        )
+    })
+
     response = render(request, template, context)
 
+    live_preview_ab.update_response(response)
     response.set_cookie('lang', encode_if_unicode(lang))
     return response

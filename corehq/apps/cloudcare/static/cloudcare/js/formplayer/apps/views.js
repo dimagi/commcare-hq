@@ -88,6 +88,8 @@ FormplayerFrontend.module("Apps.Views", function (Views, FormplayerFrontend, Bac
         },
         startApp: function(e) {
             e.preventDefault();
+            window.analytics.workflow("[app-preview] User clicked Start App");
+            window.analytics.usage("[app-preview] User clicked Start App");
             FormplayerFrontend.trigger("app:select", this.appId);
         },
     });
