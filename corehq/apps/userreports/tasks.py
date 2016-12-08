@@ -148,3 +148,9 @@ def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column, sort_o
 
     objects = experiment.run()
     return objects
+
+
+@task(queue=UCR_CELERY_QUEUE, ignore_result=True)
+def delete_data_source_task(domain, config_id):
+    from corehq.apps.userreports.views import delete_data_source_shared
+    delete_data_source_shared(domain, config_id)

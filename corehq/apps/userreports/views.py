@@ -92,7 +92,11 @@ from corehq.apps.userreports.reports.filters.choice_providers import (
 )
 from corehq.apps.userreports.reports.view import ConfigurableReport
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
-from corehq.apps.userreports.tasks import rebuild_indicators, resume_building_indicators
+from corehq.apps.userreports.tasks import (
+    rebuild_indicators,
+    resume_building_indicators,
+    delete_data_source_task,
+)
 from corehq.apps.userreports.ui.forms import (
     ConfigurableReportEditForm,
     ConfigurableDataSourceEditForm,
@@ -104,7 +108,8 @@ from corehq.apps.userreports.util import (
     has_report_builder_access,
     has_report_builder_add_on_privilege,
     allowed_report_builder_reports,
-    number_of_report_builder_reports
+    number_of_report_builder_reports,
+    temp_setting_value,
 )
 from corehq.apps.userreports.reports.util import has_location_filter
 from corehq.apps.users.decorators import require_permission
@@ -114,6 +119,7 @@ from corehq.util.couch import get_document_or_404
 
 SAMPLE_DATA_MAX_ROWS = 100
 TEMP_REPORT_PREFIX = '__tmp'
+TEMP_DATA_SOURCE_LIFESPAN = 24 * 60 * 60
 
 
 def get_datasource_config_or_404(config_id, domain):
@@ -515,7 +521,14 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
             )
         }
 
-    def _build_data_source(self, app_source, username):
+    def _expire_data_source(self, data_source_config_id):
+        with temp_setting_value('CELERY_ALWAYS_EAGER', False):  # so it works in dev environments too
+            delete_data_source_task.apply_async(
+                (self.domain, data_source_config_id),
+                countdown=TEMP_DATA_SOURCE_LIFESPAN
+            )
+
+    def _build_temp_data_source(self, app_source, username):
         data_source_config = DataSourceConfiguration(
             domain=self.domain,
             table_id=_clean_table_name(self.domain, uuid.uuid4().hex),
@@ -523,6 +536,7 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
         )
         data_source_config.validate()
         data_source_config.save()
+        self._expire_data_source(data_source_config._id)
         rebuild_indicators(data_source_config._id, username, limit=SAMPLE_DATA_MAX_ROWS)  # Do synchronously
         return data_source_config._id
 
@@ -542,7 +556,7 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
     def post(self, request, *args, **kwargs):
         if self.form.is_valid():
             app_source = self.form.get_selected_source()
-            data_source_config_id = self._build_data_source(app_source, request.user.username)
+            data_source_config_id = self._build_temp_data_source(app_source, request.user.username)
             self.filter_data_source_changes(data_source_config_id)
 
             track_workflow(
