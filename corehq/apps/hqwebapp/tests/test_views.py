@@ -20,26 +20,28 @@ class TestEmailAuthenticationFormAutocomplete(BaseAutocompleteTest):
 class TestBugReport(TestCase):
     domain = 'test-bug-report'
 
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
         delete_all_users()
-        self.project = create_domain(self.domain)
-        self.web_user = WebUser.create(
-            self.domain,
+        cls.project = create_domain(cls.domain)
+        cls.web_user = WebUser.create(
+            cls.domain,
             'bug-dude',
             password='***',
         )
-        self.web_user.is_superuser = True
-        self.web_user.save()
-        self.commcare_user = CommCareUser.create(
-            self.domain,
+        cls.web_user.is_superuser = True
+        cls.web_user.save()
+        cls.commcare_user = CommCareUser.create(
+            cls.domain,
             'bug-kid',
             password='***',
         )
-        self.url = reverse("bug_report")
+        cls.url = reverse("bug_report")
 
-    def tearDown(self):
+    @classmethod
+    def tearDownClass(cls):
         delete_all_users()
-        self.project.delete()
+        cls.project.delete()
 
     def _default_payload(self, username):
         return {
