@@ -13,10 +13,9 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.files import file_extention_from_filename
-from django.template.context import RequestContext
 
 from django.contrib import messages
-from django.shortcuts import render, render_to_response
+from django.shortcuts import render
 from django.utils.translation import ugettext as _
 
 require_can_edit_data = require_permission(Permissions.edit_data)
@@ -267,42 +266,7 @@ def excel_commit(request, domain):
 
     request.session.pop(EXCEL_SESSION_ID, None)
 
-    return render(
-        request,
-        "case_importer/excel_commit.html", {
-            'download_id': case_upload.upload_id,
-            'template': 'case_importer/partials/import_status.html',
-            'domain': domain,
-            'report': {
-                'name': 'Import: Completed'
-            },
-            'slug': base.ImportCases.slug
-        }
-    )
-
-
-@require_can_edit_data
-def importer_job_poll(request, domain, download_id, template="case_importer/partials/import_status.html"):
-    case_upload = CaseUpload.get(download_id)
-    task_status = case_upload.get_task_status()
-    if task_status.failed():
-        context = RequestContext(request)
-        context.update({'error': task_status.error, 'url': base.ImportCases.get_url(domain=domain)})
-        return render_to_response('case_importer/partials/import_error.html', context_instance=context)
-    else:
-        context = RequestContext(request)
-        from soil.heartbeat import heartbeat_enabled, is_alive
-
-        context.update({
-            'result': task_status.result,
-            'error': task_status.error,
-            'is_ready': task_status.success(),
-            'progress': task_status.progress,
-            'download_id': case_upload.upload_id,
-            'is_alive': is_alive() if heartbeat_enabled() else True,
-        })
-        context['url'] = base.ImportCases.get_url(domain=domain)
-        return render_to_response(template, context_instance=context)
+    return HttpResponseRedirect(base.ImportCases.get_url(domain))
 
 
 def _spreadsheet_expired(req, domain):
