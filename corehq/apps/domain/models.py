@@ -42,7 +42,6 @@ from langcodes import langs as all_langs
 from collections import defaultdict
 from importlib import import_module
 from corehq import toggles
-from localsettings import ONBOARDING_DOMAIN_TEST_DATE
 
 from .exceptions import InactiveTransferDomainException, NameUnavailableException
 
@@ -1064,12 +1063,12 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
     @property
     def is_onboarding_domain(self):
         # flag used for case management onboarding analytics
-        if not ONBOARDING_DOMAIN_TEST_DATE:
+        if not settings.ONBOARDING_DOMAIN_TEST_DATE:
             return False
         onboarding_date = datetime(
-            ONBOARDING_DOMAIN_TEST_DATE[0],
-            ONBOARDING_DOMAIN_TEST_DATE[1],
-            ONBOARDING_DOMAIN_TEST_DATE[2],
+            settings.ONBOARDING_DOMAIN_TEST_DATE[0],
+            settings.ONBOARDING_DOMAIN_TEST_DATE[1],
+            settings.ONBOARDING_DOMAIN_TEST_DATE[2],
         )
         return self.first_domain_for_user and self.date_created > onboarding_date
 
