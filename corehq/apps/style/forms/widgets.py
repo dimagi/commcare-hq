@@ -151,7 +151,7 @@ $(function() {
         return output
 
 
-class Select2MultipleChoiceWidget(forms.SelectMultiple):
+class _Select2Mixin(object):
 
     class Media:
         css = {
@@ -160,16 +160,23 @@ class Select2MultipleChoiceWidget(forms.SelectMultiple):
         js = ('select2-3.4.5-legacy/select2.js',)
 
     def render(self, name, value, attrs=None, choices=()):
-        final_attrs = self.build_attrs(attrs)
-        output = super(Select2MultipleChoiceWidget, self).render(name, value, attrs, choices)
+        output = super(_Select2Mixin, self).render(name, value, attrs, choices)
         output += """
             <script>
                 $(function() {
                     $('#%s').select2({ width: 'resolve' });
                 });
             </script>
-        """ % final_attrs.get('id')
+        """ % attrs.get('id')
         return mark_safe(output)
+
+
+class Select2(_Select2Mixin, forms.Select):
+    pass
+
+
+class Select2MultipleChoiceWidget(_Select2Mixin, forms.SelectMultiple):
+    pass
 
 
 class Select2Ajax(forms.TextInput):
@@ -186,8 +193,9 @@ class Select2Ajax(forms.TextInput):
         }
         js = ('select2-3.5.2-legacy/select2.js',)
 
-    def __init__(self, attrs=None, page_size=20):
+    def __init__(self, attrs=None, page_size=20, multiple=False):
         self.page_size = page_size
+        self.multiple = multiple
         super(Select2Ajax, self).__init__(attrs)
 
     def set_url(self, url):
@@ -195,20 +203,24 @@ class Select2Ajax(forms.TextInput):
 
     def _clean_initial(self, val):
         if isinstance(val, collections.Sequence) and not isinstance(val, (str, unicode)):
+            # if its a tuple or list
             return {"id": val[0], "text": val[1]}
+        elif val is None:
+            return None
         else:
+            # if its a scalar
             return {"id": val, "text": val}
 
     def render(self, name, value, attrs=None):
-        final_attrs = self.build_attrs(attrs)
         output = super(Select2Ajax, self).render(name, value, attrs)
         output += render_to_string(
             'hqstyle/forms/select_2_ajax_widget.html',
             {
-                'id': final_attrs.get('id'),
+                'id': attrs.get('id'),
                 'initial': self._clean_initial(value),
                 'endpoint': self.url,
                 'page_size': self.page_size,
+                'multiple': self.multiple,
             }
         )
         return mark_safe(output)
