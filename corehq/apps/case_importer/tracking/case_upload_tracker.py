@@ -1,6 +1,8 @@
 from corehq.apps.case_importer.exceptions import ImporterRefError
-from corehq.apps.case_importer.tracking.filestorage import transient_file_store
-from corehq.apps.case_importer.tracking.models import CaseUploadRecord
+from corehq.apps.case_importer.tracking.filestorage import transient_file_store, \
+    persistent_file_store
+from corehq.apps.case_importer.tracking.models import CaseUploadRecord, \
+    CaseUploadFileMeta
 from corehq.apps.case_importer.util import open_spreadsheet_download_ref, get_spreadsheet
 from dimagi.utils.decorators.memoized import memoized
 from soil.progress import get_task_status
@@ -46,12 +48,18 @@ class CaseUpload(object):
     def trigger_upload(self, domain, config):
         from corehq.apps.case_importer.tasks import bulk_import_async
         task = bulk_import_async.delay(config, domain, self.upload_id)
+        original_filename = transient_file_store.get_filename(self.upload_id)
+        with open(self.get_tempfile()) as f:
+            identifier = persistent_file_store.write_file(f, original_filename)
+
+        case_upload_file_meta = CaseUploadFileMeta.objects.get(identifier=identifier)
         CaseUploadRecord(
             domain=domain,
             upload_id=self.upload_id,
             task_id=task.task_id,
             couch_user_id=config.couch_user_id,
             case_type=config.case_type,
+            upload_file_meta=case_upload_file_meta,
         ).save()
 
     def get_task_status(self):
