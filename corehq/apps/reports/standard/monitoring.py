@@ -154,6 +154,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     description = ugettext_noop("Followup rates on active cases.")
     is_cacheable = True
     ajax_pagination = True
+    exportable_all = True
 
     @property
     def shared_pagination_GET_params(self):
@@ -369,17 +370,6 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 
     @property
     def rows(self):
-        def _unmatched_buckets(buckets):
-            # ES doesn't return buckets that don't have any docs matching docs
-            # we expect a bucket for each relevant user id so add empty buckets
-            returned_user_ids = {b.key for b in buckets}
-            not_returned_user_ids = set(self.paginated_user_ids) - returned_user_ids
-            extra_rows = []
-            for user_id in not_returned_user_ids:
-                extra_rows.append(self.Row(self, self.users_by_id[user_id], {}))
-            extra_rows.sort(key=lambda row: row.user.raw_username)
-            return extra_rows
-
         es_results = self.es_queryset(
             user_ids=self.paginated_user_ids,
             size=self.pagination.start + self.pagination.count
@@ -392,7 +382,8 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             user = self.users_by_id[bucket.key]
             rows.append(self.Row(self, user, bucket))
 
-        rows.extend(_unmatched_buckets(buckets))
+        rows.extend(self._unmatched_buckets(buckets, self.paginated_user_ids))
+
         if self.should_sort_by_username:
             # ES handles sorting for all other columns
             rows.sort(key=lambda row: row.user.raw_username)
@@ -411,14 +402,27 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         es_results = self.es_queryset(user_ids=self.user_ids)
         buckets = es_results.aggregations.users.buckets_list
         if self.missing_users:
-            buckets[None] = es_results.aggregations.missing_users.bucket
+            buckets.append(es_results.aggregations.missing_users.bucket)
         rows = []
         for bucket in buckets:
             user = self.users_by_id[bucket.key]
             rows.append(self.Row(self, user, bucket))
 
+        rows.extend(self._unmatched_buckets(buckets, self.user_ids))
+
         self.total_row = self._total_row
         return map(self._format_row, rows)
+
+    def _unmatched_buckets(self, buckets, user_ids):
+        # ES doesn't return buckets that don't have any docs matching docs
+        # we expect a bucket for each relevant user id so add empty buckets
+        returned_user_ids = {b.key for b in buckets}
+        not_returned_user_ids = set(user_ids) - returned_user_ids
+        extra_rows = []
+        for user_id in not_returned_user_ids:
+            extra_rows.append(self.Row(self, self.users_by_id[user_id], {}))
+        extra_rows.sort(key=lambda row: row.user.raw_username)
+        return extra_rows
 
     @property
     def _touched_total_aggregation(self):
