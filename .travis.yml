@@ -22,6 +22,9 @@ install:
 before_script:
   - docker version
   - docker-compose version
+  - "ls -al /mnt/commcare-hq-ro/corehq/apps/fixtures/tests/test_upload/"
+  - "ls -al /mnt/commcare-hq/corehq/apps/fixtures/tests/test_upload/"
+  - exit
 script: "scripts/docker test --noinput --stop --verbosity=2 --divide-depth=1"
 after_success:
   # create symlink so coverage report can find source files
