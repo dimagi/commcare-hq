@@ -1,4 +1,6 @@
 from soil import DownloadBase, CachedDownload, FileDownload, MultipleTaskDownload
+from soil.exceptions import TaskFailedError
+from soil.heartbeat import is_alive, heartbeat_enabled
 from soil.progress import get_task_status
 
 
@@ -37,18 +39,27 @@ def get_download_context(download_id, message=None, require_result=False):
     task = download_data.task
 
     task_status = get_task_status(
-        task, require_result=require_result,
-        is_multiple_download_task=isinstance(download_data, MultipleTaskDownload)
-    )
+        task, is_multiple_download_task=isinstance(download_data, MultipleTaskDownload))
+    if task_status.failed():
+        raise TaskFailedError(task_status.error)
+    if require_result:
+        is_ready = task_status.success and task_status.result is not None
+    else:
+        is_ready = task_status.success
 
     return {
         'result': task_status.result,
         'error': task_status.error,
-        'is_ready': task_status.is_ready,
-        'is_alive': task_status.is_alive,
+        'is_ready': is_ready,
+        'is_alive': is_alive() if heartbeat_enabled() else True,
         'progress': task_status.progress,
         'download_id': download_id,
         'allow_dropbox_sync': isinstance(download_data, FileDownload) and download_data.use_transfer,
         'has_file': download_data is not None and download_data.has_file,
         'custom_message': message,
     }
+
+
+def get_task(task_id):
+    from celery.task.base import Task
+    return Task.AsyncResult(task_id)

@@ -52,6 +52,7 @@ from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator, MediaSuiteGenerator
 from corehq.apps.app_manager.xpath_validator import validate_xpath
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
+from corehq.apps.users.dbaccessors.couch_users import get_display_name_for_user_id
 from corehq.util.timezones.utils import get_timezone_for_domain
 from dimagi.ext.couchdbkit import *
 from django.conf import settings
@@ -4999,12 +5000,8 @@ class SavedAppBuild(ApplicationBase):
         })
         comment_from = data['comment_from']
         if comment_from:
-            try:
-                comment_user = CouchUser.get(comment_from)
-            except ResourceNotFound:
-                data['comment_user_name'] = comment_from
-            else:
-                data['comment_user_name'] = comment_user.full_name
+            data['comment_user_name'] = get_display_name_for_user_id(
+                self.domain, comment_from, default=comment_from)
 
         return data
 
