@@ -544,7 +544,7 @@ def xform_management_job_poll(request, domain, download_id,
                               template="data_interfaces/partials/xform_management_status.html"):
     mode = FormManagementMode(request.GET.get('mode'), validate=True)
     try:
-        context = get_download_context(download_id)
+        context = get_download_context(download_id, check_state=True)
     except TaskFailedError:
         return HttpResponseServerError()
 

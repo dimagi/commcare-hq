@@ -809,7 +809,7 @@ def location_importer_job_poll(request, domain, download_id,
                                template="style/partials/download_status.html"):
     template = "locations/manage/partials/locations_upload_status.html"
     try:
-        context = get_download_context(download_id)
+        context = get_download_context(download_id, check_state=True)
     except TaskFailedError:
         return HttpResponseServerError()
 

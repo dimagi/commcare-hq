@@ -633,7 +633,7 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
         except KeyError:
             return format_angular_error(_("Requires a download id"))
         try:
-            context = get_download_context(download_id)
+            context = get_download_context(download_id, check_state=True)
         except TaskFailedError:
             return format_angular_error(
                 _("Download Task Failed to Start. It seems that the server "
