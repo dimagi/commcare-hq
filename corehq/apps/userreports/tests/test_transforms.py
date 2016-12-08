@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta
 from django.test import SimpleTestCase
+from mock import patch
+
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.transforms.factory import TransformFactory
 from corehq.apps.userreports.transforms.specs import CustomTransform
@@ -83,3 +85,61 @@ class DaysElapsedTransformTest(SimpleTestCase):
         })
         date = (datetime.utcnow() - timedelta(days=5)).strftime('%Y-%m-%d')
         self.assertEqual(transform.transform(date), 5)
+
+
+
+class TranslationTransform(SimpleTestCase):
+
+    def test_missing_translation(self):
+        transform = TransformFactory.get_transform({
+            "type": "translation",
+            "translations": {},
+        }).get_transform_function()
+        self.assertEqual(transform('foo'), 'foo')
+
+    def test_basic_translation(self):
+        transform = TransformFactory.get_transform({
+            "type": "translation",
+            "translations": {
+                "#0000FF": "Blue"
+            },
+        }).get_transform_function()
+        self.assertEqual(transform('#0000FF'), 'Blue')
+        self.assertEqual(transform('#123456'), '#123456')
+
+    def test_default_language_translation(self):
+        transform = TransformFactory.get_transform({
+            "type": "translation",
+            "translations": {
+                "#0000FF": {
+                    "en": "Blue",
+                    "es": "Azul",
+                },
+                "#800080": {
+                    "en": "Purple",
+                    "es": "Morado",
+                }
+            },
+        }).get_transform_function()
+        self.assertEqual(transform('#0000FF'), 'Blue')
+        self.assertEqual(transform('#800080'), 'Purple')
+        self.assertEqual(transform('#123456'), '#123456')
+
+    @patch('corehq.apps.userreports.transforms.specs.get_language', lambda: "es")
+    def test_spanish_language_translation(self):
+        transform = TransformFactory.get_transform({
+            "type": "translation",
+            "translations": {
+                "#0000FF": {
+                    "en": "Blue",
+                    "es": "Azul",
+                },
+                "#800080": {
+                    "en": "Purple",
+                    "es": "Morado",
+                }
+            },
+        }).get_transform_function()
+        self.assertEqual(transform('#0000FF'), 'Azul')
+        self.assertEqual(transform('#800080'), 'Morado')
+        self.assertEqual(transform('#123456'), '#123456')

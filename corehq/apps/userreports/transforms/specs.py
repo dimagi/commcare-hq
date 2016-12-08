@@ -1,6 +1,8 @@
 from decimal import Decimal
+from django.utils.translation import get_language
 from dimagi.ext.jsonobject import DictProperty, JsonObject, StringProperty
 from corehq.apps.userreports.specs import TypeProperty
+from corehq.apps.userreports.util import localize
 from corehq.apps.userreports.transforms.custom.date import get_month_display, days_elapsed_from_date
 from corehq.apps.userreports.transforms.custom.numeric import \
     get_short_decimal_display
@@ -78,13 +80,44 @@ class NumberFormatTransform(Transform):
 
 
 class TranslationTransform(Transform):
+    """
+    Lets you map slugs to display strings, and/or translate them
+
+    Simple mapping
+        {
+            "type": "translation",
+            "translations": {
+                "#0000FF": "Blue",
+                "#800080": "Purple"
+            }
+        }
+
+    Translated mapping
+        {
+            "type": "translation",
+            "translations": {
+                "#0000FF": {
+                    "en": "Blue",
+                    "es": "Azul",
+                },
+                "#800080": {
+                    "en": "Purple",
+                    "es": "Morado",
+                }
+            }
+        }
+    """
     type = TypeProperty('translation')
     translations = DictProperty()
 
     def get_transform_function(self):
 
-        # For now, use the identity function
         def transform_function(value):
-            return value
+            if value not in self.translations:
+                return value
+
+            display = self.translations.get(value, {})
+            language = get_language()
+            return localize(display, language)
 
         return transform_function
