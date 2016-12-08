@@ -2166,6 +2166,6 @@ def check_for_missing_instances(wrapped_xform):
 
     if message_parts:
         raise XFormValidationError(
-            'The form is missing some instance declarations: h{}'.format(', '.join(message_parts)),
+            'The form is missing some instance declarations: {}'.format(', '.join(message_parts)),
             validation_problems=[]
         )
