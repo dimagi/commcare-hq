@@ -289,6 +289,7 @@ HQ_APPS = (
     'corehq.apps.performance_sms',
     'corehq.apps.registration',
     'corehq.messaging.smsbackends.unicel',
+    'corehq.messaging.smsbackends.icds_nic',
     'corehq.apps.reports',
     'corehq.apps.reports_core',
     'corehq.apps.userreports',
