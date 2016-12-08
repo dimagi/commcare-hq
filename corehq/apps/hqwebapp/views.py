@@ -487,7 +487,7 @@ def bug_report(req):
     domain_object = Domain.get_by_name(report['domain'])
     current_project_description = domain_object.project_description
     new_project_description = req.POST.get('project_description')
-    if (req.couch_user.is_domain_admin() and
+    if (req.couch_user.is_domain_admin(domain=report['domain']) and
             new_project_description and
             current_project_description != new_project_description):
 
