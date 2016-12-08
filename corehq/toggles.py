@@ -3,6 +3,7 @@ from functools import wraps
 import hashlib
 from django.http import Http404
 import math
+from corehq.util.quickcache import quickcache
 from toggle.shortcuts import toggle_enabled, set_toggle
 
 Tag = namedtuple('Tag', 'name css_class description')
@@ -170,6 +171,7 @@ def any_toggle_enabled(*toggles):
     return decorator
 
 
+@quickcache([])
 def all_toggles():
     """
     Loads all toggles
