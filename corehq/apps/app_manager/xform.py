@@ -1,6 +1,8 @@
 from collections import defaultdict, OrderedDict
 from functools import wraps
 import logging
+
+import itertools
 from django.utils.translation import ugettext_lazy as _
 from casexml.apps.case.xml import V2_NAMESPACE
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
@@ -646,9 +648,15 @@ class XForm(WrappedNode):
         return images + video + audio + inline_video
 
     def get_instance_ids(self):
+        def _get_instances():
+            return itertools.chain(
+                self.model_node.findall('{f}instance'),
+                self.model_node.findall('instance')
+            )
+
         return [
             instance.attrib['id']
-            for instance in self.model_node.findall('{f}instance')
+            for instance in _get_instances()
             if 'id' in instance.attrib
         ]
 
