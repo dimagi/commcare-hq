@@ -1,6 +1,8 @@
 from collections import defaultdict, OrderedDict
 from functools import wraps
 import logging
+
+import itertools
 from django.utils.translation import ugettext_lazy as _
 
 import formtranslate.api
@@ -653,6 +655,19 @@ class XForm(WrappedNode):
         inline_video = self.media_references_by_lang(lang=lang, form="video-inline")
         return images + video + audio + inline_video
 
+    def get_instance_ids(self):
+        def _get_instances():
+            return itertools.chain(
+                self.model_node.findall('{f}instance'),
+                self.model_node.findall('instance')
+            )
+
+        return [
+            instance.attrib['id']
+            for instance in _get_instances()
+            if 'id' in instance.attrib
+        ]
+
     def set_name(self, new_name):
         title = self.find('{h}head/{h}title')
         if title.exists():
@@ -1268,8 +1283,12 @@ class XForm(WrappedNode):
         If the id already exists, DOES NOT overwrite.
 
         """
-        conflicting = self.model_node.find('{f}instance[@id="%s"]' % id)
-        if not conflicting.exists():
+        instance_xpath = 'instance[@id="%s"]' % id
+        conflicting = (
+            self.model_node.find('{f}%s' % instance_xpath).exists() or
+            self.model_node.find(instance_xpath).exists()
+        )
+        if not conflicting:
             # insert right after the main <instance> block
             first_instance = self.model_node.find('{f}instance')
             first_instance.addnext(_make_elem('instance', {'id': id, 'src': src}))
@@ -2138,3 +2157,36 @@ def infer_vellum_type(control, bind):
         })
         return None
     return result['name']
+
+
+def find_missing_instances(wrapped_xform):
+    from corehq.apps.app_manager.suite_xml.post_process.instances import get_all_instances_referenced_in_xpaths
+    instance_declarations = wrapped_xform.get_instance_ids()
+    missing_instances = set()
+    missing_unknown_instance = set()
+    instances, unknown_instance_ids = get_all_instances_referenced_in_xpaths('', [wrapped_xform.render()])
+    for instance in instances:
+        if instance.id not in instance_declarations:
+            missing_instances.add(instance.id)
+    for instance_id in unknown_instance_ids:
+        if instance_id not in instance_declarations:
+            missing_unknown_instance.add(instance_id)
+
+    return missing_instances, missing_unknown_instance
+
+
+def check_for_missing_instances(wrapped_xform):
+    missing_instances, missing_unknown_instances = find_missing_instances(wrapped_xform)
+    message_parts = []
+    if missing_instances:
+        instance_ids = "','".join(missing_instances)
+        message_parts.append(_("Known instances: '{}'").format(instance_ids))
+    if missing_unknown_instances:
+        instance_ids = "','".join(missing_unknown_instances)
+        message_parts.append(_("Unknown instances: '{}'").format(instance_ids))
+
+    if message_parts:
+        raise XFormValidationError(
+            'The form is missing some instance declarations: {}'.format(', '.join(message_parts)),
+            validation_problems=[]
+        )
