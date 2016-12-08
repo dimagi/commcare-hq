@@ -417,11 +417,7 @@ FormplayerFrontend.on('refreshApplication', function(appId) {
         tfLoadingComplete(true);
     }).done(function() {
         tfLoadingComplete();
-        if (!_.isUndefined(resp.responseJSON.tree)) {
-            FormplayerFrontend.trigger('startForm', resp.responseJSON);
-        } else {
-            FormplayerFrontend.trigger('navigateHome');
-        }
+        FormplayerFrontend.trigger('navigateHome');
     });
 });
 
