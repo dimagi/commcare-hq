@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import re
 import stat
@@ -13,7 +14,6 @@ from django.db import IntegrityError
 from django.http import HttpResponse, StreamingHttpResponse
 
 from django_transfer import TransferHttpResponse
-from soil.progress import get_task_progress, get_multiple_task_progress
 
 
 GLOBAL_RW = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH
@@ -130,13 +130,33 @@ class DownloadBase(object):
         return Task.AsyncResult(self.task_id)
 
     def get_progress(self):
-        task_progress = get_task_progress(self.task)
+        error = False
+        error_message = ''
+        try:
+            info = self.task.info
+        except (TypeError, NotImplementedError):
+            current = total = percent = None
+            logging.exception("No celery result backend?")
+        else:
+            if info is None:
+                current = total = percent = None
+            elif isinstance(info, Exception):
+                current = total = percent = 100
+                error = True
+                error_message = "%s: %s" % (type(info).__name__, info)
+            else:
+                current = info.get('current')
+                total = info.get('total')
+                percent = int(
+                    current * 100. / total if total and current is not None
+                    else 0
+                )
         return {
-            'current': task_progress.current,
-            'total': task_progress.total,
-            'percent': task_progress.percent,
-            'error': task_progress.error,
-            'error_message': task_progress.error_message,
+            'current': current,
+            'total': total,
+            'percent': percent,
+            'error': error,
+            'error_message': error_message,
         }
 
     @classmethod
@@ -174,7 +194,14 @@ class MultipleTaskDownload(DownloadBase):
         self.get_cache().set(self._task_key(), task_group.id, timeout)
 
     def get_progress(self):
-        return get_multiple_task_progress(self.task)
+        current = sum(int(result.ready()) for result in self.task.results)
+        total = len(self.task.subtasks)
+        percent = current * 100 // total if total and current is not None else 0
+        return {
+            'current': current,
+            'total': total,
+            'percent': percent,
+        }
 
 
 class CachedDownload(DownloadBase):

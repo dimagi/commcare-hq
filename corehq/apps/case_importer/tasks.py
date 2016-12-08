@@ -1,6 +1,5 @@
 from celery.task import task
-from corehq.apps.case_importer.exceptions import ImporterError
-from corehq.apps.case_importer.tracking.case_upload_tracker import CaseUpload
+from corehq.apps.case_importer.exceptions import ImporterRefError, ImporterError
 from corehq.apps.case_importer.util import get_importer_error_message
 from dimagi.utils.couch.database import is_bigcouch
 from casexml.apps.case.mock import CaseBlock, CaseBlockError
@@ -11,11 +10,11 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CouchUser
 from corehq.apps.export.tasks import add_inferred_export_properties
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from soil import DownloadBase
 from dimagi.utils.prime_views import prime_views
 from couchdbkit.exceptions import ResourceNotFound
 from corehq.util.soft_assert import soft_assert
 import uuid
-from soil.progress import set_task_progress
 
 POOL_SIZE = 10
 PRIME_VIEW_FREQUENCY = 500
@@ -24,14 +23,12 @@ CASEBLOCK_CHUNKSIZE = 100
 
 @task
 def bulk_import_async(config, domain, excel_id):
-    case_upload = CaseUpload.get(excel_id)
-    try:
-        case_upload.check_file(config.named_columns)
-    except ImporterError as e:
-        return {'errors': get_importer_error_message(e)}
+    excel_ref = DownloadBase.get(excel_id)
+    if not excel_ref:
+        return {'errors': get_importer_error_message(ImporterRefError('null download ref'))}
 
     try:
-        with case_upload.get_spreadsheet(config.named_columns) as spreadsheet:
+        with importer_util.get_spreadsheet(excel_ref.get_filename(), config.named_columns) as spreadsheet:
             result = do_import(spreadsheet, config, domain, task=bulk_import_async)
 
         # return compatible with soil
@@ -101,7 +98,7 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
     row_count = spreadsheet.max_row
     for i, row in enumerate(spreadsheet.iter_rows()):
         if task:
-            set_task_progress(task, i, row_count)
+            DownloadBase.set_progress(task, i, row_count)
 
         # skip first row if it is a header field
         if i == 0 and config.named_columns:

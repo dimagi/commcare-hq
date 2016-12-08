@@ -492,7 +492,7 @@ class DemoRestoreStatusView(BaseManageCommCareUserView):
 def demo_restore_job_poll(request, domain, download_id, template="users/mobile/partials/demo_restore_status.html"):
 
     try:
-        context = get_download_context(download_id)
+        context = get_download_context(download_id, check_state=True)
     except TaskFailedError:
         return HttpResponseServerError()
 
@@ -1041,7 +1041,7 @@ class UserUploadStatusView(BaseManageCommCareUserView):
 @require_can_edit_commcare_users
 def user_upload_job_poll(request, domain, download_id, template="users/mobile/partials/user_upload_status.html"):
     try:
-        context = get_download_context(download_id)
+        context = get_download_context(download_id, check_state=True)
     except TaskFailedError:
         return HttpResponseServerError()
 
