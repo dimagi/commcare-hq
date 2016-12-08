@@ -1,5 +1,6 @@
 import collections
 import hashlib
+from contextlib import contextmanager
 
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
@@ -172,3 +173,16 @@ def get_backend_id(config, can_handle_laboratory=False):
     if settings.OVERRIDE_UCR_BACKEND:
         return settings.OVERRIDE_UCR_BACKEND
     return config.backend_id
+
+
+@contextmanager
+def temp_setting_value(name, value):
+    """
+    Context manager to temporarily set a Django setting to a different value
+    """
+    orig_value = getattr(settings, name)
+    setattr(settings, name, value)
+    try:
+        yield
+    finally:
+        setattr(settings, name, orig_value)
