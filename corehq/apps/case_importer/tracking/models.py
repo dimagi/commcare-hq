@@ -20,6 +20,10 @@ class CaseUploadRecord(models.Model):
     def task(self):
         return get_task(self.task_id)
 
+    def get_tempfile(self):
+        from .filestorage import persistent_file_store
+        return persistent_file_store.get_tempfile(self.upload_file_meta.identifier)
+
 
 class CaseUploadFileMeta(models.Model):
     identifier = models.CharField(max_length=256, unique=True)
