@@ -39,7 +39,7 @@ from corehq.apps.app_manager.const import (
 )
 from corehq.apps.app_manager.util import (
     get_settings_values,
-)
+    app_doc_types)
 from corehq.apps.domain.models import Domain
 from corehq.tabs.tabclasses import ApplicationsTab
 from corehq.util.compression import decompress
@@ -66,7 +66,6 @@ from corehq.apps.app_manager.models import (
     Module,
     ModuleNotFoundException,
     load_app_template,
-    str_to_cls,
 )
 from corehq.apps.app_manager.models import import_app as import_app_util
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
@@ -413,7 +412,7 @@ def new_app(request, domain):
     "Adds an app to the database"
     lang = 'en'
     type = request.POST["type"]
-    cls = str_to_cls[type]
+    cls = app_doc_types()[type]
     form_args = []
     if cls == Application:
         app = cls.new_app(domain, "Untitled Application", lang=lang)

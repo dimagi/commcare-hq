@@ -114,7 +114,9 @@ from corehq.apps.app_manager.util import (
     app_callout_templates,
     xpath_references_case,
     xpath_references_user_case,
-    module_case_hierarchy_has_circular_reference)
+    module_case_hierarchy_has_circular_reference,
+    get_correct_app_class
+)
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
@@ -5892,14 +5894,6 @@ class RemoteApp(ApplicationBase):
         return questions
 
 
-str_to_cls = {
-    "Application": Application,
-    "Application-Deleted": Application,
-    "RemoteApp": RemoteApp,
-    "RemoteApp-Deleted": RemoteApp,
-}
-
-
 def import_app(app_id_or_source, domain, source_properties=None, validate_source_domain=None):
     if isinstance(app_id_or_source, basestring):
         app_id = app_id_or_source
@@ -5907,10 +5901,9 @@ def import_app(app_id_or_source, domain, source_properties=None, validate_source
         src_dom = source['domain']
         if validate_source_domain:
             validate_source_domain(src_dom)
-        source = source.export_json()
-        source = json.loads(source)
+        source = source.export_json(dump_json=False)
     else:
-        cls = str_to_cls[app_id_or_source['doc_type']]
+        cls = get_correct_app_class(app_id_or_source)
         # Don't modify original app source
         app = cls.wrap(deepcopy(app_id_or_source))
         source = app.export_json(dump_json=False)
@@ -5923,7 +5916,7 @@ def import_app(app_id_or_source, domain, source_properties=None, validate_source
     if source_properties is not None:
         for key, value in source_properties.iteritems():
             source[key] = value
-    cls = str_to_cls[source['doc_type']]
+    cls = get_correct_app_class(source)
     # Allow the wrapper to update to the current default build_spec
     if 'build_spec' in source:
         del source['build_spec']
