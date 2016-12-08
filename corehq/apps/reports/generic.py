@@ -22,6 +22,7 @@ from corehq.apps.style.decorators import (
     use_datatables,
     use_select2,
     use_daterangepicker,
+    use_nvd3,
 )
 from corehq.apps.users.models import CouchUser
 from corehq.util.timezones.utils import get_timezone_for_user
@@ -696,6 +697,7 @@ class GenericReportView(object):
         """
         return []
 
+    @use_nvd3
     @use_jquery_ui
     @use_select2
     @use_datatables

@@ -1,6 +1,7 @@
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
+from corehq.apps.locations.models import SQLLocation
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import PhoneTime
 from dimagi.utils.decorators.memoized import memoized
@@ -8,7 +9,6 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.es import filters, users as user_es, cases as case_es
 from corehq.apps.es.es_query import HQESQuery
 from corehq.apps.locations.dbaccessors import get_users_location_ids
-from corehq.apps.locations.util import get_locations_and_children
 from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.exceptions import BadRequestError
@@ -132,7 +132,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         # Show cases owned by any selected locations, user locations, or their children
         loc_ids = set(EMWF.selected_location_ids(mobile_user_and_group_slugs) +
                       get_users_location_ids(self.domain, selected_user_ids))
-        location_owner_ids = get_locations_and_children(loc_ids).location_ids()
+        location_owner_ids = SQLLocation.objects.get_locations_and_children_ids(loc_ids)
 
         # Get user ids for each user in specified reporting groups
         report_group_q = HQESQuery(index="groups").domain(self.domain)\

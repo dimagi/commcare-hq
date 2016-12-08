@@ -619,6 +619,13 @@ INSTANCE_VIEWER = StaticToggle(
     namespaces=[NAMESPACE_USER, NAMESPACE_DOMAIN],
 )
 
+CUSTOM_INSTANCES = StaticToggle(
+    'custom_instances',
+    'Inject custom instance declarations',
+    TAG_EXPERIMENTAL,
+    namespaces=[NAMESPACE_USER, NAMESPACE_DOMAIN],
+)
+
 LOCATIONS_IN_REPORTS = StaticToggle(
     'LOCATIONS_IN_REPORTS',
     "Include locations in report filters",
@@ -824,13 +831,6 @@ GRID_MENUS = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Grid+Views',
 )
 
-NEW_EXPORTS = StaticToggle(
-    'new_exports',
-    'Use new backend export infrastructure',
-    TAG_PRODUCT_CORE,
-    [NAMESPACE_DOMAIN]
-)
-
 OLD_EXPORTS = StaticToggle(
     'old_exports',
     'Use old backend export infrastructure',
@@ -942,11 +942,11 @@ APP_MANAGER_V2 = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-RESTORE_AS_CLOUDCARE = StaticToggle(
-    'restore_as_cloudcare',
-    'Restore as a different user for cloudcare',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_USER, NAMESPACE_DOMAIN],
+SHOW_PREVIEW_APP_SETTINGS = StaticToggle(
+    'preview_app_settings',
+    'Show preview app settings button',
+    TAG_PRODUCT_CORE,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
 DATA_MIGRATION = StaticToggle(

@@ -456,9 +456,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
     if should_edit("auto_select_case"):
         module["auto_select_case"] = request.POST.get("auto_select_case") == 'true'
 
-    if (feature_previews.MODULE_FILTER.enabled(app.domain) and
-            app.enable_module_filtering and
-            should_edit('module_filter')):
+    if app.enable_module_filtering and should_edit('module_filter'):
         module['module_filter'] = request.POST.get('module_filter')
 
     if should_edit('case_list_form_id'):
@@ -792,8 +790,7 @@ def edit_report_module(request, domain, app_id, module_id):
         )
         return HttpResponseBadRequest(_("There was a problem processing your request."))
 
-    if (feature_previews.MODULE_FILTER.enabled(domain) and
-            app.enable_module_filtering):
+    if app.enable_module_filtering:
         module['module_filter'] = request.POST.get('module_filter')
     module.media_image.update(params['multimedia']['mediaImage'])
     module.media_audio.update(params['multimedia']['mediaAudio'])

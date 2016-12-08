@@ -2,11 +2,7 @@ from copy import copy
 from datetime import datetime, timedelta, date
 import itertools
 import json
-from urllib import quote
 from wsgiref.util import FileWrapper
-
-from django.views.generic.base import TemplateView
-from unidecode import unidecode
 
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.domain.utils import get_domain_module_map
@@ -52,6 +48,7 @@ from django.views.decorators.http import (
     require_POST,
 )
 from django.views.generic import View
+from django.views.generic.base import TemplateView
 
 from casexml.apps.case import const
 from casexml.apps.case.cleanup import rebuild_case_from_forms, close_case
@@ -126,7 +123,7 @@ from corehq.apps.users.models import (
     WebUser,
 )
 from corehq.util.couch import get_document_or_404
-from corehq.util.spreadsheets_v1.export import WorkBook
+from corehq.util.workbook_json.export import WorkBook
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import absolute_reverse, reverse
 
@@ -162,7 +159,7 @@ from .util import (
     get_group,
     group_filter,
     users_matching_filter,
-    safe_for_fs,
+    safe_filename_header,
 )
 from corehq.apps.style.decorators import (
     use_jquery_ui,
@@ -571,14 +568,7 @@ def build_download_saved_export_response(payload, format, filename):
     content_type = Format.from_format(format).mimetype
     response = StreamingHttpResponse(FileWrapper(payload), content_type=content_type)
     if format != 'html':
-        filename = filename if isinstance(filename, unicode) else filename.decode('utf8')
-        safe_filename = safe_for_fs(filename)
-        ascii_filename = unidecode(safe_filename)
-
-        # See IETF advice https://tools.ietf.org/html/rfc6266#appendix-D
-        # and http://greenbytes.de/tech/tc2231/#attfnboth as a solution to disastrous browser compatibility
-        response['Content-Disposition'] = 'attachment; filename="{}"; filename*=UTF-8\'\'{}'.format(
-            ascii_filename, quote(safe_filename.encode('utf8')))
+        response['Content-Disposition'] = safe_filename_header(filename)
     return response
 
 

@@ -24,7 +24,7 @@ class SetupProjectPerformanceMixin(object):
     now = datetime.datetime.utcnow()
     year, month = add_months(now.year, now.month, 1)
     month_as_date = datetime.date(year, month, 1)
-    prev_month_as_date = datetime.date(year, month - 1, 1)
+    prev_month_as_date = datetime.date(now.year, now.month, 1)
 
     @classmethod
     def class_setup(cls):

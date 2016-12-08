@@ -122,6 +122,10 @@ class UnknownInstanceError(SuiteError):
     pass
 
 
+class DuplicateInstanceIdError(SuiteError):
+    pass
+
+
 class ConfigurableReportException(AppManagerException):
     pass
 

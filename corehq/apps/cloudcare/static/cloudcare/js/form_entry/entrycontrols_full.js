@@ -1,3 +1,5 @@
+/* globals Formplayer */
+
 /**
  * The base Object for all entries. Each entry takes a question object and options
  * @param {Object} question - A question object
@@ -146,6 +148,7 @@ function FreeTextEntry(question, options) {
     } else {
         self.templateType = 'text';
     }
+    self.datatype = question.datatype();
     self.domain = question.domain ? question.domain() : 'full';
     self.lengthLimit = options.lengthLimit || 100000;
     self.prose = question.domain_meta ? question.domain_meta().longtext : false;
@@ -163,7 +166,15 @@ function FreeTextEntry(question, options) {
     };
 
     self.helpText = function() {
-        return isPassword ? 'Password' : 'Free response';
+        if (isPassword) {
+            return gettext('Password');
+        }
+        switch (self.datatype) {
+        case Formplayer.Const.BARCODE:
+            return gettext('Barcode');
+        default:
+            return gettext('Free response');
+        }
     };
 }
 FreeTextEntry.prototype = Object.create(EntrySingleAnswer.prototype);
@@ -310,7 +321,8 @@ function DateTimeEntryBase(question, options) {
         thisYear = new Date().getFullYear(),
         minDate,
         maxDate,
-        displayOpts = _getDisplayOptions(question);
+        displayOpts = _getDisplayOptions(question),
+        isPhoneMode = ko.utils.unwrapObservable(displayOpts.phoneMode);
 
     EntrySingleAnswer.call(self, question, options);
     // Set max date to 10 years in the future
@@ -359,11 +371,11 @@ function DateTimeEntryBase(question, options) {
 
                 $dt.find('.xdsoft_label i').addClass('fa fa-caret-down');
 
-                if (displayOpts.phoneMode() && !self.datepicker && self.timepicker) {
+                if (isPhoneMode && !self.datepicker && self.timepicker) {
                     $dt.find('.xdsoft_time_box').addClass('time-box-full');
                 }
 
-                if (displayOpts.phoneMode() && self.timepicker && self.datepicker) {
+                if (isPhoneMode && self.timepicker && self.datepicker) {
                     $dt.find('.xdsoft_save_selected')
                         .show().text(django.gettext('Save'))
                         .addClass('btn btn-primary')
@@ -519,47 +531,49 @@ function getEntry(question) {
     var isPhoneMode = ko.utils.unwrapObservable(displayOptions.phoneMode);
 
     switch (question.datatype()) {
-        case Formplayer.Const.STRING:
-            rawStyle = question.style ? ko.utils.unwrapObservable(question.style.raw) === 'numeric' : false;
-            if (rawStyle) {
-                entry = new PhoneEntry(question, { enableAutoUpdate: isPhoneMode });
-            } else {
-                entry = new FreeTextEntry(question, { enableAutoUpdate: isPhoneMode });
-            }
-            break;
-        case Formplayer.Const.INT:
-            entry = new IntEntry(question, { enableAutoUpdate: isPhoneMode });
-            break;
-        case Formplayer.Const.LONGINT:
-            entry = new IntEntry(question, { lengthLimit: 15, enableAutoUpdate: isPhoneMode  });
-            break;
-        case Formplayer.Const.FLOAT:
-            entry = new FloatEntry(question, { enableAutoUpdate: isPhoneMode });
-            break;
-        case Formplayer.Const.SELECT:
-            entry = new SingleSelectEntry(question, {});
-            break;
-        case Formplayer.Const.MULTI_SELECT:
-            entry = new MultiSelectEntry(question, {});
-            break;
-        case Formplayer.Const.DATE:
-            entry = new DateEntry(question, {});
-            break;
-        case Formplayer.Const.TIME:
-            entry = new TimeEntry(question, {});
-            break;
-        case Formplayer.Const.DATETIME:
-            entry = new DateTimeEntry(question, {});
-            break;
-        case Formplayer.Const.GEO:
-            entry = new GeoPointEntry(question, {});
-            break;
-        case Formplayer.Const.INFO:
-            entry = new InfoEntry(question, {});
-            break;
-        default:
-            console.warn('No active entry for: ' + question.datatype());
-            entry = new UnsupportedEntry(question, options);
+    case Formplayer.Const.STRING:
+    // Barcode uses text box for CloudCare so it's possible to still enter a barcode field
+    case Formplayer.Const.BARCODE:
+        rawStyle = question.style ? ko.utils.unwrapObservable(question.style.raw) === 'numeric' : false;
+        if (rawStyle) {
+            entry = new PhoneEntry(question, { enableAutoUpdate: isPhoneMode });
+        } else {
+            entry = new FreeTextEntry(question, { enableAutoUpdate: isPhoneMode });
+        }
+        break;
+    case Formplayer.Const.INT:
+        entry = new IntEntry(question, { enableAutoUpdate: isPhoneMode });
+        break;
+    case Formplayer.Const.LONGINT:
+        entry = new IntEntry(question, { lengthLimit: 15, enableAutoUpdate: isPhoneMode  });
+        break;
+    case Formplayer.Const.FLOAT:
+        entry = new FloatEntry(question, { enableAutoUpdate: isPhoneMode });
+        break;
+    case Formplayer.Const.SELECT:
+        entry = new SingleSelectEntry(question, {});
+        break;
+    case Formplayer.Const.MULTI_SELECT:
+        entry = new MultiSelectEntry(question, {});
+        break;
+    case Formplayer.Const.DATE:
+        entry = new DateEntry(question, {});
+        break;
+    case Formplayer.Const.TIME:
+        entry = new TimeEntry(question, {});
+        break;
+    case Formplayer.Const.DATETIME:
+        entry = new DateTimeEntry(question, {});
+        break;
+    case Formplayer.Const.GEO:
+        entry = new GeoPointEntry(question, {});
+        break;
+    case Formplayer.Const.INFO:
+        entry = new InfoEntry(question, {});
+        break;
+    default:
+        window.console.warn('No active entry for: ' + question.datatype());
+        entry = new UnsupportedEntry(question, options);
     }
     return entry;
 }

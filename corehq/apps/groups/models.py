@@ -169,6 +169,14 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
     def get_static_user_ids(self, is_active=True):
         return [user.user_id for user in self.get_static_users(is_active)]
 
+    @classmethod
+    def get_static_user_ids_for_groups(cls, group_ids):
+        static_user_ids = []
+        for group_id in group_ids:
+            group = cls.get(group_id)
+            static_user_ids.append(group.get_static_user_ids())
+        return static_user_ids
+
     @memoized
     def get_static_users(self, is_active=True):
         return self.get_users(is_active)

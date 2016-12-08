@@ -13,7 +13,6 @@ import djcelery
 djcelery.setup_loader()
 
 DEBUG = True
-TEMPLATE_DEBUG = DEBUG
 LESS_DEBUG = DEBUG
 # Enable LESS_WATCH if you want less.js to constantly recompile.
 # Useful if you're making changes to the less files and don't want to refresh
@@ -128,13 +127,6 @@ ADMIN_MEDIA_PREFIX = '/static/admin/'
 # Make this unique, and don't share it with anybody - put into localsettings.py
 SECRET_KEY = 'you should really change this'
 
-# List of callables that know how to import templates from various sources.
-TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.Loader',
-    'django.template.loaders.app_directories.Loader',
-    'django.template.loaders.eggs.Loader',
-)
-
 # Add this to localsettings and set it to False, so that CSRF protection is enabled on localhost
 CSRF_SOFT_MODE = True
 
@@ -181,29 +173,6 @@ PASSWORD_HASHERS = (
 )
 
 ROOT_URLCONF = "urls"
-
-TEMPLATE_CONTEXT_PROCESSORS = [
-    "django.contrib.auth.context_processors.auth",
-    "django.core.context_processors.debug",
-    "django.core.context_processors.i18n",
-    "django.core.context_processors.media",
-    "django.core.context_processors.request",
-    "django.contrib.messages.context_processors.messages",
-    'django.core.context_processors.static',
-    "corehq.util.context_processors.current_url_name",
-    'corehq.util.context_processors.domain',
-    # sticks the base template inside all responses
-    "corehq.util.context_processors.base_template",
-    "corehq.util.context_processors.js_api_keys",
-    'corehq.util.context_processors.websockets_override',
-    "corehq.util.context_processors.enterprise_mode",
-    'django.core.context_processors.i18n',
-]
-
-_location = lambda x: os.path.join(FILEPATH, x)
-TEMPLATE_DIRS = (
-    _location('corehq/apps/domain/templates/login_and_password'),
-)
 
 DEFAULT_APPS = (
     'corehq.apps.userhack',  # this has to be above auth
@@ -254,10 +223,10 @@ HQ_APPS = (
     'corehq.apps.smsbillables',
     'corehq.apps.accounting',
     'corehq.apps.appstore',
-    'corehq.apps.preview_app',
     'corehq.apps.data_analytics',
     'corehq.apps.domain',
     'corehq.apps.domainsync',
+    'corehq.apps.domain_migration_flags',
     'corehq.apps.dump_reload',
     'corehq.apps.hqadmin',
     'corehq.apps.hqcase',
@@ -291,7 +260,7 @@ HQ_APPS = (
     'corehq.apps.es',
     'corehq.apps.fixtures',
     'corehq.apps.calendar_fixture',
-    'corehq.apps.case_importer_v1',
+    'corehq.apps.case_importer',
     'corehq.apps.reminders',
     'corehq.apps.translations',
     'corehq.apps.tour',
@@ -920,6 +889,42 @@ except ImportError as error:
     # fallback in case nothing else is found - used for readthedocs
     from dev_settings import *
 
+_location = lambda x: os.path.join(FILEPATH, x)
+
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [
+            _location('corehq/apps/domain/templates/login_and_password'),
+        ],
+        'OPTIONS': {
+            'context_processors': [
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+                'django.core.context_processors.request',
+                'django.template.context_processors.debug',
+                'django.template.context_processors.i18n',
+                'django.template.context_processors.media',
+                'django.template.context_processors.static',
+                'django.template.context_processors.tz',
+
+                'corehq.util.context_processors.base_template',
+                'corehq.util.context_processors.current_url_name',
+                'corehq.util.context_processors.domain',
+                'corehq.util.context_processors.enterprise_mode',
+                'corehq.util.context_processors.js_api_keys',
+                'corehq.util.context_processors.websockets_override',
+            ],
+            'debug': DEBUG,
+            'loaders': [
+                'django.template.loaders.filesystem.Loader',
+                'django.template.loaders.app_directories.Loader',
+                'django.template.loaders.eggs.Loader',
+            ],
+        },
+    },
+]
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': True,
@@ -1142,9 +1147,10 @@ if DEBUG:
     warnings.simplefilter('default')
     os.environ['PYTHONWARNINGS'] = 'd'  # Show DeprecationWarning
 else:
-    TEMPLATE_LOADERS = [
-        ('django.template.loaders.cached.Loader', TEMPLATE_LOADERS),
-    ]
+    TEMPLATES[0]['OPTIONS']['loaders'] = [[
+        'django.template.loaders.cached.Loader',
+        TEMPLATES[0]['OPTIONS']['loaders']
+    ]]
 
 if helper.is_testing():
     helper.assign_test_db_names(DATABASES)
@@ -1231,7 +1237,7 @@ COUCHDB_APPS = [
     'hqcase',
     'hqmedia',
     'hope',
-    'case_importer_v1',
+    'case_importer',
     'indicators',
     'locations',
     'mobile_auth',
@@ -1859,23 +1865,6 @@ DOMAIN_MODULE_MAP = {
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True
-
-# arbitrarily split up tests into two chunks
-# that have approximately equal run times,
-# the group shown here, plus a second group consisting of everything else
-TRAVIS_TEST_GROUPS = (
-    (
-        'accounting', 'api', 'app_manager', 'appstore',
-        'auditcare', 'bihar', 'builds', 'cachehq', 'callcenter',
-        'case', 'casegroups', 'cleanup', 'cloudcare', 'commtrack', 'consumption',
-        'couchapps', 'crud', 'django_digest',
-        'domain', 'domainsync', 'export',
-        'facilities', 'fixtures', 'fluff_filter', 'formplayer',
-        'formtranslate', 'fri', 'grapevine', 'groups', 'gsid', 'hope',
-        'hqadmin', 'hqcase', 'hqmedia',
-        'care_pathways', 'common', 'compressor', 'smsbillables', 'ilsgateway'
-    ),
-)
 
 #### Django Compressor Stuff after localsettings overrides ####
 

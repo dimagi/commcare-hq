@@ -281,15 +281,13 @@ class LocationQueriesMixin(object):
         return locations
 
     def accessible_to_user(self, domain, user):
-        from corehq.apps.locations.util import get_locations_and_children
-
         if user.has_permission(domain, 'access_all_locations'):
             return self.all()
 
         assigned_location_ids = user.get_location_ids(domain)
         if not assigned_location_ids:
-            return self.none()  # No locations are accessible to this user
-        return self.all() & get_locations_and_children(assigned_location_ids)
+            return self.none()  # No locations are assigned to this user
+        return self.all() & SQLLocation.objects.get_locations_and_children(assigned_location_ids)
 
 
 class LocationQuerySet(LocationQueriesMixin, models.query.QuerySet):
@@ -341,12 +339,31 @@ class LocationManager(LocationQueriesMixin, TreeManager):
         direct_matches = self.filter_by_user_input(domain, user_input)
         return self.get_queryset_descendants(direct_matches, include_self=True)
 
+    def get_locations(self, location_ids):
+        return self.filter(location_id__in=location_ids)
+
+    def get_locations_and_children(self, location_ids):
+        """
+        Takes a set of location ids and returns a django queryset of those
+        locations and their children.
+        """
+        return self.get_queryset_descendants(
+            self.filter(location_id__in=location_ids),
+            include_self=True
+        )
+
+    def get_locations_and_children_ids(self, location_ids):
+        return list(self.get_locations_and_children(location_ids).location_ids())
+
 
 class OnlyUnarchivedLocationManager(LocationManager):
 
     def get_queryset(self):
         return (super(OnlyUnarchivedLocationManager, self).get_queryset()
                 .filter(is_archived=False))
+
+    def accessible_location_ids(self, domain, user):
+        return list(self.accessible_to_user(domain, user).location_ids())
 
 
 class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
@@ -404,6 +421,25 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
         super(SQLLocation, self).save(*args, **kwargs)
         if sync_to_couch:
             self._migration_do_sync()
+
+    def to_json(self):
+        return {
+            'name': self.name,
+            'site_code': self.site_code,
+            '_id': self.location_id,
+            'location_id': self.location_id,
+            'doc_type': 'Location',
+            'domain': self.domain,
+            'external_id': self.external_id,
+            'is_archived': self.is_archived,
+            'last_modified': self.last_modified.isoformat(),
+            'latitude': float(self.latitude) if self.latitude else None,
+            'longitude': float(self.longitude) if self.longitude else None,
+            'metadata': self.metadata,
+            'location_type': self.location_type.name,
+            "lineage": self.lineage,
+            'parent_location_id': self.parent_location_id,
+        }
 
     @property
     def lineage(self):
@@ -507,7 +543,7 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
         Delete a location and its dependants.
         This also unassigns users assigned to the location.
         """
-        to_delete = self.get_descendants(include_self=True).couch_locations()
+        to_delete = list(self.get_descendants(include_self=True).couch_locations())
         # if there are errors deleting couch locations, roll back sql delete
         with transaction.atomic():
             self.sql_full_delete()

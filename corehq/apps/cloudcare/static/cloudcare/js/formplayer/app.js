@@ -82,6 +82,7 @@ FormplayerFrontend.reqres.setHandler('currentUser', function () {
 
 FormplayerFrontend.on('clearForm', function () {
     $('#webforms').html("");
+    $('#menu-container').removeClass('hide');
     $('#webforms-nav').html("");
     $('#cloudcare-debugger').html("");
     $('.atwho-container').remove();
@@ -101,9 +102,9 @@ $(document).on("ajaxStart", function () {
 
 FormplayerFrontend.on('showError', function (errorMessage, isHTML) {
     if (isHTML) {
-        showHTMLError(errorMessage, $("#cloudcare-notifications"), 10000);
+        showHTMLError(errorMessage, $("#cloudcare-notifications"));
     } else {
-        showError(errorMessage, $("#cloudcare-notifications"), 10000);
+        showError(errorMessage, $("#cloudcare-notifications"));
     }
 });
 
@@ -121,7 +122,9 @@ FormplayerFrontend.reqres.setHandler('handleNotification', function(notification
 
 FormplayerFrontend.on('startForm', function (data) {
     FormplayerFrontend.request("clearMenu");
-
+    var urlObject = Util.currentUrlToObject();
+    urlObject.setSessionId(data.session_id);
+    Util.setUrlToObject(urlObject, true);
     data.onLoading = tfLoading;
     data.onLoadingComplete = tfLoadingComplete;
     var user = FormplayerFrontend.request('currentUser');
@@ -162,6 +165,7 @@ FormplayerFrontend.on('startForm', function (data) {
     };
     var sess = new WebFormSession(data);
     sess.renderFormXml(data, $('#webforms'));
+    $('#menu-container').addClass('hide');
 });
 
 FormplayerFrontend.on("start", function (options) {
@@ -221,6 +225,10 @@ FormplayerFrontend.on("start", function (options) {
             false
         );
     }
+});
+
+FormplayerFrontend.reqres.setHandler('getCurrentSessionId', function() {
+    return Util.currentUrlToObject().sessionId;
 });
 
 FormplayerFrontend.reqres.setHandler('getCurrentAppId', function() {
@@ -377,7 +385,11 @@ FormplayerFrontend.on('clearProgress', function() {
 
 
 FormplayerFrontend.on('setVersionInfo', function(versionInfo) {
+    var user = FormplayerFrontend.request('currentUser');
     $("#version-info").text(versionInfo || '');
+    if (versionInfo) {
+        user.set('versionInfo',  versionInfo);
+    }
 });
 
 /**
@@ -393,6 +405,7 @@ FormplayerFrontend.on('refreshApplication', function(appId) {
     if (!appId) {
         throw new Error('Attempt to refresh application for null appId');
     }
+    var sessionId = FormplayerFrontend.request('getCurrentSessionId');
     var user = FormplayerFrontend.request('currentUser'),
         formplayer_url = user.formplayer_url,
         resp,
@@ -403,6 +416,8 @@ FormplayerFrontend.on('refreshApplication', function(appId) {
                 domain: user.domain,
                 username: user.username,
                 restoreAs: user.restoreAs,
+                sessionId: sessionId,
+                updateMode: "save",
             }),
         };
     Util.setCrossDomainAjaxOptions(options);
@@ -412,7 +427,12 @@ FormplayerFrontend.on('refreshApplication', function(appId) {
         tfLoadingComplete(true);
     }).done(function() {
         tfLoadingComplete();
-        FormplayerFrontend.trigger('navigateHome');
+        if (!_.isUndefined(resp.responseJSON.tree)) {
+            FormplayerFrontend.trigger('startForm', resp.responseJSON);
+        } else {
+            FormplayerFrontend.trigger('navigateHome');
+        }
+
     });
 });
 
