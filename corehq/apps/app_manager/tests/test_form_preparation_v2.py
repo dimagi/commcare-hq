@@ -103,7 +103,7 @@ class FormPreparationV2Test(SimpleTestCase, TestXmlMixin):
 
     def test_instance_check(self):
         xml = self.get_xml('missing_instances')
-        missing_instances, missing_unknown_instances = find_missing_instances(xml)
+        missing_instances, missing_unknown_instances = find_missing_instances(XForm(xml))
         self.assertEqual({'ledgerdb'}, missing_instances)
         self.assertEqual({'casebd', 'custom2'}, missing_unknown_instances)
 

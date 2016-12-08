@@ -2138,12 +2138,12 @@ def infer_vellum_type(control, bind):
     return result['name']
 
 
-def find_missing_instances(form_source):
+def find_missing_instances(wrapped_xform):
     from corehq.apps.app_manager.suite_xml.post_process.instances import get_all_instances_referenced_in_xpaths
-    instance_declarations = XForm(form_source).get_instance_ids()
+    instance_declarations = wrapped_xform.get_instance_ids()
     missing_instances = set()
     missing_unknown_instance = set()
-    instances, unknown_instance_ids = get_all_instances_referenced_in_xpaths('', [form_source])
+    instances, unknown_instance_ids = get_all_instances_referenced_in_xpaths('', [wrapped_xform.render()])
     for instance in instances:
         if instance.id not in instance_declarations:
             missing_instances.add(instance.id)
@@ -2154,8 +2154,8 @@ def find_missing_instances(form_source):
     return missing_instances, missing_unknown_instance
 
 
-def check_for_missing_instances(form_source):
-    missing_instances, missing_unknown_instances = find_missing_instances(form_source)
+def check_for_missing_instances(wrapped_xform):
+    missing_instances, missing_unknown_instances = find_missing_instances(wrapped_xform)
     message_parts = []
     if missing_instances:
         instance_ids = "','".join(missing_instances)

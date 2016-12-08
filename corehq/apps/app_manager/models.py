@@ -991,9 +991,8 @@ class FormBase(DocumentSchema):
     def render_xform(self, build_profile_id=None):
         xform = XForm(self.source)
         self.add_stuff_to_xform(xform, build_profile_id)
-        rendered = xform.render()
-        check_for_missing_instances(rendered)
-        return rendered
+        check_for_missing_instances(xform)
+        return xform.render()
 
     @quickcache(['self.source', 'langs', 'include_triggers', 'include_groups', 'include_translations'])
     def get_questions(self, langs, include_triggers=False,
