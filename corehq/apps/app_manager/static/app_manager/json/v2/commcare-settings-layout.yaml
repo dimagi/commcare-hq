@@ -21,6 +21,8 @@
     - properties.cc-autoup-freq  # Auto Update Frequency
     - properties.unsent-number-limit  # Unsent Form Limit
     - properties.cc-content-valid  # Multimedia Validation
+    - properties.cc-autosync-freq  # Auto-Sync Frequency
+    - properties.unsent-time-limit  # Unsynced Time Limit
     
 
 - title: 'Java Phone General Settings'
@@ -32,8 +34,6 @@
     - hq.admin_password  # Admin Password
     - properties.cc-send-procedure  # Send Data
     - properties.server-tether  # Sync Mode
-    - properties.cc-autosync-freq  # Auto-Sync Frequency
-    - properties.unsent-time-limit  # Unsynced Time Limit
     - properties.password_format  # Password Format
     - properties.logenabled  # Logging Enabled
 
