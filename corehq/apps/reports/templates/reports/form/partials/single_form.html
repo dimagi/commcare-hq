@@ -35,6 +35,7 @@ requires imports/proptable.html to be included in the main template
 }
 
 </style>
+<script src="{% static 'clipboard/dist/clipboard.js' %}"></script>
 <script>
     $(function () {
         function _analytics_usage(action, callback) {
@@ -84,6 +85,15 @@ requires imports/proptable.html to be included in the main template
         $("#resave-form").submit(function() {
             document.getElementById('resave-form-btn').disabled=true;
             $('#resave-spinner').show();
+        });
+        var clipboard = new Clipboard('.copy-xml', { text: function() { return $('#form-xml pre').text(); } }),
+            $copyBtn = $('.copy-xml');
+        $copyBtn.tooltip({
+            title: '{% trans "Copied!"|escapejs %}'
+        });
+        clipboard.on('success', function() {
+            $copyBtn.tooltip('show');
+            window.setTimeout(function() { $copyBtn.tooltip('hide'); }, 1000)
         });
 
     });
@@ -341,12 +351,14 @@ requires imports/proptable.html to be included in the main template
     </div>
     {% endif %}
     <div class="tab-pane" id="form-xml">
-        <p>
+        <p class="btn-group">
             <a class="btn btn-default" href="{% url "download_form" domain instance.form_id %}" target="_blank">
-                {% trans "Open XML in New Window" %}
+              <i class="fa fa-external-link"></i>&nbsp;{% trans "Open XML in New Window" %}
             </a>
+            <button class="btn btn-default copy-xml" data-toggle="tooltip" data-trigger="manual">
+              <i class="fa fa-files-o"></i>&nbsp;{% trans "Copy XML to clipboard" %}
+            </button>
         </p>
-        <p>{% trans "Double-click code below to select all:" %}</p>
         {% render_form_xml instance %}
     </div>
 </div>
