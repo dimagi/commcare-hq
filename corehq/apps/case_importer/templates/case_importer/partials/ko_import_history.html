@@ -58,7 +58,7 @@
             <!--/ko-->
             <!--ko if: upload_file_download_allowed-->
                 <i class="fa fa-download"></i>
-                <a data-bind="attr: {href: $root.getCaseUploadFileDownloadResource(upload_id)}">
+                <a data-bind="attr: {href: hqImport('hqwebapp/js/urllib.js').reverse('case_importer_upload_file_download', upload_id)}">
                     <span data-bind="text: upload_file_name"></span>
                 </a>
             <!--/ko-->

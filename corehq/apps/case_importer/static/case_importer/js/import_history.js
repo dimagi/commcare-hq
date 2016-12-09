@@ -1,11 +1,7 @@
 hqDefine('case_importer/js/import_history.js', function () {
     var urllib = hqImport('hqwebapp/js/urllib.js');
     function RecentUploads() {
-        var self = {
-            getCaseUploadFileDownloadResource: function (upload_id) {
-                return urllib.reverse('case_importer_upload_file_download', upload_id);
-            },
-        };
+        var self = {};
         // this is used both for the state of the ajax request
         // and for the state of celery task
         self.states = {
