@@ -5,7 +5,7 @@ class PatientDetail(models.Model):
     PregId = models.CharField(max_length=255, primary_key=True) # need to remove trailing whitespace in Excel
     scode = models.CharField(max_length=255, null=True, default='default')
     Dtocode = models.CharField(max_length=255, null=True)
-    Tbunitcode = models.CharField(max_length=255, null=True)
+    Tbunitcode = models.IntegerField()
     pname = models.CharField(max_length=255, null=True)
     pgender = models.CharField(max_length=255, null=True)
     page = models.CharField(max_length=255, null=True)
@@ -58,7 +58,7 @@ class PatientDetail(models.Model):
     regDate = models.CharField(max_length=255, null=True)
     isRntcp = models.CharField(max_length=255, null=True)
     dotprovider_id = models.CharField(max_length=255, null=True)
-    pregdate1 = models.CharField(max_length=255, null=True)
+    pregdate1 = models.DateField()
     cvisitedDate1 = models.CharField(max_length=255, null=True)
     InitiationDate1 = models.CharField(max_length=255, null=True)  # datetimes, look like they're all midnight
     dotmosignDate1 = models.CharField(max_length=255, null=True)
