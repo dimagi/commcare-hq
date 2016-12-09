@@ -585,3 +585,23 @@ def url_replace(context, field, value):
 def view_pdb(element):
     import ipdb; ipdb.set_trace()
     return element
+
+
+@register.tag
+def registerurl(parser, token):
+    split_contents = token.split_contents()
+    tag = split_contents[0]
+    url_name = parse_literal(split_contents[1], parser, tag)
+    expressions = [parser.compile_filter(arg) for arg in split_contents[2:]]
+
+    class FakeNodeList(object):
+        @staticmethod
+        def render(context):
+            args = [expression.resolve(context) for expression in expressions]
+            url = reverse(url_name, args=args)
+            return """
+            <script>hqImport('hqwebapp/js/urllib.js').registerUrl({}, {})</script>
+            """.format(json.dumps(url_name), json.dumps(url))
+
+    nodelist = FakeNodeList()
+    return AddToBlockNode(nodelist, 'js-inline')
