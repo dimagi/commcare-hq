@@ -7,23 +7,19 @@
     <script src="{% static 'hqwebapp/js/urllib.js' %}"></script>
 {% endblock %}
 {% block js-inline %}
-<script id="caseUploadsResource" type="text/plain">{% url 'case_importer_uploads' domain %}</script>
-<script id="caseUploadFileDownloadResource" type="text/plain">{% url 'case_importer_upload_file_download' domain '---' %}</script>
-<script id="caseUploadPermissionDeniedTitle" type="text/plain">{% trans 'You may not download this file yourself' %}</script>
-<script id="caseUploadPermissionDeniedContent" type="text/plain">{% trans 'Please ask an administrator or the user who uploaded the file for their help' %}</script>
 <script>
 (function () {
+    {% url 'case_importer_uploads' domain as case_importer_uploads_url %}
+    {% url 'case_importer_upload_file_download' domain '---' as case_importer_upload_file_download_url %}
+    var caseUploadResource = {{ case_importer_uploads_url|JSON }};
+    var caseUploadFileDownloadResourceTemplate = {{ case_importer_upload_file_download_url|JSON }};
     var urllib = hqImport('hqwebapp/js/urllib.js');
-    var caseUploadResource = $('#caseUploadsResource').text();
     var getCaseUploadFileDownloadResource = function (upload_id) {
-        return $('#caseUploadFileDownloadResource').text().replace('---', upload_id);
+        return caseUploadFileDownloadResourceTemplate.replace('---', upload_id);
     };
-    var caseUploadPermissionDeniedTitle = $('#caseUploadPermissionDeniedTitle').text();
-    var caseUploadPermissionDeniedContent = $('#caseUploadPermissionDeniedContent').text();
+
     function RecentUploads() {
         var self = {
-            caseUploadPermissionDeniedTitle: caseUploadPermissionDeniedTitle,
-            caseUploadPermissionDeniedContent: caseUploadPermissionDeniedContent,
             getCaseUploadFileDownloadResource: getCaseUploadFileDownloadResource,
         };
         // this is used both for the state of the ajax request
@@ -167,8 +163,8 @@
                         <a style="cursor: pointer" data-bind="
                             text: upload_file_name,
                             popover: {
-                                title: $root.caseUploadPermissionDeniedTitle,
-                                content: $root.caseUploadPermissionDeniedContent,
+                                title: django.gettext('You may not download this file yourself'),
+                                content: django.gettext('Please ask an administrator or the user who uploaded the file for their help'),
                                 placement: 'top'
                             }
                         "></a>
