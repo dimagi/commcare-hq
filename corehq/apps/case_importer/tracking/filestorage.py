@@ -4,10 +4,11 @@ import uuid
 from django.core.cache import caches
 from corehq.apps.case_importer.tracking.models import CaseUploadFileMeta
 from corehq.blobs import get_blob_db
+from corehq.blobs.util import random_url_id
 from corehq.util.files import file_extention_from_filename
 from dimagi.utils.decorators.memoized import memoized
 
-BUCKET = 'case_importer/upload_files'
+BUCKET_PREFIX = 'case_importer'
 
 
 class PersistentFileStore(object):
@@ -17,21 +18,27 @@ class PersistentFileStore(object):
             must contain columns identifier, filename, length
         """
 
-        self._bucket = bucket
+        self._bucket_prefix = bucket
         self._db = get_blob_db()
         self._meta_model = meta_model
 
+    def _get_bucket(self, padding):
+        return '{}/{}'.format(self._bucket_prefix, padding)
+
     def write_file(self, f, filename):
-        blob_info = self._db.put(f, bucket=self._bucket)
-        self._meta_model(identifier=blob_info.identifier, filename=filename,
+        padding = random_url_id(16)
+        blob_info = self._db.put(f, bucket=self._get_bucket(padding))
+        identifier = '{}/{}'.format(padding, blob_info.identifier)
+        self._meta_model(identifier=identifier, filename=filename,
                          length=blob_info.length).save()
-        return blob_info.identifier
+        return identifier
 
     @memoized
     def get_tempfile(self, identifier):
         filename = self.get_filename(identifier)
         suffix = file_extention_from_filename(filename)
-        content = self._db.get(identifier, bucket=self._bucket).read()
+        padding, blob_identifier = identifier.split('/')
+        content = self._db.get(blob_identifier, bucket=self._get_bucket(padding)).read()
         return make_temp_file(content, suffix)
 
     @memoized
@@ -83,5 +90,5 @@ def make_temp_file(content, suffix):
     return filename
 
 
-persistent_file_store = PersistentFileStore(BUCKET, CaseUploadFileMeta)
-transient_file_store = TransientFileStore(BUCKET, timeout=1 * 60 * 60)
+persistent_file_store = PersistentFileStore(BUCKET_PREFIX, CaseUploadFileMeta)
+transient_file_store = TransientFileStore(BUCKET_PREFIX, timeout=1 * 60 * 60)
