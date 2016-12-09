@@ -28,7 +28,7 @@ class Command(BaseCommand):
 
 
 def find_applications_with_hierarchical_fixture(domains):
-    search_string = 'commtrack:enabled'
+    search_string = 'commtrack:locations'
     domain_with_application = {}
     for domain in domains:
         domain_obj = Domain.get_by_name(domain)
