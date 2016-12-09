@@ -1,5 +1,5 @@
 from django.db import models
-from dimagi.ext import jsonobject
+
 from dimagi.utils.decorators.memoized import memoized
 from soil.util import get_task
 
@@ -29,30 +29,3 @@ class CaseUploadFileMeta(models.Model):
     identifier = models.CharField(max_length=256, unique=True)
     filename = models.CharField(max_length=256)
     length = models.IntegerField()
-
-
-class CaseUploadJSON(jsonobject.JsonObject):
-    _allow_dynamic_properties = False
-
-    domain = jsonobject.StringProperty(required=True)
-    created = jsonobject.DateTimeProperty(required=True)
-    upload_id = jsonobject.StringProperty(required=True)
-    task_id = jsonobject.StringProperty(required=True)
-    couch_user_id = jsonobject.StringProperty(required=True)
-    case_type = jsonobject.StringProperty(required=True)
-
-    upload_file_name = jsonobject.StringProperty()
-    upload_file_length = jsonobject.IntegerProperty()
-
-    @classmethod
-    def from_model(cls, other):
-        return cls(
-            domain=other.domain,
-            created=other.created,
-            upload_id=unicode(other.upload_id),
-            task_id=unicode(other.task_id),
-            couch_user_id=other.couch_user_id,
-            case_type=other.case_type,
-            upload_file_name=other.upload_file_meta.filename if other.upload_file_meta else None,
-            upload_file_length=other.upload_file_meta.length if other.upload_file_meta else None,
-        )
