@@ -109,7 +109,6 @@ from corehq.apps.userreports.util import (
     has_report_builder_add_on_privilege,
     allowed_report_builder_reports,
     number_of_report_builder_reports,
-    temp_setting_value,
 )
 from corehq.apps.userreports.reports.util import has_location_filter
 from corehq.apps.users.decorators import require_permission
@@ -522,11 +521,14 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
         }
 
     def _expire_data_source(self, data_source_config_id):
-        with temp_setting_value('CELERY_ALWAYS_EAGER', False):  # so it works in dev environments too
-            delete_data_source_task.apply_async(
-                (self.domain, data_source_config_id),
-                countdown=TEMP_DATA_SOURCE_LIFESPAN
-            )
+        always_eager = settings.CELERY_ALWAYS_EAGER
+        # CELERY_ALWAYS_EAGER will cause the data source to be deleted immediately. Switch it off temporarily
+        settings.CELERY_ALWAYS_EAGER = False
+        delete_data_source_task.apply_async(
+            (self.domain, data_source_config_id),
+            countdown=TEMP_DATA_SOURCE_LIFESPAN
+        )
+        settings.CELERY_ALWAYS_EAGER = always_eager
 
     def _build_temp_data_source(self, app_source, username):
         data_source_config = DataSourceConfiguration(
