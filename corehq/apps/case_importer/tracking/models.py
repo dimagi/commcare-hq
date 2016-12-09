@@ -15,6 +15,9 @@ class CaseUploadRecord(models.Model):
 
     upload_file_meta = models.ForeignKey('CaseUploadFileMeta', null=True)
 
+    class Meta(object):
+        index_together = ('domain', 'created')
+
     @property
     @memoized
     def task(self):
