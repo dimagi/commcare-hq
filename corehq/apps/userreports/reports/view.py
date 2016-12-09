@@ -2,6 +2,7 @@ import json
 import os
 import tempfile
 from StringIO import StringIO
+from contextlib import contextmanager
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.reports.util import \
     DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER
@@ -98,6 +99,16 @@ def query_dict_to_dict(query_dict, domain):
     request_dict = json_request(query_dict)
     request_dict['domain'] = domain
     return request_dict
+
+
+@contextmanager
+def tmp_report_config(domain, **kwargs):
+    report_config = ReportConfiguration(domain=domain, **kwargs)
+    report_config.save()
+    try:
+        yield report_config
+    finally:
+        report_config.delete()
 
 
 class ConfigurableReport(JSONResponseMixin, BaseDomainView):
@@ -539,22 +550,24 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
 
     @classmethod
     def report_config_table(cls, domain, **kwargs):
-        # FIXME: Returning one case of test data, should return two
-        tmp_report_config = ReportConfiguration(domain=domain, **kwargs)
-        tmp_report_config.save()  # TODO: Don't do this
-        view = cls(request=HttpRequest())
-        view._domain = domain
-        view._lang = "en"
-        view._report_config_id = tmp_report_config._id
-        try:
-            table = view.export_table
-        except UserReportsError:
-            # User posted an invalid report configuration
-            return None
-        else:
-            return table
-        finally:
-            tmp_report_config.delete()
+
+        with tmp_report_config(domain, **kwargs) as report_config:
+            view = cls(request=HttpRequest())
+            view._domain = domain
+            view._lang = "en"
+            view._report_config_id = report_config._id
+            try:
+                # FIXME: Returning one case of test data, should return two
+                table = view.export_table
+            except UserReportsError:
+                # User posted an invalid report configuration
+                return None
+            except DataSourceConfigurationNotFoundError:
+                # A temporary data source has probably expired
+                # TODO: It would be more helpful just to quietly recreate the data source config from GET params
+                return None
+            else:
+                return table
 
 
 # Base class for classes that provide custom rendering for UCRs

@@ -864,7 +864,7 @@ class ReportPreview(BaseDomainView):
             aggregation_columns=aggregation_columns,
             columns=[to_report_column(c, i) for i, c in enumerate(report_data['columns'])],
             report_meta=ReportMeta(created_by_builder=True),
-        )  # is None if report configuration doesn't make sense
+        )  # is None if report configuration doesn't make sense or data source has expired
         if table:
             return json_response(table[0][1])
         else:
