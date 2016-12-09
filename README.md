@@ -426,7 +426,7 @@ Then skip to "Setting up a virtualenv".
 Otherwise, install the following software from your OS package manager or the
 individual project sites when necessary.
 
-+ Python 2.6 or 2.7 (use 32 bit if you're on Windows see `Alternate steps for Windows` section below)
++ Python 2.7 (use 32 bit if you're on Windows see `Alternate steps for Windows` section below)
 + pip  (If you use virtualenv (see below) this will be installed automatically)
 + CouchDB >= 1.0 (1.2 recommended) (install from OS package manager (`sudo apt-get install couchdb`) or [here][couchdb])
    For Mac users

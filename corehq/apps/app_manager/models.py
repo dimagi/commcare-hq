@@ -136,7 +136,7 @@ from .exceptions import (
     ScheduleError,
     CaseXPathValidationError,
     UserCaseXPathValidationError,
-)
+    XFormValidationFailed)
 from corehq.apps.reports.daterange import get_daterange_start_end_dates, get_simple_dateranges
 from jsonpath_rw import jsonpath, parse
 
@@ -667,10 +667,10 @@ class FormSource(object):
             app.lazy_put_attachment(old_contents, filename)
             del form['contents']
 
-        try:
-            source = app.lazy_fetch_attachment(filename)
-        except ResourceNotFound:
+        if not app.has_attachment(filename):
             source = ''
+        else:
+            source = app.lazy_fetch_attachment(filename)
 
         return source
 
@@ -876,7 +876,7 @@ class FormBase(DocumentSchema):
             form.strip_vellum_ns_attributes()
             try:
                 if form.xml is not None:
-                    validate_xform(etree.tostring(form.xml))
+                    validate_xform(self.get_app().domain, etree.tostring(form.xml))
             except XFormValidationError as e:
                 validation_dict = {
                     "fatal_error": e.fatal_error,
@@ -931,6 +931,8 @@ class FormBase(DocumentSchema):
                     error = {'type': 'validation error', 'validation_message': unicode(e)}
                     error.update(meta)
                     errors.append(error)
+                except XFormValidationFailed:
+                    pass  # ignore this here as it gets picked up in other places
 
         if self.post_form_workflow == WORKFLOW_FORM:
             if not self.form_links:
@@ -4101,6 +4103,9 @@ class LazyBlobDoc(BlobMixin):
         self._LAZY_ATTACHMENTS_CACHE.pop(name, None)
         return super(LazyBlobDoc, self).put_attachment(content, name, *args, **kw)
 
+    def has_attachment(self, name):
+        return name in self.lazy_list_attachments()
+
     def lazy_put_attachment(self, content, name=None, content_type=None,
                             content_length=None):
         """
@@ -5319,6 +5324,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             form = form_stuff['form']
             try:
                 files[filename] = self.fetch_xform(form=form, build_profile_id=build_profile_id)
+            except XFormValidationFailed:
+                raise XFormException(_('Unable to validate the forms due to a server error. '
+                                       'Please try again later.'))
             except XFormException as e:
                 raise XFormException(_('Error in form "{}": {}').format(trans(form.name), unicode(e)))
         return files

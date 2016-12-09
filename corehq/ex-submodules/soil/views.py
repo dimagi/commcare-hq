@@ -43,7 +43,7 @@ def heartbeat_status(request):
 def ajax_job_poll(request, download_id, template="soil/partials/dl_status.html"):
     message = request.GET['message'] if 'message' in request.GET else None
     try:
-        context = get_download_context(download_id, check_state=True, message=message)
+        context = get_download_context(download_id, message=message)
     except TaskFailedError as e:
         context = {'error': list(e.errors) if e.errors else [_("An error occurred during the download.")]}
         return HttpResponseServerError(render(request, template, context))

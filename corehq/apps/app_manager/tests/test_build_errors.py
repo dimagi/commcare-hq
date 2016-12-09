@@ -1,13 +1,17 @@
 import json
 from django.test import SimpleTestCase
 import os
+
+from mock import patch
+
 from corehq.apps.app_manager.models import Application, CaseList
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 
 
+@patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
 class BuildErrorsTest(SimpleTestCase):
 
-    def test_subcase_errors(self):
+    def test_subcase_errors(self, mock):
         with open(os.path.join(os.path.dirname(__file__), 'data', 'subcase-details.json')) as f:
             source = json.load(f)
 
@@ -35,7 +39,7 @@ class BuildErrorsTest(SimpleTestCase):
         self.assertIn(update_path_error, errors)
         self.assertIn(subcase_path_error, errors)
 
-    def test_empty_module_errors(self):
+    def test_empty_module_errors(self, mock):
         factory = AppFactory(build_version='2.24')
         app = factory.app
         m1 = factory.new_basic_module('register', 'case', with_form=False)
@@ -59,7 +63,7 @@ class BuildErrorsTest(SimpleTestCase):
         self.assertIn(standard_module_error, errors)
         self.assertIn(advanced_module_error, errors)
 
-    def test_parent_cycle_in_app(self):
+    def test_parent_cycle_in_app(self, mock):
         cycle_error = {
             'type': 'parent cycle',
         }
@@ -72,7 +76,7 @@ class BuildErrorsTest(SimpleTestCase):
 
             self.assertIn(cycle_error, errors)
 
-    def test_case_tile_configuration_errors(self):
+    def test_case_tile_configuration_errors(self, mock):
         case_tile_error = {
             'type': "invalid tile configuration",
             'module': {'id': 0, 'name': {u'en': u'View'}},
@@ -86,7 +90,7 @@ class BuildErrorsTest(SimpleTestCase):
             errors = app.validate_app()
             self.assertIn(case_tile_error, errors)
 
-    def test_case_list_form_advanced_module_different_case_config(self):
+    def test_case_list_form_advanced_module_different_case_config(self, mock):
         case_tile_error = {
             'type': "all forms in case list module must load the same cases",
             'module': {'id': 1, 'name': {u'en': u'update module'}},

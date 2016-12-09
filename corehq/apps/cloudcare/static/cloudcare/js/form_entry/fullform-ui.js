@@ -452,6 +452,7 @@ Formplayer.ViewModels.CloudCareDebugger = function() {
         // In order to support multiple heights, we set the height with javascript since
         // a div inside a fixed position element cannot scroll unless a height is explicitly set.
         setTimeout(self.setContentHeight, 1001);
+        window.analytics.workflow('[app-preview] User toggled CloudCare debugger');
     };
 
     $.unsubscribe('debugger.update');
@@ -518,6 +519,7 @@ Formplayer.ViewModels.EvaluateXPath = function() {
     self.onClickSelectedXPath = function() {
         if (self.selectedXPath()) {
             self.evaluate(self.selectedXPath());
+            self.selectedXPath('');
         }
     };
     self.onClickSavedQuery = function(query) {
@@ -529,6 +531,7 @@ Formplayer.ViewModels.EvaluateXPath = function() {
             self.success(status === "accepted");
         };
         $.publish('formplayer.' + Formplayer.Const.EVALUATE_XPATH, [xpath, callback]);
+        window.analytics.workflow('[app-preview] User evaluated XPath');
     };
 
     self.isSuccess = function(query) {

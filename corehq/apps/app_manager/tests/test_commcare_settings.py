@@ -80,9 +80,7 @@ class CommCareSettingsTest(SimpleTestCase):
     def test_get_profile_setting(self):
         test_app1, test_app2, test_app3 = self.set_up_apps(3)
         test_app1.profile["properties"]["unsent-time-limit"] = "30"
-        test_app2.profile["properties"]["server-tether"] = "push-only"
-        test_app3.profile["properties"]["server-tether"] = "sync"
+        test_app2.profile["properties"]["server-tether"] = "sync"
 
         self.assertEqual(test_app1.get_profile_setting("properties", "unsent-time-limit"), "30")
-        self.assertEqual(test_app2.get_profile_setting("properties", "unsent-time-limit"), "-1")
-        self.assertEqual(test_app3.get_profile_setting("properties", "unsent-time-limit"), "5")
+        self.assertEqual(test_app2.get_profile_setting("properties", "unsent-time-limit"), "5")

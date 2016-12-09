@@ -2,11 +2,13 @@ import logging
 import hashlib
 import re
 import json
+import uuid
 from xml.dom.minidom import parseString
 from couchdbkit import ResourceNotFound
 from django.shortcuts import render
 import itertools
 
+from django.template.loader import render_to_string
 from lxml import etree
 from diff_match_patch import diff_match_patch
 from django.utils.translation import ugettext as _
@@ -29,7 +31,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.exceptions import (
     BlankXFormError,
     ConflictingCaseTypeError,
-    FormNotFoundException)
+    FormNotFoundException, XFormValidationFailed)
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.programs.models import Program
 from corehq.apps.app_manager.util import (
@@ -373,6 +375,13 @@ def new_form(request, domain, app_id, module_id):
     name = request.POST.get('name')
     form = app.new_form(module_id, name, lang)
 
+    blank_form = render_to_string("app_manager/blank_form.xml", context={
+        'xmlns': str(uuid.uuid4()).upper(),
+        'name': form.name[lang],
+        'lang': lang,
+    })
+    form.source = blank_form
+
     if toggles.APP_MANAGER_V2.enabled(domain):
         case_action = request.POST.get('case_action', 'none')
         if case_action == 'update':
@@ -449,6 +458,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
     xform = None
     form_errors = []
     xform_validation_errored = False
+    xform_validation_missing = False
 
     try:
         xform = form.wrapped_xform()
@@ -467,8 +477,8 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             )
 
         try:
-            form.validate_form()
             xform_questions = xform.get_questions(langs, include_triggers=True, form=form)
+            form.validate_form()
         except etree.XMLSyntaxError as e:
             form_errors.append(u"Syntax Error: %s" % e)
         except AppEditingError as e:
@@ -477,6 +487,9 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             xform_validation_errored = True
             # showing these messages is handled by validate_form_for_build ajax
             pass
+        except XFormValidationFailed:
+            xform_validation_missing = True
+            messages.warning(request, _("Unable to validate form due to server error."))
         except XFormException as e:
             form_errors.append(u"Error in form: %s" % e)
         # any other kind of error should fail hard,
@@ -493,19 +506,20 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             xform_questions = [q for q in xform_questions
                                if q["tag"] != "upload" or is_previewer]
 
-        try:
-            form_action_errors = form.validate_for_build()
-            if not form_action_errors:
-                form.add_stuff_to_xform(xform)
-        except CaseError as e:
-            messages.error(request, u"Error in Case Management: %s" % e)
-        except XFormException as e:
-            messages.error(request, unicode(e))
-        except Exception as e:
-            if settings.DEBUG:
-                raise
-            logging.exception(unicode(e))
-            messages.error(request, u"Unexpected Error: %s" % e)
+        if not form_errors and not xform_validation_missing and not xform_validation_errored:
+            try:
+                form_action_errors = form.validate_for_build()
+                if not form_action_errors:
+                    form.add_stuff_to_xform(xform)
+            except CaseError as e:
+                messages.error(request, u"Error in Case Management: %s" % e)
+            except XFormException as e:
+                messages.error(request, unicode(e))
+            except Exception as e:
+                if settings.DEBUG:
+                    raise
+                logging.exception(unicode(e))
+                messages.error(request, u"Unexpected Error: %s" % e)
 
     try:
         languages = xform.get_languages()
@@ -540,6 +554,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         'module_case_types': module_case_types,
         'form_errors': form_errors,
         'xform_validation_errored': xform_validation_errored,
+        'xform_validation_missing': xform_validation_missing,
         'allow_cloudcare': isinstance(form, Form),
         'allow_form_copy': isinstance(form, (Form, AdvancedForm)),
         'allow_form_filtering': not isinstance(form, CareplanForm) and not form_has_schedule,
