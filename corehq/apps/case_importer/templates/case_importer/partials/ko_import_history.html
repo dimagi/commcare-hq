@@ -5,8 +5,9 @@
         <th class="col-md-1">{% trans "Status" %}</th>
         <th class="col-md-1">{% trans "Case Type" %}</th>
         <th class="col-md-1">{% trans "Uploaded by" %}</th>
-        <th class="col-md-5">{% trans "Details" %}</th>
+        <th class="col-md-4">{% trans "Details" %}</th>
         <th class="col-md-2">{% trans "File" %}</th>
+        <th class="col-md-1">{% trans "Forms" %}</th>
         <th class="col-md-1">{% trans "Time" %}</th>
     </tr>
     <!--ko foreach: case_uploads-->
@@ -44,7 +45,7 @@
         </td>
         <td class="col-md-1" data-bind="text: user_name">
         </td>
-        <td class="col-md-5" data-bind="with: task_status">
+        <td class="col-md-4" data-bind="with: task_status">
             {% include 'case_importer/partials/ko_import_status.html' %}
         </td>
         <td class="col-md-2">
@@ -66,6 +67,13 @@
                 </a>
             <!--/ko-->
             <!--/ko-->
+        </td>
+        <td class="col-md-1">
+            <!--ko foreach: form_ids-->
+                form
+                <span data-bind="text: $data"></span>
+            <!--/ko-->
+
         </td>
         <td class="col-md-1" data-bind="text: created"></td>
     </tr>
