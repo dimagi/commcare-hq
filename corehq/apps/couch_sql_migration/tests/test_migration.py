@@ -1,6 +1,5 @@
 import os
 import uuid
-
 from datetime import datetime
 
 from couchdbkit.exceptions import ResourceNotFound
@@ -18,8 +17,8 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain_migration_flags.models import DomainMigrationProgress
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
+from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.tzmigration.timezonemigration import FormJsonDiff
 from corehq.blobs import get_blob_db
 from corehq.blobs.tests.util import TemporaryS3BlobDB
@@ -312,7 +311,8 @@ class MigrationTestCase(BaseMigrationTestCase):
         <data uiVersion="1" version="1" name="" xmlns="http://openrosa.org/formdesigner/123">
             <name>fgg</name>
             <date>2011-06-07</date>
-            <n0:case case_id="case-123" user_id="user-abc" date_modified="{date}" xmlns:n0="http://commcarehq.org/case/transaction/v2">
+            <n0:case case_id="case-123" user_id="user-abc" date_modified="{date}"
+                xmlns:n0="http://commcarehq.org/case/transaction/v2">
                 <n0:create>
                     <n0:case_type_id>cc_bc_demo</n0:case_type_id>
                     <n0:case_name>fgg</n0:case_name>
@@ -425,6 +425,50 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.assertTrue(child_transactions[0].is_case_create)
         self.assertTrue(child_transactions[1].is_case_index)
 
+    def test_form_touches_case_without_updates(self):
+        case_id = uuid.uuid4().hex
+        create_and_save_a_case(self.domain_name, case_id=case_id, case_name='touched by a form', user_id='user1')
+
+        form_id = uuid.uuid4().hex
+        xml = """<?xml version='1.0' ?>
+                <data uiVersion="1" version="1" name="" xmlns="http://openrosa.org/formdesigner/123">
+                    <name>fgg</name>
+                    <date>2011-06-07</date>
+                    <n0:case case_id="{case_id}" user_id="user1" date_modified="{date}"
+                        xmlns:n0="http://commcarehq.org/case/transaction/v2">
+                    </n0:case>
+                    <n0:case case_id="case-123" user_id="user-abc" date_modified="{date}"
+                        xmlns:n0="http://commcarehq.org/case/transaction/v2">
+                        <n0:create>
+                            <n0:case_type_id>cc_bc_demo</n0:case_type_id>
+                            <n0:case_name>fgg</n0:case_name>
+                        </n0:create>
+                    </n0:case>
+                    <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
+                        <n1:deviceID>354957031935664</n1:deviceID>
+                        <n1:timeStart>{date}</n1:timeStart>
+                        <n1:timeEnd>{date}</n1:timeEnd>
+                        <n1:username>bcdemo</n1:username>
+                        <n1:userID>user1</n1:userID>
+                        <n1:instanceID>{form_id}</n1:instanceID>
+                    </n1:meta>
+                </data>""".format(
+            date=datetime.utcnow(),
+            form_id=form_id,
+            case_id=case_id
+        )
+        _, _, cases = submit_form_locally(xml, self.domain_name)
+        case = [case for case in cases if case.case_id == case_id][0]
+        case.xform_ids.remove(form_id)  # legacy bug that didn't include these form IDs in the case
+        case.save()
+
+        self.assertEqual(2, len(self._get_form_ids()))
+        self.assertEqual(2, len(self._get_case_ids()))
+        self._do_migration_and_assert_flags(self.domain_name)
+        self.assertEqual(2, len(self._get_form_ids()))
+        self.assertEqual(2, len(self._get_case_ids()))
+        self._compare_diffs([])
+
     def test_xform_ids_diff(self):
         case_id = uuid.uuid4().hex
         submit_case_blocks(
@@ -462,6 +506,65 @@ class MigrationTestCase(BaseMigrationTestCase):
         clear_local_domain_sql_backend_override(self.domain_name)
         call_command('migrate_domain_from_couch_to_sql', self.domain_name, COMMIT=True, no_input=True)
         self.assertTrue(Domain.get_by_name(self.domain_name).use_sql_backend)
+
+    def test_v1_case(self):
+        xml = """<?xml version="1.0" ?>
+            <data name="pregnancy checklist" uiVersion="1" version="1"
+                  xmlns="http://openrosa.org/formdesigner/42461CD4-06D8-4FE5-BCEC-006130F7764F1"
+                  xmlns:jrm="http://dev.commcarehq.org/jr/xforms">
+                <name>RITA</name>
+                <age>26</age>
+                <number>918</number>
+                <case>
+                    <case_id>P0YJ</case_id>
+                    <date_modified>2011-05-20T12:27:34.823+05:30</date_modified>
+                    <create>
+                        <case_type_id>pregnant_mother</case_type_id>
+                        <case_name>RITA</case_name>
+                        <user_id>XT3XPMS</user_id>
+                        <external_id>RITA</external_id>
+                    </create>
+                    <update>
+                        <name>RITA</name>
+                    </update>
+                </case>
+                <meta>
+                <deviceID>8D24OUKK3AR4ZG7NF9CYSQFAT</deviceID>
+                <timeStart>2011-05-20T12:25:17.882+05:30</timeStart>
+                <timeEnd>2011-05-20T12:27:34.831+05:30</timeEnd>
+                <username>adevi</username>
+                <userID>XT3XPMS</userID>
+                <uid>WXJYZ</uid>
+                </meta>
+            </data>"""
+        submit_form_locally(xml, self.domain_name)
+
+        update_xml = """<?xml version="1.0" ?>
+            <data name="pregnancy checklist" uiVersion="1" version="1"
+                xmlns="http://openrosa.org/formdesigner/42461CD4-06D8-4FE5-BCEC-006130F7764F"
+                xmlns:jrm="http://dev.commcarehq.org/jr/xforms">
+                <case>
+                    <case_id>P0YJ</case_id>
+                    <date_modified>2012-02-24T00:51:07.836+05:30</date_modified>
+                    <close/>
+                </case>
+                <meta>
+                    <deviceID>44AV</deviceID>
+                    <timeStart>2012-02-24T00:46:43.007+05:30</timeStart>
+                    <timeEnd>2012-02-24T00:51:07.841+05:30</timeEnd>
+                    <username>rek</username>
+                    <userID>L53SD</userID>
+                    <uid>Z75H7</uid>
+                </meta>
+            </data>"""
+        submit_form_locally(update_xml, self.domain_name)
+
+        self.assertEqual(2, len(self._get_form_ids()))
+        self.assertEqual(1, len(self._get_case_ids()))
+        self._do_migration_and_assert_flags(self.domain_name)
+        self.assertEqual(2, len(self._get_form_ids()))
+        self.assertEqual(1, len(self._get_case_ids()))
+        self._compare_diffs([])
 
 
 class LedgerMigrationTests(BaseMigrationTestCase):
