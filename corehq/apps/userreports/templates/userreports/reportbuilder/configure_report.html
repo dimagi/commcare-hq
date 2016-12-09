@@ -113,9 +113,7 @@
         <!-- ko if: selectedChart() === 'none' -->
         <div data-bind="fadeVisible: isAggregationEnabled">
             <div class="btn btn-primary" data-bind="click: function(){selectedChart('bar');}">{% trans 'Add Chart' %}</div>
-            <div> <!-- I'm so lazy... -->
-                <br>
-            </div>
+            <div class="spacer"></div>
         </div>
         <!-- /ko -->
 

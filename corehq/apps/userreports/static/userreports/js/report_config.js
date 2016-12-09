@@ -155,8 +155,15 @@ var reportBuilder = function () {
 
             if (self.selectedChart() !== "none") {
                 if (data) {
+                    // data looks like headers, followed by rows of values
+                    // aaData needs to be a list of dictionaries
                     var columnNames = _.map(self.selectedColumns(), function (c) { return c.name; });
-                    var aaData = _.map(data.slice(1), function (d) { return _.object([columnNames, d]); });
+                    // ^^^ That's not going to work with multiple "Count Per Choice" values, which expand
+                    // TODO: Resolve selectedColumns vs. data[0]
+                    var aaData = _.map(
+                        data.slice(1), // skip the headers, iterate the rows of values
+                        function (row) { return _.object(_.zip(columnNames, row)); }
+                    );
                 } else {
                     var aaData = [];
                 }
