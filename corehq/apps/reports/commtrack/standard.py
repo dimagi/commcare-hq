@@ -493,4 +493,6 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
     @property
     def charts(self):
         if 'location_id' in self.request.GET: # hack: only get data if we're loading an actual report
-            return [PieChart(None, _('Current Reporting'), self.master_pie_chart_data())]
+            chart = PieChart(_('Current Reporting'), 'current_reporting', [])
+            chart.data = self.master_pie_chart_data()
+            return [chart]
