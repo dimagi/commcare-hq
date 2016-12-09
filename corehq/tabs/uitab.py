@@ -126,9 +126,14 @@ class UITab(object):
         if not self.show_by_default and not self.is_active_tab:
             return False
 
-        if not self.can_access_all_locations and not self.filtered_dropdown_items:
-            # location-safe filtering makes this whole tab inaccessible
-            return False
+        if not self.can_access_all_locations:
+            if self.dropdown_items and not self.filtered_dropdown_items:
+                # location-safe filtering makes this whole tab inaccessible
+                return False
+
+            # Just a button tab, determine if it's location safe
+            if not self.dropdown_items and not url_is_location_safe(self.url):
+                return False
 
         try:
             return self._is_viewable
