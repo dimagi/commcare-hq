@@ -1,0 +1,24 @@
+{% load hq_shared_tags %}
+
+{% registerurl 'case_importer_uploads' domain %}
+{% registerurl 'case_importer_upload_file_download' domain '---' %}
+
+{% addtoblock js %}
+<script src="{% static 'hqwebapp/js/urllib.js' %}"></script>
+<script src="{% static 'case_importer/js/import_history.js' %}"></script>
+{% endaddtoblock %}
+
+{% addtoblock js-inline %}
+<script>
+$(function () {
+    var RecentUploads = hqImport('case_importer/js/import_history.js').RecentUploads;
+    var recentUploads = RecentUploads();
+    $('#recent-uploads').koApplyBindings(recentUploads);
+    _.delay(recentUploads.fetchCaseUploads);
+});
+</script>
+{% endaddtoblock %}
+
+<div id="recent-uploads" class="ko-template">
+    {% include 'case_importer/partials/ko_import_history.html' %}
+</div>
