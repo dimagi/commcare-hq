@@ -1,7 +1,11 @@
 {% extends 'reports/async/basic.html' %}
 {% load report_tags %}
+{% load hq_shared_tags %}
 {% load i18n %}
 
+{% block js %}
+    <script src="{% static 'hqwebapp/js/urllib.js' %}"></script>
+{% endblock %}
 {% block js-inline %}
 <script id="caseUploadsResource" type="text/plain">{% url 'case_importer_uploads' domain %}</script>
 <script id="caseUploadFileDownloadResource" type="text/plain">{% url 'case_importer_upload_file_download' domain '---' %}</script>
@@ -9,6 +13,7 @@
 <script id="caseUploadPermissionDeniedContent" type="text/plain">{% trans 'Please ask an administrator or the user who uploaded the file for their help' %}</script>
 <script>
 (function () {
+    var urllib = hqImport('hqwebapp/js/urllib.js');
     var caseUploadResource = $('#caseUploadsResource').text();
     var getCaseUploadFileDownloadResource = function (upload_id) {
         return $('#caseUploadFileDownloadResource').text().replace('---', upload_id);
@@ -36,7 +41,7 @@
                 // only show spinner on first fetch
                 self.state(self.states.STARTED);
             }
-            $.get(caseUploadResource).success(function (data) {
+            $.get(caseUploadResource, {limit: urllib.getUrlParameter('limit')}).success(function (data) {
                 self.state(self.states.SUCCESS);
                 self.case_uploads(data);
                 var anyInProgress = _.any(self.case_uploads(), function (case_upload) {
