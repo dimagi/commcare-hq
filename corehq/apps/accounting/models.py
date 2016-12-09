@@ -1821,7 +1821,7 @@ class Invoice(InvoiceBase):
     @property
     def email_recipients(self):
         if self.subscription.service_type == SubscriptionType.IMPLEMENTATION:
-            return [settings.FINANCE_EMAIL]
+            return [settings.FINANCE_EMAIL, settings.ACCOUNTS_EMAIL]
         else:
             return self.contact_emails
 
