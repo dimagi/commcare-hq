@@ -89,19 +89,11 @@ class CouchSqlDomainMigrator(object):
                 raise
 
     def _migrate_form_and_associated_models(self, couch_form):
-        from corehq.apps.tzmigration.timezonemigration import json_diff
-
         sql_form = _migrate_form(self.domain, couch_form)
         _migrate_form_attachments(sql_form, couch_form)
         _migrate_form_operations(sql_form, couch_form)
 
-        couch_form_json = couch_form.to_json()
-        sql_form_json = sql_form.to_json()
-        diffs = json_diff(couch_form_json, sql_form_json, track_list_indices=False)
-        self.diff_db.add_diffs(
-            couch_form.doc_type, couch_form.form_id,
-            filter_form_diffs(couch_form_json, sql_form_json, diffs)
-        )
+        self._save_diffs(couch_form, sql_form)
 
         case_stock_result = None
         if sql_form.initial_processing_complete:
@@ -117,6 +109,16 @@ class CouchSqlDomainMigrator(object):
 
         _save_migrated_models(sql_form, case_stock_result)
 
+    def _save_diffs(self, couch_form, sql_form):
+        from corehq.apps.tzmigration.timezonemigration import json_diff
+        couch_form_json = couch_form.to_json()
+        sql_form_json = sql_form.to_json()
+        diffs = json_diff(couch_form_json, sql_form_json, track_list_indices=False)
+        self.diff_db.add_diffs(
+            couch_form.doc_type, couch_form.form_id,
+            filter_form_diffs(couch_form_json, sql_form_json, diffs)
+        )
+
     def _copy_unprocessed_forms(self):
         for couch_form_json in iter_docs(XFormInstance.get_db(), self.errors_with_normal_doc_type, chunksize=1000):
             assert couch_form_json['problem']
@@ -129,7 +131,6 @@ class CouchSqlDomainMigrator(object):
             self._migrate_unprocessed_form(couch_form_json)
 
     def _migrate_unprocessed_form(self, couch_form_json):
-        from corehq.apps.tzmigration.timezonemigration import json_diff
         self.log_debug('Processing doc: {}({})'.format(couch_form_json['doc_type'], couch_form_json['_id']))
         couch_form = _wrap_form(couch_form_json)
         sql_form = XFormInstanceSQL(
@@ -142,13 +143,7 @@ class CouchSqlDomainMigrator(object):
         _migrate_form_operations(sql_form, couch_form)
 
         if couch_form.doc_type != 'SubmissionErrorLog':
-            couch_form_json = couch_form.to_json()
-            sql_form_json = sql_form.to_json()
-            diffs = json_diff(couch_form_json, sql_form_json, track_list_indices=False)
-            self.diff_db.add_diffs(
-                couch_form.doc_type, couch_form.form_id,
-                filter_form_diffs(couch_form_json, sql_form_json, diffs)
-            )
+            self._save_diffs(couch_form, sql_form)
 
         _save_migrated_models(sql_form)
 
