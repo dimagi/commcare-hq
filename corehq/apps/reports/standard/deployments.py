@@ -44,13 +44,6 @@ class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParame
     Base class for all deployments reports
     """
 
-    @classmethod
-    def show_in_navigation(cls, domain=None, project=None, user=None):
-        # for commtrack projects - only show if the user can view apps
-        if project and project.commtrack_enabled:
-            return user and (user.is_superuser or user.has_permission(domain, 'edit_apps'))
-        return super(DeploymentsReport, cls).show_in_navigation(domain, project, user)
-
 
 class ApplicationStatusReport(DeploymentsReport):
     name = ugettext_noop("Application Status")
