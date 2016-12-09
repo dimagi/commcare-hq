@@ -137,10 +137,16 @@ class DocTestMixin(object):
         self.assertEqual(type(doc1), type(doc2))
         self.assertEqual(doc1.to_json(), doc2.to_json())
 
+    def assert_doc_sets_equal(self, docs1, docs2):
+        self.assertEqual(
+            sorted([(doc._id, type(doc), doc.to_json()) for doc in docs1]),
+            sorted([(doc._id, type(doc), doc.to_json()) for doc in docs2]),
+        )
+
     def assert_doc_lists_equal(self, docs1, docs2):
         self.assertEqual(
-            sorted([(doc._id, doc.to_json()) for doc in docs1]),
-            sorted([(doc._id, doc.to_json()) for doc in docs2]),
+            [(type(doc), doc.to_json()) for doc in docs1],
+            [(type(doc), doc.to_json()) for doc in docs2],
         )
 
 
