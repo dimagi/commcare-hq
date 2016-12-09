@@ -225,9 +225,17 @@ class EnikshayCaseFactory(object):
 
 class Command(BaseCommand):
 
-    def handle(self, domain, *args, **options):
+    def handle(self, domain, **options):
+        start = options['start']
+        limit = options['limit']
+
+        if limit is not None:
+            patient_details = PatientDetail.objects.all()[start:start + limit]
+        else:
+            patient_details = PatientDetail.objects.all()[start:]
+
         counter = 0
-        for patient_detail in PatientDetail.objects.all()[0:100]:
+        for patient_detail in patient_details:
             case_factory = EnikshayCaseFactory(domain, patient_detail)
             case_factory.create_cases()
             counter += 1
@@ -236,3 +244,15 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
+        parser.add_argument(
+            '--start',
+            dest='start',
+            default=0,
+            type=int,
+        )
+        parser.add_argument(
+            '--limit',
+            dest='limit',
+            default=None,
+            type=int,
+        )
