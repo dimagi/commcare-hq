@@ -238,12 +238,13 @@ class ExportColumn(DocumentSchema):
         return value
 
     @staticmethod
-    def create_default_from_export_item(table_path, item, app_ids_and_versions):
+    def create_default_from_export_item(table_path, item, app_ids_and_versions, auto_select=True):
         """Creates a default ExportColumn given an item
 
         :param table_path: The path of the table_path that the item belongs to
         :param item: An ExportItem instance
         :param app_ids_and_versions: A dictionary of app ids that map to latest build version
+        :param auto_select: Automatically select the column
         :returns: An ExportColumn instance
         """
         is_case_update = item.tag == PROPERTY_TAG_CASE and not isinstance(item, CaseIndexItem)
@@ -275,6 +276,7 @@ class ExportColumn(DocumentSchema):
             column = ExportColumn(**constructor_args)
         column.update_properties_from_app_ids_and_versions(app_ids_and_versions)
         column.selected = (
+            auto_select and
             not column._is_deleted(app_ids_and_versions) and
             not is_case_update and
             is_main_table
@@ -548,7 +550,7 @@ class ExportInstance(BlobMixin, Document):
         raise NotImplementedError()
 
     @classmethod
-    def generate_instance_from_schema(cls, schema, saved_export=None):
+    def generate_instance_from_schema(cls, schema, saved_export=None, auto_select=True):
         """Given an ExportDataSchema, this will generate an ExportInstance"""
         if saved_export:
             instance = saved_export
@@ -584,6 +586,7 @@ class ExportInstance(BlobMixin, Document):
                         table.path,
                         item,
                         latest_app_ids_and_versions,
+                        auto_select
                     )
                     if prev_index:
                         # if it's a new column, insert it right after the previous column
