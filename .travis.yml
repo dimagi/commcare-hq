@@ -12,9 +12,10 @@ env:
     - TEST=python NOSE_DIVIDED_WE_RUN=bf JS_SETUP=yes
     - TEST=python-sharded
   global:
-    # TRAVIS_HQ_USERNAME and # TRAVIS_HQ_PASSWORD
-    - secure: "ZgEgDh9FmLQm7b9YGrS3FM3MB2r3OattT6652nb/XIFcrVE/ExA2llJY7i/mNwfDy39r6Od5IkOk+mMRyu7NqEicxRXDhlZc68IEvszNdfTvVXFvpjSGAZrDXO2HQ4EhDuSMvPQ80BQ+YTN69OkuPUq0oGeednXcULvMEf2mf1M="
-    - secure: "Wvw0prb0itY8FHgl9yzy4MB3P3yUQdbR1/4Nb39S+SLG18NiiRn3Jhi5tcrRHc3uaOSJJxnF8RIADdz5p6Cqn4JwTJ10dL5eK8cipl4vr+hawIPxIq5+XKZpGxA5isKlvS0+EIyhdW3sP295U4fjPico6LKc2ElsOp0ZtvaAs1k="
+    # TRAVIS_HQ_USERNAME
+    - secure: "LuT0vvsY6RjlEX8Gje74Xl0jcuEfaiN/fOOXpfZd1tf8zC3Xd9E8mNn5vlup/3PBBBv1yIAUmw9LTc03ifWBGzaazqIVAgTfgBoW7XAd8G/lx0/eeZFqheSdpP8wSZwn72Z/XrIhQczFCreZRJHlZA9GopRv7Lfs1SfNEbnMoac="
+    # TRAVIS_HQ_PASSWORD
+    - secure: "GmJzDwP60bUWKzIWnhg4j8TkA/IQsM5Ulx+frkPkrZmLnmLZN5K6cWqruZLl/mB6VFvnuGNBwaYq5ADMD8LpIt8LYlmHZ/zOaE04ti3rOvaOHxG+ncMkloeeke+82ismFZsI/X15F4yawUKR74lnAS5u8BfY2P+Jqko1D+15WKg="
 before_install:
   # get newer version of docker-compose for variable substitution in compose files
   - curl -L https://github.com/docker/compose/releases/download/1.5.2/docker-compose-`uname -s`-`uname -m` > docker-compose
