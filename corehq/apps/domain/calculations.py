@@ -351,7 +351,7 @@ def calced_props(dom, id, all_stats):
         "cp_n_forms_90_d": int(CALC_FNS["forms_in_last"](dom, 90)),
         "cp_first_domain_for_user": CALC_FNS["first_domain_for_user"](dom),
         "cp_first_form": CALC_FNS["first_form_submission"](dom, False),
-        "cp_last_form": last_form_submission,
+        "cp_last_form": CALC_FNS["last_form_submission"](dom, False),
         "cp_is_active": CALC_FNS["active"](dom),
         "cp_has_app": CALC_FNS["has_app"](dom),
         "cp_last_updated": json_format_datetime(datetime.utcnow()),
