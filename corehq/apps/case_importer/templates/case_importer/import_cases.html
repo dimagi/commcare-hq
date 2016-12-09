@@ -148,17 +148,15 @@
                         <div class="progress-bar progress-bar-info"
                              role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"
                              data-bind="attr: {style: 'width: ' + task_status.progress.percent + '%;'}">
-                            <span><!--ko text: task_status.progress.percent --><!--/ko-->%
+                            <span><span data-bind="text: task_status.progress.percent"></span>%
                                 {% trans "Complete" %}</span>
                           </div>
                     </div>
                     <!--/ko-->
                 </td>
-                <td class="col-md-1">
-                    <!--ko text: case_type--><!--/ko-->
+                <td class="col-md-1" data-bind="text: case_type">
                 </td>
-                <td class="col-md-1">
-                    <!--ko text: user_name--><!--/ko-->
+                <td class="col-md-1" data-bind="text: user_name">
                 </td>
                 <td class="col-md-5" data-bind="with: task_status">
                     {% include 'case_importer/partials/ko_import_status.html' %}
