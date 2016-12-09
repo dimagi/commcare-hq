@@ -115,6 +115,8 @@ def not_found(request, template_name='404.html'):
 @require_GET
 @location_safe
 def redirect_to_default(req, domain=None):
+    from corehq.apps.cloudcare.views import FormplayerMain
+
     if not req.user.is_authenticated():
         if domain != None:
             url = reverse('domain_login', args=[domain])
@@ -149,7 +151,10 @@ def redirect_to_default(req, domain=None):
 
                 if (couch_user.is_commcare_user() and
                         couch_user.can_view_some_reports(domain)):
-                    url = reverse("cloudcare_main", args=[domain, ""])
+                    if toggles.USE_FORMPLAYER_FRONTEND.enabled(domain):
+                        url = reverse(FormplayerMain.urlname, args=[domain])
+                    else:
+                        url = reverse("cloudcare_main", args=[domain, ""])
                 else:
                     from corehq.apps.dashboard.views import dashboard_default
                     return dashboard_default(req, domain)
