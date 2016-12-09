@@ -98,6 +98,30 @@
                 "calculate_total": false
             },
             {
+                "display": "Number of New Microbiologically Confirmed Cases",
+                "type": "field",
+                "field": "new_microbiological",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of New Clinically Diagnosed Cases",
+                "type": "field",
+                "field": "new_clinical",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
                 "display": "Number of New Cases - pediatric (0-14)",
                 "type": "field",
                 "field": "new_under_15",
@@ -146,6 +170,30 @@
                 "calculate_total": false
             },
             {
+                "display": "Number of New Pulmonary Cases",
+                "type": "field",
+                "field": "new_pulmonary",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of New Extrapulmonary Cases",
+                "type": "field",
+                "field": "new_extra_pulmonary",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
                 "display": "Number of New Transgender Cases",
                 "type": "field",
                 "field": "new_transgender",
@@ -161,6 +209,30 @@
                 "display": "Number of Retreatment Cases",
                 "type": "field",
                 "field": "retreatment",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of Retreatment Microbiologically Confirmed Cases",
+                "type": "field",
+                "field": "retreatment_microbiological",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of Retreatment Clinically Diagnosed Cases",
+                "type": "field",
+                "field": "retreatment_clinical",
                 "aggregation": "sum",
                 "sortable": false,
                 "description": null,
@@ -221,6 +293,30 @@
                 "display": "Number of Retreatment Transgender Cases",
                 "type": "field",
                 "field": "retreatment_transgender",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of Retreatment Pulmonary Cases",
+                "type": "field",
+                "field": "retreatment_pulmonary",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of Retreatment Extrapulmonary Cases",
+                "type": "field",
+                "field": "retreatment_extra_pulmonary",
                 "aggregation": "sum",
                 "sortable": false,
                 "description": null,

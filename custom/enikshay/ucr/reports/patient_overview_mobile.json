@@ -80,42 +80,6 @@
                 },
                 "calculate_total": false
             },
-                        {
-                "display": "Total number of DOTS patients",
-                "type": "field",
-                "field": "dots_commcareuser",
-                "aggregation": "sum",
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {
-                },
-                "calculate_total": false
-            },
-            {
-                "display": "Number Cat I DOTS",
-                "type": "field",
-                "field": "dots_commcareuser_cat1",
-                "aggregation": "sum",
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {
-                },
-                "calculate_total": false
-            },
-            {
-                "display": "Number Cat II DOTS",
-                "type": "field",
-                "field": "dots_commcareuser_cat2",
-                "aggregation": "sum",
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {
-                },
-                "calculate_total": false
-            },
             {
                 "display": "Number male patients",
                 "type": "field",
@@ -189,9 +153,321 @@
                 "calculate_total": false
             },
             {
+                "display": "HIV patients on ART",
+                "type": "field",
+                "field": "hiv_positive_art",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "HIV patients on CPT",
+                "type": "field",
+                "field": "hiv_positive_cpt",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
                 "display": "Number of patients with DM",
                 "type": "field",
                 "field": "diabetic",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "female 0-4",
+                "type": "field",
+                "field": "female_under_4",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "female 5-14",
+                "type": "field",
+                "field": "female_5_14",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "female 15-24",
+                "type": "field",
+                "field": "female_15_24",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "female 25-34",
+                "type": "field",
+                "field": "female_25_34",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "female 35-44",
+                "type": "field",
+                "field": "female_35_44",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "female 45-54",
+                "type": "field",
+                "field": "female_45_54",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "female 55-64",
+                "type": "field",
+                "field": "female_55_64",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "female ≥ 65",
+                "type": "field",
+                "field": "female_over_65",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "male 0-4",
+                "type": "field",
+                "field": "male_under_4",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "male 5-14",
+                "type": "field",
+                "field": "male_5_14",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "male 15-24",
+                "type": "field",
+                "field": "male_15_24",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "male 25-34",
+                "type": "field",
+                "field": "male_25_34",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "male 35-44",
+                "type": "field",
+                "field": "male_35_44",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "male 45-54",
+                "type": "field",
+                "field": "male_45_54",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "male 55-64",
+                "type": "field",
+                "field": "male_55_64",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "male ≥ 65",
+                "type": "field",
+                "field": "male_over_65",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+                                    {
+                "display": "transgender 0-4",
+                "type": "field",
+                "field": "transgender_under_4",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "transgender 5-14",
+                "type": "field",
+                "field": "transgender_5_14",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "transgender 15-24",
+                "type": "field",
+                "field": "transgender_15_24",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "transgender 25-34",
+                "type": "field",
+                "field": "transgender_25_34",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "transgender 35-44",
+                "type": "field",
+                "field": "transgender_35_44",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "transgender 45-54",
+                "type": "field",
+                "field": "transgender_45_54",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "transgender 55-64",
+                "type": "field",
+                "field": "transgender_55_64",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "transgender ≥ 65",
+                "type": "field",
+                "field": "transgender_over_65",
                 "aggregation": "sum",
                 "sortable": false,
                 "description": null,
