@@ -12,6 +12,7 @@ env:
     - TEST=python NOSE_DIVIDED_WE_RUN=bf JS_SETUP=yes
     - TEST=python-sharded
   global:
+    # TRAVIS_HQ_USERNAME and # TRAVIS_HQ_PASSWORD
     - secure: "ZgEgDh9FmLQm7b9YGrS3FM3MB2r3OattT6652nb/XIFcrVE/ExA2llJY7i/mNwfDy39r6Od5IkOk+mMRyu7NqEicxRXDhlZc68IEvszNdfTvVXFvpjSGAZrDXO2HQ4EhDuSMvPQ80BQ+YTN69OkuPUq0oGeednXcULvMEf2mf1M="
     - secure: "Wvw0prb0itY8FHgl9yzy4MB3P3yUQdbR1/4Nb39S+SLG18NiiRn3Jhi5tcrRHc3uaOSJJxnF8RIADdz5p6Cqn4JwTJ10dL5eK8cipl4vr+hawIPxIq5+XKZpGxA5isKlvS0+EIyhdW3sP295U4fjPico6LKc2ElsOp0ZtvaAs1k="
 before_install:
@@ -25,7 +26,11 @@ install:
 before_script:
   - docker version
   - docker-compose version
-script: "scripts/docker test --noinput --stop --verbosity=2 --divide-depth=1"
+script:
+  # workaround for env vars
+  - export TRAVIS_HQ_USERNAME=$TRAVIS_HQ_USERNAME
+  - export TRAVIS_HQ_PASSWORD=$TRAVIS_HQ_PASSWORD
+  - "scripts/docker test --noinput --stop --verbosity=2 --divide-depth=1"
 after_success:
   # create symlink so coverage report can find source files
   - sudo ln -s $(pwd) /mnt/commcare-hq-ro
