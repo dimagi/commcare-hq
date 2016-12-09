@@ -45,7 +45,6 @@
 trunk: master
 name: autostaging
 branches:
-  - case-import-history  # Danny 12/6
   - case-import-history-file-attachment # Danny 12/8
   - case-import-history-landing-page # Danny 12/8
   - vellum-staging # J$ 11/13
@@ -56,7 +55,6 @@ branches:
 #  - location_export # Manish 11/2
 #  - jquery-3-retry # Jenny 11/11
   - es/location-ucr  # Ethan 11/30
-  - sk/blank-form-xml  # Simon 12/5
   - nc/export-conflict-resolution-2016-11-30  # Noah 12/5
   - nc/exports-rrr  # Noah 12/5
   - nikshay-migration-new # Nick P 12/9
