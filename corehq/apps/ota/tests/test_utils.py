@@ -291,7 +291,7 @@ class GetRestoreUserTest(TestCase):
         self.assertIsInstance(get_restore_user(self.domain, self.web_user, None), OTARestoreWebUser)
 
     def test_get_restore_user_commcare_user(self):
-        self.assertIsInstance(get_restore_user(self.domain, self.web_user, None), OTARestoreCommCareUser)
+        self.assertIsInstance(get_restore_user(self.domain, self.commcare_user, None), OTARestoreCommCareUser)
 
     def test_get_restore_user_as_user(self):
         self.assertIsInstance(
@@ -324,13 +324,12 @@ class GetRestoreUserTest(TestCase):
         )
 
     def test_get_restore_user_not_found(self):
-        self.assertIsNone(
+        with self.assertRaises(Exception):
             get_restore_user(
                 self.domain,
                 self.web_user,
                 '{}@wrong-domain'.format(self.commcare_user.raw_username, self.domain)
             )
-        )
 
     def test_get_restore_user_as_user_for_commcare_user(self):
         user = get_restore_user(
