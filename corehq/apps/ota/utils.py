@@ -98,7 +98,7 @@ def is_permitted_to_restore(domain, couch_user, as_user, has_data_cleanup_privil
     for the domain and/or as_user
     :param domain: Domain of restore
     :param couch_user: The couch user attempting authentication
-    :param as_user: a string <user>@<domain> that the couch_user is attempting to get
+    :param as_user: a string username that the couch_user is attempting to get
         a restore for. If None will get restore of the couch_user.
     :param has_data_cleanup_privelege: Whether the user has permissions to do DATA_CLEANUP
     :returns: a tuple - first a boolean if the user is permitted,
@@ -144,20 +144,6 @@ def _ensure_valid_restore_as_user(domain, couch_user, as_user_obj):
         raise RestorePermissionDenied(_(u"{} was not in the domain {}").format(as_user_obj.username, domain))
 
 
-def _parse_restore_as_user(as_user):
-    try:
-        username = as_user.split('@')[0]
-        user_domain = as_user.split('@')[1]
-        hq_suffix = '.{}'.format(settings.HQ_ACCOUNT_ROOT)
-        if user_domain.endswith(settings.HQ_ACCOUNT_ROOT):
-            user_domain = user_domain[:-len(hq_suffix)]
-    except IndexError:
-        raise RestorePermissionDenied(
-            _(u"Invalid restore user {}. Format is <user>@<domain>").format(as_user)
-        )
-    return username, user_domain
-
-
 def _ensure_accessible_location(domain, couch_user, as_user_obj):
     if not user_can_access_other_user(domain, couch_user, as_user_obj):
         raise RestorePermissionDenied(
@@ -178,34 +164,19 @@ def get_restore_user(domain, couch_user, as_user):
     if specified
     :param domain: Domain of restore
     :param couch_user: The couch user attempting authentication
-    :param as_user: a string <user>@<domain> that the couch_user is attempting to get
+    :param as_user: a string username that the couch_user is attempting to get
         a restore user for. If None will get restore of the couch_user.
     :returns: An instance of OTARestoreUser
     """
+    couch_restore_user = couch_user
     restore_user = None
     if as_user is not None:
-        if '@' in as_user:
-            username, user_domain = _parse_restore_as_user(as_user)
-        else:
-            user_domain = None
-        # Likely a mobile worker because username contains domain
-        if domain == user_domain:
-            user = CommCareUser.get_by_username(format_username(username, domain))
-            if not user:
-                return None
-            restore_user = user.to_ota_restore_user()
-        # Likely a web user
-        else:
-            user = WebUser.get_by_username(as_user)
-            if not user:
-                return None
-            elif not user.is_member_of(domain):
-                return None
-            restore_user = user.to_ota_restore_user(domain)
-    elif couch_user.is_commcare_user():
-        restore_user = couch_user.to_ota_restore_user()
-    elif couch_user.is_web_user():
-        restore_user = couch_user.to_ota_restore_user(domain)
+        couch_restore_user = CouchUser.get_by_username(as_user)
+
+    if couch_restore_user.is_commcare_user():
+        restore_user = couch_restore_user.to_ota_restore_user()
+    elif couch_restore_user.is_web_user():
+        restore_user = couch_restore_user.to_ota_restore_user(domain)
 
     return restore_user
 

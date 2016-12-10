@@ -6,6 +6,7 @@ from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.util import format_username
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
+from casexml.apps.phone.models import OTARestoreWebUser, OTARestoreCommCareUser
 
 from corehq.apps.ota.utils import is_permitted_to_restore, get_restore_user, _restoring_as_yourself
 
@@ -287,36 +288,39 @@ class GetRestoreUserTest(TestCase):
         delete_all_users()
 
     def test_get_restore_user_web_user(self):
-        self.assertIsNotNone(get_restore_user(self.domain, self.web_user, None))
+        self.assertIsInstance(get_restore_user(self.domain, self.web_user, None), OTARestoreWebUser)
 
     def test_get_restore_user_commcare_user(self):
-        self.assertIsNotNone(get_restore_user(self.domain, self.commcare_user, None))
+        self.assertIsInstance(get_restore_user(self.domain, self.web_user, None), OTARestoreCommCareUser)
 
     def test_get_restore_user_as_user(self):
-        self.assertIsNotNone(
+        self.assertIsInstance(
             get_restore_user(
                 self.domain,
                 self.web_user,
-                '{}@{}'.format(self.commcare_user.raw_username, self.domain)
-            )
+                self.commcare_user.username
+            ),
+            OTARestoreCommCareUser,
         )
 
     def test_get_restore_user_as_web_user(self):
-        self.assertIsNotNone(
+        self.assertIsInstance(
             get_restore_user(
                 self.domain,
                 self.web_user,
                 self.web_user.username,
-            )
+            ),
+            OTARestoreWebUser,
         )
 
     def test_get_restore_user_as_super_user(self):
-        self.assertIsNotNone(
+        self.assertIsInstance(
             get_restore_user(
                 self.domain,
                 self.web_user,
                 self.super_user.username,
-            )
+            ),
+            OTARestoreWebUser,
         )
 
     def test_get_restore_user_not_found(self):
@@ -332,22 +336,6 @@ class GetRestoreUserTest(TestCase):
         user = get_restore_user(
             self.domain,
             self.commcare_user,
-            '{}@{}'.format(self.other_commcare_user.raw_username, self.domain)
+            self.other_commcare_user.username
         )
         self.assertEquals(user.user_id, self.other_commcare_user._id)
-
-
-class TestRestoringAsYourself(SimpleTestCase):
-    '''Test that it properly figures out when you are restoring as yourself'''
-
-
-@generate_cases([
-    ((WebUser(username='john@self.com', domain='doe'), 'john@self.com'), True),
-    ((WebUser(username='john@self.com', domain='doe'), 'jane@self.com'), False),
-    ((CommCareUser(username='john', domain='doe'), 'john@doe.commcarehq.org'), True),
-    ((CommCareUser(username='john', domain='doe'), 'john@doe'), True),
-    ((CommCareUser(username='john', domain='doe'), 'john@jane.commcarehq.org'), False),
-    ((CommCareUser(username='john', domain='doe'), 'john@jane'), False),
-], TestRestoringAsYourself)
-def test_restore_as_yourself(self, args, expected):
-    self.assertEqual(_restoring_as_yourself(*args), expected)
