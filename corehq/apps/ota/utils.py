@@ -6,7 +6,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.users.util import format_username
 from dimagi.utils.logging import notify_exception
 
-from corehq.apps.users.models import CommCareUser, WebUser, CouchUser
+from corehq.apps.users.models import CouchUser
 
 from dimagi.utils.web import json_response
 from corehq.apps.domain.auth import get_username_and_password_from_request, determine_authtype_from_request
