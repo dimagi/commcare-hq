@@ -2,10 +2,12 @@ import urllib
 import logging
 from celery.task import task
 
+from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
 from corehq.apps.export.export import get_export_file, rebuild_export
-from corehq.apps.export.utils import convert_saved_export_to_export_instance
 from corehq.apps.export.dbaccessors import get_inferred_schema
 from corehq.apps.export.system_properties import MAIN_CASE_TABLE_PROPERTIES
+from corehq.util.decorators import serial_task
+from corehq.util.quickcache import quickcache
 from couchexport.models import Format
 from couchexport.tasks import escape_quotes
 from soil.util import expose_cached_download
@@ -45,8 +47,13 @@ def rebuild_export_task(export_instance, last_access_cutoff=None, filter=None):
     rebuild_export(export_instance, last_access_cutoff, filter)
 
 
-@task(queue='background_queue')
+@serial_task('{domain}-{case_type}', queue='background_queue')
 def add_inferred_export_properties(sender, domain, case_type, properties):
+    _cached_add_inferred_export_properties(sender, domain, case_type, properties)
+
+
+@quickcache(['sender', 'domain', 'case_type', 'properties'], timeout=60 * 60)
+def _cached_add_inferred_export_properties(sender, domain, case_type, properties):
     from corehq.apps.export.models import MAIN_TABLE, PathNode, InferredSchema, ScalarItem
     """
     Adds inferred properties to the inferred schema for a case type.
@@ -67,6 +74,7 @@ def add_inferred_export_properties(sender, domain, case_type, properties):
             case_type=case_type,
         )
     group_schema = inferred_schema.put_group_schema(MAIN_TABLE)
+    add_properties_to_data_dictionary(domain, case_type, properties)
 
     for case_property in properties:
         path = [PathNode(name=case_property)]

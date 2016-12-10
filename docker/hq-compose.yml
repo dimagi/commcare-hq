@@ -6,6 +6,8 @@ web:
     JS_SETUP: "${JS_SETUP}"
     NOSE_DIVIDED_WE_RUN: "${NOSE_DIVIDED_WE_RUN}"
     REUSE_DB: "${REUSE_DB}"
+    TRAVIS_HQ_USERNAME: "${TRAVIS_HQ_USERNAME}"
+    TRAVIS_HQ_PASSWORD: "${TRAVIS_HQ_PASSWORD}"
   privileged: true  # allows mount inside container
   links:
     - postgres

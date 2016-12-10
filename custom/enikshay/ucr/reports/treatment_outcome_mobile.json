@@ -20,6 +20,7 @@
                 "display": "Case Open Date",
                 "field": "opened_on",
                 "type": "quarter",
+                "show_all": true,
                 "slug": "patient_registration_date"
             },
             {

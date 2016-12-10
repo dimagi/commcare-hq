@@ -6,12 +6,13 @@ from django.core.management.base import CommandError, LabelCommand
 from sqlalchemy.exc import OperationalError
 
 from corehq.apps.couch_sql_migration.couchsqlmigration import (
-    do_couch_to_sql_migration, delete_diff_db, get_diff_db,
-    commit_migration)
+    do_couch_to_sql_migration, delete_diff_db, get_diff_db)
+from corehq.apps.couch_sql_migration.progress import (
+    set_couch_sql_migration_started, couch_sql_migration_in_progress,
+    set_couch_sql_migration_not_started, set_couch_sql_migration_complete
+)
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
-from corehq.apps.tzmigration.api import set_migration_started, set_migration_not_started, get_migration_status, \
-    MigrationStatus, set_migration_complete
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.util.markup import shell_green, shell_red
@@ -49,9 +50,11 @@ class Command(LabelCommand):
 
         if options['MIGRATE']:
             self.require_only_option('MIGRATE', options)
-            set_migration_started(domain)
+            set_couch_sql_migration_started(domain)
             do_couch_to_sql_migration(domain, with_progress=not self.no_input, debug=self.debug)
-            self.print_stats(domain, short=options['stats_short'], diffs_only=True)
+            has_diffs = self.print_stats(domain, short=True, diffs_only=True)
+            if has_diffs:
+                print "\nUse '--stats-short', '--stats-long', '--show-diffs' to see more info.\n"
         if options['blow_away']:
             self.require_only_option('blow_away', options)
             if not self.no_input:
@@ -59,7 +62,7 @@ class Command(LabelCommand):
                     "This will delete all SQL forms and cases for the domain {}. "
                     "Are you sure you want to continue?".format(domain)
                 )
-            set_migration_not_started(domain)
+            set_couch_sql_migration_not_started(domain)
             _blow_away_migration(domain)
         if options['stats_short'] or options['stats_long']:
             self.print_stats(domain, short=options['stats_short'])
@@ -67,15 +70,14 @@ class Command(LabelCommand):
             self.show_diffs(domain)
         if options['COMMIT']:
             self.require_only_option('COMMIT', options)
-            assert get_migration_status(domain, strict=True) == MigrationStatus.IN_PROGRESS
+            assert couch_sql_migration_in_progress(domain)
             if not self.no_input:
                 _confirm(
                     "This will allow convert the domain to use the SQL backend and"
                     "allow new form submissions to be processed. "
                     "Are you sure you want to do this for domain '{}'?".format(domain)
                 )
-            commit_migration(domain)
-            set_migration_complete(domain)
+            set_couch_sql_migration_complete(domain)
 
     def show_diffs(self, domain):
         db = get_diff_db(domain)
@@ -131,6 +133,7 @@ class Command(LabelCommand):
 
         if diffs_only and not has_diffs:
             print shell_green("No differences found between old and new docs!")
+        return has_diffs
 
     def _print_status(self, name, ids_in_couch, ids_in_sql, diff_count, short, diffs_only):
         n_couch = len(ids_in_couch)

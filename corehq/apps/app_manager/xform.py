@@ -1,20 +1,27 @@
 from collections import defaultdict, OrderedDict
 from functools import wraps
 import logging
+
+import itertools
 from django.utils.translation import ugettext_lazy as _
+
+import formtranslate.api
 from casexml.apps.case.xml import V2_NAMESPACE
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
+from corehq.apps import nimbus_api
 from corehq.apps.app_manager.const import (
     SCHEDULE_PHASE, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE,
     CASE_ID, USERCASE_ID, SCHEDULE_UNSCHEDULED_VISIT, SCHEDULE_CURRENT_VISIT_NUMBER,
     SCHEDULE_GLOBAL_NEXT_VISIT_DATE, SCHEDULE_NEXT_DUE, APP_V2)
 from lxml import etree as ET
+
+from corehq.apps.nimbus_api.exceptions import NimbusAPIException
+from corehq.toggles import NIMBUS_FORM_VALIDATION
 from corehq.util.view_utils import get_request
 from dimagi.utils.decorators.memoized import memoized
 from .xpath import CaseIDXPath, session_var, CaseTypeXpath, QualifiedScheduleFormXPath
-from .exceptions import XFormException, CaseError, XFormValidationError, BindNotFound
+from .exceptions import XFormException, CaseError, XFormValidationError, BindNotFound, XFormValidationFailed
 import collections
-import formtranslate.api
 import re
 
 
@@ -538,12 +545,19 @@ def autoset_owner_id_for_advanced_action(action):
     return False
 
 
-def validate_xform(source):
+def validate_xform(domain, source):
     if isinstance(source, unicode):
         source = source.encode("utf-8")
     # normalize and strip comments
     source = ET.tostring(parse_xml(source))
-    validation_results = formtranslate.api.validate(source)
+    if NIMBUS_FORM_VALIDATION.enabled(domain):
+        try:
+            validation_results = nimbus_api.validate_form(source)
+        except NimbusAPIException:
+            raise XFormValidationFailed("Unable to validate form")
+    else:
+        validation_results = formtranslate.api.validate(source)
+
     if not validation_results.success:
         raise XFormValidationError(
             fatal_error=validation_results.fatal_error,
@@ -572,10 +586,6 @@ class XForm(WrappedNode):
 
     def __str__(self):
         return ET.tostring(self.xml) if self.xml is not None else ''
-
-    def validate(self):
-        validate_xform(ET.tostring(self.xml) if self.xml is not None else '')
-        return self
 
     @property
     @raise_if_none("Can't find <model>")
@@ -644,6 +654,19 @@ class XForm(WrappedNode):
         audio = self.media_references_by_lang(lang=lang, form="audio")
         inline_video = self.media_references_by_lang(lang=lang, form="video-inline")
         return images + video + audio + inline_video
+
+    def get_instance_ids(self):
+        def _get_instances():
+            return itertools.chain(
+                self.model_node.findall('{f}instance'),
+                self.model_node.findall('instance')
+            )
+
+        return [
+            instance.attrib['id']
+            for instance in _get_instances()
+            if 'id' in instance.attrib
+        ]
 
     def set_name(self, new_name):
         title = self.find('{h}head/{h}title')
@@ -1086,10 +1109,11 @@ class XForm(WrappedNode):
         data_nodes = {}
 
         def for_each_data_node(parent, path_context=""):
-            for child in parent.findall('*'):
+            children = parent.findall('*')
+            for child in children:
                 path = self.resolve_path(child.tag_name, path_context)
                 for_each_data_node(child, path_context=path)
-            if not parent.findall('*'):
+            if not children and path_context:
                 data_nodes[path_context] = parent
 
         for_each_data_node(self.data_node)
@@ -1257,8 +1281,12 @@ class XForm(WrappedNode):
         If the id already exists, DOES NOT overwrite.
 
         """
-        conflicting = self.model_node.find('{f}instance[@id="%s"]' % id)
-        if not conflicting.exists():
+        instance_xpath = 'instance[@id="%s"]' % id
+        conflicting = (
+            self.model_node.find('{f}%s' % instance_xpath).exists() or
+            self.model_node.find(instance_xpath).exists()
+        )
+        if not conflicting:
             # insert right after the main <instance> block
             first_instance = self.model_node.find('{f}instance')
             first_instance.addnext(_make_elem('instance', {'id': id, 'src': src}))
@@ -2127,3 +2155,36 @@ def infer_vellum_type(control, bind):
         })
         return None
     return result['name']
+
+
+def find_missing_instances(wrapped_xform):
+    from corehq.apps.app_manager.suite_xml.post_process.instances import get_all_instances_referenced_in_xpaths
+    instance_declarations = wrapped_xform.get_instance_ids()
+    missing_instances = set()
+    missing_unknown_instance = set()
+    instances, unknown_instance_ids = get_all_instances_referenced_in_xpaths('', [wrapped_xform.render()])
+    for instance in instances:
+        if instance.id not in instance_declarations:
+            missing_instances.add(instance.id)
+    for instance_id in unknown_instance_ids:
+        if instance_id not in instance_declarations:
+            missing_unknown_instance.add(instance_id)
+
+    return missing_instances, missing_unknown_instance
+
+
+def check_for_missing_instances(wrapped_xform):
+    missing_instances, missing_unknown_instances = find_missing_instances(wrapped_xform)
+    message_parts = []
+    if missing_instances:
+        instance_ids = "','".join(missing_instances)
+        message_parts.append(_("Known instances: '{}'").format(instance_ids))
+    if missing_unknown_instances:
+        instance_ids = "','".join(missing_unknown_instances)
+        message_parts.append(_("Unknown instances: '{}'").format(instance_ids))
+
+    if message_parts:
+        raise XFormValidationError(
+            'The form is missing some instance declarations: {}'.format(', '.join(message_parts)),
+            validation_problems=[]
+        )

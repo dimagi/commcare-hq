@@ -886,7 +886,7 @@ class AdminDomainMapReport(AdminDomainStatsReport):
         active_users_per_country = (NestedTermAggregationsHelper(
                                     base_query=DomainES().real_domains().is_active_project().filter(filters),
                                     terms=[AggregationTerm('countries', 'deployment.countries')],
-                                    bottom_level_aggregation=SumAggregation('users', 'cp_n_active_cc_users')
+                                    inner_most_aggregation=SumAggregation('users', 'cp_n_active_cc_users')
                                     ).get_data())
         return active_users_per_country
 

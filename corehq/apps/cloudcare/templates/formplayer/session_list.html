@@ -1,10 +1,14 @@
 {% load hq_shared_tags %}
+{% load i18n %}
 
 <script type="text/template" id="session-view-list-template">
-    <div class="module-menu-container">
-        <div class="page-header menu-header">
-            <h1 class="page-title">Incomplete Forms</h1>
-        </div>
+    <div class="breadcrumb-form-container">
+      <ol class="breadcrumb breadcrumb-form">
+        <li class="js-home breadcrumb-text"><i class="fa fa-home"></i></li>
+        <li class="breadcrumb-text">{% trans "Incomplete Forms" %}</li>
+      </ol>
+    </div>
+    <div class="module-menu-container module-menu-bar-offset">
         <table class="table module-table">
             <tbody>
             </tbody>
@@ -18,7 +22,7 @@
             <i class="fa fa-pencil module-icon" aria-hidden="true"></i>
         </div>
     </td>
-    <td class="module-column module-column-name">
+    <td class="module-column module-column-name module-column-name-session">
         <h3>
             <b><%- title %></b>
             <% if (caseName) { %>(<%- caseName %>)<% } %>

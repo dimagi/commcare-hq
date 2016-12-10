@@ -958,6 +958,22 @@ class SuppressSubscriptionForm(forms.Form):
             ),
         )
 
+    def clean(self):
+        from corehq.apps.accounting.views import InvoiceSummaryView
+
+        invoices = self.subscription.invoice_set.all()
+        if invoices:
+            raise ValidationError(mark_safe(
+                "Cannot suppress subscription. Suppress these invoices first: %s"
+                % ', '.join(map(
+                    lambda invoice: '<a href="{edit_url}">{name}</a>'.format(
+                        edit_url=reverse(InvoiceSummaryView.urlname, args=[invoice.id]),
+                        name=invoice.invoice_number,
+                    ),
+                    invoices
+                ))
+            ))
+
 
 class PlanInformationForm(forms.Form):
     name = forms.CharField(max_length=80)

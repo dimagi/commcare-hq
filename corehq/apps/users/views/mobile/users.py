@@ -44,10 +44,12 @@ from corehq.apps.accounting.models import (
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.custom_data_fields import CustomDataEditor
 from corehq.apps.custom_data_fields.models import CUSTOM_DATA_FIELD_PREFIX
+from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin
 from corehq.apps.groups.models import Group
+from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.analytics import users_have_locations
@@ -70,6 +72,7 @@ from corehq.apps.users.bulkupload import (
     GroupNameError,
     UserUploadError,
 )
+from corehq.apps.users.dbaccessors.all_commcare_users import get_mobile_user_ids
 from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.forms import (
     CommCareAccountForm, UpdateCommCareUserInfoForm, CommtrackUserForm,
@@ -81,8 +84,9 @@ from corehq.apps.users.tasks import bulk_upload_async, turn_on_demo_mode_task, r
 from corehq.apps.users.util import can_add_extra_mobile_workers, format_username
 from corehq.apps.users.views import BaseUserSettingsView, BaseEditUserView, get_domain_languages
 from corehq.const import USER_DATE_FORMAT, GOOGLE_PLAY_STORE_COMMCARE_URL
+from corehq.toggles import SUPPORT
 from corehq.util.couch import get_document_or_404
-from corehq.util.spreadsheets_v1.excel import JSONReaderError, HeaderValueError, \
+from corehq.util.workbook_json.excel import JSONReaderError, HeaderValueError, \
     WorksheetNotFound, WorkbookJSONReader, enforce_string_type, StringTypeRequiredError, \
     InvalidExcelFileException
 from soil import DownloadBase
@@ -488,7 +492,7 @@ class DemoRestoreStatusView(BaseManageCommCareUserView):
 def demo_restore_job_poll(request, domain, download_id, template="users/mobile/partials/demo_restore_status.html"):
 
     try:
-        context = get_download_context(download_id, check_state=True)
+        context = get_download_context(download_id)
     except TaskFailedError:
         return HttpResponseServerError()
 
@@ -789,6 +793,27 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         }
 
 
+class DeletedMobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
+    template_name = 'users/deleted_mobile_workers.html'
+    urlname = 'deleted_mobile_workers'
+    page_title = ugettext_noop("Deleted Mobile Workers")
+
+    @method_decorator(require_can_edit_commcare_users)
+    def dispatch(self, request, *args, **kwargs):
+        if not SUPPORT.enabled(request.user.username):
+            raise Http404()
+        return super(DeletedMobileWorkerListView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        mobile_users = get_mobile_user_ids(self.domain)
+        everyone = set(get_doc_ids_in_domain_by_class(self.domain, CommCareUser))
+        deleted = everyone - mobile_users
+        return {
+            'deleted_mobile_workers': [get_doc_info_by_id(self.domain, id_) for id_ in deleted]
+        }
+
+
 class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
     template_name = "users/new_mobile_worker_modal.html"
     urlname = 'new_mobile_worker_modal'
@@ -1016,7 +1041,7 @@ class UserUploadStatusView(BaseManageCommCareUserView):
 @require_can_edit_commcare_users
 def user_upload_job_poll(request, domain, download_id, template="users/mobile/partials/user_upload_status.html"):
     try:
-        context = get_download_context(download_id, check_state=True)
+        context = get_download_context(download_id)
     except TaskFailedError:
         return HttpResponseServerError()
 
@@ -1029,7 +1054,7 @@ def user_upload_job_poll(request, domain, download_id, template="users/mobile/pa
     class _BulkUploadResponseWrapper(object):
 
         def __init__(self, context):
-            results = context.get('result', defaultdict(lambda: []))
+            results = context.get('result') or defaultdict(lambda: [])
             self.response_rows = results['rows']
             self.response_errors = results['errors']
             self.problem_rows = [r for r in self.response_rows if r['flag'] not in ('updated', 'created')]

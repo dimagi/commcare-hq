@@ -14,6 +14,8 @@ hqDefine('app_manager/js/preview_app.js', function() {
         PREVIEW_ACTION_TEXT_SHOW: '.js-preview-action-show',
         PREVIEW_ACTION_TEXT_HIDE: '.js-preview-action-hide',
         BTN_REFRESH: '.js-preview-refresh',
+        OFFSET_FOR_PREVIEW: '.offset-for-preview',
+        FORMDESIGNER: '#formdesigner',
     };
 
     module.EVENTS = {
@@ -26,17 +28,47 @@ hqDefine('app_manager/js/preview_app.js', function() {
     };
 
     module.DATA = {
-        OPEN: 'isopen',
+        OPEN: 'preview-isopen',
         POSITION: 'position',
+        TABLET: 'preview-tablet',
     };
+
+    _private.isFormdesigner = false;
 
     _private.showAppPreview = function() {
         $(module.SELECTORS.PREVIEW_ACTION_TEXT_SHOW).addClass('hide');
         $(module.SELECTORS.PREVIEW_ACTION_TEXT_HIDE).removeClass('hide');
+        if (_private.isFormdesigner) {
+            $(module.SELECTORS.FORMDESIGNER).addClass('offset-for-preview');
+        }
+        window.analytics.workflow("[app-preview] Clicked Show App Preview");
+        window.analytics.usage("[app-preview] Clicked Show App Preview");
+
     };
     _private.hideAppPreview = function() {
         $(module.SELECTORS.PREVIEW_ACTION_TEXT_SHOW).removeClass('hide');
         $(module.SELECTORS.PREVIEW_ACTION_TEXT_HIDE).addClass('hide');
+        if (_private.isFormdesigner) {
+            $(module.SELECTORS.FORMDESIGNER).removeClass('offset-for-preview');
+        }
+        window.analytics.workflow("[app-preview] Clicked Hide App Preview");
+        window.analytics.usage("[app-preview] Clicked Hide App Preview");
+    };
+
+    _private.tabletView = function() {
+        var $appPreview = $(module.SELECTORS.PREVIEW_WINDOW);
+        $appPreview.addClass('preview-tablet-mode');
+        $(module.SELECTORS.OFFSET_FOR_PREVIEW).addClass('offset-for-tablet');
+        _private.triggerPreviewEvent('tablet-view');
+        window.analytics.workflow('[app-preview] User turned on tablet mode');
+    };
+
+    _private.phoneView = function() {
+        var $appPreview = $(module.SELECTORS.PREVIEW_WINDOW);
+        $appPreview.removeClass('preview-tablet-mode');
+        $(module.SELECTORS.OFFSET_FOR_PREVIEW).removeClass('offset-for-tablet');
+        _private.triggerPreviewEvent('phone-view');
+        window.analytics.workflow('[app-preview] User turned off tablet mode');
     };
 
     _private.navigateBack = function() {
@@ -45,6 +77,10 @@ hqDefine('app_manager/js/preview_app.js', function() {
 
     _private.refresh = function() {
         _private.triggerPreviewEvent('refresh');
+
+        window.analytics.workflow("[app-preview] Clicked Refresh App Preview");
+        window.analytics.usage("[app-preview] Clicked Refresh App Preview");
+
     };
 
     _private.triggerPreviewEvent = function(action) {
@@ -55,13 +91,26 @@ hqDefine('app_manager/js/preview_app.js', function() {
         }, window.location.origin);
     };
 
+    _private.toggleTabletView = function() {
+        _private.toggleLocalStorageDatum(module.DATA.TABLET);
+        if (localStorage.getItem(module.DATA.TABLET)) {
+            _private.tabletView();
+        } else {
+            _private.phoneView();
+        }
+    };
+
+    _private.toggleLocalStorageDatum = function(datum) {
+        if (localStorage.getItem(datum) === datum) {
+            localStorage.removeItem(datum);
+        } else {
+            localStorage.setItem(datum, datum);
+        }
+    };
+
     _private.toggleAppPreview = function (e) {
         e.preventDefault();
-        if (localStorage.getItem(module.DATA.OPEN) === module.DATA.OPEN) {
-            localStorage.removeItem(module.DATA.OPEN);
-        } else {
-            localStorage.setItem(module.DATA.OPEN, module.DATA.OPEN);
-        }
+        _private.toggleLocalStorageDatum(module.DATA.OPEN);
         $(window).trigger(module.EVENTS.RESIZE);
         if (localStorage.getItem(module.DATA.OPEN)) {
             _private.showAppPreview();
@@ -76,6 +125,8 @@ hqDefine('app_manager/js/preview_app.js', function() {
             $appBody = $(module.SELECTORS.APP_MANAGER_BODY),
             $togglePreviewBtn = $(module.SELECTORS.BTN_TOGGLE_PREVIEW),
             $messages = $(layoutController.selector.messages);
+
+        _private.isFormdesigner = $(module.SELECTORS.FORMDESIGNER).length > 0;
 
         $appPreview.data(module.DATA.POSITION, module.POSITION.FIXED);
 
@@ -92,11 +143,11 @@ hqDefine('app_manager/js/preview_app.js', function() {
 
             if (localStorage.getItem(module.DATA.OPEN)) {
                 $appPreview.addClass('open');
-                if ($('#formdesigner').length === 0) $appBody.addClass('offset-for-preview');
+                if (!_private.isFormdesigner) $appBody.addClass('offset-for-preview');
                 $messages.addClass('offset-for-preview');
             } else {
                 $appPreview.removeClass('open');
-                if ($('#formdesigner').length === 0) $appBody.removeClass('offset-for-preview');
+                if (!_private.isFormdesigner) $appBody.removeClass('offset-for-preview');
                 $messages.removeClass('offset-for-preview');
             }
 
@@ -119,6 +170,7 @@ hqDefine('app_manager/js/preview_app.js', function() {
         };
         $(window).on(module.EVENTS.RESIZE, _resizeAppPreview);
         layoutController.utils.setBalancePreviewFn(_resizeAppPreview);
+        $('.js-preview-toggle-tablet-view').click(_private.toggleTabletView);
         $('.js-preview-back').click(_private.triggerPreviewEvent.bind(this, 'back'));
         $('.js-preview-refresh').click(function() {
             $(module.SELECTORS.BTN_REFRESH).removeClass('app-out-of-date');
@@ -127,8 +179,18 @@ hqDefine('app_manager/js/preview_app.js', function() {
         $(document).ajaxComplete(function(e, xhr, options) {
             if (/edit_form_attr/.test(options.url) ||
                 /edit_module_attr/.test(options.url) ||
+                /edit_module_detail_screens/.test(options.url) ||
+                /edit_app_attr/.test(options.url) ||
+                /edit_form_actions/.test(options.url) ||
                 /patch_xform/.test(options.url)) {
                 $(module.SELECTORS.BTN_REFRESH).addClass('app-out-of-date');
+            }
+        });
+        $(module.SELECTORS.PREVIEW_WINDOW_IFRAME).load(function() {
+            if (localStorage.getItem(module.DATA.TABLET)) {
+                _private.tabletView();
+            } else {
+                _private.phoneView();
             }
         });
 

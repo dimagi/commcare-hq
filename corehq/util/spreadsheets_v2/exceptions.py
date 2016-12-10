@@ -1,2 +1,0 @@
-class SpreadsheetFileError(Exception):
-    pass

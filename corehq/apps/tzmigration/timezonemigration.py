@@ -8,8 +8,8 @@ from django.conf import settings
 from casexml.apps.case.cleanup import rebuild_case_from_actions
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.case.xform import get_case_updates
-from corehq.apps.tzmigration.api import set_migration_started, \
-    set_migration_complete, force_phone_timezones_should_be_processed
+from corehq.apps.tzmigration.api import set_tz_migration_started, \
+    set_tz_migration_complete, force_phone_timezones_should_be_processed
 from corehq.apps.tzmigration.planning import PlanningDB
 from corehq.blobs.mixin import BlobHelper
 from corehq.form_processor.parsers.ledgers import get_stock_actions
@@ -22,9 +22,9 @@ from dimagi.utils.couch.database import iter_docs
 
 
 def run_timezone_migration_for_domain(domain):
-    set_migration_started(domain)
+    set_tz_migration_started(domain)
     _run_timezone_migration_for_domain(domain)
-    set_migration_complete(domain)
+    set_tz_migration_complete(domain)
 
 
 FormJsonDiff = collections.namedtuple('FormJsonDiff', [
@@ -200,7 +200,7 @@ def is_datetime_string(string):
     if not isinstance(string, basestring):
         return False
     try:
-        iso_string_to_datetime(string)
+        iso_string_to_datetime(string, strict=True)
     except (ValueError, OverflowError, TypeError):
         return False
     else:

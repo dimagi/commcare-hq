@@ -1,21 +1,27 @@
-#breadcrumb-region .breadcrumb {
-  color: @cc-neutral-mid;
+#breadcrumb-region .breadcrumb,
+.single-app-view .breadcrumb,
+.breadcrumb-form-container .breadcrumb {
   text-transform: uppercase;
-  background-color: white;
   margin: 0;
   padding: 0 10px;
   line-height: 30px;
-  font-size: 10px;
-  font-weight: 600;
+  font-size: 11px;
 
   li {
     display: none;
     &:before {
-      display: none;
+      color: white;
+      vertical-align: middle;
+      font-size: 8px;
+      padding: 0 4px;
     }
   }
+  li:first-child {
+    display: inline-block;
+    white-space: nowrap;
+  }
   li:last-child {
-    display: block;
+    display: inline-block;
     white-space: nowrap;
     text-overflow: ellipsis;
   }
@@ -25,4 +31,25 @@
   overflow: hidden;
   max-height: 30px;
   width: 100%;
+}
+
+.breadcrumb-form {
+  width: 100%;
+  .box-shadow(none);
+
+  li {
+    padding-top: 1px;
+  }
+}
+
+.breadcrumb-form-container {
+  position: fixed;
+  z-index: 10;
+  width: 100%;
+  height: 30px;
+  .box-shadow(0 0 5px 2px rgba(0,0,0,.3));
+}
+
+.breadcrumb-form-single-question {
+  height: 66px;
 }

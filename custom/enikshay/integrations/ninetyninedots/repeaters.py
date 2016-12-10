@@ -13,6 +13,7 @@ from casexml.apps.case.xform import get_case_updates
 
 from custom.enikshay.case_utils import get_open_episode_case_from_person
 from custom.enikshay.const import PRIMARY_PHONE_NUMBER, BACKUP_PHONE_NUMBER
+from custom.enikshay.exceptions import ENikshayCaseNotFound
 
 
 class NinetyNineDotsRegisterPatientRepeater(CaseRepeater):
@@ -56,17 +57,17 @@ class NinetyNineDotsUpdatePatientRepeater(NinetyNineDotsRegisterPatientRepeater)
         return reverse(UpdatePatientRepeaterView.urlname, args=[domain])
 
     def allowed_to_forward(self, case):
-        # checks whitelisted case types and users
-        allowed_case_types_and_users = self._allowed_case_type(case) and self._allowed_user(case)
-        if not allowed_case_types_and_users:
+        if not self._allowed_case_type(case) and self._allowed_user(case):
             return False
 
-        return (
-            phone_number_changed(case) and
-            episode_registered_with_99dots(
+        try:
+            registered_episode = episode_registered_with_99dots(
                 get_open_episode_case_from_person(case.domain, case.case_id)
             )
-        )
+        except ENikshayCaseNotFound:
+            return False
+
+        return phone_number_changed(case) and registered_episode
 
 
 def episode_registered_with_99dots(episode):

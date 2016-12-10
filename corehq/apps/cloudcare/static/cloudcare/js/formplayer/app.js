@@ -22,7 +22,6 @@ FormplayerFrontend.on("before:start", function () {
             loadingProgress: "#formplayer-progress-container",
             breadcrumb: "#breadcrumb-region",
             persistentCaseTile: "#persistent-case-tile",
-            phoneModeNavigation: '#phone-mode-navigation',
             restoreAsBanner: '#restore-as-region',
         },
     });
@@ -83,6 +82,7 @@ FormplayerFrontend.reqres.setHandler('currentUser', function () {
 
 FormplayerFrontend.on('clearForm', function () {
     $('#webforms').html("");
+    $('#menu-container').removeClass('hide');
     $('#webforms-nav').html("");
     $('#cloudcare-debugger').html("");
     $('.atwho-container').remove();
@@ -102,9 +102,9 @@ $(document).on("ajaxStart", function () {
 
 FormplayerFrontend.on('showError', function (errorMessage, isHTML) {
     if (isHTML) {
-        showHTMLError(errorMessage, $("#cloudcare-notifications"), 10000);
+        showHTMLError(errorMessage, $("#cloudcare-notifications"));
     } else {
-        showError(errorMessage, $("#cloudcare-notifications"), 10000);
+        showError(errorMessage, $("#cloudcare-notifications"));
     }
 });
 
@@ -122,7 +122,6 @@ FormplayerFrontend.reqres.setHandler('handleNotification', function(notification
 
 FormplayerFrontend.on('startForm', function (data) {
     FormplayerFrontend.request("clearMenu");
-
     data.onLoading = tfLoading;
     data.onLoadingComplete = tfLoadingComplete;
     var user = FormplayerFrontend.request('currentUser');
@@ -163,6 +162,7 @@ FormplayerFrontend.on('startForm', function (data) {
     };
     var sess = new WebFormSession(data);
     sess.renderFormXml(data, $('#webforms'));
+    $('#menu-container').addClass('hide');
 });
 
 FormplayerFrontend.on("start", function (options) {
@@ -199,12 +199,6 @@ FormplayerFrontend.on("start", function (options) {
             appId = options.apps[0]['_id'];
         }
 
-        if (user.displayOptions.phoneMode && user.displayOptions.singleAppMode) {
-            FormplayerFrontend.regions.phoneModeNavigation.show(
-                new FormplayerFrontend.Layout.Views.PhoneNavigation({ appId: appId })
-            );
-            FormplayerFrontend.trigger('phone:back:hide');
-        }
         // will be the same for every domain. TODO: get domain/username/pass from django
         if (this.getCurrentRoute() === "") {
             if (user.displayOptions.singleAppMode) {
@@ -355,6 +349,13 @@ FormplayerFrontend.on("retry", function(response, retryFn, progressMessage) {
     setTimeout(retryFn, retryTimeout);
 });
 
+FormplayerFrontend.on('view:tablet', function() {
+    $('body').addClass('preview-tablet-mode');
+});
+
+FormplayerFrontend.on('view:phone', function() {
+    $('body').removeClass('preview-tablet-mode');
+});
 
 /**
  * clearProgress
@@ -377,7 +378,11 @@ FormplayerFrontend.on('clearProgress', function() {
 
 
 FormplayerFrontend.on('setVersionInfo', function(versionInfo) {
+    var user = FormplayerFrontend.request('currentUser');
     $("#version-info").text(versionInfo || '');
+    if (versionInfo) {
+        user.set('versionInfo',  versionInfo);
+    }
 });
 
 /**

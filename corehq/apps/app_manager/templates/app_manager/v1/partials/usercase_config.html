@@ -16,7 +16,8 @@
 <div id="usercase-config-ko">
     <div class="clearfix">
             {% if allow_usercase %}
-            <div data-bind="saveButton: saveUsercaseButton"></div>
+                <div data-bind="saveButton: saveUsercaseButton"></div>
+                <div data-bind="template: 'case-config:refresh-form-questions'"></div>
             {% endif %}
     </div>
     <div class="spacer"></div>

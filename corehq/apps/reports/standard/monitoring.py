@@ -40,6 +40,7 @@ from corehq.apps.reports.util import friendly_timedelta, format_datatables_data
 from corehq.apps.reports.analytics.esaccessors import get_form_counts_by_user_xmlns
 from corehq.apps.users.models import CommCareUser
 from corehq.const import SERVER_DATETIME_FORMAT
+from corehq.util import flatten_list
 from corehq.util.timezones.conversions import ServerTime, PhoneTime
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.couch.safe_index import safe_index
@@ -153,6 +154,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     description = ugettext_noop("Followup rates on active cases.")
     is_cacheable = True
     ajax_pagination = True
+    exportable_all = True
 
     @property
     def shared_pagination_GET_params(self):
@@ -374,18 +376,20 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         )
         buckets = es_results.aggregations.users.buckets_list
         if self.missing_users:
-            buckets[None] = es_results.aggregations.missing_users.bucket
+            buckets.append(es_results.aggregations.missing_users.bucket)
         rows = []
         for bucket in buckets:
             user = self.users_by_id[bucket.key]
             rows.append(self.Row(self, user, bucket))
 
+        rows.extend(self._unmatched_buckets(buckets, self.paginated_user_ids))
+
         if self.should_sort_by_username:
             # ES handles sorting for all other columns
-            rows.sort(key=lambda row: row.user)
+            rows.sort(key=lambda row: row.user.raw_username)
 
         self.total_row = self._total_row
-        if len(rows) == self.pagination.count:
+        if len(rows) <= self.pagination.count:
             return map(self._format_row, rows)
         else:
             start = self.pagination.start
@@ -398,14 +402,27 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         es_results = self.es_queryset(user_ids=self.user_ids)
         buckets = es_results.aggregations.users.buckets_list
         if self.missing_users:
-            buckets[None] = es_results.aggregations.missing_users.bucket
+            buckets.append(es_results.aggregations.missing_users.bucket)
         rows = []
         for bucket in buckets:
             user = self.users_by_id[bucket.key]
             rows.append(self.Row(self, user, bucket))
 
+        rows.extend(self._unmatched_buckets(buckets, self.user_ids))
+
         self.total_row = self._total_row
         return map(self._format_row, rows)
+
+    def _unmatched_buckets(self, buckets, user_ids):
+        # ES doesn't return buckets that don't have any docs matching docs
+        # we expect a bucket for each relevant user id so add empty buckets
+        returned_user_ids = {b.key for b in buckets}
+        not_returned_user_ids = set(user_ids) - returned_user_ids
+        extra_rows = []
+        for user_id in not_returned_user_ids:
+            extra_rows.append(self.Row(self, self.users_by_id[user_id], {}))
+        extra_rows.sort(key=lambda row: row.user.raw_username)
+        return extra_rows
 
     @property
     def _touched_total_aggregation(self):
@@ -467,11 +484,12 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
         top_level_aggregation = self.add_landmark_aggregations(top_level_aggregation, self.end_date)
 
         if size:
-            top_level_aggregation.size(size)
+            top_level_aggregation = top_level_aggregation.size(size)
 
         if self.sort_column:
             order = "desc" if self.pagination.desc else "asc"
             top_level_aggregation = top_level_aggregation.order(self.sort_column, order)
+            top_level_aggregation = top_level_aggregation.order("_term", order, reset=False)
 
         query = (
             case_es.CaseES()
@@ -1419,7 +1437,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             ret = [util._report_user_dict(u) for u in list(CommCareUser.by_domain(self.domain))]
             return ret
         else:
-            all_users = [user for sublist in self.users_by_group.values() for user in sublist]
+            all_users = flatten_list(self.users_by_group.values())
             all_users.extend([user for user in self.get_users_by_mobile_workers().values()])
             all_users.extend([user for user in self.get_admins_and_demo_users()])
             return dict([(user['user_id'], user) for user in all_users]).values()

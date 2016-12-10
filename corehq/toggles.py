@@ -3,6 +3,7 @@ from functools import wraps
 import hashlib
 from django.http import Http404
 import math
+from corehq.util.quickcache import quickcache
 from toggle.shortcuts import toggle_enabled, set_toggle
 
 Tag = namedtuple('Tag', 'name css_class description')
@@ -170,6 +171,7 @@ def any_toggle_enabled(*toggles):
     return decorator
 
 
+@quickcache([])
 def all_toggles():
     """
     Loads all toggles
@@ -619,6 +621,13 @@ INSTANCE_VIEWER = StaticToggle(
     namespaces=[NAMESPACE_USER, NAMESPACE_DOMAIN],
 )
 
+CUSTOM_INSTANCES = StaticToggle(
+    'custom_instances',
+    'Inject custom instance declarations',
+    TAG_EXPERIMENTAL,
+    namespaces=[NAMESPACE_USER, NAMESPACE_DOMAIN],
+)
+
 LOCATIONS_IN_REPORTS = StaticToggle(
     'LOCATIONS_IN_REPORTS',
     "Include locations in report filters",
@@ -717,13 +726,6 @@ USE_FORMPLAYER = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-FORMPLAYER_EXPERIMENT = StaticToggle(
-    'use_formplayer_experiment',
-    'Do formplayer experimenting with Science',
-    TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN],
-)
-
 FIXTURE_CASE_SELECTION = StaticToggle(
     'fixture_case',
     'Allow a configurable case list that is filtered based on a fixture type and fixture selection (Due List)',
@@ -793,6 +795,7 @@ SMS_PERFORMANCE_FEEDBACK = StaticToggle(
     'Enable SMS-based performance feedback',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
+    help_link='https://docs.google.com/document/d/1YvbYLV4auuf8gVdYZ6jFZTsOLfJdxm49XhvWkska4GE/edit#',
 )
 
 LEGACY_SYNC_SUPPORT = StaticToggle(
@@ -829,13 +832,6 @@ GRID_MENUS = StaticToggle(
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/ccinternal/Grid+Views',
-)
-
-NEW_EXPORTS = StaticToggle(
-    'new_exports',
-    'Use new backend export infrastructure',
-    TAG_PRODUCT_CORE,
-    [NAMESPACE_DOMAIN]
 )
 
 OLD_EXPORTS = StaticToggle(
@@ -915,8 +911,8 @@ ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
 
 CUSTOM_CALENDAR_FIXTURE = StaticToggle(
     'custom_calendar_fixture',
-    'Send a calendar fixture down to all users (UATBC/eNikshay one off)',
-    TAG_ONE_OFF,
+    'Send a calendar fixture down to all users (R&D)',
+    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN],
 )
 
@@ -935,13 +931,6 @@ DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-REFRESH_CASE_MANAGEMENT = StaticToggle(
-    'refresh_case_management',
-    'Show a button to refresh case management',
-    TAG_PREVIEW,
-    [NAMESPACE_USER, NAMESPACE_DOMAIN],
-)
-
 CLOUDCARE_LATEST_BUILD = StaticToggle(
     'use_latest_build_cloudcare',
     'Uses latest build for cloudcare instead of latest starred',
@@ -956,11 +945,11 @@ APP_MANAGER_V2 = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-RESTORE_AS_CLOUDCARE = StaticToggle(
-    'restore_as_cloudcare',
-    'Restore as a different user for cloudcare',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_USER, NAMESPACE_DOMAIN],
+SHOW_PREVIEW_APP_SETTINGS = StaticToggle(
+    'preview_app_settings',
+    'Show preview app settings button',
+    TAG_PRODUCT_CORE,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
 DATA_MIGRATION = StaticToggle(
@@ -968,4 +957,19 @@ DATA_MIGRATION = StaticToggle(
     'Disable submissions and restores during a data migration',
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
+)
+
+DATA_DICTIONARY = StaticToggle(
+    'data_dictionary',
+    'Domain level data dictionary of cases',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
+NIMBUS_FORM_VALIDATION = PredictablyRandomToggle(
+    'nimbus_form_validation',
+    'Use Nimbus to validate XForms',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+    randomness=0.1
 )

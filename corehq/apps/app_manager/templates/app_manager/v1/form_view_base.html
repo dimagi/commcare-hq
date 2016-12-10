@@ -57,6 +57,9 @@
     {% if allow_form_workflow %}
         <script src="{% static 'app_manager/js/form_workflow.js' %}"></script>
     {% endif %}
+    {% if request|toggle_enabled:"CUSTOM_INSTANCES"%}
+        <script src="{% static 'app_manager/js/custom_instances.js' %}"></script>
+    {% endif %}
     <script>
         $(function(){
             // Do file upload check
@@ -264,6 +267,13 @@
                 {% endif %}
             });
         {% endif %}
+        {% if request|toggle_enabled:"CUSTOM_INSTANCES"%}
+            var customInstances = hqImport('app_manager/js/custom_intances.js').wrap(
+                {
+                    customInstances:{{ custom_instances|JSON }}
+                })
+            $('#custom-instances').koApplyBindings(customInstances);
+        {% endif %}
         });
     </script>
     <script>
@@ -360,6 +370,11 @@
             {% endif %}
 
             <div class="tab-pane" id="case-configuration">
+                {% if xform_validation_missing %}
+                    <p class="alert alert-warning">
+                        {% trans "We were unable to validate your form due an error on the server. Proceed with caution." %}
+                    </p>
+                {% endif %}
                 {% if form_errors or xform_validation_errored %}
                     <p class="alert alert-warning">
                         {% trans "There are errors in your form. Fix your form in order to view and edit Case Management." %}

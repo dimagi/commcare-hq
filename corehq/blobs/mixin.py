@@ -145,6 +145,9 @@ class BlobMixin(Document):
             pass
         return body
 
+    def has_attachment(self, name):
+        return name in self.blobs
+
     def delete_attachment(self, name):
         if self.migrating_blobs_from_couch and self._attachments:
             deleted = bool(self._attachments.pop(name, None))

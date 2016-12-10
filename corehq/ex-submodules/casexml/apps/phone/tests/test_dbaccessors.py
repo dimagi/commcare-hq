@@ -36,7 +36,7 @@ class DBAccessorsTest(TestCase, DocTestMixin):
         get_db(None).delete_docs(cls.legacy_sync_logs)
 
     def test_get_sync_logs_for_user(self):
-        self.assert_doc_lists_equal(
+        self.assert_doc_sets_equal(
             get_sync_logs_for_user(self.user_id, 4),
             self.sync_logs + self.legacy_sync_logs)
 

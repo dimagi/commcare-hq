@@ -223,7 +223,7 @@ class SimplifiedInventoryReport(GenericTabularReport, CommtrackReportMixin):
     @property
     @memoized
     def products(self):
-        products = SQLProduct.objects.filter(domain=self.domain)
+        products = SQLProduct.active_objects.filter(domain=self.domain)
         if self.program_id:
             products = products.filter(program_id=self.program_id)
         return list(products.order_by('name'))
@@ -493,4 +493,6 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
     @property
     def charts(self):
         if 'location_id' in self.request.GET: # hack: only get data if we're loading an actual report
-            return [PieChart(None, _('Current Reporting'), self.master_pie_chart_data())]
+            chart = PieChart(_('Current Reporting'), 'current_reporting', [])
+            chart.data = self.master_pie_chart_data()
+            return [chart]

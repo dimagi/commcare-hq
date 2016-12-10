@@ -490,6 +490,15 @@ class DomainGlobalSettingsForm(forms.Form):
                                 "when you are in this project. Changing this name "
                                 "will not change the URL of the project.")
     )
+    project_description = forms.CharField(
+        label=ugettext_lazy("Project Description"),
+        widget=forms.Textarea,
+        required=False,
+        max_length=1000,
+        help_text=ugettext_lazy(
+            "Please provide a short description of your project (Max 1000 characters)."
+        )
+    )
     default_timezone = TimeZoneChoiceField(label=ugettext_noop("Default Timezone"), initial="UTC")
 
     logo = ImageField(
@@ -651,6 +660,7 @@ class DomainGlobalSettingsForm(forms.Form):
 
     def save(self, request, domain):
         domain.hr_name = self.cleaned_data['hr_name']
+        domain.project_description = self.cleaned_data['project_description']
         self._save_logo_configuration(domain)
         self._save_call_center_configuration(domain)
         self._save_timezone_configuration(domain)
@@ -1107,7 +1117,7 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
              # WARNING: Django 1.7 passes this in automatically. do not remove
              html_email_template_name=None,
              use_https=False, token_generator=default_token_generator,
-             from_email=None, request=None):
+             from_email=None, request=None, **kwargs):
         """
         Generates a one-use only link for resetting password and sends to the
         user.

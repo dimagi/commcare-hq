@@ -51,7 +51,7 @@ class EnikshayReport(DatespanMixin, CustomProjectReport, SqlTabularReport):
         datespan = QuarterFilter.get_value(self.request, self.domain)
         return EnikshayReportConfig(
             domain=self.domain,
-            locations_id=self.request.GET.getlist('locations_id', []),
+            locations_id=EnikshayLocationFilter.get_value(self.request, self.domain),
             start_date=datespan.startdate,
             end_date=datespan.enddate
         )

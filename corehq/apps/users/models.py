@@ -775,12 +775,27 @@ class EulaMixin(DocumentSchema):
         return current_eula
 
 
+class DeviceIdLastUsed(DocumentSchema):
+    device_id = StringProperty()
+    last_used = DateTimeProperty()
+
+    def __eq__(self, other):
+        return all(getattr(self, p) == getattr(other, p) for p in self.properties())
+
+
 class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMixin):
     """
     A user (for web and commcare)
     """
     base_doc = 'CouchUser'
+
+    # todo: it looks like this is only ever set to a useless string and we should probably just remove it
+    # https://github.com/dimagi/commcare-hq/pull/14087#discussion_r90423396
     device_ids = ListProperty()
+
+    # this is the real list of devices
+    devices = SchemaListProperty(DeviceIdLastUsed)
+
     phone_numbers = ListProperty()
     created_on = DateTimeProperty(default=datetime(year=1900, month=1, day=1))
     #    For now, 'status' is things like:
@@ -1556,8 +1571,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         from corehq.apps.groups.models import Group
         # get faked location group objects
         groups = []
-        for sql_location in self.sql_locations:
-            groups.extend(self.sql_location.get_case_sharing_groups(self._id))
+        for sql_location in self.get_sql_locations(self.domain):
+            groups.extend(sql_location.get_case_sharing_groups(self._id))
 
         groups += [group for group in Group.by_user(self) if group.case_sharing]
         return groups
@@ -1635,21 +1650,15 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 pass
         return None
 
-    @property
-    def sql_locations(self):
-        from corehq.apps.locations.models import SQLLocation
-        if self.assigned_location_ids:
-            try:
-                return SQLLocation.objects.filter(location_id__in=self.assigned_location_ids)
-            except SQLLocation.DoesNotExist:
-                pass
-        return []
-
     def get_location_ids(self, domain):
         return self.assigned_location_ids
 
     def get_sql_locations(self, domain):
-        return self.sql_locations
+        from corehq.apps.locations.models import SQLLocation
+        if self.assigned_location_ids:
+            return SQLLocation.objects.filter(location_id__in=self.assigned_location_ids)
+        else:
+            return SQLLocation.objects.none()
 
     def add_to_assigned_locations(self, location):
         if self.location_id:
@@ -1980,6 +1989,23 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         case = CaseAccessors(self.domain).get_case_by_domain_hq_user_id(self._id, USERCASE_TYPE)
         return case.case_id if case else None
 
+    def update_device_id_last_used(self, device_id, when=None):
+        """
+        Sets the last_used date for the device to be the current time
+
+        Does NOT save the user object.
+        """
+        when = when or datetime.utcnow()
+        for user_device_id_last_used in self.devices:
+            if user_device_id_last_used.device_id == device_id:
+                user_device_id_last_used.last_used = when
+                break
+        else:
+            self.devices.append(DeviceIdLastUsed(
+                device_id=device_id,
+                last_used=when
+            ))
+
 
 class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     program_id = StringProperty()
@@ -2136,6 +2162,18 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         if loc_id:
             return SQLLocation.objects.get_or_None(domain=domain, location_id=loc_id)
 
+    def get_location_ids(self, domain):
+        return getattr(self.get_domain_membership(domain), 'assigned_location_ids', None)
+
+    @memoized
+    def get_sql_locations(self, domain=None):
+        from corehq.apps.locations.models import SQLLocation
+        loc_ids = self.get_location_ids(domain)
+        if loc_ids:
+            return SQLLocation.objects.get_locations(loc_ids)
+        else:
+            return SQLLocation.objects.none()
+
     @memoized
     def get_location(self, domain):
         from corehq.apps.locations.models import Location
@@ -2146,13 +2184,6 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             except ResourceNotFound:
                 pass
         return None
-
-    def get_location_ids(self, domain):
-        return self.get_domain_membership(domain).assigned_location_ids
-
-    def get_sql_locations(self, domain):
-        from corehq.apps.locations.models import SQLLocation
-        return SQLLocation.objects.filter(location_id__in=self.get_location_ids(domain))
 
     def is_locked_out(self):
         return self.login_attempts >= MAX_LOGIN_ATTEMPTS

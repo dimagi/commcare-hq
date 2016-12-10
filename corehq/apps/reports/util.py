@@ -2,6 +2,8 @@
 from collections import namedtuple
 from datetime import datetime, timedelta
 from importlib import import_module
+from unidecode import unidecode
+from urllib import quote
 import math
 import pytz
 import warnings
@@ -466,3 +468,16 @@ def safe_for_fs(filename):
     for c in unsafe_chars:
         filename = filename.replace(c, empty)
     return filename
+
+
+def safe_filename_header(filename):
+    # Removes illegal characters from filename and formats for 'Content-Disposition' HTTP header
+    #
+    # See IETF advice https://tools.ietf.org/html/rfc6266#appendix-D
+    # and http://greenbytes.de/tech/tc2231/#attfnboth as a solution to disastrous browser compatibility
+
+    filename = filename if isinstance(filename, unicode) else filename.decode('utf8')
+    safe_filename = safe_for_fs(filename)
+    ascii_filename = unidecode(safe_filename)
+    return 'attachment; filename="{}"; filename*=UTF-8\'\'{}'.format(
+        ascii_filename, quote(safe_filename.encode('utf8')))

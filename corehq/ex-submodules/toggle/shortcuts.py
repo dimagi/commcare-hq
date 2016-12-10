@@ -34,6 +34,13 @@ def set_toggle(slug, item, enabled, namespace=None):
             toggle_doc.add(ns_item)
         else:
             toggle_doc.remove(ns_item)
+        from corehq.feature_previews import all_previews
+        from corehq.toggles import all_toggles, NAMESPACE_DOMAIN
+        static_toggles_by_slug = {t.slug: t for t in all_toggles() + all_previews()}
+        if namespace == NAMESPACE_DOMAIN and slug in static_toggles_by_slug:
+            static_toggle = static_toggles_by_slug[slug]
+            if static_toggle.save_fn:
+                static_toggle.save_fn(item, enabled)
         update_toggle_cache(slug, item, enabled, namespace)
 
 

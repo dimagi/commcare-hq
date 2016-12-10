@@ -2,9 +2,12 @@ import os
 import uuid
 from datetime import datetime
 
+from django.db.utils import IntegrityError
+
 import settings
-from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.xform import get_all_extensions_to_close, CaseProcessingResult
+from casexml.apps.case.models import CommCareCase, CommCareCaseAction
+from casexml.apps.case.xform import get_all_extensions_to_close, CaseProcessingResult, get_case_updates
+from casexml.apps.case.xml.parser import CaseNoopAction
 from corehq.apps.couch_sql_migration.diff import filter_form_diffs, filter_case_diffs, filter_ledger_diffs
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_type
 from corehq.apps.domain.models import Domain
@@ -23,7 +26,6 @@ from corehq.form_processor.utils.general import set_local_domain_sql_backend_ove
     clear_local_domain_sql_backend_override
 from corehq.util.log import with_progress_bar
 from couchforms.models import XFormInstance, doc_types as form_doc_types, all_known_formlike_doc_types
-from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from fluff.management.commands.ptop_reindexer_fluff import ReindexEventHandler
@@ -51,10 +53,14 @@ class CouchSqlDomainMigrator(object):
         self.diff_db = DiffDB.init(db_filepath)
 
         self.errors_with_normal_doc_type = []
+        self.forms_that_touch_cases_without_actions = set()
 
     def log_debug(self, message):
         if self.debug:
             print '[DEBUG] {}'.format(message)
+
+    def log_error(self, message):
+        print '[ERROR] {}'.format(message)
 
     def migrate(self):
         self._process_main_forms()
@@ -76,25 +82,42 @@ class CouchSqlDomainMigrator(object):
             form_received = wrapped_form.received_on
             assert last_received_on <= form_received
             last_received_on = form_received
-            self._migrate_form_and_associated_models(wrapped_form)
+            try:
+                self._migrate_form_and_associated_models(wrapped_form)
+            except:
+                self.log_error("Unable to migrate form: {}".format(change.id))
+                raise
 
     def _migrate_form_and_associated_models(self, couch_form):
-        from corehq.apps.tzmigration.timezonemigration import json_diff
-
         sql_form = _migrate_form(self.domain, couch_form)
         _migrate_form_attachments(sql_form, couch_form)
         _migrate_form_operations(sql_form, couch_form)
 
-        diffs = json_diff(couch_form.to_json(), sql_form.to_json(), track_list_indices=False)
-        self.diff_db.add_diffs(
-            couch_form.doc_type, couch_form.form_id,
-            filter_form_diffs(couch_form.doc_type, diffs)
-        )
+        self._save_diffs(couch_form, sql_form)
 
         case_stock_result = None
         if sql_form.initial_processing_complete:
             case_stock_result = _get_case_and_ledger_updates(self.domain, sql_form)
+            if len(case_stock_result.case_models):
+                touch_updates = [
+                    update for update in get_case_updates(couch_form)
+                    if len(update.actions) == 1 and isinstance(update.actions[0], CaseNoopAction)
+                ]
+                if len(touch_updates):
+                    # record these for later use when filtering case diffs. See ``_filter_forms_touch_case``
+                    self.forms_that_touch_cases_without_actions.add(couch_form.form_id)
+
         _save_migrated_models(sql_form, case_stock_result)
+
+    def _save_diffs(self, couch_form, sql_form):
+        from corehq.apps.tzmigration.timezonemigration import json_diff
+        couch_form_json = couch_form.to_json()
+        sql_form_json = sql_form.to_json()
+        diffs = json_diff(couch_form_json, sql_form_json, track_list_indices=False)
+        self.diff_db.add_diffs(
+            couch_form.doc_type, couch_form.form_id,
+            filter_form_diffs(couch_form_json, sql_form_json, diffs)
+        )
 
     def _copy_unprocessed_forms(self):
         for couch_form_json in iter_docs(XFormInstance.get_db(), self.errors_with_normal_doc_type, chunksize=1000):
@@ -108,7 +131,6 @@ class CouchSqlDomainMigrator(object):
             self._migrate_unprocessed_form(couch_form_json)
 
     def _migrate_unprocessed_form(self, couch_form_json):
-        from corehq.apps.tzmigration.timezonemigration import json_diff
         self.log_debug('Processing doc: {}({})'.format(couch_form_json['doc_type'], couch_form_json['_id']))
         couch_form = _wrap_form(couch_form_json)
         sql_form = XFormInstanceSQL(
@@ -121,11 +143,7 @@ class CouchSqlDomainMigrator(object):
         _migrate_form_operations(sql_form, couch_form)
 
         if couch_form.doc_type != 'SubmissionErrorLog':
-            diffs = json_diff(couch_form.to_json(), sql_form.to_json(), track_list_indices=False)
-            self.diff_db.add_diffs(
-                couch_form.doc_type, couch_form.form_id,
-                filter_form_diffs(couch_form.doc_type, diffs)
-            )
+            self._save_diffs(couch_form, sql_form)
 
         _save_migrated_models(sql_form)
 
@@ -135,16 +153,21 @@ class CouchSqlDomainMigrator(object):
         for change in self._with_progress(doc_types, changes):
             couch_case = CommCareCase.wrap(change.get_document())
             self.log_debug('Processing doc: {}({})'.format(couch_case['doc_type'], change.id))
+            try:
+                first_action = couch_case.actions[0]
+            except IndexError:
+                first_action = CommCareCaseAction()
+
             sql_case = CommCareCaseSQL(
                 case_id=couch_case.case_id,
                 domain=self.domain,
-                type=couch_case.type,
+                type=couch_case.type or '',
                 name=couch_case.name,
-                owner_id=couch_case.owner_id,
-                opened_on=couch_case.opened_on,
-                opened_by=couch_case.opened_by,
+                owner_id=couch_case.owner_id or couch_case.user_id or '',
+                opened_on=couch_case.opened_on or first_action.date,
+                opened_by=couch_case.opened_by or first_action.user_id,
                 modified_on=couch_case.modified_on,
-                modified_by=couch_case.modified_by,
+                modified_by=couch_case.modified_by or couch_case.user_id or '',
                 server_modified_on=couch_case.server_modified_on,
                 closed=couch_case.closed,
                 closed_on=couch_case.closed_on,
@@ -158,7 +181,10 @@ class CouchSqlDomainMigrator(object):
             _migrate_case_actions(couch_case, sql_case)
             _migrate_case_indices(couch_case, sql_case)
             _migrate_case_attachments(couch_case, sql_case)
-            CaseAccessorSQL.save_case(sql_case)
+            try:
+                CaseAccessorSQL.save_case(sql_case)
+            except IntegrityError as e:
+                self.log_error("Unable to migrate case:\n{}\n{}".format(couch_case.case_id, e))
 
     def _calculate_case_diffs(self):
         cases = {}
@@ -183,7 +209,7 @@ class CouchSqlDomainMigrator(object):
             diffs = json_diff(couch_case, sql_case_json, track_list_indices=False)
             self.diff_db.add_diffs(
                 couch_case['doc_type'], sql_case.case_id,
-                filter_case_diffs(couch_case, sql_case_json, diffs)
+                filter_case_diffs(couch_case, sql_case_json, diffs, self.forms_that_touch_cases_without_actions)
             )
 
         self._diff_ledgers(case_ids)
@@ -274,15 +300,17 @@ def _copy_form_properties(domain, sql_form, couch_form):
     else:
         sql_form.state = doc_type_to_state[couch_form.doc_type]
 
-    if couch_form.is_deleted:
-        sql_form.deletion_id = couch_form.deletion_id
-        sql_form.deleted_on = couch_form.deletion_date
+    sql_form.deletion_id = couch_form.deletion_id
+    sql_form.deleted_on = couch_form.deletion_date
+
+    sql_form.deprecated_form_id = getattr(couch_form, 'deprecated_form_id', None)
 
     if couch_form.is_error:
         # doc_type != XFormInstance (includes deleted)
         sql_form.problem = getattr(couch_form, 'problem', None)
         sql_form.orig_id = getattr(couch_form, 'orig_id', None)
 
+    sql_form.edited_on = getattr(couch_form, 'edited_on', None)
     if couch_form.is_deprecated or couch_form.is_deleted:
         sql_form.edited_on = getattr(couch_form, 'deprecated_date', None)
 
