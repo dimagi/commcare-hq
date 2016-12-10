@@ -6,7 +6,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.users.util import format_username
 from dimagi.utils.logging import notify_exception
 
-from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.models import CommCareUser, WebUser, CouchUser
 
 from dimagi.utils.web import json_response
 from corehq.apps.domain.auth import get_username_and_password_from_request, determine_authtype_from_request
@@ -107,9 +107,13 @@ def is_permitted_to_restore(domain, couch_user, as_user, has_data_cleanup_privil
     try:
         _ensure_valid_domain(domain, couch_user)
         if as_user is not None and not _restoring_as_yourself(couch_user, as_user):
-            _ensure_cleanup_permission(domain, couch_user, as_user, has_data_cleanup_privilege)
-            _ensure_valid_restore_as_user(domain, couch_user, as_user)
-            _ensure_accessible_location(domain, couch_user, as_user)
+            as_user_obj = CouchUser.get_by_username(as_user)
+            if not as_user_obj:
+                raise RestorePermissionDenied(_(u'Invalid restore as user {}').format(as_user))
+
+            _ensure_cleanup_permission(domain, couch_user, as_user_obj, has_data_cleanup_privilege)
+            _ensure_valid_restore_as_user(domain, couch_user, as_user_obj)
+            _ensure_accessible_location(domain, couch_user, as_user_obj)
             _ensure_edit_data_permission(domain, couch_user)
     except RestorePermissionDenied as e:
         return False, unicode(e)
@@ -118,15 +122,8 @@ def is_permitted_to_restore(domain, couch_user, as_user, has_data_cleanup_privil
 
 
 def _restoring_as_yourself(couch_user, as_user):
-    username, domain = _parse_restore_as_user(as_user)
-    if isinstance(couch_user, CommCareUser):
-        return (
-            couch_user.raw_username == username
-            and couch_user.domain == domain
-        )
-    else:
-        # Must be dealing with web user
-        return couch_user.username == as_user
+    as_user_obj = CouchUser.get_by_username(as_user)
+    return as_user_obj and couch_user._id == as_user_obj._id
 
 
 def _ensure_valid_domain(domain, couch_user):
@@ -142,13 +139,9 @@ def _ensure_cleanup_permission(domain, couch_user, as_user, has_data_cleanup_pri
         ))
 
 
-def _ensure_valid_restore_as_user(domain, couch_user, as_user):
-    username, user_domain = _parse_restore_as_user(as_user)
-    if user_domain != domain:
-        # In this case we may be dealing with a WebUser
-        user = WebUser.get_by_username(as_user)
-        if not user or not user.is_member_of(domain):
-            raise RestorePermissionDenied(_(u"{} was not in the domain {}").format(username, domain))
+def _ensure_valid_restore_as_user(domain, couch_user, as_user_obj):
+    if not as_user_obj.is_member_of(domain):
+        raise RestorePermissionDenied(_(u"{} was not in the domain {}").format(as_user_obj.username, domain))
 
 
 def _parse_restore_as_user(as_user):
@@ -165,17 +158,11 @@ def _parse_restore_as_user(as_user):
     return username, user_domain
 
 
-def _ensure_accessible_location(domain, couch_user, as_user):
-    as_user_obj = None
-    if '@' in as_user:
-        username, user_domain = _parse_restore_as_user(as_user)
-        as_user_obj = CommCareUser.get_by_username(format_username(username, user_domain))
-    if not as_user_obj:
-        as_user_obj = WebUser.get_by_username(as_user)
-    if not as_user_obj:
-        raise RestorePermissionDenied(_(u'Invalid restore user {}').format(as_user))
-    elif not user_can_access_other_user(domain, couch_user, as_user_obj):
-        raise RestorePermissionDenied(_(u'Restore user {} not in allowed locations').format(as_user))
+def _ensure_accessible_location(domain, couch_user, as_user_obj):
+    if not user_can_access_other_user(domain, couch_user, as_user_obj):
+        raise RestorePermissionDenied(
+            _(u'Restore user {} not in allowed locations').format(as_user_obj.username)
+        )
 
 
 def _ensure_edit_data_permission(domain, couch_user):
