@@ -1,0 +1,61 @@
+From 4cdf09498c8b4ec139f647c9b20cf8d5635ce852 Mon Sep 17 00:00:00 2001
+From: Sravan Reddy <sravfeyn@gmail.com>
+Date: Tue, 6 Dec 2016 13:23:44 +0530
+Subject: [PATCH] convert int types to string
+
+---
+ corehq/apps/locations/bulk_management.py            |  6 +++---
+ corehq/apps/locations/tests/test_bulk_management.py | 15 +++++++++++++++
+ 2 files changed, 18 insertions(+), 3 deletions(-)
+
+diff --git a/corehq/apps/locations/bulk_management.py b/corehq/apps/locations/bulk_management.py
+index c050a84..37f1d6b 100644
+--- a/corehq/apps/locations/bulk_management.py
++++ b/corehq/apps/locations/bulk_management.py
+@@ -133,14 +133,14 @@ class LocationStub(object):
+                  do_delete, external_id, latitude, longitude, custom_data, uncategorized_data,
+                  index):
+         self.name = name
+-        self.site_code = site_code
++        self.site_code = str(site_code) if isinstance(site_code, int) else site_code
+         self.location_type = location_type
+         self.location_id = location_id
+-        self.parent_code = parent_code or ROOT_LOCATION_TYPE
++        self.parent_code = str(parent_code) if isinstance(parent_code, int) else parent_code or ROOT_LOCATION_TYPE
+         self.latitude = latitude or None
+         self.longitude = longitude or None
+         self.do_delete = do_delete
+-        self.external_id = external_id
++        self.external_id = str(external_id) if isinstance(external_id, int) else external_id
+         self.index = index
+         self.custom_data = custom_data or {}
+         self.uncategorized_data = uncategorized_data or {}
+diff --git a/corehq/apps/locations/tests/test_bulk_management.py b/corehq/apps/locations/tests/test_bulk_management.py
+index b779679..383a3d0 100644
+--- a/corehq/apps/locations/tests/test_bulk_management.py
++++ b/corehq/apps/locations/tests/test_bulk_management.py
+@@ -527,6 +527,21 @@ class TestBulkManagement(TestCase):
+         self.assertLocationsMatch(self.as_pairs(self.basic_tree))
+         self.assertCouchSync()
+ 
++    def test_int_datatype(self):
++        data = [
++            ('S1', 1, 'state', '', '', False, '12', '', '2345', {}, {}, 0),
++            ('S2', 2, 'state', '', '', False, '12', '', '2345', {}, {}, 0),
++        ]
++
++        result = self.bulk_update_locations(
++            FLAT_LOCATION_TYPES,
++            data
++        )
++        self.assertEqual(result.errors, [])
++        self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
++        self.assertLocationsMatch(set([('1', None), ('2', None)]))
++        self.assertCouchSync()
++
+     def test_data_format(self):
+         data = [
+             ('S1', '1', 'state', '', '', False, '12', 'not-lat', '2345', {}, {}, 0),
+-- 
+2.6.3
+
