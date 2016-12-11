@@ -18,7 +18,7 @@ from corehq.apps.app_manager.models import (
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.util import new_careplan_module
-from corehq.apps.app_manager.xform import XForm
+from corehq.apps.app_manager.xform import XForm, find_missing_instances
 from mock import patch
 
 
@@ -100,6 +100,12 @@ class FormPreparationV2Test(SimpleTestCase, TestXmlMixin):
         self.app.langs = ['fra']  # lang that's not in the form
         with self.assertRaises(XFormException):
             self.form.render_xform()
+
+    def test_instance_check(self):
+        xml = self.get_xml('missing_instances')
+        missing_instances, missing_unknown_instances = find_missing_instances(XForm(xml))
+        self.assertEqual({'ledgerdb'}, missing_instances)
+        self.assertEqual({'casebd', 'custom2'}, missing_unknown_instances)
 
 
 class SubcaseRepeatTest(SimpleTestCase, TestXmlMixin):

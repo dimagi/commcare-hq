@@ -30,6 +30,7 @@ def _build_quarter_filter(spec, report):
     return QuarterFilter(
         name=wrapped.slug,
         label=wrapped.get_display(),
+        show_all=wrapped.show_all,
     )
 
 

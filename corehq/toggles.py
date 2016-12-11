@@ -3,6 +3,7 @@ from functools import wraps
 import hashlib
 from django.http import Http404
 import math
+from corehq.util.quickcache import quickcache
 from toggle.shortcuts import toggle_enabled, set_toggle
 
 Tag = namedtuple('Tag', 'name css_class description')
@@ -170,6 +171,7 @@ def any_toggle_enabled(*toggles):
     return decorator
 
 
+@quickcache([])
 def all_toggles():
     """
     Loads all toggles
@@ -793,6 +795,7 @@ SMS_PERFORMANCE_FEEDBACK = StaticToggle(
     'Enable SMS-based performance feedback',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
+    help_link='https://docs.google.com/document/d/1YvbYLV4auuf8gVdYZ6jFZTsOLfJdxm49XhvWkska4GE/edit#',
 )
 
 LEGACY_SYNC_SUPPORT = StaticToggle(
@@ -942,6 +945,13 @@ APP_MANAGER_V2 = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+SHOW_PREVIEW_APP_SETTINGS = StaticToggle(
+    'preview_app_settings',
+    'Show preview app settings button',
+    TAG_PRODUCT_CORE,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
 DATA_MIGRATION = StaticToggle(
     'data_migration',
     'Disable submissions and restores during a data migration',
@@ -954,4 +964,12 @@ DATA_DICTIONARY = StaticToggle(
     'Domain level data dictionary of cases',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
+)
+
+NIMBUS_FORM_VALIDATION = PredictablyRandomToggle(
+    'nimbus_form_validation',
+    'Use Nimbus to validate XForms',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+    randomness=0.1
 )

@@ -738,19 +738,32 @@ class AngularLocationSelectWidget(forms.Widget):
 
 class SupplyPointSelectWidget(forms.Widget):
 
-    def __init__(self, attrs=None, domain=None, id='supply-point', multiselect=False):
+    def __init__(self, domain, attrs=None, id='supply-point', multiselect=False, query_url=None):
         super(SupplyPointSelectWidget, self).__init__(attrs)
         self.domain = domain
         self.id = id
         self.multiselect = multiselect
+        if query_url:
+            self.query_url = query_url
+        else:
+            self.query_url = reverse('corehq.apps.locations.views.child_locations_for_select2', args=[domain])
 
     def render(self, name, value, attrs=None):
+        location_ids = value.split(',') if value else []
+        from corehq.apps.locations.util import get_locations_from_ids
+        try:
+            locations = get_locations_from_ids(location_ids, self.domain)
+        except SQLLocation.DoesNotExist:
+            locations = []
+        initial_data = [{'id': loc.location_id, 'name': loc.display_name} for loc in locations]
+
         return get_template('locations/manage/partials/autocomplete_select_widget.html').render(Context({
             'id': self.id,
             'name': name,
             'value': value or '',
-            'query_url': reverse('corehq.apps.locations.views.child_locations_for_select2', args=[self.domain]),
+            'query_url': self.query_url,
             'multiselect': self.multiselect,
+            'initial_data': initial_data,
         }))
 
 
@@ -785,7 +798,8 @@ class CommtrackUserForm(forms.Form):
     )
     primary_location = forms.CharField(
         label=ugettext_noop("Primary Location"),
-        required=False
+        required=False,
+        help_text=ugettext_lazy('Primary Location must always be set to one of above locations')
     )
     program_id = forms.ChoiceField(
         label=ugettext_noop("Program"),
@@ -800,7 +814,7 @@ class CommtrackUserForm(forms.Form):
             del kwargs['domain']
         super(CommtrackUserForm, self).__init__(*args, **kwargs)
         self.fields['assigned_locations'].widget = SupplyPointSelectWidget(
-            domain=self.domain, multiselect=True, id='id_assigned_locations'
+            self.domain, multiselect=True, id='id_assigned_locations'
         )
         self.fields['primary_location'].widget = PrimaryLocationWidget(
             css_id='id_primary_location',

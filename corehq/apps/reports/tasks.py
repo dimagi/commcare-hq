@@ -32,7 +32,8 @@ from soil import DownloadBase
 from soil.util import expose_file_download, expose_cached_download
 
 from corehq.apps.domain.calculations import (
-    _all_domain_stats,
+    all_domain_stats,
+    calced_props,
     CALC_FNS,
     total_distinct_users,
 )
@@ -169,62 +170,21 @@ def rebuild_export_async(config, schema):
 @periodic_task(run_every=crontab(hour="22", minute="0", day_of_week="*"), queue='background_queue')
 def update_calculated_properties():
     results = DomainES().fields(["name", "_id", "cp_last_updated"]).scroll()
-    all_stats = _all_domain_stats()
+    all_stats = all_domain_stats()
     for r in results:
         dom = r["name"]
         try:
             last_form_submission = CALC_FNS["last_form_submission"](dom, False)
             if _skip_updating_domain_stats(r.get("cp_last_updated"), last_form_submission):
                 continue
-            calced_props = {
-                "_id": r["_id"],
-                "cp_n_web_users": int(all_stats["web_users"].get(dom, 0)),
-                "cp_n_active_cc_users": int(CALC_FNS["mobile_users"](dom)),
-                "cp_n_cc_users": int(all_stats["commcare_users"].get(dom, 0)),
-                "cp_n_active_cases": int(CALC_FNS["cases_in_last"](dom, 120)),
-                "cp_n_users_submitted_form": total_distinct_users([dom]),
-                "cp_n_inactive_cases": int(CALC_FNS["inactive_cases_in_last"](dom, 120)),
-                "cp_n_30_day_cases": int(CALC_FNS["cases_in_last"](dom, 30)),
-                "cp_n_60_day_cases": int(CALC_FNS["cases_in_last"](dom, 60)),
-                "cp_n_90_day_cases": int(CALC_FNS["cases_in_last"](dom, 90)),
-                "cp_n_cases": int(CALC_FNS["cases"](dom)),
-                "cp_n_forms": int(CALC_FNS["forms"](dom)),
-                "cp_n_forms_30_d": int(CALC_FNS["forms_in_last"](dom, 30)),
-                "cp_n_forms_60_d": int(CALC_FNS["forms_in_last"](dom, 60)),
-                "cp_n_forms_90_d": int(CALC_FNS["forms_in_last"](dom, 90)),
-                "cp_first_domain_for_user": CALC_FNS["first_domain_for_user"](dom),
-                "cp_first_form": CALC_FNS["first_form_submission"](dom, False),
-                "cp_last_form": last_form_submission,
-                "cp_is_active": CALC_FNS["active"](dom),
-                "cp_has_app": CALC_FNS["has_app"](dom),
-                "cp_last_updated": json_format_datetime(datetime.utcnow()),
-                "cp_n_in_sms": int(CALC_FNS["sms"](dom, "I")),
-                "cp_n_out_sms": int(CALC_FNS["sms"](dom, "O")),
-                "cp_n_sms_ever": int(CALC_FNS["sms_in_last"](dom)),
-                "cp_n_sms_30_d": int(CALC_FNS["sms_in_last"](dom, 30)),
-                "cp_n_sms_60_d": int(CALC_FNS["sms_in_last"](dom, 60)),
-                "cp_n_sms_90_d": int(CALC_FNS["sms_in_last"](dom, 90)),
-                "cp_sms_ever": int(CALC_FNS["sms_in_last_bool"](dom)),
-                "cp_sms_30_d": int(CALC_FNS["sms_in_last_bool"](dom, 30)),
-                "cp_n_sms_in_30_d": int(CALC_FNS["sms_in_in_last"](dom, 30)),
-                "cp_n_sms_in_60_d": int(CALC_FNS["sms_in_in_last"](dom, 60)),
-                "cp_n_sms_in_90_d": int(CALC_FNS["sms_in_in_last"](dom, 90)),
-                "cp_n_sms_out_30_d": int(CALC_FNS["sms_out_in_last"](dom, 30)),
-                "cp_n_sms_out_60_d": int(CALC_FNS["sms_out_in_last"](dom, 60)),
-                "cp_n_sms_out_90_d": int(CALC_FNS["sms_out_in_last"](dom, 90)),
-                "cp_n_j2me_30_d": int(CALC_FNS["j2me_forms_in_last"](dom, 30)),
-                "cp_n_j2me_60_d": int(CALC_FNS["j2me_forms_in_last"](dom, 60)),
-                "cp_n_j2me_90_d": int(CALC_FNS["j2me_forms_in_last"](dom, 90)),
-                "cp_j2me_90_d_bool": int(CALC_FNS["j2me_forms_in_last_bool"](dom, 90)),
-                "cp_300th_form": CALC_FNS["300th_form_submission"](dom)
-            }
-            if calced_props['cp_first_form'] is None:
-                del calced_props['cp_first_form']
-            if calced_props['cp_last_form'] is None:
-                del calced_props['cp_last_form']
-            if calced_props['cp_300th_form'] is None:
-                del calced_props['cp_300th_form']
-            send_to_elasticsearch("domains", calced_props)
+            props = calced_props(dom, r["_id"], all_stats)
+            if props['cp_first_form'] is None:
+                del props['cp_first_form']
+            if props['cp_last_form'] is None:
+                del props['cp_last_form']
+            if props['cp_300th_form'] is None:
+                del props['cp_300th_form']
+            send_to_elasticsearch("domains", props)
         except Exception, e:
             notify_exception(None, message='Domain {} failed on stats calculations with {}'.format(dom, e))
 
@@ -258,8 +218,8 @@ def apps_update_calculated_properties():
     q = {"filter": {"and": [{"missing": {"field": "copy_of"}}]}}
     results = stream_es_query(q=q, es_index='apps', size=999999, chunksize=500)
     for r in results:
-        calced_props = {"cp_is_active": is_app_active(r["_id"], r["_source"]["domain"])}
-        es.update(APP_INDEX, ES_META['apps'].type, r["_id"], body={"doc": calced_props})
+        props = {"cp_is_active": is_app_active(r["_id"], r["_source"]["domain"])}
+        es.update(APP_INDEX, ES_META['apps'].type, r["_id"], body={"doc": props})
 
 
 @task(ignore_result=True)

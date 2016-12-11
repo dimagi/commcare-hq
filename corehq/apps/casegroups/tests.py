@@ -39,7 +39,7 @@ class DBAccessorsTest(TestCase, DocTestMixin):
         super(DBAccessorsTest, cls).tearDownClass()
 
     def test_get_case_groups_in_domain(self):
-        self.assert_doc_lists_equal(
+        self.assert_doc_sets_equal(
             get_case_groups_in_domain(self.domain),
             self.case_groups,
         )

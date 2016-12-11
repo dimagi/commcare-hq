@@ -52,6 +52,7 @@ from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator, MediaSuiteGenerator
 from corehq.apps.app_manager.xpath_validator import validate_xpath
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
+from corehq.apps.users.dbaccessors.couch_users import get_display_name_for_user_id
 from corehq.util.timezones.utils import get_timezone_for_domain
 from dimagi.ext.couchdbkit import *
 from django.conf import settings
@@ -116,7 +117,7 @@ from corehq.apps.app_manager.util import (
     xpath_references_user_case,
     module_case_hierarchy_has_circular_reference)
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
-    validate_xform
+    validate_xform, check_for_missing_instances
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from .exceptions import (
     AppEditingError,
@@ -136,7 +137,7 @@ from .exceptions import (
     ScheduleError,
     CaseXPathValidationError,
     UserCaseXPathValidationError,
-)
+    XFormValidationFailed)
 from corehq.apps.reports.daterange import get_daterange_start_end_dates, get_simple_dateranges
 from jsonpath_rw import jsonpath, parse
 
@@ -667,10 +668,10 @@ class FormSource(object):
             app.lazy_put_attachment(old_contents, filename)
             del form['contents']
 
-        try:
-            source = app.lazy_fetch_attachment(filename)
-        except ResourceNotFound:
+        if not app.has_attachment(filename):
             source = ''
+        else:
+            source = app.lazy_fetch_attachment(filename)
 
         return source
 
@@ -876,7 +877,7 @@ class FormBase(DocumentSchema):
             form.strip_vellum_ns_attributes()
             try:
                 if form.xml is not None:
-                    validate_xform(etree.tostring(form.xml))
+                    validate_xform(self.get_app().domain, etree.tostring(form.xml))
             except XFormValidationError as e:
                 validation_dict = {
                     "fatal_error": e.fatal_error,
@@ -931,6 +932,8 @@ class FormBase(DocumentSchema):
                     error = {'type': 'validation error', 'validation_message': unicode(e)}
                     error.update(meta)
                     errors.append(error)
+                except XFormValidationFailed:
+                    pass  # ignore this here as it gets picked up in other places
 
         if self.post_form_workflow == WORKFLOW_FORM:
             if not self.form_links:
@@ -991,6 +994,7 @@ class FormBase(DocumentSchema):
     def render_xform(self, build_profile_id=None):
         xform = XForm(self.source)
         self.add_stuff_to_xform(xform, build_profile_id)
+        check_for_missing_instances(xform)
         return xform.render()
 
     @quickcache(['self.source', 'langs', 'include_triggers', 'include_groups', 'include_translations'])
@@ -4101,6 +4105,9 @@ class LazyBlobDoc(BlobMixin):
         self._LAZY_ATTACHMENTS_CACHE.pop(name, None)
         return super(LazyBlobDoc, self).put_attachment(content, name, *args, **kw)
 
+    def has_attachment(self, name):
+        return name in self.lazy_list_attachments()
+
     def lazy_put_attachment(self, content, name=None, content_type=None,
                             content_length=None):
         """
@@ -4993,12 +5000,8 @@ class SavedAppBuild(ApplicationBase):
         })
         comment_from = data['comment_from']
         if comment_from:
-            try:
-                comment_user = CouchUser.get(comment_from)
-            except ResourceNotFound:
-                data['comment_user_name'] = comment_from
-            else:
-                data['comment_user_name'] = comment_user.full_name
+            data['comment_user_name'] = get_display_name_for_user_id(
+                self.domain, comment_from, default=comment_from)
 
         return data
 
@@ -5319,6 +5322,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             form = form_stuff['form']
             try:
                 files[filename] = self.fetch_xform(form=form, build_profile_id=build_profile_id)
+            except XFormValidationFailed:
+                raise XFormException(_('Unable to validate the forms due to a server error. '
+                                       'Please try again later.'))
             except XFormException as e:
                 raise XFormException(_('Error in form "{}": {}').format(trans(form.name), unicode(e)))
         return files

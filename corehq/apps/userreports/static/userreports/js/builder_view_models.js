@@ -16,13 +16,15 @@ hqDefine('userreports/js/builder_view_models.js', function () {
      *  as an arguemnt, and returns the default display text for that property.
      * @param {function} getPropertyObject - a function that takes a property
      *  as an argument, and returns the full object representing that property.
+     * @param {Boolean} hasDisplayText - whether this list has a Display Text column.
      * @constructor
      */
-    var PropertyListItem = function(getDefaultDisplayText, getPropertyObject) {
+    var PropertyListItem = function(getDefaultDisplayText, getPropertyObject, hasDisplayText) {
         var self = this;
 
         this.property = ko.observable("");
         this.getPropertyObject = getPropertyObject;
+        this.hasDisplayText = hasDisplayText;
 
         // True if the property exists in the current version of the app
         this.existsInCurrentVersion = ko.observable(true);
@@ -68,7 +70,7 @@ hqDefine('userreports/js/builder_view_models.js', function () {
 
         this.displayTextIsValid = ko.pureComputed(function(){
             // Blank display text is not allowed
-            return Boolean(self.displayText());
+            return Boolean(self.displayText() || !self.hasDisplayText);
         });
         this.showDisplayTextError = ko.pureComputed(function(){
             // This should also return true if the user has tried to submit the form
@@ -106,7 +108,7 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         // True if validation messages should be shown on any and all fields
         this.showWarnings = ko.observable(false);
         this.isValid = ko.computed(function(){
-            return Boolean(self.property() && self.existsInCurrentVersion() && self.displayText());
+            return Boolean(self.property() && self.existsInCurrentVersion() && self.displayTextIsValid());
         });
     };
     /**
@@ -143,7 +145,8 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         var wrapListItem = function (item) {
             var i = new PropertyListItem(
                 self.getDefaultDisplayText.bind(self),
-                self.getPropertyObject.bind(self)
+                self.getPropertyObject.bind(self),
+                self.hasDisplayCol
             );
             i.existsInCurrentVersion(item.exists_in_current_version);
             i.property(getOrDefault(item, 'property', ""));

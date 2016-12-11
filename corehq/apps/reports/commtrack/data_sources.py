@@ -13,7 +13,7 @@ from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.reports.api import ReportDataSource
 from datetime import datetime, timedelta
 from dateutil import parser
-from casexml.apps.stock.const import SECTION_TYPE_STOCK
+from casexml.apps.stock.const import SECTION_TYPE_STOCK, COMMTRACK_REPORT_XMLNS
 from casexml.apps.stock.models import StockReport
 from casexml.apps.stock.utils import months_of_stock_remaining, stock_category
 from couchforms.models import XFormInstance
@@ -461,6 +461,7 @@ class ReportingStatusDataSource(ReportDataSource, CommtrackDataSourceMixin, Mult
             )
 
             form_xmlnses = [form['xmlns'] for form in self.all_relevant_forms.values()]
+            form_xmlnses.append(COMMTRACK_REPORT_XMLNS)
             spoint_loc_map = {
                 doc['_id']: doc['location_id']
                 for doc in iter_docs(SupplyPointCase.get_db(), sp_ids)
