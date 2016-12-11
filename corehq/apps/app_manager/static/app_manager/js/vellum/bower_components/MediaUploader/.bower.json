@@ -7,7 +7,7 @@
     "branch": "master",
     "commit": "8a75015f150c1801683988f7527081481ebbef43"
   },
-  "_source": "https://github.com/dimagi/MediaUploader.git",
+  "_source": "git://github.com/dimagi/MediaUploader.git",
   "_target": "master",
   "_originalSource": "dimagi/MediaUploader"
 }
