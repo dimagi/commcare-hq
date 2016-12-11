@@ -12,7 +12,6 @@ from corehq.apps.case_importer.util import get_case_properties_for_case_type, ge
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.util.files import file_extention_from_filename
 from django.template.context import RequestContext
 
 from django.contrib import messages
@@ -66,9 +65,8 @@ def excel_config(request, domain):
                             'Excel file.')
 
     # stash content in the default storage for subsequent views
-    case_upload = CaseUpload.create(
-        uploaded_file_handle.read(),
-        file_extension=file_extention_from_filename(uploaded_file_handle.name))
+    case_upload = CaseUpload.create(uploaded_file_handle,
+                                    filename=uploaded_file_handle.name)
 
     request.session[EXCEL_SESSION_ID] = case_upload.upload_id
     try:

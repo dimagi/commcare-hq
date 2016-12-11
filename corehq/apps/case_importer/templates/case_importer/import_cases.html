@@ -4,11 +4,23 @@
 
 {% block js-inline %}
 <script id="caseUploadsResource" type="text/plain">{% url 'case_importer_uploads' domain %}</script>
+<script id="caseUploadFileDownloadResource" type="text/plain">{% url 'case_importer_upload_file_download' domain '---' %}</script>
+<script id="caseUploadPermissionDeniedTitle" type="text/plain">{% trans 'You may not download this file yourself' %}</script>
+<script id="caseUploadPermissionDeniedContent" type="text/plain">{% trans 'Please ask an administrator or the user who uploaded the file for their help' %}</script>
 <script>
 (function () {
     var caseUploadResource = $('#caseUploadsResource').text();
+    var getCaseUploadFileDownloadResource = function (upload_id) {
+        return $('#caseUploadFileDownloadResource').text().replace('---', upload_id);
+    };
+    var caseUploadPermissionDeniedTitle = $('#caseUploadPermissionDeniedTitle').text();
+    var caseUploadPermissionDeniedContent = $('#caseUploadPermissionDeniedContent').text();
     function RecentUploads() {
-        var self = {};
+        var self = {
+            caseUploadPermissionDeniedTitle: caseUploadPermissionDeniedTitle,
+            caseUploadPermissionDeniedContent: caseUploadPermissionDeniedContent,
+            getCaseUploadFileDownloadResource: getCaseUploadFileDownloadResource,
+        };
         // this is used both for the state of the ajax request
         // and for the state of celery task
         self.states = {
@@ -102,15 +114,16 @@
         <!--ko if: state() == states.SUCCESS && !_.isEmpty(case_uploads())-->
         <table class="table table-striped">
             <tr>
-                <th class="col-md-2">{% trans "Status" %}</th>
+                <th class="col-md-1">{% trans "Status" %}</th>
                 <th class="col-md-1">{% trans "Case Type" %}</th>
                 <th class="col-md-1">{% trans "Uploaded by" %}</th>
-                <th class="col-md-6">{% trans "Details" %}</th>
-                <th class="col-md-2">{% trans "Time" %}</th>
+                <th class="col-md-5">{% trans "Details" %}</th>
+                <th class="col-md-2">{% trans "File" %}</th>
+                <th class="col-md-1">{% trans "Time" %}</th>
             </tr>
             <!--ko foreach: case_uploads-->
             <tr>
-                <td class="col-md-2">
+                <td class="col-md-1">
                     <!--ko if: task_status.state == $root.states.SUCCESS-->
                         <!--ko if: _.isEmpty(task_status.result.errors)-->
                         <span class="label label-success">{% trans "Success" %}</span>
@@ -142,10 +155,30 @@
                 <td class="col-md-1">
                     <!--ko text: user--><!--/ko-->
                 </td>
-                <td class="col-md-6" data-bind="with: task_status">
+                <td class="col-md-5" data-bind="with: task_status">
                     {% include 'case_importer/partials/ko_import_status.html' %}
                 </td>
-                <td class="col-md-2" data-bind="text: created"></td>
+                <td class="col-md-2">
+                    <!--ko if: upload_file_name-->
+                    <!--ko if: !upload_file_download_allowed-->
+                        <a style="cursor: pointer" data-bind="
+                            text: upload_file_name,
+                            popover: {
+                                title: $root.caseUploadPermissionDeniedTitle,
+                                content: $root.caseUploadPermissionDeniedContent,
+                                placement: 'top'
+                            }
+                        "></a>
+                    <!--/ko-->
+                    <!--ko if: upload_file_download_allowed-->
+                        <i class="fa fa-download"></i>
+                        <a data-bind="attr: {href: $root.getCaseUploadFileDownloadResource(upload_id)}">
+                            <span data-bind="text: upload_file_name"></span>
+                        </a>
+                    <!--/ko-->
+                    <!--/ko-->
+                </td>
+                <td class="col-md-1" data-bind="text: created"></td>
             </tr>
             <!--/ko-->
         </table>
