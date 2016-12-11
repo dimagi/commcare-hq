@@ -537,6 +537,7 @@ def bug_report(req):
         u"Feature Flags: {feature_flags}\n"
         u"Feature Previews: {feature_previews}\n"
         u"Is scale backend: {scale_backend}\n"
+        u"Project description: {project_description}\n"
         u"Message:\n\n"
         u"{message}\n"
         ).format(**report)
