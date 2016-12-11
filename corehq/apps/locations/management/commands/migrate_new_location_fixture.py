@@ -24,7 +24,7 @@ class Command(BaseCommand):
         )
         toggle = Toggle.get(HIERARCHICAL_LOCATION_FIXTURE.slug)
         for domain in domains_with_hierarchical_fixture:
-            toggle.add(domain, True, NAMESPACE_DOMAIN)
+            toggle.set(domain, True, NAMESPACE_DOMAIN)
 
 
 def find_applications_with_hierarchical_fixture(domains):
