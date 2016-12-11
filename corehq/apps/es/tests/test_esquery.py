@@ -1,3 +1,4 @@
+from copy import deepcopy
 from unittest import TestCase
 from mock import patch
 
@@ -10,6 +11,32 @@ from corehq.elastic import SIZE_LIMIT
 
 class TestESQuery(ElasticTestMixin, TestCase):
     maxDiff = 1000
+
+    def _check_user_location_query(self, query, with_ids):
+        json_output = {
+            'query': {
+                'filtered': {
+                    'filter': {
+                        'and': [
+                            {'or': (
+                                {'and': (
+                                    {'term': {'doc_type': 'CommCareUser'}},
+                                    {'terms': {'assigned_location_ids': with_ids}}
+                                )
+                                },
+                                {'and': (
+                                    {'term': {'doc_type': 'WebUser'}},
+                                    {'terms': {'domain_memberships.assigned_location_ids': with_ids}}
+                                )
+                                }
+                            )}, {'term': {'is_active': True}},
+                            {'term': {'base_doc': 'couchuser'}}
+                        ]
+                    },
+                    'query': {'match_all': {}}}},
+            'size': 1000000
+        }
+        self.checkQuery(query, json_output)
 
     def test_basic_query(self):
         json_output = {
@@ -114,6 +141,22 @@ class TestESQuery(ElasticTestMixin, TestCase):
                 .xmlns('banana')
         self.checkQuery(query, json_output)
 
+    @patch('corehq.apps.locations.models.SQLLocation.objects.get_locations_and_children_ids')
+    def test_users_at_locations_and_descendants(self, locations_patch):
+        location_ids = ['09d1a58cb849e53bb3a456a5957d998a', '09d1a58cb849e53bb3a456a5957d99ba']
+        children_ids = ['19d1a58cb849e53bb3a456a5957d998a', '19d1a58cb849e53bb3a456a5957d99ba']
+        all_ids = location_ids + children_ids
+        locations_patch.return_value = location_ids + children_ids
+        query = (users.UserES()
+                 .users_at_locations_and_descendants(location_ids))
+        self._check_user_location_query(query, all_ids)
+
+    def test_users_at_locations(self):
+        location_ids = ['09d1a58cb849e53bb3a456a5957d998a', '09d1a58cb849e53bb3a456a5957d99ba']
+        query = (users.UserES()
+                 .users_at_locations(location_ids))
+        self._check_user_location_query(query, location_ids)
+
     def test_remove_all_defaults(self):
         # Elasticsearch fails if you pass it an empty list of filters
         query = (users.UserES()
@@ -204,3 +247,59 @@ class TestESQuery(ElasticTestMixin, TestCase):
             {"timeStart": {"order": "asc"}},
         ]
         self.checkQuery(query.sort('timeStart', reset_sort=False), json_output)
+
+    def test_cleanup_before_run(self):
+        json_output = {
+            "query": {
+                "filtered": {
+                    "filter": {
+                        "and": [
+                            {"match_all": {}}
+                        ]
+                    },
+                    "query": {"match_all": {}}
+                }
+            },
+            "aggs": {
+                "by_day": {
+                    "date_histogram": {
+                        "field": "date",
+                        "interval": "day",
+                        "time_zone": "-01:00"
+                    }
+                }
+            },
+            "size": SIZE_LIMIT
+        }
+        expected_output = deepcopy(json_output)
+        expected_output['size'] = 0
+        query = HQESQuery('forms').date_histogram('by_day', 'date', 'day', '-01:00')
+        self.checkQuery(query, json_output)
+        self.checkQuery(query._clean_before_run(), expected_output)
+
+    def test_exclude_source(self):
+        json_output = {
+            "query": {
+                "filtered": {
+                    "filter": {
+                        "and": [
+                            {
+                                "term": {
+                                    "domain.exact": "test-exclude"
+                                }
+                            },
+                            {
+                                "match_all": {}
+                            }
+                        ]
+                    },
+                    "query": {
+                        "match_all": {}
+                    }
+                }
+            },
+            "_source": False,
+            "size": SIZE_LIMIT,
+        }
+        query = HQESQuery('forms').domain('test-exclude').exclude_source()
+        self.checkQuery(query, json_output)

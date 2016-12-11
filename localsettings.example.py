@@ -109,7 +109,6 @@ SERVER_ENVIRONMENT = 'changeme' #Modify this value if you are deploying multiple
 ####### Log/debug setup ########
 
 DEBUG = True
-TEMPLATE_DEBUG = DEBUG
 
 # log directories must exist and be writeable!
 DJANGO_LOG_FILE = "/tmp/commcare-hq.django.log"
@@ -232,7 +231,6 @@ ELASTICSEARCH_PORT = 9200
 
 # our production logstash aggregation
 LOGSTASH_DEVICELOG_PORT = 10777
-LOGSTASH_COUCHLOG_PORT = 10888
 LOGSTASH_AUDITCARE_PORT = 10999
 LOGSTASH_HOST = 'localhost'
 

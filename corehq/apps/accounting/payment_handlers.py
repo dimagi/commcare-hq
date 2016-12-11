@@ -124,7 +124,8 @@ class BaseStripePaymentHandler(object):
                     'error_class': e.__class__.__name__,
                     'cost_item': self.cost_item_name,
                     'error_msg': e.json_body['error']
-                }
+                },
+                show_stack_trace=True,
             )
             return generic_error
         except Exception as e:
@@ -132,7 +133,8 @@ class BaseStripePaymentHandler(object):
                 "A payment for %(cost_item)s failed due to: %(error_msg)s" % {
                     'cost_item': self.cost_item_name,
                     'error_msg': e,
-                }
+                },
+                show_stack_trace=True,
             )
             return generic_error
 
@@ -143,7 +145,8 @@ class BaseStripePaymentHandler(object):
                 "Failed to send out an email receipt for "
                 "payment related to PaymentRecord No. %s. "
                 "Everything else succeeded."
-                % payment_record.id
+                % payment_record.id,
+                show_stack_trace=True,
             )
 
         return {

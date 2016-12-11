@@ -30,6 +30,7 @@ from mock import patch, Mock
 DUMMY_APP_ODK_URL = 'http://localhost/testapp'
 DUMMY_REGISTRATION_URL = 'http://localhost/register'
 DUMMY_APP_INFO_URL = 'http://localhost/appinfo'
+DUMMY_APP_INFO_URL_B64 = base64.b64encode(DUMMY_APP_INFO_URL)
 
 
 def noop(*args, **kwargs):
@@ -219,7 +220,7 @@ class RegistrationTestCase(BaseSMSTest):
 
         self.assertLastOutgoingSMS('+999123', [
             _MESSAGES[MSG_MOBILE_WORKER_ANDROID_INVITATION].format(DUMMY_REGISTRATION_URL),
-            '[commcare app - do not delete] {}'.format(DUMMY_APP_INFO_URL),
+            '[commcare app - do not delete] {}'.format(DUMMY_APP_INFO_URL_B64),
         ])
 
         invite = self._get_sms_registration_invitation()
@@ -271,7 +272,7 @@ class RegistrationTestCase(BaseSMSTest):
 
         self.assertLastOutgoingSMS('+999123', [
             _MESSAGES[MSG_MOBILE_WORKER_ANDROID_INVITATION].format(DUMMY_REGISTRATION_URL),
-            '[commcare app - do not delete] {}'.format(DUMMY_APP_INFO_URL),
+            '[commcare app - do not delete] {}'.format(DUMMY_APP_INFO_URL_B64),
         ])
 
         invite = self._get_sms_registration_invitation()
@@ -329,7 +330,7 @@ class RegistrationTestCase(BaseSMSTest):
 
         self.assertLastOutgoingSMS('+999123', [
             'Sign up here: {}'.format(DUMMY_REGISTRATION_URL),
-            '[commcare app - do not delete] {}'.format(DUMMY_APP_INFO_URL),
+            '[commcare app - do not delete] {}'.format(DUMMY_APP_INFO_URL_B64),
         ])
 
     def test_resend_install_link(self):
@@ -349,7 +350,7 @@ class RegistrationTestCase(BaseSMSTest):
 
         self.assertLastOutgoingSMS('+999123', [
             _MESSAGES[MSG_REGISTRATION_INSTALL_COMMCARE].format(GOOGLE_PLAY_STORE_COMMCARE_URL),
-            '[commcare app - do not delete] {}'.format(DUMMY_APP_INFO_URL),
+            '[commcare app - do not delete] {}'.format(DUMMY_APP_INFO_URL_B64),
         ])
 
     def test_resend_install_link_with_custom_message(self):
@@ -370,7 +371,7 @@ class RegistrationTestCase(BaseSMSTest):
 
         self.assertLastOutgoingSMS('+999123', [
             'Click here to reinstall CommCare: {}'.format(GOOGLE_PLAY_STORE_COMMCARE_URL),
-            '[commcare app - do not delete] {}'.format(DUMMY_APP_INFO_URL),
+            '[commcare app - do not delete] {}'.format(DUMMY_APP_INFO_URL_B64),
         ])
 
 

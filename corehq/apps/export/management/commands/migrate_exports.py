@@ -11,7 +11,7 @@ from dimagi.utils.django.email import send_HTML_email
 class Command(BaseCommand):
     help = "Migrates old exports to new ones"
 
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option(
             '--dry-run',
             action='store_true',

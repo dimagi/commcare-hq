@@ -47,7 +47,7 @@ class Command(BaseCommand):
     args = 'index'
     help = 'Reindex a pillowtop index'
 
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option('--cleanup',
                     action='store_true',
                     dest='cleanup',

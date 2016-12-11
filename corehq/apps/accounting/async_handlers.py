@@ -336,8 +336,6 @@ class AccountFilterAsyncHandler(BaseSingleOptionFilterAsyncHandler):
 
         if self.action == 'dimagi_contact':
             query = query.exclude(
-                dimagi_contact=None
-            ).exclude(
                 dimagi_contact=''
             ).order_by('dimagi_contact')
             if self.search_string:

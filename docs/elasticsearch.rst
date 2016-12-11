@@ -83,7 +83,74 @@ blow away the index and start over.
 .. _elasticsearch-head: https://github.com/mobz/elasticsearch-head
 
 
-Querying Elasticsearch
-----------------------
+Querying Elasticsearch - Best Practices
+---------------------------------------
+
+Here are the most basic things to know if you want to write readable
+and reasonably performant code for accessing Elasticsearch.
+
+
+Use ESQuery when possible
+=========================
 
 Check out :doc:`/es_query`
+
+ * Prefer the cleaner ``.count()``, ``.values()``,  ``.values_list()``, etc. execution methods
+   to the more low level ``.run().hits``, ``.run().total``, etc.
+   With the latter easier to make mistakes and fall into anti-patterns and it's harder to read.
+ * Prefer adding filter methods to using ``set_query()``
+   unless you really know what you're doing and are willing to make your code more error prone
+   and difficult to read.
+
+
+Prefer "get" to "search"
+========================
+
+Don't use search to fetch a doc or doc fields by doc id; use "get" instead.
+Searching by id can be easily an order of magnitude (10x) slower. If done in a loop,
+this can effectively grind the ES cluster to a halt.
+
+**Bad:**::
+
+    POST /hqcases_2016-03-04/case/_search
+    {
+      "query": {
+        "filtered": {
+          "filter": {
+            "and": [{"terms": {"_id": [case_id]}}, {"match_all": {}}]
+          },
+          "query": {"match_all":{}}
+        }
+      },
+      "_source": ["name"],
+      "size":1000000
+    }
+
+**Good:**::
+
+    GET /hqcases_2016-03-04/case/<case_id>?_source_include=name
+
+
+Prefer scroll queries
+=====================
+
+Use a scroll query when fetching lots of records.
+
+
+Prefer filter to query
+======================
+
+Don't use ``query`` when you could use ``filter`` if you don't need rank.
+
+
+Use size(0) with aggregations
+=============================
+
+Use ``size(0)`` when you're only doing aggregations thing—otherwise you'll
+get back doc bodies as well! Sometimes that's just abstractly wasteful, but often
+it can be a serious performance hit for the operation as well as the cluster.
+
+The best way to do this is by using helpers like ESQuery's ``.count()``
+that know to do this for you—your code will look better and you won't have to remember
+to check for that every time. (If you ever find *helpers* not doing this correctly,
+then it's definitely worth fixing.)

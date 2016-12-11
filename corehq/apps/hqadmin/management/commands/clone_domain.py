@@ -31,7 +31,7 @@ class Command(BaseCommand):
     args = "<existing_domain> <new_domain>"
     help = """Clone a domain and it's data (settings, fixtures, locations, products, UCR, apps)"""
 
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option("-i", "--include", dest="include", action="append", choices=types),
         make_option("-e", "--exclude", dest="exclude", action="append", choices=types),
         make_option("--check", dest="nocommit", action="store_true", default=False),

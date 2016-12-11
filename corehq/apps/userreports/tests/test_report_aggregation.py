@@ -322,6 +322,7 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
             ]]
         )
 
+    # todo @run_with_all_ucr_backends
     def test_total_row(self):
         report_config = self._create_report(
             aggregation_columns=['indicator_col_id_first_name'],
@@ -370,6 +371,7 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
             ]]
         )
 
+    @run_with_all_ucr_backends
     def test_no_total_row(self):
         report_config = self._create_report(
             aggregation_columns=['indicator_col_id_first_name'],
@@ -417,6 +419,7 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
             ]]
         )
 
+    # todo @run_with_all_ucr_backends
     def test_total_row_first_column_value(self):
         report_config = self._create_report(
             aggregation_columns=['indicator_col_id_first_name'],
@@ -465,6 +468,7 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
             ]]
         )
 
+    # todo @run_with_all_ucr_backends
     def test_totaling_noninteger_column(self):
         report_config = self._create_report(
             aggregation_columns=['indicator_col_id_first_name'],
@@ -484,6 +488,7 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
         with self.assertRaises(UserReportsError):
             view.export_table
 
+    # todo @run_with_all_ucr_backends
     def test_total_row_with_expanded_column(self):
         report_config = self._create_report(
             aggregation_columns=['indicator_col_id_first_name'],
@@ -529,6 +534,161 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
                     [3, 1, 0, 3],
                     [6, 0, 2, 2],
                     [9, 1, 2, 5],
+                ]
+            ]]
+        )
+
+
+class TestReportMultipleAggregations(ConfigurableReportTestMixin, TestCase):
+    @classmethod
+    def _create_data(cls):
+        for row in [
+            {"state": "MA", "city": "Boston", "number": 4},
+            {"state": "MA", "city": "Boston", "number": 3},
+            {"state": "MA", "city": "Cambridge", "number": 2},
+            {"state": "TN", "city": "Nashville", "number": 1},
+        ]:
+            cls._new_case(row).save()
+
+    @classmethod
+    def _create_data_source(cls):
+        cls.data_sources = {}
+        cls.adapters = {}
+
+        for backend_id in UCR_BACKENDS:
+            config = DataSourceConfiguration(
+                backend_id=backend_id,
+                domain=cls.domain,
+                display_name=cls.domain,
+                referenced_doc_type='CommCareCase',
+                table_id="foo",
+                configured_filter={
+                    "type": "boolean_expression",
+                    "operator": "eq",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "type"
+                    },
+                    "property_value": cls.case_type,
+                },
+                configured_indicators=[
+                    {
+                        "type": "expression",
+                        "expression": {
+                            "type": "property_name",
+                            "property_name": 'state'
+                        },
+                        "column_id": 'indicator_col_id_state',
+                        "display_name": 'indicator_display_name_state',
+                        "datatype": "string"
+                    },
+                    {
+                        "type": "expression",
+                        "expression": {
+                            "type": "property_name",
+                            "property_name": 'city'
+                        },
+                        "column_id": 'indicator_col_id_city',
+                        "display_name": 'indicator_display_name_city',
+                        "datatype": "string"
+                    },
+                    {
+                        "type": "expression",
+                        "expression": {
+                            "type": "property_name",
+                            "property_name": 'number'
+                        },
+                        "column_id": 'indicator_col_id_number',
+                        "datatype": "integer"
+                    },
+                ],
+            )
+            config.validate()
+            config.save()
+            rebuild_indicators(config._id)
+            adapter = get_indicator_adapter(config)
+            adapter.refresh_table()
+            cls.data_sources[backend_id] = config
+            cls.adapters[backend_id] = adapter
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestReportMultipleAggregations, cls).setUpClass()
+        cls._create_data()
+        cls._create_data_source()
+
+    @classmethod
+    def tearDownClass(cls):
+        for key, adapter in cls.adapters.iteritems():
+            adapter.drop_table()
+        cls._delete_everything()
+        super(TestReportMultipleAggregations, cls).tearDownClass()
+
+    def _create_report(self, aggregation_columns, columns):
+        backend_id = settings.OVERRIDE_UCR_BACKEND or UCR_SQL_BACKEND
+        report_config = ReportConfiguration(
+            domain=self.domain,
+            config_id=self.data_sources[backend_id]._id,
+            title='foo',
+            aggregation_columns=aggregation_columns,
+            columns=columns,
+        )
+        report_config.save()
+        return report_config
+
+    def _create_view(self, report_config):
+        view = ConfigurableReport(request=HttpRequest())
+        view._domain = self.domain
+        view._lang = "en"
+        view._report_config_id = report_config._id
+        return view
+
+    @run_with_all_ucr_backends
+    def test_with_multiple_agg_columns(self):
+        report_config = self._create_report(
+            aggregation_columns=[
+                'indicator_col_id_state',
+                'indicator_col_id_city'
+            ],
+            columns=[
+                {
+                    "type": "field",
+                    "display": "report_column_display_state",
+                    "field": 'indicator_col_id_state',
+                    'column_id': 'report_column_col_id_state',
+                    'aggregation': 'simple'
+                },
+                {
+                    "type": "field",
+                    "display": "report_column_display_city",
+                    "field": 'indicator_col_id_city',
+                    'column_id': 'report_column_col_id_city',
+                    'aggregation': 'simple'
+                },
+                {
+                    "type": "field",
+                    "display": "report_column_display_number",
+                    "field": 'indicator_col_id_number',
+                    'column_id': 'report_column_col_id_number',
+                    'aggregation': 'sum'
+                }
+            ]
+        )
+        view = self._create_view(report_config)
+
+        self.assertEqual(
+            view.export_table,
+            [[
+                u'foo',
+                [
+                    [
+                        u'report_column_display_state',
+                        u'report_column_display_city',
+                        u'report_column_display_number'
+                    ],
+                    [u'MA', u'Boston', 7],
+                    [u'MA', u'Cambridge', 2],
+                    [u'TN', u'Nashville', 1],
                 ]
             ]]
         )

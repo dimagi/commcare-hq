@@ -22,7 +22,7 @@ from corehq.apps.app_manager.views.notifications import notify_form_changed
 from corehq.apps.app_manager.views.schedules import get_schedule_context
 
 from corehq.apps.app_manager.views.utils import back_to_main, \
-    CASE_TYPE_CONFLICT_MSG
+    CASE_TYPE_CONFLICT_MSG, get_langs
 
 from corehq import toggles, privileges, feature_previews
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -59,6 +59,7 @@ from dimagi.utils.web import json_response
 from corehq.apps.domain.decorators import (
     login_or_digest, api_domain_view
 )
+from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import (
     AdvancedForm,
@@ -76,9 +77,11 @@ from corehq.apps.app_manager.models import (
     ModuleNotFoundException,
     load_case_reserved_words,
     WORKFLOW_FORM,
+    CustomInstance,
 )
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
+from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
 from corehq.apps.tour import tours
 
 
@@ -156,6 +159,8 @@ def edit_advanced_form_actions(request, domain, app_id, module_id, form_id):
     json_loads = json.loads(request.POST.get('actions'))
     actions = AdvancedFormActions.wrap(json_loads)
     form.actions = actions
+    for action in actions.load_update_cases:
+        add_properties_to_data_dictionary(domain, action.case_type, action.case_properties.keys())
     if advanced_actions_use_usercase(form.actions) and not is_usercase_in_use(domain):
         enable_usercase(domain)
     response_json = {}
@@ -168,9 +173,11 @@ def edit_advanced_form_actions(request, domain, app_id, module_id, form_id):
 @require_can_edit_apps
 def edit_form_actions(request, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
-    form = app.get_module(module_id).get_form(form_id)
+    module = app.get_module(module_id)
+    form = module.get_form(form_id)
     old_load_from_form = form.actions.load_from_form
     form.actions = FormActions.wrap(json.loads(request.POST['actions']))
+    add_properties_to_data_dictionary(domain, module.case_type, form.actions.update_case.update.keys())
     if old_load_from_form:
         form.actions.load_from_form = old_load_from_form
 
@@ -178,8 +185,11 @@ def edit_form_actions(request, domain, app_id, module_id, form_id):
         if isinstance(condition.answer, basestring):
             condition.answer = condition.answer.strip('"\'')
     form.requires = request.POST.get('requires', form.requires)
-    if actions_use_usercase(form.actions) and not is_usercase_in_use(domain):
-        enable_usercase(domain)
+    if actions_use_usercase(form.actions):
+        if not is_usercase_in_use(domain):
+            enable_usercase(domain)
+        add_properties_to_data_dictionary(domain, USERCASE_TYPE, form.actions.usercase_update.update.keys())
+
     response_json = {}
     app.save(response_json)
     response_json['propertiesMap'] = get_all_case_properties(app)
@@ -321,6 +331,29 @@ def _edit_form_attr(request, domain, app_id, unique_form_id, attr):
             ]
         ) for link in form_links]
 
+    if should_edit('custom_instances'):
+        instances = json.loads(request.POST.get('custom_instances'))
+        try:         # validate that custom instances can be added into the XML
+            for instance in instances:
+                etree.fromstring(
+                    "<instance id='{}' src='{}' />".format(
+                        instance.get('instanceId'),
+                        instance.get('instancePath')
+                    )
+                )
+        except etree.XMLSyntaxError as error:
+            return json_response(
+                {'message': _("There was an issue with your custom instances: {}").format(error.message)},
+                status_code=400
+            )
+
+        form.custom_instances = [
+            CustomInstance(
+                instance_id=instance.get("instanceId"),
+                instance_path=instance.get("instancePath"),
+            ) for instance in instances
+        ]
+
     handle_media_edits(request, form, should_edit, resp, lang)
 
     app.save(resp)
@@ -394,6 +427,21 @@ def get_xform_source(request, domain, app_id, module_id, form_id):
     except IndexError:
         raise Http404()
     return _get_xform_source(request, app, form)
+
+
+@require_GET
+@require_can_edit_apps
+def get_form_questions(request, domain, app_id):
+    module_id = request.GET.get('module_id')
+    form_id = request.GET.get('form_id')
+    try:
+        app = get_app(domain, app_id)
+        form = app.get_module(module_id).get_form(form_id)
+        lang, langs = get_langs(request, app)
+    except (ModuleNotFoundException, IndexError):
+        raise Http404()
+    xform_questions = form.get_questions(langs, include_triggers=True)
+    return json_response(xform_questions)
 
 
 def get_form_view_context_and_template(request, domain, form, langs, messages=messages):
@@ -484,7 +532,6 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         app.save()
 
     form_has_schedule = isinstance(form, AdvancedForm) and form.get_module().has_schedule
-    module_filter_preview = feature_previews.MODULE_FILTER.enabled(request.domain)
     context = {
         'nav_form': form,
         'xform_languages': languages,
@@ -495,19 +542,21 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         'xform_validation_errored': xform_validation_errored,
         'allow_cloudcare': isinstance(form, Form),
         'allow_form_copy': isinstance(form, (Form, AdvancedForm)),
-        'allow_form_filtering': (module_filter_preview or
-            (not isinstance(form, CareplanForm) and not form_has_schedule)),
+        'allow_form_filtering': not isinstance(form, CareplanForm) and not form_has_schedule,
         'allow_form_workflow': not isinstance(form, CareplanForm),
         'uses_form_workflow': form.post_form_workflow == WORKFLOW_FORM,
         'allow_usercase': domain_has_privilege(request.domain, privileges.USER_CASE),
         'is_usercase_in_use': is_usercase_in_use(request.domain),
-        'is_module_filter_enabled': (feature_previews.MODULE_FILTER.enabled(request.domain) and
-                                     app.enable_module_filtering),
+        'is_module_filter_enabled': app.enable_module_filtering,
         'edit_name_url': reverse('edit_form_attr', args=[app.domain, app.id, form.unique_id, 'name']),
         'case_xpath_pattern_matches': CASE_XPATH_PATTERN_MATCHES,
         'case_xpath_substring_matches': CASE_XPATH_SUBSTRING_MATCHES,
         'user_case_xpath_pattern_matches': USER_CASE_XPATH_PATTERN_MATCHES,
         'user_case_xpath_substring_matches': USER_CASE_XPATH_SUBSTRING_MATCHES,
+        'custom_instances': [
+            {'instanceId': instance.instance_id, 'instancePath': instance.instance_path}
+            for instance in form.custom_instances
+        ],
     }
 
     if tours.NEW_APP.is_enabled(request.user):

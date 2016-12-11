@@ -10,9 +10,13 @@ def get_all_commcare_users_by_domain(domain):
     return imap(CommCareUser.wrap, iter_docs(CommCareUser.get_db(), ids))
 
 
-def get_all_user_ids_by_domain(domain, include_web_users=True):
+def get_all_user_ids_by_domain(domain, include_web_users=True, include_mobile_users=True):
     """Return generator of user IDs"""
-    return (row['id'] for row in _get_all_user_rows(domain, include_web_users=include_web_users))
+    return (row['id'] for row in _get_all_user_rows(
+        domain,
+        include_web_users=include_web_users,
+        include_mobile_users=include_mobile_users
+    ))
 
 
 def get_all_usernames_by_domain(domain):
@@ -20,20 +24,68 @@ def get_all_usernames_by_domain(domain):
     return (row['key'][3] for row in _get_all_user_rows(domain, include_web_users=True))
 
 
-def _get_all_user_rows(domain, include_web_users=True):
+def get_web_user_count(domain, include_inactive=True):
+    return sum([
+        row['value']
+        for row in _get_all_user_rows(
+            domain,
+            include_web_users=True,
+            include_mobile_users=False,
+            include_inactive=include_inactive,
+            count_only=True
+        ) if row
+    ])
+
+
+def get_mobile_user_count(domain, include_inactive=True):
+    return sum([
+        row['value']
+        for row in _get_all_user_rows(
+            domain,
+            include_web_users=False,
+            include_mobile_users=True,
+            include_inactive=include_inactive,
+            count_only=True
+        ) if row
+    ])
+
+
+def get_mobile_user_ids(domain, include_inactive=True):
+    return {
+        row['id']
+        for row in _get_all_user_rows(
+            domain,
+            include_web_users=False,
+            include_mobile_users=True,
+            include_inactive=include_inactive,
+            count_only=False
+        ) if row
+    }
+
+
+def _get_all_user_rows(domain, include_web_users=True, include_mobile_users=True,
+                       include_inactive=True, count_only=False):
     from corehq.apps.users.models import CommCareUser, WebUser
-    doc_types = [CommCareUser.__name__]
+    assert include_web_users or include_mobile_users
+
+    doc_types = []
+    if include_mobile_users:
+        doc_types.append(CommCareUser.__name__)
     if include_web_users:
         doc_types.append(WebUser.__name__)
 
-    for flag in ['active', 'inactive']:
+    states = ['active']
+    if include_inactive:
+        states.append('inactive')
+
+    for flag in states:
         for doc_type in doc_types:
             key = [flag, domain, doc_type]
             for row in CommCareUser.get_db().view(
                     'users/by_domain',
                     startkey=key,
                     endkey=key + [{}],
-                    reduce=False,
+                    reduce=count_only,
                     include_docs=False
             ):
                 yield row

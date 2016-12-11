@@ -1,4 +1,6 @@
 from django.conf import settings
+
+from corehq.toggles import DATA_MIGRATION
 from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.sms.models import QueuedSMS
 from corehq.apps.sms.tasks import process_sms
@@ -17,6 +19,8 @@ class SMSEnqueuingOperation(GenericEnqueuingOperation):
 
     def get_items_to_be_processed(self, utcnow):
         for sms in QueuedSMS.get_queued_sms():
+            if DATA_MIGRATION.enabled(sms.domain):
+                continue
             yield {
                 'id': sms.pk,
                 'key': json_format_datetime(sms.datetime_to_process),

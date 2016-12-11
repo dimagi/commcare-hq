@@ -35,6 +35,17 @@ def get_doc_count_by_type(db, doc_type):
         return 0
 
 
+def get_doc_count_by_domain_type(db, domain, doc_type):
+    key = [domain, doc_type]
+    result = db.view(
+        'by_domain_doc_type_date/view', startkey=key, endkey=key + [{}], reduce=True,
+        group_level=2).one()
+    if result:
+        return result['value']
+    else:
+        return 0
+
+
 def get_all_docs_with_doc_types(db, doc_types):
     """
     doc_types must be a sequence of doc_types

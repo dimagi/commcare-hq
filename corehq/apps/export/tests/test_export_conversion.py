@@ -8,7 +8,7 @@ from dimagi.utils.couch.undo import DELETED_SUFFIX
 from couchexport.models import SavedExportSchema
 from toggle.shortcuts import toggle_enabled, clear_toggle_cache, set_toggle
 
-from corehq.toggles import NEW_EXPORTS, NAMESPACE_DOMAIN
+from corehq.toggles import OLD_EXPORTS, NAMESPACE_DOMAIN
 from corehq.util.test_utils import TestFileMixin, generate_cases
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.export.models import (
@@ -65,16 +65,16 @@ class TestMigrateDomain(TestCase):
     def setUp(self):
         self.project = Domain(name=self.domain)
         self.project.save()
-        clear_toggle_cache(NEW_EXPORTS.slug, self.domain, namespace=NAMESPACE_DOMAIN)
-        set_toggle(NEW_EXPORTS.slug, self.domain, False, namespace=NAMESPACE_DOMAIN)
+        clear_toggle_cache(OLD_EXPORTS.slug, self.domain, namespace=NAMESPACE_DOMAIN)
+        set_toggle(OLD_EXPORTS.slug, self.domain, True, namespace=NAMESPACE_DOMAIN)
 
     def tearDown(self):
         self.project.delete()
 
     def test_toggle_turned_on(self, _):
-        self.assertFalse(toggle_enabled(NEW_EXPORTS.slug, self.domain, namespace=NAMESPACE_DOMAIN))
+        self.assertTrue(toggle_enabled(OLD_EXPORTS.slug, self.domain, namespace=NAMESPACE_DOMAIN))
         migrate_domain(self.domain)
-        self.assertTrue(toggle_enabled(NEW_EXPORTS.slug, self.domain, namespace=NAMESPACE_DOMAIN))
+        self.assertFalse(toggle_enabled(OLD_EXPORTS.slug, self.domain, namespace=NAMESPACE_DOMAIN))
 
 
 class TestIsFormStockExportQuestion(SimpleTestCase):
@@ -231,7 +231,7 @@ class TestForceConvertExport(TestConvertBase):
         instance, _ = self._convert_case_export('case', force=True)
         table = instance.get_table(MAIN_TABLE)
 
-        index, column = table.get_column([PathNode(name='age')], 'ExportItem', None)
+        index, column = table.get_column([PathNode(name='age')], 'ScalarItem', None)
         # When we do force the convert we should convert even when it's not in the schema
         self.assertIsNotNone(column)
         self.assertEqual(column.label, 'Age Label')
@@ -384,7 +384,7 @@ class TestConvertSavedExportSchemaToCaseExportInstance(TestConvertBase):
         table = instance.get_table(MAIN_TABLE)
         index, column = table.get_column(
             [PathNode(name='age')],
-            'ExportItem',
+            'ScalarItem',
             None,
         )
         self.assertIsNotNone(column)

@@ -1,4 +1,4 @@
-from django.conf.urls import url, patterns
+from django.conf.urls import url
 from corehq.apps.ota.views import (
     PrimeRestoreCacheView, AdvancedPrimeRestoreCacheView,
     restore, search, claim,
@@ -6,7 +6,7 @@ from corehq.apps.ota.views import (
 from corehq.apps.hqadmin.views import DomainAdminRestoreView
 
 
-urlpatterns = patterns('corehq.apps.ota.views',
+urlpatterns = [
     url(r'^restore/$', restore, name='ota_restore'),
     url(r'^admin_restore/$', DomainAdminRestoreView.as_view(), name=DomainAdminRestoreView.urlname),
     url(r'^restore/(?P<app_id>[\w-]+)/$', restore, name='app_aware_restore'),
@@ -15,4 +15,4 @@ urlpatterns = patterns('corehq.apps.ota.views',
         name=AdvancedPrimeRestoreCacheView.urlname),
     url(r'^search/$', search, name='remote_search'),
     url(r'^claim-case/$', claim, name='claim_case'),
-)
+]

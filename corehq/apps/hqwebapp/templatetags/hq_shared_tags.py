@@ -15,8 +15,10 @@ from django.core.urlresolvers import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from dimagi.utils.decorators.memoized import memoized
+from django_prbac.utils import has_privilege
 
 from dimagi.utils.make_uuid import random_hex
+from corehq import privileges
 from corehq.apps.domain.models import Domain
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
@@ -221,6 +223,18 @@ def toggle_enabled(request, toggle_or_toggle_name):
 def is_new_cloudcare(request):
     from corehq import toggles
     return _toggle_enabled(toggles, request, toggles.USE_FORMPLAYER_FRONTEND)
+
+
+@register.filter
+def can_use_restore_as(request):
+    if not hasattr(request, 'couch_user'):
+        return False
+
+    return (
+        request.couch_user.can_edit_commcare_users() and
+        has_privilege(request, privileges.DATA_CLEANUP) and
+        has_privilege(request, privileges.CLOUDCARE)
+    )
 
 
 @register.simple_tag

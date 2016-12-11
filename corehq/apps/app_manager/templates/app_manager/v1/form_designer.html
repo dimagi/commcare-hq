@@ -56,6 +56,9 @@
                 onFormSave: function (data) {
                     var app_manager = hqImport('app_manager/js/app_manager.js')
                     app_manager.updateDOM(data.update);
+                    {% if request.couch_user.days_since_created == 0 %}
+                        analytics.workflow('Saved the Form Builder within first 24 hours');
+                    {% endif %}
                 },
                 {% if vellum_debug == "dev" %}
                 onReady: function () {
@@ -68,6 +71,11 @@
                     }
                     {% if request.guided_tour %}
                     form_tour_start();
+                    {% endif %}
+                    {% if request.couch_user.days_since_created == 0 %}
+                        $("#formdesigner").vellum("get").data.core.form.on("question-create", function() {
+                            analytics.workflow('Added question in Form Builder within first 24 hours');
+                        });
                     {% endif %}
                 },
                 {% else %}

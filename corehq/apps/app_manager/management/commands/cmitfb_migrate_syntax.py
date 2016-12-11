@@ -21,7 +21,7 @@ class Command(BaseCommand):
         Pass --save to actually save changes.
     '''
 
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option('--save',
                     action='store_true',
                     dest='save',

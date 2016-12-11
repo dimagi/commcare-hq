@@ -13,7 +13,6 @@ import djcelery
 djcelery.setup_loader()
 
 DEBUG = True
-TEMPLATE_DEBUG = DEBUG
 LESS_DEBUG = DEBUG
 # Enable LESS_WATCH if you want less.js to constantly recompile.
 # Useful if you're making changes to the less files and don't want to refresh
@@ -113,9 +112,9 @@ DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 ACCOUNTING_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.accounting.log")
 ANALYTICS_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.analytics.log")
 DATADOG_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.datadog.log")
-FORMPLAYER_TIMING_FILE = "%s/%s" % (FILEPATH, "formplayer.timing.log")
-FORMPLAYER_DIFF_FILE = "%s/%s" % (FILEPATH, "formplayer.diff.log")
-EXPORT_MIGRATION_LOG_FILE = "%s/%s" % (FILEPATH, "export_migration.log")
+UCR_TIMING_FILE = "%s/%s" % (FILEPATH, "ucr.timing.log")
+UCR_DIFF_FILE = "%s/%s" % (FILEPATH, "ucr.diff.log")
+UCR_EXCEPTION_FILE = "%s/%s" % (FILEPATH, "ucr.exception.log")
 
 LOCAL_LOGGING_HANDLERS = {}
 LOCAL_LOGGING_LOGGERS = {}
@@ -127,13 +126,6 @@ ADMIN_MEDIA_PREFIX = '/static/admin/'
 
 # Make this unique, and don't share it with anybody - put into localsettings.py
 SECRET_KEY = 'you should really change this'
-
-# List of callables that know how to import templates from various sources.
-TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.Loader',
-    'django.template.loaders.app_directories.Loader',
-    'django.template.loaders.eggs.Loader',
-)
 
 # Add this to localsettings and set it to False, so that CSRF protection is enabled on localhost
 CSRF_SOFT_MODE = True
@@ -152,6 +144,7 @@ MIDDLEWARE_CLASSES = [
     'corehq.middleware.OpenRosaMiddleware',
     'corehq.util.global_request.middleware.GlobalRequestMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
+    'corehq.apps.domain.middleware.DomainMigrationMiddleware',
     'corehq.middleware.TimeoutMiddleware',
     'corehq.apps.domain.middleware.CCHQPRBACMiddleware',
     'corehq.apps.domain.middleware.DomainHistoryMiddleware',
@@ -180,28 +173,6 @@ PASSWORD_HASHERS = (
 )
 
 ROOT_URLCONF = "urls"
-
-TEMPLATE_CONTEXT_PROCESSORS = [
-    "django.contrib.auth.context_processors.auth",
-    "django.core.context_processors.debug",
-    "django.core.context_processors.i18n",
-    "django.core.context_processors.media",
-    "django.core.context_processors.request",
-    "django.contrib.messages.context_processors.messages",
-    'django.core.context_processors.static',
-    "corehq.util.context_processors.current_url_name",
-    'corehq.util.context_processors.domain',
-    # sticks the base template inside all responses
-    "corehq.util.context_processors.base_template",
-    "corehq.util.context_processors.js_api_keys",
-    'corehq.util.context_processors.websockets_override',
-    'django.core.context_processors.i18n',
-]
-
-_location = lambda x: os.path.join(FILEPATH, x)
-TEMPLATE_DIRS = (
-    _location('corehq/apps/domain/templates/login_and_password'),
-)
 
 DEFAULT_APPS = (
     'corehq.apps.userhack',  # this has to be above auth
@@ -252,14 +223,13 @@ HQ_APPS = (
     'corehq.apps.smsbillables',
     'corehq.apps.accounting',
     'corehq.apps.appstore',
-    'corehq.apps.preview_app',
     'corehq.apps.data_analytics',
     'corehq.apps.domain',
     'corehq.apps.domainsync',
+    'corehq.apps.domain_migration_flags',
     'corehq.apps.dump_reload',
     'corehq.apps.hqadmin',
     'corehq.apps.hqcase',
-    'corehq.apps.hqcouchlog',
     'corehq.apps.hqwebapp',
     'corehq.apps.hqmedia',
     'corehq.apps.locations',
@@ -275,10 +245,10 @@ HQ_APPS = (
     'corehq.sql_proxy_accessors',
     'couchforms',
     'couchexport',
-    'couchlog',
     'dimagi.utils',
     'formtranslate',
     'langcodes',
+    'corehq.apps.data_dictionary',
     'corehq.apps.analytics',
     'corehq.apps.callcenter',
     'corehq.apps.change_feed',
@@ -289,7 +259,8 @@ HQ_APPS = (
     'corehq.apps.app_manager',
     'corehq.apps.es',
     'corehq.apps.fixtures',
-    'corehq.apps.importer',
+    'corehq.apps.calendar_fixture',
+    'corehq.apps.case_importer_v1',
     'corehq.apps.reminders',
     'corehq.apps.translations',
     'corehq.apps.tour',
@@ -329,7 +300,6 @@ HQ_APPS = (
     'corehq.apps.notifications',
     'corehq.apps.cachehq',
     'corehq.apps.toggle_ui',
-    'corehq.apps.sofabed',
     'corehq.apps.hqpillow_retry',
     'corehq.couchapps',
     'corehq.preindex',
@@ -387,6 +357,7 @@ HQ_APPS = (
     'custom.care_pathways',
     'custom.common',
 
+    'custom.icds',
     'custom.icds_reports',
     'custom.pnlppgi',
 
@@ -437,7 +408,7 @@ INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
 
 # after login, django redirects to this URL
 # rather than the default 'accounts/profile'
-LOGIN_REDIRECT_URL = '/'
+LOGIN_REDIRECT_URL = 'homepage'
 
 
 REPORT_CACHE = 'default'  # or e.g. 'redis'
@@ -541,11 +512,12 @@ FIXTURE_GENERATORS = {
         "corehq.apps.products.fixtures.product_fixture_generator",
         "corehq.apps.programs.fixtures.program_fixture_generator",
         "corehq.apps.app_manager.fixtures.report_fixture_generator",
+        "corehq.apps.calendar_fixture.fixture_provider.calendar_fixture_generator",
         # custom
         "custom.bihar.reports.indicators.fixtures.generator",
         "custom.m4change.fixtures.report_fixtures.generator",
         "custom.m4change.fixtures.location_fixtures.generator",
-        "custom.enikshay.fixtures.calendar_fixture_generator",
+
     ],
     # fixtures that must be sent along with the phones cases
     'case': [
@@ -573,7 +545,12 @@ GET_URL_BASE = 'dimagi.utils.web.get_url_base'
 # celery
 BROKER_URL = 'django://'  # default django db based
 
-CELERY_ANNOTATIONS = {'*': {'on_failure': helper.celery_failure_handler}}
+CELERY_ANNOTATIONS = {
+    '*': {
+        'on_failure': helper.celery_failure_handler,
+        'trail': False,
+    }
+}
 
 CELERY_MAIN_QUEUE = 'celery'
 
@@ -614,30 +591,6 @@ HQ_ACCOUNT_ROOT = "commcarehq.org"
 
 XFORMS_PLAYER_URL = "http://localhost:4444/"  # touchform's setting
 FORMPLAYER_URL = 'http://localhost:8080'
-
-####### Couchlog config #######
-
-COUCHLOG_BLUEPRINT_HOME = "%s%s" % (
-    STATIC_URL, "hqwebapp/stylesheets/blueprint/")
-COUCHLOG_DATATABLES_LOC = "%s%s" % (
-    STATIC_URL, "hqwebapp/js/lib/datatables-1.9/js/jquery.dataTables.min.js")
-
-# These allow HQ to override what shows up in couchlog (add a domain column)
-COUCHLOG_TABLE_CONFIG = {"id_column": 0,
-                         "archived_column": 1,
-                         "date_column": 2,
-                         "message_column": 4,
-                         "actions_column": 8,
-                         "email_column": 9,
-                         "no_cols": 10}
-COUCHLOG_DISPLAY_COLS = ["id", "archived?", "date", "exception type", "message",
-                         "domain", "user", "url", "actions", "report"]
-COUCHLOG_RECORD_WRAPPER = "corehq.apps.hqcouchlog.wrapper"
-COUCHLOG_DATABASE_NAME = "commcarehq-couchlog"
-COUCHLOG_AUTH_DECORATOR = 'corehq.apps.domain.decorators.require_superuser_or_developer'
-
-# couchlog/case search
-LUCENE_ENABLED = False
 
 ####### SMS Queue Settings #######
 
@@ -786,7 +739,6 @@ PRELOGIN_APPS = (
 
 # our production logstash aggregation
 LOGSTASH_DEVICELOG_PORT = 10777
-LOGSTASH_COUCHLOG_PORT = 10888
 LOGSTASH_AUDITCARE_PORT = 10999
 LOGSTASH_HOST = 'localhost'
 
@@ -909,6 +861,12 @@ MOBILE_INTEGRATION_TEST_TOKEN = None
 
 OVERRIDE_UCR_BACKEND = None
 
+ENTERPRISE_MODE = False
+
+CUSTOM_LANDING_PAGE = False
+
+TABLEAU_URL_ROOT = "https://icds.commcarehq.org/"
+
 try:
     # try to see if there's an environmental variable set for local_settings
     custom_settings = os.environ.get('CUSTOMSETTINGS', None)
@@ -931,6 +889,42 @@ except ImportError as error:
     # fallback in case nothing else is found - used for readthedocs
     from dev_settings import *
 
+_location = lambda x: os.path.join(FILEPATH, x)
+
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [
+            _location('corehq/apps/domain/templates/login_and_password'),
+        ],
+        'OPTIONS': {
+            'context_processors': [
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+                'django.core.context_processors.request',
+                'django.template.context_processors.debug',
+                'django.template.context_processors.i18n',
+                'django.template.context_processors.media',
+                'django.template.context_processors.static',
+                'django.template.context_processors.tz',
+
+                'corehq.util.context_processors.base_template',
+                'corehq.util.context_processors.current_url_name',
+                'corehq.util.context_processors.domain',
+                'corehq.util.context_processors.enterprise_mode',
+                'corehq.util.context_processors.js_api_keys',
+                'corehq.util.context_processors.websockets_override',
+            ],
+            'debug': DEBUG,
+            'loaders': [
+                'django.template.loaders.filesystem.Loader',
+                'django.template.loaders.app_directories.Loader',
+                'django.template.loaders.eggs.Loader',
+            ],
+        },
+    },
+]
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': True,
@@ -950,12 +944,15 @@ LOGGING = {
         'datadog': {
             'format': '%(metric)s %(created)s %(value)s metric_type=%(metric_type)s %(message)s'
         },
-        'formplayer_timing': {
-            'format': '%(asctime)s, %(action)s, %(control_duration)s, %(candidate_duration)s'
+        'ucr_timing': {
+            'format': '%(asctime)s\t%(domain)s\t%(report_config_id)s\t%(filter_values)s\t%(control_duration)s\t%(candidate_duration)s'
         },
-        'formplayer_diff': {
-            'format': '%(asctime)s, %(action)s, %(request)s, %(control)s, %(candidate)s'
-        }
+        'ucr_diff': {
+            'format': '%(asctime)s\t%(domain)s\t%(report_config_id)s\t%(filter_values)s\t%(control)s\t%(diff)s'
+        },
+        'ucr_exception': {
+            'format': '%(asctime)s\t%(domain)s\t%(report_config_id)s\t%(filter_values)s\t%(candidate)s'
+        },
     },
     'filters': {
         'hqcontext': {
@@ -1014,27 +1011,27 @@ LOGGING = {
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 20  # Backup 200 MB of logs
         },
-        'formplayer_diff': {
+        'ucr_diff': {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
-            'formatter': 'formplayer_diff',
-            'filename': FORMPLAYER_DIFF_FILE,
+            'formatter': 'ucr_diff',
+            'filename': UCR_DIFF_FILE,
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 20  # Backup 200 MB of logs
         },
-        'formplayer_timing': {
+        'ucr_exception': {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
-            'formatter': 'formplayer_timing',
-            'filename': FORMPLAYER_TIMING_FILE,
+            'formatter': 'ucr_exception',
+            'filename': UCR_EXCEPTION_FILE,
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 20  # Backup 200 MB of logs
         },
-        'export_migration': {
+        'ucr_timing': {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
-            'formatter': 'simple',
-            'filename': EXPORT_MIGRATION_LOG_FILE,
+            'formatter': 'ucr_timing',
+            'filename': UCR_TIMING_FILE,
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 20  # Backup 200 MB of logs
         },
@@ -1110,19 +1107,20 @@ LOGGING = {
             'level': 'INFO',
             'propogate': False,
         },
-        'formplayer_timing': {
-            'handlers': ['formplayer_timing'],
+        'ucr_timing': {
+            'handlers': ['ucr_timing'],
             'level': 'INFO',
             'propogate': True,
         },
-        'formplayer_diff': {
-            'handlers': ['formplayer_diff'],
+        'ucr_diff': {
+            'handlers': ['ucr_diff'],
             'level': 'INFO',
             'propogate': True,
         },
-        'export_migration': {
-            'handlers': ['export_migration'],
+        'ucr_exception': {
+            'handlers': ['ucr_exception'],
             'level': 'INFO',
+            'propogate': True,
         },
         'boto3': {
             'handlers': ['console'],
@@ -1149,9 +1147,10 @@ if DEBUG:
     warnings.simplefilter('default')
     os.environ['PYTHONWARNINGS'] = 'd'  # Show DeprecationWarning
 else:
-    TEMPLATE_LOADERS = [
-        ('django.template.loaders.cached.Loader', TEMPLATE_LOADERS),
-    ]
+    TEMPLATES[0]['OPTIONS']['loaders'] = [[
+        'django.template.loaders.cached.Loader',
+        TEMPLATES[0]['OPTIONS']['loaders']
+    ]]
 
 if helper.is_testing():
     helper.assign_test_db_names(DATABASES)
@@ -1238,7 +1237,7 @@ COUCHDB_APPS = [
     'hqcase',
     'hqmedia',
     'hope',
-    'importer',
+    'case_importer_v1',
     'indicators',
     'locations',
     'mobile_auth',
@@ -1248,7 +1247,6 @@ COUCHDB_APPS = [
     'programs',
     'reminders',
     'reports',
-    'sofabed',
     'sms',
     'smsforms',
     'telerivet',
@@ -1276,7 +1274,6 @@ COUCHDB_APPS = [
     'ilsgateway',
     'ewsghana',
     ('auditcare', 'auditcare'),
-    ('couchlog', 'couchlog'),
     ('performance_sms', 'meta'),
     ('repeaters', 'receiverwrapper'),
     ('userreports', 'meta'),
@@ -1395,6 +1392,7 @@ SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.apposit.models.SQLAppositBackend',
     'corehq.messaging.smsbackends.grapevine.models.SQLGrapevineBackend',
     'corehq.messaging.smsbackends.http.models.SQLHttpBackend',
+    'corehq.messaging.smsbackends.icds.models.SQLICDSBackend',
     'corehq.messaging.smsbackends.mach.models.SQLMachBackend',
     'corehq.messaging.smsbackends.megamobile.models.SQLMegamobileBackend',
     'corehq.messaging.smsbackends.push.models.PushBackend',
@@ -1686,7 +1684,13 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'sputum_conversion.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_hiv.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'lab_monthly_summary.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_lab_register.json')
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_lab_register.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'new_patient_summary.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'mdr_suspects.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'patient_overview_mobile.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'patients_due_to_follow_up.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'treatment_outcome_mobile.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'case_finding_mobile.json')
 ]
 
 
@@ -1861,23 +1865,6 @@ DOMAIN_MODULE_MAP = {
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True
-
-# arbitrarily split up tests into two chunks
-# that have approximately equal run times,
-# the group shown here, plus a second group consisting of everything else
-TRAVIS_TEST_GROUPS = (
-    (
-        'accounting', 'api', 'app_manager', 'appstore',
-        'auditcare', 'bihar', 'builds', 'cachehq', 'callcenter',
-        'case', 'casegroups', 'cleanup', 'cloudcare', 'commtrack', 'consumption',
-        'couchapps', 'couchlog', 'crud', 'django_digest',
-        'domain', 'domainsync', 'export',
-        'facilities', 'fixtures', 'fluff_filter', 'formplayer',
-        'formtranslate', 'fri', 'grapevine', 'groups', 'gsid', 'hope',
-        'hqadmin', 'hqcase', 'hqcouchlog', 'hqmedia',
-        'care_pathways', 'common', 'compressor', 'smsbillables', 'ilsgateway'
-    ),
-)
 
 #### Django Compressor Stuff after localsettings overrides ####
 

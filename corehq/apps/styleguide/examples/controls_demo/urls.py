@@ -1,11 +1,11 @@
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 from corehq.apps.styleguide.examples.controls_demo.views import *
 from corehq.apps.styleguide.views.docs import (
     SelectControlFormExampleView,
     SelectControlViewExampleView,
 )
 
-urlpatterns = patterns('corehq.apps.styleguide.examples.simple_crispy_form.views',
+urlpatterns = [
     url(r'^$', DefaultControlsDemoFormsView.as_view(),
         name=DefaultControlsDemoFormsView.urlname),
     url(r'^select_example/$', SelectControlDemoView.as_view(),
@@ -16,4 +16,4 @@ urlpatterns = patterns('corehq.apps.styleguide.examples.simple_crispy_form.views
         name=SelectControlFormExampleView.urlname),
     url(r'^views/$', SelectControlViewExampleView.as_view(),
         name=SelectControlViewExampleView.urlname),
-)
+]

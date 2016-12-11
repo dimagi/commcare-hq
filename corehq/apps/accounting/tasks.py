@@ -339,7 +339,7 @@ def send_subscription_reminder_emails_dimagi_contact(num_days):
                             .filter(is_active=True)
                             .filter(date_end=date_in_n_days)
                             .filter(do_not_email_reminder=False)
-                            .filter(account__dimagi_contact__isnull=False))
+                            .exclude(account__dimagi_contact=''))
     for subscription in ending_subscriptions:
         # only send reminder emails if the subscription isn't renewed
         if not subscription.is_renewed:
@@ -468,8 +468,10 @@ def weekly_digest():
             date_end__gte=today,
             is_active=True,
             is_trial=False,
-            account__dimagi_contact__isnull=True,
-        ))
+        ).exclude(
+            account__dimagi_contact='',
+        )
+    )
 
     if not ending_in_forty_days:
         log_accounting_info(
@@ -560,24 +562,25 @@ def pay_autopay_invoices():
 
 @periodic_task(run_every=crontab(minute=0, hour=0), queue='background_queue', acks_late=True)
 def update_exchange_rates(app_id=settings.OPEN_EXCHANGE_RATES_API_ID):
-    try:
-        log_accounting_info("Updating exchange rates...")
-        rates = json.load(urllib2.urlopen(
-            'https://openexchangerates.org/api/latest.json?app_id=%s' % app_id))['rates']
-        default_rate = float(rates[Currency.get_default().code])
-        for code, rate in rates.items():
-            currency, _ = Currency.objects.get_or_create(code=code)
-            currency.rate_to_default = float(rate) / default_rate
-            currency.save()
-            log_accounting_info("Exchange rate for %(code)s updated %(rate)f." % {
-                'code': currency.code,
-                'rate': currency.rate_to_default,
-            })
-    except Exception as e:
-        log_accounting_error(
-            "Error updating exchange rates: %s" % e.message,
-            show_stack_trace=True,
-        )
+    if app_id:
+        try:
+            log_accounting_info("Updating exchange rates...")
+            rates = json.load(urllib2.urlopen(
+                'https://openexchangerates.org/api/latest.json?app_id=%s' % app_id))['rates']
+            default_rate = float(rates[Currency.get_default().code])
+            for code, rate in rates.items():
+                currency, _ = Currency.objects.get_or_create(code=code)
+                currency.rate_to_default = float(rate) / default_rate
+                currency.save()
+                log_accounting_info("Exchange rate for %(code)s updated %(rate)f." % {
+                    'code': currency.code,
+                    'rate': currency.rate_to_default,
+                })
+        except Exception as e:
+            log_accounting_error(
+                "Error updating exchange rates: %s" % e.message,
+                show_stack_trace=True,
+            )
 
 
 def ensure_explicit_community_subscription(domain_name, from_date):

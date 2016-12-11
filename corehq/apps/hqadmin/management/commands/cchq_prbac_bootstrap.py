@@ -32,7 +32,7 @@ def cchq_prbac_bootstrap(apps, schema_editor):
 class Command(BaseCommand):
     help = 'Populate a fresh database with some sample roles and grants'
 
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option('--dry-run', action='store_true',  default=False,
                     help='Do not actually modify the database, just verbosely log what happen'),
         make_option('--verbose', action='store_true',  default=False,

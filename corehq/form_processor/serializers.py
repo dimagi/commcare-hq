@@ -78,6 +78,9 @@ class JsonFieldSerializerMixin(object):
 
 class XFormInstanceSQLRawDocSerializer(JsonFieldSerializerMixin, DeletableModelSerializer):
     state = XFormStateField()
+    history = XFormOperationSQLSerializer(many=True, read_only=True)
+    form = serializers.JSONField(source='form_data')
+    external_blobs = serializers.JSONField(source='serialized_attachments')
 
     class Meta:
         model = XFormInstanceSQL
@@ -139,7 +142,7 @@ class CommCareCaseSQLSerializer(DeletableModelSerializer):
 
     class Meta:
         model = CommCareCaseSQL
-        exclude = ('case_json',)
+        exclude = ('id', 'case_json',)
 
 
 class CommCareCaseSQLAPISerializer(serializers.ModelSerializer):

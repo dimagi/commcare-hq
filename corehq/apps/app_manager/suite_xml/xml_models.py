@@ -272,6 +272,12 @@ class Instance(IdNode, OrderedXmlObject):
 
     src = StringField('@src')
 
+    def __eq__(self, other):
+        return self.src == other.src and self.id == other.id
+
+    def __hash__(self):
+        return hash((self.src, self.id))
+
 
 class SessionDatum(IdNode, OrderedXmlObject):
     ROOT_NAME = 'datum'
@@ -442,6 +448,7 @@ class RemoteRequestQuery(OrderedXmlObject, XmlObject):
 
     url = StringField('@url')
     storage_instance = StringField('@storage-instance')
+    template = StringField('@template')
     data = NodeListField('data', QueryData)
     prompts = NodeListField('prompt', QueryPrompt)
 

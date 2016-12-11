@@ -1,11 +1,10 @@
 from corehq.apps.reports.datatables import DataTablesHeader
-from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.graph_models import PieChart, MultiBarChart, Axis
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.style.decorators import use_nvd3
 from corehq.apps.userreports.models import StaticReportConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
-from custom.enikshay.reports.filters import EnikshayLocationFilter
+from custom.enikshay.reports.filters import EnikshayLocationFilter, QuarterFilter
 from custom.enikshay.reports.generic import EnikshayReport
 from custom.enikshay.reports.sqldata.case_finding_sql_data import CaseFindingSqlData
 from custom.enikshay.reports.sqldata.charts_sql_data import ChartsSqlData
@@ -22,7 +21,7 @@ class WebDashboardReport(EnikshayReport):
     slug = 'web_dashboard'
     use_datatables = False
     report_template_path = 'enikshay/web_dashboard.html'
-    fields = (DatespanFilter, EnikshayLocationFilter)
+    fields = (QuarterFilter, EnikshayLocationFilter)
 
     @use_nvd3
     def decorator_dispatcher(self, request, *args, **kwargs):
@@ -64,10 +63,7 @@ class WebDashboardReport(EnikshayReport):
             StaticReportConfiguration.by_id('static-%s-sputum_conversion' % self.domain), include_prefilters=True
         )
 
-        filter_values = {}
-
-        if self.datespan:
-            filter_values['date'] = self.datespan
+        filter_values = {'date': QuarterFilter.get_value(self.request, self.domain)}
 
         locations_id = [
             Choice(value=location_id, display='') for location_id in self.report_config.locations_id
@@ -102,7 +98,7 @@ class WebDashboardReport(EnikshayReport):
         chart2.showLegend = False
 
         positive_smear = case_finding_sql_data.get('new_positive_tb_pulmonary', default_value)['sort_key']
-        negative_smear = case_finding_sql_data.get('new_positive_tb_pulmonary', default_value)['sort_key']
+        negative_smear = case_finding_sql_data.get('new_negative_tb_pulmonary', default_value)['sort_key']
         positive_extra_pulmonary = case_finding_sql_data.get(
             'new_positive_tb_extrapulmonary', default_value
         )['sort_key']

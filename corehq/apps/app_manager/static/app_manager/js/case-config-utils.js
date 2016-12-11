@@ -1,3 +1,4 @@
+/* globals alert_user */
 hqDefine('app_manager/js/case-config-utils.js', function () {
     return {
         getQuestions: function (questions, filter, excludeHidden, includeRepeat, excludeTrigger) {
@@ -42,6 +43,23 @@ hqDefine('app_manager/js/case-config-utils.js', function () {
                 }
             }
             return options;
+        },
+        refreshQuestions: function(questions_observable, url, moduleId, formId, event){
+            var $el = $(event.currentTarget);
+            $el.find('i').addClass('fa-spin');
+            $.get(
+                url,
+                {module_id: moduleId, form_id: formId}
+            ).success(function(data){
+                $el.addClass('btn-success').removeClass('btn-danger');
+                questions_observable(data);
+                $el.find('i').removeClass('fa-spin');
+            }).error(function(e){
+                $el.removeClass('btn-success').addClass('btn-danger');
+                $el.find('i').removeClass('fa-spin');
+                alert_user("Something went wrong refreshing your form properties. "
+                           + "Please refresh the page and try again", "danger");
+            });
         },
         filteredSuggestedProperties: function (suggestedProperties, properties) {
             var used_properties = _.map(properties, function (x) {

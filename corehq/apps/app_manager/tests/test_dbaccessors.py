@@ -169,9 +169,9 @@ class TestAppGetters(TestCase):
         app = Application.wrap(app_doc)  # app is v1
 
         app.save()  # app is v2
-        v2_build = app.make_build()
-        v2_build.is_released = True
-        v2_build.save()  # There is a starred build at v2
+        cls.v2_build = app.make_build()
+        cls.v2_build.is_released = True
+        cls.v2_build.save()  # There is a starred build at v2
 
         app.save()  # app is v3
         app.make_build().save()  # There is a build at v3
@@ -189,6 +189,10 @@ class TestAppGetters(TestCase):
 
     def test_get_current_app(self):
         app_doc = get_current_app(self.domain, self.app_id)
+        self.assertEqual(app_doc['version'], 4)
+
+    def test_latest_saved_from_build(self):
+        app_doc = get_app(self.domain, self.v2_build._id, latest=True, target='save')
         self.assertEqual(app_doc['version'], 4)
 
     def test_get_app_latest_released_build(self):

@@ -1,9 +1,9 @@
-import functools
 import inspect
 import json
 import uuid
 from StringIO import StringIO
 from collections import Counter
+from datetime import datetime
 
 from django.contrib.admin.utils import NestedObjects
 from django.core import serializers
@@ -15,33 +15,17 @@ from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from corehq.apps.commtrack.helpers import make_product
 from corehq.apps.commtrack.tests.util import get_single_balance_block
 from corehq.apps.domain.models import Domain
-from corehq.apps.dump_reload.sql import dump_sql_data
-from corehq.apps.dump_reload.sql import load_sql_data
-from corehq.apps.dump_reload.sql.dump import get_model_domain_filters, get_objects_to_dump
+from corehq.apps.domain_migration_flags.models import DomainMigrationProgress
+from corehq.apps.dump_reload.sql import SqlDataLoader, SqlDataDumper
+from corehq.apps.dump_reload.sql.dump import get_objects_to_dump, get_querysets_to_dump
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.products.models import SQLProduct
-from corehq.apps.tzmigration.models import TimezoneMigrationProgress
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.form_processor.models import (
     XFormInstanceSQL, XFormAttachmentSQL, CommCareCaseSQL, CommCareCaseIndexSQL, CaseTransaction,
     LedgerValue, LedgerTransaction)
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, create_form_for_test
-
-
-def register_cleanup(test, models, domain):
-    test.addCleanup(functools.partial(delete_sql_data, test, models, domain))
-
-
-@override_settings(ALLOW_FORM_PROCESSING_QUERIES=True)
-def delete_sql_data(test, models, domain):
-    for model in models:
-        filters = get_model_domain_filters(model, domain)
-        for filter in filters:
-            collector = NestedObjects(using='default')
-            collector.collect(model.objects.filter(filter))
-            collector.delete()
-            test.assertFalse(model.objects.filter(filter).exists(), model)
 
 
 class BaseDumpLoadTest(TestCase):
@@ -53,25 +37,38 @@ class BaseDumpLoadTest(TestCase):
         cls.domain.save()
 
         cls.default_objects_counts = Counter({
-            TimezoneMigrationProgress: 1
+            DomainMigrationProgress: 1
         })
 
     @classmethod
     def tearDownClass(cls):
-        TimezoneMigrationProgress.objects.filter(domain=cls.domain_name).delete()
         cls.domain.delete()
         super(BaseDumpLoadTest, cls).tearDownClass()
+
+    @override_settings(ALLOW_FORM_PROCESSING_QUERIES=True)
+    def delete_sql_data(self):
+        for model_class, queryset in get_querysets_to_dump(self.domain_name, []):
+            collector = NestedObjects(using=queryset.db)
+            collector.collect(queryset)
+            collector.delete()
+
+        self.assertEqual([], list(get_objects_to_dump(self.domain_name, [])))
+
+    def tearDown(self):
+        self.delete_sql_data()
+        super(BaseDumpLoadTest, self).tearDown()
 
     @override_settings(ALLOW_FORM_PROCESSING_QUERIES=True)
     def _dump_and_load(self, expected_object_counts):
         expected_object_counts.update(self.default_objects_counts)
 
         models = list(expected_object_counts)
+        self._check_signals_handle_raw(models)
 
         output_stream = StringIO()
-        dump_sql_data(self.domain_name, [], output_stream)
+        SqlDataDumper(self.domain_name, []).dump(output_stream)
 
-        delete_sql_data(self, models, self.domain_name)
+        self.delete_sql_data()
 
         # make sure that there's no data left in the DB
         objects_remaining = list(get_objects_to_dump(self.domain_name, []))
@@ -81,13 +78,15 @@ class BaseDumpLoadTest(TestCase):
 
         dump_output = output_stream.getvalue()
         dump_lines = [line.strip() for line in dump_output.split('\n') if line.strip()]
-        total_object_count, loaded_object_count = load_sql_data(dump_lines)
+        total_object_count, loaded_model_counts = SqlDataLoader().load_objects(dump_lines)
 
         expected_model_counts = _normalize_object_counter(expected_object_counts)
         actual_model_counts = Counter([json.loads(line)['model'] for line in dump_lines])
         expected_total_objects = sum(expected_object_counts.values())
-        self.assertDictEqual(expected_model_counts, actual_model_counts)
-        self.assertEqual(expected_total_objects, loaded_object_count)
+        self.assertDictEqual(dict(expected_model_counts), dict(actual_model_counts))
+        expected_loaded_counts = _normalize_object_counter(expected_object_counts, for_loaded=True)
+        self.assertDictEqual(dict(expected_loaded_counts), dict(loaded_model_counts))
+        self.assertEqual(expected_total_objects, sum(loaded_model_counts.values()))
         self.assertEqual(expected_total_objects, total_object_count)
 
         return dump_lines
@@ -98,20 +97,16 @@ class BaseDumpLoadTest(TestCase):
         whitelist_receivers = [
             'django_digest.models._post_save_persist_partial_digests'
         ]
-        post_save_receivers = post_save.receivers
         for model in models:
-            target_id = id(model)
-            for receiver in post_save_receivers:
-                if receiver[0][1] == target_id:
-                    receiver_fn = receiver[1]()
-                    receiver_path = receiver_fn.__module__ + '.' + receiver_fn.__name__
-                    if receiver_path in whitelist_receivers:
-                        continue
-                    args = inspect.getargspec(receiver_fn).args
-                    message = 'Signal handler "{}" for model "{}" missing raw arg'.format(
-                        receiver_fn, model
-                    )
-                    self.assertIn('raw', args, message)
+            for receiver in post_save._live_receivers(model):
+                receiver_path = receiver.__module__ + '.' + receiver.__name__
+                if receiver_path in whitelist_receivers:
+                    continue
+                args = inspect.getargspec(receiver).args
+                message = 'Signal handler "{}" for model "{}" missing raw arg'.format(
+                    receiver, model
+                )
+                self.assertIn('raw', args, message)
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
@@ -137,7 +132,6 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
             XFormInstanceSQL: 2,
             XFormAttachmentSQL: 2
         })
-        register_cleanup(self, list(expected_object_counts), self.domain_name)
 
         pre_forms = [
             create_form_for_test(self.domain_name),
@@ -161,7 +155,6 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
             CommCareCaseIndexSQL: 1
 
         })
-        register_cleanup(self, list(expected_object_counts), self.domain_name)
 
         pre_cases = self.factory.create_or_update_case(
             CaseStructure(
@@ -194,7 +187,6 @@ class TestSQLDumpLoadShardedModels(BaseDumpLoadTest):
             LedgerTransaction: 2
 
         })
-        register_cleanup(self, list(expected_object_counts), self.domain_name)
 
         case = self.factory.create_case()
         submit_case_blocks([
@@ -236,7 +228,6 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         expected_object_counts = Counter({
             CaseSearchConfig: 1,
         })
-        register_cleanup(self, list(expected_object_counts), self.domain_name)
 
         pre_config, created = CaseSearchConfig.objects.get_or_create(pk=self.domain_name)
         pre_config.enabled = True
@@ -261,7 +252,6 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             AutomaticUpdateRuleCriteria: 1,
             AutomaticUpdateAction: 2,
         })
-        register_cleanup(self, list(expected_object_counts), self.domain_name)
 
         pre_rule = AutomaticUpdateRule(
             domain=self.domain_name,
@@ -306,7 +296,6 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         from django.contrib.auth.models import User
 
         expected_object_counts = Counter({User: 3})
-        register_cleanup(self, list(expected_object_counts), self.domain_name)
 
         ccuser_1 = CommCareUser.create(
             domain=self.domain_name,
@@ -322,7 +311,7 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         )
         web_user = WebUser.create(
             domain=self.domain_name,
-            username='webuser_1',
+            username='webuser_t1',
             password='secret',
             email='webuser@example.com',
         )
@@ -345,7 +334,6 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             UserErrorEntry: 2,
             ForceCloseEntry: 1
         })
-        register_cleanup(self, list(expected_object_counts), self.domain_name)
 
         user = CommCareUser.create(
             domain=self.domain_name,
@@ -371,7 +359,6 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             User: 1,
             DemoUserRestore: 1
         })
-        register_cleanup(self, list(expected_object_counts), self.domain_name)
 
         user_id = uuid.uuid4().hex
         user = CommCareUser.create(
@@ -395,7 +382,6 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
     def test_products(self):
         from corehq.apps.products.models import SQLProduct
         expected_object_counts = Counter({SQLProduct: 3})
-        register_cleanup(self, list(expected_object_counts), self.domain_name)
 
         p1 = SQLProduct.objects.create(domain=self.domain_name, product_id='test1', name='test1')
         p2 = SQLProduct.objects.create(domain=self.domain_name, product_id='test2', name='test2')
@@ -409,11 +395,133 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         self.assertTrue(p2 in all_active)
         self.assertTrue(parchived not in all_active)
 
+    def test_location_type(self):
+        from corehq.apps.locations.models import LocationType
+        from corehq.apps.locations.tests.test_location_types import make_loc_type
+        expected_object_counts = Counter({LocationType: 7})
 
-def _normalize_object_counter(counter):
+        state = make_loc_type('state', domain=self.domain_name)
+
+        district = make_loc_type('district', state, domain=self.domain_name)
+        section = make_loc_type('section', district, domain=self.domain_name)
+        block = make_loc_type('block', district, domain=self.domain_name)
+        center = make_loc_type('center', block, domain=self.domain_name)
+
+        county = make_loc_type('county', state, domain=self.domain_name)
+        city = make_loc_type('city', county, domain=self.domain_name)
+
+        self._dump_and_load(expected_object_counts)
+
+        hierarchy = LocationType.objects.full_hierarchy(self.domain_name)
+        desired_hierarchy = {
+            state.id: (
+                state,
+                {
+                    district.id: (
+                        district,
+                        {
+                            section.id: (section, {}),
+                            block.id: (block, {
+                                center.id: (center, {}),
+                            }),
+                        },
+                    ),
+                    county.id: (
+                        county,
+                        {city.id: (city, {})},
+                    ),
+                },
+            ),
+        }
+        self.assertEqual(hierarchy, desired_hierarchy)
+
+    def test_location(self):
+        from corehq.apps.locations.models import LocationType, SQLLocation
+        from corehq.apps.locations.tests.util import setup_locations_and_types
+        expected_object_counts = Counter({LocationType: 3, SQLLocation: 11})
+
+        location_type_names = ['province', 'district', 'city']
+        location_structure = [
+            ('Western Cape', [
+                ('Cape Winelands', [
+                    ('Stellenbosch', []),
+                    ('Paarl', []),
+                ]),
+                ('Cape Town', [
+                    ('Cape Town City', []),
+                ])
+            ]),
+            ('Gauteng', [
+                ('Ekurhuleni ', [
+                    ('Alberton', []),
+                    ('Benoni', []),
+                    ('Springs', []),
+                ]),
+            ]),
+        ]
+
+        location_types, locations = setup_locations_and_types(
+            self.domain_name,
+            location_type_names,
+            [],
+            location_structure,
+        )
+
+        self._dump_and_load(expected_object_counts)
+
+        names = ['Cape Winelands', 'Paarl', 'Cape Town']
+        location_ids = [locations[name].location_id for name in names]
+        result = SQLLocation.objects.get_locations_and_children(location_ids)
+        self.assertItemsEqual(
+            [loc.name for loc in result],
+            ['Cape Winelands', 'Stellenbosch', 'Paarl', 'Cape Town', 'Cape Town City']
+        )
+
+        result = SQLLocation.objects.get_locations_and_children([locations['Gauteng'].location_id])
+        self.assertItemsEqual(
+            [loc.name for loc in result],
+            ['Gauteng', 'Ekurhuleni ', 'Alberton', 'Benoni', 'Springs']
+        )
+
+    def test_sms(self):
+        from corehq.apps.sms.models import PhoneNumber, MessagingEvent, MessagingSubEvent
+        expected_object_counts = Counter({PhoneNumber: 1, MessagingEvent: 1, MessagingSubEvent: 1})
+
+        phone_number = PhoneNumber(
+            domain=self.domain_name,
+            owner_doc_type='CommCareCase',
+            owner_id='fake-owner-id1',
+            phone_number='99912341234',
+            backend_id=None,
+            ivr_backend_id=None,
+            verified=True,
+            contact_last_modified=datetime.utcnow()
+        )
+        phone_number.save()
+        event = MessagingEvent.objects.create(
+            domain=self.domain_name,
+            date=datetime.utcnow(),
+            source=MessagingEvent.SOURCE_REMINDER,
+            content_type=MessagingEvent.CONTENT_SMS,
+            status=MessagingEvent.STATUS_COMPLETED
+        )
+        MessagingSubEvent.objects.create(
+            parent=event,
+            date=datetime.utcnow(),
+            recipient_type=MessagingEvent.RECIPIENT_CASE,
+            content_type=MessagingEvent.CONTENT_SMS,
+            status=MessagingEvent.STATUS_COMPLETED
+        )
+
+        self._dump_and_load(expected_object_counts)
+
+
+def _normalize_object_counter(counter, for_loaded=False):
     """Converts a <Model Class> keyed counter to an model label keyed counter"""
     def _model_class_to_label(model_class):
-        return '{}.{}'.format(model_class._meta.app_label, model_class.__name__).lower()
+        prefix = '(sql) ' if for_loaded else ''
+        label = '{}{}.{}'.format(prefix, model_class._meta.app_label, model_class.__name__)
+        return label if for_loaded else label.lower()
     return Counter({
         _model_class_to_label(model_class): count
         for model_class, count in counter.items()

@@ -4,12 +4,13 @@ import os
 from xml.sax.saxutils import escape
 
 from eulxml.xmlmap.core import load_xmlobject_from_string
+from lxml import etree
 
 from corehq.apps.app_manager.const import RETURN_TO
 from corehq.apps.app_manager.id_strings import callout_header_locale
 from corehq.apps.app_manager.suite_xml.const import FIELD_TYPE_LEDGER
 from corehq.apps.app_manager.suite_xml.contributors import SectionContributor
-from corehq.apps.app_manager.suite_xml.post_process.instances import EntryInstances
+from corehq.apps.app_manager.suite_xml.post_process.instances import get_all_instances_referenced_in_xpaths
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.app_manager.suite_xml.xml_models import (
     Action,
@@ -100,6 +101,7 @@ class DetailContributor(SectionContributor):
         """
         from corehq.apps.app_manager.detail_screen import get_column_generator
         d = Detail(id=id, title=title, nodeset=nodeset)
+        self._add_custom_variables(detail, d)
         if tabs:
             tab_spans = detail.get_tab_spans()
             for tab in tabs:
@@ -165,6 +167,18 @@ class DetailContributor(SectionContributor):
             else:
                 # only yield the Detail if it has Fields
                 return d
+
+    def _add_custom_variables(self, detail, d):
+        custom_variables = detail.custom_variables
+        if custom_variables:
+            custom_variable_elements = [
+                variable for variable in
+                etree.fromstring("<variables>{}</variables>".format(custom_variables))
+            ]
+            d.variables.extend([
+                load_xmlobject_from_string(etree.tostring(e), xmlclass=DetailVariable)
+                for e in custom_variable_elements
+            ])
 
     def _get_lookup_element(self, detail, module):
         if detail.lookup_display_results:
@@ -401,7 +415,7 @@ def get_instances_for_module(app, module, additional_xpaths=None):
     for detail_id in detail_ids:
         xpaths.update(details_by_id[detail_id].get_all_xpaths())
 
-    instances, _ = EntryInstances.get_required_instances(xpaths)
+    instances, _ = get_all_instances_referenced_in_xpaths(app.domain, xpaths)
     return instances
 
 

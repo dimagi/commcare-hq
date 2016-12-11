@@ -2,9 +2,10 @@ import uuid
 from datetime import datetime, date
 from xml.etree import ElementTree
 from corehq.apps.receiverwrapper.util import submit_form_locally
+from corehq.form_processor.tests.utils import run_with_all_backends
 from casexml.apps.case.const import CASE_INDEX_CHILD
 from casexml.apps.case.mock import CaseStructure, CaseIndex
-from custom.icds_reports.ucr.tests.base_test import BaseICDSDatasourceTest, create_element_with_value
+from custom.icds_reports.ucr.tests.base_test import BaseICDSDatasourceTest, add_element
 
 XMNLS_BP_FORM = 'http://openrosa.org/formdesigner/2864010F-B1B1-4711-8C59-D5B2B81D65DB'
 XMLNS_THR_FORM = 'http://openrosa.org/formdesigner/F1B73934-8B70-4CEE-B462-3E4C81F80E4A'
@@ -102,7 +103,7 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         form.attrib['xmlns:jrm'] = 'http://openrosa.org/jr/xforms'
 
         meta = ElementTree.Element('meta')
-        meta.append(create_element_with_value('timeEnd', form_date.isoformat()))
+        add_element(meta, 'timeEnd', form_date.isoformat())
         form.append(meta)
 
         case = ElementTree.Element('case')
@@ -111,27 +112,26 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         case.attrib['xmlns'] = 'http://commcarehq.org/case/transaction/v2'
         form.append(case)
 
-        form.append(create_element_with_value('play_family_planning_vid', counsel_fp_vid))
-        form.append(create_element_with_value('conceive', counsel_immediate_conception))
+        add_element(form, 'play_family_planning_vid', counsel_fp_vid)
+        add_element(form, 'conceive', counsel_immediate_conception)
 
         bp1 = ElementTree.Element('bp1')
-        bp1.append(create_element_with_value('using_ifa', using_ifa))
+        add_element(bp1, 'using_ifa', using_ifa)
         if using_ifa == 'yes':
-            bp1.append(create_element_with_value('ifa_last_seven_days', num_ifa_consumed_last_seven_days))
-        bp1.append(create_element_with_value('anemia', anemia))
-        bp1.append(create_element_with_value('eating_extra', extra_meal))
-        bp1.append(create_element_with_value('resting', resting_during_pregnancy))
+            add_element(bp1, 'ifa_last_seven_days', num_ifa_consumed_last_seven_days)
+        add_element(bp1, 'anemia', anemia)
+        add_element(bp1, 'eating_extra', extra_meal)
+        add_element(bp1, 'resting', resting_during_pregnancy)
         form.append(bp1)
 
         bp2 = ElementTree.Element('bp2')
-        bp2.append(create_element_with_value('immediate_breastfeeding', counsel_immediate_bf))
-        bp2.append(create_element_with_value('play_birth_preparedness_vid', counsel_bp_vid))
-        bp2.append(create_element_with_value('counsel_preparation', counsel_preparation))
+        add_element(bp2, 'immediate_breastfeeding', counsel_immediate_bf)
+        add_element(bp2, 'play_birth_preparedness_vid', counsel_bp_vid)
+        add_element(bp2, 'counsel_preparation', counsel_preparation)
         form.append(bp2)
 
         fp_group = ElementTree.Element('family_planning_group')
-        fp_group.append(
-            create_element_with_value('counsel_accessible_ppfp', counsel_accessible_postpartum_fp))
+        add_element(fp_group, 'counsel_accessible_ppfp', counsel_accessible_postpartum_fp)
         form.append(fp_group)
 
         submit_form_locally(ElementTree.tostring(form), self.domain, **{})
@@ -144,7 +144,7 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         form.attrib['xmlns:jrm'] = 'http://openrosa.org/jr/xforms'
 
         meta = ElementTree.Element('meta')
-        meta.append(create_element_with_value('timeEnd', form_date.isoformat()))
+        add_element(meta, 'timeEnd', form_date.isoformat())
         form.append(meta)
 
         case = ElementTree.Element('case')
@@ -153,11 +153,11 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         case.attrib['xmlns'] = 'http://commcarehq.org/case/transaction/v2'
         form.append(case)
 
-        form.append(create_element_with_value('thr_given_mother', thr_given_mother))
+        add_element(form, 'thr_given_mother', thr_given_mother)
 
         if thr_given_mother == '1':
             mother_thr = ElementTree.Element('mother_thr')
-            mother_thr.append(create_element_with_value('days_ration_given_mother', rations_distributed))
+            add_element(mother_thr, 'days_ration_given_mother', rations_distributed)
             form.append(mother_thr)
 
         submit_form_locally(ElementTree.tostring(form), self.domain, **{})
@@ -169,7 +169,7 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         form.attrib['xmlns:jrm'] = 'http://openrosa.org/jr/xforms'
 
         meta = ElementTree.Element('meta')
-        meta.append(create_element_with_value('timeEnd', form_date.isoformat()))
+        add_element(meta, 'timeEnd', form_date.isoformat())
         form.append(meta)
 
         case = ElementTree.Element('case')
@@ -178,7 +178,7 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         case.attrib['xmlns'] = 'http://commcarehq.org/case/transaction/v2'
         form.append(case)
 
-        form.append(create_element_with_value('counsel_methods', counsel_methods))
+        add_element(form, 'counsel_methods', counsel_methods)
 
         submit_form_locally(ElementTree.tostring(form), self.domain, **{})
 
@@ -189,7 +189,7 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         form.attrib['xmlns:jrm'] = 'http://openrosa.org/jr/xforms'
 
         meta = ElementTree.Element('meta')
-        meta.append(create_element_with_value('timeEnd', form_date.isoformat()))
+        add_element(meta, 'timeEnd', form_date.isoformat())
         form.append(meta)
 
         case = ElementTree.Element('case')
@@ -198,10 +198,11 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
         case.attrib['xmlns'] = 'http://commcarehq.org/case/transaction/v2'
         form.append(case)
 
-        form.append(create_element_with_value('counsel_methods', counsel_methods))
+        add_element(form, 'counsel_methods', counsel_methods)
 
         submit_form_locally(ElementTree.tostring(form), self.domain, **{})
 
+    @run_with_all_backends
     def test_open_in_month(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -213,29 +214,16 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             closed=True,
         )
 
-        query = self._rebuild_table_get_query_object()
-        self.assertEqual(query.count(), 7)
+        cases = [
+            (0, [('open_in_month', 0)]),
+            (1, [('open_in_month', 1)]),
+            (2, [('open_in_month', 1)]),
+            (3, [('open_in_month', 1)]),
+            (4, [('open_in_month', 0)]),
+        ]
+        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-        row = query.all()[0]
-        self.assertEqual(row.month, date(2015, 12, 1))
-        self.assertEqual(row.open_in_month, 0)
-
-        row = query.all()[1]
-        self.assertEqual(row.month, date(2016, 1, 1))
-        self.assertEqual(row.open_in_month, 1)
-
-        row = query.all()[2]
-        self.assertEqual(row.month, date(2016, 2, 1))
-        self.assertEqual(row.open_in_month, 1)
-
-        row = query.all()[3]
-        self.assertEqual(row.month, date(2016, 3, 1))
-        self.assertEqual(row.open_in_month, 1)
-
-        row = query.all()[4]
-        self.assertEqual(row.month, date(2016, 4, 1))
-        self.assertEqual(row.open_in_month, 0)
-
+    @run_with_all_backends
     def test_alive_in_month(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -247,25 +235,15 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             date_death=date(2016, 1, 10),
         )
 
-        query = self._rebuild_table_get_query_object()
-        self.assertEqual(query.count(), 7)
+        cases = [
+            (0, [('alive_in_month', 1)]),
+            (1, [('alive_in_month', 1)]),
+            (2, [('alive_in_month', 0)]),
+            (3, [('alive_in_month', 0)]),
+        ]
+        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-        row = query.all()[0]
-        self.assertEqual(row.month, date(2015, 12, 1))
-        self.assertEqual(row.alive_in_month, 1)
-
-        row = query.all()[1]
-        self.assertEqual(row.month, date(2016, 1, 1))
-        self.assertEqual(row.alive_in_month, 1)
-
-        row = query.all()[2]
-        self.assertEqual(row.month, date(2016, 2, 1))
-        self.assertEqual(row.alive_in_month, 0)
-
-        row = query.all()[3]
-        self.assertEqual(row.month, date(2016, 3, 1))
-        self.assertEqual(row.alive_in_month, 0)
-
+    @run_with_all_backends
     def test_demographic_data(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -280,15 +258,17 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             date_modified=datetime(2016, 3, 12),
         )
 
-        query = self._rebuild_table_get_query_object()
-        self.assertEqual(query.count(), 7)
+        cases = [
+            (0, [
+                ('caste', 'sc'),
+                ('disabled', 'yes'),
+                ('minority', 'yes'),
+                ('resident', 'yes'),
+            ]),
+        ]
+        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-        row = query.all()[0]
-        self.assertEqual(row.caste, 'sc')
-        self.assertEqual(row.disabled, 'yes')
-        self.assertEqual(row.minority, 'yes')
-        self.assertEqual(row.resident, 'yes')
-
+    @run_with_all_backends
     def test_thr_rations(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -305,14 +285,12 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             thr_given_mother='1',
             rations_distributed=5,
         )
-
         self._submit_thr_rations_form(
             form_date=datetime(2016, 2, 6),
             case_id=case_id,
             thr_given_mother='1',
             rations_distributed=6,
         )
-
         self._submit_thr_rations_form(
             form_date=datetime(2016, 3, 10),
             case_id=case_id,
@@ -320,29 +298,15 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             rations_distributed=21,
         )
 
-        query = self._rebuild_table_get_query_object()
-        self.assertEqual(query.count(), 7)
+        cases = [
+            (1, [('num_rations_distributed', 0), ('rations_21_plus_distributed', 0)]),
+            (2, [('num_rations_distributed', 11), ('rations_21_plus_distributed', 0)]),
+            (3, [('num_rations_distributed', 21), ('rations_21_plus_distributed', 1)]),
+            (4, [('num_rations_distributed', 0), ('rations_21_plus_distributed', 0)]),
+        ]
+        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-        row = query.all()[1]
-        self.assertEqual(row.month, date(2016, 1, 1))
-        self.assertEqual(row.num_rations_distributed, 0)
-        self.assertEqual(row.rations_21_plus_distributed, 0)
-
-        row = query.all()[2]
-        self.assertEqual(row.month, date(2016, 2, 1))
-        self.assertEqual(row.num_rations_distributed, 11)
-        self.assertEqual(row.rations_21_plus_distributed, 0)
-
-        row = query.all()[3]
-        self.assertEqual(row.month, date(2016, 3, 1))
-        self.assertEqual(row.num_rations_distributed, 21)
-        self.assertEqual(row.rations_21_plus_distributed, 1)
-
-        row = query.all()[4]
-        self.assertEqual(row.month, date(2016, 4, 1))
-        self.assertEqual(row.num_rations_distributed, 0)
-        self.assertEqual(row.rations_21_plus_distributed, 0)
-
+    @run_with_all_backends
     def test_lactating_post(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -354,33 +318,15 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             date_modified=datetime(2016, 3, 12),
         )
 
-        query = self._rebuild_table_get_query_object()
-        self.assertEqual(query.count(), 7)
+        cases = [
+            (1, [('pregnant', 0), ('lactating', 1), ('ccs_status', 'lactating')]),
+            (2, [('pregnant', 0), ('lactating', 1), ('ccs_status', 'lactating')]),
+            (3, [('pregnant', 0), ('lactating', 0), ('ccs_status', 'other')]),
+            (4, [('pregnant', 0), ('lactating', 0), ('ccs_status', 'other')]),
+        ]
+        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-        row = query.all()[1]
-        self.assertEqual(row.month, date(2016, 1, 1))
-        self.assertEqual(row.pregnant, 0)
-        self.assertEqual(row.lactating, 1)
-        self.assertEqual(row.ccs_status, 'lactating')
-
-        row = query.all()[2]
-        self.assertEqual(row.month, date(2016, 2, 1))
-        self.assertEqual(row.pregnant, 0)
-        self.assertEqual(row.lactating, 1)
-        self.assertEqual(row.ccs_status, 'lactating')
-
-        row = query.all()[3]
-        self.assertEqual(row.month, date(2016, 3, 1))
-        self.assertEqual(row.pregnant, 0)
-        self.assertEqual(row.lactating, 0)
-        self.assertEqual(row.ccs_status, 'other')
-
-        row = query.all()[4]
-        self.assertEqual(row.month, date(2016, 4, 1))
-        self.assertEqual(row.pregnant, 0)
-        self.assertEqual(row.lactating, 0)
-        self.assertEqual(row.ccs_status, 'other')
-
+    @run_with_all_backends
     def test_preg_to_lactating(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -392,27 +338,14 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             date_modified=datetime(2016, 3, 12),
         )
 
-        query = self._rebuild_table_get_query_object()
-        self.assertEqual(query.count(), 7)
+        cases = [
+            (1, [('pregnant', 1), ('lactating', 0), ('ccs_status', 'pregnant')]),
+            (2, [('pregnant', 0), ('lactating', 1), ('ccs_status', 'lactating')]),
+            (3, [('pregnant', 0), ('lactating', 1), ('ccs_status', 'lactating')]),
+        ]
+        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-        row = query.all()[1]
-        self.assertEqual(row.month, date(2016, 1, 1))
-        self.assertEqual(row.pregnant, 1)
-        self.assertEqual(row.lactating, 0)
-        self.assertEqual(row.ccs_status, 'pregnant')
-
-        row = query.all()[2]
-        self.assertEqual(row.month, date(2016, 2, 1))
-        self.assertEqual(row.pregnant, 0)
-        self.assertEqual(row.lactating, 1)
-        self.assertEqual(row.ccs_status, 'lactating')
-
-        row = query.all()[3]
-        self.assertEqual(row.month, date(2016, 3, 1))
-        self.assertEqual(row.pregnant, 0)
-        self.assertEqual(row.lactating, 1)
-        self.assertEqual(row.ccs_status, 'lactating')
-
+    @run_with_all_backends
     def test_pre_preg(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -423,40 +356,15 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             date_modified=datetime(2016, 3, 12),
         )
 
-        query = self._rebuild_table_get_query_object()
-        self.assertEqual(query.count(), 7)
+        cases = [
+            (0, [('pregnant', 0), ('lactating', 0), ('ccs_status', 'other')]),
+            (1, [('pregnant', 1), ('lactating', 0), ('ccs_status', 'pregnant')]),
+            (2, [('pregnant', 1), ('lactating', 0), ('ccs_status', 'pregnant')]),
+            (3, [('pregnant', 1), ('lactating', 0), ('ccs_status', 'pregnant')]),
+        ]
+        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-        # case is not open
-        row = query.all()[0]
-        self.assertEqual(row.month, date(2015, 12, 1))
-        self.assertEqual(row.pregnant, 0)
-        self.assertEqual(row.lactating, 0)
-        self.assertEqual(row.ccs_status, 'other')
-
-        row = query.all()[1]
-        self.assertEqual(row.month, date(2016, 1, 1))
-        self.assertEqual(row.pregnant, 1)
-        self.assertEqual(row.lactating, 0)
-        self.assertEqual(row.ccs_status, 'pregnant')
-
-        row = query.all()[2]
-        self.assertEqual(row.month, date(2016, 2, 1))
-        self.assertEqual(row.pregnant, 1)
-        self.assertEqual(row.lactating, 0)
-        self.assertEqual(row.ccs_status, 'pregnant')
-
-        row = query.all()[3]
-        self.assertEqual(row.month, date(2016, 3, 1))
-        self.assertEqual(row.pregnant, 1)
-        self.assertEqual(row.lactating, 0)
-        self.assertEqual(row.ccs_status, 'pregnant')
-
-        row = query.all()[4]
-        self.assertEqual(row.month, date(2016, 4, 1))
-        self.assertEqual(row.pregnant, 1)
-        self.assertEqual(row.lactating, 0)
-        self.assertEqual(row.ccs_status, 'pregnant')
-
+    @run_with_all_backends
     def test_postnatal(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -468,25 +376,15 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             date_modified=datetime(2016, 3, 12),
         )
 
-        query = self._rebuild_table_get_query_object()
-        self.assertEqual(query.count(), 7)
+        cases = [
+            (1, [('postnatal', 0)]),
+            (2, [('postnatal', 1)]),
+            (3, [('postnatal', 1)]),
+            (4, [('postnatal', 0)]),
+        ]
+        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-        row = query.all()[1]
-        self.assertEqual(row.month, date(2016, 1, 1))
-        self.assertEqual(row.postnatal, 0)
-
-        row = query.all()[2]
-        self.assertEqual(row.month, date(2016, 2, 1))
-        self.assertEqual(row.postnatal, 1)
-
-        row = query.all()[3]
-        self.assertEqual(row.month, date(2016, 3, 1))
-        self.assertEqual(row.postnatal, 1)
-
-        row = query.all()[4]
-        self.assertEqual(row.month, date(2016, 4, 1))
-        self.assertEqual(row.postnatal, 0)
-
+    @run_with_all_backends
     def test_tt_complete_none(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -497,21 +395,14 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             date_modified=datetime(2016, 3, 12),
         )
 
-        query = self._rebuild_table_get_query_object()
-        self.assertEqual(query.count(), 7)
+        cases = [
+            (1, [('tetanus_complete', 0)]),
+            (2, [('tetanus_complete', 0)]),
+            (3, [('tetanus_complete', 0)]),
+        ]
+        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-        row = query.all()[1]
-        self.assertEqual(row.month, date(2016, 1, 1))
-        self.assertEqual(row.tetanus_complete, 0)
-
-        row = query.all()[2]
-        self.assertEqual(row.month, date(2016, 2, 1))
-        self.assertEqual(row.tetanus_complete, 0)
-
-        row = query.all()[3]
-        self.assertEqual(row.month, date(2016, 3, 1))
-        self.assertEqual(row.tetanus_complete, 0)
-
+    @run_with_all_backends
     def test_tt_complete(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -523,21 +414,14 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             tt_complete_date=date(2016, 2, 7)
         )
 
-        query = self._rebuild_table_get_query_object()
-        self.assertEqual(query.count(), 7)
+        cases = [
+            (1, [('tetanus_complete', 0)]),
+            (2, [('tetanus_complete', 1)]),
+            (3, [('tetanus_complete', 1)]),
+        ]
+        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-        row = query.all()[1]
-        self.assertEqual(row.month, date(2016, 1, 1))
-        self.assertEqual(row.tetanus_complete, 0)
-
-        row = query.all()[2]
-        self.assertEqual(row.month, date(2016, 2, 1))
-        self.assertEqual(row.tetanus_complete, 1)
-
-        row = query.all()[3]
-        self.assertEqual(row.month, date(2016, 3, 1))
-        self.assertEqual(row.tetanus_complete, 1)
-
+    @run_with_all_backends
     def test_delivered_in_month(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -549,21 +433,14 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             date_modified=datetime(2016, 3, 12),
         )
 
-        query = self._rebuild_table_get_query_object()
-        self.assertEqual(query.count(), 7)
+        cases = [
+            (1, [('delivered_in_month', 0)]),
+            (2, [('delivered_in_month', 1)]),
+            (3, [('delivered_in_month', 0)]),
+        ]
+        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-        row = query.all()[1]
-        self.assertEqual(row.month, date(2016, 1, 1))
-        self.assertEqual(row.delivered_in_month, 0)
-
-        row = query.all()[2]
-        self.assertEqual(row.month, date(2016, 2, 1))
-        self.assertEqual(row.delivered_in_month, 1)
-
-        row = query.all()[3]
-        self.assertEqual(row.month, date(2016, 3, 1))
-        self.assertEqual(row.delivered_in_month, 0)
-
+    @run_with_all_backends
     def test_trimester_1_2(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -574,34 +451,15 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             date_modified=datetime(2016, 3, 12),
         )
 
-        query = self._rebuild_table_get_query_object()
-        self.assertEqual(query.count(), 7)
+        cases = [
+            (1, [('trimester', None), ('trimester_2', 0), ('trimester_3', 0)]),
+            (2, [('trimester', 1), ('trimester_2', 0), ('trimester_3', 0)]),
+            (3, [('trimester', 2), ('trimester_2', 1), ('trimester_3', 0)]),
+            (4, [('trimester', 2), ('trimester_2', 1), ('trimester_3', 0)]),
+        ]
+        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-        # case is not open
-        row = query.all()[1]
-        self.assertEqual(row.month, date(2016, 1, 1))
-        self.assertEqual(row.trimester, None)
-        self.assertEqual(row.trimester_2, 0)
-        self.assertEqual(row.trimester_3, 0)
-
-        row = query.all()[2]
-        self.assertEqual(row.month, date(2016, 2, 1))
-        self.assertEqual(row.trimester, 1)
-        self.assertEqual(row.trimester_2, 0)
-        self.assertEqual(row.trimester_3, 0)
-
-        row = query.all()[3]
-        self.assertEqual(row.month, date(2016, 3, 1))
-        self.assertEqual(row.trimester, 2)
-        self.assertEqual(row.trimester_2, 1)
-        self.assertEqual(row.trimester_3, 0)
-
-        row = query.all()[4]
-        self.assertEqual(row.month, date(2016, 4, 1))
-        self.assertEqual(row.trimester, 2)
-        self.assertEqual(row.trimester_2, 1)
-        self.assertEqual(row.trimester_3, 0)
-
+    @run_with_all_backends
     def test_trimester_3_none(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -613,33 +471,14 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             date_modified=datetime(2016, 3, 12),
         )
 
-        query = self._rebuild_table_get_query_object()
-        self.assertEqual(query.count(), 7)
+        cases = [
+            (1, [('trimester', 3), ('trimester_2', 0), ('trimester_3', 1)]),
+            (2, [('trimester', None), ('trimester_2', 0), ('trimester_3', 0)]),
+            (3, [('trimester', None), ('trimester_2', 0), ('trimester_3', 0)]),
+        ]
+        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-        row = query.all()[0]
-        self.assertEqual(row.month, date(2015, 12, 1))
-        self.assertEqual(row.trimester, 3)
-        self.assertEqual(row.trimester_2, 0)
-        self.assertEqual(row.trimester_3, 1)
-
-        row = query.all()[1]
-        self.assertEqual(row.month, date(2016, 1, 1))
-        self.assertEqual(row.trimester, 3)
-        self.assertEqual(row.trimester_2, 0)
-        self.assertEqual(row.trimester_3, 1)
-
-        row = query.all()[2]
-        self.assertEqual(row.month, date(2016, 2, 1))
-        self.assertEqual(row.trimester, None)
-        self.assertEqual(row.trimester_2, 0)
-        self.assertEqual(row.trimester_3, 0)
-
-        row = query.all()[3]
-        self.assertEqual(row.month, date(2016, 3, 1))
-        self.assertEqual(row.trimester, None)
-        self.assertEqual(row.trimester_2, 0)
-        self.assertEqual(row.trimester_3, 0)
-
+    @run_with_all_backends
     def test_no_anc_at_delivery(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -652,30 +491,23 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             num_anc_complete=0,
         )
 
-        query = self._rebuild_table_get_query_object()
-        self.assertEqual(query.count(), 7)
+        cases = [
+            (1, [('anc1_received_at_delivery', 0),
+                 ('anc2_received_at_delivery', 0),
+                 ('anc3_received_at_delivery', 0),
+                 ('anc4_received_at_delivery', 0)]),
+            (2, [('anc1_received_at_delivery', 0),
+                 ('anc2_received_at_delivery', 0),
+                 ('anc3_received_at_delivery', 0),
+                 ('anc4_received_at_delivery', 0)]),
+            (3, [('anc1_received_at_delivery', 0),
+                 ('anc2_received_at_delivery', 0),
+                 ('anc3_received_at_delivery', 0),
+                 ('anc4_received_at_delivery', 0)]),
+        ]
+        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-        row = query.all()[1]
-        self.assertEqual(row.month, date(2016, 1, 1))
-        self.assertEqual(row.anc1_received_at_delivery, 0)
-        self.assertEqual(row.anc2_received_at_delivery, 0)
-        self.assertEqual(row.anc3_received_at_delivery, 0)
-        self.assertEqual(row.anc4_received_at_delivery, 0)
-
-        row = query.all()[2]
-        self.assertEqual(row.month, date(2016, 2, 1))
-        self.assertEqual(row.anc1_received_at_delivery, 0)
-        self.assertEqual(row.anc2_received_at_delivery, 0)
-        self.assertEqual(row.anc3_received_at_delivery, 0)
-        self.assertEqual(row.anc4_received_at_delivery, 0)
-
-        row = query.all()[3]
-        self.assertEqual(row.month, date(2016, 3, 1))
-        self.assertEqual(row.anc1_received_at_delivery, 0)
-        self.assertEqual(row.anc2_received_at_delivery, 0)
-        self.assertEqual(row.anc3_received_at_delivery, 0)
-        self.assertEqual(row.anc4_received_at_delivery, 0)
-
+    @run_with_all_backends
     def test_anc1_at_delivery(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -688,30 +520,23 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             num_anc_complete=1,
         )
 
-        query = self._rebuild_table_get_query_object()
-        self.assertEqual(query.count(), 7)
+        cases = [
+            (1, [('anc1_received_at_delivery', 0),
+                 ('anc2_received_at_delivery', 0),
+                 ('anc3_received_at_delivery', 0),
+                 ('anc4_received_at_delivery', 0)]),
+            (2, [('anc1_received_at_delivery', 1),
+                 ('anc2_received_at_delivery', 0),
+                 ('anc3_received_at_delivery', 0),
+                 ('anc4_received_at_delivery', 0)]),
+            (3, [('anc1_received_at_delivery', 0),
+                 ('anc2_received_at_delivery', 0),
+                 ('anc3_received_at_delivery', 0),
+                 ('anc4_received_at_delivery', 0)]),
+        ]
+        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-        row = query.all()[1]
-        self.assertEqual(row.month, date(2016, 1, 1))
-        self.assertEqual(row.anc1_received_at_delivery, 0)
-        self.assertEqual(row.anc2_received_at_delivery, 0)
-        self.assertEqual(row.anc3_received_at_delivery, 0)
-        self.assertEqual(row.anc4_received_at_delivery, 0)
-
-        row = query.all()[2]
-        self.assertEqual(row.month, date(2016, 2, 1))
-        self.assertEqual(row.anc1_received_at_delivery, 1)
-        self.assertEqual(row.anc2_received_at_delivery, 0)
-        self.assertEqual(row.anc3_received_at_delivery, 0)
-        self.assertEqual(row.anc4_received_at_delivery, 0)
-
-        row = query.all()[3]
-        self.assertEqual(row.month, date(2016, 3, 1))
-        self.assertEqual(row.anc1_received_at_delivery, 0)
-        self.assertEqual(row.anc2_received_at_delivery, 0)
-        self.assertEqual(row.anc3_received_at_delivery, 0)
-        self.assertEqual(row.anc4_received_at_delivery, 0)
-
+    @run_with_all_backends
     def test_anc2_at_delivery(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -724,30 +549,23 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             num_anc_complete=2,
         )
 
-        query = self._rebuild_table_get_query_object()
-        self.assertEqual(query.count(), 7)
+        cases = [
+            (1, [('anc1_received_at_delivery', 0),
+                 ('anc2_received_at_delivery', 0),
+                 ('anc3_received_at_delivery', 0),
+                 ('anc4_received_at_delivery', 0)]),
+            (2, [('anc1_received_at_delivery', 1),
+                 ('anc2_received_at_delivery', 1),
+                 ('anc3_received_at_delivery', 0),
+                 ('anc4_received_at_delivery', 0)]),
+            (3, [('anc1_received_at_delivery', 0),
+                 ('anc2_received_at_delivery', 0),
+                 ('anc3_received_at_delivery', 0),
+                 ('anc4_received_at_delivery', 0)]),
+        ]
+        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-        row = query.all()[1]
-        self.assertEqual(row.month, date(2016, 1, 1))
-        self.assertEqual(row.anc1_received_at_delivery, 0)
-        self.assertEqual(row.anc2_received_at_delivery, 0)
-        self.assertEqual(row.anc3_received_at_delivery, 0)
-        self.assertEqual(row.anc4_received_at_delivery, 0)
-
-        row = query.all()[2]
-        self.assertEqual(row.month, date(2016, 2, 1))
-        self.assertEqual(row.anc1_received_at_delivery, 1)
-        self.assertEqual(row.anc2_received_at_delivery, 1)
-        self.assertEqual(row.anc3_received_at_delivery, 0)
-        self.assertEqual(row.anc4_received_at_delivery, 0)
-
-        row = query.all()[3]
-        self.assertEqual(row.month, date(2016, 3, 1))
-        self.assertEqual(row.anc1_received_at_delivery, 0)
-        self.assertEqual(row.anc2_received_at_delivery, 0)
-        self.assertEqual(row.anc3_received_at_delivery, 0)
-        self.assertEqual(row.anc4_received_at_delivery, 0)
-
+    @run_with_all_backends
     def test_anc3_at_delivery(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -760,30 +578,23 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             num_anc_complete=3,
         )
 
-        query = self._rebuild_table_get_query_object()
-        self.assertEqual(query.count(), 7)
+        cases = [
+            (1, [('anc1_received_at_delivery', 0),
+                 ('anc2_received_at_delivery', 0),
+                 ('anc3_received_at_delivery', 0),
+                 ('anc4_received_at_delivery', 0)]),
+            (2, [('anc1_received_at_delivery', 1),
+                 ('anc2_received_at_delivery', 1),
+                 ('anc3_received_at_delivery', 1),
+                 ('anc4_received_at_delivery', 0)]),
+            (3, [('anc1_received_at_delivery', 0),
+                 ('anc2_received_at_delivery', 0),
+                 ('anc3_received_at_delivery', 0),
+                 ('anc4_received_at_delivery', 0)]),
+        ]
+        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-        row = query.all()[1]
-        self.assertEqual(row.month, date(2016, 1, 1))
-        self.assertEqual(row.anc1_received_at_delivery, 0)
-        self.assertEqual(row.anc2_received_at_delivery, 0)
-        self.assertEqual(row.anc3_received_at_delivery, 0)
-        self.assertEqual(row.anc4_received_at_delivery, 0)
-
-        row = query.all()[2]
-        self.assertEqual(row.month, date(2016, 2, 1))
-        self.assertEqual(row.anc1_received_at_delivery, 1)
-        self.assertEqual(row.anc2_received_at_delivery, 1)
-        self.assertEqual(row.anc3_received_at_delivery, 1)
-        self.assertEqual(row.anc4_received_at_delivery, 0)
-
-        row = query.all()[3]
-        self.assertEqual(row.month, date(2016, 3, 1))
-        self.assertEqual(row.anc1_received_at_delivery, 0)
-        self.assertEqual(row.anc2_received_at_delivery, 0)
-        self.assertEqual(row.anc3_received_at_delivery, 0)
-        self.assertEqual(row.anc4_received_at_delivery, 0)
-
+    @run_with_all_backends
     def test_anc4_at_delivery(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -796,30 +607,23 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             num_anc_complete=4,
         )
 
-        query = self._rebuild_table_get_query_object()
-        self.assertEqual(query.count(), 7)
+        cases = [
+            (1, [('anc1_received_at_delivery', 0),
+                 ('anc2_received_at_delivery', 0),
+                 ('anc3_received_at_delivery', 0),
+                 ('anc4_received_at_delivery', 0)]),
+            (2, [('anc1_received_at_delivery', 1),
+                 ('anc2_received_at_delivery', 1),
+                 ('anc3_received_at_delivery', 1),
+                 ('anc4_received_at_delivery', 1)]),
+            (3, [('anc1_received_at_delivery', 0),
+                 ('anc2_received_at_delivery', 0),
+                 ('anc3_received_at_delivery', 0),
+                 ('anc4_received_at_delivery', 0)]),
+        ]
+        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-        row = query.all()[1]
-        self.assertEqual(row.month, date(2016, 1, 1))
-        self.assertEqual(row.anc1_received_at_delivery, 0)
-        self.assertEqual(row.anc2_received_at_delivery, 0)
-        self.assertEqual(row.anc3_received_at_delivery, 0)
-        self.assertEqual(row.anc4_received_at_delivery, 0)
-
-        row = query.all()[2]
-        self.assertEqual(row.month, date(2016, 2, 1))
-        self.assertEqual(row.anc1_received_at_delivery, 1)
-        self.assertEqual(row.anc2_received_at_delivery, 1)
-        self.assertEqual(row.anc3_received_at_delivery, 1)
-        self.assertEqual(row.anc4_received_at_delivery, 1)
-
-        row = query.all()[3]
-        self.assertEqual(row.month, date(2016, 3, 1))
-        self.assertEqual(row.anc1_received_at_delivery, 0)
-        self.assertEqual(row.anc2_received_at_delivery, 0)
-        self.assertEqual(row.anc3_received_at_delivery, 0)
-        self.assertEqual(row.anc4_received_at_delivery, 0)
-
+    @run_with_all_backends
     def test_reg_trimester_3_at_delivery(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -831,21 +635,14 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             date_modified=datetime(2016, 3, 12),
         )
 
-        query = self._rebuild_table_get_query_object()
-        self.assertEqual(query.count(), 7)
+        cases = [
+            (1, [('registration_trimester_at_delivery', None)]),
+            (2, [('registration_trimester_at_delivery', 3)]),
+            (3, [('registration_trimester_at_delivery', None)]),
+        ]
+        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-        row = query.all()[1]
-        self.assertEqual(row.month, date(2016, 1, 1))
-        self.assertEqual(row.registration_trimester_at_delivery, None)
-
-        row = query.all()[2]
-        self.assertEqual(row.month, date(2016, 2, 1))
-        self.assertEqual(row.registration_trimester_at_delivery, 3)
-
-        row = query.all()[3]
-        self.assertEqual(row.month, date(2016, 3, 1))
-        self.assertEqual(row.registration_trimester_at_delivery, None)
-
+    @run_with_all_backends
     def test_reg_trimester_2_at_delivery(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -857,21 +654,15 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             date_modified=datetime(2016, 5, 12),
         )
 
-        query = self._rebuild_table_get_query_object()
-        self.assertEqual(query.count(), 7)
+        start_date = date(2016, 2, 1)
+        cases = [
+            (1, [('registration_trimester_at_delivery', None)]),
+            (2, [('registration_trimester_at_delivery', 2)]),
+            (3, [('registration_trimester_at_delivery', None)]),
+        ]
+        self._run_iterative_monthly_test(case_id=case_id, cases=cases, start_date=start_date)
 
-        row = query.all()[1]
-        self.assertEqual(row.month, date(2016, 3, 1))
-        self.assertEqual(row.registration_trimester_at_delivery, None)
-
-        row = query.all()[2]
-        self.assertEqual(row.month, date(2016, 4, 1))
-        self.assertEqual(row.registration_trimester_at_delivery, 2)
-
-        row = query.all()[3]
-        self.assertEqual(row.month, date(2016, 5, 1))
-        self.assertEqual(row.registration_trimester_at_delivery, None)
-
+    @run_with_all_backends
     def test_reg_trimester_1_at_delivery(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -883,21 +674,15 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             date_modified=datetime(2016, 9, 12),
         )
 
-        query = self._rebuild_table_get_query_object()
-        self.assertEqual(query.count(), 7)
+        start_date = date(2016, 6, 1)
+        cases = [
+            (1, [('registration_trimester_at_delivery', None)]),
+            (2, [('registration_trimester_at_delivery', 1)]),
+            (3, [('registration_trimester_at_delivery', None)]),
+        ]
+        self._run_iterative_monthly_test(case_id=case_id, cases=cases, start_date=start_date)
 
-        row = query.all()[1]
-        self.assertEqual(row.month, date(2016, 7, 1))
-        self.assertEqual(row.registration_trimester_at_delivery, None)
-
-        row = query.all()[2]
-        self.assertEqual(row.month, date(2016, 8, 1))
-        self.assertEqual(row.registration_trimester_at_delivery, 1)
-
-        row = query.all()[3]
-        self.assertEqual(row.month, date(2016, 9, 1))
-        self.assertEqual(row.registration_trimester_at_delivery, None)
-
+    @run_with_all_backends
     def test_bp_in_month(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -913,21 +698,14 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             case_id=case_id
         )
 
-        query = self._rebuild_table_get_query_object()
-        self.assertEqual(query.count(), 7)
+        cases = [
+            (1, [('bp_visited_in_month', 0)]),
+            (2, [('bp_visited_in_month', 1)]),
+            (3, [('bp_visited_in_month', 0)]),
+        ]
+        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-        row = query.all()[1]
-        self.assertEqual(row.month, date(2016, 1, 1))
-        self.assertEqual(row.bp_visited_in_month, 0)
-
-        row = query.all()[2]
-        self.assertEqual(row.month, date(2016, 2, 1))
-        self.assertEqual(row.bp_visited_in_month, 1)
-
-        row = query.all()[3]
-        self.assertEqual(row.month, date(2016, 3, 1))
-        self.assertEqual(row.bp_visited_in_month, 0)
-
+    @run_with_all_backends
     def test_pnc_in_month(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -944,21 +722,14 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             case_id=case_id
         )
 
-        query = self._rebuild_table_get_query_object()
-        self.assertEqual(query.count(), 7)
+        cases = [
+            (1, [('pnc_visited_in_month', 0)]),
+            (2, [('pnc_visited_in_month', 1)]),
+            (3, [('pnc_visited_in_month', 0)]),
+        ]
+        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-        row = query.all()[1]
-        self.assertEqual(row.month, date(2016, 1, 1))
-        self.assertEqual(row.pnc_visited_in_month, 0)
-
-        row = query.all()[2]
-        self.assertEqual(row.month, date(2016, 2, 1))
-        self.assertEqual(row.pnc_visited_in_month, 1)
-
-        row = query.all()[3]
-        self.assertEqual(row.month, date(2016, 3, 1))
-        self.assertEqual(row.pnc_visited_in_month, 0)
-
+    @run_with_all_backends
     def test_bp_last_submitted_form(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -977,7 +748,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             extra_meal='yes',
             resting_during_pregnancy='yes',
         )
-
         self._submit_bp_form(
             form_date=datetime(2016, 3, 8),
             case_id=case_id,
@@ -987,44 +757,31 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             resting_during_pregnancy='no',
         )
 
-        query = self._rebuild_table_get_query_object()
-        self.assertEqual(query.count(), 7)
+        cases = [
+            (0, [('using_ifa', 0),
+                 ('ifa_consumed_last_seven_days', 0),
+                 ('extra_meal', 0),
+                 ('resting_during_pregnancy', 0)]),
+            (1, [('using_ifa', 1),
+                 ('ifa_consumed_last_seven_days', 1),
+                 ('extra_meal', 1),
+                 ('resting_during_pregnancy', 1)]),
+            (2, [('using_ifa', 1),
+                 ('ifa_consumed_last_seven_days', 1),
+                 ('extra_meal', 1),
+                 ('resting_during_pregnancy', 1)]),
+            (3, [('using_ifa', 0),
+                 ('ifa_consumed_last_seven_days', 0),
+                 ('extra_meal', 0),
+                 ('resting_during_pregnancy', 0)]),
+            (4, [('using_ifa', 0),
+                 ('ifa_consumed_last_seven_days', 0),
+                 ('extra_meal', 0),
+                 ('resting_during_pregnancy', 0)]),
+        ]
+        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-        row = query.all()[0]
-        self.assertEqual(row.month, date(2015, 12, 1))
-        self.assertEqual(row.using_ifa, 0)
-        self.assertEqual(row.ifa_consumed_last_seven_days, 0)
-        self.assertEqual(row.extra_meal, 0)
-        self.assertEqual(row.resting_during_pregnancy, 0)
-
-        row = query.all()[1]
-        self.assertEqual(row.month, date(2016, 1, 1))
-        self.assertEqual(row.using_ifa, 1)
-        self.assertEqual(row.ifa_consumed_last_seven_days, 1)
-        self.assertEqual(row.extra_meal, 1)
-        self.assertEqual(row.resting_during_pregnancy, 1)
-
-        row = query.all()[2]
-        self.assertEqual(row.month, date(2016, 2, 1))
-        self.assertEqual(row.using_ifa, 1)
-        self.assertEqual(row.ifa_consumed_last_seven_days, 1)
-        self.assertEqual(row.extra_meal, 1)
-        self.assertEqual(row.resting_during_pregnancy, 1)
-
-        row = query.all()[3]
-        self.assertEqual(row.month, date(2016, 3, 1))
-        self.assertEqual(row.using_ifa, 0)
-        self.assertEqual(row.ifa_consumed_last_seven_days, 0)
-        self.assertEqual(row.extra_meal, 0)
-        self.assertEqual(row.resting_during_pregnancy, 0)
-
-        row = query.all()[4]
-        self.assertEqual(row.month, date(2016, 4, 1))
-        self.assertEqual(row.using_ifa, 0)
-        self.assertEqual(row.ifa_consumed_last_seven_days, 0)
-        self.assertEqual(row.extra_meal, 0)
-        self.assertEqual(row.resting_during_pregnancy, 0)
-
+    @run_with_all_backends
     def test_bp_any_submitted_form(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -1045,7 +802,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             counsel_immediate_conception='no',
             counsel_accessible_postpartum_fp='no'
         )
-
         self._submit_bp_form(
             form_date=datetime(2016, 3, 6),
             case_id=case_id,
@@ -1056,7 +812,6 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             counsel_immediate_conception='yes',
             counsel_accessible_postpartum_fp='yes'
         )
-
         self._submit_bp_form(
             form_date=datetime(2016, 3, 8),
             case_id=case_id,
@@ -1068,54 +823,35 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             counsel_accessible_postpartum_fp='no'
         )
 
-        query = self._rebuild_table_get_query_object()
-        self.assertEqual(query.count(), 7)
+        cases = [
+            (1, [('counsel_immediate_bf', 0),
+                 ('counsel_bp_vid', 0),
+                 ('counsel_preparation', 0),
+                 ('counsel_fp_vid', 0),
+                 ('counsel_immediate_conception', 0),
+                 ('counsel_accessible_postpartum_fp', 0)]),
+            (2, [('counsel_immediate_bf', 0),
+                 ('counsel_bp_vid', 0),
+                 ('counsel_preparation', 0),
+                 ('counsel_fp_vid', 0),
+                 ('counsel_immediate_conception', 0),
+                 ('counsel_accessible_postpartum_fp', 0)]),
+            (3, [('counsel_immediate_bf', 1),
+                 ('counsel_bp_vid', 1),
+                 ('counsel_preparation', 1),
+                 ('counsel_fp_vid', 1),
+                 ('counsel_immediate_conception', 1),
+                 ('counsel_accessible_postpartum_fp', 1)]),
+            (4, [('counsel_immediate_bf', 1),
+                 ('counsel_bp_vid', 1),
+                 ('counsel_preparation', 1),
+                 ('counsel_fp_vid', 1),
+                 ('counsel_immediate_conception', 1),
+                 ('counsel_accessible_postpartum_fp', 1)]),
+        ]
+        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-        row = query.all()[0]
-        self.assertEqual(row.month, date(2015, 12, 1))
-        self.assertEqual(row.counsel_immediate_bf, 0)
-        self.assertEqual(row.counsel_bp_vid, 0)
-        self.assertEqual(row.counsel_preparation, 0)
-        self.assertEqual(row.counsel_fp_vid, 0)
-        self.assertEqual(row.counsel_immediate_conception, 0)
-        self.assertEqual(row.counsel_accessible_postpartum_fp, 0)
-
-        row = query.all()[1]
-        self.assertEqual(row.month, date(2016, 1, 1))
-        self.assertEqual(row.counsel_immediate_bf, 0)
-        self.assertEqual(row.counsel_bp_vid, 0)
-        self.assertEqual(row.counsel_preparation, 0)
-        self.assertEqual(row.counsel_fp_vid, 0)
-        self.assertEqual(row.counsel_immediate_conception, 0)
-        self.assertEqual(row.counsel_accessible_postpartum_fp, 0)
-
-        row = query.all()[2]
-        self.assertEqual(row.month, date(2016, 2, 1))
-        self.assertEqual(row.counsel_immediate_bf, 0)
-        self.assertEqual(row.counsel_bp_vid, 0)
-        self.assertEqual(row.counsel_preparation, 0)
-        self.assertEqual(row.counsel_fp_vid, 0)
-        self.assertEqual(row.counsel_immediate_conception, 0)
-        self.assertEqual(row.counsel_accessible_postpartum_fp, 0)
-
-        row = query.all()[3]
-        self.assertEqual(row.month, date(2016, 3, 1))
-        self.assertEqual(row.counsel_immediate_bf, 1)
-        self.assertEqual(row.counsel_bp_vid, 1)
-        self.assertEqual(row.counsel_preparation, 1)
-        self.assertEqual(row.counsel_fp_vid, 1)
-        self.assertEqual(row.counsel_immediate_conception, 1)
-        self.assertEqual(row.counsel_accessible_postpartum_fp, 1)
-
-        row = query.all()[4]
-        self.assertEqual(row.month, date(2016, 4, 1))
-        self.assertEqual(row.counsel_immediate_bf, 1)
-        self.assertEqual(row.counsel_bp_vid, 1)
-        self.assertEqual(row.counsel_preparation, 1)
-        self.assertEqual(row.counsel_fp_vid, 1)
-        self.assertEqual(row.counsel_immediate_conception, 1)
-        self.assertEqual(row.counsel_accessible_postpartum_fp, 1)
-
+    @run_with_all_backends
     def test_anemic_unknown(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -1126,23 +862,19 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             date_modified=datetime(2016, 3, 12),
         )
 
-        query = self._rebuild_table_get_query_object()
-        self.assertEqual(query.count(), 7)
+        cases = [
+            (1, [('anemic_unknown', 1),
+                 ('anemic_normal', 0),
+                 ('anemic_moderate', 0),
+                 ('anemic_severe', 0)]),
+            (2, [('anemic_unknown', 1),
+                 ('anemic_normal', 0),
+                 ('anemic_moderate', 0),
+                 ('anemic_severe', 0)]),
+        ]
+        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-        row = query.all()[1]
-        self.assertEqual(row.month, date(2016, 1, 1))
-        self.assertEqual(row.anemic_unknown, 1)
-        self.assertEqual(row.anemic_normal, 0)
-        self.assertEqual(row.anemic_moderate, 0)
-        self.assertEqual(row.anemic_severe, 0)
-
-        row = query.all()[2]
-        self.assertEqual(row.month, date(2016, 2, 1))
-        self.assertEqual(row.anemic_unknown, 1)
-        self.assertEqual(row.anemic_normal, 0)
-        self.assertEqual(row.anemic_moderate, 0)
-        self.assertEqual(row.anemic_severe, 0)
-
+    @run_with_all_backends
     def test_anemia_normal(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -1158,49 +890,37 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             case_id=case_id,
             anemia='severe',
         )
-
         self._submit_bp_form(
             form_date=datetime(2016, 1, 10),
             case_id=case_id,
             anemia='normal',
         )
-
         self._submit_bp_form(
             form_date=datetime(2016, 2, 10),
             case_id=case_id,
         )
 
-        query = self._rebuild_table_get_query_object()
-        self.assertEqual(query.count(), 7)
+        cases = [
+            (0, [('anemic_unknown', 1),
+                 ('anemic_normal', 0),
+                 ('anemic_moderate', 0),
+                 ('anemic_severe', 0)]),
+            (1, [('anemic_unknown', 0),
+                 ('anemic_normal', 1),
+                 ('anemic_moderate', 0),
+                 ('anemic_severe', 0)]),
+            (2, [('anemic_unknown', 0),
+                 ('anemic_normal', 1),
+                 ('anemic_moderate', 0),
+                 ('anemic_severe', 0)]),
+            (3, [('anemic_unknown', 0),
+                 ('anemic_normal', 1),
+                 ('anemic_moderate', 0),
+                 ('anemic_severe', 0)]),
+        ]
+        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-        row = query.all()[0]
-        self.assertEqual(row.month, date(2015, 12, 1))
-        self.assertEqual(row.anemic_unknown, 1)
-        self.assertEqual(row.anemic_normal, 0)
-        self.assertEqual(row.anemic_moderate, 0)
-        self.assertEqual(row.anemic_severe, 0)
-
-        row = query.all()[1]
-        self.assertEqual(row.month, date(2016, 1, 1))
-        self.assertEqual(row.anemic_unknown, 0)
-        self.assertEqual(row.anemic_normal, 1)
-        self.assertEqual(row.anemic_moderate, 0)
-        self.assertEqual(row.anemic_severe, 0)
-
-        row = query.all()[2]
-        self.assertEqual(row.month, date(2016, 2, 1))
-        self.assertEqual(row.anemic_unknown, 0)
-        self.assertEqual(row.anemic_normal, 1)
-        self.assertEqual(row.anemic_moderate, 0)
-        self.assertEqual(row.anemic_severe, 0)
-
-        row = query.all()[3]
-        self.assertEqual(row.month, date(2016, 3, 1))
-        self.assertEqual(row.anemic_unknown, 0)
-        self.assertEqual(row.anemic_normal, 1)
-        self.assertEqual(row.anemic_moderate, 0)
-        self.assertEqual(row.anemic_severe, 0)
-
+    @run_with_all_backends
     def test_anemia_moderate(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -1216,49 +936,37 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             case_id=case_id,
             anemia='severe',
         )
-
         self._submit_bp_form(
             form_date=datetime(2016, 1, 10),
             case_id=case_id,
             anemia='moderate',
         )
-
         self._submit_bp_form(
             form_date=datetime(2016, 2, 10),
             case_id=case_id,
         )
 
-        query = self._rebuild_table_get_query_object()
-        self.assertEqual(query.count(), 7)
+        cases = [
+            (0, [('anemic_unknown', 1),
+                 ('anemic_normal', 0),
+                 ('anemic_moderate', 0),
+                 ('anemic_severe', 0)]),
+            (1, [('anemic_unknown', 0),
+                 ('anemic_normal', 0),
+                 ('anemic_moderate', 1),
+                 ('anemic_severe', 0)]),
+            (2, [('anemic_unknown', 0),
+                 ('anemic_normal', 0),
+                 ('anemic_moderate', 1),
+                 ('anemic_severe', 0)]),
+            (3, [('anemic_unknown', 0),
+                 ('anemic_normal', 0),
+                 ('anemic_moderate', 1),
+                 ('anemic_severe', 0)]),
+        ]
+        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-        row = query.all()[0]
-        self.assertEqual(row.month, date(2015, 12, 1))
-        self.assertEqual(row.anemic_unknown, 1)
-        self.assertEqual(row.anemic_normal, 0)
-        self.assertEqual(row.anemic_moderate, 0)
-        self.assertEqual(row.anemic_severe, 0)
-
-        row = query.all()[1]
-        self.assertEqual(row.month, date(2016, 1, 1))
-        self.assertEqual(row.anemic_unknown, 0)
-        self.assertEqual(row.anemic_normal, 0)
-        self.assertEqual(row.anemic_moderate, 1)
-        self.assertEqual(row.anemic_severe, 0)
-
-        row = query.all()[2]
-        self.assertEqual(row.month, date(2016, 2, 1))
-        self.assertEqual(row.anemic_unknown, 0)
-        self.assertEqual(row.anemic_normal, 0)
-        self.assertEqual(row.anemic_moderate, 1)
-        self.assertEqual(row.anemic_severe, 0)
-
-        row = query.all()[3]
-        self.assertEqual(row.month, date(2016, 3, 1))
-        self.assertEqual(row.anemic_unknown, 0)
-        self.assertEqual(row.anemic_normal, 0)
-        self.assertEqual(row.anemic_moderate, 1)
-        self.assertEqual(row.anemic_severe, 0)
-
+    @run_with_all_backends
     def test_anemia_severe(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -1274,49 +982,37 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             case_id=case_id,
             anemia='normal',
         )
-
         self._submit_bp_form(
             form_date=datetime(2016, 1, 10),
             case_id=case_id,
             anemia='severe',
         )
-
         self._submit_bp_form(
             form_date=datetime(2016, 2, 10),
             case_id=case_id,
         )
 
-        query = self._rebuild_table_get_query_object()
-        self.assertEqual(query.count(), 7)
+        cases = [
+            (0, [('anemic_unknown', 1),
+                 ('anemic_normal', 0),
+                 ('anemic_moderate', 0),
+                 ('anemic_severe', 0)]),
+            (1, [('anemic_unknown', 0),
+                 ('anemic_normal', 0),
+                 ('anemic_moderate', 0),
+                 ('anemic_severe', 1)]),
+            (2, [('anemic_unknown', 0),
+                 ('anemic_normal', 0),
+                 ('anemic_moderate', 0),
+                 ('anemic_severe', 1)]),
+            (3, [('anemic_unknown', 0),
+                 ('anemic_normal', 0),
+                 ('anemic_moderate', 0),
+                 ('anemic_severe', 1)]),
+        ]
+        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-        row = query.all()[0]
-        self.assertEqual(row.month, date(2015, 12, 1))
-        self.assertEqual(row.anemic_unknown, 1)
-        self.assertEqual(row.anemic_normal, 0)
-        self.assertEqual(row.anemic_moderate, 0)
-        self.assertEqual(row.anemic_severe, 0)
-
-        row = query.all()[1]
-        self.assertEqual(row.month, date(2016, 1, 1))
-        self.assertEqual(row.anemic_unknown, 0)
-        self.assertEqual(row.anemic_normal, 0)
-        self.assertEqual(row.anemic_moderate, 0)
-        self.assertEqual(row.anemic_severe, 1)
-
-        row = query.all()[2]
-        self.assertEqual(row.month, date(2016, 2, 1))
-        self.assertEqual(row.anemic_unknown, 0)
-        self.assertEqual(row.anemic_normal, 0)
-        self.assertEqual(row.anemic_moderate, 0)
-        self.assertEqual(row.anemic_severe, 1)
-
-        row = query.all()[3]
-        self.assertEqual(row.month, date(2016, 3, 1))
-        self.assertEqual(row.anemic_unknown, 0)
-        self.assertEqual(row.anemic_normal, 0)
-        self.assertEqual(row.anemic_moderate, 0)
-        self.assertEqual(row.anemic_severe, 1)
-
+    @run_with_all_backends
     def test_counsel_methods_pnc(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -1333,32 +1029,21 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             case_id=case_id,
             counsel_methods='no',
         )
-
         self._submit_pnc_form(
             form_date=datetime(2016, 3, 2),
             case_id=case_id,
             counsel_methods='yes',
         )
 
-        query = self._rebuild_table_get_query_object()
-        self.assertEqual(query.count(), 7)
+        cases = [
+            (1, [('counsel_fp_methods', 0)]),
+            (2, [('counsel_fp_methods', 0)]),
+            (3, [('counsel_fp_methods', 1)]),
+            (4, [('counsel_fp_methods', 1)]),
+        ]
+        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-        row = query.all()[1]
-        self.assertEqual(row.month, date(2016, 1, 1))
-        self.assertEqual(row.counsel_fp_methods, 0)
-
-        row = query.all()[2]
-        self.assertEqual(row.month, date(2016, 2, 1))
-        self.assertEqual(row.counsel_fp_methods, 0)
-
-        row = query.all()[3]
-        self.assertEqual(row.month, date(2016, 3, 1))
-        self.assertEqual(row.counsel_fp_methods, 1)
-
-        row = query.all()[4]
-        self.assertEqual(row.month, date(2016, 4, 1))
-        self.assertEqual(row.counsel_fp_methods, 1)
-
+    @run_with_all_backends
     def test_counsel_methods_ebf(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -1375,32 +1060,21 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             case_id=case_id,
             counsel_methods='no',
         )
-
         self._submit_ebf_form(
             form_date=datetime(2016, 3, 2),
             case_id=case_id,
             counsel_methods='yes',
         )
 
-        query = self._rebuild_table_get_query_object()
-        self.assertEqual(query.count(), 7)
+        cases = [
+            (1, [('counsel_fp_methods', 0)]),
+            (2, [('counsel_fp_methods', 0)]),
+            (3, [('counsel_fp_methods', 1)]),
+            (4, [('counsel_fp_methods', 1)]),
+        ]
+        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
-        row = query.all()[1]
-        self.assertEqual(row.month, date(2016, 1, 1))
-        self.assertEqual(row.counsel_fp_methods, 0)
-
-        row = query.all()[2]
-        self.assertEqual(row.month, date(2016, 2, 1))
-        self.assertEqual(row.counsel_fp_methods, 0)
-
-        row = query.all()[3]
-        self.assertEqual(row.month, date(2016, 3, 1))
-        self.assertEqual(row.counsel_fp_methods, 1)
-
-        row = query.all()[4]
-        self.assertEqual(row.month, date(2016, 4, 1))
-        self.assertEqual(row.counsel_fp_methods, 1)
-
+    @run_with_all_backends
     def test_bp_pnc_complete(self):
         case_id = uuid.uuid4().hex
         self._create_ccs_case(
@@ -1416,33 +1090,22 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             pnc1_date=date(2016, 3, 18),
         )
 
-        query = self._rebuild_table_get_query_object()
-        self.assertEqual(query.count(), 7)
-
-        row = query.all()[0]
-        self.assertEqual(row.month, date(2015, 12, 1))
-        self.assertEqual(row.bp1_complete, 1)
-        self.assertEqual(row.bp2_complete, 0)
-        self.assertEqual(row.bp3_complete, 0)
-        self.assertEqual(row.pnc_complete, 0)
-
-        row = query.all()[1]
-        self.assertEqual(row.month, date(2016, 1, 1))
-        self.assertEqual(row.bp1_complete, 1)
-        self.assertEqual(row.bp2_complete, 1)
-        self.assertEqual(row.bp3_complete, 0)
-        self.assertEqual(row.pnc_complete, 0)
-
-        row = query.all()[2]
-        self.assertEqual(row.month, date(2016, 2, 1))
-        self.assertEqual(row.bp1_complete, 1)
-        self.assertEqual(row.bp2_complete, 1)
-        self.assertEqual(row.bp3_complete, 1)
-        self.assertEqual(row.pnc_complete, 0)
-
-        row = query.all()[3]
-        self.assertEqual(row.month, date(2016, 3, 1))
-        self.assertEqual(row.bp1_complete, 1)
-        self.assertEqual(row.bp2_complete, 1)
-        self.assertEqual(row.bp3_complete, 1)
-        self.assertEqual(row.pnc_complete, 1)
+        cases = [
+            (0, [('bp1_complete', 1),
+                 ('bp2_complete', 0),
+                 ('bp3_complete', 0),
+                 ('pnc_complete', 0)]),
+            (1, [('bp1_complete', 1),
+                 ('bp2_complete', 1),
+                 ('bp3_complete', 0),
+                 ('pnc_complete', 0)]),
+            (2, [('bp1_complete', 1),
+                 ('bp2_complete', 1),
+                 ('bp3_complete', 1),
+                 ('pnc_complete', 0)]),
+            (3, [('bp1_complete', 1),
+                 ('bp2_complete', 1),
+                 ('bp3_complete', 1),
+                 ('pnc_complete', 1)]),
+        ]
+        self._run_iterative_monthly_test(case_id=case_id, cases=cases)

@@ -1,27 +1,61 @@
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 
 from corehq.apps.domain.utils import grandfathered_domain_re
 from .views import (
-    DefaultProjectUserSettingsView, DomainRequestView, EditWebUserView,
-    ListWebUsersView, InviteWebUserView, change_password,
-    domain_accounts, delete_phone_number, make_phone_number_default, verify_phone_number, add_domain_membership,
-    remove_web_user, undo_remove_web_user, delete_invitation, reinvite_web_user, delete_request,
-    location_restriction_for_users, accept_invitation, post_user_role, delete_user_role, register_fcm_device_token,
-    test_httpdigest)
+    accept_invitation,
+    add_domain_membership,
+    change_password,
+    DefaultProjectUserSettingsView,
+    delete_invitation,
+    delete_phone_number,
+    delete_request,
+    delete_user_role,
+    domain_accounts,
+    DomainRequestView,
+    EditWebUserView,
+    InviteWebUserView,
+    ListWebUsersView,
+    location_restriction_for_users,
+    make_phone_number_default,
+    post_user_role,
+    register_fcm_device_token,
+    reinvite_web_user,
+    remove_web_user,
+    test_httpdigest,
+    undo_remove_web_user,
+    verify_phone_number,
+)
 from .views.mobile.custom_data_fields import UserFieldsView
-from .views.mobile.groups import (GroupsListView, EditGroupMembersView,
-    BulkSMSVerificationView)
+from .views.mobile.groups import (
+    BulkSMSVerificationView,
+    EditGroupMembersView,
+    GroupsListView,
+)
 from .views.mobile.users import (
-    UploadCommCareUsers, EditCommCareUserView,
-    ConfirmBillingAccountForExtraUsersView, UserUploadStatusView,
-    CommCareUserSelfRegistrationView, MobileWorkerListView,
-    CreateCommCareUserModal, DemoRestoreStatusView,
-    update_user_data, update_user_groups, archive_commcare_user, delete_commcare_user, restore_commcare_user,
-    toggle_demo_mode, reset_demo_user_restore, demo_restore_job_poll, user_upload_job_poll,
-    download_commcare_users, set_commcare_user_group)
+    archive_commcare_user,
+    CommCareUserSelfRegistrationView,
+    ConfirmBillingAccountForExtraUsersView,
+    CreateCommCareUserModal,
+    delete_commcare_user,
+    DeletedMobileWorkerListView,
+    demo_restore_job_poll,
+    DemoRestoreStatusView,
+    download_commcare_users,
+    EditCommCareUserView,
+    MobileWorkerListView,
+    reset_demo_user_restore,
+    restore_commcare_user,
+    set_commcare_user_group,
+    toggle_demo_mode,
+    update_user_data,
+    update_user_groups,
+    UploadCommCareUsers,
+    user_upload_job_poll,
+    UserUploadStatusView,
+)
 
 
-urlpatterns = patterns('corehq.apps.users.views',
+urlpatterns = [
     url(r'^$', DefaultProjectUserSettingsView.as_view(), name=DefaultProjectUserSettingsView.urlname),
     url(r'^change_password/(?P<login_id>[ \w-]+)/$', change_password, name="change_password"),
     url(r'^domain_accounts/(?P<couch_user_id>[ \w-]+)/$', domain_accounts, name='domain_accounts'),
@@ -53,11 +87,13 @@ urlpatterns = patterns('corehq.apps.users.views',
     url(r'^register_fcm_device_token/(?P<couch_user_id>[ \w-]+)/(?P<device_token>[ \w-]+)/$',
         register_fcm_device_token, name='register_fcm_device_token'),
     url(r'^httpdigest/?$', test_httpdigest, name='test_httpdigest'),
-) + \
-patterns("corehq.apps.users.views.mobile.users",
+] + [
     url(r'^commcare/$',
         MobileWorkerListView.as_view(),
         name=MobileWorkerListView.urlname),
+    url(r'^commcare/deleted/$',
+        DeletedMobileWorkerListView.as_view(),
+        name=DeletedMobileWorkerListView.urlname),
     url(r'^commcare/fields/$', UserFieldsView.as_view(), name=UserFieldsView.urlname),
     url(r'^commcare/account/(?P<couch_user_id>[ \w-]+)/$', EditCommCareUserView.as_view(),
         name=EditCommCareUserView.urlname),
@@ -90,10 +126,9 @@ patterns("corehq.apps.users.views.mobile.users",
         name=ConfirmBillingAccountForExtraUsersView.urlname),
     url(r'^commcare/register/(?P<token>[\w-]+)/$', CommCareUserSelfRegistrationView.as_view(),
         name=CommCareUserSelfRegistrationView.urlname),
-) +\
-patterns("corehq.apps.users.views.mobile.groups",
+] + [
     url(r'^groups/$', GroupsListView.as_view(), name=GroupsListView.urlname),
     url(r'^groups/(?P<group_id>[ \w-]+)/$', EditGroupMembersView.as_view(), name=EditGroupMembersView.urlname),
     url(r'^groups/sms_verification/(?P<group_id>[ \w-]+)$', BulkSMSVerificationView.as_view(),
         name=BulkSMSVerificationView.urlname),
-)
+]

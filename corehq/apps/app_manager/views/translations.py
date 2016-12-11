@@ -16,7 +16,7 @@ from corehq.apps.app_manager.translations import \
     expected_bulk_app_sheet_headers, expected_bulk_app_sheet_rows, \
     process_bulk_app_translation_upload
 from corehq.apps.translations import system_text_sources
-from corehq.util.spreadsheets.excel import WorkbookJSONReader
+from corehq.util.spreadsheets_v1.excel import WorkbookJSONReader
 from couchexport.export import export_raw
 from couchexport.models import Format
 from couchexport.shortcuts import export_response

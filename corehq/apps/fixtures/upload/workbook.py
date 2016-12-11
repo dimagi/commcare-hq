@@ -3,7 +3,7 @@ from corehq.apps.fixtures.exceptions import FixtureUploadError
 from corehq.apps.fixtures.models import FixtureTypeField
 from corehq.apps.fixtures.upload.const import DELETE_HEADER
 from corehq.apps.fixtures.upload.failure_messages import FAILURE_MESSAGES
-from corehq.util.spreadsheets.excel import WorkbookJSONReader, InvalidExcelFileException, \
+from corehq.util.spreadsheets_v1.excel import WorkbookJSONReader, InvalidExcelFileException, \
     HeaderValueError, JSONReaderError, WorksheetNotFound
 
 

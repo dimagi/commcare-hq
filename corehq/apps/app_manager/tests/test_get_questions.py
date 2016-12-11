@@ -25,6 +25,7 @@ QUESTIONS = [
                      "instance('casedb')/casedb/case[@case_id=instance('casedb')/casedb/case["
                      "@case_id=instance('commcaresession')/session/data/case_id]/index/parent"
                      "]/parent_property_1"),
+        'comment': None,
     },
     {
         'tag': 'input',
@@ -37,6 +38,7 @@ QUESTIONS = [
         'type': 'Text',
         'required': False,
         'relevant': None,
+        'comment': "This is a comment",
     },
     {
         'tag': 'input',
@@ -49,6 +51,7 @@ QUESTIONS = [
         'type': 'Text',
         'required': False,
         'relevant': None,
+        'comment': None,
     },
     {
         'tag': 'trigger',
@@ -61,6 +64,7 @@ QUESTIONS = [
         'type': 'Trigger',
         'required': False,
         'relevant': None,
+        'comment': None,
     },
     {
         'tag': 'input',
@@ -73,6 +77,7 @@ QUESTIONS = [
         'type': 'Text',
         'required': False,
         'relevant': None,
+        'comment': None,
     },
     {
         'tag': 'select1',
@@ -92,6 +97,7 @@ QUESTIONS = [
         'type': 'Select',
         'required': False,
         'relevant': None,
+        'comment': None,
     },
     {
         'tag': 'input',
@@ -104,6 +110,7 @@ QUESTIONS = [
         'type': 'Int',
         'required': False,
         'relevant': None,
+        'comment': None,
     },
     {
         'tag': 'input',
@@ -116,6 +123,7 @@ QUESTIONS = [
         'type': 'Text',
         'required': False,
         'relevant': None,
+        'comment': None,
     },
     {
         'tag': 'hidden',

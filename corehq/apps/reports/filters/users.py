@@ -5,9 +5,11 @@ from django.utils.translation import ugettext as _
 from corehq.apps.es import users as user_es, filters
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
+from corehq.apps.locations.models import Location
 from corehq.apps.reports.util import namedtupledict
-from corehq.apps.users.models import CommCareUser
-from corehq.util import remove_dups
+from corehq.apps.users.cases import get_wrapped_owner
+from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.util import remove_dups, flatten_list
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.commtrack.models import SQLLocation
 
@@ -151,6 +153,27 @@ class EmwfUtils(object):
 
         return static_options
 
+    def _group_to_choice_tuple(self, group):
+        return self.reporting_group_tuple(group)
+
+    def id_to_choice_tuple(self, id_):
+        for static_id, text in self.static_options:
+            if id_ == static_id[3:]:
+                return (static_id, text)
+
+        owner = get_wrapped_owner(id_)
+        if isinstance(owner, Group):
+            return self._group_to_choice_tuple(owner)
+        elif isinstance(owner, Location):
+            return self.location_tuple(owner.sql_location)
+        elif isinstance(owner, (CommCareUser, WebUser)):
+            return self.user_tuple(owner)
+        elif owner is None:
+            import ipdb; ipdb.set_trace()
+            return None
+        else:
+            import ipdb; ipdb.set_trace()
+            raise Exception("Unexpcted id")
 
 _UserData = namedtupledict('_UserData', (
     'users',
@@ -342,7 +365,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
                 group=group,
                 simplified=True
             )
-        users_in_groups = [user for sublist in user_dict.values() for user in sublist]
+        users_in_groups = flatten_list(user_dict.values())
         users_by_group = user_dict
         combined_users = remove_dups(all_users + users_in_groups, "user_id")
 
@@ -370,6 +393,22 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             cls.slug: 'g__%s' % group_id
         }
 
+    def _get_assigned_locations_default(self):
+        user_assigned_locations = self.request.couch_user.get_assigned_sql_locations(
+            self.request.domain
+        )
+        return map(self.utils.location_tuple, user_assigned_locations)
+
+
+class LocationRestrictedMobileWorkerFilter(ExpandedMobileWorkerFilter):
+    slug = 'location_restricted_mobile_worker'
+    options_url = 'new_emwf_options'
+
+    def get_default_selections(self):
+        if self.request.can_access_all_locations:
+            return super(LocationRestrictedMobileWorkerFilter, self).get_default_selections()
+        else:
+            return self._get_assigned_locations_default()
 
 def get_user_toggle(request):
     ufilter = group = individual = show_commtrack = None

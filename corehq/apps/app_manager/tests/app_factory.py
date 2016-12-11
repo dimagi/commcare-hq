@@ -1,3 +1,4 @@
+import uuid
 from corehq.apps.app_manager.const import AUTO_SELECT_USERCASE
 from corehq.apps.app_manager.models import AdvancedModule, Module, UpdateCaseAction, LoadUpdateAction, \
     FormActionCondition, OpenSubCaseAction, OpenCaseAction, AdvancedOpenCaseAction, Application, AdvancedForm, \
@@ -21,12 +22,13 @@ class AppFactory(object):
     >>> factory.form_opens_case(form3, case_type='child', is_subcase=True)
     """
 
-    def __init__(self, domain='test', name='Untitled Application', build_version=None):
+    def __init__(self, domain='test', name='Untitled Application', build_version=None, include_xmlns=False):
         self.app = Application.new_app(domain, name)
         if build_version:
             self.app.build_spec.version = build_version
 
         self.slugs = {}
+        self.include_xmlns = include_xmlns
 
     def get_form(self, module_index, form_index):
         return self.app.get_module(module_index).get_form(form_index)
@@ -71,6 +73,8 @@ class AppFactory(object):
         form = module.new_form('{} form {}'.format(slug, index), None)
         form.unique_id = '{}_form_{}'.format(slug, index)
         form.source = ''  # set form source since we changed the unique_id
+        if self.include_xmlns:
+            form.xmlns = "http://openrosa.org/formdesigner/{}".format(uuid.uuid4().hex)
         return form
 
     @staticmethod

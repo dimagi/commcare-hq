@@ -37,12 +37,7 @@ TAG_PREVIEW = Tag(
     css_class='default',
     description="",  # I'm not sure...
 )
-TAG_UNKNOWN = Tag(
-    name='Unknown',
-    css_class='default',
-    description="",  # I'm not sure...
-)
-ALL_TAGS = [TAG_ONE_OFF, TAG_EXPERIMENTAL, TAG_PRODUCT_PATH, TAG_PRODUCT_CORE, TAG_PREVIEW, TAG_UNKNOWN]
+ALL_TAGS = [TAG_ONE_OFF, TAG_EXPERIMENTAL, TAG_PRODUCT_PATH, TAG_PRODUCT_CORE, TAG_PREVIEW]
 
 
 class StaticToggle(object):
@@ -251,6 +246,13 @@ CASE_LIST_CUSTOM_XML = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+CASE_LIST_CUSTOM_VARIABLES = StaticToggle(
+    'case_list_custom_variables',
+    'Show text area for entering custom variables',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
+
 CASE_LIST_TILE = StaticToggle(
     'case_list_tile',
     'Allow configuration of case list tiles',
@@ -277,13 +279,6 @@ ADD_USERS_FROM_LOCATION = StaticToggle(
     "Allow users to add new mobile workers from the locations page",
     TAG_PRODUCT_CORE,
     [NAMESPACE_DOMAIN]
-)
-
-DEMO_REPORTS = StaticToggle(
-    'demo-reports',
-    'Access to map-based demo reports',
-    TAG_PREVIEW,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
 DETAIL_LIST_TABS = StaticToggle(
@@ -381,7 +376,7 @@ SYNC_ALL_LOCATIONS = StaticToggle(
 FLAT_LOCATION_FIXTURE = StaticToggle(
     'flat_location_fixture',
     'Sync the location fixture in a flat format.',
-    TAG_ONE_OFF,  # todo: this should change to product path once we are signed off on format
+    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
 
@@ -506,7 +501,7 @@ FORM_LINK_WORKFLOW = StaticToggle(
 VELLUM_SAVE_TO_CASE = StaticToggle(
     'save_to_case',
     "Adds save to case as a question to the form builder",
-    TAG_UNKNOWN,
+    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN]
 )
 
@@ -528,7 +523,7 @@ CACHE_AND_INDEX = StaticToggle(
     'cache_and_index',
     'Enable the "Cache and Index" format option when choosing sort properties '
     'in the app builder',
-    TAG_UNKNOWN,
+    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN],
 )
 
@@ -621,6 +616,13 @@ INSTANCE_VIEWER = StaticToggle(
     'instance_viewer',
     'CloudCare Form Debugging Tool',
     TAG_PRODUCT_PATH,
+    namespaces=[NAMESPACE_USER, NAMESPACE_DOMAIN],
+)
+
+CUSTOM_INSTANCES = StaticToggle(
+    'custom_instances',
+    'Inject custom instance declarations',
+    TAG_EXPERIMENTAL,
     namespaces=[NAMESPACE_USER, NAMESPACE_DOMAIN],
 )
 
@@ -719,13 +721,6 @@ USE_FORMPLAYER = StaticToggle(
     'use_formplayer',
     'Use the new formplayer server',
     TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN],
-)
-
-FORMPLAYER_EXPERIMENT = StaticToggle(
-    'use_formplayer_experiment',
-    'Do formplayer experimenting with Science',
-    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN],
 )
 
@@ -836,10 +831,10 @@ GRID_MENUS = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Grid+Views',
 )
 
-NEW_EXPORTS = StaticToggle(
-    'new_exports',
-    'Use new backend export infrastructure',
-    TAG_PRODUCT_CORE,
+OLD_EXPORTS = StaticToggle(
+    'old_exports',
+    'Use old backend export infrastructure',
+    TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )
 
@@ -884,7 +879,7 @@ MOBILE_USER_DEMO_MODE = StaticToggle(
 EXPORT_ZIPPED_APPS = StaticToggle(
     'export-zipped-apps',
     'Export+Import Zipped Applications',
-    TAG_UNKNOWN,
+    TAG_EXPERIMENTAL,
     [NAMESPACE_USER]
 )
 
@@ -913,8 +908,8 @@ ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
 
 CUSTOM_CALENDAR_FIXTURE = StaticToggle(
     'custom_calendar_fixture',
-    'Send a calendar fixture down to all users (UATBC/eNikshay one off)',
-    TAG_ONE_OFF,
+    'Send a calendar fixture down to all users (R&D)',
+    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN],
 )
 
@@ -947,9 +942,16 @@ APP_MANAGER_V2 = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-RESTORE_AS_CLOUDCARE = StaticToggle(
-    'restore_as_cloudcare',
-    'Restore as a different user for cloudcare',
+DATA_MIGRATION = StaticToggle(
+    'data_migration',
+    'Disable submissions and restores during a data migration',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
+DATA_DICTIONARY = StaticToggle(
+    'data_dictionary',
+    'Domain level data dictionary of cases',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_USER, NAMESPACE_DOMAIN],
+    [NAMESPACE_DOMAIN]
 )

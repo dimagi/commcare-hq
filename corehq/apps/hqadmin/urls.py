@@ -1,4 +1,4 @@
-from django.conf.urls import include, patterns, url
+from django.conf.urls import include, url
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.domain.utils import new_domain_re
 from corehq.apps.hqadmin.views import (
@@ -14,7 +14,6 @@ from corehq.apps.hqadmin.views import (
     ReprocessMessagingCaseUpdatesView,
     SuperuserManagement,
     SystemInfoView,
-    VCMMigrationView,
     WebUserDataView,
     admin_reports_stats_data,
     branches_on_staging,
@@ -30,12 +29,13 @@ from corehq.apps.hqadmin.views import (
     system_ajax,
     pillow_operation_api,
     web_user_lookup,
+    top_five_projects_by_country,
 )
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
 
 from corehq.apps.api.urls import admin_urlpatterns as admin_api_urlpatterns
 
-urlpatterns = patterns('corehq.apps.hqadmin.views',
+urlpatterns = [
     url(r'^$', default, name="default_admin_report"),
     url(r'^system/$', SystemInfoView.as_view(), name=SystemInfoView.urlname),
     url(r'^system/recent_changes/$', RecentCouchChangesView.as_view(),
@@ -52,7 +52,6 @@ urlpatterns = patterns('corehq.apps.hqadmin.views',
         name=ManagementCommandsView.urlname),
     url(r'^superuser_management/$', SuperuserManagement.as_view(), name=SuperuserManagement.urlname),
     url(r'^run_command/$', run_command, name="run_management_command"),
-    url(r'^vcm_migration/$', VCMMigrationView.as_view(), name=VCMMigrationView.urlname),
     url(r'^phone/restore/$', AdminRestoreView.as_view(), name="admin_restore"),
     url(r'^phone/restore/(?P<app_id>[\w-]+)/$', AdminRestoreView.as_view(), name='app_aware_admin_restore'),
     url(r'^flag_broken_builds/$', FlagBrokenBuilds.as_view(), name="flag_broken_builds"),
@@ -64,9 +63,9 @@ urlpatterns = patterns('corehq.apps.hqadmin.views',
     url(r'^raw_couch/$', raw_couch, name='raw_couch'),
     url(r'^raw_doc/$', raw_doc, name='raw_doc'),
     url(r'^callcenter_test/$', callcenter_test, name='callcenter_test'),
-    (r'^api/', include(admin_api_urlpatterns)),
+    url(r'^api/', include(admin_api_urlpatterns)),
     url(r'^callcenter_ucr_check/$', CallcenterUCRCheck.as_view(), name=CallcenterUCRCheck.urlname),
-    (r'^api/', include(admin_api_urlpatterns)),
+    url(r'^api/', include(admin_api_urlpatterns)),
     url(r'^download_malt/$',
         DownloadMALTView.as_view(), name=DownloadMALTView.urlname),
     url(r'^download_gir', DownloadGIRView.as_view(), name=DownloadGIRView.urlname),
@@ -75,7 +74,7 @@ urlpatterns = patterns('corehq.apps.hqadmin.views',
         name='dimagisphere'),
     url(r'^reprocess_messaging_case_updates/$', ReprocessMessagingCaseUpdatesView.as_view(),
         name=ReprocessMessagingCaseUpdatesView.urlname),
-    url(r'^top_five_projects_by_country/$', 'top_five_projects_by_country', name='top_five_projects_by_country'),
+    url(r'^top_five_projects_by_country/$', top_five_projects_by_country, name='top_five_projects_by_country'),
     url(r'^web_user_data', WebUserDataView.as_view(), name=WebUserDataView.urlname),
     AdminReportDispatcher.url_pattern(),
-)
+]

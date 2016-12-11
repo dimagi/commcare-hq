@@ -38,7 +38,7 @@ class Command(BaseCommand):
     help = "Creates an HqDeploy document to record a successful deployment."
     args = "[user]"
 
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option('--user', help='User', default=False),
         make_option('--environment', help='Environment {production|staging etc...}', default=settings.SERVER_ENVIRONMENT),
         make_option('--mail_admins', help='Mail Admins', default=False, action='store_true'),

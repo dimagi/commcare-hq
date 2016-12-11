@@ -107,7 +107,15 @@ with NodeJS. An up-to-date version is available on the NodeSource repository.
 3. Run bower with:
 
         $ bower install
+        
 
+### Install JS-XPATH
+
+This is required for the server side xpath validation. See [package.json](package.json) for exact version.
+
+```
+npm install dimagi/js-xpath#v0.0.2-rc1
+```
 
 ### Using LESS: 3 Options
 
@@ -264,7 +272,7 @@ refer to the install instructions [here](https://github.com/dimagi/formplayer).
 Running CommCare HQ
 -------------------
 
-Make sure the required services are running (PostgreSQL, Redis, Elasticsearch, CouchDB).
+Make sure the required services are running (PostgreSQL, Redis, CouchDB, Kafka, Elasticsearch).
 
 Then run the following separately:
 
@@ -475,6 +483,10 @@ automatically, set the cluster name to your hostname in /etc/elasticsearch/elast
 ```yaml
 cluster.name: <your hostname>
 ```
+
+#### Kafka Configuration
+
+See [changes_feed README](./corehq/apps/change_feed/README.md).
 
 #### CouchDB Configuration
 

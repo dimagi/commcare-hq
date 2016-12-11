@@ -85,7 +85,7 @@ class PartitionConfig(object):
         num_shards = len(shards_seen)
 
         if not _is_power_of_2(num_shards):
-            raise NotPowerOf2Error('Total number of shards must be a power of 2')
+            raise NotPowerOf2Error('Total number of shards must be a power of 2: {}'.format(num_shards))
 
     @property
     def partition_config(self):
@@ -166,3 +166,12 @@ def _get_config():
 
 
 partition_config = _get_config()
+
+
+def get_sql_db_aliases_in_use():
+    if settings.USE_PARTITIONED_DATABASE:
+        using = partition_config.get_form_processing_dbs()
+    else:
+        using = [None]  # use the default database
+
+    return using

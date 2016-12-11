@@ -137,13 +137,13 @@
         var self = {};
         $scope._ = _;   // make underscore.js available
         $scope.formData = {};
+        $scope.modelType = null;  // "form" or "case" - corresponding to the type of export selected.
         $scope.isSubmittingForm = false;
         $scope.hasFormSubmitError = false;
         $scope.formSubmitErrorMessage = null;
-        $scope.hasGroups = true;
         $scope.dateRegex = '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]';
         self.nonPristineExportFilters = {};
-        var formElement = filterFormElements;
+        $scope.formElement = filterFormElements;
 
 
         $rootScope.$watch("filterModalExport", function (newSelectedExport, oldSelectedExport) {
@@ -156,9 +156,10 @@
                 }
 
                 $scope.formData = newSelectedExport.emailedExport.filters;
+                $scope.modelType = newSelectedExport.exportType;
                 // select2s require programmatic update
-                formElement.user_type().select2("val", $scope.formData.user_types);
-                formElement.group().select2("val", $scope.formData.group);
+                $scope.formElement.emwf_case_filter().select2("data", newSelectedExport.emailedExport.filters.emwf_case_filter);
+                $scope.formElement.emwf_form_filter().select2("data", newSelectedExport.emailedExport.filters.emwf_form_filter);
             }
         });
 
@@ -169,15 +170,20 @@
                 self._clearSubmitError();
             }
         });
-        $scope.$watch("formData.type_or_group", function(newVal, oldVal) {
-            if (!newVal) {
-                $scope.formData.type_or_group = "type";
-            }
-        });
 
         $scope.commitFilters = function () {
             var export_ = $rootScope.filterModalExport;
             $scope.isSubmittingForm = true;
+
+            // Put the data from the select2 into the formData object
+            if ($scope.modelType === 'form') {
+                $scope.formData.emwf_form_filter = $scope.formElement.emwf_form_filter().select2("data");
+                $scope.formData.emwf_case_filter = null;
+            }
+            if ($scope.modelType === 'case') {
+                $scope.formData.emwf_case_filter = $scope.formElement.emwf_case_filter().select2("data");
+                $scope.formData.emwf_form_filter = null;
+            }
 
             djangoRMI.commit_filters({
                 export: export_,

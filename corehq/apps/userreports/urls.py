@@ -1,4 +1,4 @@
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 
 from corehq.apps.userreports.views import (
     UserConfigReportsHomeView,
@@ -20,8 +20,7 @@ from corehq.apps.userreports.views import (
     choice_list_api,
 )
 
-urlpatterns = patterns(
-    'corehq.apps.userreports.views',
+urlpatterns = [
     url(r'^$', UserConfigReportsHomeView.as_view(),
         name=UserConfigReportsHomeView.urlname),
     url(r'^reports/create/$', CreateConfigReportView.as_view(),
@@ -55,4 +54,4 @@ urlpatterns = patterns(
 
     # apis
     url(r'^api/choice_list/(?P<report_id>[\w-]+)/(?P<filter_id>[\w-]+)/$', choice_list_api, name='choice_list_api'),
-)
+]

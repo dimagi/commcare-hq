@@ -1,5 +1,5 @@
 from django.test import SimpleTestCase
-from corehq.util.spreadsheets.excel import IteratorJSONReader
+from corehq.util.spreadsheets_v1.excel import IteratorJSONReader
 
 
 class IteratorJSONReaderTest(SimpleTestCase):

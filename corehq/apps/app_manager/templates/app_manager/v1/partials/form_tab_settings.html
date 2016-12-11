@@ -63,6 +63,11 @@
                 {% include "app_manager/v1/partials/form_gps_capture.html" %}
 
             </div>
+
+            {% if request|toggle_enabled:'CUSTOM_INSTANCES' %}
+                {% include "app_manager/v1/partials/custom_instances.html" %}
+            {% endif %}
+
             {% if request|toggle_enabled:'NO_VELLUM' %}
             <div class="form-group">
                 <label class="control-label col-sm-2">

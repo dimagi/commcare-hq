@@ -90,7 +90,7 @@
                 <th>{% trans "Date Registered" %}</th>
                 <td><%= user.dateRegistered %></td>
             </tr>
-        <% _.each(user.customFields, function(key, value) { %>
+        <% _.each(user.customFields, function(value, key) { %>
             <tr>
                 <th><%= key %></th>
                 <td><%= value %></td>
@@ -101,7 +101,7 @@
 
 </script>
 <script type="text/template" id="restore-as-banner-template">
-  {% if request|toggle_enabled:'RESTORE_AS_CLOUDCARE' %}
+  {% if request|can_use_restore_as %}
     <% if (restoreAs) { %>
     <div class="restore-as-banner module-banner">
         <span>

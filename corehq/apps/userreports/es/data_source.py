@@ -1,91 +1,28 @@
-from collections import OrderedDict
+import copy
 
 from django.utils.decorators import method_decorator
 
 from dimagi.utils.decorators.memoized import memoized
 
-from corehq.apps.es.aggregations import SumAggregation, TermsAggregation
+from corehq.apps.es.aggregations import MinAggregation, SumAggregation, TermsAggregation
 from corehq.apps.es.es_query import HQESQuery
 
 from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.userreports.columns import get_expanded_column_config
 from corehq.apps.userreports.decorators import catch_and_raise_exceptions
-from corehq.apps.userreports.models import DataSourceConfiguration, get_datasource_config
+from corehq.apps.userreports.mixins import ConfigurableReportDataSourceMixin
 from corehq.apps.userreports.reports.sorting import ASCENDING, DESCENDING
-from corehq.apps.userreports.util import get_table_name
 
 
-class ConfigurableReportEsDataSource(ReportDataSource):
-    def __init__(self, domain, config_or_config_id, filters, aggregation_columns, columns, order_by):
-        self.lang = None
-        self.domain = domain
-        if isinstance(config_or_config_id, DataSourceConfiguration):
-            self._config = config_or_config_id
-            self._config_id = self._config._id
-        else:
-            assert isinstance(config_or_config_id, basestring)
-            self._config = None
-            self._config_id = config_or_config_id
-
-        self._filters = {f.slug: f for f in filters}
-        self._filter_values = {}
-        self._deferred_filters = {}
-        self._order_by = order_by
-        self._aggregation_columns = aggregation_columns
-        self._column_configs = OrderedDict()
-        for column in columns:
-            # should be caught in validation prior to reaching this
-            assert column.column_id not in self._column_configs, \
-                'Report {} in domain {} has more than one {} column defined!'.format(
-                    self._config_id, self.domain, column.column_id,
-                )
-            self._column_configs[column.column_id] = column
-
-    @property
-    def aggregation_columns(self):
-        # TODO add deferred filters to support mobile ucr
-        return self._aggregation_columns
-
-    @property
-    def config(self):
-        if self._config is None:
-            self._config, _ = get_datasource_config(self._config_id, self.domain)
-        return self._config
-
-    @property
-    def top_level_columns(self):
-        return self._column_configs.values()
-
-    @property
-    def inner_columns(self):
-        """
-        This returns a list of Column objects that are contained within the top_level_columns
-        above.
-        """
-        return [
-            inner_col for col in self.top_level_columns
-            for inner_col in col.get_column_config(self.config, self.lang).columns
-        ]
-
+class ConfigurableReportEsDataSource(ConfigurableReportDataSourceMixin, ReportDataSource):
     @property
     def table_name(self):
         # TODO make this the same function as the adapter
-        return get_table_name(self.domain, self.config.table_id).lower()
+        return super(ConfigurableReportEsDataSource, self).table_name.lower()
 
     @property
     def filters(self):
         return filter(None, [f.to_es_filter() for f in self._filter_values.values()])
-
-    def set_filter_values(self, filter_values):
-        for filter_slug, value in filter_values.items():
-            self._filter_values[filter_slug] = self._filters[filter_slug].create_filter_value(value)
-
-    def defer_filters(self, filter_slugs):
-        self._deferred_filters.update({
-            filter_slug: self._filters[filter_slug] for filter_slug in filter_slugs})
-
-    def set_order_by(self, columns):
-        self._order_by = columns
 
     @property
     def order_by(self):
@@ -106,14 +43,6 @@ class ConfigurableReportEsDataSource(ReportDataSource):
         return db_columns
 
     @property
-    def column_configs(self):
-        return [col.get_column_config(self.config, self.lang) for col in self.top_level_columns]
-
-    @property
-    def column_warnings(self):
-        return [w for conf in self.column_configs for w in conf.warnings]
-
-    @property
     @memoized
     def uses_aggregations(self):
         return not(len(self.aggregation_columns) == 1 and self.aggregation_columns[0] == 'doc_id')
@@ -126,8 +55,12 @@ class ConfigurableReportEsDataSource(ReportDataSource):
         else:
             ret = self._get_query_results(start, limit)
 
-        for report_column in self.top_level_columns:
+        for report_column in self.top_level_db_columns:
             report_column.format_data(ret)
+
+        for computed_column in self.top_level_computed_columns:
+            for row in ret:
+                row[computed_column.column_id] = computed_column.wrapped_expression(row)
 
         return ret
 
@@ -138,8 +71,8 @@ class ConfigurableReportEsDataSource(ReportDataSource):
 
         for row in hits:
             r = {}
-            for report_column in self.top_level_columns:
-                r[report_column.column_id] = row[report_column.field]
+            for report_column in self.top_level_db_columns:
+                r.update(report_column.get_es_data(row, self.config, self.lang, from_aggregation=False))
             ret.append(r)
 
         return ret
@@ -162,25 +95,44 @@ class ConfigurableReportEsDataSource(ReportDataSource):
 
     @memoized
     def _get_aggregated_results(self, start, limit):
-        query = self._get_aggregated_query(start, limit)
-        hits = getattr(query.aggregations, self.aggregation_columns[0]).raw
-        hits = hits[self.aggregation_columns[0]]['buckets'][start:]
-        ret = []
+        def _parse_bucket(bucket, remaining_agg_columns, current_bucket_name, past_bucket_info):
+            current_bucket_key = bucket['key']
+            past_bucket_info.update({current_bucket_name: current_bucket_key})
+            if remaining_agg_columns:
+                sub_buckets = bucket[remaining_agg_columns[0]]['buckets']
+                return _parse_buckets(
+                    sub_buckets,
+                    remaining_agg_columns[1:],
+                    remaining_agg_columns[0],
+                    past_bucket_info
+                )
 
-        for row in hits:
+            ret = bucket
+            ret['past_bucket_values'] = copy.deepcopy(past_bucket_info)
+            return [ret]
+
+        def _parse_buckets(buckets, remaining_agg_columns, current_bucket_name, past_bucket_info=None):
+            past_bucket_info = past_bucket_info or {}
+
+            ret = []
+            for bucket in buckets:
+                ret += _parse_bucket(bucket, remaining_agg_columns, current_bucket_name, past_bucket_info)
+            return ret
+
+        query = self._get_aggregated_query(start, limit)
+        aggs = getattr(query.aggregations, self.aggregation_columns[0]).raw
+        top_buckets = aggs[self.aggregation_columns[0]]['buckets']
+        hits = _parse_buckets(top_buckets, self.aggregation_columns[1:], self.aggregation_columns[0])
+
+        ret = []
+        start = start or 0
+        end = start + (limit or len(hits))
+        relevant_hits = hits[start:end]
+
+        for row in relevant_hits:
             r = {}
             for report_column in self.top_level_columns:
-                if report_column.type == 'expanded':
-                    # todo aggregation only supports # of docs matching
-                    for sub_col in get_expanded_column_config(self.config, report_column, 'en').columns:
-                        # todo move interpretation of data into column config
-                        r[sub_col.ui_alias] = row[sub_col.es_alias]['doc_count']
-                elif report_column.field == self.aggregation_columns[0]:
-                    r[report_column.column_id] = row['key']
-                elif report_column.aggregation == 'sum':
-                    r[report_column.column_id] = int(row[report_column.field]['value'])
-                else:
-                    r[report_column.column_id] = row[report_column.field]['doc_count']
+                r.update(report_column.get_es_data(row, self.config, self.lang))
             ret.append(r)
 
         return ret
@@ -192,38 +144,32 @@ class ConfigurableReportEsDataSource(ReportDataSource):
         for filter in self.filters:
             query = query.filter(filter)
 
-        top_agg = TermsAggregation(self.aggregation_columns[0], self.aggregation_columns[0], size=max_size)
-        for agg_column in self.aggregation_columns[1:]:
-            # todo support multiple aggregations
-            pass
+        innermost_agg_col = self.aggregation_columns[-1]
+        innermost_agg = TermsAggregation(innermost_agg_col, innermost_agg_col)
 
         aggregations = []
         for col in self.top_level_columns:
-            if col.type == 'expanded':
-                for sub_col in get_expanded_column_config(self.config, col, 'en').columns:
-                    aggregations.append(sub_col.aggregation)
-            elif col.type == 'field':
-                if col.aggregation == 'sum':
-                    # todo push this to the column
-                    aggregations.append(SumAggregation(col.field, col.field))
+            for agg in col.aggregations(self.config, self.lang):
+                innermost_agg.aggregation(agg)
 
-        for agg in aggregations:
-            top_agg = top_agg.aggregation(agg)
+        top_agg = innermost_agg
+        # go through aggregations in reverse order so that they are nested properly
+        # todo: Refactor NestedTermAggregationsHelper to support this use case
+        for agg_column in self.aggregation_columns[:-1][::-1]:
+            top_agg = TermsAggregation(agg_column, agg_column).aggregation(top_agg)
+
+        top_agg.size(max_size)
 
         if self.order_by:
             # todo sort by more than one column
             # todo sort by by something other than the first aggregate column
             col, desc = self.order_by[0]
             if col == self.aggregation_columns[0] or col == self.top_level_columns[0].field:
-                top_agg = top_agg.order('_count', desc)
+                top_agg = top_agg.order('_term', desc)
 
         query = query.aggregation(top_agg)
 
         return query.run()
-
-    @property
-    def has_total_row(self):
-        return any(column_config.calculate_total for column_config in self.top_level_columns)
 
     @method_decorator(catch_and_raise_exceptions)
     def get_total_records(self):
@@ -237,7 +183,7 @@ class ConfigurableReportEsDataSource(ReportDataSource):
 
     @property
     def required_fields(self):
-        ret = [c.field for c in self.top_level_columns]
+        ret = [c.field for c in self.top_level_db_columns]
         return ret + [c for c in self.aggregation_columns]
 
     @method_decorator(catch_and_raise_exceptions)

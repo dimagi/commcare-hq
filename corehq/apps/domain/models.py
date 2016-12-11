@@ -1,13 +1,17 @@
 from datetime import datetime
 from itertools import imap
+import time
 import uuid
+
+from couchdbkit import PreconditionFailed
+
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.template.loader import render_to_string
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.domain.exceptions import DomainDeleteException
-from corehq.apps.tzmigration.api import set_migration_complete
+from corehq.apps.tzmigration.api import set_tz_migration_complete
 from corehq.dbaccessors.couchapps.all_docs import \
     get_all_doc_ids_for_domain_grouped_by_db
 from corehq.util.soft_assert import soft_assert
@@ -251,6 +255,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
     usercase_enabled = BooleanProperty(default=False)
     hipaa_compliant = BooleanProperty(default=False)
     use_sql_backend = BooleanProperty(default=False)
+    first_domain_for_user = BooleanProperty(default=False)
 
     case_display = SchemaProperty(CaseDisplaySettings)
 
@@ -631,7 +636,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         self.last_modified = datetime.utcnow()
         if not self._rev:
             # mark any new domain as timezone migration complete
-            set_migration_complete(self.name)
+            set_tz_migration_complete(self.name)
         super(Domain, self).save(**params)
 
         from corehq.apps.domain.signals import commcare_domain_post_save
@@ -689,7 +694,14 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
             # Saving the domain should happen before we import any apps since
             # importing apps can update the domain object (for example, if user
             # as a case needs to be enabled)
-            new_domain.save()
+            try:
+                new_domain.save()
+            except PreconditionFailed:
+                # This is a hack to resolve http://manage.dimagi.com/default.asp?241492
+                # Following solution in
+                # https://github.com/dimagi/commcare-hq/commit/d59b1e403060ade599cc4a03db0aabc4da62b668
+                time.sleep(0.5)
+                new_domain.save()
 
             new_app_components = {}  # a mapping of component's id to its copy
 

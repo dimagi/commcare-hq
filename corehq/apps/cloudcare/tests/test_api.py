@@ -1,3 +1,4 @@
+from mock import patch
 import json
 import uuid
 
@@ -13,6 +14,7 @@ from corehq import toggles
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
+from corehq.apps.cloudcare.views import ReadableQuestions
 from corehq.apps.cloudcare.api import get_filtered_cases, CaseAPIResult, CASE_STATUS_OPEN, CASE_STATUS_ALL,\
     CASE_STATUS_CLOSED
 
@@ -329,3 +331,48 @@ def _create_case(user, type, close=False, **extras):
     case = CaseAccessors(TEST_DOMAIN).get_case(case_id)
     assert case.closed == close
     return case
+
+
+class ReadableQuestionsAPITest(TestCase):
+    """
+    Tests some of the Case API functions
+    """
+    domain = TEST_DOMAIN
+
+    @classmethod
+    def setUpClass(cls):
+        super(ReadableQuestionsAPITest, cls).setUpClass()
+        cls.project = create_domain(cls.domain)
+        cls.password = "****"
+        cls.username = format_username('reed', cls.domain)
+
+        cls.user = CommCareUser.create(
+            cls.domain,
+            cls.username,
+            cls.password
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        super(ReadableQuestionsAPITest, cls).tearDownClass()
+        cls.user.delete()
+        cls.project.delete()
+
+    def test_readable_questions(self):
+        instanceXml = '''
+        <data>
+          <question1>ddd</question1>
+        </data>
+        '''
+        self.client.login(username=self.username, password=self.password)
+        with patch('corehq.apps.cloudcare.views.readable.get_questions', lambda x, y, z: []):
+            result = self.client.post(
+                reverse(ReadableQuestions.urlname, args=[self.domain]),
+                {
+                    'app_id': '123',
+                    'xmlns': 'abc',
+                    'instanceXml': instanceXml,
+                }
+            )
+        self.assertEqual(result.status_code, 200)
+        self.assertIn('form_data', json.loads(result.content))

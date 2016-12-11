@@ -16,7 +16,7 @@ class Command(BaseCommand):
     args = '<domain domain ...>'
     help = "Rebuild call center data sources which are out of sync"
 
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option(
             '--all', action='store_true', default=False,
             help='Check ALL domains'

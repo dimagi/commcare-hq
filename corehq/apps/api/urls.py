@@ -8,7 +8,7 @@ from corehq.apps.commtrack.resources.v0_1 import ProductResource
 from corehq.apps.fixtures.resources.v0_1 import FixtureResource, InternalFixtureResource
 from corehq.apps.locations import resources as locations
 from corehq.apps.sms.resources import v0_5 as sms_v0_5
-from django.conf.urls import include, patterns, url
+from django.conf.urls import include, url
 from django.http import HttpResponseNotFound
 from tastypie.api import Api
 
@@ -70,7 +70,7 @@ def api_url_patterns():
         api = CommCareHqApi(api_name='v%d.%d' % version)
         for R in resources:
             api.register(R())
-        yield (r'^', include(api.urls))
+        yield url(r'^', include(api.urls))
     # HACK: fix circular import here, to fix later
     try:
         from pact.api import PactAPI
@@ -82,7 +82,7 @@ def api_url_patterns():
     yield url(r'^form/attachment/(?P<form_id>[\w\-]+)/(?P<attachment_id>.*)$', FormAttachmentAPI.as_view(), name="api_form_attachment")
 
 
-urlpatterns = patterns('', *list(api_url_patterns()))
+urlpatterns = list(api_url_patterns())
 
 ADMIN_API_LIST = (
     v0_5.AdminWebUserResource,
@@ -120,6 +120,6 @@ def api_url_patterns():
     api = CommCareHqApi(api_name='global')
     for resource in ADMIN_API_LIST + USER_API_LIST:
         api.register(resource())
-        yield (r'^', include(api.urls))
+        yield url(r'^', include(api.urls))
 
-admin_urlpatterns = patterns('', *list(api_url_patterns()))
+admin_urlpatterns = list(api_url_patterns())

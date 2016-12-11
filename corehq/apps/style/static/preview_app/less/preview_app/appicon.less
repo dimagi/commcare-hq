@@ -6,6 +6,7 @@
   margin-bottom: 10px;
 
   .appicon-title {
+    .transition(height 1s);
     height: 30px;
     bottom: 7px;
     h3 {
@@ -23,9 +24,15 @@
   }
 }
 
-.appicon-start, .appicon-sync {
+.appicon-start,
+.appicon-sync,
+.appicon-settings,
+.preview-tablet-mode .appicon-incomplete {
   .appicon-title {
     height: 21px;
   }
 }
 
+.container-appicons .page-header-apps {
+  display: none;
+}

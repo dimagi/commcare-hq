@@ -16,7 +16,7 @@ POOL_SIZE = getattr(settings, 'PREINDEX_POOL_SIZE', 8)
 class Command(BaseCommand):
     help = 'Super preindex management command to do our bidding'
 
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option('--mail', help='Mail confirmation', action='store_true',
                     default=False),
         make_option('--check', help='Exit with 0 if preindex is complete',

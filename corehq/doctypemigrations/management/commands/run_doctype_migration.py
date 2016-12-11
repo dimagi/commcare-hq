@@ -50,7 +50,7 @@ class Command(BaseCommand):
 
     """
     help = USAGE
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option(
             '--initial',
             action='store_true',

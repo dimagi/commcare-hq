@@ -12,14 +12,30 @@
         "table_id": "episode",
         "display_name": "episode",
         "configured_filter": {
-            "operator": "eq",
-            "expression": {
-                "datatype": null,
-                "type": "property_name",
-                "property_name": "type"
-            },
-            "type": "boolean_expression",
-            "property_value": "episode"
+            "type": "and",
+            "filters": [
+                {
+                    "operator": "eq",
+                    "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "type"
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "episode"
+                },
+                {
+                    "operator": "eq",
+                    "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "closed"
+                    },
+                    "type": "boolean_expression",
+                    "property_value": false
+                }
+            ]
+
         },
         "configured_indicators": [
             {
@@ -265,7 +281,7 @@
             },
             {
                 "display_name": "person/age",
-                "datatype": "string",
+                "datatype": "integer",
                 "type": "expression",
                 "is_primary_key": false,
                 "transform": {
@@ -314,7 +330,7 @@
                     "value_expression": {
                         "datatype": "string",
                         "type": "property_name",
-                        "property_name": "mobile_number"
+                        "property_name": "phone_number"
                     },
                     "type": "related_doc",
                     "related_doc_type": "CommCareCase",
@@ -325,6 +341,170 @@
                     }
                 },
                 "column_id": "mobile_number"
+            },
+            {
+                "display_name": "previous_tb_treatment",
+                "type": "expression",
+                "datatype": "string",
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "previous_tb_treatment"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "datatype": null,
+                        "type": "named",
+                        "name": "person_id"
+                    }
+                },
+                "column_id": "previous_tb_treatment"
+            },
+            {
+                "display_name": "episode_type_patient",
+                "type": "boolean",
+                "filter": {
+                    "type": "named",
+                    "name": "current_episode_type_patient"
+                },
+                "column_id": "episode_type_patient"
+            },
+            {
+                "display_name": "current_episode_type",
+                "datatype": "string",
+                "type": "expression",
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "current_episode_type"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "datatype": null,
+                        "type": "named",
+                        "name": "occurrence_id"
+                    }
+                },
+                "column_id": "current_episode_type"
+            },
+            {
+                "display_name": "cat1",
+                "type": "boolean",
+                "filter": {
+                    "type": "named",
+                    "name": "cat1"
+                },
+                "column_id": "cat1"
+            },
+            {
+                "display_name": "cat2",
+                "type": "boolean",
+                "filter": {
+                    "type": "named",
+                    "name": "cat2"
+                },
+                "column_id": "cat2"
+            },
+            {
+                "display_name": "person/tu",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "name"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "Location",
+                    "doc_id_expression": {
+                        "value_expression": {
+                            "datatype": "string",
+                            "type": "property_name",
+                            "property_name": "tu_choice"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                            "datatype": null,
+                            "type": "named",
+                            "name": "person_id"
+                        }
+                    }
+                },
+                "column_id": "tu"
+            },
+            {
+                "display_name": "person/phi",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "phi"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "datatype": null,
+                        "type": "named",
+                        "name": "person_id"
+                    }
+                },
+                "column_id": "phi"
+            },
+            {
+                "type": "expression",
+                "datatype": "string",
+                "column_id": "treatment_status",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "operator": "in",
+                        "expression": {
+                            "type": "property_name",
+                            "property_name": "treatment_initiated"
+                        },
+                        "type": "boolean_expression",
+                        "property_value": ["yes_phi", "yes_private"]
+                    },
+                    "expression_if_true": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "cp_initiated"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "yes"
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": "CP"
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": "IP"
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": ""
+                    }
+                }
             },
             {
                 "display_name": "patient_type",
@@ -352,7 +532,7 @@
                 "expression": {
                     "datatype": "string",
                     "type": "property_name",
-                    "property_name": "basis_of_diagnosis"
+                    "property_name": "case_definition"
                 },
                 "column_id": "basis_of_diagnosis"
             },
@@ -561,7 +741,7 @@
                     }
                 }
             },
-                        {
+            {
                 "display_name": "endofcp_test_requested_date",
                 "column_id": "endofcp_test_requested_date",
                 "datatype": "date",
@@ -648,6 +828,20 @@
                 "column_id": "diabetes_status"
             },
             {
+                "type": "boolean",
+                "filter": {
+                    "type": "boolean_expression",
+                    "operator": "eq",
+                    "expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "diabetes_status"
+                    },
+                    "property_value": "diabetic"
+                },
+                "column_id": "diabetic"
+            },
+            {
                 "display_name": "hiv_status",
                 "datatype": "string",
                 "type": "expression",
@@ -656,10 +850,65 @@
                 },
                 "is_nullable": true,
                 "expression": {
-                    "type": "named",
-                    "name": "hiv_status"
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "hiv_status"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "datatype": null,
+                        "type": "named",
+                        "name": "person_id"
+                    }
                 },
                 "column_id": "hiv_status"
+            },
+            {
+                "display_name": "dots_commcareuser",
+                "type": "boolean",
+                "filter": {
+                    "type": "named",
+                    "name": "dots_commcareuser"
+                },
+                "column_id": "dots_commcareuser"
+            },
+            {
+                "display_name": "dots_commcareuser_cat1",
+                "type": "boolean",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "dots_commcareuser"
+                        },
+                        {
+                            "type": "named",
+                            "name": "cat1"
+                        }
+                    ]
+                },
+                "column_id": "dots_commcareuser_cat1"
+            },
+            {
+                "display_name": "dots_commcareuser_cat2",
+                "type": "boolean",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "dots_commcareuser"
+                        },
+                        {
+                            "type": "named",
+                            "name": "cat2"
+                        }
+                    ]
+                },
+                "column_id": "dots_commcareuser_cat2"
             },
             {
                 "column_id": "purpose_of_test",
@@ -985,6 +1234,18 @@
             },
             {
                 "filter": {
+                    "type": "not",
+                    "filter": {
+                        "type": "named",
+                        "name": "under_15"
+                    }
+                },
+                "type": "boolean",
+                "display_name": null,
+                "column_id": "over_15"
+            },
+            {
+                "filter": {
                     "type": "named",
                     "name": "new_patient"
                 },
@@ -1036,24 +1297,6 @@
                 "type": "boolean",
                 "display_name": null,
                 "column_id": "hiv_positive"
-            },
-            {
-                "column_id": "episode_type_patient",
-                "type": "boolean",
-                "filter": {
-                    "type": "and",
-                    "filters": [
-                        {
-                            "type": "boolean_expression",
-                            "expression": {
-                                "type": "property_name",
-                                "property_name": "episode_type"
-                            },
-                            "operator": "eq",
-                            "property_value": "confirmed_tb"
-                        }
-                    ]
-                }
             },
             {
                 "column_id": "cpt_during_tb",
@@ -1261,7 +1504,7 @@
                 "type": "boolean",
                 "column_id": "new_sputum_na_patient_2months_ip"
             },
-                       {
+            {
                 "filter": {
                     "type": "and",
                     "filters": [
@@ -1847,6 +2090,1729 @@
                         "name": "person_id"
                     }
                 }
+            },
+            {
+                "type": "boolean",
+                "column_id": "suspect_tested_at_dmc",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "not",
+                            "filter": {
+                                "operator": "in",
+                                "type": "boolean_expression",
+                                "expression": {
+                                    "type": "nested",
+                                    "argument_expression": {
+                                        "type": "named",
+                                        "name": "latest_microscopy_test_case"
+                                    },
+                                    "value_expression": {
+                                        "type": "property_name",
+                                        "property_name": "result"
+                                    }
+                                },
+                                "property_value": ["", null]
+                            }
+                        },
+                        {
+                            "type": "named",
+                            "name": "current_episode_type_suspect"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "positive_suspect_tested_at_dmc",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "operator": "eq",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "named",
+                                    "name": "latest_microscopy_test_case"
+                                },
+                                "value_expression": {
+                                    "type": "property_name",
+                                    "property_name": "result"
+                                }
+                            },
+                            "property_value": "tb_detected"
+                        },
+                        {
+                            "type": "named",
+                            "name": "current_episode_type_suspect"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "suspect_tested_for_diagnosis",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "not",
+                            "filter": {
+                                "operator": "in",
+                                "type": "boolean_expression",
+                                "expression": {
+                                    "type": "nested",
+                                    "argument_expression": {
+                                        "type": "named",
+                                        "name": "latest_diagnostic_microscopy_test_case"
+                                    },
+                                    "value_expression": {
+                                        "type": "property_name",
+                                        "property_name": "result"
+                                    }
+                                },
+                                "property_value": ["", null]
+                            }
+                        },
+                        {
+                            "type": "named",
+                            "name": "current_episode_type_suspect"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "positive_suspect_tested_for_diagnosis",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "operator": "eq",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "named",
+                                    "name": "latest_diagnostic_microscopy_test_case"
+                                },
+                                "value_expression": {
+                                    "type": "property_name",
+                                    "property_name": "result"
+                                }
+                            },
+                            "property_value": "tb_detected"
+                        },
+                        {
+                            "type": "named",
+                            "name": "current_episode_type_suspect"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "suspect_tested_for_follow_up",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "not",
+                            "filter": {
+                                "operator": "in",
+                                "type": "boolean_expression",
+                                "expression": {
+                                    "type": "nested",
+                                    "argument_expression": {
+                                        "type": "named",
+                                        "name": "latest_follow_up_microscopy_test_case"
+                                    },
+                                    "value_expression": {
+                                        "type": "property_name",
+                                        "property_name": "result"
+                                    }
+                                },
+                                "property_value": ["", null]
+                            }
+                        },
+                        {
+                            "type": "named",
+                            "name": "current_episode_type_suspect"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "positive_suspect_tested_for_follow_up",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "operator": "eq",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "named",
+                                    "name": "latest_follow_up_microscopy_test_case"
+                                },
+                                "value_expression": {
+                                    "type": "property_name",
+                                    "property_name": "result"
+                                }
+                            },
+                            "property_value": "tb_detected"
+                        },
+                        {
+                            "type": "named",
+                            "name": "current_episode_type_suspect"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "positive_suspect_referred_out_tested_for_diagnosis",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "operator": "eq",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "named",
+                                    "name": "latest_diagnostic_microscopy_test_case"
+                                },
+                                "value_expression": {
+                                    "type": "property_name",
+                                    "property_name": "result"
+                                }
+                            },
+                            "property_value": "tb_detected"
+                        },
+                        {
+                            "type": "not",
+                            "filter": {
+                                "operator": "in",
+                                "type": "boolean_expression",
+                                "expression": {
+                                    "type": "nested",
+                                    "argument_expression": {
+                                        "type": "named",
+                                        "name": "referral_case"
+                                    },
+                                    "value_expression": {
+                                        "type": "property_name",
+                                        "property_name": "referral_date"
+                                    }
+                                },
+                                "property_value": ["", null]
+                            }
+                        },
+                        {
+                            "operator": "in",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_initiation_date"
+                            },
+                            "property_value": ["", null]
+                        },
+                        {
+                            "type": "named",
+                            "name": "current_episode_type_suspect"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "positive_suspect_in_district_tested_for_diagnosis",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "operator": "eq",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "named",
+                                    "name": "latest_diagnostic_microscopy_test_case"
+                                },
+                                "value_expression": {
+                                    "type": "property_name",
+                                    "property_name": "result"
+                                }
+                            },
+                            "property_value": "tb_detected"
+                        },
+                        {
+                            "type": "not",
+                            "filter": {
+                                "operator": "in",
+                                "type": "boolean_expression",
+                                "expression": {
+                                    "type": "property_name",
+                                    "property_name": "treatment_initiation_date"
+                                },
+                                "property_value": ["", null]
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "positive_suspect_all_tested_for_diagnosis",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "operator": "eq",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "named",
+                                    "name": "latest_diagnostic_microscopy_test_case"
+                                },
+                                "value_expression": {
+                                    "type": "property_name",
+                                    "property_name": "result"
+                                }
+                            },
+                            "property_value": "tb_detected"
+                        },
+                        {
+                            "operator": "in",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_initiation_date"
+                            },
+                            "property_value": ["", null]
+                        },
+                        {
+                            "operator": "in",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "named",
+                                    "name": "referral_case"
+                                },
+                                "value_expression": {
+                                    "type": "property_name",
+                                    "property_name": "referral_date"
+                                }
+                            },
+                            "property_value": ["", null]
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "patient_on_ip",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "not",
+                            "filter": {
+                                "operator": "in",
+                                "type": "boolean_expression",
+                                "expression": {
+                                    "type": "property_name",
+                                    "property_name": "treatment_initiation_date"
+                                },
+                                "property_value": ["", null]
+                            }
+                        },
+                        {
+                            "type": "not",
+                            "filter": {
+                                "operator": "eq",
+                                "type": "boolean_expression",
+                                "expression": {
+                                    "type": "property_name",
+                                    "property_name": "cp_initiated"
+                                },
+                                "property_value": "yes"
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "patient_on_cp",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "operator": "eq",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "cp_initiated"
+                            },
+                            "property_value": "yes"
+
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "patient_on_ip_or_cp",
+                "filter": {
+                    "type": "or",
+                    "filters": [
+                        {
+                            "operator": "eq",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "cp_initiated"
+                            },
+                            "property_value": "yes"
+                        },
+                        {
+                            "type": "not",
+                            "filter": {
+                                "operator": "in",
+                                "type": "boolean_expression",
+                                "expression": {
+                                    "type": "property_name",
+                                    "property_name": "treatment_initiation_date"
+                                },
+                                "property_value": ["", null]
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "mdr_suspect",
+                "filter": {
+                    "type": "or",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        },
+                        {
+                            "type": "not",
+                            "filter": {
+                                "operator": "in",
+                                "type": "boolean_expression",
+                                "expression": {
+                                    "type": "named",
+                                    "name": "key_populations"
+                                },
+                                "property_value": [null, ""]
+                            }
+                        },
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "named",
+                                    "name": "latest_endofip_test_case"
+                                },
+                                "value_expression": {
+                                    "type": "property_name",
+                                    "property_name": "result"
+                                }
+                            },
+                            "property_value": "tb_detected"
+                        },
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "named",
+                                    "name": "latest_endofcp_test_case"
+                                },
+                                "value_expression": {
+                                    "type": "property_name",
+                                    "property_name": "result"
+                                }
+                            },
+                            "property_value": "tb_detected"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "mdr_suspect_end_of_ip_positive",
+                "filter": {
+                    "type": "boolean_expression",
+                    "operator": "eq",
+                    "expression": {
+                        "type": "nested",
+                        "argument_expression": {
+                            "type": "named",
+                            "name": "latest_endofip_test_case"
+                        },
+                        "value_expression": {
+                            "type": "property_name",
+                            "property_name": "result"
+                        }
+                    },
+                    "property_value": "tb_detected"
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "diagnostic_test_after_end_of_ip",
+                "filter": {
+                    "type": "not",
+                    "filter": {
+                        "type": "boolean_expression",
+                        "operator": "in",
+                        "expression": {
+                            "type": "nested",
+                            "argument_expression": {
+                                "type": "reduce_items",
+                                "items_expression": {
+                                    "type": "sort_items",
+                                    "items_expression": {
+                                        "type": "filter_items",
+                                        "items_expression": {
+                                            "type": "get_subcases",
+                                            "case_id_expression": {
+                                                "type": "named",
+                                                "name": "occurrence_id"
+                                            }
+                                        },
+                                        "filter_expression": {
+                                            "type": "and",
+                                            "filters": [
+                                                {
+                                                    "type": "boolean_expression",
+                                                    "operator": "eq",
+                                                    "expression": {
+                                                        "type": "property_name",
+                                                        "property_name": "type"
+                                                    },
+                                                    "property_value": "test"
+                                                },
+                                                {
+                                                    "type": "boolean_expression",
+                                                    "expression": {
+                                                        "type": "property_name",
+                                                        "property_name": "purpose_of_testing"
+                                                    },
+                                                    "operator": "eq",
+                                                    "property_value": "diagnostic"
+                                                },
+                                                {
+                                                    "type": "boolean_expression",
+                                                    "operator": "in",
+                                                    "expression": {
+                                                        "type": "property_name",
+                                                        "property_name": "test_type_value"
+                                                    },
+                                                    "property_value": ["cbnaat", "culture", "line_probe_assay"]
+                                                },
+                                                {
+                                                    "type": "boolean_expression",
+                                                    "expression": {
+                                                        "datatype": "integer",
+                                                        "type": "diff_days",
+                                                        "from_date_expression": {
+                                                            "type": "nested",
+                                                            "argument_expression": {
+                                                                "type": "named",
+                                                                "name": "latest_endofip_test_case"
+                                                            },
+                                                            "value_expression": {
+                                                                "type": "property_name",
+                                                                "property_name": "opened_on"
+                                                            }
+                                                        },
+                                                        "to_date_expression": {
+                                                            "type": "property_name",
+                                                            "property_name": "opened_on"
+                                                        }
+                                                    },
+                                                    "operator": "gt",
+                                                    "property_value": 0
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "sort_expression": {
+                                        "type": "property_name",
+                                        "property_name": "opened_on"
+                                    }
+                                },
+                                "aggregation_fn": "last_item"
+                            },
+                            "value_expression": {
+                                "type": "property_name",
+                                "property_name": "_id"
+                            }
+                        },
+                        "property_value": ["", null]
+                    }
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "positive_diagnostic_test_after_end_of_ip",
+                "filter": {
+                    "type": "boolean_expression",
+                    "operator": "eq",
+                    "expression": {
+                        "type": "nested",
+                        "argument_expression": {
+                            "type": "reduce_items",
+                            "items_expression": {
+                                "type": "sort_items",
+                                "items_expression": {
+                                    "type": "filter_items",
+                                    "items_expression": {
+                                        "type": "get_subcases",
+                                        "case_id_expression": {
+                                            "type": "named",
+                                            "name": "occurrence_id"
+                                        }
+                                    },
+                                    "filter_expression": {
+                                        "type": "and",
+                                        "filters": [
+                                            {
+                                                "type": "boolean_expression",
+                                                "operator": "eq",
+                                                "expression": {
+                                                    "type": "property_name",
+                                                    "property_name": "type"
+                                                },
+                                                "property_value": "test"
+                                            },
+                                            {
+                                                "type": "boolean_expression",
+                                                "expression": {
+                                                    "type": "property_name",
+                                                    "property_name": "purpose_of_testing"
+                                                },
+                                                "operator": "eq",
+                                                "property_value": "diagnostic"
+                                            },
+                                            {
+                                                "type": "boolean_expression",
+                                                "operator": "in",
+                                                "expression": {
+                                                    "type": "property_name",
+                                                    "property_name": "test_type_value"
+                                                },
+                                                "property_value": ["cbnaat", "culture", "line_probe_assay"]
+                                            },
+                                            {
+                                                "type": "boolean_expression",
+                                                "expression": {
+                                                    "datatype": "integer",
+                                                    "type": "diff_days",
+                                                    "from_date_expression": {
+                                                        "type": "nested",
+                                                        "argument_expression": {
+                                                            "type": "named",
+                                                            "name": "latest_endofip_test_case"
+                                                        },
+                                                        "value_expression": {
+                                                            "type": "property_name",
+                                                            "property_name": "opened_on"
+                                                        }
+                                                    },
+                                                    "to_date_expression": {
+                                                        "type": "property_name",
+                                                        "property_name": "opened_on"
+                                                    }
+                                                },
+                                                "operator": "gt",
+                                                "property_value": 0
+                                            }
+                                        ]
+                                    }
+                                },
+                                "sort_expression": {
+                                    "type": "property_name",
+                                    "property_name": "opened_on"
+                                }
+                            },
+                            "aggregation_fn": "last_item"
+                        },
+                        "value_expression": {
+                            "type": "property_name",
+                            "property_name": "result"
+                        }
+                    },
+                    "property_value": "resistant"
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "mdr_suspects_key_populations",
+                "filter": {
+                    "type": "not",
+                    "filter": {
+                        "operator": "in",
+                        "type": "boolean_expression",
+                        "expression": {
+                            "type": "named",
+                            "name": "key_populations"
+                        },
+                        "property_value": [null, ""]
+                    }
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "mdr_suspects_key_populations_test",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "not",
+                            "filter": {
+                                "operator": "in",
+                                "type": "boolean_expression",
+                                "expression": {
+                                    "type": "named",
+                                    "name": "key_populations"
+                                },
+                                "property_value": [null, ""]
+                            }
+                        },
+                        {
+                            "type": "not",
+                            "filter": {
+                                "operator": "in",
+                                "type": "boolean_expression",
+                                "expression": {
+                                    "type": "nested",
+                                    "argument_expression": {
+                                        "type": "named",
+                                        "name": "latest_diagnostic_mbr_test_case"
+                                    },
+                                    "value_expression": {
+                                        "type": "property_name",
+                                        "property_name": "_id"
+                                    }
+                                },
+                                "property_value": [null, ""]
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "mdr_suspects_key_populations_test_positive",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "not",
+                            "filter": {
+                                "operator": "in",
+                                "type": "boolean_expression",
+                                "expression": {
+                                    "type": "named",
+                                    "name": "key_populations"
+                                },
+                                "property_value": [null, ""]
+                            }
+                        },
+                        {
+                            "operator": "eq",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "named",
+                                    "name": "latest_diagnostic_mbr_test_case"
+                                },
+                                "value_expression": {
+                                    "type": "property_name",
+                                    "property_name": "result"
+                                }
+                            },
+                            "property_value": "resistant"
+
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "treatment_outcome_updated",
+                "filter": {
+                    "type": "not",
+                    "filter": {
+                        "type": "boolean_expression",
+                        "operator": "in",
+                        "expression": {
+                            "type": "named",
+                            "name": "treatment_outcome"
+                        },
+                        "property_value": [null, ""]
+                    }
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "new_cured",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_outcome"
+                            },
+                            "property_value": "cured"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "new_treatment_complete",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_outcome"
+                            },
+                            "property_value": "treatment_complete"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "new_died",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_outcome"
+                            },
+                            "property_value": "died"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "new_failure",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_outcome"
+                            },
+                            "property_value": "failure"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "new_loss_to_follow_up",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_outcome"
+                            },
+                            "property_value": "loss_to_follow_up"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "new_regimen_changed",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_outcome"
+                            },
+                            "property_value": "regimen_changed"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "new_not_evaluated",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_outcome"
+                            },
+                            "property_value": "not_evaluated"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "new_treatment_outcome_updated",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "not",
+                            "filter": {
+                                "type": "boolean_expression",
+                                "operator": "in",
+                                "expression": {
+                                    "type": "named",
+                                    "name": "treatment_outcome"
+                                },
+                                "property_value": [null, ""]
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "retreatment_cured",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "retreatment"
+                        },
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_outcome"
+                            },
+                            "property_value": "cured"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "retreatment_treatment_complete",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "retreatment"
+                        },
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_outcome"
+                            },
+                            "property_value": "treatment_complete"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "retreatment_died",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "retreatment"
+                        },
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_outcome"
+                            },
+                            "property_value": "died"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "retreatment_failure",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "retreatment"
+                        },
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_outcome"
+                            },
+                            "property_value": "failure"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "retreatment_loss_to_follow_up",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "retreatment"
+                        },
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_outcome"
+                            },
+                            "property_value": "loss_to_follow_up"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "retreatment_regimen_changed",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "retreatment"
+                        },
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_outcome"
+                            },
+                            "property_value": "regimen_changed"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "retreatment_not_evaluated",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "retreatment"
+                        },
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_outcome"
+                            },
+                            "property_value": "not_evaluated"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "retreatment_treatment_outcome_updated",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "retreatment"
+                        },
+                        {
+                            "type": "not",
+                            "filter": {
+                                "type": "boolean_expression",
+                                "operator": "in",
+                                "expression": {
+                                    "type": "named",
+                                    "name": "treatment_outcome"
+                                },
+                                "property_value": [null, ""]
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "cured",
+                "filter": {
+                    "type": "boolean_expression",
+                    "operator": "eq",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "treatment_outcome"
+                    },
+                    "property_value": "cured"
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "treatment_complete",
+                "filter": {
+                    "type": "boolean_expression",
+                    "operator": "eq",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "treatment_outcome"
+                    },
+                    "property_value": "treatment_complete"
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "died",
+                "filter": {
+                    "type": "boolean_expression",
+                    "operator": "eq",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "treatment_outcome"
+                    },
+                    "property_value": "died"
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "failure",
+                "filter": {
+                    "type": "boolean_expression",
+                    "operator": "eq",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "treatment_outcome"
+                    },
+                    "property_value": "failure"
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "loss_to_follow_up",
+                "filter": {
+                    "type": "boolean_expression",
+                    "operator": "eq",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "treatment_outcome"
+                    },
+                    "property_value": "loss_to_follow_up"
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "regimen_changed",
+                "filter": {
+                    "type": "boolean_expression",
+                    "operator": "eq",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "treatment_outcome"
+                    },
+                    "property_value": "regimen_changed"
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "not_evaluated",
+                "filter": {
+                    "type": "boolean_expression",
+                    "operator": "eq",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "treatment_outcome"
+                    },
+                    "property_value": "not_evaluated"
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "new",
+                "filter": {
+                    "type": "named",
+                    "name": "new_patient"
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "new_under_15",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "under_15"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "new_over_15",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "over_15"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "new_male",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "male"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "new_female",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "female"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "new_transgender",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "named",
+                            "name": "transgender"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "retreatment",
+                "filter": {
+                    "type": "named",
+                    "name": "retreatment"
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "retreatment_under_15",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "retreatment"
+                        },
+                        {
+                            "type": "named",
+                            "name": "under_15"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "retreatment_over_15",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "retreatment"
+                        },
+                        {
+                            "type": "named",
+                            "name": "over_15"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "retreatment_male",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "retreatment"
+                        },
+                        {
+                            "type": "named",
+                            "name": "male"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "retreatment_female",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "retreatment"
+                        },
+                        {
+                            "type": "named",
+                            "name": "female"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "retreatment_transgender",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "retreatment"
+                        },
+                        {
+                            "type": "named",
+                            "name": "transgender"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "expression",
+                "datatype": "integer",
+                "column_id": "lab_requests",
+                "expression": {
+                    "type": "reduce_items",
+                    "items_expression": {
+                        "type": "map_items",
+                        "items_expression": {
+                            "type": "filter_items",
+                            "items_expression": {
+                                "type": "get_subcases",
+                                "case_id_expression": {
+                                    "value_expression": {
+                                        "datatype": null,
+                                        "type": "property_name",
+                                        "property_name": "referenced_id"
+                                    },
+                                    "type": "nested",
+                                    "argument_expression": {
+                                        "type": "array_index",
+                                        "array_expression": {
+                                            "datatype": null,
+                                            "type": "property_name",
+                                            "property_name": "indices"
+                                        },
+                                        "index_expression": {
+                                            "type": "constant",
+                                            "constant": 0
+                                        }
+                                    }
+                                }
+                            },
+                            "filter_expression": {
+                                "type": "boolean_expression",
+                                "operator": "eq",
+                                "expression": {
+                                    "type": "property_name",
+                                    "property_name": "type"
+                                },
+                                "property_value": "test"
+                            }
+
+                        },
+                        "map_expression": {
+                            "type": "reduce_items",
+                            "items_expression": {
+                                "type": "filter_items",
+                                "items_expression": {
+                                    "type": "get_case_forms",
+                                    "case_id_expression": {
+                                        "type": "property_name",
+                                        "property_name": "_id"
+                                    }
+                                },
+                                "filter_expression": {
+                                    "type": "boolean_expression",
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "xmlns"
+                                    },
+                                    "property_value": "http://openrosa.org/formdesigner/826B0458-C4ED-4A58-8AFD-F8E437C3646F"
+                                }
+                            },
+                            "aggregation_fn": "count"
+                        }
+                    },
+                    "aggregation_fn": "sum"
+                }
+            },
+            {
+                "type": "expression",
+                "datatype": "integer",
+                "column_id": "lab_results",
+                "expression": {
+                    "type": "reduce_items",
+                    "items_expression": {
+                        "type": "map_items",
+                        "items_expression": {
+                            "type": "filter_items",
+                            "items_expression": {
+                                "type": "get_subcases",
+                                "case_id_expression": {
+                                    "value_expression": {
+                                        "datatype": null,
+                                        "type": "property_name",
+                                        "property_name": "referenced_id"
+                                    },
+                                    "type": "nested",
+                                    "argument_expression": {
+                                        "type": "array_index",
+                                        "array_expression": {
+                                            "datatype": null,
+                                            "type": "property_name",
+                                            "property_name": "indices"
+                                        },
+                                        "index_expression": {
+                                            "type": "constant",
+                                            "constant": 0
+                                        }
+                                    }
+                                }
+                            },
+                            "filter_expression": {
+                                "type": "boolean_expression",
+                                "operator": "eq",
+                                "expression": {
+                                    "type": "property_name",
+                                    "property_name": "type"
+                                },
+                                "property_value": "test"
+                            }
+
+                        },
+                        "map_expression": {
+                            "type": "reduce_items",
+                            "items_expression": {
+                                "type": "filter_items",
+                                "items_expression": {
+                                    "type": "get_case_forms",
+                                    "case_id_expression": {
+                                        "type": "property_name",
+                                        "property_name": "_id"
+                                    }
+                                },
+                                "filter_expression": {
+                                    "type": "boolean_expression",
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "xmlns"
+                                    },
+                                    "property_value": "http://openrosa.org/formdesigner/0598A2DE-3E33-48BF-96AC-226C25C70CB3"
+                                }
+                            },
+                            "aggregation_fn": "count"
+                        }
+                    },
+                    "aggregation_fn": "sum"
+                }
+            },
+            {
+                "type": "expression",
+                "datatype": "integer",
+                "column_id": "diagnostic_tests",
+                "expression": {
+                    "type": "reduce_items",
+                    "items_expression": {
+                        "type": "filter_items",
+                        "items_expression": {
+                            "type": "get_subcases",
+                            "case_id_expression": {
+                                "value_expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "referenced_id"
+                                },
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "array_index",
+                                    "array_expression": {
+                                        "datatype": null,
+                                        "type": "property_name",
+                                        "property_name": "indices"
+                                    },
+                                    "index_expression": {
+                                        "type": "constant",
+                                        "constant": 0
+                                    }
+                                }
+                            }
+                        },
+                        "filter_expression": {
+                            "type": "and",
+                            "filters": [
+                                {
+                                    "type": "boolean_expression",
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "type"
+                                    },
+                                    "property_value": "test"
+                                },
+                                {
+                                    "type": "boolean_expression",
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "purpose_of_testing"
+                                    },
+                                    "property_value": "diagnostic"
+                                }
+                            ]
+
+                        }
+                    },
+                    "aggregation_fn": "count"
+                }
+            },
+            {
+                "type": "expression",
+                "datatype": "integer",
+                "column_id": "follow_up_tests",
+                "expression": {
+                    "type": "reduce_items",
+                    "items_expression": {
+                        "type": "filter_items",
+                        "items_expression": {
+                            "type": "get_subcases",
+                            "case_id_expression": {
+                                "value_expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "referenced_id"
+                                },
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "array_index",
+                                    "array_expression": {
+                                        "datatype": null,
+                                        "type": "property_name",
+                                        "property_name": "indices"
+                                    },
+                                    "index_expression": {
+                                        "type": "constant",
+                                        "constant": 0
+                                    }
+                                }
+                            }
+                        },
+                        "filter_expression": {
+                            "type": "and",
+                            "filters": [
+                                {
+                                    "type": "boolean_expression",
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "type"
+                                    },
+                                    "property_value": "test"
+                                },
+                                {
+                                    "type": "boolean_expression",
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "purpose_of_testing"
+                                    },
+                                    "property_value": "follow_up"
+                                }
+                            ]
+
+                        }
+                    },
+                    "aggregation_fn": "count"
+                }
+            },
+            {
+                "type": "expression",
+                "datatype": "date",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "referral_case"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "referral_date"
+                    }
+                },
+                "column_id": "referral_date"
+            },
+            {
+                "type": "expression",
+                "column_id": "current_address_district_choice",
+                "datatype": "string",
+                "expression": {
+                    "value_expression":{
+                        "type":"property_name",
+                        "property_name":"name"
+                    },
+                    "type":"related_doc",
+                    "related_doc_type":"Location",
+                    "doc_id_expression":{
+                        "value_expression": {
+                            "datatype": "string",
+                            "type": "property_name",
+                            "property_name": "current_address_district_choice"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                            "datatype": null,
+                            "type": "named",
+                            "name": "person_id"
+                        }
+                    }
+                }
             }
         ],
         "named_filters": {
@@ -1868,6 +3834,25 @@
                     }
                 },
                 "property_value": "yes"
+            },
+            "cat1": {
+                "operator": "eq",
+                "type": "boolean_expression",
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "previous_tb_treatment"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "datatype": null,
+                        "type": "named",
+                        "name": "person_id"
+                    }
+                },
+                "property_value": "no"
             },
             "cpt_months_delivered_zero": {
                 "operator": "eq",
@@ -1906,6 +3891,16 @@
                 },
                 "property_value": 5475
             },
+            "over_15": {
+                "operator": "gte",
+                "type": "boolean_expression",
+                "expression": {
+                    "datatype": "integer",
+                    "type": "named",
+                    "name": "age_in_days"
+                },
+                "property_value": 5475
+            },
             "new_patient": {
                 "operator": "eq",
                 "expression": {
@@ -1915,6 +3910,38 @@
                 },
                 "type": "boolean_expression",
                 "property_value": "new"
+            },
+            "retreatment": {
+                "type": "and",
+                "filters": [
+                    {
+                        "type": "not",
+                        "filter": {
+                            "operator": "in",
+                            "expression": {
+                                "datatype": "string",
+                                "type": "property_name",
+                                "property_name": "patient_type_choice"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": ["", null]
+                        }
+                    },
+                    {
+                        "type": "not",
+                        "filter": {
+                            "operator": "eq",
+                            "expression": {
+                                "datatype": "string",
+                                "type": "property_name",
+                                "property_name": "patient_type_choice"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "new"
+                        }
+                    }
+                ]
+
             },
             "others_patient": {
                 "operator": "eq",
@@ -2393,7 +4420,7 @@
                     }
                 ]
             },
-           "3months_length_of_ip": {
+            "3months_length_of_ip": {
                 "operator": "gte",
                 "expression": {
                     "datatype": "integer",
@@ -2402,6 +4429,65 @@
                 },
                 "type": "boolean_expression",
                 "property_value": 90
+            },
+            "current_episode_type_suspect": {
+                "operator": "eq",
+                "expression": {
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "type": "named",
+                        "name": "occurrence_id"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "current_episode_type"
+                    }
+                },
+                "type": "boolean_expression",
+                "property_value": "presumptive_tb"
+            },
+            "current_episode_type_patient": {
+                "operator": "eq",
+                "expression": {
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "type": "named",
+                        "name": "occurrence_id"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "current_episode_type"
+                    }
+                },
+                "type": "boolean_expression",
+                "property_value": "confirmed_tb"
+            },
+            "dots_commcareuser" : {
+                "type": "and",
+                "filters": [
+                    {
+                        "type": "boolean_expression",
+                        "operator": "eq",
+                        "expression": {
+                            "datatype": "string",
+                            "type": "property_name",
+                            "property_name": "adherence_type_choice"
+                        },
+                        "property_value": "dots"
+                    },
+                    {
+                        "type": "boolean_expression",
+                        "operator": "eq",
+                        "expression": {
+                            "datatype": "string",
+                            "type": "property_name",
+                            "property_name": "treatment_supporter_designation"
+                        },
+                        "property_value": "tbhv_to"
+                    }
+                ]
             }
         },
         "named_expressions": {
@@ -2506,6 +4592,76 @@
                                 "property_name": "type"
                             },
                             "property_value": "test"
+                        }
+                    },
+                    "sort_expression": {
+                        "type": "property_name",
+                        "property_name": "opened_on"
+                    }
+                },
+                "aggregation_fn": "last_item"
+            },
+            "referral_case": {
+                "type": "reduce_items",
+                "items_expression": {
+                    "type": "sort_items",
+                    "items_expression": {
+                        "type": "filter_items",
+                        "items_expression": {
+                            "type": "get_subcases",
+                            "case_id_expression": {
+                                "value_expression": {
+                                    "type": "nested",
+                                    "value_expression": {
+                                        "datatype": null,
+                                        "type": "property_name",
+                                        "property_name": "referenced_id"
+                                    },
+                                    "argument_expression": {
+                                        "type": "array_index",
+                                        "array_expression": {
+                                            "datatype": null,
+                                            "type": "property_name",
+                                            "property_name": "indices"
+                                        },
+                                        "index_expression": {
+                                            "type": "constant",
+                                            "constant": 0
+                                        }
+                                    }
+                                },
+                                "type": "related_doc",
+                                "related_doc_type": "CommCareCase",
+                                "doc_id_expression": {
+                                    "value_expression": {
+                                        "datatype": null,
+                                        "type": "property_name",
+                                        "property_name": "referenced_id"
+                                    },
+                                    "type": "nested",
+                                    "argument_expression": {
+                                        "type": "array_index",
+                                        "array_expression": {
+                                            "datatype": null,
+                                            "type": "property_name",
+                                            "property_name": "indices"
+                                        },
+                                        "index_expression": {
+                                            "type": "constant",
+                                            "constant": 0
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "filter_expression": {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "type"
+                            },
+                            "property_value": "referral"
                         }
                     },
                     "sort_expression": {
@@ -2633,6 +4789,204 @@
                                         "property_name": "test_type_value"
                                     },
                                     "property_value": ["microscopy-zn", "microscopy-fluorescent"]
+                                }
+                            ]
+                        }
+                    },
+                    "sort_expression": {
+                        "type": "property_name",
+                        "property_name": "opened_on"
+                    }
+                },
+                "aggregation_fn": "last_item"
+            },
+            "latest_follow_up_microscopy_test_case": {
+                "type": "reduce_items",
+                "items_expression": {
+                    "type": "sort_items",
+                    "items_expression": {
+                        "type": "filter_items",
+                        "items_expression": {
+                            "type": "get_subcases",
+                            "case_id_expression": {
+                                "value_expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "referenced_id"
+                                },
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "array_index",
+                                    "array_expression": {
+                                        "datatype": null,
+                                        "type": "property_name",
+                                        "property_name": "indices"
+                                    },
+                                    "index_expression": {
+                                        "type": "constant",
+                                        "constant": 0
+                                    }
+                                }
+                            }
+                        },
+                        "filter_expression": {
+                            "type": "and",
+                            "filters": [
+                                {
+                                    "type": "boolean_expression",
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "type"
+                                    },
+                                    "property_value": "test"
+                                },
+                                {
+                                    "type": "boolean_expression",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "purpose_of_testing"
+                                    },
+                                    "operator": "eq",
+                                    "property_value": "follow_up"
+                                },
+                                {
+                                    "type": "boolean_expression",
+                                    "operator": "in",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "test_type_value"
+                                    },
+                                    "property_value": ["microscopy-zn", "microscopy-fluorescent"]
+                                }
+                            ]
+                        }
+                    },
+                    "sort_expression": {
+                        "type": "property_name",
+                        "property_name": "opened_on"
+                    }
+                },
+                "aggregation_fn": "last_item"
+            },
+            "latest_microscopy_test_case": {
+                "type": "reduce_items",
+                "items_expression": {
+                    "type": "sort_items",
+                    "items_expression": {
+                        "type": "filter_items",
+                        "items_expression": {
+                            "type": "get_subcases",
+                            "case_id_expression": {
+                                "value_expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "referenced_id"
+                                },
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "array_index",
+                                    "array_expression": {
+                                        "datatype": null,
+                                        "type": "property_name",
+                                        "property_name": "indices"
+                                    },
+                                    "index_expression": {
+                                        "type": "constant",
+                                        "constant": 0
+                                    }
+                                }
+                            }
+                        },
+                        "filter_expression": {
+                            "type": "and",
+                            "filters": [
+                                {
+                                    "type": "boolean_expression",
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "type"
+                                    },
+                                    "property_value": "test"
+                                },
+                                {
+                                    "type": "boolean_expression",
+                                    "operator": "in",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "test_type_value"
+                                    },
+                                    "property_value": ["microscopy-zn", "microscopy-fluorescent"]
+                                }
+                            ]
+                        }
+                    },
+                    "sort_expression": {
+                        "type": "property_name",
+                        "property_name": "opened_on"
+                    }
+                },
+                "aggregation_fn": "last_item"
+            },
+            "latest_diagnostic_mbr_test_case": {
+                "type": "reduce_items",
+                "items_expression": {
+                    "type": "sort_items",
+                    "items_expression": {
+                        "type": "filter_items",
+                        "items_expression": {
+                            "type": "get_subcases",
+                            "case_id_expression": {
+                                "value_expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "referenced_id"
+                                },
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "array_index",
+                                    "array_expression": {
+                                        "datatype": null,
+                                        "type": "property_name",
+                                        "property_name": "indices"
+                                    },
+                                    "index_expression": {
+                                        "type": "constant",
+                                        "constant": 0
+                                    }
+                                }
+                            }
+                        },
+                        "filter_expression": {
+                            "type": "and",
+                            "filters": [
+                                {
+                                    "type": "boolean_expression",
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "type"
+                                    },
+                                    "property_value": "test"
+                                },
+                                {
+                                    "type": "boolean_expression",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "purpose_of_testing"
+                                    },
+                                    "operator": "eq",
+                                    "property_value": "diagnostic"
+                                },
+                                {
+                                    "type": "boolean_expression",
+                                    "operator": "in",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "test_type_value"
+                                    },
+                                    "property_value": ["cbnaat", "culture", "line_probe_assay"]
                                 }
                             ]
                         }
@@ -3471,6 +5825,37 @@
                     "aggregation_fn": "first_item"
                 }
             },
+            "complete_treatment_form": {
+                "type": "reduce_items",
+                "items_expression": {
+                    "type": "sort_items",
+                    "items_expression": {
+                        "type": "filter_items",
+                        "items_expression": {
+                            "type": "get_case_forms",
+                            "case_id_expression": {
+                                "type": "property_name",
+                                "property_name": "_id"
+                            }
+                        },
+                        "filter_expression": {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "xmlns"
+                            },
+                            "property_value": "http://openrosa.org/formdesigner/60B0DB43-CC15-43A0-BFE7-885310AFD6E4"
+                        }
+                    },
+                    "sort_expression": {
+                        "type": "property_name",
+                        "property_name": "received_on"
+                    }
+                },
+                "aggregation_fn": "last_item"
+
+            },
             "hiv_status": {
                 "value_expression": {
                     "datatype": "string",
@@ -3496,6 +5881,59 @@
                         "index_expression": {
                             "type": "constant",
                             "constant": 0
+                        }
+                    }
+                }
+            },
+            "key_populations": {
+                "value_expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "key_populations"
+                },
+                "type": "related_doc",
+                "related_doc_type": "CommCareCase",
+                "doc_id_expression": {
+                    "value_expression": {
+                        "type": "nested",
+                        "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                        },
+                        "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "indices"
+                            },
+                            "index_expression": {
+                                "type": "constant",
+                                "constant": 0
+                            }
+                        }
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                        },
+                        "type": "nested",
+                        "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "indices"
+                            },
+                            "index_expression": {
+                                "type": "constant",
+                                "constant": 0
+                            }
                         }
                     }
                 }

@@ -11,7 +11,7 @@ from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.util import raw_username
-from corehq.util.spreadsheets.excel import alphanumeric_sort_key
+from corehq.util.spreadsheets_v1.excel import alphanumeric_sort_key
 
 DATA_SOURCE_COLUMN = 'data_source_column'
 LOCATION = 'location'

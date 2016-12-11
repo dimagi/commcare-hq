@@ -18,13 +18,13 @@ class JsonLinesSerializer(JsonSerializer):
         self._init_options()
 
     def end_serialization(self):
-        self.stream.write("\n")
+        pass
 
     def end_object(self, obj):
         # self._current has the field data
-        self.stream.write("\n")
         json.dump(self.get_dump_object(obj), self.stream,
                   cls=CommCareJSONEncoder, **self.json_kwargs)
+        self.stream.write("\n")
         self._current = None
 
 
@@ -36,4 +36,4 @@ class CommCareJSONEncoder(DjangoJSONEncoder):
         if isinstance(o, datetime.datetime):
             return json_format_datetime(o)
         else:
-            super(CommCareJSONEncoder, self).default(o)
+            return super(CommCareJSONEncoder, self).default(o)

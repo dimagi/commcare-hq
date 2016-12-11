@@ -10,7 +10,7 @@ class Command(BaseCommand):
     help = "Clear supervisor confs for the given environment"
     args = ""
 
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option('--conf_location', help='Supervisor configuration file path', default=None),
     )
 

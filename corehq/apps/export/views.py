@@ -11,6 +11,10 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 
 from corehq.apps.export.export import get_export_download, get_export_size
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.permissions import location_safe, location_restricted_response
+from corehq.apps.reports.filters.case_list import CaseListFilter
+from corehq.apps.reports.filters.users import LocationRestrictedMobileWorkerFilter
 from corehq.apps.reports.views import should_update_export, \
     build_download_saved_export_response, require_form_export_permission
 from corehq.form_processor.utils import use_new_exports
@@ -18,6 +22,7 @@ from corehq.privileges import EXCEL_DASHBOARD, DAILY_SAVED_EXPORT
 from django_prbac.utils import has_privilege
 from django.utils.decorators import method_decorator
 import json
+import re
 from django.utils.safestring import mark_safe
 
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
@@ -44,7 +49,7 @@ from corehq.apps.export.exceptions import (
 from corehq.apps.export.forms import (
     FilterFormCouchExportDownloadForm,
     FilterCaseCouchExportDownloadForm,
-    FilterFormESExportDownloadForm,
+    EmwfFilterFormExport,
     FilterCaseESExportDownloadForm,
     CreateExportTagForm,
     DashboardFeedFilterForm,
@@ -61,7 +66,6 @@ from corehq.apps.export.const import (
     CASE_EXPORT,
     MAX_EXPORTABLE_ROWS,
 )
-from corehq.apps.export.tasks import async_convert_saved_export_to_export_instance
 from corehq.apps.export.dbaccessors import (
     get_form_export_instances,
     get_case_export_instances,
@@ -130,13 +134,13 @@ def _get_saved_exports(domain, has_deid_permissions, old_exports_getter, new_exp
 
 def _get_case_exports_by_domain(domain, has_deid_permissions):
     old_exports_getter = CaseExportSchema.get_stale_exports
-    new_exports_getter = get_form_export_instances
+    new_exports_getter = get_case_export_instances
     return _get_saved_exports(domain, has_deid_permissions, old_exports_getter, new_exports_getter)
 
 
 def _get_form_exports_by_domain(domain, has_deid_permissions):
     old_exports_getter = FormExportSchema.get_stale_exports
-    new_exports_getter = get_case_export_instances
+    new_exports_getter = get_form_export_instances
     return _get_saved_exports(domain, has_deid_permissions, old_exports_getter, new_exports_getter)
 
 
@@ -360,16 +364,6 @@ class BaseModifyCustomExportView(BaseExportView):
     @property
     def export_id(self):
         return self.kwargs.get('export_id')
-
-    @property
-    def page_context(self):
-        if not use_new_exports(self.domain):
-            async_convert_saved_export_to_export_instance.delay(
-                self.domain,
-                self.export_helper.custom_export,
-                dryrun=True
-            )
-        return super(BaseModifyCustomExportView, self).page_context
 
     @property
     @memoized
@@ -870,9 +864,8 @@ class DownloadFormExportView(BaseDownloadExportView):
                 )
             download = DownloadBase()
             export_object = self._get_export(self.domain, export_specs[0]['export_id'])
-            task_kwargs = filter_form.get_multimedia_task_kwargs(
-                export_object, download.download_id
-            )
+            task_kwargs = self.get_multimedia_task_kwargs(in_data, filter_form, export_object,
+                                                          download.download_id)
             from corehq.apps.reports.tasks import build_form_multimedia_zip
             download.set_task(build_form_multimedia_zip.delay(**task_kwargs))
         except Exception as e:
@@ -880,6 +873,9 @@ class DownloadFormExportView(BaseDownloadExportView):
         return format_angular_success({
             'download_id': download.download_id,
         })
+
+    def get_multimedia_task_kwargs(self, in_data, filter_form, export_object, download_id):
+        return filter_form.get_multimedia_task_kwargs(export_object, download_id)
 
     def _get_filter_form(self, filter_form_data):
         filter_form = self.filter_form_class(
@@ -1033,7 +1029,7 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
     def fmt_emailed_export_data(self, group_id=None, index=None,
                                 has_file=False, file_id=None, size=0,
                                 last_updated=None, last_accessed=None,
-                                download_url=None, filters=None):
+                                download_url=None, filters=None, export_type=None):
         """
         Return a dictionary containing details about an emailed export.
         This will eventually be passed to an Angular controller.
@@ -1049,7 +1045,8 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
             'hasFile': has_file,
             'index': index,  # This can be removed when we're off legacy exports
             'fileData': file_data,
-            'filters': DashboardFeedFilterForm.get_form_data_from_export_instance_filters(filters)
+            'filters': DashboardFeedFilterForm.get_form_data_from_export_instance_filters(filters, self.domain, export_type),
+            'isLocationSafeForUser': filters.is_location_safe_for_user(self.request),
         }
 
     def fmt_legacy_emailed_export_data(self, group_id=None, index=None,
@@ -1084,6 +1081,7 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
             'hasFile': has_file,
             'index': index,  # This can be removed when we're off legacy exports
             'fileData': file_data,
+            'isLocationSafeForUser': self.request.can_access_all_locations,
         }
 
     def _fmt_emailed_export_fileData(self, has_file, fileId, size, last_updated,
@@ -1138,6 +1136,7 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
             download_url=self.request.build_absolute_uri(reverse(
                 'download_daily_saved_export', args=[self.domain, export._id]
             )),
+            export_type=type(export),
         )
 
     @allow_remote_invocation
@@ -1240,6 +1239,7 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
         })
 
 
+@location_safe
 class DailySavedExportListView(BaseExportListView):
     urlname = 'list_daily_saved_exports'
     template_name = 'export/daily_saved_export_list.html'
@@ -1396,7 +1396,17 @@ class DailySavedExportListView(BaseExportListView):
             export = get_properly_wrapped_export_instance(export_id)
             filter_form = DashboardFeedFilterForm(self.domain_object, form_data)
             if filter_form.is_valid():
-                filters = filter_form.to_export_instance_filters()
+                if not self.request.can_access_all_locations:
+                    accessible_location_ids = (SQLLocation.active_objects.accessible_location_ids(
+                        self.request.domain,
+                        self.request.couch_user)
+                    )
+                else:
+                    accessible_location_ids = None
+                filters = filter_form.to_export_instance_filters(
+                    self.request.can_access_all_locations,
+                    accessible_location_ids
+                )
                 if export.filters != filters:
                     export.filters = filters
                     export.save()
@@ -1411,6 +1421,7 @@ class DailySavedExportListView(BaseExportListView):
             return format_angular_error(_(msg).format(e.__class__, e))
 
 
+@location_safe
 class DashboardFeedListView(DailySavedExportListView):
     template_name = 'export/dashboard_feed_list.html'
     urlname = 'list_dashboard_feeds'
@@ -1473,6 +1484,7 @@ class DashboardFeedPaywall(BaseProjectDataView):
     template_name = 'export/paywall.html'
 
 
+@location_safe
 class FormExportListView(BaseExportListView):
     urlname = 'list_form_exports'
     page_title = ugettext_noop("Export Forms")
@@ -1488,7 +1500,7 @@ class FormExportListView(BaseExportListView):
 
     @memoized
     def get_saved_exports(self):
-        exports = _get_case_exports_by_domain(self.domain, self.has_deid_view_permissions)
+        exports = _get_form_exports_by_domain(self.domain, self.has_deid_view_permissions)
         if use_new_exports(self.domain):
             # New exports display daily saved exports in their own view
             exports = filter(lambda x: not x.is_daily_saved_export, exports)
@@ -1601,6 +1613,7 @@ class _DeidMixin(object):
         return [x for x in get_form_export_instances(self.domain) if x.is_safe]
 
 
+@location_safe
 class DeIdDailySavedExportListView(_DeidMixin, DailySavedExportListView):
     urlname = 'list_deid_daily_saved_exports'
     page_title = ugettext_noop("Export De-Identified Daily Saved Exports")
@@ -1610,6 +1623,7 @@ class DeIdDailySavedExportListView(_DeidMixin, DailySavedExportListView):
         return [x for x in exports if x.is_daily_saved_export and not x.export_format == "html"]
 
 
+@location_safe
 class DeIdDashboardFeedListView(_DeidMixin, DashboardFeedListView):
     urlname = 'list_deid_dashboard_feeds'
     page_title = ugettext_noop("Export De-Identified Dashboard Feeds")
@@ -1619,6 +1633,7 @@ class DeIdDashboardFeedListView(_DeidMixin, DashboardFeedListView):
         return [x for x in exports if x.is_daily_saved_export and x.export_format == "html"]
 
 
+@location_safe
 class CaseExportListView(BaseExportListView):
     urlname = 'list_case_exports'
     page_title = ugettext_noop("Export Cases")
@@ -1782,6 +1797,7 @@ class BaseModifyNewCustomView(BaseNewExportView):
         return context
 
 
+@location_safe
 class CreateNewCustomFormExportView(BaseModifyNewCustomView):
     urlname = 'new_custom_export_form'
     page_title = ugettext_lazy("Create Form Export")
@@ -1804,6 +1820,7 @@ class CreateNewCustomFormExportView(BaseModifyNewCustomView):
         return super(CreateNewCustomFormExportView, self).get(request, *args, **kwargs)
 
 
+@location_safe
 class CreateNewCustomCaseExportView(BaseModifyNewCustomView):
     urlname = 'new_custom_export_case'
     page_title = ugettext_lazy("Create Case Export")
@@ -2060,6 +2077,13 @@ class GenericDownloadNewExportMixin(object):
     """
     Supporting class for new style export download views
     """
+    # Form used for rendering filters
+    filter_form_class = None
+    # To serve filters for export from mobile_user_and_group_slugs
+    export_filter_class = None
+    mobile_user_and_group_slugs_regex = re.compile(
+        '(emw=|case_list_filter=|location_restricted_mobile_worker=){1}([^&]*)(&){0,1}'
+    )
 
     def _get_download_task(self, in_data):
         export_filters, export_specs = self._process_filters_and_specs(in_data)
@@ -2106,35 +2130,93 @@ class GenericDownloadNewExportMixin(object):
                 "filters to be less than " + MAX_EXPORTABLE_ROWS + "rows.")
             )
 
+    @property
+    def page_context(self):
+        parent_context = super(GenericDownloadNewExportMixin, self).page_context
+        if self.export_filter_class:
+            parent_context['dynamic_filters'] = self.export_filter_class(
+                self.request, self.request.domain
+            ).render()
+        return parent_context
 
+    def _get_mobile_user_and_group_slugs(self, filter_slug):
+        matches = self.mobile_user_and_group_slugs_regex.findall(filter_slug)
+        return [n[1] for n in matches]
+
+    def _process_filters_and_specs(self, in_data):
+        """
+        Returns a the export filters and a list of JSON export specs
+        Override to hook fetching mobile_user_and_group_slugs
+        """
+        filter_form_data, export_specs = self._get_form_data_and_specs(in_data)
+        mobile_user_and_group_slugs = self._get_mobile_user_and_group_slugs(filter_form_data['emw'])
+        try:
+            export_filter = self.get_filters(filter_form_data, mobile_user_and_group_slugs)
+        except ExportFormValidationException:
+            raise ExportAsyncException(
+                _("Form did not validate.")
+            )
+
+        return export_filter, export_specs
+
+
+@location_safe
 class DownloadNewFormExportView(GenericDownloadNewExportMixin, DownloadFormExportView):
     urlname = 'new_export_download_forms'
-    filter_form_class = FilterFormESExportDownloadForm
+    filter_form_class = EmwfFilterFormExport
+    export_filter_class = LocationRestrictedMobileWorkerFilter
 
     def _get_export(self, domain, export_id):
         return FormExportInstance.get(export_id)
 
-    def get_filters(self, filter_form_data):
+    def get_filters(self, filter_form_data, mobile_user_and_group_slugs):
         filter_form = self._get_filter_form(filter_form_data)
-        form_filters = filter_form.get_form_filter()
+        if not self.request.can_access_all_locations:
+            accessible_location_ids = (SQLLocation.active_objects.accessible_location_ids(
+                self.request.domain,
+                self.request.couch_user)
+            )
+        else:
+            accessible_location_ids = None
+        form_filters = filter_form.get_form_filter(
+            mobile_user_and_group_slugs, self.request.can_access_all_locations, accessible_location_ids
+        )
         return form_filters
+
+    def get_multimedia_task_kwargs(self, in_data, filter_form, export_object, download_id):
+        filter_slug = in_data['form_data']['emw']
+        mobile_user_and_group_slugs = self._get_mobile_user_and_group_slugs(filter_slug)
+        return filter_form.get_multimedia_task_kwargs(export_object, download_id, mobile_user_and_group_slugs)
 
 
 class BulkDownloadNewFormExportView(DownloadNewFormExportView):
     urlname = 'new_bulk_download_forms'
     page_title = ugettext_noop("Download Form Exports")
+    filter_form_class = EmwfFilterFormExport
+    export_filter_class = LocationRestrictedMobileWorkerFilter
 
 
+@location_safe
 class DownloadNewCaseExportView(GenericDownloadNewExportMixin, DownloadCaseExportView):
     urlname = 'new_export_download_cases'
     filter_form_class = FilterCaseESExportDownloadForm
+    export_filter_class = CaseListFilter
 
     def _get_export(self, domain, export_id):
         return CaseExportInstance.get(export_id)
 
-    def get_filters(self, filter_form_data):
+    def get_filters(self, filter_form_data, mobile_user_and_group_slugs):
         filter_form = self._get_filter_form(filter_form_data)
-        form_filters = filter_form.get_case_filter()
+        if not self.request.can_access_all_locations:
+            accessible_location_ids = (SQLLocation.active_objects.accessible_location_ids(
+                self.request.domain,
+                self.request.couch_user)
+            )
+        else:
+            accessible_location_ids = None
+        form_filters = filter_form.get_case_filter(
+            mobile_user_and_group_slugs, self.request.can_access_all_locations, accessible_location_ids
+        )
         return form_filters
 
 
@@ -2152,6 +2234,9 @@ def download_daily_saved_export(req, domain, export_instance_id):
     elif export_instance.is_daily_saved_export:
         if not domain_has_privilege(domain, DAILY_SAVED_EXPORT):
             raise Http404
+
+    if not export_instance.filters.is_location_safe_for_user(req):
+        return location_restricted_response(req)
 
     if should_update_export(export_instance.last_accessed):
         try:
