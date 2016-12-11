@@ -82,7 +82,6 @@ var reportBuilder = function () {
             self.refreshPreview(newValue);
             self.saveButton.fire('change');
         });
-        self.selectedColumns.extend({ rateLimit: 50 });
 
         self.reportTypeListLabel = (config['sourceType'] === "case") ? "Case List" : "Form List";
         self.reportTypeAggLabel = (config['sourceType'] === "case") ? "Case Summary" : "Form Summary";
