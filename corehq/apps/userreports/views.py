@@ -822,7 +822,7 @@ class ConfigureReport(ReportBuilderView):
             aggregated_report_columns = [c['column_id'] for c in report_data['columns'] if c['is_group_by_column']]
             aggregation_columns = [self.report_column_options[c].indicator_id for c in aggregated_report_columns]
         else:
-            aggregation_columns = []
+            aggregation_columns = ["doc_id"]
         try:
             report_configuration = ReportConfiguration(
                 domain=app.domain,
