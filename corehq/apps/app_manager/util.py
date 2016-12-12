@@ -420,7 +420,11 @@ def get_casedb_schema(form):
             "name": "{} ({})".format(generation_names[i], " or ".join(ctypes)) if i > 0 else base_case_type,
             "key": "@case_type",
             "structure": {p: {} for type in [map[t] for t in ctypes] for p in type},
-            "related": {"parent": generation_names[i + 1]} if i < len(generations) - 1 else None,
+            "related": {"parent": {
+                "hashtag": "#case/" + generation_names[i + 1],
+                "subset": generation_names[i + 1],
+                "key": "@case_id",
+            }} if i < len(generations) - 1 else None,
         } for i, ctypes in enumerate(generations)],
     }
 
@@ -439,6 +443,7 @@ def get_session_schema(form):
         session_var = datums[-1].datum.id
         structure[session_var] = {
             "reference": {
+                "hashtag": "#case",
                 "source": "casedb",
                 "subset": "case",
                 "key": "@case_id",
