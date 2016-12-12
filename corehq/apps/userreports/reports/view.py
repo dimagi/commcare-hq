@@ -557,7 +557,6 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             view._lang = "en"
             view._report_config_id = report_config._id
             try:
-                # FIXME: Returning one case of test data, should return two
                 table = view.export_table
             except UserReportsError:
                 # User posted an invalid report configuration

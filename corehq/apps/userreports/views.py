@@ -854,7 +854,7 @@ class ReportPreview(BaseDomainView):
         if report_data['aggregate']:
             aggregation_columns = [c['column_id'] for c in report_data['columns'] if c['is_group_by_column']]
         else:
-            aggregation_columns = []
+            aggregation_columns = ['doc_id']
         table = ConfigurableReport.report_config_table(
             domain=domain,
             config_id=data_source,
