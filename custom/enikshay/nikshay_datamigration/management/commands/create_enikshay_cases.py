@@ -112,7 +112,7 @@ class EnikshayCaseFactory(object):
         }
 
         for occurrence_case in self.case_accessor.get_cases([
-            index.case_id for index in
+            index.referenced_id for index in
             self.case_accessor.get_case(self.person().case_id).reverse_indices
         ]):
             if outcome.pk == occurrence_case.dynamic_case_properties().get('nikshay_id'):
@@ -149,7 +149,7 @@ class EnikshayCaseFactory(object):
         }
 
         for episode_case in self.case_accessor.get_cases([
-            index.case_id for index in
+            index.referenced_id for index in
             self.case_accessor.get_case(self.occurrence(outcome).case_id).reverse_indices
         ]):
             if episode_case.dynamic_case_properties().get('migration_created_case'):
