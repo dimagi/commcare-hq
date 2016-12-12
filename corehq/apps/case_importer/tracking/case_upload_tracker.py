@@ -16,7 +16,7 @@ class CaseUpload(object):
 
     @classmethod
     def create(cls, file_object, filename):
-        upload_id = transient_file_store.write_file(file_object, filename)
+        upload_id = transient_file_store.write_file(file_object, filename).identifier
         return cls(upload_id)
 
     @classmethod
@@ -50,9 +50,8 @@ class CaseUpload(object):
         task = bulk_import_async.delay(config, domain, self.upload_id)
         original_filename = transient_file_store.get_filename(self.upload_id)
         with open(self.get_tempfile()) as f:
-            identifier = persistent_file_store.write_file(f, original_filename)
+            case_upload_file_meta = persistent_file_store.write_file(f, original_filename)
 
-        case_upload_file_meta = CaseUploadFileMeta.objects.get(identifier=identifier)
         CaseUploadRecord(
             domain=domain,
             upload_id=self.upload_id,

@@ -22,7 +22,7 @@ class FilestorageTest(TestCase):
                  (persistent_file_store,)], FilestorageTest)
 def test_transient(self, file_store):
     with open(self.filename, 'r') as f:
-        identifier = file_store.write_file(f, 'test_file.txt')
+        identifier = file_store.write_file(f, 'test_file.txt').identifier
 
     tmpfile = file_store.get_tempfile_ref_for_contents(identifier)
     self.assertEqual(file_extention_from_filename(tmpfile), '.txt')

@@ -1,3 +1,4 @@
+from collections import namedtuple
 import os
 from tempfile import mkstemp
 import uuid
@@ -29,9 +30,10 @@ class PersistentFileStore(object):
         padding = random_url_id(16)
         blob_info = self._db.put(f, bucket=self._get_bucket(padding))
         identifier = '{}/{}'.format(padding, blob_info.identifier)
-        self._meta_model(identifier=identifier, filename=filename,
-                         length=blob_info.length).save()
-        return identifier
+        file_meta = self._meta_model(identifier=identifier, filename=filename,
+                                     length=blob_info.length)
+        file_meta.save()
+        return file_meta
 
     @memoized
     def get_tempfile_ref_for_contents(self, identifier):
@@ -44,6 +46,9 @@ class PersistentFileStore(object):
     @memoized
     def get_filename(self, identifier):
         return self._meta_model.objects.values_list('filename', flat=True).get(identifier=identifier)
+
+
+FileMeta = namedtuple('FileMeta', ['identifier', 'filename', 'length'])
 
 
 class TransientFileStore(object):
@@ -60,8 +65,10 @@ class TransientFileStore(object):
 
     def write_file(self, f, filename):
         identifier = str(uuid.uuid4())
-        self._cache.set(self._get_key(identifier), (filename, f.read()), timeout=self._timeout)
-        return identifier
+        contents = f.read()
+        content_length = len(contents)
+        self._cache.set(self._get_key(identifier), (filename, contents), timeout=self._timeout)
+        return FileMeta(identifier=identifier, filename=filename, length=content_length)
 
     def get_tempfile_ref_for_contents(self, identifier):
         try:
