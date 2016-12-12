@@ -1247,7 +1247,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         else:
             couch_user.created_on = datetime.utcnow()
 
-        user_data = kwargs.get('user_data', {})
+        user_data = {'commcare_project': domain}
+        user_data.update(kwargs.get('user_data', {}))
         couch_user.user_data = user_data
         couch_user.sync_from_django_user(django_user)
         return couch_user
