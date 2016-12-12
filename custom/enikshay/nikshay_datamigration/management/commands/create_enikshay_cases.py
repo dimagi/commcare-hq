@@ -162,7 +162,7 @@ class EnikshayCaseFactory(object):
 
     @memoized
     def test(self, followup):
-        occurrence_structure = self.occurrence(self._outcome)
+        occurrence_structure = self.occurrence(self._outcome)  # TODO - pass outcome as argument
 
         kwargs = {
             'attrs': {
