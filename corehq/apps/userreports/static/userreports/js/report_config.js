@@ -82,7 +82,6 @@ var reportBuilder = function () {
             self.refreshPreview(newValue);
             self.saveButton.fire('change');
         });
-        self.selectedColumns.extend({ rateLimit: 50 });
 
         self.reportTypeListLabel = (config['sourceType'] === "case") ? "Case List" : "Form List";
         self.reportTypeAggLabel = (config['sourceType'] === "case") ? "Case Summary" : "Form Summary";
@@ -276,26 +275,3 @@ var reportBuilder = function () {
     return self;
 
 }();
-
-
-// Copied verbatim from detail-screen-config.js
-// TODO: DRY. Put this in a common place used by both -- COMMCAREHQ?
-ko.bindingHandlers.sortableList = {
-    init: function(element, valueAccessor) {
-        var list = valueAccessor();
-        $(element).sortable({
-            handle: '.grip',
-            cursor: 'move',
-            update: function(event, ui) {
-                var item = ko.dataFor(ui.item.get(0));
-                var position = ko.utils.arrayIndexOf(ui.item.parent().children(), ui.item[0]);
-                if (position >= 0) {
-                    list.remove(item);
-                    list.splice(position, 0, item);  // TODO: Inserts in ViewModel but not in UI!?
-                }
-                ui.item.remove();
-                item.notifyButton();
-            },
-        });
-    },
-};
