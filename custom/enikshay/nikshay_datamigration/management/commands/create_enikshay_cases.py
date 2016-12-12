@@ -27,7 +27,9 @@ class EnikshayCaseFactory(object):
         self.create_test_cases()
 
     def create_person_case(self):
-        self.factory.create_or_update_case(self.person())
+        person_structure = self.person()
+        person_case = self.factory.create_or_update_case(person_structure)[0]
+        person_structure.case_id = person_case.case_id
 
     def create_occurrence_case(self):
         if self._outcome:
@@ -49,7 +51,7 @@ class EnikshayCaseFactory(object):
     @memoized
     def person(self):
         return CaseStructure(
-            case_id=self.patient_detail.PregId,
+            # case_id=self.patient_detail.PregId,
             attrs={
                 'create': True,
                 'case_type': 'person',

@@ -82,14 +82,14 @@ class TestCreateEnikshayCases(TestCase):
     def test_case_properties(self):
         call_command('create_enikshay_cases', self.domain.name)
 
-        self.assertEqual(
-            ['MH-ABD-05-16-0001'],
-            self.case_accessor.get_case_ids_in_domain(
-                type='person'
-            )
-        )
+        # self.assertEqual(
+        #     ['MH-ABD-05-16-0001'],
+        #     self.case_accessor.get_case_ids_in_domain(
+        #         type='person'
+        #     )
+        # )
 
-        person_case = self.case_accessor.get_case('MH-ABD-05-16-0001')
+        person_case = self.case_accessor.get_case(self.case_accessor.get_case_ids_in_domain(type='person')[0])
         self.assertEqual(
             OrderedDict([
                 ('aadhaar_number', '867386000000'),
