@@ -4425,6 +4425,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     # Whether or not the Application has had any forms submitted against it
     has_submissions = BooleanProperty(default=False)
 
+    # domains that are allowed to have linked apps with this master
+    linked_whitelist = StringListProperty()
+
     @classmethod
     def wrap(cls, data):
         should_save = False
@@ -5892,6 +5895,16 @@ class RemoteApp(ApplicationBase):
             self.save()
         questions = self.questions_map.get(xmlns, [])
         return questions
+
+
+class LinkedApplication(Application):
+    """
+    A wrapper for a url pointing to a suite or profile file. This allows you to
+    write all the files for an app by hand, and then give the url to app_manager
+    and let it package everything together for you.
+
+    """
+    master = StringProperty()
 
 
 def import_app(app_id_or_source, domain, source_properties=None, validate_source_domain=None):
