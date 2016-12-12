@@ -25,7 +25,7 @@ class FilesystemBlobDB(AbstractBlobDB):
         self.rootdir = rootdir
 
     def put(self, content, basename="", bucket=DEFAULT_BUCKET):
-        identifier = self.get_identifier(basename)
+        identifier = self.get_short_identifier()
         path = self.get_path(identifier, bucket)
         dirpath = dirname(path)
         if not isdir(dirpath):

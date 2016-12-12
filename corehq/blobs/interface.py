@@ -97,7 +97,7 @@ class AbstractBlobDB(object):
         raise NotImplementedError
 
     @staticmethod
-    def get_identifier(basename):
+    def get_short_identifier():
         """Get an unique random identifier
 
         The identifier is chosen from a 64 bit key space, which is

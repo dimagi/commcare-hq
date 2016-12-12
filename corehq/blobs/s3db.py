@@ -38,7 +38,7 @@ class S3BlobDB(AbstractBlobDB):
         self.db.meta.client.meta.events.unregister('before-sign.s3', fix_s3_host)
 
     def put(self, content, basename="", bucket=DEFAULT_BUCKET):
-        identifier = self.get_identifier(basename)
+        identifier = self.get_short_identifier()
         path = self.get_path(identifier, bucket)
         s3_bucket = self._s3_bucket(create=True)
         if isinstance(content, BlobStream) and content.blob_db is self:
