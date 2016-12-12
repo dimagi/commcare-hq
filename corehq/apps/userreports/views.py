@@ -6,6 +6,7 @@ import json
 import os
 import tempfile
 import uuid
+from itertools import chain
 
 from django.conf import settings
 from django.contrib import messages
@@ -601,7 +602,7 @@ class EditReportInBuilder(View):
         raise Http404("Report was not created by the report builder")
 
 
-def to_report_column(column, index, column_options):
+def to_report_columns(column, index, column_options):
     """
     column is the JSON that we get when saving or previewing a report. Return a column spec we can use to create a
     ReportConfiguration.
@@ -619,7 +620,7 @@ def to_report_column(column, index, column_options):
     # Some wrangling in order to reused ColumnOption
     reverse_map = {v: k for k, v in ColumnOption.aggregation_map.items()}
     aggregation = reverse_map[column.get('aggregation') or 'simple']
-    return column_options[column['column_id']].to_column_dicts(index, column['label'], aggregation)[0]
+    return column_options[column['column_id']].to_column_dicts(index, column['label'], aggregation)
 
 
 def _get_aggregation_columns(aggregate, columns, column_options):
@@ -834,7 +835,9 @@ class ConfigureReport(ReportBuilderView):
                 config_id=data_source_config_id,
                 title=report_name,
                 aggregation_columns=_get_aggregation_columns(report_data['aggregate'], report_data['columns'], self.report_column_options),
-                columns=[to_report_column(c, i, self.report_column_options) for i, c in enumerate(report_data['columns'])],
+                columns=list(chain.from_iterable(
+                    to_report_columns(c, i, self.report_column_options) for i, c in enumerate(report_data['columns'])
+                )),
                 filters=[],  # TODO: report_data['user_filters'] + report_data['default_filters']
                 configured_charts=get_report_charts(report_data),
                 report_meta=ReportMeta(
@@ -886,7 +889,9 @@ class ReportPreview(BaseDomainView):
             title='{}_{}_{}'.format(TEMP_REPORT_PREFIX, domain, data_source),
             description='',
             aggregation_columns=_get_aggregation_columns(report_data['aggregate'], report_data['columns'], column_options),
-            columns=[to_report_column(c, i, column_options) for i, c in enumerate(report_data['columns'])],
+            columns=list(chain.from_iterable(
+                to_report_columns(c, i, column_options) for i, c in enumerate(report_data['columns'])
+            )),
             report_meta=ReportMeta(created_by_builder=True),
         )  # is None if report configuration doesn't make sense or data source has expired
         if table:
