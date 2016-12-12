@@ -307,14 +307,12 @@
                     <h4 class="modal-title">{% trans "Revert to Version?" %}</h4>
                 </div>
                 <div class="modal-body">
-                    {% if vellum_case_management %}
-                        <div class='alert alert-danger' data-bind="visible: !vellum_case_management()">
-                            {% blocktrans %}
-                                This version uses an outdated form of case management.
-                                We advise against reverting back to this version.
-                            {% endblocktrans %}
-                        </div>
-                    {% endif %}
+                    <div class='alert alert-danger' data-bind="visible: !vellum_case_management()">
+                        {% blocktrans %}
+                            This version uses an outdated form of case management.
+                            We advise against reverting back to this version.
+                        {% endblocktrans %}
+                    </div>
                     <p>{% blocktrans %}
                      Are you sure you want to revert to version <span data-bind="text: version"></span>?</p>
                     {% endblocktrans %}
