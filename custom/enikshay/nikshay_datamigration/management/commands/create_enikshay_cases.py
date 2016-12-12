@@ -30,22 +30,21 @@ class EnikshayCaseFactory(object):
         self.factory.create_or_update_case(self.person())
 
     def create_occurrence_case(self):
-        occurrence_structure = self.occurrence(self._outcome)
-        occurrence_case = self.factory.create_or_update_case(occurrence_structure)[0]
-        occurrence_structure.case_id = occurrence_case.case_id
+        if self._outcome:
+            occurrence_structure = self.occurrence(self._outcome)
+            occurrence_case = self.factory.create_or_update_case(occurrence_structure)[0]
+            occurrence_structure.case_id = occurrence_case.case_id
 
     def create_episode_case(self):
-        episode_structure = self.episode(self._outcome)
-        episode_case = self.factory.create_or_update_case(episode_structure)[0]
-        episode_structure.case_id = episode_case.case_id
+        if self._outcome:
+            episode_structure = self.episode(self._outcome)
+            episode_case = self.factory.create_or_update_case(episode_structure)[0]
+            episode_structure.case_id = episode_case.case_id
 
     def create_test_cases(self):
-        tests = [
-            self.test(followup) for followup in self._followups
-            if Outcome.objects.filter(PatientId=followup.PatientID).exists()
+        if self._outcome:
             # how many followup's do not have a corresponding outcome? how should we handle this situation?
-        ]
-        self.factory.create_or_update_cases(tests)
+            self.factory.create_or_update_cases([self.test(followup) for followup in self._followups])
 
     @memoized
     def person(self):
@@ -195,7 +194,11 @@ class EnikshayCaseFactory(object):
     @property
     @memoized
     def _outcome(self):
-        return Outcome.objects.get(PatientId=self.patient_detail)
+        zero_or_one_outcomes = list(Outcome.objects.filter(PatientId=self.patient_detail))
+        if zero_or_one_outcomes:
+            return zero_or_one_outcomes[0]
+        else:
+            return None
 
     @property
     @memoized
