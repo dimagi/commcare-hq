@@ -8,7 +8,28 @@
  
  <script type="text/html" id="CommcareSettings.widgets.select">
      <span>
-@@ -152,115 +153,61 @@
+@@ -128,6 +129,20 @@
+     });
+ </script>
+ 
++{% if linked_apps_enabled and app.get_doc_type != 'LinkedApplication' %}
++<script>
++     $(function () {
++        var domains = {{ app.linked_whitelist|JSON }};
++        var save = '{% url "update_linked_whitelist" domain app.id %}';
++        $(function () {
++            var LinkedWhitelist = hqImport('app_manager/js/linked_whitelist.js').LinkedWhitelist;
++            linkedWhitelist = new LinkedWhitelist(domains, save);
++            $('#whitelist-section').koApplyBindings(linkedWhitelist);
++        });
++     });
++</script>
++{% endif %}
++
+ <script type="text/html" id="CommcareSettings.widgets.text_input">
+     <span data-bind="template: 'CommcareSettings.widgets.select'"></span>
+     <aside id="custom-keys-help" data-bind="visible: visibleValue() === 'custom-keys'">
+@@ -152,123 +167,102 @@
      </aside>
  </script>
  
@@ -32,6 +53,14 @@
 -"></inline-edit>
 -
 -<div class="tab-pane" id="commcare-settings">
+-    {% if app.get_doc_type == 'LinkedApplication' %}
+-        <p> Your app is at version {{ app.version }}. The master app is at version {{ master_version }}. </p>
+-        <a class="btn btn-primary"
+-            href="{% url 'pull_master_app' domain app.id %}">
+-            {% trans 'Pull Master App' %}
+-        </a>
+-
+-    {% else %}
 -    <br />
 -    <form class="form-horizontal">
 -        <div class="clearfix">
@@ -85,26 +114,7 @@
 -                            </div>
 -                        </div>
 -                    </div>
-+<div class="tabbable">
-+    <ul class="nav nav-tabs">
-+        <li class="active"><a href="#commcare-settings" data-toggle="tab">{% trans "Settings" %}</a></li>
-+        {% if app.get_doc_type == 'Application' %}
-+            <li><a id="demand-multimedia" href="#multimedia" data-toggle="tab">{% trans "Multimedia" %}</a></li>
-+        {% endif %}
-+        <li><a href="#languages" data-toggle="tab">{% trans "Languages" %}</a></li>
-+        <li><a href="#actions" data-toggle="tab">{% trans "Actions" %}</a></li>
-+    </ul>
-+    <br>
-+    <div class="tab-content">
-+        <div class="tab-pane active" id="commcare-settings">
-+            {% include 'app_manager/v2/partials/commcare_settings.html' %}
-+        </div>
-+        {% if app.get_doc_type == 'Application' %}
-+            <div class="tab-pane" id="multimedia">
-+                <div data-bind="if: load_state() === 'loading'">
-+                    <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
-+                    {% trans "Loading ..." %}
-                 </div>
+-                </div>
 -            </fieldset>
 -        </div>
 -        {% if request|toggle_enabled:"CUSTOM_PROPERTIES" %}
@@ -132,24 +142,85 @@
 -                        ">
 -                    </div>
 -
-+                <div data-bind="html: multimedia_page_html"></div>
-+                <div data-bind="if: load_state() === 'error'">
-+                    <button class="btn btn-default" data-bind="click: load_if_necessary">{% trans "Try again" %}</button>
-                 </div>
+-                </div>
 -                <button class="btn btn-default" data-bind="click: onAddCustomProperty">
 -                    <i class="fa fa-plus"></i>
 -                    {% trans "Add Custom Property" %}
++<div class="tabbable">
++    <ul class="nav nav-tabs">
++        <li class="active"><a href="#commcare-settings" data-toggle="tab">{% trans "Settings" %}</a></li>
++        {% if app.get_doc_type == 'Application' %}
++            <li><a id="demand-multimedia" href="#multimedia" data-toggle="tab">{% trans "Multimedia" %}</a></li>
++        {% endif %}
++        <li><a href="#languages" data-toggle="tab">{% trans "Languages" %}</a></li>
++        <li><a href="#actions" data-toggle="tab">{% trans "Actions" %}</a></li>
++    </ul>
++    <br>
++    <div class="tab-content">
++        {% if app.get_doc_type == 'LinkedApplication' %}
++            <p> Your app is at version {{ app.version }}. The master app is at version {{ master_version }}. </p>
++            <a class="btn btn-primary"
++                href="{% url 'pull_master_app' domain app.id %}">
++                {% trans 'Pull Master App' %}
++            </a>
++        {% endif %}
++        <div class="tab-pane active" id="commcare-settings">
++            {% include 'app_manager/v2/partials/commcare_settings.html' %}
++        </div>
++        {% if app.get_doc_type == 'Application' %}
++            <div class="tab-pane" id="multimedia">
++                <div data-bind="if: load_state() === 'loading'">
++                    <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
++                    {% trans "Loading ..." %}
++                </div>
++                <div data-bind="html: multimedia_page_html"></div>
++                <div data-bind="if: load_state() === 'error'">
++                    <button class="btn btn-default" data-bind="click: load_if_necessary">{% trans "Try again" %}</button>
++                </div>
 +            </div>
 +        {% endif %}
++        {% if app.get_doc_type != 'LinkedApplication' %}
 +        <div class="tab-pane" id="languages">
 +            {% include 'app_manager/v2/languages.html' %}
 +        </div>
++        {% endif %}
 +        <div class="tab-pane" id="actions">
++            {% if app.get_doc_type != 'LinkedApplication' %}
 +            {% if copy_app_form %}
 +                <form class="form form-horizontal" method="post" action="{% url "copy_app" domain %}">
 +                    {% crispy copy_app_form %}
 +                </form>
 +                <br>
++            {% endif %}
++            {% if linked_apps_enabled %}
++                <legend>{% trans 'Linked Project Whitelist' %}</legend>
++                <div id="whitelist-section" class="tab-pane">
++                <div class="help-block">
++                    {% blocktrans %}
++                        Project spaces on this list are able to update linked applications
++                        with new changes to this application. Project spaces are automatically added to
++                        this list when this application is copied as a linked application to that project
++                        space. If you would like to prevent a project from making future updates,
++                        you can remove them from the list here.
++                    {% endblocktrans %}
++                </div>
++                <div data-bind="saveButton: saveButton"></div>
++                <table class="table">
++                    <thead>
++                    <tr class="row">
++                        <th></th>
++                        <th>{% trans "Project Space" %}</th>
++                    </tr>
++                    </thead>
++                    <tbody data-bind="foreach: linkedDomains">
++                    <tr class="row">
++                        <td class="col-sm-1"><a href="#"><i class="fa fa-remove"
++                                                            data-bind="click: $root.removeDomain"></i></a></td>
++                        <td class="col-sm-11"><span data-bind="text: $data"></span></td>
++                    </tr>
++                    </tbody>
++                </table>
++                </div>
 +            {% endif %}
 +            {% if request|toggle_enabled:"EXPORT_ZIPPED_APPS" %}
 +                <legend>Export compressed application</legend>
@@ -162,6 +233,7 @@
 +                </form>
 +                <br>
 +            {% endif %}
++            {% endif %}
 +            <legend>{% trans "Delete Application" %}</legend>
 +            <form action="{% url "corehq.apps.app_manager.views.delete_app" domain app.id %}" method="POST">
 +                {% csrf_token %}
@@ -173,8 +245,8 @@
 -        </fieldset>
 -        {% endif %}
 -    </form>
+-    {% endif %}
 +            </form>
 +        </div>
 +    </div>
  </div>
--
