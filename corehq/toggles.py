@@ -955,3 +955,10 @@ DATA_DICTIONARY = StaticToggle(
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
+
+LINKED_APPS = StaticToggle(
+    'linked_apps',
+    'Allows master and linked apps',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)

@@ -56,7 +56,7 @@ from corehq.apps.domain.decorators import (
     login_and_domain_required,
     login_or_digest,
 )
-from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.dbaccessors import get_app, get_current_app_doc, wrap_app
 from corehq.apps.app_manager.models import (
     Application,
     ApplicationBase,
@@ -73,6 +73,7 @@ from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
 from django_prbac.utils import has_privilege
 from corehq.apps.analytics.tasks import track_app_from_template_on_hubspot, identify
 from corehq.apps.analytics.utils import get_meta
+from corehq.util.view_utils import reverse as reverse_util
 
 
 @no_conflict_require_POST
@@ -185,9 +186,10 @@ def get_app_view_context(request, app):
         lambda x: x['type'] == 'hq' and x['id'] == 'build_spec',
         [setting for section in context['settings_layout']
             for setting in section['settings']]
-    )
-    build_spec_setting['options_map'] = options_map
-    build_spec_setting['default_app_version'] = app.application_version
+    ) if context['settings_layout'] else (None,)
+    if build_spec_setting:
+        build_spec_setting['options_map'] = options_map
+        build_spec_setting['default_app_version'] = app.application_version
 
     context.update({
         'bulk_ui_translation_upload': {
@@ -223,6 +225,8 @@ def get_app_view_context(request, app):
     except ValueError:
         context['fetchLimit'] = DEFAULT_FETCH_LIMIT
 
+    if app.get_doc_type() == 'LinkedApplication':
+        context['master_version'] = get_app(None, app.master, latest=True).version
     return context
 
 
@@ -297,7 +301,15 @@ def copy_app(request, domain):
             if data['toggles']:
                 for slug in data['toggles'].split(","):
                     set_toggle(slug, domain, True, namespace=toggles.NAMESPACE_DOMAIN)
-            app_copy = import_app_util(app_id_or_source, domain, {'name': data['name']})
+            extra_properties = {'name': data['name']}
+            if data.get('linked'):
+                extra_properties['master'] = app_id
+                extra_properties['doc_type'] = 'LinkedApplication'
+                app = get_app(None, app_id)
+                if domain not in app.linked_whitelist:
+                    app.linked_whitelist.append(domain)
+                app.save()
+            app_copy = import_app_util(app_id_or_source, domain, extra_properties)
             return back_to_main(request, app_copy.domain, app_id=app_copy._id)
 
         return login_and_domain_required(_inner)(request, form.cleaned_data['domain'], form.cleaned_data)
@@ -792,3 +804,33 @@ def drop_user_case(request, domain, app_id):
         _('You have successfully removed User Case properties from this application.')
     )
     return back_to_main(request, domain, app_id=app_id)
+
+
+@require_GET
+@require_can_edit_apps
+def pull_master_app(request, domain, app_id):
+    app = get_current_app_doc(domain, app_id)
+    master_app = get_app(None, app['master'], latest=True)
+    params = {}
+    if app['domain'] in master_app.linked_whitelist:
+        excluded_fields = set(Application._meta_fields).union(
+            ['date_created', 'build_profiles', 'copy_history', 'copy_of', 'name', 'comment', 'doc_type']
+        )
+        master_json = master_app.to_json()
+        for key, value in master_json.iteritems():
+            if key not in excluded_fields:
+                app[key] = value
+        app['version'] = master_json['version']
+        wrapped_app = wrap_app(app)
+        wrapped_app.copy_attachments(master_app)
+        wrapped_app.save(increment_version=False)
+    return HttpResponseRedirect(reverse_util('view_app', params=params, args=[domain, app_id]))
+
+
+@no_conflict_require_POST
+@require_can_edit_apps
+def update_linked_whitelist(request, domain, app_id):
+    app = wrap_app(get_current_app_doc(domain, app_id))
+    new_whitelist = json.loads(request.body).get('whitelist')
+    app.linked_whitelist = new_whitelist
+    app.save()
