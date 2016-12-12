@@ -16,6 +16,7 @@ class TestCreateEnikshayCases(TestCase):
         super(TestCreateEnikshayCases, self).setUp()
 
         patient_detail = PatientDetail.objects.create(
+            Tbunitcode=1,
             PregId='MH-ABD-05-16-0001',
             pname='A B C',
             pgender='M',
@@ -91,15 +92,20 @@ class TestCreateEnikshayCases(TestCase):
         self.assertEqual(
             OrderedDict([
                 ('aadhaar_number', '867386000000'),
-                ('age', '18'),
+                ('age_entered', '18'),
                 ('current_address', 'Cambridge MA'),
+                ('current_address_district_choice', ''),
+                ('current_address_state_choice', 'default'),
                 ('first_name', 'A'),
                 ('last_name', 'C'),
                 ('middle_name', 'B'),
                 ('migration_created_case', 'True'),
-                ('mobile_number', '9987328695'),
+                ('nikshay_id', 'MH-ABD-05-16-0001'),
+                ('permanent_address_district_choice', ''),
+                ('permanent_address_state_choice', 'default'),
                 ('phi', '2'),
                 ('sex', 'male'),
+                ('tu_choice', '1'),
             ]),
             person_case.dynamic_case_properties()
         )
@@ -119,6 +125,8 @@ class TestCreateEnikshayCases(TestCase):
         self.assertEqual(1, len(episode_case_ids))
         self.assertEqual(
             OrderedDict([
+                ('date_reported', '2016-12-12'),
+                ('disease_classification', ''),
                 ('migration_created_case', 'True'),
                 ('treatment_supporter_mobile_number', '123'),
             ]),
