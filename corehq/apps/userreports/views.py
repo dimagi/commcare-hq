@@ -622,6 +622,15 @@ def to_report_column(column, index, column_options):
     return column_options[column['column_id']].to_column_dicts(index, column['label'], aggregation)[0]
 
 
+def _get_aggregation_columns(aggregate, columns, column_options):
+    if aggregate:
+        aggregated_report_columns = [c['column_id'] for c in columns if c['is_group_by_column']]
+        aggregation_columns = [column_options[c].indicator_id for c in aggregated_report_columns]
+    else:
+        aggregation_columns = ["doc_id"]
+    return aggregation_columns
+
+
 def _report_column_options(domain, application, source_type, source):
         builder = DataSourceBuilder(domain, application, source_type, source)
         options = OrderedDict()
@@ -818,17 +827,13 @@ class ConfigureReport(ReportBuilderView):
         data_source_config_id = build_data_source(app.domain, ds_config_kwargs)
 
         self._confirm_report_limit()
-        if report_data['aggregate']:
-            aggregated_report_columns = [c['column_id'] for c in report_data['columns'] if c['is_group_by_column']]
-            aggregation_columns = [self.report_column_options[c].indicator_id for c in aggregated_report_columns]
-        else:
-            aggregation_columns = ["doc_id"]
+
         try:
             report_configuration = ReportConfiguration(
                 domain=app.domain,
                 config_id=data_source_config_id,
                 title=report_name,
-                aggregation_columns=aggregation_columns,
+                aggregation_columns=_get_aggregation_columns(report_data['aggregate'], report_data['columns'], self.report_column_options),
                 columns=[to_report_column(c, i, self.report_column_options) for i, c in enumerate(report_data['columns'])],
                 filters=[],  # TODO: report_data['user_filters'] + report_data['default_filters']
                 configured_charts=get_report_charts(report_data),
@@ -875,17 +880,12 @@ class ReportPreview(BaseDomainView):
             self.domain, Application.get(report_data['app']), report_data['source_type'], report_data['source_id']
         )
 
-        if report_data['aggregate']:
-            aggregated_report_columns = [c['column_id'] for c in report_data['columns'] if c['is_group_by_column']]
-            aggregation_columns = [column_options[c].indicator_id for c in aggregated_report_columns]
-        else:
-            aggregation_columns = ['doc_id']
         table = ConfigurableReport.report_config_table(
             domain=domain,
             config_id=data_source,
             title='{}_{}_{}'.format(TEMP_REPORT_PREFIX, domain, data_source),
             description='',
-            aggregation_columns=aggregation_columns,
+            aggregation_columns=_get_aggregation_columns(report_data['aggregate'], report_data['columns'], column_options),
             columns=[to_report_column(c, i, column_options) for i, c in enumerate(report_data['columns'])],
             report_meta=ReportMeta(created_by_builder=True),
         )  # is None if report configuration doesn't make sense or data source has expired
