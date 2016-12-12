@@ -55,3 +55,9 @@ class CopyApplicationForm(forms.Form):
         if domain is None:
             raise forms.ValidationError("A valid project space is required.")
         return domain_name
+
+    def clean(self):
+        domain = self.cleaned_data.get('domain')
+        if self.cleaned_data.get('linked'):
+            if not LINKED_APPS.enabled(domain):
+                raise forms.ValidationError("The target project space does not have linked apps enabled.")
