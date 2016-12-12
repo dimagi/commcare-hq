@@ -35,6 +35,6 @@ def find_applications_with_hierarchical_fixture(domains):
         for application in domain_obj.applications():
             raw_doc = json.dumps(application.get_db().get(application.id))
             if search_string in raw_doc:
-                search_string[domain] = application.id
+                domain_with_application[domain] = application.id
                 continue
     return domain_with_application
