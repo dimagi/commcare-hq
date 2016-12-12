@@ -51,7 +51,6 @@ class EnikshayCaseFactory(object):
     @memoized
     def person(self):
         return CaseStructure(
-            # case_id=self.patient_detail.PregId,
             attrs={
                 'create': True,
                 'case_type': 'person',
