@@ -17,4 +17,19 @@ describe('urllib', function() {
             assert.equal(urllib.getUrlParameterFromString('color', '?limit=29&color=red'), 'red');
         });
     });
+
+    describe('registerUrl', function() {
+        it('should fetch a static url', function() {
+            urllib.registerUrl("case_importer_uploads", "/a/hqsharedtags/importer/history/uploads/");
+            assert.equal(urllib.reverse("case_importer_uploads"), "/a/hqsharedtags/importer/history/uploads/");
+        });
+        it('should interpolate a templated url', function() {
+            urllib.registerUrl("case_importer_upload_file_download", "/a/hqsharedtags/importer/history/uploads/---/");
+            assert.equal(urllib.reverse("case_importer_upload_file_download", 'asdf-ghjk'), "/a/hqsharedtags/importer/history/uploads/asdf-ghjk/");
+        });
+        it('should correctly interpolate a templated url with multiple variables', function() {
+            urllib.registerUrl("multiple_args", "/a/---/importer/history/uploads/---/");
+            assert.equal(urllib.reverse("multiple_args", 'hqsharedtags', 'asdf-ghjk'), "/a/hqsharedtags/importer/history/uploads/asdf-ghjk/");
+        });
+    });
 });
