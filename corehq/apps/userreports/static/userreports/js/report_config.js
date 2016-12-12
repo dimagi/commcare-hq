@@ -68,6 +68,10 @@ var reportBuilder = function () {
      */
     self.ReportConfig = function (config) {
         var self = this;
+        self._app = config['app'];
+        self._sourceType = config['sourceType'];
+        self._sourceId = config['sourceId'];
+
         self.reportTitle = config["reportTitle"];
         self.columns = config["columns"];
         self.dataSourceUrl = config["dataSourceUrl"];  // Fetch the preview data asynchronously.
@@ -129,6 +133,9 @@ var reportBuilder = function () {
                 data: JSON.stringify({
                     'columns': _.map(columns, function (c) { return c.serialize(); }),
                     'aggregate': self.isAggregationEnabled(),
+                    'app': self._app,
+                    'source_type': self._sourceType,
+                    'source_id': self._sourceId,
                 }),
                 dataType: 'json',
                 success: self.renderReportPreview,
