@@ -1,3 +1,5 @@
+from mock import patch
+
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.models import (
@@ -63,7 +65,8 @@ class ModuleAsChildTestBase(TestXmlMixin):
         """
         self.assertXmlPartialEqual(XML, self.app.create_suite(), "./menu")
 
-    def test_deleted_parent(self):
+    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+    def test_deleted_parent(self, mock):
         self.module_1.root_module_id = "unknownmodule"
 
         cycle_error = {
@@ -72,7 +75,8 @@ class ModuleAsChildTestBase(TestXmlMixin):
         errors = self.app.validate_app()
         self.assertIn(cycle_error, errors)
 
-    def test_circular_relation(self):
+    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+    def test_circular_relation(self, mock):
         self.module_0.root_module_id = self.module_1.unique_id
         cycle_error = {
             'type': 'root cycle',

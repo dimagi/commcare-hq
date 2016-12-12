@@ -35,6 +35,8 @@ from corehq.apps.app_manager.decorators import require_can_edit_apps
 from corehq.apps.analytics.tasks import track_entered_form_builder_on_hubspot
 from corehq.apps.analytics.utils import get_meta
 from corehq.apps.tour import tours
+from corehq.apps.analytics import ab_tests
+from corehq.apps.domain.models import Domain
 
 
 logger = logging.getLogger(__name__)
@@ -141,7 +143,22 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         'notify_facility': get_facility_for_form(domain, app_id, form.unique_id),
     })
     notify_form_opened(domain, request.couch_user, app_id, form.unique_id)
-    return render(request, 'app_manager/v1/form_designer.html', context)
+
+    live_preview_ab = ab_tests.ABTest(ab_tests.LIVE_PREVIEW, request)
+    domain_obj = Domain.get_by_name(domain)
+    context.update({
+        'live_preview_ab': live_preview_ab.context,
+        'is_onboarding_domain': domain_obj.is_onboarding_domain,
+        'show_live_preview': (
+            toggles.PREVIEW_APP.enabled(domain)
+            or (domain_obj.is_onboarding_domain
+                and live_preview_ab.version == ab_tests.LIVE_PREVIEW_ENABLED)
+        )
+    })
+
+    response = render(request, 'app_manager/v1/form_designer.html', context)
+    live_preview_ab.update_response(response)
+    return response
 
 
 @require_GET

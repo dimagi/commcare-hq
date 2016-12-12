@@ -8,6 +8,7 @@ from casexml.apps.case.exceptions import UsesReferrals, VersionNotSupported
 from casexml.apps.case.xform import get_case_updates
 from casexml.apps.case.xml import V2
 from casexml.apps.case.xml.parser import KNOWN_PROPERTIES
+from corehq.apps.couch_sql_migration.progress import couch_sql_migration_in_progress
 from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL, CaseTransaction, CaseAttachmentSQL
 from corehq.form_processor.update_strategy_base import UpdateStrategy
 from django.utils.translation import ugettext as _
@@ -49,14 +50,19 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
             self.case.track_create(transaction)
 
     def _apply_case_update(self, case_update, xformdoc):
-        if case_update.has_referrals():
+        sql_migration_in_progress = couch_sql_migration_in_progress(xformdoc.domain)
+        if case_update.has_referrals() and not sql_migration_in_progress:
             logging.error('Form {} touching case {} in domain {} is still using referrals'.format(
                 xformdoc.form_id, case_update.id, getattr(xformdoc, 'domain', None))
             )
             raise UsesReferrals(_('Sorry, referrals are no longer supported!'))
 
-        if case_update.version and case_update.version != V2:
+        if case_update.version and case_update.version != V2 and not sql_migration_in_progress:
             raise VersionNotSupported
+
+        if not case_update.user_id and xformdoc.user_id:
+            # hack for migration from V1 case blocks
+            case_update.user_id = xformdoc.user_id
 
         if xformdoc.is_deprecated:
             return

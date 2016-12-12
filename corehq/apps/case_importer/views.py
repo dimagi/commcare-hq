@@ -5,17 +5,14 @@ from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
 from corehq.apps.case_importer import base
 from corehq.apps.case_importer import util as importer_util
 from corehq.apps.case_importer.exceptions import ImporterError
-from corehq.apps.case_importer.tasks import bulk_import_async
 from django.views.decorators.http import require_POST
+from corehq.apps.case_importer.tracking.case_upload_tracker import CaseUpload
 
 from corehq.apps.case_importer.util import get_case_properties_for_case_type, get_importer_error_message
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.files import file_extention_from_filename
-from soil.exceptions import TaskFailedError
-from soil.util import expose_cached_download, get_download_context
-from soil import DownloadBase
 from django.template.context import RequestContext
 
 from django.contrib import messages
@@ -69,18 +66,17 @@ def excel_config(request, domain):
                             'Excel file.')
 
     # stash content in the default storage for subsequent views
-    file_ref = expose_cached_download(
+    case_upload = CaseUpload.create(
         uploaded_file_handle.read(),
-        expiry=1*60*60,
-        file_extension=file_extention_from_filename(uploaded_file_handle.name),
-    )
-    request.session[EXCEL_SESSION_ID] = file_ref.download_id
+        file_extension=file_extention_from_filename(uploaded_file_handle.name))
+
+    request.session[EXCEL_SESSION_ID] = case_upload.upload_id
     try:
-        importer_util.open_spreadsheet_download_ref(file_ref, named_columns)
+        case_upload.check_file(named_columns)
     except ImporterError as e:
         return render_error(request, domain, get_importer_error_message(e))
 
-    with importer_util.get_spreadsheet(file_ref.get_filename(), named_columns) as spreadsheet:
+    with case_upload.get_spreadsheet(named_columns) as spreadsheet:
         columns = spreadsheet.get_header_columns()
         row_count = spreadsheet.max_row
 
@@ -172,14 +168,14 @@ def excel_fields(request, domain):
     key_column = ''
     value_column = ''
 
-    download_ref = DownloadBase.get(request.session.get(EXCEL_SESSION_ID))
+    case_upload = CaseUpload.get(request.session.get(EXCEL_SESSION_ID))
 
     try:
-        importer_util.open_spreadsheet_download_ref(download_ref, named_columns)
+        case_upload.check_file(named_columns)
     except ImporterError as e:
         return render_error(request, domain, get_importer_error_message(e))
 
-    with importer_util.get_spreadsheet(download_ref.get_filename(), named_columns) as spreadsheet:
+    with case_upload.get_spreadsheet(named_columns) as spreadsheet:
         columns = spreadsheet.get_header_columns()
 
         if key_value_columns:
@@ -261,28 +257,20 @@ def excel_commit(request, domain):
 
     excel_id = request.session.get(EXCEL_SESSION_ID)
 
-    excel_ref = DownloadBase.get(excel_id)
+    case_upload = CaseUpload.get(excel_id)
     try:
-        importer_util.open_spreadsheet_download_ref(excel_ref, config.named_columns)
+        case_upload.check_file(config.named_columns)
     except ImporterError as e:
         return render_error(request, domain, get_importer_error_message(e))
 
-    download = DownloadBase()
-    download.set_task(bulk_import_async.delay(
-        config,
-        domain,
-        excel_id,
-    ))
+    case_upload.trigger_upload(domain, config)
 
-    try:
-        del request.session[EXCEL_SESSION_ID]
-    except KeyError:
-        pass
+    request.session.pop(EXCEL_SESSION_ID, None)
 
     return render(
         request,
         "case_importer/excel_commit.html", {
-            'download_id': download.download_id,
+            'download_id': case_upload.upload_id,
             'template': 'case_importer/partials/import_status.html',
             'domain': domain,
             'report': {
@@ -295,15 +283,24 @@ def excel_commit(request, domain):
 
 @require_can_edit_data
 def importer_job_poll(request, domain, download_id, template="case_importer/partials/import_status.html"):
-    try:
-        download_context = get_download_context(download_id, check_state=True)
-    except TaskFailedError as e:
+    case_upload = CaseUpload.get(download_id)
+    task_status = case_upload.get_task_status()
+    if task_status.failed():
         context = RequestContext(request)
-        context.update({'error': e.errors, 'url': base.ImportCases.get_url(domain=domain)})
+        context.update({'error': task_status.error, 'url': base.ImportCases.get_url(domain=domain)})
         return render_to_response('case_importer/partials/import_error.html', context_instance=context)
     else:
         context = RequestContext(request)
-        context.update(download_context)
+        from soil.heartbeat import heartbeat_enabled, is_alive
+
+        context.update({
+            'result': task_status.result,
+            'error': task_status.error,
+            'is_ready': task_status.success(),
+            'progress': task_status.progress,
+            'download_id': case_upload.upload_id,
+            'is_alive': is_alive() if heartbeat_enabled() else True,
+        })
         context['url'] = base.ImportCases.get_url(domain=domain)
         return render_to_response(template, context_instance=context)
 

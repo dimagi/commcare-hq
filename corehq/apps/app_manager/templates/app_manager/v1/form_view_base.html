@@ -370,6 +370,11 @@
             {% endif %}
 
             <div class="tab-pane" id="case-configuration">
+                {% if xform_validation_missing %}
+                    <p class="alert alert-warning">
+                        {% trans "We were unable to validate your form due an error on the server. Proceed with caution." %}
+                    </p>
+                {% endif %}
                 {% if form_errors or xform_validation_errored %}
                     <p class="alert alert-warning">
                         {% trans "There are errors in your form. Fix your form in order to view and edit Case Management." %}

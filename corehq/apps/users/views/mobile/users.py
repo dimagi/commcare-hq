@@ -492,7 +492,7 @@ class DemoRestoreStatusView(BaseManageCommCareUserView):
 def demo_restore_job_poll(request, domain, download_id, template="users/mobile/partials/demo_restore_status.html"):
 
     try:
-        context = get_download_context(download_id, check_state=True)
+        context = get_download_context(download_id)
     except TaskFailedError:
         return HttpResponseServerError()
 
@@ -1041,7 +1041,7 @@ class UserUploadStatusView(BaseManageCommCareUserView):
 @require_can_edit_commcare_users
 def user_upload_job_poll(request, domain, download_id, template="users/mobile/partials/user_upload_status.html"):
     try:
-        context = get_download_context(download_id, check_state=True)
+        context = get_download_context(download_id)
     except TaskFailedError:
         return HttpResponseServerError()
 
@@ -1054,7 +1054,7 @@ def user_upload_job_poll(request, domain, download_id, template="users/mobile/pa
     class _BulkUploadResponseWrapper(object):
 
         def __init__(self, context):
-            results = context.get('result', defaultdict(lambda: []))
+            results = context.get('result') or defaultdict(lambda: [])
             self.response_rows = results['rows']
             self.response_errors = results['errors']
             self.problem_rows = [r for r in self.response_rows if r['flag'] not in ('updated', 'created')]
