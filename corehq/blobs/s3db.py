@@ -37,7 +37,7 @@ class S3BlobDB(AbstractBlobDB):
         # https://github.com/boto/boto3/issues/259
         self.db.meta.client.meta.events.unregister('before-sign.s3', fix_s3_host)
 
-    def put(self, content, basename="", bucket=DEFAULT_BUCKET):
+    def put(self, content, bucket=DEFAULT_BUCKET):
         identifier = self.get_short_identifier()
         path = self.get_path(identifier, bucket)
         s3_bucket = self._s3_bucket(create=True)

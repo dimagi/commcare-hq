@@ -17,62 +17,62 @@ class _BlobDBTests(object):
 
     def test_put_and_get(self):
         name = "test.1"
-        info = self.db.put(StringIO(b"content"), name)
+        info = self.db.put(StringIO(b"content"))
         with self.db.get(info.identifier) as fh:
             self.assertEqual(fh.read(), b"content")
 
     def test_put_and_get_with_unicode_names(self):
         name = "test.\u4500"
         bucket = "doc.4500"
-        info = self.db.put(StringIO(b"content"), name, bucket)
+        info = self.db.put(StringIO(b"content"), bucket=bucket)
         with self.db.get(info.identifier, bucket) as fh:
             self.assertEqual(fh.read(), b"content")
 
     def test_put_and_get_with_bucket(self):
         name = "test.2"
         bucket = "doc.2"
-        info = self.db.put(StringIO(b"content"), name, bucket)
+        info = self.db.put(StringIO(b"content"), bucket=bucket)
         with self.db.get(info.identifier, bucket) as fh:
             self.assertEqual(fh.read(), b"content")
 
     def test_put_with_bucket_and_get_without_bucket(self):
         name = "test.3"
         bucket = "doc.3"
-        info = self.db.put(StringIO(b"content"), name, bucket)
+        info = self.db.put(StringIO(b"content"), bucket=bucket)
         with self.assertRaises(mod.NotFound):
             self.db.get(info.identifier)
 
     def test_put_with_double_dotted_name(self):
         name = "nations..mp3"
-        info = self.db.put(StringIO(b"content"), name)
+        info = self.db.put(StringIO(b"content"))
         with self.db.get(info.identifier) as fh:
             self.assertEqual(fh.read(), b"content")
 
     def test_put_from_get_stream(self):
         name = "form.xml"
-        old = self.db.put(StringIO(b"content"), name, "old_bucket")
+        old = self.db.put(StringIO(b"content"), bucket="old_bucket")
         with self.db.get(old.identifier, "old_bucket") as fh:
-            new = self.db.put(fh, name, "new_bucket")
+            new = self.db.put(fh, bucket="new_bucket")
         with self.db.get(new.identifier, "new_bucket") as fh:
             self.assertEqual(fh.read(), b"content")
 
     def test_exists(self):
         name = "test.3.0"
         bucket = "doc.3.0"
-        info = self.db.put(StringIO(b"content"), name, bucket)
+        info = self.db.put(StringIO(b"content"), bucket=bucket)
         self.assertTrue(self.db.exists(info.identifier, bucket), 'not found')
 
     def test_delete_not_exists(self):
         name = "test.3.1"
         bucket = "doc.3.1"
-        info = self.db.put(StringIO(b"content"), name, bucket)
+        info = self.db.put(StringIO(b"content"), bucket=bucket)
         self.db.delete(info.identifier, bucket)
         self.assertFalse(self.db.exists(info.identifier, bucket), 'not deleted')
 
     def test_delete(self):
         name = "test.4"
         bucket = "doc.4"
-        info = self.db.put(StringIO(b"content"), name, bucket)
+        info = self.db.put(StringIO(b"content"), bucket=bucket)
 
         self.assertTrue(self.db.delete(info.identifier, bucket), 'delete failed')
 
@@ -87,7 +87,7 @@ class _BlobDBTests(object):
             ('test.6', 'doc.6'),
         ]
         infos = [
-            self.db.put(StringIO(b"content-{}".format(blob[0])), blob[0], blob[1])
+            self.db.put(StringIO(b"content-{}".format(blob[0])), bucket=blob[1])
             for blob in blobs
         ]
 

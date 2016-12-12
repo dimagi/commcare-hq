@@ -18,7 +18,7 @@ class AbstractBlobDB(object):
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def put(self, content, basename="", bucket=DEFAULT_BUCKET):
+    def put(self, content, bucket=DEFAULT_BUCKET):
         """Put a blob in persistent storage
 
         :param content: A file-like object in binary read mode.
