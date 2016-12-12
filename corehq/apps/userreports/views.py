@@ -704,7 +704,7 @@ class ConfigureReport(ReportBuilderView):
                 'column_id': column.id,
                 'name': column.id,
                 'label': column.display,
-                'is_numeric': not column._is_non_numeric
+                'is_numeric': not column._is_non_numeric  # TODO: these are not the same things
             }
         return map(remap_fields, columns.values())
 
