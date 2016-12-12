@@ -1,8 +1,7 @@
 from corehq.apps.case_importer.exceptions import ImporterRefError
 from corehq.apps.case_importer.tracking.filestorage import transient_file_store, \
     persistent_file_store
-from corehq.apps.case_importer.tracking.models import CaseUploadRecord, \
-    CaseUploadFileMeta
+from corehq.apps.case_importer.tracking.models import CaseUploadRecord
 from corehq.apps.case_importer.util import open_spreadsheet_download_ref, get_spreadsheet
 from dimagi.utils.decorators.memoized import memoized
 from soil.progress import get_task_status
