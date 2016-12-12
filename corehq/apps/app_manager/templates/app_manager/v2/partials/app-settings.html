@@ -129,6 +129,20 @@
     });
 </script>
 
+{% if linked_apps_enabled and app.get_doc_type != 'LinkedApplication' %}
+<script>
+     $(function () {
+        var domains = {{ app.linked_whitelist|JSON }};
+        var save = '{% url "update_linked_whitelist" domain app.id %}';
+        $(function () {
+            var LinkedWhitelist = hqImport('app_manager/js/linked_whitelist.js').LinkedWhitelist;
+            linkedWhitelist = new LinkedWhitelist(domains, save);
+            $('#whitelist-section').koApplyBindings(linkedWhitelist);
+        });
+     });
+</script>
+{% endif %}
+
 <script type="text/html" id="CommcareSettings.widgets.text_input">
     <span data-bind="template: 'CommcareSettings.widgets.select'"></span>
     <aside id="custom-keys-help" data-bind="visible: visibleValue() === 'custom-keys'">
@@ -164,6 +178,13 @@
     </ul>
     <br>
     <div class="tab-content">
+        {% if app.get_doc_type == 'LinkedApplication' %}
+            <p> Your app is at version {{ app.version }}. The master app is at version {{ master_version }}. </p>
+            <a class="btn btn-primary"
+                href="{% url 'pull_master_app' domain app.id %}">
+                {% trans 'Pull Master App' %}
+            </a>
+        {% endif %}
         <div class="tab-pane active" id="commcare-settings">
             {% include 'app_manager/v2/partials/commcare_settings.html' %}
         </div>
@@ -179,15 +200,48 @@
                 </div>
             </div>
         {% endif %}
+        {% if app.get_doc_type != 'LinkedApplication' %}
         <div class="tab-pane" id="languages">
             {% include 'app_manager/v2/languages.html' %}
         </div>
+        {% endif %}
         <div class="tab-pane" id="actions">
+            {% if app.get_doc_type != 'LinkedApplication' %}
             {% if copy_app_form %}
                 <form class="form form-horizontal" method="post" action="{% url "copy_app" domain %}">
                     {% crispy copy_app_form %}
                 </form>
                 <br>
+            {% endif %}
+            {% if linked_apps_enabled %}
+                <legend>{% trans 'Linked Project Whitelist' %}</legend>
+                <div id="whitelist-section" class="tab-pane">
+                <div class="help-block">
+                    {% blocktrans %}
+                        Project spaces on this list are able to update linked applications
+                        with new changes to this application. Project spaces are automatically added to
+                        this list when this application is copied as a linked application to that project
+                        space. If you would like to prevent a project from making future updates,
+                        you can remove them from the list here.
+                    {% endblocktrans %}
+                </div>
+                <div data-bind="saveButton: saveButton"></div>
+                <table class="table">
+                    <thead>
+                    <tr class="row">
+                        <th></th>
+                        <th>{% trans "Project Space" %}</th>
+                    </tr>
+                    </thead>
+                    <tbody data-bind="foreach: linkedDomains">
+                    <tr class="row">
+                        <td class="col-sm-1"><a href="#"><i class="fa fa-remove"
+                                                            data-bind="click: $root.removeDomain"></i></a></td>
+                        <td class="col-sm-11"><span data-bind="text: $data"></span></td>
+                    </tr>
+                    </tbody>
+                </table>
+                </div>
             {% endif %}
             {% if request|toggle_enabled:"EXPORT_ZIPPED_APPS" %}
                 <legend>Export compressed application</legend>
@@ -199,6 +253,7 @@
                     </button>
                 </form>
                 <br>
+            {% endif %}
             {% endif %}
             <legend>{% trans "Delete Application" %}</legend>
             <form action="{% url "corehq.apps.app_manager.views.delete_app" domain app.id %}" method="POST">

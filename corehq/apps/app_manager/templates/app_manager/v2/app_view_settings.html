@@ -15,6 +15,9 @@
 
 {% block js %}{{ block.super }}
   <script src="{% static 'app_manager/js/commcaresettings.js' %}"></script>
+    {% if linked_apps_enabled %}
+        <script src="{% static 'app_manager/js/linked_whitelist.js' %}"></script>
+    {% endif %}
 {% endblock js %}
 
 {% block js-inline %}{{ block.super }}

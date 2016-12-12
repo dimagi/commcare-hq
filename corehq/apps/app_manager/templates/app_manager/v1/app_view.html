@@ -58,6 +58,7 @@
 
         {% if not app.is_remote_app and app.get_doc_type != 'LinkedApplication' %}
             {% if linked_apps_enabled %}
+             $(function () {
                 var domains = {{ app.linked_whitelist|JSON }};
                 var save = '{% url "update_linked_whitelist" domain app.id %}';
                 $(function () {
@@ -65,6 +66,7 @@
                     linkedWhitelist = new LinkedWhitelist(domains, save);
                     $('#whitelist-tab').koApplyBindings(linkedWhitelist);
                 });
+             });
             {% endif %}
         $(function () {
             var multimedia_tab = (function () {
@@ -320,7 +322,7 @@
             <div class="tabbable">
                 <ul class="nav nav-tabs">
                     <li class="active"><a href="#copy-tab" data-toggle="tab">{% trans "Copy Application" %}</a></li>
-                    <li><a href="#whitelist-tab" data-toggle="tab">{% trans "Linked Domain Whitelist" %}</a></li>
+                    <li><a href="#whitelist-tab" data-toggle="tab">{% trans "Linked Project Whitelist" %}</a></li>
                 </ul>
                 <div class="spacer"></div>
                 <div class="tab-content">
@@ -361,9 +363,8 @@
                         </thead>
                         <tbody data-bind="foreach: linkedDomains">
                             <tr class="row">
-
-                                <td class="col-sm-11"><span data-bind="text: $data"></span></td>
                                 <td class="col-sm-1"><a href="#"><i class="fa fa-remove" data-bind="click: $root.removeDomain"></i></a></td>
+                                <td class="col-sm-11"><span data-bind="text: $data"></span></td>
                             </tr>
                         </tbody>
                     </table>

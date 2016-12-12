@@ -9,7 +9,7 @@ hqDefine('app_manager/js/linked_whitelist.js', function () {
                self.saveButton.ajax({
                    url: saveUrl,
                    type: 'post',
-                   data: {'whitelist': JSON.stringify(self.linkedDomains)},
+                   data: {'whitelist': JSON.stringify(self.linkedDomains())},
                    error: function () {
                        throw gettext("There was an error saving");
                    },

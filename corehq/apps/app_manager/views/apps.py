@@ -831,6 +831,7 @@ def pull_master_app(request, domain, app_id):
 @require_can_edit_apps
 def update_linked_whitelist(request, domain, app_id):
     app = wrap_app(get_current_app_doc(domain, app_id))
-    new_whitelist = json.loads(request.body).get('whitelist')
+    new_whitelist = json.loads(request.POST.get('whitelist'))
     app.linked_whitelist = new_whitelist
     app.save()
+    return HttpResponse()
