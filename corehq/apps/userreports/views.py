@@ -10,7 +10,6 @@ import uuid
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
-from django.http import HttpRequest
 from django.http import HttpResponseRedirect, HttpResponse
 from django.http.response import Http404
 from django.shortcuts import redirect

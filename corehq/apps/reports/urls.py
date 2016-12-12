@@ -32,13 +32,39 @@ from .views import (
     MySavedReportsView,
     ScheduledReportsView,
     default,
-    old_saved_reports, case_forms, case_xml, rebuild_case_view, resave_case, close_case_view, undo_close_case_view,
-    export_case_transactions, case_form_data, download_form, restore_edit, form_multimedia_export,
-    download_attachment, archive_form, resave_form, unarchive_form, project_health_user_details, export_data,
-    export_default_or_custom_data, hq_download_saved_export, hq_deid_download_saved_export, hq_update_saved_export,
-    export_report, email_report, delete_config, delete_scheduled_report, send_test_scheduled_report,
-    view_scheduled_report, export_all_form_metadata, export_all_form_metadata_async, download_cases,
-    download_cases_internal)
+    old_saved_reports,
+    case_forms,
+    case_xml,
+    rebuild_case_view,
+    resave_case,
+    close_case_view,
+    undo_close_case_view,
+    export_case_transactions,
+    case_form_data,
+    download_form,
+    restore_edit,
+    form_multimedia_export,
+    download_attachment,
+    archive_form,
+    resave_form,
+    unarchive_form,
+    project_health_user_details,
+    export_data,
+    export_default_or_custom_data,
+    hq_download_saved_export,
+    hq_deid_download_saved_export,
+    hq_update_saved_export,
+    export_report,
+    email_report,
+    delete_config,
+    delete_scheduled_report,
+    send_test_scheduled_report,
+    view_scheduled_report,
+    export_all_form_metadata,
+    export_all_form_metadata_async,
+    download_cases,
+    download_cases_internal,
+)
 
 
 custom_report_urls = [
@@ -54,7 +80,8 @@ urlpatterns = [
     url(r'builder/subscribe/activating_subscription/$', ReportBuilderPaywallActivatingSubscription.as_view(),
         name=ReportBuilderPaywallActivatingSubscription.urlname),
 
-    url(r'^builder/select_source/$', ReportBuilderDataSourceSelect.as_view(), name=ReportBuilderDataSourceSelect.urlname),
+    url(r'^builder/select_source/$', ReportBuilderDataSourceSelect.as_view(),
+        name=ReportBuilderDataSourceSelect.urlname),
     url(r'^builder/configure/$', ConfigureReport.as_view(), name=ConfigureReport.urlname),
     url(r'^builder/preview/(?P<data_source>[\w\-]+)/$', ReportPreview.as_view(), name=ReportPreview.urlname),
     url(r'^builder/configure/map/$', ConfigureMapReport.as_view(), name="configure_map_report"),
@@ -100,14 +127,18 @@ urlpatterns = [
     # Download Exports
     # todo should eventually be moved to corehq.apps.export
     # Custom
-    url(r"^export/custom/(?P<export_id>[\w\-]+)/download/$", export_default_or_custom_data, name="export_custom_data"),
+    url(r"^export/custom/(?P<export_id>[\w\-]+)/download/$", export_default_or_custom_data,
+        name="export_custom_data"),
     # Default
     url(r"^export/default/download/$", export_default_or_custom_data, name="export_default_data"),
     # Bulk
-    url(r"^export/bulk/download/$", export_default_or_custom_data, name="export_bulk_download", kwargs=dict(bulk_export=True)),
+    url(r"^export/bulk/download/$", export_default_or_custom_data,
+        name="export_bulk_download", kwargs=dict(bulk_export=True)),
     # saved
-    url(r"^export/saved/download/(?P<export_id>[\w\-]+)/$", hq_download_saved_export, name="hq_download_saved_export"),
-    url(r"^export/saved/download/deid/(?P<export_id>[\w\-]+)/$", hq_deid_download_saved_export, name="hq_deid_download_saved_export"),
+    url(r"^export/saved/download/(?P<export_id>[\w\-]+)/$", hq_download_saved_export,
+        name="hq_download_saved_export"),
+    url(r"^export/saved/download/deid/(?P<export_id>[\w\-]+)/$", hq_deid_download_saved_export,
+        name="hq_deid_download_saved_export"),
     url(r"^export/saved/update/$", hq_update_saved_export, name="hq_update_saved_export"),
 
     # Full Excel export
