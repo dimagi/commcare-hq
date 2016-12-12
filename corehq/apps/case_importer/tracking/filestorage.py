@@ -13,6 +13,14 @@ BUCKET_PREFIX = 'case_importer'
 
 
 class PersistentFileStore(object):
+    """
+    helper for writing and reading back arbitrary files to HIPAA-compliant storage
+    (Riak or filesystem, via BlobDB)
+
+    metadata is also stored in a django model given by meta_model,
+    which is returned by write_file
+
+    """
     def __init__(self, bucket, meta_model):
         """
         :meta_model is a django model used to store meta info
@@ -52,6 +60,10 @@ FileMeta = namedtuple('FileMeta', ['identifier', 'filename', 'length'])
 
 
 class TransientFileStore(object):
+    """
+    helper for writing and reading back arbitrary files to the cache
+
+    """
     def __init__(self, bucket, timeout):
         self._bucket = bucket
         self._cache = caches['default']
