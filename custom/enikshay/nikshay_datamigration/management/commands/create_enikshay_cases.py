@@ -30,16 +30,14 @@ class EnikshayCaseFactory(object):
         self.factory.create_or_update_case(self.person())
 
     def create_occurrence_cases(self):
-        occurrences = [self.occurrence(outcome) for outcome in self._outcomes]
-        cases = self.factory.create_or_update_cases(occurrences)
-        for occurrence_structure, occurrence_case in zip(occurrences, cases):
-            occurrence_structure.case_id = occurrence_case.case_id
+        occurrence_structure = self.occurrence(self._outcome)
+        occurrence_case = self.factory.create_or_update_case(occurrence_structure)[0]
+        occurrence_structure.case_id = occurrence_case.case_id
 
     def create_episode_cases(self):
-        episodes = [self.episode(outcome) for outcome in self._outcomes]
-        cases = self.factory.create_or_update_cases(episodes)
-        for episode_structure, episode_case in zip(episodes, cases):
-            episode_structure.case_id = episode_case.case_id
+        episode_structure = self.episode(self._outcome)
+        episode_case = self.factory.create_or_update_case(episode_structure)[0]
+        episode_structure.case_id = episode_case.case_id
 
     def create_test_cases(self):
         tests = [
@@ -197,8 +195,8 @@ class EnikshayCaseFactory(object):
 
     @property
     @memoized
-    def _outcomes(self):
-        return Outcome.objects.filter(PatientId=self.patient_detail)
+    def _outcome(self):
+        return Outcome.objects.get(PatientId=self.patient_detail)
 
     @property
     @memoized
