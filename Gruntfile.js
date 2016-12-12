@@ -23,6 +23,7 @@ module.exports = function(grunt) {
         'userreports',
         'cloudcare',
         'cloudcare#form_entry',
+        'hqwebapp',
     ];
 
     var mochaConfig = {},
