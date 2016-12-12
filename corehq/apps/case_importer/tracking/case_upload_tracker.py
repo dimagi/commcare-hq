@@ -29,7 +29,7 @@ class CaseUpload(object):
         return CaseUploadRecord.objects.get(upload_id=self.upload_id)
 
     def get_tempfile(self):
-        return transient_file_store.get_tempfile(self.upload_id)
+        return transient_file_store.get_tempfile_ref_for_contents(self.upload_id)
 
     def check_file(self, named_columns):
         """

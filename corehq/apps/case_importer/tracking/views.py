@@ -58,7 +58,7 @@ def case_upload_file(request, domain, upload_id):
     if not user_may_view_file_upload(domain, request.couch_user, case_upload):
         return HttpResponseForbidden()
 
-    response = StreamingHttpResponse(open(case_upload.get_tempfile(), 'rb'))
+    response = StreamingHttpResponse(open(case_upload.get_tempfile_ref_for_upload_ref(), 'rb'))
 
     set_file_download(response, case_upload.upload_file_meta.filename)
     return response

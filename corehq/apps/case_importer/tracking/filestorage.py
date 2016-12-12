@@ -34,7 +34,7 @@ class PersistentFileStore(object):
         return identifier
 
     @memoized
-    def get_tempfile(self, identifier):
+    def get_tempfile_ref_for_contents(self, identifier):
         filename = self.get_filename(identifier)
         suffix = file_extention_from_filename(filename)
         padding, blob_identifier = identifier.split('/')
@@ -63,7 +63,7 @@ class TransientFileStore(object):
         self._cache.set(self._get_key(identifier), (filename, f.read()), timeout=self._timeout)
         return identifier
 
-    def get_tempfile(self, identifier):
+    def get_tempfile_ref_for_contents(self, identifier):
         try:
             filename, content = self._get_filename_content(identifier)
         except (TypeError, ValueError):
