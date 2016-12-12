@@ -54,6 +54,7 @@ def restore(request, domain, app_id=None):
     return response
 
 
+@location_safe
 @json_error
 @login_or_digest_or_basic_or_apikey()
 @check_domain_migration
@@ -101,6 +102,7 @@ def search(request, domain):
     return HttpResponse(fixtures, content_type="text/xml")
 
 
+@location_safe
 @csrf_exempt
 @require_POST
 @json_error
