@@ -638,17 +638,66 @@ class ConfigureReport(ReportBuilderView):
 
     @property
     def page_name(self):
-        title = self.request.GET.get('report_name', '')
-        if self.existing_report:
-            title = self.existing_report.title
+        title = self._get_report_name()
         return _(self.report_title).format(title)
+
+    def _get_report_name(self, request=None):
+        if self.existing_report:
+            return self.existing_report.title
+        else:
+            request = request or self.request
+            return request.GET.get('report_name', '')
+
+    def _get_application(self, request=None):
+        if self.existing_report:
+            data_source_config = DataSourceConfiguration.get(self.existing_report.config_id)
+            app_id = data_source_config.meta.build.app_id
+        else:
+            request = request or self.request
+            app_id = request.GET['application']
+        return Application.get(app_id)
+
+    def _get_source_type(self, request=None):
+        """
+        Returns "case" or "form"
+        """
+        if self.existing_report:
+            data_source_config = DataSourceConfiguration.get(self.existing_report.config_id)
+            if data_source_config.referenced_doc_type == 'XFormInstance':
+                return 'form'
+            elif data_source_config.referenced_doc_type == 'CommCareCase':
+                return 'case'
+        else:
+            request = request or self.request
+            return request.GET['source_type']
+
+    def _get_source_id(self, request=None):
+        """
+        Returns the case type if source_type == 'case', or form ID if source_type == 'form'
+        """
+        if self.existing_report:
+            data_source_config = DataSourceConfiguration.get(self.existing_report.config_id)
+            return data_source_config.meta.build.source_id
+        else:
+            request = request or self.request
+            return request.GET['source']
+
+    def _get_data_source(self, request=None):
+        """
+        Return the ID of the report's DataSourceConfiguration
+        """
+        if self.existing_report:
+            return self.existing_report.config_id
+        else:
+            request = request or self.request
+            return request.GET['data_source']
 
     def get_columns(self):
         builder = DataSourceBuilder(
             self.domain,
-            Application.get(self.request.GET['application']),
-            self.request.GET['source_type'],
-            self.request.GET['source']
+            self._get_application(),
+            self._get_source_type(),
+            self._get_source_id()
         )
         return [{
             'column_id': v.column_id,
@@ -688,9 +737,9 @@ class ConfigureReport(ReportBuilderView):
                 "title": self.page_name
             },
             'columns': self.get_columns(),
-            'source_type': self.request.GET['source_type'],
+            'source_type': self._get_source_type(),
             'data_source_url': reverse(ReportPreview.urlname,
-                                       args=[self.domain, self.request.GET['data_source']]),
+                                       args=[self.domain, self._get_data_source()]),
             'report_builder_events': self.request.session.pop(REPORT_BUILDER_EVENTS_KEY, [])
         }
 
@@ -785,11 +834,10 @@ class ConfigureReport(ReportBuilderView):
 
         self._confirm_report_limit()
 
-        report_name = request.GET['report_name']
-        source_type = request.GET['source_type']
-        report_source_id = request.GET['source']
-        # data_source_id = request.GET['data_source']  # TODO: Why is this a GET param if it's unused?
-        app = Application.get(request.GET['application'])
+        report_name = self._get_report_name(request)
+        source_type = self._get_source_type(request)
+        report_source_id = self._get_source_id(request)
+        app = self._get_application(request)
 
         report_data = json.loads(request.body)
 
