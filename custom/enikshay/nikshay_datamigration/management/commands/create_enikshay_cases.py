@@ -226,13 +226,15 @@ class EnikshayCaseFactory(object):
 class Command(BaseCommand):
 
     def handle(self, domain, **options):
+        base_query = PatientDetail.objects.all()
+
         start = options['start']
         limit = options['limit']
 
         if limit is not None:
-            patient_details = PatientDetail.objects.all()[start:start + limit]
+            patient_details = base_query[start:start + limit]
         else:
-            patient_details = PatientDetail.objects.all()[start:]
+            patient_details = base_query[start:]
 
         counter = 0
         for patient_detail in patient_details:
