@@ -161,7 +161,7 @@ class EnikshayCaseFactory(object):
 
     @memoized
     def test(self, followup):
-        episode_structure = self.episode(self._outcome)
+        occurrence_structure = self.occurrence(self._outcome)
 
         kwargs = {
             'attrs': {
@@ -174,18 +174,19 @@ class EnikshayCaseFactory(object):
                 },
             },
             'indices': [CaseIndex(
-                episode_structure,
+                occurrence_structure,
                 identifier='host',
                 relationship=CASE_INDEX_EXTENSION,
-                related_type=episode_structure.attrs['case_type'],
+                related_type=occurrence_structure.attrs['case_type'],
             )],
         }
 
         for test_case in self.case_accessor.get_cases([
-            index.case_id for index in
-            self.case_accessor.get_case(episode_structure.case_id).reverse_indices
+            index.referenced_id for index in
+            self.case_accessor.get_case(occurrence_structure.case_id).reverse_indices
         ]):
-            if followup.id == int(test_case.dynamic_case_properties().get('migration_followup_id')):
+            dynamic_case_properties = test_case.dynamic_case_properties()
+            if 'migration_followup_id' in dynamic_case_properties and followup.id == int(test_case.dynamic_case_properties()['migration_followup_id']):
                 kwargs['case_id'] = test_case.case_id
                 kwargs['attrs']['create'] = False
 

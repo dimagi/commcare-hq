@@ -197,8 +197,8 @@ class TestCreateEnikshayCases(TestCase):
             self.assertItemsEqual(
                 [CommCareCaseIndex(
                     identifier='host',
-                    referenced_type='episode',
-                    referenced_id=episode_case.get_id,
+                    referenced_type='occurrence',
+                    referenced_id=occurrence_case.get_id,
                     relationship='extension',
                 )],
                 test_case.indices
