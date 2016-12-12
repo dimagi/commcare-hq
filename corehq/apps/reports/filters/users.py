@@ -4,6 +4,7 @@ from django.utils.translation import ugettext as _
 
 from corehq.apps.es import users as user_es, filters
 from corehq.apps.domain.models import Domain
+from corehq.apps.es.users import user_ids_at_locations_and_descendants
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.util import namedtupledict
 from corehq.apps.users.models import CommCareUser
@@ -313,6 +314,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         user_ids = cls.selected_user_ids(mobile_user_and_group_slugs)
         user_types = cls.selected_user_types(mobile_user_and_group_slugs)
         group_ids = cls.selected_group_ids(mobile_user_and_group_slugs)
+        location_ids = cls.selected_location_ids(mobile_user_and_group_slugs)
         users = []
 
         if limit_user_ids:
@@ -342,9 +344,15 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
                 group=group,
                 simplified=True
             )
+        users_at_locations = util.get_all_users_by_domain(
+            domain=domain,
+            user_ids=user_ids_at_locations_and_descendants(location_ids),
+            simplified=True,
+            CommCareUser=CommCareUser,
+        )
         users_in_groups = flatten_list(user_dict.values())
         users_by_group = user_dict
-        combined_users = remove_dups(all_users + users_in_groups, "user_id")
+        combined_users = remove_dups(all_users + users_in_groups + users_at_locations, "user_id")
 
         return _UserData(
             users=all_users,
