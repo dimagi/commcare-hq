@@ -634,7 +634,22 @@ class ConfigureReport(ReportBuilderView):
     @use_datatables
     @use_nvd3
     def dispatch(self, request, *args, **kwargs):
+        if self.existing_report:
+            self.source_type = {
+                "CommCareCase": "case",
+                "XFormInstance": "form"
+            }[self.existing_report.config.referenced_doc_type]
+            self.source_id = self.existing_report.config.meta.build.source_id
+            self.app_id = self.existing_report.config.meta.build.app_id
+            self.app = Application.get(self.app_id) if self.app_id else None
+        else:
+            self.app_id = self.request.GET['application']
+            self.app = Application.get(self.app_id)
+            self.source_type = self.request.GET['source_type']
+            self.source_id = self.request.GET['source']
+
         return super(ConfigureReport, self).dispatch(request, *args, **kwargs)
+
 
     @property
     def page_name(self):
@@ -646,9 +661,9 @@ class ConfigureReport(ReportBuilderView):
     def get_columns(self):
         builder = DataSourceBuilder(
             self.domain,
-            Application.get(self.request.GET['application']),
-            self.request.GET['source_type'],
-            self.request.GET['source']
+            self.app,
+            self.source_type,
+            self.source_id,
         )
         return [{
             'column_id': v.column_id,
@@ -688,7 +703,7 @@ class ConfigureReport(ReportBuilderView):
                 "title": self.page_name
             },
             'columns': self.get_columns(),
-            'source_type': self.request.GET['source_type'],
+            'source_type': self.source_type,
             'data_source_url': reverse(ReportPreview.urlname,
                                        args=[self.domain, self.request.GET['data_source']]),
             'report_builder_events': self.request.session.pop(REPORT_BUILDER_EVENTS_KEY, [])
