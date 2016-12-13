@@ -599,9 +599,8 @@ def registerurl(parser, token):
         def render(context):
             args = [expression.resolve(context) for expression in expressions]
             url = reverse(url_name, args=args)
-            return """
-            <script>hqImport('hqwebapp/js/urllib.js').registerUrl({}, {})</script>
-            """.format(json.dumps(url_name), json.dumps(url))
+            return ("<script>hqImport('hqwebapp/js/urllib.js').registerUrl({}, {})</script>"
+                    .format(json.dumps(url_name), json.dumps(url)))
 
     nodelist = FakeNodeList()
     return AddToBlockNode(nodelist, 'js-inline')
