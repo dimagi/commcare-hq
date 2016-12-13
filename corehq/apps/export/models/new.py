@@ -1952,13 +1952,18 @@ class ConversionMeta(DocumentSchema):
         print '---' * 15
         print '{:<20}| {}'.format('Original Path', self.path)
         print '{:<20}| {}'.format('Failure Reason', self.failure_reason)
-        print '{:<20}| {}'.format('Info', self.info)
+        for idx, line in enumerate(self.info):
+            prefix = 'Info' if idx == 0 else ''
+            print '{:<20}| {}'.format(prefix, line)
 
 
 class ExportMigrationMeta(Document):
     saved_export_id = StringProperty()
     domain = StringProperty()
     export_type = StringProperty(choices=[FORM_EXPORT, CASE_EXPORT])
+
+    # The schema of the new export
+    generated_schema_id = StringProperty()
 
     skipped_tables = SchemaListProperty(ConversionMeta)
     skipped_columns = SchemaListProperty(ConversionMeta)

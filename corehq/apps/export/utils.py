@@ -71,13 +71,6 @@ def convert_saved_export_to_export_instance(
         getattr(saved_export, 'app_id', None),
         export_type,
     )
-    migration_meta = ExportMigrationMeta(
-        saved_export_id=saved_export._id,
-        domain=domain,
-        export_type=export_type,
-        is_remote_app_migration=is_remote_app_migration,
-        migration_date=datetime.utcnow(),
-    )
     # Build a new schema and instance
     if export_type == FORM_EXPORT:
         instance_cls = FormExportInstance
@@ -93,6 +86,15 @@ def convert_saved_export_to_export_instance(
             None,
             _extract_casetype_from_index(saved_export.index),
         )
+
+    migration_meta = ExportMigrationMeta(
+        saved_export_id=saved_export._id,
+        domain=domain,
+        export_type=export_type,
+        is_remote_app_migration=is_remote_app_migration,
+        migration_date=datetime.utcnow(),
+        generated_schema_id=schema._id,
+    )
 
     instance = instance_cls.generate_instance_from_schema(schema)
     instance.name = saved_export.name
