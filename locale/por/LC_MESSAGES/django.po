@@ -32,8 +32,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-12-13 21:36+0000\n"
-"PO-Revision-Date: 2016-11-29 17:25+0000\n"
+"POT-Creation-Date: 2016-12-13 21:52+0000\n"
+"PO-Revision-Date: 2016-12-13 21:40+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: Portuguese (http://www.transifex.com/dimagi/commcare-hq/"
 "language/pt/)\n"
@@ -858,8 +858,8 @@ msgstr ""
 #: corehq/apps/accounting/subscription_changes.py:637
 #, python-format
 msgid ""
-"You have %(number_of_reports)d report builder reports.By selecting this plan "
-"you will lose access to those reports."
+"You have %(number_of_reports)d report builder reports. By selecting this "
+"plan you will lose access to those reports."
 msgstr ""
 
 #: corehq/apps/accounting/tasks.py:417
@@ -10299,10 +10299,8 @@ msgid "Data Dictionary"
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html:45
-#, fuzzy
-#| msgid "Case Type"
 msgid "Data Type"
-msgstr "Típo de Caso"
+msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html:64
 msgid "Click here to add a description"
@@ -11287,10 +11285,8 @@ msgstr ""
 
 #: corehq/apps/domain/forms.py:494
 #: corehq/apps/style/templates/style/includes/modal_report_issue.html:78
-#, fuzzy
-#| msgid "Description"
 msgid "Project Description"
-msgstr "Descrição"
+msgstr ""
 
 #: corehq/apps/domain/forms.py:499
 msgid ""
@@ -23438,10 +23434,8 @@ msgid "Displays application of last submitted form"
 msgstr ""
 
 #: corehq/apps/reports/standard/deployments.py:68
-#, fuzzy
-#| msgid "Applications"
 msgid "Application Version"
-msgstr "Aplicativos"
+msgstr ""
 
 #: corehq/apps/reports/standard/deployments.py:69
 msgid ""
@@ -27319,10 +27313,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/style/templates/style/includes/modal_report_issue.html:95
-#, fuzzy
-#| msgid "Other Meds"
 msgid "Other recipients"
-msgstr "Outros Medicamentos"
+msgstr ""
 
 #: corehq/apps/style/templates/style/includes/modal_report_issue.html:103
 msgid ""
@@ -37930,6 +37922,12 @@ msgstr ""
 "Ocorreu um erro ao tentar se conectar ao serviço de CloudCare. Se você tiver "
 "problemas para preencher o restante do formulário por favor envie  um "
 "relatorio do problema usando os links de abaixo."
+
+#~ msgid "Import complete"
+#~ msgstr "Manejo de Casos"
+
+#~ msgid "Menu Filtering"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"

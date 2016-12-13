@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-12-13 21:36+0000\n"
-"PO-Revision-Date: 2016-11-29 17:25+0000\n"
+"POT-Creation-Date: 2016-12-13 21:52+0000\n"
+"PO-Revision-Date: 2016-12-13 21:40+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: Swahili (http://www.transifex.com/dimagi/commcare-hq/language/"
 "sw/)\n"
@@ -832,8 +832,8 @@ msgstr ""
 #: corehq/apps/accounting/subscription_changes.py:637
 #, python-format
 msgid ""
-"You have %(number_of_reports)d report builder reports.By selecting this plan "
-"you will lose access to those reports."
+"You have %(number_of_reports)d report builder reports. By selecting this "
+"plan you will lose access to those reports."
 msgstr ""
 
 #: corehq/apps/accounting/tasks.py:417
@@ -10237,10 +10237,8 @@ msgid "Data Dictionary"
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html:45
-#, fuzzy
-#| msgid "Case Type: "
 msgid "Data Type"
-msgstr "Manejo de Casos"
+msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html:64
 msgid "Click here to add a description"
@@ -11225,10 +11223,8 @@ msgstr ""
 
 #: corehq/apps/domain/forms.py:494
 #: corehq/apps/style/templates/style/includes/modal_report_issue.html:78
-#, fuzzy
-#| msgid "Project Health"
 msgid "Project Description"
-msgstr "Casos IRA Tratados"
+msgstr ""
 
 #: corehq/apps/domain/forms.py:499
 msgid ""
@@ -37902,6 +37898,12 @@ msgid ""
 "have problems filling in the rest of your form please report an issue."
 msgstr ""
 
+#~ msgid "Import complete"
+#~ msgstr "Manejo de Casos"
+
+#~ msgid "Menu Filtering"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
 #~ msgid ""
 #~ "\n"
 #~ "    Happy Application Building!\n"
@@ -37940,6 +37942,9 @@ msgstr ""
 #~ msgstr "Manejo de Casos"
 
 #~ msgid "Report Title"
+#~ msgstr "Manejo de Casos"
+
+#~ msgid "Case Type: "
 #~ msgstr "Manejo de Casos"
 
 #~ msgid "Doc Date:"
@@ -38015,6 +38020,9 @@ msgstr ""
 #~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid "Ledgers By Location"
+#~ msgstr "Casos IRA Tratados"
+
+#~ msgid "Project Health"
 #~ msgstr "Casos IRA Tratados"
 
 #~ msgid "Admin User"

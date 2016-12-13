@@ -32,9 +32,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-12-13 21:36+0000\n"
-"PO-Revision-Date: 2016-12-08 18:12+0000\n"
-"Last-Translator: Aissetou Sawadogo <ais107@hotmail.com>\n"
+"POT-Creation-Date: 2016-12-13 21:52+0000\n"
+"PO-Revision-Date: 2016-12-13 21:40+0000\n"
+"Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: French (http://www.transifex.com/dimagi/commcare-hq/language/"
 "fr/)\n"
 "Language: fr\n"
@@ -947,14 +947,17 @@ msgstr ""
 #: corehq/apps/accounting/subscription_changes.py:637
 #, fuzzy, python-format
 #| msgid ""
-#| "You have %(number_of_reports) report builder reports.By selecting this "
-#| "plan you will lose access to those reports."
+#| "You have %(num_active)d active Reminder Rule. Selecting this plan will "
+#| "deactivate this rule."
+#| msgid_plural ""
+#| "You have %(num_active)d active Reminder Rules. Selecting this plan will "
+#| "deactivate these rules."
 msgid ""
-"You have %(number_of_reports)d report builder reports.By selecting this plan "
-"you will lose access to those reports."
+"You have %(number_of_reports)d report builder reports. By selecting this "
+"plan you will lose access to those reports."
 msgstr ""
-"Vous avez %(number_of_reports) rapports de \"report builder'. En "
-"selectionnant ce plan, vous perdrez l'accès à ces rapports."
+"Vous avez %(num_active)d règle de rappel active. Selectionner ce plan "
+"entrainera la désactivation de cette règle."
 
 #: corehq/apps/accounting/tasks.py:417
 msgid "Payment Received - Thank You!"
@@ -6612,10 +6615,8 @@ msgstr "Ajouter des variables personnalisées au nœud des variables."
 
 #: corehq/apps/app_manager/templates/app_manager/v1/partials/custom_instances.html:4
 #: corehq/apps/app_manager/templates/app_manager/v2/partials/custom_instances.html:4
-#, fuzzy
-#| msgid "Custom Properties"
 msgid "Custom Instances"
-msgstr "Propriétés personalisées: "
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/v1/partials/custom_instances.html:7
 #: corehq/apps/app_manager/templates/app_manager/v2/partials/custom_instances.html:7
@@ -8001,14 +8002,6 @@ msgstr "Restaurer la version ?"
 
 #: corehq/apps/app_manager/templates/app_manager/v1/partials/releases.html:311
 #: corehq/apps/app_manager/templates/app_manager/v2/partials/releases.html:317
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                This version uses an outdated form of "
-#| "case management.\n"
-#| "                                We advise against reverting back to this "
-#| "version.\n"
-#| "                            "
 msgid ""
 "\n"
 "                            This version uses an outdated form of case "
@@ -8017,9 +8010,6 @@ msgid ""
 "version.\n"
 "                        "
 msgstr ""
-"\n"
-"Cette version utilise un formulaire de gestion de dossier dépassé.\n"
-"On vous recommande de ne pas passer à cette version."
 
 #: corehq/apps/app_manager/templates/app_manager/v1/partials/releases.html:316
 #: corehq/apps/app_manager/templates/app_manager/v2/partials/releases.html:322
@@ -8338,14 +8328,6 @@ msgstr ""
 "Sélectionnez une que vous souhaitez copier avec cette application."
 
 #: corehq/apps/app_manager/templates/app_manager/v1/partials/vellum_case_management_warning.html:4
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                This version uses an outdated form of "
-#| "case management.\n"
-#| "                                We advise against reverting back to this "
-#| "version.\n"
-#| "                            "
 msgid ""
 "\n"
 "            This application uses an outdated form of case management and "
@@ -8356,9 +8338,6 @@ msgid ""
 "            application.\n"
 "        "
 msgstr ""
-"\n"
-"Cette version utilise un formulaire de gestion de dossier dépassé.\n"
-"On vous recommande de ne pas passer à cette version."
 
 #: corehq/apps/app_manager/templates/app_manager/v2/app_view.html:67
 #: corehq/apps/app_manager/templates/app_manager/v2/form_designer.html:170
@@ -8869,15 +8848,6 @@ msgid "Untitled"
 msgstr "Sans titre"
 
 #: corehq/apps/app_manager/tests/data/v2_diffs/partials/app-settings.html.diff.txt:64
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                    Oops!\n"
-#| "                                    This setting shouldn't be here.\n"
-#| "                                    Could you change it to the default\n"
-#| "                                    to make it go away?\n"
-#| "                                    Sorry about that.\n"
-#| "                                "
 msgid ""
 "\n"
 "-                                    Oops!\n"
@@ -8887,54 +8857,25 @@ msgid ""
 "-                                    Sorry about that.\n"
 "-                                "
 msgstr ""
-"\n"
-"Oups!\n"
-"Ce réglage ne devrait pas être là.\n"
-"Pouvez-vous le modifier et le remettre au réglage par défaut\n"
-"afin de l'éliminer?\n"
-"Nous vous prions de nous excuser."
 
 #: corehq/apps/app_manager/tests/data/v2_diffs/partials/build_errors.html.diff.txt:20
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                            Link to other form is selected, but no form "
-#| "links have been provided.\n"
-#| "                            "
 msgid ""
 "\n"
 "                             Link to other form is selected, but no form "
 "links have been provided.\n"
 "                             "
 msgstr ""
-"\n"
-"Un lien à un formulaire est sélectionné, mais aucun lien de formulaire n'a "
-"été fourni."
 
 #: corehq/apps/app_manager/tests/data/v2_diffs/partials/build_errors.html.diff.txt:26
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                            Link to other form is selected, but we don't "
-#| "recognize the form you provided.\n"
-#| "                            "
 msgid ""
 "\n"
 "                             Link to other form is selected, but we don't "
 "recognize the form you provided.\n"
 "                             "
 msgstr ""
-"\n"
-"Un lien vers un autre formulaire est sélectionné, mais nous ne pouvons pas "
-"reconnaître le formulaire fourni."
 
 #: corehq/apps/app_manager/tests/data/v2_diffs/partials/build_errors.html.diff.txt:65
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                            The case hierarchy for module <a href="
-#| "\"%(module_url)s\">%(module_name)s</a> contains a circular reference.\n"
-#| "                            "
+#, python-format
 msgid ""
 "\n"
 "-                            The case hierarchy for module <a href="
@@ -8943,23 +8884,9 @@ msgid ""
 "\">%(module_name)s</a> contains a circular reference.\n"
 "                             "
 msgstr ""
-"\n"
-"L'hiérarchie de dossier pour le module <a href=\"%(module_url)s\">"
-"%(module_name)s</a> contient une référence circulaire."
 
 #: corehq/apps/app_manager/tests/data/v2_diffs/partials/build_errors.html.diff.txt:76
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                            You have selected the <a href=\"%(form_url)s"
-#| "\">%(form_name)s</a> form\n"
-#| "                            as the case registration form for the <a href="
-#| "\"%(module_url)s\">%(module_name)s</a> module.\n"
-#| "                            This form is not a registration form. You "
-#| "need to select a form which opens a case and\n"
-#| "                            does not update an existing case. Please "
-#| "select a different form.\n"
-#| "                            "
+#, python-format
 msgid ""
 "\n"
 "                             You have selected the <a href=\"%(form_url)s\">"
@@ -8974,25 +8901,9 @@ msgid ""
 "a different form.\n"
 "                             "
 msgstr ""
-"\n"
-"Vous avez sélectionné le <a href=\"%(form_url)s\">%(form_name)s</a> "
-"formulaire\n"
-"en tant que formulaire d'inscription de dossier pour le <a href="
-"\"%(module_url)s\">%(module_name)s</a> module.\n"
-"Ce formulaire n'est pas un formulaire d'inscription. Vous devez sélectionner "
-"un formulaire qui ouvre un dossier et qui ne met pas à jour un dossier "
-"existant. Veuillez sélectionner un autre formulaire."
 
 #: corehq/apps/app_manager/tests/data/v2_diffs/partials/build_errors.html.diff.txt:85
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                            The form you have selected as the case "
-#| "registration form for the\n"
-#| "                            <a href=\"%(module_url)s\">%(module_name)s</"
-#| "a> module does not exist.\n"
-#| "                            Please select another form.\n"
-#| "                            "
+#, python-format
 msgid ""
 "\n"
 "-                            The form you have selected as the case "
@@ -9006,22 +8917,9 @@ msgid ""
 "                             Please select another form.\n"
 "                             "
 msgstr ""
-"\n"
-"Le formulaire que vous avez choisi en tant que formulaire d'inscription de "
-"dossier pour le\n"
-"<a href=\"%(module_url)s\">%(module_name)s</a>  module n'existe pas.\n"
-"Veuillez sélectionner un autre formulaire."
 
 #: corehq/apps/app_manager/tests/data/v2_diffs/partials/build_errors.html.diff.txt:94
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                            There are references to reports that are "
-#| "deleted in the\n"
-#| "                            <a href=\"%(module_url)s\">%(module_name)s</"
-#| "a> module.\n"
-#| "                            You may re-save the module to delete them.\n"
-#| "                            "
+#, python-format
 msgid ""
 "\n"
 "-                            There are references to reports that are "
@@ -9037,21 +8935,9 @@ msgid ""
 "%(module_name)s</a> to delete them.\n"
 "                             "
 msgstr ""
-"\n"
-"Il y a des références à des rapports qui sont supprimées dans le \n"
-"<a href=\"%(module_url)s\">%(module_name)s</a> module.\n"
-"Vous pouvez sauvegarder à nouveau le module pour les supprimer."
 
 #: corehq/apps/app_manager/tests/data/v2_diffs/partials/build_errors.html.diff.txt:104
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                            Display Condition has syntax errors\n"
-#| "                            in the <a href=\"%(form_url)s\">"
-#| "%(form_name)s</a> form\n"
-#| "                            in the <a href=\"%(module_url)s\">"
-#| "%(module_name)s</a> module.\n"
-#| "                            "
+#, python-format
 msgid ""
 "\n"
 "-                            Module Filter has syntax errors in the\n"
@@ -9061,21 +8947,9 @@ msgid ""
 "%(module_name)s</a> has errors.\n"
 "                             "
 msgstr ""
-"\n"
-"La condition d'affichage contient des erreurs de syntaxe\n"
-"dans le <a href=\"%(form_url)s\">%(form_name)s</a> formulaire\n"
-"dans le <a href=\"%(module_url)s\">%(module_name)s</a> module."
 
 #: corehq/apps/app_manager/tests/data/v2_diffs/partials/build_errors.html.diff.txt:112
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                            Display Condition has syntax errors\n"
-#| "                            in the <a href=\"%(form_url)s\">"
-#| "%(form_name)s</a> form\n"
-#| "                            in the <a href=\"%(module_url)s\">"
-#| "%(module_name)s</a> module.\n"
-#| "                            "
+#, python-format
 msgid ""
 "\n"
 "                             Display Condition has syntax errors\n"
@@ -9087,22 +8961,9 @@ msgid ""
 "a>.\n"
 "                             "
 msgstr ""
-"\n"
-"La condition d'affichage contient des erreurs de syntaxe\n"
-"dans le <a href=\"%(form_url)s\">%(form_name)s</a> formulaire\n"
-"dans le <a href=\"%(module_url)s\">%(module_name)s</a> module."
 
 #: corehq/apps/app_manager/tests/data/v2_diffs/partials/build_errors.html.diff.txt:121
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                            The <a href=\"%(form_url)s\">%(form_name)s</"
-#| "a> form in the <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-#| "                            module loads different case types from the "
-#| "other forms in the module. All forms in a module that\n"
-#| "                            has a case registration form selected must "
-#| "load the same case types.\n"
-#| "                            "
+#, python-format
 msgid ""
 "\n"
 "-                            The <a href=\"%(form_url)s\">%(form_name)s</a> "
@@ -9118,25 +8979,9 @@ msgid ""
 "+                            selected must load the same case types.\n"
 "                             "
 msgstr ""
-"\n"
-"Le <a href=\"%(form_url)s\">%(form_name)s</a> formulaire dans le <a href="
-"\"%(module_url)s\">%(module_name)s</a>\n"
-"module charge des types de dossiers différents à partir d'autres formulaires "
-"dans le module. Tous les formulaires dans un module qui\n"
-"a un formulaire d'inscription de dossier sélectionné doit charger les mêmes "
-"types de dossiers."
 
 #: corehq/apps/app_manager/tests/data/v2_diffs/partials/build_errors.html.diff.txt:132
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                            The <a href=\"%(form_url)s\">%(form_name)s</"
-#| "a> form in the <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-#| "                            module loads different case types from the "
-#| "other forms in the module. All forms in a module that\n"
-#| "                            has a case registration form selected must "
-#| "load the same case types.\n"
-#| "                            "
+#, python-format
 msgid ""
 "\n"
 "-                            The <a href=\"%(form_url)s\">%(form_name)s</a> "
@@ -9149,25 +8994,9 @@ msgid ""
 "that has a case registration form selected must update a case.\n"
 "                             "
 msgstr ""
-"\n"
-"Le <a href=\"%(form_url)s\">%(form_name)s</a> formulaire dans le <a href="
-"\"%(module_url)s\">%(module_name)s</a>\n"
-"module charge des types de dossiers différents à partir d'autres formulaires "
-"dans le module. Tous les formulaires dans un module qui\n"
-"a un formulaire d'inscription de dossier sélectionné doit charger les mêmes "
-"types de dossiers."
 
 #: corehq/apps/app_manager/tests/data/v2_diffs/partials/build_errors.html.diff.txt:141
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                            The <a href=\"%(form_url)s\">%(form_name)s</"
-#| "a> form in the <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-#| "                            module can only load or update a single case "
-#| "and its parents. All forms in a module that has a case registration form\n"
-#| "                            selected can only update a single case and "
-#| "its parents.\n"
-#| "                            "
+#, python-format
 msgid ""
 "\n"
 "-                            The <a href=\"%(form_url)s\">%(form_name)s</a> "
@@ -9184,26 +9013,9 @@ msgid ""
 "update a single case and its parents.\n"
 "                             "
 msgstr ""
-"\n"
-"Le <a href=\"%(form_url)s\">%(form_name)s</a> formulaire dans le <a href="
-"\"%(module_url)s\">%(module_name)s</a>\n"
-"module ne peut que charger ou mettre à jour qu'un seul dossier et ses "
-"parents. Tous les formulaires dans un module qui a un formulaire "
-"d'inscription de dossier \n"
-"sélectionné e peut que charger ou mettre à jour qu'un seul dossier et ses "
-"parents."
 
 #: corehq/apps/app_manager/tests/data/v2_diffs/partials/build_errors.html.diff.txt:152
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                            The <a href=\"%(form_url)s\">%(form_name)s</"
-#| "a> form in the <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-#| "                            module loads a case of a different type to "
-#| "the module. All forms in a module that has a case registration form\n"
-#| "                            selected must load a case of the same type as "
-#| "the module.\n"
-#| "                            "
+#, python-format
 msgid ""
 "\n"
 "-                            The <a href=\"%(form_url)s\">%(form_name)s</a> "
@@ -9220,27 +9032,9 @@ msgid ""
 "the case list.\n"
 "                             "
 msgstr ""
-"\n"
-"Le <a href=\"%(form_url)s\">%(form_name)s</a> formulaire dans le <a href="
-"\"%(module_url)s\">%(module_name)s</a>\n"
-"module charge un dossier d'un différent type que le module. Tous les "
-"formulaires dans le module qui ont a un formulaire d'inscription de "
-"dossier \n"
-"sélectionné doivent charger un dossier du même type que le module."
 
 #: corehq/apps/app_manager/tests/data/v2_diffs/partials/build_errors.html.diff.txt:163
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                            The <a href=\"%(form_url)s\">%(form_name)s</"
-#| "a> form in the <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-#| "                            module loads a case with a different case tag "
-#| "to the other forms in the module.\n"
-#| "                            All forms in a module that has a case "
-#| "registration form selected must use the same case tag.\n"
-#| "                            Expected case tag: <strong>%(expected_tag)s</"
-#| "strong>\n"
-#| "                            "
+#, python-format
 msgid ""
 "\n"
 "-                            The <a href=\"%(form_url)s\">%(form_name)s</a> "
@@ -9259,26 +9053,9 @@ msgid ""
 "strong>\n"
 "                             "
 msgstr ""
-"\n"
-"Le  <a href=\"%(form_url)s\">%(form_name)s</a> formulaire dans le <a href="
-"\"%(module_url)s\">%(module_name)s</a>\n"
-"module charge un dossier avec une étiquette de dossier différente aux autres "
-"formulaires dans le module.\n"
-"Tous les formulaires dans un module qui ont un formulaire d'enregistrement "
-"de dossier sélectionné doivent utiliser la même étiquette de dossier.\n"
-"Étiquette de dossier prévu: <strong>%(expected_tag)s</strong>"
 
 #: corehq/apps/app_manager/tests/data/v2_diffs/partials/build_errors.html.diff.txt:175
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                            The <a href=\"%(form_url)s\">%(form_name)s</"
-#| "a> form in the <a href=\"%(module_url)s\">%(module_name)s</a>\n"
-#| "                            module uses a details screen from another "
-#| "module. All forms in a module that has a case\n"
-#| "                            registration form selected must use the "
-#| "details screen from that module.\n"
-#| "                            "
+#, python-format
 msgid ""
 "\n"
 "-                            The <a href=\"%(form_url)s\">%(form_name)s</a> "
@@ -9295,26 +9072,9 @@ msgid ""
 "screen from that case list.\n"
 "                             "
 msgstr ""
-"\n"
-"Le <a href=\"%(form_url)s\">%(form_name)s</a> formulaire dans le <a href="
-"\"%(module_url)s\">%(module_name)s</a>\n"
-"module utilise un écran de détails d'un autre module. Tous les formulaires "
-"dans un module qui ont un formulaire d'enregistrement de dossier sélectionné "
-"doivent utiliser l'écran de détails de ce module."
 
 #: corehq/apps/app_manager/tests/data/v2_diffs/partials/build_errors.html.diff.txt:302
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                                    Your form display condition for form "
-#| "<a href=\"%(form_url)s\">%(form_name)s</a> refers to a case,\n"
-#| "                                    but cases are not available for this "
-#| "form. Please either remove the case reference or (1) make sure\n"
-#| "                                    that the module is set to display the "
-#| "module first and then form, and (2) make sure that all forms in\n"
-#| "                                    this module update or close a case "
-#| "(which means registration forms must go in a different module).\n"
-#| "                                "
+#, python-format
 msgid ""
 "\n"
 "                                     Your form display condition for form <a "
@@ -9331,28 +9091,8 @@ msgid ""
 "(which means registration forms must go in a different case list).\n"
 "                                 "
 msgstr ""
-"\n"
-"Votre formulaire de condition d'affichage pour le formulaire <a href="
-"\"%(form_url)s\">%(form_name)s</a> se réfère à un dossier,\n"
-"mais les dossiers ne sont pas disponibles pour ce formulaire. Veuillez "
-"supprimer le dossier de référence ou (1) vous assurez\n"
-"que le module est configuré pour afficher d'abord le module puis le "
-"formulaire, et (2) assurez-vous que tous les formulaires dans\n"
-"ce module mettent à jour ou ferment un dossier (ce qui signifie que les "
-"formulaires d'enregistrement doivent être placés dans un module différent)."
 
 #: corehq/apps/app_manager/tests/data/v2_diffs/partials/build_errors.html.diff.txt:311
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                    You have a display condition which "
-#| "refers to a case, but cases are not available. Please either remove\n"
-#| "                                    the case reference or (1) make sure "
-#| "that the module is set to display the module first and then form,\n"
-#| "                                    and (2) make sure that all forms in "
-#| "this module update or close a case (which means registration forms\n"
-#| "                                    must go in a different module).\n"
-#| "                                "
 msgid ""
 "\n"
 "                                     You have a display condition which "
@@ -9369,49 +9109,15 @@ msgid ""
 "+                                    must go in a different case list).\n"
 "                                 "
 msgstr ""
-"\n"
-"Vous avez une condition d'affichage qui se réfère à un dossier, mais que les "
-"dossiers ne sont pas disponibles. Veuillez supprimer \n"
-"le dossier de référence ou (1) vous assurez que le module est configuré pour "
-"afficher d'abord le module puis le formulaire,\n"
-"et (2) vous assurez que tous les formulaires dans ce module mettent à jour "
-"ou ferment un dossier (ce qui signifie que les formulaires "
-"d’enregistrement \n"
-"doivent être placés dans un module différent)."
 
 #: corehq/apps/app_manager/tests/data/v2_diffs/partials/case_list_form_setting.html.diff.txt:13
-#, fuzzy
-#| msgid ""
-#| "Minimize duplicate case registrations by requiring mobile workers\n"
-#| "                  to search the case list before they can enter a form "
-#| "that registers new cases."
 msgid ""
 "Minimize duplicate case registrations by requiring mobile workers\n"
 "-                  to search the case list before they can enter a form that "
 "registers new cases."
 msgstr ""
-"Minimisez la duplication des enregistrements de dossiers en exigeant des "
-"utilisateurs mobiles de chercher la liste des dossiers avant qu'ils puissent "
-"entrer un formulaire qui peut enregistrer de nouveaux dossiers."
 
 #: corehq/apps/app_manager/tests/data/v2_diffs/partials/case_list_form_setting.html.diff.txt:45
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                    Registration forms are only available from the case "
-#| "list when<br/>\n"
-#| "                    (1) The registration form is in a different module<br/"
-#| ">\n"
-#| "                    (2) Every form in the module updates or closes the "
-#| "case<br/>\n"
-#| "                    (3) The case list does not have parent case selection "
-#| "configured.<br/>\n"
-#| "                    (4) The module's \"Menu Mode\" is configured as "
-#| "\"Display module and then forms\".<br/>\n"
-#| "                    To learn more, see our <a href=\"https://help."
-#| "commcarehq.org/display/commcarepublic/Minimize+Duplicates\" target="
-#| "\"_blank\">Help Site</a>\n"
-#| "                    "
 msgid ""
 "\n"
 "-                    Registration forms are only available from the case "
@@ -9429,29 +9135,8 @@ msgid ""
 "\">Help Site</a>\n"
 "-                    "
 msgstr ""
-"\n"
-"Les formulaires d'inscription sont seulement disponible dans la liste des "
-"dossier si <br/>\n"
-"(1) Le formulaire d'identification est dans un module différent<br/>\n"
-"(2) Tous les formulaires dans le module mettent à jour ou ferment le "
-"dossier<br/>\n"
-"(3) La liste des dossiers n'a pas de configuation de sélection du dossier "
-"parent.<br/>\n"
-"(4) Le \"Menu Mode\" du module est configuré en tant que \"Afficher module "
-"puis formulaires\".<br/>\n"
-"Pour en savoir plus, veuillez voir notre <a href=\"https://help.commcarehq."
-"org/display/commcarepublic/Minimize+Duplicates\" target=\"_blank\">Help "
-"Site</a>"
 
 #: corehq/apps/app_manager/tests/data/v2_diffs/partials/case_list_form_setting.html.diff.txt:69
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                    To learn more, see our\n"
-#| "                    <a href=\"https://help.commcarehq.org/display/"
-#| "commcarepublic/Minimize+Duplicates#MinimizeDuplicates-Limitations\" "
-#| "target=\"_blank\">Help Site</a>\n"
-#| "                "
 msgid ""
 "\n"
 "-                    To learn more, see our\n"
@@ -9460,34 +9145,15 @@ msgid ""
 "\"_blank\">Help Site</a>\n"
 "-                "
 msgstr ""
-"\n"
-"Pour en savoir plus, veuillez voir notre\n"
-"<a href=\"https://help.commcarehq.org/display/commcarepublic/Minimize"
-"+Duplicates#MinimizeDuplicates-Limitations\" target=\"_blank\">Help Site</a>"
 
 #: corehq/apps/app_manager/tests/data/v2_diffs/partials/case_list_form_setting.html.diff.txt:105
-#, fuzzy
-#| msgid ""
-#| "Minimize duplicate case registrations by requiring mobile workers\n"
-#| "                  to search the case list before they can enter a form "
-#| "that registers new cases."
 msgid ""
 "Minimize duplicate case registrations by requiring mobile workers\n"
 "+                    to search the case list before they can enter a form "
 "that registers new cases."
 msgstr ""
-"Minimisez la duplication des enregistrements de dossiers en exigeant des "
-"utilisateurs mobiles de chercher la liste des dossiers avant qu'ils puissent "
-"entrer un formulaire qui peut enregistrer de nouveaux dossiers."
 
 #: corehq/apps/app_manager/tests/data/v2_diffs/partials/case_list_missing_warning.html.diff.txt:6
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "        This module either doesn't have a source module or has a source "
-#| "module that doesn't use cases.\n"
-#| "        Changes made here will have no effect.\n"
-#| "        "
 msgid ""
 "\n"
 "-        This module either doesn't have a source module or has a source "
@@ -9497,20 +9163,8 @@ msgid ""
 "         Changes made here will have no effect.\n"
 "         "
 msgstr ""
-"\n"
-"Soit ce module n'a pas de module source soit il a un module source qui "
-"n'utilise pas de dossiers.\n"
-"Les changements faits ici n'auront pas d'effet."
 
 #: corehq/apps/app_manager/tests/data/v2_diffs/partials/enable_schedule.html.diff.txt:5
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                    Visit schedule will be ignored as not "
-#| "all\n"
-#| "                                    forms in the module update or close a "
-#| "case.\n"
-#| "                                "
 msgid ""
 "\n"
 "                                     Visit schedule will be ignored as not "
@@ -9521,20 +9175,8 @@ msgid ""
 "a case.\n"
 "                                 "
 msgstr ""
-"\n"
-"Le planificateur des visites sera ignoré comme pas tous les\n"
-"formulaires dans le module autorisent la mise à jour ou la fermeture d'un "
-"dossier."
 
 #: corehq/apps/app_manager/tests/data/v2_diffs/partials/enable_schedule.html.diff.txt:15
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "        Visit schedules can only be used on modules where all the forms "
-#| "in the module<br/>\n"
-#| "        update or close a case, which means registration forms must go in "
-#| "a separate module.\n"
-#| "    "
 msgid ""
 "\n"
 "-        Visit schedules can only be used on modules where all the forms in "
@@ -9547,19 +9189,9 @@ msgid ""
 "separate case list.\n"
 "     "
 msgstr ""
-"\n"
-"Les calendriers de visites ne peuvent seulement être utilisés pour les "
-"modules où tous les formulaires dans le module<br/>\n"
-"mettent à jour ou ferment un dossier, ce qui veut dire que les formulaires "
-"d'inscription doivent être placés dans un module séparé."
 
 #: corehq/apps/app_manager/tests/data/v2_diffs/partials/form_tab_visit_scheduler.html.diff.txt:6
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                                  \"The phase this form is part of. Make "
-#| "phases on the <a href='%(module_url)s'>module settings page</a>\"\n"
-#| "                              "
+#, python-format
 msgid ""
 "\n"
 "-                                  \"The phase this form is part of. Make "
@@ -9568,23 +9200,8 @@ msgid ""
 "phases on the <a href='%(module_url)s'>case list settings page</a>\"\n"
 "                               "
 msgstr ""
-"\n"
-"\n"
-"\"La phase de laquelle ce formulaire fait partie. Créer des phases sur la <a "
-"href='%(module_url)s'> page de configuration des modules</a>\""
 
 #: corehq/apps/app_manager/tests/data/v2_diffs/templates/languages.html.diff.txt:50
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                            For Java Phone (Nokia), refer to\n"
-#| "                            <a target=\"_blank\" href=\"https://github."
-#| "com/dimagi/javarosa/blob/master/j2me/shared-resources/resources/"
-#| "messages_default.txt\">JavaRosa translations</a>\n"
-#| "                            and <a target=\"_blank\" href=\"https://"
-#| "github.com/dimagi/commcare/blob/master/application/resources/"
-#| "messages_cc_default.txt\">CommCare translations</a>.\n"
-#| "                            "
 msgid ""
 "\n"
 "-                            For Java Phone (Nokia), refer to\n"
@@ -9596,28 +9213,8 @@ msgid ""
 "\">CommCare translations</a>.\n"
 "-                            "
 msgstr ""
-"\n"
-"Pour les téléphones Java (Nokia), veuillez vous référez à <a target=\"_blank"
-"\" href=\"https://github.com/dimagi/javarosa/blob/master/j2me/shared-"
-"resources/resources/messages_default.txt\">JavaRosa translations</a>\n"
-"and <a target=\"_blank\" href=\"https://github.com/dimagi/commcare/blob/"
-"master/application/resources/messages_cc_default.txt\">CommCare "
-"translations</a>.\n"
-"\n"
-" "
 
 #: corehq/apps/app_manager/tests/data/v2_diffs/templates/languages.html.diff.txt:57
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                            For Android, refer to\n"
-#| "                            <a target=\"_blank\" href=\"https://github."
-#| "com/dimagi/commcare-odk/blob/master/app/assets/locales/"
-#| "messages_ccodk_default.txt\">CommCareODK translations</a>\n"
-#| "                            and <a target=\"_blank\" href=\"https://help."
-#| "commcarehq.org/display/commcarepublic/CommCare+ODK+Form+Entry+Interface"
-#| "+Strings\">ODK Collect translations</a>.\n"
-#| "                            "
 msgid ""
 "\n"
 "-                            For Android, refer to\n"
@@ -9629,27 +9226,8 @@ msgid ""
 "+Strings\">ODK Collect translations</a>.\n"
 "-                            "
 msgstr ""
-"\n"
-"Pour les Androides, veuilez vous référer à\n"
-"<a target=\"_blank\" href=\"https://github.com/dimagi/commcare-odk/blob/"
-"master/app/assets/locales/messages_ccodk_default.txt\">CommCareODK "
-"translations</a>\n"
-"and <a target=\"_blank\" href=\"https://help.commcarehq.org/display/"
-"commcarepublic/CommCare+ODK+Form+Entry+Interface+Strings\">ODK Collect "
-"translations</a>."
 
 #: corehq/apps/app_manager/tests/data/v2_diffs/templates/languages.html.diff.txt:85
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                            For Java Phone (Nokia), refer to\n"
-#| "                            <a target=\"_blank\" href=\"https://github."
-#| "com/dimagi/javarosa/blob/master/j2me/shared-resources/resources/"
-#| "messages_default.txt\">JavaRosa translations</a>\n"
-#| "                            and <a target=\"_blank\" href=\"https://"
-#| "github.com/dimagi/commcare/blob/master/application/resources/"
-#| "messages_cc_default.txt\">CommCare translations</a>.\n"
-#| "                            "
 msgid ""
 "\n"
 "+                    For Java Phone (Nokia), refer to\n"
@@ -9661,28 +9239,8 @@ msgid ""
 "\">CommCare translations</a>.\n"
 "+                    "
 msgstr ""
-"\n"
-"Pour les téléphones Java (Nokia), veuillez vous référez à <a target=\"_blank"
-"\" href=\"https://github.com/dimagi/javarosa/blob/master/j2me/shared-"
-"resources/resources/messages_default.txt\">JavaRosa translations</a>\n"
-"and <a target=\"_blank\" href=\"https://github.com/dimagi/commcare/blob/"
-"master/application/resources/messages_cc_default.txt\">CommCare "
-"translations</a>.\n"
-"\n"
-" "
 
 #: corehq/apps/app_manager/tests/data/v2_diffs/templates/languages.html.diff.txt:92
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                            For Android, refer to\n"
-#| "                            <a target=\"_blank\" href=\"https://github."
-#| "com/dimagi/commcare-odk/blob/master/app/assets/locales/"
-#| "messages_ccodk_default.txt\">CommCareODK translations</a>\n"
-#| "                            and <a target=\"_blank\" href=\"https://help."
-#| "commcarehq.org/display/commcarepublic/CommCare+ODK+Form+Entry+Interface"
-#| "+Strings\">ODK Collect translations</a>.\n"
-#| "                            "
 msgid ""
 "\n"
 "+                    For Android, refer to\n"
@@ -9694,14 +9252,6 @@ msgid ""
 "Collect translations</a>.\n"
 "+                    "
 msgstr ""
-"\n"
-"Pour les Androides, veuilez vous référer à\n"
-"<a target=\"_blank\" href=\"https://github.com/dimagi/commcare-odk/blob/"
-"master/app/assets/locales/messages_ccodk_default.txt\">CommCareODK "
-"translations</a>\n"
-"and <a target=\"_blank\" href=\"https://help.commcarehq.org/display/"
-"commcarepublic/CommCare+ODK+Form+Entry+Interface+Strings\">ODK Collect "
-"translations</a>."
 
 #: corehq/apps/app_manager/translations.py:67
 msgid ""
@@ -9835,10 +9385,8 @@ msgid "There was an error saving, please try again!"
 msgstr "Une erreur s'est produite, veuillez réessayer!"
 
 #: corehq/apps/app_manager/views/forms.py:348
-#, fuzzy
-#| msgid "There was a problem with your request"
 msgid "There was an issue with your custom instances: {}"
-msgstr "Votre demande comportait un élément problématique"
+msgstr ""
 
 #: corehq/apps/app_manager/views/forms.py:492
 msgid "Unable to validate form due to server error."
@@ -10031,10 +9579,8 @@ msgid "Known instances: '{}'"
 msgstr ""
 
 #: corehq/apps/app_manager/xform.py:2184
-#, fuzzy
-#| msgid "Unknown Contact"
 msgid "Unknown instances: '{}'"
-msgstr "Contact inconnu"
+msgstr ""
 
 #: corehq/apps/app_manager/xpath.py:23
 msgid ""
@@ -10847,10 +10393,8 @@ msgid "This file contains column headers"
 msgstr "Ce fichier contient des en-têtes de colonnes"
 
 #: corehq/apps/case_importer/templates/case_importer/import_cases.html:119
-#, fuzzy
-#| msgid "Downloaded by"
 msgid "Uploaded by"
-msgstr "Téléchargé par"
+msgstr ""
 
 #: corehq/apps/case_importer/templates/case_importer/import_cases.html:120
 #: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:66
@@ -10939,13 +10483,7 @@ msgstr ""
 "</a>"
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_status.html:6
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                        <strong>%(match_count)s</strong> rows were "
-#| "matched and\n"
-#| "                        updated.\n"
-#| "                    "
+#, python-format
 msgid ""
 "\n"
 "                    <strong data-bind=\"text: %(match_count)s\"></strong> "
@@ -10953,21 +10491,9 @@ msgid ""
 "                    updated.\n"
 "                "
 msgstr ""
-"\n"
-"                        les lignes <strong>%(match_count)s</strong> ont été "
-"liées par correspondance et\n"
-"                        mises à jour."
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_status.html:15
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                        <strong>%(created_count)s</strong> rows did\n"
-#| "                        not match any existing cases and had new cases "
-#| "created\n"
-#| "                        for them. If case_id's were used, these were "
-#| "ignored.\n"
-#| "                    "
+#, python-format
 msgid ""
 "\n"
 "                    <strong data-bind=\"text: %(created_count)s\"></strong> "
@@ -10976,27 +10502,13 @@ msgid ""
 "                    for them. If case_id's were used, these were ignored.\n"
 "                "
 msgstr ""
-"\n"
-"                        <strong>%(created_count)s</strong> les colonnes ne\n"
-"                        correspondaient à aucun dossier existant et de "
-"nouveaux dossiers\n"
-"                        ont été créés. Si les case_id ont été utilisés, ceux-"
-"ci ont été ignorés."
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_status.html:25
 msgid "No cases were created or updated during this import."
 msgstr "Aucun dossier n'a été créé ou mis à jour pendant cette importation."
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_status.html:31
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                        <strong>%(too_many_matches)s</strong> rows "
-#| "matched more\n"
-#| "                        than one case at the same time - this means that "
-#| "there are cases\n"
-#| "                        in your system with the same external ID.\n"
-#| "                    "
+#, python-format
 msgid ""
 "\n"
 "                    <strong data-bind=\"text: %(too_many_matches)s\"></"
@@ -11006,12 +10518,6 @@ msgid ""
 "                    in your system with the same external ID.\n"
 "                "
 msgstr ""
-"\n"
-"                        les lignes <strong>%(too_many_matches)s</strong> "
-"correspondent à plus d'un seul\n"
-"                        dossier à la fois, ce qui signifie que des dossiers\n"
-"                        dans votre système portent le même identifiant "
-"externe."
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_status.html:48
 msgid "in column"
@@ -11501,16 +11007,12 @@ msgstr ""
 "connexions lentes, veuillez décocher cette option."
 
 #: corehq/apps/cloudcare/templates/form_entry/templates.html:239
-#, fuzzy
-#| msgid "Delete Series"
 msgid "Recent Queries"
-msgstr "Supprimer les séries"
+msgstr ""
 
 #: corehq/apps/cloudcare/templates/form_entry/templates.html:309
-#, fuzzy
-#| msgid "This question is required"
 msgid "Sorry, this response is required!"
-msgstr "Ce champ est requis."
+msgstr ""
 
 #: corehq/apps/cloudcare/templates/formplayer/case_list.html:38
 msgid "List is empty."
@@ -12025,28 +11527,19 @@ msgid "Delete Field"
 msgstr "Supprimer le Champ"
 
 #: corehq/apps/dashboard/templates/dashboard/dashboard_domain.html:41
-#, fuzzy
-#| msgid "Welcome back to "
 msgid "Welcome Back to ICDS-CAS"
-msgstr "Bon retour sur "
+msgstr ""
 
 #: corehq/apps/dashboard/templates/dashboard/dashboard_domain.html:43
 msgid "Welcome Back to CommCare HQ"
 msgstr "Bienvenue sur CommCare HQ"
 
 #: corehq/apps/dashboard/templates/dashboard/dashboard_domain.html:59
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                Resend Transfer Request\n"
-#| "                "
 msgid ""
 "\n"
 "                Thanks for using ICDS-CAS!\n"
 "            "
 msgstr ""
-"\n"
-"Renvoyer la requête de transfert "
 
 #: corehq/apps/dashboard/templates/dashboard/dashboard_domain.html:63
 msgid ""
@@ -12180,22 +11673,16 @@ msgid "Data Dictionary"
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html:45
-#, fuzzy
-#| msgid "Rate Type"
 msgid "Data Type"
-msgstr "Type de taux "
+msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html:64
-#, fuzzy
-#| msgid "(Click here to add a comment)"
 msgid "Click here to add a description"
-msgstr "(Cliquez ici pour ajouter un commentaire)"
+msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html:68
-#, fuzzy
-#| msgid "Error updating comment.  Please try again."
 msgid "Error updating description. Please try again."
-msgstr "Erreur dans le chargement du commentaire. Veuillez réessayer. "
+msgstr ""
 
 #: corehq/apps/data_interfaces/forms.py:20
 #: corehq/apps/data_interfaces/views.py:120
@@ -13225,17 +12712,13 @@ msgstr ""
 
 #: corehq/apps/domain/forms.py:494
 #: corehq/apps/style/templates/style/includes/modal_report_issue.html:78
-#, fuzzy
-#| msgid "Short Description"
 msgid "Project Description"
-msgstr "Description brève"
+msgstr ""
 
 #: corehq/apps/domain/forms.py:499
-#, fuzzy
-#| msgid "A brief description of your project (max. 200 characters)"
 msgid ""
 "Please provide a short description of your project (Max 1000 characters)."
-msgstr "Une brève description de votre projet (max. 200 caractères)"
+msgstr ""
 
 #: corehq/apps/domain/forms.py:502
 msgid "Default Timezone"
@@ -21321,30 +20804,24 @@ msgid "{} was not in the domain {}"
 msgstr ""
 
 #: corehq/apps/ota/utils.py:139
-#, fuzzy
-#| msgid "You do not have permission to access this tile."
 msgid "{} does not have permissions to restore as {}"
-msgstr "Vous n'avez pas l'autorisation pour accéder à ce fichier."
+msgstr ""
 
 #: corehq/apps/ota/utils.py:163
 msgid "Invalid restore user {}. Format is <user>@<domain>"
 msgstr ""
 
 #: corehq/apps/ota/utils.py:176
-#, fuzzy
-#| msgid "Invalid Integer"
 msgid "Invalid restore user {}"
-msgstr "Entier non valide"
+msgstr ""
 
 #: corehq/apps/ota/utils.py:178
 msgid "Restore user {} not in allowed locations"
 msgstr ""
 
 #: corehq/apps/ota/utils.py:184
-#, fuzzy
-#| msgid "You do not have permission to access this tile."
 msgid "{} does not have permission to edit commcare users"
-msgstr "Vous n'avez pas l'autorisation pour accéder à ce fichier."
+msgstr ""
 
 #: corehq/apps/ota/views.py:208
 msgid "Speed up 'Sync with Server'"
@@ -26114,10 +25591,8 @@ msgid "This Month"
 msgstr ""
 
 #: corehq/apps/reports/daterange.py:22
-#, fuzzy
-#| msgid "Quarter"
 msgid "This Quarter"
-msgstr "Quart"
+msgstr ""
 
 #: corehq/apps/reports/daterange.py:23 custom/m4change/fields.py:19
 msgid "Last Quarter"
@@ -26614,38 +26089,22 @@ msgid "Displays application of last submitted form"
 msgstr ""
 
 #: corehq/apps/reports/standard/deployments.py:68
-#, fuzzy
-#| msgid "Application Users"
 msgid "Application Version"
-msgstr "Utilisateurs de l'application"
+msgstr ""
 
 #: corehq/apps/reports/standard/deployments.py:69
-#, fuzzy
-#| msgid ""
-#| "Displays application version of the last submitted form;\n"
-#| "                            The currently deployed version may be "
-#| "different."
 msgid ""
 "Displays application version of the last submitted form;\n"
 "                                         The currently deployed version may "
 "be different."
 msgstr ""
-"Montre la version de l'application du dernier formulaire soumis;\n"
-"La version actuelle déployée peut être différente,"
 
 #: corehq/apps/reports/standard/deployments.py:73
-#, fuzzy
-#| msgid ""
-#| "Displays application version of the last submitted form;\n"
-#| "                            The currently deployed version may be "
-#| "different."
 msgid ""
 "Displays CommCare version the user last submitted with;\n"
 "                                         The currently deployed version may "
 "be different."
 msgstr ""
-"Montre la version de l'application du dernier formulaire soumis;\n"
-"La version actuelle déployée peut être différente,"
 
 #: corehq/apps/reports/standard/deployments.py:180
 #: corehq/apps/reports/standard/deployments.py:185
@@ -30750,10 +30209,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/style/templates/style/includes/modal_report_issue.html:95
-#, fuzzy
-#| msgid "Other recipients (optional)"
 msgid "Other recipients"
-msgstr "Autres destinataires (facultatif)"
+msgstr ""
 
 #: corehq/apps/style/templates/style/includes/modal_report_issue.html:103
 msgid ""
@@ -30768,19 +30225,12 @@ msgid "Upload file"
 msgstr "Uploader un fichier"
 
 #: corehq/apps/style/templates/style/includes/modal_report_issue.html:118
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                            %(entity_string)s Property\n"
-#| "                                        "
 msgid ""
 "\n"
 "                                    Please upload any files relevant to your "
 "issue.\n"
 "                                    "
 msgstr ""
-"\n"
-"%(entity_string)s Propriété "
 
 #: corehq/apps/style/templates/style/includes/modal_report_issue.html:124
 msgid ""
@@ -41536,58 +40986,11 @@ msgstr ""
 "Si vous avez des problèmes pour remplir le formulaire, veuillez signaler ce "
 "problème."
 
-#~ msgid "Return to import cases"
-#~ msgstr "Retour à l'importation des dossiers"
-
 #~ msgid "Import complete"
-#~ msgstr "Importation terminée"
+#~ msgstr "Manejo de Casos"
 
-#~ msgid ""
-#~ "\n"
-#~ "            Task processor not detected.\n"
-#~ "            There may be something wrong with your system.\n"
-#~ "            If the download takes longer than normal to complete\n"
-#~ "            please contact support for help.\n"
-#~ "        "
-#~ msgstr ""
-#~ "\n"
-#~ "            Aucun processeur de tâches détecté.\n"
-#~ "            Il se pourrait que votre système comporte un élément qui ne "
-#~ "fonctionne pas correctement.\n"
-#~ "            Si le téléchargement nécessite plus de temps qu'à "
-#~ "l'habitude,\n"
-#~ "            veuillez contacter l'assistance pour obtenir de l'aide.\n"
-#~ "        "
-
-#~ msgid "Imported"
-#~ msgstr "Importé"
-
-#~ msgid "Welcome Back to CommCare Supply"
-#~ msgstr "Bienvenue sur CommCare Supply"
-
-#~ msgid "This was taken from build id"
-#~ msgstr "Ceci provient du build id"
-
-#~ msgid "This was taken from appversion text"
-#~ msgstr "Ceci provient de l'appversion text"
-
-#~ msgid "This was taken from xform version"
-#~ msgstr "Ceci provient de la version xform"
-
-#~ msgid "Unable to determine the build version"
-#~ msgstr "Impossible de déterminer la version"
-
-#~ msgid "Application (Deployed Version)"
-#~ msgstr "Application (Version Déployée)"
-
-#~ msgid "Unknown App"
-#~ msgstr "App. inconnue"
-
-#~ msgid "Double-click code below to select all:"
-#~ msgstr "Double cliquer le code ci-dessous pour tout sélectionner:"
-
-#~ msgid "Please try to include as much information as possible."
-#~ msgstr "Veuillez tenter d'inclure le plus d'informations possible."
+#~ msgid "Menu Filtering"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid ""
 #~ "\n"
