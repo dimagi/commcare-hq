@@ -607,10 +607,16 @@ def migrate_domain(domain, dryrun=False, force_convert_columns=False):
         toggle_js_domain_cachebuster.clear(domain)
 
     for meta in metas:
+        if not meta.skipped_tables and not meta.skipped_columns:
+            continue
+
+        output = '* Export information for export: {} *'.format(meta.old_export_url)
+        schema_id_output = 'Generated schema: {}'.format(meta.generated_schema_id)
         print ''
-        print '***' * 15
-        print '* Export information for export: {}'.format(meta.saved_export_id)
-        print '***' * 15
+        print '*' * len(output)
+        print output
+        print '* {}{} *'.format(schema_id_output, ' ' * (len(output) - len(schema_id_output) - 4))
+        print '*' * len(output)
         print ''
 
         if meta.skipped_tables:

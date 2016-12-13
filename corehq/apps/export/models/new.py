@@ -7,6 +7,7 @@ from collections import defaultdict, OrderedDict, namedtuple
 from couchdbkit import ResourceConflict
 from couchdbkit.ext.django.schema import IntegerProperty
 from django.utils.translation import ugettext as _
+from django.core.urlresolvers import reverse
 
 from corehq.apps.export.esaccessors import get_ledger_section_entry_combinations
 from dimagi.utils.decorators.memoized import memoized
@@ -33,6 +34,7 @@ from corehq.util.view_utils import absolute_reverse
 from couchexport.models import Format
 from couchexport.transforms import couch_to_excel_datetime
 from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.web import get_url_base
 from dimagi.ext.couchdbkit import (
     Document,
     DocumentSchema,
@@ -1970,6 +1972,19 @@ class ExportMigrationMeta(Document):
 
     class Meta:
         app_label = 'export'
+
+    @property
+    def old_export_url(self):
+        from corehq.apps.export.views import EditCustomCaseExportView, EditCustomFormExportView
+        if self.export_type == FORM_EXPORT:
+            view_cls = EditCustomFormExportView
+        else:
+            view_cls = EditCustomCaseExportView
+
+        return '{}{}'.format(get_url_base(), reverse(
+            view_cls.urlname,
+            args=[self.domain, self.saved_export_id],
+        ))
 
 
 # These must match the constants in corehq/apps/export/static/export/js/const.js
