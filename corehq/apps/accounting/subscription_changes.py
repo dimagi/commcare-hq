@@ -634,6 +634,6 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
             reports = _get_report_builder_reports(project)
             if reports:
                 return _fmt_alert(_(
-                    "You have %(number_of_reports)d report builder reports."
+                    "You have %(number_of_reports)d report builder reports. "
                     "By selecting this plan you will lose access to those reports."
                 ) % {'number_of_reports': len(reports)})
