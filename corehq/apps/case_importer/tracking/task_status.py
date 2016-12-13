@@ -4,6 +4,7 @@ from soil.util import get_task
 
 
 class TaskStatus(jsonobject.StrictJsonObject):
+    # takes on values of soil.progress.STATES
     state = jsonobject.IntegerProperty()
     progress = jsonobject.ObjectProperty(lambda: TaskStatusProgress)
     result = jsonobject.ObjectProperty(lambda: TaskStatusResult)

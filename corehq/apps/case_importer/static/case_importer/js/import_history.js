@@ -5,6 +5,7 @@ hqDefine('case_importer/js/import_history.js', function () {
         // this is used both for the state of the ajax request
         // and for the state of celery task
         self.states = {
+            MISSING: -1,
             NOT_STARTED: 0,
             STARTED: 1,
             SUCCESS: 2,
