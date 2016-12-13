@@ -1,6 +1,6 @@
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Fieldset, Hidden, Layout
-from crispy_forms.bootstrap import StrictButton
+from crispy_forms.bootstrap import StrictButton, PrependedText
 from django import forms
 from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.dbaccessors import get_app
@@ -16,7 +16,11 @@ class CopyApplicationForm(forms.Form):
             "data-bind": "autocompleteSelect2: domain_names",
         }))
     name = forms.CharField(required=True, label=_('Name'))
-    linked = forms.BooleanField(required=False, label=_('Copy as Linked Application'))
+    linked = forms.BooleanField(
+        required=False,
+        label=_('Copy as Linked Application'),
+        help_text=_("This will create an application that can be updated from changes to this application.")
+    )
 
     # Toggles to enable when copying the app
     toggles = forms.CharField(required=False, widget=forms.HiddenInput, max_length=5000)
@@ -33,7 +37,7 @@ class CopyApplicationForm(forms.Form):
             self.fields['gzip'] = forms.FileField(required=False)
             fields.append('gzip')
         if LINKED_APPS.enabled(from_domain):
-            fields.append('linked')
+            fields.append(PrependedText('linked', ''))
 
         self.helper = FormHelper()
         self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
