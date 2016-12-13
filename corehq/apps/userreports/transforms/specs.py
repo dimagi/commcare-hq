@@ -80,33 +80,6 @@ class NumberFormatTransform(Transform):
 
 
 class TranslationTransform(Transform):
-    """
-    Lets you map slugs to display strings, and/or translate them
-
-    Simple mapping
-        {
-            "type": "translation",
-            "translations": {
-                "#0000FF": "Blue",
-                "#800080": "Purple"
-            }
-        }
-
-    Translated mapping
-        {
-            "type": "translation",
-            "translations": {
-                "#0000FF": {
-                    "en": "Blue",
-                    "es": "Azul",
-                },
-                "#800080": {
-                    "en": "Purple",
-                    "es": "Morado",
-                }
-            }
-        }
-    """
     type = TypeProperty('translation')
     translations = DictProperty()
     mobile_or_web = StringProperty(default="web", choices=["mobile", "web"])
