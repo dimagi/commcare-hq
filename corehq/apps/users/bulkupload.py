@@ -5,7 +5,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.utils.translation import ugettext as _
-from corehq.util.spreadsheets.excel import flatten_json, json_to_headers, \
+from corehq.util.workbook_json.excel import flatten_json, json_to_headers, \
     alphanumeric_sort_key
 from dimagi.utils.parsing import string_to_boolean
 
@@ -43,7 +43,7 @@ class UserUploadError(Exception):
 required_headers = set(['username'])
 allowed_headers = set([
     'data', 'email', 'group', 'language', 'name', 'password', 'phone-number',
-    'uncategorized_data', 'user_id', 'is_active', 'location_code', 'role',
+    'uncategorized_data', 'user_id', 'is_active', 'location_code', 'role', 'User IMEIs (read only)',
 ]) | required_headers
 old_headers = {
     # 'old_header_name': 'new_header_name'
@@ -703,11 +703,23 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache):
             Group.by_user(user, wrap=False)
         ), key=alphanumeric_sort_key)
 
+    def _get_devices(user):
+        """
+        Returns a comma-separated list of IMEI numbers of the user's devices, sorted with most-recently-used first
+        """
+        return ', '.join([device.device_id for device in sorted(
+            user.devices, key=lambda d: d.last_used, reverse=True
+        )])
+
     def _make_user_dict(user, group_names, location_cache):
         model_data, uncategorized_data = (
             user_data_model.get_model_and_uncategorized(user.user_data)
         )
         role = user.get_role(domain)
+        try:
+            location_code = location_cache.get(user.location_id)
+        except SQLLocation.DoesNotExist:
+            location_code = None
         return {
             'data': model_data,
             'uncategorized_data': uncategorized_data,
@@ -720,7 +732,8 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache):
             'language': user.language,
             'user_id': user._id,
             'is_active': str(user.is_active),
-            'location_code': location_cache.get(user.location_id),
+            'User IMEIs (read only)': _get_devices(user),
+            'location_code': location_code,
             'role': role.name if role else '',
         }
 
@@ -736,7 +749,7 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache):
 
     user_headers = [
         'username', 'password', 'name', 'phone-number', 'email',
-        'language', 'role', 'user_id', 'is_active',
+        'language', 'role', 'user_id', 'is_active', 'User IMEIs (read only)',
     ]
     if domain_has_privilege(domain, privileges.LOCATIONS):
         user_headers.append('location_code')

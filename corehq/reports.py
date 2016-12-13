@@ -39,7 +39,7 @@ import toggles
 from django.utils.translation import ugettext_noop as _, ugettext_lazy
 from corehq.apps.indicators.admin import document_indicators, couch_indicators, dynamic_indicators
 from corehq.apps.data_interfaces.interfaces import CaseReassignmentInterface, BulkFormManagementInterface
-from corehq.apps.case_importer_v1.base import ImportCases
+from corehq.apps.case_importer.base import ImportCases
 from corehq.apps.accounting.interface import (
     AccountingInterface,
     SubscriptionInterface,
@@ -61,7 +61,6 @@ from custom.openclinica.reports import OdmExportReport
 def REPORTS(project):
     from corehq.apps.reports.standard.cases.basic import CaseListReport
     from corehq.apps.reports.standard.cases.careplan import make_careplan_reports
-    from corehq.apps.reports.standard.maps import DemoMapReport, DemoMapReport2, DemoMapCaseList
 
     reports = []
 
@@ -87,9 +86,6 @@ def REPORTS(project):
             phonelog.DeviceLogDetailsReport,
             deployments.SyncHistoryReport,
             deployments.ApplicationErrorReport,
-        )),
-        (ugettext_lazy("Demos"), (
-            DemoMapReport, DemoMapReport2, DemoMapCaseList,
         )),
     ])
 

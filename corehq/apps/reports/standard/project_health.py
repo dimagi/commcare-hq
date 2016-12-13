@@ -58,6 +58,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
                  delta_high_performers=0, delta_low_performers=0):
         self._previous_summary = previous_summary
         self._next_summary = None
+        self._is_final = None
 
         base_queryset = MALTRow.objects.filter(
             domain_name=domain,
@@ -90,7 +91,6 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
             domain=domain,
             performance_threshold=performance_threshold,
             active=num_active_users,
-            inactive=0,
             total_users_by_month=0,
             percent_active=0,
             performing=num_performing_users,
@@ -101,11 +101,8 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
     def set_next_month_summary(self, next_month_summary):
         self._next_summary = next_month_summary
 
-    def set_num_inactive_users(self, num_inactive_users):
-        self.inactive = num_inactive_users
-
     def set_percent_active(self):
-        self.total_users_by_month = self.number_of_inactive_users + self.number_of_active_users
+        self.total_users_by_month = self.inactive + self.number_of_active_users
         if self.total_users_by_month:
             self.percent_active = float(self.number_of_active_users) / float(self.total_users_by_month)
         else:
@@ -124,8 +121,10 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         return self.active
 
     @property
-    def number_of_inactive_users(self):
-        return self.inactive
+    @memoized
+    def inactive(self):
+        dropouts = self.get_dropouts()
+        return len(dropouts) if dropouts else 0
 
     @property
     def previous_month(self):
@@ -176,9 +175,9 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
     @property
     def delta_inactive_pct(self):
         if self.delta_inactive and self._previous_summary:
-            if self._previous_summary.number_of_inactive_users == 0:
+            if self._previous_summary.inactive == 0:
                 return self.delta_inactive * 100.
-            return float(self.delta_inactive / float(self._previous_summary.number_of_inactive_users)) * 100.
+            return float(self.delta_inactive / float(self._previous_summary.inactive)) * 100.
 
     def _get_all_user_stubs(self):
         return {
@@ -192,8 +191,18 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
             ) for row in self._user_stat_from_malt
         }
 
+    def finalize(self):
+        """
+        Before a summary is "finalized" certain fields can't be accessed.
+        """
+        self._is_final = True
+
     @memoized
-    def get_all_user_stubs_with_extra_data(self):
+    def _get_all_user_stubs_with_extra_data(self):
+        if not self._is_final:
+            # intentionally fail-hard with developer-facing error
+            raise Exception("User stubs accessed before finalized. "
+                            "Please call finalize() before calling this method.")
         if self._previous_summary:
             previous_stubs = self._previous_summary._get_all_user_stubs()
             next_stubs = self._next_summary._get_all_user_stubs() if self._next_summary else {}
@@ -228,7 +237,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         if self._previous_summary:
             unhealthy_users = filter(
                 lambda stub: stub.is_active and not stub.is_performing,
-                self.get_all_user_stubs_with_extra_data()
+                self._get_all_user_stubs_with_extra_data()
             )
             return sorted(unhealthy_users, key=lambda stub: stub.delta_forms)
 
@@ -240,7 +249,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         if self._previous_summary:
             dropouts = filter(
                 lambda stub: not stub.is_active,
-                self.get_all_user_stubs_with_extra_data()
+                self._get_all_user_stubs_with_extra_data()
             )
             return sorted(dropouts, key=lambda stub: stub.delta_forms)
 
@@ -252,7 +261,7 @@ class MonthlyPerformanceSummary(jsonobject.JsonObject):
         if self._previous_summary:
             dropouts = filter(
                 lambda stub: stub.is_newly_performing,
-                self.get_all_user_stubs_with_extra_data()
+                self._get_all_user_stubs_with_extra_data()
             )
             return sorted(dropouts, key=lambda stub: -stub.delta_forms)
 
@@ -366,9 +375,14 @@ class ProjectHealthDashboard(ProjectReport):
             six_month_summary.append(this_month_summary)
             if last_month_summary is not None:
                 last_month_summary.set_next_month_summary(this_month_summary)
-                this_month_summary.set_num_inactive_users(len(this_month_summary.get_dropouts()))
-            this_month_summary.set_percent_active()
             last_month_summary = this_month_summary
+
+        # these steps have to be done in a second outer loop so that 'next month summary' is available
+        # whenever it is needed
+        for summary in six_month_summary:
+            summary.finalize()
+            summary.set_percent_active()
+
         return six_month_summary[1:]
 
     def export_summary(self, six_months):

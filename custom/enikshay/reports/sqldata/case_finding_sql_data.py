@@ -46,7 +46,7 @@ def generate_for_all_ranges(slug, filters):
     columns = []
     for lower_bound, upper_bound in AGE_RANGES[:-1]:
         age_filter = RawFilter(
-            'age_in_days BETWEEN %d AND %d' % (lower_bound * DAYS_IN_YEARS, upper_bound * DAYS_IN_YEARS)
+            'age >= %d AND age <= %d' % (lower_bound, upper_bound)
         )
         columns.append(
             DatabaseColumn(
@@ -64,7 +64,7 @@ def generate_for_all_ranges(slug, filters):
             CountColumn(
                 'doc_id',
                 filters=filters + [
-                    RawFilter('age_in_days > %d' % (AGE_RANGES[-1][0] * DAYS_IN_YEARS)), type_filter
+                    RawFilter('age > %d' % (AGE_RANGES[-1][0] * DAYS_IN_YEARS)), type_filter
                 ],
                 alias='%s_age_%d' % (slug, AGE_RANGES[-1][0])
             )
@@ -85,6 +85,7 @@ def generate_for_all_ranges(slug, filters):
 
 def diagnosis_filter(diagnosis, classification):
     return [
+        RawFilter('patient_type IS NOT NULL'),
         RawFilter("basis_of_diagnosis = '%s'" % diagnosis),
         RawFilter("disease_classification = '%s'" % classification)
     ]
@@ -106,7 +107,10 @@ class CaseFindingSqlData(EnikshaySqlData):
                 'pulmonary_clinical', self.filters + diagnosis_filter('clinical', 'pulmonary')
             ) +
             generate_for_all_patient_types(
-                'extra_pulmonary', self.filters + [RawFilter("disease_classification = 'extra_pulmonary'")]
+                'extra_pulmonary', self.filters + [
+                    RawFilter('patient_type IS NOT NULL'),
+                    RawFilter("disease_classification = 'extra_pulmonary'")
+                ]
             ) +
             generate_for_all_patient_types(
                 'total', self.filters + [RawFilter("patient_type IS NOT NULL")]

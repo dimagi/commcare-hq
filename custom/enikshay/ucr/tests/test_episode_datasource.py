@@ -63,6 +63,7 @@ class TestEpisodeDatasource(BaseEnikshayDatasourceTest):
                 "update": dict(
                     dob="1987-08-15",
                     sex="male",
+                    hiv_status="reactive"
                 )
             },
         )

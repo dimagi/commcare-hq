@@ -39,7 +39,6 @@
 			</instance>
 			<instance id="commcaresession" src="jr://instance/session"/>
 			<instance id="groups" src="jr://fixture/user-groups"/>
-			<instance id="groups" src="jr://fixture/user-groups"/>
 			<bind nodeset="/data/mother_name" required="true()" type="xsd:string"/>
 			<bind nodeset="/data/child"/>
 			<bind nodeset="/data/child/name" required="true()" type="xsd:string"/>

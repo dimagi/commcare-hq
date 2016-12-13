@@ -13,7 +13,7 @@ from corehq.apps.style.decorators import (
     use_datatables,
 )
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, \
-    DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
+    DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE, UCR_LABORATORY_BACKEND
 from couchexport.shortcuts import export_response
 
 from corehq.toggles import DISABLE_COLUMN_LIMIT_IN_UCR
@@ -47,6 +47,7 @@ from corehq.apps.userreports.reports.util import (
     get_expanded_columns,
     has_location_filter,
 )
+from corehq.apps.userreports.tasks import compare_ucr_dbs
 from corehq.apps.userreports.util import (
     default_language,
     has_report_builder_trial,
@@ -398,6 +399,11 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
         }
         if total_row is not None:
             json_response["total_row"] = total_row
+        if data_source.data_source.config.backend_id == UCR_LABORATORY_BACKEND:
+            compare_ucr_dbs.delay(
+                self.domain, self.report_config_id, self.filter_values,
+                sort_column, sort_order, params
+            )
         return self.render_json_response(json_response)
 
     def _get_initial(self, request, **kwargs):

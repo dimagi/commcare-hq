@@ -9,6 +9,7 @@ from django.utils.translation import ugettext_lazy
 
 from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
+from crispy_forms.bootstrap import StrictButton
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 
@@ -21,7 +22,7 @@ from corehq.apps.locations.permissions import LOCATION_ACCESS_DENIED
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import raw_username, user_display_string
 
-from .models import SQLLocation, LocationType
+from .models import SQLLocation, LocationType, LocationFixtureConfiguration
 from .permissions import user_can_access_location_id
 from .signals import location_edited
 
@@ -383,3 +384,29 @@ class UsersAtLocationForm(MultipleSelectionForm):
 
         self.unassign_users(to_remove)
         self.assign_users(to_add)
+
+
+class LocationFixtureForm(forms.ModelForm):
+    class Meta:
+        model = LocationFixtureConfiguration
+        fields = ['sync_flat_fixture', 'sync_hierarchical_fixture']
+
+    def __init__(self, *args, **kwargs):
+        super(LocationFixtureForm, self).__init__(*args, **kwargs)
+        self.fields['sync_flat_fixture'].label = _('Sync the flat location fixture (recommended).')
+        self.fields['sync_hierarchical_fixture'].label = _(
+            'Sync the hierarchicial location fixture (legacy format).'
+        )
+        self.helper = FormHelper()
+        self.helper.form_class = 'form-horizontal'
+        self.helper.label_class = 'col-sm-3 col-md-3'
+        self.helper.field_class = 'col-sm-3 col-md-3'
+        self.helper.layout = crispy.Layout(
+            'sync_flat_fixture',
+            'sync_hierarchical_fixture',
+            StrictButton(
+                _("Update Settings"),
+                type="submit",
+                css_class='btn-primary',
+            )
+        )

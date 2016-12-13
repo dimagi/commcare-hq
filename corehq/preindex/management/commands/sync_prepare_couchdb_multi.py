@@ -16,7 +16,7 @@ POOL_SIZE = getattr(settings, 'PREINDEX_POOL_SIZE', 8)
 class Command(BaseCommand):
     help = 'Sync design docs to temporary ids...but multithreaded'
 
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option(
             '--no-mail',
             help="Don't send email confirmation",

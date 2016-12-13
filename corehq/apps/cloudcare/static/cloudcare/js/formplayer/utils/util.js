@@ -55,9 +55,10 @@ Util.currentUrlToObject = function () {
     }
 };
 
-Util.setUrlToObject = function (urlObject) {
+Util.setUrlToObject = function (urlObject, replace) {
+    replace = replace || false;
     var encodedUrl = Util.objectToEncodedUrl(urlObject.toJson());
-    FormplayerFrontend.navigate(encodedUrl);
+    FormplayerFrontend.navigate(encodedUrl, { replace: replace });
 };
 
 Util.doUrlAction = function (actionCallback) {
@@ -91,7 +92,12 @@ Util.getSavedDisplayOptions = function() {
 
 Util.getDisplayOptionsKey = function() {
     var user = FormplayerFrontend.request('currentUser');
-    return user.domain + ':' + user.username + ':' + 'displayOptions';
+    return [
+        user.environment,
+        user.domain,
+        user.username,
+        'displayOptions',
+    ].join(':');
 };
 
 Util.CloudcareUrl = function (options) {

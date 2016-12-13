@@ -5,7 +5,7 @@
     <div class="gr">
         <fieldset class="gr-header">
             <legend>
-                <span class="caption" data-bind="html: caption_markdown() || caption()"></span>
+                <span class="caption" data-bind="html: ko.utils.unwrapObservable($data.caption_markdown) || caption()"></span>
                 <button class="btn btn-xs btn-danger del pull-right" href="#" data-bind="
                     visible: isRepetition,
                     click: deleteRepeat
@@ -18,7 +18,6 @@
 </script>
 
 <script type="text/html" id="form-navigation-ko-template">
-  <h1 class="formnav-title page-header" data-bind="text: title, visible: showInFormNavigation"></h1>
   <div class="formnav-container" data-bind="visible: showInFormNavigation">
     <button type="button"
             class="btn btn-formnav"
@@ -39,7 +38,7 @@
     <button type="button"
             disabled="disabled"
             class="btn btn-formnav disabled btn-formnav-next"
-            data-bind="visible: !enableNextButton() && !atLastIndex()">
+            data-bind="visible: disableNextButton() && !atLastIndex()">
       <i class="fa fa-chevron-right"></i>
     </button>
     <button type="button"
@@ -47,17 +46,30 @@
             data-bind="click: nextQuestion, visible: enableNextButton() && !atLastIndex()">
       <i class="fa fa-chevron-right"></i>
     </button>
+    <button type="button"
+            class="btn btn-formnav btn-formnav-next"
+            data-bind="click: clickedNextOnRequired, visible: enableForceNextButton() && !atLastIndex()">
+      <i class="fa fa-chevron-right"></i>
+    </button>
 
   </div>
 </script>
 
 <script type="text/html" id="form-fullform-ko-template">
-    <div class="container form-container" data-bind="css: { 'form-single-question': showInFormNavigation }">
-      <div class="page-header" data-bind="visible: !showInFormNavigation()">
-        <h1 class="title" data-bind="text: title"></h1>
-      </div>
+    <div class="breadcrumb-form-container"
+         data-bind="css: { 'breadcrumb-form-single-question': showInFormNavigation }">
+      <ol class="breadcrumb breadcrumb-form">
+        <li class="js-home breadcrumb-text"><i class="fa fa-home"></i></li>
+        <li class="breadcrumb-text" data-bind="text: title"></li>
+      </ol>
       <div class="webforms-nav"
            data-bind="template: { name: 'form-navigation-ko-template' }"></div>
+    </div>
+    <div class="container form-container" data-bind="css: { 'form-single-question': showInFormNavigation }">
+
+      <div class="page-header">
+        <h1 class="title" data-bind="text: title, visible: !showInFormNavigation()"></h1>
+      </div>
 
       <div class="row">
         <div class="col-sm-12">
@@ -96,7 +108,11 @@
             <div class="debugger-tab-title">
                 <i class="fa fa-table"></i>
                 <span class="debugger-title">{% trans "Data Preview" %}</span>
-                <a class="pull-right" data-bind="click: toggleState">{% trans "Show Data Preview" %}</a>
+                <a class="pull-right" data-bind="
+                    click: toggleState,
+                    text: isMinimized() ? gettext('Show Data Preview') : gettext('Hide Data Preview')
+                    ">
+                </a>
             </div>
 
             <!-- Debugger content -->
@@ -186,34 +202,65 @@
 </script>
 
 <script type="text/html" id="debugger-eval-ko-template">
-    <form class="form-horizontal" data-bind="submit: evaluate">
-        <div class="form-group">
-            <div class="col-sm-12">
-                <div class="input-group">
-                    <input
-                        id="xpath"
-                        class="form-control debugger-code at-who-input"
-                        name="xpath"
-                        placeholder="/data/[your path here]"
-                        autocomplete="off"
-                        data-bind="value: xpath" />
-                    <span class="input-group-btn">
-                        <button class="btn btn-default" id="evaluate-button">{% trans "Evaluate" %}</button>
-                    </span>
-                </div>
-            </div>
-        </div>
+      <form class="form-horizontal" data-bind="submit: onSubmitXPath">
+          <div class="col-sm-12">
+          <div class="form-group">
+              <textarea
+                  id="xpath"
+                  class="form-control debugger-code at-who-input"
+                  name="xpath"
+                  placeholder="XPath Expression"
+                  autocomplete="off"
+                  data-bind="value: xpath, event: { mouseup: onMouseUp }" ></textarea>
+          </div>
+          </div>
+          <div class="col-sm-12">
+          <div class="form-group">
+                <input class="btn btn-success" id="evaluate-button" value="Evaluate" type="submit"/>
+                <input
+                    class="btn btn-default"
+                    value="Evaluate Selection"
+                    type="button"
+                    data-bind="css: { disabled: !selectedXPath() }, click: onClickSelectedXPath"/>
+          </div>
+          </div>
+          <div class="col-sm-12">
+              <div
+                  id="evaluate-result"
+                  type="text"
+                  data-bind="
+                      text: result,
+                      css: { 'text-danger': !success() }
+              "></div>
+          </div>
+      </form>
+      <div class="row">
         <div class="col-sm-12">
-            <p
-                id="evaluate-result"
-                type="text"
-                style="display: block;"
-                data-bind="
-                    text: result,
-                    css: { 'text-danger': !success() }
-            "></p>
+          <h3>{% trans "Recent Queries" %}</h3>
         </div>
-    </form>
+      </div>
+      <table class="table table-striped table-hover">
+        <tbody data-bind="foreach: recentXPathQueries">
+          <tr class="query-container" data-bind="click: $parent.onClickSavedQuery">
+            <td class="col-sm-1 query-status">
+              <span><i class="fa" data-bind="
+                  css: {
+                    'fa-check': $parent.isSuccess($data),
+                    'fa-times': !$parent.isSuccess($data),
+                    'text-success': $parent.isSuccess($data),
+                    'text-danger': !$parent.isSuccess($data)
+                  }
+                  "></i></span>
+            </td>
+            <td class="col-sm-8 debugger-code">
+              <span data-bind="text: xpath"></span>
+            </td>
+            <td class="col-sm-3">
+              <span data-bind="text: output"></span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
 </script>
 
 <script type="text/html" id="question-fullform-ko-template">
@@ -222,10 +269,11 @@
             css: {
                 error: error,
                 required: $data.required,
+                on: $root.forceRequiredVisible,
             }
         ">
         <label class="caption control-label" data-bind="
-            html: caption_markdown() || caption(),
+            html: ko.utils.unwrapObservable($data.caption_markdown) || caption(),
             css: Formplayer.Const.LABEL_WIDTH
             "></label>
         <div class="widget-container controls" data-bind="css: Formplayer.Const.CONTROL_WIDTH">
@@ -253,14 +301,18 @@
             "></div>
         </div>
         <span class="ix" data-bind="text: ixInfo($data)"></span>
-        <div class="eoq"></div/>
+        <div class="eoq"></div>
     </div>
+    <div class="form-group-required-label"
+         data-bind="visible: $data.required, css: {
+                      on: $root.forceRequiredVisible,
+                    }">{% trans 'Sorry, this response is required!' %}</div>
     <!-- /ko -->
     <!-- ko if: datatype() === 'info' -->
     <div class="info panel panel-default">
         <div class="panel-body">
             <span class="ix" data-bind="text: ixInfo($data)">></span>
-            <span class="caption" data-bind="html: caption_markdown() || caption()"></span>
+            <span class="caption" data-bind="html: ko.utils.unwrapObservable($data.caption_markdown) || caption()"></span>
             <div class="widget-multimedia" data-bind="
                 template: { name: 'widget-multimedia-ko-template', data: $data }"
                 >
@@ -388,11 +440,13 @@
             </label>
         </div>
     </div>
+    {% if not request|toggle_enabled:"USE_FORMPLAYER_FRONTEND" %}
     <div class="help-block clear-container">
         <button class="btn btn-default btn-xs clear" data-bind="
             click: onClear
         ">Clear choices</button>
     </div>
+    {% endif %}
 </script>
 <script type="text/html" id="date-entry-ko-template">
     <div class="input-group">

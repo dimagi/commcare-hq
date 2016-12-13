@@ -22,7 +22,6 @@ FormplayerFrontend.on("before:start", function () {
             loadingProgress: "#formplayer-progress-container",
             breadcrumb: "#breadcrumb-region",
             persistentCaseTile: "#persistent-case-tile",
-            phoneModeNavigation: '#phone-mode-navigation',
             restoreAsBanner: '#restore-as-region',
         },
     });
@@ -83,6 +82,7 @@ FormplayerFrontend.reqres.setHandler('currentUser', function () {
 
 FormplayerFrontend.on('clearForm', function () {
     $('#webforms').html("");
+    $('#menu-container').removeClass('hide');
     $('#webforms-nav').html("");
     $('#cloudcare-debugger').html("");
     $('.atwho-container').remove();
@@ -102,9 +102,9 @@ $(document).on("ajaxStart", function () {
 
 FormplayerFrontend.on('showError', function (errorMessage, isHTML) {
     if (isHTML) {
-        showHTMLError(errorMessage, $("#cloudcare-notifications"), 10000);
+        showHTMLError(errorMessage, $("#cloudcare-notifications"));
     } else {
-        showError(errorMessage, $("#cloudcare-notifications"), 10000);
+        showError(errorMessage, $("#cloudcare-notifications"));
     }
 });
 
@@ -122,7 +122,6 @@ FormplayerFrontend.reqres.setHandler('handleNotification', function(notification
 
 FormplayerFrontend.on('startForm', function (data) {
     FormplayerFrontend.request("clearMenu");
-
     data.onLoading = tfLoading;
     data.onLoadingComplete = tfLoadingComplete;
     var user = FormplayerFrontend.request('currentUser');
@@ -131,7 +130,7 @@ FormplayerFrontend.on('startForm', function (data) {
     data.username = user.username;
     data.restoreAs = user.restoreAs;
     data.formplayerEnabled = true;
-    data.displayOptions = user.displayOptions;
+    data.displayOptions = $.extend(true, {}, user.displayOptions);
     data.onerror = function (resp) {
         showError(resp.human_readable_message || resp.message, $("#cloudcare-notifications"));
     };
@@ -163,6 +162,7 @@ FormplayerFrontend.on('startForm', function (data) {
     };
     var sess = new WebFormSession(data);
     sess.renderFormXml(data, $('#webforms'));
+    $('#menu-container').addClass('hide');
 });
 
 FormplayerFrontend.on("start", function (options) {
@@ -175,6 +175,7 @@ FormplayerFrontend.on("start", function (options) {
     user.domain = options.domain;
     user.formplayer_url = options.formplayer_url;
     user.debuggerEnabled = options.debuggerEnabled;
+    user.environment = options.environment;
     user.restoreAs = FormplayerFrontend.request('restoreAsUser', user.domain, user.username);
 
     savedDisplayOptions = _.pick(
@@ -195,21 +196,22 @@ FormplayerFrontend.on("start", function (options) {
                 model: user,
             })
         );
-        if (user.displayOptions.phoneMode) {
-            FormplayerFrontend.regions.phoneModeNavigation.show(
-                new FormplayerFrontend.Layout.Views.PhoneNavigation({ appId: appId })
-            );
-            FormplayerFrontend.trigger('phone:back:hide');
+        if (user.displayOptions.singleAppMode) {
+            appId = options.apps[0]['_id'];
         }
+
         // will be the same for every domain. TODO: get domain/username/pass from django
         if (this.getCurrentRoute() === "") {
             if (user.displayOptions.singleAppMode) {
-                appId = options.apps[0]['_id'];
-
                 FormplayerFrontend.trigger('setAppDisplayProperties', options.apps[0]);
                 FormplayerFrontend.trigger("app:singleApp", appId);
             } else {
                 FormplayerFrontend.trigger("apps:list", options.apps);
+            }
+            if (user.displayOptions.phoneMode) {
+                // Refresh on start of preview mode so it ensures we're on the latest app
+                // since app updates do not work.
+                FormplayerFrontend.trigger('refreshApplication', appId);
             }
         }
     }
@@ -322,18 +324,6 @@ FormplayerFrontend.on("sync", function () {
     $.ajax(options);
 });
 
-FormplayerFrontend.on('phone:back:hide', function() {
-    if (FormplayerFrontend.regions.phoneModeNavigation.currentView) {
-        FormplayerFrontend.regions.phoneModeNavigation.currentView.hideBackButton();
-    }
-});
-
-FormplayerFrontend.on('phone:back:show', function() {
-    if (FormplayerFrontend.regions.phoneModeNavigation.currentView) {
-        FormplayerFrontend.regions.phoneModeNavigation.currentView.showBackButton();
-    }
-});
-
 /**
  * retry
  *
@@ -360,6 +350,13 @@ FormplayerFrontend.on("retry", function(response, retryFn, progressMessage) {
     setTimeout(retryFn, retryTimeout);
 });
 
+FormplayerFrontend.on('view:tablet', function() {
+    $('body').addClass('preview-tablet-mode');
+});
+
+FormplayerFrontend.on('view:phone', function() {
+    $('body').removeClass('preview-tablet-mode');
+});
 
 /**
  * clearProgress
@@ -381,6 +378,14 @@ FormplayerFrontend.on('clearProgress', function() {
 });
 
 
+FormplayerFrontend.on('setVersionInfo', function(versionInfo) {
+    var user = FormplayerFrontend.request('currentUser');
+    $("#version-info").text(versionInfo || '');
+    if (versionInfo) {
+        user.set('versionInfo',  versionInfo);
+    }
+});
+
 /**
  * refreshApplication
  *
@@ -391,6 +396,9 @@ FormplayerFrontend.on('clearProgress', function() {
  * @param {String} appId - The id of the application to refresh
  */
 FormplayerFrontend.on('refreshApplication', function(appId) {
+    if (!appId) {
+        throw new Error('Attempt to refresh application for null appId');
+    }
     var user = FormplayerFrontend.request('currentUser'),
         formplayer_url = user.formplayer_url,
         resp,

@@ -4,6 +4,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from corehq.form_processor.models import CommCareCaseSQL
 from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.xml.parser import CaseUpdateAction
 
 from corehq.apps.repeaters.models import CaseRepeater
 from corehq.apps.repeaters.signals import create_repeat_records
@@ -12,6 +13,7 @@ from casexml.apps.case.xform import get_case_updates
 
 from custom.enikshay.case_utils import get_open_episode_case_from_person
 from custom.enikshay.const import PRIMARY_PHONE_NUMBER, BACKUP_PHONE_NUMBER
+from custom.enikshay.exceptions import ENikshayCaseNotFound
 
 
 class NinetyNineDotsRegisterPatientRepeater(CaseRepeater):
@@ -55,17 +57,17 @@ class NinetyNineDotsUpdatePatientRepeater(NinetyNineDotsRegisterPatientRepeater)
         return reverse(UpdatePatientRepeaterView.urlname, args=[domain])
 
     def allowed_to_forward(self, case):
-        # checks whitelisted case types and users
-        allowed_case_types_and_users = self._allowed_case_type(case) and self._allowed_user(case)
-        if not allowed_case_types_and_users:
+        if not self._allowed_case_type(case) and self._allowed_user(case):
             return False
 
-        return (
-            phone_number_changed(case) and
-            episode_registered_with_99dots(
+        try:
+            registered_episode = episode_registered_with_99dots(
                 get_open_episode_case_from_person(case.domain, case.case_id)
             )
-        )
+        except ENikshayCaseNotFound:
+            return False
+
+        return phone_number_changed(case) and registered_episode
 
 
 def episode_registered_with_99dots(episode):
@@ -80,8 +82,9 @@ def phone_number_changed(case):
     update_actions = [update.get_update_action() for update in get_case_updates(last_case_action.form)]
     phone_number_changed = any(
         action for action in update_actions
-        if PRIMARY_PHONE_NUMBER in action.dynamic_properties or
-        BACKUP_PHONE_NUMBER in action.dynamic_properties
+        if isinstance(action, CaseUpdateAction)
+        and (PRIMARY_PHONE_NUMBER in action.dynamic_properties or
+             BACKUP_PHONE_NUMBER in action.dynamic_properties)
     )
     return phone_number_changed
 

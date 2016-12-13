@@ -15,15 +15,6 @@
         "filters": [
             {
                 "compare_as_string": false,
-                "datatype": "datetime",
-                "required": false,
-                "display": "Case Open Date",
-                "field": "opened_on",
-                "type": "quarter",
-                "slug": "opened_on"
-            },
-            {
-                "compare_as_string": false,
                 "datatype": "string",
                 "type": "dynamic_choice_list",
                 "slug": "village",
@@ -103,6 +94,18 @@
                 "calculate_total": false
             },
             {
+                "display": "Key Population",
+                "type": "field",
+                "field": "key_populations",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
                 "display": "Mobile/Landline number",
                 "type": "field",
                 "field": "mobile_number",
@@ -163,6 +166,18 @@
                 "calculate_total": false
             },
             {
+                "display": "Microbiological Confirmation Test Results - Lab Name",
+                "type": "field",
+                "field": "diagnostic_test_location_name",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
                 "display": "Microbiological Confirmation Test Results - Test",
                 "type": "field",
                 "field": "diagnostic_test_type",
@@ -178,6 +193,18 @@
                 "display": "Microbiological Confirmation Test Results - Result",
                 "type": "field",
                 "field": "diagnostic_result",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Basis of diagnosis if other than microbiological",
+                "type": "field",
+                "field": "not_microbiological_basis_of_diagnosis",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,
@@ -211,6 +238,42 @@
                 "calculate_total": false
             },
             {
+                "display": "Date of Sample Sent for DST",
+                "type": "field",
+                "field": "date_of_sample_dst",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Result of DST",
+                "type": "field",
+                "field": "result_of_dst",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Status of Treatment",
+                "type": "field",
+                "field": "status_of_treatment",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
                 "display": "Date of Treatment Initiation",
                 "type": "field",
                 "field": "ip_initiation_date",
@@ -226,30 +289,6 @@
                 "display": "Dosage Frequency",
                 "type": "field",
                 "field": "dosage_frequency",
-                "aggregation": "simple",
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {
-                },
-                "calculate_total": false
-            },
-            {
-                "display": "Follow up Smear Examinations (End of IP) - Date",
-                "type": "field",
-                "field": "endofip_test_requested_date",
-                "aggregation": "simple",
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {
-                },
-                "calculate_total": false
-            },
-            {
-                "display": "Follow up Smear Examinations (End of IP) - Result",
-                "type": "field",
-                "field": "endofip_result",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,

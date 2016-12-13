@@ -150,14 +150,14 @@ def doc_value_wrapper(doc_cls, value_cls):
 
 def can_add_extra_mobile_workers(request):
     from corehq.apps.users.models import CommCareUser
-    from corehq.apps.accounting.models import BillingAccount
+    from corehq.apps.accounting.models import Subscription
     num_web_users = CommCareUser.total_by_domain(request.domain)
     user_limit = request.plan.user_limit
     if user_limit == -1 or num_web_users < user_limit:
         return True
     if not has_privilege(request, privileges.ALLOW_EXCESS_USERS):
-        account = BillingAccount.get_account_by_domain(request.domain)
-        if account is None or account.date_confirmed_extra_charges is None:
+        current_subscription = Subscription.get_subscribed_plan_by_domain(request.domain)[1]
+        if current_subscription is None or current_subscription.account.date_confirmed_extra_charges is None:
             return False
     return True
 

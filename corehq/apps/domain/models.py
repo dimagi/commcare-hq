@@ -1,13 +1,17 @@
 from datetime import datetime
 from itertools import imap
+import time
 import uuid
+
+from couchdbkit import PreconditionFailed
+
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.template.loader import render_to_string
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.domain.exceptions import DomainDeleteException
-from corehq.apps.tzmigration.api import set_migration_complete
+from corehq.apps.tzmigration.api import set_tz_migration_complete
 from corehq.dbaccessors.couchapps.all_docs import \
     get_all_doc_ids_for_domain_grouped_by_db
 from corehq.util.soft_assert import soft_assert
@@ -233,6 +237,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
     cloudcare_releases = StringProperty(choices=['stars', 'nostars', 'default'], default='default')
     organization = StringProperty()
     hr_name = StringProperty()  # the human-readable name for this project
+    project_description = StringProperty()  # Brief description of the project
     creating_user = StringProperty()  # username of the user who created this domain
 
     # domain metadata
@@ -632,7 +637,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         self.last_modified = datetime.utcnow()
         if not self._rev:
             # mark any new domain as timezone migration complete
-            set_migration_complete(self.name)
+            set_tz_migration_complete(self.name)
         super(Domain, self).save(**params)
 
         from corehq.apps.domain.signals import commcare_domain_post_save
@@ -690,7 +695,14 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
             # Saving the domain should happen before we import any apps since
             # importing apps can update the domain object (for example, if user
             # as a case needs to be enabled)
-            new_domain.save()
+            try:
+                new_domain.save()
+            except PreconditionFailed:
+                # This is a hack to resolve http://manage.dimagi.com/default.asp?241492
+                # Following solution in
+                # https://github.com/dimagi/commcare-hq/commit/d59b1e403060ade599cc4a03db0aabc4da62b668
+                time.sleep(0.5)
+                new_domain.save()
 
             new_app_components = {}  # a mapping of component's id to its copy
 
@@ -1048,6 +1060,19 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         flag that should be set normally.
         """
         return toggles.MULTIPLE_LOCATIONS_PER_USER.enabled(self.name)
+
+    @property
+    def is_onboarding_domain(self):
+        # flag used for case management onboarding analytics
+        if not settings.ONBOARDING_DOMAIN_TEST_DATE:
+            return False
+        onboarding_date = datetime(
+            settings.ONBOARDING_DOMAIN_TEST_DATE[0],
+            settings.ONBOARDING_DOMAIN_TEST_DATE[1],
+            settings.ONBOARDING_DOMAIN_TEST_DATE[2],
+        )
+        return self.first_domain_for_user and self.date_created > onboarding_date
+
 
     def convert_to_commtrack(self):
         """

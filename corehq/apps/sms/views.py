@@ -68,7 +68,7 @@ from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.soft_assert import soft_assert
-from corehq.util.spreadsheets.excel import WorkbookJSONReader
+from corehq.util.workbook_json.excel import WorkbookJSONReader
 from corehq.util.timezones.conversions import ServerTime, UserTime
 from corehq.util.quickcache import quickcache
 from django.contrib import messages
@@ -2159,22 +2159,8 @@ class InvitationAppInfoView(View, DomainViewMixin):
 
 class IncomingBackendView(View):
 
-    def dispatch(self, request, api_key, *args, **kwargs):
-        try:
-            api_user = ApiUser.get('ApiUser-%s' % api_key)
-        except ResourceNotFound:
-            return HttpResponse(status=401)
-
-        if api_user.doc_type != 'ApiUser' or not api_user.has_permission(PERMISSION_POST_SMS):
-            return HttpResponse(status=401)
-
-        return super(IncomingBackendView, self).dispatch(request, api_key, *args, **kwargs)
-
-
-class NewIncomingBackendView(View):
-
     def __init__(self, *args, **kwargs):
-        super(NewIncomingBackendView, self).__init__(*args, **kwargs)
+        super(IncomingBackendView, self).__init__(*args, **kwargs)
         self.domain = None
         self.backend_couch_id = None
 
@@ -2195,4 +2181,4 @@ class NewIncomingBackendView(View):
         except SQLMobileBackend.DoesNotExist:
             return HttpResponse(status=401)
 
-        return super(NewIncomingBackendView, self).dispatch(request, api_key, *args, **kwargs)
+        return super(IncomingBackendView, self).dispatch(request, api_key, *args, **kwargs)

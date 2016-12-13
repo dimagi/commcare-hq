@@ -1,3 +1,4 @@
+import uuid
 import mock
 import os
 from xml.etree import ElementTree
@@ -25,8 +26,8 @@ from .util import (
     LocationTypeStructure,
 )
 from ..fixtures import _location_to_fixture, LocationSet, should_sync_locations, location_fixture_generator, \
-    flat_location_fixture_generator
-from ..models import SQLLocation, LocationType, Location
+    flat_location_fixture_generator, should_sync_flat_fixture, should_sync_hierarchical_fixture
+from ..models import SQLLocation, LocationType, Location, LocationFixtureConfiguration
 
 
 class FixtureHasLocationsMixin(TestXmlMixin):
@@ -83,7 +84,7 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
         self.assertXmlEqual(empty_fixture, fixture)
 
     def test_simple_location_fixture(self, uses_locations):
-        self.user.set_location(self.locations['Suffolk'].couch_location)
+        self.user._couch_user.set_location(self.locations['Suffolk'].couch_location)
 
         self._assert_fixture_has_locations(
             'simple_fixture',
@@ -91,8 +92,8 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
         )
 
     def test_multiple_locations(self, uses_locations):
-        self.user.add_to_assigned_locations(self.locations['Suffolk'].couch_location)
-        self.user.add_to_assigned_locations(self.locations['New York City'].couch_location)
+        self.user._couch_user.add_to_assigned_locations(self.locations['Suffolk'].couch_location)
+        self.user._couch_user.add_to_assigned_locations(self.locations['New York City'].couch_location)
 
         self._assert_fixture_has_locations(
             'multiple_locations',
@@ -136,7 +137,7 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
             Mass
             - Suffolk
         """
-        self.user.set_location(self.locations['Suffolk'].couch_location)
+        self.user._couch_user.set_location(self.locations['Suffolk'].couch_location)
         location_type = self.locations['Suffolk'].location_type
         location_type.expand_to = location_type
         location_type.save()
@@ -147,7 +148,7 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
         )
 
     def test_expand_to_county_from_state(self, uses_locations):
-        self.user.set_location(self.locations['Massachusetts'].couch_location)
+        self.user._couch_user.set_location(self.locations['Massachusetts'].couch_location)
         location_type = self.locations['Massachusetts'].location_type
         location_type.expand_to = self.locations['Suffolk'].location_type
         location_type.save()
@@ -158,7 +159,7 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
         )
 
     def test_expand_from_county_at_city(self, uses_locations):
-        self.user.set_location(self.locations['Boston'].couch_location)
+        self.user._couch_user.set_location(self.locations['Boston'].couch_location)
         location_type = self.locations['Boston'].location_type
         location_type.expand_from = self.locations['Suffolk'].location_type
         location_type.save()
@@ -169,7 +170,7 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
         )
 
     def test_expand_from_root_at_city(self, uses_locations):
-        self.user.set_location(self.locations['Boston'].couch_location)
+        self.user._couch_user.set_location(self.locations['Boston'].couch_location)
         location_type = self.locations['Boston'].location_type
         location_type.expand_from_root = True
         location_type.save()
@@ -181,7 +182,7 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
         )
 
     def test_expand_from_root_to_county(self, uses_locations):
-        self.user.set_location(self.locations['Massachusetts'].couch_location)
+        self.user._couch_user.set_location(self.locations['Massachusetts'].couch_location)
         location_type = self.locations['Massachusetts'].location_type
         location_type.expand_from_root = True
         location_type.expand_to = self.locations['Suffolk'].location_type
@@ -202,7 +203,7 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
                 )
 
     def test_include_without_expanding(self, uses_locations):
-        self.user.set_location(self.locations['Boston'].couch_location)
+        self.user._couch_user.set_location(self.locations['Boston'].couch_location)
         location_type = self.locations['Boston'].location_type
         location_type.expand_from = self.locations['Suffolk'].location_type
         location_type.include_without_expanding = self.locations['Massachusetts'].location_type
@@ -211,6 +212,62 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
         self._assert_fixture_has_locations(
             'include_without_expanding',
             ['Massachusetts', 'Suffolk', 'Boston', 'Revere', 'New York']
+        )
+
+
+@mock.patch.object(Domain, 'uses_locations', return_value=True)  # removes dependency on accounting
+class WebUserLocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
+
+    location_type_names = ['state', 'county', 'city']
+    location_structure = [
+        ('Massachusetts', [
+            ('Middlesex', [
+                ('Cambridge', []),
+                ('Somerville', []),
+            ]),
+            ('Suffolk', [
+                ('Boston', []),
+                ('Revere', []),
+            ])
+        ]),
+        ('New York', [
+            ('New York City', [
+                ('Manhattan', []),
+                ('Brooklyn', []),
+                ('Queens', []),
+            ]),
+        ]),
+    ]
+
+    def setUp(self):
+        super(WebUserLocationFixturesTest, self).setUp()
+        delete_all_users()
+        self.user = create_restore_user(self.domain, 'web_user', '123', is_mobile_user=False)
+
+    def test_no_user_locations_returns_empty(self, uses_locations):
+        empty_fixture = "<fixture id='commtrack:locations' user_id='{}' />".format(self.user.user_id)
+        fixture = ElementTree.tostring(location_fixture_generator(self.user, V2)[0])
+        self.assertXmlEqual(empty_fixture, fixture)
+
+    def test_simple_location_fixture(self, uses_locations):
+        self.user._couch_user.set_location(self.domain, self.locations['Suffolk'].couch_location)
+
+        self._assert_fixture_has_locations(
+            'simple_fixture',
+            ['Massachusetts', 'Suffolk', 'Boston', 'Revere']
+        )
+
+    def test_multiple_locations(self, uses_locations):
+        self.user._couch_user.add_to_assigned_locations(self.domain, self.locations['Suffolk'].couch_location)
+        self.user._couch_user.add_to_assigned_locations(
+            self.domain,
+            self.locations['New York City'].couch_location
+        )
+
+        self._assert_fixture_has_locations(
+            'multiple_locations',
+            ['Massachusetts', 'Suffolk', 'Boston', 'Revere', 'New York',
+             'New York City', 'Manhattan', 'Queens', 'Brooklyn']
         )
 
 
@@ -260,7 +317,7 @@ class ForkedHierarchyLocationFixturesTest(LocationHierarchyPerTest, FixtureHasLo
         self.locations = setup_locations_with_structure(self.domain, self.location_structure)
 
     def test_forked_locations(self, *args):
-        self.user.set_location(self.locations['Massachusetts'].couch_location)
+        self.user._couch_user.set_location(self.locations['Massachusetts'].couch_location)
         location_type = self.locations['Massachusetts'].location_type
         location_type.expand_to = self.locations['Middlesex'].location_type
         location_type.save()
@@ -375,3 +432,50 @@ class ShouldSyncLocationFixturesTest(TestCase):
         self.assertFalse(
             should_sync_locations(SyncLog(date=after_archive), location_db, self.user.to_ota_restore_user())
         )
+
+
+class LocationFixtureSyncSettingsTest(TestCase):
+
+    def test_should_sync_hierarchical_format_default(self):
+        self.assertEqual(False, should_sync_hierarchical_fixture(Domain()))
+
+    @mock.patch('corehq.apps.accounting.utils.domain_has_privilege', lambda x, y: True)
+    def test_should_sync_hierarchical_format_if_location_types_exist(self):
+        domain = uuid.uuid4().hex
+        project = Domain(name=domain)
+        project.save()
+        location_type = LocationType.objects.create(domain=domain, name='test-type')
+        self.assertEqual(True, should_sync_hierarchical_fixture(project))
+        self.addCleanup(project.delete)
+        self.addCleanup(location_type.delete)
+
+    def test_should_sync_flat_format_default(self):
+        self.assertEqual(False, should_sync_flat_fixture('some-domain'))
+
+    def test_should_sync_flat_format_default_toggle(self):
+        with flag_enabled('FLAT_LOCATION_FIXTURE'):
+            self.assertEqual(True, should_sync_flat_fixture('some-domain'))
+
+    def test_should_sync_flat_format_disabled_toggle(self):
+        location_settings = LocationFixtureConfiguration.objects.create(
+            domain='some-domain', sync_flat_fixture=False
+        )
+        self.addCleanup(location_settings.delete)
+        with flag_enabled('FLAT_LOCATION_FIXTURE'):
+            self.assertEqual(False, should_sync_flat_fixture('some-domain'))
+
+    @mock.patch('corehq.apps.accounting.utils.domain_has_privilege', lambda x, y: True)
+    def test_should_sync_hierarchical_format_disabled(self):
+        domain = uuid.uuid4().hex
+        project = Domain(name=domain)
+        project.save()
+        location_type = LocationType.objects.create(domain=domain, name='test-type')
+        location_settings = LocationFixtureConfiguration.objects.create(
+            domain=domain, sync_hierarchical_fixture=False
+        )
+        self.assertEqual(False, should_sync_hierarchical_fixture(project))
+        with flag_enabled('FLAT_LOCATION_FIXTURE'):
+            self.assertEqual(False, should_sync_hierarchical_fixture(project))
+        self.addCleanup(project.delete)
+        self.addCleanup(location_type.delete)
+        self.addCleanup(location_settings.delete)

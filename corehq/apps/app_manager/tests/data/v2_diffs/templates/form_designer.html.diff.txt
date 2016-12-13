@@ -1,0 +1,66 @@
+--- 
++++ 
+@@ -1,4 +1,4 @@
+-{% extends 'app_manager/v1/managed_app.html'%}
++{% extends 'app_manager/v2/managed_app.html'%}
+ {% load xforms_extras %}
+ {% load hq_shared_tags %}
+ {% load i18n %}
+@@ -12,6 +12,15 @@
+     {% elif vellum_debug == "dev-min" %}
+         <link href="{% static 'formdesigner/_build/style.css' %}" type="text/css" rel="stylesheet"/>
+     {% endif %}
++{% endblock %}
++
++{% block stylesheets %}{{ block.super }}
++  <style type="text/css">
++    .hq-container {
++      padding-bottom: 0;
++      margin-bottom: 0;
++    }
++  </style>
+ {% endblock %}
+ 
+ {% block js %}{{ block.super }}
+@@ -126,12 +135,11 @@
+             csrftoken: $.cookie('csrftoken')
+         };
+ 
+-        {% include 'app_manager/v1/partials/form_designer_requirejs_config.html' with vellum_debug=vellum_debug %}
++        {% include 'app_manager/v2/partials/form_designer_requirejs_config.html' with vellum_debug=vellum_debug %}
+ 
+         require(["jquery", "jquery.vellum", "moment"], function ($) {
+             $(function () {
+                 $("#edit").hide();
+-                $('#hq-footer').hide();
+ 
+                 $('#formdesigner').vellum(VELLUM_OPTIONS);
+ 
+@@ -149,7 +157,21 @@
+         });
+         analytics.workflow('Entered the Form Builder');
+ 
++        $(function () {
++            var previewApp = hqImport('app_manager/js/preview_app.js');
++            previewApp.prependToggleTo('.fd-form-actions', $('#js-fd-app-preview-btn-template').html());
++        });
+     </script>
++
++    <script type="text/html" id="js-fd-app-preview-btn-template">
++      <div class="btn-group">
++        <a class="btn btn-default js-preview-toggle" href="#">
++          <span class="js-preview-action-show hide"><i class="fa fa-play-circle"></i> {% trans "Preview Changes" %}</span>
++          <span class="js-preview-action-hide hide"><i class="fa fa-pause-circle"></i> {% trans "Hide Preview" %}</span>
++        </a>
++      </div>
++    </script>
++
+ {% endblock %}
+ 
+ {% block title %}{{ form.name|clean_trans:langs }}{% endblock %}
+@@ -159,3 +181,5 @@
+ {% endblock %}
+ 
+ {% block column_style %}hq-flush-content{% endblock %}
++
++{% block footer %}{% endblock %}

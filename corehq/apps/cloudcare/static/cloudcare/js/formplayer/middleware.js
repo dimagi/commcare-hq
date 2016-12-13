@@ -15,23 +15,33 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             return wrappedApi;
         },
     };
-    var backButtonShowHideMiddleware = function(name) {
-        if (name === 'singleApp') {
-            FormplayerFrontend.trigger('phone:back:hide');
-        } else {
-            FormplayerFrontend.trigger('phone:back:show');
-        }
-    };
     var logRouteMiddleware = function(name) {
         window.console.log('User navigated to ' + name);
     };
     var clearFormMiddleware = function(name) {
         FormplayerFrontend.trigger("clearForm");
     };
+    var clearVersionInfo = function(name) {
+        FormplayerFrontend.trigger('setVersionInfo', '');
+    };
+    var setScrollableMaxHeight = function() {
+        var maxHeight,
+            maxHeightForm;
+        maxHeight = ($(window).height() -
+            FormplayerFrontend.regions.breadcrumb.$el.height());
+        maxHeightForm = $(window).height();
+
+        $('.scrollable-container').css('max-height', maxHeight + 'px');
+        $('.form-scrollable-container').css({
+            'min-height': maxHeightForm + 'px',
+            'max-height': maxHeightForm + 'px',
+        });
+    };
 
     SessionNavigate.Middleware.middlewares = [
         logRouteMiddleware,
-        backButtonShowHideMiddleware,
         clearFormMiddleware,
+        clearVersionInfo,
+        setScrollableMaxHeight,
     ];
 });

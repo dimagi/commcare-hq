@@ -20,15 +20,26 @@ $(function() {
     // This custom event is fired in autocomplete_select_widget.html
     $('#{{ source_css_id }}').on('select-ready', function() {
         updateSelect2(this);
-        // set to initial value
-        $('#{{ css_id }}').val({{ value|JSON }});
+        // set initial value
+        $('#{{ css_id }}').select2("val", {{ value|JSON }});
     });
 
+    // Change options/value for css_id based on what's chosen for source_css_id
     $('#{{ source_css_id }}').on('change', function() {
         updateSelect2(this);
         if ($(this).select2('data').length == 0) {
+            // if no options available, set to null
             $('#{{ css_id }}').val(null);
+        } else {
+            var currentValue = $('#{{ css_id }}').val();
+            var availableValues = _.map($(this).select2('data'), function(item){return item.id});
+            // set as first value of option
+            if (!currentValue || !availableValues.includes(currentValue)) {
+               $('#{{ css_id }}').select2("val", $(this).select2('data')[0].id);
+            }
+
         }
+
     }).trigger('change');
 });
 

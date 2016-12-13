@@ -192,10 +192,10 @@ function Form(json) {
         self.atLastIndex(isAtLastIndex);
     };
 
-    self.showInFormNavigation = ko.observable(
-        self.displayOptions.oneQuestionPerScreen !== undefined
+    self.showInFormNavigation = ko.computed(function () {
+        return self.displayOptions.oneQuestionPerScreen !== undefined
         && self.displayOptions.oneQuestionPerScreen() === true
-    );
+    });
 
     self.isCurrentRequiredSatisfied = ko.computed(function () {
         if (!self.showInFormNavigation()) return true;
@@ -204,6 +204,11 @@ function Form(json) {
             return (q.answer() === Formplayer.Const.NO_ANSWER && !q.required())
                 || q.answer() !== null;
         });
+    });
+    self.isCurrentRequiredSatisfied.subscribe(function (isSatisfied) {
+        if (isSatisfied) {
+            self.forceRequiredVisible(false);
+        }
     });
 
     self.enableNextButton = ko.computed(function () {
@@ -221,6 +226,24 @@ function Form(json) {
     self.enablePreviousButton = ko.computed(function () {
         if (!self.showInFormNavigation()) return false;
         return self.currentIndex() !== "0" && self.currentIndex() !== "-1";
+    });
+
+    self.forceRequiredVisible = ko.observable(false);
+
+    self.showRequiredNotice = ko.computed(function () {
+        return !self.isCurrentRequiredSatisfied() && self.forceRequiredVisible();
+    });
+
+    self.clickedNextOnRequired = function () {
+        self.forceRequiredVisible(true);
+    };
+
+    self.enableForceNextButton = ko.computed(function () {
+        return !self.isCurrentRequiredSatisfied() && !self.enableNextButton();
+    });
+
+    self.disableNextButton = ko.computed(function () {
+        return !self.enableNextButton() && !self.enableForceNextButton();
     });
 
     self.showSubmitButton = ko.computed(function () {
@@ -425,6 +448,11 @@ Formplayer.ViewModels.CloudCareDebugger = function() {
     self.formattedQuestionsHtml = ko.observable('');
     self.toggleState = function() {
         self.isMinimized(!self.isMinimized());
+        // Wait to set the content heigh until after the CSS animation has completed.
+        // In order to support multiple heights, we set the height with javascript since
+        // a div inside a fixed position element cannot scroll unless a height is explicitly set.
+        setTimeout(self.setContentHeight, 1001);
+        window.analytics.workflow('[app-preview] User toggled CloudCare debugger');
     };
 
     $.unsubscribe('debugger.update');
@@ -433,8 +461,21 @@ Formplayer.ViewModels.CloudCareDebugger = function() {
             self.formattedQuestionsHtml(resp.formattedQuestions);
             self.instanceXml(resp.instanceXml);
             self.evalXPath.autocomplete(resp.questionList);
+            self.evalXPath.recentXPathQueries(resp.recentXPathQueries || []);
         });
     });
+
+    self.setContentHeight = function() {
+        var contentHeight;
+        if (self.isMinimized()) {
+            $('.debugger-content').outerHeight(0);
+        } else {
+            contentHeight = ($('.debugger').outerHeight() -
+                $('.debugger-tab-title').outerHeight() -
+                $('.debugger-navbar').outerHeight());
+            $('.debugger-content').outerHeight(contentHeight);
+        }
+    };
 
     self.instanceXml.subscribe(function(newXml) {
         var $instanceTab = $('#debugger-xml-instance-tab'),
@@ -467,15 +508,39 @@ Formplayer.ViewModels.CloudCareDebugger = function() {
 Formplayer.ViewModels.EvaluateXPath = function() {
     var self = this;
     self.xpath = ko.observable('');
+    self.selectedXPath = ko.observable('');
+    self.recentXPathQueries = ko.observableArray();
     self.$xpath = null;
     self.result = ko.observable('');
     self.success = ko.observable(true);
-    self.evaluate = function(form) {
+    self.onSubmitXPath = function() {
+        self.evaluate(self.xpath());
+    };
+    self.onClickSelectedXPath = function() {
+        if (self.selectedXPath()) {
+            self.evaluate(self.selectedXPath());
+            self.selectedXPath('');
+        }
+    };
+    self.onClickSavedQuery = function(query) {
+        self.xpath(query.xpath);
+    };
+    self.evaluate = function(xpath) {
         var callback = function(result, status) {
             self.result(result);
             self.success(status === "accepted");
         };
-        $.publish('formplayer.' + Formplayer.Const.EVALUATE_XPATH, [self.xpath(), callback]);
+        $.publish('formplayer.' + Formplayer.Const.EVALUATE_XPATH, [xpath, callback]);
+        window.analytics.workflow('[app-preview] User evaluated XPath');
+    };
+
+    self.isSuccess = function(query) {
+        return query.status === 'accepted';
+    };
+
+    self.onMouseUp = function() {
+        var text = window.getSelection().toString();
+        self.selectedXPath(text);
     };
 
     self.matcher = function(flag, subtext) {
@@ -489,13 +554,15 @@ Formplayer.ViewModels.EvaluateXPath = function() {
     /**
      * Set autocomplete for xpath input.
      *
-     * @param {Array} questionData - List of questions to be autocompleted for the xpath input
+     * @param {Array} autocompleteData - List of questions to be autocompleted for the xpath input
      */
-    self.autocomplete = function(questionData) {
+    self.autocomplete = function(autocompleteData) {
         self.$xpath = $('#xpath');
+        self.$xpath.atwho('destroy');
+        self.$xpath.atwho('setIframe', window.frameElement, true);
         self.$xpath.atwho({
             at: '',
-            data: questionData,
+            data: autocompleteData,
             searchKey: 'value',
             maxLen: Infinity,
             displayTpl: function(d) {
@@ -582,6 +649,7 @@ Formplayer.Const = {
     DATETIME: 'datetime',
     GEO: 'geo',
     INFO: 'info',
+    BARCODE: 'barcode',
 
     // Note it's important to differentiate these two
     NO_PENDING_ANSWER: undefined,
@@ -747,6 +815,9 @@ Formplayer.Utils.getIconFromType = function(type) {
         break;
     case 'Repeat Group':
         icon = 'fa fa-retweet';
+        break;
+    case 'Function':
+        icon = 'fa fa-calculator';
         break;
     }
     return icon;

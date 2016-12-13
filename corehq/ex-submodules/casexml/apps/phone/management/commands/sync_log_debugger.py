@@ -27,7 +27,7 @@ class Command(BaseCommand):
        (it's a N choose X problem so gets very slow after --depth > 1 if you
         have a significant number of cases in the log)
     """
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option('--debugger',
                     action='store_true',
                     dest='debugger',

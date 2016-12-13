@@ -82,8 +82,8 @@ def get_tableau_trusted_url(client_ip):
     See Tableau Trusted Authentication https://onlinehelp.tableau.com/current/server/en-us/trusted_auth.htm
     """
     access_token = get_tableau_access_token(const.TABLEAU_USERNAME, client_ip)
-    url = "{tableau_root}trusted/{access_token}/#/views/".format(
-        tableau_root=const.TABLEAU_ROOT,
+    url = "{tableau_trusted}{access_token}/#/views/".format(
+        tableau_trusted=const.TABLEAU_TICKET_URL,
         access_token=access_token
     )
     return url
@@ -100,7 +100,7 @@ def get_tableau_access_token(tableau_user, client_ip):
                    if this is empty, the token returned can be redeemed on any IP address
     """
     r = requests.post(
-        const.TABLEU_TICKET_URL,
+        const.TABLEAU_TICKET_URL,
         data={'username': tableau_user, 'client_ip': client_ip}
     )
 

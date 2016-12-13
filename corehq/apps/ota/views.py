@@ -25,6 +25,7 @@ from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.ota.forms import PrimeRestoreCacheForm, AdvancedPrimeRestoreCacheForm
 from corehq.apps.ota.tasks import queue_prime_restore
 from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.apps.locations.permissions import location_safe
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_MAX_RESULTS
 from corehq.tabs.tabclasses import ProjectSettingsTab
@@ -37,6 +38,7 @@ from soil import MultipleTaskDownload
 from .utils import demo_user_restore_response, get_restore_user, is_permitted_to_restore, handle_401_response
 
 
+@location_safe
 @json_error
 @handle_401_response
 @login_or_digest_or_basic_or_apikey()
@@ -52,6 +54,7 @@ def restore(request, domain, app_id=None):
     return response
 
 
+@location_safe
 @json_error
 @login_or_digest_or_basic_or_apikey()
 @check_domain_migration
@@ -99,6 +102,7 @@ def search(request, domain):
     return HttpResponse(fixtures, content_type="text/xml")
 
 
+@location_safe
 @csrf_exempt
 @require_POST
 @json_error

@@ -1,3 +1,5 @@
+import copy
+
 from django.utils.decorators import method_decorator
 
 from dimagi.utils.decorators.memoized import memoized
@@ -70,19 +72,7 @@ class ConfigurableReportEsDataSource(ConfigurableReportDataSourceMixin, ReportDa
         for row in hits:
             r = {}
             for report_column in self.top_level_db_columns:
-                if report_column.type == 'expanded':
-                    # todo aggregation only supports # of docs matching
-                    counter = 0
-                    for sub_col in get_expanded_column_config(self.config, report_column, 'en').columns:
-                        ui_col = report_column.column_id + "-" + str(counter)
-                        # todo move interpretation of data into column config
-                        if row[report_column.column_id] == sub_col.expand_value:
-                            r[ui_col] = 1
-                        else:
-                            r[ui_col] = 0
-                        counter += 1
-                else:
-                    r[report_column.column_id] = row[report_column.field]
+                r.update(report_column.get_es_data(row, self.config, self.lang, from_aggregation=False))
             ret.append(r)
 
         return ret
@@ -105,27 +95,44 @@ class ConfigurableReportEsDataSource(ConfigurableReportDataSourceMixin, ReportDa
 
     @memoized
     def _get_aggregated_results(self, start, limit):
-        query = self._get_aggregated_query(start, limit)
-        hits = getattr(query.aggregations, self.aggregation_columns[0]).raw
-        hits = hits[self.aggregation_columns[0]]['buckets'][start:]
-        ret = []
+        def _parse_bucket(bucket, remaining_agg_columns, current_bucket_name, past_bucket_info):
+            current_bucket_key = bucket['key']
+            past_bucket_info.update({current_bucket_name: current_bucket_key})
+            if remaining_agg_columns:
+                sub_buckets = bucket[remaining_agg_columns[0]]['buckets']
+                return _parse_buckets(
+                    sub_buckets,
+                    remaining_agg_columns[1:],
+                    remaining_agg_columns[0],
+                    past_bucket_info
+                )
 
-        for row in hits:
+            ret = bucket
+            ret['past_bucket_values'] = copy.deepcopy(past_bucket_info)
+            return [ret]
+
+        def _parse_buckets(buckets, remaining_agg_columns, current_bucket_name, past_bucket_info=None):
+            past_bucket_info = past_bucket_info or {}
+
+            ret = []
+            for bucket in buckets:
+                ret += _parse_bucket(bucket, remaining_agg_columns, current_bucket_name, past_bucket_info)
+            return ret
+
+        query = self._get_aggregated_query(start, limit)
+        aggs = getattr(query.aggregations, self.aggregation_columns[0]).raw
+        top_buckets = aggs[self.aggregation_columns[0]]['buckets']
+        hits = _parse_buckets(top_buckets, self.aggregation_columns[1:], self.aggregation_columns[0])
+
+        ret = []
+        start = start or 0
+        end = start + (limit or len(hits))
+        relevant_hits = hits[start:end]
+
+        for row in relevant_hits:
             r = {}
             for report_column in self.top_level_columns:
-                if report_column.type == 'expanded':
-                    # todo aggregation only supports # of docs matching
-                    for sub_col in get_expanded_column_config(self.config, report_column, 'en').columns:
-                        # todo move interpretation of data into column config
-                        r[sub_col.ui_alias] = row[sub_col.es_alias]['doc_count']
-                elif report_column.field == self.aggregation_columns[0]:
-                    r[report_column.column_id] = row['key']
-                elif report_column.aggregation == 'sum':
-                    r[report_column.column_id] = int(row[report_column.column_id]['value'])
-                elif report_column.aggregation == 'min':
-                    r[report_column.column_id] = int(row[report_column.column_id]['value'])
-                else:
-                    r[report_column.column_id] = row[report_column.column_id]['doc_count']
+                r.update(report_column.get_es_data(row, self.config, self.lang))
             ret.append(r)
 
         return ret
@@ -137,32 +144,28 @@ class ConfigurableReportEsDataSource(ConfigurableReportDataSourceMixin, ReportDa
         for filter in self.filters:
             query = query.filter(filter)
 
-        top_agg = TermsAggregation(self.aggregation_columns[0], self.aggregation_columns[0], size=max_size)
-        for agg_column in self.aggregation_columns[1:]:
-            # todo support multiple aggregations
-            pass
+        innermost_agg_col = self.aggregation_columns[-1]
+        innermost_agg = TermsAggregation(innermost_agg_col, innermost_agg_col)
 
         aggregations = []
         for col in self.top_level_columns:
-            if col.type == 'expanded':
-                for sub_col in get_expanded_column_config(self.config, col, 'en').columns:
-                    aggregations.append(sub_col.aggregation)
-            elif col.type == 'field':
-                # todo push this to the column
-                if col.aggregation == 'sum':
-                    aggregations.append(SumAggregation(col.column_id, col.field))
-                elif col.aggregation == 'min':
-                    aggregations.append(MinAggregation(col.column_id, col.field))
+            for agg in col.aggregations(self.config, self.lang):
+                innermost_agg.aggregation(agg)
 
-        for agg in aggregations:
-            top_agg = top_agg.aggregation(agg)
+        top_agg = innermost_agg
+        # go through aggregations in reverse order so that they are nested properly
+        # todo: Refactor NestedTermAggregationsHelper to support this use case
+        for agg_column in self.aggregation_columns[:-1][::-1]:
+            top_agg = TermsAggregation(agg_column, agg_column).aggregation(top_agg)
+
+        top_agg.size(max_size)
 
         if self.order_by:
             # todo sort by more than one column
             # todo sort by by something other than the first aggregate column
             col, desc = self.order_by[0]
             if col == self.aggregation_columns[0] or col == self.top_level_columns[0].field:
-                top_agg = top_agg.order('_count', desc)
+                top_agg = top_agg.order('_term', desc)
 
         query = query.aggregation(top_agg)
 

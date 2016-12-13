@@ -7,14 +7,13 @@ from corehq.apps.app_manager.util import (is_usercase_in_use, xpath_references_c
     xpath_references_user_case)
 from corehq.apps.app_manager.xpath import (interpolate_xpath, CaseIDXPath, session_var,
     QualifiedScheduleFormXPath)
-from corehq.feature_previews import MODULE_FILTER
 from dimagi.utils.decorators.memoized import memoized
 
 
 class MenuContributor(SuiteContributorByModule):
 
     def get_module_contributions(self, module):
-        def get_commands():
+        def get_commands(excluded_form_ids):
             @memoized
             def module_uses_case():
                 return module.all_forms_require_a_case()
@@ -24,6 +23,9 @@ class MenuContributor(SuiteContributorByModule):
                 return is_usercase_in_use(self.app.domain)
 
             for form in module.get_suite_forms():
+                if form.unique_id in excluded_form_ids:
+                    continue
+
                 command = Command(id=id_strings.form_command(form, module))
 
                 if form.requires_case():
@@ -66,21 +68,19 @@ class MenuContributor(SuiteContributorByModule):
             if hasattr(module, 'case_list') and module.case_list.show:
                 yield Command(id=id_strings.case_list_command(module))
 
-        supports_module_filter = (
-            self.app.domain and MODULE_FILTER.enabled(self.app.domain) and
-            self.app.enable_module_filtering and getattr(module, 'module_filter', None)
-        )
+        supports_module_filter = self.app.enable_module_filtering and getattr(module, 'module_filter', None)
 
         menus = []
         if hasattr(module, 'get_menus'):
             for menu in module.get_menus(supports_module_filter=supports_module_filter):
                 menus.append(menu)
         elif module.module_type != 'careplan':
+            from corehq.apps.app_manager.models import ShadowModule
             id_modules = [module]
             root_modules = []
 
             shadow_modules = [m for m in self.app.get_modules()
-                              if m.doc_type == "ShadowModule" and m.source_module_id]
+                              if isinstance(m, ShadowModule) and m.source_module_id]
             put_in_root = getattr(module, 'put_in_root', False)
             if not put_in_root and getattr(module, 'root_module', False):
                 root_modules.append(module.root_module)
@@ -100,7 +100,7 @@ class MenuContributor(SuiteContributorByModule):
                     suffix = ""
                     if root_module:
                         menu_kwargs.update({'root': id_strings.menu_id(root_module)})
-                        suffix = id_strings.menu_id(root_module) if root_module.doc_type == 'ShadowModule' else ""
+                        suffix = id_strings.menu_id(root_module) if isinstance(root_module, ShadowModule) else ""
                     menu_kwargs.update({'id': id_strings.menu_id(id_module, suffix)})
 
                     if supports_module_filter:
@@ -123,7 +123,12 @@ class MenuContributor(SuiteContributorByModule):
                         })
                         menu = Menu(**menu_kwargs)
 
-                    menu.commands.extend(get_commands())
+                    excluded_form_ids = []
+                    if root_module and isinstance(root_module, ShadowModule):
+                        excluded_form_ids = root_module.excluded_form_ids
+                    if id_module and isinstance(id_module, ShadowModule):
+                        excluded_form_ids = id_module.excluded_form_ids
+                    menu.commands.extend(get_commands(excluded_form_ids))
 
                     menus.append(menu)
 

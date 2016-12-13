@@ -17,7 +17,7 @@ hq_api = CommCareHqApi(api_name='v0.3')
 hq_api.register(ILSLocationResource())
 
 urlpatterns = [
-    url(r'^ils_dashboard_report/$', DashboardPageRedirect.as_view(), name='ils_dashboard_report'),
+    url(r'^ils_dashboard_report/$', DashboardPageRedirect.as_view(permanent=True), name='ils_dashboard_report'),
     url(r'^ils_config/$', ILSConfigView.as_view(), name=ILSConfigView.urlname),
     url(r'^global_stats/$', GlobalStats.as_view(), name=GlobalStats.urlname),
     url(r'^run_reports/$', run_warehouse_runner, name='run_reports'),

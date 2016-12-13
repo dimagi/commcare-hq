@@ -1,32 +1,14 @@
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseForbidden, HttpResponse, HttpResponseBadRequest
 from tastypie import fields
-from tastypie.bundle import Bundle
 from tastypie.authentication import Authentication
+from tastypie.bundle import Bundle
 from tastypie.exceptions import BadRequest
 
-from corehq.apps.api.models import ESXFormInstance, ESCase
-from corehq.apps.api.resources.auth import DomainAdminAuthentication, RequirePermissionAuthentication
-from corehq.apps.api.resources.v0_1 import _safe_bool
-from corehq.apps.api.resources.meta import CustomResourceMeta
-from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
-from couchforms.models import doc_types
 from casexml.apps.case import xform as casexml_xform
-from custom.hope.models import HOPECase, CC_BIHAR_NEWBORN, CC_BIHAR_PREGNANCY
-
-from corehq.apps.api.util import get_object_or_not_exist, object_does_not_exist, get_obj, form_to_es_form, \
-    case_to_es_case
-from corehq.apps.app_manager import util as app_manager_util
-from corehq.apps.app_manager.models import Application, RemoteApp
-from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
-from corehq.apps.repeaters.models import Repeater
-from corehq.apps.repeaters.utils import get_all_repeater_types
-from corehq.apps.groups.models import Group
-from corehq.apps.cloudcare.api import ElasticCaseQuery
-from corehq.apps.users.util import format_username
-from corehq.apps.users.models import CouchUser, Permissions
-
+from corehq.apps.api.es import XFormES, CaseES, ElasticAPIQuerySet, es_search
+from corehq.apps.api.fields import ToManyDocumentsField, UseIfRequested, ToManyDictField, ToManyListDictField
+from corehq.apps.api.models import ESXFormInstance, ESCase
 from corehq.apps.api.resources import (
     CouchResourceMixin,
     DomainSpecificResourceMixin,
@@ -35,10 +17,22 @@ from corehq.apps.api.resources import (
     v0_1,
     v0_3,
 )
-from corehq.apps.api.es import XFormES, CaseES, ElasticAPIQuerySet, es_search
-from corehq.apps.api.fields import ToManyDocumentsField, UseIfRequested, ToManyDictField, ToManyListDictField
+from corehq.apps.api.resources.auth import DomainAdminAuthentication, RequirePermissionAuthentication
+from corehq.apps.api.resources.meta import CustomResourceMeta
+from corehq.apps.api.resources.v0_1 import _safe_bool
 from corehq.apps.api.serializers import CommCareCaseSerializer, XFormInstanceSerializer
-
+from corehq.apps.api.util import get_object_or_not_exist, get_obj
+from corehq.apps.app_manager import util as app_manager_util
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.apps.app_manager.models import Application, RemoteApp
+from corehq.apps.cloudcare.api import ElasticCaseQuery
+from corehq.apps.groups.models import Group
+from corehq.apps.repeaters.models import Repeater
+from corehq.apps.repeaters.utils import get_all_repeater_types
+from corehq.apps.users.models import CouchUser, Permissions
+from corehq.apps.users.util import format_username
+from couchforms.models import doc_types
+from custom.hope.models import HOPECase, CC_BIHAR_NEWBORN, CC_BIHAR_PREGNANCY
 from no_exceptions.exceptions import Http400
 
 # By the time a test case is running, the resource is already instantiated,
@@ -112,15 +106,8 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
 
     def obj_get(self, bundle, **kwargs):
         instance_id = kwargs['pk']
-        try:
-            form = FormAccessors(kwargs['domain']).get_form(instance_id)
-            es_form = form_to_es_form(form)
-            if es_form:
-                return es_form
-            else:
-                raise XFormNotFound
-        except XFormNotFound:
-            raise object_does_not_exist("XFormInstance", instance_id)
+        domain = kwargs['domain']
+        return self.xform_es(domain).get_document(instance_id)
 
     def xform_es(self, domain):
         return MOCK_XFORM_ES or XFormES(domain)
@@ -252,11 +239,8 @@ class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResourc
 
     def obj_get(self, bundle, **kwargs):
         case_id = kwargs['pk']
-        try:
-            case = CaseAccessors(kwargs['domain']).get_case(case_id)
-            return case_to_es_case(case)
-        except CaseNotFound:
-            raise object_does_not_exist("CommCareCase", case_id)
+        domain = kwargs['domain']
+        return self.case_es(domain).get_document(case_id)
 
     def case_es(self, domain):
         return MOCK_CASE_ES or CaseES(domain)

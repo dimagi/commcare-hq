@@ -3,7 +3,7 @@ from alembic.autogenerate.api import compare_metadata
 from datetime import datetime, timedelta
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
-from corehq.apps.userreports.const import UCR_ES_BACKEND, UCR_SQL_BACKEND
+from corehq.apps.userreports.const import UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_LABORATORY_BACKEND
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
 from corehq.apps.userreports.exceptions import TableRebuildError, StaleRebuildError
 from corehq.apps.userreports.sql import metadata
@@ -50,20 +50,25 @@ class ConfigurableReportTableManagerMixin(object):
         if configs is None:
             configs = self.get_all_configs()
 
-        self.table_adapters = [get_indicator_adapter(config) for config in configs]
+        self.table_adapters = [get_indicator_adapter(config, can_handle_laboratory=True) for config in configs]
         self.rebuild_tables_if_necessary()
         self.bootstrapped = True
         self.last_bootstrapped = datetime.utcnow()
 
     def rebuild_tables_if_necessary(self):
+        sql_supported_backends = [UCR_SQL_BACKEND, UCR_LABORATORY_BACKEND]
+        es_supported_backends = [UCR_ES_BACKEND, UCR_LABORATORY_BACKEND]
         self._rebuild_sql_tables(
-            filter(lambda a: get_backend_id(a.config) == UCR_SQL_BACKEND, self.table_adapters))
-        self._rebuild_es_tables(filter(lambda a: get_backend_id(a.config) == UCR_ES_BACKEND, self.table_adapters))
+            filter(lambda a: get_backend_id(a.config) in sql_supported_backends, self.table_adapters))
+        self._rebuild_es_tables(
+            filter(lambda a: get_backend_id(a.config) in es_supported_backends, self.table_adapters))
 
     def _rebuild_sql_tables(self, adapters):
+        # todo move this code to sql adapter rebuild_if_necessary
         tables_by_engine = defaultdict(dict)
         for adapter in adapters:
-            tables_by_engine[adapter.engine_id][adapter.get_table().name] = adapter
+            sql_adapter = get_indicator_adapter(adapter.config)
+            tables_by_engine[sql_adapter.engine_id][sql_adapter.get_table().name] = sql_adapter
 
         _assert = soft_assert(to='@'.join(['czue', 'dimagi.com']))
         _notify_cory = lambda msg, obj: _assert(False, msg, obj)

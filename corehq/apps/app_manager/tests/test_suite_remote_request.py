@@ -1,7 +1,15 @@
+# -*- coding: utf-8 -*-
 from django.test import SimpleTestCase
 from mock import patch
 
-from corehq.apps.app_manager.models import Application, Module, CaseSearch, CaseSearchProperty
+from corehq.apps.app_manager.const import CLAIM_DEFAULT_RELEVANT_CONDITION
+from corehq.apps.app_manager.models import (
+    Application,
+    Module,
+    CaseSearch,
+    CaseSearchProperty,
+    DefaultCaseSearchProperty
+)
 from corehq.apps.app_manager.tests.util import TestXmlMixin, SuiteMixin
 
 
@@ -21,7 +29,21 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             properties=[
                 CaseSearchProperty(name='name', label={'en': 'Name'}),
                 CaseSearchProperty(name='dob', label={'en': 'Date of birth'})
-            ]
+            ],
+            relevant="{} and {}".format("instance('groups')/groups/group", CLAIM_DEFAULT_RELEVANT_CONDITION),
+            default_properties=[
+                DefaultCaseSearchProperty(
+                    property=u'ɨŧsȺŧɍȺᵽ',
+                    defaultValue=(
+                        u"instance('casedb')/case"
+                        u"[@case_id='instance('commcaresession')/session/data/case_id']"
+                        u"/ɨŧsȺŧɍȺᵽ")
+                ),
+                DefaultCaseSearchProperty(
+                    property='name',
+                    defaultValue="instance('locations')/locations/location[@id=123]/@type",
+                ),
+            ],
         )
 
     def test_remote_request(self):

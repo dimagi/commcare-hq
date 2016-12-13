@@ -16,7 +16,7 @@ class GaTracker(namedtuple('GaTracking', 'category action label')):
 
 class MaintenanceAlert(models.Model):
     created = models.DateTimeField(auto_now_add=True)
-    modified = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
     active = models.BooleanField(default=False)
 
     text = models.TextField()

@@ -14,7 +14,7 @@ from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.users.permissions import can_view_form_exports, can_view_case_exports
-from corehq.util.spreadsheets.excel import JSONReaderError, WorkbookJSONReader, \
+from corehq.util.workbook_json.excel import JSONReaderError, WorkbookJSONReader, \
     InvalidExcelFileException
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
@@ -420,7 +420,7 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
             'detailsUrl': reverse('case_details', args=[self.domain, case.case_id]),
             'name': case.name,
             'externalId': case.external_id if case.external_id else '--',
-            'phoneNumber': getattr(case, 'contact_phone_number', '--'),
+            'phoneNumber': case.get_case_property('contact_phone_number') or '--',
         }
 
     def get_create_form(self, is_blank=False):
@@ -544,7 +544,7 @@ def xform_management_job_poll(request, domain, download_id,
                               template="data_interfaces/partials/xform_management_status.html"):
     mode = FormManagementMode(request.GET.get('mode'), validate=True)
     try:
-        context = get_download_context(download_id, check_state=True)
+        context = get_download_context(download_id)
     except TaskFailedError:
         return HttpResponseServerError()
 

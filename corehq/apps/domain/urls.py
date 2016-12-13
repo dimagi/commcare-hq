@@ -36,7 +36,7 @@ from corehq.apps.domain.views import (
     calculated_properties,
     toggle_diff,
     select,
-)
+    CalendarFixtureConfigView, LocationFixtureConfigView)
 from corehq.apps.repeaters.views import AddCaseRepeaterView, RepeatRecordView
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
 
@@ -180,7 +180,9 @@ domain_settings = [
     url(r'^snapshots/new/$', CreateNewExchangeSnapshotView.as_view(), name=CreateNewExchangeSnapshotView.urlname),
     url(r'^multimedia/$', ManageProjectMediaView.as_view(), name=ManageProjectMediaView.urlname),
     url(r'^case_search/$', CaseSearchConfigView.as_view(), name=CaseSearchConfigView.urlname),
-    url(r'^commtrack/settings/$', RedirectView.as_view(url='commtrack_settings')),
+    url(r'^calendar_settings/$', CalendarFixtureConfigView.as_view(), name=CalendarFixtureConfigView.urlname),
+    url(r'^location_settings/$', LocationFixtureConfigView.as_view(), name=LocationFixtureConfigView.urlname),
+    url(r'^commtrack/settings/$', RedirectView.as_view(url='commtrack_settings', permanent=True)),
     url(r'^internal/info/$', EditInternalDomainInfoView.as_view(), name=EditInternalDomainInfoView.urlname),
     url(r'^internal/calculations/$', EditInternalCalculationsView.as_view(), name=EditInternalCalculationsView.urlname),
     url(r'^internal/calculated_properties/$', calculated_properties, name='calculated_properties'),

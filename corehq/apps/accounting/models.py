@@ -80,6 +80,14 @@ _soft_assert_domain_not_loaded = soft_assert(
     exponential_backoff=False,
 )
 
+_soft_assert_contact_emails_missing = soft_assert(
+    to=['{}@{}'.format(email, 'dimagi.com') for email in [
+        'accounts',
+        'billing-dev',
+    ]],
+    exponential_backoff=False,
+)
+
 
 class BillingAccountType(object):
     CONTRACT = "CONTRACT"
@@ -1043,7 +1051,6 @@ class Subscription(models.Model):
     skip_auto_downgrade = models.BooleanField(default=False)
 
     objects = SubscriptionManager()
-    api_objects = Manager()
 
     class Meta:
         app_label = 'accounting'
@@ -1252,8 +1259,8 @@ class Subscription(models.Model):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
         today = datetime.date.today()
-        assert is_active_subscription(self.date_start, self.date_end, today=today) and self.is_active
-        assert date_end is None or date_end > today
+        assert self.is_active
+        assert date_end is None or date_end >= today
 
         self.date_end = today
         if self.date_delay_invoicing is not None and self.date_delay_invoicing > today:
@@ -1536,8 +1543,13 @@ class Subscription(models.Model):
                 if BillingContactInfo.objects.filter(account=self.account).exists() else []
             )
             if not billing_contact_emails:
-                log_accounting_error(
-                    "Billing account %d doesn't have any contact emails" % self.account.id
+                from corehq.apps.accounting.views import ManageBillingAccountView
+                _soft_assert_contact_emails_missing(
+                    False,
+                    'Billing Account for project %s is missing client contact emails: %s' % (
+                        domain_name,
+                        absolute_reverse(ManageBillingAccountView.urlname, args=[self.account.id])
+                    )
                 )
             emails |= {billing_contact_email for billing_contact_email in billing_contact_emails}
         return emails
@@ -1809,7 +1821,7 @@ class Invoice(InvoiceBase):
     @property
     def email_recipients(self):
         if self.subscription.service_type == SubscriptionType.IMPLEMENTATION:
-            return [settings.FINANCE_EMAIL]
+            return [settings.FINANCE_EMAIL, settings.ACCOUNTS_EMAIL]
         else:
             return self.contact_emails
 
@@ -1822,12 +1834,18 @@ class Invoice(InvoiceBase):
             contact_emails = []
 
         if not contact_emails:
+            from corehq.apps.accounting.views import ManageBillingAccountView
             admins = WebUser.get_admins_by_domain(self.get_domain())
             contact_emails = [admin.email if admin.email else admin.username for admin in admins]
-            log_accounting_error(
+            _soft_assert_contact_emails_missing(
+                False,
                 "Could not find an email to send the invoice "
                 "email to for the domain %s. Sending to domain admins instead: %s."
-                % (self.get_domain(), ', '.join(contact_emails))
+                " Add client contact emails here: %s" % (
+                    self.get_domain(),
+                    ', '.join(contact_emails),
+                    absolute_reverse(ManageBillingAccountView.urlname, args=[self.account.id]),
+                )
             )
         return contact_emails
 

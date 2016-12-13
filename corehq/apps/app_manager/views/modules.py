@@ -3,6 +3,7 @@ import os
 from collections import OrderedDict, namedtuple
 import json
 import logging
+from lxml import etree
 
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _, gettext_lazy
@@ -201,11 +202,12 @@ def _get_shadow_module_view_context(app, module, lang=None):
         return {
             'unique_id': mod.unique_id,
             'name': trans(mod.name, langs),
+            'root_module_id': mod.root_module_id,
             'forms': [{'unique_id': f.unique_id, 'name': trans(f.name, langs)} for f in mod.get_forms()]
         }
 
     return {
-        'modules': [get_mod_dict(m) for m in app.modules if m.module_type == 'basic'],
+        'modules': [get_mod_dict(m) for m in app.modules if m.module_type in ['basic', 'advanced']],
         'excluded_form_ids': module.excluded_form_ids,
     }
 
@@ -454,9 +456,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
     if should_edit("auto_select_case"):
         module["auto_select_case"] = request.POST.get("auto_select_case") == 'true'
 
-    if (feature_previews.MODULE_FILTER.enabled(app.domain) and
-            app.enable_module_filtering and
-            should_edit('module_filter')):
+    if app.enable_module_filtering and should_edit('module_filter'):
         module['module_filter'] = request.POST.get('module_filter')
 
     if should_edit('case_list_form_id'):
@@ -553,7 +553,7 @@ def _new_report_module(request, domain, app, name, lang):
         ReportAppConfig(
             report_id=report._id,
             header={lang: report.title},
-            description={lang: report.description},
+            description={lang: report.description} if report.description else None,
         )
         for report in ReportConfiguration.by_domain(domain)
     ]
@@ -660,6 +660,10 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
     pull_down_tile = params.get("enableTilePullDown", None)
     case_list_lookup = params.get("case_list_lookup", None)
     search_properties = params.get("search_properties")
+    custom_variables = {
+        'short': params.get("short_custom_variables", None),
+        'long': params.get("long_custom_variables", None)
+    }
 
     app = get_app(domain, app_id)
     module = app.get_module(module_id)
@@ -701,6 +705,25 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
         detail.short.filter = filter
     if custom_xml is not None:
         detail.short.custom_xml = custom_xml
+
+    if custom_variables['short'] is not None:
+        try:
+            etree.fromstring("<variables>{}</variables>".format(custom_variables['short']))
+        except etree.XMLSyntaxError as error:
+            return HttpResponseBadRequest(
+                "There was an issue with your custom variables: {}".format(error.message)
+            )
+        detail.short.custom_variables = custom_variables['short']
+
+    if custom_variables['long'] is not None:
+        try:
+            etree.fromstring("<variables>{}</variables>".format(custom_variables['long']))
+        except etree.XMLSyntaxError as error:
+            return HttpResponseBadRequest(
+                "There was an issue with your custom variables: {}".format(error.message)
+            )
+        detail.long.custom_variables = custom_variables['long']
+
     if sort_elements is not None:
         detail.short.sort_elements = []
         for sort_element in sort_elements:
@@ -767,8 +790,7 @@ def edit_report_module(request, domain, app_id, module_id):
         )
         return HttpResponseBadRequest(_("There was a problem processing your request."))
 
-    if (feature_previews.MODULE_FILTER.enabled(domain) and
-            app.enable_module_filtering):
+    if app.enable_module_filtering:
         module['module_filter'] = request.POST.get('module_filter')
     module.media_image.update(params['multimedia']['mediaImage'])
     module.media_audio.update(params['multimedia']['mediaAudio'])

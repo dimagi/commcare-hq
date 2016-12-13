@@ -204,14 +204,15 @@ BEGIN
 		'doc_id, ' ||
 		'awc_id, ' ||
 		'month, ' ||
-		'submitted_on, ' ||
+		'submitted_on AS pse_date, ' ||
 		'awc_open_count, ' ||
+		'1, ' ||
 		'eligible_children, ' ||
 		'attended_children, ' ||
 		'attended_children_percent, ' ||
 		'form_location, ' ||
 		'form_location_lat, ' ||
-		'form_location_long, ' ||
+		'form_location_long ' ||
 		'FROM ' || quote_ident(_daily_attendance_tablename) || ' WHERE month = ' || quote_literal(_start_date) || ')';
 
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(awc_id)';
@@ -987,7 +988,7 @@ BEGIN
 	EXECUTE 'DELETE FROM ' || quote_ident(_tablename);
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) ||
 		' (state_id, district_id, block_id, supervisor_id, awc_id, month, num_awcs, thr_score, thr_eligible_ccs, ' ||
-		'thr_eligible_child, thr_rations_21_plus_distributed_ccs, thr_rations_21_plus_distributed_child wer_score, pse_score) ' ||
+		'thr_eligible_child, thr_rations_21_plus_distributed_ccs, thr_rations_21_plus_distributed_child, wer_score, pse_score) ' ||
 		'(SELECT ' ||
 			'state_id, ' ||
 			'district_id, ' ||
@@ -1071,7 +1072,8 @@ BEGIN
 		'sum(valid_in_month) AS cases_child_health, ' ||
 		'sum(nutrition_status_weighed) AS wer_weighed, ' ||
 		'sum(wer_eligible) AS wer_eligible, ' ||
-		'CASE WHEN (sum(nutrition_status_weighed)::numeric / sum(wer_eligible)) >= 0.8 THEN 20 ' ||
+		'CASE WHEN sum(wer_eligible) = 0 THEN 1 ' ||
+			'WHEN (sum(nutrition_status_weighed)::numeric / sum(wer_eligible)) >= 0.8 THEN 20 ' ||
 			'WHEN (sum(nutrition_status_weighed)::numeric / sum(wer_eligible)) >= 0.6 THEN 10 ' ||
 			'ELSE 1 END AS wer_score, ' ||
 		'sum(thr_eligible) AS thr_eligible_child, ' ||
@@ -1669,6 +1671,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql;
+
 
 --Aggregate Location TABLE
 CREATE OR REPLACE FUNCTION aggregate_location_table() RETURNS VOID AS

@@ -64,6 +64,26 @@ def set_default_settings_path(argv):
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", module)
 
 
+def patch_jsonfield():
+    """Patch the ``to_python`` method of JSONField
+    See https://github.com/bradjasper/django-jsonfield/pull/173 for more details
+    """
+    import six
+    import json
+    from django.core.exceptions import ValidationError
+    from django.utils.translation import ugettext_lazy as _
+    from jsonfield import JSONField
+
+    def to_python(self, value):
+        if isinstance(value, six.string_types):
+            try:
+                return json.loads(value, **self.load_kwargs)
+            except ValueError:
+                raise ValidationError(_("Enter valid JSON"))
+
+    JSONField.to_python = to_python
+
+
 if __name__ == "__main__":
     init_hq_python_path()
 
@@ -89,6 +109,7 @@ if __name__ == "__main__":
 
     # workaround for https://github.com/smore-inc/tinys3/issues/33
     mimetypes.init()
+    patch_jsonfield()
 
     set_default_settings_path(sys.argv)
     from django.core.management import execute_from_command_line

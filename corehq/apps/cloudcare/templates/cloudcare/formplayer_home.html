@@ -12,7 +12,6 @@
 {% block head %}
     {{ block.super }}
     {% include "imports/proptable.html" %}
-    {% include "imports/fancy-code.html" %}
 
     <script src="{% static 'datatables/media/js/jquery.dataTables.min.js' %}"></script>
     <script src="{% static 'datatables/media/js/dataTables.bootstrap.min.js' %}"></script>
@@ -102,6 +101,7 @@
             gridPolyfillPath: "{% static 'css-grid-polyfill-binaries/css-polyfills.js' %}",
             debuggerEnabled: instanceViewerEnabled,
             singleAppMode: {{ single_app_mode|JSON }},
+            environment: {{ environment|JSON }},
         };
         FormplayerFrontend.start(options);
         $(function () {
@@ -142,7 +142,6 @@
         <section id="case-crumbs" style="width: 800px"></section>
         <section id="cases"></section>
         <div id="menu-container">
-            <div id="phone-mode-navigation"></div>
             <section id="formplayer-progress-container"></section>
             <div id="restore-as-region"></div>
             <div id="breadcrumb-region"></div>
@@ -173,6 +172,5 @@
     {% include 'formplayer/query_view.html' %}
     {% include 'formplayer/confirmation_modal.html' %}
     {% include 'formplayer/progress.html' %}
-    {% include 'formplayer/navigation.html' %}
 
 {% endblock %}

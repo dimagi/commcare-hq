@@ -1,3 +1,5 @@
+from mock import patch
+
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.models import (
@@ -6,9 +8,6 @@ from corehq.apps.app_manager.models import (
     PreloadAction,
 )
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.feature_previews import MODULE_FILTER
-from corehq.toggles import NAMESPACE_DOMAIN
-from toggle.shortcuts import clear_toggle_cache, update_toggle_cache
 
 DOMAIN = 'domain'
 
@@ -18,15 +17,11 @@ class ModuleAsChildTestBase(TestXmlMixin):
     child_module_class = None
 
     def setUp(self):
-        update_toggle_cache(MODULE_FILTER.slug, DOMAIN, True, NAMESPACE_DOMAIN)
         self.factory = AppFactory(domain=DOMAIN)
         self.module_0, _ = self.factory.new_basic_module('parent', 'gold-fish')
         self.module_1, _ = self.factory.new_module(self.child_module_class, 'child', 'guppy', parent_module=self.module_0)
 
         self.app = self.factory.app
-
-    def tearDown(self):
-        clear_toggle_cache(MODULE_FILTER.slug, DOMAIN, NAMESPACE_DOMAIN)
 
     def test_basic_workflow(self):
         # make module_1 as submenu to module_0
@@ -70,7 +65,8 @@ class ModuleAsChildTestBase(TestXmlMixin):
         """
         self.assertXmlPartialEqual(XML, self.app.create_suite(), "./menu")
 
-    def test_deleted_parent(self):
+    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+    def test_deleted_parent(self, mock):
         self.module_1.root_module_id = "unknownmodule"
 
         cycle_error = {
@@ -79,7 +75,8 @@ class ModuleAsChildTestBase(TestXmlMixin):
         errors = self.app.validate_app()
         self.assertIn(cycle_error, errors)
 
-    def test_circular_relation(self):
+    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+    def test_circular_relation(self, mock):
         self.module_0.root_module_id = self.module_1.unique_id
         cycle_error = {
             'type': 'root cycle',

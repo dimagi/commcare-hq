@@ -18,9 +18,18 @@ import logging
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
+from email_validator import validate_email, EmailNotValidError
 from corehq.toggles import deterministic_random
 from corehq.util.decorators import analytics_task
 from corehq.util.soft_assert import soft_assert
+from corehq.util.datadog.utils import (
+    count_by_response_code,
+    update_datadog_metrics,
+    DATADOG_DOMAINS_EXCEEDING_FORMS_GAUGE,
+    DATADOG_WEB_USERS_GAUGE,
+    DATADOG_HUBSPOT_SENT_FORM_METRIC,
+    DATADOG_HUBSPOT_TRACK_DATA_POST_METRIC
+)
 
 from dimagi.utils.logging import notify_exception
 
@@ -43,6 +52,7 @@ HUBSPOT_EXISTING_USER_INVITE_FORM = "7533717e-3095-4072-85ff-96b139bcb147"
 HUBSPOT_CLICKED_SIGNUP_FORM = "06b39b74-62b3-4387-b323-fe256dc92720"
 HUBSPOT_CLICKED_PREVIEW_FORM_ID = "43124a42-972b-479e-a01a-6b92a484f7bc"
 HUBSPOT_COOKIE = 'hubspotutk'
+HUBSPOT_THRESHOLD = 300
 
 
 def _raise_for_urllib3_response(response):
@@ -109,14 +119,15 @@ def _hubspot_post(url, data):
         headers = {
             'content-type': 'application/json'
         }
-        response = requests.post(
-            url,
-            params={'hapikey': api_key},
-            data=data,
-            headers=headers
-        )
+        params = {'hapikey': api_key}
+        response = _send_post_data(url, params, data, headers)
         _log_response('HS', data, response)
         response.raise_for_status()
+
+
+@count_by_response_code(DATADOG_HUBSPOT_TRACK_DATA_POST_METRIC)
+def _send_post_data(url, params, data, headers):
+    return requests.post(url, params=params, data=data, headers=headers)
 
 
 def _get_user_hubspot_id(webuser):
@@ -167,12 +178,14 @@ def _send_form_to_hubspot(form_id, webuser, cookies, meta, extra_fields=None, em
         if extra_fields:
             data.update(extra_fields)
 
-        response = requests.post(
-            url,
-            data=data
-        )
+        response = _send_hubspot_form_request(url, data)
         _log_response('HS', data, response)
         response.raise_for_status()
+
+
+@count_by_response_code(DATADOG_HUBSPOT_SENT_FORM_METRIC)
+def _send_hubspot_form_request(url, data):
+    return requests.post(url, data=data)
 
 
 @analytics_task()
@@ -343,13 +356,23 @@ def track_periodic_data():
     # Keep track of india and www data seperately
     env = get_instance_string()
 
+    # Track no of users and domains with max_forms greater than HUBSPOT_THRESHOLD
+    number_of_users = 0
+    number_of_domains_with_forms_gt_threshold = 0
+
+    for num_forms in domains_to_forms.values():
+        if num_forms > HUBSPOT_THRESHOLD:
+            number_of_domains_with_forms_gt_threshold += 1
+
     # For each web user, iterate through their domains and select the max number of form submissions and
     # max number of mobile workers
     submit = []
     for user in users_to_domains:
         email = user.get('email')
-        if not email:
+        if not _email_is_valid(email):
             continue
+
+        number_of_users += 1
         date_created = user.get('date_joined')
         max_forms = 0
         max_workers = 0
@@ -379,7 +402,7 @@ def track_periodic_data():
                 },
                 {
                     'property': '{}over_300_form_submissions'.format(env),
-                    'value': max_forms > 300
+                    'value': max_forms > HUBSPOT_THRESHOLD
                 },
                 {
                     'property': '{}date_created'.format(env),
@@ -392,6 +415,23 @@ def track_periodic_data():
     submit_json = json.dumps(submit)
 
     submit_data_to_hub_and_kiss(submit_json)
+    update_datadog_metrics({
+        DATADOG_WEB_USERS_GAUGE: number_of_users,
+        DATADOG_DOMAINS_EXCEEDING_FORMS_GAUGE: number_of_domains_with_forms_gt_threshold
+    })
+
+
+def _email_is_valid(email):
+    if not email:
+        return False
+
+    try:
+        validate_email(email)
+    except EmailNotValidError as e:
+        logger.warn(str(e))
+        return False
+
+    return True
 
 
 def submit_data_to_hub_and_kiss(submit_json):

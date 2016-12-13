@@ -119,7 +119,7 @@ class LocationType(models.Model):
         null=True,
         related_name='+',
         on_delete=models.SET_NULL,
-    )  # include all leves of this type and their ancestors
+    )  # include all levels of this type and their ancestors
     last_modified = models.DateTimeField(auto_now=True)
 
     emergency_level = StockLevelField(default=0.5)
@@ -284,10 +284,16 @@ class LocationQueriesMixin(object):
         if user.has_permission(domain, 'access_all_locations'):
             return self.all()
 
-        users_location = user.get_sql_location(domain)
-        if not users_location:
-            return self.none()  # No locations are accessible to this user
-        return self.all() & users_location.get_descendants(include_self=True)
+        assigned_location_ids = user.get_location_ids(domain)
+        if not assigned_location_ids:
+            return self.none()  # No locations are assigned to this user
+        return self.all() & SQLLocation.objects.get_locations_and_children(assigned_location_ids)
+
+    def delete(self, *args, **kwargs):
+        from .document_store import publish_location_saved
+        for domain, location_id in self.values_list('domain', 'location_id'):
+            publish_location_saved(domain, location_id, is_deletion=True)
+        return super(LocationQueriesMixin, self).delete(*args, **kwargs)
 
 
 class LocationQuerySet(LocationQueriesMixin, models.query.QuerySet):
@@ -339,12 +345,31 @@ class LocationManager(LocationQueriesMixin, TreeManager):
         direct_matches = self.filter_by_user_input(domain, user_input)
         return self.get_queryset_descendants(direct_matches, include_self=True)
 
+    def get_locations(self, location_ids):
+        return self.filter(location_id__in=location_ids)
+
+    def get_locations_and_children(self, location_ids):
+        """
+        Takes a set of location ids and returns a django queryset of those
+        locations and their children.
+        """
+        return self.get_queryset_descendants(
+            self.filter(location_id__in=location_ids),
+            include_self=True
+        )
+
+    def get_locations_and_children_ids(self, location_ids):
+        return list(self.get_locations_and_children(location_ids).location_ids())
+
 
 class OnlyUnarchivedLocationManager(LocationManager):
 
     def get_queryset(self):
         return (super(OnlyUnarchivedLocationManager, self).get_queryset()
                 .filter(is_archived=False))
+
+    def accessible_location_ids(self, domain, user):
+        return list(self.accessible_to_user(domain, user).location_ids())
 
 
 class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
@@ -395,6 +420,7 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
     @transaction.atomic()
     def save(self, *args, **kwargs):
         from corehq.apps.commtrack.models import sync_supply_point
+        from .document_store import publish_location_saved
         self.supply_point_id = sync_supply_point(self)
 
         sync_to_couch = kwargs.pop('sync_to_couch', True)
@@ -402,6 +428,27 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
         super(SQLLocation, self).save(*args, **kwargs)
         if sync_to_couch:
             self._migration_do_sync()
+
+        publish_location_saved(self.domain, self.location_id)
+
+    def to_json(self):
+        return {
+            'name': self.name,
+            'site_code': self.site_code,
+            '_id': self.location_id,
+            'location_id': self.location_id,
+            'doc_type': 'Location',
+            'domain': self.domain,
+            'external_id': self.external_id,
+            'is_archived': self.is_archived,
+            'last_modified': self.last_modified.isoformat(),
+            'latitude': float(self.latitude) if self.latitude else None,
+            'longitude': float(self.longitude) if self.longitude else None,
+            'metadata': self.metadata,
+            'location_type': self.location_type.name,
+            "lineage": self.lineage,
+            'parent_location_id': self.parent_location_id,
+        }
 
     @property
     def lineage(self):
@@ -505,7 +552,7 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
         Delete a location and its dependants.
         This also unassigns users assigned to the location.
         """
-        to_delete = self.get_descendants(include_self=True).couch_locations()
+        to_delete = list(self.get_descendants(include_self=True).couch_locations())
         # if there are errors deleting couch locations, roll back sql delete
         with transaction.atomic():
             self.sql_full_delete()
@@ -516,14 +563,12 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
         SQL ONLY FULL DELETE
         Delete this location and it's descendants.
         """
-        ids_to_delete = self.get_descendants(include_self=True).location_ids()
+        to_delete = self.get_descendants(include_self=True)
 
-        for loc_id in ids_to_delete:
-            loc = SQLLocation.objects.prefetch_related(
-                'location_type').get(location_id=loc_id)
+        for loc in to_delete:
             loc._sql_close_case_and_remove_users()
 
-        self.get_descendants(include_self=True).delete()
+        to_delete.delete()
 
     def _sql_close_case_and_remove_users(self):
         """
@@ -895,14 +940,10 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
         return list(SQLLocation.root_locations(domain).couch_locations())
 
     @property
-    def is_root(self):
-        return not self.lineage
-
-    @property
     def parent_location_id(self):
-        if self.is_root:
-            return None
-        return self.lineage[0]
+        if self.lineage:
+            return self.lineage[0]
+        return None
 
     @property
     def parent_id(self):
@@ -952,6 +993,24 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
     @property
     def location_type_name(self):
         return self.location_type_object.name
+
+
+class LocationFixtureConfiguration(models.Model):
+    domain = models.CharField(primary_key=True, max_length=255)
+    sync_flat_fixture = models.BooleanField(default=True)
+    sync_hierarchical_fixture = models.BooleanField(default=True)
+
+    def __repr__(self):
+        return u'{}: flat: {}, hierarchical: {}'.format(
+            self.domain, self.sync_flat_fixture, self.sync_hierarchical_fixture
+        )
+
+    @classmethod
+    def for_domain(cls, domain):
+        try:
+            return cls.objects.get(domain=domain)
+        except cls.DoesNotExist:
+            return cls(domain=domain)
 
 
 def _unassign_users_from_location(domain, location_id):

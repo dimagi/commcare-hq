@@ -2,7 +2,9 @@
 import hashlib
 import re
 from django.test import SimpleTestCase
-from corehq.apps.app_manager.exceptions import SuiteValidationError
+from corehq.util.test_utils import flag_enabled
+
+from corehq.apps.app_manager.exceptions import SuiteValidationError, DuplicateInstanceIdError
 from corehq.apps.app_manager.models import (
     AdvancedModule,
     Application,
@@ -17,6 +19,7 @@ from corehq.apps.app_manager.models import (
     ReportModule,
     SortElement,
     UpdateCaseAction,
+    CustomInstance,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import SuiteMixin, TestXmlMixin, commtrack_enabled
@@ -25,20 +28,11 @@ from corehq.apps.app_manager.xpath import (
 )
 from corehq.apps.hqmedia.models import HQMediaMapItem
 from corehq.apps.userreports.models import ReportConfiguration
-from corehq.toggles import NAMESPACE_DOMAIN
-from corehq.feature_previews import MODULE_FILTER
-from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
 import commcare_translations
 
 
 class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     file_path = ('data', 'suite')
-
-    def setUp(self):
-        update_toggle_cache(MODULE_FILTER.slug, 'domain', True, NAMESPACE_DOMAIN)
-
-    def tearDown(self):
-        clear_toggle_cache(MODULE_FILTER.slug, 'domain', NAMESPACE_DOMAIN)
 
     def test_normal_suite(self):
         self._test_generic_suite('app', 'normal-suite')
@@ -763,3 +757,107 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
         with self.assertRaises(SuiteValidationError):
             factory.app.create_suite()
+
+    def test_custom_variables(self):
+        factory = AppFactory()
+        module, form = factory.new_basic_module('m0', 'case1')
+        short_custom_variables = "<variable function='true()' /><foo function='bar'/>"
+        long_custom_variables = "<bar function='true()' /><baz function='buzz'/>"
+        module.case_details.short.custom_variables = short_custom_variables
+        module.case_details.long.custom_variables = long_custom_variables
+        self.assertXmlPartialEqual(
+            u"""
+            <partial>
+                <variables>
+                    {short_variables}
+                </variables>
+                <variables>
+                    {long_variables}
+                </variables>
+            </partial>
+            """.format(short_variables=short_custom_variables, long_variables=long_custom_variables),
+            factory.app.create_suite(),
+            "detail/variables"
+        )
+
+
+class InstanceTests(SimpleTestCase, TestXmlMixin, SuiteMixin):
+    file_path = ('data', 'suite')
+
+    def setUp(self):
+        super(InstanceTests, self).setUp()
+        self.factory = AppFactory(include_xmlns=True)
+        self.module, self.form = self.factory.new_basic_module('m0', 'case1')
+
+    def test_custom_instances(self):
+        instance_id = "foo"
+        instance_path = "jr://foo/bar"
+        self.form.custom_instances = [CustomInstance(instance_id=instance_id, instance_path=instance_path)]
+        self.assertXmlPartialEqual(
+            u"""
+            <partial>
+                <instance id='{}' src='{}' />
+            </partial>
+            """.format(instance_id, instance_path),
+            self.factory.app.create_suite(),
+            "entry/instance"
+        )
+
+    def test_duplicate_custom_instances(self):
+        self.factory.form_requires_case(self.form)
+        instance_id = "casedb"
+        instance_path = "jr://casedb/bar"
+        # Use form_filter to add instances
+        self.form.form_filter = "count(instance('casedb')/casedb/case[@case_id='123']) > 0"
+        self.form.custom_instances = [CustomInstance(instance_id=instance_id, instance_path=instance_path)]
+        with self.assertRaises(DuplicateInstanceIdError):
+            self.factory.app.create_suite()
+
+    def test_duplicate_regular_instances(self):
+        """Make sure instances aren't getting added multiple times if they are referenced multiple times
+        """
+        self.factory.form_requires_case(self.form)
+        self.form.form_filter = "instance('casedb') instance('casedb') instance('locations') instance('locations')"
+        self.assertXmlPartialEqual(
+            u"""
+            <partial>
+                <instance id='casedb' src='jr://instance/casedb' />
+                <instance id='locations' src='jr://fixture/commtrack:locations' />
+            </partial>
+            """,
+            self.factory.app.create_suite(),
+            "entry/instance"
+        )
+
+    def test_location_instances(self):
+        self.form.form_filter = "instance('locations')/locations/"
+        with flag_enabled('FLAT_LOCATION_FIXTURE'):
+            self.assertXmlPartialEqual(
+                u"""
+                <partial>
+                    <instance id='locations' src='jr://fixture/locations' />
+                </partial>
+                """,
+                self.factory.app.create_suite(),
+                "entry/instance")
+
+        self.assertXmlPartialEqual(
+            u"""
+            <partial>
+                <instance id='locations' src='jr://fixture/commtrack:locations' />
+            </partial>
+            """,
+            self.factory.app.create_suite(),
+            "entry/instance"
+        )
+
+        self.form.form_filter = "instance('commtrack:locations')/locations/"
+        self.assertXmlPartialEqual(
+            u"""
+            <partial>
+                <instance id='commtrack:locations' src='jr://fixture/commtrack:locations' />
+            </partial>
+            """,
+            self.factory.app.create_suite(),
+            "entry/instance"
+        )

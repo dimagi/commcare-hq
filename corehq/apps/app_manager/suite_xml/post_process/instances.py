@@ -1,6 +1,7 @@
 from collections import defaultdict
 import re
 from corehq import toggles
+from corehq.apps.app_manager.exceptions import DuplicateInstanceIdError
 from corehq.apps.app_manager.suite_xml.contributors import PostProcessor
 from corehq.apps.app_manager.suite_xml.xml_models import Instance
 from dimagi.utils.decorators.memoized import memoized
@@ -9,28 +10,23 @@ from dimagi.utils.decorators.memoized import memoized
 class EntryInstances(PostProcessor):
 
     def update_suite(self):
-        details_by_id = self.get_detail_mapping()
-        relevance_by_menu, menu_by_command = self.get_menu_relevance_mapping()
         for entry in self.suite.entries:
-            self.add_referenced_instances(entry, details_by_id, relevance_by_menu, menu_by_command)
+            self.add_entry_instances(entry)
 
-    def get_detail_mapping(self):
-        return {detail.id: detail for detail in self.suite.details}
+    def add_entry_instances(self, entry):
+        xpaths = self._get_all_xpaths_for_entry(entry)
+        known_instances, unknown_instance_ids = get_all_instances_referenced_in_xpaths(self.app.domain, xpaths)
+        custom_instances, unknown_instance_ids = self._get_custom_instances(
+            entry,
+            known_instances,
+            unknown_instance_ids
+        )
+        all_instances = known_instances | custom_instances
+        entry.require_instances(instances=all_instances, instance_ids=unknown_instance_ids)
 
-    def get_menu_relevance_mapping(self):
-        relevance_by_menu = defaultdict(list)
-        menu_by_command = {}
-        for menu in self.suite.menus:
-            for command in menu.commands:
-                menu_by_command[command.id] = menu.id
-                if command.relevant:
-                    relevance_by_menu[menu.id].append(command.relevant)
-            if menu.relevant:
-                relevance_by_menu[menu.id].append(menu.relevant)
-
-        return relevance_by_menu, menu_by_command
-
-    def add_referenced_instances(self, entry, details_by_id, relevance_by_menu, menu_by_command):
+    def _get_all_xpaths_for_entry(self, entry):
+        relevance_by_menu, menu_by_command = self._get_menu_relevance_mapping()
+        details_by_id = self._get_detail_mapping()
         detail_ids = set()
         xpaths = set()
 
@@ -57,57 +53,45 @@ class EntryInstances(PostProcessor):
                     for datum in frame.datums:
                         xpaths.add(datum.value)
         xpaths.discard(None)
-        instances, unknown_instance_ids = EntryInstances.get_required_instances(xpaths)
+        return xpaths
 
-        instances, unknown_instance_ids = self._add_custom_referenced_instances(instances, unknown_instance_ids)
+    @memoized
+    def _get_detail_mapping(self):
+        return {detail.id: detail for detail in self.suite.details}
 
-        entry.require_instances(instances=instances, instance_ids=unknown_instance_ids)
+    @memoized
+    def _get_menu_relevance_mapping(self):
+        relevance_by_menu = defaultdict(list)
+        menu_by_command = {}
+        for menu in self.suite.menus:
+            for command in menu.commands:
+                menu_by_command[command.id] = menu.id
+                if command.relevant:
+                    relevance_by_menu[menu.id].append(command.relevant)
+            if menu.relevant:
+                relevance_by_menu[menu.id].append(menu.relevant)
 
-    @staticmethod
-    def get_required_instances(xpaths):
-        instance_re = r"""instance\(['"]([\w\-:]+)['"]\)"""
-        instances = set()
-        unknown_instance_ids = set()
-        for xpath in xpaths:
-            instance_names = re.findall(instance_re, xpath)
-            for instance_name in instance_names:
-                try:
-                    scheme, _ = instance_name.split(':', 1)
-                except ValueError:
-                    scheme = None
+        return relevance_by_menu, menu_by_command
 
-                factory = get_instance_factory(scheme)
-                instance = factory(instance_name)
-                if instance:
-                    instances.add(instance)
-                else:
-                    class UnicodeWithContext(unicode):
-                        pass
-                    instance_name = UnicodeWithContext(instance_name)
-                    instance_name.xpath = xpath
-                    unknown_instance_ids.add(instance_name)
-        return instances, unknown_instance_ids
+    def _get_custom_instances(self, entry, known_instances, required_instances):
+        known_instance_ids = [instance.id for instance in known_instances]
+        try:
+            custom_instances = self._custom_instances_by_xmlns()[entry.form]
+        except KeyError:
+            custom_instances = []
 
-    def _add_custom_referenced_instances(self, instances, unknown_instance_ids):
-        def _add_custom_instance(instance_name):
-            if instance_name in unknown_instance_ids:
-                instances.add(Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name)))
-                unknown_instance_ids.remove(instance_name)
+        for instance in custom_instances:
+            if instance.instance_id in known_instance_ids:
+                raise DuplicateInstanceIdError(instance.instance_id)
+            # Remove custom instances from required instances, but add them even if they aren't referenced anywhere
+            required_instances.discard(instance.instance_id)
+        return {
+            Instance(id=instance.instance_id, src=instance.instance_path) for instance in custom_instances
+        }, required_instances
 
-        if toggles.CUSTOM_CALENDAR_FIXTURE.enabled(self.app.domain):
-            _add_custom_instance('enikshay:calendar')
-
-        if toggles.MOBILE_UCR.enabled(self.app.domain):
-            _add_custom_instance('commcare:reports')
-
-        instance_name = 'locations'
-        if instance_name in unknown_instance_ids:
-            if toggles.FLAT_LOCATION_FIXTURE.enabled(self.app.domain):
-                instances.add(Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name)))
-            else:
-                instances.add(Instance(id=instance_name, src='jr://fixture/commtrack:{}'.format(instance_name)))
-            unknown_instance_ids.remove(instance_name)
-        return instances, unknown_instance_ids
+    @memoized
+    def _custom_instances_by_xmlns(self):
+        return {form.xmlns: form.custom_instances for form in self.app.get_forms() if form.custom_instances}
 
 
 def get_instance_factory(scheme):
@@ -136,11 +120,56 @@ INSTANCE_BY_ID = {
 
 
 @register_factory(*INSTANCE_BY_ID.keys())
-def preset_instances(instance_name):
+def preset_instances(domain, instance_name):
     return INSTANCE_BY_ID.get(instance_name, None)
 
 
 @register_factory('item-list', 'schedule', 'indicators', 'commtrack')
 @memoized
-def generic_fixture_instances(instance_name):
+def generic_fixture_instances(domain, instance_name):
     return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
+
+
+@register_factory('enikshay')
+def enikshay_fixture_instances(domain, instance_name):
+    if instance_name == 'enikshay:calendar' and toggles.CUSTOM_CALENDAR_FIXTURE.enabled(domain):
+        return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
+
+
+@register_factory('commcare')
+def commcare_fixture_instances(domain, instance_name):
+    if instance_name == 'commcare:reports' and toggles.MOBILE_UCR.enabled(domain):
+        return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
+
+
+@register_factory('locations')
+def location_fixture_instances(domain, instance_name):
+    if toggles.FLAT_LOCATION_FIXTURE.enabled(domain):
+        return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
+    else:
+        return Instance(id=instance_name, src='jr://fixture/commtrack:{}'.format(instance_name))
+
+
+def get_all_instances_referenced_in_xpaths(domain, xpaths):
+    instance_re = r"""instance\(['"]([\w\-:]+)['"]\)"""
+    instances = set()
+    unknown_instance_ids = set()
+    for xpath in xpaths:
+        instance_names = re.findall(instance_re, xpath)
+        for instance_name in instance_names:
+            try:
+                scheme, _ = instance_name.split(':', 1)
+            except ValueError:
+                scheme = instance_name if instance_name == 'locations' else None
+
+            factory = get_instance_factory(scheme)
+            instance = factory(domain, instance_name)
+            if instance:
+                instances.add(instance)
+            else:
+                class UnicodeWithContext(unicode):
+                    pass
+                instance_name = UnicodeWithContext(instance_name)
+                instance_name.xpath = xpath
+                unknown_instance_ids.add(instance_name)
+    return instances, unknown_instance_ids

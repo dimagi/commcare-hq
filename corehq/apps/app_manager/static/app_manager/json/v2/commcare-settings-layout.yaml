@@ -1,8 +1,6 @@
-- title: 'Basic'
+- title: 'Data and Sharing'
   id: app-settings-basic
   settings:
-    - hq.name # won't actually be rendered here
-    - hq.comment # won't actually be rendered here
     - hq.application_version # App Version (disabled)
     # Application
     - hq.case_sharing  # Case Sharing
@@ -15,7 +13,7 @@
     - hq.profile_url
     - hq.manage_urls
 
-- title: General Settings
+- title: Build Settings
   id: app-settings-general
   collapse: true
   settings:
@@ -23,6 +21,8 @@
     - properties.cc-autoup-freq  # Auto Update Frequency
     - properties.unsent-number-limit  # Unsent Form Limit
     - properties.cc-content-valid  # Multimedia Validation
+    - properties.cc-autosync-freq  # Auto-Sync Frequency
+    - properties.unsent-time-limit  # Unsynced Time Limit
     
 
 - title: 'Java Phone General Settings'
@@ -34,8 +34,6 @@
     - hq.admin_password  # Admin Password
     - properties.cc-send-procedure  # Send Data
     - properties.server-tether  # Sync Mode
-    - properties.cc-autosync-freq  # Auto-Sync Frequency
-    - properties.unsent-time-limit  # Unsynced Time Limit
     - properties.password_format  # Password Format
     - properties.logenabled  # Logging Enabled
 

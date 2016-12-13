@@ -1,0 +1,20 @@
+--- 
++++ 
+@@ -1,7 +1,7 @@
+ {% load i18n %}
+ {% load hq_shared_tags %}
+ 
+-{% include 'app_manager/v1/partials/case_list_missing_warning.html' %}
++{% include 'app_manager/v2/partials/case_list_missing_warning.html' %}
+ 
+ <div data-bind="saveButton: longScreen.saveButton"></div>
+ 
+@@ -16,7 +16,7 @@
+     ></span>
+ </legend>
+ <div data-bind="with: longScreen">
+-    {% include 'app_manager/v1/partials/case_list_properties.html' %}
++    {% include 'app_manager/v2/partials/case_list_properties.html' %}
+ </div>
+ 
+ {% if request|toggle_enabled:"DETAIL_LIST_TABS" %}

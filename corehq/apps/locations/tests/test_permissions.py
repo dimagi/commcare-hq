@@ -154,9 +154,9 @@ class TestNewFormEditRestrictions(FormEditRestrictionsMixin, LocationHierarchyTe
     @classmethod
     def setUpClass(cls):
         super(TestNewFormEditRestrictions, cls).setUpClass()
-        cls.restrict_user_to_location(cls.middlesex_web_user)
-        cls.restrict_user_to_location(cls.massachusetts_web_user)
-        cls.restrict_user_to_location(cls.locationless_web_user)
+        cls.restrict_user_to_assigned_locations(cls.middlesex_web_user)
+        cls.restrict_user_to_assigned_locations(cls.massachusetts_web_user)
+        cls.restrict_user_to_assigned_locations(cls.locationless_web_user)
 
     # TODO add more tests, maybe with cls.project_admin?
 
@@ -185,7 +185,7 @@ class TestAccessRestrictions(LocationHierarchyTestCase):
         super(TestAccessRestrictions, cls).setUpClass()
         cls.suffolk_user = WebUser.create(cls.domain, 'suffolk-joe', 'password')
         cls.suffolk_user.set_location(cls.domain, cls.locations['Suffolk'])
-        cls.restrict_user_to_location(cls.suffolk_user)
+        cls.restrict_user_to_assigned_locations(cls.suffolk_user)
 
         def make_mobile_worker(username, location):
             worker = CommCareUser.create(cls.domain, username, '123')

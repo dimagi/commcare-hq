@@ -1,8 +1,6 @@
-import uuid
-from django.test import TestCase, SimpleTestCase
-from fakecouch import FakeCouchDb
+from django.test import TestCase
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.locations.models import SQLLocation, LocationType, Location
+from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.specs import EvaluationContext
 
@@ -69,44 +67,65 @@ class TestLocationTypeExpression(TestCase):
         self._check_expression(doc, None)
 
 
-class TestLocationParentIdExpression(SimpleTestCase):
+class TestLocationParentIdExpression(TestCase):
 
-    def setUp(self):
-        # we have to set the fake database before any other calls
-        self.domain = 'test-loc-parent-id'
-        self.evaluation_context = EvaluationContext({"domain": self.domain})
-        self.orig_db = Location.get_db()
-        self.database = FakeCouchDb()
-        Location.set_db(self.database)
-        self.parent = self._make_location(_id=uuid.uuid4().hex)
-        self.child = self._make_location(
-            _id=uuid.uuid4().hex,
-            lineage=[self.parent._id]
+    @classmethod
+    def setUpClass(cls):
+        cls.domain = 'test-loc-parent-id'
+        cls.domain_obj = create_domain(cls.domain)
+        cls.location_type = LocationType(
+            domain=cls.domain,
+            name="state",
+            code="state",
         )
-        self.grandchild = self._make_location(
-            _id=uuid.uuid4().hex,
-            lineage=[self.child._id, self.parent._id]
+        cls.location_type.save()
+
+        cls.parent = SQLLocation(
+            domain=cls.domain,
+            name="Westeros",
+            location_type=cls.location_type,
+            site_code="westeros",
         )
-        self.expression_spec = {
+        cls.parent.save()
+        cls.child = SQLLocation(
+            domain=cls.domain,
+            name="The North",
+            location_type=cls.location_type,
+            parent=cls.parent,
+            site_code="the_north",
+        )
+        cls.child.save()
+        cls.grandchild = SQLLocation(
+            domain=cls.domain,
+            name="Winterfell",
+            location_type=cls.location_type,
+            parent=cls.child,
+            site_code="winterfell",
+        )
+        cls.grandchild.save()
+
+        cls.evaluation_context = EvaluationContext({"domain": cls.domain})
+        cls.expression_spec = {
             "type": "location_parent_id",
             "location_id_expression": {
                 "type": "property_name",
                 "property_name": "location_id",
             }
         }
-        self.expression = ExpressionFactory.from_spec(self.expression_spec)
+        cls.expression = ExpressionFactory.from_spec(cls.expression_spec)
 
-    def tearDown(self):
-        Location.set_db(self.orig_db)
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain_obj.delete()
 
     def test_location_parent_id(self):
         self.assertEqual(
-            self.parent._id,
-            self.expression({'location_id': self.child._id}, self.evaluation_context)
+            self.parent.location_id,
+            self.expression({'location_id': self.child.location_id}, self.evaluation_context)
         )
         self.assertEqual(
-            self.child._id,
-            self.expression({'location_id': self.grandchild._id}, self.evaluation_context)
+            self.child.location_id,
+            self.expression({'location_id': self.grandchild.location_id}, self.evaluation_context)
         )
 
     def test_location_parent_missing(self):
@@ -118,7 +137,7 @@ class TestLocationParentIdExpression(SimpleTestCase):
     def test_location_parent_bad_domain(self):
         self.assertEqual(
             None,
-            self.expression({'location_id': self.child._id}, EvaluationContext({"domain": 'bad-domain'}))
+            self.expression({'location_id': self.child.location_id}, EvaluationContext({"domain": 'bad-domain'}))
         )
 
     def test_location_parents_chained(self):
@@ -133,12 +152,6 @@ class TestLocationParentIdExpression(SimpleTestCase):
             }
         })
         self.assertEqual(
-            self.parent._id,
-            expression({'location_id': self.grandchild._id}, self.evaluation_context)
+            self.parent.location_id,
+            expression({'location_id': self.grandchild.location_id}, self.evaluation_context)
         )
-
-    def _make_location(self, **kwargs):
-        kwargs['domain'] = self.domain
-        loc = Location(**kwargs)
-        self.database.save_doc(loc.to_json())
-        return loc

@@ -10,7 +10,7 @@ from corehq.apps.accounting.models import SoftwarePlanVersion
 class Command(BaseCommand):
     help = 'Grandfather privileges to all roles above a certain plan level and custom roles'
 
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option(
             '--dry-run',
             action='store_true',

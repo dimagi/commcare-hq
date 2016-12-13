@@ -34,7 +34,7 @@ class Command(BaseCommand):
     args = ''
     help = 'Creates or updates the pl_proxy cluster configuration'
 
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option('--verbose',
             action='store_true',
             dest='verbose',
