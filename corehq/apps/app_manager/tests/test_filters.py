@@ -261,6 +261,10 @@ class AutoFilterTests(TestCase):
         cls.new_york.delete()
         cls.massachusetts.delete()
         cls.usa.delete()
+        cls.city.delete()
+        cls.state.delete()
+        cls.country.delete()
+        cls.domain.delete()
 
     def test_filter_by_case_sharing_group_id(self):
         result = _filter_by_case_sharing_group_id(self.sheel, None)

@@ -43,9 +43,9 @@ def get_download_context(download_id, message=None, require_result=False):
     if task_status.failed():
         raise TaskFailedError(task_status.error)
     if require_result:
-        is_ready = task_status.success and task_status.result is not None
+        is_ready = task_status.success() and task_status.result is not None
     else:
-        is_ready = task_status.success
+        is_ready = task_status.success()
 
     return {
         'result': task_status.result,

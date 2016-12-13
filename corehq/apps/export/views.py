@@ -1557,8 +1557,11 @@ class BaseEditNewCustomExportView(BaseModifyNewCustomView):
         raise NotImplementedError()
 
     def get(self, request, *args, **kwargs):
+        auto_select = True
         try:
             export_instance = self.export_instance_cls.get(self.export_id)
+            # if the export exists we don't want to automatically select new columns
+            auto_select = False
         except ResourceNotFound:
             # If it's not found, try and see if it's on the legacy system before throwing a 404
             try:
@@ -1606,6 +1609,7 @@ class BaseEditNewCustomExportView(BaseModifyNewCustomView):
         self.export_instance = self.export_instance_cls.generate_instance_from_schema(
             schema,
             saved_export=export_instance,
+            auto_select=auto_select
         )
         return super(BaseEditNewCustomExportView, self).get(request, *args, **kwargs)
 

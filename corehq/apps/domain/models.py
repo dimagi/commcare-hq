@@ -237,6 +237,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
     cloudcare_releases = StringProperty(choices=['stars', 'nostars', 'default'], default='default')
     organization = StringProperty()
     hr_name = StringProperty()  # the human-readable name for this project
+    project_description = StringProperty()  # Brief description of the project
     creating_user = StringProperty()  # username of the user who created this domain
 
     # domain metadata
