@@ -714,6 +714,7 @@ class ConfigureReport(ReportBuilderView):
         columns = self.report_column_options
         # TODO: All the fields are called different things. Let's change it on the front end eventually,
         #       but re-map for now to see if its working
+
         def remap_fields(column):
             return {
                 'column_id': column.id,
