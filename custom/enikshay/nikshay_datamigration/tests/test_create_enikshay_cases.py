@@ -17,10 +17,10 @@ class TestCreateEnikshayCases(TestCase):
         super(TestCreateEnikshayCases, self).setUp()
 
         patient_detail = PatientDetail.objects.create(
-            Tbunitcode=1,
             PregId='MH-ABD-05-16-0001',
             scode='MA',
             Dtocode='Middlesex',
+            Tbunitcode=1,
             pname='A B C',
             pgender='M',
             page=18,
@@ -28,6 +28,8 @@ class TestCreateEnikshayCases(TestCase):
             paddress='Cambridge MA',
             pmob='9987328695',
             pregdate1=date(2016, 12, 13),
+            cname='Secondary name',
+            caddress='Secondary address',
             cmob='123',
             dcpulmunory='',
             dotpType=1,
@@ -35,9 +37,6 @@ class TestCreateEnikshayCases(TestCase):
             atbtreatment='',
             Ptype=3,
             pcategory=4,
-            cname='Secondary name',
-            caddress='Secondary address',
-
         )
         Outcome.objects.create(
             PatientId=patient_detail,
