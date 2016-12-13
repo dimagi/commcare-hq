@@ -1,4 +1,5 @@
 from __future__ import print_function, unicode_literals
+import json
 
 from django.test import TestCase
 
@@ -36,3 +37,5 @@ class DomainCalculatedPropertiesTest(TestCase):
         all_stats = all_domain_stats()
         props = calced_props(self.domain.name, self.domain._id, all_stats)
         self.assertFalse(props['cp_has_app'])
+        # ensure serializable
+        json.dumps(props)

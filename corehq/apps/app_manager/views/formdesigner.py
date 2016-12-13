@@ -87,7 +87,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         vellum_plugins.append("commtrack")
     if toggles.VELLUM_SAVE_TO_CASE.enabled(domain):
         vellum_plugins.append("saveToCase")
-    if (app.vellum_case_management and _form_uses_case(module, form) and _form_is_basic(form)):
+    if (_form_uses_case(module, form) and _form_is_basic(form)):
         vellum_plugins.append("databrowser")
 
     vellum_features = toggles.toggles_dict(username=request.user.username,
@@ -101,7 +101,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         'lookup_tables': domain_has_privilege(domain, privileges.LOOKUP_TABLES),
         'templated_intents': domain_has_privilege(domain, privileges.TEMPLATED_INTENTS),
         'custom_intents': domain_has_privilege(domain, privileges.CUSTOM_INTENTS),
-        'rich_text': app.vellum_case_management,
+        'rich_text': True,
     })
 
     has_schedule = (
@@ -122,8 +122,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
             if getattr(f, 'schedule', False) and f.schedule.enabled
         ])
 
-    if tours.VELLUM_CASE_MANAGEMENT.is_enabled(request.user) \
-        and app.vellum_case_management and form.requires_case():
+    if tours.VELLUM_CASE_MANAGEMENT.is_enabled(request.user) and form.requires_case():
         request.guided_tour = tours.VELLUM_CASE_MANAGEMENT.get_tour_data()
 
     context = get_apps_base_context(request, domain, app)
@@ -151,6 +150,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         'is_onboarding_domain': domain_obj.is_onboarding_domain,
         'show_live_preview': (
             toggles.PREVIEW_APP.enabled(domain)
+            or toggles.PREVIEW_APP.enabled(request.couch_user.username)
             or (domain_obj.is_onboarding_domain
                 and live_preview_ab.version == ab_tests.LIVE_PREVIEW_ENABLED)
         )

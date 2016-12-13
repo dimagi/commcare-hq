@@ -1,0 +1,11 @@
+{% load i18n %}
+{% if not app.vellum_case_management %}
+    <div class="alert alert-danger">
+        {% blocktrans %}
+            This application uses an outdated form of case management and may behave unexpectedly.
+            <br />
+            Please use the help menu to report an issue if you wish to continue to work with this
+            application.
+        {% endblocktrans %}
+    </div>
+{% endif %}

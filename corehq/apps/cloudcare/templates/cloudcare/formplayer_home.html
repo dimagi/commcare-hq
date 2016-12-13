@@ -12,7 +12,6 @@
 {% block head %}
     {{ block.super }}
     {% include "imports/proptable.html" %}
-    {% include "imports/fancy-code.html" %}
 
     <script src="{% static 'datatables/media/js/jquery.dataTables.min.js' %}"></script>
     <script src="{% static 'datatables/media/js/dataTables.bootstrap.min.js' %}"></script>
@@ -102,6 +101,7 @@
             gridPolyfillPath: "{% static 'css-grid-polyfill-binaries/css-polyfills.js' %}",
             debuggerEnabled: instanceViewerEnabled,
             singleAppMode: {{ single_app_mode|JSON }},
+            environment: {{ environment|JSON }},
         };
         FormplayerFrontend.start(options);
         $(function () {

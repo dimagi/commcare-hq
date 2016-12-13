@@ -423,7 +423,7 @@ class AbstractAttachment(DisabledDbMixin, models.Model, SaveStateMixin):
 
         db = get_blob_db()
         bucket = self.blobdb_bucket()
-        info = db.put(content, self.name, bucket)
+        info = db.put(content, bucket=bucket)
         self.md5 = info.md5_hash
         self.content_length = info.length
         self.blob_id = info.identifier

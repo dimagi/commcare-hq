@@ -1,8 +1,7 @@
 from corehq.apps.case_importer.exceptions import ImporterRefError
 from corehq.apps.case_importer.tracking.filestorage import transient_file_store, \
     persistent_file_store
-from corehq.apps.case_importer.tracking.models import CaseUploadRecord, \
-    CaseUploadFileMeta
+from corehq.apps.case_importer.tracking.models import CaseUploadRecord
 from corehq.apps.case_importer.util import open_spreadsheet_download_ref, get_spreadsheet
 from dimagi.utils.decorators.memoized import memoized
 from soil.progress import get_task_status
@@ -16,7 +15,7 @@ class CaseUpload(object):
 
     @classmethod
     def create(cls, file_object, filename):
-        upload_id = transient_file_store.write_file(file_object, filename)
+        upload_id = transient_file_store.write_file(file_object, filename).identifier
         return cls(upload_id)
 
     @classmethod
@@ -29,7 +28,7 @@ class CaseUpload(object):
         return CaseUploadRecord.objects.get(upload_id=self.upload_id)
 
     def get_tempfile(self):
-        return transient_file_store.get_tempfile(self.upload_id)
+        return transient_file_store.get_tempfile_ref_for_contents(self.upload_id)
 
     def check_file(self, named_columns):
         """
@@ -50,9 +49,8 @@ class CaseUpload(object):
         task = bulk_import_async.delay(config, domain, self.upload_id)
         original_filename = transient_file_store.get_filename(self.upload_id)
         with open(self.get_tempfile()) as f:
-            identifier = persistent_file_store.write_file(f, original_filename)
+            case_upload_file_meta = persistent_file_store.write_file(f, original_filename)
 
-        case_upload_file_meta = CaseUploadFileMeta.objects.get(identifier=identifier)
         CaseUploadRecord(
             domain=domain,
             upload_id=self.upload_id,

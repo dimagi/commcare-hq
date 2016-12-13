@@ -131,7 +131,7 @@
  {% endblock %}
  
  {% block page_content %}
-@@ -141,7 +148,7 @@
+@@ -143,7 +150,7 @@
                  {% endblocktrans %}
              </p>
              <br>

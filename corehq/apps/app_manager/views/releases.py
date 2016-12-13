@@ -114,7 +114,6 @@ def releases_ajax(request, domain, app_id, template='app_manager/v1/partials/rel
         ),
         'build_profile_access': build_profile_access and not toggles.APP_MANAGER_V2.enabled(domain),
         'lastest_j2me_enabled_build': CommCareBuildConfig.latest_j2me_enabled_config().label,
-        'vellum_case_management': app.vellum_case_management,
         'fetchLimit': request.GET.get('limit', DEFAULT_FETCH_LIMIT),
     })
     if not app.is_remote_app():
