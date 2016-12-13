@@ -109,17 +109,17 @@ class Outcome(models.Model):
 class Followup(models.Model):
     id = models.AutoField(primary_key=True)
     PatientID = models.ForeignKey(PatientDetail)  # requires trimming whitespace in excel and moving to end of CSV
-    IntervalId = models.CharField(max_length=255, null=True)
+    IntervalId = models.CharField(max_length=255)
     TestDate = models.CharField(max_length=255, null=True)
-    DMC = models.CharField(max_length=255, null=True)
+    DMC = models.CharField(max_length=255)
     LabNo = models.CharField(max_length=255, null=True)
-    SmearResult = models.CharField(max_length=255, null=True)
-    PatientWeight = models.CharField(max_length=255, null=True)
-    DmcStoCode = models.CharField(max_length=255, null=True)
-    DmcDtoCode = models.CharField(max_length=255, null=True)
-    DmcTbuCode = models.CharField(max_length=255, null=True)
-    RegBy = models.CharField(max_length=255, null=True)
-    regdate = models.CharField(max_length=255, null=True)
+    SmearResult = models.CharField(max_length=255)
+    PatientWeight = models.CharField(max_length=255)
+    DmcStoCode = models.CharField(max_length=255)
+    DmcDtoCode = models.CharField(max_length=255)
+    DmcTbuCode = models.CharField(max_length=255)
+    RegBy = models.CharField(max_length=255)
+    regdate = models.CharField(max_length=255)
 
 
 # class Household(models.Model):
