@@ -6,12 +6,12 @@ class PatientDetail(models.Model):
     scode = models.CharField(max_length=255, null=True, default='default')
     Dtocode = models.CharField(max_length=255, null=True)
     Tbunitcode = models.IntegerField()
-    pname = models.CharField(max_length=255, null=True)
-    pgender = models.CharField(max_length=255, null=True)
-    page = models.CharField(max_length=255, null=True)
-    poccupation = models.CharField(max_length=255, null=True)
+    pname = models.CharField(max_length=255)
+    pgender = models.CharField(max_length=255)
+    page = models.CharField(max_length=255)
+    poccupation = models.CharField(max_length=255)
     paadharno = models.CharField(max_length=255, null=True) # big ints (scientific notation) and nulls. requires some formatting
-    paddress = models.CharField(max_length=255, null=True)
+    paddress = models.CharField(max_length=255)
     pmob = models.CharField(max_length=255, null=True)  # contains " ", big ints
     plandline = models.CharField(max_length=255, null=True)
     ptbyr = models.CharField(max_length=255, null=True)  # dates, but not clean
@@ -26,19 +26,19 @@ class PatientDetail(models.Model):
         max_length=255, choices=(
             ('y', 'y'),
             ('N', 'N'),
-        ), null=True
+        ),
     )  # y or N
-    dcexpulmunory = models.CharField(max_length=255, null=True)
-    dcpulmunorydet = models.CharField(max_length=255, null=True)
+    dcexpulmunory = models.CharField(max_length=255)
+    dcpulmunorydet = models.CharField(max_length=255)
     dotname = models.CharField(max_length=255, null=True)
     dotdesignation = models.CharField(max_length=255, null=True)
     dotmob = models.CharField(max_length=255, null=True)
     dotlandline = models.CharField(max_length=255, null=True)
-    dotpType = models.CharField(max_length=255, null=True)
+    dotpType = models.CharField(max_length=255)
     dotcenter = models.CharField(max_length=255, null=True)
-    PHI = models.CharField(max_length=255, null=True)
+    PHI = models.CharField(max_length=255)
     dotmoname = models.CharField(max_length=255, null=True)
-    dotmosdone = models.CharField(max_length=255, null=True)
+    dotmosdone = models.CharField(max_length=255)
     # dotmosignDate = models.CharField(max_length=255, null=True)  # datetimes, look like they're all midnight. also have a bunch of 1/1/1990
     atbtreatment = models.CharField(max_length=255, choices=(
         ('Y', 'Y'),
@@ -52,16 +52,16 @@ class PatientDetail(models.Model):
     ))
     atbregimen = models.CharField(max_length=255, null=True)
     atbyr = models.CharField(max_length=255, null=True)
-    Ptype = models.CharField(max_length=255, null=True)
-    pcategory = models.CharField(max_length=255, null=True)
-    regBy = models.CharField(max_length=255, null=True)
-    regDate = models.CharField(max_length=255, null=True)
-    isRntcp = models.CharField(max_length=255, null=True)
-    dotprovider_id = models.CharField(max_length=255, null=True)
+    Ptype = models.CharField(max_length=255)
+    pcategory = models.CharField(max_length=255)
+    regBy = models.CharField(max_length=255)
+    regDate = models.CharField(max_length=255)
+    isRntcp = models.CharField(max_length=255)
+    dotprovider_id = models.CharField(max_length=255)
     pregdate1 = models.DateField()
-    cvisitedDate1 = models.CharField(max_length=255, null=True)
-    InitiationDate1 = models.CharField(max_length=255, null=True)  # datetimes, look like they're all midnight
-    dotmosignDate1 = models.CharField(max_length=255, null=True)
+    cvisitedDate1 = models.CharField(max_length=255)
+    InitiationDate1 = models.CharField(max_length=255)  # datetimes, look like they're all midnight
+    dotmosignDate1 = models.CharField(max_length=255)
 
     @property
     def first_name(self):
