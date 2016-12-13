@@ -90,10 +90,10 @@ class PatientDetail(models.Model):
 
 class Outcome(models.Model):
     PatientId = models.OneToOneField(PatientDetail, primary_key=True)
-    Outcome = models.CharField(max_length=255, null=True)
+    Outcome = models.CharField(max_length=255)
     OutcomeDate = models.CharField(max_length=255, null=True)
     MO = models.CharField(max_length=255, null=True)
-    XrayEPTests = models.CharField(max_length=255, null=True)
+    XrayEPTests = models.CharField(max_length=255)
     MORemark = models.CharField(max_length=255, null=True)
     HIVStatus = models.CharField(max_length=255, null=True)
     HIVTestDate = models.CharField(max_length=255, null=True)
@@ -101,9 +101,9 @@ class Outcome(models.Model):
     ARTCentreDate = models.CharField(max_length=255, null=True)
     InitiatedOnART = models.CharField(max_length=255, null=True)
     InitiatedDate = models.CharField(max_length=255, null=True)
-    userName = models.CharField(max_length=255, null=True)
-    loginDate = models.CharField(max_length=255, null=True)
-    OutcomeDate1 = models.CharField(max_length=255, null=True)
+    userName = models.CharField(max_length=255)
+    loginDate = models.CharField(max_length=255)
+    OutcomeDate1 = models.CharField(max_length=255)
 
 
 class Followup(models.Model):
