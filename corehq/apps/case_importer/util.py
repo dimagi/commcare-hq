@@ -342,13 +342,11 @@ def populate_updated_fields(config, columns, row):
     return fields_to_update
 
 
-def open_spreadsheet_download_ref(download_ref, column_headers=True):
+def open_spreadsheet_download_ref(filename, column_headers=True):
     """
     open a spreadsheet download ref just to test there are no errors opening it
     """
-    if not download_ref:
-        raise ImporterRefError('null download ref')
-    with get_spreadsheet(download_ref.get_filename(), column_headers):
+    with get_spreadsheet(filename, column_headers):
         pass
 
 
