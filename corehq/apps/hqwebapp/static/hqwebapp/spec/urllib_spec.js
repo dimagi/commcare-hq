@@ -16,6 +16,10 @@ describe('urllib', function() {
             assert.equal(urllib.getUrlParameterFromString('limit', '?limit=29&color=red'), '29');
             assert.equal(urllib.getUrlParameterFromString('color', '?limit=29&color=red'), 'red');
         });
+
+        it('should return the URL-decoded value', function() {
+            assert.equal(urllib.getUrlParameterFromString('json', '?json=[%22hi%22]'), '["hi"]');
+        });
     });
 
     describe('registerUrl', function() {
