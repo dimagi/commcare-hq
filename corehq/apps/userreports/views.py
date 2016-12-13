@@ -843,7 +843,9 @@ class ConfigureReport(ReportBuilderView):
                 domain=self.domain,
                 config_id=data_source_config_id,
                 title=self._get_report_name(request),
-                aggregation_columns=_get_aggregation_columns(report_data['aggregate'], report_data['columns'], self.report_column_options),
+                aggregation_columns=_get_aggregation_columns(
+                    report_data['aggregate'], report_data['columns'], self.report_column_options
+                ),
                 columns=list(chain.from_iterable(
                     to_report_columns(c, i, self.report_column_options) for i, c in enumerate(report_data['columns'])
                 )),
@@ -897,7 +899,9 @@ class ReportPreview(BaseDomainView):
             config_id=data_source,
             title='{}_{}_{}'.format(TEMP_REPORT_PREFIX, domain, data_source),
             description='',
-            aggregation_columns=_get_aggregation_columns(report_data['aggregate'], report_data['columns'], column_options),
+            aggregation_columns=_get_aggregation_columns(
+                report_data['aggregate'], report_data['columns'], column_options
+            ),
             columns=list(chain.from_iterable(
                 to_report_columns(c, i, column_options) for i, c in enumerate(report_data['columns'])
             )),
