@@ -839,7 +839,7 @@ msgstr "Si selecciona este plan, afectará las siguientes funciones de seguridad
 msgid ""
 "You have %(number_of_reports) report builder reports.By selecting this plan "
 "you will lose access to those reports."
-msgstr "Usted tiene informes de Manejo de Casos. Al seleccionar este plan perderá acceso a esos informes. "
+msgstr ""
 
 #: corehq/apps/accounting/tasks.py:417
 msgid "Payment Received - Thank You!"
