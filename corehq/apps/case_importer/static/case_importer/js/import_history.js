@@ -34,6 +34,6 @@ hqDefine('case_importer/js/import_history.js', function () {
         return self;
     }
     return {
-        RecentUploads: RecentUploads
+        RecentUploads: RecentUploads,
     };
 });
