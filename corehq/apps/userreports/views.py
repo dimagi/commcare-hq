@@ -680,10 +680,25 @@ class ConfigureReport(ReportBuilderView):
 
     @property
     def page_name(self):
-        title = self.request.GET.get('report_name', '')
-        if self.existing_report:
-            title = self.existing_report.title
+        title = self._get_report_name()
         return _(self.report_title).format(title)
+
+    def _get_report_name(self, request=None):
+        if self.existing_report:
+            return self.existing_report.title
+        else:
+            request = request or self.request
+            return request.GET.get('report_name', '')
+
+    def _get_data_source(self, request=None):
+        """
+        Return the ID of the report's DataSourceConfiguration
+        """
+        if self.existing_report:
+            return self.existing_report.config_id
+        else:
+            request = request or self.request
+            return request.GET['data_source']
 
     @property
     @memoized
@@ -719,7 +734,7 @@ class ConfigureReport(ReportBuilderView):
             'source_id': self.source_id,
             'application': self.app_id,
             'data_source_url': reverse(ReportPreview.urlname,
-                                       args=[self.domain, self.request.GET['data_source']]),
+                                       args=[self.domain, self._get_data_source()]),
             'report_builder_events': self.request.session.pop(REPORT_BUILDER_EVENTS_KEY, [])
         }
 
@@ -814,26 +829,20 @@ class ConfigureReport(ReportBuilderView):
 
         self._confirm_report_limit()
 
-        report_name = request.GET['report_name']
-        source_type = request.GET['source_type']
-        report_source_id = request.GET['source']
-        # data_source_id = request.GET['data_source']  # TODO: Why is this a GET param if it's unused?
-        app = Application.get(request.GET['application'])
-
         report_data = json.loads(request.body)
 
-        ds_builder = DataSourceBuilder(app.domain, app, source_type, report_source_id)
-        ds_config_kwargs = get_data_source_configuration_kwargs(ds_builder, app, report_source_id,
+        ds_builder = DataSourceBuilder(self.domain, self.app, self.source_type, self.source_id)
+        ds_config_kwargs = get_data_source_configuration_kwargs(ds_builder, self.app, self.source_id,
                                                                 report_data['columns'])
-        data_source_config_id = build_data_source(app.domain, ds_config_kwargs)
+        data_source_config_id = build_data_source(self.domain, ds_config_kwargs)
 
         self._confirm_report_limit()
 
         try:
             report_configuration = ReportConfiguration(
-                domain=app.domain,
+                domain=self.domain,
                 config_id=data_source_config_id,
-                title=report_name,
+                title=self._get_report_name(request),
                 aggregation_columns=_get_aggregation_columns(report_data['aggregate'], report_data['columns'], self.report_column_options),
                 columns=list(chain.from_iterable(
                     to_report_columns(c, i, self.report_column_options) for i, c in enumerate(report_data['columns'])
