@@ -91,6 +91,10 @@ class EnikshayCaseFactory(object):
 
                     # 'date_reported'
 
+                    'contact_phone_number': self.patient_detail.pmob,
+                    'secondary_contact_phone_number': self.patient_detail.cmob,
+                    'treatment_supporter_mobile_number': self.patient_detail.dotmob,
+
                     # 'mobile_number': self.patient_detail.pmob, # not used in eNikshay
                     'migration_created_case': True,
                 },

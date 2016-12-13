@@ -32,6 +32,7 @@ class TestCreateEnikshayCases(TestCase):
             caddress='Secondary address',
             cmob='123',
             dcpulmunory='',
+            dotmob='321',
             dotpType=1,
             PHI=2,
             atbtreatment='',
@@ -97,6 +98,7 @@ class TestCreateEnikshayCases(TestCase):
             OrderedDict([
                 ('aadhaar_number', '867386000000'),
                 ('age_entered', '18'),
+                ('contact_phone_number', '9987328695'),
                 ('current_address', 'Cambridge MA'),
                 ('current_address_district_choice', 'Middlesex'),
                 ('current_address_state_choice', 'MA'),
@@ -109,7 +111,9 @@ class TestCreateEnikshayCases(TestCase):
                 ('permanent_address_state_choice', 'MA'),
                 ('phi', '2'),
                 ('secondary_contact_name_address', 'Secondary name, Secondary address'),
+                ('secondary_contact_phone_number', '123'),
                 ('sex', 'male'),
+                ('treatment_supporter_mobile_number', '321'),
                 ('tu_choice', '1'),
             ]),
             person_case.dynamic_case_properties()
