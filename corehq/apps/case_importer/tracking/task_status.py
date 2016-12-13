@@ -1,5 +1,5 @@
 from dimagi.ext import jsonobject
-from soil.progress import get_task_status
+from soil.progress import get_task_status, STATES
 from soil.util import get_task
 
 
@@ -7,6 +7,9 @@ class TaskStatus(jsonobject.StrictJsonObject):
     state = jsonobject.IntegerProperty()
     progress = jsonobject.ObjectProperty(lambda: TaskStatusProgress)
     result = jsonobject.ObjectProperty(lambda: TaskStatusResult)
+
+    def is_finished(self):
+        return self.state not in (STATES.not_started, STATES.started)
 
 
 class TaskStatusProgress(jsonobject.StrictJsonObject):

@@ -40,6 +40,14 @@ def bulk_import_async(config, domain, excel_id):
         }
     except ImporterError as e:
         return {'errors': get_importer_error_message(e)}
+    finally:
+        store_task_result.delay(excel_id)
+
+
+@task
+def store_task_result(upload_id):
+    case_upload = CaseUpload.get(upload_id)
+    case_upload.store_task_result()
 
 
 def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKSIZE):

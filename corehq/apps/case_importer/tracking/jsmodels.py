@@ -1,6 +1,5 @@
 from corehq.apps.case_importer.tracking.permissions import user_may_view_file_upload
-from corehq.apps.case_importer.tracking.task_status import TaskStatus, \
-    get_task_status_json
+from corehq.apps.case_importer.tracking.task_status import TaskStatus
 from corehq.apps.users.dbaccessors.couch_users import get_display_name_for_user_id
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_request
@@ -29,7 +28,7 @@ def case_upload_to_user_json(case_upload, request):
         domain=case_upload.domain,
         created=ServerTime(case_upload.created).user_time(tz).ui_string(),
         upload_id=str(case_upload.upload_id),
-        task_status=get_task_status_json(str(case_upload.task_id)),
+        task_status=case_upload.get_task_status_json(),
         user_name=get_display_name_for_user_id(
             domain, case_upload.couch_user_id, default=''),
         case_type=case_upload.case_type,

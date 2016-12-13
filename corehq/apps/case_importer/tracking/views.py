@@ -1,3 +1,4 @@
+from django.db import transaction
 from django.http import HttpResponseNotFound, HttpResponseForbidden, \
     StreamingHttpResponse
 
@@ -17,9 +18,17 @@ def case_uploads(request, domain):
     except (TypeError, ValueError):
         limit = 10
 
-    case_uploads = [case_upload_to_user_json(case_upload, request)
-                    for case_upload in get_case_upload_records(domain, limit)]
-    return json_response(case_uploads)
+    case_upload_records = get_case_upload_records(domain, limit)
+
+    with transaction.atomic():
+        for case_upload_record in case_upload_records:
+            if case_upload_record.set_task_status_json_if_finished():
+                case_upload_record.save()
+
+    case_uploads_json = [case_upload_to_user_json(case_upload_record, request)
+                         for case_upload_record in case_upload_records]
+
+    return json_response(case_uploads_json)
 
 
 @require_can_edit_data
