@@ -109,8 +109,11 @@ class TranslationTransform(Transform):
     """
     type = TypeProperty('translation')
     translations = DictProperty()
+    mobile_or_web = StringProperty(default="web", choices=["mobile", "web"])
 
     def get_transform_function(self):
+        if self.mobile_or_web == "mobile":  # Mobile translation happens later
+            return lambda value: value
 
         def transform_function(value):
             if value not in self.translations:

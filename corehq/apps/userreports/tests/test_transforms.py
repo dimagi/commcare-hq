@@ -143,3 +143,28 @@ class TranslationTransform(SimpleTestCase):
         self.assertEqual(transform('#0000FF'), 'Azul')
         self.assertEqual(transform('#800080'), 'Morado')
         self.assertEqual(transform('#123456'), '#123456')
+
+    def test_dont_translate_for_mobile(self):
+        transform = TransformFactory.get_transform({
+            "type": "translation",
+            "mobile_or_web": "mobile",
+            "translations": {
+                "#0000FF": "Blue",
+                "#800080": [["en", "Purple"], ["es", "Morado"]],  # legacy, mobile-only format
+            },
+        }).get_transform_function()
+        self.assertEqual(transform('#0000FF'), '#0000FF')
+        self.assertEqual(transform('#800080'), '#800080')
+        self.assertEqual(transform('#123456'), '#123456')
+
+    def test_bad_option(self):
+        with self.assertRaises(BadSpecError):
+            TransformFactory.get_transform({
+                "type": "translation",
+                "mobile_or_web": "neither!",
+                "translations": {
+                    "0": "zero",
+                    "1": {"en": "one", "es": "uno"},
+                    "2": {"en": "two", "es": "dos"}
+                },
+            })
