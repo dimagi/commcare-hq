@@ -9,7 +9,7 @@ from corehq.apps.data_dictionary.util import generate_data_dictionary
 
 @patch('corehq.apps.data_dictionary.util._get_all_case_properties')
 class GenerateDictionaryTest(TestCase):
-    domain = uuid.uuid4()
+    domain = uuid.uuid4().hex
 
     def tearDown(self):
         CaseType.objects.filter(domain=self.domain).delete()
