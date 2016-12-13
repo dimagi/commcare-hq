@@ -33,7 +33,7 @@ class Migration(migrations.Migration):
                 ('cvisitedby', models.CharField(max_length=255, null=True)),
                 ('dcpulmunory', models.CharField(max_length=255, choices=[(b'y', b'y'), (b'N', b'N')])),
                 ('dcexpulmunory', models.CharField(max_length=255)),
-                ('dcpulmunorydet', models.CharField(max_length=255)),
+                ('dcpulmunorydet', models.CharField(max_length=255, null=True)),
                 ('dotname', models.CharField(max_length=255, null=True)),
                 ('dotdesignation', models.CharField(max_length=255, null=True)),
                 ('dotmob', models.CharField(max_length=255, null=True)),

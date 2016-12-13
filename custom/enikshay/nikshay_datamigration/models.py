@@ -29,7 +29,7 @@ class PatientDetail(models.Model):
         ),
     )  # y or N
     dcexpulmunory = models.CharField(max_length=255)
-    dcpulmunorydet = models.CharField(max_length=255)
+    dcpulmunorydet = models.CharField(max_length=255, null=True)
     dotname = models.CharField(max_length=255, null=True)
     dotdesignation = models.CharField(max_length=255, null=True)
     dotmob = models.CharField(max_length=255, null=True)
