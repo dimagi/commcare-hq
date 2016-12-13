@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
             name='PatientDetail',
             fields=[
                 ('PregId', models.CharField(max_length=255, serialize=False, primary_key=True)),
-                ('scode', models.CharField(default=b'default', max_length=255, null=True)),
+                ('scode', models.CharField(max_length=255, null=True)),
                 ('Dtocode', models.CharField(max_length=255, null=True)),
                 ('Tbunitcode', models.IntegerField()),
                 ('pname', models.CharField(max_length=255)),
