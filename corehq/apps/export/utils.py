@@ -622,12 +622,12 @@ def migrate_domain(domain, dryrun=False, force_convert_columns=False):
         print ''
 
         if meta.skipped_tables:
-            print '## Skipped tables: ##'
+            print '# Skipped tables #'
             for table_meta in meta.skipped_tables:
                 table_meta.pretty_print()
 
         if meta.skipped_columns:
-            print '## Skipped columns: ##'
+            print '# Skipped columns #'
             for column_meta in meta.skipped_columns:
                 column_meta.pretty_print()
     return metas
