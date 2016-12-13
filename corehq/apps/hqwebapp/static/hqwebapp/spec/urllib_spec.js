@@ -4,8 +4,8 @@
 describe('urllib', function() {
     var urllib = hqImport('hqwebapp/js/urllib.js');
     describe('getUrlParameterFromString', function() {
-        it('should return null when URL param missing', function() {
-            assert.equal(urllib.getUrlParameterFromString('asdf', '?limit=29'), null);
+        it('should return undefined when URL param missing', function() {
+            assert.strictEqual(urllib.getUrlParameterFromString('asdf', '?limit=29'), undefined);
         });
 
         it('should return correct value when present in URL', function() {
