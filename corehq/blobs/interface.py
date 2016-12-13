@@ -22,15 +22,16 @@ class AbstractBlobDB(object):
         """Put a blob in persistent storage
 
         :param content: A file-like object in binary read mode.
-        :param basename: Optional name from which the blob name will be
-        derived. This is used to make the unique blob name somewhat
-        recognizable.
         :param bucket: Optional bucket name used to partition blob data
         in the persistent storage medium. This may be delimited with
         slashes (/). It must be a valid relative path.
+        :param identifier: Optional identifier as the blob identifier (key).
+        If not passed, a short identifier is generated that will be collision free
+        only up to about 1000 keys. If more than a handful of objects are going to be
+        in the same bucket, it's recommended to use `identifier=random_url_id(16)`
+        for a 128-bit key.
         :returns: A `BlobInfo` named tuple. The returned object has a
-        `identifier` member that must be used to get or delete the blob. It
-        should not be confused with the optional `basename` parameter.
+        `identifier` member that must be used to get or delete the blob.
         """
         raise NotImplementedError
 
