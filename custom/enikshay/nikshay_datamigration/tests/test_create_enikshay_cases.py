@@ -25,7 +25,7 @@ class TestCreateEnikshayCases(TestCase):
             paadharno=867386000000,
             paddress='Cambridge MA',
             pmob='9987328695',
-            pregdate1=date.today(),
+            pregdate1=date(2016, 12, 13),
             cmob='123',
             dcpulmunory='',
             dotpType=1,
@@ -137,7 +137,7 @@ class TestCreateEnikshayCases(TestCase):
         episode_case = self.case_accessor.get_case(episode_case_ids[0])
         self.assertEqual(
             OrderedDict([
-                ('date_reported', '2016-12-12'),
+                ('date_reported', '2016-12-13'),
                 ('disease_classification', ''),
                 ('migration_created_case', 'True'),
                 ('treatment_supporter_mobile_number', '123'),
