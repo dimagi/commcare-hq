@@ -8,7 +8,6 @@ from soil.progress import get_task_status
 
 
 class CaseUpload(object):
-    _expiry = 1 * 60 * 60
 
     def __init__(self, upload_id):
         self.upload_id = upload_id
