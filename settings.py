@@ -260,7 +260,7 @@ HQ_APPS = (
     'corehq.apps.es',
     'corehq.apps.fixtures',
     'corehq.apps.calendar_fixture',
-    'corehq.apps.case_importer_v1',
+    'corehq.apps.case_importer',
     'corehq.apps.reminders',
     'corehq.apps.translations',
     'corehq.apps.tour',
@@ -289,6 +289,7 @@ HQ_APPS = (
     'corehq.apps.performance_sms',
     'corehq.apps.registration',
     'corehq.messaging.smsbackends.unicel',
+    'corehq.messaging.smsbackends.icds_nic',
     'corehq.apps.reports',
     'corehq.apps.reports_core',
     'corehq.apps.userreports',
@@ -867,6 +868,10 @@ CUSTOM_LANDING_PAGE = False
 
 TABLEAU_URL_ROOT = "https://icds.commcarehq.org/"
 
+ONBOARDING_DOMAIN_TEST_DATE = ()
+
+HQ_INSTANCE = 'development'
+
 try:
     # try to see if there's an environmental variable set for local_settings
     custom_settings = os.environ.get('CUSTOMSETTINGS', None)
@@ -1237,7 +1242,7 @@ COUCHDB_APPS = [
     'hqcase',
     'hqmedia',
     'hope',
-    'case_importer_v1',
+    'case_importer',
     'indicators',
     'locations',
     'mobile_auth',
@@ -1392,7 +1397,7 @@ SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.apposit.models.SQLAppositBackend',
     'corehq.messaging.smsbackends.grapevine.models.SQLGrapevineBackend',
     'corehq.messaging.smsbackends.http.models.SQLHttpBackend',
-    'corehq.messaging.smsbackends.icds.models.SQLICDSBackend',
+    'corehq.messaging.smsbackends.icds_nic.models.SQLICDSBackend',
     'corehq.messaging.smsbackends.mach.models.SQLMachBackend',
     'corehq.messaging.smsbackends.megamobile.models.SQLMegamobileBackend',
     'corehq.messaging.smsbackends.push.models.PushBackend',

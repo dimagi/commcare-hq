@@ -75,7 +75,8 @@ class AppManagerTest(TestCase):
         for module in self.app.get_modules():
             self.assertEqual(len(module.forms), 3)
 
-    def testCreateJadJar(self):
+    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+    def testCreateJadJar(self, mock):
         self.app.build_spec = BuildSpec(**self.build1)
         self.app.create_build_files(save=True)
         self.app.save(increment_version=False)
@@ -159,7 +160,8 @@ class AppManagerTest(TestCase):
         self.assertTrue(build.fetch_attachment(path))
         self.assertEqual(build.odk_profile_created_after_build, True)
 
-    def testBuildApp(self):
+    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+    def testBuildApp(self, mock):
         # do it from a NOT-SAVED app;
         # regression test against case where contents gets lazy-put w/o saving
         app = Application.wrap(self._yesno_source)
@@ -171,14 +173,16 @@ class AppManagerTest(TestCase):
         self._check_legacy_odk_files(copy)
 
     @patch_default_builds
-    def testBuildImportedApp(self):
+    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+    def testBuildImportedApp(self, mock):
         app = import_app(self._yesno_source, self.domain)
         copy = app.make_build()
         copy.save()
         self._check_has_build_files(copy, self.min_paths)
         self._check_legacy_odk_files(copy)
 
-    def testRevertToCopy(self):
+    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+    def testRevertToCopy(self, mock):
         old_name = 'old name'
         new_name = 'new name'
         app = Application.wrap(self._yesno_source)

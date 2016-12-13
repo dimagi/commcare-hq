@@ -237,6 +237,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
     cloudcare_releases = StringProperty(choices=['stars', 'nostars', 'default'], default='default')
     organization = StringProperty()
     hr_name = StringProperty()  # the human-readable name for this project
+    project_description = StringProperty()  # Brief description of the project
     creating_user = StringProperty()  # username of the user who created this domain
 
     # domain metadata
@@ -1059,6 +1060,19 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         flag that should be set normally.
         """
         return toggles.MULTIPLE_LOCATIONS_PER_USER.enabled(self.name)
+
+    @property
+    def is_onboarding_domain(self):
+        # flag used for case management onboarding analytics
+        if not settings.ONBOARDING_DOMAIN_TEST_DATE:
+            return False
+        onboarding_date = datetime(
+            settings.ONBOARDING_DOMAIN_TEST_DATE[0],
+            settings.ONBOARDING_DOMAIN_TEST_DATE[1],
+            settings.ONBOARDING_DOMAIN_TEST_DATE[2],
+        )
+        return self.first_domain_for_user and self.date_created > onboarding_date
+
 
     def convert_to_commtrack(self):
         """

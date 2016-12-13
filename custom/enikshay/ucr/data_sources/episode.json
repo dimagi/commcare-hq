@@ -288,18 +288,8 @@
                 },
                 "is_nullable": true,
                 "expression": {
-                    "value_expression": {
-                        "datatype": "string",
-                        "type": "property_name",
-                        "property_name": "age"
-                    },
-                    "type": "related_doc",
-                    "related_doc_type": "CommCareCase",
-                    "doc_id_expression": {
-                        "datatype": null,
-                        "type": "named",
-                        "name": "person_id"
-                    }
+                    "type": "named",
+                    "name": "age"
                 },
                 "column_id": "age"
             },
@@ -314,7 +304,7 @@
                 "expression": {
                     "datatype": "string",
                     "type": "property_name",
-                    "property_name": "reg_weight"
+                    "property_name": "weight"
                 },
                 "column_id": "weight"
             },
@@ -330,7 +320,7 @@
                     "value_expression": {
                         "datatype": "string",
                         "type": "property_name",
-                        "property_name": "phone_number"
+                        "property_name": "contact_phone_number"
                     },
                     "type": "related_doc",
                     "related_doc_type": "CommCareCase",
@@ -408,6 +398,17 @@
                     "name": "cat2"
                 },
                 "column_id": "cat2"
+            },
+            {
+                "display_name": "key_populations",
+                "datatype": "string",
+                "type": "expression",
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "key_populations"
+                },
+                "column_id": "key_populations"
             },
             {
                 "display_name": "person/tu",
@@ -535,6 +536,63 @@
                     "property_name": "case_definition"
                 },
                 "column_id": "basis_of_diagnosis"
+            },
+            {
+                "display_name": "not_microbiological_basis_of_diagnosis",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "operator": "eq",
+                        "expression": {
+                            "type": "property_name",
+                            "property_name": "case_definition"
+                        },
+                        "type": "boolean_expression",
+                        "property_value": "microbiological"
+                    },
+                    "expression_if_true": {
+                        "type": "constant",
+                        "constant": ""
+                    },
+                    "expression_if_false": {
+                        "type": "property_name",
+                        "property_name": "case_definition"
+                    }
+                },
+                "column_id": "not_microbiological_basis_of_diagnosis"
+            },
+            {
+                "column_id": "date_of_sample_dst",
+                "datatype": "string",
+                "type": "expression",
+                "expression": {
+                    "type": "constant",
+                    "constant": ""
+                }
+            },
+            {
+                "column_id": "result_of_dst",
+                "datatype": "string",
+                "type": "expression",
+                "expression": {
+                    "type": "constant",
+                    "constant": ""
+                }
+            },
+            {
+                "column_id": "status_of_treatment",
+                "datatype": "string",
+                "type": "expression",
+                "expression": {
+                    "type": "constant",
+                    "constant": ""
+                }
             },
             {
                 "type": "boolean",
@@ -668,6 +726,68 @@
                         "type": "property_name",
                         "property_name": "result"
                     }
+                }
+            },
+            {
+                "display_name": "diagnostic_test_location_name",
+                "column_id": "diagnostic_test_location_name",
+                "datatype": "string",
+                "type": "expression",
+                "expression": {
+                    "value_expression":{
+                        "type":"property_name",
+                        "property_name":"name"
+                    },
+                    "type":"related_doc",
+                    "related_doc_type":"Location",
+                    "doc_id_expression":{
+                        "type": "nested",
+                        "argument_expression": {
+                            "type": "reduce_items",
+                            "items_expression": {
+                                "type": "sort_items",
+                                "items_expression": {
+                                    "type": "filter_items",
+                                    "items_expression": {
+                                        "type": "get_case_forms",
+                                        "case_id_expression": {
+                                            "type": "nested",
+                                            "argument_expression": {
+                                                "type": "named",
+                                                "name": "latest_diagnostic_test_case"
+                                            },
+                                            "value_expression": {
+                                                "type": "property_name",
+                                                "property_name": "_id"
+                                            }
+                                        }
+                                    },
+                                    "filter_expression": {
+                                        "type": "boolean_expression",
+                                        "operator": "eq",
+                                        "expression": {
+                                            "type": "property_name",
+                                            "property_name": "xmlns"
+                                        },
+                                        "property_value": "http://openrosa.org/formdesigner/826B0458-C4ED-4A58-8AFD-F8E437C3646F"
+                                    }
+                                },
+                                "sort_expression": {
+                                    "type": "property_name",
+                                    "property_name": "received_on"
+                                }
+                            },
+                            "aggregation_fn": "last_item"
+                        },
+                        "value_expression": {
+                            "type": "property_path",
+                            "property_path": [
+                                "form",
+                                "user_location_id"
+                            ]
+                        }
+                    }
+
                 }
             },
             {
@@ -821,9 +941,18 @@
                 },
                 "is_nullable": true,
                 "expression": {
-                    "datatype": "string",
-                    "type": "property_name",
-                    "property_name": "diabetes_status"
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "diabetes_status"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "datatype": null,
+                        "type": "named",
+                        "name": "person_id"
+                    }
                 },
                 "column_id": "diabetes_status"
             },
@@ -833,9 +962,18 @@
                     "type": "boolean_expression",
                     "operator": "eq",
                     "expression": {
-                        "datatype": "string",
-                        "type": "property_name",
-                        "property_name": "diabetes_status"
+                        "value_expression": {
+                            "datatype": "string",
+                            "type": "property_name",
+                            "property_name": "diabetes_status"
+                        },
+                        "type": "related_doc",
+                        "related_doc_type": "CommCareCase",
+                        "doc_id_expression": {
+                            "datatype": null,
+                            "type": "named",
+                            "name": "person_id"
+                        }
                     },
                     "property_value": "diabetic"
                 },
@@ -1013,9 +1151,17 @@
                 },
                 "is_nullable": true,
                 "expression": {
-                    "datatype": "string",
-                    "type": "property_name",
-                    "property_name": "initiated_on_art"
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "art_initiated"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "type": "named",
+                        "name": "person_id"
+                    }
                 },
                 "column_id": "initiated_on_art"
             },
@@ -3813,6 +3959,628 @@
                         }
                     }
                 }
+            },
+            {
+                "type": "boolean",
+                "column_id": "new_microbiological",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "case_definition"
+                            },
+                            "property_value": "microbiological"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "new_clinical",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "case_definition"
+                            },
+                            "property_value": "clinical"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "new_pulmonary",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "operator": "eq",
+                            "expression": {
+                                "datatype": "string",
+                                "type": "property_name",
+                                "property_name": "disease_classification"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "pulmonary"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "new_extra_pulmonary",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "new_patient"
+                        },
+                        {
+                            "operator": "eq",
+                            "expression": {
+                                "datatype": "string",
+                                "type": "property_name",
+                                "property_name": "disease_classification"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "extra_pulmonary"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "retreatment_microbiological",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "retreatment"
+                        },
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "case_definition"
+                            },
+                            "property_value": "microbiological"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "retreatment_clinical",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "retreatment"
+                        },
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "case_definition"
+                            },
+                            "property_value": "clinical"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "retreatment_pulmonary",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "retreatment"
+                        },
+                        {
+                            "operator": "eq",
+                            "expression": {
+                                "datatype": "string",
+                                "type": "property_name",
+                                "property_name": "disease_classification"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "pulmonary"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "retreatment_extra_pulmonary",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "retreatment"
+                        },
+                        {
+                            "operator": "eq",
+                            "expression": {
+                                "datatype": "string",
+                                "type": "property_name",
+                                "property_name": "disease_classification"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "extra_pulmonary"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "hiv_positive_art",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "initiated_on_art"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "hiv_positive_cpt",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "hiv_positive"
+                        },
+                        {
+                            "type": "named",
+                            "name": "cpt_initiated"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "female_under_4",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "female"
+                        },
+                        {
+                            "type": "named",
+                            "name": "age_under_4"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "female_5_14",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "female"
+                        },
+                        {
+                            "type": "named",
+                            "name": "age_5_14"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "female_15_24",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "female"
+                        },
+                        {
+                            "type": "named",
+                            "name": "age_15_24"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "female_25_34",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "female"
+                        },
+                        {
+                            "type": "named",
+                            "name": "age_25_34"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "female_35_44",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "female"
+                        },
+                        {
+                            "type": "named",
+                            "name": "age_35_44"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "female_45_54",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "female"
+                        },
+                        {
+                            "type": "named",
+                            "name": "age_45_54"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "female_55_64",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "female"
+                        },
+                        {
+                            "type": "named",
+                            "name": "age_55_64"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "female_over_65",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "female"
+                        },
+                        {
+                            "type": "named",
+                            "name": "age_over_65"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "male_under_4",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "male"
+                        },
+                        {
+                            "type": "named",
+                            "name": "age_under_4"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "male_5_14",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "male"
+                        },
+                        {
+                            "type": "named",
+                            "name": "age_5_14"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "male_15_24",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "male"
+                        },
+                        {
+                            "type": "named",
+                            "name": "age_15_24"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "male_25_34",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "male"
+                        },
+                        {
+                            "type": "named",
+                            "name": "age_25_34"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "male_35_44",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "male"
+                        },
+                        {
+                            "type": "named",
+                            "name": "age_35_44"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "male_45_54",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "male"
+                        },
+                        {
+                            "type": "named",
+                            "name": "age_45_54"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "male_55_64",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "male"
+                        },
+                        {
+                            "type": "named",
+                            "name": "age_55_64"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "male_over_65",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "male"
+                        },
+                        {
+                            "type": "named",
+                            "name": "age_over_65"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "transgender_under_4",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "transgender"
+                        },
+                        {
+                            "type": "named",
+                            "name": "age_under_4"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "transgender_5_14",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "transgender"
+                        },
+                        {
+                            "type": "named",
+                            "name": "age_5_14"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "transgender_15_24",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "transgender"
+                        },
+                        {
+                            "type": "named",
+                            "name": "age_15_24"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "transgender_25_34",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "transgender"
+                        },
+                        {
+                            "type": "named",
+                            "name": "age_25_34"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "transgender_35_44",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "transgender"
+                        },
+                        {
+                            "type": "named",
+                            "name": "age_35_44"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "transgender_45_54",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "transgender"
+                        },
+                        {
+                            "type": "named",
+                            "name": "age_45_54"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "transgender_55_64",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "transgender"
+                        },
+                        {
+                            "type": "named",
+                            "name": "age_55_64"
+                        }
+                    ]
+                }
+            },
+            {
+                "type": "boolean",
+                "column_id": "transgender_over_65",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "named",
+                            "name": "transgender"
+                        },
+                        {
+                            "type": "named",
+                            "name": "age_over_65"
+                        }
+                    ]
+                }
             }
         ],
         "named_filters": {
@@ -3863,12 +4631,40 @@
                 },
                 "property_value": "0"
             },
+            "cpt_initiated": {
+                "operator": "eq",
+                "type": "boolean_expression",
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "cpt_initiated"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "datatype": null,
+                        "type": "named",
+                        "name": "person_id"
+                    }
+                },
+                "property_value": "yes"
+            },
             "initiated_on_art": {
                 "operator": "eq",
                 "type": "boolean_expression",
                 "expression": {
-                    "type": "property_name",
-                    "property_name": "initiated_on_art"
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "art_initiated"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "type": "named",
+                        "name": "person_id"
+                    }
                 },
                 "property_value": "yes"
             },
@@ -3900,6 +4696,176 @@
                     "name": "age_in_days"
                 },
                 "property_value": 5475
+            },
+            "age_under_4": {
+                "operator": "lte",
+                "type": "boolean_expression",
+                "expression": {
+                    "datatype": "integer",
+                    "type": "named",
+                    "name": "age"
+                },
+                "property_value": 4
+            },
+            "age_5_14": {
+                "type": "and",
+                "filters": [
+                    {
+                        "operator": "gte",
+                        "type": "boolean_expression",
+                        "expression": {
+                            "datatype": "integer",
+                            "type": "named",
+                            "name": "age"
+                        },
+                        "property_value": 5
+                    },
+                    {
+                        "operator": "lte",
+                        "type": "boolean_expression",
+                        "expression": {
+                            "datatype": "integer",
+                            "type": "named",
+                            "name": "age"
+                        },
+                        "property_value": 14
+                    }
+                ]
+            },
+            "age_15_24": {
+                "type": "and",
+                "filters": [
+                    {
+                        "operator": "gte",
+                        "type": "boolean_expression",
+                        "expression": {
+                            "datatype": "integer",
+                            "type": "named",
+                            "name": "age"
+                        },
+                        "property_value": 15
+                    },
+                    {
+                        "operator": "lte",
+                        "type": "boolean_expression",
+                        "expression": {
+                            "datatype": "integer",
+                            "type": "named",
+                            "name": "age"
+                        },
+                        "property_value": 24
+                    }
+                ]
+            },
+            "age_25_34": {
+                "type": "and",
+                "filters": [
+                    {
+                        "operator": "gte",
+                        "type": "boolean_expression",
+                        "expression": {
+                            "datatype": "integer",
+                            "type": "named",
+                            "name": "age"
+                        },
+                        "property_value": 25
+                    },
+                    {
+                        "operator": "lte",
+                        "type": "boolean_expression",
+                        "expression": {
+                            "datatype": "integer",
+                            "type": "named",
+                            "name": "age"
+                        },
+                        "property_value": 34
+                    }
+                ]
+            },
+            "age_35_44": {
+                "type": "and",
+                "filters": [
+                    {
+                        "operator": "gte",
+                        "type": "boolean_expression",
+                        "expression": {
+                            "datatype": "integer",
+                            "type": "named",
+                            "name": "age"
+                        },
+                        "property_value": 35
+                    },
+                    {
+                        "operator": "lte",
+                        "type": "boolean_expression",
+                        "expression": {
+                            "datatype": "integer",
+                            "type": "named",
+                            "name": "age"
+                        },
+                        "property_value": 44
+                    }
+                ]
+            },
+            "age_45_54": {
+                "type": "and",
+                "filters": [
+                    {
+                        "operator": "gte",
+                        "type": "boolean_expression",
+                        "expression": {
+                            "datatype": "integer",
+                            "type": "named",
+                            "name": "age"
+                        },
+                        "property_value": 45
+                    },
+                    {
+                        "operator": "lte",
+                        "type": "boolean_expression",
+                        "expression": {
+                            "datatype": "integer",
+                            "type": "named",
+                            "name": "age"
+                        },
+                        "property_value": 54
+                    }
+                ]
+            },
+            "age_55_64": {
+                "type": "and",
+                "filters": [
+                    {
+                        "operator": "gte",
+                        "type": "boolean_expression",
+                        "expression": {
+                            "datatype": "integer",
+                            "type": "named",
+                            "name": "age"
+                        },
+                        "property_value": 55
+                    },
+                    {
+                        "operator": "lte",
+                        "type": "boolean_expression",
+                        "expression": {
+                            "datatype": "integer",
+                            "type": "named",
+                            "name": "age"
+                        },
+                        "property_value": 64
+                    }
+                ]
+            },
+            "age_over_65": {
+                "operator": "gte",
+                "type": "boolean_expression",
+                "expression": {
+                    "datatype": "integer",
+                    "type": "named",
+                    "name": "age"
+                },
+                "property_value": 65
             },
             "new_patient": {
                 "operator": "eq",
@@ -4021,8 +4987,17 @@
             "hiv_positive": {
                 "operator": "eq",
                 "expression": {
-                    "type": "named",
-                    "name": "hiv_status"
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "hiv_status"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "type": "named",
+                        "name": "person_id"
+                    }
                 },
                 "type": "boolean_expression",
                 "property_value": "reactive"
@@ -4491,6 +5466,59 @@
             }
         },
         "named_expressions": {
+            "age": {
+                "value_expression": {
+                    "datatype": "integer",
+                    "type": "property_name",
+                    "property_name": "age"
+                },
+                "type": "related_doc",
+                "related_doc_type": "CommCareCase",
+                "doc_id_expression": {
+                    "value_expression": {
+                        "type": "nested",
+                        "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                        },
+                        "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "indices"
+                            },
+                            "index_expression": {
+                                "type": "constant",
+                                "constant": 0
+                            }
+                        }
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "value_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referenced_id"
+                        },
+                        "type": "nested",
+                        "argument_expression": {
+                            "type": "array_index",
+                            "array_expression": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "indices"
+                            },
+                            "index_expression": {
+                                "type": "constant",
+                                "constant": 0
+                            }
+                        }
+                    }
+                }
+            },
             "occurrence_id": {
                 "value_expression": {
                     "datatype": null,

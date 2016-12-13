@@ -527,6 +527,21 @@ class TestBulkManagement(TestCase):
         self.assertLocationsMatch(self.as_pairs(self.basic_tree))
         self.assertCouchSync()
 
+    def test_int_datatype(self):
+        data = [
+            ('S1', 1, 'state', '', '', False, '12', '', '2345', {}, {}, 0),
+            ('S2', 2, 'state', '', '', False, '12', '', '2345', {}, {}, 0),
+        ]
+
+        result = self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            data
+        )
+        self.assertEqual(result.errors, [])
+        self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
+        self.assertLocationsMatch(set([('1', None), ('2', None)]))
+        self.assertCouchSync()
+
     def test_data_format(self):
         data = [
             ('S1', '1', 'state', '', '', False, '12', 'not-lat', '2345', {}, {}, 0),

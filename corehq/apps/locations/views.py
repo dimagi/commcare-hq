@@ -2,6 +2,7 @@ import json
 import logging
 
 from django.contrib import messages
+from django.core.cache import cache
 from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.http.response import HttpResponseServerError
 from django.shortcuts import render, get_object_or_404
@@ -88,6 +89,57 @@ def lock_locations(func):
     return func_wrapper
 
 
+def import_locations_task_key(domain):
+    # cache key to track download_id of import_locations_async task
+    return 'import_locations_async-task-status-{domain}'.format(domain=domain)
+
+
+def pending_location_import_download_id(domain):
+    # Check if there is an unfinished import_locations_async
+    # If the task is pending returns download_id of the task else returns False
+    key = import_locations_task_key(domain)
+    download_id = cache.get(key)
+    if download_id:
+        try:
+            context = get_download_context(download_id)
+        except TaskFailedError:
+            return False
+        if context['is_ready']:
+            return False
+        else:
+            # task hasn't finished
+            return download_id
+    else:
+        return False
+
+
+def check_pending_locations_import(redirect=False):
+    """
+    Decorate any location edit View with this, to warn user to not edit if a location upload is
+        under process
+    If redirect is set to True, user is redirected to current location import status page
+    """
+    def _outer(view_fn):
+        def new_fn(request, domain, *args, **kwargs):
+            download_id = pending_location_import_download_id(domain)
+            if download_id:
+                status_url = reverse('location_import_status', args=[domain, download_id])
+                if redirect:
+                    # redirect to import status page
+                    return HttpResponseRedirect(status_url)
+                else:
+                    messages.warning(request, mark_safe(
+                        _("Organizations can't be edited until "
+                          "<a href='{}''>current bulk upload</a> "
+                          "has finished.").format(status_url)
+                    ))
+                    return view_fn(request, domain, *args, **kwargs)
+            else:
+                return view_fn(request, domain, *args, **kwargs)
+        return new_fn
+    return _outer
+
+
 class BaseLocationView(BaseDomainView):
     section_name = ugettext_lazy("Locations")
 
@@ -123,6 +175,7 @@ class LocationsListView(BaseLocationView):
 
     @use_jquery_ui
     @method_decorator(require_can_edit_commcare_users)
+    @method_decorator(check_pending_locations_import())
     def dispatch(self, request, *args, **kwargs):
         return super(LocationsListView, self).dispatch(request, *args, **kwargs)
 
@@ -178,6 +231,7 @@ class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
     template_name = "custom_data_fields/custom_data_fields.html"
 
     @method_decorator(is_locations_admin)
+    @method_decorator(check_pending_locations_import())
     def dispatch(self, request, *args, **kwargs):
         return super(LocationFieldsView, self).dispatch(request, *args, **kwargs)
 
@@ -189,6 +243,7 @@ class LocationTypesView(BaseLocationView):
 
     @method_decorator(can_edit_location_types)
     @use_jquery_ui
+    @method_decorator(check_pending_locations_import())
     def dispatch(self, request, *args, **kwargs):
         return super(LocationTypesView, self).dispatch(request, *args, **kwargs)
 
@@ -375,6 +430,7 @@ class NewLocationView(BaseLocationView):
     form_tab = 'basic'
 
     @use_multiselect
+    @method_decorator(check_pending_locations_import(redirect=True))
     def dispatch(self, request, *args, **kwargs):
         return super(NewLocationView, self).dispatch(request, *args, **kwargs)
 
@@ -745,6 +801,7 @@ class LocationImportView(BaseLocationView):
     template_name = 'locations/manage/import.html'
 
     @method_decorator(can_edit_any_location)
+    @method_decorator(check_pending_locations_import(redirect=True))
     def dispatch(self, request, *args, **kwargs):
         return super(LocationImportView, self).dispatch(request, *args, **kwargs)
 
@@ -786,15 +843,18 @@ class LocationImportView(BaseLocationView):
         domain = args[0]
 
         # stash this in soil to make it easier to pass to celery
+        ONE_HOUR = 1*60*60
         file_ref = expose_cached_download(
             upload.read(),
-            expiry=1*60*60,
+            expiry=ONE_HOUR,
             file_extension=file_extention_from_filename(upload.name),
         )
         task = import_locations_async.delay(
             domain,
             file_ref.download_id,
         )
+        # put the file_ref.download_id in cache to lookup from elsewhere
+        cache.set(import_locations_task_key(domain), file_ref.download_id, ONE_HOUR)
         file_ref.set_task(task)
         return HttpResponseRedirect(
             reverse(
@@ -809,7 +869,7 @@ def location_importer_job_poll(request, domain, download_id,
                                template="style/partials/download_status.html"):
     template = "locations/manage/partials/locations_upload_status.html"
     try:
-        context = get_download_context(download_id, check_state=True)
+        context = get_download_context(download_id)
     except TaskFailedError:
         return HttpResponseServerError()
 

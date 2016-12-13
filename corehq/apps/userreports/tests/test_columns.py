@@ -221,7 +221,7 @@ class TestExpandedColumn(TestCase):
             'blueberry'
         ])
         vals = get_distinct_values(data_source.config, column)[0]
-        self.assertSetEqual(set(vals), set(['apple', 'banana', 'blueberry']))
+        self.assertListEqual(vals, ['apple', 'banana', 'blueberry'])
 
     @run_with_all_ucr_backends
     def test_no_distinct_values(self):

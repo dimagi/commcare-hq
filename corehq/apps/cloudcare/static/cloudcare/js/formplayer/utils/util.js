@@ -55,9 +55,10 @@ Util.currentUrlToObject = function () {
     }
 };
 
-Util.setUrlToObject = function (urlObject) {
+Util.setUrlToObject = function (urlObject, replace) {
+    replace = replace || false;
     var encodedUrl = Util.objectToEncodedUrl(urlObject.toJson());
-    FormplayerFrontend.navigate(encodedUrl);
+    FormplayerFrontend.navigate(encodedUrl, { replace: replace });
 };
 
 Util.doUrlAction = function (actionCallback) {

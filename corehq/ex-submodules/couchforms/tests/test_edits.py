@@ -10,7 +10,7 @@ from casexml.apps.case.mock import CaseBlock
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
-from couchforms.models import UnfinishedSubmissionStub, XFormInstance
+from couchforms.models import UnfinishedSubmissionStub
 
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends, post_xform
@@ -71,6 +71,25 @@ class EditFormTest(TestCase, TestFileMixin):
             original_xml
         )
         self.assertEqual(xform.get_xml(), edit_xml)
+
+    @run_with_all_backends
+    def test_edit_an_error(self):
+        form_id = uuid.uuid4().hex
+        case_block = CaseBlock(
+            create=True,
+            case_id='',  # this should cause the submission to error
+            case_type='person',
+            owner_id='some-owner',
+        )
+
+        form, _ = submit_case_blocks(case_block.as_string(), domain=self.domain, form_id=form_id)
+        self.assertTrue(form.is_error)
+        self.assertTrue('IllegalCaseId' in form.problem)
+
+        case_block.case_id = uuid.uuid4().hex
+        form, _ = submit_case_blocks(case_block.as_string(), domain=self.domain, form_id=form_id)
+        self.assertFalse(form.is_error)
+        self.assertEqual(None, getattr(form, 'problem', None))
 
     @run_with_all_backends
     def test_broken_save(self):

@@ -41,7 +41,8 @@ hqDefine('app_manager/js/preview_app.js', function() {
         if (_private.isFormdesigner) {
             $(module.SELECTORS.FORMDESIGNER).addClass('offset-for-preview');
         }
-
+        window.analytics.workflow("[app-preview] Clicked Show App Preview");
+        window.analytics.usage("[app-preview] Clicked Show App Preview");
 
     };
     _private.hideAppPreview = function() {
@@ -50,6 +51,8 @@ hqDefine('app_manager/js/preview_app.js', function() {
         if (_private.isFormdesigner) {
             $(module.SELECTORS.FORMDESIGNER).removeClass('offset-for-preview');
         }
+        window.analytics.workflow("[app-preview] Clicked Hide App Preview");
+        window.analytics.usage("[app-preview] Clicked Hide App Preview");
     };
 
     _private.tabletView = function() {
@@ -57,6 +60,7 @@ hqDefine('app_manager/js/preview_app.js', function() {
         $appPreview.addClass('preview-tablet-mode');
         $(module.SELECTORS.OFFSET_FOR_PREVIEW).addClass('offset-for-tablet');
         _private.triggerPreviewEvent('tablet-view');
+        window.analytics.workflow('[app-preview] User turned on tablet mode');
     };
 
     _private.phoneView = function() {
@@ -64,6 +68,7 @@ hqDefine('app_manager/js/preview_app.js', function() {
         $appPreview.removeClass('preview-tablet-mode');
         $(module.SELECTORS.OFFSET_FOR_PREVIEW).removeClass('offset-for-tablet');
         _private.triggerPreviewEvent('phone-view');
+        window.analytics.workflow('[app-preview] User turned off tablet mode');
     };
 
     _private.navigateBack = function() {
@@ -72,6 +77,10 @@ hqDefine('app_manager/js/preview_app.js', function() {
 
     _private.refresh = function() {
         _private.triggerPreviewEvent('refresh');
+
+        window.analytics.workflow("[app-preview] Clicked Refresh App Preview");
+        window.analytics.usage("[app-preview] Clicked Refresh App Preview");
+
     };
 
     _private.triggerPreviewEvent = function(action) {

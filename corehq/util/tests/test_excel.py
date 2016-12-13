@@ -3,7 +3,7 @@ import os
 from django.test import SimpleTestCase
 
 from corehq.util.test_utils import TestFileMixin
-from corehq.util.spreadsheets_v1.excel import WorkbookJSONReader
+from corehq.util.workbook_json.excel import WorkbookJSONReader
 
 
 class WorkbookJSONReaderTest(SimpleTestCase, TestFileMixin):

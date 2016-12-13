@@ -1371,7 +1371,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
             LATE_FLAG_EXTRA_LABEL: ' Days late ',
             FILTER_XPATH_EXTRA_LABEL: '',
             INVISIBLE_FORMAT: 'Search Only',
-            ADDRESS_FORMAT: 'Address (Android/CloudCare)',
+            ADDRESS_FORMAT: 'Address',
             PICTURE_FORMAT: 'Picture',
             AUDIO_FORMAT: 'Audio',
             CALC_XPATH_FORMAT: 'Calculate',

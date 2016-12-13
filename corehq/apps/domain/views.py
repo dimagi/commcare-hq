@@ -389,6 +389,7 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
     def basic_info_form(self):
         initial = {
             'hr_name': self.domain_object.hr_name or self.domain_object.name,
+            'project_description': self.domain_object.project_description,
             'default_timezone': self.domain_object.default_timezone,
             'case_sharing': json.dumps(self.domain_object.case_sharing),
             'call_center_enabled': self.domain_object.call_center_config.enabled,
@@ -397,32 +398,24 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
             'call_center_case_type': self.domain_object.call_center_config.case_type,
             'commtrack_enabled': self.domain_object.commtrack_enabled,
         }
-        if self.request.method == 'POST':
-            if self.can_user_see_meta:
-                return DomainMetadataForm(
-                    self.request.POST,
-                    self.request.FILES,
-                    domain=self.domain_object,
-                    can_use_custom_logo=self.can_use_custom_logo,
-                )
-            return DomainGlobalSettingsForm(
-                self.request.POST,
-                self.request.FILES,
-                domain=self.domain_object,
-                can_use_custom_logo=self.can_use_custom_logo
-            )
         if self.can_user_see_meta:
             initial.update({
                 'is_test': self.domain_object.is_test,
                 'cloudcare_releases': self.domain_object.cloudcare_releases,
             })
+            form_cls = DomainMetadataForm
+        else:
+            form_cls = DomainGlobalSettingsForm
 
-            return DomainMetadataForm(
-                can_use_custom_logo=self.can_use_custom_logo,
+        if self.request.method == 'POST':
+            return form_cls(
+                self.request.POST,
+                self.request.FILES,
                 domain=self.domain_object,
-                initial=initial
+                can_use_custom_logo=self.can_use_custom_logo,
             )
-        return DomainGlobalSettingsForm(
+
+        return form_cls(
             initial=initial,
             domain=self.domain_object,
             can_use_custom_logo=self.can_use_custom_logo
@@ -457,6 +450,8 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
                 messages.success(request, _("Project settings saved!"))
             else:
                 messages.error(request, _("There seems to have been an error saving your settings. Please try again!"))
+            return HttpResponseRedirect(self.page_url)
+
         return self.get(request, *args, **kwargs)
 
 

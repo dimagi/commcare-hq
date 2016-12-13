@@ -216,9 +216,17 @@ class TermsAggregation(Aggregation):
         if sort_field:
             self.order(sort_field, order)
 
-    def order(self, field, order="desc"):
+    def order(self, field, order="desc", reset=True):
         query = deepcopy(self)
-        query.body['order'] = {field: order}
+        order_field = {field: order}
+
+        if reset:
+            query.body['order'] = [order_field]
+        else:
+            if not query.body.get('order'):
+                query.body['order'] = []
+            query.body['order'].append(order_field)
+
         return query
 
     def size(self, size):

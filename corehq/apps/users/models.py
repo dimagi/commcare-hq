@@ -2173,7 +2173,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         if loc_ids:
             return SQLLocation.objects.get_locations(loc_ids)
         else:
-            return []
+            return SQLLocation.objects.none()
 
     @memoized
     def get_location(self, domain):

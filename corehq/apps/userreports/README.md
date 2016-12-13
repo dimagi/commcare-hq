@@ -1459,6 +1459,8 @@ In most simple reports you will only have one level of aggregation. See examples
 
 ### No aggregation
 
+Note that if you use `is_primary_key` in any of your columns, you must include all primary key columns here.
+
 ```json
 ["doc_id"]
 ```
