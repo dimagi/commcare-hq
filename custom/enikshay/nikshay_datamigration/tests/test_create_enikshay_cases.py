@@ -33,6 +33,8 @@ class TestCreateEnikshayCases(TestCase):
             atbtreatment='',
             Ptype=3,
             pcategory=4,
+            cname='Secondary name',
+            caddress='Secondary address',
 
         )
         Outcome.objects.create(
@@ -105,6 +107,7 @@ class TestCreateEnikshayCases(TestCase):
                 ('permanent_address_district_choice', ''),
                 ('permanent_address_state_choice', 'default'),
                 ('phi', '2'),
+                ('secondary_contact_name_address', 'Secondary name, Secondary address'),
                 ('sex', 'male'),
                 ('tu_choice', '1'),
             ]),

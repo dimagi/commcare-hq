@@ -64,6 +64,8 @@ class EnikshayCaseFactory(object):
                     'current_address_district_choice': self.patient_detail.Dtocode,
                     'permanent_address_district_choice': self.patient_detail.Dtocode,
 
+                    'secondary_contact_name_address': self.patient_detail.cname + ', ' + self.patient_detail.caddress,
+
                     'tu_choice': self.patient_detail.Tbunitcode,
 
                     'phi': self.patient_detail.PHI,
