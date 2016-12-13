@@ -27,7 +27,7 @@ def add_cases_to_case_group(domain, case_group_id, uploaded_data):
             response['errors'].append(_("Could not find case with identifier '%s'." % identifier))
         elif case.doc_type != 'CommCareCase':
             response['errors'].append(_("It looks like the case with identifier '%s' is deleted" % identifier))
-        elif case._id in case_group.cases:
+        elif case.case_id in case_group.cases:
             response['errors'].append(_("A case with identifier %s already exists in this group." % identifier))
         else:
             case_group.cases.append(case.case_id)
