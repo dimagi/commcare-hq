@@ -848,7 +848,8 @@ class ConfigureReport(ReportBuilderView):
                     report_data['aggregate'], report_data['columns'], self.report_column_options
                 ),
                 columns=list(chain.from_iterable(
-                    to_report_columns(c, i, self.report_column_options) for i, c in enumerate(report_data['columns'])
+                    to_report_columns(c, i, self.report_column_options)
+                    for i, c in enumerate(report_data['columns'])
                 )),
                 filters=[],  # TODO: report_data['user_filters'] + report_data['default_filters']
                 configured_charts=get_report_charts(report_data),
