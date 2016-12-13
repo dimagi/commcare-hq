@@ -9,7 +9,7 @@ from corehq.blobs.util import random_url_id
 from corehq.util.files import file_extention_from_filename
 from dimagi.utils.decorators.memoized import memoized
 
-BUCKET_PREFIX = 'case_importer'
+BUCKET = 'case_importer'
 
 
 class PersistentFileStore(object):
@@ -27,17 +27,14 @@ class PersistentFileStore(object):
             must contain columns identifier, filename, length
         """
 
-        self._bucket_prefix = bucket
+        self._bucket = bucket
         self._db = get_blob_db()
         self._meta_model = meta_model
 
-    def _get_bucket(self, padding):
-        return '{}/{}'.format(self._bucket_prefix, padding)
-
     def write_file(self, f, filename):
-        padding = random_url_id(16)
-        blob_info = self._db.put(f, bucket=self._get_bucket(padding))
-        identifier = '{}/{}'.format(padding, blob_info.identifier)
+        identifier = random_url_id(16)
+        blob_info = self._db.put(f, bucket=self._bucket, identifier=identifier)
+        assert identifier == blob_info.identifier
         file_meta = self._meta_model(identifier=identifier, filename=filename,
                                      length=blob_info.length)
         file_meta.save()
@@ -47,8 +44,7 @@ class PersistentFileStore(object):
     def get_tempfile_ref_for_contents(self, identifier):
         filename = self.get_filename(identifier)
         suffix = file_extention_from_filename(filename)
-        padding, blob_identifier = identifier.split('/')
-        content = self._db.get(blob_identifier, bucket=self._get_bucket(padding)).read()
+        content = self._db.get(identifier, bucket=self._bucket).read()
         return make_temp_file(content, suffix)
 
     @memoized
@@ -109,5 +105,5 @@ def make_temp_file(content, suffix):
     return filename
 
 
-persistent_file_store = PersistentFileStore(BUCKET_PREFIX, CaseUploadFileMeta)
-transient_file_store = TransientFileStore(BUCKET_PREFIX, timeout=1 * 60 * 60)
+persistent_file_store = PersistentFileStore(BUCKET, CaseUploadFileMeta)
+transient_file_store = TransientFileStore(BUCKET, timeout=1 * 60 * 60)
