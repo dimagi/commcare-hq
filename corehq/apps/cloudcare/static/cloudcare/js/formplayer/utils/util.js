@@ -96,6 +96,7 @@ Util.getDisplayOptionsKey = function() {
         user.environment,
         user.domain,
         user.username,
+        'displayOptions',
     ].join(':');
 };
 
