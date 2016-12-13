@@ -5905,11 +5905,9 @@ class RemoteApp(ApplicationBase):
 
 class LinkedApplication(Application):
     """
-    A wrapper for a url pointing to a suite or profile file. This allows you to
-    write all the files for an app by hand, and then give the url to app_manager
-    and let it package everything together for you.
-
+    An app that can pull changes from an app in a different domain.
     """
+    # This is the id of the master application
     master = StringProperty()
 
 

@@ -308,7 +308,7 @@ def copy_app(request, domain):
                 app = get_app(None, app_id)
                 if domain not in app.linked_whitelist:
                     app.linked_whitelist.append(domain)
-                app.save()
+                    app.save()
             app_copy = import_app_util(app_id_or_source, domain, extra_properties)
             return back_to_main(request, app_copy.domain, app_id=app_copy._id)
 
