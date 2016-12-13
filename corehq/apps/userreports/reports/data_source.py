@@ -7,7 +7,7 @@ from corehq.apps.userreports.util import get_backend_id
 
 class ConfigurableReportDataSource(object):
 
-    def __init__(self, domain, config_or_config_id, filters, aggregation_columns, columns, order_by):
+    def __init__(self, domain, config_or_config_id, filters, aggregation_columns, columns, order_by, backend=None):
         self.domain = domain
         self._data_source = None
         if isinstance(config_or_config_id, DataSourceConfiguration):
@@ -22,8 +22,10 @@ class ConfigurableReportDataSource(object):
         self._order_by = order_by
         self._aggregation_columns = aggregation_columns
         self._columns = columns
-        self._override_backend = False
-        self._backend = None
+        if backend:
+            self.override_backend_id(backend)
+        else:
+            self._backend = None
 
     @property
     def backend(self):
@@ -106,3 +108,4 @@ class ConfigurableReportDataSource(object):
         assert get_backend_id(self.config, can_handle_laboratory=True) == UCR_LABORATORY_BACKEND
         assert new_backend == UCR_ES_BACKEND or new_backend == UCR_SQL_BACKEND
         self._backend = new_backend
+        self.config.backend_id = new_backend
