@@ -1,11 +1,12 @@
 import urllib
-from collections import namedtuple
+from collections import namedtuple, OrderedDict
 import datetime
 import functools
 import json
 import os
 import tempfile
 import uuid
+from itertools import chain
 
 from django.conf import settings
 from django.contrib import messages
@@ -29,7 +30,8 @@ from corehq.apps.analytics.tasks import update_hubspot_properties
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
-from corehq.apps.userreports.reports.builder.columns import ColumnOption
+from corehq.apps.userreports.reports.builder.columns import ColumnOption, MultiselectQuestionColumnOption, \
+    QuestionColumnOption
 from corehq.util import reverse
 from corehq.util.quickcache import quickcache
 from couchexport.export import export_from_tables
@@ -600,7 +602,7 @@ class EditReportInBuilder(View):
         raise Http404("Report was not created by the report builder")
 
 
-def to_report_column(column, index):
+def to_report_columns(column, index, column_options):
     """
     column is the JSON that we get when saving or previewing a report. Return a column spec we can use to create a
     ReportConfiguration.
@@ -618,8 +620,33 @@ def to_report_column(column, index):
     # Some wrangling in order to reused ColumnOption
     reverse_map = {v: k for k, v in ColumnOption.aggregation_map.items()}
     aggregation = reverse_map[column.get('aggregation') or 'simple']
-    column_option = ColumnOption('unused', 'unused', column['column_id'], not column['is_numeric'])
-    return column_option.to_column_dicts(index, column['label'], aggregation)[0]
+    return column_options[column['column_id']].to_column_dicts(index, column['label'], aggregation)
+
+
+def _get_aggregation_columns(aggregate, columns, column_options):
+    if aggregate:
+        aggregated_report_columns = [c['column_id'] for c in columns if c['is_group_by_column']]
+        aggregation_columns = [column_options[c].indicator_id for c in aggregated_report_columns]
+    else:
+        aggregation_columns = ["doc_id"]
+    return aggregation_columns
+
+
+def _report_column_options(domain, application, source_type, source):
+        builder = DataSourceBuilder(domain, application, source_type, source)
+        options = OrderedDict()
+        for id_, prop in builder.data_source_properties.iteritems():
+            if prop.type == "question":
+                if prop.source['type'] == "MSelect":
+                    option = MultiselectQuestionColumnOption(id_, prop.text, prop.column_id, prop.source)
+                else:
+                    option = QuestionColumnOption(id_, prop.text, prop.column_id, prop.is_non_numeric,
+                                                  prop.source)
+            else:
+                # meta properties
+                option = ColumnOption(id_, prop.text, prop.column_id, prop.is_non_numeric)
+            options[id_] = option
+        return options
 
 
 class ConfigureReport(ReportBuilderView):
@@ -634,7 +661,22 @@ class ConfigureReport(ReportBuilderView):
     @use_datatables
     @use_nvd3
     def dispatch(self, request, *args, **kwargs):
+        if self.existing_report:
+            self.source_type = {
+                "CommCareCase": "case",
+                "XFormInstance": "form"
+            }[self.existing_report.config.referenced_doc_type]
+            self.source_id = self.existing_report.config.meta.build.source_id
+            self.app_id = self.existing_report.config.meta.build.app_id
+            self.app = Application.get(self.app_id) if self.app_id else None
+        else:
+            self.app_id = self.request.GET['application']
+            self.app = Application.get(self.app_id)
+            self.source_type = self.request.GET['source_type']
+            self.source_id = self.request.GET['source']
+
         return super(ConfigureReport, self).dispatch(request, *args, **kwargs)
+
 
     @property
     def page_name(self):
@@ -648,40 +690,6 @@ class ConfigureReport(ReportBuilderView):
             request = request or self.request
             return request.GET.get('report_name', '')
 
-    def _get_application(self, request=None):
-        if self.existing_report:
-            data_source_config = DataSourceConfiguration.get(self.existing_report.config_id)
-            app_id = data_source_config.meta.build.app_id
-        else:
-            request = request or self.request
-            app_id = request.GET['application']
-        return Application.get(app_id)
-
-    def _get_source_type(self, request=None):
-        """
-        Returns "case" or "form"
-        """
-        if self.existing_report:
-            data_source_config = DataSourceConfiguration.get(self.existing_report.config_id)
-            if data_source_config.referenced_doc_type == 'XFormInstance':
-                return 'form'
-            elif data_source_config.referenced_doc_type == 'CommCareCase':
-                return 'case'
-        else:
-            request = request or self.request
-            return request.GET['source_type']
-
-    def _get_source_id(self, request=None):
-        """
-        Returns the case type if source_type == 'case', or form ID if source_type == 'form'
-        """
-        if self.existing_report:
-            data_source_config = DataSourceConfiguration.get(self.existing_report.config_id)
-            return data_source_config.meta.build.source_id
-        else:
-            request = request or self.request
-            return request.GET['source']
-
     def _get_data_source(self, request=None):
         """
         Return the ID of the report's DataSourceConfiguration
@@ -692,43 +700,29 @@ class ConfigureReport(ReportBuilderView):
             request = request or self.request
             return request.GET['data_source']
 
-    def get_columns(self):
-        builder = DataSourceBuilder(
+    @property
+    @memoized
+    def report_column_options(self):
+        return _report_column_options(
             self.domain,
-            self._get_application(),
-            self._get_source_type(),
-            self._get_source_id()
+            self.app,
+            self.source_type,
+            self.source_id,
         )
-        return [{
-            'column_id': v.column_id,
-            'name': k,
-            'label': v.text,
-            'is_numeric': not v.is_non_numeric,
-        } for k, v in builder.data_source_properties.iteritems()]
 
-    # TODO: OR ...
-    # @property
-    # @memoized
-    # def report_column_options(self):
-    #     options = OrderedDict()
-    #     for id_, prop in self.data_source_properties.iteritems():
-    #         if prop.type == "question":
-    #             if prop.source['type'] == "MSelect":
-    #                 option = MultiselectQuestionColumnOption(id_, prop.text, prop.column_id, prop.source)
-    #             else:
-    #                 option = QuestionColumnOption(id_, prop.text, prop.column_id, prop.is_non_numeric,
-    #                                               prop.source)
-    #         else:
-    #             # meta properties
-    #             option = ColumnOption(id_, prop.text, prop.column_id, prop.is_non_numeric)
-    #         options[id_] = option
-    #     return options
-    # TODO: Except we want to be able to choose a column more than once, each time with a unique ID. ...
-    #       ... Generated client-side?
-    #
-    # def get_columns(self):
-    #     columns = self.report_column_options
-    #     return columns.values()
+    def get_columns(self):
+        columns = self.report_column_options
+        # TODO: All the fields are called different things. Let's change it on the front end eventually,
+        #       but re-map for now to see if its working
+
+        def remap_fields(column):
+            return {
+                'column_id': column.id,
+                'name': column.id,
+                'label': column.display,
+                'is_numeric': not column._is_non_numeric  # TODO: these are not the same things
+            }
+        return map(remap_fields, columns.values())
 
     @property
     def page_context(self):
@@ -737,7 +731,9 @@ class ConfigureReport(ReportBuilderView):
                 "title": self.page_name
             },
             'columns': self.get_columns(),
-            'source_type': self._get_source_type(),
+            'source_type': self.source_type,
+            'source_id': self.source_id,
+            'application': self.app_id,
             'data_source_url': reverse(ReportPreview.urlname,
                                        args=[self.domain, self._get_data_source()]),
             'report_builder_events': self.request.session.pop(REPORT_BUILDER_EVENTS_KEY, [])
@@ -834,30 +830,27 @@ class ConfigureReport(ReportBuilderView):
 
         self._confirm_report_limit()
 
-        report_name = self._get_report_name(request)
-        source_type = self._get_source_type(request)
-        report_source_id = self._get_source_id(request)
-        app = self._get_application(request)
-
         report_data = json.loads(request.body)
 
-        ds_builder = DataSourceBuilder(app.domain, app, source_type, report_source_id)
-        ds_config_kwargs = get_data_source_configuration_kwargs(ds_builder, app, report_source_id,
+        ds_builder = DataSourceBuilder(self.domain, self.app, self.source_type, self.source_id)
+        ds_config_kwargs = get_data_source_configuration_kwargs(ds_builder, self.app, self.source_id,
                                                                 report_data['columns'])
-        data_source_config_id = build_data_source(app.domain, ds_config_kwargs)
+        data_source_config_id = build_data_source(self.domain, ds_config_kwargs)
 
         self._confirm_report_limit()
-        if report_data['aggregate']:
-            aggregation_columns = [c['column_id'] for c in report_data['columns'] if c['is_group_by_column']]
-        else:
-            aggregation_columns = []
+
         try:
             report_configuration = ReportConfiguration(
-                domain=app.domain,
+                domain=self.domain,
                 config_id=data_source_config_id,
-                title=report_name,
-                aggregation_columns=aggregation_columns,
-                columns=[to_report_column(c, i) for i, c in enumerate(report_data['columns'])],
+                title=self._get_report_name(request),
+                aggregation_columns=_get_aggregation_columns(
+                    report_data['aggregate'], report_data['columns'], self.report_column_options
+                ),
+                columns=list(chain.from_iterable(
+                    to_report_columns(c, i, self.report_column_options)
+                    for i, c in enumerate(report_data['columns'])
+                )),
                 filters=[],  # TODO: report_data['user_filters'] + report_data['default_filters']
                 configured_charts=get_report_charts(report_data),
                 report_meta=ReportMeta(
@@ -899,17 +892,21 @@ class ReportPreview(BaseDomainView):
 
     def post(self, request, domain, data_source):
         report_data = json.loads(urllib.unquote(request.body))
-        if report_data['aggregate']:
-            aggregation_columns = [c['column_id'] for c in report_data['columns'] if c['is_group_by_column']]
-        else:
-            aggregation_columns = ['doc_id']
+        column_options = _report_column_options(
+            self.domain, Application.get(report_data['app']), report_data['source_type'], report_data['source_id']
+        )
+
         table = ConfigurableReport.report_config_table(
             domain=domain,
             config_id=data_source,
             title='{}_{}_{}'.format(TEMP_REPORT_PREFIX, domain, data_source),
             description='',
-            aggregation_columns=aggregation_columns,
-            columns=[to_report_column(c, i) for i, c in enumerate(report_data['columns'])],
+            aggregation_columns=_get_aggregation_columns(
+                report_data['aggregate'], report_data['columns'], column_options
+            ),
+            columns=list(chain.from_iterable(
+                to_report_columns(c, i, column_options) for i, c in enumerate(report_data['columns'])
+            )),
             report_meta=ReportMeta(created_by_builder=True),
         )  # is None if report configuration doesn't make sense or data source has expired
         if table:
