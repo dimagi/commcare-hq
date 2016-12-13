@@ -150,6 +150,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         'is_onboarding_domain': domain_obj.is_onboarding_domain,
         'show_live_preview': (
             toggles.PREVIEW_APP.enabled(domain)
+            or toggles.PREVIEW_APP.enabled(request.couch_user.username)
             or (domain_obj.is_onboarding_domain
                 and live_preview_ab.version == ab_tests.LIVE_PREVIEW_ENABLED)
         )
