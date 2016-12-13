@@ -33,8 +33,8 @@ msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-11-29 17:08+0000\n"
-"PO-Revision-Date: 2016-11-29 17:24+0000\n"
-"Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
+"PO-Revision-Date: 2016-12-08 18:12+0000\n"
+"Last-Translator: Aissetou Sawadogo <ais107@hotmail.com>\n"
 "Language-Team: French (http://www.transifex.com/dimagi/commcare-hq/language/fr/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -24846,12 +24846,12 @@ msgstr ""
 #: corehq/apps/sms/messages.py:76
 #, python-brace-format
 msgid "CommCare user {0} already exists"
-msgstr ""
+msgstr "L'utilisateur CommCare {0} existe déjà"
 
 #: corehq/apps/sms/messages.py:77
 #, python-brace-format
 msgid "Username {0} is too long.  Must be under {1} characters."
-msgstr ""
+msgstr "Le nom d’utilisateur {0} est trop long. Il doit contenir moins de {1} caractères. "
 
 #: corehq/apps/sms/messages.py:78
 #, python-brace-format
@@ -25242,7 +25242,7 @@ msgstr ""
 
 #: corehq/apps/sms/templates/sms/manage_registration_invitations.html:69
 msgid "click here"
-msgstr ""
+msgstr "Cliquez ici"
 
 #: corehq/apps/sms/templates/sms/message_tester.html:8
 msgid "Simulate Inbound Message from"
@@ -25450,11 +25450,11 @@ msgstr ""
 
 #: corehq/apps/sms/views.py:1781
 msgid "Update failed. We're looking into it."
-msgstr ""
+msgstr "La mise à jour a échouée. Nous tentons de déterminer de quoi il s'agit."
 
 #: corehq/apps/sms/views.py:1789 corehq/apps/sms/views.py:1793
 msgid "SMS Settings"
-msgstr ""
+msgstr "Paramètres des SMS"
 
 #: corehq/apps/sms/views.py:1969
 msgid "Manage Registration Invitations"
@@ -25462,7 +25462,7 @@ msgstr ""
 
 #: corehq/apps/sms/views.py:1971
 msgid "invitations per page"
-msgstr ""
+msgstr "Invitations par page"
 
 #: corehq/apps/sms/views.py:1972
 msgid "No registration invitations sent yet."
@@ -25470,24 +25470,24 @@ msgstr ""
 
 #: corehq/apps/sms/views.py:1973
 msgid "Loading invitations..."
-msgstr ""
+msgstr "Chargement des invitations..."
 
 #: corehq/apps/sms/views.py:2014
 msgid "Created On"
-msgstr ""
+msgstr "Créé le"
 
 #: corehq/apps/sms/views.py:2017
 msgid "Expiration Date"
-msgstr ""
+msgstr "Date d'expiration"
 
 #: corehq/apps/sms/views.py:2019
 msgid "Phone Type"
-msgstr ""
+msgstr "Modèle de téléphone"
 
 #: corehq/apps/sms/views.py:2028
 #, python-format
 msgid "Registered on %(date)s"
-msgstr ""
+msgstr "Inscrit le %(date)s"
 
 #: corehq/apps/sms/views.py:2032
 #: corehq/apps/users/templates/users/web_users.html:373
@@ -25497,7 +25497,7 @@ msgstr "Expiré"
 #: corehq/apps/sms/views.py:2084
 #, python-format
 msgid "Invitations sent to: %(phone_numbers)s"
-msgstr ""
+msgstr "Invitations envoyées à: %(phone_numbers)s"
 
 #: corehq/apps/sms/views.py:2091
 #, python-format
@@ -25511,7 +25511,7 @@ msgstr ""
 msgid ""
 "Invitations could not be sent to: %(phone_numbers)s. These number(s) are "
 "already in use."
-msgstr ""
+msgstr "Les invitations n'ont pas pu être envoyées à:  %(phone_numbers)s. Ce(s) numéro(s) sont déjà utilisés."
 
 #: corehq/apps/smsbillables/async_handlers.py:48
 #, python-format
@@ -25540,11 +25540,11 @@ msgstr ""
 
 #: corehq/apps/smsbillables/filters.py:62
 msgid "Gateway Type"
-msgstr ""
+msgstr "Type de Passerelle"
 
 #: corehq/apps/smsbillables/filters.py:72
 msgid "Specific Gateway"
-msgstr ""
+msgstr "Passerelle spécifique"
 
 #: corehq/apps/smsbillables/filters.py:89
 msgid "Country Code"
@@ -25560,16 +25560,16 @@ msgstr ""
 
 #: corehq/apps/smsforms/models.py:79
 msgid "Not Finished"
-msgstr ""
+msgstr "Non terminé"
 
 #: corehq/apps/style/crispy.py:81
 msgid "Step {} of {}"
-msgstr ""
+msgstr "Etape {} de {}"
 
 #: corehq/apps/style/templates/style/base.html:228
 #: corehq/apps/style/templates/style/base.html:248
 msgid "Menu"
-msgstr ""
+msgstr "Menu"
 
 #: corehq/apps/style/templates/style/base.html:270
 msgid "This is a snapshot of "
@@ -25577,7 +25577,7 @@ msgstr "Voici un instantané de "
 
 #: corehq/apps/style/templates/style/base.html:276
 msgid "CommCare HQ does not work well with Internet Explorer."
-msgstr ""
+msgstr "CommCare HQ ne marche pas bien avec Internet Explorer."
 
 #: corehq/apps/style/templates/style/base.html:278
 msgid ""
@@ -25638,11 +25638,11 @@ msgstr ""
 
 #: corehq/apps/style/templates/style/includes/global_navigation_bar.html:26
 msgid "Logged in As"
-msgstr ""
+msgstr "Connecté en tant que"
 
 #: corehq/apps/style/templates/style/includes/global_navigation_bar.html:48
 msgid "Manage Project"
-msgstr ""
+msgstr "Gérer le Projet"
 
 #: corehq/apps/style/templates/style/includes/global_navigation_bar.html:63
 msgid "Support Options"
@@ -26631,11 +26631,11 @@ msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/report_error.html:15
 msgid "Technical Details:"
-msgstr ""
+msgstr "Détails techniques:"
 
 #: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:14
 msgid "Step 2 of 2"
-msgstr ""
+msgstr "Etape 2 sur 2"
 
 #: corehq/apps/userreports/templates/userreports/reportbuilder/configure_report.html:16
 msgid "Configure Report Settings"
@@ -26643,24 +26643,24 @@ msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/reportbuilder/data_source_select.html:9
 msgid "Step 1 of 2 - Select Data Source"
-msgstr ""
+msgstr "Etape 1 sur 2 - Sélectionnez la source des données"
 
 #: corehq/apps/userreports/templates/userreports/reportbuilder/report_type_select.html:55
 msgid ""
 "\n"
 "                Before creating a new report, you need an application.\n"
 "                "
-msgstr ""
+msgstr "\nAvant de créer un nouveau rapport, vous avez besoin d'une application."
 
 #: corehq/apps/userreports/templates/userreports/userreports_base.html:54
 msgid ""
 "Are you sure you want to do this? Deleting things is permanent and not "
 "undoable!"
-msgstr ""
+msgstr "Etes-vous certain de vouloir faire ça? Supprimer des choses est permanent et ne peut être défait!"
 
 #: corehq/apps/userreports/templates/userreports/userreports_base.html:63
 msgid "Edit Reports"
-msgstr ""
+msgstr "Editer les rapports"
 
 #: corehq/apps/userreports/templates/userreports/userreports_base.html:84
 msgid "Edit Data Sources"
@@ -35594,37 +35594,37 @@ msgstr ""
 
 #: custom/succeed/reports/patient_Info.py:24
 msgid "Transient Ischemic Attack (TIA)"
-msgstr ""
+msgstr "Ischémie cérébrale transitoire (ICT)"
 
 #: custom/succeed/reports/patient_Info.py:26
 msgid "Intracerebral Hemorrhage"
-msgstr ""
+msgstr "Hémorragie intracérébrale"
 
 #: custom/succeed/reports/patient_Info.py:37
 #, python-format
 msgid "Phone Number %s"
-msgstr ""
+msgstr "Numéro de téléphone %s"
 
 #: custom/succeed/reports/patient_Info.py:39
 msgid "Number: "
-msgstr ""
+msgstr "Nombre:"
 
 #: custom/succeed/reports/patient_Info.py:40
 msgid "Type: "
-msgstr ""
+msgstr "Type:"
 
 #: custom/succeed/reports/patient_Info.py:41
 msgid "Best time to call: "
-msgstr ""
+msgstr "Meilleur moment pour appeler:"
 
 #: custom/succeed/reports/patient_Info.py:42
 msgid "Can receive text messages? "
-msgstr ""
+msgstr "Peut recevoir des messages SMS"
 
 #: custom/succeed/reports/patient_Info.py:46
 #, python-format
 msgid "Family Member %s"
-msgstr ""
+msgstr "Membre de la famille %s"
 
 #: custom/succeed/reports/patient_Info.py:48
 msgid "Name: "
@@ -35632,7 +35632,7 @@ msgstr "Nom:"
 
 #: custom/succeed/reports/patient_Info.py:49
 msgid "Relationship: "
-msgstr ""
+msgstr "Relation:"
 
 #: custom/succeed/reports/patient_Info.py:50
 msgid "Phone number: "
@@ -36171,7 +36171,7 @@ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 #: docs/_build/html/_sources/translations.txt:104
 #, python-format
 msgid "This string will have %(value)s inside."
-msgstr ""
+msgstr "Cette chaîne aura %(value)s à l'intérieur."
 
 #: docs/_build/html/_sources/translations.txt:110
 #, python-format
@@ -36179,7 +36179,7 @@ msgid ""
 "\n"
 "        That will cost $ %(amount)s.\n"
 "    "
-msgstr ""
+msgstr "\nCeci vous coutera $ %(amount)s."
 
 #: docs/_build/html/_sources/translations.txt:118
 #, python-format
@@ -36187,7 +36187,7 @@ msgid ""
 "\n"
 "        This will have %(myvar)s inside.\n"
 "    "
-msgstr ""
+msgstr "\nCeci aura %(myvar)s à l'interieur."
 
 #: docs/_build/html/_sources/translations.txt:130
 msgid ""
@@ -36195,11 +36195,11 @@ msgid ""
 "        Manage Mobile Workers <small>for CommCare Mobile and\n"
 "        CommCare HQ Reports</small>\n"
 "    "
-msgstr ""
+msgstr "\nGérer les utilisateurs mobiles <small>pour CommCare Mobile et\nles rapports de CommCare HQ<small>"
 
 #: manage.py:82
 msgid "Enter valid JSON"
-msgstr ""
+msgstr "Saisir un JSON valide"
 
 #: submodules/auditcare-src/auditcare/forms.py:14
 msgid ""

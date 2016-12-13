@@ -5,14 +5,15 @@
 # Translators:
 # esoergel, 2016
 # esoergel, 2016
+# Gladys Teos <info@enestranslations.com>, 2016
 # Michelle B. Sultan <msultan@dimagi.com>, 2016
 msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-11-29 17:08+0000\n"
-"PO-Revision-Date: 2016-12-06 19:22+0000\n"
-"Last-Translator: Michelle B. Sultan <msultan@dimagi.com>\n"
+"PO-Revision-Date: 2016-12-13 19:30+0000\n"
+"Last-Translator: Gladys Teos <info@enestranslations.com>\n"
 "Language-Team: Spanish (http://www.transifex.com/dimagi/commcare-hq/language/es/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -22,7 +23,7 @@ msgstr ""
 
 #: corehq/apps/accounting/filters.py:45
 msgid "Account Type"
-msgstr ""
+msgstr "Tipo de cuenta"
 
 #: corehq/apps/accounting/filters.py:46 corehq/apps/accounting/filters.py:53
 #: corehq/apps/accounting/filters.py:61 corehq/apps/accounting/filters.py:166
@@ -42,11 +43,11 @@ msgstr ""
 #: corehq/apps/toggle_ui/templates/toggle/flags.html:56
 #: custom/fri/reports/filters.py:23 custom/m4change/filters.py:30
 msgid "All"
-msgstr ""
+msgstr "Todo"
 
 #: corehq/apps/accounting/filters.py:52
 msgid "Account Name"
-msgstr ""
+msgstr "Nombre de la cuenta"
 
 #: corehq/apps/accounting/filters.py:60 corehq/apps/accounting/filters.py:83
 #: corehq/apps/accounting/forms.py:389
@@ -61,12 +62,12 @@ msgstr ""
 #: corehq/apps/domain/forms.py:1528 corehq/apps/hqadmin/reports.py:1056
 #: corehq/apps/smsbillables/filters.py:30
 msgid "Project Space"
-msgstr ""
+msgstr "Espacio del proyecto"
 
 #: corehq/apps/accounting/filters.py:75 corehq/apps/accounting/forms.py:81
 #: corehq/apps/domain/forms.py:816
 msgid "Salesforce Account ID"
-msgstr ""
+msgstr "ID de la cuenta del equipo de ventas"
 
 #: corehq/apps/accounting/filters.py:76 corehq/apps/accounting/filters.py:84
 #: corehq/apps/accounting/filters.py:92 corehq/apps/accounting/filters.py:100
@@ -78,53 +79,53 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/credits_tab.html:46
 #: corehq/apps/sms/filters.py:69
 msgid "Any"
-msgstr ""
+msgstr "Cualquiera"
 
 #: corehq/apps/accounting/filters.py:91
 #: corehq/apps/accounting/templates/accounting/subscriptions_tab.html:19
 #: corehq/apps/domain/forms.py:815
 msgid "Salesforce Contract ID"
-msgstr ""
+msgstr "ID del contrato del equipo de ventas"
 
 #: corehq/apps/accounting/filters.py:99
 msgid "Active Status"
-msgstr ""
+msgstr "Estado activo"
 
 #: corehq/apps/accounting/filters.py:111
 msgid "Dimagi Contact"
-msgstr ""
+msgstr "Contacto Dimagi"
 
 #: corehq/apps/accounting/filters.py:119 corehq/apps/accounting/forms.py:108
 msgid "Entry Point"
-msgstr ""
+msgstr "Punto de entrada"
 
 #: corehq/apps/accounting/filters.py:126
 msgid "Invoicing Status"
-msgstr ""
+msgstr "Estado de facturación"
 
 #: corehq/apps/accounting/filters.py:132
 msgid "Send invoice"
-msgstr ""
+msgstr "Enviar factura"
 
 #: corehq/apps/accounting/filters.py:133
 msgid "Do not invoice"
-msgstr ""
+msgstr "No facturar"
 
 #: corehq/apps/accounting/filters.py:139
 msgid "Trial Status"
-msgstr ""
+msgstr "Estado de prueba"
 
 #: corehq/apps/accounting/filters.py:140
 msgid "Show All Subscriptions (including trials)"
-msgstr ""
+msgstr "Mostrar todas las suscripciones (incluso las de prueba)"
 
 #: corehq/apps/accounting/filters.py:144
 msgid "Show Non-Trial Subscriptions"
-msgstr ""
+msgstr "Mostrar las suscripciones pagadas"
 
 #: corehq/apps/accounting/filters.py:145
 msgid "Show Only Trial Subscriptions"
-msgstr ""
+msgstr "Mostrar solo las suscripciones de prueba"
 
 #: corehq/apps/accounting/filters.py:151 corehq/apps/accounting/forms.py:412
 #: corehq/apps/accounting/forms.py:743
@@ -142,37 +143,37 @@ msgstr ""
 #: corehq/apps/reports/standard/sms.py:661
 #: corehq/ex-submodules/casexml/apps/case/templatetags/case_tags.py:172
 msgid "Type"
-msgstr ""
+msgstr "Tipo"
 
 #: corehq/apps/accounting/filters.py:158 corehq/apps/accounting/forms.py:417
 #: corehq/apps/accounting/forms.py:748
 msgid "Discounted"
-msgstr ""
+msgstr "Descontado"
 
 #: corehq/apps/accounting/filters.py:165
 msgid "Is Hidden"
-msgstr ""
+msgstr "Está oculto"
 
 #: corehq/apps/accounting/filters.py:181
 #: corehq/apps/reports/standard/cases/basic.py:254
 msgid "Created By"
-msgstr ""
+msgstr "Creado por"
 
 #: corehq/apps/accounting/filters.py:182
 msgid "Anyone"
-msgstr ""
+msgstr "Cualquiera"
 
 #: corehq/apps/accounting/filters.py:295 corehq/apps/hqadmin/reports.py:676
 #: corehq/apps/hqadmin/reports.py:691
 msgid "Date Created"
-msgstr ""
+msgstr "Fecha de creación"
 
 #: corehq/apps/accounting/filters.py:300 corehq/apps/accounting/forms.py:372
 #: corehq/apps/accounting/templates/accounting/subscriptions_tab.html:16
 #: corehq/apps/domain/forms.py:1873
 #: corehq/apps/domain/templates/domain/confirm_subscription_renewal.html:21
 msgid "Start Date"
-msgstr ""
+msgstr "Fecha de inicio"
 
 #: corehq/apps/accounting/filters.py:305 corehq/apps/accounting/forms.py:375
 #: corehq/apps/accounting/forms.py:740
@@ -181,102 +182,102 @@ msgstr ""
 #: corehq/apps/reports/templates/reports/partials/save_reports_modal.html:91
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html:128
 msgid "End Date"
-msgstr ""
+msgstr "Fecha de finalización"
 
 #: corehq/apps/accounting/filters.py:358
 msgid "Statement Period"
-msgstr ""
+msgstr "Período del estado"
 
 #: corehq/apps/accounting/filters.py:379
 msgid "Due Date"
-msgstr ""
+msgstr "Fecha límite"
 
 #: corehq/apps/accounting/filters.py:384
 msgid "Plan Name"
-msgstr ""
+msgstr "Nombre del plan"
 
 #: corehq/apps/accounting/filters.py:392 corehq/apps/accounting/forms.py:385
 #: corehq/apps/accounting/forms.py:735
 msgid "Edition"
-msgstr ""
+msgstr "Edición"
 
 #: corehq/apps/accounting/filters.py:399
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html:18
 msgid "Visibility"
-msgstr ""
+msgstr "Visibilidad"
 
 #: corehq/apps/accounting/filters.py:406 corehq/apps/domain/views.py:920
 msgid "Payment Status"
-msgstr ""
+msgstr "Estado del pago"
 
 #: corehq/apps/accounting/filters.py:418
 msgid "Billing Contact Name"
-msgstr ""
+msgstr "Nombre del contacto de facturación"
 
 #: corehq/apps/accounting/filters.py:426
 msgid "Transaction ID"
-msgstr ""
+msgstr "ID de la transacción"
 
 #: corehq/apps/accounting/filters.py:427
 msgid "Usually begins with 'ch_'"
-msgstr ""
+msgstr "Generalmente comienza con 'ch_'"
 
 #: corehq/apps/accounting/forms.py:87
 msgid "Client Contact Emails"
-msgstr ""
+msgstr "Correos electrónicos de contacto del cliente"
 
 #: corehq/apps/accounting/forms.py:90
 msgid "Account is Active"
-msgstr ""
+msgstr "La cuenta está activa"
 
 #: corehq/apps/accounting/forms.py:95
 msgid "Transfer Subscriptions To"
-msgstr ""
+msgstr "Transferir las suscripciones a"
 
 #: corehq/apps/accounting/forms.py:97
 msgid ""
 "Transfer any existing subscriptions to the Billing Account specified here."
-msgstr ""
+msgstr "Transferir cualquier suscripción vigente a la Cuenta de facturación aquí especificada"
 
 #: corehq/apps/accounting/forms.py:103
 msgid "Dimagi Contact Email"
-msgstr ""
+msgstr "Correo electrónico de contacto de Dimagi"
 
 #: corehq/apps/accounting/forms.py:112
 msgid "Last Payment Method"
-msgstr ""
+msgstr "Último método de pago"
 
 #: corehq/apps/accounting/forms.py:116
 msgid "Prepay or Postpay"
-msgstr ""
+msgstr "Prepago o pospago"
 
 #: corehq/apps/accounting/forms.py:228
 #, python-format
 msgid "Name '%s' is already taken."
-msgstr ""
+msgstr "El nombre '%s' no está disponible. "
 
 #: corehq/apps/accounting/forms.py:242
 msgid ""
 "This account has subscriptions associated with it. Please specify a transfer"
 " account before deactivating."
-msgstr ""
+msgstr "Esta cuenta tiene suscripciones asociadas a ella. Por favor especifique una cuenta de transferencia antes de desactivarla."
 
 #: corehq/apps/accounting/forms.py:247
 msgid ""
 "The transfer account can't be the same one you're trying to deactivate."
-msgstr ""
+msgstr "La cuenta de transferencia debe ser diferente a la que intenta desactivar."
 
 #: corehq/apps/accounting/forms.py:369
 msgid "Billing Account"
-msgstr ""
+msgstr "Cuenta de facturación"
 
 #: corehq/apps/accounting/forms.py:378
 msgid "Delay Invoice Until"
-msgstr ""
+msgstr "Retrasar la factura hasta"
 
 #: corehq/apps/accounting/forms.py:381 corehq/apps/accounting/forms.py:731
 msgid "Core Product"
-msgstr ""
+msgstr "Producto principal"
 
 #: corehq/apps/accounting/forms.py:388
 #: corehq/apps/accounting/templates/accounting/invoice_email.html:32
@@ -286,53 +287,53 @@ msgstr ""
 #: corehq/apps/domain/forms.py:1855
 #: corehq/apps/domain/templates/domain/current_subscription.html:315
 msgid "Software Plan"
-msgstr ""
+msgstr "Plan del programa"
 
 #: corehq/apps/accounting/forms.py:391
 msgid "Salesforce Deployment ID"
-msgstr ""
+msgstr "ID de implementación del equipo de ventas"
 
 #: corehq/apps/accounting/forms.py:394
 #: corehq/apps/accounting/templates/accounting/subscriptions_tab.html:22
 msgid "Do Not Invoice"
-msgstr ""
+msgstr "No facturar"
 
 #: corehq/apps/accounting/forms.py:397
 msgid "Justify why \"Do Not Invoice\""
-msgstr ""
+msgstr "Explique por qué «No facturar»"
 
 #: corehq/apps/accounting/forms.py:402
 msgid "Auto-generate Plan Credits"
-msgstr ""
+msgstr "Autogenerar planes de crédito"
 
 #: corehq/apps/accounting/forms.py:405
 msgid "Skip invoicing if no feature charges"
-msgstr ""
+msgstr "Omitir la facturación si no hay cargos por función"
 
 #: corehq/apps/accounting/forms.py:408
 msgid "Transfer Subscription To"
-msgstr ""
+msgstr "Transferir la suscripción a"
 
 #: corehq/apps/accounting/forms.py:422 corehq/apps/accounting/forms.py:753
 msgid "Funding Source"
-msgstr ""
+msgstr "Fuente de financiamiento"
 
 #: corehq/apps/accounting/forms.py:427
 msgid "Exclude from automated downgrade process"
-msgstr ""
+msgstr "Excluir del proceso de degradación automatico. "
 
 #: corehq/apps/accounting/forms.py:673
 msgid ""
 "Please select an account other than the current account to transfer to."
-msgstr ""
+msgstr "Seleccione una cuenta diferente a la actual para transferirle.  "
 
 #: corehq/apps/accounting/forms.py:682
 msgid "A valid project space is required."
-msgstr ""
+msgstr "Un espacio del proyecto válido es necesario."
 
 #: corehq/apps/accounting/forms.py:687
 msgid "Account must be specified"
-msgstr ""
+msgstr "La cuenta debe ser especificada. "
 
 #: corehq/apps/accounting/forms.py:701
 #, python-format
@@ -340,82 +341,82 @@ msgid ""
 "Please update 'Client Contact Emails' <strong><a href=%(link)s "
 "target=\"_blank\">here</a></strong> before using Billing Account "
 "<strong>%(account)s</strong>."
-msgstr ""
+msgstr "Porfavor actualice 'Correos electrónicos de contacto del cliente' <strong><a href=%(link)s target=\"_blank\">aquí</a></strong> antes de utilizar la cuenta de facturación <strong>%(account)s</strong>."
 
 #: corehq/apps/accounting/forms.py:714
 msgid "You must specify a start date"
-msgstr ""
+msgstr "Debe especificar la fecha de inicio."
 
 #: corehq/apps/accounting/forms.py:719
 msgid "End date must be after start date."
-msgstr ""
+msgstr "La fecha de finalización debe ser posterior a la fecha de inicio. "
 
 #: corehq/apps/accounting/forms.py:726
 #: corehq/apps/accounting/templates/accounting/invoice.html:105
 #: corehq/apps/users/templates/users/accept_invite.html:43
 msgid "Note"
-msgstr ""
+msgstr "Nota"
 
 #: corehq/apps/accounting/forms.py:738
 msgid "New Software Plan"
-msgstr ""
+msgstr "Nuevo plan del programa"
 
 #: corehq/apps/accounting/forms.py:811
 msgid "Rate Type"
-msgstr ""
+msgstr "Tipo de tarifa"
 
 #: corehq/apps/accounting/forms.py:819
 msgid "Feature Type"
-msgstr ""
+msgstr "Tipo de función"
 
 #: corehq/apps/accounting/forms.py:859
 msgid ""
 "Amount over maximum size.  If you need support for quantities this large, "
 "please <a data-toggle=\"modal\" data-target=\"#modalReportIssue\" "
 "href=\"#modalReportIssue\">Report an Issue</a>."
-msgstr ""
+msgstr "Cantidad por encima del tamaño máximo. Si necesita apoyo para cantidades tan grandes como estas, por favor <a data-toggle=\"modal\" data-target=\"#modalReportIssue\" href=\"#modalReportIssue\">Informe sobre un problema</a>."
 
 #: corehq/apps/accounting/forms.py:1011
 msgid "Name already taken.  Please enter a new name."
-msgstr ""
+msgstr "El nombre ya existe. Por favor introduzca un nombre nuevo. "
 
 #: corehq/apps/accounting/forms.py:1321
 msgid "Privileges Available"
-msgstr ""
+msgstr "Privilegios disponibles"
 
 #: corehq/apps/accounting/forms.py:1322
 msgid "Privileges Selected"
-msgstr ""
+msgstr "Privilegios seleccionados"
 
 #: corehq/apps/accounting/forms.py:1323
 msgid "Search Privileges..."
-msgstr ""
+msgstr "Buscar privilegios"
 
 #: corehq/apps/accounting/forms.py:1423
 msgid "You must specify exactly one rate per feature type (SMS, USER, etc.)"
-msgstr ""
+msgstr "Debe especificar exactamente una tarifa por cada tipo de función (SMS, Usuario, entre otras)"
 
 #: corehq/apps/accounting/forms.py:1449
 msgid "You must specify at least one product rate."
-msgstr ""
+msgstr "Debe especificar al menos una tarifa del producto."
 
 #: corehq/apps/accounting/forms.py:1463
 msgid ""
 "You may have at most ONE rate per product type (CommCare, CommCare Supply, "
 "etc.)"
-msgstr ""
+msgstr "Debe tener al menos UNA tarifa por tipo de producto (CommCare, Suministros de CommCare, entre otros)"
 
 #: corehq/apps/accounting/forms.py:1490
 msgid "A slug is required for this new role."
-msgstr ""
+msgstr "Se requiere una indicación para este nuevo puesto."
 
 #: corehq/apps/accounting/forms.py:1494
 msgid "Enter a unique role slug."
-msgstr ""
+msgstr "Introduzca una indicación de puesto única."
 
 #: corehq/apps/accounting/forms.py:1500
 msgid "A name is required for this new role."
-msgstr ""
+msgstr "Se requiere un nombre para este nuevo puesto."
 
 #: corehq/apps/accounting/forms.py:1641 corehq/apps/app_manager/forms.py:17
 #: corehq/apps/app_manager/models.py:2331
@@ -467,11 +468,11 @@ msgstr ""
 #: custom/ilsgateway/tanzania/reports/supervision.py:56
 #: custom/ilsgateway/tanzania/reports/supervision.py:123
 msgid "Name"
-msgstr ""
+msgstr "Nombre"
 
 #: corehq/apps/accounting/forms.py:1645 corehq/apps/accounting/models.py:526
 msgid "Company / Organization"
-msgstr ""
+msgstr "Empresa/Organización"
 
 #: corehq/apps/accounting/forms.py:1649
 #: corehq/apps/performance_sms/templates/performance_sms/list_performance_configs.html:26
@@ -483,54 +484,54 @@ msgstr ""
 #: corehq/ex-submodules/phonelog/reports.py:84
 #: custom/ilsgateway/tanzania/reports/unrecognized_sms.py:115
 msgid "Message"
-msgstr ""
+msgstr "Mensaje"
 
 #: corehq/apps/accounting/forms.py:1668
 msgid "Request Quote"
-msgstr ""
+msgstr "Solicite una cotización "
 
 #: corehq/apps/accounting/forms.py:1673
 #: corehq/apps/domain/templates/domain/confirm_plan.html:85
 #: corehq/apps/domain/templates/domain/confirm_plan.html:110
 msgid "Select different plan"
-msgstr ""
+msgstr "Seleccione un plan diferente"
 
 #: corehq/apps/accounting/forms.py:1970
 #, python-format
 msgid "Received invalid adjustment type: %s"
-msgstr ""
+msgstr "El tipo de ajuste recibido no es válido: %s"
 
 #: corehq/apps/accounting/invoicing.py:435
 #, python-format
 msgid "One month of %(plan_name)s Software Plan."
-msgstr ""
+msgstr "Un mes de Plan del programa %(plan_name)s."
 
 #: corehq/apps/accounting/invoicing.py:443
 #, python-format
 msgid "%(num_days)s day of %(plan_name)s Software Plan."
 msgid_plural "%(num_days)s days of %(plan_name)s Software Plan."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%(num_days)s día del Plan del programa %(plan_name)s."
+msgstr[1] "%(num_days)s días del Plan del programa %(plan_name)s."
 
 #: corehq/apps/accounting/invoicing.py:528
 #, python-format
 msgid "Per User fee exceeding monthly limit of %(monthly_limit)s user."
 msgid_plural ""
 "Per User fee exceeding monthly limit of %(monthly_limit)s users."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Cargo por usuario al exceder el límite mensual de %(monthly_limit)s usuario."
+msgstr[1] "Cargo por usuario al exceder el límite mensual de %(monthly_limit)s usuarios."
 
 #: corehq/apps/accounting/invoicing.py:571
 #, python-format
 msgid "%(num_sms)d SMS Message"
 msgid_plural "%(num_sms)d SMS Messages"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%(num_sms)d Mensaje de texto"
+msgstr[1] "%(num_sms)d Mensajes de texto"
 
 #: corehq/apps/accounting/invoicing.py:579
 #, python-format
 msgid "%(num_sms)d of %(monthly_limit)d included SMS messages"
-msgstr ""
+msgstr "%(num_sms)d de %(monthly_limit)d con mensajes de texto incluidos."
 
 #: corehq/apps/accounting/invoicing.py:590
 #, python-format
@@ -538,18 +539,18 @@ msgid ""
 "%(num_extra_sms)d SMS Message beyond %(monthly_limit)d messages included."
 msgid_plural ""
 "%(num_extra_sms)d SMS Messages beyond %(monthly_limit)d messages included."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%(num_extra_sms)d Mensaje de texto después de %(monthly_limit)d con mensajes incluidos."
+msgstr[1] "%(num_extra_sms)d Mensaje de texto después de %(monthly_limit)d con mensajes incluidos."
 
 #: corehq/apps/accounting/models.py:452
 #, python-brace-format
 msgid "Your card is no longer being used to auto-pay for {billing_account}"
-msgstr ""
+msgstr "Su tarjeta ya no será utilizada para el pago automático de {billing_account}"
 
 #: corehq/apps/accounting/models.py:477
 #, python-brace-format
 msgid "Your card is being used to auto-pay for {billing_account}"
-msgstr ""
+msgstr "Su tarjeta será utilizada para el pago automático de {billing_account}"
 
 #: corehq/apps/accounting/models.py:509
 #: corehq/apps/cloudcare/templates/formplayer/users.html:82
@@ -558,7 +559,7 @@ msgstr ""
 #: corehq/apps/users/templates/users/mobile_workers.html:93
 #: corehq/apps/users/templates/users/mobile_workers.html:373
 msgid "First Name"
-msgstr ""
+msgstr "Nombre"
 
 #: corehq/apps/accounting/models.py:512
 #: corehq/apps/cloudcare/templates/formplayer/users.html:86
@@ -566,17 +567,17 @@ msgstr ""
 #: corehq/apps/users/templates/users/mobile_workers.html:94
 #: corehq/apps/users/templates/users/mobile_workers.html:374
 msgid "Last Name"
-msgstr ""
+msgstr "Apellido"
 
 #: corehq/apps/accounting/models.py:517
 msgid "Contact Emails"
-msgstr ""
+msgstr "Correos electrónicos de contacto"
 
 #: corehq/apps/accounting/models.py:518
 msgid ""
 "We will email communications regarding your account to the emails specified "
 "here."
-msgstr ""
+msgstr "Enviaremos información sobre su cuenta por correo electrónico a las direcciones especificadas aquí."
 
 #: corehq/apps/accounting/models.py:522
 #: corehq/apps/data_interfaces/views.py:346
@@ -592,60 +593,60 @@ msgstr ""
 #: corehq/apps/users/templates/users/partial/manage_phone_numbers.html:99
 #: custom/ilsgateway/tanzania/reports/unrecognized_sms.py:113
 msgid "Phone Number"
-msgstr ""
+msgstr "Número de teléfono "
 
 #: corehq/apps/accounting/models.py:530
 msgid "Address First Line"
-msgstr ""
+msgstr "Primera línea de la dirección"
 
 #: corehq/apps/accounting/models.py:534
 msgid "Address Second Line"
-msgstr ""
+msgstr "Segunda línea de la dirección"
 
 #: corehq/apps/accounting/models.py:537
 #: corehq/apps/appstore/templates/appstore/deployment_info.html:36
 msgid "City"
-msgstr ""
+msgstr "Ciudad"
 
 #: corehq/apps/accounting/models.py:541
 msgid "State / Province / Region"
-msgstr ""
+msgstr "Estado / Provincia / Región"
 
 #: corehq/apps/accounting/models.py:544
 msgid "Postal Code"
-msgstr ""
+msgstr "Código postal"
 
 #: corehq/apps/accounting/models.py:547
 msgid "Country"
-msgstr ""
+msgstr "País"
 
 #: corehq/apps/accounting/models.py:1438
 msgid "tomorrow!"
-msgstr ""
+msgstr "¡mañana!"
 
 #: corehq/apps/accounting/models.py:1440
 #, python-format
 msgid "on %s."
-msgstr ""
+msgstr "en %s."
 
 #: corehq/apps/accounting/models.py:1446
 #, python-format
 msgid "CommCare Alert: 30 day trial for '%(domain)s' ends %(ending_on)s"
-msgstr ""
+msgstr "Alerta de CommCare: la prueba de 30 días por '%(domain)s' termina %(ending_on)s"
 
 #: corehq/apps/accounting/models.py:1455
 #, python-format
 msgid ""
 "CommCare Alert: %(domain)s's subscription to %(plan_name)s ends "
 "%(ending_on)s"
-msgstr ""
+msgstr "Alerta de CommCare: la suscripción de %(domain)s a %(plan_name)s termina %(ending_on)s"
 
 #: corehq/apps/accounting/models.py:1611
 #, python-format
 msgid ""
 "There is already a subscription '%s' with no end date that conflicts with "
 "the start and end dates of this subscription."
-msgstr ""
+msgstr "Existe una suscripción '%s' sin una fecha de finalización que está en conflicto con las fechas de inicio y finalización de esta suscripción."
 
 #: corehq/apps/accounting/models.py:1625
 #, python-format
@@ -653,43 +654,43 @@ msgid ""
 "There is already a subscription '%(sub)s' that has an end date that "
 "conflicts with the start and end dates of this subscription %(start)s - "
 "%(end)s."
-msgstr ""
+msgstr "Existe una suscripción '%(sub)s' con una fecha de finalización que está en conflicto con la fecha de inicio y finalización de esta suscripción %(start)s - %(end)s."
 
 #: corehq/apps/accounting/models.py:2047 corehq/apps/accounting/models.py:2203
 msgid "Paid"
-msgstr ""
+msgstr "Pagado"
 
 #: corehq/apps/accounting/models.py:2048 corehq/apps/accounting/models.py:2205
 msgid "Payment Required"
-msgstr ""
+msgstr "Pago requerido"
 
 #: corehq/apps/accounting/models.py:2076
 msgid "Hello,"
-msgstr ""
+msgstr "Hola,"
 
 #: corehq/apps/accounting/models.py:2082 custom/ewsghana/alerts/alerts.py:69
 #, python-format
 msgid "Dear %s,"
-msgstr ""
+msgstr "Estimado %s,"
 
 #: corehq/apps/accounting/models.py:2143
 msgid "Your prepayment invoice"
-msgstr ""
+msgstr "Su recibo previo al pago"
 
 #: corehq/apps/accounting/models.py:3009
 msgid "You can't specify both an invoice and a line item."
-msgstr ""
+msgstr "No puede especificar una factura y una partida al mismo tiempo. "
 
 #: corehq/apps/accounting/payment_handlers.py:86
 msgid ""
 "Something went wrong while processing your payment. We're working quickly to"
 " resolve the issue. No charges were issued. Please try again in a few hours."
-msgstr ""
+msgstr "Algo sucedió mientras procesábamos su pago. Estamos trabajando rápidamente para solucionar el problema. No se realizó ningún cargo. Por favor intente otra vez en unas horas."
 
 #: corehq/apps/accounting/payment_handlers.py:183
 #, python-format
 msgid "Invoice #%s"
-msgstr ""
+msgstr "Factura #%s"
 
 #: corehq/apps/accounting/payment_handlers.py:235
 #, python-format
@@ -699,7 +700,7 @@ msgstr ""
 #: corehq/apps/accounting/payment_handlers.py:320
 #, python-brace-format
 msgid "Credits: {credit_types} for {sub_or_account}"
-msgstr ""
+msgstr "Créditos: {credit_types} para {sub_or_account}"
 
 #: corehq/apps/accounting/subscription_changes.py:381
 #, python-format
@@ -709,8 +710,8 @@ msgid ""
 msgid_plural ""
 "You have %(num_apps)d applications that will lose CloudCare access if you "
 "select this plan."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Usted tiene %(num_apps)d aplicación que perderá acceso a CloudCare si selecciona este plan."
+msgstr[1] "Usted tiene  %(num_apps)d aplicaciones que perderán acceso a CloudCare si selecciona este plan. "
 
 #: corehq/apps/accounting/subscription_changes.py:404
 #, python-format
@@ -720,8 +721,8 @@ msgid ""
 msgid_plural ""
 "You have %(num_fix)s Lookup Tables set up. Selecting this plan will delete "
 "these Lookup Tables."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Usted tiene %(num_fix)s Lookup Table configurada. Al seleccionar este plan se eliminará esta Lookup Table."
+msgstr[1] "Usted tiene %(num_fix)s Lookup Tables configuradas. Al seleccionar este plan se eliminaran estas Lookup Tables."
 
 #: corehq/apps/accounting/subscription_changes.py:419
 msgid ""
@@ -793,7 +794,7 @@ msgstr[1] ""
 msgid ""
 "You have a subscription SCHEDULED TO START on %(date_start)s. Changing this "
 "plan will CANCEL that %(plan_name)s subscription."
-msgstr ""
+msgstr "Usted tiene una suscripción Programado para iniciar en  %(date_start)s. Al cambiar este plan se cancelará la suscripción de %(plan_name)s."
 
 #: corehq/apps/accounting/subscription_changes.py:590
 #, python-format
@@ -831,28 +832,28 @@ msgstr ""
 #: corehq/apps/accounting/subscription_changes.py:627
 msgid ""
 "The following security features will be affected if you select this plan:"
-msgstr ""
+msgstr "Si selecciona este plan, afectará las siguientes funciones de seguridad:"
 
 #: corehq/apps/accounting/subscription_changes.py:637
 #, python-format
 msgid ""
 "You have %(number_of_reports) report builder reports.By selecting this plan "
 "you will lose access to those reports."
-msgstr ""
+msgstr "Usted tiene informes de Manejo de Casos. Al seleccionar este plan perderá acceso a esos informes. "
 
 #: corehq/apps/accounting/tasks.py:417
 msgid "Payment Received - Thank You!"
-msgstr ""
+msgstr "El pago ha sido recibido. ¡Gracias!"
 
 #: corehq/apps/accounting/tasks.py:674
 msgid "Oh no! Your CommCare subscription for {} has been downgraded"
-msgstr ""
+msgstr "¡Oh no! Su suscripción de CommCare por {} ha sido degradada. "
 
 #: corehq/apps/accounting/tasks.py:695
 msgid ""
 "CommCare Alert: {}'s subscription will be downgraded to Community Plan after"
 " tomorrow!"
-msgstr ""
+msgstr "Alerta de Commcare: ¡La suscripción {} será degradada a Community Plan mañana! "
 
 #: corehq/apps/accounting/tasks.py:707
 msgid "CommCare Billing Statement 30 days Overdue for {}"
@@ -1067,15 +1068,15 @@ msgstr ""
 #: custom/ilsgateway/templates/ilsgateway/supervision_docs.html:33
 #: custom/m4change/templates/m4change/selectTemplate.html:86
 msgid "Cancel"
-msgstr ""
+msgstr "Cancelar"
 
 #: corehq/apps/accounting/templates/accounting/accounting_admins.html:65
 msgid "Removing User..."
-msgstr ""
+msgstr "Eliminando ususario"
 
 #: corehq/apps/accounting/templates/accounting/accounting_admins.html:66
 msgid "Remove User"
-msgstr ""
+msgstr "Eliminar usuario"
 
 #: corehq/apps/accounting/templates/accounting/accounting_admins.html:80
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_case_groups.html:62
@@ -1090,24 +1091,24 @@ msgstr ""
 #: custom/enikshay/reports/web_dashboard.py:251
 #: custom/enikshay/reports/web_dashboard.py:263
 msgid "New"
-msgstr ""
+msgstr "Nuevo"
 
 #: corehq/apps/accounting/templates/accounting/accounting_admins.html:88
 msgid "Removed"
-msgstr ""
+msgstr "Eliminado"
 
 #: corehq/apps/accounting/templates/accounting/accounts.html:30
 msgid "Account"
-msgstr ""
+msgstr "Cuenta"
 
 #: corehq/apps/accounting/templates/accounting/accounts.html:31
 msgid "Subscriptions"
-msgstr ""
+msgstr "Suscripciones"
 
 #: corehq/apps/accounting/templates/accounting/accounts.html:32
 #: corehq/apps/accounting/templates/accounting/subscriptions.html:51
 msgid "Credits"
-msgstr ""
+msgstr "Créditos"
 
 #: corehq/apps/accounting/templates/accounting/adjust_balance.html:9
 msgid "Adjust Balance for Invoice #"
@@ -1174,7 +1175,7 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/invoice_receipt_email.html:25
 #: corehq/apps/accounting/templates/accounting/invoice_receipt_email.html:32
 msgid "Amount Paid"
-msgstr ""
+msgstr "Monto pagado"
 
 #: corehq/apps/accounting/templates/accounting/bulk_payment_receipt_email.html:26
 #: corehq/apps/accounting/templates/accounting/bulk_payment_receipt_email.html:33
@@ -1183,7 +1184,7 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/invoice_receipt_email.html:26
 #: corehq/apps/accounting/templates/accounting/invoice_receipt_email.html:33
 msgid "Payment Date"
-msgstr ""
+msgstr "Fecha de pago"
 
 #: corehq/apps/accounting/templates/accounting/bulk_payment_receipt_email.html:27
 #: corehq/apps/accounting/templates/accounting/bulk_payment_receipt_email.html:34
@@ -1192,12 +1193,12 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/invoice_receipt_email.html:27
 #: corehq/apps/accounting/templates/accounting/invoice_receipt_email.html:34
 msgid "Transaction No."
-msgstr ""
+msgstr "Número de transacción"
 
 #: corehq/apps/accounting/templates/accounting/bulk_payment_receipt_email.html:35
 #: corehq/apps/accounting/templates/accounting/invoice_receipt_email.html:35
 msgid "Remaining Balance"
-msgstr ""
+msgstr "Saldo restante"
 
 #: corehq/apps/accounting/templates/accounting/bulk_payment_receipt_email.html:40
 #: corehq/apps/accounting/templates/accounting/credit_receipt_email.html:41
@@ -1295,7 +1296,7 @@ msgstr ""
 #: custom/m4change/reports/mcct_project_review.py:398
 #: custom/m4change/reports/mcct_project_review.py:481
 msgid "Amount"
-msgstr ""
+msgstr "Monto"
 
 #: corehq/apps/accounting/templates/accounting/credit_receipt_email.html:31
 #: corehq/apps/accounting/templates/accounting/credit_receipt_email_plaintext.txt:10
@@ -1319,7 +1320,7 @@ msgstr ""
 #: custom/m4change/reports/mcct_monthly_aggregate_report.py:192
 #: custom/m4change/reports/project_indicators_report.py:107
 msgid "Total"
-msgstr ""
+msgstr "Total"
 
 #: corehq/apps/accounting/templates/accounting/credit_receipt_email.html:56
 #: corehq/apps/accounting/templates/accounting/invoice_receipt_email.html:56
@@ -1371,20 +1372,20 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/subscriptions.html:44
 #: corehq/tabs/tabclasses.py:1237
 msgid "Subscription"
-msgstr ""
+msgstr "Suscripción"
 
 #: corehq/apps/accounting/templates/accounting/credits_tab.html:11
 msgid "Product Rate"
-msgstr ""
+msgstr "Tarifa del producto"
 
 #: corehq/apps/accounting/templates/accounting/credits_tab.html:12
 msgid "Feature Rate"
-msgstr ""
+msgstr "Tarifa de función"
 
 #: corehq/apps/accounting/templates/accounting/credits_tab.html:13
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/single_case.html:73
 msgid "Balance"
-msgstr ""
+msgstr "Saldo"
 
 #: corehq/apps/accounting/templates/accounting/downgrade.html:10
 #, python-format
@@ -1483,11 +1484,11 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/invoice.html:49
 msgid "Invoice"
-msgstr ""
+msgstr "Factura"
 
 #: corehq/apps/accounting/templates/accounting/invoice.html:51
 msgid "Adjustments"
-msgstr ""
+msgstr "Ajustes"
 
 #: corehq/apps/accounting/templates/accounting/invoice.html:53
 #: corehq/apps/accounting/templates/accounting/subscriptions.html:53
@@ -1509,21 +1510,21 @@ msgstr ""
 #: custom/ilsgateway/tanzania/reports/supervision.py:125
 #: custom/intrahealth/sqldata.py:405 custom/up_nrhm/sql_data.py:263
 msgid "Date"
-msgstr ""
+msgstr "Fecha"
 
 #: corehq/apps/accounting/templates/accounting/invoice.html:65
 #: corehq/apps/reports/templates/reports/reports_home.html:102
 msgid "Recipients"
-msgstr ""
+msgstr "Destinatarios"
 
 #: corehq/apps/accounting/templates/accounting/invoice.html:66
 msgid "View PDF"
-msgstr ""
+msgstr "Ver PDF"
 
 #: corehq/apps/accounting/templates/accounting/invoice.html:104
 #: custom/m4change/templates/m4change/selectTemplate.html:89
 msgid "Reason"
-msgstr ""
+msgstr "Razón"
 
 #: corehq/apps/accounting/templates/accounting/invoice.html:106
 #: corehq/apps/reports/standard/deployments.py:413
@@ -1536,7 +1537,7 @@ msgstr ""
 #: custom/m4change/reports/mcct_project_review.py:335
 #: custom/m4change/reports/mcct_project_review.py:401
 msgid "User"
-msgstr ""
+msgstr "Usuario"
 
 #: corehq/apps/accounting/templates/accounting/invoice_autopay_setup.html:4
 #, python-format
@@ -1575,11 +1576,11 @@ msgstr ""
 #: custom/logistics/templates/logistics/config.html:94
 #: custom/openclinica/forms.py:18
 msgid "Username"
-msgstr ""
+msgstr "Usuario"
 
 #: corehq/apps/accounting/templates/accounting/invoice_autopay_setup.html:26
 msgid "Last 4 digits of Credit Card"
-msgstr ""
+msgstr "Últimos 4 dígitos de la tarjeta de crédito"
 
 #: corehq/apps/accounting/templates/accounting/invoice_autopay_setup.html:31
 #, python-format
@@ -1631,7 +1632,7 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/invoice_email_autopayment.txt:6
 #: corehq/apps/domain/views.py:916
 msgid "Statement No."
-msgstr ""
+msgstr "Número de estado"
 
 #: corehq/apps/accounting/templates/accounting/invoice_email.html:40
 #: corehq/apps/accounting/templates/accounting/invoice_email_autopayment.html:39
@@ -1660,55 +1661,55 @@ msgstr ""
 #: custom/m4change/reports/mcct_project_review.py:482
 #: custom/succeed/reports/patient_task_list.py:154
 msgid "Status"
-msgstr ""
+msgstr "Estado"
 
 #: corehq/apps/accounting/templates/accounting/invoice_email.html:48
 #: corehq/apps/accounting/templates/accounting/invoice_email_autopayment.html:47
 #: corehq/apps/accounting/templates/accounting/invoice_email_autopayment.txt:10
 msgid "Amount Due this Month"
-msgstr ""
+msgstr "Monto a pagar este mes"
 
 #: corehq/apps/accounting/templates/accounting/invoice_email.html:56
 #: corehq/apps/accounting/templates/accounting/invoice_email_autopayment.html:55
 #: corehq/apps/accounting/templates/accounting/invoice_email_autopayment.txt:11
 msgid "Total Balance"
-msgstr ""
+msgstr "Balance total"
 
 #: corehq/apps/accounting/templates/accounting/invoice_email.html:65
 #: corehq/apps/accounting/templates/accounting/invoice_email_autopayment.html:64
 #: corehq/apps/accounting/templates/accounting/invoice_email_autopayment.txt:13
 msgid "Payment Due Date"
-msgstr ""
+msgstr "Fecha de límite de pago"
 
 #: corehq/apps/accounting/templates/accounting/invoice_email.html:76
 msgid "Subscription Credits Remaining"
-msgstr ""
+msgstr "Créditos de suscripción restantes"
 
 #: corehq/apps/accounting/templates/accounting/invoice_email.html:83
 #: corehq/apps/accounting/templates/accounting/invoice_email.html:131
 msgid "Plan Credits"
-msgstr ""
+msgstr "Créditos del plan"
 
 #: corehq/apps/accounting/templates/accounting/invoice_email.html:93
 #: corehq/apps/accounting/templates/accounting/invoice_email.html:141
 #: corehq/apps/domain/forms.py:1890
 msgid "User Credits"
-msgstr ""
+msgstr "Créditos del usuario"
 
 #: corehq/apps/accounting/templates/accounting/invoice_email.html:103
 #: corehq/apps/accounting/templates/accounting/invoice_email.html:151
 #: corehq/apps/domain/forms.py:1885
 msgid "SMS Credits"
-msgstr ""
+msgstr "Créditos de SMS"
 
 #: corehq/apps/accounting/templates/accounting/invoice_email.html:113
 #: corehq/apps/accounting/templates/accounting/invoice_email.html:161
 msgid "General Credits"
-msgstr ""
+msgstr "Créditos generales"
 
 #: corehq/apps/accounting/templates/accounting/invoice_email.html:124
 msgid "Account Credits Remaining"
-msgstr ""
+msgstr "Créditos de la cuenta restantes"
 
 #: corehq/apps/accounting/templates/accounting/invoice_email.html:173
 #, python-format
@@ -2051,12 +2052,12 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/invoice_receipt_email.html:31
 #: corehq/apps/accounting/templates/accounting/wire_invoice_email.html:14
 msgid "Invoice No."
-msgstr ""
+msgstr "Número de factura"
 
 #: corehq/apps/accounting/templates/accounting/invoice_receipt_email.html:36
 #: corehq/apps/domain/views.py:919
 msgid "Date Due"
-msgstr ""
+msgstr "Fecha límite"
 
 #: corehq/apps/accounting/templates/accounting/invoice_receipt_email_plaintext.txt:1
 #, python-format
@@ -2387,7 +2388,7 @@ msgstr ""
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_hierarchy.html:110
 #: custom/ilsgateway/templates/ilsgateway/slab/slab_configuration.html:55
 msgid "Edit"
-msgstr ""
+msgstr "Editar"
 
 #: corehq/apps/accounting/templates/accounting/trial_ending_reminder_email.html:5
 #, python-format
@@ -3045,7 +3046,7 @@ msgstr ""
 #: corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:206
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/single_case.html:106
 msgid "Form"
-msgstr ""
+msgstr "Formulario"
 
 #: corehq/apps/app_manager/fields.py:71
 #: corehq/apps/cloudcare/templates/cloudcare/config.html:170
@@ -3230,7 +3231,7 @@ msgstr ""
 #: custom/ewsghana/reports/email_reports.py:127
 #: custom/ilsgateway/tanzania/reports/facility_details.py:26
 msgid "Product"
-msgstr ""
+msgstr "Producto"
 
 #: corehq/apps/app_manager/models.py:3162
 #, python-brace-format
@@ -3525,7 +3526,7 @@ msgstr ""
 #: corehq/apps/reminders/forms.py:1661
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_attachments.html:7
 msgid "Case Property"
-msgstr ""
+msgstr "Propiedad del caso"
 
 #: corehq/apps/app_manager/templates/app_manager/ng_partials/case_summary_view.html:114
 msgid "Load questions"
@@ -3710,7 +3711,7 @@ msgstr ""
 #: corehq/apps/dashboard/views.py:266 corehq/tabs/tabclasses.py:942
 #: submodules/touchforms-src/touchforms/formplayer/templates/formplayer/fullform-ui/templates.html:110
 msgid "Settings"
-msgstr ""
+msgstr "Configuración"
 
 #: corehq/apps/app_manager/templates/app_manager/v1/form_view_base.html:335
 #: corehq/apps/app_manager/templates/app_manager/v1/module_view.html:240
@@ -4525,7 +4526,7 @@ msgstr ""
 #: corehq/ex-submodules/casexml/apps/case/templatetags/case_tags.py:77
 #: corehq/ex-submodules/casexml/apps/case/templatetags/case_tags.py:117
 msgid "Case Type"
-msgstr ""
+msgstr "Tipo de caso"
 
 #: corehq/apps/app_manager/templates/app_manager/v1/partials/case_config_advanced.html:189
 #: corehq/apps/app_manager/templates/app_manager/v1/partials/case_config_advanced.html:315
@@ -5549,7 +5550,7 @@ msgstr ""
 #: corehq/apps/reports/templates/reports/reports_home.html:151
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_hierarchy.html:117
 msgid "View"
-msgstr ""
+msgstr "Vista"
 
 #: corehq/apps/app_manager/templates/app_manager/v1/partials/form_tab_advanced.html:61
 #: corehq/apps/app_manager/templates/app_manager/v2/partials/form_tab_advanced.html:61
@@ -6286,7 +6287,7 @@ msgstr ""
 #: corehq/apps/hqadmin/reports.py:1245
 #: corehq/ex-submodules/phonelog/reports.py:86 corehq/tabs/tabclasses.py:1582
 msgid "CommCare Version"
-msgstr ""
+msgstr "Versión CommCare"
 
 #: corehq/apps/app_manager/templates/app_manager/v1/partials/releases.html:119
 #: corehq/apps/app_manager/templates/app_manager/v2/partials/releases.html:125
@@ -8010,7 +8011,7 @@ msgstr ""
 #: custom/opm/beneficiary.py:877 custom/opm/beneficiary.py:960
 #: custom/opm/beneficiary.py:985
 msgid "Case ID"
-msgstr ""
+msgstr "ID del caso"
 
 #: corehq/apps/case_importer/templates/case_importer/excel_config.html:111
 #: corehq/apps/data_interfaces/views.py:347
@@ -8325,7 +8326,7 @@ msgstr ""
 #: corehq/apps/case_search/templates/case_search/case_search.html:43
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/single_case.html:27
 msgid "Case Properties"
-msgstr ""
+msgstr "Propiedades del caso"
 
 #: corehq/apps/case_search/templates/case_search/case_search.html:52
 #: corehq/apps/domain/templates/domain/admin/partials/case_search_templates.html:5
@@ -8353,13 +8354,13 @@ msgstr ""
 #: corehq/apps/case_search/templates/case_search/case_search.html:98
 #: corehq/ex-submodules/soil/templates/soil/partials/dl_status.html:46
 msgid "Results"
-msgstr ""
+msgstr "Resultados"
 
 #: corehq/apps/case_search/templates/case_search/case_search.html:106
 #: corehq/apps/userreports/reports/builder/forms.py:852
 #: corehq/ex-submodules/casexml/apps/case/templatetags/case_tags.py:42
 msgid "Closed"
-msgstr ""
+msgstr "Cerrado"
 
 #: corehq/apps/case_search/templates/case_search/case_search.html:107
 msgid "Properties"
@@ -8604,28 +8605,28 @@ msgstr ""
 #: corehq/apps/reports/standard/monitoring.py:1349
 #: submodules/touchforms-src/touchforms/formplayer/templates/formplayer/fullform-ui/templates.html:90
 msgid "Form Data"
-msgstr ""
+msgstr "Datos del formulario"
 
 #: corehq/apps/cloudcare/templates/form_entry/templates.html:139
 #: submodules/touchforms-src/touchforms/formplayer/templates/formplayer/fullform-ui/templates.html:100
 msgid "Form XML"
-msgstr ""
+msgstr "Formulario XML"
 
 #: corehq/apps/cloudcare/templates/form_entry/templates.html:144
 #: submodules/touchforms-src/touchforms/formplayer/templates/formplayer/fullform-ui/templates.html:105
 msgid "Evaluate XPath"
-msgstr ""
+msgstr "Evaluar XPath"
 
 #: corehq/apps/cloudcare/templates/form_entry/templates.html:163
 #: submodules/touchforms-src/touchforms/formplayer/templates/formplayer/fullform-ui/templates.html:121
 #: submodules/touchforms-src/touchforms/formplayer/templates/formplayer/fullform-ui/templates.html:124
 msgid "Answer a question to show data"
-msgstr ""
+msgstr "Responda a una pregunta para mostrar la información"
 
 #: corehq/apps/cloudcare/templates/form_entry/templates.html:176
 #: submodules/touchforms-src/touchforms/formplayer/templates/formplayer/fullform-ui/templates.html:137
 msgid "Auto Sync"
-msgstr ""
+msgstr "Auto sincronizar"
 
 #: corehq/apps/cloudcare/templates/form_entry/templates.html:178
 msgid ""
@@ -9369,7 +9370,7 @@ msgstr ""
 #: corehq/apps/reports/standard/cases/basic.py:252
 #: corehq/ex-submodules/casexml/apps/case/templatetags/case_tags.py:87
 msgid "Owner"
-msgstr ""
+msgstr "Propietario"
 
 #: corehq/apps/data_interfaces/interfaces.py:65
 #: corehq/apps/toggle_ui/templates/toggle/flags.html:75
@@ -11175,7 +11176,7 @@ msgstr ""
 #: corehq/apps/domain/templates/domain/billing_statements.html:166
 #: corehq/apps/domain/views.py:854
 msgid "Billing Statements"
-msgstr ""
+msgstr "Estados de cuenta"
 
 #: corehq/apps/domain/templates/domain/billing_statements.html:166
 msgid "Unpaid"
@@ -11183,11 +11184,11 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/billing_statements.html:172
 msgid "Show Only Unpaid Statements"
-msgstr ""
+msgstr "Mostrar solo estados sin pagar"
 
 #: corehq/apps/domain/templates/domain/billing_statements.html:178
 msgid "Show All Statements"
-msgstr ""
+msgstr "Mostrar todos los estados"
 
 #: corehq/apps/domain/templates/domain/billing_statements.html:199
 msgid "Make Payment"
@@ -11232,7 +11233,7 @@ msgid ""
 "\n"
 "        Payment for Statement No. <span data-bind=\"text: invoiceNumber\"></span>\n"
 "        "
-msgstr ""
+msgstr "\n        Pago para estado número <span data-bind=\"text: invoiceNumber\"></span>\n        "
 
 #: corehq/apps/domain/templates/domain/billing_statements.html:286
 msgid "Bulk Wire Payment"
@@ -12154,15 +12155,15 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/stripe_cards.html:81
 msgid "Autopay card"
-msgstr ""
+msgstr "Tarjeta de pago automático"
 
 #: corehq/apps/domain/templates/domain/stripe_cards.html:93
 msgid "Remove Autopay"
-msgstr ""
+msgstr "Eliminar Pago automático"
 
 #: corehq/apps/domain/templates/domain/stripe_cards.html:99
 msgid "Set as autopay card"
-msgstr ""
+msgstr "Seleccionar como tarjeta para pago automático"
 
 #: corehq/apps/domain/templates/error.html:4
 #: corehq/apps/reports/standard/ivr.py:50
@@ -12171,34 +12172,34 @@ msgstr ""
 #: corehq/apps/reports/standard/sms.py:553 corehq/apps/sms/filters.py:64
 #: corehq/apps/sms/models.py:714 custom/zipline/models.py:29
 msgid "Error"
-msgstr ""
+msgstr "Error"
 
 #: corehq/apps/domain/templates/error.html:11
 msgid "Error details"
-msgstr ""
+msgstr "Detalles del error"
 
 #: corehq/apps/domain/templates/error.html:22
 msgid "Log In"
-msgstr ""
+msgstr "Ingresar"
 
 #: corehq/apps/domain/templates/login_and_password/login.html:4
 msgid "Login to CommCare HQ"
-msgstr ""
+msgstr "Ingresar a CommCare HQ"
 
 #: corehq/apps/domain/templates/login_and_password/mobile_login.html:8
 msgid "Welcome back to "
-msgstr ""
+msgstr "Bienvenido nuevamente"
 
 #: corehq/apps/domain/templates/login_and_password/mobile_login.html:11
 msgid ""
 "Looks like your CommCare session has expired. Please log-in again to "
 "continue working."
-msgstr ""
+msgstr "Parece que su sesión de CommCare ha expirado. Por favor vuelva a ingresar para continuar trabajando."
 
 #: corehq/apps/domain/templates/login_and_password/mobile_login.html:13
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/login.html:9
 msgid "Please sign in below to continue."
-msgstr ""
+msgstr "Por favor suscribase abajo para continuar."
 
 #: corehq/apps/domain/templates/login_and_password/mobile_login.html:19
 #: corehq/apps/domain/templates/login_and_password/two_factor/core/login.html:15
@@ -12627,23 +12628,23 @@ msgstr ""
 #: corehq/apps/domain/urls.py:68 corehq/apps/registration/views.py:212
 #: corehq/apps/registration/views.py:224 corehq/apps/registration/views.py:286
 msgid "Oops!"
-msgstr ""
+msgstr "¡Ups!"
 
 #: corehq/apps/domain/urls.py:108
 msgid "Reset My Password"
-msgstr ""
+msgstr "Restablecer mi contraseña"
 
 #: corehq/apps/domain/views.py:150
 msgid "Your request was not formatted properly."
-msgstr ""
+msgstr "Su solicitud no fue formateada correctamente."
 
 #: corehq/apps/domain/views.py:151
 msgid "Forbidden."
-msgstr ""
+msgstr "Prohibido."
 
 #: corehq/apps/domain/views.py:152
 msgid "Page not found."
-msgstr ""
+msgstr "Página no encontrada."
 
 #: corehq/apps/domain/views.py:153
 msgid ""
@@ -12731,7 +12732,7 @@ msgstr ""
 
 #: corehq/apps/domain/views.py:856
 msgid "statements per page"
-msgstr ""
+msgstr "estados por página"
 
 #: corehq/apps/domain/views.py:857
 msgid "No Billing Statements match the current criteria."
@@ -12739,7 +12740,7 @@ msgstr ""
 
 #: corehq/apps/domain/views.py:858
 msgid "Loading statements..."
-msgstr ""
+msgstr "Cargando estados..."
 
 #: corehq/apps/domain/views.py:918
 msgid "Billing Period"
@@ -12747,12 +12748,12 @@ msgstr ""
 
 #: corehq/apps/domain/views.py:921
 msgid "PDF"
-msgstr ""
+msgstr "PDF"
 
 #: corehq/apps/domain/views.py:959
 #, python-format
 msgid "Paid on %s."
-msgstr ""
+msgstr "Pagado el %s."
 
 #: corehq/apps/domain/views.py:963
 msgid "Not Paid"
@@ -12776,7 +12777,7 @@ msgstr ""
 
 #: corehq/apps/domain/views.py:1241
 msgid "Could not obtain billing statement. An issue has been submitted."
-msgstr ""
+msgstr "No pudo obtenerse el estado de cuenta. Se ha enviado un informe. "
 
 #: corehq/apps/domain/views.py:1249
 msgid "Dimagi Internal Subscription Management"
@@ -12798,11 +12799,11 @@ msgstr ""
 
 #: corehq/apps/domain/views.py:1381
 msgid "Privacy and Security"
-msgstr ""
+msgstr "Privacidad y seguridad"
 
 #: corehq/apps/domain/views.py:1422
 msgid "Contact Dimagi"
-msgstr ""
+msgstr "Contactar a Dimagi"
 
 #: corehq/apps/domain/views.py:1429
 msgid "2. Contact Dimagi"
@@ -13164,7 +13165,7 @@ msgstr ""
 #: corehq/apps/export/templates/export/customize_export_old.html:17
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/single_case.html:29
 msgid "Case History"
-msgstr ""
+msgstr "Historial del caso"
 
 #: corehq/apps/export/models/new.py:820
 #: corehq/apps/export/templates/export/customize_export_old.html:19
@@ -13761,14 +13762,14 @@ msgstr ""
 #: corehq/apps/export/templates/export/partial/export_download_progress.html:62
 #: corehq/ex-submodules/soil/templates/soil/partials/dl_status.html:38
 msgid "Sync to Dropbox"
-msgstr ""
+msgstr "Sincronizar al Dropbox"
 
 #: corehq/apps/export/templates/export/partial/export_download_progress.html:78
 #: corehq/ex-submodules/soil/templates/soil/partials/download_in_progress.html:24
 #: corehq/messaging/smsbackends/telerivet/forms.py:212
 #: corehq/messaging/smsbackends/telerivet/templates/telerivet/partials/finish.html:9
 msgid "Complete"
-msgstr ""
+msgstr "Completar"
 
 #: corehq/apps/export/templates/export/partial/export_download_progress.html:85
 msgid "Something went wrong!"
@@ -14360,7 +14361,7 @@ msgstr ""
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html:189
 #: corehq/ex-submodules/soil/templates/soil/partials/dl_status.html:34
 msgid "Download File Now"
-msgstr ""
+msgstr "Descargar el archivo ahora"
 
 #: corehq/apps/fixtures/templates/fixtures/partials/edit_table_modal.html:7
 msgid "Edit Table"
@@ -15673,7 +15674,7 @@ msgstr ""
 #: corehq/apps/hqmedia/models.py:361
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_attachments.html:16
 msgid "Image"
-msgstr ""
+msgstr "Imagen"
 
 #: corehq/apps/hqmedia/models.py:375
 msgid "Audio"
@@ -16247,7 +16248,7 @@ msgstr ""
 #: corehq/ex-submodules/casexml/apps/case/templatetags/case_tags.py:190
 #: custom/enikshay/reports/filters.py:19 custom/world_vision/filters.py:8
 msgid "Location"
-msgstr ""
+msgstr "Ubicación"
 
 #: corehq/apps/hqwebapp/forms.py:23
 #: corehq/apps/users/templates/users/web_users.html:169
@@ -21898,7 +21899,7 @@ msgstr ""
 #: corehq/ex-submodules/casexml/apps/case/templatetags/case_tags.py:127
 #: custom/_legacy/pact/models.py:330
 msgid "Date Modified"
-msgstr ""
+msgstr "Fecha de modificación"
 
 #: corehq/apps/reports/standard/cases/data_sources.py:37
 msgid "[no name]"
@@ -22108,7 +22109,7 @@ msgstr ""
 #: corehq/apps/reports/standard/forms/reports.py:78
 #: submodules/touchforms-src/touchforms/formplayer/views.py:250
 msgid "Unknown Form"
-msgstr ""
+msgstr "Formulario desconocido"
 
 #: corehq/apps/reports/standard/inspect.py:47
 #: corehq/apps/reports/templates/reports/form/partials/form_breadcrumbs.html:9
@@ -22165,7 +22166,7 @@ msgstr ""
 #: custom/ilsgateway/tanzania/reports/delivery.py:173
 #: custom/zipline/models.py:30
 msgid "Received"
-msgstr ""
+msgstr "Recibido"
 
 #: corehq/apps/reports/standard/ivr.py:193 corehq/apps/sms/models.py:346
 msgid "Missed"
@@ -22950,7 +22951,7 @@ msgstr ""
 #: corehq/apps/reports/templates/reports/form/partials/single_form.html:197
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/single_case.html:34
 msgid "Attachments"
-msgstr ""
+msgstr "Adjuntos"
 
 #: corehq/apps/reports/templates/reports/form/partials/single_form.html:203
 msgid "Raw XML"
@@ -23159,7 +23160,7 @@ msgstr ""
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/single_case.html:74
 #: custom/succeed/reports/patient_task_list.py:158
 msgid "Last Updated"
-msgstr ""
+msgstr "Última actualización"
 
 #: corehq/apps/reports/templates/reports/partials/hqexport_group_table.html:23
 msgid ""
@@ -28620,31 +28621,31 @@ msgstr ""
 
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_attachments.html:9
 msgid "Source File"
-msgstr ""
+msgstr "Archivo fuente"
 
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_attachments.html:11
 msgid "File Type"
-msgstr ""
+msgstr "Tipo de archivo"
 
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_attachments.html:13
 msgid "File Size"
-msgstr ""
+msgstr "Tamaño de archivo"
 
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_attachments.html:19
 msgid "Link"
-msgstr ""
+msgstr "Enlace"
 
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_hierarchy.html:67
 msgid "Parent case not found"
-msgstr ""
+msgstr "No se encuentra el caso de origen"
 
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_hierarchy.html:147
 msgid "No related cases"
-msgstr ""
+msgstr "No hay casos relacionados"
 
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/single_case.html:31
 msgid "Related Cases"
-msgstr ""
+msgstr "Casos relacionados"
 
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/single_case.html:37
 msgid "Ledger Sections"
@@ -28652,123 +28653,123 @@ msgstr ""
 
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/single_case.html:65
 msgid "download complete transaction history"
-msgstr ""
+msgstr "descargar el historial de transacciones completo"
 
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/single_case.html:68
 #, python-format
 msgid "Section: %(section_id)s"
-msgstr ""
+msgstr "Seccción: %(section_id)s"
 
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/single_case.html:84
 msgid "No transaction found"
-msgstr ""
+msgstr "No se encuentra la transacción"
 
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/single_case.html:129
 msgid "page"
-msgstr ""
+msgstr "página"
 
 #: corehq/ex-submodules/casexml/apps/case/templatetags/case_tags.py:42
 msgid "Open"
-msgstr ""
+msgstr "Abierto"
 
 #: corehq/ex-submodules/casexml/apps/case/templatetags/case_tags.py:57
 msgid "Opened On"
-msgstr ""
+msgstr "Abierto el"
 
 #: corehq/ex-submodules/casexml/apps/case/templatetags/case_tags.py:63
 msgid "Modified On"
-msgstr ""
+msgstr "Modificado el"
 
 #: corehq/ex-submodules/casexml/apps/case/templatetags/case_tags.py:69
 #: custom/opm/beneficiary.py:878 custom/opm/beneficiary.py:962
 msgid "Closed On"
-msgstr ""
+msgstr "Cerrado el"
 
 #: corehq/ex-submodules/casexml/apps/case/templatetags/case_tags.py:82
 msgid "Last Submitter"
-msgstr ""
+msgstr "Último remitente"
 
 #: corehq/ex-submodules/casexml/apps/case/templatetags/case_tags.py:121
 msgid "Date Opened"
-msgstr ""
+msgstr "Fecha en la que se abrió"
 
 #: corehq/ex-submodules/casexml/apps/case/templatetags/case_tags.py:176
 #: custom/ilsgateway/tanzania/reports/delivery.py:83
 #: custom/ilsgateway/tanzania/reports/randr.py:171
 msgid "Code"
-msgstr ""
+msgstr "Código"
 
 #: corehq/ex-submodules/casexml/apps/case/templatetags/case_tags.py:186
 msgid "Parent Location"
-msgstr ""
+msgstr "Ubicación de origen"
 
 #: corehq/ex-submodules/casexml/apps/case/templatetags/case_tags.py:259
 msgid "Unknown Product (\"{}\")"
-msgstr ""
+msgstr "Producto desconocido (\"{}\")"
 
 #: corehq/ex-submodules/casexml/apps/case/templatetags/case_tags.py:383
 #, python-format
 msgid "Add %(case_type)s"
-msgstr ""
+msgstr "Agregar %(case_type)s"
 
 #: corehq/ex-submodules/casexml/apps/case/templatetags/case_tags.py:512
 msgid "Opened"
-msgstr ""
+msgstr "Abierto"
 
 #: corehq/ex-submodules/casexml/apps/case/templatetags/case_tags.py:516
 msgid "Empty Case"
-msgstr ""
+msgstr "Caso vacío"
 
 #: corehq/ex-submodules/couchexport/shortcuts.py:24
 #, python-brace-format
 msgid "No previous export with id \"{id}\" found"
-msgstr ""
+msgstr "No se encuentra una exportación anterior con id \"{id}\""
 
 #: corehq/ex-submodules/phonelog/reports.py:34
 msgid ""
 "This report will only show data for the past 60 days. Furthermore the report"
 " may not always show the latest log data but will be updated over time"
-msgstr ""
+msgstr "Este informe solo mostrará datos de los últimos 60 días. Además, el informe pueda no siempre mostrar la información más reciente de ingreso, pero se actualizará con el paso del tiempo"
 
 #: corehq/ex-submodules/phonelog/reports.py:45
 msgid "Device Log Details"
-msgstr ""
+msgstr "Detalles de ingreso del dispositivo"
 
 #: corehq/ex-submodules/phonelog/reports.py:73
 msgid "Log Date"
-msgstr ""
+msgstr "Fecha de ingreso"
 
 #: corehq/ex-submodules/phonelog/reports.py:76
 msgid "Log Submission Date"
-msgstr ""
+msgstr "Fecha de envío de ingreso"
 
 #: corehq/ex-submodules/phonelog/reports.py:79
 msgid "Log Type"
-msgstr ""
+msgstr "Tipo de ingreso"
 
 #: corehq/ex-submodules/phonelog/reports.py:80
 msgid "Logged in Username"
-msgstr ""
+msgstr "Usuario que ingresó"
 
 #: corehq/ex-submodules/phonelog/reports.py:82
 msgid "Device Users"
-msgstr ""
+msgstr "Usuarios del dispositivo"
 
 #: corehq/ex-submodules/phonelog/reports.py:83
 msgid "Device ID"
-msgstr ""
+msgstr "ID del dispositivo"
 
 #: corehq/ex-submodules/phonelog/reports.py:85
 msgid "App Version"
-msgstr ""
+msgstr "Versión App"
 
 #: corehq/ex-submodules/soil/templates/soil/partials/dl_status.html:3
 msgid "There was an error processing your request"
-msgstr ""
+msgstr "Ocurrió un error al procesar su solicitud"
 
 #: corehq/ex-submodules/soil/templates/soil/partials/dl_status.html:17
 msgid "Your export is ready."
-msgstr ""
+msgstr "Su exportación está lista."
 
 #: corehq/ex-submodules/soil/templates/soil/partials/dl_status.html:23
 msgid ""
@@ -28776,7 +28777,7 @@ msgid ""
 "                If you are downloading a large file over a slow or unstable connection, we recommend syncing to Dropbox. Learn more about\n"
 "                <a href=\"https://confluence.dimagi.com/display/commcarepublic/Syncing+Downloads+to+Dropbox\">Sync to Dropbox</a>.\n"
 "                "
-msgstr ""
+msgstr "\n                Si está descargando un archivo grande con una conexión lenta o inestable, le recomendamos sincronizarla a Dropbox. Aprenda más acerca de \n                <a href=\"https://confluence.dimagi.com/display/commcarepublic/Syncing+Downloads+to+Dropbox\"> Sincronizar a Dropbox</a>.\n                "
 
 #: corehq/ex-submodules/soil/templates/soil/partials/dl_status.html:43
 msgid "Process complete."
