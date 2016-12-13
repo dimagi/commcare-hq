@@ -420,7 +420,7 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
             'detailsUrl': reverse('case_details', args=[self.domain, case.case_id]),
             'name': case.name,
             'externalId': case.external_id if case.external_id else '--',
-            'phoneNumber': getattr(case, 'contact_phone_number', '--'),
+            'phoneNumber': case.get_case_property('contact_phone_number') or '--',
         }
 
     def get_create_form(self, is_blank=False):
