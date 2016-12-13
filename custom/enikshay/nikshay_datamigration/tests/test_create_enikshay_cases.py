@@ -110,6 +110,7 @@ class TestCreateEnikshayCases(TestCase):
             ]),
             person_case.dynamic_case_properties()
         )
+        self.assertEqual('A B C', person_case.name)
 
         occurrence_case_ids = self.case_accessor.get_case_ids_in_domain(type='occurrence')
         self.assertEqual(1, len(occurrence_case_ids))
