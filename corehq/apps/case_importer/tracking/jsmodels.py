@@ -19,9 +19,6 @@ class CaseUploadJSON(jsonobject.StrictJsonObject):
     upload_file_length = jsonobject.IntegerProperty()
     upload_file_download_allowed = jsonobject.BooleanProperty(required=True)
 
-    form_ids = jsonobject.ListProperty(str)
-    case_ids = jsonobject.ListProperty(str)
-
 
 def case_upload_to_user_json(case_upload, request):
     domain = case_upload.domain
@@ -41,7 +38,4 @@ def case_upload_to_user_json(case_upload, request):
                             if case_upload.upload_file_meta else None),
         upload_file_download_allowed=user_may_view_file_upload(
             domain, request.couch_user, case_upload),
-        form_ids=[form_record.form_id for form_record in case_upload.form_records.all()],
-        case_ids=[case_record.case_id for form_record in case_upload.form_records.all()
-                  for case_record in form_record.case_records.all()],
     )
