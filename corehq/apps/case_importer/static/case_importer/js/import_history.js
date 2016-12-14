@@ -17,7 +17,7 @@ hqDefine('case_importer/js/import_history.js', function () {
                 // only show spinner on first fetch
                 self.state(self.states.STARTED);
             }
-            $.get(urllib.reverse('case_importer_uploads'), {limit: urllib.getUrlParameter('limit')}).success(function (data) {
+            $.get(urllib.reverse('case_importer_uploads'), {limit: urllib.getUrlParameter('limit')}).done(function (data) {
                 self.state(self.states.SUCCESS);
                 self.case_uploads(data);
                 var anyInProgress = _.any(self.case_uploads(), function (case_upload) {

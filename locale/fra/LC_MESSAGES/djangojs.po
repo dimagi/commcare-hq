@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-12-06 20:04+0000\n"
+"POT-Creation-Date: 2016-12-13 21:53+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,14 +17,15 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: bower_components/jquery-ui/jquery-ui.min.js:8
-msgid "'"
-msgstr ""
-
+#: bower_components/bower_components/underscore-legacy/test/utility.js:67
 #: bower_components/underscore-legacy/test/utility.js:67
 #: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/test_underscore/utility.js:51
 #: node_modules/grunt/node_modules/underscore.string/test/test_underscore/utility.js:41
 msgid "champ"
+msgstr ""
+
+#: bower_components/jquery-ui/jquery-ui.min.js:8
+msgid "'"
 msgstr ""
 
 #: corehq/apps/accounting/static/accounting/js/accounting.billing_info_handler.js:85
@@ -104,16 +105,16 @@ msgstr ""
 msgid "Save"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:142
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:139
 msgid "Form successfully saved"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:314
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:308
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:25
 msgid "Waiting for server progress"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:346
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:340
 msgid "Please wait..."
 msgstr ""
 
@@ -463,6 +464,45 @@ msgstr ""
 msgid ""
 "Password Requirements: 1 special character, 1 number, 1 capital letter, "
 "minimum length of 8 characters."
+msgstr ""
+
+#: docs/_build/html/_static/doctools.js:166
+msgid "Permalink to this headline"
+msgstr ""
+
+#: docs/_build/html/_static/doctools.js:172
+msgid "Permalink to this definition"
+msgstr ""
+
+#: docs/_build/html/_static/doctools.js:205
+msgid "Hide Search Matches"
+msgstr ""
+
+#: docs/_build/html/_static/searchtools.js:299
+msgid "Searching"
+msgstr ""
+
+#: docs/_build/html/_static/searchtools.js:304
+msgid "Preparing search..."
+msgstr ""
+
+#: docs/_build/html/_static/searchtools.js:461
+msgid "Search Results"
+msgstr ""
+
+#: docs/_build/html/_static/searchtools.js:463
+msgid ""
+"Your search did not match any documents. Please make sure that all words are "
+"spelled correctly and that you've selected enough categories."
+msgstr ""
+
+#: docs/_build/html/_static/searchtools.js:465
+#, javascript-format
+msgid "Search finished, found %s page(s) matching the search query."
+msgstr ""
+
+#: docs/_build/html/_static/searchtools.js:517
+msgid ", in "
 msgstr ""
 
 #: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:22
