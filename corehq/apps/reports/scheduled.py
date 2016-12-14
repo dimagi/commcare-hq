@@ -5,7 +5,7 @@ from corehq.apps.reports.models import ReportNotification
 
 def get_scheduled_reports(period, as_of=None):
     as_of = as_of or datetime.utcnow()
-    assert period in ('daily', 'weekly', 'monthly')
+    assert period in ('daily', 'weekly', 'monthly'), period
 
     def _keys(period, as_of):
         minute = guess_reporting_minute(as_of)
