@@ -147,6 +147,7 @@ class EnikshayCaseFactory(object):
                 'case_type': 'episode',
                 'update': {
                     'disease_classification': self.patient_detail.disease_classification,
+                    'patient_type_choice': self.patient_detail.patient_type_choice,
                     'treatment_supporter_mobile_number': outcome.PatientId.cmob,
 
                     'date_reported': self.patient_detail.pregdate1, # is this right?

@@ -36,7 +36,7 @@ class TestCreateEnikshayCases(TestCase):
             dotpType=1,
             PHI=2,
             atbtreatment='',
-            Ptype=3,
+            Ptype=4,
             pcategory=4,
         )
         Outcome.objects.create(
@@ -149,6 +149,7 @@ class TestCreateEnikshayCases(TestCase):
                 ('date_reported', '2016-12-13'),
                 ('disease_classification', 'pulmonary'),
                 ('migration_created_case', 'True'),
+                ('patient_type_choice', 'treatment_after_failure'),
                 ('treatment_supporter_mobile_number', '123'),
             ]),
             episode_case.dynamic_case_properties()
