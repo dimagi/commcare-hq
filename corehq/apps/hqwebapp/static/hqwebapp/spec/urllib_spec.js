@@ -20,6 +20,13 @@ describe('urllib', function() {
         it('should return the URL-decoded value', function() {
             assert.equal(urllib.getUrlParameterFromString('json', '?json=[%22hi%22]'), '["hi"]');
         });
+
+        it('should allow & in the value', function() {
+            assert.equal(
+                urllib.getUrlParameterFromString('drink', '?drink=gin%20%26%20tonic&food=eggplant%20parm'),
+                'gin & tonic'
+            );
+        });
     });
 
     describe('registerUrl', function() {

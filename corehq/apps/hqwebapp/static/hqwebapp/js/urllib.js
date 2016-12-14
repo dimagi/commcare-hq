@@ -5,16 +5,16 @@ hqDefine('hqwebapp/js/urllib.js', function () {
         return getUrlParameterFromString(param, window.location.search);
     };
     var getUrlParameterFromString = function (param, search) {
-        var pageUrl = decodeURIComponent(search.substring(1)),
-            urlVariables = pageUrl.split('&'),
-            parameterName,
-            i;
+        var pageUrl = search.substring(1),
+            urlVariables = pageUrl.split('&');
 
-        for (i = 0; i < urlVariables.length; i++) {
-            parameterName = urlVariables[i].split('=');
+        for (var i = 0; i < urlVariables.length; i++) {
+            var keyValue = urlVariables[i].split('=');
+            var key = decodeURIComponent(keyValue[0]);
+            var value = decodeURIComponent(keyValue[1]);
 
-            if (parameterName[0] === param) {
-                return parameterName[1] === undefined ? true : parameterName[1];
+            if (key === param) {
+                return value === undefined ? true : value;
             }
         }
     };
