@@ -5,9 +5,13 @@ from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.export.models.new import CaseExportDataSchema
 
 
+class OldExportsEnabledException(Exception):
+    pass
+
+
 def generate_data_dictionary(domain):
     if toggles.OLD_EXPORTS.enabled(domain):
-        return False
+        raise OldExportsEnabledException()
     properties = _get_all_case_properties(domain)
     _create_properties_for_case_types(domain, properties)
     CaseType.objects.filter(domain=domain, name__in=properties.keys()).update(fully_generated=True)
@@ -55,10 +59,8 @@ def _get_current_case_types_and_properties(domain):
 
 
 def add_properties_to_data_dictionary(domain, case_type, properties):
-    if not properties:
-        return
-
-    _create_properties_for_case_types(domain, {case_type: properties})
+    if properties:
+        _create_properties_for_case_types(domain, {case_type: properties})
 
 
 def _create_properties_for_case_types(domain, case_type_to_prop):
@@ -69,14 +71,16 @@ def _create_properties_for_case_types(domain, case_type_to_prop):
         if not case_type:
             continue
 
-        if case_type in current_case_types:
+        try:
             case_type_obj = current_case_types[case_type]
-        else:
+        except KeyError:
             case_type_obj = CaseType.objects.create(domain=domain, name=case_type)
 
         for prop in props:
+            # don't add any properites to parent cases
             if '/' in prop:
                 continue
+
             if (case_type not in current_properties or
                     prop not in current_properties[case_type]):
                 new_case_properties.append(CaseProperty(
