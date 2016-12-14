@@ -15,19 +15,17 @@ class PatientDetail(models.Model):
     pmob = models.CharField(max_length=255, null=True)  # validate numerical in factory
     plandline = models.CharField(max_length=255, null=True)
     ptbyr = models.CharField(max_length=255, null=True)  # dates, but not clean
-    # pregdate1 = models.CharField(max_length=255, null=True)  # remove time in Excel (format as DD-MM-YYYY)
     cname = models.CharField(max_length=255, null=True)
     caddress = models.CharField(max_length=255, null=True)
     cmob = models.CharField(max_length=255, null=True)  # validate numerical in factory
     clandline = models.CharField(max_length=255, null=True)
     cvisitedby = models.CharField(max_length=255, null=True)
-    # cvisitedDate1 = models.CharField(max_length=255, null=True)  # datetimes, look like they're all midnight
     dcpulmunory = models.CharField(
         max_length=255, choices=(
             ('y', 'y'),
             ('N', 'N'),
         ),
-    )  # y or N
+    )
     dcexpulmunory = models.CharField(max_length=255)
     dcpulmunorydet = models.CharField(max_length=255, null=True)
     dotname = models.CharField(max_length=255, null=True)
@@ -39,7 +37,6 @@ class PatientDetail(models.Model):
     PHI = models.CharField(max_length=255)
     dotmoname = models.CharField(max_length=255, null=True)
     dotmosdone = models.CharField(max_length=255)
-    # dotmosignDate = models.CharField(max_length=255, null=True)  # datetimes, look like they're all midnight. also have a bunch of 1/1/1990
     atbtreatment = models.CharField(max_length=255, choices=(
         ('Y', 'Y'),
         ('N', 'N'),
