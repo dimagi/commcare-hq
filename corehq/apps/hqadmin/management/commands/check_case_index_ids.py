@@ -1,5 +1,6 @@
 import csv
 from django.core.management import BaseCommand
+from corehq.elastic import ES_MAX_CLAUSE_COUNT
 from corehq.apps.es.cases import CaseES
 
 
@@ -22,8 +23,7 @@ class Command(BaseCommand):
 
         invalid_referenced_ids = referenced_case_ids - valid_case_ids
 
-        if len(invalid_referenced_ids) > 1023:
-            # I think there is an issue with having more than 1024 in the filter
+        if len(invalid_referenced_ids) > ES_MAX_CLAUSE_COUNT:
             print "there's a lot of invalid ids here. ES queries may not handle this well"
 
         cases_with_invalid_references = (
