@@ -1,7 +1,11 @@
+from celery.schedules import crontab
 from celery.task import task
 from corehq.apps.case_importer.exceptions import ImporterError
+from corehq.apps.case_importer.tracking.analytics import \
+    get_case_upload_files_total_bytes
 from corehq.apps.case_importer.tracking.case_upload_tracker import CaseUpload
 from corehq.apps.case_importer.util import get_importer_error_message
+from corehq.util.datadog.gauges import datadog_gauge_task
 from dimagi.utils.couch.database import is_bigcouch
 from casexml.apps.case.mock import CaseBlock, CaseBlockError
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -279,3 +283,10 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
         'errors': errors.as_dict(),
         'num_chunks': num_chunks,
     }
+
+
+total_bytes = datadog_gauge_task(
+    'case_importer.files.total_bytes',
+    get_case_upload_files_total_bytes,
+    run_every=crontab(minute=0)
+)
