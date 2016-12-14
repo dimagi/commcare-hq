@@ -810,21 +810,28 @@ def drop_user_case(request, domain, app_id):
 @require_can_edit_apps
 def pull_master_app(request, domain, app_id):
     app = get_current_app_doc(domain, app_id)
-    master_app = get_app(None, app['master'], latest=True)
+    master_app = get_app(None, app['master'])
+    latest_master_build = get_app(None, app['master'], latest=True)
     params = {}
     if app['domain'] in master_app.linked_whitelist:
         excluded_fields = set(Application._meta_fields).union(
             ['date_created', 'build_profiles', 'copy_history', 'copy_of', 'name', 'comment', 'doc_type']
         )
-        master_json = master_app.to_json()
+        master_json = latest_master_build.to_json()
         for key, value in master_json.iteritems():
             if key not in excluded_fields:
                 app[key] = value
         app['version'] = master_json['version']
         wrapped_app = wrap_app(app)
-        wrapped_app.copy_attachments(master_app)
+        wrapped_app.copy_attachments(latest_master_build)
         wrapped_app.save(increment_version=False)
+    else:
+        messages.error(request, _(
+            'This project is not authorized to update from the master application. '
+            'Please contact the maintainer of the master app if you believe this is a mistake. ')
+        )
     return HttpResponseRedirect(reverse_util('view_app', params=params, args=[domain, app_id]))
+
 
 
 @no_conflict_require_POST

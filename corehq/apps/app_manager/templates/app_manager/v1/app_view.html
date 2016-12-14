@@ -61,11 +61,9 @@
              $(function () {
                 var domains = {{ app.linked_whitelist|JSON }};
                 var save = '{% url "update_linked_whitelist" domain app.id %}';
-                $(function () {
-                    var LinkedWhitelist = hqImport('app_manager/js/linked_whitelist.js').LinkedWhitelist;
-                    linkedWhitelist = new LinkedWhitelist(domains, save);
-                    $('#whitelist-tab').koApplyBindings(linkedWhitelist);
-                });
+                var LinkedWhitelist = hqImport('app_manager/js/linked_whitelist.js').LinkedWhitelist;
+                linkedWhitelist = new LinkedWhitelist(domains, save);
+                $('#whitelist-tab').koApplyBindings(linkedWhitelist);
              });
             {% endif %}
         $(function () {

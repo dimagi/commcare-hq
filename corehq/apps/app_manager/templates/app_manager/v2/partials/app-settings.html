@@ -182,7 +182,7 @@
             <p> Your app is at version {{ app.version }}. The master app is at version {{ master_version }}. </p>
             <a class="btn btn-primary"
                 href="{% url 'pull_master_app' domain app.id %}">
-                {% trans 'Pull Master App' %}
+                {% trans 'Update from Master App' %}
             </a>
         {% endif %}
         <div class="tab-pane active" id="commcare-settings">
