@@ -62,8 +62,8 @@ submodules:
     branches: []
 #      - commcare-2.32-jars # Aliza 12/5
   submodules/formtranslate-src:
-    branches: []
-#      - commcare-2.32-jars # Aliza 12/5
+    branches:
+      - commcare-2.32-jars # Aliza 12/5
   submodules/django-digest-src:
     branches: []
   submodules/dimagi-utils-src:
