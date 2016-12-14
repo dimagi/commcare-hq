@@ -112,6 +112,83 @@
           </tbody>
         </table>
       </div>
+
+      <div>
+        <h3>{% trans 'User Filters' %}</h3>
+        <table class="table">
+          <thead>
+            <th> </th>
+            <th>{% trans 'Property' %}</th>
+            <th>{% trans 'Display Text' %}</th>
+            <th>{% trans 'Format' %}</th>
+            <th> </th>
+          </thead>
+
+          <tbody>
+            <tr>
+              <td>&nbsp;</td>
+              <td>
+                <select data-bind="options: columns,
+                                   optionsText: 'label',
+                                   optionsValue: 'name',
+                                   value: newColumnName">
+                </select>
+              </td>
+              <td>
+                <input type="text" />
+              </td>
+              <td>
+                <select>
+                  <option>Choice</option>
+                  <option>Date</option>
+                </select>
+              </td>
+              <td>
+                <button class="btn btn-primary"><i class="fa fa-plus"></i></button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div>
+        <h3>{% trans 'Default Filters' %}</h3>
+        <table class="table">
+          <thead>
+            <th> </th>
+            <th>{% trans 'Property' %}</th>
+            <th>{% trans 'Format' %}</th>
+            <th>{% trans 'Filter Value' %}</th>
+            <th> </th>
+          </thead>
+
+          <tbody>
+            <tr>
+              <td>&nbsp;</td>
+              <td>
+                <select data-bind="options: columns,
+                                   optionsText: 'label',
+                                   optionsValue: 'name',
+                                   value: newColumnName">
+                </select>
+              </td>
+              <td>
+                <select>
+                  <option>Value</option>
+                  <option>Date</option>
+                </select>
+              </td>
+              <td>
+                <input type="text" />
+              </td>
+              <td>
+                <button class="btn btn-primary"><i class="fa fa-plus"></i></button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
     </div>
 
     <div class="col-md-7">
