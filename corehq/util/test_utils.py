@@ -116,11 +116,11 @@ class TestFileMixin(object):
         return cls.get_file(name, 'xml', override_path)
 
 
-def flag_enabled(toggle_class_string):
+def toggle_enabled(toggle_class_string):
     """
     Decorate test methods with this to mock the lookup
 
-        @flag_enabled('MULTIPLE_LOCATIONS_PER_USER')
+        @toggle_enabled('MULTIPLE_LOCATIONS_PER_USER')
         def test_something_fancy(self):
             something.which_depends(on.MULTIPLE_LOCATIONS_PER_USER)
     """

@@ -1,10 +1,10 @@
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.util.test_utils import flag_enabled
+from corehq.util.test_utils import toggle_enabled
 
 
-@flag_enabled('GRID_MENUS')
+@toggle_enabled('GRID_MENUS')
 class GridMenuSuiteTests(SimpleTestCase, TestXmlMixin):
     def test_that_grid_style_is_added(self):
         """
