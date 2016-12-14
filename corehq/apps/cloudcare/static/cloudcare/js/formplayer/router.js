@@ -37,7 +37,12 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             var urlObject = Util.CloudcareUrl.fromJson(
                 Util.encodedUrlToObject(sessionObject || Backbone.history.getFragment())
             );
-            FormplayerFrontend.Menus.Controller.selectMenu(urlObject);
+            if (_.isUndefined(urlObject.appId)) {
+                // We can't do any menu navigation without an appId
+                FormplayerFrontend.trigger("apps:list");
+            } else {
+                FormplayerFrontend.Menus.Controller.selectMenu(urlObject);
+            }
         },
         listUsers: function(page, query) {
             FormplayerFrontend.trigger("clearForm");
