@@ -1,5 +1,9 @@
 from django.utils.translation import ugettext as _
 
+from corehq.apps.groups.models import Group
+from corehq.apps.locations.models import Location
+from corehq.apps.users.cases import get_wrapped_owner
+from corehq.apps.users.models import CommCareUser
 from dimagi.utils.decorators.memoized import memoized
 
 from .users import ExpandedMobileWorkerFilter, EmwfUtils
@@ -21,8 +25,15 @@ class CaseListFilterUtils(EmwfUtils):
             ('project_data', _("[Project Data]"))
         ] + options[1:]
 
+    def _group_to_choice_tuple(self, group):
+        if group.case_sharing:
+            return self.sharing_group_tuple(group)
+        else:
+            return self.reporting_group_tuple(group)
+
 
 class CaseListFilter(ExpandedMobileWorkerFilter):
+    slug = 'case_list_filter'
     options_url = 'case_list_options'
     default_selections = [('project_data', _("[Project Data]"))]
 
