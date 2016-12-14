@@ -149,7 +149,7 @@ class TestCreateEnikshayCases(TestCase):
                 ('disease_classification', 'pulmonary'),
                 ('migration_created_case', 'True'),
                 ('patient_type_choice', 'treatment_after_failure'),
-                ('treatment_supporter_mobile_number', '123'),
+                ('treatment_supporter_mobile_number', '321'),
             ]),
             episode_case.dynamic_case_properties()
         )
