@@ -425,7 +425,7 @@ def get_casedb_schema(form):
             "id": USERCASE_TYPE,
             "name": "user",
             "key": "@case_type",
-            "structure": {p: {} for p in get_usercase_properties(app)},
+            "structure": {p: {} for p in get_usercase_properties(app)[USERCASE_TYPE]},
         })
 
     return {

@@ -314,6 +314,10 @@ class SchemaTest(SimpleTestCase):
 
     def test_get_casedb_schema_with_user_case(self):
         module, form = self.factory.new_basic_module('village', 'village')
+        self.factory.form_uses_usercase(form, update={
+            'name': '/data/username',
+            'role': '/data/userrole',
+        })
         with patch('corehq.apps.app_manager.util.is_usercase_in_use') as mock:
             mock.return_value = True
             schema = util.get_casedb_schema(form)
@@ -323,7 +327,8 @@ class SchemaTest(SimpleTestCase):
                 "key": "@case_type",
                 "name": "user",
                 "structure": {
-                    "commcare-user": {},
+                    "name": {},
+                    "role": {},
                 },
             })
 
