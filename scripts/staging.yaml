@@ -55,6 +55,8 @@ branches:
   - nc/exports-with-conflict-res-branch  # Noah 12/11
   - nikshay-migration-new # Nick P 12/9
   - dm/vellum-user-properties
+  - br/dict-serialize  # Ben 12/14
+  - br/remove-lenient-protocol  # Ben 12/14
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
