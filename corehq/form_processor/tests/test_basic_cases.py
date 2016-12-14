@@ -246,6 +246,20 @@ class FundamentalCaseTests(TestCase):
         case = self.casedb.get_case(child_case_id)
         self.assertEqual(len(case.indices), 0)
 
+    @run_with_all_backends
+    def test_invalid_index(self):
+        invalid_case_id = uuid.uuid4().hex
+        child_case_id = uuid.uuid4().hex
+        form, cases = _submit_case_block(
+            True, child_case_id, user_id='user1', owner_id='owner1', case_type='child',
+            case_name='child', date_modified=datetime.utcnow(), index={
+                'mom': ('mother', invalid_case_id)
+            }
+        )
+        self.assertEqual(0, len(cases))
+        self.assertTrue(form.is_error)
+        self.assertTrue('InvalidCaseIndex' in form.problem)
+
     def test_case_with_attachment(self):
         # same as update, attachments
         pass

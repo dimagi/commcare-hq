@@ -15,7 +15,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from couchforms.models import XFormInstance
 from casexml.apps.case.exceptions import (
     NoDomainProvided,
-)
+    InvalidCaseIndex)
 from django.conf import settings
 
 from casexml.apps.case import const
@@ -263,11 +263,9 @@ def _validate_indices(case_db, cases):
                 # see CaseDbCache._validate_case
                 referenced_case = case_db.get(index.referenced_id)
                 if not referenced_case:
-                    # just log, don't raise an error or modify the index
-                    logging.error(
-                        "Case '%s' references non-existent case '%s'",
-                        case.case_id,
-                        index.referenced_id,
+                    # fail hard on invalid indices
+                    raise InvalidCaseIndex(
+                        "Case '%s' references non-existent case '%s'" % (case.case_id, index.referenced_id)
                     )
 
 
