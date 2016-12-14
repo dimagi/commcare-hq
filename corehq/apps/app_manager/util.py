@@ -412,7 +412,6 @@ def get_casedb_schema(form):
     subsets = [{
         "id": generation_names[i],
         "name": "{} ({})".format(generation_names[i], " or ".join(ctypes)) if i > 0 else base_case_type,
-        "key": "@case_type",
         "structure": {p: {} for type in [map[t] for t in ctypes] for p in type},
         "related": {"parent": {
             "hashtag": "#case/" + generation_names[i + 1],

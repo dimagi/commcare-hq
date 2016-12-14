@@ -116,7 +116,6 @@ class SchemaTest(SimpleTestCase):
         self.assert_has_kv_pairs(schema["subsets"][0], {
             'id': 'case',
             'name': 'village',
-            'key': '@case_type',
             'structure': {'case_name': {}},
             'related': None,
         })
@@ -256,7 +255,6 @@ class SchemaTest(SimpleTestCase):
                     }
                 },
                 "id": "case",
-                "key": "@case_type",
                 "name": "guppy"
             },
             {
@@ -266,7 +264,6 @@ class SchemaTest(SimpleTestCase):
                 },
                 "related": None,
                 "id": "parent",
-                "key": "@case_type",
                 "name": "parent (gold-fish)"
             }
         ]
