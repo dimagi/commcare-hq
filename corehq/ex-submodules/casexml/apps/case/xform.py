@@ -264,7 +264,7 @@ def _validate_indices(case_db, cases):
                     # see CaseDbCache._validate_case
                     referenced_case = case_db.get(index.referenced_id)
                     invalid = referenced_case is None
-                except IllegalCaseId as e:
+                except IllegalCaseId:
                     invalid = True
                 if invalid:
                     # fail hard on invalid indices
