@@ -1,0 +1,101 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
+from django.db import migrations, models
+
+
+class Migration(migrations.Migration):
+
+    dependencies = [
+    ]
+
+    operations = [
+        migrations.CreateModel(
+            name='PatientDetail',
+            fields=[
+                ('PregId', models.CharField(max_length=255, serialize=False, primary_key=True)),
+                ('scode', models.CharField(default=b'default', max_length=255, null=True)),
+                ('Dtocode', models.CharField(max_length=255, null=True)),
+                ('Tbunitcode', models.IntegerField()),
+                ('pname', models.CharField(max_length=255, null=True)),
+                ('pgender', models.CharField(max_length=255, null=True)),
+                ('page', models.CharField(max_length=255, null=True)),
+                ('poccupation', models.CharField(max_length=255, null=True)),
+                ('paadharno', models.CharField(max_length=255, null=True)),
+                ('paddress', models.CharField(max_length=255, null=True)),
+                ('pmob', models.CharField(max_length=255, null=True)),
+                ('plandline', models.CharField(max_length=255, null=True)),
+                ('ptbyr', models.CharField(max_length=255, null=True)),
+                ('cname', models.CharField(max_length=255, null=True)),
+                ('caddress', models.CharField(max_length=255, null=True)),
+                ('cmob', models.CharField(max_length=255, null=True)),
+                ('clandline', models.CharField(max_length=255, null=True)),
+                ('cvisitedby', models.CharField(max_length=255, null=True)),
+                ('dcpulmunory', models.CharField(max_length=255, null=True, choices=[(b'y', b'y'), (b'N', b'N')])),
+                ('dcexpulmunory', models.CharField(max_length=255, null=True)),
+                ('dcpulmunorydet', models.CharField(max_length=255, null=True)),
+                ('dotname', models.CharField(max_length=255, null=True)),
+                ('dotdesignation', models.CharField(max_length=255, null=True)),
+                ('dotmob', models.CharField(max_length=255, null=True)),
+                ('dotlandline', models.CharField(max_length=255, null=True)),
+                ('dotpType', models.CharField(max_length=255, null=True)),
+                ('dotcenter', models.CharField(max_length=255, null=True)),
+                ('PHI', models.CharField(max_length=255, null=True)),
+                ('dotmoname', models.CharField(max_length=255, null=True)),
+                ('dotmosdone', models.CharField(max_length=255, null=True)),
+                ('atbtreatment', models.CharField(max_length=255, null=True, choices=[(b'Y', b'Y'), (b'N', b'N')])),
+                ('atbduration', models.CharField(max_length=255, null=True)),
+                ('atbsource', models.CharField(max_length=255, null=True, choices=[(b'G', b'G'), (b'O', b'O'), (b'P', b'P')])),
+                ('atbregimen', models.CharField(max_length=255, null=True)),
+                ('atbyr', models.CharField(max_length=255, null=True)),
+                ('Ptype', models.CharField(max_length=255, null=True)),
+                ('pcategory', models.CharField(max_length=255, null=True)),
+                ('regBy', models.CharField(max_length=255, null=True)),
+                ('regDate', models.CharField(max_length=255, null=True)),
+                ('isRntcp', models.CharField(max_length=255, null=True)),
+                ('dotprovider_id', models.CharField(max_length=255, null=True)),
+                ('pregdate1', models.DateField()),
+                ('cvisitedDate1', models.CharField(max_length=255, null=True)),
+                ('InitiationDate1', models.CharField(max_length=255, null=True)),
+                ('dotmosignDate1', models.CharField(max_length=255, null=True)),
+            ],
+        ),
+        migrations.CreateModel(
+            name='Followup',
+            fields=[
+                ('id', models.AutoField(serialize=False, primary_key=True)),
+                ('PatientID', models.ForeignKey(to='nikshay_datamigration.PatientDetail')),
+                ('IntervalId', models.CharField(max_length=255, null=True)),
+                ('TestDate', models.CharField(max_length=255, null=True)),
+                ('DMC', models.CharField(max_length=255, null=True)),
+                ('LabNo', models.CharField(max_length=255, null=True)),
+                ('SmearResult', models.CharField(max_length=255, null=True)),
+                ('PatientWeight', models.CharField(max_length=255, null=True)),
+                ('DmcStoCode', models.CharField(max_length=255, null=True)),
+                ('DmcDtoCode', models.CharField(max_length=255, null=True)),
+                ('DmcTbuCode', models.CharField(max_length=255, null=True)),
+                ('RegBy', models.CharField(max_length=255, null=True)),
+                ('regdate', models.CharField(max_length=255, null=True)),
+            ],
+        ),
+        migrations.CreateModel(
+            name='Outcome',
+            fields=[
+                ('PatientId', models.OneToOneField(primary_key=True, serialize=False, to='nikshay_datamigration.PatientDetail')),
+                ('Outcome', models.CharField(max_length=255, null=True)),
+                ('OutcomeDate', models.CharField(max_length=255, null=True)),
+                ('MO', models.CharField(max_length=255, null=True)),
+                ('XrayEPTests', models.CharField(max_length=255, null=True)),
+                ('MORemark', models.CharField(max_length=255, null=True)),
+                ('HIVStatus', models.CharField(max_length=255, null=True)),
+                ('HIVTestDate', models.CharField(max_length=255, null=True)),
+                ('CPTDeliverDate', models.CharField(max_length=255, null=True)),
+                ('ARTCentreDate', models.CharField(max_length=255, null=True)),
+                ('InitiatedOnART', models.CharField(max_length=255, null=True)),
+                ('InitiatedDate', models.CharField(max_length=255, null=True)),
+                ('userName', models.CharField(max_length=255, null=True)),
+                ('loginDate', models.CharField(max_length=255, null=True)),
+                ('OutcomeDate1', models.CharField(max_length=255, null=True)),
+            ],
+        ),
+    ]
