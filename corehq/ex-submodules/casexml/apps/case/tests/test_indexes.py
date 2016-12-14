@@ -1,4 +1,5 @@
 import re
+import uuid
 from xml.etree import ElementTree
 import datetime
 from django.test.utils import override_settings
@@ -144,14 +145,18 @@ class IndexTest(TestCase):
 
     @run_with_all_backends
     def testRelationshipGetsSet(self):
+        parent_case_id = uuid.uuid4().hex
+        post_case_blocks(
+            [CaseBlock(create=True, case_id=parent_case_id, user_id=self.user.user_id).as_xml()],
+            domain=self.project.name
+        )
         create_index = CaseBlock(
             create=True,
             case_id=self.CASE_ID,
             user_id=self.user.user_id,
             owner_id=self.user.user_id,
-            index={'mom': ('mother-case', self.MOTHER_CASE_ID, 'extension')},
+            index={'mom': ('mother-case', parent_case_id, 'extension')},
         ).as_xml()
-
         post_case_blocks([create_index], domain=self.project.name)
         check_user_has_case(self, self.user, create_index)
 
