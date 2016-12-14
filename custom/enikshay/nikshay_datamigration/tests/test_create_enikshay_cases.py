@@ -31,7 +31,7 @@ class TestCreateEnikshayCases(TestCase):
             cname='Secondary name',
             caddress='Secondary address',
             cmob='123',
-            dcpulmunory='',
+            dcpulmunory='Y',
             dotmob='321',
             dotpType=1,
             PHI=2,
@@ -147,7 +147,7 @@ class TestCreateEnikshayCases(TestCase):
         self.assertEqual(
             OrderedDict([
                 ('date_reported', '2016-12-13'),
-                ('disease_classification', ''),
+                ('disease_classification', 'pulmonary'),
                 ('migration_created_case', 'True'),
                 ('treatment_supporter_mobile_number', '123'),
             ]),

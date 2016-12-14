@@ -146,11 +146,10 @@ class EnikshayCaseFactory(object):
                 'create': True,
                 'case_type': 'episode',
                 'update': {
+                    'disease_classification': self.patient_detail.disease_classification,
                     'treatment_supporter_mobile_number': outcome.PatientId.cmob,
 
                     'date_reported': self.patient_detail.pregdate1, # is this right?
-
-                    'disease_classification': self.patient_detail.dcexpulmunory,
 
                     'migration_created_case': True,
 

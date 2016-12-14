@@ -103,6 +103,17 @@ class PatientDetail(models.Model):
             'T': 'transgender'
         }[self.pgender]
 
+    @property
+    def disease_classification(self):
+        pulmonary = 'pulmonary'
+        extra_pulmonary = 'extra_pulmonary'
+        return {
+            'y': pulmonary,
+            'Y': pulmonary,
+            'P': pulmonary,
+            'N': extra_pulmonary,
+        }[self.dcpulmunory]
+
 
 class Outcome(models.Model):
     PatientId = models.OneToOneField(PatientDetail, primary_key=True)
