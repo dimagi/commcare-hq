@@ -67,6 +67,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.reports.formdetails import readable
 from corehq.apps.style.decorators import (
     use_datatables,
+    use_legacy_jquery,
     use_jquery_ui,
 )
 from corehq.apps.users.models import CouchUser, CommCareUser
@@ -232,6 +233,7 @@ class CloudcareMain(View):
         }
         context.update(_url_context())
         if toggles.USE_FORMPLAYER_FRONTEND.enabled(domain):
+            request.use_legacy_jquery = True
             return render(request, "cloudcare/formplayer_home.html", context)
         else:
             return render(request, "cloudcare/cloudcare_home.html", context)
@@ -244,6 +246,7 @@ class FormplayerMain(View):
     urlname = 'formplayer_main'
 
     @use_datatables
+    @use_legacy_jquery
     @use_jquery_ui
     @method_decorator(require_cloudcare_access)
     @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
@@ -300,6 +303,10 @@ class FormplayerMainPreview(FormplayerMain):
     preview = True
     urlname = 'formplayer_main_preview'
 
+    @use_legacy_jquery
+    def dispatch(self, request, *args, **kwargs):
+        return super(FormplayerMain, self).dispatch(request, *args, **kwargs)
+
     def fetch_app(self, domain, app_id):
         return get_current_app(domain, app_id)
 
@@ -309,6 +316,7 @@ class FormplayerPreviewSingleApp(View):
     urlname = 'formplayer_single_app'
 
     @use_datatables
+    @use_legacy_jquery
     @use_jquery_ui
     @method_decorator(require_cloudcare_access)
     @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
