@@ -788,6 +788,14 @@ def make_location(**kwargs):
     return SQLLocation(**kwargs)
 
 
+def get_location(location_id, domain=None):
+    """Drop-in replacement for `Location.get`, but returns a SQLLocation"""
+    if domain:
+        return SQLLocation.objects.get(domain=domain, location_id=location_id)
+    else:
+        return SQLLocation.objects.get(location_id=location_id)
+
+
 def set_site_code_if_needed(location):
     from corehq.apps.commtrack.util import generate_code
     if not location.site_code:
