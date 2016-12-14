@@ -36,7 +36,7 @@
                 // only show spinner on first fetch
                 self.state(self.states.STARTED);
             }
-            $.get(caseUploadResource).success(function (data) {
+            $.get(caseUploadResource).done(function (data) {
                 self.state(self.states.SUCCESS);
                 self.case_uploads(data);
                 var anyInProgress = _.any(self.case_uploads(), function (case_upload) {
