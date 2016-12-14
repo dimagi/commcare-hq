@@ -105,7 +105,7 @@ class Outcome(models.Model):
 
 class Followup(models.Model):
     id = models.AutoField(primary_key=True)
-    PatientID = models.ForeignKey(PatientDetail)  # requires trimming whitespace in excel and moving to end of CSV
+    PatientID = models.ForeignKey(PatientDetail)
     IntervalId = models.CharField(max_length=255)
     TestDate = models.CharField(max_length=255, null=True)
     DMC = models.CharField(max_length=255)
