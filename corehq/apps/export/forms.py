@@ -560,7 +560,7 @@ class DashboardFeedFilterForm(forms.Form):
         """
 
         # Only one of these fields should have any data in it.
-        emwf_field = 'emwf_form_filter' if self.cleaned_data['emwf_form_filter'] else 'emwf_case_filter'
+        emwf_field = 'emwf_form_filter' if self.cleaned_data['emwf_form_filter'] is not None else 'emwf_case_filter'
         emwf_selections = [x['id'] for x in self.cleaned_data[emwf_field]]
 
         if self.cleaned_data['emwf_form_filter']:
