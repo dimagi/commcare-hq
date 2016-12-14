@@ -79,7 +79,6 @@ class IndexTest(TestCase):
                 domain=self.project.name
             )
 
-        now = datetime.datetime.utcnow()
 
         # Step 1. Create a case with index <mom>
         create_index = CaseBlock(
