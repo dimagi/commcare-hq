@@ -833,7 +833,6 @@ def pull_master_app(request, domain, app_id):
     return HttpResponseRedirect(reverse_util('view_app', params=params, args=[domain, app_id]))
 
 
-
 @no_conflict_require_POST
 @require_can_edit_apps
 def update_linked_whitelist(request, domain, app_id):
