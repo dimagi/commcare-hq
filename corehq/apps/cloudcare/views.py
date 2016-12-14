@@ -96,6 +96,7 @@ def insufficient_privilege(request, domain, *args, **kwargs):
 class CloudcareMain(View):
 
     @use_datatables
+    @use_legacy_jquery
     @use_jquery_ui
     @method_decorator(require_cloudcare_access)
     @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
@@ -233,7 +234,6 @@ class CloudcareMain(View):
         }
         context.update(_url_context())
         if toggles.USE_FORMPLAYER_FRONTEND.enabled(domain):
-            request.use_legacy_jquery = True
             return render(request, "cloudcare/formplayer_home.html", context)
         else:
             return render(request, "cloudcare/cloudcare_home.html", context)
@@ -359,6 +359,7 @@ class PreviewAppView(TemplateView):
     template_name = 'preview_app/base.html'
     urlname = 'preview_app'
 
+    @use_legacy_jquery
     def get(self, request, *args, **kwargs):
         app = get_app(request.domain, kwargs.pop('app_id'))
         return self.render_to_response({
