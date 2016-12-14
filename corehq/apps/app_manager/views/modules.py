@@ -252,7 +252,7 @@ def _get_fixture_columns_by_type(domain):
 
 
 def _setup_case_property_builder(app):
-    defaults = ('name', 'date-opened', 'status')
+    defaults = ('name', 'date-opened', 'status', 'last_modified')
     if app.case_sharing:
         defaults += ('#owner_name',)
     per_type_defaults = None
