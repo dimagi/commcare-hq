@@ -9,6 +9,13 @@ from custom.enikshay.nikshay_datamigration.models import PatientDetail, Outcome,
 from dimagi.utils.decorators.memoized import memoized
 
 
+def validate_number(string_value):
+    if string_value is None or string_value.strip() == '':
+        return None
+    else:
+        return int(string_value)
+
+
 class EnikshayCaseFactory(object):
 
     domain = None
@@ -91,9 +98,9 @@ class EnikshayCaseFactory(object):
 
                     # 'date_reported'
 
-                    'contact_phone_number': self.patient_detail.pmob,
-                    'secondary_contact_phone_number': self.patient_detail.cmob,
-                    'treatment_supporter_mobile_number': self.patient_detail.dotmob,
+                    'contact_phone_number': validate_number(self.patient_detail.pmob),
+                    'secondary_contact_phone_number': validate_number(self.patient_detail.cmob),
+                    'treatment_supporter_mobile_number': validate_number(self.patient_detail.dotmob),
 
                     # 'mobile_number': self.patient_detail.pmob, # not used in eNikshay
                     'migration_created_case': True,

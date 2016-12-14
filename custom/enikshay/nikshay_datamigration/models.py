@@ -12,13 +12,13 @@ class PatientDetail(models.Model):
     poccupation = models.CharField(max_length=255)
     paadharno = models.BigIntegerField(null=True)
     paddress = models.CharField(max_length=255)
-    pmob = models.CharField(max_length=255, null=True)  # contains " ", big ints
+    pmob = models.CharField(max_length=255, null=True)  # validate numerical in factory
     plandline = models.CharField(max_length=255, null=True)
     ptbyr = models.CharField(max_length=255, null=True)  # dates, but not clean
     # pregdate1 = models.CharField(max_length=255, null=True)  # remove time in Excel (format as DD-MM-YYYY)
     cname = models.CharField(max_length=255, null=True)
     caddress = models.CharField(max_length=255, null=True)
-    cmob = models.CharField(max_length=255, null=True)  # contains "  ", big ints
+    cmob = models.CharField(max_length=255, null=True)  # validate numerical in factory
     clandline = models.CharField(max_length=255, null=True)
     cvisitedby = models.CharField(max_length=255, null=True)
     # cvisitedDate1 = models.CharField(max_length=255, null=True)  # datetimes, look like they're all midnight
@@ -32,7 +32,7 @@ class PatientDetail(models.Model):
     dcpulmunorydet = models.CharField(max_length=255, null=True)
     dotname = models.CharField(max_length=255, null=True)
     dotdesignation = models.CharField(max_length=255, null=True)
-    dotmob = models.CharField(max_length=255, null=True)
+    dotmob = models.CharField(max_length=255, null=True)  # validate numerical in factory
     dotlandline = models.CharField(max_length=255, null=True)
     dotpType = models.CharField(max_length=255)
     dotcenter = models.CharField(max_length=255, null=True)
