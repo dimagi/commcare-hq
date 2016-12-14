@@ -272,7 +272,7 @@ class ESQuery(object):
         query._aggregations.extend(aggregations)
         return query
 
-    def terms_aggregation(self, term, name, size=None, sort_field=None, order="desc"):
+    def terms_aggregation(self, term, name, size=None, sort_field=None, order="asc"):
         return self.aggregation(aggregations.TermsAggregation(name, term, size=size, sort_field=sort_field, order=order))
 
     def date_histogram(self, name, datefield, interval, timezone=None):

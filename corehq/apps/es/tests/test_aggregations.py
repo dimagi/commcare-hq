@@ -449,3 +449,33 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
             inner_most_aggregation=SumAggregation('balance', 'balance')
         ).query
         self.checkQuery(query, json_output)
+
+    def test_terms_aggregation_with_order(self):
+        json_output = {
+            "query": {
+                "filtered": {
+                    "filter": {
+                        "and": [
+                            {"match_all": {}}
+                        ]
+                    },
+                    "query": {"match_all": {}}
+                }
+            },
+            "aggs": {
+                "name": {
+                    "terms": {
+                        "field": "name",
+                        "size": 1000000,
+                        "order": [{
+                            "sort_field": "asc"
+                        }]
+                    },
+                },
+            },
+            "size": SIZE_LIMIT
+        }
+        query = HQESQuery('cases').aggregation(
+            TermsAggregation('name', 'name', sort_field="sort_field")
+        )
+        self.checkQuery(query, json_output)
