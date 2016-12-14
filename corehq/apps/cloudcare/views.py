@@ -85,6 +85,7 @@ def default(request, domain):
     return HttpResponseRedirect(reverse('cloudcare_main', args=[domain, '']))
 
 
+@use_legacy_jquery
 def insufficient_privilege(request, domain, *args, **kwargs):
     context = {
         'domain': domain,
