@@ -20,6 +20,7 @@ from corehq.apps.export.models import (
     InferredSchema,
     ExportGroupSchema,
     ExportItem,
+    LabelItem,
     PARENT_CASE_TABLE,
 )
 from corehq.apps.export.const import KNOWN_CASE_PROPERTIES
@@ -51,6 +52,25 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         form_items = filter(lambda item: item.tag is None, group_schema.items)
         self.assertEqual(form_items[0].path, [PathNode(name='form'), PathNode(name='question1')])
         self.assertEqual(form_items[1].path, [PathNode(name='form'), PathNode(name='question2')])
+
+    def test_labels_in_xform(self):
+        form_xml = self.get_xml('form_with_labels')
+
+        schema = FormExportDataSchema._generate_schema_from_xform(
+            XForm(form_xml),
+            [],
+            ['en'],
+            self.app_id,
+            1
+        )
+
+        self.assertEqual(len(schema.group_schemas), 1)
+
+        group_schema = schema.group_schemas[0]
+
+        self.assertEqual(len(group_schema.items), 1)
+        self.assertEqual(group_schema.items[0].path, [PathNode(name='form'), PathNode(name='label')])
+        self.assertIsInstance(group_schema.items[0], LabelItem)
 
     def test_xform_parsing_with_repeat_group(self):
         form_xml = self.get_xml('repeat_group_form')
