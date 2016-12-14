@@ -476,7 +476,11 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
             uncategorized_data = row.get('uncategorized_data')
             user_id = row.get('user_id')
             username = row.get('username')
-            location_code = row.get('location_code', '')
+            location_codes = row.get('location_code')
+            if location_codes and not isinstance(location_codes, list):
+                raise UserUploadError(_("location_code must be listed as multiple columns of "
+                                        "'location_code 1, location_code 2 ...' for each of users's location. "
+                                        "If user has only one location, it should be listed as 'location_code 1'"))
             role = row.get('role', '')
 
             if password:
@@ -591,10 +595,10 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
                         # Do this here so that we validate the location code before we
                         # save any other information to the user, this way either all of
                         # the user's information is updated, or none of it
-                        if location_code:
-                            loc = get_location_from_site_code(location_code, location_cache)
-                        else:
-                            loc = None
+                        location_ids = []
+                        for code in location_codes:
+                            loc = get_location_from_site_code(code, location_cache)
+                            location_ids.append(loc.location_id)
 
                     if role:
                         if role in roles_by_name:
@@ -605,12 +609,12 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
                             ) % role)
 
                     user.save()
-                    if can_access_locations and loc:
-                        if user.location_id != loc.location_id:
+                    if can_access_locations and location_ids:
+                        if set(user.assigned_location_ids) != set(location_ids):
                             # this triggers a second user save so
                             # we want to avoid doing it if it isn't
                             # needed
-                            user.set_location(loc)
+                            user.reset_locations(location_ids)
 
                     if is_password(password):
                         # Without this line, digest auth doesn't work.
@@ -650,8 +654,6 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
             ) % (_error_message, e.errors))
             ret['errors'].append(_error_message)
 
-    if Domain.get_by_name(domain).supports_multiple_locations_per_user:
-        create_or_update_locations(domain, location_specs, log=ret)
     _set_progress(total)
     return ret
 

@@ -140,20 +140,35 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.setup_location()
         from copy import deepcopy
         updated_user_spec = deepcopy(self.user_specs[0])
-        updated_user_spec["location_code"] = self.state_code
 
+        # location_code should be an array of multiple excel columns
+        with self.assertRaises(UserUploadError):
+            updated_user_spec["location_code"] = "just-string"
+            bulk_upload_async(
+                self.domain.name,
+                list([updated_user_spec]),
+                list([]),
+                list([])
+            )
+
+        updated_user_spec["location_code"] = [a.site_code for a in [self.loc1, self.loc2]]
         bulk_upload_async(
             self.domain.name,
             list([updated_user_spec]),
             list([]),
             list([])
         )
-        self.assertEqual(self.user.location_id, self.location._id)
+        # first location should be primary location
+        self.assertEqual(self.user.location_id, self.loc1._id)
         self.assertEqual(self.user.location_id, self.user.user_data.get('commcare_location_id'))
+        # multiple locations
+        self.assertListEqual([l._id for l in [self.loc1, self.loc2]], self.user.assigned_location_ids)
+        # non-primary location
+        self.assertTrue(self.loc2._id in self.user.user_data.get('commcare_location_ids'))
 
     def setup_location(self):
-        self.state_code = 'my_state'
-        self.location = make_loc(self.state_code, type='state', domain=self.domain_name)
+        self.loc1 = make_loc('loc1', type='state', domain=self.domain_name)
+        self.loc2 = make_loc('loc2', type='state', domain=self.domain_name)
 
     def test_numeric_user_name(self):
         """
