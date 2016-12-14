@@ -727,9 +727,9 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             "./detail[@id='reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.summary']",
         )
 
-        report_app_config._report.columns[0]['transform'] = {
-            'type': 'translation',
-            'translations': {
+        # Tuple mapping translation formats to the expected output of each
+        translation_formats = [
+            ({
                 u'एक': [
                     ['en', 'one'],
                     ['es', 'uno'],
@@ -739,14 +739,41 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                     ['es', 'dos\''],
                     ['hin', u'दो'],
                 ],
+            }, 'reports_module_data_detail-translated'),
+            ({
+                u'एक': {
+                    'en': 'one',
+                    'es': 'uno',
+                },
+                '2': {
+                    'en': 'two',
+                    'es': 'dos\'',
+                    'hin': u'दो',
+                },
+            }, 'reports_module_data_detail-translated'),
+            ({
+                u'एक': 'one',
+                '2': 'two',
+            }, 'reports_module_data_detail-translated-simple'),
+            ({
+                u'एक': {
+                    'en': 'one',
+                    'es': 'uno',
+                },
+                '2': 'two',
+            }, 'reports_module_data_detail-translated-mixed'),
+        ]
+        for translation_format, expected_output in translation_formats:
+            report_app_config._report.columns[0]['transform'] = {
+                'type': 'translation',
+                'translations': translation_format,
             }
-        }
-        report_app_config._report = ReportConfiguration.wrap(report_app_config._report._doc)
-        self.assertXmlPartialEqual(
-            self.get_xml('reports_module_data_detail-translated'),
-            app.create_suite(),
-            "./detail/detail[@id='reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.data']",
-        )
+            report_app_config._report = ReportConfiguration.wrap(report_app_config._report._doc)
+            self.assertXmlPartialEqual(
+                self.get_xml(expected_output),
+                app.create_suite(),
+                "./detail/detail[@id='reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.data']",
+            )
 
     def test_circular_parent_case_ref(self):
         factory = AppFactory()
