@@ -7,7 +7,14 @@ class PatientDetail(models.Model):
     Dtocode = models.CharField(max_length=255, null=True)
     Tbunitcode = models.IntegerField()
     pname = models.CharField(max_length=255)
-    pgender = models.CharField(max_length=255)
+    pgender = models.CharField(
+        max_length=255,
+        choices=(
+            ('F', 'F'),
+            ('M', 'M'),
+            ('T', 'T'),
+        ),
+    )
     page = models.CharField(max_length=255)
     poccupation = models.CharField(max_length=255)
     paadharno = models.BigIntegerField(null=True)
@@ -21,9 +28,12 @@ class PatientDetail(models.Model):
     clandline = models.CharField(max_length=255, null=True)
     cvisitedby = models.CharField(max_length=255, null=True)
     dcpulmunory = models.CharField(
-        max_length=255, choices=(
+        max_length=255,
+        choices=(
             ('y', 'y'),
+            ('Y', 'Y'),
             ('N', 'N'),
+            ('P', 'P'),
         ),
     )
     dcexpulmunory = models.CharField(max_length=255)
@@ -37,16 +47,25 @@ class PatientDetail(models.Model):
     PHI = models.IntegerField()
     dotmoname = models.CharField(max_length=255, null=True)
     dotmosdone = models.CharField(max_length=255)
-    atbtreatment = models.CharField(max_length=255, choices=(
-        ('Y', 'Y'),
-        ('N', 'N'),
-    ), null=True)  # Y or N
+    atbtreatment = models.CharField(
+        max_length=255,
+        choices=(
+            ('Y', 'Y'),
+            ('N', 'N'),
+        ),
+        null=True,
+    )
     atbduration = models.CharField(max_length=255, null=True)  # some int, some # months poorly formatted
-    atbsource = models.CharField(max_length=255, null=True, choices=(
-        ('G', 'G'),
-        ('O', 'O'),
-        ('P', 'P'),
-    ))
+    atbsource = models.CharField(
+        max_length=255,
+        choices=(
+            ('G', 'G'),
+            ('N', 'N'),
+            ('O', 'O'),
+            ('P', 'P'),
+        ),
+        null=True,
+    )
     atbregimen = models.CharField(max_length=255, null=True)
     atbyr = models.CharField(max_length=255, null=True)
     Ptype = models.CharField(max_length=255)
