@@ -23,6 +23,7 @@ from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import ServerTime, UserTime
 from dimagi.utils.couch import LockableMixIn, CriticalSection
 from dimagi.utils.couch.cache.cache_core import get_redis_client
+from dimagi.utils.couch.migration import SyncCouchToSQLMixin
 from dimagi.utils.logging import notify_exception
 from random import randint
 from django.conf import settings
@@ -1866,7 +1867,7 @@ class SurveyKeywordAction(DocumentSchema):
     named_args_separator = StringProperty() # Can be None in which case there is no separator (i.e., a100 b200)
 
 
-class SurveyKeyword(Document):
+class SurveyKeyword(SyncCouchToSQLMixin, Document):
     domain = StringProperty()
     keyword = StringProperty()
     description = StringProperty()
