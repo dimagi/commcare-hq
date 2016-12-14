@@ -124,3 +124,7 @@ class USecDateTimeMeta(object):
 
 class JsonObject(OldJsonObject):
     Meta = USecDateTimeMeta
+
+
+class StrictJsonObject(JsonObject):
+    _allow_dynamic_properties = False
