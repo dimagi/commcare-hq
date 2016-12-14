@@ -113,7 +113,6 @@ class TestCreateEnikshayCases(TestCase):
                 ('secondary_contact_name_address', 'Secondary name, Secondary address'),
                 ('secondary_contact_phone_number', '123'),
                 ('sex', 'male'),
-                ('treatment_supporter_mobile_number', '321'),
                 ('tu_choice', '1'),
             ]),
             person_case.dynamic_case_properties()
