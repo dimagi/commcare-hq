@@ -10,7 +10,7 @@ class PatientDetail(models.Model):
     pgender = models.CharField(max_length=255)
     page = models.CharField(max_length=255)
     poccupation = models.CharField(max_length=255)
-    paadharno = models.CharField(max_length=255, null=True) # big ints (scientific notation) and nulls. requires some formatting
+    paadharno = models.BigIntegerField(null=True)
     paddress = models.CharField(max_length=255)
     pmob = models.CharField(max_length=255, null=True)  # contains " ", big ints
     plandline = models.CharField(max_length=255, null=True)
