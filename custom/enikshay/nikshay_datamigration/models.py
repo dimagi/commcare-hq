@@ -34,7 +34,7 @@ class PatientDetail(models.Model):
     dotlandline = models.CharField(max_length=255, null=True)
     dotpType = models.CharField(max_length=255)
     dotcenter = models.CharField(max_length=255, null=True)
-    PHI = models.CharField(max_length=255)
+    PHI = models.IntegerField()
     dotmoname = models.CharField(max_length=255, null=True)
     dotmosdone = models.CharField(max_length=255)
     atbtreatment = models.CharField(max_length=255, choices=(
