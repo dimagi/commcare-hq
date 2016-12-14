@@ -94,7 +94,7 @@ class BlobMixin(Document):
 
         bucket = self._blobdb_bucket()
         # do we need to worry about BlobDB reading beyond content_length?
-        info = db.put(content, name, bucket)
+        info = db.put(content, bucket=bucket)
         self.external_blobs[name] = BlobMeta(
             id=info.identifier,
             content_type=content_type,

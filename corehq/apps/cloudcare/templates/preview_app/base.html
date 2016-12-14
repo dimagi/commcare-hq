@@ -188,6 +188,7 @@
                 phoneMode: true,
                 oneQuestionPerScreen: true,
                 allowedHost: "{{ request.get_host }}",
+                environment: {{ environment|JSON }},
                 {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
                 debuggerEnabled: true,
                 {% endif %}

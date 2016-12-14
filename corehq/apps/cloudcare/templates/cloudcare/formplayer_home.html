@@ -101,6 +101,7 @@
             gridPolyfillPath: "{% static 'css-grid-polyfill-binaries/css-polyfills.js' %}",
             debuggerEnabled: instanceViewerEnabled,
             singleAppMode: {{ single_app_mode|JSON }},
+            environment: {{ environment|JSON }},
         };
         FormplayerFrontend.start(options);
         $(function () {

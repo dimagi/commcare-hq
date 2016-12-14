@@ -61,6 +61,7 @@ from corehq.apps.cloudcare.decorators import require_cloudcare_access
 from corehq.apps.cloudcare.exceptions import RemoteAppError
 from corehq.apps.cloudcare.models import ApplicationAccess
 from corehq.apps.cloudcare.touchforms_api import BaseSessionDataHelper, CaseSessionDataHelper
+from corehq.apps.cloudcare.const import WEB_APPS_ENVIRONMENT, PREVIEW_APP_ENVIRONMENT
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest_ex, domain_admin_required
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.formdetails import readable
@@ -289,6 +290,7 @@ class FormplayerMain(View):
             "formplayer_url": settings.FORMPLAYER_URL,
             "single_app_mode": False,
             "home_url": reverse(self.urlname, args=[domain]),
+            "environment": WEB_APPS_ENVIRONMENT,
         }
         return render(request, "cloudcare/formplayer_home.html", context)
 
@@ -340,6 +342,7 @@ class FormplayerPreviewSingleApp(View):
             "formplayer_url": settings.FORMPLAYER_URL,
             "single_app_mode": True,
             "home_url": reverse(self.urlname, args=[domain, app_id]),
+            "environment": WEB_APPS_ENVIRONMENT,
         }
         return render(request, "cloudcare/formplayer_home.html", context)
 
@@ -354,6 +357,7 @@ class PreviewAppView(TemplateView):
             'app': app,
             'formplayer_url': settings.FORMPLAYER_URL,
             "maps_api_key": settings.GMAPS_API_KEY,
+            "environment": PREVIEW_APP_ENVIRONMENT,
         })
 
 
@@ -498,7 +502,6 @@ def filter_cases(request, domain, app_id, module_id, parent_id=None):
     xpath = EntriesHelper.get_filter_xpath(module)
     instances = get_instances_for_module(app, module, additional_xpaths=[xpath])
     extra_instances = [{'id': inst.id, 'src': inst.src} for inst in instances]
-    use_formplayer = toggles.USE_FORMPLAYER.enabled(domain)
     accessor = CaseAccessors(domain)
 
     # touchforms doesn't like this to be escaped
@@ -514,7 +517,7 @@ def filter_cases(request, domain, app_id, module_id, parent_id=None):
 
         helper = BaseSessionDataHelper(domain, request.couch_user)
         result = helper.filter_cases(xpath, additional_filters, DjangoAuth(auth_cookie),
-                                     extra_instances=extra_instances, use_formplayer=use_formplayer)
+                                     extra_instances=extra_instances)
         if result.get('status', None) == 'error':
             code = result.get('code', 500)
             message = result.get('message', _("Something went wrong filtering your cases."))

@@ -1,4 +1,5 @@
 import re
+import uuid
 from xml.etree import ElementTree
 import datetime
 from django.test.utils import override_settings
@@ -79,7 +80,6 @@ class IndexTest(TestCase):
                 domain=self.project.name
             )
 
-        now = datetime.datetime.utcnow()
 
         # Step 1. Create a case with index <mom>
         create_index = CaseBlock(
@@ -143,36 +143,20 @@ class IndexTest(TestCase):
 
         check_user_has_case(self, self.user, update_index_expected)
 
-    def testBadIndexReferenceDomain(self):
-        case_in_other_domain = self.MOTHER_CASE_ID
-        parent_domain = 'parent'
-        child_domain = 'child'
-
-        post_case_blocks([
-            CaseBlock(create=True, case_id=case_in_other_domain, user_id=self.user.user_id).as_xml()
-        ], form_extras={'domain': parent_domain})
-
-        block = CaseBlock(create=True, case_id='child-case-id', user_id=self.user.user_id,
-                          index={'bad': ('bad-case', case_in_other_domain)})
-
-        xform, _ = post_case_blocks([block.as_xml()],
-                                    form_extras={'domain': child_domain})
-
-        self.assertTrue(xform.is_error)
-        self.assertEqual(xform.doc_type, 'XFormError')
-        self.assertIn('IllegalCaseId', xform.problem)
-        self.assertIn('Bad case id', xform.problem)
-
     @run_with_all_backends
     def testRelationshipGetsSet(self):
+        parent_case_id = uuid.uuid4().hex
+        post_case_blocks(
+            [CaseBlock(create=True, case_id=parent_case_id, user_id=self.user.user_id).as_xml()],
+            domain=self.project.name
+        )
         create_index = CaseBlock(
             create=True,
             case_id=self.CASE_ID,
             user_id=self.user.user_id,
             owner_id=self.user.user_id,
-            index={'mom': ('mother-case', self.MOTHER_CASE_ID, 'extension')},
+            index={'mom': ('mother-case', parent_case_id, 'extension')},
         ).as_xml()
-
         post_case_blocks([create_index], domain=self.project.name)
         check_user_has_case(self, self.user, create_index)
 

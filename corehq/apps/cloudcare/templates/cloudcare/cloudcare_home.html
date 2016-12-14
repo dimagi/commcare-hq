@@ -125,10 +125,6 @@
         {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
                 instanceViewerEnabled = true;
         {% endif %}
-        var formplayerEnabled = false;
-        {% if request|toggle_enabled:"USE_FORMPLAYER" %}
-                formplayerEnabled = true;
-        {% endif %}
         var username = "{{ request.user.username }}";
         var cloudCare = hqImport('cloudcare/js/backbone/apps.js');
         window.mainView = new cloudCare.AppMainView({
@@ -147,7 +143,7 @@
             instanceViewerEnabled: instanceViewerEnabled,
             username: username,
             syncDbUrl: syncDbUrl,
-            formplayerEnabled: formplayerEnabled,
+            formplayerEnabled: false,
         });
 
         // TODO: when we figure out what to do about get params, use this

@@ -18,6 +18,7 @@ import logging
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
+from email_validator import validate_email, EmailNotValidError
 from corehq.toggles import deterministic_random
 from corehq.util.decorators import analytics_task
 from corehq.util.soft_assert import soft_assert
@@ -368,7 +369,7 @@ def track_periodic_data():
     submit = []
     for user in users_to_domains:
         email = user.get('email')
-        if not email:
+        if not _email_is_valid(email):
             continue
 
         number_of_users += 1
@@ -418,6 +419,19 @@ def track_periodic_data():
         DATADOG_WEB_USERS_GAUGE: number_of_users,
         DATADOG_DOMAINS_EXCEEDING_FORMS_GAUGE: number_of_domains_with_forms_gt_threshold
     })
+
+
+def _email_is_valid(email):
+    if not email:
+        return False
+
+    try:
+        validate_email(email)
+    except EmailNotValidError as e:
+        logger.warn(str(e))
+        return False
+
+    return True
 
 
 def submit_data_to_hub_and_kiss(submit_json):
