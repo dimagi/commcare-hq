@@ -476,6 +476,6 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
             "size": SIZE_LIMIT
         }
         query = HQESQuery('cases').aggregation(
-            TermsAggregation('name', 'name', sort_field="sort_field")
+            TermsAggregation('name', 'name').order('sort_field')
         )
         self.checkQuery(query, json_output)
