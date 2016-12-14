@@ -973,3 +973,10 @@ NIMBUS_FORM_VALIDATION = PredictablyRandomToggle(
     [NAMESPACE_DOMAIN],
     randomness=0.1
 )
+
+USER_PROPERTY_EASY_REFS = StaticToggle(
+    'user_property_easy_refs',
+    'Easy-reference user properties in the form builder.',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)

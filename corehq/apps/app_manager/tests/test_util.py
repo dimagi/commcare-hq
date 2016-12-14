@@ -7,6 +7,7 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
+from corehq.util.test_utils import flag_enabled
 from django.test.testcases import SimpleTestCase
 from mock import patch, MagicMock
 import re
@@ -89,6 +90,7 @@ class GetCasePropertiesTest(SimpleTestCase, TestXmlMixin):
         phase.add_form(form)
 
 
+@flag_enabled('USER_PROPERTY_EASY_REFS')
 @patch('corehq.apps.app_manager.models.is_usercase_in_use', MagicMock(return_value=False))
 @patch('corehq.apps.app_manager.util.is_usercase_in_use', MagicMock(return_value=False))
 @patch('corehq.apps.app_manager.util.get_per_type_defaults', MagicMock(return_value={}))

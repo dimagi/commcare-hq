@@ -420,7 +420,7 @@ def get_casedb_schema(form):
         }} if i < len(generations) - 1 else None,
     } for i, ctypes in enumerate(generations)]
 
-    if is_usercase_in_use(app.domain):
+    if is_usercase_in_use(app.domain) and toggles.USER_PROPERTY_EASY_REFS.enabled(app.domain):
         subsets.append({
             "id": USERCASE_TYPE,
             "name": "user",
@@ -464,7 +464,7 @@ def get_session_schema(form):
                 },
             },
         }
-    if is_usercase_in_use(app.domain):
+    if is_usercase_in_use(app.domain) and toggles.USER_PROPERTY_EASY_REFS.enabled(app.domain):
         structure["context"] = {
             "merge": True,
             "structure": {
