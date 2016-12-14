@@ -28,7 +28,7 @@ from dimagi.utils.logging import notify_exception
 from random import randint
 from django.conf import settings
 from dimagi.utils.couch.database import iter_docs
-from django.db import models
+from django.db import models, transaction
 from string import Formatter
 
 
@@ -1949,6 +1949,36 @@ class SurveyKeyword(SyncCouchToSQLMixin, Document):
         ).all()
         count = reduced[0]['value'] if reduced else 0
         return count > 0
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        from corehq.apps.sms.models import Keyword
+        return Keyword
+
+    def _migration_sync_to_sql(self, sql_object):
+        from corehq.apps.sms.models import KeywordAction
+        with transaction.atomic():
+            sql_object.domain = self.domain
+            sql_object.keyword = self.keyword
+            sql_object.description = self.description
+            sql_object.delimiter = self.delimiter
+            sql_object.override_open_sessions = self.override_open_sessions
+            sql_object.initiator_doc_type_filter = self.initiator_doc_type_filter
+            sql_object.save(sync_to_couch=False)
+            sql_object.keywordaction_set.all().delete()
+
+            for couch_action in self.actions:
+                KeywordAction.objects.create(
+                    keyword=sql_object,
+                    action=couch_action.action,
+                    recipient=couch_action.recipient,
+                    recipient_id=couch_action.recipient_id,
+                    message_content=couch_action.message_content,
+                    form_unique_id=couch_action.form_unique_id,
+                    use_named_args=couch_action.use_named_args,
+                    named_args=couch_action.named_args,
+                    named_args_separator=couch_action.named_args_separator
+                )
 
 
 class EmailUsage(models.Model):
