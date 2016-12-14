@@ -147,6 +147,8 @@ class EnikshayCaseFactory(object):
                 'update': {
                     'disease_classification': self.patient_detail.disease_classification,
                     'patient_type_choice': self.patient_detail.patient_type_choice,
+                    'treatment_supporter_first_name': self.patient_detail.treatment_supporter_first_name,
+                    'treatment_supporter_last_name': self.patient_detail.treatment_supporter_last_name,
                     'treatment_supporter_mobile_number': validate_number(self.patient_detail.dotmob),
 
                     'date_reported': self.patient_detail.pregdate1, # is this right?

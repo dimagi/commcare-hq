@@ -126,6 +126,17 @@ class PatientDetail(models.Model):
             '7': 'transfer_in',
         }[self.Ptype]
 
+    @property
+    def treatment_supporter_first_name(self):
+        return ' '.join(self.dotname.split(' ')[:-1]) if len(self._list_of_dot_names) > 1 else ''
+
+    @property
+    def treatment_supporter_last_name(self):
+        return self.dotname.split(' ')[-1]
+
+    @property
+    def _list_of_dot_names(self):
+        return self.dotname.split(' ') if self.dotname else ['']
 
 class Outcome(models.Model):
     PatientId = models.OneToOneField(PatientDetail, primary_key=True)
