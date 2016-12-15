@@ -52,6 +52,18 @@ PROPERTY_TAG_STOCK = 'stock'
 # This list comes from casexml.apps.case.xml.parser.CaseActionBase.from_v2
 KNOWN_CASE_PROPERTIES = ["type", "name", "external_id", "user_id", "owner_id", "opened_on"]
 
+# Attributes found on a case block. <case case_id="..." date_modified="..." ...>
+CASE_ATTRIBUTES = ['@case_id', '@date_modified', '@user_id']
+
+# Elements that are found in a case create block
+# <case>
+#   <create>
+#       <case_name>
+#       ...
+#   </create>
+# </case>
+CASE_CREATE_ELEMENTS = ['case_name', 'owner_id', 'case_type']
+
 FORM_EXPORT = 'form'
 CASE_EXPORT = 'case'
 MAX_EXPORTABLE_ROWS = 100000
