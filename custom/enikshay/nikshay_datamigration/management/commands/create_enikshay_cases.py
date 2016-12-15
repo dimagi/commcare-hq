@@ -270,7 +270,7 @@ class Command(BaseCommand):
             try:
                 case_factory = EnikshayCaseFactory(domain, patient_detail)
                 case_factory.create_cases()
-            except Exception as e:
+            except:
                 num_failed += 1
                 logger.error('Failed on %d of %d.' % (counter, total), exc_info=True)
             else:
