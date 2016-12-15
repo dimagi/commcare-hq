@@ -6,9 +6,10 @@ from corehq.apps.case_importer import base
 from corehq.apps.case_importer import util as importer_util
 from corehq.apps.case_importer.exceptions import ImporterError
 from django.views.decorators.http import require_POST
+from corehq.apps.case_importer.suggested_fields import get_suggested_case_fields
 from corehq.apps.case_importer.tracking.case_upload_tracker import CaseUpload
 
-from corehq.apps.case_importer.util import get_case_properties_for_case_type, get_importer_error_message
+from corehq.apps.case_importer.util import get_importer_error_message
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -195,24 +196,15 @@ def excel_fields(request, domain):
         else:
             excel_fields = columns
 
-    case_fields = get_case_properties_for_case_type(domain, case_type)
-
     # hide search column and matching case fields from the update list
-    try:
-        excel_fields.remove(search_column)
-    except:
-        pass
+    if search_field in excel_fields:
+        excel_fields.remove(search_field)
 
-    try:
-        case_fields.remove(search_field)
-    except:
-        pass
+    field_specs = get_suggested_case_fields(
+        domain, case_type, exclude=[search_column, search_field])
 
-    # we can't actually update this so don't show it
-    try:
-        case_fields.remove('type')
-    except:
-        pass
+    case_fields_in_menu = [field_spec.field for field_spec in field_specs
+                           if field_spec.show_in_menu]
 
     return render(
         request,
@@ -226,7 +218,7 @@ def excel_fields(request, domain):
             'value_column': value_column,
             'columns': columns,
             'excel_fields': excel_fields,
-            'case_fields': case_fields,
+            'case_fields': case_fields_in_menu,
             'domain': domain,
             'report': {
                 'name': 'Import: Match columns to fields'
