@@ -33,10 +33,19 @@ class Command(BaseCommand):
                 case_factory.create_cases()
             except:
                 num_failed += 1
-                logger.error('Failed on %d of %d.' % (counter, total), exc_info=True)
+                logger.error(
+                    'Failed on %d of %d. Nikshay ID=%s' % (
+                        counter, total, patient_detail.PregId
+                    ),
+                    exc_info=True,
+                )
             else:
                 num_succeeded += 1
-                logger.info('Succeeded on %s of %d.' % (counter, total))
+                logger.info(
+                    'Succeeded on %s of %d. Nikshay ID=%s' % (
+                        counter, total, patient_detail.PregId
+                    )
+                )
         logger.info('Done.')
         logger.info('Number of attempts: %d.' % counter)
         logger.info('Number of successes: %d.' % num_succeeded)
