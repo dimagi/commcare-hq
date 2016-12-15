@@ -150,6 +150,7 @@ class TestCreateEnikshayCases(TestCase):
                 ('disease_classification', 'pulmonary'),
                 ('migration_created_case', 'True'),
                 ('patient_type_choice', 'treatment_after_failure'),
+                ('treatment_supporter_designation', 'health_worker'),
                 ('treatment_supporter_first_name', 'Bubble'),
                 ('treatment_supporter_last_name', 'Bubbles'),
                 ('treatment_supporter_mobile_number', '321'),

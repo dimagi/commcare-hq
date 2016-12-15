@@ -127,6 +127,18 @@ class PatientDetail(models.Model):
         }[self.Ptype]
 
     @property
+    def treatment_supporter_designation(self):
+        return {
+            '1': 'health_worker',
+            '2': 'tbhv',
+            '3': 'asha_or_other_phi_hw',
+            '4': 'aww',
+            '5': 'ngo_volunteer',
+            '6': 'private_medical_pracitioner',
+            '7': 'other_community_volunteer',
+        }[self.dotpType]
+
+    @property
     def treatment_supporter_first_name(self):
         return ' '.join(self.dotname.split(' ')[:-1]) if len(self._list_of_dot_names) > 1 else ''
 
