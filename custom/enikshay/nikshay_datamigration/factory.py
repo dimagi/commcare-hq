@@ -159,11 +159,14 @@ class EnikshayCaseFactory(object):
         }
 
         matching_episode_case = next((
-            episode_case for episode_case in self.case_accessor.get_cases([
+            extension_case for extension_case in self.case_accessor.get_cases([
                 index.referenced_id for index in
                 self.case_accessor.get_case(self.occurrence(outcome).case_id).reverse_indices
             ])
-            if episode_case.dynamic_case_properties().get('migration_created_case')
+            if (
+                extension_case.type == 'episode'
+                and extension_case.dynamic_case_properties().get('migration_created_case')
+            )
         ), None)
         if matching_episode_case:
             kwargs['case_id'] = matching_episode_case.case_id
@@ -197,11 +200,14 @@ class EnikshayCaseFactory(object):
         }
 
         matching_test_case = next((
-            test_case for test_case in self.case_accessor.get_cases([
+            extension_case for extension_case in self.case_accessor.get_cases([
                 index.referenced_id for index in
                 self.case_accessor.get_case(occurrence_structure.case_id).reverse_indices
             ])
-            if followup.id == int(test_case.dynamic_case_properties().get('migration_followup_id', -1))
+            if (
+                extension_case.type == 'test'
+                and followup.id == int(extension_case.dynamic_case_properties().get('migration_followup_id', -1))
+            )
         ), None)
         if matching_test_case:
             kwargs['case_id'] = matching_test_case.case_id
