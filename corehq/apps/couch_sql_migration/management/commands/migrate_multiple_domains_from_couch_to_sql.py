@@ -10,8 +10,6 @@ from corehq.apps.couch_sql_migration.progress import (
     set_couch_sql_migration_not_started, set_couch_sql_migration_complete
 )
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
-from corehq.apps.domain.models import Domain
-from corehq.apps.domain_migration_flags.models import DomainMigrationProgress
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.utils import should_use_sql_backend
