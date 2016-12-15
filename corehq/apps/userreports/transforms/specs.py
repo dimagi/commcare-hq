@@ -82,6 +82,7 @@ class NumberFormatTransform(Transform):
 class TranslationTransform(Transform):
     type = TypeProperty('translation')
     translations = DictProperty()
+    # For mobile, the transform is a no-op and translation happens in the app
     mobile_or_web = StringProperty(default="web", choices=["mobile", "web"])
 
     def get_transform_function(self):

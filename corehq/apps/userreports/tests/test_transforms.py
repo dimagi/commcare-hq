@@ -87,7 +87,6 @@ class DaysElapsedTransformTest(SimpleTestCase):
         self.assertEqual(transform.transform(date), 5)
 
 
-
 class TranslationTransform(SimpleTestCase):
 
     def test_missing_translation(self):
