@@ -4,7 +4,6 @@ from corehq.apps.case_importer.tracking.filestorage import transient_file_store,
 from corehq.apps.case_importer.tracking.models import CaseUploadRecord
 from corehq.apps.case_importer.util import open_spreadsheet_download_ref, get_spreadsheet
 from dimagi.utils.decorators.memoized import memoized
-from soil.progress import get_task_status
 
 
 class CaseUpload(object):
@@ -59,5 +58,6 @@ class CaseUpload(object):
             upload_file_meta=case_upload_file_meta,
         ).save()
 
-    def get_task_status(self):
-        return get_task_status(self._case_upload_record.task)
+    def store_task_result(self):
+        if self._case_upload_record.set_task_status_json_if_finished():
+            self._case_upload_record.save()
