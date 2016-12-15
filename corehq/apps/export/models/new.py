@@ -1261,7 +1261,10 @@ class FormExportDataSchema(ExportDataSchema):
         if repeats_with_subcases:
             repeat_case_schema = FormExportDataSchema._generate_schema_from_repeat_subcases(
                 xform,
-                repeats_with_subcases
+                repeats_with_subcases,
+                app.langs,
+                app.copy_of or app._id,  # If it's not a copy, must be current
+                app.version,
             )
             schemas.append(repeat_case_schema)
 
