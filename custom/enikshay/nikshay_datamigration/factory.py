@@ -107,7 +107,9 @@ class EnikshayCaseFactory(object):
                 'case_type': 'occurrence',
                 'update': {
                     'hiv_status': outcome.HIVStatus,
+                    'name': 'Occurrence #1',
                     'nikshay_id': self.patient_detail.PregId,
+                    'occurrence_episode_count': 1,
 
                     'migration_created_case': True,
                 },

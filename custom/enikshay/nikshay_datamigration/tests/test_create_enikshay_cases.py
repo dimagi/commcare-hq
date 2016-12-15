@@ -125,9 +125,11 @@ class TestCreateEnikshayCases(TestCase):
                 ('hiv_status', 'negative'),
                 ('migration_created_case', 'True'),
                 ('nikshay_id', 'MH-ABD-05-16-0001'),
+                ('occurrence_episode_count', '1'),
             ]),
             occurrence_case.dynamic_case_properties()
         )
+        self.assertEqual('Occurrence #1', occurrence_case.name)
         self.assertItemsEqual(
             [CommCareCaseIndex(
                 identifier='host',
