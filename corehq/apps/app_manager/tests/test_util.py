@@ -364,3 +364,28 @@ class SchemaTest(SimpleTestCase):
             self.factory_2.form_requires_case(
                 form, case_type=case_type, update=case_updates)
         return form
+
+
+@patch('corehq.apps.app_manager.models.is_usercase_in_use', MagicMock(return_value=True))
+@patch('corehq.apps.app_manager.util.is_usercase_in_use', MagicMock(return_value=True))
+@patch('corehq.apps.app_manager.util.get_per_type_defaults', MagicMock(return_value={}))
+class DisabledUserPropertiesSchemaTest(SimpleTestCase):
+    # TODO remove this test when removing USER_PROPERTY_EASY_REFS toggle
+
+    def setUp(self):
+        self.factory = AppFactory()
+
+    def test_get_session_schema(self):
+        module, form = self.factory.new_basic_module('village', 'village')
+        schema = util.get_session_schema(form)
+        self.assertNotIn("context", schema["structure"], repr(schema))
+
+    def test_get_casedb_schema(self):
+        module, form = self.factory.new_basic_module('village', 'village')
+        self.factory.form_uses_usercase(form, update={
+            'name': '/data/username',
+            'role': '/data/userrole',
+        })
+        schema = util.get_casedb_schema(form)
+        subsets = {s["id"]: s for s in schema["subsets"]}
+        self.assertNotIn(util.USERCASE_TYPE, subsets, repr(subsets))
