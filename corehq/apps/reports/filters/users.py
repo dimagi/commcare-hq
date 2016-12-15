@@ -158,7 +158,7 @@ class EmwfUtils(object):
 
     def id_to_choice_tuple(self, id_):
         for static_id, text in self.static_options:
-            if id_ == static_id[3:]:
+            if (id_ == static_id[3:] and static_id[:3] == "t__") or id_ == static_id:
                 return (static_id, text)
 
         owner = get_wrapped_owner(id_)
@@ -169,10 +169,8 @@ class EmwfUtils(object):
         elif isinstance(owner, (CommCareUser, WebUser)):
             return self.user_tuple(owner)
         elif owner is None:
-            import ipdb; ipdb.set_trace()
             return None
         else:
-            import ipdb; ipdb.set_trace()
             raise Exception("Unexpcted id")
 
 _UserData = namedtupledict('_UserData', (

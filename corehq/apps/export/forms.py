@@ -610,7 +610,9 @@ class DashboardFeedFilterForm(forms.Form):
                 export_instance_filters.reporting_groups +
                 export_instance_filters.sharing_groups +
                 export_instance_filters.locations +
-                export_instance_filters.user_types
+                export_instance_filters.user_types +
+                (["all_data"] if export_instance_filters.show_all_data else []) +
+                (["project_data"] if export_instance_filters.show_project_data else [])
             )
             emwf_utils_class = CaseListFilterUtils if export_type is CaseExportInstance else EmwfUtils
             emwf_data = [emwf_utils_class(domain).id_to_choice_tuple(str(x)) for x in selected_items]
