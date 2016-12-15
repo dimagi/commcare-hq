@@ -1623,6 +1623,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
                                 questions,
                                 question_path
                             )
+
         def parse_case_type(name, types={"#case": module_case_type,
                                          "#user": USERCASE_TYPE}):
             if name.startswith("#") and "/" in name:
@@ -1633,6 +1634,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
             else:
                 hashtag = "#case"
             return types[hashtag], name
+
         case_loads = self.case_references.get("load", {})
         for question_path, case_properties in case_loads.iteritems():
             for name in case_properties:
