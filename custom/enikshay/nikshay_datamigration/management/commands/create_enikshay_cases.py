@@ -256,13 +256,26 @@ class Command(BaseCommand):
         else:
             patient_details = base_query[start:]
 
+        total = patient_details.count()
         counter = 0
+        num_succeeded = 0
+        num_failed = 0
+        print 'Starting migration of %d patient cases.' % total
         for patient_detail in patient_details:
-            case_factory = EnikshayCaseFactory(domain, patient_detail)
-            case_factory.create_cases()
             counter += 1
-            print counter
-        print 'All patient cases created'
+            try:
+                case_factory = EnikshayCaseFactory(domain, patient_detail)
+                case_factory.create_cases()
+            except Exception as e:
+                num_failed += 1
+                print 'Failed on %d of %d.' % (counter, total)
+            else:
+                num_succeeded += 1
+                print 'Succeeded on %s of %d.' % (counter, total)
+        print 'Done.'
+        print 'Number of attempts: %d.' % counter
+        print 'Number of successes: %d.' % num_succeeded
+        print 'Number of failures: %d.' % num_failed
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
