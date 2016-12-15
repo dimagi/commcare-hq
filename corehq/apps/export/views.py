@@ -11,6 +11,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 
 from corehq.apps.export.export import get_export_download, get_export_size
+from corehq.apps.export.models.new import DatePeriod
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, location_restricted_response
 from corehq.apps.reports.filters.case_list import CaseListFilter
@@ -1847,17 +1848,43 @@ class CreateNewCustomCaseExportView(BaseModifyNewCustomView):
         return super(CreateNewCustomCaseExportView, self).get(request, *args, **kwargs)
 
 
-class DashboardFeedMixin(object):
+class DailySavedExportMixin(object):
+
+    def _priv_check(self):
+        if not domain_has_privilege(self.domain, DAILY_SAVED_EXPORT):
+            raise Http404
 
     def dispatch(self, *args, **kwargs):
+        self._priv_check()
+        return super(DailySavedExportMixin, self).dispatch(*args, **kwargs)
+
+    def create_new_export_instance(self, schema):
+        instance = super(DailySavedExportMixin, self).create_new_export_instance(schema)
+        instance.is_daily_saved_export = True
+
+        if instance.type == CASE_EXPORT:
+            instance.filters.show_all_data = True
+        else:
+            instance.filters.user_types = ['t__0']  # "All mobile workers"
+        span = datespan_from_beginning(self.domain_object, _get_timezone(self.domain, self.request.couch_user))
+        instance.filters.date_period = DatePeriod(period_type="range", begin=span.startdate.date(), end=span.enddate.date())
+
+        return instance
+
+    @property
+    def report_class(self):
+        return DailySavedExportListView
+
+
+class DashboardFeedMixin(DailySavedExportMixin):
+
+    def _priv_check(self):
         if not domain_has_privilege(self.domain, EXCEL_DASHBOARD):
             raise Http404
-        return super(DashboardFeedMixin, self).dispatch(*args, **kwargs)
 
     def create_new_export_instance(self, schema):
         instance = super(DashboardFeedMixin, self).create_new_export_instance(schema)
         instance.export_format = "html"
-        instance.is_daily_saved_export = True
         return instance
 
     @property
@@ -1869,23 +1896,6 @@ class DashboardFeedMixin(object):
     @property
     def report_class(self):
         return DashboardFeedListView
-
-
-class DailySavedExportMixin(object):
-
-    def dispatch(self, *args, **kwargs):
-        if not domain_has_privilege(self.domain, DAILY_SAVED_EXPORT):
-            raise Http404
-        return super(DailySavedExportMixin, self).dispatch(*args, **kwargs)
-
-    def create_new_export_instance(self, schema):
-        instance = super(DailySavedExportMixin, self).create_new_export_instance(schema)
-        instance.is_daily_saved_export = True
-        return instance
-
-    @property
-    def report_class(self):
-        return DailySavedExportListView
 
 
 class CreateNewCaseFeedView(DashboardFeedMixin, CreateNewCustomCaseExportView):
