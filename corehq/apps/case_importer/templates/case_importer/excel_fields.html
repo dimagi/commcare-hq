@@ -3,9 +3,16 @@
 {% load report_tags %}
 {% load i18n %}
 
+{% block js %}{{ block.super }}
+<script src="{% static 'case_importer/js/excel_fields.js' %}"></script>
+{% endblock %}
 {% block js-inline %}{{ block.super }}
     <script>
         $(function() {
+            var excelFields = {{ excel_fields|JSON }};
+            var caseFieldSpecs = {{ case_field_specs|JSON }};
+            var excelFieldRows = hqImport('case_importer/js/excel_fields.js').ExcelFieldRows(excelFields, caseFieldSpecs);
+            $('#excel-field-rows').koApplyBindings(excelFieldRows);
             function updatePropertyInput() {
                 var caseField = $(this).closest('tr').find(".case_field");
                 var customField = $(this).closest('tr').find(".custom_field");
@@ -29,25 +36,17 @@
                 e.preventDefault();
             }
 
-            var allowedCaseProperties = {{ case_fields|JSON }};
+            var allowedCaseProperties = _(_(caseFieldSpecs).where({show_in_menu: true})).pluck('field');
 
             function autofillProperties() {
-                // just doing this whole thing off the DOM, though would be a good candidate
-                // to port to use more javascript.
-                var getExcelField = function ($row) {
-                    var select = $row.find('.excel_field')[0]
-                    return select.options[select.selectedIndex].text;
-                };
-
-                $('table#fieldlist tbody tr').each(function () {
-                    var field = getExcelField($(this));
+                _(excelFieldRows.mappingRows()).each(function (row) {
+                    var field = row.excelField();
                     if ($.inArray(field, allowedCaseProperties) !== -1) {
-                        var $caseSelect = $(this).find('.case_field').first();
-                        $caseSelect.val(field);
+                        row.selectedCaseField(field);
+                        row.isCustom(false);
                     } else {
-                        var $newProperty = $(this).find('.new_property').first();
-                        $newProperty.prop('checked', true);
-                        $newProperty.trigger('change');
+                        row.customCaseField(field);
+                        row.isCustom(true);
                     }
                 });
             }
@@ -156,12 +155,8 @@
                     <th>{% trans "Case Property" %}<button type="button" class="btn btn-primary btn-xs pull-right" id="autofill">{% trans "Auto Fill" %}</button></th>
                     <th></th>
                 </thead>
-                <tbody>
-                    {% for item in excel_fields %}
-                    <tr>
-                        {% include "case_importer/partials/excel_field_row.html" %}
-                    </tr>
-                    {% endfor %}
+                <tbody id="excel-field-rows">
+                    {% include "case_importer/partials/excel_field_rows.html" %}
                 </tbody>
             </table>
             <div class="form-group">

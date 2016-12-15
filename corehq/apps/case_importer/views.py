@@ -203,8 +203,7 @@ def excel_fields(request, domain):
     field_specs = get_suggested_case_fields(
         domain, case_type, exclude=[search_column, search_field])
 
-    case_fields_in_menu = [field_spec.field for field_spec in field_specs
-                           if field_spec.show_in_menu]
+    case_field_specs = [field_spec.to_json() for field_spec in field_specs]
 
     return render(
         request,
@@ -218,7 +217,7 @@ def excel_fields(request, domain):
             'value_column': value_column,
             'columns': columns,
             'excel_fields': excel_fields,
-            'case_fields': case_fields_in_menu,
+            'case_field_specs': case_field_specs,
             'domain': domain,
             'report': {
                 'name': 'Import: Match columns to fields'

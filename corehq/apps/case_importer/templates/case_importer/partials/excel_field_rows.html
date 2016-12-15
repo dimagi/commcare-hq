@@ -1,0 +1,62 @@
+{% load i18n %}
+<!--ko foreach: mappingRows-->
+<tr>
+
+<td>
+    <!--ko if: $index() == 0-->
+        <a class="hide remove_row" href="#"><i class="fa fa-remove"></i></a>
+    <!--/ko-->
+    <!--ko if: $index() != 0-->
+        <a class="remove_row" href="#"><i class="fa fa-remove"></i></a>
+    <!--/ko-->
+</td>
+
+<td class="col-sm-3">
+    <select class="form-control excel_field" name="excel_field[]" data-bind="
+        options: $root.excelFields,
+        optionsCaption: django.gettext('Select field from excel...'),
+        value: excelField
+    "></select>
+</td>
+
+<td>
+    <i class="fa fa-arrow-right"></i>
+</td>
+
+<td class="hide">
+    <input type="text" name="custom_field[]"
+           class="custom_field form-control"
+           placeholder="Enter new property name"
+           data-bind="value: customCaseField" />
+</td>
+
+<td class="col-sm-3">
+    <select class="form-control case_field" name="case_field[]" data-bind="
+        options: _($root.caseFieldSpecs).where({show_in_menu: true}),
+        optionsCaption: django.gettext('Select property name...'),
+        optionsText: 'field',
+        optionsValue: 'field',
+        value: selectedCaseField
+    "></select>
+</td>
+
+<td>
+    <div class="checkbox">
+        <label>
+            <input type="checkbox" class="new_property" data-bind="checked: isCustom"/>
+            {% trans "Create a new property instead" %}
+        </label>
+    </div>
+</td>
+
+<input type="hidden"
+       class="is_date_field"
+       name="is_date_field[]"
+       value="false" />
+
+<td>
+    <span data-bind="text: caseFieldSpec() ? caseFieldSpec().description : ''"></span>
+</td>
+
+</tr>
+<!--/ko-->
