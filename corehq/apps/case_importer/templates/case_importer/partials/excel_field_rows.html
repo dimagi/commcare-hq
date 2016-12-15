@@ -23,15 +23,17 @@
     <i class="fa fa-arrow-right"></i>
 </td>
 
-<td class="hide">
+<td class="col-sm-3">
     <input type="text" name="custom_field[]"
            class="custom_field form-control"
            placeholder="Enter new property name"
-           data-bind="value: customCaseField" />
-</td>
+           data-bind="
+        visible: isCustom(),
+        value: customCaseField
+    "/>
 
-<td class="col-sm-3">
     <select class="form-control case_field" name="case_field[]" data-bind="
+        visible: !isCustom(),
         options: _($root.caseFieldSpecs).where({show_in_menu: true}),
         optionsCaption: django.gettext('Select property name...'),
         optionsText: 'field',

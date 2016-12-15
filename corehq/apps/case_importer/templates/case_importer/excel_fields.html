@@ -13,24 +13,6 @@
             var caseFieldSpecs = {{ case_field_specs|JSON }};
             var excelFieldRows = hqImport('case_importer/js/excel_fields.js').ExcelFieldRows(excelFields, caseFieldSpecs);
             $('#excel-field-rows').koApplyBindings(excelFieldRows);
-            function updatePropertyInput() {
-                var caseField = $(this).closest('tr').find(".case_field");
-                var customField = $(this).closest('tr').find(".custom_field");
-
-                if (this.checked) {
-                    var excelField = $(this).closest('tr').find(".excel_field");
-                    var escapedValue = excelField.val().replace(/[^\w\s]/gi, '');
-                    escapedValue = escapedValue.replace(/[\s]/gi, '_');
-                    customField.val(escapedValue);
-                    customField.closest('td').removeClass('hide');
-                    caseField.closest('td').addClass('hide');
-                } else {
-                    customField.val('');
-                    customField.closest('td').addClass('hide');
-                    caseField.closest('td').removeClass('hide');
-                }
-            }
-            $('.new_property').change(updatePropertyInput);
             function removeRow(e) {
                 $(this).closest('tr').remove();
                 e.preventDefault();

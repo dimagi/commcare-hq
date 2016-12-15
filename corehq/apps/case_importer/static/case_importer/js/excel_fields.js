@@ -10,7 +10,7 @@ hqDefine('case_importer/js/excel_fields.js', function () {
             var row = {
                 excelField: ko.observable(excelField),
                 selectedCaseField: ko.observable(null),
-                customCaseField: ko.observable(''),
+                customCaseField: ko.observable(excelField),
                 isCustom: ko.observable(false),
             };
             row.caseField = ko.computed(function () {
