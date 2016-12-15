@@ -1,6 +1,5 @@
 import logging
 from lxml import etree as ET
-from optparse import make_option
 
 from couchdbkit import ResourceNotFound
 from django.core.management import BaseCommand
