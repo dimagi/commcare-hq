@@ -511,6 +511,7 @@ def _get_normal_column(new_table, column_path, transform):
         'MultipleChoiceItem',
         'GeopointItem',
         'MultiMediaItem',
+        'LabelItem',
         'ExportItem',
     ]
     # Since old exports had no concept of item type, we just guess all
