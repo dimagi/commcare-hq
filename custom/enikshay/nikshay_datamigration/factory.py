@@ -55,9 +55,10 @@ class EnikshayCaseFactory(object):
 
     @memoized
     def person(self):
+        nikshay_id = self.patient_detail.PregId
+
         kwargs = {
             'attrs': {
-                'create': True,
                 'case_type': 'person',
                 # 'owner_id': self._location.location_id,
                 'update': {
@@ -71,7 +72,7 @@ class EnikshayCaseFactory(object):
                     'last_name': self.patient_detail.last_name,
                     'middle_name': self.patient_detail.middle_name,
                     'name': self.patient_detail.pname,
-                    'nikshay_id': self.patient_detail.PregId,
+                    'nikshay_id': nikshay_id,
                     'permanent_address_district_choice': self.patient_detail.Dtocode,
                     'permanent_address_state_choice': self.patient_detail.scode,
                     'phi': self.patient_detail.PHI,
@@ -88,6 +89,12 @@ class EnikshayCaseFactory(object):
                 },
             },
         }
+
+        if nikshay_id in self.nikshay_id_to_preexisting_nikshay_person_cases:
+            kwargs['case_id'] = self.nikshay_id_to_preexisting_nikshay_person_cases[nikshay_id].case_id
+            kwargs['attrs']['create'] = False
+        else:
+            kwargs['attrs']['create'] = True
 
         return CaseStructure(**kwargs)
 
@@ -203,6 +210,17 @@ class EnikshayCaseFactory(object):
             kwargs['attrs']['create'] = True
 
         return CaseStructure(**kwargs)
+
+    @property
+    @memoized
+    def nikshay_id_to_preexisting_nikshay_person_cases(self):
+        return {
+            person_case.dynamic_case_properties()['nikshay_id']: person_case
+            for person_case in self.case_accessor.get_cases([
+                case_id for case_id in self.case_accessor.get_case_ids_in_domain(type='person')
+            ])
+            if person_case.dynamic_case_properties().get('migration_created_case')
+        }
 
     @property
     @memoized
