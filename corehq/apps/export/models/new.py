@@ -805,7 +805,7 @@ class CaseExportInstance(ExportInstance):
     def get_filters(self):
         if self.filters:
             from corehq.apps.export.forms import CaseExportFilterBuilder
-            filter_builder = CaseExportFilterBuilder(self.domain, get_timezone_for_domain(self.domain))
+            filter_builder = CaseExportFilterBuilder(Domain.get_by_name(self.domain), get_timezone_for_domain(self.domain))
             return filter_builder.get_filter(
                 self.filters.can_access_all_locations,
                 self.filters.accessible_location_ids,
@@ -843,7 +843,7 @@ class FormExportInstance(ExportInstance):
     def get_filters(self):
         if self.filters:
             from corehq.apps.export.forms import FormExportFilterBuilder
-            filter_builder = FormExportFilterBuilder(self.domain, get_timezone_for_domain(self.domain))
+            filter_builder = FormExportFilterBuilder(Domain.get_by_name(self.domain), get_timezone_for_domain(self.domain))
             return filter_builder.get_filter(
                 self.filters.can_access_all_locations,
                 self.filters.accessible_location_ids,

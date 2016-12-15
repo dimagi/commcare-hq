@@ -1037,7 +1037,7 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloa
         AND
             datespan filter
         """
-        filter_builder = FormExportFilterBuilder(self.timezone, self.domain_object)
+        filter_builder = FormExportFilterBuilder(self.domain_object, self.timezone)
         return filter_builder.get_filter(
             can_access_all_locations,
             accessible_location_ids,
