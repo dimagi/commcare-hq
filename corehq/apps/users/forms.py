@@ -835,7 +835,7 @@ class CommtrackUserForm(forms.Form):
             css_id='id_primary_location',
             source_css_id='id_assigned_locations',
             submit_form_id=self.helper.form_id,
-            empty_primary_location_message = _("Primary location can't be empty if user has any locations set")
+            empty_primary_location_message=_("Primary location can't be empty if user has any locations set")
         )
         if self.commtrack_enabled:
             programs = Program.by_domain(self.domain, wrap=False)
