@@ -4,6 +4,7 @@ from datetime import date
 from django.core.management import call_command
 from django.test import TestCase
 
+from casexml.apps.case.mock import CaseFactory, CaseStructure
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation, LocationType
@@ -16,7 +17,7 @@ class TestCreateEnikshayCases(TestCase):
     def setUp(self):
         super(TestCreateEnikshayCases, self).setUp()
 
-        patient_detail = PatientDetail.objects.create(
+        self.patient_detail = PatientDetail.objects.create(
             PregId='MH-ABD-05-16-0001',
             scode='MA',
             Dtocode='Middlesex',
@@ -40,8 +41,8 @@ class TestCreateEnikshayCases(TestCase):
             Ptype=4,
             pcategory=4,
         )
-        Outcome.objects.create(
-            PatientId=patient_detail,
+        self.outcome = Outcome.objects.create(
+            PatientId=self.patient_detail,
             HIVStatus='negative',
         )
         # Household.objects.create(
@@ -50,7 +51,7 @@ class TestCreateEnikshayCases(TestCase):
         for i in range(5):
             Followup.objects.create(
                 id=(i + 1),
-                PatientID=patient_detail,
+                PatientID=self.patient_detail,
             )
 
         self.domain = Domain(name='enikshay-test-domain')
@@ -211,3 +212,30 @@ class TestCreateEnikshayCases(TestCase):
                 )],
                 test_case.indices
             )
+
+    def test_case_update(self):
+        call_command('create_enikshay_cases', self.domain.name)
+
+        new_addhaar_number = 867386000001
+        self.patient_detail.paadharno = new_addhaar_number
+        self.patient_detail.dcpulmunory = 'N'
+        self.patient_detail.save()
+        self.outcome.HIVStatus = 'positive'
+        self.outcome.save()
+
+        call_command('create_enikshay_cases', self.domain.name)
+
+        person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
+        self.assertEqual(1, len(person_case_ids))
+        person_case = self.case_accessor.get_case(person_case_ids[0])
+        self.assertEqual(person_case.dynamic_case_properties()['aadhaar_number'], str(new_addhaar_number))
+
+        occurrence_case_ids = self.case_accessor.get_case_ids_in_domain(type='occurrence')
+        self.assertEqual(1, len(occurrence_case_ids))
+        occurrence_case = self.case_accessor.get_case(occurrence_case_ids[0])
+        self.assertEqual(occurrence_case.dynamic_case_properties()['hiv_status'], 'positive')
+
+        episode_case_ids = self.case_accessor.get_case_ids_in_domain(type='episode')
+        self.assertEqual(1, len(episode_case_ids))
+        episode_case = self.case_accessor.get_case(episode_case_ids[0])
+        self.assertEqual(episode_case.dynamic_case_properties()['disease_classification'], 'extra_pulmonary')
