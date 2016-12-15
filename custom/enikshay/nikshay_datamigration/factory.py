@@ -93,7 +93,6 @@ class EnikshayCaseFactory(object):
     def occurrence(self, outcome):
         kwargs = {
             'attrs': {
-                'create': True,
                 'case_type': 'occurrence',
                 'update': {
                     'hiv_status': outcome.HIVStatus,
@@ -110,14 +109,18 @@ class EnikshayCaseFactory(object):
             )],
         }
 
-        for occurrence_case in self.case_accessor.get_cases([
-            index.referenced_id for index in
-            self.case_accessor.get_case(self.person().case_id).reverse_indices
-        ]):
-            if outcome.pk == occurrence_case.dynamic_case_properties().get('nikshay_id'):
-                kwargs['case_id'] = occurrence_case.case_id
-                kwargs['attrs']['create'] = False
-                break
+        matching_occurrence_case = next((
+            occurrence_case for occurrence_case in self.case_accessor.get_cases([
+                index.referenced_id for index in
+                self.case_accessor.get_case(self.person().case_id).reverse_indices
+            ])
+            if outcome.pk == occurrence_case.dynamic_case_properties().get('nikshay_id')
+        ), None)
+        if matching_occurrence_case:
+            kwargs['case_id'] = matching_occurrence_case.case_id
+            kwargs['attrs']['create'] = False
+        else:
+            kwargs['attrs']['create'] = True
 
         return CaseStructure(**kwargs)
 
