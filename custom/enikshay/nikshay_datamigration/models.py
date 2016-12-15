@@ -150,6 +150,7 @@ class PatientDetail(models.Model):
     def _list_of_dot_names(self):
         return self.dotname.split(' ') if self.dotname else ['']
 
+
 class Outcome(models.Model):
     PatientId = models.OneToOneField(PatientDetail, primary_key=True)
     Outcome = models.CharField(max_length=255)

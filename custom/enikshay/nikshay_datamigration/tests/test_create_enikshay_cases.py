@@ -49,7 +49,7 @@ class TestCreateEnikshayCases(TestCase):
         # )
         for i in range(5):
             Followup.objects.create(
-                id=i+1,
+                id=(i + 1),
                 PatientID=patient_detail,
             )
 

@@ -48,7 +48,9 @@ class Command(BaseCleanupCommand):
                         del cur_row[XrayEPTests_INDEX]
 
                     num_extra_columns = len(cur_row) - len(rows[0])
-                    cur_row[MORemark_INDEX] = ','.join(cur_row[MORemark_INDEX:MORemark_INDEX + 1 + num_extra_columns])
+                    cur_row[MORemark_INDEX] = ','.join(
+                        cur_row[MORemark_INDEX:MORemark_INDEX + 1 + num_extra_columns]
+                    )
                     for _ in range(num_extra_columns):
                         del cur_row[MORemark_INDEX + 1]
 

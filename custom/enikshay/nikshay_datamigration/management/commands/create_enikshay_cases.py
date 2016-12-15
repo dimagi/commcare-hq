@@ -209,7 +209,10 @@ class EnikshayCaseFactory(object):
             self.case_accessor.get_case(occurrence_structure.case_id).reverse_indices
         ]):
             dynamic_case_properties = test_case.dynamic_case_properties()
-            if 'migration_followup_id' in dynamic_case_properties and followup.id == int(test_case.dynamic_case_properties()['migration_followup_id']):
+            if (
+                'migration_followup_id' in dynamic_case_properties
+                and followup.id == int(test_case.dynamic_case_properties()['migration_followup_id'])
+            ):
                 kwargs['case_id'] = test_case.case_id
                 kwargs['attrs']['create'] = False
 
