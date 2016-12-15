@@ -730,17 +730,6 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         # Tuple mapping translation formats to the expected output of each
         translation_formats = [
             ({
-                u'एक': [
-                    ['en', 'one'],
-                    ['es', 'uno'],
-                ],
-                '2': [
-                    ['en', 'two'],
-                    ['es', 'dos\''],
-                    ['hin', u'दो'],
-                ],
-            }, 'reports_module_data_detail-translated'),
-            ({
                 u'एक': {
                     'en': 'one',
                     'es': 'uno',

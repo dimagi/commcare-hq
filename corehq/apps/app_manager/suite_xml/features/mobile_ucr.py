@@ -220,11 +220,7 @@ def _get_data_detail(config, domain):
 
             def _get_word_eval(word_translations, default_value):
                 word_eval = default_value
-                if isinstance(word_translations, dict):
-                    translation_pairs = word_translations.items()
-                else:
-                    translation_pairs = word_translations
-                for lang, translation in translation_pairs:
+                for lang, translation in word_translations.items():
                     word_eval = _get_conditional(
                         "$lang = '{lang}'".format(
                             lang=lang,
