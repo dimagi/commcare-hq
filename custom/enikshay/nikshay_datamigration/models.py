@@ -2,7 +2,7 @@ from django.db import models
 
 
 class PatientDetail(models.Model):
-    PregId = models.CharField(max_length=255, primary_key=True) # need to remove trailing whitespace in Excel
+    PregId = models.CharField(max_length=255, primary_key=True)
     scode = models.CharField(max_length=255, null=True)
     Dtocode = models.CharField(max_length=255, null=True)
     Tbunitcode = models.IntegerField()
