@@ -53,7 +53,8 @@ from corehq.apps.export.const import (
     PROPERTY_TAG_CASE,
     USER_DEFINED_SPLIT_TYPES,
     PLAIN_USER_DEFINED_SPLIT_TYPE,
-    DATA_SCHEMA_VERSION,
+    CASE_DATA_SCHEMA_VERSION,
+    FORM_DATA_SCHEMA_VERSION,
     MISSING_VALUE,
     EMPTY_VALUE,
     KNOWN_CASE_PROPERTIES,
@@ -1060,7 +1061,7 @@ class ExportDataSchema(Document):
         current_schema = cls.get_latest_export_schema(domain, app_id, identifier)
         if (current_schema
                 and not force_rebuild
-                and current_schema.version == DATA_SCHEMA_VERSION):
+                and current_schema.version == cls.schema_version()):
             original_id, original_rev = current_schema._id, current_schema._rev
         else:
             current_schema = cls()
@@ -1095,7 +1096,7 @@ class ExportDataSchema(Document):
 
         current_schema.domain = domain
         current_schema.app_id = app_id
-        current_schema.version = DATA_SCHEMA_VERSION
+        current_schema.version = cls.schema_version()
         current_schema._set_identifier(identifier)
 
         current_schema = cls._save_export_schema(
@@ -1209,6 +1210,10 @@ class FormExportDataSchema(ExportDataSchema):
     @property
     def type(self):
         return FORM_EXPORT
+
+    @classmethod
+    def schema_version(cls):
+        return FORM_DATA_SCHEMA_VERSION
 
     @classmethod
     def _get_inferred_schema(cls, domain, xmlns):
@@ -1431,6 +1436,10 @@ class CaseExportDataSchema(ExportDataSchema):
 
     def _set_identifier(self, case_type):
         self.case_type = case_type
+
+    @classmethod
+    def schema_version(cls):
+        return CASE_DATA_SCHEMA_VERSION
 
     @classmethod
     def _get_inferred_schema(cls, domain, case_type):

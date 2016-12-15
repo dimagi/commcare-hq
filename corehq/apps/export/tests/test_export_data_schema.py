@@ -26,7 +26,7 @@ from corehq.apps.export.models import (
 from corehq.apps.export.const import (
     KNOWN_CASE_PROPERTIES,
     PROPERTY_TAG_UPDATE,
-    DATA_SCHEMA_VERSION,
+    FORM_DATA_SCHEMA_VERSION,
     CASE_ATTRIBUTES,
     CASE_CREATE_ELEMENTS,
 )
@@ -673,16 +673,16 @@ class TestExportDataSchemaVersionControl(TestCase, TestXmlMixin):
         self.assertEqual(schema._id, existing_schema._id)
 
         with patch(
-                'corehq.apps.export.models.new.DATA_SCHEMA_VERSION',
-                DATA_SCHEMA_VERSION + 1):
+                'corehq.apps.export.models.new.FORM_DATA_SCHEMA_VERSION',
+                FORM_DATA_SCHEMA_VERSION + 1):
             rebuilt_schema = FormExportDataSchema.generate_schema_from_builds(
                 app.domain,
                 app._id,
                 'my_sweet_xmlns'
             )
         self.assertNotEqual(schema._id, rebuilt_schema._id)
-        self.assertEqual(schema.version, DATA_SCHEMA_VERSION)
-        self.assertEqual(rebuilt_schema.version, DATA_SCHEMA_VERSION + 1)
+        self.assertEqual(schema.version, FORM_DATA_SCHEMA_VERSION)
+        self.assertEqual(rebuilt_schema.version, FORM_DATA_SCHEMA_VERSION + 1)
 
 
 class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
