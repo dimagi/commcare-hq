@@ -1865,7 +1865,8 @@ class DailySavedExportMixin(object):
         if instance.type == CASE_EXPORT:
             instance.filters.show_all_data = True
         else:
-            instance.filters.user_types = ['t__0']  # "All mobile workers"
+            # 0 is the id for "All mobile workers", corresponding to the option "t__0"
+            instance.filters.user_types = [0]
         span = datespan_from_beginning(self.domain_object, _get_timezone(self.domain, self.request.couch_user))
         instance.filters.date_period = DatePeriod(period_type="range", begin=span.startdate.date(), end=span.enddate.date())
 
