@@ -8,6 +8,7 @@ from corehq.apps.users.bulkupload import (
     SiteCodeToSupplyPointCache,
     UserLocMapping,
     UserUploadError,
+    create_or_update_users_and_groups
 )
 from corehq.apps.users.tasks import bulk_upload_async
 from corehq.apps.users.models import CommCareUser, UserRole, Permissions
@@ -136,20 +137,40 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(self.user_specs[0]['name'], self.user.name)
 
     @patch('corehq.apps.users.bulkupload.domain_has_privilege', lambda x, y: True)
-    def test_location_update(self):
-        self.setup_location()
-        from copy import deepcopy
+    def test_location_not_list(self):
+        self.setup_locations()
         updated_user_spec = deepcopy(self.user_specs[0])
+        updated_user_spec["location_code"] = "just-string"
 
         # location_code should be an array of multiple excel columns
         with self.assertRaises(UserUploadError):
-            updated_user_spec["location_code"] = "just-string"
             bulk_upload_async(
                 self.domain.name,
                 list([updated_user_spec]),
                 list([]),
                 list([])
             )
+
+    @patch('corehq.apps.users.bulkupload.domain_has_privilege', lambda x, y: True)
+    def test_location_unknown_site_code(self):
+        self.setup_locations()
+        updated_user_spec = deepcopy(self.user_specs[0])
+        updated_user_spec["location_code"] = ['unknownsite']
+
+        # location_code should be an array of multiple excel columns
+        # with self.assertRaises(UserUploadError):
+        result = create_or_update_users_and_groups(
+            self.domain.name,
+            list([updated_user_spec]),
+            list([]),
+            list([])
+        )
+        self.assertEqual(len(result["rows"]), 1)
+
+    @patch('corehq.apps.users.bulkupload.domain_has_privilege', lambda x, y: True)
+    def test_location_add(self):
+        self.setup_locations()
+        updated_user_spec = deepcopy(self.user_specs[0])
 
         updated_user_spec["location_code"] = [a.site_code for a in [self.loc1, self.loc2]]
         bulk_upload_async(
@@ -166,7 +187,64 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
         # non-primary location
         self.assertTrue(self.loc2._id in self.user.user_data.get('commcare_location_ids'))
 
-    def setup_location(self):
+    @patch('corehq.apps.users.bulkupload.domain_has_privilege', lambda x, y: True)
+    def test_location_remove(self):
+        self.setup_locations()
+        updated_user_spec = deepcopy(self.user_specs[0])
+        # first assign both locations
+        updated_user_spec["location_code"] = [a.site_code for a in [self.loc1, self.loc2]]
+        bulk_upload_async(
+            self.domain.name,
+            list([updated_user_spec]),
+            list([]),
+            list([])
+        )
+
+        # deassign all locations
+        updated_user_spec["location_code"] = []
+        updated_user_spec["user_id"] = self.user._id
+        bulk_upload_async(
+            self.domain.name,
+            list([updated_user_spec]),
+            list([]),
+            list([])
+        )
+
+        # user should have no locations
+        self.assertEqual(self.user.location_id, None)
+        self.assertEqual(self.user.user_data.get('commcare_location_id'), None)
+        self.assertListEqual(self.user.assigned_location_ids, [])
+
+    @patch('corehq.apps.users.bulkupload.domain_has_privilege', lambda x, y: True)
+    def test_location_replace(self):
+        self.setup_locations()
+        updated_user_spec = deepcopy(self.user_specs[0])
+
+        # first assign to loc1
+        updated_user_spec["location_code"] = [self.loc1.site_code]
+        create_or_update_users_and_groups(
+            self.domain.name,
+            list([updated_user_spec]),
+            list([]),
+            list([])
+        )
+
+        # reassign to loc2
+        updated_user_spec["location_code"] = [self.loc2.site_code]
+        updated_user_spec["user_id"] = self.user._id
+        create_or_update_users_and_groups(
+            self.domain.name,
+            list([updated_user_spec]),
+            list([]),
+            list([])
+        )
+
+        # user's location should now be loc2
+        self.assertEqual(self.user.location_id, self.loc2._id)
+        self.assertEqual(self.user.user_data.get('commcare_location_id'), self.loc2._id)
+        self.assertListEqual(self.user.assigned_location_ids, [self.loc2._id])
+
+    def setup_locations(self):
         self.loc1 = make_loc('loc1', type='state', domain=self.domain_name)
         self.loc2 = make_loc('loc2', type='state', domain=self.domain_name)
 

@@ -476,11 +476,13 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
             uncategorized_data = row.get('uncategorized_data')
             user_id = row.get('user_id')
             username = row.get('username')
-            location_codes = row.get('location_code')
+            location_codes = row.get('location_code') or []
             if location_codes and not isinstance(location_codes, list):
                 raise UserUploadError(_("location_code must be listed as multiple columns of "
                                         "'location_code 1, location_code 2 ...' for each of users's location. "
                                         "If user has only one location, it should be listed as 'location_code 1'"))
+            # ignore empty
+            location_codes = [code for code in location_codes if code]
             role = row.get('role', '')
 
             if password:
@@ -608,12 +610,13 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
                                 "Role '%s' does not exist"
                             ) % role)
 
+                    # following blocks require user doc id, so it needs to be saved if new user
                     user.save()
-                    if can_access_locations and location_ids:
+                    if can_access_locations:
+                        if (user.location_id and not location_ids or
+                           user.location_id not in location_ids):
+                            user.unset_location()
                         if set(user.assigned_location_ids) != set(location_ids):
-                            # this triggers a second user save so
-                            # we want to avoid doing it if it isn't
-                            # needed
                             user.reset_locations(location_ids)
 
                     if is_password(password):
