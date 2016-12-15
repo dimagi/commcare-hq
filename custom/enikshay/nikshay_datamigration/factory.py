@@ -125,7 +125,6 @@ class EnikshayCaseFactory(object):
     def episode(self, outcome):
         kwargs = {
             'attrs': {
-                'create': True,
                 'case_type': 'episode',
                 'update': {
                     'date_reported': self.patient_detail.pregdate1,  # is this right?
@@ -147,14 +146,18 @@ class EnikshayCaseFactory(object):
             )],
         }
 
-        for episode_case in self.case_accessor.get_cases([
-            index.referenced_id for index in
-            self.case_accessor.get_case(self.occurrence(outcome).case_id).reverse_indices
-        ]):
-            if episode_case.dynamic_case_properties().get('migration_created_case'):
-                kwargs['case_id'] = episode_case.case_id
-                kwargs['attrs']['create'] = False
-                break
+        matching_episode_case = next((
+            episode_case for episode_case in self.case_accessor.get_cases([
+                index.referenced_id for index in
+                self.case_accessor.get_case(self.occurrence(outcome).case_id).reverse_indices
+            ])
+            if episode_case.dynamic_case_properties().get('migration_created_case')
+        ), None)
+        if matching_episode_case:
+            kwargs['case_id'] = matching_episode_case.case_id
+            kwargs['attrs']['create'] = False
+        else:
+            kwargs['attrs']['create'] = True
 
         return CaseStructure(**kwargs)
 
