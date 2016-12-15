@@ -577,27 +577,6 @@ class GroupNameError(Exception):
         )
 
 
-def get_location_rows(domain):
-    users = CommCareUser.by_domain(domain)
-
-    mappings = []
-    for user in users:
-        # this method is only called when exporting the
-        # locaiton tab (so on domains with multiple
-        # locations per user), so we are relying on
-        # user.locations being a thing that is real
-        # and working
-        locations = user.locations
-        for location in locations:
-            mappings.append([
-                user.raw_username,
-                location.site_code,
-                location.name
-            ])
-
-    return mappings
-
-
 def build_data_headers(keys, header_prefix='data'):
     return json_to_headers(
         {header_prefix: {key: None for key in keys}}
@@ -766,16 +745,6 @@ def dump_users_and_groups(response, domain):
         ('users', user_rows),
         ('groups', group_rows),
     ]
-
-    domain_obj = Domain.get_by_name(domain)
-    # This is only for domains using the multiple locations feature flag
-    if domain_obj.commtrack_enabled and domain_obj.supports_multiple_locations_per_user:
-        headers.append(
-            ('locations', [['username', 'location_code', 'location name (optional)']])
-        )
-        rows.append(
-            ('locations', get_location_rows(domain))
-        )
 
     writer.open(
         header_table=headers,
