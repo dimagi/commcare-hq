@@ -4,7 +4,6 @@ from datetime import date
 from django.core.management import call_command
 from django.test import TestCase
 
-from casexml.apps.case.mock import CaseFactory, CaseStructure
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation, LocationType
