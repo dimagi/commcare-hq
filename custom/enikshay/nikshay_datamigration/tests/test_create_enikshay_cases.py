@@ -84,7 +84,7 @@ class TestCreateEnikshayCases(TestCase):
 
         super(TestCreateEnikshayCases, self).tearDown()
 
-    def test_case_properties(self):
+    def test_case_creation(self):
         call_command('create_enikshay_cases', self.domain.name)
 
         person_case = self.case_accessor.get_case(self.case_accessor.get_case_ids_in_domain(type='person')[0])
