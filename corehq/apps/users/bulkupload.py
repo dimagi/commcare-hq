@@ -245,102 +245,6 @@ class LocationIdToSiteCodeCache(BulkCacheBase):
         ).site_code
 
 
-class UserLocMapping(object):
-
-    def __init__(self, username, domain, location_cache):
-        self.username = username
-        self.domain = domain
-        self.to_add = set()
-        self.to_remove = set()
-        self.location_cache = location_cache
-
-    def get_supply_point_from_location(self, sms_code):
-        return self.location_cache.get(sms_code)
-
-    def save(self):
-        """
-        Calculate which locations need added or removed, then submit
-        one caseblock to handle this
-        """
-        user = CommCareUser.get_by_username(self.username)
-        if not user:
-            raise UserUploadError(_('no username with {} found!'.format(self.username)))
-
-        current_locations = user.locations
-        current_location_codes = [loc.site_code for loc in current_locations]
-
-        commit_list = {}
-        messages = []
-
-        def _add_loc(loc, clear=False):
-            sp = self.get_supply_point_from_location(loc)
-            if sp is None:
-                messages.append(_(
-                    "No supply point found for location '{}'. "
-                    "Make sure the location type is not set to administrative only "
-                    "and that the location has a valid sms code."
-                ).format(loc or ''))
-            else:
-                commit_list.update(user.supply_point_index_mapping(sp, clear))
-
-        for loc in self.to_add:
-            if loc not in current_location_codes:
-                _add_loc(loc)
-        for loc in self.to_remove:
-            if loc in current_location_codes:
-                _add_loc(loc, clear=True)
-
-        if commit_list:
-            submit_mapping_case_block(user, commit_list)
-
-        return messages
-
-
-def create_or_update_locations(domain, location_specs, log):
-    """
-    This method should only be used when uploading multiple
-    location per user situations. This is behind a feature
-    flag and is not for normal use.
-
-    It is special because it is creating delegate case
-    submissions to give this location access.
-    """
-    sp_cache = SiteCodeToSupplyPointCache(domain)
-    users = {}
-    for row in location_specs:
-        username = row.get('username')
-        try:
-            username = normalize_username(username, domain)
-        except ValidationError:
-            log['errors'].append(
-                _("Username must be a valid email address: %s") % username
-            )
-        else:
-            location_code = unicode(row.get('location_code'))
-            if username in users:
-                user_mapping = users[username]
-            else:
-                user_mapping = UserLocMapping(username, domain, sp_cache)
-                users[username] = user_mapping
-
-            if row.get('remove') == 'y':
-                user_mapping.to_remove.add(location_code)
-            else:
-                user_mapping.to_add.add(location_code)
-
-    for username, mapping in users.iteritems():
-        try:
-            messages = mapping.save()
-            log['errors'].extend(messages)
-        except UserUploadError as e:
-            log['errors'].append(
-                _('Unable to update locations for {user} because {message}'.format(
-                    user=username,
-                    message=e
-                ))
-            )
-
-
 def create_or_update_groups(domain, group_specs, log):
     group_memoizer = GroupMemoizer(domain)
     group_memoizer.load_all()
@@ -436,11 +340,11 @@ def users_with_duplicate_passwords(rows):
     return ret
 
 
-def create_or_update_users_and_groups(domain, user_specs, group_specs, location_specs, task=None):
+def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None):
     from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
     custom_data_validator = UserFieldsView.get_validator(domain)
     ret = {"errors": [], "rows": []}
-    total = len(user_specs) + len(group_specs) + len(location_specs)
+    total = len(user_specs) + len(group_specs)
 
     def _set_progress(progress):
         if task is not None:

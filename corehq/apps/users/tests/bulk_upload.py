@@ -1,12 +1,10 @@
 from copy import deepcopy
 from django.test import SimpleTestCase, TestCase
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
-from corehq.apps.commtrack.tests.util import CommTrackTest, make_loc
+from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.users.bulkupload import (
     check_duplicate_usernames,
     check_existing_usernames,
-    SiteCodeToSupplyPointCache,
-    UserLocMapping,
     UserUploadError,
     create_or_update_users_and_groups
 )
@@ -14,83 +12,7 @@ from corehq.apps.users.tasks import bulk_upload_async
 from corehq.apps.users.models import CommCareUser, UserRole, Permissions
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.domain.models import Domain
-from corehq.toggles import MULTIPLE_LOCATIONS_PER_USER, NAMESPACE_DOMAIN
 from mock import patch
-
-
-class UserLocMapTest(CommTrackTest):
-
-    def setUp(self):
-        super(UserLocMapTest, self).setUp()
-
-        self.user = CommCareUser.create(
-            self.domain.name,
-            'commcareuser',
-            'password',
-            phone_numbers=['123123'],
-            user_data={},
-            first_name='test',
-            last_name='user'
-        )
-
-        MULTIPLE_LOCATIONS_PER_USER.set(self.user.domain, True, NAMESPACE_DOMAIN)
-
-        self.loc = make_loc('secondloc')
-        self.sp = self.loc.linked_supply_point()
-        self.cache = SiteCodeToSupplyPointCache(self.domain.name)
-        self.mapping = UserLocMapping(self.user.username, self.user.domain, self.cache)
-
-    def test_adding_a_location(self):
-        self.mapping.to_add.add(self.loc.site_code)
-
-        self.assertEqual(len(self.user.locations), 0)
-        self.mapping.save()
-        self.assertEqual(len(self.user.locations), 1)
-
-    def test_removing_a_location(self):
-        # first make sure there is one to remove
-        self.user.add_location_delegate(self.loc)
-        self.assertEqual(len(self.user.locations), 1)
-
-        self.mapping.to_remove.add(self.loc.site_code)
-        ret = self.mapping.save()
-        self.assertEqual(len(self.user.locations), 0)
-
-    def test_should_not_add_what_is_already_there(self):
-        self.mapping.to_add.add(self.loc.site_code)
-
-        self.user.add_location_delegate(self.loc)
-
-        with patch('corehq.apps.hqcase.utils.submit_case_blocks') as submit_blocks:
-            self.mapping.save()
-            assert not submit_blocks.called, 'Should not submit case block if user already has location'
-
-    def test_should_not_delete_what_is_not_there(self):
-        self.mapping.to_remove.add(self.loc.site_code)
-
-        with patch('corehq.apps.hqcase.utils.submit_case_blocks') as submit_blocks:
-            self.mapping.save()
-            assert not submit_blocks.called, 'Should not submit case block if user already has location'
-
-    def test_location_lookup_caching(self):
-        user2 = CommCareUser.create(
-            self.domain.name,
-            'commcareuser2',
-            'password',
-            phone_numbers=['123123'],
-            user_data={},
-            first_name='test',
-            last_name='user'
-        )
-        mapping2 = UserLocMapping(user2.username, user2.domain, self.cache)
-
-        self.mapping.to_add.add(self.loc.site_code)
-        mapping2.to_add.add(self.loc.site_code)
-
-        with patch('corehq.form_processor.interfaces.supply.SupplyInterface.get_by_location') as get_supply_point:
-            self.mapping.save()
-            mapping2.save()
-            self.assertEqual(get_supply_point.call_count, 1)
 
 
 class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
@@ -129,7 +51,6 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             list(self.user_specs),
             list([]),
-            list([])
         )
 
         self.assertNotEqual(self.user_specs[0]['user_id'], self.user._id)
@@ -148,7 +69,6 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
                 self.domain.name,
                 list([updated_user_spec]),
                 list([]),
-                list([])
             )
 
     @patch('corehq.apps.users.bulkupload.domain_has_privilege', lambda x, y: True)
@@ -163,7 +83,6 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             list([updated_user_spec]),
             list([]),
-            list([])
         )
         self.assertEqual(len(result["rows"]), 1)
 
@@ -177,7 +96,6 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             list([updated_user_spec]),
             list([]),
-            list([])
         )
         # first location should be primary location
         self.assertEqual(self.user.location_id, self.loc1._id)
@@ -197,7 +115,6 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             list([updated_user_spec]),
             list([]),
-            list([])
         )
 
         # deassign all locations
@@ -207,7 +124,6 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             list([updated_user_spec]),
             list([]),
-            list([])
         )
 
         # user should have no locations
@@ -226,7 +142,6 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             list([updated_user_spec]),
             list([]),
-            list([])
         )
 
         # reassign to loc2
@@ -236,7 +151,6 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             list([updated_user_spec]),
             list([]),
-            list([])
         )
 
         # user's location should now be loc2
@@ -259,7 +173,6 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             list([updated_user_spec]),
             list([]),
-            list([])
         )
         self.assertEqual(self.user.full_name, "1234")
 
@@ -275,7 +188,6 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             list([updated_user_spec]),
             list([]),
-            list([])
         )
         self.assertEqual(self.user.full_name, "")
 
@@ -290,7 +202,6 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             list([updated_user_spec]),
             list([]),
-            list([])
         )
         self.assertEqual(self.user.email, updated_user_spec['email'].lower())
 
@@ -302,7 +213,6 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             list([updated_user_spec]),
             list([]),
-            list([])
         )
         self.assertEqual(self.user.get_role(self.domain_name).name, updated_user_spec['role'])
 
@@ -346,7 +256,6 @@ class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             list(user_spec + self.user_specs),
             list([]),
-            list([])
         )['messages']['rows']
         self.assertEqual(rows[0]['flag'], 'Provide a unique password for each mobile worker')
 
@@ -358,7 +267,6 @@ class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
             self.domain.name,
             list([updated_user_spec]),
             list([]),
-            list([])
         )['messages']['rows']
         self.assertEqual(rows[0]['flag'], 'Please provide a stronger password')
 
