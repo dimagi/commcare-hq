@@ -20,7 +20,7 @@
     <i class="fa fa-arrow-right"></i>
 </td>
 
-<td class="col-sm-3">
+<td class="col-sm-3" data-bind="css: {'has-success': !!(caseFieldSpec() ? caseFieldSpec().description : '')}">
     <input type="text" name="custom_field[]"
            class="custom_field form-control"
            placeholder="Enter new property name"
@@ -37,6 +37,8 @@
         optionsValue: 'field',
         value: selectedCaseField
     "></select>
+
+    <p class="help-block" data-bind="text: caseFieldSpec() ? caseFieldSpec().description : ''"></p>
 </td>
 
 <td>
@@ -52,10 +54,6 @@
        class="is_date_field"
        name="is_date_field[]"
        value="false" />
-
-<td>
-    <span data-bind="text: caseFieldSpec() ? caseFieldSpec().description : ''"></span>
-</td>
 
 </tr>
 <!--/ko-->
