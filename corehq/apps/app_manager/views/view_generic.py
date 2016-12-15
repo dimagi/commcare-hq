@@ -77,15 +77,15 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     # Application states that should no longer exist
     if app:
         if app.application_version == APP_V1:
-            _assert = soft_assert(['jschweers' + '@' + 'dimagi.com'])
+            _assert = soft_assert()
             _assert(False, 'App version 1.0', {'domain': domain, 'app_id': app_id})
             return render(request, 'app_manager/v1/no_longer_supported.html', {
                 'domain': domain,
                 'app': app,
             })
-        if app.vellum_case_management == False:
+        if not app.vellum_case_management:
             # Soft assert but then continue rendering; template will contain a user-facing warning
-            _assert = soft_assert()
+            _assert = soft_assert(['jschweers' + '@' + 'dimagi.com'])
             _assert(False, 'vellum_case_management=False', {'domain': domain, 'app_id': app_id})
 
 
