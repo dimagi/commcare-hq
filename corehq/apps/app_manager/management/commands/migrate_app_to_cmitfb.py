@@ -7,7 +7,7 @@ from django.core.management import BaseCommand
 from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain
 from corehq.apps.app_manager.models import Application, PreloadAction
 from corehq.apps.app_manager.util import save_xform
-from corehq.apps.app_manager.xform import XForm
+from corehq.apps.app_manager.xform import XForm, SESSION_USERCASE_ID
 
 
 logger = logging.getLogger('app_migration')
@@ -21,9 +21,15 @@ class Command(BaseCommand):
         Pass either a domain name (to migrate all apps in the domain) or an
         individual app id. Will skip any apps that have already been migrated.
     '''
+    option_list = (
+        make_option('--usercase',
+                    action='store_true',
+                    help='Migrate user properties'),
+    )
 
     def handle(self, *args, **options):
         app_ids = []
+        self.migrate_usercase = options.get("usercase")
         try:
             Application.get(args[0])
             app_ids = [args[0]]
@@ -39,7 +45,8 @@ class Command(BaseCommand):
 
     def migrate_app(self, app_id):
         app = Application.get(app_id)
-        if app.vellum_case_management:
+        migrate_usercase = should_migrate_usercase(app, self.migrate_usercase)
+        if app.vellum_case_management and not migrate_usercase:
             logger.info('already migrated app {}'.format(app_id))
             return
 
@@ -47,15 +54,45 @@ class Command(BaseCommand):
         for module in modules:
             forms = [f for f in module.forms if f.doc_type == 'Form']
             for form in forms:
+                preloads = []
                 preload = form.actions.case_preload.preload
                 if preload:
                     if form.requires == 'case':
-                        xform = XForm(form.source)
-                        xform.add_case_preloads(preload)
-                        save_xform(app, form, ET.tostring(xform.xml))
-                        form.case_references = {"load": {path: [case_property]
-                            for path, case_property in preload.iteritems()}}
+                        preloads.append({
+                            "hashtag": "#case/",
+                            "preloads": preload,
+                        })
                     form.actions.case_preload = PreloadAction()
+                usercase_preload = form.actions.usercase_preload.preload
+                if migrate_usercase and usercase_preload:
+                    preloads.append({
+                        "hashtag": "#user/",
+                        "preloads": usercase_preload,
+                        "case_id_xpath": SESSION_USERCASE_ID,
+                    })
+                    form.actions.usercase_preload = PreloadAction()
+                if preloads:
+                    migrate_preloads(app, form, preloads)
 
         app.vellum_case_management = True
         app.save()
+
+
+def migrate_preloads(app, form, preloads):
+    xform = XForm(form.source)
+    for kwargs in preloads:
+        hashtag = kwargs.pop("hashtag")
+        xform.add_case_preloads(**kwargs)
+        refs = {path: [hashtag + case_property]
+                for path, case_property in kwargs["preloads"].iteritems()}
+        if form.case_references:
+            form.case_references["load"].update(refs)
+        else:
+            form.case_references = {"load": refs}
+    save_xform(app, form, ET.tostring(xform.xml))
+
+
+def should_migrate_usercase(app, migrate_usercase):
+    return migrate_usercase and any(form.actions.usercase_preload.preload
+        for module in app.modules if module.module_type == 'basic'
+        for form in module.forms if form.doc_type == 'Form')
