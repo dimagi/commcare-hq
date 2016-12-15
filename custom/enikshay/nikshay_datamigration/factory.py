@@ -55,8 +55,8 @@ class EnikshayCaseFactory(object):
 
     @memoized
     def person(self):
-        return CaseStructure(
-            attrs={
+        kwargs = {
+            'attrs': {
                 'create': True,
                 'case_type': 'person',
                 # 'owner_id': self._location.location_id,
@@ -87,7 +87,9 @@ class EnikshayCaseFactory(object):
                     'migration_created_case': True,
                 },
             },
-        )
+        }
+
+        return CaseStructure(**kwargs)
 
     @memoized
     def occurrence(self, outcome):
