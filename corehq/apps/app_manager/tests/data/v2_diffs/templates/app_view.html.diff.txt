@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,395 +1,105 @@
+@@ -1,393 +1,105 @@
 -{% extends "app_manager/v1/managed_app.html" %}
 +{% extends "app_manager/v2/managed_app.html" %}
  {% load xforms_extras %}
@@ -65,11 +65,9 @@
 -             $(function () {
 -                var domains = {{ app.linked_whitelist|JSON }};
 -                var save = '{% url "update_linked_whitelist" domain app.id %}';
--                $(function () {
--                    var LinkedWhitelist = hqImport('app_manager/js/linked_whitelist.js').LinkedWhitelist;
--                    linkedWhitelist = new LinkedWhitelist(domains, save);
--                    $('#whitelist-tab').koApplyBindings(linkedWhitelist);
--                });
+-                var LinkedWhitelist = hqImport('app_manager/js/linked_whitelist.js').LinkedWhitelist;
+-                linkedWhitelist = new LinkedWhitelist(domains, save);
+-                $('#whitelist-tab').koApplyBindings(linkedWhitelist);
 -             });
 -            {% endif %}
 -        $(function () {
