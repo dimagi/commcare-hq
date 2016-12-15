@@ -156,7 +156,7 @@ class EnikshayCaseFactory(object):
                     'treatment_supporter_last_name': self.patient_detail.treatment_supporter_last_name,
                     'treatment_supporter_mobile_number': validate_number(self.patient_detail.dotmob),
 
-                    'date_reported': self.patient_detail.pregdate1, # is this right?
+                    'date_reported': self.patient_detail.pregdate1,  # is this right?
 
                     'migration_created_case': True,
 
