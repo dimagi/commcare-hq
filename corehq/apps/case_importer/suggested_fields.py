@@ -55,7 +55,8 @@ def get_special_fields():
         FieldSpec(
             field='parent_ref',
             description=_("This is a deprecated feature needed for a handful of clients. "
-                          "Please do not use unless you know what you are doing")),
+                          "Please do not use unless you know what you are doing"),
+            discoverable=False),
         FieldSpec(
             field='close',
             description=_("This field will be used to close cases. "
