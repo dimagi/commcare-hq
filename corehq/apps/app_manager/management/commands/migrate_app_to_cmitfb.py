@@ -9,6 +9,7 @@ from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain
 from corehq.apps.app_manager.models import Application, PreloadAction
 from corehq.apps.app_manager.util import save_xform
 from corehq.apps.app_manager.xform import XForm, SESSION_USERCASE_ID
+from corehq.toggles import NAMESPACE_DOMAIN, USER_PROPERTY_EASY_REFS
 
 
 logger = logging.getLogger('app_migration')
@@ -25,25 +26,38 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('app_id_or_domain', nargs='+',
-            help="App ID or domain name.")
+            help="App ID or domain name. Must be a domain name "
+                 "with --usercase option.")
         parser.add_argument('--usercase', action='store_true',
             help='Migrate user properties.')
 
     def handle(self, *args, **options):
+        domains = []
         app_ids = []
         self.migrate_usercase = options["usercase"]
         for ident in options["app_id_or_domain"]:
-            try:
-                Application.get(ident)
-                app_ids = [ident]
-            except ResourceNotFound:
-                ids = get_app_ids_in_domain(ident)
-                app_ids.extend(ids)
-                logger.info('migrating {} apps in domain {}'.format(len(ids), ident))
+            if not self.migrate_usercase:
+                try:
+                    Application.get(ident)
+                    app_ids.append(ident)
+                    continue
+                except ResourceNotFound:
+                    pass
+            ids = get_app_ids_in_domain(ident)
+            app_ids.extend(ids)
+            if ids:
+                domains.append(ident)
+            logger.info('migrating {} apps in domain {}'.format(len(ids), ident))
 
         for app_id in app_ids:
             logger.info('migrating app {}'.format(app_id))
             self.migrate_app(app_id)
+
+        if self.migrate_usercase:
+            for domain in domains:
+                USER_PROPERTY_EASY_REFS.set(domain, True, NAMESPACE_DOMAIN)
+            logger.info("enabled USER_PROPERTY_EASY_REFS for domains: %s",
+                ", ".join(domains))
 
         logger.info('done with migrate_app_to_cmitfb')
 
