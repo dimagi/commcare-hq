@@ -272,7 +272,7 @@ class Command(BaseCommand):
                 case_factory.create_cases()
             except Exception as e:
                 num_failed += 1
-                logger.error('Failed on %d of %d.' % (counter, total))
+                logger.error('Failed on %d of %d.' % (counter, total), exc_info=True)
             else:
                 num_succeeded += 1
                 logger.info('Succeeded on %s of %d.' % (counter, total))
