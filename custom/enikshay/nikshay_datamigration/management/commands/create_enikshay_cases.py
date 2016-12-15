@@ -98,7 +98,7 @@ class EnikshayCaseFactory(object):
 
                     'aadhaar_number': self.patient_detail.paadharno,
 
-                    'current_address': self.patient_detail.paddress, # not exactly clear which address field is right
+                    'current_address': self.patient_detail.paddress,
 
                     # 'date_reported'
 
