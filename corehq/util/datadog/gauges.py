@@ -5,7 +5,7 @@ from corehq.util.soft_assert import soft_assert
 
 
 def datadog_gauge_task(name, fn, run_every, enforce_prefix='commcare'):
-    """"
+    """
     helper for easily registering datadog gauges to run periodically
 
     To update a datadog gauge on a schedule based on the result of a function
