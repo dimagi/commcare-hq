@@ -115,6 +115,7 @@ DATADOG_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.datadog.log")
 UCR_TIMING_FILE = "%s/%s" % (FILEPATH, "ucr.timing.log")
 UCR_DIFF_FILE = "%s/%s" % (FILEPATH, "ucr.diff.log")
 UCR_EXCEPTION_FILE = "%s/%s" % (FILEPATH, "ucr.exception.log")
+NIKSHAY_DATAMIGRATION = "%s/%s" % (FILEPATH, "nikshay_datamigration.log")
 
 LOCAL_LOGGING_HANDLERS = {}
 LOCAL_LOGGING_LOGGERS = {}
@@ -1050,6 +1051,14 @@ LOGGING = {
         'null': {
             'class': 'logging.NullHandler',
         },
+        'nikshay_datamigration': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'verbose',
+            'filename': NIKSHAY_DATAMIGRATION,
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 20  # Backup 200 MB of logs
+        },
     },
     'loggers': {
         '': {
@@ -1135,7 +1144,12 @@ LOGGING = {
             'handlers': ['console'],
             'level': 'WARNING',
             'propogate': True
-        }
+        },
+        'nikshay_datamigration': {
+            'handlers': ['nikshay_datamigration', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
     }
 }
 

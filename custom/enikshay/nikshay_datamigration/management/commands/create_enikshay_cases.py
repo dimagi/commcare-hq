@@ -1,3 +1,5 @@
+import logging
+
 from django.core.management import BaseCommand
 
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
@@ -7,6 +9,8 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 from custom.enikshay.nikshay_datamigration.models import PatientDetail, Outcome, Followup
 from dimagi.utils.decorators.memoized import memoized
+
+logger = logging.getLogger('nikshay_datamigration')
 
 
 def validate_number(string_value):
@@ -260,7 +264,7 @@ class Command(BaseCommand):
         counter = 0
         num_succeeded = 0
         num_failed = 0
-        print 'Starting migration of %d patient cases.' % total
+        logger.info('Starting migration of %d patient cases.' % total)
         for patient_detail in patient_details:
             counter += 1
             try:
@@ -268,14 +272,14 @@ class Command(BaseCommand):
                 case_factory.create_cases()
             except Exception as e:
                 num_failed += 1
-                print 'Failed on %d of %d.' % (counter, total)
+                logger.error('Failed on %d of %d.' % (counter, total))
             else:
                 num_succeeded += 1
-                print 'Succeeded on %s of %d.' % (counter, total)
-        print 'Done.'
-        print 'Number of attempts: %d.' % counter
-        print 'Number of successes: %d.' % num_succeeded
-        print 'Number of failures: %d.' % num_failed
+                logger.info('Succeeded on %s of %d.' % (counter, total))
+        logger.info('Done.')
+        logger.info('Number of attempts: %d.' % counter)
+        logger.info('Number of successes: %d.' % num_succeeded)
+        logger.info('Number of failures: %d.' % num_failed)
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
