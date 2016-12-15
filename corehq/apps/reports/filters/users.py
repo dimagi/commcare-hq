@@ -177,7 +177,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     placeholder = ugettext_lazy(
         "Specify groups and users to include in the report")
     is_cacheable = False
-    options_url = 'new_emwf_options'
+    options_url = 'emwf_options'
 
     @property
     @memoized
