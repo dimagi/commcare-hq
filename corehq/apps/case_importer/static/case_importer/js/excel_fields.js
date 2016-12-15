@@ -4,6 +4,9 @@ hqDefine('case_importer/js/excel_fields.js', function () {
             excelFields: excelFields,
             caseFieldSpecs: caseFieldSpecs,
         };
+        self.removeRow = function (row) {
+            self.mappingRows.remove(row);
+        };
         self.mappingRows = ko.observableArray();
         // initialize mappingRows with one row per excelField
         _.each(excelFields, function (excelField) {

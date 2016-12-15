@@ -13,10 +13,6 @@
             var caseFieldSpecs = {{ case_field_specs|JSON }};
             var excelFieldRows = hqImport('case_importer/js/excel_fields.js').ExcelFieldRows(excelFields, caseFieldSpecs);
             $('#excel-field-rows').koApplyBindings(excelFieldRows);
-            function removeRow(e) {
-                $(this).closest('tr').remove();
-                e.preventDefault();
-            }
 
             var allowedCaseProperties = _(_(caseFieldSpecs).where({show_in_menu: true})).pluck('field');
 
@@ -32,8 +28,6 @@
                     }
                 });
             }
-
-            $('a.remove_row').click(removeRow);
 
             $('#js-add-mapping').click(function() {
                 var table = $('#fieldlist');

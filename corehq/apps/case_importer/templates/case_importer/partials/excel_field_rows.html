@@ -3,11 +3,8 @@
 <tr>
 
 <td>
-    <!--ko if: $index() == 0-->
-        <a class="hide remove_row" href="#"><i class="fa fa-remove"></i></a>
-    <!--/ko-->
     <!--ko if: $index() != 0-->
-        <a class="remove_row" href="#"><i class="fa fa-remove"></i></a>
+        <a class="remove_row" href="#" data-bind="click: $root.removeRow"><i class="fa fa-remove"></i></a>
     <!--/ko-->
 </td>
 
