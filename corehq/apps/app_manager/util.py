@@ -409,19 +409,32 @@ def get_casedb_schema(form):
     else:
         generations = []
 
+    subsets = [{
+        "id": generation_names[i],
+        "name": "{} ({})".format(generation_names[i], " or ".join(ctypes)) if i > 0 else base_case_type,
+        "structure": {p: {} for type in [map[t] for t in ctypes] for p in type},
+        "related": {"parent": {
+            "hashtag": "#case/" + generation_names[i + 1],
+            "subset": generation_names[i + 1],
+            "key": "@case_id",
+        }} if i < len(generations) - 1 else None,
+    } for i, ctypes in enumerate(generations)]
+
+    if is_usercase_in_use(app.domain) and toggles.USER_PROPERTY_EASY_REFS.enabled(app.domain):
+        subsets.append({
+            "id": USERCASE_TYPE,
+            "name": "user",
+            "key": "@case_type",
+            "structure": {p: {} for p in get_usercase_properties(app)[USERCASE_TYPE]},
+        })
+
     return {
         "id": "casedb",
         "uri": "jr://instance/casedb",
         "name": "case",
         "path": "/casedb/case",
         "structure": {},
-        "subsets": [{
-            "id": generation_names[i],
-            "name": "{} ({})".format(generation_names[i], " or ".join(ctypes)) if i > 0 else base_case_type,
-            "key": "@case_type",
-            "structure": {p: {} for type in [map[t] for t in ctypes] for p in type},
-            "related": {"parent": generation_names[i + 1]} if i < len(generations) - 1 else None,
-        } for i, ctypes in enumerate(generations)],
+        "subsets": subsets,
     }
 
 
@@ -429,26 +442,49 @@ def get_session_schema(form):
     """Get form session schema definition
     """
     from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
+    app = form.get_app()
     structure = {}
-    datums = EntriesHelper(form.get_app()).get_datums_meta_for_form_generic(form)
+    datums = EntriesHelper(app).get_datums_meta_for_form_generic(form)
     datums = [
         d for d in datums
         if not d.is_new_case_id and d.case_type and d.requires_selection
     ]
     if len(datums):
         session_var = datums[-1].datum.id
-        structure[session_var] = {
-            "reference": {
-                "source": "casedb",
-                "subset": "case",
-                "key": "@case_id",
+        structure["data"] = {
+            "merge": True,
+            "structure": {
+                session_var: {
+                    "reference": {
+                        "hashtag": "#case",
+                        "source": "casedb",
+                        "subset": "case",
+                        "key": "@case_id",
+                    },
+                },
+            },
+        }
+    if is_usercase_in_use(app.domain) and toggles.USER_PROPERTY_EASY_REFS.enabled(app.domain):
+        structure["context"] = {
+            "merge": True,
+            "structure": {
+                "userid": {
+                    "reference": {
+                        "hashtag": "#user",
+                        "source": "casedb",
+                        "subset": USERCASE_TYPE,
+                        "subset_key": "@case_type",
+                        "subset_filter": True,
+                        "key": "hq_user_id",
+                    },
+                },
             },
         }
     return {
         "id": "commcaresession",
         "uri": "jr://instance/session",
         "name": "Session",
-        "path": "/session/data",
+        "path": "/session",
         "structure": structure,
     }
 
