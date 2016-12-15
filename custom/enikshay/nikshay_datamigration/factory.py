@@ -63,6 +63,7 @@ class EnikshayCaseFactory(object):
                 # 'owner_id': self._location.location_id,
                 'update': {
                     'aadhaar_number': self.patient_detail.paadharno,
+                    'age': self.patient_detail.page,
                     'age_entered': self.patient_detail.page,
                     'contact_phone_number': validate_number(self.patient_detail.pmob),
                     'current_address': self.patient_detail.paddress,

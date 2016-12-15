@@ -93,6 +93,7 @@ class TestCreateEnikshayCases(TestCase):
         self.assertEqual(
             OrderedDict([
                 ('aadhaar_number', '867386000000'),
+                ('age', '18'),
                 ('age_entered', '18'),
                 ('contact_phone_number', '9987328695'),
                 ('current_address', 'Cambridge MA'),
