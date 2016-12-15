@@ -27,7 +27,8 @@ def get_special_fields():
     return [
         FieldSpec(
             field='name',
-            description=_("This field will used to set the case's name.")),
+            description=_("This field will used to set the case's name."),
+            show_in_menu=True),
         FieldSpec(
             field='owner_name',
             description=_("This field will assign the case to a new owner given by "
