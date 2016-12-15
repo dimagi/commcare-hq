@@ -721,10 +721,18 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache):
             user_data_model.get_model_and_uncategorized(user.user_data)
         )
         role = user.get_role(domain)
+        location_codes = []
         try:
-            location_code = location_cache.get(user.location_id)
+            location_codes.append(location_cache.get(user.location_id))
         except SQLLocation.DoesNotExist:
-            location_code = None
+            pass
+        for location_id in user.assigned_location_ids:
+            # skip if primary location_id, as it is already added to the start of list above
+            if location_id != user.location_id:
+                try:
+                    location_codes.append(location_cache.get(location_id))
+                except SQLLocation.DoesNotExist:
+                    pass
         return {
             'data': model_data,
             'uncategorized_data': uncategorized_data,
@@ -738,12 +746,13 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache):
             'user_id': user._id,
             'is_active': str(user.is_active),
             'User IMEIs (read only)': _get_devices(user),
-            'location_code': location_code,
+            'location_code': location_codes,
             'role': role.name if role else '',
         }
 
     unrecognized_user_data_keys = set()
     user_groups_length = 0
+    max_location_length = 0
     user_dicts = []
     for user in get_all_commcare_users_by_domain(domain):
         group_names = _get_group_names(user)
@@ -751,13 +760,13 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache):
         user_dicts.append(user_dict)
         unrecognized_user_data_keys.update(user_dict['uncategorized_data'].keys())
         user_groups_length = max(user_groups_length, len(group_names))
+        max_location_length = max(max_location_length, len(user_dict["location_code"]))
 
     user_headers = [
         'username', 'password', 'name', 'phone-number', 'email',
         'language', 'role', 'user_id', 'is_active', 'User IMEIs (read only)',
     ]
-    if domain_has_privilege(domain, privileges.LOCATIONS):
-        user_headers.append('location_code')
+
     user_data_fields = [f.slug for f in user_data_model.get_fields(include_system=False)]
     user_headers.extend(build_data_headers(user_data_fields))
     user_headers.extend(build_data_headers(
@@ -767,6 +776,10 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache):
     user_headers.extend(json_to_headers(
         {'group': range(1, user_groups_length + 1)}
     ))
+    if domain_has_privilege(domain, privileges.LOCATIONS):
+        user_headers.extend(json_to_headers(
+            {'location_code': range(1, max_location_length + 1)}
+        ))
 
     def _user_rows():
         for user_dict in user_dicts:
