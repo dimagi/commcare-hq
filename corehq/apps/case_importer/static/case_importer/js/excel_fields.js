@@ -4,12 +4,11 @@ hqDefine('case_importer/js/excel_fields.js', function () {
             excelFields: excelFields,
             caseFieldSpecs: caseFieldSpecs,
         };
+        self.mappingRows = ko.observableArray();
         self.removeRow = function (row) {
             self.mappingRows.remove(row);
         };
-        self.mappingRows = ko.observableArray();
-        // initialize mappingRows with one row per excelField
-        _.each(excelFields, function (excelField) {
+        self.addRow = function (excelField) {
             var row = {
                 excelField: ko.observable(excelField),
                 selectedCaseField: ko.observable(null),
@@ -29,7 +28,9 @@ hqDefine('case_importer/js/excel_fields.js', function () {
             });
 
             self.mappingRows.push(row);
-        });
+        };
+        // initialize mappingRows with one row per excelField
+        _.each(excelFields, self.addRow);
 //        setInterval(function () {
 //            var row = self.mappingRows()[0];
 //            console.log(row.isCustom(), row.caseFieldSpec());

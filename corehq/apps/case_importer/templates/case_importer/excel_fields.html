@@ -30,21 +30,7 @@
             }
 
             $('#js-add-mapping').click(function() {
-                var table = $('#fieldlist');
-                var cloned = table.find('tbody tr').first().clone();
-
-                cloned.find('input').val('');
-                cloned.find('select').val('');
-                cloned.find('input[type=checkbox]').prop('checked', false)
-                cloned.find('.remove_row').removeClass('hide');
-
-                cloned.find('.case_field').closest('td').removeClass('hide');
-                cloned.find('.custom_field').closest('td').addClass('hide');
-
-                cloned.find('.new_property').change(updatePropertyInput);
-                cloned.find('.remove_row').click(removeRow);
-
-                table.find('tr').last().after(cloned);
+                excelFieldRows.addRow();
             });
 
             $('.custom_field').on('change, keypress, keydown, keyup', function() {
