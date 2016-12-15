@@ -77,7 +77,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     # Application states that should no longer exist
     if app:
         if app.application_version == APP_V1:
-            _assert = soft_assert()
+            _assert = soft_assert(['jschweers' + '@' + 'dimagi.com'])
             _assert(False, 'App version 1.0', {'domain': domain, 'app_id': app_id})
             return render(request, 'app_manager/v1/no_longer_supported.html', {
                 'domain': domain,
