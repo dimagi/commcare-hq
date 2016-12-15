@@ -2270,6 +2270,7 @@ class MigrationStatus(models.Model):
     MIGRATION_DOMAIN_DEFAULT_BACKEND = 'domain_default_backend'
     MIGRATION_LOGS = 'logs'
     MIGRATION_PHONE_NUMBERS = 'phone_numbers'
+    MIGRATION_KEYWORDS = 'keywords'
 
     class Meta:
         db_table = 'messaging_migrationstatus'
