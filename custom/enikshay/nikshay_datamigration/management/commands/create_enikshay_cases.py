@@ -67,45 +67,29 @@ class EnikshayCaseFactory(object):
                 'case_type': 'person',
                 # 'owner_id': self._location.location_id,
                 'update': {
-                    'nikshay_id': self.patient_detail.PregId,
-
-                    'current_address_state_choice': self.patient_detail.scode,
-                    'permanent_address_state_choice': self.patient_detail.scode,
-
+                    'aadhaar_number': self.patient_detail.paadharno,
+                    'age_entered': self.patient_detail.page,
+                    'contact_phone_number': validate_number(self.patient_detail.pmob),
+                    'current_address': self.patient_detail.paddress,
                     'current_address_district_choice': self.patient_detail.Dtocode,
+                    'current_address_state_choice': self.patient_detail.scode,
+                    'first_name': self.patient_detail.first_name,
+                    'last_name': self.patient_detail.last_name,
+                    'middle_name': self.patient_detail.middle_name,
+                    'name': self.patient_detail.pname,
+                    'nikshay_id': self.patient_detail.PregId,
                     'permanent_address_district_choice': self.patient_detail.Dtocode,
-
+                    'permanent_address_state_choice': self.patient_detail.scode,
+                    'phi': self.patient_detail.PHI,
                     'secondary_contact_name_address': (
                         (self.patient_detail.cname or '')
                         + ', '
                         + (self.patient_detail.caddress or '')
                     ),
-
+                    'secondary_contact_phone_number': validate_number(self.patient_detail.cmob),
+                    'sex': self.patient_detail.sex,
                     'tu_choice': self.patient_detail.Tbunitcode,
 
-                    'phi': self.patient_detail.PHI,
-
-                    'name': self.patient_detail.pname,
-                    'first_name': self.patient_detail.first_name,
-                    'middle_name': self.patient_detail.middle_name,
-                    'last_name': self.patient_detail.last_name,
-
-                    'sex': self.patient_detail.sex,
-
-                    'age_entered': self.patient_detail.page,
-
-                    # poccupation
-
-                    'aadhaar_number': self.patient_detail.paadharno,
-
-                    'current_address': self.patient_detail.paddress,
-
-                    # 'date_reported'
-
-                    'contact_phone_number': validate_number(self.patient_detail.pmob),
-                    'secondary_contact_phone_number': validate_number(self.patient_detail.cmob),
-
-                    # 'mobile_number': self.patient_detail.pmob, # not used in eNikshay
                     'migration_created_case': True,
                 },
             },
@@ -118,8 +102,9 @@ class EnikshayCaseFactory(object):
                 'create': True,
                 'case_type': 'occurrence',
                 'update': {
-                    'nikshay_id': outcome.PatientId.PregId,
                     'hiv_status': outcome.HIVStatus,
+                    'nikshay_id': outcome.PatientId.PregId,
+
                     'migration_created_case': True,
                 },
             },
@@ -149,6 +134,7 @@ class EnikshayCaseFactory(object):
                 'create': True,
                 'case_type': 'episode',
                 'update': {
+                    'date_reported': self.patient_detail.pregdate1,  # is this right?
                     'disease_classification': self.patient_detail.disease_classification,
                     'patient_type_choice': self.patient_detail.patient_type_choice,
                     'treatment_supporter_designation': self.patient_detail.treatment_supporter_designation,
@@ -156,11 +142,7 @@ class EnikshayCaseFactory(object):
                     'treatment_supporter_last_name': self.patient_detail.treatment_supporter_last_name,
                     'treatment_supporter_mobile_number': validate_number(self.patient_detail.dotmob),
 
-                    'date_reported': self.patient_detail.pregdate1,  # is this right?
-
                     'migration_created_case': True,
-
-                    # poccupation
                 },
             },
             'indices': [CaseIndex(
@@ -192,8 +174,9 @@ class EnikshayCaseFactory(object):
                 'case_type': 'test',
                 'update': {
                     'date_tested': followup.TestDate,
-                    'migration_followup_id': followup.id,
+
                     'migration_created_case': True,
+                    'migration_followup_id': followup.id,
                 },
             },
             'indices': [CaseIndex(
