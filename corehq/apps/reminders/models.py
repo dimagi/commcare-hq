@@ -1886,13 +1886,6 @@ class SurveyKeyword(SyncCouchToSQLMixin, Document):
 
     def is_structured_sms(self):
         return METHOD_STRUCTURED_SMS in [a.action for a in self.actions]
-
-    def deleted(self):
-        return self.doc_type != 'SurveyKeyword'
-
-    def retire(self):
-        self.doc_type += "-Deleted"
-        self.save()
     
     @property
     def get_id(self):
@@ -1934,6 +1927,10 @@ class SurveyKeyword(SyncCouchToSQLMixin, Document):
     def save(self, *args, **kwargs):
         self.clear_caches()
         return super(SurveyKeyword, self).save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        self.clear_caches()
+        return super(SurveyKeyword, self).delete(*args, **kwargs)
 
     def clear_caches(self):
         self.domain_has_keywords.clear(SurveyKeyword, self.domain)

@@ -1119,6 +1119,12 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
             'deleteModalId': 'delete-%s' % keyword._id,
         }
 
+    def _fmt_deleted_keyword_data(self, keyword):
+        return {
+            'keyword': keyword.keyword,
+            'description': keyword.description,
+        }
+
     def get_deleted_item_data(self, item_id):
         try:
             s = SurveyKeyword.get(item_id)
@@ -1126,9 +1132,9 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
             raise Http404()
         if s.domain != self.domain or s.doc_type != "SurveyKeyword":
             raise Http404()
-        s.retire()
+        s.delete()
         return {
-            'itemData': self._fmt_keyword_data(s),
+            'itemData': self._fmt_deleted_keyword_data(s),
             'template': 'keyword-deleted-template',
         }
 
