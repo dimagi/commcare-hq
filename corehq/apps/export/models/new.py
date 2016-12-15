@@ -536,7 +536,6 @@ class ExportInstanceFilters(DocumentSchema):
         return True
 
 
-
 class ExportInstance(BlobMixin, Document):
     """
     This is an instance of an export. It contains the tables to export and
@@ -799,6 +798,19 @@ class CaseExportInstance(ExportInstance):
     case_type = StringProperty()
     type = CASE_EXPORT
 
+    def __init__(self, *args, **kwargs):
+        super(CaseExportInstance, self).__init__(*args, **kwargs)
+        # Conditional default values for self.filters
+        created_default_filters = "filters" not in kwargs and (len(args) == 0 or "filters" not in args[0])
+        if created_default_filters:
+            self.filters.show_all_data = True
+
+    @classmethod
+    def wrap(cls, data):
+        if "filters" not in data:
+            data['filters'] = {'show_all_data': True}
+        return super(CaseExportInstance, cls).wrap(data)
+
     @classmethod
     def _new_from_schema(cls, schema):
         return cls(
@@ -831,6 +843,19 @@ class FormExportInstance(ExportInstance):
 
     # Whether to include duplicates and other error'd forms in export
     include_errors = BooleanProperty(default=False)
+
+    def __init__(self, *args, **kwargs):
+        super(FormExportInstance, self).__init__(*args, **kwargs)
+        # Conditional default values for self.filters
+        created_default_filters = "filters" not in kwargs and (len(args) == 0 or "filters" not in args[0])
+        if created_default_filters:
+            self.filters.user_types = [0]
+
+    @classmethod
+    def wrap(cls, data):
+        if "filters" not in data:
+            data['filters'] = {"user_types": [0]}
+        return super(FormExportInstance, cls).wrap(data)
 
     @property
     def formname(self):
