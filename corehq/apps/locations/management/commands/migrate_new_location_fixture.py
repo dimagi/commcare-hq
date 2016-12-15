@@ -28,7 +28,7 @@ class Command(BaseCommand):
         # 4. Update domains that need to stay on hierarchical with enabled legacy toggle to be able to access conf
         # and update their location configuration to use hierarchical fixture for now
         toggle = Toggle.get(HIERARCHICAL_LOCATION_FIXTURE.slug)
-        for domain in domains_to_stay_on_hierarchical_fixture :
+        for domain in domains_to_stay_on_hierarchical_fixture:
             toggle.set(domain, True, NAMESPACE_DOMAIN)
             enable_legacy_fixture_for_domain(domain)
 
