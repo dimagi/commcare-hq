@@ -16,27 +16,30 @@ logger.setLevel('DEBUG')
 
 
 class Command(BaseCommand):
-    args = 'app_id_or_domain'
     help = '''
         Migrate apps from case management in the app builder to form builder.
-        Pass either a domain name (to migrate all apps in the domain) or an
-        individual app id. Will skip any apps that have already been migrated.
+        Pass either domain name(s) (to migrate all apps in the domain) or
+        individual app id(s). Will skip any apps that have already been
+        migrated.
     '''
-    option_list = (
-        make_option('--usercase',
-                    action='store_true',
-                    help='Migrate user properties'),
-    )
+
+    def add_arguments(self, parser):
+        parser.add_argument('app_id_or_domain', nargs='+',
+            help="App ID or domain name.")
+        parser.add_argument('--usercase', action='store_true',
+            help='Migrate user properties.')
 
     def handle(self, *args, **options):
         app_ids = []
-        self.migrate_usercase = options.get("usercase")
-        try:
-            Application.get(args[0])
-            app_ids = [args[0]]
-        except ResourceNotFound:
-            app_ids = get_app_ids_in_domain(args[0])
-            logger.info('migrating {} apps in domain {}'.format(len(app_ids), args[0]))
+        self.migrate_usercase = options["usercase"]
+        for ident in options["app_id_or_domain"]:
+            try:
+                Application.get(ident)
+                app_ids = [ident]
+            except ResourceNotFound:
+                ids = get_app_ids_in_domain(ident)
+                app_ids.extend(ids)
+                logger.info('migrating {} apps in domain {}'.format(len(ids), ident))
 
         for app_id in app_ids:
             logger.info('migrating app {}'.format(app_id))
