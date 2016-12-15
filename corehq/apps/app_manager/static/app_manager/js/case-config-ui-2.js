@@ -4,7 +4,7 @@ hqDefine('app_manager/js/case-config-ui-2.js', function () {
     "use strict";
     var caseConfigUtils = hqImport('app_manager/js/case-config-utils.js');
     var action_names = ["open_case", "update_case", "close_case", "case_preload",
-        // Usercase actions are managed in the User Case Management tab.
+        // Usercase actions are managed in the User Properties tab.
         "usercase_update", "usercase_preload"];
 
     var CaseConfig = function (params) {
@@ -73,7 +73,7 @@ hqDefine('app_manager/js/case-config-ui-2.js', function () {
         });
 
         self.saveUsercaseButton = COMMCAREHQ.SaveButton.init({
-            unsavedMessage: "You have unchanged user case settings",
+            unsavedMessage: "You have unchanged user properties settings",
             save: function () {
                 var actions = JSON.stringify(_(self.actions).extend(
                     HQFormActions.from_usercase_transaction(self.caseConfigViewModel.usercase_transaction)
