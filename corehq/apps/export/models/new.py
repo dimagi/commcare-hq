@@ -133,6 +133,8 @@ class ExportItem(DocumentSchema):
                 return super(ExportItem, cls).wrap(data)
             elif doc_type == 'ScalarItem':
                 return ScalarItem.wrap(data)
+            elif doc_type == 'LabelItem':
+                return LabelItem.wrap(data)
             elif doc_type == 'MultipleChoiceItem':
                 return MultipleChoiceItem.wrap(data)
             elif doc_type == 'GeopointItem':
@@ -251,12 +253,13 @@ class ExportColumn(DocumentSchema):
         """
         is_case_update = item.tag == PROPERTY_TAG_CASE and not isinstance(item, CaseIndexItem)
         is_case_history_update = item.tag == PROPERTY_TAG_UPDATE
+        is_label_question = isinstance(item, LabelItem)
 
         is_main_table = table_path == MAIN_TABLE
         constructor_args = {
             "item": item,
             "label": item.readable_path if not is_case_history_update else item.label,
-            "is_advanced": is_case_update or False,
+            "is_advanced": is_case_update or is_label_question,
         }
 
         if isinstance(item, GeopointItem):
@@ -281,6 +284,7 @@ class ExportColumn(DocumentSchema):
             auto_select and
             not column._is_deleted(app_ids_and_versions) and
             not is_case_update and
+            not is_label_question and
             is_main_table
         )
         return column
@@ -843,6 +847,12 @@ class ScalarItem(ExportItem):
     """
 
 
+class LabelItem(ExportItem):
+    """
+    An item that refers to a label question
+    """
+
+
 class CaseIndexItem(ExportItem):
     """
     An item that refers to a case index
@@ -1191,6 +1201,7 @@ class FormExportDataSchema(ExportDataSchema):
         'Image': MultiMediaItem,
         'Audio': MultiMediaItem,
         'Video': MultiMediaItem,
+        'Trigger': LabelItem,
     })
 
     @property
@@ -1238,7 +1249,7 @@ class FormExportDataSchema(ExportDataSchema):
 
     @staticmethod
     def _generate_schema_from_xform(xform, case_updates, langs, app_id, app_version):
-        questions = xform.get_questions(langs)
+        questions = xform.get_questions(langs, include_triggers=True)
         repeats = [
             r['value']
             for r in xform.get_questions(langs, include_groups=True) if r['tag'] == 'repeat'
