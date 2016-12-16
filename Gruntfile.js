@@ -24,6 +24,7 @@ module.exports = function(grunt) {
         'cloudcare',
         'cloudcare#form_entry',
         'hqwebapp',
+        'case_importer',
     ];
 
     var mochaConfig = {},
