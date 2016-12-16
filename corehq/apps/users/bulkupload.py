@@ -18,6 +18,7 @@ from couchexport.writers import Excel2007ExportWriter
 from soil import DownloadBase
 
 from corehq import privileges
+from corehq import toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.commtrack.util import submit_mapping_case_block, get_supply_point_and_location
 from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
@@ -359,8 +360,11 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None
     allowed_group_names = [group.name for group in allowed_groups]
     allowed_roles = UserRole.by_domain(domain)
     roles_by_name = {role.name: role for role in allowed_roles}
-    can_access_locations = domain_has_privilege(domain, privileges.LOCATIONS)
-    if can_access_locations:
+    can_assign_locations = domain_has_privilege(domain, privileges.LOCATIONS)
+    # ToDo: We need more speccing on what/how locations can be assigned if location-restrictions is enabled
+    #       For now, don't support bulk assigning if location-restrictions are enabled
+    can_assign_locations = can_assign_locations and not toggles.RESTRICT_WEB_USERS_BY_LOCATION.enabled(domain)
+    if can_assign_locations:
         location_cache = SiteCodeToLocationCache(domain)
     project = Domain.get_by_name(domain)
     usernames_with_dupe_passwords = users_with_duplicate_passwords(user_specs)
@@ -495,7 +499,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None
                     if is_active is not None:
                         user.is_active = is_active
 
-                    if can_access_locations:
+                    if can_assign_locations:
                         # Do this here so that we validate the location code before we
                         # save any other information to the user, this way either all of
                         # the user's information is updated, or none of it
@@ -514,7 +518,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None
 
                     # following blocks require user doc id, so it needs to be saved if new user
                     user.save()
-                    if can_access_locations:
+                    if can_assign_locations:
                         if (user.location_id and not location_ids or
                            user.location_id not in location_ids):
                             user.unset_location()
