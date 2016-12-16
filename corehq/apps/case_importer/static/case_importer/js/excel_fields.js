@@ -58,7 +58,7 @@ hqDefine('case_importer/js/excel_fields.js', function () {
                 }).filter(function (suggestion) {
                     return suggestion.distance < 4;
                 });
-                return _.chain(suggestions).sortBy('distance').reverse().pluck('field').value();
+                return _.chain(suggestions).sortBy('distance').pluck('field').value();
             });
 
             self.mappingRows.push(row);
