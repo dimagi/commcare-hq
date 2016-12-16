@@ -101,7 +101,7 @@ def _get_select_details(config):
                 ),
             )
         ]
-    ).serialize())
+    ).serialize().decode('utf-8'))
 
 
 def _get_summary_details(config, domain):
@@ -309,7 +309,7 @@ class _MobileSelectFilterHelpers(object):
 
     @staticmethod
     def get_select_details(config, filter_slug, domain):
-        return models.Detail(custom_xml=Detail(
+        detail = Detail(
             id=_MobileSelectFilterHelpers.get_select_detail_id(config, filter_slug),
             title=Text(config.report(domain).get_ui_filter(filter_slug).label),
             fields=[
@@ -322,7 +322,8 @@ class _MobileSelectFilterHelpers(object):
                     ),
                 )
             ]
-        ).serialize())
+        ).serialize()
+        return models.Detail(custom_xml=detail.decode('utf-8'))
 
     @staticmethod
     def get_data_filter_xpath(config, domain):
