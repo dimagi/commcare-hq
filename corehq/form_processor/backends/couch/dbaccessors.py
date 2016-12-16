@@ -16,6 +16,7 @@ from corehq.apps.hqcase.dbaccessors import (
     get_case_types_for_domain,
     get_cases_in_domain_by_external_id,
     get_deleted_case_ids_by_owner,
+    get_number_of_cases_in_domain,
 )
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from corehq.blobs.mixin import BlobMixin
@@ -139,6 +140,10 @@ class CaseAccessorCouch(AbstractCaseAccessor):
     @staticmethod
     def get_case_ids_in_domain(domain, type=None):
         return get_case_ids_in_domain(domain, type=type)
+
+    @staticmethod
+    def get_number_of_cases_in_domain(domain):
+        return get_number_of_cases_in_domain(domain)
 
     @staticmethod
     def get_case_ids_in_domain_by_owners(domain, owner_ids, closed=None):

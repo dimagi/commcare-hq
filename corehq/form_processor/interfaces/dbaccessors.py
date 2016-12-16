@@ -292,7 +292,7 @@ class CaseAccessors(object):
         return self.db_accessor.get_case_ids_in_domain(self.domain, type)
 
     def get_number_of_cases_in_domain(self):
-        return len(self.get_case_ids_in_domain())
+        return self.db_accessor.get_number_of_cases_in_domain(self.domain)
 
     def get_case_ids_by_owners(self, owner_ids, closed=None):
         """
