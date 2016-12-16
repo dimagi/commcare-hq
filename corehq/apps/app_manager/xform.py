@@ -936,6 +936,7 @@ class XForm(WrappedNode):
                 "relevant": relevant,
                 "required": required == "true()",
                 "comment": self._get_comment(leaf_data_nodes, path),
+                "hashtagValue": self.hashtag_path(path),
             }
             if include_translations:
                 question["translations"] = self.get_label_translations(node, langs)
