@@ -201,7 +201,7 @@ def excel_fields(request, domain):
         excel_fields.remove(search_field)
 
     field_specs = get_suggested_case_fields(
-        domain, case_type, exclude=[search_column, search_field])
+        domain, case_type, exclude=[search_field])
 
     case_field_specs = [field_spec.to_json() for field_spec in field_specs]
 

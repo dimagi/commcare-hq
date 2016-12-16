@@ -1,18 +1,39 @@
 from django.utils.translation import ugettext as _
+import itertools
 from corehq.apps.case_importer.util import get_case_properties_for_case_type, \
     RESERVED_FIELDS
 from dimagi.ext import jsonobject
 
 
+def _combine_field_specs(field_specs, exclude_fields):
+    """
+    take a list of FieldSpec objects and return a sorted list where field is unique
+    and fields in exclude_fields are removed, and where the first mention of a
+    field in field_specs will win out over any repeats.
+
+    """
+
+    combined_field_specs = {}
+
+    for field_spec in field_specs:
+        field = field_spec.field
+        if field not in exclude_fields and field not in combined_field_specs:
+            combined_field_specs[field] = field_spec
+
+    return sorted(combined_field_specs.values(), key=lambda field_spec: field_spec.field)
+
+
 def get_suggested_case_fields(domain, case_type, exclude=None):
-    exclude_fields = set(RESERVED_FIELDS)
-    if exclude:
-        exclude_fields.update(exclude)
-    dynamic_fields = set(get_case_properties_for_case_type(domain, case_type)) - exclude_fields
-    return sorted(
-        get_special_fields() +
-        [FieldSpec(field=field, show_in_menu=True) for field in dynamic_fields],
-        key=lambda field_spec: field_spec.field
+    exclude_fields = set(RESERVED_FIELDS) | set(exclude or [])
+
+    special_field_specs = (field_spec for field_spec in get_special_fields())
+
+    dynamic_field_specs = (FieldSpec(field=field, show_in_menu=True)
+                           for field in get_case_properties_for_case_type(domain, case_type))
+
+    return _combine_field_specs(
+        itertools.chain(special_field_specs, dynamic_field_specs),
+        exclude_fields=exclude_fields
     )
 
 
@@ -38,6 +59,9 @@ def get_special_fields():
             field='owner_id',
             description=_("This field will assign the case to a new owner given by "
                           "User ID, Group ID, or Organization ID.")),
+        FieldSpec(
+            field='external_id',
+            description=_("This field will set the case's external_id")),
         FieldSpec(
             field='parent_external_id',
             description=_("This field will assign the case a new parent given by "
