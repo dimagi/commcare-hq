@@ -99,7 +99,7 @@ class TestCreateEnikshayCases(TestCase):
                 ('current_address', 'Cambridge MA'),
                 ('current_address_district_choice', 'Middlesex'),
                 ('current_address_state_choice', 'MA'),
-                ('dob_known', 'False'),
+                ('dob_known', 'no'),
                 ('first_name', 'A'),
                 ('last_name', 'C'),
                 ('middle_name', 'B'),

@@ -69,7 +69,7 @@ class EnikshayCaseFactory(object):
                     'current_address': self.patient_detail.paddress,
                     'current_address_district_choice': self.patient_detail.Dtocode,
                     'current_address_state_choice': self.patient_detail.scode,
-                    'dob_known': False,
+                    'dob_known': 'no',
                     'first_name': self.patient_detail.first_name,
                     'last_name': self.patient_detail.last_name,
                     'middle_name': self.patient_detail.middle_name,
