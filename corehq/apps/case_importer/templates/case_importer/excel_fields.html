@@ -18,8 +18,9 @@
                 excelFieldRows.autoFill();
             }
 
-            $('#js-add-mapping').click(function() {
+            $('#js-add-mapping').click(function(e) {
                 excelFieldRows.addRow();
+                e.preventDefault();
             });
 
             $('.custom_field').on('change, keypress, keydown, keyup', function() {
