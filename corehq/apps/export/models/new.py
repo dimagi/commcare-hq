@@ -1311,7 +1311,7 @@ class FormExportDataSchema(ExportDataSchema):
                 #
                 # /data/repeat/other_group/question
                 #
-                # We want to currate a path that looks like:
+                # We want to create a path that looks like:
                 #
                 # /data/repeat/case/update/other_group/question
                 path_suffix = case_path[len(subcase_action.repeat_context):]
