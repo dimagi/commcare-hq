@@ -1953,7 +1953,6 @@ class SurveyKeyword(SyncCouchToSQLMixin, Document):
         return Keyword
 
     def _migration_sync_to_sql(self, sql_object):
-        from corehq.apps.sms.models import KeywordAction
         with transaction.atomic():
             sql_object.domain = self.domain
             sql_object.keyword = self.keyword
@@ -1965,8 +1964,7 @@ class SurveyKeyword(SyncCouchToSQLMixin, Document):
             sql_object.keywordaction_set.all().delete()
 
             for couch_action in self.actions:
-                KeywordAction.objects.create(
-                    keyword=sql_object,
+                sql_object.keywordaction_set.create(
                     action=couch_action.action,
                     recipient=couch_action.recipient,
                     recipient_id=couch_action.recipient_id,
