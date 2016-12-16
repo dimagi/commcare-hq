@@ -15,6 +15,8 @@ from corehq.apps.users.dbaccessors.all_commcare_users import get_all_user_ids_by
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 
 
+
+
 class Command(BaseCommand):
     help = "Compares the number of documents in ES to primary DB to detect inconsistency"
 
@@ -33,37 +35,25 @@ class Command(BaseCommand):
 
     def deep_dive_domain(self, domain, csvfile):
         csvfile.writerow(['domain', 'doctype', 'docs_in_es_not_primary', 'docs_in_primary_db_not_es'])
-        num_cases_es = cases(domain)
-        num_forms_es = forms(domain)
-        num_apps_es = AppES().domain(domain).is_build(False).count()
-        num_users_es = UserES().domain(domain).count()
-        num_groups_es = GroupES().domain(domain).count()
-        num_cases_primary = cases(domain, primary_db=True)
-        num_forms_primary = forms(domain, primary_db=True)
-        app_ids_primary = set(get_app_ids_in_domain(domain))
-        num_apps_primary = len(app_ids_primary)
-        user_ids_primary = set(get_all_user_ids_by_domain(domain))
-        num_users_primary = len(user_ids_primary)
-        group_ids_primary = set(get_group_ids_by_domain(domain))
-        num_groups_primary = len(group_ids_primary)
+        stats = self.domain_info(domain)
 
-        if num_cases_es != num_cases_primary:
+        if stats.num_cases_es != stats.num_cases_primary:
             case_ids_es = set(CaseES().domain(domain).get_ids())
             case_ids_primary = set(CaseAccessors(domain).get_case_ids_in_domain())
             csvfile.writerow([domain, 'cases', case_ids_es - case_ids_primary, case_ids_primary - case_ids_es])
-        if num_forms_es != num_forms_primary:
+        if stats.num_forms_es != stats.num_forms_primary:
             form_ids_es = set(FormES().domain(domain).get_ids())
             form_ids_primary = set(FormAccessors(domain).get_all_form_ids_in_domain(domain))
             csvfile.writerow([domain, 'forms', form_ids_es - form_ids_primary, form_ids_primary - form_ids_es])
-        if num_apps_es != num_apps_primary:
+        if stats.num_apps_es != stats.num_apps_primary:
             app_ids_es = set(AppES().domain(domain).is_build(False).get_ids())
-            csvfile.writerow([domain, 'apps', app_ids_es - app_ids_primary, app_ids_primary - app_ids_es])
-        if num_users_es != num_users_primary:
+            csvfile.writerow([domain, 'apps', app_ids_es - stats.app_ids_primary, stats.app_ids_primary - app_ids_es])
+        if stats.num_users_es != stats.num_users_primary:
             user_ids_es = set(UserES().domain(domain).get_ids())
-            csvfile.writerow([domain, 'users', user_ids_es - user_ids_primary, user_ids_primary - user_ids_es])
-        if num_groups_es != num_groups_primary:
+            csvfile.writerow([domain, 'users', user_ids_es - stats.user_ids_primary, stats.user_ids_primary - user_ids_es])
+        if stats.num_groups_es != stats.num_groups_primary:
             group_ids_es = set(GroupES().domain(domain).get_ids())
-            csvfile.writerow([domain, 'groups', group_ids_es - group_ids_primary, group_ids_primary - group_ids_es])
+            csvfile.writerow([domain, 'groups', group_ids_es - stats.group_ids_primary, stats.group_ids_primary - group_ids_es])
 
     def check_domains(self, csvfile):
         csvfile.writerow(['domain', 'doctype', 'docs_in_es', 'docs_in_primary_db'])
@@ -79,24 +69,39 @@ class Command(BaseCommand):
             self.check_domain(domain['name'], csvfile)
 
     def check_domain(self, domain, csvfile):
-        num_cases_es = cases(domain)
-        num_forms_es = forms(domain)
-        num_apps_es = AppES().domain(domain).is_build(False).count()
-        num_users_es = UserES().domain(domain).count()
-        num_groups_es = GroupES().domain(domain).count()
-        num_cases_primary = cases(domain, primary_db=True)
-        num_forms_primary = forms(domain, primary_db=True)
-        num_apps_primary = len(get_app_ids_in_domain(domain))
-        num_users_primary = len(list(get_all_user_ids_by_domain(domain)))
-        num_groups_primary = len(list(get_group_ids_by_domain(domain)))
+        stats = self.domain_info(domain)
 
-        if num_cases_es != num_cases_primary:
-            csvfile.writerow([domain, 'cases', num_cases_es, num_cases_primary])
-        if num_forms_es != num_forms_primary:
-            csvfile.writerow([domain, 'forms', num_forms_es, num_forms_primary])
-        if num_apps_es != num_apps_primary:
-            csvfile.writerow([domain, 'apps', num_apps_es, num_apps_primary])
-        if num_users_es != num_users_primary:
-            csvfile.writerow([domain, 'users', num_users_es, num_users_primary])
-        if num_groups_es != num_groups_primary:
-            csvfile.writerow([domain, 'groups', num_groups_es, num_groups_primary])
+        if stats.num_cases_es != stats.num_cases_primary:
+            csvfile.writerow([domain, 'cases', stats.num_cases_es, stats.num_cases_primary])
+        if stats.num_forms_es != stats.num_forms_primary:
+            csvfile.writerow([domain, 'forms', stats.num_forms_es, stats.num_forms_primary])
+        if stats.num_apps_es != stats.num_apps_primary:
+            csvfile.writerow([domain, 'apps', stats.num_apps_es, stats.num_apps_primary])
+        if stats.num_users_es != stats.num_users_primary:
+            csvfile.writerow([domain, 'users', stats.num_users_es, stats.num_users_primary])
+        if stats.num_groups_es != stats.num_groups_primary:
+            csvfile.writerow([domain, 'groups', stats.num_groups_es, stats.num_groups_primary])
+
+    def domain_info(self, domain):
+        DomainStats = namedtuple('DomainStats', [
+            'num_cases_es', 'num_forms_es', 'num_apps_es', 'num_users_es', 'num_groups_es',
+            'num_cases_primary', 'num_forms_primary', 'num_apps_primary', 'num_users_primary', 'num_groups_primary',
+            'app_ids_primary', 'user_ids_primary', 'group_ids_primary'
+        ])
+
+        stats = DomainStats()
+        stats.num_cases_es = cases(domain)
+        stats.num_forms_es = forms(domain)
+        stats.num_apps_es = AppES().domain(domain).is_build(False).count()
+        stats.num_users_es = UserES().domain(domain).count()
+        stats.num_groups_es = GroupES().domain(domain).count()
+        stats.num_cases_primary = cases(domain, primary_db=True)
+        stats.num_forms_primary = forms(domain, primary_db=True)
+        stats.app_ids_primary = set(get_app_ids_in_domain(domain))
+        stats.num_apps_primary = len(app_ids_primary)
+        stats.user_ids_primary = set(get_all_user_ids_by_domain(domain))
+        stats.num_users_primary = len(user_ids_primary)
+        stats.group_ids_primary = set(get_group_ids_by_domain(domain))
+        stats.num_groups_primary = len(group_ids_primary)
+
+        return stats
