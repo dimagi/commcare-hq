@@ -382,9 +382,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None
             username = row.get('username')
             location_codes = row.get('location_code') or []
             if location_codes and not isinstance(location_codes, list):
-                raise UserUploadError(_("location_code must be listed as multiple columns of "
-                                        "'location_code 1, location_code 2 ...' for each of users's location. "
-                                        "If user has only one location, it should be listed as 'location_code 1'"))
+                location_codes = [location_codes]
             # ignore empty
             location_codes = [code for code in location_codes if code]
             role = row.get('role', '')

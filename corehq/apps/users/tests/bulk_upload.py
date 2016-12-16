@@ -61,15 +61,18 @@ class TestUserBulkUpload(TestCase, DomainSubscriptionMixin):
     def test_location_not_list(self):
         self.setup_locations()
         updated_user_spec = deepcopy(self.user_specs[0])
-        updated_user_spec["location_code"] = "just-string"
 
-        # location_code should be an array of multiple excel columns
-        with self.assertRaises(UserUploadError):
-            bulk_upload_async(
-                self.domain.name,
-                list([updated_user_spec]),
-                list([]),
-            )
+        # location_code can also just be string instead of array for single location assignmentss
+        updated_user_spec["location_code"] = self.loc1.site_code
+        bulk_upload_async(
+            self.domain.name,
+            list([updated_user_spec]),
+            list([]),
+        )
+        self.assertEqual(self.user.location_id, self.loc1._id)
+        self.assertEqual(self.user.location_id, self.user.user_data.get('commcare_location_id'))
+        # multiple locations
+        self.assertListEqual([self.loc1._id], self.user.assigned_location_ids)
 
     @patch('corehq.apps.users.bulkupload.domain_has_privilege', lambda x, y: True)
     def test_location_unknown_site_code(self):
