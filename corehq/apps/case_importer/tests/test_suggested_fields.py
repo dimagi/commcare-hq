@@ -2,7 +2,7 @@ from django.test import SimpleTestCase
 import mock
 from corehq.apps.case_importer.suggested_fields import get_suggested_case_fields, \
     FieldSpec
-from corehq.util.test_utils import DocTestMixin, generate_cases
+from corehq.util.test_utils import DocTestMixin
 
 
 class SuggestedFieldTest(SimpleTestCase, DocTestMixin):
