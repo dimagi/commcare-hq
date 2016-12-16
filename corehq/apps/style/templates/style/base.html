@@ -154,11 +154,7 @@
         {% endif %}
 
         {# Core Libraries #}
-        {% if request.GET.jquery == 'old' %}
-            <script src="{% static 'jquery-2.2.4/dist/jquery.min.js' %}"></script>
-        {% else %}
-            {% include "style/includes/jquery.html" %}
-        {% endif %}
+        {% include "style/includes/jquery.html" %}
         {% compress js %}
         {% include "style/includes/core_libraries.html" %}
         {% endcompress %} 
