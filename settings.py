@@ -365,6 +365,7 @@ HQ_APPS = (
 )
 
 ENIKSHAY_APPS = (
+    'custom.enikshay',
     'custom.enikshay.integrations.ninetyninedots',
     'custom.enikshay.nikshay_datamigration',
 )
