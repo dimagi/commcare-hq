@@ -1,8 +1,10 @@
 import csv
 from django.core.management import BaseCommand
+from corehq.apps.receiverwrapper.util import get_app_version_info
 from corehq.apps.users.util import cached_owner_id_to_display
 from corehq.elastic import ES_MAX_CLAUSE_COUNT
 from corehq.apps.es.cases import CaseES
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 
 
 class Command(BaseCommand):
@@ -48,10 +50,19 @@ class Command(BaseCommand):
                 'owner name',
                 'opened by id',
                 'opened by name',
+                'build version',
             ])
             for case in cases_with_invalid_references:
                 for index in case['indices']:
                     if index['referenced_id'] in invalid_referenced_ids:
+                        form_id = case['xform_ids'][0]
+                        form = FormAccessors(domain=domain).get_form(form_id)
+                        app_version_info = get_app_version_info(
+                            domain,
+                            form.build_id,
+                            form.version,
+                            form.metadata,
+                        )
                         writer.writerow([
                             case['_id'],
                             case['type'],
@@ -64,4 +75,5 @@ class Command(BaseCommand):
                             cached_owner_id_to_display(case['owner_id']),
                             case['opened_by'],
                             cached_owner_id_to_display(case['opened_by']),
+                            app_version_info.build_version,
                         ])
