@@ -2371,6 +2371,9 @@ class KeywordAction(models.Model):
     SMS survey, for example) and the recipient of that action.
     """
 
+    class InvalidModelStateException(Exception):
+        pass
+
     # Send an SMS
     ACTION_SMS = "sms"
 
@@ -2432,6 +2435,18 @@ class KeywordAction(models.Model):
     # is "=".
     # This can be None in which case there is no separator (i.e., "report a100 b200")
     named_args_separator = models.CharField(max_length=126, null=True)
+
+    def save(self, *args, **kwargs):
+        if self.recipient == self.RECIPIENT_USER_GROUP and not self.recipient_id:
+            raise self.InvalidModelStateException("Expected a value for recipient_id")
+
+        if self.action == self.ACTION_SMS and not self.message_content:
+            raise self.InvalidModelStateException("Expected a value for message_content")
+
+        if self.action in [self.ACTION_SMS_SURVEY, self.ACTION_STRUCTURED_SMS] and not self.form_unique_id:
+            raise self.InvalidModelStateException("Expected a value for form_unique_id")
+
+        super(KeywordAction, self).save(*args, **kwargs)
 
 
 from corehq.apps.sms import signals
