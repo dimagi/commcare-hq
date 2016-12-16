@@ -130,8 +130,12 @@ class BlobMixin(Document):
                 raise NotFound
             blob = db.get(meta.id, self._blobdb_bucket())
         except NotFound:
-            raise ResourceNotFound(u"{model} attachment: {name!r}".format(
-                                   model=type(self).__name__, name=name))
+            raise ResourceNotFound(
+                u"{model} {model_id} attachment: {name!r}".format(
+                    model=type(self).__name__,
+                    name=name,
+                    model_id=self._id,
+                ))
         if stream:
             return blob
 

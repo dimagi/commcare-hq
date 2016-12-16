@@ -16,7 +16,7 @@ class UpdateCasePropertyViewTest(TestCase):
     @classmethod
     def setUpClass(cls):
         cls.domain = create_domain(cls.domain_name)
-        cls.couch_user = WebUser.create(None, "test5", "foobar")
+        cls.couch_user = WebUser.create(None, "test", "foobar")
         cls.couch_user.add_domain_membership(cls.domain_name, is_admin=True)
         cls.couch_user.save()
         cls.case_type_obj = CaseType(name='caseType', domain=cls.domain_name)
@@ -32,7 +32,7 @@ class UpdateCasePropertyViewTest(TestCase):
     def setUp(self):
         self.url = reverse('update_case_property', args=[self.domain_name])
         self.client = Client()
-        self.client.login(username='test5', password='foobar')
+        self.client.login(username='test', password='foobar')
 
     def _get_property(self):
         return CaseProperty.objects.filter(
