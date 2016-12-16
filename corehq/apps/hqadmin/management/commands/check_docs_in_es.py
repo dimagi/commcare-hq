@@ -1,3 +1,4 @@
+from collections import namedtuple
 import csv
 from django.core.management import BaseCommand
 
@@ -97,23 +98,28 @@ class Command(BaseCommand):
             'app_ids_primary', 'user_ids_primary', 'group_ids_primary', 'case_ids_primary', 'form_ids_primary'
         ])
 
-        stats = DomainStats()
+        case_ids_primary = set(CaseAccessors(domain).get_case_ids_in_domain())
+        form_ids_primary = set(FormAccessors(domain).get_all_form_ids_in_domain(domain))
+        app_ids_primary = set(get_app_ids_in_domain(domain))
+        user_ids_primary = set(get_all_user_ids_by_domain(domain))
+        group_ids_primary = set(get_group_ids_by_domain(domain))
 
-        stats.num_cases_es = cases(domain)
-        stats.num_forms_es = forms(domain)
-        stats.num_apps_es = AppES().domain(domain).is_build(False).count()
-        stats.num_users_es = UserES().domain(domain).count()
-        stats.num_groups_es = GroupES().domain(domain).count()
-
-        stats.case_ids_primary = set(CaseAccessors(domain).get_case_ids_in_domain())
-        stats.num_cases_primary = len(stats.case_ids_primary)
-        stats.form_ids_primary = set(FormAccessors(domain).get_all_form_ids_in_domain(domain))
-        stats.num_forms_primary = len(stats.form_ids_primary)
-        stats.app_ids_primary = set(get_app_ids_in_domain(domain))
-        stats.num_apps_primary = len(stats.app_ids_primary)
-        stats.user_ids_primary = set(get_all_user_ids_by_domain(domain))
-        stats.num_users_primary = len(stats.user_ids_primary)
-        stats.group_ids_primary = set(get_group_ids_by_domain(domain))
-        stats.num_groups_primary = len(stats.group_ids_primary)
+        stats = DomainStats(
+            num_cases_es=cases(domain),
+            num_forms_es=forms(domain),
+            num_apps_es=AppES().domain(domain).is_build(False).count(),
+            num_users_es=UserES().domain(domain).count(),
+            num_groups_es=GroupES().domain(domain).count(),
+            case_ids_primary=case_ids_primary,
+            num_cases_primary=len(case_ids_primary),
+            form_ids_primary=form_ids_primary,
+            num_forms_primary=len(form_ids_primary),
+            app_ids_primary=app_ids_primary,
+            num_apps_primary=len(app_ids_primary),
+            user_ids_primary=user_ids_primary,
+            num_users_primary=len(user_ids_primary),
+            group_ids_primary=group_ids_primary,
+            num_groups_primary=len(group_ids_primary),
+        )
 
         return stats
