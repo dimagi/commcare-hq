@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from datetime import date
+from datetime import date, datetime
 
 from django.core.management import call_command
 from django.test import TestCase
@@ -43,6 +43,7 @@ class TestCreateEnikshayCases(TestCase):
         self.outcome = Outcome.objects.create(
             PatientId=self.patient_detail,
             HIVStatus='negative',
+            loginDate=datetime(2016, 1, 2),
         )
         # Household.objects.create(
         #     PatientID=patient_detail,
