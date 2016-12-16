@@ -65,7 +65,11 @@ hqDefine('case_importer/js/excel_fields.js', function () {
                     return [];
                 }
                 var suggestions = _(self.caseFieldSuggestions).map(function (suggestion) {
-                    return {distance: window.Levenshtein.get(field, suggestion), field: suggestion};
+                    return {
+                        // make distance case-insensitive
+                        distance: window.Levenshtein.get(field.toLowerCase(), suggestion.toLowerCase()),
+                        field: suggestion
+                    };
                 }).filter(function (suggestion) {
                     return suggestion.distance < 4;
                 });
