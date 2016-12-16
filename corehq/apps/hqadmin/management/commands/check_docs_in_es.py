@@ -99,7 +99,7 @@ class Command(BaseCommand):
         ])
 
         case_ids_primary = set(CaseAccessors(domain).get_case_ids_in_domain())
-        form_ids_primary = set(FormAccessors(domain).get_all_form_ids_in_domain(domain))
+        form_ids_primary = set(FormAccessors(domain).get_all_form_ids_in_domain())
         app_ids_primary = set(get_app_ids_in_domain(domain))
         user_ids_primary = set(get_all_user_ids_by_domain(domain))
         group_ids_primary = set(get_group_ids_by_domain(domain))
