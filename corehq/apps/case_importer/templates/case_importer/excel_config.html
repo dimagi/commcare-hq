@@ -57,7 +57,6 @@
           action="{% url "corehq.apps.case_importer.views.excel_fields" domain %}"
           method="post">
         {% csrf_token %}
-        <input type="hidden" name="named_columns" value="{{named_columns}}" />
 
         <fieldset>
             <legend>{% trans "Case Type to Update/Create" %}</legend>

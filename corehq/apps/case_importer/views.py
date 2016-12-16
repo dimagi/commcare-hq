@@ -35,12 +35,6 @@ def excel_config(request, domain):
 
     This is the initial post when the user uploads the excel file
 
-    named_columns:
-        Whether or not the first row of the excel sheet contains
-        header strings for the columns. This defaults to True and
-        should potentially not be an option as it is always used
-        due to how important it is to see column headers
-        in the rest of the importer.
     """
     if request.method != 'POST':
         return HttpResponseRedirect(base.ImportCases.get_url(domain=domain))
@@ -48,7 +42,6 @@ def excel_config(request, domain):
     if not request.FILES:
         return render_error(request, domain, 'Please choose an Excel file to import.')
 
-    named_columns = request.POST.get('named_columns') == "on"
     uploaded_file_handle = request.FILES['file']
 
     extension = os.path.splitext(uploaded_file_handle.name)[1][1:].strip().lower()
@@ -69,11 +62,11 @@ def excel_config(request, domain):
 
     request.session[EXCEL_SESSION_ID] = case_upload.upload_id
     try:
-        case_upload.check_file(named_columns)
+        case_upload.check_file()
     except ImporterError as e:
         return render_error(request, domain, get_importer_error_message(e))
 
-    with case_upload.get_spreadsheet(named_columns) as spreadsheet:
+    with case_upload.get_spreadsheet() as spreadsheet:
         columns = spreadsheet.get_header_columns()
         row_count = spreadsheet.max_row
 
@@ -98,7 +91,6 @@ def excel_config(request, domain):
     return render(
         request,
         "case_importer/excel_config.html", {
-            'named_columns': named_columns,
             'columns': columns,
             'unrecognized_case_types': unrecognized_case_types,
             'case_types_from_apps': case_types_from_apps,
@@ -119,9 +111,6 @@ def excel_fields(request, domain):
 
     Important values that are grabbed from the POST or defined by
     the user on this page:
-
-    named_columns:
-        Passed through from last step, see that for documentation
 
     case_type:
         The type of case we are matching to. When creating new cases,
@@ -149,7 +138,6 @@ def excel_fields(request, domain):
         These correspond to an advanced feature allowing a user
         to modify a single case with multiple rows.
     """
-    named_columns = request.POST['named_columns']
     case_type = request.POST['case_type']
     try:
         search_column = request.POST['search_column']
@@ -168,11 +156,11 @@ def excel_fields(request, domain):
     case_upload = CaseUpload.get(request.session.get(EXCEL_SESSION_ID))
 
     try:
-        case_upload.check_file(named_columns)
+        case_upload.check_file()
     except ImporterError as e:
         return render_error(request, domain, get_importer_error_message(e))
 
-    with case_upload.get_spreadsheet(named_columns) as spreadsheet:
+    with case_upload.get_spreadsheet() as spreadsheet:
         columns = spreadsheet.get_header_columns()
 
         if key_value_columns:
@@ -217,7 +205,6 @@ def excel_fields(request, domain):
     return render(
         request,
         "case_importer/excel_fields.html", {
-            'named_columns': named_columns,
             'case_type': case_type,
             'search_column': search_column,
             'search_field': search_field,
@@ -256,7 +243,7 @@ def excel_commit(request, domain):
 
     case_upload = CaseUpload.get(excel_id)
     try:
-        case_upload.check_file(config.named_columns)
+        case_upload.check_file()
     except ImporterError as e:
         return render_error(request, domain, get_importer_error_message(e))
 

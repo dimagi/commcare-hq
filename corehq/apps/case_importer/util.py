@@ -39,7 +39,6 @@ class ImporterConfig(namedtuple('ImporterConfig', [
     'search_column',
     'key_column',
     'value_column',
-    'named_columns',
     'case_type',
     'search_field',
     'create_new_cases',
@@ -73,7 +72,6 @@ class ImporterConfig(namedtuple('ImporterConfig', [
             search_column=request.POST['search_column'],
             key_column=request.POST['key_column'],
             value_column=request.POST['value_column'],
-            named_columns=request.POST['named_columns'] == 'True',
             case_type=request.POST['case_type'],
             search_field=request.POST['search_field'],
             create_new_cases=request.POST['create_new_cases'] == 'True',
@@ -85,12 +83,11 @@ ALLOWED_EXTENSIONS = ['xls', 'xlsx']
 
 class WorksheetWrapper(object):
 
-    def __init__(self, worksheet, column_headers):
+    def __init__(self, worksheet):
         self._worksheet = worksheet
-        self._column_headers = column_headers
 
     @classmethod
-    def from_workbook(cls, workbook, column_headers):
+    def from_workbook(cls, workbook):
         if not isinstance(workbook, Workbook):
             raise AssertionError(
                 "WorksheetWrapper.from_workbook called without Workbook object")
@@ -98,22 +95,18 @@ class WorksheetWrapper(object):
             raise AssertionError(
                 "WorksheetWrapper.from_workbook called with Workbook with no sheets")
         else:
-            return cls(workbook.worksheets[0], column_headers)
+            return cls(workbook.worksheets[0])
 
     def get_header_columns(self):
         if self.max_row > 0:
-            if self._column_headers:
-                return self.iter_rows().next()
-            else:
-                return ["Column {}".format(i) for i in range(self.max_row)]
+            return self.iter_rows().next()
         else:
             return []
 
     def _get_column_values(self, column_index):
         rows = self.iter_rows()
         # skip first row (header row)
-        if self._column_headers:
-            rows.next()
+        rows.next()
         for row in rows:
             yield row[column_index]
 
@@ -342,19 +335,19 @@ def populate_updated_fields(config, columns, row):
     return fields_to_update
 
 
-def open_spreadsheet_download_ref(filename, column_headers=True):
+def open_spreadsheet_download_ref(filename):
     """
     open a spreadsheet download ref just to test there are no errors opening it
     """
-    with get_spreadsheet(filename, column_headers):
+    with get_spreadsheet(filename):
         pass
 
 
 @contextmanager
-def get_spreadsheet(filename, column_headers):
+def get_spreadsheet(filename):
     try:
         with open_any_workbook(filename) as workbook:
-            yield WorksheetWrapper.from_workbook(workbook, column_headers)
+            yield WorksheetWrapper.from_workbook(workbook)
     except SpreadsheetFileEncrypted as e:
         raise ImporterExcelFileEncrypted(e.message)
     except SpreadsheetFileNotFound as e:
