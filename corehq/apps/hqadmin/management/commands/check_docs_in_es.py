@@ -16,23 +16,30 @@ class Command(BaseCommand):
     help = "Compares the number of documents in ES to primary DB to detect inconsistency"
 
     def add_arguments(self, parser):
+        parser.add_argument('--domain', dest='domain', default=None)
         parser.add_argument('--filename', dest='filename', default='es_reliability.csv')
 
     def handle(self, *args, **options):
         with open(options['filename'], 'w') as csvfile:
-            num_domains_es = DomainES().count()
-            num_domains_couch = Domain.get_db().view("domain/domains").all()[0]['value']
-            writer = csvfile.writer(csvfile)
+            writer = csv.writer(csvfile)
 
-            writer.writerow(['domain', 'doctype', 'docs_in_es', 'docs_in_primary_db'])
+            if options['domain']:
+                self.deep_dive_domain(domain, writer)
+            else:
+                self.check_domains(writer)
 
-            if num_es_domains != num_couch_domains:
-                # not a great start here
-                writer.writerow(["HQ", 'domains', num_domains_es, num_domains_couch])
-
-            self.check_domains(writer)
+    def deep_dive_domain(self, domain, csvfile):
+        csvfile.writerow(['domain', 'doctype', 'docs_in_es_not_primary', 'docs_in_primary_db_not_es'])
 
     def check_domains(self, csvfile):
+        csvfile.writerow(['domain', 'doctype', 'docs_in_es', 'docs_in_primary_db'])
+        num_domains_es = DomainES().count()
+        num_domains_couch = Domain.get_db().view("domain/domains").all()[0]['value']
+
+        if num_domains_es != num_domains_couch:
+            # not a great start here
+            csvfile.writerow(["HQ", 'domains', num_domains_es, num_domains_couch])
+
         domains = DomainES().fields(["name"]).scroll()
         for domain in domains:
             self.check_domain(domain['name'], csvfile)
