@@ -39,7 +39,10 @@ class Command(BaseCommand):
             writer.writerow([
                 'case id',
                 'case type',
-                'index',
+                'referenced id',
+                'referenced_type',
+                'index relationship',
+                'index identifier',
                 'owner id',
                 'owner name',
                 'opened by id',
@@ -51,7 +54,10 @@ class Command(BaseCommand):
                         writer.writerow([
                             case['_id'],
                             case['type'],
-                            index,
+                            index['referenced_id'],
+                            index['referenced_type'],
+                            index['relationship'],
+                            index['identifier'],
                             case['owner_id'],
                             cached_owner_id_to_display(case['owner_id']),
                             case['opened_by'],
