@@ -130,6 +130,9 @@ class FormAccessors(object):
     def get_all_form_ids_in_domain(self, doc_type='XFormInstance'):
         return self.db_accessor.get_form_ids_in_domain_by_type(self.domain, doc_type)
 
+    def get_number_of_forms_in_domain(self):
+        return len(self.get_all_form_ids_in_domain())
+
     def get_forms_by_type(self, type_, limit, recent_first=False):
         return self.db_accessor.get_forms_by_type(self.domain, type_, limit, recent_first)
 
@@ -287,6 +290,9 @@ class CaseAccessors(object):
 
     def get_case_ids_in_domain(self, type=None):
         return self.db_accessor.get_case_ids_in_domain(self.domain, type)
+
+    def get_number_of_cases_in_domain(self):
+        return len(self.get_case_ids_in_domain())
 
     def get_case_ids_by_owners(self, owner_ids, closed=None):
         """
