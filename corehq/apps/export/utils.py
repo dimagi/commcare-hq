@@ -71,13 +71,6 @@ def convert_saved_export_to_export_instance(
         getattr(saved_export, 'app_id', None),
         export_type,
     )
-    migration_meta = ExportMigrationMeta(
-        saved_export_id=saved_export._id,
-        domain=domain,
-        export_type=export_type,
-        is_remote_app_migration=is_remote_app_migration,
-        migration_date=datetime.utcnow(),
-    )
     # Build a new schema and instance
     if export_type == FORM_EXPORT:
         instance_cls = FormExportInstance
@@ -93,6 +86,15 @@ def convert_saved_export_to_export_instance(
             None,
             _extract_casetype_from_index(saved_export.index),
         )
+
+    migration_meta = ExportMigrationMeta(
+        saved_export_id=saved_export._id,
+        domain=domain,
+        export_type=export_type,
+        is_remote_app_migration=is_remote_app_migration,
+        migration_date=datetime.utcnow(),
+        generated_schema_id=schema._id,
+    )
 
     instance = instance_cls.generate_instance_from_schema(schema)
     instance.name = saved_export.name
@@ -509,6 +511,7 @@ def _get_normal_column(new_table, column_path, transform):
         'MultipleChoiceItem',
         'GeopointItem',
         'MultiMediaItem',
+        'LabelItem',
         'ExportItem',
     ]
     # Since old exports had no concept of item type, we just guess all
@@ -607,19 +610,25 @@ def migrate_domain(domain, dryrun=False, force_convert_columns=False):
         toggle_js_domain_cachebuster.clear(domain)
 
     for meta in metas:
+        if not meta.skipped_tables and not meta.skipped_columns:
+            continue
+
+        output = '* Export information for export: {} *'.format(meta.old_export_url)
+        schema_id_output = 'Generated schema: {}'.format(meta.generated_schema_id)
         print ''
-        print '***' * 15
-        print '* Export information for export: {}'.format(meta.saved_export_id)
-        print '***' * 15
+        print '*' * len(output)
+        print output
+        print '* {}{} *'.format(schema_id_output, ' ' * (len(output) - len(schema_id_output) - 4))
+        print '*' * len(output)
         print ''
 
         if meta.skipped_tables:
-            print '## Skipped tables: ##'
+            print '# Skipped tables #'
             for table_meta in meta.skipped_tables:
                 table_meta.pretty_print()
 
         if meta.skipped_columns:
-            print '## Skipped columns: ##'
+            print '# Skipped columns #'
             for column_meta in meta.skipped_columns:
                 column_meta.pretty_print()
     return metas

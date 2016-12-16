@@ -1,20 +1,20 @@
 var COMMCAREHQ_URLS = {};
 hqDefine('hqwebapp/js/urllib.js', function () {
     // http://stackoverflow.com/a/21903119/240553
-    var getUrlParameter = function (sParam) {
-        return getUrlParameterFromString(sParam, window.location.search);
+    var getUrlParameter = function (param) {
+        return getUrlParameterFromString(param, window.location.search);
     };
-    var getUrlParameterFromString = function (sParam, sSearch) {
-        var sPageURL = decodeURIComponent(sSearch.substring(1)),
-            sURLVariables = sPageURL.split('&'),
-            sParameterName,
-            i;
+    var getUrlParameterFromString = function (param, search) {
+        var pageUrl = search.substring(1),
+            urlVariables = pageUrl.split('&');
 
-        for (i = 0; i < sURLVariables.length; i++) {
-            sParameterName = sURLVariables[i].split('=');
+        for (var i = 0; i < urlVariables.length; i++) {
+            var keyValue = urlVariables[i].split('=');
+            var key = decodeURIComponent(keyValue[0]);
+            var value = decodeURIComponent(keyValue[1]);
 
-            if (sParameterName[0] === sParam) {
-                return sParameterName[1] === undefined ? true : sParameterName[1];
+            if (key === param) {
+                return value === undefined ? true : value;
             }
         }
     };

@@ -286,9 +286,11 @@ class PreFilterValue(FilterValue):
             return filters.date_range(self.filter.field, gt=start_date, lt=end_date)
         elif self._is_null():
             return filters.missing(self.filter.field)
-        else:
-            terms = [v.value for v in self.value]
+        elif self._is_list():
+            terms = [v.value for v in self.value['operand']]
             return filters.term(self.filter.field, terms)
+        else:
+            return self._scalar_filter.es(self.filter.field, self.value['operand'])
 
 
 class ChoiceListFilterValue(FilterValue):

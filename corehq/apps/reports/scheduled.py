@@ -1,11 +1,15 @@
 from calendar import monthrange
 from datetime import datetime
 from corehq.apps.reports.models import ReportNotification
+from corehq.util.soft_assert import soft_assert
+
+
+_soft_assert = soft_assert(exponential_backoff=True)
 
 
 def get_scheduled_reports(period, as_of=None):
     as_of = as_of or datetime.utcnow()
-    assert period in ('daily', 'weekly', 'monthly')
+    assert period in ('daily', 'weekly', 'monthly'), period
 
     def _keys(period, as_of):
         minute = guess_reporting_minute(as_of)
@@ -39,11 +43,18 @@ def get_scheduled_reports(period, as_of=None):
                             'key': [period, as_of.hour, minute, day]
                         }
 
-    for keys in _keys(period, as_of):
-        for report in ReportNotification.view("reportconfig/all_notifications",
+    try:
+        keys = _keys(period, as_of)
+    except ValueError:
+        _soft_assert(False, "Celery was probably down for a while. Lots of reports are getting dropped!")
+        raise StopIteration
+
+    for key in keys:
+        for report in ReportNotification.view(
+            "reportconfig/all_notifications",
             reduce=False,
             include_docs=True,
-            **keys
+            **key
         ).all():
             yield report
 

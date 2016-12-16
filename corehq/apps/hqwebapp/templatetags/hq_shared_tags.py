@@ -5,7 +5,7 @@ import json
 import warnings
 
 from django.conf import settings
-from django.template import loader_tags
+from django.template import loader_tags, NodeList
 from django.template.base import Variable, VariableDoesNotExist
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
@@ -594,14 +594,14 @@ def registerurl(parser, token):
     url_name = parse_literal(split_contents[1], parser, tag)
     expressions = [parser.compile_filter(arg) for arg in split_contents[2:]]
 
-    class FakeNodeList(object):
-        @staticmethod
-        def render(context):
+    class FakeNode(template.Node):
+
+        def render(self, context):
             args = [expression.resolve(context) for expression in expressions]
             url = reverse(url_name, args=args)
-            return """
-            <script>hqImport('hqwebapp/js/urllib.js').registerUrl({}, {})</script>
-            """.format(json.dumps(url_name), json.dumps(url))
+            return ("<script>hqImport('hqwebapp/js/urllib.js').registerUrl({}, {})</script>"
+                    .format(json.dumps(url_name), json.dumps(url)))
 
-    nodelist = FakeNodeList()
+    nodelist = NodeList([FakeNode()])
+
     return AddToBlockNode(nodelist, 'js-inline')

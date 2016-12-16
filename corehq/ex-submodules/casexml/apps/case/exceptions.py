@@ -21,6 +21,13 @@ class IllegalCaseId(CommCareCaseError):
     pass
 
 
+class InvalidCaseIndex(CommCareCaseError):
+    """
+    Raise when someone tries to set an index relationship on a case to an invalid case.
+    """
+    pass
+
+
 class UsesReferrals(CommCareCaseError):
     pass
 

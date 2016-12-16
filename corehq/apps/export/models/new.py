@@ -7,6 +7,7 @@ from collections import defaultdict, OrderedDict, namedtuple
 from couchdbkit import ResourceConflict
 from couchdbkit.ext.django.schema import IntegerProperty
 from django.utils.translation import ugettext as _
+from django.core.urlresolvers import reverse
 
 from corehq.apps.export.esaccessors import get_ledger_section_entry_combinations
 from dimagi.utils.decorators.memoized import memoized
@@ -33,6 +34,7 @@ from corehq.util.view_utils import absolute_reverse
 from couchexport.models import Format
 from couchexport.transforms import couch_to_excel_datetime
 from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.web import get_url_base
 from dimagi.ext.couchdbkit import (
     Document,
     DocumentSchema,
@@ -131,6 +133,8 @@ class ExportItem(DocumentSchema):
                 return super(ExportItem, cls).wrap(data)
             elif doc_type == 'ScalarItem':
                 return ScalarItem.wrap(data)
+            elif doc_type == 'LabelItem':
+                return LabelItem.wrap(data)
             elif doc_type == 'MultipleChoiceItem':
                 return MultipleChoiceItem.wrap(data)
             elif doc_type == 'GeopointItem':
@@ -249,12 +253,13 @@ class ExportColumn(DocumentSchema):
         """
         is_case_update = item.tag == PROPERTY_TAG_CASE and not isinstance(item, CaseIndexItem)
         is_case_history_update = item.tag == PROPERTY_TAG_UPDATE
+        is_label_question = isinstance(item, LabelItem)
 
         is_main_table = table_path == MAIN_TABLE
         constructor_args = {
             "item": item,
             "label": item.readable_path if not is_case_history_update else item.label,
-            "is_advanced": is_case_update or False,
+            "is_advanced": is_case_update or is_label_question,
         }
 
         if isinstance(item, GeopointItem):
@@ -279,6 +284,7 @@ class ExportColumn(DocumentSchema):
             auto_select and
             not column._is_deleted(app_ids_and_versions) and
             not is_case_update and
+            not is_label_question and
             is_main_table
         )
         return column
@@ -841,6 +847,12 @@ class ScalarItem(ExportItem):
     """
 
 
+class LabelItem(ExportItem):
+    """
+    An item that refers to a label question
+    """
+
+
 class CaseIndexItem(ExportItem):
     """
     An item that refers to a case index
@@ -1189,6 +1201,7 @@ class FormExportDataSchema(ExportDataSchema):
         'Image': MultiMediaItem,
         'Audio': MultiMediaItem,
         'Video': MultiMediaItem,
+        'Trigger': LabelItem,
     })
 
     @property
@@ -1236,7 +1249,7 @@ class FormExportDataSchema(ExportDataSchema):
 
     @staticmethod
     def _generate_schema_from_xform(xform, case_updates, langs, app_id, app_version):
-        questions = xform.get_questions(langs)
+        questions = xform.get_questions(langs, include_triggers=True)
         repeats = [
             r['value']
             for r in xform.get_questions(langs, include_groups=True) if r['tag'] == 'repeat'
@@ -1950,13 +1963,18 @@ class ConversionMeta(DocumentSchema):
         print '---' * 15
         print '{:<20}| {}'.format('Original Path', self.path)
         print '{:<20}| {}'.format('Failure Reason', self.failure_reason)
-        print '{:<20}| {}'.format('Info', self.info)
+        for idx, line in enumerate(self.info):
+            prefix = 'Info' if idx == 0 else ''
+            print '{:<20}| {}'.format(prefix, line)
 
 
 class ExportMigrationMeta(Document):
     saved_export_id = StringProperty()
     domain = StringProperty()
     export_type = StringProperty(choices=[FORM_EXPORT, CASE_EXPORT])
+
+    # The schema of the new export
+    generated_schema_id = StringProperty()
 
     skipped_tables = SchemaListProperty(ConversionMeta)
     skipped_columns = SchemaListProperty(ConversionMeta)
@@ -1970,6 +1988,19 @@ class ExportMigrationMeta(Document):
 
     class Meta:
         app_label = 'export'
+
+    @property
+    def old_export_url(self):
+        from corehq.apps.export.views import EditCustomCaseExportView, EditCustomFormExportView
+        if self.export_type == FORM_EXPORT:
+            view_cls = EditCustomFormExportView
+        else:
+            view_cls = EditCustomCaseExportView
+
+        return '{}{}'.format(get_url_base(), reverse(
+            view_cls.urlname,
+            args=[self.domain, self.saved_export_id],
+        ))
 
 
 # These must match the constants in corehq/apps/export/static/export/js/const.js

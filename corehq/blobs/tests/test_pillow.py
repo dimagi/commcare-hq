@@ -16,7 +16,7 @@ class TestBlobDeletionProcessor(BaseTestCase):
         self.obj.put_attachment("content", "name")
         change = Config(id=self.obj._id, deleted=True)
         self.processor.process_change(None, change)
-        msg = "FakeCouchDocument attachment: 'name'"
+        msg = "FakeCouchDocument {} attachment: 'name'".format(self.obj._id)
         with assert_raises(ResourceNotFound, msg=msg):
             self.obj.fetch_attachment("name")
 

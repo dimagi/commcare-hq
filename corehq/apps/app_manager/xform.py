@@ -900,6 +900,11 @@ class XForm(WrappedNode):
 
         if the xform is bad, it will raise an XFormException
 
+        :param include_triggers: When set to True will return label questions as well as regular questions
+        :param include_groups: When set will return repeats and group questions
+        :param include_translations: When set to True will return all the translations for the question
+        :param form: When included adds a hashtagValue to the dict returned
+
         """
 
         if not self.exists():

@@ -4,8 +4,8 @@
 describe('urllib', function() {
     var urllib = hqImport('hqwebapp/js/urllib.js');
     describe('getUrlParameterFromString', function() {
-        it('should return null when URL param missing', function() {
-            assert.equal(urllib.getUrlParameterFromString('asdf', '?limit=29'), null);
+        it('should return undefined when URL param missing', function() {
+            assert.strictEqual(urllib.getUrlParameterFromString('asdf', '?limit=29'), undefined);
         });
 
         it('should return correct value when present in URL', function() {
@@ -15,6 +15,17 @@ describe('urllib', function() {
         it('should return correct value when multiple present in URL', function() {
             assert.equal(urllib.getUrlParameterFromString('limit', '?limit=29&color=red'), '29');
             assert.equal(urllib.getUrlParameterFromString('color', '?limit=29&color=red'), 'red');
+        });
+
+        it('should return the URL-decoded value', function() {
+            assert.equal(urllib.getUrlParameterFromString('json', '?json=[%22hi%22]'), '["hi"]');
+        });
+
+        it('should allow & in the value', function() {
+            assert.equal(
+                urllib.getUrlParameterFromString('drink', '?drink=gin%20%26%20tonic&food=eggplant%20parm'),
+                'gin & tonic'
+            );
         });
     });
 
