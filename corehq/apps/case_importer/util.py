@@ -424,6 +424,9 @@ def get_id_from_name(name, domain, cache):
 
 
 def get_case_properties_for_case_type(domain, case_type):
+    # todo: seems like poor boundaries for this function care about the backend
+    # todo: get_case_properties just always return the right answer,
+    # todo: possibly by moving this there.
     if should_use_sql_backend(domain):
         from corehq.apps.export.models import CaseExportDataSchema
         from corehq.apps.export.models.new import MAIN_TABLE
