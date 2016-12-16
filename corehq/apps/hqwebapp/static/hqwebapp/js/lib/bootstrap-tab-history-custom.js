@@ -51,6 +51,7 @@ $(function () {
                 }, null, State.url);
             }
         }
+        link.parent().removeClass('active');    // force tab to load
         link.tab('show');
     };
     $(window).on('load', statechange);
