@@ -29,7 +29,7 @@ class Command(BaseCommand):
             config = ImporterConfig.from_json(f.read())
 
         config.couch_user_id = user._id
-        with get_spreadsheet(export_file, True) as spreadsheet:
+        with get_spreadsheet(export_file) as spreadsheet:
             print json.dumps(do_import(spreadsheet, config, domain),
                              default=json_handler)
             print 'finished in %s seconds' % (datetime.utcnow() - start).seconds
