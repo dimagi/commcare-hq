@@ -10,9 +10,10 @@
 {% block js-inline %}{{ block.super }}
     <script>
         $(function() {
+            var excelfields = hqImport('case_importer/js/excel_fields.js');
             var excelFields = {{ excel_fields|JSON }};
             var caseFieldSpecs = {{ case_field_specs|JSON }};
-            var excelFieldRows = hqImport('case_importer/js/excel_fields.js').ExcelFieldRows(excelFields, caseFieldSpecs);
+            var excelFieldRows = excelfields.ExcelFieldRows(excelFields, caseFieldSpecs);
             $('#excel-field-rows').koApplyBindings(excelFieldRows);
 
             function autofillProperties() {
@@ -26,7 +27,7 @@
 
             $('.custom_field').on('change, keypress, keydown, keyup', function() {
                 var original_value = $(this).val();
-                var value = excelFieldRows.sanitizeCaseField(original_value);
+                var value = excelfields.sanitizeCaseField(original_value);
                 if (value !== original_value) {
                     $(this).val(value);
                 }
