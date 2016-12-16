@@ -1054,7 +1054,7 @@ class ExportDataSchema(Document):
         :param app_id: The app_id that the export belongs to (or None if export is not associated with an app.
         :param identifier: The unique identifier of the schema being exported.
             case_type for Case Exports and xmlns for Form Exports
-        :returns: Returns a FormExportDataSchema instance
+        :returns: Returns a ExportDataSchema instance
         """
 
         original_id, original_rev = None, None
@@ -1238,8 +1238,8 @@ class FormExportDataSchema(ExportDataSchema):
     def get_latest_export_schema(domain, app_id, form_xmlns):
         return get_latest_form_export_schema(domain, app_id, form_xmlns)
 
-    @staticmethod
-    def _process_app_build(current_schema, app, form_xmlns):
+    @classmethod
+    def _process_app_build(cls, current_schema, app, form_xmlns):
         form = app.get_form_by_xmlns(form_xmlns, log_missing=False)
         if not form:
             return current_schema
@@ -1250,7 +1250,7 @@ class FormExportDataSchema(ExportDataSchema):
             subcase_action for subcase_action in form.actions.subcases
             if subcase_action.repeat_context
         }
-        xform_schema = FormExportDataSchema._generate_schema_from_xform(
+        xform_schema = cls._generate_schema_from_xform(
             xform,
             case_updates,
             app.langs,
@@ -1259,7 +1259,7 @@ class FormExportDataSchema(ExportDataSchema):
         )
         schemas = [current_schema, xform_schema]
         if repeats_with_subcases:
-            repeat_case_schema = FormExportDataSchema._generate_schema_from_repeat_subcases(
+            repeat_case_schema = cls._generate_schema_from_repeat_subcases(
                 xform,
                 repeats_with_subcases,
                 app.langs,
@@ -1268,10 +1268,10 @@ class FormExportDataSchema(ExportDataSchema):
             )
             schemas.append(repeat_case_schema)
 
-        return FormExportDataSchema._merge_schemas(*schemas)
+        return cls._merge_schemas(*schemas)
 
-    @staticmethod
-    def _generate_schema_from_repeat_subcases(xform, repeats_with_subcases, langs, app_id, app_version):
+    @classmethod
+    def _generate_schema_from_repeat_subcases(cls, xform, repeats_with_subcases, langs, app_id, app_version):
         """
         This generates a FormExportDataSchema for repeat groups that generate subcases.
 
@@ -1284,8 +1284,8 @@ class FormExportDataSchema(ExportDataSchema):
         :returns: An instance of a FormExportDataSchema
         """
 
-        repeats = FormExportDataSchema._get_repeat_paths(xform, langs)
-        schema = FormExportDataSchema()
+        repeats = cls._get_repeat_paths(xform, langs)
+        schema = cls()
 
         def _add_to_group_schema(group_schema, path, label):
             group_schema.items.append(ExportItem(
@@ -1333,11 +1333,11 @@ class FormExportDataSchema(ExportDataSchema):
             for question in xform.get_questions(langs, include_groups=True) if question['tag'] == 'repeat'
         ]
 
-    @staticmethod
-    def _generate_schema_from_xform(xform, case_updates, langs, app_id, app_version):
+    @classmethod
+    def _generate_schema_from_xform(cls, xform, case_updates, langs, app_id, app_version):
         questions = xform.get_questions(langs, include_triggers=True)
-        repeats = FormExportDataSchema._get_repeat_paths(xform, langs)
-        schema = FormExportDataSchema()
+        repeats = cls._get_repeat_paths(xform, langs)
+        schema = cls()
         question_keyfn = lambda q: q['repeat']
 
         question_groups = [(x, list(y)) for x, y in groupby(
@@ -1358,7 +1358,7 @@ class FormExportDataSchema(ExportDataSchema):
             for question in group_questions:
                 # Create ExportItem based on the question type
                 if 'stock_type_attributes' in question:
-                    items = FormExportDataSchema._get_stock_items_from_question(
+                    items = cls._get_stock_items_from_question(
                         question,
                         app_id,
                         app_version,
@@ -1366,7 +1366,7 @@ class FormExportDataSchema(ExportDataSchema):
                     )
                     group_schema.items.extend(items)
                 else:
-                    item = FormExportDataSchema.datatype_mapping[question['type']].create_from_question(
+                    item = cls.datatype_mapping[question['type']].create_from_question(
                         question,
                         app_id,
                         app_version,
@@ -1468,8 +1468,8 @@ class CaseExportDataSchema(ExportDataSchema):
     def get_latest_export_schema(domain, app_id, case_type):
         return get_latest_case_export_schema(domain, case_type)
 
-    @staticmethod
-    def _process_app_build(current_schema, app, case_type):
+    @classmethod
+    def _process_app_build(cls, current_schema, app, case_type):
         case_property_mapping = get_case_properties(
             app,
             [case_type],
@@ -1480,35 +1480,35 @@ class CaseExportDataSchema(ExportDataSchema):
             .get_parent_types_and_contributed_properties(case_type)
         )
         case_schemas = []
-        case_schemas.append(CaseExportDataSchema._generate_schema_from_case_property_mapping(
+        case_schemas.append(cls._generate_schema_from_case_property_mapping(
             case_property_mapping,
             parent_types,
             app.copy_of or app._id,  # If not copy, must be current app
             app.version,
         ))
         if any(map(lambda relationship_tuple: relationship_tuple[1] == 'parent', parent_types)):
-            case_schemas.append(CaseExportDataSchema._generate_schema_for_parent_case(
+            case_schemas.append(cls._generate_schema_for_parent_case(
                 app.copy_of or app._id,
                 app.version,
             ))
 
-        case_schemas.append(CaseExportDataSchema._generate_schema_for_case_history(
+        case_schemas.append(cls._generate_schema_for_case_history(
             case_property_mapping,
             app.copy_of or app._id,
             app.version,
         ))
         case_schemas.append(current_schema)
 
-        return CaseExportDataSchema._merge_schemas(*case_schemas)
+        return cls._merge_schemas(*case_schemas)
 
-    @staticmethod
-    def _generate_schema_from_case_property_mapping(case_property_mapping, parent_types, app_id, app_version):
+    @classmethod
+    def _generate_schema_from_case_property_mapping(cls, case_property_mapping, parent_types, app_id, app_version):
         """
         Generates the schema for the main Case tab on the export page
         Includes system export properties for the case.
         """
         assert len(case_property_mapping.keys()) == 1
-        schema = CaseExportDataSchema()
+        schema = cls()
 
         group_schema = ExportGroupSchema(
             path=MAIN_TABLE,
@@ -1535,20 +1535,20 @@ class CaseExportDataSchema(ExportDataSchema):
         schema.group_schemas.append(group_schema)
         return schema
 
-    @staticmethod
-    def _generate_schema_for_parent_case(app_id, app_version):
-        schema = CaseExportDataSchema()
+    @classmethod
+    def _generate_schema_for_parent_case(cls, app_id, app_version):
+        schema = cls()
         schema.group_schemas.append(ExportGroupSchema(
             path=PARENT_CASE_TABLE,
             last_occurrences={app_id: app_version},
         ))
         return schema
 
-    @staticmethod
-    def _generate_schema_for_case_history(case_property_mapping, app_id, app_version):
+    @classmethod
+    def _generate_schema_for_case_history(cls, case_property_mapping, app_id, app_version):
         """Generates the schema for the Case History tab on the export page"""
         assert len(case_property_mapping.keys()) == 1
-        schema = CaseExportDataSchema()
+        schema = cls()
 
         group_schema = ExportGroupSchema(
             path=CASE_HISTORY_TABLE,
