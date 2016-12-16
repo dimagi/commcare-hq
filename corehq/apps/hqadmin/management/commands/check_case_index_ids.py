@@ -13,9 +13,11 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('domain', nargs='+')
         parser.add_argument('--filename', dest='filename', default='badcaserefs.csv')
+        parser.add_argument('--debug', action='store_true', dest='debug', default=False)
 
     def handle(self, *args, **options):
         domain = options['domain']
+        debug = options['debug']
         domain_query = CaseES().domain(domain)
         valid_case_ids = set(domain_query.get_ids())
         referenced_case_ids = {
@@ -38,7 +40,7 @@ class Command(BaseCommand):
 
         with open(options['filename'], 'w') as csvfile:
             writer = csv.writer(csvfile)
-            writer.writerow([
+            headers = [
                 'case id',
                 'case type',
                 'creating form id',
@@ -50,23 +52,19 @@ class Command(BaseCommand):
                 'owner name',
                 'opened by id',
                 'opened by name',
-                'build version',
-            ])
+            ]
+            if debug:
+                headers.append('app version')
+            writer.writerow(headers)
+
             for case in cases_with_invalid_references:
                 for index in case['indices']:
                     if index['referenced_id'] in invalid_referenced_ids:
                         form_id = case['xform_ids'][0]
-                        form = FormAccessors(domain=domain).get_form(form_id)
-                        app_version_info = get_app_version_info(
-                            domain,
-                            form.build_id,
-                            form.metadata.appVersion,
-                            form.metadata,
-                        )
-                        writer.writerow([
+                        row = [
                             case['_id'],
                             case['type'],
-                            case['xform_ids'][0],
+                            form_id,
                             index['referenced_id'],
                             index['referenced_type'],
                             index['relationship'],
@@ -75,5 +73,14 @@ class Command(BaseCommand):
                             cached_owner_id_to_display(case['owner_id']),
                             case['opened_by'],
                             cached_owner_id_to_display(case['opened_by']),
-                            app_version_info.build_version,
-                        ])
+                        ]
+                        if debug:
+                            form = FormAccessors(domain=domain).get_form(form_id)
+                            app_version_info = get_app_version_info(
+                                domain,
+                                form.build_id,
+                                form.metadata.appVersion,
+                                form.metadata,
+                            )
+                            row.append(app_version_info.build_version)
+                        writer.writerow(row)
