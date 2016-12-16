@@ -60,7 +60,7 @@ class Command(BaseCommand):
                         app_version_info = get_app_version_info(
                             domain,
                             form.build_id,
-                            form.version,
+                            form.metadata.appVersion,
                             form.metadata,
                         )
                         writer.writerow([
