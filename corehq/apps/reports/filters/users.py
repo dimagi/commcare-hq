@@ -346,7 +346,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             )
         users_at_locations = []
         if location_ids:
-                users_at_locations = util.get_all_users_by_domain(
+            users_at_locations = util.get_all_users_by_domain(
                 domain=domain,
                 user_ids=user_ids_at_locations_and_descendants(location_ids),
                 simplified=True,
