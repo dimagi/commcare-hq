@@ -39,6 +39,7 @@ class Command(BaseCommand):
             writer.writerow([
                 'case id',
                 'case type',
+                'creating form id',
                 'referenced id',
                 'referenced_type',
                 'index relationship',
@@ -54,6 +55,7 @@ class Command(BaseCommand):
                         writer.writerow([
                             case['_id'],
                             case['type'],
+                            case['xform_ids'][0],
                             index['referenced_id'],
                             index['referenced_type'],
                             index['relationship'],
