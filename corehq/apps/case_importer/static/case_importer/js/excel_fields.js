@@ -12,6 +12,16 @@ hqDefine('case_importer/js/excel_fields.js', function () {
         self.removeRow = function (row) {
             self.mappingRows.remove(row);
         };
+        self.sanitizeCaseField = function (original_value) {
+            var value = original_value;
+            // space to underscore
+            value = value.replace(/\s/g, "_");
+            // remove other symbols
+            value = value.replace(/[^a-zA-Z0-9_\-]/g, "");
+            // remove xml from beginning of string. todo: why (36cafb01)?
+            value = value.replace(/^xml/i, "");
+            return value;
+        };
         self.addRow = function (excelField) {
             var row = {
                 excelField: ko.observable(excelField),
@@ -38,6 +48,7 @@ hqDefine('case_importer/js/excel_fields.js', function () {
             });
             row.reset = function () {
                 var field = row.excelField();
+                field = field && self.sanitizeCaseField(field);
                 row.customCaseField(field);
                 if (!field || _(self.caseFieldsInMenu).contains(field)) {
                     row.isCustom(false);

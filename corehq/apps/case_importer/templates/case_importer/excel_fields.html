@@ -25,21 +25,12 @@
             });
 
             $('.custom_field').on('change, keypress, keydown, keyup', function() {
-                // check if field is valid for xml
-                // TODO: this method seems pretty sketchy, should cleanup
-                var original_value, value;
-                original_value = value = $(this).val();
-                var regx = new RegExp(/^xml/i); 
-
-                value = value.replace(/\s/g, "_"); // space to underscore
-                value = value.replace(/[^a-zA-Z0-9_\-]/g, ""); // remove other symbols
-                value = value.replace(regx, ""); // remove xml from beginning of string
+                var original_value = $(this).val();
+                var value = excelFieldRows.sanitizeCaseField(original_value);
                 if (value !== original_value) {
                     $(this).val(value);
                 }
             });
-
-            $('.custom_field').trigger('change');
 
             $('#field_form').submit(function() {
                 $('[disabled]').each(function() {
