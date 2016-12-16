@@ -24,9 +24,14 @@ hqDefine('case_importer/js/excel_fields.js', function () {
             });
 
             row.caseFieldSpec = ko.computed(function () {
-                return _(caseFieldSpecs).findWhere({field: row.caseField()});
+                return _(caseFieldSpecs).findWhere({field: row.caseField()}) || {};
             });
-
+            row.hasDiscoverableSpecialField = ko.computed(function () {
+                return row.caseFieldSpec().description && row.caseFieldSpec().discoverable;
+            });
+            row.hasNonDiscoverableField = ko.computed(function () {
+                return row.caseFieldSpec().description && !row.caseFieldSpec().discoverable;
+            });
             self.mappingRows.push(row);
         };
         // initialize mappingRows with one row per excelField

@@ -20,7 +20,7 @@
     <i class="fa fa-arrow-right"></i>
 </td>
 
-<td class="col-sm-3" data-bind="css: {'has-success': !!(caseFieldSpec() ? caseFieldSpec().description : '')}">
+<td class="col-sm-3">
     <input type="text" name="custom_field[]"
            class="custom_field form-control"
            placeholder="Enter new property name"
@@ -38,7 +38,22 @@
         value: selectedCaseField
     "></select>
 
-    <p class="help-block" data-bind="text: caseFieldSpec() ? caseFieldSpec().description : ''"></p>
+    <div data-bind="
+        css: {
+            'has-success': hasDiscoverableSpecialField,
+            'has-error': hasNonDiscoverableField,
+        }
+    ">
+        <p class="help-block">
+            <!--ko if: hasDiscoverableSpecialField-->
+            <i class="fa fa-check"></i>
+            <!--/ko-->
+            <!--ko if: hasNonDiscoverableField-->
+            <i class="fa fa-warning"></i>
+            <!--/ko-->
+            <span data-bind="text: caseFieldSpec().description"></span>
+        </p>
+    </div>
 </td>
 
 <td>
