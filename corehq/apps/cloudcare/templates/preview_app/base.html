@@ -186,7 +186,7 @@
                 formplayer_url: "{{ formplayer_url }}",
                 singleAppMode: true,
                 phoneMode: true,
-                oneQuestionPerScreen: true,
+                oneQuestionPerScreen: !{{ request.couch_user.is_dimagi|JSON }},
                 allowedHost: "{{ request.get_host }}",
                 environment: {{ environment|JSON }},
                 {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
