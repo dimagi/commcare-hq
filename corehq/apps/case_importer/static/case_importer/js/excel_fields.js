@@ -83,10 +83,6 @@ hqDefine('case_importer/js/excel_fields.js', function () {
         // initialize mappingRows with one row per excelField
         _.each(excelFields, self.addRow);
 
-//        setInterval(function () {
-//            var row = self.mappingRows()[0];
-//            console.log(row.isCustom(), row.caseFieldSpec());
-//        }, 1000);
         return self;
     }
     return {ExcelFieldRows: ExcelFieldRows};
