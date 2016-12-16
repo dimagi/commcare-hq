@@ -39,19 +39,29 @@ class Command(BaseCommand):
 
         if stats.num_cases_es != stats.num_cases_primary:
             case_ids_es = set(CaseES().domain(domain).get_ids())
-            csvfile.writerow([domain, 'cases', case_ids_es - stats.case_ids_primary, stats.case_ids_primary - case_ids_es])
+            csvfile.writerow([
+                domain, 'cases', case_ids_es - stats.case_ids_primary, stats.case_ids_primary - case_ids_es
+            ])
         if stats.num_forms_es != stats.num_forms_primary:
             form_ids_es = set(FormES().domain(domain).get_ids())
-            csvfile.writerow([domain, 'forms', form_ids_es - stats.form_ids_primary, stats.form_ids_primary - form_ids_es])
+            csvfile.writerow([
+                domain, 'forms', form_ids_es - stats.form_ids_primary, stats.form_ids_primary - form_ids_es
+            ])
         if stats.num_apps_es != stats.num_apps_primary:
             app_ids_es = set(AppES().domain(domain).is_build(False).get_ids())
-            csvfile.writerow([domain, 'apps', app_ids_es - stats.app_ids_primary, stats.app_ids_primary - app_ids_es])
+            csvfile.writerow([
+                domain, 'apps', app_ids_es - stats.app_ids_primary, stats.app_ids_primary - app_ids_es
+            ])
         if stats.num_users_es != stats.num_users_primary:
             user_ids_es = set(UserES().domain(domain).get_ids())
-            csvfile.writerow([domain, 'users', user_ids_es - stats.user_ids_primary, stats.user_ids_primary - user_ids_es])
+            csvfile.writerow([
+                domain, 'users', user_ids_es - stats.user_ids_primary, stats.user_ids_primary - user_ids_es
+            ])
         if stats.num_groups_es != stats.num_groups_primary:
             group_ids_es = set(GroupES().domain(domain).get_ids())
-            csvfile.writerow([domain, 'groups', group_ids_es - stats.group_ids_primary, stats.group_ids_primary - group_ids_es])
+            csvfile.writerow([
+                domain, 'groups', group_ids_es - stats.group_ids_primary, stats.group_ids_primary - group_ids_es
+            ])
 
     def check_domains(self, csvfile):
         csvfile.writerow(['domain', 'doctype', 'docs_in_es', 'docs_in_primary_db'])
