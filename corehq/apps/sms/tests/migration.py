@@ -12,7 +12,6 @@ class BaseMigrationTestCase(TestCase):
 
     def setUp(self):
         self.domain = 'test-sms-sql-migration'
-        self.deleteAllObjects()
 
     def deleteAllObjects(self):
         for obj in SurveyKeyword.get_all(self.domain):
