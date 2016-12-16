@@ -30,7 +30,7 @@ class Command(BaseCommand):
         cases_with_invalid_references = (
             domain_query
             .term('indices.referenced_id', invalid_referenced_ids)
-            .source(['_id', 'type', 'indices', 'owner_id', 'opened_by'])
+            .source(['_id', 'type', 'indices', 'owner_id', 'opened_by', 'xform_ids'])
             .run().hits
         )
 
