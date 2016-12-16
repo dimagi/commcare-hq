@@ -21,6 +21,7 @@ class Command(BaseCommand):
     help = "Compares the number of documents in ES to primary DB to detect inconsistency"
 
     def add_arguments(self, parser):
+        parser.add_argument('--all-domains', dest='all_domains', default=False, action="store_true")
         parser.add_argument('--domain', dest='domain', default=None)
         parser.add_argument('--filename', dest='filename', default='es_reliability.csv')
 
@@ -31,7 +32,7 @@ class Command(BaseCommand):
             if options['domain']:
                 self.deep_dive_domain(options['domain'], writer)
             else:
-                self.check_domains(writer)
+                self.check_domains(options['all_domains'], writer)
 
     def deep_dive_domain(self, domain, csvfile):
         def _write_row(doc_type, extra_in_es, extra_in_primary):
@@ -71,7 +72,7 @@ class Command(BaseCommand):
             extra_in_primary = stats.group_ids_primary - group_ids_es
             _write_row('groups', extra_in_es, extra_in_primary)
 
-    def check_domains(self, csvfile):
+    def check_domains(self, all_domains, csvfile):
         csvfile.writerow(['domain', 'doctype', 'docs_in_es', 'docs_in_primary_db'])
         num_domains_es = DomainES().count()
         num_domains_couch = Domain.get_db().view("domain/domains").all()[0]['value']
@@ -80,7 +81,10 @@ class Command(BaseCommand):
             # not a great start here
             csvfile.writerow(["HQ", 'domains', num_domains_es, num_domains_couch])
 
-        domains = DomainES().fields(["name"]).scroll()
+        domain_query = DomainES().fields(['name'])
+        if not all_domains:
+            domain_query = domain_query.is_active_project()
+        domains = domain_query.scroll()
         for domain in domains:
             self.check_domain(domain['name'], csvfile)
 
