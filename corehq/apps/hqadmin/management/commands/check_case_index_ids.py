@@ -1,10 +1,13 @@
 import csv
 from django.core.management import BaseCommand
+from casexml.apps.case.cleanup import close_cases
 from corehq.apps.receiverwrapper.util import get_app_version_info
+from corehq.apps.reports.views import FormDataView
 from corehq.apps.users.util import cached_owner_id_to_display
 from corehq.elastic import ES_MAX_CLAUSE_COUNT
 from corehq.apps.es.cases import CaseES
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.util.view_utils import absolute_reverse
 
 
 class Command(BaseCommand):
@@ -14,10 +17,12 @@ class Command(BaseCommand):
         parser.add_argument('domain', nargs='+')
         parser.add_argument('--filename', dest='filename', default='badcaserefs.csv')
         parser.add_argument('--debug', action='store_true', dest='debug', default=False)
+        parser.add_argument('--close-all', action='store_true', dest='close_all', default=False)
 
     def handle(self, *args, **options):
         domain = options['domain']
         debug = options['debug']
+        close_all = options['close_all']
         domain_query = CaseES().domain(domain)
         valid_case_ids = set(domain_query.get_ids())
         referenced_case_ids = {
@@ -84,3 +89,14 @@ class Command(BaseCommand):
                             )
                             row.append(app_version_info.build_version)
                         writer.writerow(row)
+
+        if close_all:
+            if raw_input('\n'.join([
+                'Are you sure you want to close these {} cases? (y/N)'.format(len(cases_with_invalid_references)),
+            ])).lower() == 'y':
+                case_ids = [case['_id'] for case in cases_with_invalid_references]
+                form, closed_cases = close_cases(case_ids)
+                print 'closed {} cases. You can undo this by archiving this form: {}'.format(
+                    len(closed_cases),
+                    absolute_reverse(FormDataView.urlname, args=form.form_id)
+                )
