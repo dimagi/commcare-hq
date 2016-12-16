@@ -1,5 +1,6 @@
 import csv
 from django.core.management import BaseCommand
+from corehq.apps.users.util import cached_owner_id_to_display
 from corehq.elastic import ES_MAX_CLAUSE_COUNT
 from corehq.apps.es.cases import CaseES
 
@@ -39,4 +40,12 @@ class Command(BaseCommand):
             for case in cases_with_invalid_references:
                 for index in case['indices']:
                     if index['referenced_id'] in invalid_referenced_ids:
-                        writer.writerow([case['_id'], case['type'], index, case['owner_id'], case['opened_by']])
+                        writer.writerow([
+                            case['_id'],
+                            case['type'],
+                            index,
+                            case['owner_id'],
+                            cached_owner_id_to_display(case['owner_id']),
+                            case['opened_by'],
+                            cached_owner_id_to_display(case['opened_by']),
+                        ])
