@@ -19,17 +19,21 @@ class Command(BaseCommand):
         parser.add_argument('--filename', dest='filename', default='es_reliability.csv')
 
     def handle(self, *args, **options):
-        num_es_domains = DomainES().count()
-        num_couch_domains = Domain.get_db().view("domain/domains").all()[0]['value']
-
-        if num_es_domains != num_couch_domains:
-            print str(num_es_domains) + " != " + str(num_couch_domains)
-
         with open(options['filename'], 'w') as csvfile:
-            self.check_domains(csv.writer(csvfile))
+            num_domains_es = DomainES().count()
+            num_domains_couch = Domain.get_db().view("domain/domains").all()[0]['value']
+            writer = csvfile.writer(csvfile)
+
+            writer.writerow(['domain', 'doctype', 'docs_in_es', 'docs_in_primary_db'])
+
+            if num_es_domains != num_couch_domains:
+                # not a great start here
+                writer.writerow(["HQ", 'domains', num_domains_es, num_domains_couch])
+
+            self.check_domains(writer)
 
     def check_domains(self, csvfile):
-        domains = DomainES().fields(["name", "_id", "cp_last_updated"]).scroll()
+        domains = DomainES().fields(["name"]).scroll()
         for domain in domains:
             self.check_domain(domain['name'], csvfile)
 
