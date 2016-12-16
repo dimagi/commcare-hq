@@ -65,7 +65,7 @@ hqDefine('case_importer/js/excel_fields.js', function () {
                     return [];
                 }
                 var suggestions = _(self.caseFieldSuggestions).map(function (suggestion) {
-                    return {distance: Levenshtein.get(field, suggestion), field: suggestion};
+                    return {distance: window.Levenshtein.get(field, suggestion), field: suggestion};
                 }).filter(function (suggestion) {
                     return suggestion.distance < 4;
                 });
