@@ -286,7 +286,7 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
 
 
 total_bytes = datadog_gauge_task(
-    'case_importer.files.total_bytes',
+    'commcare.case_importer.files.total_bytes',
     get_case_upload_files_total_bytes,
     run_every=crontab(minute=0)
 )
