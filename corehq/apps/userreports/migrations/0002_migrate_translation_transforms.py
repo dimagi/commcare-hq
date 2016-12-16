@@ -13,6 +13,7 @@ def migrate_translation_transforms(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
+        ('userreports', '0001_initial'),
     ]
 
     operations = [
