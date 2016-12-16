@@ -16,8 +16,6 @@ from corehq.apps.users.dbaccessors.all_commcare_users import get_all_user_ids_by
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 
 
-
-
 class Command(BaseCommand):
     help = "Compares the number of documents in ES to primary DB to detect inconsistency"
 
