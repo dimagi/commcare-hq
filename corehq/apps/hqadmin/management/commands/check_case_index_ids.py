@@ -36,7 +36,15 @@ class Command(BaseCommand):
 
         with open(options['filename'], 'w') as csvfile:
             writer = csv.writer(csvfile)
-
+            writer.writerow([
+                'case id',
+                'case type',
+                'index',
+                'owner id',
+                'owner name',
+                'opened by id',
+                'opened by name',
+            ])
             for case in cases_with_invalid_references:
                 for index in case['indices']:
                     if index['referenced_id'] in invalid_referenced_ids:
