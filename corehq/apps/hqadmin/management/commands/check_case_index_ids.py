@@ -79,7 +79,7 @@ class Command(BaseCommand):
                             app_version_info = get_app_version_info(
                                 domain,
                                 form.build_id,
-                                form.metadata.appVersion,
+                                form.form_data['@version'],
                                 form.metadata,
                             )
                             row.append(app_version_info.build_version)
