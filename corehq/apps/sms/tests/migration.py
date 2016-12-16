@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from django.test import TestCase
 from corehq.apps.reminders.models import (SurveyKeyword, SurveyKeywordAction,
     KEYWORD_ACTION_CHOICES, KEYWORD_RECIPIENT_CHOICES)
-from corehq.apps.sms.models import Keyword, KeywordAction
+from corehq.apps.sms.models import Keyword
 from couchdbkit import ResourceNotFound
 import random
 import string
