@@ -9,6 +9,7 @@ TaskProgress = namedtuple('TaskProgress',
 
 
 class STATES(object):
+    missing = -1
     not_started = 0
     started = 1
     success = 2
@@ -16,6 +17,9 @@ class STATES(object):
 
 
 class TaskStatus(namedtuple('TaskStatus', ['result', 'error', 'state', 'progress'])):
+    def missing(self):
+        return self.state == STATES.missing
+
     def not_started(self):
         return self.state == STATES.not_started
 
@@ -123,6 +127,8 @@ def get_task_status(task, is_multiple_download_task=False):
         state = STATES.failed
     elif is_ready:
         state = STATES.success
+    elif task.state == 'PENDING':
+        state = STATES.missing
     elif progress.percent is None:
         state = STATES.not_started
     else:
