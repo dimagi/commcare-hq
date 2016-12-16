@@ -1,6 +1,7 @@
 from collections import namedtuple
 import csv
 import json
+import logging
 from django.core.management import BaseCommand
 
 from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain
@@ -15,6 +16,10 @@ from corehq.apps.es.users import UserES
 from corehq.apps.groups.dbaccessors import get_group_ids_by_domain
 from corehq.apps.users.dbaccessors.all_commcare_users import get_all_user_ids_by_domain
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+
+
+logger = logging.getLogger('es_reliability')
+logger.setLevel('DEBUG')
 
 
 class Command(BaseCommand):
@@ -86,7 +91,10 @@ class Command(BaseCommand):
             domain_query = domain_query.is_active_project()
         domains = domain_query.scroll()
         for domain in domains:
-            self.check_domain(domain['name'], csvfile)
+            try:
+                self.check_domain(domain['name'], csvfile)
+            except:
+                logger.error('error occurred when checking domain {}'.format(domain['name']))
 
     def check_domain(self, domain, csvfile):
         stats = self.domain_info(domain)
