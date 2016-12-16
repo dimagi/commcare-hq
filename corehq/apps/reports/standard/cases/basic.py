@@ -1,6 +1,7 @@
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
+from corehq.apps.es.users import user_ids_at_locations_and_descendants
 from corehq.apps.locations.models import SQLLocation
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import PhoneTime
@@ -130,10 +131,13 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         selected_sharing_group_ids = EMWF.selected_sharing_group_ids(mobile_user_and_group_slugs)
 
         # Show cases owned by any selected locations, user locations, or their children
-        loc_ids = set(EMWF.selected_location_ids(mobile_user_and_group_slugs) +
+        selected_location_ids = EMWF.selected_location_ids(mobile_user_and_group_slugs)
+        loc_ids = set(selected_location_ids +
                       get_users_location_ids(self.domain, selected_user_ids))
         location_owner_ids = SQLLocation.objects.get_locations_and_children_ids(loc_ids)
 
+        # Get users at selected locations and descendants
+        assigned_user_ids_at_selected_locations = user_ids_at_locations_and_descendants(selected_location_ids)
         # Get user ids for each user in specified reporting groups
         report_group_q = HQESQuery(index="groups").domain(self.domain)\
                                            .doc_type("Group")\
@@ -158,6 +162,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
             selected_reporting_group_users,
             sharing_group_ids,
             location_owner_ids,
+            assigned_user_ids_at_selected_locations,
         ))
         return owner_ids
 
