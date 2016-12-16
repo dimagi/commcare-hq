@@ -48,15 +48,17 @@ class Command(BaseCommand):
 
         if stats.num_cases_es != stats.num_cases_primary:
             case_ids_es = set(CaseES().domain(domain).get_ids())
-            extra_in_es = case_ids_es - stats.case_ids_primary
-            extra_in_primary = stats.case_ids_primary - case_ids_es
+            case_ids_primary = set(CaseAccessors(domain).get_case_ids_in_domain())
+            extra_in_es = case_ids_es - case_ids_primary
+            extra_in_primary = case_ids_primary - case_ids_es
             _write_row('cases', extra_in_es, extra_in_primary)
             csvfile.writerow([domain, 'cases', extra_in_es, extra_in_primary])
 
         if stats.num_forms_es != stats.num_forms_primary:
             form_ids_es = set(FormES().domain(domain).get_ids())
-            extra_in_es = form_ids_es - stats.form_ids_primary
-            extra_in_primary = stats.form_ids_primary - form_ids_es
+            form_ids_primary = set(FormAccessors(domain).get_all_form_ids_in_domain())
+            extra_in_es = form_ids_es - form_ids_primary
+            extra_in_primary = form_ids_primary - form_ids_es
             _write_row('forms', extra_in_es, extra_in_primary)
 
         if stats.num_apps_es != stats.num_apps_primary:
@@ -114,11 +116,11 @@ class Command(BaseCommand):
         DomainStats = namedtuple('DomainStats', [
             'num_cases_es', 'num_forms_es', 'num_apps_es', 'num_users_es', 'num_groups_es',
             'num_cases_primary', 'num_forms_primary', 'num_apps_primary', 'num_users_primary', 'num_groups_primary',
-            'app_ids_primary', 'user_ids_primary', 'group_ids_primary', 'case_ids_primary', 'form_ids_primary'
+            'app_ids_primary', 'user_ids_primary', 'group_ids_primary'
         ])
 
-        case_ids_primary = set(CaseAccessors(domain).get_case_ids_in_domain())
-        form_ids_primary = set(FormAccessors(domain).get_all_form_ids_in_domain())
+        num_cases_primary = CaseAccessors(domain).get_number_of_cases_in_domain()
+        num_forms_primary = FormAccessors(domain).get_number_of_forms_in_domain()
         app_ids_primary = set(get_app_ids_in_domain(domain))
         user_ids_primary = set(get_all_user_ids_by_domain(domain))
         group_ids_primary = set(get_group_ids_by_domain(domain))
@@ -129,10 +131,8 @@ class Command(BaseCommand):
             num_apps_es=app_query(domain).count(),
             num_users_es=user_query(domain).count(),
             num_groups_es=GroupES().domain(domain).count(),
-            case_ids_primary=case_ids_primary,
-            num_cases_primary=len(case_ids_primary),
-            form_ids_primary=form_ids_primary,
-            num_forms_primary=len(form_ids_primary),
+            num_cases_primary=num_cases_primary,
+            num_forms_primary=num_forms_primary,
             app_ids_primary=app_ids_primary,
             num_apps_primary=len(app_ids_primary),
             user_ids_primary=user_ids_primary,
