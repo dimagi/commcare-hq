@@ -60,13 +60,13 @@ class Command(BaseCommand):
             _write_row('forms', extra_in_es, extra_in_primary)
 
         if stats.num_apps_es != stats.num_apps_primary:
-            app_ids_es = set(AppES().domain(domain).is_build(False).get_ids())
+            app_ids_es = set(app_query.get_ids())
             extra_in_es = app_ids_es - stats.app_ids_primary
             extra_in_primary = stats.app_ids_primary - app_ids_es
             _write_row('cases', extra_in_es, extra_in_primary)
 
         if stats.num_users_es != stats.num_users_primary:
-            user_ids_es = set(UserES().domain(domain).get_ids())
+            user_ids_es = set(user_query.get_ids())
             extra_in_es = user_ids_es - stats.user_ids_primary
             extra_in_primary = stats.user_ids_primary - user_ids_es
             _write_row('users', extra_in_es, extra_in_primary)
@@ -126,8 +126,8 @@ class Command(BaseCommand):
         stats = DomainStats(
             num_cases_es=cases(domain),
             num_forms_es=forms(domain),
-            num_apps_es=AppES().domain(domain).is_build(False).count(),
-            num_users_es=UserES().domain(domain).count(),
+            num_apps_es=app_query(domain).count(),
+            num_users_es=user_query(domain).count(),
             num_groups_es=GroupES().domain(domain).count(),
             case_ids_primary=case_ids_primary,
             num_cases_primary=len(case_ids_primary),
@@ -142,3 +142,11 @@ class Command(BaseCommand):
         )
 
         return stats
+
+
+def user_query(domain):
+    return UserES().domain(domain).show_inactive()
+
+
+def app_query(domain):
+    return AppES().domain(domain).is_build(False)
