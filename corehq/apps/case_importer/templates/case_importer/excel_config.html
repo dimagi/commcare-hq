@@ -12,16 +12,6 @@
 {% block js-inline %}{{ block.super }}
     <script>
         $(function() {
-            $('#key_value_columns').change(function() {
-                if ($(this).prop('checked')) {
-                    $('#key_val_selection_fields').show();
-                } else {
-                    $('#key_val_selection_fields').hide();
-                }
-            }).change();
-
-            $('#key_value_columns').change();
-
             $('#back_button').click(function() {
                 history.back();
                 return false;
@@ -125,86 +115,6 @@
                         {% trans "Create new records if there is no matching case" %}
                     </label>
                 </div>
-            </div>
-        </fieldset>
-
-        <fieldset class="hide">
-            <legend>
-                <a class="accordion-toggle collapsed" data-toggle="collapse" data-parent="#" href="#advanced-options">
-                    <i class="fa fa-angle-double-down"></i> {% trans "Advanced" %}
-                </a>
-            </legend>
-            <div id="advanced-options" class="accordion-body collapse">
-                <div class="form-group">
-                    <label class="control-label col-sm-3">
-                        {% trans "Advanced Update" %}
-                    </label>
-                    <div class="col-sm-6">
-                        <label for="key_value_columns" class="checkbox">
-                            <input type="checkbox"
-                                   name="key_value_columns"
-                                   id="key_value_columns" />
-                            {% trans "Update Cases Using Multiple Key/Value Pairs" %}
-                        </label>
-                    </div>
-                </div>
-
-                <fieldset id="key_val_selection_fields">
-                    <div class="alert">
-                        <p>
-                            {% blocktrans %}
-                                Instructions can be found on our
-                                <a href="https://confluence.dimagi.com/display/commcarepublic/Mapping+data+from+multiple+rows+to+a+single+case" target="_blank">
-                                    help pages
-                                </a>
-                                for this part of the feature.
-                            {% endblocktrans %}
-                        </p>
-                    </div>                
-                    <legend>                    
-                        {% trans "Corresponding Key/Value fields from Excel" %}
-                        <span class="hq-help-template"
-                            data-title='{% trans "Key/Value Pairs" %}'
-                            data-content='{% trans "The Excel file must be formatted with three columns. The first, identified in the Identifying Cases section above, contains the case to update. The second contains names of case properties to update. The last column contains the values to change. " %}'
-                        ></span>
-                        <script>
-                            $(function () {
-                                $('.hq-help-template').each(function () {
-                                    COMMCAREHQ.transformHelpTemplate($(this), true);
-                                });
-                            });
-                        </script>                         
-                    </legend>
-                    <div class="form-group">
-                        <label class="control-label col-sm-3" for="key_column">
-                            {% trans "Case Properties column" %}
-                        </label>
-                        <div class="col-sm-6">
-                            <select class="form-control" name="key_column" id="key_column">
-                                {% for column in columns %}
-                                <option value="{{column|escape}}">
-                                    {{column|escape}}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="control-label col-sm-3" for="value_column">
-                            {% trans "Value column" %}
-                        </label>
-                        <div class="col-sm-6">
-                            <select class="form-control" name="value_column" id="value_column">
-                                {% for column in columns %}
-                                <option value="{{column|escape}}">
-                                    {{column|escape}}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-                </fieldset>
             </div>
         </fieldset>
 

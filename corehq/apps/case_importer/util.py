@@ -37,8 +37,6 @@ class ImporterConfig(namedtuple('ImporterConfig', [
     'case_fields',
     'custom_fields',
     'search_column',
-    'key_column',
-    'value_column',
     'case_type',
     'search_field',
     'create_new_cases',
@@ -70,8 +68,6 @@ class ImporterConfig(namedtuple('ImporterConfig', [
             case_fields=request.POST.getlist('case_field[]'),
             custom_fields=request.POST.getlist('custom_field[]'),
             search_column=request.POST['search_column'],
-            key_column=request.POST['key_column'],
-            value_column=request.POST['value_column'],
             case_type=request.POST['case_type'],
             search_field=request.POST['search_field'],
             create_new_cases=request.POST['create_new_cases'] == 'True',
@@ -242,26 +238,6 @@ def parse_search_id(config, columns, row):
     return convert_field_value(search_id)
 
 
-def get_key_column_index(config, columns):
-    key_column = config.key_column
-    try:
-        key_column_index = columns.index(key_column)
-    except ValueError:
-        key_column_index = False
-
-    return key_column_index
-
-
-def get_value_column_index(config, columns):
-    value_column = config.value_column
-    try:
-        value_column_index = columns.index(value_column)
-    except ValueError:
-        value_column_index = False
-
-    return value_column_index
-
-
 def lookup_case(search_field, search_id, domain, case_type):
     """
     Attempt to find the case in CouchDB by the provided search_field and search_id.
@@ -301,15 +277,10 @@ def populate_updated_fields(config, columns, row):
     to trigger updates.
     """
     field_map = convert_custom_fields_to_struct(config)
-    key_column_index = get_key_column_index(config, columns)
-    value_column_index = get_value_column_index(config, columns)
     fields_to_update = {}
     for key in field_map:
         try:
-            if key_column_index and key == row[key_column_index]:
-                update_value = row[value_column_index]
-            else:
-                update_value = row[columns.index(key)]
+            update_value = row[columns.index(key)]
         except Exception:
             continue
 

@@ -53,8 +53,6 @@ class ImporterTest(TestCase):
             search_column=search_column,
             search_field=search_field,
             create_new_cases=create_new_cases,
-            key_column='',
-            value_column='',
         )
 
     @run_with_all_backends

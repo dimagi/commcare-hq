@@ -134,9 +134,6 @@ def excel_fields(request, domain):
         Either case id or external id, determines which type of
         identification we are using to match to cases.
 
-    key_column/value_column:
-        These correspond to an advanced feature allowing a user
-        to modify a single case with multiple rows.
     """
     case_type = request.POST['case_type']
     try:
@@ -149,9 +146,6 @@ def excel_fields(request, domain):
 
     search_field = request.POST['search_field']
     create_new_cases = request.POST.get('create_new_cases') == 'on'
-    key_value_columns = request.POST.get('key_value_columns') == 'on'
-    key_column = ''
-    value_column = ''
 
     case_upload = CaseUpload.get(request.session.get(EXCEL_SESSION_ID))
 
@@ -162,26 +156,7 @@ def excel_fields(request, domain):
 
     with case_upload.get_spreadsheet() as spreadsheet:
         columns = spreadsheet.get_header_columns()
-
-        if key_value_columns:
-            key_column = request.POST['key_column']
-            value_column = request.POST['value_column']
-
-            excel_fields = []
-            key_column_index = columns.index(key_column)
-
-            # if key/value columns were specified, get all the unique keys listed
-            if key_column_index:
-                excel_fields = spreadsheet.get_unique_column_values(key_column_index)
-
-            # concatenate unique key fields with the rest of the columns
-            excel_fields = columns + excel_fields
-            # remove key/value column names from list
-            excel_fields.remove(key_column)
-            if value_column in excel_fields:
-                excel_fields.remove(value_column)
-        else:
-            excel_fields = columns
+        excel_fields = columns
 
     case_fields = get_case_properties_for_case_type(domain, case_type)
 
@@ -209,8 +184,6 @@ def excel_fields(request, domain):
             'search_column': search_column,
             'search_field': search_field,
             'create_new_cases': create_new_cases,
-            'key_column': key_column,
-            'value_column': value_column,
             'columns': columns,
             'excel_fields': excel_fields,
             'case_fields': case_fields,
