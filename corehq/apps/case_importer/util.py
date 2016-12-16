@@ -46,6 +46,19 @@ class ImporterConfig(namedtuple('ImporterConfig', [
     be pickled and passed to celery tasks.
     """
 
+    def __new__(cls, *args, **kwargs):
+        args, kwargs = cls.__detect_schema_change(args, kwargs)
+        return super(cls, ImporterConfig).__new__(cls, *args, **kwargs)
+
+    @staticmethod
+    def __detect_schema_change(args, kwargs):
+        # before we removed key_column, value_column, named_columns
+        # from positions 5-7
+        if len(args) == 11 and not kwargs:
+            return args[:5] + args[8:], {}
+        else:
+            return args, kwargs
+
     def to_dict(self):
         return self._asdict()
 
