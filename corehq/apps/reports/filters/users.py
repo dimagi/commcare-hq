@@ -344,12 +344,14 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
                 group=group,
                 simplified=True
             )
-        users_at_locations = util.get_all_users_by_domain(
-            domain=domain,
-            user_ids=user_ids_at_locations_and_descendants(location_ids),
-            simplified=True,
-            CommCareUser=CommCareUser,
-        )
+        users_at_locations = []
+        if location_ids:
+                users_at_locations = util.get_all_users_by_domain(
+                domain=domain,
+                user_ids=user_ids_at_locations_and_descendants(location_ids),
+                simplified=True,
+                CommCareUser=CommCareUser,
+            )
         users_in_groups = flatten_list(user_dict.values())
         users_by_group = user_dict
         combined_users = remove_dups(all_users + users_in_groups + users_at_locations, "user_id")
