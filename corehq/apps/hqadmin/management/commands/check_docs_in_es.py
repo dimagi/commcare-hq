@@ -62,13 +62,13 @@ class Command(BaseCommand):
             _write_row('forms', extra_in_es, extra_in_primary)
 
         if stats.num_apps_es != stats.num_apps_primary:
-            app_ids_es = set(app_query.get_ids())
+            app_ids_es = set(app_query(domain).get_ids())
             extra_in_es = app_ids_es - stats.app_ids_primary
             extra_in_primary = stats.app_ids_primary - app_ids_es
             _write_row('cases', extra_in_es, extra_in_primary)
 
         if stats.num_users_es != stats.num_users_primary:
-            user_ids_es = set(user_query.get_ids())
+            user_ids_es = set(user_query(domain).get_ids())
             extra_in_es = user_ids_es - stats.user_ids_primary
             extra_in_primary = stats.user_ids_primary - user_ids_es
             _write_row('users', extra_in_es, extra_in_primary)
