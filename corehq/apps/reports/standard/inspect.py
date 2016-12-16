@@ -3,6 +3,7 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop, get_language
 
 from corehq.apps.es import forms as form_es, filters as es_filters
+from corehq.apps.es.users import user_ids_at_accessible_locations
 from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports import util
@@ -93,16 +94,27 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
             )
         return form_es.xmlns(form['xmlns'])
 
+    def scope_filter(self):
+        # Filter to be applied in AND with filters for export for restricted user
+        # Restricts to forms submitted by users at accessible locations
+        accessible_user_ids = (user_ids_at_accessible_locations(
+            self.request.domain, self.request.couch_user
+        ))
+        return form_es.user_id(accessible_user_ids)
+
     @property
     def es_query(self):
         time_filter = form_es.submitted if self.by_submission_time else form_es.completed
         mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
 
         query = (form_es.FormES()
-                .domain(self.domain)
-                .filter(time_filter(gte=self.datespan.startdate,
-                                    lt=self.datespan.enddate_adjusted))
-                .filter(self._get_users_filter(mobile_user_and_group_slugs)))
+                 .domain(self.domain)
+                 .filter(time_filter(gte=self.datespan.startdate,
+                                     lt=self.datespan.enddate_adjusted))
+                 .filter(self._get_users_filter(mobile_user_and_group_slugs)))
+
+        if not self.request.can_access_all_locations:
+            query = query.filter(self.scope_filter())
 
         # filter results by app and xmlns if applicable
         if FormsByApplicationFilter.has_selections(self.request):
