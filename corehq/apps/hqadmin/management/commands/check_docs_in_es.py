@@ -36,7 +36,7 @@ class Command(BaseCommand):
     def check_domain(self, domain, csvfile):
         num_cases_es = cases(domain)
         num_forms_es = forms(domain)
-        num_apps_es = AppES().domain(domain).count()
+        num_apps_es = AppES().domain(domain).is_build(False).count()
         num_users_es = UserES().domain(domain).count()
         num_groups_es = GroupES().domain(domain).count()
         num_cases_primary = cases(domain, primary_db=True)
