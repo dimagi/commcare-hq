@@ -4,6 +4,7 @@
 {% load i18n %}
 
 {% block js %}{{ block.super }}
+<script src="{% static 'fast-levenshtein/levenshtein.js' %}"></script>
 <script src="{% static 'case_importer/js/excel_fields.js' %}"></script>
 {% endblock %}
 {% block js-inline %}{{ block.super }}

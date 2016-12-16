@@ -54,6 +54,15 @@
             <span data-bind="text: caseFieldSpec().description"></span>
         </p>
     </div>
+    <!--ko if: caseFieldSuggestions().length-->
+    <div class="has-warning">
+        <p class="help-block">
+            {% blocktrans with '<!--ko foreach: caseFieldSuggestions--><!--ko if: $index() !== 0-->, <!--/ko--><strong data-bind="text: $data"></strong><!--/ko-->' as suggestion %}
+                Did you mean {{ suggestion }}?
+            {% endblocktrans %}
+        </p>
+    </div>
+    <!--/ko-->
 </td>
 
 <td>
