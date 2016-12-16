@@ -197,8 +197,8 @@ def excel_fields(request, domain):
             excel_fields = columns
 
     # hide search column and matching case fields from the update list
-    if search_field in excel_fields:
-        excel_fields.remove(search_field)
+    if search_column in excel_fields:
+        excel_fields.remove(search_column)
 
     field_specs = get_suggested_case_fields(
         domain, case_type, exclude=[search_field])
