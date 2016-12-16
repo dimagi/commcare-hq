@@ -31,7 +31,7 @@
 
     <select class="form-control case_field" name="case_field[]" data-bind="
         visible: !isCustom(),
-        options: _($root.caseFieldSpecs).where({show_in_menu: true}),
+        options: $root.caseFieldSpecsInMenu,
         optionsCaption: django.gettext('Select property name...'),
         optionsText: 'field',
         optionsValue: 'field',

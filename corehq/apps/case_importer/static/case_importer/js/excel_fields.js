@@ -4,6 +4,8 @@ hqDefine('case_importer/js/excel_fields.js', function () {
             excelFields: excelFields,
             caseFieldSpecs: caseFieldSpecs,
         };
+        self.caseFieldSpecsInMenu = _(caseFieldSpecs).where({show_in_menu: true});
+        self.caseFieldsInMenu = _(self.caseFieldSpecsInMenu).pluck('field');
         self.mappingRows = ko.observableArray();
         self.removeRow = function (row) {
             self.mappingRows.remove(row);
@@ -32,10 +34,29 @@ hqDefine('case_importer/js/excel_fields.js', function () {
             row.hasNonDiscoverableField = ko.computed(function () {
                 return row.caseFieldSpec().description && !row.caseFieldSpec().discoverable;
             });
+            row.reset = function () {
+                var field = row.excelField();
+                row.customCaseField(field);
+                if (!field || _(self.caseFieldsInMenu).contains(field)) {
+                    row.isCustom(false);
+                    row.selectedCaseField(field);
+                } else {
+                    row.isCustom(true);
+                    row.selectedCaseField(null);
+                }
+            };
             self.mappingRows.push(row);
         };
+        self.autoFill = function () {
+            _(self.mappingRows()).each(function (row) {
+                row.reset();
+            });
+        };
+
         // initialize mappingRows with one row per excelField
         _.each(excelFields, self.addRow);
+        self.autoFill();
+
 //        setInterval(function () {
 //            var row = self.mappingRows()[0];
 //            console.log(row.isCustom(), row.caseFieldSpec());

@@ -14,19 +14,8 @@
             var excelFieldRows = hqImport('case_importer/js/excel_fields.js').ExcelFieldRows(excelFields, caseFieldSpecs);
             $('#excel-field-rows').koApplyBindings(excelFieldRows);
 
-            var allowedCaseProperties = _(_(caseFieldSpecs).where({show_in_menu: true})).pluck('field');
-
             function autofillProperties() {
-                _(excelFieldRows.mappingRows()).each(function (row) {
-                    var field = row.excelField();
-                    if ($.inArray(field, allowedCaseProperties) !== -1) {
-                        row.selectedCaseField(field);
-                        row.isCustom(false);
-                    } else {
-                        row.customCaseField(field);
-                        row.isCustom(true);
-                    }
-                });
+                excelFieldRows.autoFill();
             }
 
             $('#js-add-mapping').click(function() {
@@ -114,7 +103,7 @@
                     <th class="span1"></th>
                     <th>{% trans "Excel Field" %}</th>
                     <th></th>
-                    <th>{% trans "Case Property" %}<button type="button" class="btn btn-primary btn-xs pull-right" id="autofill">{% trans "Auto Fill" %}</button></th>
+                    <th>{% trans "Case Property" %}<button type="button" class="btn btn-primary btn-xs pull-right" id="autofill">{% trans "Set to default" %}</button></th>
                     <th></th>
                 </thead>
                 <tbody id="excel-field-rows">
