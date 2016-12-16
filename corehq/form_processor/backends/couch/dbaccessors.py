@@ -31,7 +31,9 @@ from couchforms.dbaccessors import (
     get_forms_by_type,
     get_deleted_form_ids_for_user,
     get_form_ids_for_user,
-    get_forms_by_id, get_form_ids_by_type)
+    get_forms_by_id, get_form_ids_by_type,
+    get_number_forms_in_domain,
+)
 from couchforms.models import XFormInstance, doc_types
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.parsing import json_format_datetime
@@ -62,6 +64,10 @@ class FormAccessorCouch(AbstractFormAccessor):
     @staticmethod
     def get_form_ids_in_domain_by_type(domain, type_):
         return get_form_ids_by_type(domain, type_)
+
+    @staticmethod
+    def get_number_of_forms_in_domain(domain):
+        return get_number_forms_in_domain(domain)
 
     @staticmethod
     def get_forms_by_type(domain, type_, limit, recent_first=False):

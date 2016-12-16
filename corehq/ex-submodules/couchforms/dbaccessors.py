@@ -30,6 +30,18 @@ def get_form_ids_by_type(domain, type_, start=None, end=None):
     )]
 
 
+def get_number_forms_in_domain(domain, type_="XFormInstance"):
+    assert type_ in doc_types()
+    startkey = [domain, type_]
+
+    return XFormInstance.get_db().view(
+        "couchforms/all_submissions_by_domain",
+        startkey=startkey,
+        endkey=endkey,
+        reduce=False,
+    ).count()
+
+
 def get_forms_by_type(domain, type_, recent_first=False,
                       limit=None):
     assert type_ in doc_types()

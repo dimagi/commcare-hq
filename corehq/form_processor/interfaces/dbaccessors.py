@@ -131,7 +131,7 @@ class FormAccessors(object):
         return self.db_accessor.get_form_ids_in_domain_by_type(self.domain, doc_type)
 
     def get_number_of_forms_in_domain(self):
-        return len(self.get_all_form_ids_in_domain())
+        return self.db_accessor.get_number_of_forms_in_domain(self.domain)
 
     def get_forms_by_type(self, type_, limit, recent_first=False):
         return self.db_accessor.get_forms_by_type(self.domain, type_, limit, recent_first)

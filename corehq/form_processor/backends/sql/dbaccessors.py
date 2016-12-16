@@ -311,6 +311,10 @@ class FormAccessorSQL(AbstractFormAccessor):
         return forms[:limit]
 
     @staticmethod
+    def get_number_of_forms_in_domain(domain):
+        return len(FormAccessorSQL.get_all_form_ids_in_domain(domain))
+
+    @staticmethod
     def form_exists(form_id, domain=None):
         with get_cursor(XFormInstanceSQL) as cursor:
             cursor.execute('SELECT * FROM check_form_exists(%s, %s)', [form_id, domain])
