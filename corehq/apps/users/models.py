@@ -1683,13 +1683,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     @property
     @memoized
     def location(self):
-        from corehq.apps.locations.models import Location
-        if self.location_id:
-            try:
-                return Location.get(self.location_id)
-            except ResourceNotFound:
-                pass
-        return None
+        return self.sql_location
 
     @property
     def sql_location(self):
@@ -2219,16 +2213,8 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         else:
             return SQLLocation.objects.none()
 
-    @memoized
     def get_location(self, domain):
-        from corehq.apps.locations.models import Location
-        loc_id = self.get_location_id(domain)
-        if loc_id:
-            try:
-                return Location.get(loc_id)
-            except ResourceNotFound:
-                pass
-        return None
+        return self.get_sql_location(domain)
 
     def is_locked_out(self):
         return self.login_attempts >= MAX_LOGIN_ATTEMPTS
