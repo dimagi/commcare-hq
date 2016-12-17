@@ -153,20 +153,53 @@ class PatientDetail(models.Model):
 
 class Outcome(models.Model):
     PatientId = models.OneToOneField(PatientDetail, primary_key=True)
-    Outcome = models.CharField(max_length=255)
-    OutcomeDate = models.CharField(max_length=255, null=True)
-    MO = models.CharField(max_length=255, null=True)
-    XrayEPTests = models.CharField(max_length=255)
-    MORemark = models.CharField(max_length=255, null=True)
-    HIVStatus = models.CharField(max_length=255, null=True)
-    HIVTestDate = models.CharField(max_length=255, null=True)
-    CPTDeliverDate = models.CharField(max_length=255, null=True)
-    ARTCentreDate = models.CharField(max_length=255, null=True)
-    InitiatedOnART = models.CharField(max_length=255, null=True)
-    InitiatedDate = models.CharField(max_length=255, null=True)
+    Outcome = models.CharField(
+        max_length=255,
+        choices=(
+            ('NULL', 'NULL'),
+            ('0', '0'),
+            ('1', '1'),
+            ('2', '2'),
+            ('3', '3'),
+            ('4', '4'),
+            ('5', '5'),
+            ('6', '6'),
+            ('7', '7'),
+        )
+    )
+    OutcomeDate = models.CharField(max_length=255, null=True)  # somethings DD/MM/YYYY, sometimes DD-MM-YYYY
+    MO = models.CharField(max_length=255, null=True)  # doctor's name
+    XrayEPTests = models.CharField(
+        max_length=255,
+        choices=(
+            ('NULL', 'NULL'),
+        ),
+    )
+    MORemark = models.CharField(max_length=255, null=True)  # doctor's notes
+    HIVStatus = models.CharField(
+        max_length=255,
+        choices=(
+            ('NULL', 'NULL'),
+            ('Pos', 'Pos'),
+            ('Neg', 'Neg'),
+            ('Unknown', 'Unknown'),
+        ),
+        null=True,
+    )
+    HIVTestDate = models.CharField(max_length=255, null=True)  # dates, None, and NULL
+    CPTDeliverDate = models.CharField(max_length=255, null=True)  # dates, None, and NULL
+    ARTCentreDate = models.CharField(max_length=255, null=True)  # dates, None, and NULL
+    InitiatedOnART = models.IntegerField(
+        choices=(
+            (0, 0),
+            (1, 1),
+        ),
+        null=True,
+    )
+    InitiatedDate = models.CharField(max_length=255, null=True)  # dates, None, and NULL
     userName = models.CharField(max_length=255)
-    loginDate = models.CharField(max_length=255)
-    OutcomeDate1 = models.CharField(max_length=255)
+    loginDate = models.DateTimeField()
+    OutcomeDate1 = models.CharField(max_length=255)  # datetimes and NULL
 
 
 class Followup(models.Model):
