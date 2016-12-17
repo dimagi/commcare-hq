@@ -318,4 +318,4 @@
 +                                    must go in a different case list).
                                  {% endblocktrans %}
                              {% endif %}
-                         {% case "invalid user case xpath reference" %}
+                         {% case "invalid user property xpath reference" %}
