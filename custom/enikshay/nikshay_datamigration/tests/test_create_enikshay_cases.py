@@ -93,11 +93,13 @@ class TestCreateEnikshayCases(TestCase):
         self.assertEqual(
             OrderedDict([
                 ('aadhaar_number', '867386000000'),
+                ('age', '18'),
                 ('age_entered', '18'),
                 ('contact_phone_number', '9987328695'),
                 ('current_address', 'Cambridge MA'),
                 ('current_address_district_choice', 'Middlesex'),
                 ('current_address_state_choice', 'MA'),
+                ('dob_known', 'no'),
                 ('first_name', 'A'),
                 ('last_name', 'C'),
                 ('middle_name', 'B'),
@@ -123,9 +125,11 @@ class TestCreateEnikshayCases(TestCase):
                 ('hiv_status', 'negative'),
                 ('migration_created_case', 'True'),
                 ('nikshay_id', 'MH-ABD-05-16-0001'),
+                ('occurrence_episode_count', '1'),
             ]),
             occurrence_case.dynamic_case_properties()
         )
+        self.assertEqual('Occurrence #1', occurrence_case.name)
         self.assertItemsEqual(
             [CommCareCaseIndex(
                 identifier='host',

@@ -63,11 +63,13 @@ class EnikshayCaseFactory(object):
                 # 'owner_id': self._location.location_id,
                 'update': {
                     'aadhaar_number': self.patient_detail.paadharno,
+                    'age': self.patient_detail.page,
                     'age_entered': self.patient_detail.page,
                     'contact_phone_number': validate_number(self.patient_detail.pmob),
                     'current_address': self.patient_detail.paddress,
                     'current_address_district_choice': self.patient_detail.Dtocode,
                     'current_address_state_choice': self.patient_detail.scode,
+                    'dob_known': 'no',
                     'first_name': self.patient_detail.first_name,
                     'last_name': self.patient_detail.last_name,
                     'middle_name': self.patient_detail.middle_name,
@@ -105,7 +107,9 @@ class EnikshayCaseFactory(object):
                 'case_type': 'occurrence',
                 'update': {
                     'hiv_status': outcome.HIVStatus,
-                    'nikshay_id': outcome.PatientId.PregId,
+                    'name': 'Occurrence #1',
+                    'nikshay_id': self.patient_detail.PregId,
+                    'occurrence_episode_count': 1,
 
                     'migration_created_case': True,
                 },
