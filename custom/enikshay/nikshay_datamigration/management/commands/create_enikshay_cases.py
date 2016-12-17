@@ -25,7 +25,7 @@ class Command(BaseCommand):
         counter = 0
         num_succeeded = 0
         num_failed = 0
-        logger.info('Starting migration of %d patient cases.' % total)
+        logger.info('Starting migration of %d patient cases on domain %s.' % (total, domain))
         for patient_detail in patient_details:
             counter += 1
             try:
@@ -46,7 +46,7 @@ class Command(BaseCommand):
                         counter, total, patient_detail.PregId
                     )
                 )
-        logger.info('Done.')
+        logger.info('Done creating cases for domain %s.' % domain)
         logger.info('Number of attempts: %d.' % counter)
         logger.info('Number of successes: %d.' % num_succeeded)
         logger.info('Number of failures: %d.' % num_failed)
