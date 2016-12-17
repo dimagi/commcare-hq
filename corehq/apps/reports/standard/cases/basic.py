@@ -3,6 +3,7 @@ from django.utils.translation import ugettext_noop
 
 from corehq.apps.es.users import user_ids_at_locations_and_descendants
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.permissions import location_safe
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import PhoneTime
 from dimagi.utils.decorators.memoized import memoized
@@ -187,6 +188,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         return shared_params
 
 
+@location_safe
 class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
 
     # note that this class is not true to the spirit of ReportDataSource; the whole

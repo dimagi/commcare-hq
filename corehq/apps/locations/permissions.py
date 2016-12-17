@@ -99,7 +99,7 @@ LOCATION_ACCESS_DENIED = mark_safe(ugettext_lazy(
 
 LOCATION_SAFE_TASTYPIE_RESOURCES = set()
 
-LOCATION_SAFE_HQ_REPORTS = set(['case_list'])
+LOCATION_SAFE_HQ_REPORTS = set()
 
 
 def locations_access_required(view_fn):
