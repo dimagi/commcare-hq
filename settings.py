@@ -1121,32 +1121,32 @@ LOGGING = {
         'datadog-metrics': {
             'handlers': ['datadog'],
             'level': 'INFO',
-            'propogate': False,
+            'propagate': False,
         },
         'ucr_timing': {
             'handlers': ['ucr_timing'],
             'level': 'INFO',
-            'propogate': True,
+            'propagate': True,
         },
         'ucr_diff': {
             'handlers': ['ucr_diff'],
             'level': 'INFO',
-            'propogate': True,
+            'propagate': True,
         },
         'ucr_exception': {
             'handlers': ['ucr_exception'],
             'level': 'INFO',
-            'propogate': True,
+            'propagate': True,
         },
         'boto3': {
             'handlers': ['console'],
             'level': 'WARNING',
-            'propogate': True
+            'propagate': True
         },
         'botocore': {
             'handlers': ['console'],
             'level': 'WARNING',
-            'propogate': True
+            'propagate': True
         },
         'nikshay_datamigration': {
             'handlers': ['nikshay_datamigration', 'console'],
