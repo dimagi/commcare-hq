@@ -57,7 +57,7 @@ class BasePayloadGenerator(object):
         """
         return True
 
-    def handle_failure(self, response, payload_doc):
+    def handle_failure(self, response, payload_doc, repeat_record):
         """handle a failed post
         """
         return True

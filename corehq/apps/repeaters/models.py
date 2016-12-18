@@ -303,7 +303,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         """handle a failed post
         """
         generator = self.get_payload_generator(self.format_or_default_format())
-        return generator.handle_failure(response, self.payload_doc(repeat_record))
+        return generator.handle_failure(response, self.payload_doc(repeat_record), repeat_record)
 
 
 class FormRepeater(Repeater):

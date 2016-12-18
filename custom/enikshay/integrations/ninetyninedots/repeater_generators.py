@@ -58,7 +58,7 @@ class RegisterPatientPayloadGenerator(BasePayloadGenerator):
                 }
             )
 
-    def handle_failure(self, response, payload_doc):
+    def handle_failure(self, response, payload_doc, repeat_record):
         if 400 <= response.status_code <= 500:
             _update_episode_case(
                 payload_doc.domain,
@@ -102,7 +102,7 @@ class UpdatePatientPayloadGenerator(BasePayloadGenerator):
                 }
             )
 
-    def handle_failure(self, response, payload_doc):
+    def handle_failure(self, response, payload_doc, repeat_record):
         if 400 <= response.status_code <= 500:
             _update_episode_case(
                 payload_doc.domain,
