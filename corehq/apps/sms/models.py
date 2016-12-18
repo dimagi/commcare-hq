@@ -23,6 +23,7 @@ from corehq.apps.sms.messages import (MSG_MOBILE_WORKER_INVITATION_START,
 from corehq.const import GOOGLE_PLAY_STORE_COMMCARE_URL
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
+from dimagi.utils.couch.migration import SyncSQLToCouchMixin
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.load_balance import load_balance
 from django.utils.translation import ugettext_noop, ugettext_lazy
@@ -2269,6 +2270,7 @@ class MigrationStatus(models.Model):
     MIGRATION_DOMAIN_DEFAULT_BACKEND = 'domain_default_backend'
     MIGRATION_LOGS = 'logs'
     MIGRATION_PHONE_NUMBERS = 'phone_numbers'
+    MIGRATION_KEYWORDS = 'keywords'
 
     class Meta:
         db_table = 'messaging_migrationstatus'
@@ -2293,6 +2295,158 @@ class MigrationStatus(models.Model):
             return True
         except cls.DoesNotExist:
             return False
+
+
+class Keyword(SyncSQLToCouchMixin, models.Model):
+    """
+    A Keyword allows a project to define actions to be taken when a contact
+    in the project sends an inbound SMS starting with a certain word.
+    """
+
+    class Meta:
+        index_together = (
+            ('domain', 'keyword')
+        )
+
+    couch_id = models.CharField(max_length=126, null=True, db_index=True)
+    domain = models.CharField(max_length=126, db_index=True)
+
+    # The word which is used to invoke this Keyword's KeywordActions
+    keyword = models.CharField(max_length=126)
+    description = models.TextField(null=True)
+
+    # When specified, this is the delimiter that is used in the structured SMS format.
+    # If None, the delimiter is any consecutive white space.
+    # This is ignored unless this Keyword is describing a structured SMS
+    # (i.e., it has a KeywordAction with action equal to ACTION_STRUCTURED_SMS)
+    delimiter = models.CharField(max_length=126, null=True)
+
+    # If a SQLXFormsSession (i.e., an sms survey) is open for a contact when they invoke this
+    # Keyword, override_open_sessions tells what to do with it. If True, the SQLXFormsSession
+    # will be closed and this Keyword will be invoked. If False, this Keyword will be
+    # skipped and the form session handler will count the text as the next
+    # answer in the open survey.
+    override_open_sessions = models.NullBooleanField()
+
+    # List of doc types representing the only types of contacts who should be
+    # able to invoke this keyword. Empty list means anyone can invoke.
+    # Example: ['CommCareUser', 'CommCareCase']
+    initiator_doc_type_filter = jsonfield.JSONField(default=list)
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        from corehq.apps.reminders.models import SurveyKeyword
+        return SurveyKeyword
+
+    def _migration_sync_to_couch(self, couch_obj):
+        from corehq.apps.reminders.models import SurveyKeywordAction
+
+        couch_obj.domain = self.domain
+        couch_obj.keyword = self.keyword
+        couch_obj.description = self.description
+        couch_obj.delimiter = self.delimiter
+        couch_obj.override_open_sessions = self.override_open_sessions
+        couch_obj.initiator_doc_type_filter = self.initiator_doc_type_filter
+
+        couch_obj.actions = []
+        for sql_action in self.keywordaction_set.all():
+            couch_obj.actions.append(SurveyKeywordAction(
+                recipient=sql_action.recipient,
+                recipient_id=sql_action.recipient_id,
+                action=sql_action.action,
+                message_content=sql_action.message_content,
+                form_unique_id=sql_action.form_unique_id,
+                use_named_args=sql_action.use_named_args,
+                named_args=sql_action.named_args,
+                named_args_separator=sql_action.named_args_separator
+            ))
+
+        couch_obj.save(sync_to_sql=False)
+
+
+class KeywordAction(models.Model):
+    """
+    When a Keyword is invoked, its KeywordActions are processed. A KeywordAction
+    defines the action to take (which could be sending an SMS, or starting an
+    SMS survey, for example) and the recipient of that action.
+    """
+
+    class InvalidModelStateException(Exception):
+        pass
+
+    # Send an SMS
+    ACTION_SMS = "sms"
+
+    # Start an SMS Survey
+    ACTION_SMS_SURVEY = "survey"
+
+    # Process the text as structured SMS. The expected format of the structured
+    # SMS is described using the fields on this object.
+    ACTION_STRUCTURED_SMS = "structured_sms"
+
+    # The recipient of this action is the contact who invoked the keyword.
+    RECIPIENT_SENDER = "SENDER"
+
+    # The recipient of this action is the owner of the case contact who invoked
+    # the keyword.
+    RECIPIENT_OWNER = "OWNER"
+
+    # The recipient of this action is a user group (Group) with id given by
+    # recipient_id.
+    RECIPIENT_USER_GROUP = "USER_GROUP"
+
+    # The Keyword that this KeywordAction belongs to
+    keyword = models.ForeignKey('Keyword', on_delete=models.CASCADE)
+
+    # One of the ACTION_* constants representing the action to take
+    action = models.CharField(max_length=126)
+
+    # One of the RECIPIENT_* constants representing the recipient of this action
+    recipient = models.CharField(max_length=126)
+
+    # Represents the id of the recipient, when necessary
+    recipient_id = models.CharField(max_length=126, null=True)
+
+    # Only used for action == ACTION_SMS
+    message_content = models.TextField(null=True)
+
+    # Only used for action in [ACTION_SMS_SURVEY, ACTION_STRUCTURED_SMS]
+    # The form unique id of the form to use as a survey when processing this action.
+    form_unique_id = models.CharField(max_length=126, null=True)
+
+    # Only used for action == ACTION_STRUCTURED_SMS
+    # Set to True if the expected structured SMS format should name the values
+    # being passed. For example the format "register name=joe age=20" would set
+    # this to True, while the format "register joe 20" would set it to False.
+    use_named_args = models.NullBooleanField()
+
+    # Only used for action == ACTION_STRUCTURED_SMS
+    # When use_named_args is True, this is a dictionary of {arg name (caps) : form question xpath}
+    # So for example, in structured SMS "register name=joe age=20", the expected
+    # arg names are NAME and AGE. They would be keys in this dictionary and their
+    # corresponding values would be the corresponding question xpaths in the form
+    # referenced by form_unique_id, for example /data/name and /data/age.
+    named_args = jsonfield.JSONField(default=dict)
+
+    # Only used for action == ACTION_STRUCTURED_SMS
+    # When use_named_args is True, this is the separator to be used between arg name
+    # and value in the structured SMS.
+    # So for example, in structured SMS "register name=joe age=20", the separator
+    # is "=".
+    # This can be None in which case there is no separator (i.e., "report a100 b200")
+    named_args_separator = models.CharField(max_length=126, null=True)
+
+    def save(self, *args, **kwargs):
+        if self.recipient == self.RECIPIENT_USER_GROUP and not self.recipient_id:
+            raise self.InvalidModelStateException("Expected a value for recipient_id")
+
+        if self.action == self.ACTION_SMS and not self.message_content:
+            raise self.InvalidModelStateException("Expected a value for message_content")
+
+        if self.action in [self.ACTION_SMS_SURVEY, self.ACTION_STRUCTURED_SMS] and not self.form_unique_id:
+            raise self.InvalidModelStateException("Expected a value for form_unique_id")
+
+        super(KeywordAction, self).save(*args, **kwargs)
 
 
 from corehq.apps.sms import signals
