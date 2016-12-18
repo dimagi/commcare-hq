@@ -368,6 +368,7 @@ ENIKSHAY_APPS = (
     'custom.enikshay',
     'custom.enikshay.integrations.ninetyninedots',
     'custom.enikshay.nikshay_datamigration',
+    'custom.enikshay.integrations.nikshay'
 )
 
 # DEPRECATED use LOCAL_APPS instead; can be removed with testrunner.py
@@ -1632,6 +1633,7 @@ BASE_REPEATERS = (
 CUSTOM_REPEATERS = (
     'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsRegisterPatientRepeater',
     'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsUpdatePatientRepeater',
+    'custom.enikshay.integrations.nikshay.repeaters.NikshayRegisterPatientRepeater'
 )
 
 REPEATERS = BASE_REPEATERS + LOCAL_REPEATERS + CUSTOM_REPEATERS
