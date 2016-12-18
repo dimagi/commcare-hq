@@ -297,7 +297,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         """handle a successful post
         """
         generator = self.get_payload_generator(self.format_or_default_format())
-        return generator.handle_success(response, self.payload_doc(repeat_record))
+        return generator.handle_success(response, self.payload_doc(repeat_record), repeat_record)
 
     def handle_failure(self, response, repeat_record):
         """handle a failed post

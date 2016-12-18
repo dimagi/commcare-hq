@@ -47,7 +47,7 @@ class RegisterPatientPayloadGenerator(BasePayloadGenerator):
         )
         return json.dumps(data.to_json())
 
-    def handle_success(self, response, payload_doc):
+    def handle_success(self, response, payload_doc, repeat_record):
         if response.status_code == 201:
             _update_episode_case(
                 payload_doc.domain,
@@ -92,7 +92,7 @@ class UpdatePatientPayloadGenerator(BasePayloadGenerator):
         )
         return json.dumps(data.to_json())
 
-    def handle_success(self, response, payload_doc):
+    def handle_success(self, response, payload_doc, repeat_record):
         if response.status_code == 200:
             _update_episode_case(
                 payload_doc.domain,

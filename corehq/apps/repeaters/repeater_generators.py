@@ -48,7 +48,7 @@ class BasePayloadGenerator(object):
             "</data>" % datetime.utcnow()
         )
 
-    def handle_success(self, response, payload_doc):
+    def handle_success(self, response, payload_doc, repeat_record):
         """handle a successful post
 
         e.g. could be used to store something to the payload_doc once a
