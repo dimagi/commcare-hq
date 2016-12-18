@@ -126,6 +126,16 @@ def _update_episode_case(domain, case_id, updated_properties):
     )
 
 
+def _update_person_case(domain, case_id, updated_properties):
+    post_case_blocks(
+        [CaseBlock(
+            case_id=case_id,
+            update=updated_properties
+        ).as_xml()],
+        {'domain': domain}
+    )
+
+
 def _get_phone_numbers(case_properties):
     primary_number = _parse_number(case_properties.get(PRIMARY_PHONE_NUMBER))
     backup_number = _parse_number(case_properties.get(BACKUP_PHONE_NUMBER))

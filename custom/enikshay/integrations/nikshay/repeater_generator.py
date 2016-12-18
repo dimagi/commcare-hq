@@ -1,6 +1,8 @@
 import json
 import datetime
 
+from simplejson import JSONDecodeError
+
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.repeaters.repeater_generators import RegisterGenerator, CaseRepeaterJsonPayloadGenerator
 from custom.enikshay.case_utils import get_person_case_from_episode
@@ -10,7 +12,7 @@ from custom.enikshay.integrations.nikshay.field_mappings import (
     treatment_support_designation, patient_type_choice,
     disease_classification
 )
-
+from custom.enikshay.integrations.ninetyninedots.repeater_generators import _update_person_case
 
 ENIKSHAY_ID = 8
 
@@ -79,6 +81,30 @@ class NikshayRegisterPatientPayloadGenerator(CaseRepeaterJsonPayloadGenerator):
         properties_dict.update(_get_person_case_properties(person_case_properties))
         properties_dict.update(_get_episode_case_properties(episode_case_properties))
         return json.dumps(properties_dict)
+
+    def handle_success(self, response, payload_doc, repeat_record):
+        # A success would be getting a nikshay_id for the patient
+        # without it this would actually be a failure
+        try:
+            nikshay_id = response.json()['Results']['Fieldvalue']
+            person_case_id = get_person_case_from_episode(payload_doc.domain, payload_doc.case_id).get_id
+            _update_person_case(
+                payload_doc.domain,
+                person_case_id,
+                {
+                    "nikshay_registered": "true",
+                    "nikshay_id": nikshay_id
+                }
+            )
+        except (JSONDecodeError, KeyError):
+            self.handle_failure(response, payload_doc, repeat_record)
+
+    def handle_failure(self, response, payload_doc, repeat_record):
+        try:
+            error_message = response.json().get('Results', response.content)
+        except (JSONDecodeError, KeyError):
+            error_message = response.content
+        save_error_message(response.status_code, error_message)
 
 
 def _get_person_case_properties(person_case_properties):
@@ -160,3 +186,9 @@ def _get_episode_case_properties(episode_case_properties):
     # 'ptbyr': '2016', 'dotpType': '7', 'dotmob': u'1234567890', 'dotname': u'asdfasdf', 'Ptype': '1',
     # 'poccupation': 1, 'disease_classification': 'P'}
     return episode_properties
+
+
+def save_error_message(repeat_record, status_code, error_message):
+    repeat_record.add_failure_reason(
+        "{}: {}".format(status_code, error_message)
+    )
