@@ -1,7 +1,10 @@
 {
     "domains": [
         "enikshay-test",
-        "enikshay-test-test"
+        "enikshay-test-test",
+        "enikshay",
+        "enikshay-test-2",
+        "enikshay-test-3"
     ],
     "data_source_table": "episode",
     "report_id": "tb_notification_register",

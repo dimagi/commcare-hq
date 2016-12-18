@@ -1,7 +1,10 @@
 {
     "domains": [
         "enikshay-test",
-        "enikshay-test-test"
+        "enikshay-test-test",
+        "enikshay",
+        "enikshay-test-2",
+        "enikshay-test-3"
     ],
     "config": {
         "referenced_doc_type": "CommCareCase",
