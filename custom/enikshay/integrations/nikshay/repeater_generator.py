@@ -3,7 +3,7 @@ import datetime
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.repeaters.repeater_generators import RegisterGenerator, CaseRepeaterJsonPayloadGenerator
-from custom.enikshay.case_utils import get_occurrence_case_from_episode, get_person_case_from_occurrence
+from custom.enikshay.case_utils import get_person_case_from_episode
 from custom.enikshay.integrations.nikshay.repeaters import NikshayRegisterPatientRepeater
 from custom.enikshay.integrations.nikshay.field_mappings import (
     gender_mapping, occupation, episode_site,
@@ -66,8 +66,7 @@ class NikshayRegisterPatientPayloadGenerator(CaseRepeaterJsonPayloadGenerator):
         # "dcpulmunory": "P",
         # "IP_Address": "mk-ip-address",
         # "IP_From": "127.0.0.1",
-        occurence_case = get_occurrence_case_from_episode(repeat_record.domain, episode_case.get_id)
-        person_case = get_person_case_from_occurrence(repeat_record.domain, occurence_case.get_id)
+        person_case = get_person_case_from_episode(repeat_record.domain, episode_case.get_id)
 
         episode_case_properties = episode_case.case_properties()
         person_case_properties = person_case.case_properties()
