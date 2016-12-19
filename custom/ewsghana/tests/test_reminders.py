@@ -17,7 +17,7 @@ from custom.ewsghana.tasks import first_soh_reminder, second_soh_reminder, third
     stockout_notification_to_web_supers, reminder_to_visit_website, reminder_to_submit_rrirv
 from custom.ewsghana.tests.handlers.utils import EWSTestCase
 from custom.ewsghana.utils import prepare_domain, bootstrap_user, bootstrap_web_user, \
-    set_sms_notifications
+    set_sms_notifications, user_needs_reminders
 
 TEST_DOMAIN = 'ews-reminders-test-domain'
 
@@ -162,6 +162,11 @@ class TestReminders(EWSTestCase):
         FacilityInCharge.objects.all().delete()
 
         super(TestReminders, cls).tearDownClass()
+
+    def test_needs_reminders_flag(self):
+        self.assertFalse(user_needs_reminders(self.user1))
+        self.assertFalse(user_needs_reminders(self.user2))
+        self.assertTrue(user_needs_reminders(self.user3))
 
     def test_first_soh_reminder(self):
         first_soh_reminder()
