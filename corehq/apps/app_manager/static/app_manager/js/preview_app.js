@@ -186,7 +186,7 @@ hqDefine('app_manager/js/preview_app.js', function() {
                 $(module.SELECTORS.BTN_REFRESH).addClass('app-out-of-date');
             }
         });
-        $(module.SELECTORS.PREVIEW_WINDOW_IFRAME).load(function() {
+        $(module.SELECTORS.PREVIEW_WINDOW_IFRAME).on('load', function() {
             if (localStorage.getItem(module.DATA.TABLET)) {
                 _private.tabletView();
             } else {
