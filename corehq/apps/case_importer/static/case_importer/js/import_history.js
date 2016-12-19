@@ -19,7 +19,7 @@ hqDefine('case_importer/js/import_history.js', function () {
             // this prevents some jumpiness when not necessary
             // and is particularly bad if you're in the middle of editing a comment
             return !(_.chain(self.case_uploads()).pluck('upload_id').isEqual(_(data).pluck('upload_id')).value() &&
-                _.chain(self.case_uploads()).pluck('task_status').isEqual(_(data).pluck('task_status')).value())
+                _.chain(self.case_uploads()).pluck('task_status').isEqual(_(data).pluck('task_status')).value());
         };
         self.fetchCaseUploads = function () {
             if (self.state() === self.states.NOT_STARTED) {
