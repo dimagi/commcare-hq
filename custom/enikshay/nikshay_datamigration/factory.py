@@ -235,10 +235,9 @@ class EnikshayCaseFactory(object):
     @property
     @memoized
     def _outcome(self):
-        zero_or_one_outcomes = list(Outcome.objects.filter(PatientId=self.patient_detail))
-        if zero_or_one_outcomes:
-            return zero_or_one_outcomes[0]
-        else:
+        try:
+            return self.patient_detail.outcome
+        except Outcome.DoesNotExist:
             return None
 
     @property
