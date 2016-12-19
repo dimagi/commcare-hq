@@ -243,7 +243,7 @@ class EnikshayCaseFactory(object):
     @property
     @memoized
     def _followups(self):
-        return Followup.objects.filter(PatientID=self.patient_detail)
+        return self.patient_detail.followup_set.all()
 
     @property
     def _location(self):
