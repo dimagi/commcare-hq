@@ -146,10 +146,9 @@ def _get_person_case_properties(person_case_properties):
 
 
 def _get_episode_case_properties(episode_case_properties):
-    # Not Found
-    # "sitedetail": episode_site.get(episode_case_properties.get('site_choice', ''), ''),
-    if episode_site.get(episode_case_properties.get('site_choice', None)):
-        episode_site.get(episode_site.get(episode_case_properties.get('site_choice')))
+    episode_site_choice = episode_site.get(episode_case_properties.get('site_choice', None))
+    if episode_site_choice:
+        site_detail = episode_site.get(episode_site_choice, 'others')
     episode_case_date = episode_case_properties.get('date_of_diagnosis', None)
     if episode_case_date:
         episode_date = datetime.datetime.strptime(episode_case_date, "%Y-%m-%d").date()
@@ -180,6 +179,7 @@ def _get_episode_case_properties(episode_case_properties):
         ),
         "dateofInitiation": episode_case_properties.get('treatment_initiation_date', str(datetime.date.today())),
         "Ptype": patient_type_choice.get(episode_case_properties.get('patient_type_choice', ''), ''),
+        "sitedetail": site_detail
     }
 
     # Example : {'dateofInitiation': '2016-12-01', 'pregdate': '2016-12-01', 'dotdesignation': u'tbhv_to',
