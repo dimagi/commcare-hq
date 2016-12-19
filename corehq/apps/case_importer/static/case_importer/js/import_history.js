@@ -14,6 +14,10 @@ hqDefine('case_importer/js/import_history.js', function () {
         self.case_uploads = ko.observableArray(null);
         self.state = ko.observable(self.states.NOT_STARTED);
         var shouldUpdate = function (data) {
+            // do not update DOM
+            // if we're not either adding new uploads or updating the status
+            // this prevents some jumpiness when not necessary
+            // and is particularly bad if you're in the middle of editing a comment
             return !(_.chain(self.case_uploads()).pluck('upload_id').isEqual(_(data).pluck('upload_id')).value() &&
                 _.chain(self.case_uploads()).pluck('task_status').isEqual(_(data).pluck('task_status')).value())
         };
