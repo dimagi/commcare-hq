@@ -164,8 +164,13 @@ class TestReminders(EWSTestCase):
         super(TestReminders, cls).tearDownClass()
 
     def test_needs_reminders_flag(self):
+        self.assertFalse('needs_reminders' in self.user1.user_data)
         self.assertFalse(user_needs_reminders(self.user1))
+
+        self.assertEqual(self.user2.user_data['needs_reminders'], 'False')
         self.assertFalse(user_needs_reminders(self.user2))
+
+        self.assertEqual(self.user3.user_data['needs_reminders'], 'True')
         self.assertTrue(user_needs_reminders(self.user3))
 
     def test_first_soh_reminder(self):
