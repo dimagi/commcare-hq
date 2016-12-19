@@ -171,7 +171,7 @@ def global_keyword_unknown(v, text, msg, text_words, open_sessions):
 
 def handle_domain_keywords(v, text, msg, text_words, sessions):
     any_session_open = len(sessions) > 0
-    for survey_keyword in SurveyKeyword.get_all(v.domain):
+    for survey_keyword in SurveyKeyword.get_by_domain(v.domain):
         args = split_args(text, survey_keyword)
         keyword = args[0].upper()
         if keyword == survey_keyword.keyword.upper():

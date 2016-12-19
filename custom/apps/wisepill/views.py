@@ -46,7 +46,7 @@ def device_data(request):
     event.save()
     
     if case is not None:
-        survey_keywords = SurveyKeyword.get_all(case.domain)
+        survey_keywords = SurveyKeyword.get_by_domain(case.domain)
         for survey_keyword in survey_keywords:
             if survey_keyword.keyword.upper() == "DEVICE_EVENT":
                 for survey_keyword_action in survey_keyword.actions:
