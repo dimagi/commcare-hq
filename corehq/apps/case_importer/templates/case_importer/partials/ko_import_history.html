@@ -3,11 +3,11 @@
 <table class="table table-striped">
     <tr>
         <th class="col-md-1">{% trans "Status" %}</th>
-        <th class="col-md-1">{% trans "Case Type" %}</th>
-        <th class="col-md-1">{% trans "Uploaded by" %}</th>
-        <th class="col-md-5">{% trans "Details" %}</th>
-        <th class="col-md-2">{% trans "File" %}</th>
         <th class="col-md-1">{% trans "Time" %}</th>
+        <th class="col-md-1">{% trans "Case Type" %}</th>
+        <th class="col-md-4">{% trans "Details" %}</th>
+        <th class="col-md-3">{% trans "Uploaded by" %}</th>
+        <th class="col-md-2">{% trans "File" %}</th>
     </tr>
     <!--ko foreach: case_uploads-->
     <tr>
@@ -40,13 +40,13 @@
             </div>
             <!--/ko-->
         </td>
+        <td class="col-md-1" data-bind="text: created"></td>
         <td class="col-md-1" data-bind="text: case_type">
         </td>
-        <td class="col-md-1" data-bind="text: user_name">
-        </td>
-        <td class="col-md-5" data-bind="with: task_status">
+        <td class="col-md-4" data-bind="with: task_status">
             {% include 'case_importer/partials/ko_import_status.html' %}
         </td>
+        <td class="col-md-3" data-bind="text: user_name"></td>
         <td class="col-md-2">
             <!--ko if: upload_file_name-->
             <!--ko if: !upload_file_download_allowed-->
@@ -67,7 +67,6 @@
             <!--/ko-->
             <!--/ko-->
         </td>
-        <td class="col-md-1" data-bind="text: created"></td>
     </tr>
     <!--/ko-->
 </table>
