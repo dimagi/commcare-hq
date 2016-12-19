@@ -45,3 +45,18 @@ def case_upload_file(request, domain, upload_id):
 
     set_file_download(response, case_upload.upload_file_meta.filename)
     return response
+
+
+@require_can_edit_data
+def case_upload_case_ids(request, domain, upload_id):
+    try:
+        case_upload = CaseUploadRecord.objects.get(upload_id=upload_id, domain=domain)
+    except CaseUploadRecord.DoesNotExist:
+        return HttpResponseNotFound()
+
+    def stream_ids():
+        for form_record in case_upload.form_records.all():
+            for case_record in form_record.case_records.all():
+                yield '{}\n'.format(case_record.case_id)
+
+    return StreamingHttpResponse(stream_ids(), content_type='text/plain')

@@ -1,5 +1,6 @@
 from django.conf.urls import url
-from corehq.apps.case_importer.tracking.views import case_uploads, case_upload_file
+from corehq.apps.case_importer.tracking.views import case_uploads, case_upload_file, \
+    case_upload_case_ids
 
 from corehq.apps.case_importer.views import (
     excel_commit,
@@ -14,4 +15,6 @@ urlpatterns = [
     url(r'^history/uploads/$', case_uploads, name='case_importer_uploads'),
     url(r'^history/uploads/(?P<upload_id>[\w-]+)/$', case_upload_file,
         name='case_importer_upload_file_download'),
+    url(r'^history/uploads/(?P<upload_id>[\w-]+)/case_ids.txt$', case_upload_case_ids,
+        name='case_importer_upload_case_ids'),
 ]
