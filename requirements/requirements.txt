@@ -97,3 +97,4 @@ csiphash==0.0.4
 json-delta==2.0
 email_validator==1.0.1
 dnspython==1.13.0
+git+https://github.com/mvantellingen/python-zeep.git@46653fac2a92a99bc93d20c772cd7d797c301105

@@ -78,6 +78,7 @@ domain_specific = [
     url(r'^performance_messaging/', include('corehq.apps.performance_sms.urls')),
     url(r'^', include('custom.icds_reports.urls')),
     url(r'^', include('custom.enikshay.urls')),
+    url(r'^', include('custom.rch.urls')),
     url(r'^_base_template/$', login_and_domain_required(
         lambda request, domain: render(request, 'style/base.html', {'domain': domain})
     )),

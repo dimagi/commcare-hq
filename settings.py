@@ -362,12 +362,17 @@ HQ_APPS = (
     'custom.icds',
     'custom.icds_reports',
     'custom.pnlppgi',
+    'custom.rch'
 )
 
 ENIKSHAY_APPS = (
     'custom.enikshay',
     'custom.enikshay.integrations.ninetyninedots',
     'custom.enikshay.nikshay_datamigration',
+)
+
+RCH_APPS = (
+    'custom.rch',
 )
 
 # DEPRECATED use LOCAL_APPS instead; can be removed with testrunner.py
@@ -407,7 +412,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'dimagi.utils',
 )
 
-INSTALLED_APPS = DEFAULT_APPS + HQ_APPS + ENIKSHAY_APPS
+INSTALLED_APPS = DEFAULT_APPS + HQ_APPS + ENIKSHAY_APPS + RCH_APPS
 
 
 # after login, django redirects to this URL

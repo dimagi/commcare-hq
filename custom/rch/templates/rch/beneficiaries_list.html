@@ -1,0 +1,82 @@
+{% load hq_shared_tags %}{% load compress %}
+{% load crispy_forms_tags %}
+<div class="row">
+  <div class="col-md-12">
+    <h3>{{ filter_form.form_name }}</h3>
+
+    {% crispy filter_form %}
+  </div>
+</div>
+{% compress css %}
+    <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.min.css' %}"/>
+{% endcompress %}
+
+<div class="row">
+  <div class="col-md-12">
+    <strong>RCH Mother Beneficiaries:</strong>
+    {% if mother_beneficiaries %}
+        <strong>{{ mother_beneficiaries.count }}</strong>
+        <table class="table table-striped table-bordered">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Husband</th>
+                    <th>Village</th>
+                    <th>District</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for mother in mother_beneficiaries %}
+                    <tr>
+                        <td>
+                            <a href='{% url "mother_beneficiary_view" request.domain mother.id %}'>
+                                {{mother.Name_wife}}
+                            </a>
+                        </td>
+                        <td>{{ mother.Name_husband }}</td>
+                        <td>{{ mother.Village_Name }}</td>
+                        <td>{{ mother.District_Name }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No Mother Beneficiaries</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-12">
+    <strong>RCH Child Beneficiaries:</strong>
+    {% if child_beneficiaries %}
+        {{ child_beneficiaries.count }}
+        <table class="table table-striped table-bordered">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Mother</th>
+                    <th>Village</th>
+                    <th>District</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for child in child_beneficiaries %}
+                    <tr>
+                        <td>
+                            <a href='{% url "child_beneficiary_view" request.domain child.id %}'>
+                                {{ child.Name_Child }}
+                            </a>
+                        </td>
+                        <td>{{ child.Name_Mother }}</td>
+                        <td>{{ child.VILLAGE_Name }}</td>
+                        <td>{{ child.District_Name }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No Child Beneficiaries</p>
+    {% endif %}
+  </div>
+</div>
