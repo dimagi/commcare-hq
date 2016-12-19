@@ -138,6 +138,8 @@
         $scope._ = _;   // make underscore.js available
         $scope.formData = {};
         $scope.modelType = null;  // "form" or "case" - corresponding to the type of export selected.
+        // A list a location names. The export will be restricted to these locations.
+        $scope.locationRestrictions = [];
         $scope.isSubmittingForm = false;
         $scope.hasFormSubmitError = false;
         $scope.formSubmitErrorMessage = null;
@@ -156,6 +158,7 @@
                 }
 
                 $scope.formData = newSelectedExport.emailedExport.filters;
+                $scope.locationRestrictions = newSelectedExport.emailedExport.locationRestrictions;
                 $scope.modelType = newSelectedExport.exportType;
                 // select2s require programmatic update
                 $scope.formElement.emwf_case_filter().select2("data", newSelectedExport.emailedExport.filters.emwf_case_filter);

@@ -1045,6 +1045,13 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
                 has_file, file_id, size, last_updated, last_accessed, download_url
             )
 
+        location_restrictions = []
+        locations = []
+        if filters.accessible_location_ids:
+            locations = SQLLocation.objects.filter(location_id__in=filters.accessible_location_ids)
+        for location in locations:
+            location_restrictions.append(location.display_name)
+
         return {
             'groupId': group_id,  # This can be removed when we're off legacy exports
             'hasFile': has_file,
@@ -1052,6 +1059,7 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
             'fileData': file_data,
             'filters': DashboardFeedFilterForm.get_form_data_from_export_instance_filters(filters, self.domain, export_type),
             'isLocationSafeForUser': filters.is_location_safe_for_user(self.request),
+            "locationRestrictions": location_restrictions,
         }
 
     def fmt_legacy_emailed_export_data(self, group_id=None, index=None,
