@@ -8,6 +8,11 @@ _.each(components, function(moduleName, elementName) {
 
 $(function() {
     _.each(_.keys(components), function(elementName) {
-        _.each($(elementName), function(el) { $(el).koApplyBindings(); });
+        _.each($(elementName), function(el) {
+            var $el = $(el);
+            if (!$el.closest('.ko-template').length) {
+                $(el).koApplyBindings();
+            }
+        });
     });
 });
