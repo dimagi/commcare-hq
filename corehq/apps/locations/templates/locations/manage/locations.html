@@ -345,7 +345,19 @@
             </div>
             <div class="modal-footer">
                 <button data-dismiss="modal" class="btn btn-default">{% trans "Cancel" %}</button>
-                <button data-bind="click: delete_fn, css: {disabled: !(signOff() == count)}" class="btn btn-danger">{% trans "Delete" %}</button>
+                <div class="btn-group">
+                  <button type="button" class="btn btn-danger">Delete Locations</button>
+                  <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <span class="caret"></span>
+                    <span class="sr-only">Toggle Dropdown</span>
+                  </button>
+                  <ul class="dropdown-menu">
+                    <li><a href="#">Delete Locations</a></li>
+                    <li role="separator" class="divider"></li>
+                    <li><a href="#">Delete Locations and <strong>All Assigned Cases</strong></a></li>
+                  </ul>
+                </div>
+{#                <button data-bind="click: delete_fn, css: {disabled: !(signOff() == count)}" class="btn btn-danger">{% trans "Delete" %}</button>#}
             </div>
         </div>
     </div>
