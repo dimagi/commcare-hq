@@ -4,7 +4,8 @@ from django.http import HttpResponseNotFound, HttpResponseForbidden, \
 
 from corehq.apps.case_importer.tracking.dbaccessors import get_case_upload_records
 from corehq.apps.case_importer.tracking.jsmodels import case_upload_to_user_json
-from corehq.apps.case_importer.tracking.models import CaseUploadRecord
+from corehq.apps.case_importer.tracking.models import CaseUploadRecord, \
+    MAX_COMMENT_LENGTH
 from corehq.apps.case_importer.tracking.permissions import user_may_view_file_upload, \
     user_may_update_comment
 from corehq.apps.case_importer.views import require_can_edit_data
@@ -37,6 +38,9 @@ def update_case_upload_comment(request, domain, upload_id):
     comment = request.POST.get('comment')
     if comment is None:
         return HttpResponseBadRequest("POST body must contain non-null comment property")
+    elif len(comment) > MAX_COMMENT_LENGTH:
+        return HttpResponseBadRequest("comment must be shorter than {} characters"
+                                      .format(MAX_COMMENT_LENGTH))
     try:
         case_upload = CaseUploadRecord.objects.get(upload_id=upload_id, domain=domain)
     except CaseUploadRecord.DoesNotExist:

@@ -6,6 +6,8 @@ from corehq.apps.case_importer.tracking.task_status import TaskStatus, \
 from dimagi.utils.decorators.memoized import memoized
 from soil.util import get_task
 
+MAX_COMMENT_LENGTH = 2048
+
 
 class CaseUploadRecord(models.Model):
     domain = models.CharField(max_length=256)
