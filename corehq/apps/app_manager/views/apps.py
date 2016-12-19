@@ -66,7 +66,7 @@ from corehq.apps.app_manager.models import (
     Module,
     ModuleNotFoundException,
     load_app_template,
-)
+    ReportModule)
 from corehq.apps.app_manager.models import import_app as import_app_util
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
@@ -310,6 +310,15 @@ def copy_app(request, domain):
                     app.linked_whitelist.append(domain)
                     app.save()
             app_copy = import_app_util(app_id_or_source, domain, extra_properties)
+            mobile_ucrs = False
+            for module in app_copy.modules:
+                if isinstance(module, ReportModule):
+                    mobile_ucrs = True
+                    break
+            if mobile_ucrs:
+                messages.error(request, _('This linked application uses mobile UCRs '
+                                          'which are currently not supported. For this application '
+                                          'to function correctly, you will need to remove those modules.'))
             return back_to_main(request, app_copy.domain, app_id=app_copy._id)
 
         return login_and_domain_required(_inner)(request, form.cleaned_data['domain'], form.cleaned_data)
@@ -823,6 +832,19 @@ def pull_master_app(request, domain, app_id):
                 app[key] = value
         app['version'] = master_json['version']
         wrapped_app = wrap_app(app)
+        mobile_ucrs = False
+        for module in wrapped_app.modules:
+            if isinstance(module, ReportModule):
+                mobile_ucrs = True
+                break
+        if mobile_ucrs:
+            messages.error(request, _('This linked application uses mobile UCRs '
+                                      'which are currently not supported. For this application '
+                                      'to function correctly, you will need to remove those modules '
+                                      'or revert to a previous version that did not include them.'))
+        else:
+            messages.success(request,
+                             _('Your linked application was successfully updated to the latest version.'))
         wrapped_app.copy_attachments(latest_master_build)
         wrapped_app.save(increment_version=False)
     else:
