@@ -47,7 +47,7 @@
 -                permissions: {
 -                    cloudcare: {{ is_cloudcare_allowed|BOOL }}
 -                },
--                warning: '{% trans "This is not an allowed value for this field" %}'
+-                warning: '{% trans "This is not an allowed value for this field"|escapejs %}'
 -            }
 -        };
 -
@@ -317,7 +317,7 @@
 +          permissions: {
 +            cloudcare: {{ is_cloudcare_allowed|BOOL }}
 +          },
-+          warning: '{% trans "This is not an allowed value for this field" %}'
++          warning: '{% trans "This is not an allowed value for this field"|escapejs %}'
 +        }
 +      };
 +    </script>
