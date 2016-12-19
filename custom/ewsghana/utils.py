@@ -6,6 +6,7 @@ from dateutil import rrule
 from dateutil.relativedelta import relativedelta
 from dateutil.rrule import MO
 
+from dimagi.utils.parsing import string_to_boolean
 from django.db.models.query_utils import Q
 from django.utils import html
 
@@ -26,6 +27,10 @@ from custom.ewsghana.reminders.const import DAYS_UNTIL_LATE
 TEST_DOMAIN = 'ewsghana-receipts-test'
 TEST_BACKEND = 'MOBILE_BACKEND_TEST'
 Msg = namedtuple('Msg', ['text'])
+
+
+def user_needs_reminders(user):
+    return string_to_boolean(user.user_data.get('needs_reminders', 'False'))
 
 
 def get_descendants(location_id):
