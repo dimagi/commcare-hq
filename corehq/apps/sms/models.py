@@ -2333,6 +2333,8 @@ class Keyword(SyncSQLToCouchMixin, models.Model):
     # Example: ['CommCareUser', 'CommCareCase']
     initiator_doc_type_filter = jsonfield.JSONField(default=list)
 
+    last_modified = models.DateTimeField(auto_now=True)
+
     @classmethod
     def _migration_get_couch_model_class(cls):
         from corehq.apps.reminders.models import SurveyKeyword
