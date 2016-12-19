@@ -152,7 +152,7 @@ class PatientDetail(models.Model):
 
 
 class Outcome(models.Model):
-    PatientId = models.OneToOneField(PatientDetail, primary_key=True)
+    PatientId = models.OneToOneField(PatientDetail, primary_key=True, related_name='outcome')
     Outcome = models.CharField(
         max_length=255,
         choices=(
