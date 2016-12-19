@@ -110,18 +110,17 @@ class NikshayRegisterPatientPayloadGenerator(CaseRepeaterJsonPayloadGenerator):
 def _get_person_case_properties(person_case_properties):
     state_choice = person_case_properties.get('current_address_state_choice', None)
     district_choice = person_case_properties.get('current_address_district_choice', None)
+    tu_choice = person_case_properties.get('tu_choice', None)
 
     if state_choice:
-        state_location = (SQLLocation.objects.
-                          get(location_id=person_case_properties['current_address_state_choice']))
+        state_location = SQLLocation.objects.get(location_id=state_choice)
     if district_choice:
-        district_location = (SQLLocation.objects.
-                             get(location_id=person_case_properties['current_address_district_choice']))
+        district_location = SQLLocation.objects.get(location_id=district_choice)
 
-    # Could not locate this in any of the case types : episode, person, occurence
-    # tu_location = SQLLocation.objects.get(location_id=person_case_properties.get('tu_choice'))
-    # "tcode": tu_location.metadata['nikshay_code'],
-    # and pcategory
+    if tu_choice:
+        tu_location = SQLLocation.objects.get(tu_choice)
+    person_category = '2' if person_case_properties.get('previous_tb_treatment', '') == 'yes' else '1'
+
     person_properites = {
         "pname": person_case_properties.get('name', ''),
         "pgender": gender_mapping.get(person_case_properties.get('sex', ''), ''),
@@ -132,12 +131,15 @@ def _get_person_case_properties(person_case_properties):
         "cname": person_case_properties.get('secondary_contact_name_address', ''),
         "caddress": person_case_properties.get('secondary_contact_name_address', ''),
         "cmob": person_case_properties.get('secondary_contact_phone_number', ''),
+        "pcategory": person_category
     }
 
     if state_location:
         person_properites['scode'] = state_location.metadata.get('nikshay_code', '')
     if district_location:
         person_properites['dcode'] = district_location.metadata.get('nikshay_code')
+    if tu_location:
+        person_properites['tcode'] = tu_location.metadata.get('nikshay_code', '')
 
     # {'dcode': u'JLR', 'paddress': u'123, near asdf, , , Jalore, Rajasthan ', 'cmob': u'1234567890',
     # 'pname': u'home visit', 'scode': u'RJ', 'dotphi': u'Test S1-C1-D1-T1 PHI 1', 'pmob': u'1234567890',
