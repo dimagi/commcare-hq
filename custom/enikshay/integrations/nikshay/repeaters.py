@@ -34,14 +34,10 @@ class NikshayRegisterPatientRepeater(CaseRepeater):
 
 def episode_pending_registration_changed(case):
     last_case_action = case.actions[-1]
-    # previous_case_action = case.actions[-2]
     if last_case_action.is_case_create:
         return False
 
     last_update_actions = [update.get_update_action() for update in get_case_updates(last_case_action.form)]
-    # add condition for if this is a create
-    # previous_update_actions =
-    # [update.get_update_action() for update in get_case_updates(previous_case_action.form)]
     value_changed = any(
         action for action in last_update_actions
         if isinstance(action, CaseUpdateAction)

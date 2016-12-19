@@ -108,6 +108,11 @@ class NikshayRegisterPatientPayloadGenerator(CaseRepeaterJsonPayloadGenerator):
 
 
 def _get_person_case_properties(person_case_properties):
+    """
+    :return: Example {'dcode': u'JLR', 'paddress': u'123, near asdf, Jalore, Rajasthan ', 'cmob': u'1234567890',
+    'pname': u'home visit', 'scode': u'RJ', 'tcode': 'AB', dotphi': u'Test S1-C1-D1-T1 PHI 1',
+    'pmob': u'1234567890', 'cname': u'123', 'caddress': u'123', 'pgender': 'T', 'page': u'79', 'pcategory': 1}
+    """
     state_choice = person_case_properties.get('current_address_state_choice', None)
     district_choice = person_case_properties.get('current_address_district_choice', None)
     tu_choice = person_case_properties.get('tu_choice', None)
@@ -141,13 +146,15 @@ def _get_person_case_properties(person_case_properties):
     if tu_location:
         person_properites['tcode'] = tu_location.metadata.get('nikshay_code', '')
 
-    # {'dcode': u'JLR', 'paddress': u'123, near asdf, , , Jalore, Rajasthan ', 'cmob': u'1234567890',
-    # 'pname': u'home visit', 'scode': u'RJ', 'dotphi': u'Test S1-C1-D1-T1 PHI 1', 'pmob': u'1234567890',
-    # 'cname': u'123', 'caddress': u'123', 'pgender': 'T', 'page': u'79'}
     return person_properites
 
 
 def _get_episode_case_properties(episode_case_properties):
+    """
+    :return: Example : {'dateofInitiation': '2016-12-01', 'pregdate': '2016-12-01', 'dotdesignation': u'tbhv_to',
+    'ptbyr': '2016', 'dotpType': '7', 'dotmob': u'1234567890', 'dotname': u'asdfasdf', 'Ptype': '1',
+    'poccupation': 1, 'disease_classification': 'P', 'sitedetail: 1}
+    """
     episode_site_choice = episode_site.get(episode_case_properties.get('site_choice', None))
     if episode_site_choice:
         site_detail = episode_site.get(episode_site_choice, 'others')
@@ -184,9 +191,6 @@ def _get_episode_case_properties(episode_case_properties):
         "sitedetail": site_detail
     }
 
-    # Example : {'dateofInitiation': '2016-12-01', 'pregdate': '2016-12-01', 'dotdesignation': u'tbhv_to',
-    # 'ptbyr': '2016', 'dotpType': '7', 'dotmob': u'1234567890', 'dotname': u'asdfasdf', 'Ptype': '1',
-    # 'poccupation': 1, 'disease_classification': 'P'}
     return episode_properties
 
 
