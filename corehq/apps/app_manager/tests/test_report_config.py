@@ -14,7 +14,8 @@ from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import ReportConfiguration, ReportMeta
 from corehq.apps.userreports.reports.filters.choice_providers import ChoiceProvider
-from corehq.apps.userreports.reports.filters.specs import DynamicChoiceListFilterSpec
+from corehq.apps.userreports.reports.filters.specs import DynamicChoiceListFilterSpec, ChoiceListFilterSpec, \
+    FilterChoice
 from corehq.apps.userreports.reports.specs import FieldColumn, MultibarChartSpec, \
     GraphDisplayColumn
 from corehq.apps.userreports.tests.utils import mock_datasource_config, mock_sql_backend
@@ -65,6 +66,17 @@ MAKE_REPORT_CONFIG = lambda domain, report_id: ReportConfiguration(
             display="owner name",
             field="computed_owner_name_40cc88a0",
             slug="computed_owner_name_40cc88a0_1"
+        ).to_json(),
+        ChoiceListFilterSpec(
+            type='choice_list',
+            display="fav color",
+            field="fav_color_abc123",
+            slug="fav_color_abc123_1",
+            choices=[
+                FilterChoice(value='r', display='red'),
+                FilterChoice(value='g', display='green'),
+                FilterChoice(value='b', display='blue'),
+            ]
         ).to_json()
     ],
 )
@@ -118,7 +130,10 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
                         series_configs={'count': {}}
                     )
                 },
-                filters={'computed_owner_name_40cc88a0_1': MobileSelectFilter()},
+                filters={
+                    'computed_owner_name_40cc88a0_1': MobileSelectFilter(),
+                    'fav_color_abc123_1': MobileSelectFilter()
+                },
                 uuid=cls.report_config_uuid,
             )
         )
@@ -154,6 +169,7 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
             <instance id="commcaresession" src="jr://instance/session"/>
             <instance id="reports" src="jr://fixture/commcare:reports"/>
             <session>
+              <datum id="report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_fav_color_abc123_1" nodeset="instance('reports')/reports/report[@id='a98c812873986df34fd1b4ceb45e6164ae9cc664']/filters/filter[@field='fav_color_abc123_1']/option" value="./@value" detail-select="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.filter.fav_color_abc123_1" />
               <datum id="report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_computed_owner_name_40cc88a0_1" nodeset="instance('reports')/reports/report[@id='a98c812873986df34fd1b4ceb45e6164ae9cc664']/filters/filter[@field='computed_owner_name_40cc88a0_1']/option" value="./@value" detail-select="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.filter.computed_owner_name_40cc88a0_1"/>
               <datum id="report_id_a98c812873986df34fd1b4ceb45e6164ae9cc664" nodeset="instance('reports')/reports/report[@id='a98c812873986df34fd1b4ceb45e6164ae9cc664']" value="./@id" detail-select="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.select" detail-confirm="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.summary" autoselect="true"/>
             </session>
@@ -185,7 +201,7 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
     def test_data_detail(self):
         self.assertXmlPartialEqual("""
         <partial>
-          <detail nodeset="rows/row[column[@id='computed_owner_name_40cc88a0']=instance('commcaresession')/session/data/report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_computed_owner_name_40cc88a0_1]" id="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.data">
+          <detail nodeset="rows/row[column[@id='fav_color_abc123']=instance('commcaresession')/session/data/report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_fav_color_abc123_1][column[@id='computed_owner_name_40cc88a0']=instance('commcaresession')/session/data/report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_computed_owner_name_40cc88a0_1]" id="reports.a98c812873986df34fd1b4ceb45e6164ae9cc664.data">
             <title>
               <text>
                 <locale id="cchq.report_data_table"/>
@@ -212,7 +228,7 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
         <partial>
           <template form="graph">
             <graph type="bar">
-              <series nodeset="instance('reports')/reports/report[@id='a98c812873986df34fd1b4ceb45e6164ae9cc664']/rows/row[@is_total_row='False'][column[@id='computed_owner_name_40cc88a0']=instance('commcaresession')/session/data/report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_computed_owner_name_40cc88a0_1]">
+              <series nodeset="instance('reports')/reports/report[@id='a98c812873986df34fd1b4ceb45e6164ae9cc664']/rows/row[@is_total_row='False'][column[@id='fav_color_abc123']=instance('commcaresession')/session/data/report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_fav_color_abc123_1][column[@id='computed_owner_name_40cc88a0']=instance('commcaresession')/session/data/report_filter_a98c812873986df34fd1b4ceb45e6164ae9cc664_computed_owner_name_40cc88a0_1]">
                 <configuration/>
                 <x function="column[@id='color_94ec39e6']"/>
                 <y function="column[@id='count']"/>
@@ -250,6 +266,11 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
         self.assertXmlPartialEqual("""
         <partial>
           <filters>
+            <filter field="fav_color_abc123_1">
+              <option value="r">red</option>
+              <option value="g">green</option>
+              <option value="b">blue</option>
+            </filter>
             <filter field="computed_owner_name_40cc88a0_1">
               <option value="ctsims">Clayton Sims</option>
               <option value="cory">Cory Zue</option>
