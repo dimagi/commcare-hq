@@ -5,7 +5,7 @@ import logging
 from django.core.management import BaseCommand
 
 from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain
-from corehq.apps.domain.calculations import cases, forms
+from corehq.apps.domain.calculations import cases
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.apps import AppES
 from corehq.apps.es.cases import CaseES
@@ -55,7 +55,7 @@ class Command(BaseCommand):
             csvfile.writerow([domain, 'cases', extra_in_es, extra_in_primary])
 
         if stats.num_forms_es != stats.num_forms_primary:
-            form_ids_es = set(FormES().domain(domain).get_ids())
+            form_ids_es = set(form_query(domain).get_ids())
             form_ids_primary = set(FormAccessors(domain).get_all_form_ids_in_domain())
             extra_in_es = form_ids_es - form_ids_primary
             extra_in_primary = form_ids_primary - form_ids_es
@@ -127,7 +127,7 @@ class Command(BaseCommand):
 
         stats = DomainStats(
             num_cases_es=cases(domain),
-            num_forms_es=forms(domain),
+            num_forms_es=form_query(domain).count(),
             num_apps_es=app_query(domain).count(),
             num_users_es=user_query(domain).count(),
             num_groups_es=GroupES().domain(domain).count(),
@@ -150,3 +150,7 @@ def user_query(domain):
 
 def app_query(domain):
     return AppES().domain(domain).is_build(False)
+
+
+def form_query(domain):
+    return FormES().domain(domain).remove_default_filter('has_user')
