@@ -35,12 +35,12 @@ def get_number_forms_in_domain(domain, type_="XFormInstance"):
     startkey = [domain, type_]
     endkey = [domain, type_, {}]
 
-    return XFormInstance.get_db().view(
+    ret = XFormInstance.get_db().view(
         "couchforms/all_submissions_by_domain",
         startkey=startkey,
         endkey=endkey,
-        reduce=False,
-    ).count()
+    ).first()
+    return ret['value'] if ret else 0
 
 
 def get_forms_by_type(domain, type_, recent_first=False,

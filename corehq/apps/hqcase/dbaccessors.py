@@ -32,13 +32,12 @@ def get_case_ids_in_domain(domain, type=None):
 
 
 def get_number_of_cases_in_domain(domain, type=None):
-    return CommCareCase.get_db().view(
+    ret = CommCareCase.get_db().view(
         'case_types_by_domain/view',
         startkey=[domain],
         endkey=[domain, {}],
-        include_docs=False,
-        reduce=False,
-    ).count()
+    ).first()
+    return ret['value'] if ret else 0
 
 
 def get_cases_in_domain(domain, type=None):
