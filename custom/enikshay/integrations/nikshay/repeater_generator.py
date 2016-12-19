@@ -12,7 +12,7 @@ from custom.enikshay.integrations.nikshay.field_mappings import (
     treatment_support_designation, patient_type_choice,
     disease_classification
 )
-from custom.enikshay.integrations.ninetyninedots.repeater_generators import _update_person_case
+from custom.enikshay.case_utils import _update_case
 
 ENIKSHAY_ID = 8
 
@@ -88,7 +88,7 @@ class NikshayRegisterPatientPayloadGenerator(CaseRepeaterJsonPayloadGenerator):
         try:
             nikshay_id = response.json()['Results']['Fieldvalue']
             person_case_id = get_person_case_from_episode(payload_doc.domain, payload_doc.case_id).get_id
-            _update_person_case(
+            _update_case(
                 payload_doc.domain,
                 person_case_id,
                 {

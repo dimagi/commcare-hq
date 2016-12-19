@@ -3,9 +3,7 @@ import json
 import phonenumbers
 import jsonobject
 from corehq.apps.repeaters.repeater_generators import BasePayloadGenerator, RegisterGenerator
-
-from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.util import post_case_blocks
+from custom.enikshay.case_utils import _update_case
 from custom.enikshay.integrations.ninetyninedots.repeaters import (
     NinetyNineDotsRegisterPatientRepeater,
     NinetyNineDotsUpdatePatientRepeater,
@@ -49,7 +47,7 @@ class RegisterPatientPayloadGenerator(BasePayloadGenerator):
 
     def handle_success(self, response, payload_doc, repeat_record):
         if response.status_code == 201:
-            _update_episode_case(
+            _update_case(
                 payload_doc.domain,
                 payload_doc.case_id,
                 {
@@ -60,7 +58,7 @@ class RegisterPatientPayloadGenerator(BasePayloadGenerator):
 
     def handle_failure(self, response, payload_doc, repeat_record):
         if 400 <= response.status_code <= 500:
-            _update_episode_case(
+            _update_case(
                 payload_doc.domain,
                 payload_doc.case_id,
                 {
@@ -94,7 +92,7 @@ class UpdatePatientPayloadGenerator(BasePayloadGenerator):
 
     def handle_success(self, response, payload_doc, repeat_record):
         if response.status_code == 200:
-            _update_episode_case(
+            _update_case(
                 payload_doc.domain,
                 payload_doc.case_id,
                 {
@@ -104,7 +102,7 @@ class UpdatePatientPayloadGenerator(BasePayloadGenerator):
 
     def handle_failure(self, response, payload_doc, repeat_record):
         if 400 <= response.status_code <= 500:
-            _update_episode_case(
+            _update_case(
                 payload_doc.domain,
                 payload_doc.case_id,
                 {
@@ -114,26 +112,6 @@ class UpdatePatientPayloadGenerator(BasePayloadGenerator):
                     ),
                 }
             )
-
-
-def _update_episode_case(domain, case_id, updated_properties):
-    post_case_blocks(
-        [CaseBlock(
-            case_id=case_id,
-            update=updated_properties
-        ).as_xml()],
-        {'domain': domain}
-    )
-
-
-def _update_person_case(domain, case_id, updated_properties):
-    post_case_blocks(
-        [CaseBlock(
-            case_id=case_id,
-            update=updated_properties
-        ).as_xml()],
-        {'domain': domain}
-    )
 
 
 def _get_phone_numbers(case_properties):

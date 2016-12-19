@@ -1,6 +1,8 @@
 import pytz
 from django.utils.dateparse import parse_datetime
 
+from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.util import post_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 from corehq.form_processor.exceptions import CaseNotFound
@@ -104,3 +106,13 @@ def get_adherence_cases_between_dates(domain, person_case_id, start_date, end_da
     ]
 
     return open_pertinent_adherence_cases
+
+
+def _update_case(domain, case_id, updated_properties):
+    post_case_blocks(
+        [CaseBlock(
+            case_id=case_id,
+            update=updated_properties
+        ).as_xml()],
+        {'domain': domain}
+    )
