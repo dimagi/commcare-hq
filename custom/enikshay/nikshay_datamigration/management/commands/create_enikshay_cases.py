@@ -11,7 +11,7 @@ logger = logging.getLogger('nikshay_datamigration')
 class Command(BaseCommand):
 
     def handle(self, domain, **options):
-        base_query = PatientDetail.objects.all()
+        base_query = PatientDetail.objects.prefetch_related('outcome').all()
 
         start = options['start']
         limit = options['limit']
