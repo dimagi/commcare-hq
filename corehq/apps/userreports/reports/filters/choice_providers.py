@@ -88,6 +88,41 @@ class ChoiceProvider(object):
         pass
 
 
+class SearchableChoice(Choice):
+
+    def __new__(cls, value, display, searchable_text=None):
+        self = super(SearchableChoice, cls).__new__(cls, value, display)
+        self.searchable_text = [text for text in searchable_text or []
+                                if text is not None]
+        return self
+
+
+class StaticChoiceProvider(ChoiceProvider):
+
+    def __init__(self, choices):
+        """
+        choices must be passed in in desired sort order
+        """
+        self.choices = [
+            choice if isinstance(choice, SearchableChoice)
+            else SearchableChoice(
+                choice.value, choice.display,
+                searchable_text=[choice.display]
+            )
+            for choice in choices
+        ]
+        super(StaticChoiceProvider, self).__init__(None, None)
+
+    def query(self, query_context):
+        filtered_set = [choice for choice in self.choices
+                        if any(query_context.query in text for text in choice.searchable_text)]
+        return filtered_set[query_context.offset:query_context.offset + query_context.limit]
+
+    def get_choices_for_known_values(self, values):
+        return {choice for choice in self.choices
+                if choice.value in values}
+
+
 class ChainableChoiceProvider(ChoiceProvider):
     __metaclass__ = ABCMeta
 
