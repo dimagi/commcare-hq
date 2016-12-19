@@ -13,6 +13,10 @@ hqDefine('case_importer/js/import_history.js', function () {
         };
         self.case_uploads = ko.observableArray(null);
         self.state = ko.observable(self.states.NOT_STARTED);
+        var shouldUpdate = function (data) {
+            return !(_.chain(self.case_uploads()).pluck('upload_id').isEqual(_(data).pluck('upload_id')).value() &&
+                _.chain(self.case_uploads()).pluck('task_status').isEqual(_(data).pluck('task_status')).value())
+        };
         self.fetchCaseUploads = function () {
             if (self.state() === self.states.NOT_STARTED) {
                 // only show spinner on first fetch
@@ -20,7 +24,12 @@ hqDefine('case_importer/js/import_history.js', function () {
             }
             $.get(urllib.reverse('case_importer_uploads'), {limit: urllib.getUrlParameter('limit')}).done(function (data) {
                 self.state(self.states.SUCCESS);
-                self.case_uploads(data);
+                _(data).each(function (case_upload) {
+                    case_upload.comment = ko.observable(case_upload.comment || '');
+                });
+                if (shouldUpdate(data)) {
+                    self.case_uploads(data);
+                }
                 var anyInProgress = _.any(self.case_uploads(), function (case_upload) {
                     return case_upload.task_status.state === self.states.STARTED ||
                             case_upload.task_status.state === self.states.NOT_STARTED;
