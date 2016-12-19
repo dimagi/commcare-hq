@@ -1407,18 +1407,21 @@ class DailySavedExportListView(BaseExportListView):
         form_data = in_data['form_data']
         try:
             export = get_properly_wrapped_export_instance(export_id)
+
+            if not export.filters.is_location_safe_for_user(self.request):
+                return location_restricted_response(self.request)
+
             filter_form = DashboardFeedFilterForm(self.domain_object, form_data)
             if filter_form.is_valid():
-                if not self.request.can_access_all_locations:
-                    accessible_location_ids = (SQLLocation.active_objects.accessible_location_ids(
-                        self.request.domain,
-                        self.request.couch_user)
-                    )
-                else:
-                    accessible_location_ids = None
+                old_can_access_all_locations = export.filters.can_access_all_locations
+                old_accessible_location_ids = export.filters.accessible_location_ids
+
                 filters = filter_form.to_export_instance_filters(
-                    self.request.can_access_all_locations,
-                    accessible_location_ids
+                    # using existing location restrictions prevents a less restricted user from modifying
+                    # restrictions on an export that a more restricted user created (which would mean the more
+                    # restricted user would lose access to the export)
+                    old_can_access_all_locations,
+                    old_accessible_location_ids
                 )
                 if export.filters != filters:
                     export.filters = filters
@@ -1877,6 +1880,15 @@ class DailySavedExportMixin(object):
             instance.filters.user_types = [0]
         span = datespan_from_beginning(self.domain_object, _get_timezone(self.domain, self.request.couch_user))
         instance.filters.date_period = DatePeriod(period_type="range", begin=span.startdate.date(), end=span.enddate.date())
+        if not self.request.can_access_all_locations:
+            accessible_location_ids = (SQLLocation.active_objects.accessible_location_ids(
+                self.request.domain,
+                self.request.couch_user)
+            )
+        else:
+            accessible_location_ids = None
+        instance.filters.can_access_all_locations = self.request.can_access_all_locations
+        instance.filters.accessible_location_ids = accessible_location_ids
 
         return instance
 
