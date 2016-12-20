@@ -87,7 +87,7 @@ class EnikshayCaseFactory(object):
                     'sex': self.patient_detail.sex,
                     'tu_choice': self.patient_detail.Tbunitcode,
 
-                    'migration_created_case': True,
+                    'migration_created_case': 'true',
                 },
             },
         }
@@ -111,7 +111,7 @@ class EnikshayCaseFactory(object):
                     'nikshay_id': self.patient_detail.PregId,
                     'occurrence_episode_count': 1,
 
-                    'migration_created_case': True,
+                    'migration_created_case': 'true',
                 },
             },
             'indices': [CaseIndex(
@@ -151,7 +151,7 @@ class EnikshayCaseFactory(object):
                     'treatment_supporter_last_name': self.patient_detail.treatment_supporter_last_name,
                     'treatment_supporter_mobile_number': validate_number(self.patient_detail.dotmob),
 
-                    'migration_created_case': True,
+                    'migration_created_case': 'true',
                 },
             },
             'indices': [CaseIndex(
@@ -191,7 +191,7 @@ class EnikshayCaseFactory(object):
                 'update': {
                     'date_tested': followup.TestDate,
 
-                    'migration_created_case': True,
+                    'migration_created_case': 'true',
                     'migration_followup_id': followup.id,
                 },
             },
