@@ -439,6 +439,12 @@ class ProjectDataTab(UITab):
 
     @property
     @memoized
+    def use_new_daily_saved_exports_ui(self):
+        from corehq.apps.export.views import use_new_daily_saved_exports_ui
+        return use_new_daily_saved_exports_ui(self.domain)
+
+    @property
+    @memoized
     def can_only_see_deid_exports(self):
         from corehq.apps.export.views import user_can_view_deid_exports
         return (not self.can_view_form_exports
@@ -593,7 +599,8 @@ class ProjectDataTab(UITab):
                         ])
                     })
             if self.can_view_daily_saved_exports:
-                export_data_views.append({
+                if self.use_new_daily_saved_exports_ui:
+                    export_data_views.append({
                     "title": DailySavedExportListView.page_title,
                     "url": reverse(DailySavedExportListView.urlname, args=(self.domain,)),
                     "show_in_dropdown": True,
@@ -624,7 +631,8 @@ class ProjectDataTab(UITab):
                     'subpages': []
                 })
             if self.can_view_dashboard_feeds:
-                export_data_views.append({
+                if self.use_new_daily_saved_exports_ui:
+                    export_data_views.append({
                     'title': DashboardFeedListView.page_title,
                     'url': reverse(DashboardFeedListView.urlname, args=(self.domain,)),
                     'show_in_dropdown': True,
@@ -715,11 +723,11 @@ class ProjectDataTab(UITab):
             dropdown_dict(
                 DailySavedExportListView.page_title,
                 url=daily_saved_list_url if self.can_view_daily_saved_exports else daily_saved_paywall_url
-            ),
+            ) if self.use_new_daily_saved_exports_ui else None,
             dropdown_dict(
                 DashboardFeedListView.page_title,
                 url=feed_list_url if self.can_view_dashboard_feeds else feed_paywall_url
-            ),
+            ) if self.use_new_daily_saved_exports_ui else None,
             dropdown_dict(None, is_divider=True),
             dropdown_dict(_("View All"), url=self.url),
         ])

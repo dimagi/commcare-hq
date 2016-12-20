@@ -73,7 +73,7 @@ from corehq.apps.export.dbaccessors import (
     get_properly_wrapped_export_instance,
 )
 from corehq.apps.groups.models import Group
-from corehq.apps.reports.dbaccessors import touch_exports
+from corehq.apps.reports.dbaccessors import touch_exports, stale_get_export_count
 from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.export import CustomBulkExportHelper
 from corehq.apps.reports.exportfilters import default_form_filter
@@ -1500,6 +1500,18 @@ class DashboardFeedPaywall(BaseProjectDataView):
     template_name = 'export/paywall.html'
 
 
+def use_new_daily_saved_exports_ui(domain):
+    """
+    Return True if this domain should use the new daily saved exports UI
+    The new daily saved exports UI puts Daily Saved Exports and Dashboard Feeds on their own pages.
+    It also allows for the filtering of both of these types of exports.
+    """
+    def _has_no_old_exports(domain_):
+        return not bool(stale_get_export_count(domain_))
+
+    return use_new_exports(domain) and _has_no_old_exports(domain)
+
+
 @location_safe
 class FormExportListView(BaseExportListView):
     urlname = 'list_form_exports'
@@ -1517,7 +1529,7 @@ class FormExportListView(BaseExportListView):
     @memoized
     def get_saved_exports(self):
         exports = _get_form_exports_by_domain(self.domain, self.has_deid_view_permissions)
-        if use_new_exports(self.domain):
+        if use_new_daily_saved_exports_ui(self.domain):
             # New exports display daily saved exports in their own view
             exports = filter(lambda x: not x.is_daily_saved_export, exports)
         return exports
@@ -1673,7 +1685,7 @@ class CaseExportListView(BaseExportListView):
     @memoized
     def get_saved_exports(self):
         exports = _get_case_exports_by_domain(self.domain, self.has_deid_view_permissions)
-        if use_new_exports(self.domain):
+        if use_new_daily_saved_exports_ui(self.domain):
             exports = filter(lambda x: not x.is_daily_saved_export, exports)
         return exports
 
@@ -2103,8 +2115,8 @@ class DeleteNewCustomExportView(BaseModifyNewCustomView):
     @property
     @memoized
     def report_class(self):
-        # The user will be redirected to the view class returned by this function after a successfull deletion
-        if self.export_instance.is_daily_saved_export and use_new_exports(self.domain):
+        # The user will be redirected to the view class returned by this function after a successful deletion
+        if self.export_instance.is_daily_saved_export and use_new_daily_saved_exports_ui(self.domain):
             if self.export_instance.export_format == "html":
                 return DashboardFeedListView
             return DailySavedExportListView
