@@ -19,6 +19,19 @@ hqDefine('case_importer/js/excel_fields.js', function () {
                 customCaseField: ko.observable(excelField),
                 isCustom: ko.observable(false),
             };
+            row.selectedCaseFieldOrBlank = ko.computed({
+                read: function () {
+                    return row.isCustom() ? '' : row.selectedCaseField();
+                },
+                write: row.selectedCaseField,
+            });
+            row.customCaseFieldOrBlank = ko.computed({
+                read: function () {
+                    return row.isCustom() ? row.customCaseField() : '';
+                },
+                write: row.customCaseField,
+            });
+
             row.caseField = ko.computed(function () {
                 if (row.isCustom()) {
                     return row.customCaseField();
