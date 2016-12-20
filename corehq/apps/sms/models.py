@@ -2335,6 +2335,48 @@ class Keyword(SyncSQLToCouchMixin, models.Model):
 
     last_modified = models.DateTimeField(auto_now=True)
 
+    def is_structured_sms(self):
+        return self.keywordaction_set.filter(action=KeywordAction.ACTION_STRUCTURED_SMS).count() > 0
+
+    @property
+    def get_id(self):
+        return self.couch_id
+
+    @classmethod
+    def get_keyword(cls, domain, keyword):
+        try:
+            return cls.objects.get(domain=domain, keyword__iexact=keyword)
+        except cls.DoesNotExist:
+            return None
+
+    @classmethod
+    def get_by_domain(cls, domain, limit=None, skip=None):
+        qs = Keyword.objects.filter(domain=domain).order_by('keyword')
+
+        if skip is not None:
+            qs = qs[skip:]
+
+        if limit is not None:
+            qs = qs[:limit]
+
+        return qs
+
+    def save(self, *args, **kwargs):
+        self.clear_caches()
+        return super(Keyword, self).save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        self.clear_caches()
+        return super(Keyword, self).delete(*args, **kwargs)
+
+    def clear_caches(self):
+        self.domain_has_keywords.clear(Keyword, self.domain)
+
+    @classmethod
+    @quickcache(['domain'], timeout=60 * 60)
+    def domain_has_keywords(cls, domain):
+        return cls.get_by_domain(domain).count() > 0
+
     @classmethod
     def _migration_get_couch_model_class(cls):
         from corehq.apps.reminders.models import SurveyKeyword
