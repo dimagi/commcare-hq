@@ -145,15 +145,14 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
                 commtrack=HQUserType.COMMTRACK in user_types,
             )
 
-
             # Get group ids for each group that was specified
             selected_reporting_group_ids = EMWF.selected_reporting_group_ids(mobile_user_and_group_slugs)
             selected_sharing_group_ids = EMWF.selected_sharing_group_ids(mobile_user_and_group_slugs)
 
-            report_group_q = HQESQuery(index="groups").domain(self.domain)\
-                                               .doc_type("Group")\
-                                               .filter(filters.term("_id", selected_reporting_group_ids))\
-                                               .fields(["users"])
+            report_group_q = (HQESQuery(index="groups").domain(self.domain)
+                              .doc_type("Group")
+                              .filter(filters.term("_id", selected_reporting_group_ids))
+                              .fields(["users"]))
             user_lists = [group["users"] for group in report_group_q.run().hits]
             selected_reporting_group_users = list(set().union(*user_lists))
 
