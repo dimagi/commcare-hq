@@ -650,7 +650,7 @@ class EditStructuredKeywordView(AddStructuredKeywordView):
             initial.update({
                 'allow_keyword_use_by': 'users',
             })
-        for action in self.keywordaction_set.all():
+        for action in self.keyword.keywordaction_set.all():
             if action.action == KeywordAction.ACTION_STRUCTURED_SMS:
                 if self.process_structured_message:
                     initial.update({
@@ -1075,13 +1075,7 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
     @property
     @memoized
     def total(self):
-        data = SurveyKeyword.get_db().view(
-            'reminders/survey_keywords',
-            reduce=True,
-            startkey=[self.domain],
-            endkey=[self.domain, {}],
-        ).first()
-        return data['value'] if data else 0
+        return Keyword.get_by_domain(self.domain).count()
 
     @property
     def column_names(self):
@@ -1097,7 +1091,7 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
 
     @property
     def paginated_list(self):
-        for keyword in SurveyKeyword.get_by_domain(
+        for keyword in Keyword.get_by_domain(
             self.domain,
             limit=self.limit,
             skip=self.skip,
@@ -1109,17 +1103,17 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
 
     def _fmt_keyword_data(self, keyword):
         return {
-            'id': keyword._id,
+            'id': keyword.couch_id,
             'keyword': keyword.keyword,
             'description': keyword.description,
             'editUrl': reverse(
                 EditStructuredKeywordView.urlname,
-                args=[self.domain, keyword._id]
+                args=[self.domain, keyword.couch_id]
             ) if keyword.is_structured_sms() else reverse(
                 EditNormalKeywordView.urlname,
-                args=[self.domain, keyword._id]
+                args=[self.domain, keyword.couch_id]
             ),
-            'deleteModalId': 'delete-%s' % keyword._id,
+            'deleteModalId': 'delete-%s' % keyword.couch_id,
         }
 
     def _fmt_deleted_keyword_data(self, keyword):
@@ -1130,14 +1124,17 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
 
     def get_deleted_item_data(self, item_id):
         try:
-            s = SurveyKeyword.get(item_id)
-        except ResourceNotFound:
+            k = Keyword.objects.get(couch_id=item_id)
+        except Keyword.DoesNotExist:
             raise Http404()
-        if s.domain != self.domain or s.doc_type != "SurveyKeyword":
+
+        if k.domain != self.domain:
             raise Http404()
-        s.delete()
+
+        k.delete()
+
         return {
-            'itemData': self._fmt_deleted_keyword_data(s),
+            'itemData': self._fmt_deleted_keyword_data(k),
             'template': 'keyword-deleted-template',
         }
 
