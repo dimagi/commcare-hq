@@ -19,11 +19,14 @@ class EnikshayCaseFactory(object):
     domain = None
     patient_detail = None
 
-    def __init__(self, domain, patient_detail):
+    def __init__(self, domain, patient_detail, nikshay_codes_to_location,
+                 nikshay_ids_to_preexisting_nikshay_person_cases):
         self.domain = domain
         self.patient_detail = patient_detail
         self.factory = CaseFactory(domain=domain)
         self.case_accessor = CaseAccessors(domain)
+        self.nikshay_codes_to_location = nikshay_codes_to_location
+        self.nikshay_ids_to_preexisting_nikshay_person_cases = nikshay_ids_to_preexisting_nikshay_person_cases
 
     def create_cases(self):
         self.create_person_case()
@@ -92,8 +95,8 @@ class EnikshayCaseFactory(object):
             },
         }
 
-        if nikshay_id in nikshay_id_to_preexisting_nikshay_person_cases(self.domain):
-            kwargs['case_id'] = nikshay_id_to_preexisting_nikshay_person_cases(self.domain)[nikshay_id].case_id
+        if nikshay_id in self.nikshay_ids_to_preexisting_nikshay_person_cases:
+            kwargs['case_id'] = self.nikshay_ids_to_preexisting_nikshay_person_cases[nikshay_id].case_id
             kwargs['attrs']['create'] = False
         else:
             kwargs['attrs']['create'] = True
@@ -237,7 +240,7 @@ class EnikshayCaseFactory(object):
 
     @property
     def _location(self):
-        return nikshay_code_to_location(self.domain)[self._nikshay_code]
+        return self.nikshay_codes_to_location[self._nikshay_code]
 
     @property
     def _nikshay_code(self):
