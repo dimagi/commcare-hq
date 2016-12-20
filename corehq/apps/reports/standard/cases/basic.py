@@ -134,45 +134,53 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         # Get user ids for each user that match the demo_user, admin,
         # Unknown Users, or All Mobile Workers filters
         mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
-        user_types = EMWF.selected_user_types(mobile_user_and_group_slugs)
-        special_owner_ids = self.get_special_owner_ids(
-            admin=HQUserType.ADMIN in user_types,
-            unknown=HQUserType.UNKNOWN in user_types,
-            demo=HQUserType.DEMO_USER in user_types,
-            commtrack=HQUserType.COMMTRACK in user_types,
-        )
+        special_owner_ids, selected_sharing_group_ids, selected_reporting_group_users = [], [], []
+        sharing_group_ids, location_owner_ids, assigned_user_ids_at_selected_locations = [], [], []
+        if self.request.can_access_all_locations:
+            user_types = EMWF.selected_user_types(mobile_user_and_group_slugs)
+            special_owner_ids = self.get_special_owner_ids(
+                admin=HQUserType.ADMIN in user_types,
+                unknown=HQUserType.UNKNOWN in user_types,
+                demo=HQUserType.DEMO_USER in user_types,
+                commtrack=HQUserType.COMMTRACK in user_types,
+            )
+
+
+            # Get group ids for each group that was specified
+            selected_reporting_group_ids = EMWF.selected_reporting_group_ids(mobile_user_and_group_slugs)
+            selected_sharing_group_ids = EMWF.selected_sharing_group_ids(mobile_user_and_group_slugs)
+
+            report_group_q = HQESQuery(index="groups").domain(self.domain)\
+                                               .doc_type("Group")\
+                                               .filter(filters.term("_id", selected_reporting_group_ids))\
+                                               .fields(["users"])
+            user_lists = [group["users"] for group in report_group_q.run().hits]
+            selected_reporting_group_users = list(set().union(*user_lists))
 
         # Get user ids for each user that was specifically selected
         selected_user_ids = EMWF.selected_user_ids(mobile_user_and_group_slugs)
 
-        # Get group ids for each group that was specified
-        selected_reporting_group_ids = EMWF.selected_reporting_group_ids(mobile_user_and_group_slugs)
-        selected_sharing_group_ids = EMWF.selected_sharing_group_ids(mobile_user_and_group_slugs)
+        # Get ids for each sharing group that contains a user from selected_reporting_group_users OR
+        # a user that was specifically selected
+        if selected_reporting_group_users and selected_user_ids:
+            sharing_group_ids = (HQESQuery(index="groups")
+                                 .domain(self.domain)
+                                 .doc_type("Group")
+                                 .term("case_sharing", True)
+                                 .term("users", (selected_reporting_group_users +
+                                                 selected_user_ids))
+                                 .get_ids())
 
         # Show cases owned by any selected locations, user locations, or their children
         selected_location_ids = EMWF.selected_location_ids(mobile_user_and_group_slugs)
-        loc_ids = set(selected_location_ids +
-                      get_users_location_ids(self.domain, selected_user_ids))
-        location_owner_ids = SQLLocation.objects.get_locations_and_children_ids(loc_ids)
+        if selected_location_ids:
+            loc_ids = set(selected_location_ids +
+                          get_users_location_ids(self.domain, selected_user_ids))
+            location_owner_ids = SQLLocation.objects.get_locations_and_children_ids(loc_ids)
 
-        # Get users at selected locations and descendants
-        assigned_user_ids_at_selected_locations = user_ids_at_locations_and_descendants(selected_location_ids)
-        # Get user ids for each user in specified reporting groups
-        report_group_q = HQESQuery(index="groups").domain(self.domain)\
-                                           .doc_type("Group")\
-                                           .filter(filters.term("_id", selected_reporting_group_ids))\
-                                           .fields(["users"])
-        user_lists = [group["users"] for group in report_group_q.run().hits]
-        selected_reporting_group_users = list(set().union(*user_lists))
-
-        # Get ids for each sharing group that contains a user from selected_reporting_group_users OR a user that was specifically selected
-        sharing_group_ids = (HQESQuery(index="groups")
-                             .domain(self.domain)
-                             .doc_type("Group")
-                             .term("case_sharing", True)
-                             .term("users", (selected_reporting_group_users +
-                                             selected_user_ids))
-                             .get_ids())
+            # Get users at selected locations and descendants
+            assigned_user_ids_at_selected_locations = user_ids_at_locations_and_descendants(selected_location_ids)
+            # Get user ids for each user in specified reporting groups
 
         owner_ids = list(set().union(
             special_owner_ids,
