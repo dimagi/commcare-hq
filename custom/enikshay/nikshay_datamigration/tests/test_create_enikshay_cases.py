@@ -8,6 +8,7 @@ from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.tests.utils import run_with_all_backends
 from custom.enikshay.nikshay_datamigration.models import Followup, Outcome, PatientDetail
 
 
@@ -85,6 +86,8 @@ class TestCreateEnikshayCases(TestCase):
 
         super(TestCreateEnikshayCases, self).tearDown()
 
+
+    @run_with_all_backends
     def test_case_creation(self):
         call_command('create_enikshay_cases', self.domain.name)
 
@@ -217,6 +220,7 @@ class TestCreateEnikshayCases(TestCase):
                 test_case.indices
             )
 
+    @run_with_all_backends
     def test_case_update(self):
         call_command('create_enikshay_cases', self.domain.name)
 
