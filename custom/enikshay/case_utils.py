@@ -55,12 +55,12 @@ def get_person_case_from_occurrence(domain, occurrence_case_id):
     return get_parent_of_case(domain, occurrence_case_id, CASE_TYPE_PERSON)
 
 
-def get_open_episode_case_from_person(domain, person_case_id):
+def get_open_occurrence_case_from_person(domain, person_case_id):
     """
     Gets the first open 'episode' case for the person
 
     Assumes the following case structure:
-    Person <--ext-- Occurrence <--ext-- Episode
+    Person <--ext-- Occurrence
 
     """
     case_accessor = CaseAccessors(domain)
@@ -71,7 +71,19 @@ def get_open_episode_case_from_person(domain, person_case_id):
         raise ENikshayCaseNotFound(
             "Person with id: {} exists but has no open occurrence cases".format(person_case_id)
         )
-    occurrence_case = open_occurrence_cases[0]
+    return open_occurrence_cases[0]
+
+
+def get_open_episode_case_from_person(domain, person_case_id):
+    """
+    Gets the first open 'episode' case for the person
+
+    Assumes the following case structure:
+    Person <--ext-- Occurrence <--ext-- Episode
+
+    """
+    case_accessor = CaseAccessors(domain)
+    occurrence_case = get_open_occurrence_case_from_person(domain, person_case_id)
     episode_cases = case_accessor.get_reverse_indexed_cases([occurrence_case.case_id])
     open_episode_cases = [case for case in episode_cases
                           if not case.closed and case.type == CASE_TYPE_EPISODE and
