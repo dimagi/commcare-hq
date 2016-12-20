@@ -57,13 +57,13 @@ class Command(BaseCommand):
             else:
                 if len(episodes) == limit:
                     CaseFactory(domain).create_or_update_cases(episodes)
-                num_succeeded += limit
-                logger.info(
-                    'Succeeded on %s of %d. Nikshay ID=%s' % (
-                        counter, total, patient_detail.PregId
+                    num_succeeded += limit
+                    logger.info(
+                        'Succeeded on %s of %d. Nikshay ID=%s' % (
+                            counter, total, patient_detail.PregId
+                        )
                     )
-                )
-                episodes = []
+                    episodes = []
         logger.info('Done creating cases for domain %s.' % domain)
         logger.info('Number of attempts: %d.' % counter)
         logger.info('Number of successes: %d.' % num_succeeded)
