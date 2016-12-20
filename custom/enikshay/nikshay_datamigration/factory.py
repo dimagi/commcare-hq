@@ -36,7 +36,7 @@ class EnikshayCaseFactory(object):
         outcome = self._outcome
         occurrence = self.occurrence(outcome, person)
         episode = self.episode(outcome, occurrence)
-        self.factory.create_or_update_case(episode)
+        # self.factory.create_or_update_case(episode)
 
     def create_person_occurrence_episode_cases(self):
         episode_structure = self.episode(self._outcome)

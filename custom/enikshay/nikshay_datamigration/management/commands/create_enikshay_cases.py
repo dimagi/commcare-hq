@@ -38,7 +38,7 @@ class Command(BaseCommand):
                     domain, patient_detail, nikshay_codes_to_location,
                     nikshay_ids_to_preexisting_nikshay_person_cases
                 )
-                # case_factory.create_cases()
+                case_factory.create_cases()
             except:
                 num_failed += 1
                 logger.error(
