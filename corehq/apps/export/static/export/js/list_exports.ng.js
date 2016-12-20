@@ -130,6 +130,9 @@
             // The filterModalExport is used as context for the FeedFilterFormController
             $rootScope.filterModalExport = export_;
         };
+        $scope.isLocationSafeForUser = function(export_) {
+            return (!export_.emailedExport) || export_.emailedExport.isLocationSafeForUser;
+        };
     };
     exportsControllers.FeedFilterFormController = function (
         $scope, $rootScope, djangoRMI, filterFormElements, filterFormModalElement

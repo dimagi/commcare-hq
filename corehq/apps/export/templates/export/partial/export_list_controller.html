@@ -130,13 +130,13 @@
                             </p>
                             {% endangularjs %}
                             {% angularjs %}
-                            <div ng-if="!export.emailedExport.isLocationSafeForUser" class="text-warning">
+                            <div ng-if="!isLocationSafeForUser(export)" class="text-warning">
                                 {% blocktrans %}
                                 This export is filtered to data you don't have access to.
                                 {% endblocktrans %}
                             </div>
                             <div class="alert alert-neutral alert-small"
-                                 ng-show="export.emailedExport && export.emailedExport.isLocationSafeForUser">
+                                 ng-show="export.emailedExport && isLocationSafeForUser(export)">
                                 <div class="h5">
                                     <span ng-if="export.emailedExport.hasFile">
                                         <strong>{% trans "Size:" %}</strong> {{ export.emailedExport.fileData.size }}&nbsp;&nbsp;&nbsp;
@@ -145,7 +145,7 @@
                                     &nbsp;&nbsp;
                                     {% if has_edit_permissions %}
                                     {% angularjs %}
-                                    <div ng-if="export.emailedExport.isLocationSafeForUser">
+                                    <div ng-if="isLocationSafeForUser(export)">
                                         <button type="button"
                                                 class="btn btn-default btn-xs"
                                                 ng-show="!export.emailedExport.updatingData"
@@ -166,7 +166,7 @@
                                     {% endif %}
                                 </div>
 
-                                <div class="h5" ng-if="export.emailedExport.hasFile && export.emailedExport.isLocationSafeForUser">
+                                <div class="h5" ng-if="export.emailedExport.hasFile && isLocationSafeForUser(export)">
 
                                     <a href="{{ export.emailedExport.fileData.downloadUrl }}"
                                        ng-click="downloadRequested($event)"
@@ -193,7 +193,7 @@
                                 </div>
 
                                 {% if has_edit_permissions %}
-                                <div ng-if="export.emailedExport.isLocationSafeForUser">
+                                <div ng-if="isLocationSafeForUser(export)">
                                 <p class="text-warning"
                                    ng-if="export.emailedExport.hasFile && export.emailedExport.fileData.showExpiredWarning && !export.emailedExport.updateDataTriggered">
                                     <i class="fa fa-exclamation-triangle"></i>
@@ -212,7 +212,7 @@
                                 {% endif %}
 
                                 {% if has_edit_permissions %}
-                                <div ng-if="export.emailedExport.isLocationSafeForUser">
+                                <div ng-if="isLocationSafeForUser(export)">
                                     <p ng-if="!export.emailedExport.hasFile && !export.emailedExport.updatedDataTriggered">
                                         {% blocktrans %}
                                         <strong>No data is available yet.</strong><br />
@@ -274,7 +274,7 @@
                         {% if has_edit_permissions %}
                         {% angularjs %}
                         <td>
-                            <div ng-if="export.emailedExport.isLocationSafeForUser">
+                            <div ng-if="isLocationSafeForUser(export)">
                                 <a href="{{ export.editUrl }}" class="btn btn-default">
                                     <i class="fa fa-pencil"></i>
                                     <span ng-show="!export.isDailySaved">{% trans 'Edit' %}</span>
@@ -300,7 +300,7 @@
                                href="#setFeedFiltersModal"
                                data-toggle="modal"
                                ng-click="setFilterModalExport(export)"
-                               ng-if="export.emailedExport.isLocationSafeForUser"
+                               ng-if="isLocationSafeForUser(export)"
                             >
                                 {% trans "Edit Filters" %}
                             </a>
