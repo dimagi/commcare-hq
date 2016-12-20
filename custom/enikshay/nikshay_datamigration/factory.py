@@ -33,20 +33,17 @@ class EnikshayCaseFactory(object):
 
     def create_person_case(self):
         person_structure = self.person()
-        person_case = self.factory.create_or_update_case(person_structure)[0]
-        person_structure.case_id = person_case.case_id
+        self.factory.create_or_update_case(person_structure)
 
     def create_occurrence_case(self):
         if self._outcome:
             occurrence_structure = self.occurrence(self._outcome)
-            occurrence_case = self.factory.create_or_update_case(occurrence_structure)[0]
-            occurrence_structure.case_id = occurrence_case.case_id
+            self.factory.create_or_update_case(occurrence_structure)
 
     def create_episode_case(self):
         if self._outcome:
             episode_structure = self.episode(self._outcome)
-            episode_case = self.factory.create_or_update_case(episode_structure)[0]
-            episode_structure.case_id = episode_case.case_id
+            self.factory.create_or_update_case(episode_structure)
 
     def create_test_cases(self):
         if self._outcome:
