@@ -1,7 +1,7 @@
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
-from corehq.apps.es.users import user_ids_at_locations_and_descendants
+from corehq.apps.es.users import user_ids_at_locations_and_descendants, user_ids_at_locations
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
 from corehq.const import SERVER_DATETIME_FORMAT
@@ -38,6 +38,21 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     ajax_pagination = True
     asynchronous = True
 
+    def scope_filter(self):
+        # Filter to be applied in AND with filters for export to add scope for restricted user
+        # Restricts to cases owned by accessible locations and their respective users Or Cases
+        # Last Modified by accessible users
+        accessible_location_ids = (SQLLocation.active_objects.accessible_location_ids(
+            self.request.domain,
+            self.request.couch_user)
+        )
+        accessible_user_ids = user_ids_at_locations(accessible_location_ids)
+        accessible_ids = accessible_user_ids + list(accessible_location_ids)
+        return (
+            case_es.owner(accessible_ids),
+            case_es.owner(accessible_user_ids)
+        )
+
     def _build_query(self):
         query = (case_es.CaseES()
                  .domain(self.domain)
@@ -70,7 +85,10 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
             )
             query = query.NOT(case_es.owner(ids_to_exclude))
         else:  # Only show explicit matches
-            query = query.owner(self.case_owners)
+            selected_case_owners = self.case_owners
+            if selected_case_owners:
+                query = query.owner(selected_case_owners)
+            query = query.OR(self.scope_filter())
 
         search_string = SearchFilter.get_value(self.request, self.domain)
         if search_string:
