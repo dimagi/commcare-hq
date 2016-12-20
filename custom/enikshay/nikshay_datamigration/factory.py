@@ -106,7 +106,6 @@ class EnikshayCaseFactory(object):
             'attrs': {
                 'case_type': 'occurrence',
                 'update': {
-                    'hiv_status': outcome.HIVStatus,
                     'name': 'Occurrence #1',
                     'nikshay_id': self.patient_detail.PregId,
                     'occurrence_episode_count': 1,
@@ -121,13 +120,16 @@ class EnikshayCaseFactory(object):
                 related_type=self.person().attrs['case_type'],
             )],
         }
+        if outcome:
+            # TODO - store with correct value
+            kwargs['attrs']['update']['hiv_status'] = outcome.HIVStatus
 
         matching_occurrence_case = next((
             occurrence_case for occurrence_case in self.case_accessor.get_cases([
                 index.referenced_id for index in
                 self.case_accessor.get_case(self.person().case_id).reverse_indices
             ])
-            if outcome.pk == occurrence_case.dynamic_case_properties().get('nikshay_id')
+            if self.patient_detail.PregId == occurrence_case.dynamic_case_properties().get('nikshay_id')
         ), None)
         if matching_occurrence_case:
             kwargs['case_id'] = matching_occurrence_case.case_id
