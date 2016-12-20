@@ -2,6 +2,7 @@ from datetime import timedelta, datetime, time
 import json
 from couchdbkit import ResourceNotFound
 from django.contrib import messages
+from django.db import transaction
 from django.utils.decorators import method_decorator
 import pytz
 from django.core.urlresolvers import reverse
@@ -36,8 +37,6 @@ from corehq.apps.reminders.models import (
     CaseReminderHandler,
     CaseReminderEvent,
     EVENT_AS_OFFSET,
-    SurveyKeyword,
-    SurveyKeywordAction,
     ON_DATETIME,
     REMINDER_TYPE_ONE_TIME,
     REMINDER_TYPE_DEFAULT,
@@ -47,6 +46,7 @@ from corehq.apps.reminders.models import (
     RECIPIENT_SENDER,
     METHOD_IVR_SURVEY,
 )
+from corehq.apps.sms.models import Keyword, KeywordAction
 from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
@@ -508,7 +508,7 @@ class AddStructuredKeywordView(BaseMessagingSectionView):
     @property
     @memoized
     def keyword(self):
-        return SurveyKeyword(domain=self.domain)
+        return Keyword(domain=self.domain)
 
     @property
     def keyword_form(self):
@@ -516,8 +516,6 @@ class AddStructuredKeywordView(BaseMessagingSectionView):
 
     @property
     def page_context(self):
-        def _fmt_choices(val, text):
-            return {'value': val, 'text': text}
         return {
             'form': self.keyword_form,
             'form_list': get_form_list(self.domain),
@@ -538,51 +536,49 @@ class AddStructuredKeywordView(BaseMessagingSectionView):
 
     def post(self, request, *args, **kwargs):
         if self.keyword_form.is_valid():
-            self.keyword.keyword = self.keyword_form.cleaned_data['keyword']
-            self.keyword.description = self.keyword_form.cleaned_data['description']
-            self.keyword.delimiter = self.keyword_form.cleaned_data['delimiter']
-            self.keyword.override_open_sessions = self.keyword_form.cleaned_data['override_open_sessions']
+            with transaction.atomic():
+                self.keyword.keyword = self.keyword_form.cleaned_data['keyword']
+                self.keyword.description = self.keyword_form.cleaned_data['description']
+                self.keyword.delimiter = self.keyword_form.cleaned_data['delimiter']
+                self.keyword.override_open_sessions = self.keyword_form.cleaned_data['override_open_sessions']
 
-            self.keyword.initiator_doc_type_filter = []
-            if self.keyword_form.cleaned_data['allow_keyword_use_by'] == 'users':
-                self.keyword.initiator_doc_type_filter.append('CommCareUser')
-            if self.keyword_form.cleaned_data['allow_keyword_use_by'] == 'cases':
-                self.keyword.initiator_doc_type_filter.append('CommCareCase')
+                self.keyword.initiator_doc_type_filter = []
+                if self.keyword_form.cleaned_data['allow_keyword_use_by'] == 'users':
+                    self.keyword.initiator_doc_type_filter.append('CommCareUser')
+                if self.keyword_form.cleaned_data['allow_keyword_use_by'] == 'cases':
+                    self.keyword.initiator_doc_type_filter.append('CommCareCase')
 
-            self.keyword.actions = []
-            if self.keyword_form.cleaned_data['sender_content_type'] != NO_RESPONSE:
-                self.keyword.actions.append(
-                    SurveyKeywordAction(
-                        recipient=RECIPIENT_SENDER,
+                self.keyword.save(sync_to_couch=False)
+
+                self.keyword.keywordaction_set.all().delete()
+                if self.keyword_form.cleaned_data['sender_content_type'] != NO_RESPONSE:
+                    self.keyword.keywordaction_set.create(
+                        recipient=KeywordAction.RECIPIENT_SENDER,
                         action=self.keyword_form.cleaned_data['sender_content_type'],
                         message_content=self.keyword_form.cleaned_data['sender_message'],
                         form_unique_id=self.keyword_form.cleaned_data['sender_form_unique_id'],
                     )
-                )
-            if self.process_structured_message:
-                self.keyword.actions.append(
-                    SurveyKeywordAction(
-                        recipient=RECIPIENT_SENDER,
-                        action=METHOD_STRUCTURED_SMS,
+                if self.process_structured_message:
+                    self.keyword.keywordaction_set.create(
+                        recipient=KeywordAction.RECIPIENT_SENDER,
+                        action=KeywordAction.ACTION_STRUCTURED_SMS,
                         form_unique_id=self.keyword_form.cleaned_data['structured_sms_form_unique_id'],
                         use_named_args=self.keyword_form.cleaned_data['use_named_args'],
                         named_args=self.keyword_form.cleaned_data['named_args'],
                         named_args_separator=self.keyword_form.cleaned_data['named_args_separator'],
                     )
-                )
-            if self.keyword_form.cleaned_data['other_recipient_content_type'] != NO_RESPONSE:
-                self.keyword.actions.append(
-                    SurveyKeywordAction(
+                if self.keyword_form.cleaned_data['other_recipient_content_type'] != NO_RESPONSE:
+                    self.keyword.keywordaction_set.create(
                         recipient=self.keyword_form.cleaned_data['other_recipient_type'],
                         recipient_id=self.keyword_form.cleaned_data['other_recipient_id'],
                         action=self.keyword_form.cleaned_data['other_recipient_content_type'],
                         message_content=self.keyword_form.cleaned_data['other_recipient_message'],
                         form_unique_id=self.keyword_form.cleaned_data['other_recipient_form_unique_id'],
                     )
-                )
 
-            self.keyword.save()
-            return HttpResponseRedirect(reverse(KeywordsListView.urlname, args=[self.domain]))
+                # Sync to Couch; We can remove this after syncing SurveyKeywords is no longer needed
+                self.keyword.save()
+                return HttpResponseRedirect(reverse(KeywordsListView.urlname, args=[self.domain]))
         return self.get(request, *args, **kwargs)
 
 
@@ -607,12 +603,18 @@ class EditStructuredKeywordView(AddStructuredKeywordView):
     @property
     @memoized
     def keyword(self):
-        if self.keyword_id is None:
+        if not self.keyword_id:
             raise Http404()
-        sk = SurveyKeyword.get(self.keyword_id)
-        if sk.domain != self.domain:
+
+        try:
+            k = Keyword.objects.get(couch_id=self.keyword_id)
+        except Keyword.DoesNotExist:
             raise Http404()
-        return sk
+
+        if k.domain != self.domain:
+            raise Http404()
+
+        return k
 
     @property
     @memoized
@@ -648,8 +650,8 @@ class EditStructuredKeywordView(AddStructuredKeywordView):
             initial.update({
                 'allow_keyword_use_by': 'users',
             })
-        for action in self.keyword.actions:
-            if action.action == METHOD_STRUCTURED_SMS:
+        for action in self.keywordaction_set.all():
+            if action.action == KeywordAction.ACTION_STRUCTURED_SMS:
                 if self.process_structured_message:
                     initial.update({
                         'structured_sms_form_unique_id': action.form_unique_id,
@@ -659,7 +661,7 @@ class EditStructuredKeywordView(AddStructuredKeywordView):
                         'named_args_separator': action.named_args_separator,
                         'named_args': [{"name" : k, "xpath" : v} for k, v in action.named_args.items()],
                     })
-            elif action.recipient == RECIPIENT_SENDER:
+            elif action.recipient == KeywordAction.RECIPIENT_SENDER:
                 initial.update({
                     'sender_content_type': action.action,
                     'sender_message': action.message_content,
@@ -684,11 +686,12 @@ class EditNormalKeywordView(EditStructuredKeywordView):
     @property
     @memoized
     def keyword(self):
-        sk = super(EditNormalKeywordView, self).keyword
+        k = super(EditNormalKeywordView, self).keyword
         # don't allow structured keywords to be edited in this view.
-        if METHOD_STRUCTURED_SMS in [a.action for a in sk.actions]:
+        if k.is_structured_sms():
             raise Http404()
-        return sk
+
+        return k
 
 
 class CreateBroadcastView(BaseMessagingSectionView):
