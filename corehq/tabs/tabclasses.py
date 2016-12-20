@@ -711,26 +711,32 @@ class ProjectDataTab(UITab):
         daily_saved_paywall_url = reverse(DailySavedExportPaywall.urlname, args=(self.domain,))
         feed_list_url = reverse(DashboardFeedListView.urlname, args=(self.domain,))
         feed_paywall_url = reverse(DashboardFeedPaywall.urlname, args=(self.domain,))
-        return filter(None, [
-            dropdown_dict(
+        items = []
+        if self.can_view_form_exports:
+            items.append(dropdown_dict(
                 FormExportListView.page_title,
                 url=reverse(FormExportListView.urlname, args=(self.domain,))
-            ) if self.can_view_form_exports else None,
-            dropdown_dict(
+            ))
+        if self.can_view_case_exports:
+            items.append(dropdown_dict(
                 CaseExportListView.page_title,
                 url=reverse(CaseExportListView.urlname, args=(self.domain,))
-            ) if self.can_view_case_exports else None,
-            dropdown_dict(
+            ))
+        if self.use_new_daily_saved_exports_ui:
+            items.append(dropdown_dict(
                 DailySavedExportListView.page_title,
                 url=daily_saved_list_url if self.can_view_daily_saved_exports else daily_saved_paywall_url
-            ) if self.use_new_daily_saved_exports_ui else None,
-            dropdown_dict(
+            ))
+        if self.use_new_daily_saved_exports_ui:
+            items.append(dropdown_dict(
                 DashboardFeedListView.page_title,
                 url=feed_list_url if self.can_view_dashboard_feeds else feed_paywall_url
-            ) if self.use_new_daily_saved_exports_ui else None,
+            ))
+        items += [
             dropdown_dict(None, is_divider=True),
             dropdown_dict(_("View All"), url=self.url),
-        ])
+        ]
+        return items
 
 
 class ApplicationsTab(UITab):
