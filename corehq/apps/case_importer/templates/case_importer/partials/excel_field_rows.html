@@ -26,7 +26,7 @@
            placeholder="Enter new property name"
            data-bind="
         visible: isCustom(),
-        value: customCaseField
+        value: customCaseFieldOrBlank
     "/>
 
     <select class="form-control case_field" name="case_field[]" data-bind="
@@ -35,7 +35,7 @@
         optionsCaption: django.gettext('Select property name...'),
         optionsText: 'field',
         optionsValue: 'field',
-        value: selectedCaseField
+        value: selectedCaseFieldOrBlank
     "></select>
 
     <div data-bind="
