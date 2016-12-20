@@ -508,6 +508,10 @@ class DatePeriod(DocumentSchema):
 
 
 class ExportInstanceFilters(DocumentSchema):
+    """
+    A class represented a saved set of filters for an export
+    These are used for Daily Saved Exports, and Dashboard Feeds (which are a type of Daily Saved Export)
+    """
     date_period = SchemaProperty(DatePeriod, default=None)
     users = ListProperty(StringProperty)
     reporting_groups = ListProperty(StringProperty)

@@ -829,7 +829,6 @@ class AbstractExportFilterBuilder(object):
                 pass
             return self.date_filter_class(gte=datespan.startdate, lt=datespan.enddate + timedelta(days=1))
 
-
     def _get_locations_filter(self, location_ids):
         """
         :return: User filter with users at filtered locations and their descendants
@@ -867,6 +866,21 @@ class FormExportFilterBuilder(AbstractExportFilterBuilder):
 
     def get_filter(self, can_access_all_locations, accessible_location_ids, group_ids, user_types, user_ids,
                    location_ids, date_range):
+        """
+        Return a list of `ExportFilter`s for the given ids.
+        This list of filters will eventually be ANDed to filter the documents that appear in the export.
+        Therefore, the filter will be constructed as such:
+            (groups OR user type OR users OR locations) AND date filter AND accessible locations
+
+        :param can_access_all_locations: True if there are no user based location restrictions
+        :param accessible_location_ids: If not can_access_all_locations, this is a list of location ids that the
+            user is restricted to seeing data from
+        :param group_ids:
+        :param user_types:
+        :param user_ids:
+        :param location_ids:
+        :param date_range: A DatePeriod or DateSpan
+        """
         form_filters = []
         if can_access_all_locations:
             form_filters += filter(None, [
@@ -905,9 +919,15 @@ class CaseExportFilterBuilder(AbstractExportFilterBuilder):
     def get_filter(self, can_access_all_locations, accessible_location_ids, show_all_data, show_project_data,
                    selected_user_types, datespan, group_ids, location_ids, user_ids):
         """
-        Taking reference from CaseListMixin allow filters depending on locations access
+        Return a list of `ExportFilter`s for the given ids.
+        This list of filters will eventually be ANDed to filter the documents that appear in the export.
+        Therefore, the filter will be constructed as such:
+            (groups OR user type OR users OR locations) AND date filter AND accessible locations
+
         :param can_access_all_locations: if request user has full organization access permission
-        :return: set of filters
+        :param accessible_location_ids: If not can_access_all_locations, this is a list of location ids that the
+            user is restricted to seeing data from
+        :return: list of filters
         """
         if can_access_all_locations and show_all_data:
             # if all data then just filter by date
