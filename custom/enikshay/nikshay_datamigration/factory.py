@@ -36,19 +36,15 @@ class EnikshayCaseFactory(object):
         self.factory.create_or_update_case(person_structure)
 
     def create_occurrence_case(self):
-        if self._outcome:
-            occurrence_structure = self.occurrence(self._outcome)
-            self.factory.create_or_update_case(occurrence_structure)
+        occurrence_structure = self.occurrence(self._outcome)
+        self.factory.create_or_update_case(occurrence_structure)
 
     def create_episode_case(self):
-        if self._outcome:
-            episode_structure = self.episode(self._outcome)
-            self.factory.create_or_update_case(episode_structure)
+        episode_structure = self.episode(self._outcome)
+        self.factory.create_or_update_case(episode_structure)
 
     def create_test_cases(self):
-        if self._outcome:
-            # how many followup's do not have a corresponding outcome? how should we handle this situation?
-            self.factory.create_or_update_cases([self.test(followup) for followup in self._followups])
+        self.factory.create_or_update_cases([self.test(followup) for followup in self._followups])
 
     @memoized
     def person(self):
