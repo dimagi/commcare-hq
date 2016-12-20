@@ -244,7 +244,7 @@ class EnikshayCaseFactory(object):
         return '-'.join(self.patient_detail.PregId.split('-')[:4])
 
 
-def nikshay_code_to_location(domain):
+def get_nikshay_codes_to_location(domain):
     return {
         location.metadata.get('nikshay_code'): location
         for location in SQLLocation.objects.filter(domain=domain)
@@ -252,7 +252,7 @@ def nikshay_code_to_location(domain):
     }
 
 
-def nikshay_id_to_preexisting_nikshay_person_cases(domain):
+def get_nikshay_ids_to_preexisting_nikshay_person_cases(domain):
     case_accessor = CaseAccessors(domain)
     return {
         person_case.dynamic_case_properties()['nikshay_id']: person_case
