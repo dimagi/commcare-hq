@@ -484,7 +484,9 @@ class PhoneBlacklist(models.Model):
         return False
 
 
-class PhoneNumber(models.Model):
+class PhoneNumber(UUIDGeneratorMixin, models.Model):
+    UUIDS_TO_GENERATE = ['couch_id']
+
     couch_id = models.CharField(max_length=126, db_index=True, null=True)
     domain = models.CharField(max_length=126, db_index=True, null=True)
     owner_doc_type = models.CharField(max_length=126, null=True)

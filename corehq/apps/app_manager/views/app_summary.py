@@ -161,6 +161,7 @@ APP_SUMMARY_EXPORT_HEADER_NAMES = [
     'module_type',
     'comments',
     'end_of_form_navigation',
+    'parent_module',
 ]
 AppSummaryRow = namedtuple('AppSummaryRow', APP_SUMMARY_EXPORT_HEADER_NAMES)
 AppSummaryRow.__new__.__defaults__ = (None, ) * len(APP_SUMMARY_EXPORT_HEADER_NAMES)
@@ -198,6 +199,8 @@ class DownloadAppSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
                         filter=module.module_filter,
                         module_type='advanced' if isinstance(module, AdvancedModule) else 'standard',
                         comments=module.comment,
+                        parent_module=(_get_translated_module_name(self.app, module.root_module_id, language)
+                                       if module.root_module_id else '')
                     )
                 ])
             ]
