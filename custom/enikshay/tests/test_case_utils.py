@@ -2,9 +2,10 @@ from datetime import datetime
 import pytz
 
 from django.test import TestCase
+
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.enikshay.tests.utils import ENikshayCaseStructureMixin
 from corehq.form_processor.tests.utils import run_with_all_backends, FormProcessorTestUtils
-from casexml.apps.case.models import CommCareCase
 
 from custom.enikshay.case_utils import (
     get_open_episode_case_from_person,
@@ -97,11 +98,13 @@ class ENikshayCaseUtilsTests(ENikshayCaseStructureMixin, TestCase):
             self.person_id
         )
 
+    @run_with_all_backends
     def test_update_case(self):
         update_properties = {'age': 99}
         self.factory.create_or_update_cases([self.person])
-        person_case = CommCareCase.get(self.person_id)
-        self.assertIsNone(person_case.case_properties().get('age', None))
-        _update_case(self.domain, self.person_id, update_properties)
-        person_case = CommCareCase.get(self.person_id)
-        self.assertEqual(person_case.case_properties()['age'], '99')
+        case_accessors = CaseAccessors(self.domain)
+        person_case = case_accessors.get_case(self.person_id)
+        self.assertIsNone(person_case.dynamic_case_properties().get('age', None))
+        update_case(self.domain, self.person_id, update_properties)
+        person_case = case_accessors.get_case(self.person_id)
+        self.assertEqual(person_case.dynamic_case_properties()['age'], '99')
