@@ -78,7 +78,7 @@ class NikshayRegisterPatientPayloadGenerator(CaseRepeaterJsonPayloadGenerator):
             "Local_ID": person_case.get_id,
             "Source": ENIKSHAY_ID
         }
-        properties_dict.update(_get_person_case_properties(person_case_properties))
+        properties_dict.update(_get_person_case_properties(person_case, person_case_properties))
         properties_dict.update(_get_episode_case_properties(episode_case_properties))
         return json.dumps(properties_dict)
 
@@ -107,23 +107,32 @@ class NikshayRegisterPatientPayloadGenerator(CaseRepeaterJsonPayloadGenerator):
         save_error_message(response.status_code, error_message)
 
 
-def _get_person_case_properties(person_case_properties):
+def _get_person_case_properties(person_case, person_case_properties):
     """
     :return: Example {'dcode': u'JLR', 'paddress': u'123, near asdf, Jalore, Rajasthan ', 'cmob': u'1234567890',
     'pname': u'home visit', 'scode': u'RJ', 'tcode': 'AB', dotphi': u'Test S1-C1-D1-T1 PHI 1',
     'pmob': u'1234567890', 'cname': u'123', 'caddress': u'123', 'pgender': 'T', 'page': u'79', 'pcategory': 1}
     """
+    person_properites = {}
     state_choice = person_case_properties.get('current_address_state_choice', None)
     district_choice = person_case_properties.get('current_address_district_choice', None)
-    tu_choice = person_case_properties.get('tu_choice', None)
+    phi_location_id = person_case.ownder_id
 
     if state_choice:
-        state_location = SQLLocation.objects.get(location_id=state_choice)
+        state_location = SQLLocation.objects.get_or_None(location_id=state_choice)
+        person_properites['scode'] = state_location.metadata.get('nikshay_code', '')
     if district_choice:
-        district_location = SQLLocation.objects.get(location_id=district_choice)
+        district_location = SQLLocation.objects.get_or_None(location_id=district_choice)
+        person_properites['dcode'] = district_location.metadata.get('nikshay_code')
 
-    if tu_choice:
-        tu_location = SQLLocation.objects.get(tu_choice)
+    if phi_location_id:
+        phi_location = SQLLocation.objects.get_or_None(location_id=phi_location_id)
+        if phi_location:
+            person_properites['dotphi'] = phi_location.metadata.get('nikshay_code', '')
+            tu_location = phi_location.parent
+            if tu_location:
+                person_properites['tcode'] = tu_location.metadata.get('nikshay_code', '')
+
     person_category = '2' if person_case_properties.get('previous_tb_treatment', '') == 'yes' else '1'
 
     person_properites = {
@@ -132,19 +141,11 @@ def _get_person_case_properties(person_case_properties):
         "page": person_case_properties.get('age', ''),
         "paddress": person_case_properties.get('current_address', ''),
         "pmob": person_case_properties.get('contact_phone_number', ''),
-        "dotphi": person_case_properties.get('phi', ''),
         "cname": person_case_properties.get('secondary_contact_name_address', ''),
         "caddress": person_case_properties.get('secondary_contact_name_address', ''),
         "cmob": person_case_properties.get('secondary_contact_phone_number', ''),
         "pcategory": person_category
     }
-
-    if state_location:
-        person_properites['scode'] = state_location.metadata.get('nikshay_code', '')
-    if district_location:
-        person_properites['dcode'] = district_location.metadata.get('nikshay_code')
-    if tu_location:
-        person_properites['tcode'] = tu_location.metadata.get('nikshay_code', '')
 
     return person_properites
 
