@@ -2,7 +2,8 @@ from django.db import transaction
 from django.http import HttpResponseNotFound, HttpResponseForbidden, \
     StreamingHttpResponse
 
-from corehq.apps.case_importer.tracking.dbaccessors import get_case_upload_records
+from corehq.apps.case_importer.tracking.dbaccessors import get_case_upload_records, \
+    get_case_ids_for_case_upload, get_form_ids_for_case_upload
 from corehq.apps.case_importer.tracking.jsmodels import case_upload_to_user_json
 from corehq.apps.case_importer.tracking.models import CaseUploadRecord
 from corehq.apps.case_importer.tracking.permissions import user_may_view_file_upload
@@ -54,11 +55,10 @@ def case_upload_form_ids(request, domain, upload_id):
     except CaseUploadRecord.DoesNotExist:
         return HttpResponseNotFound()
 
-    def stream_ids():
-        for form_record in case_upload.form_records.all():
-                yield '{}\n'.format(form_record.form_id)
+    ids_stream = ('{}\n'.format(form_id)
+                  for form_id in get_form_ids_for_case_upload(case_upload))
 
-    return StreamingHttpResponse(stream_ids(), content_type='text/plain')
+    return StreamingHttpResponse(ids_stream, content_type='text/plain')
 
 
 @require_can_edit_data
@@ -68,9 +68,7 @@ def case_upload_case_ids(request, domain, upload_id):
     except CaseUploadRecord.DoesNotExist:
         return HttpResponseNotFound()
 
-    def stream_ids():
-        for form_record in case_upload.form_records.all():
-            for case_record in form_record.case_records.all():
-                yield '{}\n'.format(case_record.case_id)
+    ids_stream = ('{}\n'.format(case_id)
+                  for case_id in get_case_ids_for_case_upload(case_upload))
 
-    return StreamingHttpResponse(stream_ids(), content_type='text/plain')
+    return StreamingHttpResponse(ids_stream, content_type='text/plain')

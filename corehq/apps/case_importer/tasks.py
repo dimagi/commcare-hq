@@ -95,6 +95,8 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
                 )
             else:
                 if record_cases_callback:
+                    case_id_sort_order = [case_block.case_id for case_block in caseblocks]
+                    cases.sort(key=lambda case: case_id_sort_order.index(case.case_id))
                     record_cases_callback(form.form_id, [case.case_id for case in cases])
                 properties = set().union(*map(lambda c: set(c.dynamic_case_properties().keys()), cases))
                 if case_type and len(properties):
