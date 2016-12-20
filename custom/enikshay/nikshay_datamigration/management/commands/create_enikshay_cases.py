@@ -31,14 +31,21 @@ class Command(BaseCommand):
         nikshay_ids_to_preexisting_nikshay_person_cases = get_nikshay_ids_to_preexisting_nikshay_person_cases(
             domain
         )
+        episodes = []
+        limit = 20
+        from casexml.apps.case.mock import CaseFactory
         for patient_detail in patient_details:
-            counter += 1
+            # patients.append(patient_detail)
+            # if len(patients) == limit:
+
+            # counter += 1
             try:
                 case_factory = EnikshayCaseFactory(
                     domain, patient_detail, nikshay_codes_to_location,
                     nikshay_ids_to_preexisting_nikshay_person_cases
                 )
-                case_factory.create_cases()
+                episodes.append(case_factory.get_episode_structure())
+                # case_factory.create_cases()
             except:
                 num_failed += 1
                 logger.error(
@@ -48,12 +55,15 @@ class Command(BaseCommand):
                     exc_info=True,
                 )
             else:
-                num_succeeded += 1
+                if len(episodes) == limit:
+                    CaseFactory(domain).create_or_update_cases(episodes)
+                num_succeeded += limit
                 logger.info(
                     'Succeeded on %s of %d. Nikshay ID=%s' % (
                         counter, total, patient_detail.PregId
                     )
                 )
+                episodes = []
         logger.info('Done creating cases for domain %s.' % domain)
         logger.info('Number of attempts: %d.' % counter)
         logger.info('Number of successes: %d.' % num_succeeded)
