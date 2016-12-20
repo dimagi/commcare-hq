@@ -1919,20 +1919,24 @@ class DashboardFeedMixin(DailySavedExportMixin):
         return DashboardFeedListView
 
 
+@location_safe
 class CreateNewCaseFeedView(DashboardFeedMixin, CreateNewCustomCaseExportView):
     urlname = 'new_case_feed_export'
     page_title = ugettext_lazy("Create Dashboard Feed")
 
 
+@location_safe
 class CreateNewFormFeedView(DashboardFeedMixin, CreateNewCustomFormExportView):
     urlname = 'new_form_feed_export'
     page_title = ugettext_lazy("Create Dashboard Feed")
 
 
+@location_safe
 class CreateNewDailySavedCaseExport(DailySavedExportMixin, CreateNewCustomCaseExportView):
     urlname = 'new_case_daily_saved_export'
 
 
+@location_safe
 class CreateNewDailySavedFormExport(DailySavedExportMixin, CreateNewCustomFormExportView):
     urlname = 'new_form_faily_saved_export'
 
@@ -2259,6 +2263,7 @@ class DownloadNewCaseExportView(GenericDownloadNewExportMixin, DownloadCaseExpor
         return form_filters
 
 
+@location_safe
 @csrf_exempt
 @login_or_digest_or_basic_or_apikey(default='digest')
 @require_form_export_permission
