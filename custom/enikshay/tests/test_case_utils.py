@@ -12,7 +12,7 @@ from custom.enikshay.case_utils import (
     get_occurrence_case_from_episode,
     get_person_case_from_occurrence,
     get_person_case_from_episode,
-    _update_case
+    update_case
 )
 
 

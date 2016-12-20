@@ -108,7 +108,7 @@ def get_adherence_cases_between_dates(domain, person_case_id, start_date, end_da
     return open_pertinent_adherence_cases
 
 
-def _update_case(domain, case_id, updated_properties):
+def update_case(domain, case_id, updated_properties):
     post_case_blocks(
         [CaseBlock(
             case_id=case_id,

@@ -12,7 +12,7 @@ from custom.enikshay.integrations.nikshay.field_mappings import (
     treatment_support_designation, patient_type_choice,
     disease_classification
 )
-from custom.enikshay.case_utils import _update_case
+from custom.enikshay.case_utils import update_case
 
 ENIKSHAY_ID = 8
 
@@ -88,7 +88,7 @@ class NikshayRegisterPatientPayloadGenerator(CaseRepeaterJsonPayloadGenerator):
         try:
             nikshay_id = response.json()['Results']['Fieldvalue']
             person_case_id = get_person_case_from_episode(payload_doc.domain, payload_doc.case_id).get_id
-            _update_case(
+            update_case(
                 payload_doc.domain,
                 person_case_id,
                 {
@@ -116,7 +116,7 @@ def _get_person_case_properties(person_case, person_case_properties):
     person_properites = {}
     state_choice = person_case_properties.get('current_address_state_choice', None)
     district_choice = person_case_properties.get('current_address_district_choice', None)
-    phi_location_id = person_case.ownder_id
+    phi_location_id = person_case.owner_id
 
     if state_choice:
         state_location = SQLLocation.objects.get_or_None(location_id=state_choice)
