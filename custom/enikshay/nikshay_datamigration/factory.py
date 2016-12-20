@@ -92,8 +92,8 @@ class EnikshayCaseFactory(object):
             },
         }
 
-        if nikshay_id in self.nikshay_id_to_preexisting_nikshay_person_cases:
-            kwargs['case_id'] = self.nikshay_id_to_preexisting_nikshay_person_cases[nikshay_id].case_id
+        if nikshay_id in nikshay_id_to_preexisting_nikshay_person_cases(self.domain):
+            kwargs['case_id'] = nikshay_id_to_preexisting_nikshay_person_cases(self.domain)[nikshay_id].case_id
             kwargs['attrs']['create'] = False
         else:
             kwargs['attrs']['create'] = True
@@ -223,17 +223,6 @@ class EnikshayCaseFactory(object):
 
     @property
     @memoized
-    def nikshay_id_to_preexisting_nikshay_person_cases(self):
-        return {
-            person_case.dynamic_case_properties()['nikshay_id']: person_case
-            for person_case in self.case_accessor.get_cases([
-                case_id for case_id in self.case_accessor.get_case_ids_in_domain(type='person')
-            ])
-            if person_case.dynamic_case_properties().get('migration_created_case')
-        }
-
-    @property
-    @memoized
     def _outcome(self):
         zero_or_one_outcomes = list(Outcome.objects.filter(PatientId=self.patient_detail))
         if zero_or_one_outcomes:
@@ -248,17 +237,27 @@ class EnikshayCaseFactory(object):
 
     @property
     def _location(self):
-        return self.nikshay_code_to_location(self.domain)[self._nikshay_code]
-
-    @classmethod
-    @memoized
-    def nikshay_code_to_location(cls, domain):
-        return {
-            location.metadata.get('nikshay_code'): location
-            for location in SQLLocation.objects.filter(domain=domain)
-            if 'nikshay_code' in location.metadata
-        }
+        return nikshay_code_to_location(self.domain)[self._nikshay_code]
 
     @property
     def _nikshay_code(self):
         return '-'.join(self.patient_detail.PregId.split('-')[:4])
+
+
+def nikshay_code_to_location(domain):
+    return {
+        location.metadata.get('nikshay_code'): location
+        for location in SQLLocation.objects.filter(domain=domain)
+        if 'nikshay_code' in location.metadata
+    }
+
+
+def nikshay_id_to_preexisting_nikshay_person_cases(domain):
+    case_accessor = CaseAccessors(domain)
+    return {
+        person_case.dynamic_case_properties()['nikshay_id']: person_case
+        for person_case in case_accessor.get_cases([
+            case_id for case_id in case_accessor.get_case_ids_in_domain(type='person')
+        ])
+        if person_case.dynamic_case_properties().get('migration_created_case')
+    }
