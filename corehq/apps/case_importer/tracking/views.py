@@ -35,12 +35,6 @@ def case_uploads(request, domain):
 
 @require_can_edit_data
 def update_case_upload_comment(request, domain, upload_id):
-    comment = request.POST.get('comment')
-    if comment is None:
-        return HttpResponseBadRequest("POST body must contain non-null comment property")
-    elif len(comment) > MAX_COMMENT_LENGTH:
-        return HttpResponseBadRequest("comment must be shorter than {} characters"
-                                      .format(MAX_COMMENT_LENGTH))
     try:
         case_upload = CaseUploadRecord.objects.get(upload_id=upload_id, domain=domain)
     except CaseUploadRecord.DoesNotExist:
@@ -48,6 +42,13 @@ def update_case_upload_comment(request, domain, upload_id):
 
     if not user_may_update_comment(request.couch_user, case_upload):
         return HttpResponseForbidden()
+
+    comment = request.POST.get('comment')
+    if comment is None:
+        return HttpResponseBadRequest("POST body must contain non-null comment property")
+    elif len(comment) > MAX_COMMENT_LENGTH:
+        return HttpResponseBadRequest("comment must be shorter than {} characters"
+                                      .format(MAX_COMMENT_LENGTH))
 
     case_upload.comment = comment
     case_upload.save()
