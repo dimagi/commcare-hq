@@ -30,8 +30,13 @@ class EnikshayCaseFactory(object):
         self.nikshay_ids_to_preexisting_nikshay_person_cases = nikshay_ids_to_preexisting_nikshay_person_cases
 
     def create_cases(self):
-        self.create_person_occurrence_episode_cases()
+        # self.create_person_occurrence_episode_cases()
         # self.create_test_cases()
+        person = self.person()
+        outcome = self._outcome
+        occurrence = self.occurrence(outcome, person)
+        episode = self.episode(outcome, occurrence)
+        self.factory.create_or_update_case(episode)
 
     def create_person_occurrence_episode_cases(self):
         episode_structure = self.episode(self._outcome)
@@ -40,7 +45,6 @@ class EnikshayCaseFactory(object):
     def create_test_cases(self):
         self.factory.create_or_update_cases([self.test(followup) for followup in self._followups])
 
-    @memoized
     def person(self):
         nikshay_id = self.patient_detail.PregId
 
@@ -87,8 +91,7 @@ class EnikshayCaseFactory(object):
 
         return CaseStructure(**kwargs)
 
-    @memoized
-    def occurrence(self, outcome):
+    def occurrence(self, outcome, person):
         kwargs = {
             'attrs': {
                 'case_type': 'occurrence',
@@ -101,10 +104,10 @@ class EnikshayCaseFactory(object):
                 },
             },
             'indices': [CaseIndex(
-                self.person(),
+                person,
                 identifier='host',
                 relationship=CASE_INDEX_EXTENSION,
-                related_type=self.person().attrs['case_type'],
+                related_type=person.attrs['case_type'],
             )],
         }
         if outcome:
@@ -130,8 +133,8 @@ class EnikshayCaseFactory(object):
 
         return CaseStructure(**kwargs)
 
-    @memoized
-    def episode(self, outcome):
+    # @memoized
+    def episode(self, outcome, occurrence):
         kwargs = {
             'attrs': {
                 'case_type': 'episode',
@@ -148,10 +151,10 @@ class EnikshayCaseFactory(object):
                 },
             },
             'indices': [CaseIndex(
-                self.occurrence(outcome),
+                occurrence,
                 identifier='host',
                 relationship=CASE_INDEX_EXTENSION,
-                related_type=self.occurrence(outcome).attrs['case_type'],
+                related_type=occurrence.attrs['case_type'],
             )],
         }
 
@@ -219,7 +222,7 @@ class EnikshayCaseFactory(object):
         return CaseStructure(**kwargs)
 
     @property
-    @memoized
+    # @memoized
     def _outcome(self):
         zero_or_one_outcomes = list(Outcome.objects.filter(PatientId=self.patient_detail))
         if zero_or_one_outcomes:
