@@ -4,12 +4,15 @@ import pytz
 from django.test import TestCase
 from custom.enikshay.tests.utils import ENikshayCaseStructureMixin
 from corehq.form_processor.tests.utils import run_with_all_backends, FormProcessorTestUtils
+from casexml.apps.case.models import CommCareCase
 
 from custom.enikshay.case_utils import (
     get_open_episode_case_from_person,
     get_adherence_cases_between_dates,
     get_occurrence_case_from_episode,
     get_person_case_from_occurrence,
+    get_person_case_from_episode,
+    _update_case
 )
 
 
@@ -86,3 +89,19 @@ class ENikshayCaseUtilsTests(ENikshayCaseStructureMixin, TestCase):
             get_person_case_from_occurrence(self.domain, self.occurrence_id).case_id,
             self.person_id
         )
+
+    @run_with_all_backends
+    def test_get_person_case_from_episode(self):
+        self.assertEqual(
+            get_person_case_from_episode(self.domain, self.episode_id).case_id,
+            self.person_id
+        )
+
+    def test_update_case(self):
+        update_properties = {'age': 99 }
+        self.factory.create_or_update_cases([self.person])
+        person_case = CommCareCase.get(self.person_id)
+        self.assertIsNone(person_case.case_properties().get('age', None))
+        _update_case(self.domain, self.person_id, update_properties)
+        person_case = CommCareCase.get(self.person_id)
+        self.assertEqual(person_case.case_properties()['age'], '99')
