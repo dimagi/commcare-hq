@@ -28,7 +28,7 @@ class EnikshayCaseFactory(object):
 
     def create_cases(self):
         self.create_person_occurrence_episode_cases()
-        self.create_test_cases()
+        # self.create_test_cases()
 
     def create_person_occurrence_episode_cases(self):
         episode_structure = self.episode(self._outcome)
@@ -109,6 +109,7 @@ class EnikshayCaseFactory(object):
             kwargs['attrs']['update']['hiv_status'] = outcome.HIVStatus
 
         try:
+            raise CaseNotFound
             matching_occurrence_case = next((
                 occurrence_case for occurrence_case in self.case_accessor.get_cases([
                     index.referenced_id for index in
@@ -152,6 +153,7 @@ class EnikshayCaseFactory(object):
         }
 
         try:
+            raise CaseNotFound
             matching_episode_case = next((
                 extension_case for extension_case in self.case_accessor.get_cases([
                     index.referenced_id for index in
