@@ -156,9 +156,13 @@ def _get_episode_case_properties(episode_case_properties):
     'ptbyr': '2016', 'dotpType': '7', 'dotmob': u'1234567890', 'dotname': u'asdfasdf', 'Ptype': '1',
     'poccupation': 1, 'disease_classification': 'P', 'sitedetail: 1}
     """
+    episode_properties = {}
+
     episode_site_choice = episode_site.get(episode_case_properties.get('site_choice', None))
     if episode_site_choice:
         site_detail = episode_site.get(episode_site_choice, 'others')
+        episode_properties["sitedetail"] = site_detail
+
     episode_case_date = episode_case_properties.get('date_of_diagnosis', None)
     if episode_case_date:
         episode_date = datetime.datetime.strptime(episode_case_date, "%Y-%m-%d").date()
@@ -166,7 +170,7 @@ def _get_episode_case_properties(episode_case_properties):
         episode_date = datetime.date.today()
 
     episode_year = episode_date.year
-    episode_properties = {
+    episode_properties.update({
         "poccupation": occupation.get(
             episode_case_properties.get('occupation', 'other'),
             occupation['other']
@@ -189,8 +193,7 @@ def _get_episode_case_properties(episode_case_properties):
         ),
         "dateofInitiation": episode_case_properties.get('treatment_initiation_date', str(datetime.date.today())),
         "Ptype": patient_type_choice.get(episode_case_properties.get('patient_type_choice', ''), ''),
-        "sitedetail": site_detail
-    }
+    })
 
     return episode_properties
 
