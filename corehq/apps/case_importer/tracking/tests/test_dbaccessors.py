@@ -94,7 +94,7 @@ class FormAndCaseIdsTest(TestCase):
         config = self._get_config(rows[0])
         xls_file = make_worksheet_wrapper(*rows)
         do_import(xls_file, config, self.domain,
-                  record_cases_callback=tracker.record_cases)
+                  record_form_callback=tracker.record_form)
 
         return case_upload_record
 

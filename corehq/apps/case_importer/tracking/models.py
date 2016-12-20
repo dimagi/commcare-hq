@@ -67,8 +67,3 @@ class CaseUploadFileMeta(models.Model):
 class CaseUploadFormRecord(models.Model):
     case_upload_record = models.ForeignKey(CaseUploadRecord, related_name='form_records')
     form_id = models.CharField(max_length=256, unique=True)
-
-
-class CaseUploadCaseRecord(models.Model):
-    form_record = models.ForeignKey(CaseUploadFormRecord, related_name='case_records')
-    case_id = models.CharField(max_length=256)
