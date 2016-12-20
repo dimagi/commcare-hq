@@ -98,7 +98,7 @@ class ENikshayCaseUtilsTests(ENikshayCaseStructureMixin, TestCase):
         )
 
     def test_update_case(self):
-        update_properties = {'age': 99 }
+        update_properties = {'age': 99}
         self.factory.create_or_update_cases([self.person])
         person_case = CommCareCase.get(self.person_id)
         self.assertIsNone(person_case.case_properties().get('age', None))
