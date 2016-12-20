@@ -3,6 +3,7 @@ from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from corehq.apps.locations.models import SQLLocation
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.enikshay.nikshay_datamigration.models import Outcome, Followup
 
@@ -26,20 +27,10 @@ class EnikshayCaseFactory(object):
         self.case_accessor = CaseAccessors(domain)
 
     def create_cases(self):
-        self.create_person_case()
-        self.create_occurrence_case()
-        self.create_episode_case()
+        self.create_person_occurrence_episode_cases()
         self.create_test_cases()
 
-    def create_person_case(self):
-        person_structure = self.person()
-        self.factory.create_or_update_case(person_structure)
-
-    def create_occurrence_case(self):
-        occurrence_structure = self.occurrence(self._outcome)
-        self.factory.create_or_update_case(occurrence_structure)
-
-    def create_episode_case(self):
+    def create_person_occurrence_episode_cases(self):
         episode_structure = self.episode(self._outcome)
         self.factory.create_or_update_case(episode_structure)
 
@@ -117,13 +108,16 @@ class EnikshayCaseFactory(object):
             # TODO - store with correct value
             kwargs['attrs']['update']['hiv_status'] = outcome.HIVStatus
 
-        matching_occurrence_case = next((
-            occurrence_case for occurrence_case in self.case_accessor.get_cases([
-                index.referenced_id for index in
-                self.case_accessor.get_case(self.person().case_id).reverse_indices
-            ])
-            if self.patient_detail.PregId == occurrence_case.dynamic_case_properties().get('nikshay_id')
-        ), None)
+        try:
+            matching_occurrence_case = next((
+                occurrence_case for occurrence_case in self.case_accessor.get_cases([
+                    index.referenced_id for index in
+                    self.case_accessor.get_case(self.person().case_id).reverse_indices
+                ])
+                if self.patient_detail.PregId == occurrence_case.dynamic_case_properties().get('nikshay_id')
+            ), None)
+        except CaseNotFound:
+            matching_occurrence_case = None
         if matching_occurrence_case:
             kwargs['case_id'] = matching_occurrence_case.case_id
             kwargs['attrs']['create'] = False
@@ -157,16 +151,19 @@ class EnikshayCaseFactory(object):
             )],
         }
 
-        matching_episode_case = next((
-            extension_case for extension_case in self.case_accessor.get_cases([
-                index.referenced_id for index in
-                self.case_accessor.get_case(self.occurrence(outcome).case_id).reverse_indices
-            ])
-            if (
-                extension_case.type == 'episode'
-                and extension_case.dynamic_case_properties().get('migration_created_case')
-            )
-        ), None)
+        try:
+            matching_episode_case = next((
+                extension_case for extension_case in self.case_accessor.get_cases([
+                    index.referenced_id for index in
+                    self.case_accessor.get_case(self.occurrence(outcome).case_id).reverse_indices
+                ])
+                if (
+                    extension_case.type == 'episode'
+                    and extension_case.dynamic_case_properties().get('migration_created_case')
+                )
+            ), None)
+        except CaseNotFound:
+            matching_episode_case = None
         if matching_episode_case:
             kwargs['case_id'] = matching_episode_case.case_id
             kwargs['attrs']['create'] = False
