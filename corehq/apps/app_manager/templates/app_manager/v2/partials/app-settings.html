@@ -201,7 +201,7 @@
       {% endif %}
       <div class="panel panel-appmanager panel-appmanager-form panel-appmanager-form-danger">
         <form class="form form-horizontal" method="post" action="{% url "copy_app" domain %}">
-          <form action="{% url "corehq.apps.app_manager.views.delete_app" domain app.id %}" method="POST">
+          <form action="{% url "delete_app" domain app.id %}" method="POST">
             {% csrf_token %}
             <legend>{% trans "Delete Application" %}</legend>
             <div class="panel-body">
