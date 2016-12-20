@@ -58,7 +58,7 @@ def get_person_case_from_occurrence(domain, occurrence_case_id):
 
 
 def get_person_case_from_episode(domain, episode_case_id):
-    get_person_case_from_occurrence(
+    return get_person_case_from_occurrence(
         domain,
         get_occurrence_case_from_episode(domain, episode_case_id).case_id
     )
