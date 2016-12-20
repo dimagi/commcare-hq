@@ -38,11 +38,6 @@
                     $(this).prop('disabled', false);
                 });
 
-                $(this).find('input.is_date').each(function() {
-                    var checked_val = this.checked;
-                    $(this).closest('tr').find('input.is_date_field').val(checked_val);
-                });
-
                 return true;
             });
 
