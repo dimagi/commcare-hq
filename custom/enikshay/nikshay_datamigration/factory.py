@@ -3,7 +3,6 @@ from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from corehq.apps.locations.models import SQLLocation
-from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.enikshay.case_utils import get_open_occurrence_case_from_person, get_open_episode_case_from_occurrence
 from custom.enikshay.exceptions import ENikshayCaseNotFound
