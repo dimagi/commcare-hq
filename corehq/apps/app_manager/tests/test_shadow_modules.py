@@ -53,20 +53,7 @@ class ShadowModuleFormSelectionSuiteTest(SimpleTestCase, TestXmlMixin):
 
     def test_no_forms_selected(self):
         self.shadow_module.excluded_form_ids = [self.form0.unique_id, self.form1.unique_id]
-        expected = """
-        <partial>
-          <menu id="m1">
-            <text>
-              <locale id="modules.m1"/>
-            </text>
-          </menu>
-        </partial>
-        """
-        self.assertXmlPartialEqual(
-            expected,
-            self.factory.app.create_suite(),
-            "./menu[@id='m1']"
-        )
+        self.assertXmlDoesNotHaveXpath(self.factory.app.create_suite(), "./menu[@id='m1']")
 
     def test_no_child_forms_selected(self):
         self.shadow_module.excluded_form_ids = [self.form2.unique_id]
@@ -93,11 +80,6 @@ class ShadowModuleFormSelectionSuiteTest(SimpleTestCase, TestXmlMixin):
                     </text>
                     <command id="m2-f0"/>
                   </menu>
-                  <menu id="m2.m1" root="m1">
-                    <text>
-                      <locale id="modules.m2"/>
-                    </text>
-                  </menu>
                 </partial>
             ''',
             self.factory.app.create_suite(),
@@ -129,11 +111,6 @@ class ShadowModuleFormSelectionSuiteTest(SimpleTestCase, TestXmlMixin):
                       <locale id="modules.m2"/>
                     </text>
                     <command id="m2-f0"/>
-                  </menu>
-                  <menu id="m2.m1" root="m1">
-                    <text>
-                      <locale id="modules.m2"/>
-                    </text>
                   </menu>
                 </partial>
             ''',
@@ -167,11 +144,6 @@ class ShadowModuleFormSelectionSuiteTest(SimpleTestCase, TestXmlMixin):
                     </text>
                     <command id="m2-f0"/>
                   </menu>
-                  <menu id="m2.root" root="root">
-                    <text>
-                      <locale id="modules.m2"/>
-                    </text>
-                  </menu>
                 </partial>
             ''',
             self.factory.app.create_suite(),
@@ -203,11 +175,6 @@ class ShadowModuleFormSelectionSuiteTest(SimpleTestCase, TestXmlMixin):
                       <locale id="modules.m2"/>
                     </text>
                     <command id="m2-f0"/>
-                  </menu>
-                  <menu id="m1">
-                    <text>
-                      <locale id="modules.m2"/>
-                    </text>
                   </menu>
                 </partial>
             ''',
@@ -241,11 +208,6 @@ class ShadowModuleFormSelectionSuiteTest(SimpleTestCase, TestXmlMixin):
                     </text>
                     <command id="m2-f0"/>
                   </menu>
-                  <menu id="root">
-                    <text>
-                      <locale id="modules.m2"/>
-                    </text>
-                  </menu>
                 </partial>
             ''',
             self.factory.app.create_suite(),
@@ -277,11 +239,6 @@ class ShadowModuleFormSelectionSuiteTest(SimpleTestCase, TestXmlMixin):
                       <locale id="modules.m2"/>
                     </text>
                     <command id="m2-f0"/>
-                  </menu>
-                  <menu id="m1">
-                    <text>
-                      <locale id="modules.m2"/>
-                    </text>
                   </menu>
                 </partial>
             ''',
@@ -315,11 +272,6 @@ class ShadowModuleFormSelectionSuiteTest(SimpleTestCase, TestXmlMixin):
                     </text>
                     <command id="m2-f0"/>
                   </menu>
-                  <menu id="m2.root" root="root">
-                    <text>
-                      <locale id="modules.m2"/>
-                    </text>
-                  </menu>
                 </partial>
             ''',
             self.factory.app.create_suite(),
@@ -351,11 +303,6 @@ class ShadowModuleFormSelectionSuiteTest(SimpleTestCase, TestXmlMixin):
                       <locale id="modules.m2"/>
                     </text>
                     <command id="m2-f0"/>
-                  </menu>
-                  <menu id="root">
-                    <text>
-                      <locale id="modules.m2"/>
-                    </text>
                   </menu>
                 </partial>
             ''',
