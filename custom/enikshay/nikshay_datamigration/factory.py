@@ -96,8 +96,10 @@ class EnikshayCaseFactory(object):
             },
         }
 
-        if nikshay_id in self.nikshay_ids_to_preexisting_nikshay_person_cases:
-            kwargs['case_id'] = self.nikshay_ids_to_preexisting_nikshay_person_cases[nikshay_id].case_id
+        matching_external_ids = self.case_accessor.get_cases_by_external_id(nikshay_id, case_type='person')
+        assert len(matching_external_ids) <= 1
+        if matching_external_ids:
+            kwargs['case_id'] = matching_external_ids[0].case_id
             kwargs['attrs']['create'] = False
         else:
             kwargs['attrs']['create'] = True
