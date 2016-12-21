@@ -2,8 +2,7 @@ import logging
 
 from django.core.management import BaseCommand
 
-from custom.enikshay.nikshay_datamigration.factory import EnikshayCaseFactory, get_nikshay_codes_to_location, \
-    get_nikshay_ids_to_preexisting_nikshay_person_cases
+from custom.enikshay.nikshay_datamigration.factory import EnikshayCaseFactory, get_nikshay_codes_to_location
 from custom.enikshay.nikshay_datamigration.models import PatientDetail
 
 logger = logging.getLogger('nikshay_datamigration')
@@ -28,15 +27,11 @@ class Command(BaseCommand):
         num_failed = 0
         logger.info('Starting migration of %d patient cases on domain %s.' % (total, domain))
         nikshay_codes_to_location = get_nikshay_codes_to_location(domain)
-        nikshay_ids_to_preexisting_nikshay_person_cases = get_nikshay_ids_to_preexisting_nikshay_person_cases(
-            domain
-        )
         for patient_detail in patient_details:
             counter += 1
             try:
                 case_factory = EnikshayCaseFactory(
-                    domain, patient_detail, nikshay_codes_to_location,
-                    nikshay_ids_to_preexisting_nikshay_person_cases
+                    domain, patient_detail, nikshay_codes_to_location
                 )
                 case_factory.create_cases()
             except:
