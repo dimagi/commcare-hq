@@ -152,6 +152,7 @@ class TestCreateEnikshayCases(TestCase):
             OrderedDict([
                 ('date_reported', '2016-12-13'),
                 ('disease_classification', 'pulmonary'),
+                ('episode_type', 'confirmed_tb'),
                 ('migration_created_case', 'true'),
                 ('patient_type_choice', 'treatment_after_failure'),
                 ('treatment_supporter_designation', 'health_worker'),

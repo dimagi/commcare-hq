@@ -4,6 +4,8 @@ from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from custom.enikshay.case_utils import get_open_occurrence_case_from_person, get_open_episode_case_from_occurrence
+from custom.enikshay.exceptions import ENikshayCaseNotFound
 from custom.enikshay.nikshay_datamigration.models import Outcome, Followup
 
 
@@ -27,32 +29,15 @@ class EnikshayCaseFactory(object):
         self.nikshay_codes_to_location = nikshay_codes_to_location
 
     def create_cases(self):
-        self.create_person_case()
-        self.create_occurrence_case()
-        self.create_episode_case()
+        self.create_person_occurrence_episode_cases()
         self.create_test_cases()
 
-    def create_person_case(self):
-        person_structure = self.person()
-        person_case = self.factory.create_or_update_case(person_structure)[0]
-        person_structure.case_id = person_case.case_id
-
-    def create_occurrence_case(self):
-        if self._outcome:
-            occurrence_structure = self.occurrence(self._outcome)
-            occurrence_case = self.factory.create_or_update_case(occurrence_structure)[0]
-            occurrence_structure.case_id = occurrence_case.case_id
-
-    def create_episode_case(self):
-        if self._outcome:
-            episode_structure = self.episode(self._outcome)
-            episode_case = self.factory.create_or_update_case(episode_structure)[0]
-            episode_structure.case_id = episode_case.case_id
+    def create_person_occurrence_episode_cases(self):
+        episode_structure = self.episode(self._outcome)
+        self.factory.create_or_update_case(episode_structure)
 
     def create_test_cases(self):
-        if self._outcome:
-            # how many followup's do not have a corresponding outcome? how should we handle this situation?
-            self.factory.create_or_update_cases([self.test(followup) for followup in self._followups])
+        self.factory.create_or_update_cases([self.test(followup) for followup in self._followups])
 
     @memoized
     def person(self):
@@ -110,7 +95,6 @@ class EnikshayCaseFactory(object):
             'attrs': {
                 'case_type': 'occurrence',
                 'update': {
-                    'hiv_status': outcome.HIVStatus,
                     'name': 'Occurrence #1',
                     'nikshay_id': self.patient_detail.PregId,
                     'occurrence_episode_count': 1,
@@ -125,19 +109,19 @@ class EnikshayCaseFactory(object):
                 related_type=self.person().attrs['case_type'],
             )],
         }
+        if outcome:
+            # TODO - store with correct value
+            kwargs['attrs']['update']['hiv_status'] = outcome.HIVStatus
 
-        matching_occurrence_case = next((
-            occurrence_case for occurrence_case in self.case_accessor.get_cases([
-                index.referenced_id for index in
-                self.case_accessor.get_case(self.person().case_id).reverse_indices
-            ])
-            if outcome.pk == occurrence_case.dynamic_case_properties().get('nikshay_id')
-        ), None)
-        if matching_occurrence_case:
-            kwargs['case_id'] = matching_occurrence_case.case_id
-            kwargs['attrs']['create'] = False
-        else:
+        if self.person().attrs['create']:
             kwargs['attrs']['create'] = True
+        else:
+            try:
+                matching_occurrence_case = get_open_occurrence_case_from_person(self.domain, self.person().case_id)
+                kwargs['case_id'] = matching_occurrence_case.case_id
+                kwargs['attrs']['create'] = False
+            except ENikshayCaseNotFound:
+                kwargs['attrs']['create'] = True
 
         return CaseStructure(**kwargs)
 
@@ -149,6 +133,7 @@ class EnikshayCaseFactory(object):
                 'update': {
                     'date_reported': self.patient_detail.pregdate1,  # is this right?
                     'disease_classification': self.patient_detail.disease_classification,
+                    'episode_type': 'confirmed_tb',
                     'patient_type_choice': self.patient_detail.patient_type_choice,
                     'treatment_supporter_designation': self.patient_detail.treatment_supporter_designation,
                     'treatment_supporter_first_name': self.patient_detail.treatment_supporter_first_name,
@@ -166,21 +151,17 @@ class EnikshayCaseFactory(object):
             )],
         }
 
-        matching_episode_case = next((
-            extension_case for extension_case in self.case_accessor.get_cases([
-                index.referenced_id for index in
-                self.case_accessor.get_case(self.occurrence(outcome).case_id).reverse_indices
-            ])
-            if (
-                extension_case.type == 'episode'
-                and extension_case.dynamic_case_properties().get('migration_created_case')
-            )
-        ), None)
-        if matching_episode_case:
-            kwargs['case_id'] = matching_episode_case.case_id
-            kwargs['attrs']['create'] = False
-        else:
+        if self.occurrence(outcome).attrs['create']:
             kwargs['attrs']['create'] = True
+        else:
+            try:
+                matching_episode_case = get_open_episode_case_from_occurrence(
+                    self.domain, self.occurrence(outcome).case_id
+                )
+                kwargs['case_id'] = matching_episode_case.case_id
+                kwargs['attrs']['create'] = False
+            except ENikshayCaseNotFound:
+                kwargs['attrs']['create'] = True
 
         return CaseStructure(**kwargs)
 
