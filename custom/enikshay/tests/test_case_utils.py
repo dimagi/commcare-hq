@@ -11,6 +11,7 @@ from custom.enikshay.case_utils import (
     get_occurrence_case_from_episode,
     get_person_case_from_occurrence,
     get_open_occurrence_case_from_person,
+    get_open_episode_case_from_occurrence,
 )
 
 
@@ -93,4 +94,11 @@ class ENikshayCaseUtilsTests(ENikshayCaseStructureMixin, TestCase):
         self.assertEqual(
             get_open_occurrence_case_from_person(self.domain, self.person_id).case_id,
             self.occurrence_id
+        )
+
+    @run_with_all_backends
+    def test_get_open_episode_case_from_occurrence(self):
+        self.assertEqual(
+            get_open_episode_case_from_occurrence(self.domain, self.occurrence_id).case_id,
+            self.episode_id
         )
