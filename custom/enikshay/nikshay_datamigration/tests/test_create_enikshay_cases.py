@@ -104,7 +104,7 @@ class TestCreateEnikshayCases(TestCase):
                 ('first_name', 'A'),
                 ('last_name', 'C'),
                 ('middle_name', 'B'),
-                ('migration_created_case', 'True'),
+                ('migration_created_case', 'true'),
                 ('nikshay_id', 'MH-ABD-05-16-0001'),
                 ('permanent_address_district_choice', 'Middlesex'),
                 ('permanent_address_state_choice', 'MA'),
@@ -124,7 +124,7 @@ class TestCreateEnikshayCases(TestCase):
         self.assertEqual(
             OrderedDict([
                 ('hiv_status', 'negative'),
-                ('migration_created_case', 'True'),
+                ('migration_created_case', 'true'),
                 ('nikshay_id', 'MH-ABD-05-16-0001'),
                 ('occurrence_episode_count', '1'),
             ]),
@@ -148,7 +148,7 @@ class TestCreateEnikshayCases(TestCase):
             OrderedDict([
                 ('date_reported', '2016-12-13'),
                 ('disease_classification', 'pulmonary'),
-                ('migration_created_case', 'True'),
+                ('migration_created_case', 'true'),
                 ('patient_type_choice', 'treatment_after_failure'),
                 ('treatment_supporter_designation', 'health_worker'),
                 ('treatment_supporter_first_name', 'Bubble'),
@@ -181,27 +181,27 @@ class TestCreateEnikshayCases(TestCase):
             [
                 OrderedDict([
                     ('date_tested', ''),
-                    ('migration_created_case', 'True'),
+                    ('migration_created_case', 'true'),
                     ('migration_followup_id', str(1)),
                 ]),
                 OrderedDict([
                     ('date_tested', ''),
-                    ('migration_created_case', 'True'),
+                    ('migration_created_case', 'true'),
                     ('migration_followup_id', str(2)),
                 ]),
                 OrderedDict([
                     ('date_tested', ''),
-                    ('migration_created_case', 'True'),
+                    ('migration_created_case', 'true'),
                     ('migration_followup_id', str(3)),
                 ]),
                 OrderedDict([
                     ('date_tested', ''),
-                    ('migration_created_case', 'True'),
+                    ('migration_created_case', 'true'),
                     ('migration_followup_id', str(4)),
                 ]),
                 OrderedDict([
                     ('date_tested', ''),
-                    ('migration_created_case', 'True'),
+                    ('migration_created_case', 'true'),
                     ('migration_followup_id', str(5)),
                 ]),
             ]
