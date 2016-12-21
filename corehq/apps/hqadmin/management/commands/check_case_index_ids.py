@@ -1,15 +1,12 @@
 import csv
 from django.core.management import BaseCommand, call_command
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.receiverwrapper.util import get_app_version_info
 from corehq.apps.reports.util import resync_case_to_es
 from corehq.apps.users.util import cached_owner_id_to_display
 from corehq.elastic import ES_MAX_CLAUSE_COUNT
 from corehq.apps.es.cases import CaseES
-from corehq.form_processor.change_publishers import publish_case_saved
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
-from corehq.form_processor.utils import should_use_sql_backend
 
 
 class Command(BaseCommand):
