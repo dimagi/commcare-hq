@@ -97,3 +97,4 @@ csiphash==0.0.4
 json-delta==2.0
 email_validator==1.0.1
 dnspython==1.13.0
+freezegun==0.3.8
