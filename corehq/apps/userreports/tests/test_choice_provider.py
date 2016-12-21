@@ -152,20 +152,28 @@ class LocationChoiceProviderTest(ChoiceProviderTestMixin, LocationHierarchyTestC
     ]
 
     @classmethod
+    def loc_to_choice(cls, loc_name):
+        location = cls.locations[loc_name]
+        return SearchableChoice(
+            location.location_id,
+            location.get_path_display(),
+            searchable_text=[location.site_code, location.name]
+        )
+
+    @classmethod
     def setUpClass(cls):
         delete_all_locations()
         delete_all_users()
         super(LocationChoiceProviderTest, cls).setUpClass()
         report = ReportConfiguration(domain=cls.domain)
-        choices = [
-            SearchableChoice(
-                location.location_id,
-                location.get_path_display(),
-                searchable_text=[location.site_code, location.name]
-            )
-            for location in cls.locations.itervalues()
-        ]
-        choices.sort(key=lambda choice: choice.display)
+        choices = map(cls.loc_to_choice, [
+            'Massachusetts',
+            'Middlesex',
+            'Cambridge',
+            'Somerville',
+            'Suffolke',
+            'Bostone',
+        ])
         cls.web_user = WebUser.create(cls.domain, 'blah', 'password')
         cls.choice_provider = LocationChoiceProvider(report, None)
         cls.static_choice_provider = StaticChoiceProvider(choices)
@@ -188,18 +196,12 @@ class LocationChoiceProviderTest(ChoiceProviderTestMixin, LocationHierarchyTestC
     def test_scoped_to_location_search(self):
         self.web_user.set_location(self.domain, self.locations['Middlesex'])
         self.restrict_user_to_assigned_locations(self.web_user)
-        scoped_choices = [
-            SearchableChoice(
-                location.location_id,
-                location.get_path_display(),
-                searchable_text=[location.site_code, location.name]
-            )
-            for location in [
-                self.locations['Middlesex'],
-                self.locations['Cambridge'],
-                self.locations['Somerville'],
+        scoped_choices = map(self.loc_to_choice, [
+                'Middlesex',
+                'Cambridge',
+                'Somerville',
             ]
-        ]
+        )
         self.static_choice_provider = StaticChoiceProvider(scoped_choices)
 
         # When an empty query is given, the user receives all the choices they can access

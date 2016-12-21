@@ -173,7 +173,7 @@ class LocationChoiceProvider(ChainableChoiceProvider):
 
     def query(self, query_context):
         # todo: consider making this an extensions framework similar to custom expressions
-        locations = self._locations_query(query_context.query, query_context.user).order_by('name')
+        locations = self._locations_query(query_context.query, query_context.user)
 
         return self._locations_to_choices(
             locations[query_context.offset:query_context.offset + query_context.limit]
