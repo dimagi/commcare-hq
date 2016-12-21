@@ -592,6 +592,9 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
         app_label = 'locations'
         unique_together = ('domain', 'site_code',)
 
+    class MPTTMeta:
+        order_insertion_by = ['name']
+
     def __unicode__(self):
         return u"{} ({})".format(self.name, self.domain)
 

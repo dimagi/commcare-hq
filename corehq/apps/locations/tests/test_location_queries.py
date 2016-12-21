@@ -1,5 +1,5 @@
 from ..models import SQLLocation
-from .util import LocationHierarchyTestCase
+from .util import LocationHierarchyTestCase, make_loc
 from corehq.apps.users.models import WebUser
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 
@@ -126,3 +126,70 @@ class TestLocationScopedQueryset(BaseTestLocationQuerysetMethods):
             .accessible_to_user(self.domain, self.web_user)
         )
         self.assertItemsEqual([], no_locs)
+
+
+class TestLocationQuerysetOrder(LocationHierarchyTestCase):
+    domain = 'test-location-queryset-order'
+    location_type_names = ['state', 'county', 'city']
+    location_structure = []
+
+    def tearDown(self):
+        SQLLocation.objects.filter(domain=self.domain).delete()
+
+    def make_loc(self, name, loc_type, parent=None):
+        return make_loc(name, domain=self.domain, type=loc_type, parent=parent)
+
+    def test_backwards_insertion(self):
+        mass = self.make_loc("Mass", "state")
+        suffolk = self.make_loc("Suffolk", "county", mass)
+        dorcester = self.make_loc("Dorcester", "city", suffolk)
+        boston = self.make_loc("Boston", "city", suffolk)
+        middlesex = self.make_loc("Middlesex", "county", mass)
+        somerville = self.make_loc("Somerville", "city", middlesex)
+        cambridge = self.make_loc("Cambridge", "city", middlesex)
+        arlington = self.make_loc("Arlington", "city", middlesex)
+
+        self.assertEqual(
+            list(SQLLocation.objects.filter(domain=self.domain).values_list("name", flat=True)),
+            # I know the indentation is weird - it's here to illustrate WHY this is the correct ordering
+            [
+                "Mass",
+                    "Middlesex",
+                        "Arlington",
+                        "Cambridge",
+                        "Somerville",
+                    "Suffolk",
+                        "Boston",
+                        "Dorcester",
+            ]
+        )
+
+    def test_arbitrary_insertion_with_rearrangement(self):
+        cambridge = self.make_loc("Cambridge", "state")
+
+        mass = self.make_loc("Mass", "state")
+        suffolk = self.make_loc("Suffolk", "county", mass)
+        middlesex = self.make_loc("Middlesex", "county", mass)
+        arlington = self.make_loc("Arlington", "city", middlesex)
+        boston = self.make_loc("Boston", "city", suffolk)
+        dorcester = self.make_loc("Dorcester", "city", suffolk)
+        somerville = self.make_loc("Somerville", "city", middlesex)
+
+        cambridge = cambridge.sql_location
+        cambridge.parent = middlesex.sql_location
+        cambridge.save()
+
+        self.assertEqual(
+            list(SQLLocation.objects.filter(domain=self.domain).values_list("name", flat=True)),
+            # I know the indentation is weird - it's here to illustrate WHY this is the correct ordering
+            [
+                "Mass",
+                    "Middlesex",
+                        "Arlington",
+                        "Cambridge",
+                        "Somerville",
+                    "Suffolk",
+                        "Boston",
+                        "Dorcester",
+            ]
+        )
