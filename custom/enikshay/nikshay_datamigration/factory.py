@@ -1,3 +1,5 @@
+import datetime
+
 from dimagi.utils.decorators.memoized import memoized
 
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
@@ -113,6 +115,7 @@ class EnikshayCaseFactory(object):
                     'name': 'Occurrence #1',
                     'nikshay_id': self.patient_detail.PregId,
                     'occurrence_episode_count': 1,
+                    'occurrence_id': datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S%f')[:-3],
 
                     'migration_created_case': 'true',
                 },

@@ -4,6 +4,8 @@ from datetime import date, datetime
 from django.core.management import call_command
 from django.test import TestCase
 
+from freezegun import freeze_time
+
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation, LocationType
@@ -87,6 +89,7 @@ class TestCreateEnikshayCases(TestCase):
         super(TestCreateEnikshayCases, self).tearDown()
 
     @run_with_all_backends
+    @freeze_time("2016-09-08 01:02:03.4123")
     def test_case_creation(self):
         call_command('create_enikshay_cases', self.domain.name)
 
@@ -129,6 +132,7 @@ class TestCreateEnikshayCases(TestCase):
                 ('migration_created_case', 'true'),
                 ('nikshay_id', 'MH-ABD-05-16-0001'),
                 ('occurrence_episode_count', '1'),
+                ('occurrence_id', '20160908010203004'),
             ]),
             occurrence_case.dynamic_case_properties()
         )
