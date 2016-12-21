@@ -196,7 +196,7 @@ class Command(BaseCommand):
     @property
     def report_map(self):
         if not self._report_map:
-            self.copy_ucr_data(self.existing_domain, self.new_domain)
+            self.copy_ucr_data()
         return self._report_map
 
     def copy_applications(self):
