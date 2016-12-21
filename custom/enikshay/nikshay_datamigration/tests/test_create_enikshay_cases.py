@@ -8,6 +8,7 @@ from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.tests.utils import run_with_all_backends
 from custom.enikshay.nikshay_datamigration.models import Followup, Outcome, PatientDetail
 
 
@@ -85,6 +86,7 @@ class TestCreateEnikshayCases(TestCase):
 
         super(TestCreateEnikshayCases, self).tearDown()
 
+    @run_with_all_backends
     def test_case_creation(self):
         call_command('create_enikshay_cases', self.domain.name)
 
@@ -131,14 +133,15 @@ class TestCreateEnikshayCases(TestCase):
             occurrence_case.dynamic_case_properties()
         )
         self.assertEqual('Occurrence #1', occurrence_case.name)
-        self.assertItemsEqual(
-            [CommCareCaseIndex(
+        self.assertEqual(len(occurrence_case.indices), 1)
+        self._assertIndexEqual(
+            CommCareCaseIndex(
                 identifier='host',
                 referenced_type='person',
                 referenced_id=person_case.get_id,
                 relationship='extension',
-            )],
-            occurrence_case.indices
+            ),
+            occurrence_case.indices[0]
         )
 
         episode_case_ids = self.case_accessor.get_case_ids_in_domain(type='episode')
@@ -157,14 +160,15 @@ class TestCreateEnikshayCases(TestCase):
             ]),
             episode_case.dynamic_case_properties()
         )
-        self.assertItemsEqual(
-            [CommCareCaseIndex(
+        self.assertEqual(len(episode_case.indices), 1)
+        self._assertIndexEqual(
+            CommCareCaseIndex(
                 identifier='host',
                 referenced_type='occurrence',
                 referenced_id=occurrence_case.get_id,
                 relationship='extension',
-            )],
-            episode_case.indices
+            ),
+            episode_case.indices[0]
         )
 
         test_case_ids = set(self.case_accessor.get_case_ids_in_domain(type='test'))
@@ -207,16 +211,18 @@ class TestCreateEnikshayCases(TestCase):
             ]
         )
         for test_case in test_cases:
-            self.assertItemsEqual(
-                [CommCareCaseIndex(
+            self.assertEqual(len(test_case.indices), 1)
+            self._assertIndexEqual(
+                CommCareCaseIndex(
                     identifier='host',
                     referenced_type='occurrence',
                     referenced_id=occurrence_case.get_id,
                     relationship='extension',
-                )],
-                test_case.indices
+                ),
+                test_case.indices[0]
             )
 
+    @run_with_all_backends
     def test_case_update(self):
         call_command('create_enikshay_cases', self.domain.name)
 
@@ -243,3 +249,9 @@ class TestCreateEnikshayCases(TestCase):
         self.assertEqual(1, len(episode_case_ids))
         episode_case = self.case_accessor.get_case(episode_case_ids[0])
         self.assertEqual(episode_case.dynamic_case_properties()['disease_classification'], 'extra_pulmonary')
+
+    def _assertIndexEqual(self, index_1, index_2):
+        self.assertEqual(index_1.identifier, index_2.identifier)
+        self.assertEqual(index_1.referenced_type, index_2.referenced_type)
+        self.assertEqual(index_1.referenced_id, index_2.referenced_id)
+        self.assertEqual(index_1.relationship, index_2.relationship)
