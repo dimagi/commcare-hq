@@ -1038,20 +1038,17 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
 
     @classmethod
     def get_content_info_from_keyword(cls, keyword):
-        from corehq.apps.reminders.models import (METHOD_SMS, METHOD_SMS_SURVEY,
-            METHOD_STRUCTURED_SMS, RECIPIENT_SENDER)
-
         content_type = cls.CONTENT_NONE
         form_unique_id = None
         form_name = None
 
-        for action in keyword.actions:
-            if action.recipient == RECIPIENT_SENDER:
-                if action.action in (METHOD_SMS_SURVEY, METHOD_STRUCTURED_SMS):
+        for action in keyword.keywordaction_set.all():
+            if action.recipient == KeywordAction.RECIPIENT_SENDER:
+                if action.action in (KeywordAction.ACTION_SMS_SURVEY, KeywordAction.ACTION_STRUCTURED_SMS):
                     content_type = cls.CONTENT_SMS_SURVEY
                     form_unique_id = action.form_unique_id
                     form_name = cls.get_form_name_or_none(action.form_unique_id)
-                elif action.action == METHOD_SMS:
+                elif action.action == KeywordAction.ACTION_SMS:
                     content_type = cls.CONTENT_SMS
 
         return (content_type, form_unique_id, form_name)
@@ -1118,7 +1115,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             domain=keyword.domain,
             date=datetime.utcnow(),
             source=cls.SOURCE_KEYWORD,
-            source_id=keyword.get_id,
+            source_id=keyword.couch_id,
             content_type=content_type,
             form_unique_id=form_unique_id,
             form_name=form_name,
