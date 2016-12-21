@@ -63,6 +63,7 @@ class EnikshayCaseFactory(object):
         kwargs = {
             'attrs': {
                 'case_type': 'person',
+                'external_id': nikshay_id,
                 # 'owner_id': self._location.location_id,
                 'update': {
                     'aadhaar_number': self.patient_detail.paadharno,
