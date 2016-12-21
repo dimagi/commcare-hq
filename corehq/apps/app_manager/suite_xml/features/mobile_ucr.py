@@ -221,9 +221,7 @@ def _get_data_detail(config, domain):
 
             def _get_word_eval(word_translations, default_value):
                 word_eval = default_value
-                for lang_translation_pair in word_translations:
-                    lang = lang_translation_pair[0]
-                    translation = lang_translation_pair[1]
+                for lang, translation in word_translations.items():
                     word_eval = _get_conditional(
                         "$lang = '{lang}'".format(
                             lang=lang,
@@ -240,12 +238,17 @@ def _get_data_detail(config, domain):
                 default_val = "column[@id='{column_id}']"
                 xpath_function = default_val
                 for word, translations in transform['translations'].items():
+                    if isinstance(translations, basestring):
+                        # This is a flat mapping, not per-language translations
+                        word_eval = "'{}'".format(translations)
+                    else:
+                        word_eval = _get_word_eval(translations, default_val)
                     xpath_function = _get_conditional(
                         u"{value} = '{word}'".format(
                             value=default_val,
                             word=word,
                         ),
-                        _get_word_eval(translations, default_val),
+                        word_eval,
                         xpath_function
                     )
                 return Xpath(

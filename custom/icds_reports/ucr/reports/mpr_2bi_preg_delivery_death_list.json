@@ -109,61 +109,26 @@
         "format": "default",
         "transform": {
           "type": "translation",
+          "mobile_or_web": "mobile",
           "translations": {
-            "delivery": [
-              [
-                "mar",
-                "प्रसूति"
-              ],
-              [
-                "tel",
-                "కాన్పు వివరాలు "
-              ],
-              [
-                "hin",
-                "प्रसव"
-              ],
-              [
-                "en",
-                "Delivery"
-              ]
-            ],
-            "pnc": [
-              [
-                "mar",
-                "प्रसुतीनंतरची देखभाल"
-              ],
-              [
-                "tel",
-                "కాన్పు తరువాత సంరక్షణ "
-              ],
-              [
-                "hin",
-                "प्रसव के बाद देख-रेख"
-              ],
-              [
-                "en",
-                "PNC"
-              ]
-            ],
-            "pregnant": [
-              [
-                "mar",
-                "गरोदर"
-              ],
-              [
-                "tel",
-                "గర్భవతా"
-              ],
-              [
-                "hin",
-                "गर्भवती"
-              ],
-              [
-                "en",
-                "Pregnant"
-              ]
-            ]
+            "delivery": {
+              "mar": "प्रसूति",
+              "tel": "కాన్పు వివరాలు ",
+              "hin": "प्रसव",
+              "en": "Delivery"
+            },
+            "pnc": {
+              "mar": "प्रसुतीनंतरची देखभाल",
+              "tel": "కాన్పు తరువాత సంరక్షణ ",
+              "hin": "प्रसव के बाद देख-रेख",
+              "en": "PNC"
+            },
+            "pregnant": {
+              "mar": "गरोदर",
+              "tel": "గర్భవతా",
+              "hin": "गर्भवती",
+              "en": "Pregnant"
+            }
           }
         },
         "column_id": "female_death_type",
@@ -181,43 +146,20 @@
         "format": "default",
         "transform": {
           "type": "translation",
+          "mobile_or_web": "mobile",
           "translations": {
-            "yes": [
-              [
-                "mar",
-                "होय"
-              ],
-              [
-                "tel",
-                "అవును"
-              ],
-              [
-                "hin",
-                "हाँ"
-              ],
-              [
-                "en",
-                "Yes"
-              ]
-            ],
-            "no": [
-              [
-                "mar",
-                "नाही"
-              ],
-              [
-                "tel",
-                "కాదు"
-              ],
-              [
-                "hin",
-                "नहीं"
-              ],
-              [
-                "en",
-                "No"
-              ]
-            ]
+            "yes": {
+              "mar": "होय",
+              "tel": "అవును",
+              "hin": "हाँ",
+              "en": "Yes"
+            },
+            "no": {
+              "mar": "नाही",
+              "tel": "కాదు",
+              "hin": "नहीं",
+              "en": "No"
+            }
           }
         },
         "column_id": "resident",
