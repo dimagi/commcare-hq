@@ -1153,7 +1153,7 @@
                         },
                         "value_expression": {
                             "type": "property_name",
-                            "property_name": "test_type_label"
+                            "property_name": "test_result"
                         }
                     },
                     "expression_if_false": {
@@ -1253,60 +1253,6 @@
                 "expression":{
                     "type": "property_name",
                     "property_name": "regimen"
-                }
-            },
-            {
-                "display_name": "endofcp_test_requested_date",
-                "column_id": "endofcp_test_requested_date",
-                "datatype": "date",
-                "type": "expression",
-                "expression": {
-                    "type": "nested",
-                    "argument_expression": {
-                        "type": "reduce_items",
-                        "items_expression": {
-                            "type": "sort_items",
-                            "items_expression": {
-                                "type": "filter_items",
-                                "items_expression": {
-                                    "type": "get_case_forms",
-                                    "case_id_expression": {
-                                        "type": "nested",
-                                        "argument_expression": {
-                                            "type": "named",
-                                            "name": "latest_endofcp_test_case"
-                                        },
-                                        "value_expression": {
-                                            "type": "property_name",
-                                            "property_name": "_id"
-                                        }
-                                    }
-                                },
-                                "filter_expression": {
-                                    "type": "boolean_expression",
-                                    "operator": "eq",
-                                    "expression": {
-                                        "type": "property_name",
-                                        "property_name": "xmlns"
-                                    },
-                                    "property_value": "http://openrosa.org/formdesigner/826B0458-C4ED-4A58-8AFD-F8E437C3646F"
-                                }
-                            },
-                            "sort_expression": {
-                                "type": "property_name",
-                                "property_name": "received_on"
-                            }
-                        },
-                        "aggregation_fn": "last_item"
-                    },
-                    "value_expression": {
-                        "type": "property_path",
-                        "property_path": [
-                            "form",
-                            "ql_request_details",
-                            "test_requested_date"
-                        ]
-                    }
                 }
             },
             {
@@ -1496,23 +1442,6 @@
                     }
                 },
                 "column_id": "dosage_frequency"
-            },
-            {
-                "column_id": "result_of_test",
-                "display_name": "result_of_test",
-                "type": "expression",
-                "datatype": "string",
-                "expression": {
-                    "type": "nested",
-                    "argument_expression": {
-                        "type": "named",
-                        "name": "test_case"
-                    },
-                    "value_expression": {
-                        "type": "property_name",
-                        "property_name": "test_facility_referred_to"
-                    }
-                }
             },
             {
                 "display_name": "treatment_outcome_date",
