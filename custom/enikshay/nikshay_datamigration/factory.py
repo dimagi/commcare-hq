@@ -5,7 +5,7 @@ from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from custom.enikshay.case_utils import get_open_occurrence_case_from_person
+from custom.enikshay.case_utils import get_open_occurrence_case_from_person, get_open_episode_case_from_occurrence
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 from custom.enikshay.nikshay_datamigration.models import Outcome, Followup
 
@@ -151,24 +151,17 @@ class EnikshayCaseFactory(object):
             )],
         }
 
-        try:
-            matching_episode_case = next((
-                extension_case for extension_case in self.case_accessor.get_cases([
-                    index.referenced_id for index in
-                    self.case_accessor.get_case(self.occurrence(outcome).case_id).reverse_indices
-                ])
-                if (
-                    extension_case.type == 'episode'
-                    and extension_case.dynamic_case_properties().get('migration_created_case')
-                )
-            ), None)
-        except CaseNotFound:
-            matching_episode_case = None
-        if matching_episode_case:
-            kwargs['case_id'] = matching_episode_case.case_id
-            kwargs['attrs']['create'] = False
-        else:
+        if self.occurrence(outcome).attrs['create']:
             kwargs['attrs']['create'] = True
+        else:
+            try:
+                matching_episode_case = get_open_episode_case_from_occurrence(
+                    self.domain, self.occurrence(outcome).case_id
+                )
+                kwargs['case_id'] = matching_episode_case.case_id
+                kwargs['attrs']['create'] = False
+            except ENikshayCaseNotFound:
+                kwargs['attrs']['create'] = True
 
         return CaseStructure(**kwargs)
 
