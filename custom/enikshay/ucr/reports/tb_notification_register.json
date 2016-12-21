@@ -158,6 +158,15 @@
                 "description": null,
                 "format": "default",
                 "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "new": "New",
+                        "retreatment": "Retreatment",
+                        "treatment_after_failure": "Treatment After Failure",
+                        "treatment_after_lfu": "Treatment After Loss to Follow-up",
+                        "transfer_in": "Transferred In",
+                        "other_previously_treated": "Others Previously Treated"
+                    }
                 },
                 "calculate_total": false
             },
@@ -170,6 +179,11 @@
                 "description": null,
                 "format": "default",
                 "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "pulmonary": "P",
+                        "extra_pulonary": "EP"
+                    }
                 },
                 "calculate_total": false
             },
@@ -182,6 +196,11 @@
                 "description": null,
                 "format": "default",
                 "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "microbiological": "Microbiologically confirmed",
+                        "clinical": "Clinically Diagnosed"
+                    }
                 },
                 "calculate_total": false
             },
@@ -230,6 +249,12 @@
                 "description": null,
                 "format": "default",
                 "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "Microscopy-ZN": "ZN",
+                        "Microscopy-Fluorescent": "FM",
+                        "cbnaat": "CBNAAT"
+                    }
                 },
                 "calculate_total": false
             },
