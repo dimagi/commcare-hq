@@ -23,7 +23,7 @@ class TestRealBuild(SimpleTestCase):
             domain, app_id
         )
         response = requests.get(url, auth=HTTPDigestAuth(username, password))
-        if response.status_code == 401 and not os.environ.get('TRAVIS_REPO_SLUG').startswith('dimagi/'):
+        if response.status_code == 401 and not os.environ.get("TRAVIS_SECURE_ENV_VARS") == "true":
             # on travis this test fails for non-dimagi repos because encrypted variables don't work
             # see https://docs.travis-ci.com/user/environment-variables/#Defining-encrypted-variables-in-.travis.yml
             raise SkipTest("Not running TestRealBuild from external PR from {}".format(
