@@ -864,7 +864,7 @@ class InstanceTests(SimpleTestCase, TestXmlMixin, SuiteMixin):
         configuration_mock_obj = mock.MagicMock()
         sync_patch.return_value = configuration_mock_obj
 
-        hierarchical_fixture_format_xml= u"""
+        hierarchical_fixture_format_xml = u"""
             <partial>
                 <instance id='locations' src='jr://fixture/commtrack:locations' />
             </partial>
