@@ -2,6 +2,7 @@ import csv
 from django.core.management import BaseCommand, call_command
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.receiverwrapper.util import get_app_version_info
+from corehq.apps.reports.util import resync_case_to_es
 from corehq.apps.users.util import cached_owner_id_to_display
 from corehq.elastic import ES_MAX_CLAUSE_COUNT
 from corehq.apps.es.cases import CaseES
@@ -122,10 +123,3 @@ class Command(BaseCommand):
                     if index['referenced_id'] in missing:
                         # this is just an invalid reference. no recourse but to delete the case itself
                         call_command('delete_related_cases', domain, case['_id'])
-
-
-def resync_case_to_es(domain, case):
-    if should_use_sql_backend(domain):
-        publish_case_saved(case)
-    else:
-        CommCareCase.get_db().save_doc(case._doc)  # don't just call save to avoid signals
