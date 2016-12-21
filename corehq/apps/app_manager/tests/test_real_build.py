@@ -18,10 +18,18 @@ class TestRealBuild(SimpleTestCase):
             if os.environ.get("TRAVIS") == "true":
                 raise
             raise SkipTest("not travis (KeyError: {})".format(err))
+
         url = "https://www.commcarehq.org/a/{}/apps/source/{}/".format(
             domain, app_id
         )
         response = requests.get(url, auth=HTTPDigestAuth(username, password))
+        if response.status_code == 401 and not os.environ.get('TRAVIS_REPO_SLUG').startswith('dimagi/'):
+            # on travis this test fails for non-dimagi repos because encrypted variables don't work
+            # see https://docs.travis-ci.com/user/environment-variables/#Defining-encrypted-variables-in-.travis.yml
+            raise SkipTest("Not running TestRealBuild from external PR from {}".format(
+                os.environ.get('TRAVIS_REPO_SLUG')
+            ))
+
         response.raise_for_status()
         app = Application.wrap(response.json())
         app.create_all_files()
