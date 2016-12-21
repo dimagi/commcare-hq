@@ -77,6 +77,7 @@ An overview of the design, API and data structures used here.
         - [Aggregate by 'username' column](#aggregate-by-username-column)
         - [Aggregate by two columns](#aggregate-by-two-columns)
     - [Transforms](#transforms)
+        - [Translations and arbitrary mappings](#translations-and-arbitrary-mappings)
         - [Displaying username instead of user ID](#displaying-username-instead-of-user-id)
         - [Displaying username minus @domain.commcarehq.org instead of user ID](#displaying-username-minus-domaincommcarehqorg-instead-of-user-id)
         - [Displaying owner name instead of owner ID](#displaying-owner-name-instead-of-owner-id)
@@ -1180,7 +1181,10 @@ user                 | Select a user
 owner                | Select a possible case owner owner (user, group, or location)
 
 
-Location choice providers also support an "include_descendants" property to include descendant locations in the results, which defaults to `false`.
+Location choice providers also support two additional configuration options:
+
+* "include_descendants" - Include descendant locations in the results. Defaults to `false`.
+* "show_full_path" - display the full path to the location in the filter.  Defaults to `true`.
 
 Example assuming "village" is a location ID, which is converted to names using the location `choice_provider`:
 ```json
@@ -1192,7 +1196,8 @@ Example assuming "village" is a location ID, which is converted to names using t
   "datatype": "string",
   "choice_provider": {
       "type": "location",
-      "include_descendants": false
+      "include_descendants": false,
+      "show_full_path": true
   }
 }
 ```
@@ -1214,7 +1219,10 @@ Choice lists allow manual configuration of a fixed, specified number of choices 
 
 ### Internationalization
 
-Report builders may specify translations for the filter display value. See the section on internationalization in the Report Column section for more information.
+Report builders may specify translations for the filter display value.
+Also see the sections on internationalization in the Report Column and
+the [translations transform](#translations-and-arbitrary-mappings).
+
 ```json
 {
     "type": "choice_list",
@@ -1322,13 +1330,13 @@ Expanded columns have a type of `"expanded"`. Expanded columns will be "expanded
 
 If you have a data source like this:
 ```
-+---------+----------+-------------+
++---------|----------|-------------+
 | Patient | district | test_result |
-+---------+----------+-------------+
++---------|----------|-------------+
 | Joe     | North    | positive    |
 | Bob     | North    | positive    |
 | Fred    | South    | negative    |
-+---------+----------+-------------+
++---------|----------|-------------+
 ```
 and a report configuration like this:
 ```
@@ -1354,12 +1362,12 @@ columns:
 ```
 Then you will get a report like this:
 ```
-+----------+----------------------+----------------------+
++----------|----------------------|----------------------+
 | district | test_result-positive | test_result-negative |
-+----------+----------------------+----------------------+
++----------|----------------------|----------------------+
 | North    | 2                    | 0                    |
 | South    | 0                    | 1                    |
-+----------+----------------------+----------------------+
++----------|----------------------|----------------------+
 ```
 
 Expanded columns have an optional parameter `"max_expansion"` (defaults to 10) which limits the number of columns that can be created.  WARNING: Only override the default if you are confident that there will be no adverse performance implications for the server.
@@ -1421,9 +1429,11 @@ Column IDs in percentage fields *must be unique for the whole report*. If you us
 To sum a column and include the result in a totals row at the bottom of the report, set the `calculate_total` value in the column configuration to `true`.
 
 ### Internationalization
-Report columns can be translated into multiple languages. To specify translations
-for a column header, use an object as the `display` value in the configuration
-instead of a string. For example:
+Report columns can be translated into multiple languages.
+To translate values in a given column check out
+the [translations transform](#translations-and-arbitrary-mappings) below.
+To specify translations for a column header, use an object as the `display`
+value in the configuration instead of a string. For example:
 ```
 {
     "type": "field",
@@ -1480,11 +1490,73 @@ Note that if you use `is_primary_key` in any of your columns, you must include a
 ## Transforms
 
 Transforms can be used in two places - either to manipulate the value of a column just before it gets saved to a data source, or to transform the value returned by a column just before it reaches the user in a report.
+Here's an example of a transform used in a report config 'field' column:
+
+```json
+{
+    "type": "field",
+    "field": "owner_id",
+    "column_id": "owner_id",
+    "display": "Owner Name",
+    "format": "default",
+    "transform": {
+        "type": "custom",
+        "custom_type": "owner_display"
+    },
+    "aggregation": "simple"
+}
+```
+
 The currently supported transform types are shown below:
+
+### Translations and arbitrary mappings
+
+The translations transform can be used to give human readable strings:
+
+```json
+{
+    "type": "translation",
+    "translations": {
+        "lmp": "Last Menstrual Period",
+        "edd": "Estimated Date of Delivery"
+    }
+}
+```
+
+And for translations:
+
+```json
+{
+    "type": "translation",
+    "translations": {
+        "lmp": {
+            "en": "Last Menstrual Period",
+            "es": "Fecha Última Menstruación",
+        },
+        "edd": {
+            "en": "Estimated Date of Delivery",
+            "es": "Fecha Estimada de Parto",
+        }
+    }
+}
+```
+
+To use this in a mobile ucr, set the `'mobile_or_web'` property to `'mobile'`
+
+```json
+{
+    "type": "translation",
+    "mobile_or_web": "mobile",
+    "translations": {
+        "lmp": "Last Menstrual Period",
+        "edd": "Estimated Date of Delivery"
+    }
+}
+```
 
 ### Displaying username instead of user ID
 
-```
+```json
 {
     "type": "custom",
     "custom_type": "user_display"
@@ -1493,7 +1565,7 @@ The currently supported transform types are shown below:
 
 ### Displaying username minus @domain.commcarehq.org instead of user ID
 
-```
+```json
 {
     "type": "custom",
     "custom_type": "user_without_domain_display"
@@ -1502,7 +1574,7 @@ The currently supported transform types are shown below:
 
 ### Displaying owner name instead of owner ID
 
-```
+```json
 {
     "type": "custom",
     "custom_type": "owner_display"
@@ -1511,7 +1583,7 @@ The currently supported transform types are shown below:
 
 ### Displaying month name instead of month index
 
-```
+```json
 {
     "type": "custom",
     "custom_type": "month_display"
@@ -1522,7 +1594,7 @@ The currently supported transform types are shown below:
 
 Rounds decimal and floating point numbers to two decimal places.
 
-```
+```json
 {
     "type": "custom",
     "custom_type": "short_decimal_display"
@@ -1540,7 +1612,7 @@ If the format string is not valid or the input is not a number then the original
 
 #### Round to the nearest whole number
 
-```
+```json
 {
     "type": "number_format",
     "custom_type": "{0:.0f}"
@@ -1549,7 +1621,7 @@ If the format string is not valid or the input is not a number then the original
 
 #### Always round to 3 decimal places
 
-```
+```json
 {
     "type": "number_format",
     "custom_type": "{0:.3f}"
@@ -1559,7 +1631,7 @@ If the format string is not valid or the input is not a number then the original
 ### Date formatting
 Formats dates with the given format string. See [here](https://docs.python.org/2/library/datetime.html#strftime-strptime-behavior) for an explanation of format string behavior.
 If there is an error formatting the date, the transform is not applied to that value.
-```
+```json
 {
    "type": "date_format", 
    "format": "%Y-%m-%d %H:%M"

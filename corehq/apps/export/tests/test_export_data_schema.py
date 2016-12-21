@@ -8,7 +8,7 @@ from corehq.apps.export.models.new import MAIN_TABLE, \
 
 from corehq.util.context_managers import drop_connected_signals
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.apps.app_manager.models import XForm, Application
+from corehq.apps.app_manager.models import XForm, Application, OpenSubCaseAction
 from corehq.apps.app_manager.signals import app_post_save
 from corehq.apps.export.dbaccessors import delete_all_export_data_schemas, delete_all_inferred_schemas
 from corehq.apps.export.tasks import add_inferred_export_properties
@@ -23,8 +23,13 @@ from corehq.apps.export.models import (
     LabelItem,
     PARENT_CASE_TABLE,
 )
-from corehq.apps.export.const import KNOWN_CASE_PROPERTIES
-from corehq.apps.export.const import PROPERTY_TAG_UPDATE, DATA_SCHEMA_VERSION
+from corehq.apps.export.const import (
+    KNOWN_CASE_PROPERTIES,
+    PROPERTY_TAG_UPDATE,
+    FORM_DATA_SCHEMA_VERSION,
+    CASE_ATTRIBUTES,
+    CASE_CREATE_ELEMENTS,
+)
 
 
 class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
@@ -124,6 +129,53 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         self.assertEqual(form_items[1].path, [PathNode(name='form'), PathNode(name='question2')])
         self.assertEqual(form_items[1].options[0].value, 'choice1')
         self.assertEqual(form_items[1].options[1].value, 'choice2')
+
+    def test_repeat_subcases_schema_generation(self):
+        form_xml = self.get_xml('nested_repeat_form')
+        repeats_with_subcases = [
+            OpenSubCaseAction(
+                repeat_context='/data/repeat',
+                case_properties={
+                    'weight': '/data/repeat/group/weight',
+                }
+            ),
+            OpenSubCaseAction(
+                repeat_context='/data/repeat/nested_repeat',
+                case_properties={
+                    'age': '/data/repeat/nested_repeat/age',
+                }
+            ),
+        ]
+
+        schema = FormExportDataSchema._generate_schema_from_repeat_subcases(
+            XForm(form_xml),
+            repeats_with_subcases,
+            ['en'],
+            self.app_id,
+            1,
+        )
+
+        self.assertEqual(len(schema.group_schemas), 2)
+
+        group_schema = schema.group_schemas[0]
+        attribute_items = filter(lambda item: item.path[-1].name in CASE_ATTRIBUTES, group_schema.items)
+
+        self.assertEqual(len(attribute_items), len(CASE_ATTRIBUTES))
+        self.assertTrue(all(map(
+            lambda item: item.readable_path.startswith('form.repeat.case'),
+            attribute_items,
+        )))
+
+        create_items = filter(lambda item: item.path[-1].name in CASE_CREATE_ELEMENTS, group_schema.items)
+        self.assertEqual(len(create_items), len(CASE_CREATE_ELEMENTS))
+        self.assertTrue(all(map(
+            lambda item: item.readable_path.startswith('form.repeat.case.create'),
+            create_items,
+        )))
+
+        update_items = list(set(group_schema.items) - set(create_items) - set(attribute_items))
+        self.assertEqual(len(update_items), 1)
+        self.assertEqual(update_items[0].readable_path, 'form.repeat.case.update.group.weight')
 
     def test_xform_parsing_with_stock_questions(self):
         form_xml = self.get_xml('stock_form')
@@ -621,16 +673,16 @@ class TestExportDataSchemaVersionControl(TestCase, TestXmlMixin):
         self.assertEqual(schema._id, existing_schema._id)
 
         with patch(
-                'corehq.apps.export.models.new.DATA_SCHEMA_VERSION',
-                DATA_SCHEMA_VERSION + 1):
+                'corehq.apps.export.models.new.FORM_DATA_SCHEMA_VERSION',
+                FORM_DATA_SCHEMA_VERSION + 1):
             rebuilt_schema = FormExportDataSchema.generate_schema_from_builds(
                 app.domain,
                 app._id,
                 'my_sweet_xmlns'
             )
         self.assertNotEqual(schema._id, rebuilt_schema._id)
-        self.assertEqual(schema.version, DATA_SCHEMA_VERSION)
-        self.assertEqual(rebuilt_schema.version, DATA_SCHEMA_VERSION + 1)
+        self.assertEqual(schema.version, FORM_DATA_SCHEMA_VERSION)
+        self.assertEqual(rebuilt_schema.version, FORM_DATA_SCHEMA_VERSION + 1)
 
 
 class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):

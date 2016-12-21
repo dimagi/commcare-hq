@@ -1,17 +1,13 @@
-from corehq.apps.case_importer.tracking.permissions import user_may_view_file_upload
+from corehq.apps.case_importer.tracking.permissions import user_may_view_file_upload, \
+    user_may_update_comment
+from corehq.apps.case_importer.tracking.task_status import TaskStatus
 from corehq.apps.users.dbaccessors.couch_users import get_display_name_for_user_id
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_request
 from dimagi.ext import jsonobject
-from soil.progress import get_task_status
-from soil.util import get_task
 
 
-class StrictJsonObject(jsonobject.JsonObject):
-    _allow_dynamic_properties = False
-
-
-class CaseUploadJSON(StrictJsonObject):
+class CaseUploadJSON(jsonobject.StrictJsonObject):
     domain = jsonobject.StringProperty(required=True)
     # In user display format, e.g. Dec 08, 2016 19:19 EST
     created = jsonobject.StringProperty(required=True)
@@ -19,95 +15,33 @@ class CaseUploadJSON(StrictJsonObject):
     task_status = jsonobject.ObjectProperty(lambda: TaskStatus)
     user_name = jsonobject.StringProperty(required=True)
     case_type = jsonobject.StringProperty(required=True)
+    comment = jsonobject.StringProperty()
 
     upload_file_name = jsonobject.StringProperty()
     upload_file_length = jsonobject.IntegerProperty()
     upload_file_download_allowed = jsonobject.BooleanProperty(required=True)
-
-
-class TaskStatus(StrictJsonObject):
-    state = jsonobject.IntegerProperty()
-    progress = jsonobject.ObjectProperty(lambda: TaskStatusProgress)
-    result = jsonobject.ObjectProperty(lambda: TaskStatusResult)
-
-
-class TaskStatusProgress(StrictJsonObject):
-    percent = jsonobject.IntegerProperty()
-
-
-class TaskStatusResult(StrictJsonObject):
-    match_count = jsonobject.IntegerProperty()
-    created_count = jsonobject.IntegerProperty()
-    too_many_matches = jsonobject.IntegerProperty()
-    num_chunks = jsonobject.IntegerProperty()
-    errors = jsonobject.ListProperty(lambda: TaskStatusResultError)
-
-
-class TaskStatusResultError(StrictJsonObject):
-    title = jsonobject.StringProperty()
-    description = jsonobject.StringProperty()
-    column = jsonobject.StringProperty()
-    rows = jsonobject.ListProperty(int)
+    upload_comment_edit_allowed = jsonobject.BooleanProperty(required=True)
 
 
 def case_upload_to_user_json(case_upload, request):
     domain = case_upload.domain
     tz = get_timezone_for_request(request)
-    task_status = get_task_status(get_task(str(case_upload.task_id)))
 
     return CaseUploadJSON(
         domain=case_upload.domain,
         created=ServerTime(case_upload.created).user_time(tz).ui_string(),
         upload_id=str(case_upload.upload_id),
-        task_status=TaskStatus(
-            state=task_status.state,
-            progress=TaskStatusProgress(
-                percent=task_status.progress.percent,
-            ),
-            result=normalize_task_status_result(task_status.result),
-        ),
+        task_status=case_upload.get_task_status_json(),
         user_name=get_display_name_for_user_id(
             domain, case_upload.couch_user_id, default=''),
         case_type=case_upload.case_type,
+        comment=case_upload.comment,
         upload_file_name=(case_upload.upload_file_meta.filename
                           if case_upload.upload_file_meta else None),
         upload_file_length=(case_upload.upload_file_meta.length
                             if case_upload.upload_file_meta else None),
         upload_file_download_allowed=user_may_view_file_upload(
-            domain, request.couch_user, case_upload)
+            domain, request.couch_user, case_upload),
+        upload_comment_edit_allowed=user_may_update_comment(
+            request.couch_user, case_upload),
     )
-
-
-def normalize_task_status_result(result):
-    if result:
-        return TaskStatusResult(
-            match_count=result['match_count'],
-            created_count=result['created_count'],
-            too_many_matches=result['too_many_matches'],
-            num_chunks=result['num_chunks'],
-            errors=normalize_task_status_result_errors(result),
-        )
-    else:
-        return None
-
-
-def normalize_task_status_result_errors(result):
-    """
-    result is the return value of do_import
-
-    it is important that when changes are made to the return value of do_import
-    this function remains backwards compatible,
-    i.e. compatible with old return values of do_import,
-    because those values are saved directly in the database,
-    and we need to be able to process them in the future
-    """
-    result_errors = []
-    for _, columns_to_error_value in result['errors'].items():
-        for column_name, error_value in columns_to_error_value.items():
-            result_errors.append(TaskStatusResultError(
-                title=unicode(error_value['error']),
-                description=unicode(error_value['description']),
-                column=column_name,
-                rows=error_value['rows']
-            ))
-    return result_errors

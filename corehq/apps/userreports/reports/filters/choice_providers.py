@@ -155,9 +155,11 @@ class LocationChoiceProvider(ChainableChoiceProvider):
     def __init__(self, report, filter_slug):
         super(LocationChoiceProvider, self).__init__(report, filter_slug)
         self.include_descendants = False
+        self.show_full_path = True
 
     def configure(self, spec):
         self.include_descendants = spec.get('include_descendants', self.include_descendants)
+        self.show_full_path = spec.get('show_full_path', self.show_full_path)
 
     def _locations_query(self, query_text, user):
         active_locations = SQLLocation.active_objects
@@ -200,7 +202,9 @@ class LocationChoiceProvider(ChainableChoiceProvider):
         return [Choice(SHOW_ALL_CHOICE, "[{}]".format(ugettext('Show All')))]
 
     def _locations_to_choices(self, locations):
-        return [Choice(loc.location_id, loc.display_name) for loc in locations]
+        def display(loc):
+            return loc.get_path_display() if self.show_full_path else loc.display_name
+        return [Choice(loc.location_id, display(loc)) for loc in locations]
 
 
 class UserChoiceProvider(ChainableChoiceProvider):

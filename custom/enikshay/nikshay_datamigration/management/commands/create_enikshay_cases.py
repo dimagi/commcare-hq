@@ -2,7 +2,8 @@ import logging
 
 from django.core.management import BaseCommand
 
-from custom.enikshay.nikshay_datamigration.factory import EnikshayCaseFactory
+from custom.enikshay.nikshay_datamigration.factory import EnikshayCaseFactory, get_nikshay_codes_to_location, \
+    get_nikshay_ids_to_preexisting_nikshay_person_cases
 from custom.enikshay.nikshay_datamigration.models import PatientDetail
 
 logger = logging.getLogger('nikshay_datamigration')
@@ -25,11 +26,18 @@ class Command(BaseCommand):
         counter = 0
         num_succeeded = 0
         num_failed = 0
-        logger.info('Starting migration of %d patient cases.' % total)
+        logger.info('Starting migration of %d patient cases on domain %s.' % (total, domain))
+        nikshay_codes_to_location = get_nikshay_codes_to_location(domain)
+        nikshay_ids_to_preexisting_nikshay_person_cases = get_nikshay_ids_to_preexisting_nikshay_person_cases(
+            domain
+        )
         for patient_detail in patient_details:
             counter += 1
             try:
-                case_factory = EnikshayCaseFactory(domain, patient_detail)
+                case_factory = EnikshayCaseFactory(
+                    domain, patient_detail, nikshay_codes_to_location,
+                    nikshay_ids_to_preexisting_nikshay_person_cases
+                )
                 case_factory.create_cases()
             except:
                 num_failed += 1
@@ -46,7 +54,7 @@ class Command(BaseCommand):
                         counter, total, patient_detail.PregId
                     )
                 )
-        logger.info('Done.')
+        logger.info('Done creating cases for domain %s.' % domain)
         logger.info('Number of attempts: %d.' % counter)
         logger.info('Number of successes: %d.' % num_succeeded)
         logger.info('Number of failures: %d.' % num_failed)

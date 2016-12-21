@@ -477,7 +477,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             )
 
         try:
-            xform_questions = xform.get_questions(langs, include_triggers=True, form=form)
+            xform_questions = xform.get_questions(langs, include_triggers=True)
             form.validate_form()
         except etree.XMLSyntaxError as e:
             form_errors.append(u"Syntax Error: %s" % e)

@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from datetime import date
+from datetime import date, datetime
 
 from django.core.management import call_command
 from django.test import TestCase
@@ -8,6 +8,7 @@ from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.tests.utils import run_with_all_backends
 from custom.enikshay.nikshay_datamigration.models import Followup, Outcome, PatientDetail
 
 
@@ -43,6 +44,7 @@ class TestCreateEnikshayCases(TestCase):
         self.outcome = Outcome.objects.create(
             PatientId=self.patient_detail,
             HIVStatus='negative',
+            loginDate=datetime(2016, 1, 2),
         )
         # Household.objects.create(
         #     PatientID=patient_detail,
@@ -84,6 +86,7 @@ class TestCreateEnikshayCases(TestCase):
 
         super(TestCreateEnikshayCases, self).tearDown()
 
+    @run_with_all_backends
     def test_case_creation(self):
         call_command('create_enikshay_cases', self.domain.name)
 
@@ -93,15 +96,17 @@ class TestCreateEnikshayCases(TestCase):
         self.assertEqual(
             OrderedDict([
                 ('aadhaar_number', '867386000000'),
+                ('age', '18'),
                 ('age_entered', '18'),
                 ('contact_phone_number', '9987328695'),
                 ('current_address', 'Cambridge MA'),
                 ('current_address_district_choice', 'Middlesex'),
                 ('current_address_state_choice', 'MA'),
+                ('dob_known', 'no'),
                 ('first_name', 'A'),
                 ('last_name', 'C'),
                 ('middle_name', 'B'),
-                ('migration_created_case', 'True'),
+                ('migration_created_case', 'true'),
                 ('nikshay_id', 'MH-ABD-05-16-0001'),
                 ('permanent_address_district_choice', 'Middlesex'),
                 ('permanent_address_state_choice', 'MA'),
@@ -121,19 +126,22 @@ class TestCreateEnikshayCases(TestCase):
         self.assertEqual(
             OrderedDict([
                 ('hiv_status', 'negative'),
-                ('migration_created_case', 'True'),
+                ('migration_created_case', 'true'),
                 ('nikshay_id', 'MH-ABD-05-16-0001'),
+                ('occurrence_episode_count', '1'),
             ]),
             occurrence_case.dynamic_case_properties()
         )
-        self.assertItemsEqual(
-            [CommCareCaseIndex(
+        self.assertEqual('Occurrence #1', occurrence_case.name)
+        self.assertEqual(len(occurrence_case.indices), 1)
+        self._assertIndexEqual(
+            CommCareCaseIndex(
                 identifier='host',
                 referenced_type='person',
                 referenced_id=person_case.get_id,
                 relationship='extension',
-            )],
-            occurrence_case.indices
+            ),
+            occurrence_case.indices[0]
         )
 
         episode_case_ids = self.case_accessor.get_case_ids_in_domain(type='episode')
@@ -143,7 +151,7 @@ class TestCreateEnikshayCases(TestCase):
             OrderedDict([
                 ('date_reported', '2016-12-13'),
                 ('disease_classification', 'pulmonary'),
-                ('migration_created_case', 'True'),
+                ('migration_created_case', 'true'),
                 ('patient_type_choice', 'treatment_after_failure'),
                 ('treatment_supporter_designation', 'health_worker'),
                 ('treatment_supporter_first_name', 'Bubble'),
@@ -152,14 +160,15 @@ class TestCreateEnikshayCases(TestCase):
             ]),
             episode_case.dynamic_case_properties()
         )
-        self.assertItemsEqual(
-            [CommCareCaseIndex(
+        self.assertEqual(len(episode_case.indices), 1)
+        self._assertIndexEqual(
+            CommCareCaseIndex(
                 identifier='host',
                 referenced_type='occurrence',
                 referenced_id=occurrence_case.get_id,
                 relationship='extension',
-            )],
-            episode_case.indices
+            ),
+            episode_case.indices[0]
         )
 
         test_case_ids = set(self.case_accessor.get_case_ids_in_domain(type='test'))
@@ -176,42 +185,44 @@ class TestCreateEnikshayCases(TestCase):
             [
                 OrderedDict([
                     ('date_tested', ''),
-                    ('migration_created_case', 'True'),
+                    ('migration_created_case', 'true'),
                     ('migration_followup_id', str(1)),
                 ]),
                 OrderedDict([
                     ('date_tested', ''),
-                    ('migration_created_case', 'True'),
+                    ('migration_created_case', 'true'),
                     ('migration_followup_id', str(2)),
                 ]),
                 OrderedDict([
                     ('date_tested', ''),
-                    ('migration_created_case', 'True'),
+                    ('migration_created_case', 'true'),
                     ('migration_followup_id', str(3)),
                 ]),
                 OrderedDict([
                     ('date_tested', ''),
-                    ('migration_created_case', 'True'),
+                    ('migration_created_case', 'true'),
                     ('migration_followup_id', str(4)),
                 ]),
                 OrderedDict([
                     ('date_tested', ''),
-                    ('migration_created_case', 'True'),
+                    ('migration_created_case', 'true'),
                     ('migration_followup_id', str(5)),
                 ]),
             ]
         )
         for test_case in test_cases:
-            self.assertItemsEqual(
-                [CommCareCaseIndex(
+            self.assertEqual(len(test_case.indices), 1)
+            self._assertIndexEqual(
+                CommCareCaseIndex(
                     identifier='host',
                     referenced_type='occurrence',
                     referenced_id=occurrence_case.get_id,
                     relationship='extension',
-                )],
-                test_case.indices
+                ),
+                test_case.indices[0]
             )
 
+    @run_with_all_backends
     def test_case_update(self):
         call_command('create_enikshay_cases', self.domain.name)
 
@@ -238,3 +249,9 @@ class TestCreateEnikshayCases(TestCase):
         self.assertEqual(1, len(episode_case_ids))
         episode_case = self.case_accessor.get_case(episode_case_ids[0])
         self.assertEqual(episode_case.dynamic_case_properties()['disease_classification'], 'extra_pulmonary')
+
+    def _assertIndexEqual(self, index_1, index_2):
+        self.assertEqual(index_1.identifier, index_2.identifier)
+        self.assertEqual(index_1.referenced_type, index_2.referenced_type)
+        self.assertEqual(index_1.referenced_id, index_2.referenced_id)
+        self.assertEqual(index_1.relationship, index_2.relationship)

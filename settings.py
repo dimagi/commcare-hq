@@ -1121,32 +1121,32 @@ LOGGING = {
         'datadog-metrics': {
             'handlers': ['datadog'],
             'level': 'INFO',
-            'propogate': False,
+            'propagate': False,
         },
         'ucr_timing': {
             'handlers': ['ucr_timing'],
             'level': 'INFO',
-            'propogate': True,
+            'propagate': True,
         },
         'ucr_diff': {
             'handlers': ['ucr_diff'],
             'level': 'INFO',
-            'propogate': True,
+            'propagate': True,
         },
         'ucr_exception': {
             'handlers': ['ucr_exception'],
             'level': 'INFO',
-            'propogate': True,
+            'propagate': True,
         },
         'boto3': {
             'handlers': ['console'],
             'level': 'WARNING',
-            'propogate': True
+            'propagate': True
         },
         'botocore': {
             'handlers': ['console'],
             'level': 'WARNING',
-            'propogate': True
+            'propagate': True
         },
         'nikshay_datamigration': {
             'handlers': ['nikshay_datamigration', 'console'],
@@ -1869,7 +1869,15 @@ DOMAIN_MODULE_MAP = {
     'icds-cas': 'custom.icds_reports',
     'testing-ipm-senegal': 'custom.intrahealth',
     'up-nrhm': 'custom.up_nrhm',
+
     'enikshay-test': 'custom.enikshay',
+    'enikshay': 'custom.enikshay',
+    'enikshay-test-2': 'custom.enikshay',
+    'enikshay-test-3': 'custom.enikshay',
+    'enikshay-nikshay-migration-test': 'custom.enikshay',
+    'enikshay-domain-copy-test': 'custom.enikshay',
+    'enikshay-aks-audit': 'custom.enikshay',
+    'np-migration-3': 'custom.enikshay',
 
     'crs-remind': 'custom.apps.crs_reports',
 

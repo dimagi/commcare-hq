@@ -3,11 +3,11 @@
 <table class="table table-striped">
     <tr>
         <th class="col-md-1">{% trans "Status" %}</th>
-        <th class="col-md-1">{% trans "Case Type" %}</th>
-        <th class="col-md-1">{% trans "Uploaded by" %}</th>
-        <th class="col-md-5">{% trans "Details" %}</th>
-        <th class="col-md-2">{% trans "File" %}</th>
         <th class="col-md-1">{% trans "Time" %}</th>
+        <th class="col-md-1">{% trans "Case Type" %}</th>
+        <th class="col-md-4">{% trans "Details" %}</th>
+        <th class="col-md-3">{% trans "Comment" %}</th>
+        <th class="col-md-2">{% trans "File" %}</th>
     </tr>
     <!--ko foreach: case_uploads-->
     <tr>
@@ -26,6 +26,9 @@
             <!--ko if: task_status.state == $root.states.NOT_STARTED-->
             {% trans "Waiting to start" %}
             <!--/ko-->
+            <!--ko if: task_status.state == $root.states.MISSING-->
+            {% trans "Info no longer available" %}
+            <!--/ko-->
             <!--ko if: task_status.state == $root.states.STARTED-->
             <div class="progress">
                 <div class="progress-bar progress-bar-info"
@@ -37,12 +40,27 @@
             </div>
             <!--/ko-->
         </td>
+        <td class="col-md-1" data-bind="text: created"></td>
         <td class="col-md-1" data-bind="text: case_type">
         </td>
-        <td class="col-md-1" data-bind="text: user_name">
-        </td>
-        <td class="col-md-5" data-bind="with: task_status">
+        <td class="col-md-4" data-bind="with: task_status">
             {% include 'case_importer/partials/ko_import_status.html' %}
+        </td>
+        <td class="col-md-3">
+            <strong data-bind="text: user_name"></strong>
+            <!--ko if: upload_comment_edit_allowed-->
+            <inline-edit params="
+                value: comment,
+                url: hqImport('hqwebapp/js/urllib.js').reverse('case_importer_update_upload_comment', upload_id),
+                rows: 1,
+                placeholder: '{% trans "(Click here to add a comment)"|escapejs %}',
+                saveValueName: 'comment',
+                errorMessage: '{% trans "Error updating comment.  Please try again."|escapejs %}'
+            "></inline-edit>
+            <!--/ko-->
+            <!--ko if: !upload_comment_edit_allowed-->
+            <span data-bind="text: comment"></span>
+            <!--/ko-->
         </td>
         <td class="col-md-2">
             <!--ko if: upload_file_name-->
@@ -64,7 +82,6 @@
             <!--/ko-->
             <!--/ko-->
         </td>
-        <td class="col-md-1" data-bind="text: created"></td>
     </tr>
     <!--/ko-->
 </table>

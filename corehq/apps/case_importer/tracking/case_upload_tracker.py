@@ -4,7 +4,6 @@ from corehq.apps.case_importer.tracking.filestorage import transient_file_store,
 from corehq.apps.case_importer.tracking.models import CaseUploadRecord
 from corehq.apps.case_importer.util import open_spreadsheet_download_ref, get_spreadsheet
 from dimagi.utils.decorators.memoized import memoized
-from soil.progress import get_task_status
 
 
 class CaseUpload(object):
@@ -29,7 +28,7 @@ class CaseUpload(object):
     def get_tempfile(self):
         return transient_file_store.get_tempfile_ref_for_contents(self.upload_id)
 
-    def check_file(self, named_columns):
+    def check_file(self):
         """
         open a spreadsheet download ref just to test there are no errors opening it
 
@@ -38,10 +37,10 @@ class CaseUpload(object):
         tempfile = self.get_tempfile()
         if not tempfile:
             raise ImporterRefError('file not found in cache')
-        open_spreadsheet_download_ref(tempfile, named_columns)
+        open_spreadsheet_download_ref(tempfile)
 
-    def get_spreadsheet(self, named_columns):
-        return get_spreadsheet(self.get_tempfile(), named_columns)
+    def get_spreadsheet(self):
+        return get_spreadsheet(self.get_tempfile())
 
     def trigger_upload(self, domain, config):
         from corehq.apps.case_importer.tasks import bulk_import_async
@@ -59,5 +58,6 @@ class CaseUpload(object):
             upload_file_meta=case_upload_file_meta,
         ).save()
 
-    def get_task_status(self):
-        return get_task_status(self._case_upload_record.task)
+    def store_task_result(self):
+        if self._case_upload_record.set_task_status_json_if_finished():
+            self._case_upload_record.save()

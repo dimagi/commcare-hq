@@ -8,6 +8,7 @@ from casexml.apps.phone.models import OTARestoreUser
 
 from corehq import toggles
 from corehq.apps.app_manager.models import ReportModule
+from corehq.apps.app_manager.suite_xml.features.mobile_ucr import is_valid_mobile_select_filter_type
 from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
 from corehq.util.xml_utils import serialize
 
@@ -81,7 +82,7 @@ class ReportFixturesProvider(object):
         defer_filters = {
             filter_slug: report.get_ui_filter(filter_slug)
             for filter_slug, filter_value in all_filter_values.items()
-            if filter_value is None
+            if filter_value is None and is_valid_mobile_select_filter_type(report.get_ui_filter(filter_slug))
         }
         data_source.set_filter_values(filter_values)
         data_source.defer_filters(defer_filters)

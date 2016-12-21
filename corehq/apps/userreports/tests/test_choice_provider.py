@@ -160,7 +160,7 @@ class LocationChoiceProviderTest(ChoiceProviderTestMixin, LocationHierarchyTestC
         choices = [
             SearchableChoice(
                 location.location_id,
-                location.display_name,
+                location.get_path_display(),
                 searchable_text=[location.site_code, location.name]
             )
             for location in cls.locations.itervalues()
@@ -191,12 +191,12 @@ class LocationChoiceProviderTest(ChoiceProviderTestMixin, LocationHierarchyTestC
         scoped_choices = [
             SearchableChoice(
                 location.location_id,
-                location.display_name,
+                location.get_path_display(),
                 searchable_text=[location.site_code, location.name]
             )
             for location in [
-                self.locations['Cambridge'],
                 self.locations['Middlesex'],
+                self.locations['Cambridge'],
                 self.locations['Somerville'],
             ]
         ]
@@ -340,7 +340,7 @@ class OwnerChoiceProviderTest(LocationHierarchyTestCase, ChoiceProviderTestMixin
                              [cls.mobile_worker.username]),
             SearchableChoice(cls.web_user.get_id, cls.web_user.username,
                              [cls.web_user.username]),
-            SearchableChoice(cls.location.location_id, cls.location.display_name,
+            SearchableChoice(cls.location.location_id, cls.location.get_path_display(),
                              [cls.location.name, cls.location.site_code]),
         ]
         cls.choice_provider = OwnerChoiceProvider(report, None)
