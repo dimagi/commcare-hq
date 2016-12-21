@@ -104,7 +104,7 @@ def get_open_episode_case_from_person(domain, person_case_id):
 
     """
     return get_open_episode_case_from_occurrence(
-        get_open_occurrence_case_from_person(person_case_id).case_id
+        domain, get_open_occurrence_case_from_person(domain, person_case_id).case_id
     )
 
 
