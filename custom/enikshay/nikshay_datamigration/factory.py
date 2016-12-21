@@ -5,6 +5,8 @@ from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from custom.enikshay.case_utils import get_open_occurrence_case_from_person
+from custom.enikshay.exceptions import ENikshayCaseNotFound
 from custom.enikshay.nikshay_datamigration.models import Outcome, Followup
 
 
@@ -111,21 +113,15 @@ class EnikshayCaseFactory(object):
             # TODO - store with correct value
             kwargs['attrs']['update']['hiv_status'] = outcome.HIVStatus
 
-        try:
-            matching_occurrence_case = next((
-                occurrence_case for occurrence_case in self.case_accessor.get_cases([
-                    index.referenced_id for index in
-                    self.case_accessor.get_case(self.person().case_id).reverse_indices
-                ])
-                if self.patient_detail.PregId == occurrence_case.dynamic_case_properties().get('nikshay_id')
-            ), None)
-        except CaseNotFound:
-            matching_occurrence_case = None
-        if matching_occurrence_case:
-            kwargs['case_id'] = matching_occurrence_case.case_id
-            kwargs['attrs']['create'] = False
-        else:
+        if self.person().attrs['create']:
             kwargs['attrs']['create'] = True
+        else:
+            try:
+                matching_occurrence_case = get_open_occurrence_case_from_person(self.domain, self.person().case_id)
+                kwargs['case_id'] = matching_occurrence_case.case_id
+                kwargs['attrs']['create'] = False
+            except ENikshayCaseNotFound:
+                kwargs['attrs']['create'] = True
 
         return CaseStructure(**kwargs)
 
