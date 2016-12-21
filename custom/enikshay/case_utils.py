@@ -76,7 +76,7 @@ def get_open_occurrence_case_from_person(domain, person_case_id):
 
 def get_open_episode_case_from_occurrence(domain, occurrence_case_id):
     """
-    Gets the first open 'episode' case for the person
+    Gets the first open 'episode' case for the occurrence
 
     Assumes the following case structure:
     Occurrence <--ext-- Episode
@@ -97,7 +97,7 @@ def get_open_episode_case_from_occurrence(domain, occurrence_case_id):
 
 def get_open_episode_case_from_person(domain, person_case_id):
     """
-    Gets the first open 'occurrence' case for the person
+    Gets the first open 'episode' case for the person
 
     Assumes the following case structure:
     Person <--ext-- Occurrence <--ext-- Episode
