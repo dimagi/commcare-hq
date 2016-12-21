@@ -52,10 +52,7 @@ class ImporterTest(TestCase):
             custom_fields=col_names,
             search_column=search_column,
             search_field=search_field,
-            named_columns=True,
             create_new_cases=create_new_cases,
-            key_column='',
-            value_column='',
         )
 
     @run_with_all_backends
@@ -401,4 +398,4 @@ class ImporterTest(TestCase):
 
 
 def make_worksheet_wrapper(*rows):
-    return WorksheetWrapper(make_worksheet(rows), True)
+    return WorksheetWrapper(make_worksheet(rows))

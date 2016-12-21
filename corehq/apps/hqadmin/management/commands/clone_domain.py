@@ -21,8 +21,6 @@ types = [
     'apps',
     'user_fields',
     'user_roles',
-    'reminders',
-    'keywords',
     'auto_case_updates',
 ]
 
@@ -75,14 +73,6 @@ class Command(BaseCommand):
         if self._clone_type(options, 'user_roles'):
             from corehq.apps.users.models import UserRole
             self._copy_all_docs_of_type(UserRole)
-
-        if self._clone_type(options, 'reminders'):
-            from corehq.apps.reminders.models import CaseReminderHandler
-            self._copy_all_docs_of_type(CaseReminderHandler)
-
-        if self._clone_type(options, 'keywords'):
-            from corehq.apps.reminders.models import SurveyKeyword
-            self._copy_all_docs_of_type(SurveyKeyword)
 
         if self._clone_type(options, 'auto_case_updates'):
             self.copy_auto_case_update_rules()
@@ -206,7 +196,7 @@ class Command(BaseCommand):
     @property
     def report_map(self):
         if not self._report_map:
-            self.copy_ucr_data(self.existing_domain, self.new_domain)
+            self.copy_ucr_data()
         return self._report_map
 
     def copy_applications(self):

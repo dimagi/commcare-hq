@@ -341,7 +341,7 @@
 -                </button>
 -            </script>
 -        </div>
--        <div class="tab-pane{% if not copy_app_form.is_bound %} active{% endif %}" id="app-settings">
+-        <div class="tab-pane" id="app-settings">
 -            {% include "app_manager/v1/partials/app-settings.html" %}
 -        </div>
 -        {% include 'app_manager/v1/languages.html' %}
