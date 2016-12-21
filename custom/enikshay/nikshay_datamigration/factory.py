@@ -19,14 +19,12 @@ class EnikshayCaseFactory(object):
     domain = None
     patient_detail = None
 
-    def __init__(self, domain, patient_detail, nikshay_codes_to_location,
-                 nikshay_ids_to_preexisting_nikshay_person_cases):
+    def __init__(self, domain, patient_detail, nikshay_codes_to_location):
         self.domain = domain
         self.patient_detail = patient_detail
         self.factory = CaseFactory(domain=domain)
         self.case_accessor = CaseAccessors(domain)
         self.nikshay_codes_to_location = nikshay_codes_to_location
-        self.nikshay_ids_to_preexisting_nikshay_person_cases = nikshay_ids_to_preexisting_nikshay_person_cases
 
     def create_cases(self):
         self.create_person_case()
@@ -63,6 +61,7 @@ class EnikshayCaseFactory(object):
         kwargs = {
             'attrs': {
                 'case_type': 'person',
+                'external_id': nikshay_id,
                 # 'owner_id': self._location.location_id,
                 'update': {
                     'aadhaar_number': self.patient_detail.paadharno,
@@ -95,8 +94,10 @@ class EnikshayCaseFactory(object):
             },
         }
 
-        if nikshay_id in self.nikshay_ids_to_preexisting_nikshay_person_cases:
-            kwargs['case_id'] = self.nikshay_ids_to_preexisting_nikshay_person_cases[nikshay_id].case_id
+        matching_external_ids = self.case_accessor.get_cases_by_external_id(nikshay_id, case_type='person')
+        assert len(matching_external_ids) <= 1
+        if matching_external_ids:
+            kwargs['case_id'] = matching_external_ids[0].case_id
             kwargs['attrs']['create'] = False
         else:
             kwargs['attrs']['create'] = True
@@ -252,15 +253,4 @@ def get_nikshay_codes_to_location(domain):
         location.metadata.get('nikshay_code'): location
         for location in SQLLocation.objects.filter(domain=domain)
         if 'nikshay_code' in location.metadata
-    }
-
-
-def get_nikshay_ids_to_preexisting_nikshay_person_cases(domain):
-    case_accessor = CaseAccessors(domain)
-    return {
-        person_case.dynamic_case_properties()['nikshay_id']: person_case
-        for person_case in case_accessor.get_cases([
-            case_id for case_id in case_accessor.get_case_ids_in_domain(type='person')
-        ])
-        if person_case.dynamic_case_properties().get('migration_created_case')
     }
