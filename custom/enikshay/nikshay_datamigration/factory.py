@@ -14,6 +14,7 @@ from custom.enikshay.nikshay_datamigration.models import Outcome, Followup
 PERSON_CASE_TYPE = 'person'
 OCCURRENCE_CASE_TYPE = 'occurrence'
 EPISODE_CASE_TYPE = 'episode'
+TEST_CASE_TYPE = 'test'
 
 
 def validate_number(string_value):
@@ -223,7 +224,7 @@ class EnikshayCaseFactory(object):
         kwargs = {
             'attrs': {
                 'create': True,
-                'case_type': 'test',
+                'case_type': TEST_CASE_TYPE,
                 'update': {
                     'date_tested': followup.TestDate,
 
@@ -245,7 +246,7 @@ class EnikshayCaseFactory(object):
                 self.case_accessor.get_case(occurrence_structure.case_id).reverse_indices
             ])
             if (
-                extension_case.type == 'test'
+                extension_case.type == TEST_CASE_TYPE
                 and followup.id == int(extension_case.dynamic_case_properties().get('migration_followup_id', -1))
             )
         ), None)
