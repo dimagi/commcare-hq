@@ -41,6 +41,7 @@ class TestCreateEnikshayCases(TestCase):
             atbtreatment='',
             Ptype=4,
             pcategory=4,
+            InitiationDate1='2016-12-22 16:06:47.726'
         )
         self.outcome = Outcome.objects.create(
             PatientId=self.patient_detail,
@@ -164,6 +165,7 @@ class TestCreateEnikshayCases(TestCase):
                 ('episode_type', 'confirmed_tb'),
                 ('migration_created_case', 'true'),
                 ('patient_type_choice', 'treatment_after_failure'),
+                ('treatment_initiation_date', '2016-12-22'),
                 ('treatment_supporter_designation', 'health_worker'),
                 ('treatment_supporter_first_name', 'Bubble'),
                 ('treatment_supporter_last_name', 'Bubbles'),

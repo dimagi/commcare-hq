@@ -184,6 +184,7 @@ class EnikshayCaseFactory(object):
                     'disease_classification': self.patient_detail.disease_classification,
                     'episode_type': 'confirmed_tb',
                     'patient_type_choice': self.patient_detail.patient_type_choice,
+                    'treatment_initiation_date': self.patient_detail.treatment_initiation_date,
                     'treatment_supporter_designation': self.patient_detail.treatment_supporter_designation,
                     'treatment_supporter_first_name': self.patient_detail.treatment_supporter_first_name,
                     'treatment_supporter_last_name': self.patient_detail.treatment_supporter_last_name,
