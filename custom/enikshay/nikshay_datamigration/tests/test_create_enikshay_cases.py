@@ -175,6 +175,7 @@ class TestCreateEnikshayCases(TestCase):
             ]),
             episode_case.dynamic_case_properties()
         )
+        self.assertEqual('Episode #1: Confirmed TB (Patient)', episode_case.name)
         self.assertEqual(len(episode_case.indices), 1)
         self._assertIndexEqual(
             CommCareCaseIndex(
