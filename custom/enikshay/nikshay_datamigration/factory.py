@@ -36,7 +36,7 @@ class EnikshayCaseFactory(object):
         self.create_test_cases()
 
     def create_person_occurrence_episode_cases(self):
-        episode_structure = self.episode(self._outcome)
+        episode_structure = self.get_episode_case_structure(self._outcome)
         self.factory.create_or_update_case(episode_structure)
 
     def create_test_cases(self):
@@ -132,7 +132,7 @@ class EnikshayCaseFactory(object):
         return CaseStructure(**kwargs)
 
     @memoized
-    def episode(self, outcome):
+    def get_episode_case_structure(self, outcome):
         kwargs = {
             'attrs': {
                 'case_type': 'episode',
