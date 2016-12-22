@@ -31,6 +31,22 @@ class EnikshayCaseFactory(object):
         self.case_accessor = CaseAccessors(domain)
         self.nikshay_codes_to_location = nikshay_codes_to_location
 
+    @property
+    def nikshay_id(self):
+        return self.patient_detail.PregId
+
+    @property
+    @memoized
+    def existing_person_case(self):
+        """
+        Get the existing person case for this nikshay ID, or None if no person case exists
+        """
+        matching_external_ids = self.case_accessor.get_cases_by_external_id(self.nikshay_id, case_type='person')
+        if matching_external_ids:
+            assert len(matching_external_ids) == 1
+            return matching_external_ids[0]
+        return None
+
     def create_cases(self):
         self.create_person_occurrence_episode_cases()
         self.create_test_cases()
@@ -84,10 +100,8 @@ class EnikshayCaseFactory(object):
             },
         }
 
-        matching_external_ids = self.case_accessor.get_cases_by_external_id(nikshay_id, case_type='person')
-        assert len(matching_external_ids) <= 1
-        if matching_external_ids:
-            kwargs['case_id'] = matching_external_ids[0].case_id
+        if self.existing_person_case is not None:
+            kwargs['case_id'] = self.existing_person_case.case_id
             kwargs['attrs']['create'] = False
         else:
             kwargs['attrs']['create'] = True
