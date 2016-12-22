@@ -49,7 +49,7 @@ class Command(BaseCommand):
                     domain, patient_detail, nikshay_codes_to_location
                 )
                 case_factory.create_cases()
-            except:
+            except Exception:
                 num_failed += 1
                 logger.error(
                     'Failed on %d of %d. Nikshay ID=%s' % (
