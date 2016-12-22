@@ -163,7 +163,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
 
         # Get ids for each sharing group that contains a user from selected_reporting_group_users OR
         # a user that was specifically selected
-        if selected_reporting_group_users and selected_user_ids:
+        if selected_reporting_group_users or selected_user_ids:
             sharing_group_ids = (HQESQuery(index="groups")
                                  .domain(self.domain)
                                  .doc_type("Group")
