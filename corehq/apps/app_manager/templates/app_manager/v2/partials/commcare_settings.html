@@ -19,7 +19,6 @@
       <div class="panel-collapse collapse" data-bind="attr: {id: id}, css: {'in': !reallyCollapse()}">
         <div class="panel-body">
           <!-- ko foreach: settings -->
-          <!-- ko if: widget !== 'none' -->
           <div class="form-group" data-bind="
                       visible: visible,
                       css: {error: hasError()}
@@ -57,7 +56,6 @@
               </div>
             </div>
           </div>
-          <!-- /ko -->
           <!-- /ko -->
         </div>
       </div>
