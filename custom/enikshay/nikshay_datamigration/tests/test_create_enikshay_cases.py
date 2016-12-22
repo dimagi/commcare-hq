@@ -114,6 +114,7 @@ class TestCreateEnikshayCases(TestCase):
                 ('nikshay_id', 'MH-ABD-05-16-0001'),
                 ('permanent_address_district_choice', 'Middlesex'),
                 ('permanent_address_state_choice', 'MA'),
+                ('person_id', 'FROM_NIKSHAY_MH-ABD-05-16-0001'),
                 ('phi', '2'),
                 ('secondary_contact_name_address', 'Secondary name, Secondary address'),
                 ('secondary_contact_phone_number', '123'),
