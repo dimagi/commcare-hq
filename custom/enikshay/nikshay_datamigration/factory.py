@@ -235,7 +235,7 @@ class EnikshayCaseFactory(object):
             matching_test_case = next((
                 extension_case for extension_case in self.case_accessor.get_cases([
                     index.referenced_id for index in
-                    self.case_accessor.get_case(occurrence_structure.case_id).reverse_indices
+                    self.existing_occurrence_case.reverse_indices
                 ])
                 if (
                     extension_case.type == TEST_CASE_TYPE
