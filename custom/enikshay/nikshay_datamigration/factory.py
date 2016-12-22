@@ -13,6 +13,8 @@ from dimagi.utils.decorators.profile import line_profile, profile
 
 
 PERSON_CASE_TYPE = 'person'
+OCCURRENCE_CASE_TYPE = 'occurrence'
+EPISODE_CASE_TYPE = 'episode'
 
 
 def validate_number(string_value):
@@ -147,7 +149,7 @@ class EnikshayCaseFactory(object):
         """
         kwargs = {
             'attrs': {
-                'case_type': 'occurrence',
+                'case_type': OCCURRENCE_CASE_TYPE,
                 'update': {
                     'name': 'Occurrence #1',
                     'nikshay_id': self.nikshay_id,
@@ -184,7 +186,7 @@ class EnikshayCaseFactory(object):
         """
         kwargs = {
             'attrs': {
-                'case_type': 'episode',
+                'case_type': EPISODE_CASE_TYPE,
                 'update': {
                     'date_reported': self.patient_detail.pregdate1,  # is this right?
                     'disease_classification': self.patient_detail.disease_classification,
@@ -202,7 +204,7 @@ class EnikshayCaseFactory(object):
                 self.get_occurrence_case_structure(outcome),
                 identifier='host',
                 relationship=CASE_INDEX_EXTENSION,
-                related_type=self.get_occurrence_case_structure(outcome).attrs['case_type'],
+                related_type=OCCURRENCE_CASE_TYPE,
             )],
         }
 
