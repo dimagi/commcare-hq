@@ -96,6 +96,9 @@ class EnikshayCaseFactory(object):
 
     @memoized
     def get_occurrence_case_structure(self, outcome):
+        """
+        This gets the occurrence case structure with a nested person case structure.
+        """
         kwargs = {
             'attrs': {
                 'case_type': 'occurrence',
@@ -135,6 +138,10 @@ class EnikshayCaseFactory(object):
 
     @memoized
     def get_episode_case_structure(self, outcome):
+        """
+        This gets the episode case structure with a nested occurrence and person case structures
+        inside of it.
+        """
         kwargs = {
             'attrs': {
                 'case_type': 'episode',
