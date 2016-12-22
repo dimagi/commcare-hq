@@ -18,7 +18,6 @@ class TestCreateEnikshayCases(TestCase):
 
     def setUp(self):
         super(TestCreateEnikshayCases, self).setUp()
-
         self.patient_detail = PatientDetail.objects.create(
             PregId='MH-ABD-05-16-0001',
             scode='MA',
@@ -124,6 +123,9 @@ class TestCreateEnikshayCases(TestCase):
         )
         self.assertEqual('MH-ABD-05-16-0001', person_case.external_id)
         self.assertEqual('A B C', person_case.name)
+        # make sure the case is only created/modified by a single form
+        self.assertEqual(1, len(person_case.xform_ids))
+
 
         occurrence_case_ids = self.case_accessor.get_case_ids_in_domain(type='occurrence')
         self.assertEqual(1, len(occurrence_case_ids))
@@ -149,6 +151,8 @@ class TestCreateEnikshayCases(TestCase):
             ),
             occurrence_case.indices[0]
         )
+        # make sure the case is only created/modified by a single form
+        self.assertEqual(1, len(occurrence_case.xform_ids))
 
         episode_case_ids = self.case_accessor.get_case_ids_in_domain(type='episode')
         self.assertEqual(1, len(episode_case_ids))
@@ -177,6 +181,8 @@ class TestCreateEnikshayCases(TestCase):
             ),
             episode_case.indices[0]
         )
+        # make sure the case is only created/modified by a single form
+        self.assertEqual(1, len(episode_case.xform_ids))
 
         test_case_ids = set(self.case_accessor.get_case_ids_in_domain(type='test'))
         self.assertEqual(5, len(test_case_ids))
