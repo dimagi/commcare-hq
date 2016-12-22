@@ -159,7 +159,7 @@ def _get_episode_case_properties(episode_case_properties):
     """
     episode_properties = {}
 
-    episode_site_choice = episode_site.get(episode_case_properties.get('site_choice', None))
+    episode_site_choice = episode_case_properties.get('site_choice', None)
     if episode_site_choice:
         site_detail = episode_site.get(episode_site_choice, 'others')
         episode_properties["sitedetail"] = site_detail
