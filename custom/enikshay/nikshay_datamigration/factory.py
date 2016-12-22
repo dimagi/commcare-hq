@@ -9,6 +9,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.enikshay.case_utils import get_open_occurrence_case_from_person, get_open_episode_case_from_occurrence
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 from custom.enikshay.nikshay_datamigration.models import Outcome, Followup
+from dimagi.utils.decorators.profile import line_profile, profile
 
 
 def validate_number(string_value):
@@ -92,7 +93,7 @@ class EnikshayCaseFactory(object):
         return CaseStructure(**kwargs)
 
     @memoized
-    def occurrence(self, outcome):
+    def get_occurrence_case_structure(self, outcome):
         kwargs = {
             'attrs': {
                 'case_type': 'occurrence',
@@ -149,19 +150,19 @@ class EnikshayCaseFactory(object):
                 },
             },
             'indices': [CaseIndex(
-                self.occurrence(outcome),
+                self.get_occurrence_case_structure(outcome),
                 identifier='host',
                 relationship=CASE_INDEX_EXTENSION,
-                related_type=self.occurrence(outcome).attrs['case_type'],
+                related_type=self.get_occurrence_case_structure(outcome).attrs['case_type'],
             )],
         }
 
-        if self.occurrence(outcome).attrs['create']:
+        if self.get_occurrence_case_structure(outcome).attrs['create']:
             kwargs['attrs']['create'] = True
         else:
             try:
                 matching_episode_case = get_open_episode_case_from_occurrence(
-                    self.domain, self.occurrence(outcome).case_id
+                    self.domain, self.get_occurrence_case_structure(outcome).case_id
                 )
                 kwargs['case_id'] = matching_episode_case.case_id
                 kwargs['attrs']['create'] = False
@@ -172,7 +173,7 @@ class EnikshayCaseFactory(object):
 
     @memoized
     def test(self, followup):
-        occurrence_structure = self.occurrence(self._outcome)  # TODO - pass outcome as argument
+        occurrence_structure = self.get_occurrence_case_structure(self._outcome)  # TODO - pass outcome as argument
 
         kwargs = {
             'attrs': {
