@@ -23,11 +23,12 @@ from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import ServerTime, UserTime
 from dimagi.utils.couch import LockableMixIn, CriticalSection
 from dimagi.utils.couch.cache.cache_core import get_redis_client
+from dimagi.utils.couch.migration import SyncCouchToSQLMixin
 from dimagi.utils.logging import notify_exception
 from random import randint
 from django.conf import settings
 from dimagi.utils.couch.database import iter_docs
-from django.db import models
+from django.db import models, transaction
 from string import Formatter
 
 
@@ -1866,7 +1867,7 @@ class SurveyKeywordAction(DocumentSchema):
     named_args_separator = StringProperty() # Can be None in which case there is no separator (i.e., a100 b200)
 
 
-class SurveyKeyword(Document):
+class SurveyKeyword(SyncCouchToSQLMixin, Document):
     domain = StringProperty()
     keyword = StringProperty()
     description = StringProperty()
@@ -1885,13 +1886,6 @@ class SurveyKeyword(Document):
 
     def is_structured_sms(self):
         return METHOD_STRUCTURED_SMS in [a.action for a in self.actions]
-
-    def deleted(self):
-        return self.doc_type != 'SurveyKeyword'
-
-    def retire(self):
-        self.doc_type += "-Deleted"
-        self.save()
     
     @property
     def get_id(self):
@@ -1934,6 +1928,10 @@ class SurveyKeyword(Document):
         self.clear_caches()
         return super(SurveyKeyword, self).save(*args, **kwargs)
 
+    def delete(self, *args, **kwargs):
+        self.clear_caches()
+        return super(SurveyKeyword, self).delete(*args, **kwargs)
+
     def clear_caches(self):
         self.domain_has_keywords.clear(SurveyKeyword, self.domain)
 
@@ -1948,6 +1946,34 @@ class SurveyKeyword(Document):
         ).all()
         count = reduced[0]['value'] if reduced else 0
         return count > 0
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        from corehq.apps.sms.models import Keyword
+        return Keyword
+
+    def _migration_sync_to_sql(self, sql_object):
+        with transaction.atomic():
+            sql_object.domain = self.domain
+            sql_object.keyword = self.keyword
+            sql_object.description = self.description
+            sql_object.delimiter = self.delimiter
+            sql_object.override_open_sessions = self.override_open_sessions
+            sql_object.initiator_doc_type_filter = self.initiator_doc_type_filter
+            sql_object.save(sync_to_couch=False)
+            sql_object.keywordaction_set.all().delete()
+
+            for couch_action in self.actions:
+                sql_object.keywordaction_set.create(
+                    action=couch_action.action,
+                    recipient=couch_action.recipient,
+                    recipient_id=couch_action.recipient_id,
+                    message_content=couch_action.message_content,
+                    form_unique_id=couch_action.form_unique_id,
+                    use_named_args=couch_action.use_named_args,
+                    named_args=couch_action.named_args,
+                    named_args_separator=couch_action.named_args_separator
+                )
 
 
 class EmailUsage(models.Model):

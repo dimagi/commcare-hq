@@ -1,7 +1,14 @@
 {
     "domains": [
         "enikshay-test",
-        "enikshay-test-test"
+        "enikshay-test-test",
+        "enikshay",
+        "enikshay-test-2",
+        "enikshay-test-3",
+        "enikshay-nikshay-migration-test",
+        "enikshay-domain-copy-test",
+        "enikshay-aks-audit",
+        "np-migration-3"
     ],
     "data_source_table": "episode",
     "report_id": "tb_notification_register",
@@ -94,9 +101,21 @@
                 "calculate_total": false
             },
             {
-                "display": "Key Population",
+                "display": "PIN Code",
                 "type": "field",
-                "field": "key_populations",
+                "field": "current_address_postal_code",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Aadhaar No.",
+                "type": "field",
+                "field": "aadhaar_number",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,
@@ -118,6 +137,19 @@
                 "calculate_total": false
             },
             {
+                "display": "Key Population",
+                "type": "field",
+                "field": "key_populations",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+
+            {
                 "display": "Type of Patient",
                 "type": "field",
                 "field": "patient_type",
@@ -126,6 +158,15 @@
                 "description": null,
                 "format": "default",
                 "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "new": "New",
+                        "retreatment": "Retreatment",
+                        "treatment_after_failure": "Treatment After Failure",
+                        "treatment_after_lfu": "Treatment After Loss to Follow-up",
+                        "transfer_in": "Transferred In",
+                        "other_previously_treated": "Others Previously Treated"
+                    }
                 },
                 "calculate_total": false
             },
@@ -138,25 +179,35 @@
                 "description": null,
                 "format": "default",
                 "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "pulmonary": "P",
+                        "extra_pulonary": "EP"
+                    }
                 },
                 "calculate_total": false
             },
             {
-                "display": "Weight at beginning of treatment",
+                "display": "Case Definition",
                 "type": "field",
-                "field": "weight",
+                "field": "basis_of_diagnosis",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,
                 "format": "default",
                 "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "microbiological": "Microbiologically confirmed",
+                        "clinical": "Clinically Diagnosed"
+                    }
                 },
                 "calculate_total": false
             },
             {
                 "display": "Microbiological Confirmation Test Results - Date",
                 "type": "field",
-                "field": "diagnostic_test_requested_date",
+                "field": "microbiological_test_requested_date",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,
@@ -168,7 +219,19 @@
             {
                 "display": "Microbiological Confirmation Test Results - Lab Name",
                 "type": "field",
-                "field": "diagnostic_test_location_name",
+                "field": "microbiological_test_facility_referred_to",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Microbiological Confirmation Test Results - Lab No.",
+                "type": "field",
+                "field": "microbiological_test_lab_serial_number",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,
@@ -180,7 +243,25 @@
             {
                 "display": "Microbiological Confirmation Test Results - Test",
                 "type": "field",
-                "field": "diagnostic_test_type",
+                "field": "microbiological_test_type",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "Microscopy-ZN": "ZN",
+                        "Microscopy-Fluorescent": "FM",
+                        "cbnaat": "CBNAAT"
+                    }
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Microbiological Confirmation Test Results - Results of Test",
+                "type": "field",
+                "field": "microbiological_result",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,
@@ -190,21 +271,9 @@
                 "calculate_total": false
             },
             {
-                "display": "Microbiological Confirmation Test Results - Result",
+                "display": "Results of Other tests (XRay/Histopatho/FNAC/Clinical/Other,specify)",
                 "type": "field",
-                "field": "diagnostic_result",
-                "aggregation": "simple",
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {
-                },
-                "calculate_total": false
-            },
-            {
-                "display": "Basis of diagnosis if other than microbiological",
-                "type": "field",
-                "field": "not_microbiological_basis_of_diagnosis",
+                "field": "not_microbiological_result",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,
@@ -264,7 +333,19 @@
             {
                 "display": "Status of Treatment",
                 "type": "field",
-                "field": "status_of_treatment",
+                "field": "treatment_status_value",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Health Facility for Treatment",
+                "type": "field",
+                "field": "phi_assigned_to",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,
@@ -286,9 +367,69 @@
                 "calculate_total": false
             },
             {
+                "display": "Type of Regimen",
+                "type": "field",
+                "field": "type_of_regimen",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Weight at beginning of treatment",
+                "type": "field",
+                "field": "weight",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
                 "display": "Dosage Frequency",
                 "type": "field",
                 "field": "dosage_frequency",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Follow up Smear Examinations (End of IP) - Date",
+                "type": "field",
+                "field": "endofip_test_requested_date",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Follow up Smear Examinations (End of IP) - DMC Name",
+                "type": "field",
+                "field": "endofip_test_facility_referred_to",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Follow up Smear Examinations (End of IP) - Smear Result",
+                "type": "field",
+                "field": "endofip_result",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,
@@ -310,9 +451,9 @@
                 "calculate_total": false
             },
             {
-                "display": "Follow up Smear Examinations (End of CP) - Result",
+                "display": "Follow up Smear Examinations (End of CP) - DMC Name",
                 "type": "field",
-                "field": "endofcp_result",
+                "field": "endofcp_test_facility_referred_to",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,
@@ -322,9 +463,9 @@
                 "calculate_total": false
             },
             {
-                "display": "Treatment Outcome - Date",
+                "display": "Follow up Smear Examinations (End of CP) - Smear Result",
                 "type": "field",
-                "field": "treatment_outcome_date",
+                "field": "endofcp_result",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,
@@ -346,9 +487,9 @@
                 "calculate_total": false
             },
             {
-                "display": "ART (y/n)",
+                "display": "Treatment Outcome - Date",
                 "type": "field",
-                "field": "initiated_on_art",
+                "field": "treatment_outcome_date",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,
@@ -358,9 +499,21 @@
                 "calculate_total": false
             },
             {
-                "display": "ART Date",
+                "display": "CPT (y/n) Date",
                 "type": "field",
-                "field": "art_initiation_date",
+                "field": "cpt",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "ART (y/n) Date",
+                "type": "field",
+                "field": "art",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,

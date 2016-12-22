@@ -1871,7 +1871,15 @@ DOMAIN_MODULE_MAP = {
     'icds-cas': 'custom.icds_reports',
     'testing-ipm-senegal': 'custom.intrahealth',
     'up-nrhm': 'custom.up_nrhm',
+
     'enikshay-test': 'custom.enikshay',
+    'enikshay': 'custom.enikshay',
+    'enikshay-test-2': 'custom.enikshay',
+    'enikshay-test-3': 'custom.enikshay',
+    'enikshay-nikshay-migration-test': 'custom.enikshay',
+    'enikshay-domain-copy-test': 'custom.enikshay',
+    'enikshay-aks-audit': 'custom.enikshay',
+    'np-migration-3': 'custom.enikshay',
 
     'crs-remind': 'custom.apps.crs_reports',
 

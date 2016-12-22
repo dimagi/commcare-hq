@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.db import models
 
 
@@ -76,7 +78,7 @@ class PatientDetail(models.Model):
     dotprovider_id = models.CharField(max_length=255)
     pregdate1 = models.DateField()
     cvisitedDate1 = models.CharField(max_length=255)
-    InitiationDate1 = models.CharField(max_length=255)  # datetimes, look like they're all midnight
+    InitiationDate1 = models.CharField(max_length=255)  # datetime or 'NULL'
     dotmosignDate1 = models.CharField(max_length=255)
 
     @property
@@ -149,6 +151,13 @@ class PatientDetail(models.Model):
     @property
     def _list_of_dot_names(self):
         return self.dotname.split(' ') if self.dotname else ['']
+
+    @property
+    def treatment_initiation_date(self):
+        if self.InitiationDate1 == 'NULL':
+            return None
+        else:
+            return datetime.strptime(self.InitiationDate1, '%Y-%m-%d %H:%M:%S.%f').date()
 
 
 class Outcome(models.Model):

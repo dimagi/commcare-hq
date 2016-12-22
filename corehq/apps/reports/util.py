@@ -11,8 +11,10 @@ import warnings
 from django.conf import settings
 from django.http import Http404
 from django.utils import html, safestring
+from casexml.apps.case.models import CommCareCase
 from corehq.apps.users.permissions import get_extra_permissions
-from corehq.form_processor.utils import use_new_exports
+from corehq.form_processor.change_publishers import publish_case_saved
+from corehq.form_processor.utils import use_new_exports, should_use_sql_backend
 
 from couchexport.util import SerializableFunction
 from couchforms.analytics import get_first_form_submission_received
@@ -481,3 +483,10 @@ def safe_filename_header(filename):
     ascii_filename = unidecode(safe_filename)
     return 'attachment; filename="{}"; filename*=UTF-8\'\'{}'.format(
         ascii_filename, quote(safe_filename.encode('utf8')))
+
+
+def resync_case_to_es(domain, case):
+    if should_use_sql_backend(domain):
+        publish_case_saved(case)
+    else:
+        CommCareCase.get_db().save_doc(case._doc)  # don't just call save to avoid signals

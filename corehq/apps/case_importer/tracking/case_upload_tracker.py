@@ -28,7 +28,7 @@ class CaseUpload(object):
     def get_tempfile(self):
         return transient_file_store.get_tempfile_ref_for_contents(self.upload_id)
 
-    def check_file(self, named_columns):
+    def check_file(self):
         """
         open a spreadsheet download ref just to test there are no errors opening it
 
@@ -37,10 +37,10 @@ class CaseUpload(object):
         tempfile = self.get_tempfile()
         if not tempfile:
             raise ImporterRefError('file not found in cache')
-        open_spreadsheet_download_ref(tempfile, named_columns)
+        open_spreadsheet_download_ref(tempfile)
 
-    def get_spreadsheet(self, named_columns):
-        return get_spreadsheet(self.get_tempfile(), named_columns)
+    def get_spreadsheet(self):
+        return get_spreadsheet(self.get_tempfile())
 
     def trigger_upload(self, domain, config):
         from corehq.apps.case_importer.tasks import bulk_import_async

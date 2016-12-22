@@ -569,17 +569,18 @@ class BaseMessagingEventReport(BaseCommConnectLogReport):
             return content_cache[keyword_id]
         try:
             keyword = SurveyKeyword.get(keyword_id)
-            if keyword.deleted():
-                display = '%s %s' % (keyword.description, _('(Deleted Keyword)'))
-            else:
-                urlname = (EditStructuredKeywordView.urlname if keyword.is_structured_sms()
-                    else EditNormalKeywordView.urlname)
-                display = '<a target="_blank" href="%s">%s</a>' % (
-                    reverse(urlname, args=[keyword.domain, keyword_id]),
-                    keyword.description,
-                )
+            if keyword.doc_type.endswith('-Deleted'):
+                # We'll get rid of this once we move to postgres
+                raise ResourceNotFound()
         except ResourceNotFound:
-            display = '-'
+            display = _('(Deleted Keyword)')
+        else:
+            urlname = (EditStructuredKeywordView.urlname if keyword.is_structured_sms()
+                else EditNormalKeywordView.urlname)
+            display = '<a target="_blank" href="%s">%s</a>' % (
+                reverse(urlname, args=[keyword.domain, keyword_id]),
+                keyword.description,
+            )
 
         content_cache[keyword_id] = display
         return display

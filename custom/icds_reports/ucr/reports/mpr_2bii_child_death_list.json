@@ -109,61 +109,26 @@
         "format": "default",
         "transform": {
           "type": "translation",
+          "mobile_or_web": "mobile",
           "translations": {
-            "M": [
-              [
-                "mar",
-                "पुरुष"
-              ],
-              [
-                "tel",
-                "పురుషుడు"
-              ],
-              [
-                "hin",
-                "पुरुष"
-              ],
-              [
-                "en",
-                "M"
-              ]
-            ],
-            "O": [
-              [
-                "mar",
-                "अन्य"
-              ],
-              [
-                "tel",
-                "ఇతరులు"
-              ],
-              [
-                "hin",
-                "अन्य"
-              ],
-              [
-                "en",
-                "O"
-              ]
-            ],
-            "F": [
-              [
-                "mar",
-                "स्त्री"
-              ],
-              [
-                "tel",
-                "మహిళ"
-              ],
-              [
-                "hin",
-                "महिला"
-              ],
-              [
-                "en",
-                "F"
-              ]
-            ]
+            "M": {
+                "mar": "पुरुष",
+                "tel": "పురుషుడు",
+                "hin": "पुरुष",
+                "en": "M"
+            },
+            "O": {
+                "mar": "अन्य",
+                "tel": "ఇతరులు",
+                "hin": "अन्य",
+                "en": "O"
+            },
+            "F": {
+                "mar": "स्त्री",
+                "tel": "మహిళ",
+                "hin": "महिला",
+                "en": "F"
+            }
           }
         },
         "column_id": "sex",
@@ -181,79 +146,32 @@
         "format": "default",
         "transform": {
           "type": "translation",
+          "mobile_or_web": "mobile",
           "translations": {
-            "white": [
-              [
-                "mar",
-                "पांढरा"
-              ],
-              [
-                "tel",
-                "తెలుపు"
-              ],
-              [
-                "hin",
-                "सफेद"
-              ],
-              [
-                "en",
-                "White"
-              ]
-            ],
-            "green": [
-              [
-                "mar",
-                "हिरवा"
-              ],
-              [
-                "tel",
-                "ఆకుపచ్చ"
-              ],
-              [
-                "hin",
-                "हरा"
-              ],
-              [
-                "en",
-                "Green"
-              ]
-            ],
-            "red": [
-              [
-                "mar",
-                "लाल"
-              ],
-              [
-                "tel",
-                "ఎరుపు"
-              ],
-              [
-                "hin",
-                "लाल"
-              ],
-              [
-                "en",
-                "Red"
-              ]
-            ],
-            "yellow": [
-              [
-                "mar",
-                "पिवळा"
-              ],
-              [
-                "tel",
-                "పసుపు"
-              ],
-              [
-                "hin",
-                "पीला"
-              ],
-              [
-                "en",
-                "Yellow"
-              ]
-            ]
+            "white": {
+              "mar": "पांढरा",
+              "tel": "తెలుపు",
+              "hin": "सफेद",
+              "en": "White"
+            },
+            "green": {
+              "mar": "हिरवा",
+              "tel": "ఆకుపచ్చ",
+              "hin": "हरा",
+              "en": "Green"
+            },
+            "red": {
+              "mar": "लाल",
+              "tel": "ఎరుపు",
+              "hin": "लाल",
+              "en": "Red"
+            },
+            "yellow": {
+              "mar": "पिवळा",
+              "tel": "పసుపు",
+              "hin": "पीला",
+              "en": "Yellow"
+            }
           }
         },
         "column_id": "zscore_grading_wfa",
@@ -271,43 +189,20 @@
         "format": "default",
         "transform": {
           "type": "translation",
+          "mobile_or_web": "mobile",
           "translations": {
-            "yes": [
-              [
-                "mar",
-                "होय"
-              ],
-              [
-                "tel",
-                "అవును"
-              ],
-              [
-                "hin",
-                "हाँ"
-              ],
-              [
-                "en",
-                "Yes"
-              ]
-            ],
-            "no": [
-              [
-                "mar",
-                "नाही"
-              ],
-              [
-                "tel",
-                "కాదు"
-              ],
-              [
-                "hin",
-                "नहीं"
-              ],
-              [
-                "en",
-                "No"
-              ]
-            ]
+            "yes": {
+              "mar": "होय",
+              "tel": "అవును",
+              "hin": "हाँ",
+              "en": "Yes"
+            },
+            "no": {
+              "mar": "नाही",
+              "tel": "కాదు",
+              "hin": "नहीं",
+              "en": "No"
+            }
           }
         },
         "column_id": "resident",
