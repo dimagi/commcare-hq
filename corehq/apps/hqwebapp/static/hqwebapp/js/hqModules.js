@@ -66,12 +66,14 @@ function hqGlobal(path, dependencies, moduleAccessor) {
         if (typeof define === 'function' && define.amd) {
             define(path, dependencies, factory);
         } else {
-            factory(jQuery, (typeof ko === 'undefined' ? undefined : ko), _);
+            factory(jQuery, (typeof ko === 'undefined' ? undefined : ko), (typeof _ === 'undefined' ? undefined : _));
         }
     }(moduleAccessor));
 }
 
 function hqImport(path) {
+    path = path.replace(/\.js$/, "");
+    path = path + ".js";
     if (typeof COMMCAREHQ_MODULES[path] === 'undefined') {
         throw new Error("The module '" + path + "' has not yet been defined.\n\n" +
             'Did you include <script src="' + path + '"></script> on your html page?');
