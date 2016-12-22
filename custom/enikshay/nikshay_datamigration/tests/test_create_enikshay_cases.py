@@ -129,7 +129,6 @@ class TestCreateEnikshayCases(TestCase):
         # make sure the case is only created/modified by a single form
         self.assertEqual(1, len(person_case.xform_ids))
 
-
         occurrence_case_ids = self.case_accessor.get_case_ids_in_domain(type='occurrence')
         self.assertEqual(1, len(occurrence_case_ids))
         occurrence_case = self.case_accessor.get_case(occurrence_case_ids[0])
@@ -273,6 +272,18 @@ class TestCreateEnikshayCases(TestCase):
         self.assertEqual(1, len(episode_case_ids))
         episode_case = self.case_accessor.get_case(episode_case_ids[0])
         self.assertEqual(episode_case.dynamic_case_properties()['disease_classification'], 'extra_pulmonary')
+
+    @run_with_all_backends
+    def test_location_not_found(self):
+        self.loc.delete()
+        call_command('create_enikshay_cases', self.domain.name)
+
+        person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
+        self.assertEqual(1, len(person_case_ids))
+        person_case = self.case_accessor.get_case(person_case_ids[0])
+        self.assertEqual(person_case.owner_id, '')
+        self.assertEqual(person_case.dynamic_case_properties()['migration_error'], 'location_not_found')
+        self.assertEqual(person_case.dynamic_case_properties()['migration_error_details'], 'MH-ABD-05-16')
 
     def _assertIndexEqual(self, index_1, index_2):
         self.assertEqual(index_1.identifier, index_2.identifier)

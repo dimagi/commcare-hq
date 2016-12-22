@@ -127,6 +127,9 @@ class EnikshayCaseFactory(object):
 
         if self._location:
             kwargs['attrs']['owner_id'] = self._location.location_id
+        else:
+            kwargs['attrs']['update']['migration_error'] = 'location_not_found'
+            kwargs['attrs']['update']['migration_error_details'] = self._nikshay_code
 
         if self.patient_detail.paadharno is not None:
             kwargs['attrs']['update']['aadhaar_number'] = self.patient_detail.paadharno
