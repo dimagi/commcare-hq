@@ -155,6 +155,7 @@ class TestCreateEnikshayCases(TestCase):
             ),
             occurrence_case.indices[0]
         )
+        self.assertEqual('-', occurrence_case.owner_id)
         # make sure the case is only created/modified by a single form
         self.assertEqual(1, len(occurrence_case.xform_ids))
 
@@ -181,6 +182,7 @@ class TestCreateEnikshayCases(TestCase):
         )
         self.assertEqual('Episode #1: Confirmed TB (Patient)', episode_case.name)
         self.assertEqual(datetime(2016, 12, 13), episode_case.opened_on)
+        self.assertEqual('-', episode_case.owner_id)
         self.assertEqual(len(episode_case.indices), 1)
         self._assertIndexEqual(
             CommCareCaseIndex(
@@ -234,6 +236,7 @@ class TestCreateEnikshayCases(TestCase):
             ]
         )
         for test_case in test_cases:
+            self.assertEqual('-', test_case.owner_id)
             self.assertEqual(len(test_case.indices), 1)
             self._assertIndexEqual(
                 CommCareCaseIndex(

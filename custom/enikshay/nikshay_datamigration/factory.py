@@ -152,6 +152,7 @@ class EnikshayCaseFactory(object):
         kwargs = {
             'attrs': {
                 'case_type': OCCURRENCE_CASE_TYPE,
+                'owner_id': '-',
                 'update': {
                     'current_episode_type': 'confirmed_tb',
                     'ihv_date': self.patient_detail.ihv_date,
@@ -190,6 +191,7 @@ class EnikshayCaseFactory(object):
             'attrs': {
                 'case_type': EPISODE_CASE_TYPE,
                 'date_opened': self.patient_detail.pregdate1,
+                'owner_id': '-',
                 'update': {
                     'date_of_mo_signature': self.patient_detail.date_of_mo_signature,
                     'disease_classification': self.patient_detail.disease_classification,
@@ -229,6 +231,7 @@ class EnikshayCaseFactory(object):
             'attrs': {
                 'create': True,
                 'case_type': TEST_CASE_TYPE,
+                'owner_id': '-',
                 'update': {
                     'date_tested': followup.TestDate,
 
