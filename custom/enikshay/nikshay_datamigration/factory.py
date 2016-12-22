@@ -97,7 +97,6 @@ class EnikshayCaseFactory(object):
             'attrs': {
                 'case_type': PERSON_CASE_TYPE,
                 'external_id': self.nikshay_id,
-                'owner_id': self._location.location_id,
                 'update': {
                     'age': self.patient_detail.page,
                     'age_entered': self.patient_detail.page,
@@ -125,6 +124,9 @@ class EnikshayCaseFactory(object):
                 },
             },
         }
+
+        if self._location:
+            kwargs['attrs']['owner_id'] = self._location.location_id
 
         if self.patient_detail.paadharno is not None:
             kwargs['attrs']['update']['aadhaar_number'] = self.patient_detail.paadharno
@@ -273,7 +275,7 @@ class EnikshayCaseFactory(object):
 
     @property
     def _location(self):
-        return self.nikshay_codes_to_location[self._nikshay_code]
+        return self.nikshay_codes_to_location.get(self._nikshay_code)
 
     @property
     def _nikshay_code(self):
