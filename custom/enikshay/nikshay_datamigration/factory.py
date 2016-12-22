@@ -190,9 +190,7 @@ class EnikshayCaseFactory(object):
             )],
         }
 
-        if self.get_occurrence_case_structure(outcome).attrs['create']:
-            kwargs['attrs']['create'] = True
-        else:
+        if self.existing_occurrence_case:
             try:
                 matching_episode_case = get_open_episode_case_from_occurrence(
                     self.domain, self.get_occurrence_case_structure(outcome).case_id
