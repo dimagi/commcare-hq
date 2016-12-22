@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 
 from django.db import models
 
@@ -175,6 +175,17 @@ class PatientDetail(models.Model):
     @property
     def date_of_mo_signature(self):
         return _parse_datetime_or_null_to_date(self.dotmosignDate1)
+
+    @property
+    def ihv_date(self):
+        if self.cvisitedDate1 == 'NULL':
+            return ''
+        else:
+            ihv_date = datetime.strptime(self.cvisitedDate1, '%Y-%m-%d %H:%M:%S.%f').date()
+            if ihv_date == date(1900, 1, 1):
+                return ''
+            else:
+                return ihv_date
 
 
 class Outcome(models.Model):

@@ -42,6 +42,7 @@ class TestCreateEnikshayCases(TestCase):
             atbtreatment='',
             Ptype=4,
             pcategory=4,
+            cvisitedDate1='2016-12-25 00:00:00.000',
             InitiationDate1='2016-12-22 16:06:47.726',
             dotmosignDate1='2016-12-23 00:00:00.000',
         )
@@ -135,6 +136,7 @@ class TestCreateEnikshayCases(TestCase):
             OrderedDict([
                 ('current_episode_type', 'confirmed_tb'),
                 ('hiv_status', 'negative'),
+                ('ihv_date', '2016-12-25'),
                 ('migration_created_case', 'true'),
                 ('nikshay_id', 'MH-ABD-05-16-0001'),
                 ('occurrence_episode_count', '1'),

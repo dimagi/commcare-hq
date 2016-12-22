@@ -146,6 +146,7 @@ class EnikshayCaseFactory(object):
                 'case_type': OCCURRENCE_CASE_TYPE,
                 'update': {
                     'current_episode_type': 'confirmed_tb',
+                    'ihv_date': self.patient_detail.ihv_date,
                     'name': 'Occurrence #1',
                     'nikshay_id': self.nikshay_id,
                     'occurrence_episode_count': 1,
