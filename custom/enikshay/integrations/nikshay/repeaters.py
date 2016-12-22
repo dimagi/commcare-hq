@@ -1,9 +1,13 @@
 from django.utils.translation import ugettext_lazy as _
 from django.core.urlresolvers import reverse
 from corehq.apps.repeaters.models import CaseRepeater
+from corehq.form_processor.models import CommCareCaseSQL
 from corehq.toggles import NIKSHAY_INTEGRATION
 from casexml.apps.case.xml.parser import CaseUpdateAction
 from casexml.apps.case.xform import get_case_updates
+from casexml.apps.case.models import CommCareCase
+from casexml.apps.case.signals import case_post_save
+from corehq.apps.repeaters.signals import create_repeat_records
 
 
 class NikshayRegisterPatientRepeater(CaseRepeater):
@@ -26,10 +30,10 @@ class NikshayRegisterPatientRepeater(CaseRepeater):
         # When case property episode.episode_pending_registration transitions from 'yes' to 'no',
         # and (episode.nikshay_registered != 'true'  or episode.nikshay_id != '')
         episode_case_properties = episode_case.dynamic_case_properties()
-        (not episode_case_properties['nikshay_registered'] and
-         not episode_case_properties['nikshay_id'] and
-         episode_pending_registration_changed(episode_case)
-         )
+        return (not episode_case_properties.get('nikshay_registered', False) and
+                not episode_case_properties.get('nikshay_id', None) and
+                episode_pending_registration_changed(episode_case)
+        )
 
 
 def episode_pending_registration_changed(case):
@@ -45,3 +49,12 @@ def episode_pending_registration_changed(case):
         and action.dynamic_properties['episode_pending_registration'] == 'no'
     )
     return value_changed
+
+
+def create_case_repeat_records(sender, case, **kwargs):
+    create_repeat_records(NikshayRegisterPatientRepeater, case)
+
+case_post_save.connect(create_case_repeat_records, CommCareCaseSQL)
+
+# TODO: Remove this when eNikshay gets migrated to SQL
+case_post_save.connect(create_case_repeat_records, CommCareCase)
