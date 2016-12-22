@@ -157,15 +157,16 @@ class LocationChoiceProviderTest(ChoiceProviderTestMixin, LocationHierarchyTestC
         delete_all_users()
         super(LocationChoiceProviderTest, cls).setUpClass()
         report = ReportConfiguration(domain=cls.domain)
-        choices = [
-            SearchableChoice(
+        choice_tuples = [
+            (location.name, SearchableChoice(
                 location.location_id,
                 location.get_path_display(),
                 searchable_text=[location.site_code, location.name]
-            )
+            ))
             for location in cls.locations.itervalues()
         ]
-        choices.sort(key=lambda choice: choice.display)
+        choice_tuples.sort()
+        choices = [choice for name, choice in choice_tuples]
         cls.web_user = WebUser.create(cls.domain, 'blah', 'password')
         cls.choice_provider = LocationChoiceProvider(report, None)
         cls.static_choice_provider = StaticChoiceProvider(choices)
@@ -195,8 +196,8 @@ class LocationChoiceProviderTest(ChoiceProviderTestMixin, LocationHierarchyTestC
                 searchable_text=[location.site_code, location.name]
             )
             for location in [
-                self.locations['Middlesex'],
                 self.locations['Cambridge'],
+                self.locations['Middlesex'],
                 self.locations['Somerville'],
             ]
         ]
