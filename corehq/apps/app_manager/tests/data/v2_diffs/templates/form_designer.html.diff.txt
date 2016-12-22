@@ -36,13 +36,10 @@
  
                  $('#formdesigner').vellum(VELLUM_OPTIONS);
  
-@@ -149,7 +157,60 @@
+@@ -148,8 +156,57 @@
+             });
          });
          analytics.workflow('Entered the Form Builder');
- 
-+        $(function () {
-+
-+        });
 +        $(function () {
 +            var previewApp = hqImport('app_manager/js/preview_app.js');
 +
@@ -74,7 +71,7 @@
 +            {% endif %}
 +
 +        });
-+
+ 
      </script>
 +
 +    <script type="text/html" id="js-fd-app-preview-btn-template">
@@ -97,7 +94,7 @@
  {% endblock %}
  
  {% block title %}{{ form.name|clean_trans:langs }}{% endblock %}
-@@ -159,3 +220,5 @@
+@@ -159,3 +216,5 @@
  {% endblock %}
  
  {% block column_style %}hq-flush-content{% endblock %}

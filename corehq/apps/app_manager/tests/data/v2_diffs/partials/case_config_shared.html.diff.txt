@@ -33,27 +33,16 @@
          This would normally use .form-control, but it's going to become a select2,
          which adds wonky height & borders on Firefox when it uses .form-control
      -->
-@@ -64,7 +68,18 @@
+@@ -64,7 +68,7 @@
          <input type="text" class="form-control" data-bind="
              valueDefault: property.key,
              default: property.defaultKey,
 -            casePropertySelect2: suggestedProperties,
-+            casePropertyTypeahead: suggestedProperties,
-+            event: {
-+                change: function(){
-+                    var el = $($element),
-+                        caretPosition = el.caret();
-+                    el.val(el.val().replace(/ /g,'_'));
-+                    if(el.is(':focus')) {
-+                        el.caret(caretPosition);
-+                    }
-+                    return true;
-+                }
-+            }
++            casePropertySelect2: suggestedProperties
          "/>
      </span>
      <span data-bind="visible: property.required()">
-@@ -73,12 +88,16 @@
+@@ -73,12 +77,16 @@
  </script>
  
  <script type="text/html" id="case-config:case-transaction:case-preload">
@@ -72,7 +61,7 @@
                  <th></th>
                  <th>{% trans "Question" %}</th>
              </tr>
-@@ -112,9 +131,9 @@
+@@ -112,9 +120,9 @@
      </table>
      <div class="panel-body">
          <div class="alert alert-block alert-info" data-bind="visible: !case_preload().length">
@@ -84,13 +73,17 @@
              <i class="fa fa-plus"></i>
              {% trans "Load properties" %}
          </a>
-@@ -122,50 +141,52 @@
+@@ -122,50 +130,52 @@
  </script>
  
  <script type="text/html" id="case-config:case-transaction:case-properties">
 -    <div class="panel-heading panel-title">
 -        {% trans "Save data to the following case properties" %}
--    </div>
++    <div class="panel-heading">
++      <h4 class="panel-title panel-title-nolink">
++        <i class="fa fa-save"></i> {% trans "Save Question Answers to Case Properties" %}
++      </h4>
+     </div>
 -    <table class="table table-condensed" data-bind="visible: case_properties().length">
 -        <thead>
 -            <tr>
@@ -100,7 +93,17 @@
 -                <th>{% trans "Case Property" %}</th>
 -            </tr>
 -        </thead>
--
++    <div class="panel-body">
++        <table class="table table-savecaseprops" data-bind="visible: case_properties().length">
++            <thead>
++                <tr>
++                    <th class="col-sm-1"></th>
++                    <th class="col-sm-5">{% trans "Question Answer" %}</th>
++                    <th class="col-sm-1"></th>
++                    <th class="col-sm-5">{% trans "Case Property" %}</th>
++                </tr>
++            </thead>
+ 
 -        <tbody data-bind="foreach: case_properties">
 -            <tr class="form-group" data-bind="css: {'has-error': validate, warning: (!validate() && required() && !path()) || (!validate() && !required() && !path() && key())}">
 -                <td class="col-sm-1">
@@ -127,22 +130,7 @@
 -            </tr>
 -        </tbody>
 -    </table>
-+    <div class="panel-heading">
-+      <h4 class="panel-title panel-title-nolink">
-+        <i class="fa fa-save"></i> {% trans "Save Question Answers to Case Properties" %}
-+      </h4>
-+    </div>
-     <div class="panel-body">
-+        <table class="table table-savecaseprops" data-bind="visible: case_properties().length">
-+            <thead>
-+                <tr>
-+                    <th class="col-sm-1"></th>
-+                    <th class="col-sm-5">{% trans "Question Answer" %}</th>
-+                    <th class="col-sm-1"></th>
-+                    <th class="col-sm-5">{% trans "Case Property" %}</th>
-+                </tr>
-+            </thead>
-+
+-    <div class="panel-body">
 +            <tbody data-bind="foreach: case_properties">
 +                <tr class="form-group" data-bind="css: {'has-error': validate, warning: (!validate() && required() && !path()) || (!validate() && !required() && !path() && key())}">
 +                    <td class="col-sm-1 text-center">
@@ -178,7 +166,7 @@
              <i class="fa fa-plus"></i>
              {% trans "Save properties" %}
          </a>
-@@ -173,12 +194,14 @@
+@@ -173,12 +183,14 @@
  </script>
  
  <script type="text/html" id="case-config:refresh-form-questions">
@@ -197,7 +185,6 @@
 +                        }">
          <i class="fa fa-refresh"></i>
 -    </div>
--</script>
 +    </button>
 +  </p>
-+</script>
+ </script>
