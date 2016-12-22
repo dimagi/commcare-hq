@@ -148,7 +148,6 @@ class EnikshayCaseFactory(object):
         """
         This gets the occurrence case structure with a nested person case structure.
         """
-        outcome = self._outcome
         kwargs = {
             'attrs': {
                 'case_type': OCCURRENCE_CASE_TYPE,
@@ -168,9 +167,9 @@ class EnikshayCaseFactory(object):
                 related_type=PERSON_CASE_TYPE,
             )],
         }
-        if outcome:
+        if self._outcome:
             # TODO - store with correct value
-            kwargs['attrs']['update']['hiv_status'] = outcome.HIVStatus
+            kwargs['attrs']['update']['hiv_status'] = self._outcome.HIVStatus
 
         if self.existing_occurrence_case:
             kwargs['case_id'] = self.existing_occurrence_case.case_id
