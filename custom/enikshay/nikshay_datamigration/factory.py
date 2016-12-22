@@ -51,6 +51,20 @@ class EnikshayCaseFactory(object):
     def creating_person_case(self):
         return self.existing_person_case is not None
 
+    @property
+    @memoized
+    def existing_occurrence_case(self):
+        """
+        Get the existing occurrence case for this nikshay ID, or None if no occurrence case exists
+        """
+        if self.existing_person_case:
+            try:
+                return get_open_occurrence_case_from_person(
+                    self.domain, self.existing_person_case.case_id
+                )
+            except ENikshayCaseNotFound:
+                return None
+
     def create_cases(self):
         self.create_person_occurrence_episode_cases()
         self.create_test_cases()
@@ -138,18 +152,11 @@ class EnikshayCaseFactory(object):
             # TODO - store with correct value
             kwargs['attrs']['update']['hiv_status'] = outcome.HIVStatus
 
-        if self.creating_person_case:
-            kwargs['attrs']['create'] = True
+        if self.existing_occurrence_case:
+            kwargs['case_id'] = self.existing_occurrence_case.case_id
+            kwargs['attrs']['create'] = False
         else:
-            assert self.existing_person_case is not None
-            try:
-                matching_occurrence_case = get_open_occurrence_case_from_person(
-                    self.domain, self.existing_person_case.case_id
-                )
-                kwargs['case_id'] = matching_occurrence_case.case_id
-                kwargs['attrs']['create'] = False
-            except ENikshayCaseNotFound:
-                kwargs['attrs']['create'] = True
+            kwargs['attrs']['create'] = True
 
         return CaseStructure(**kwargs)
 
