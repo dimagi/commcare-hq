@@ -291,7 +291,7 @@ hqDefine('app_manager/js/app_manager.js', function () {
         if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
 
             $('#js-add-new-item').popover({
-                title: "Add",
+                title: django.gettext("Add"),
                 container: 'body',
                 content: function () {
                     return $('#js-popover-template-add-item-content').text();
