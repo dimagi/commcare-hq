@@ -187,6 +187,10 @@ class PatientDetail(models.Model):
             else:
                 return ihv_date
 
+    @property
+    def initial_home_visit_status(self):
+        return 'completed' if self.ihv_date else 'unknown_from_migration'
+
 
 class Outcome(models.Model):
     PatientId = models.OneToOneField(PatientDetail, primary_key=True)
