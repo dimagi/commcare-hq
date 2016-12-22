@@ -8,7 +8,7 @@
 -{% inline_edit_trans module.name langs edit_name_url saveValueName='name' readOnlyClass='h3' postSave="function(data) { document.title = data.update['.variable-module_name'] + ' - CommCare HQ'; return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
 -<br />
 -<inline-edit params="
-+<div class="appmanger-page-actions">
++<div class="appmanager-page-actions">
 +  <a class="btn btn-purple js-preview-toggle" style="display: none;" href="#">
 +    <span class="js-preview-action-show hide"><i class="fa fa-play-circle"></i> {% trans "Preview App" %}</span>
 +    <span class="js-preview-action-hide hide"><i class="fa fa-pause-circle"></i> {% trans "Preview App" %}</span>
