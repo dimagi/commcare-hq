@@ -89,7 +89,7 @@ class EnikshayCaseFactory(object):
         self.create_test_cases()
 
     def create_person_occurrence_episode_cases(self):
-        episode_structure = self.get_episode_case_structure(self._outcome)
+        episode_structure = self.get_episode_case_structure()
         self.factory.create_or_update_case(episode_structure)
 
     def create_test_cases(self):
@@ -144,10 +144,11 @@ class EnikshayCaseFactory(object):
         return CaseStructure(**kwargs)
 
     @memoized
-    def get_occurrence_case_structure(self, outcome):
+    def get_occurrence_case_structure(self):
         """
         This gets the occurrence case structure with a nested person case structure.
         """
+        outcome = self._outcome
         kwargs = {
             'attrs': {
                 'case_type': OCCURRENCE_CASE_TYPE,
@@ -180,7 +181,7 @@ class EnikshayCaseFactory(object):
         return CaseStructure(**kwargs)
 
     @memoized
-    def get_episode_case_structure(self, outcome):
+    def get_episode_case_structure(self):
         """
         This gets the episode case structure with a nested occurrence and person case structures
         inside of it.
@@ -202,7 +203,7 @@ class EnikshayCaseFactory(object):
                 },
             },
             'indices': [CaseIndex(
-                self.get_occurrence_case_structure(outcome),
+                self.get_occurrence_case_structure(),
                 identifier='host',
                 relationship=CASE_INDEX_EXTENSION,
                 related_type=OCCURRENCE_CASE_TYPE,
@@ -219,7 +220,9 @@ class EnikshayCaseFactory(object):
 
     @memoized
     def get_test_case_structure(self, followup):
-        occurrence_structure = self.get_occurrence_case_structure(self._outcome)  # TODO - pass outcome as argument
+        # cz 12/22: is this comment still valid? to check with Nick
+        # TODO - pass outcome as argument
+        occurrence_structure = self.get_occurrence_case_structure()
 
         kwargs = {
             'attrs': {
