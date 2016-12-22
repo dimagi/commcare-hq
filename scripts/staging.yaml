@@ -55,7 +55,6 @@ branches:
 #  - es/location-ucr  # Ethan 11/30
   - nc/exports-with-conflict-res-branch  # Noah 12/11
   - dm/vellum-user-properties
-  - bmb/appmanager-v2-split-006 # Jenny 12/22
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
