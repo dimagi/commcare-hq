@@ -187,6 +187,7 @@ class EnikshayCaseFactory(object):
                     'episode_pending_registration': 'no',
                     'episode_type': 'confirmed_tb',
                     'name': 'Episode #1: Confirmed TB (Patient)',
+                    'occupation': self.patient_detail.occupation,
                     'patient_type_choice': self.patient_detail.patient_type_choice,
                     'treatment_initiation_date': self.patient_detail.treatment_initiation_date,
                     'treatment_supporter_designation': self.patient_detail.treatment_supporter_designation,

@@ -136,6 +136,19 @@ class PatientDetail(models.Model):
         }[self.Ptype]
 
     @property
+    def occupation(self):
+        return {
+            '4': 'engineer',
+            '5': 'doctor_',
+            '11': 'lawyer',
+            '21': 'trader',
+            '27': 'labour',
+            '28': 'unemployed',
+            '29': 'worker',
+            '30': 'retired',
+        }.get(self.poccupation, 'undetermined_by_migration')
+
+    @property
     def treatment_supporter_designation(self):
         return {
             '1': 'health_worker',
