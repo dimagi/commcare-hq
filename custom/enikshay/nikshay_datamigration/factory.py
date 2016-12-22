@@ -93,7 +93,6 @@ class EnikshayCaseFactory(object):
             [self.get_test_case_structure(followup, ocurrence_structure) for followup in self._followups]
         )
 
-    @memoized
     def get_person_case_structure(self):
         kwargs = {
             'attrs': {
@@ -139,7 +138,6 @@ class EnikshayCaseFactory(object):
 
         return CaseStructure(**kwargs)
 
-    @memoized
     def get_occurrence_case_structure(self, person_structure):
         """
         This gets the occurrence case structure with a nested person case structure.
@@ -174,7 +172,6 @@ class EnikshayCaseFactory(object):
 
         return CaseStructure(**kwargs)
 
-    @memoized
     def get_episode_case_structure(self, occurrence_structure):
         """
         This gets the episode case structure with a nested occurrence and person case structures
@@ -212,7 +209,6 @@ class EnikshayCaseFactory(object):
 
         return CaseStructure(**kwargs)
 
-    @memoized
     def get_test_case_structure(self, followup, occurrence_structure):
         kwargs = {
             'attrs': {
