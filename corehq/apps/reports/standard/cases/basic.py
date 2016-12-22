@@ -88,6 +88,8 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
             selected_case_owners = self.case_owners
             if selected_case_owners:
                 query = query.owner(selected_case_owners)
+
+        if not self.request.can_access_all_locations:
             query = query.OR(self.scope_filter())
 
         search_string = SearchFilter.get_value(self.request, self.domain)
