@@ -40,7 +40,9 @@ class EnikshayCaseFactory(object):
         self.factory.create_or_update_case(episode_structure)
 
     def create_test_cases(self):
-        self.factory.create_or_update_cases([self.test(followup) for followup in self._followups])
+        self.factory.create_or_update_cases(
+            [self.get_test_case_structure(followup) for followup in self._followups]
+        )
 
     @memoized
     def get_person_case_structure(self):
@@ -172,7 +174,7 @@ class EnikshayCaseFactory(object):
         return CaseStructure(**kwargs)
 
     @memoized
-    def test(self, followup):
+    def get_test_case_structure(self, followup):
         occurrence_structure = self.get_occurrence_case_structure(self._outcome)  # TODO - pass outcome as argument
 
         kwargs = {
