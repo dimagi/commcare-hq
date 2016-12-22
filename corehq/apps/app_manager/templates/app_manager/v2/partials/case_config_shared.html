@@ -68,7 +68,18 @@
         <input type="text" class="form-control" data-bind="
             valueDefault: property.key,
             default: property.defaultKey,
-            casePropertySelect2: suggestedProperties,
+            casePropertyTypeahead: suggestedProperties,
+            event: {
+                change: function(){
+                    var el = $($element),
+                        caretPosition = el.caret();
+                    el.val(el.val().replace(/ /g,'_'));
+                    if(el.is(':focus')) {
+                        el.caret(caretPosition);
+                    }
+                    return true;
+                }
+            }
         "/>
     </span>
     <span data-bind="visible: property.required()">
@@ -77,7 +88,11 @@
 </script>
 
 <script type="text/html" id="case-config:case-transaction:case-preload">
-    <div class="panel-heading panel-title">{% trans "Load the following properties into the form" %}</div>
+    <div class="panel-heading">
+      <h4 class="panel-title panel-title-nolink">
+        {% trans "Load the following properties into the form" %}
+      </h4>
+    </div>
     <table class="table table-condensed" data-bind="visible: case_preload().length">
         <thead>
             <tr>
@@ -118,7 +133,7 @@
         <div class="alert alert-block alert-info" data-bind="visible: !case_preload().length">
             {% trans "No properties will be loaded" %}
         </div>
-        <a href="#" class="firstProperty" data-bind="click: addPreload, visible: !case_preload().length">
+        <a href="#" class="firstProperty btn btn-default" data-bind="click: addPreload, visible: !case_preload().length">
             <i class="fa fa-plus"></i>
             {% trans "Load properties" %}
         </a>
@@ -171,7 +186,7 @@
         <div class="alert alert-block alert-info" data-bind="visible: !case_properties().length">
             {% trans "No properties will be saved" %}
         </div>
-        <a href="#" class="firstProperty" data-bind="click: addProperty, visible: !case_properties().length">
+        <a href="#" class="firstProperty btn btn-default" data-bind="click: addProperty, visible: !case_properties().length">
             <i class="fa fa-plus"></i>
             {% trans "Save properties" %}
         </a>
@@ -179,12 +194,14 @@
 </script>
 
 <script type="text/html" id="case-config:refresh-form-questions">
-    <div style="margin-right: 1em;"
-         class="btn btn-info refresh-form-questions pull-right"
-         data-bind="click: function(data, event){
-                    refreshQuestions('{% url 'get_form_questions' domain app.id %}', '{{module.id}}', '{{form.id}}', event);
-                    analytics.usage('Refresh case management', 'Button Clicked');
-                    }">
+  <p>
+    <button class="btn btn-info refresh-form-questions"
+            type="button"
+             data-bind="click: function(data, event){
+                        refreshQuestions('{% url 'get_form_questions' domain app.id %}', '{{module.id}}', '{{form.id}}', event);
+                        analytics.usage('Refresh case management', 'Button Clicked');
+                        }">
         <i class="fa fa-refresh"></i>
-    </div>
+    </button>
+  </p>
 </script>

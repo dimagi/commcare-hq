@@ -347,6 +347,11 @@
 
             {% if form.requires_case or form.get_action_type == 'open' %}
               <div class="tab-pane active" id="case-configuration">
+                  {% if xform_validation_missing %}
+                      <p class="alert alert-warning">
+                          {% trans "We were unable to validate your form due an error on the server. Proceed with caution." %}
+                      </p>
+                  {% endif %}
                   {% if form_errors or xform_validation_errored %}
                       <p class="alert alert-warning">
                           {% trans "There are errors in your form. Fix your form in order to view and edit Case Management." %}
@@ -427,6 +432,7 @@
             {% if form.form_type == 'advanced_form' and module.has_schedule %}
                 {% include "app_manager/v2/partials/form_tab_visit_scheduler.html" %}
             {% endif %}
+
             {% include "app_manager/v2/partials/form_tab_advanced.html" %}
         </div>
     </div>
