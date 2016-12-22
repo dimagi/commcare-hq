@@ -47,6 +47,10 @@ class EnikshayCaseFactory(object):
             return matching_external_ids[0]
         return None
 
+    @property
+    def creating_person_case(self):
+        return self.existing_person_case is not None
+
     def create_cases(self):
         self.create_person_occurrence_episode_cases()
         self.create_test_cases()
@@ -134,7 +138,7 @@ class EnikshayCaseFactory(object):
             # TODO - store with correct value
             kwargs['attrs']['update']['hiv_status'] = outcome.HIVStatus
 
-        if self.get_person_case_structure().attrs['create']:
+        if self.creating_person_case:
             kwargs['attrs']['create'] = True
         else:
             try:
