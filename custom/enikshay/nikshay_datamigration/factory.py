@@ -227,6 +227,8 @@ class EnikshayCaseFactory(object):
                 relationship=CASE_INDEX_EXTENSION,
                 related_type=occurrence_structure.attrs['case_type'],
             )],
+            # this prevents creating duplicate occurrence data on creation of the test cases
+            'walk_related': False,
         }
 
         matching_test_case = next((
