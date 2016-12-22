@@ -1,11 +1,14 @@
 import logging
 
 from django.core.management import BaseCommand
+from casexml.apps.case.mock import CaseFactory
 
 from custom.enikshay.nikshay_datamigration.factory import EnikshayCaseFactory, get_nikshay_codes_to_location
 from custom.enikshay.nikshay_datamigration.models import PatientDetail
 
 logger = logging.getLogger('nikshay_datamigration')
+
+DEFAULT_NUMBER_OF_PATIENTS_PER_FORM = 50
 
 
 class Command(BaseCommand):
@@ -24,12 +27,19 @@ class Command(BaseCommand):
             default=None,
             type=int,
         )
+        parser.add_argument(
+            '--chunksize',
+            dest='chunk_size',
+            default=DEFAULT_NUMBER_OF_PATIENTS_PER_FORM,
+            type=int,
+        )
 
     def handle(self, domain, **options):
         base_query = PatientDetail.objects.all()
 
         start = options['start']
         limit = options['limit']
+        chunk_size = options['chunk_size']
 
         if limit is not None:
             patient_details = base_query[start:start + limit]
@@ -42,13 +52,16 @@ class Command(BaseCommand):
         num_failed = 0
         logger.info('Starting migration of %d patient cases on domain %s.' % (total, domain))
         nikshay_codes_to_location = get_nikshay_codes_to_location(domain)
+        factory = CaseFactory(domain=domain)
+        case_structures = []
+
         for patient_detail in patient_details:
             counter += 1
             try:
                 case_factory = EnikshayCaseFactory(
                     domain, patient_detail, nikshay_codes_to_location
                 )
-                case_factory.create_cases()
+                case_structures.extend(case_factory.get_case_structures_to_create())
             except Exception:
                 num_failed += 1
                 logger.error(
@@ -59,11 +72,22 @@ class Command(BaseCommand):
                 )
             else:
                 num_succeeded += 1
+                if num_succeeded % chunk_size == 0:
+                    logger.info('committing cases {}-{}...'.format(num_succeeded - chunk_size, num_succeeded))
+                    factory.create_or_update_cases(case_structures)
+                    case_structures = []
+                    logger.info('done')
+
                 logger.info(
                     'Succeeded on %s of %d. Nikshay ID=%s' % (
                         counter, total, patient_detail.PregId
                     )
                 )
+
+        if case_structures:
+            logger.info('committing final cases...'.format(num_succeeded - chunk_size, num_succeeded))
+            factory.create_or_update_cases(case_structures)
+
         logger.info('Done creating cases for domain %s.' % domain)
         logger.info('Number of attempts: %d.' % counter)
         logger.info('Number of successes: %d.' % num_succeeded)
