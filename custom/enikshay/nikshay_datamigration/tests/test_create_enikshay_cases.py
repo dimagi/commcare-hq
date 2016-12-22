@@ -4,6 +4,8 @@ from datetime import date, datetime
 from django.core.management import call_command
 from django.test import TestCase
 
+from mock import patch
+
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation, LocationType
@@ -87,7 +89,9 @@ class TestCreateEnikshayCases(TestCase):
         super(TestCreateEnikshayCases, self).tearDown()
 
     @run_with_all_backends
-    def test_case_creation(self):
+    @patch('custom.enikshay.nikshay_datamigration.factory.datetime')
+    def test_case_creation(self, mock_datetime):
+        mock_datetime.utcnow.return_value = datetime(2016, 9, 8, 1, 2, 3, 4123)
         call_command('create_enikshay_cases', self.domain.name)
 
         person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
@@ -130,6 +134,7 @@ class TestCreateEnikshayCases(TestCase):
                 ('migration_created_case', 'true'),
                 ('nikshay_id', 'MH-ABD-05-16-0001'),
                 ('occurrence_episode_count', '1'),
+                ('occurrence_id', '20160908010203004'),
             ]),
             occurrence_case.dynamic_case_properties()
         )
