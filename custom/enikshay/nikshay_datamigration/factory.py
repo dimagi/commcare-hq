@@ -64,6 +64,19 @@ class EnikshayCaseFactory(object):
                 )
             except ENikshayCaseNotFound:
                 return None
+    @property
+    @memoized
+    def existing_episode_case(self):
+        """
+        Get the existing episode case for this nikshay ID, or None if no episode case exists
+        """
+        if self.existing_occurrence_case:
+            try:
+                return get_open_episode_case_from_occurrence(
+                    self.domain, self.existing_occurrence_case.case_id
+                )
+            except ENikshayCaseNotFound:
+                return None
 
     def create_cases(self):
         self.create_person_occurrence_episode_cases()
@@ -190,15 +203,11 @@ class EnikshayCaseFactory(object):
             )],
         }
 
-        if self.existing_occurrence_case:
-            try:
-                matching_episode_case = get_open_episode_case_from_occurrence(
-                    self.domain, self.get_occurrence_case_structure(outcome).case_id
-                )
-                kwargs['case_id'] = matching_episode_case.case_id
-                kwargs['attrs']['create'] = False
-            except ENikshayCaseNotFound:
-                kwargs['attrs']['create'] = True
+        if self.existing_episode_case:
+            kwargs['case_id'] = self.existing_episode_case.case_id
+            kwargs['attrs']['create'] = False
+        else:
+            kwargs['attrs']['create'] = True
 
         return CaseStructure(**kwargs)
 
