@@ -374,18 +374,18 @@ class OnlyUnarchivedLocationManager(LocationManager):
 
 class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
     domain = models.CharField(max_length=255, db_index=True)
-    name = models.CharField(max_length=100, null=True)
+    name = models.CharField(max_length=100, null=True, blank=True)
     location_id = models.CharField(max_length=100, db_index=True, unique=True)
     _migration_couch_id_name = "location_id"  # Used for SyncSQLToCouchMixin
     location_type = models.ForeignKey(LocationType, on_delete=models.CASCADE)
     site_code = models.CharField(max_length=255)
-    external_id = models.CharField(max_length=255, null=True)
-    metadata = jsonfield.JSONField(default=dict)
+    external_id = models.CharField(max_length=255, null=True, blank=True)
+    metadata = jsonfield.JSONField(default=dict, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
     is_archived = models.BooleanField(default=False)
-    latitude = models.DecimalField(max_digits=20, decimal_places=10, null=True)
-    longitude = models.DecimalField(max_digits=20, decimal_places=10, null=True)
+    latitude = models.DecimalField(max_digits=20, decimal_places=10, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=20, decimal_places=10, null=True, blank=True)
     parent = TreeForeignKey('self', null=True, blank=True, related_name='children', on_delete=models.CASCADE)
 
     # Use getter and setter below to access this value
@@ -395,7 +395,7 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
     _products = models.ManyToManyField(SQLProduct)
     stocks_all_products = models.BooleanField(default=True)
 
-    supply_point_id = models.CharField(max_length=255, db_index=True, unique=True, null=True)
+    supply_point_id = models.CharField(max_length=255, db_index=True, unique=True, null=True, blank=True)
 
     objects = _tree_manager = LocationManager()
     # This should really be the default location manager
