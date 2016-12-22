@@ -42,7 +42,7 @@ class EnikshayCaseFactory(object):
         self.factory.create_or_update_cases([self.test(followup) for followup in self._followups])
 
     @memoized
-    def person(self):
+    def get_person_case_structure(self):
         nikshay_id = self.patient_detail.PregId
 
         kwargs = {
@@ -106,21 +106,23 @@ class EnikshayCaseFactory(object):
                 },
             },
             'indices': [CaseIndex(
-                self.person(),
+                self.get_person_case_structure(),
                 identifier='host',
                 relationship=CASE_INDEX_EXTENSION,
-                related_type=self.person().attrs['case_type'],
+                related_type=self.get_person_case_structure().attrs['case_type'],
             )],
         }
         if outcome:
             # TODO - store with correct value
             kwargs['attrs']['update']['hiv_status'] = outcome.HIVStatus
 
-        if self.person().attrs['create']:
+        if self.get_person_case_structure().attrs['create']:
             kwargs['attrs']['create'] = True
         else:
             try:
-                matching_occurrence_case = get_open_occurrence_case_from_person(self.domain, self.person().case_id)
+                matching_occurrence_case = get_open_occurrence_case_from_person(
+                    self.domain, self.get_person_case_structure().case_id
+                )
                 kwargs['case_id'] = matching_occurrence_case.case_id
                 kwargs['attrs']['create'] = False
             except ENikshayCaseNotFound:
