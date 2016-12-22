@@ -182,6 +182,8 @@ class EnikshayCaseFactory(object):
                 'update': {
                     'date_reported': self.patient_detail.pregdate1,  # is this right?
                     'disease_classification': self.patient_detail.disease_classification,
+                    'dots_99_enabled': 'false',
+                    'episode_pending_registration': 'no',
                     'episode_type': 'confirmed_tb',
                     'patient_type_choice': self.patient_detail.patient_type_choice,
                     'treatment_initiation_date': self.patient_detail.treatment_initiation_date,
