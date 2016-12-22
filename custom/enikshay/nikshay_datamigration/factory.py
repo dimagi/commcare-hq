@@ -17,9 +17,9 @@ EPISODE_CASE_TYPE = 'episode'
 TEST_CASE_TYPE = 'test'
 
 
-def validate_number(string_value):
+def validate_phone_number(string_value):
     if string_value is None or string_value.strip() == '':
-        return None
+        return ''
     else:
         return int(string_value)
 
@@ -102,7 +102,7 @@ class EnikshayCaseFactory(object):
                     'aadhaar_number': self.patient_detail.paadharno,
                     'age': self.patient_detail.page,
                     'age_entered': self.patient_detail.page,
-                    'contact_phone_number': validate_number(self.patient_detail.pmob),
+                    'contact_phone_number': validate_phone_number(self.patient_detail.pmob),
                     'current_address': self.patient_detail.paddress,
                     'current_address_district_choice': self.patient_detail.Dtocode,
                     'current_address_state_choice': self.patient_detail.scode,
@@ -120,7 +120,7 @@ class EnikshayCaseFactory(object):
                         + ', '
                         + (self.patient_detail.caddress or '')
                     ),
-                    'secondary_contact_phone_number': validate_number(self.patient_detail.cmob),
+                    'secondary_contact_phone_number': validate_phone_number(self.patient_detail.cmob),
                     'sex': self.patient_detail.sex,
                     'tu_choice': self.patient_detail.Tbunitcode,
 
@@ -188,7 +188,7 @@ class EnikshayCaseFactory(object):
                     'treatment_supporter_designation': self.patient_detail.treatment_supporter_designation,
                     'treatment_supporter_first_name': self.patient_detail.treatment_supporter_first_name,
                     'treatment_supporter_last_name': self.patient_detail.treatment_supporter_last_name,
-                    'treatment_supporter_mobile_number': validate_number(self.patient_detail.dotmob),
+                    'treatment_supporter_mobile_number': validate_phone_number(self.patient_detail.dotmob),
 
                     'migration_created_case': 'true',
                 },
