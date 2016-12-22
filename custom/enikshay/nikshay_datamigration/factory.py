@@ -141,9 +141,10 @@ class EnikshayCaseFactory(object):
         if self.creating_person_case:
             kwargs['attrs']['create'] = True
         else:
+            assert self.existing_person_case is not None
             try:
                 matching_occurrence_case = get_open_occurrence_case_from_person(
-                    self.domain, self.get_person_case_structure().case_id
+                    self.domain, self.existing_person_case.case_id
                 )
                 kwargs['case_id'] = matching_occurrence_case.case_id
                 kwargs['attrs']['create'] = False
