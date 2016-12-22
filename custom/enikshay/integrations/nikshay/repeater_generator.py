@@ -93,7 +93,8 @@ class NikshayRegisterPatientPayloadGenerator(CaseRepeaterJsonPayloadGenerator):
                 person_case_id,
                 {
                     "nikshay_registered": "true",
-                    "nikshay_id": nikshay_id
+                    "nikshay_id": nikshay_id,
+                    "external_id": nikshay_id
                 }
             )
         except (JSONDecodeError, KeyError):
