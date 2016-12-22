@@ -1,7 +1,6 @@
 var CustomExportView = {
-    wrap: function (o, translations) {
+    wrap: function (o, translations, has_excel_dashboard_access) {
         var self = ko.mapping.fromJS(o);
-
         self.utils = {
             rename: function (field, rename_map) {
                 if (rename_map.hasOwnProperty(field)) {
@@ -373,12 +372,29 @@ var CustomExportView = {
                 }
                 redirect();
             }).fail(function (response) {
-                var data = $.parseJSON(response.responseText);
+                var data = JSON.parse(response.responseText);
                 self.save.state('error');
                 alert('There was an error saving: ' + data.error);
             });
         };
         self.save.state = ko.observable('save');
+
+        self.valid = ko.observable(true);
+        self.custom_export.default_format.subscribe(function (newFormat) {
+            if (newFormat === "html") {
+                self.presave(true);
+            } else {
+                if (!has_excel_dashboard_access) {
+                    // If the user doesn't have access to daily saved exports, then we need to clear the checkbox,
+                    // because it is disabled and the user won't be able to clear it themselves.
+                    self.presave(false);
+                }
+            }
+            if (!has_excel_dashboard_access) {
+                self.valid(newFormat !== "html");
+            }
+        });
+        
 
         self.save_no_preview = function() {
             var exportType = self.export_type();

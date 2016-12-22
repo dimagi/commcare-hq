@@ -22,7 +22,7 @@
         // when no GOOGLE_ANALYTICS_API_ID is specified (useful for debugging)
         ga.create = true;
     {% endif %}
-        ga('create', '{{ GOOGLE_ANALYTICS_API_ID }}', {
+        ga('create', '{{ GOOGLE_ANALYTICS_API_ID }}', 'auto', {
             'userId': '{% if request.couch_user %}{{ request.couch_user.userID }}{% else %}none{% endif %}',
         });
         ga('set', 'dimension1', '{% if request.couch_user and request.couch_user.is_dimagi %}yes{% else %}no{% endif %}');
@@ -30,6 +30,9 @@
         ga('set', 'dimension3', '{% if request.couch_user.is_commcare_user %}yes{% else %}no{% endif %}');
         ga('set', 'dimension4', '{% if domain %}{{ domain|escapejs }}{% else %}none{% endif %}');
         ga('set', 'dimension5', '{% if request.couch_user.has_built_app %}yes{% else %}no{% endif %}');
+        var daysOld = {{ request.couch_user.days_since_created }};
+        ga('set', 'dimension6', daysOld < 1 ? 'yes' : 'no');
+        ga('set', 'dimension7', daysOld >= 1 && daysOld < 7 ? 'yes' : 'no');
         ga('send', 'pageview');
 
 

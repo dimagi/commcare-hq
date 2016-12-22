@@ -6,7 +6,9 @@ from django.http import (
     HttpResponseForbidden,
 )
 from casexml.apps.case.xform import get_case_updates, is_device_report
-from corehq.apps.domain.decorators import login_or_digest_ex, login_or_basic_ex
+from corehq.apps.domain.decorators import (
+    check_domain_migration, login_or_digest_ex, login_or_basic_ex
+)
 from corehq.apps.receiverwrapper.auth import (
     AuthContext,
     WaivedAuthContext,
@@ -16,7 +18,8 @@ from corehq.apps.receiverwrapper.util import (
     get_app_and_build_ids,
     determine_authtype,
     from_demo_user,
-    should_ignore_submission
+    should_ignore_submission,
+    DEMO_SUBMIT_MODE,
 )
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.submission_post import SubmissionPost
@@ -30,6 +33,8 @@ from django.views.decorators.csrf import csrf_exempt
 from couchforms.const import MAGIC_PROPERTY
 from couchforms.getters import MultimediaBug
 from dimagi.utils.logging import notify_exception
+from corehq.apps.ota.utils import handle_401_response
+from corehq import toggles
 
 
 @count_by_response_code('commcare.xform_submissions')
@@ -38,6 +43,9 @@ def _process_form(request, domain, app_id, user_id, authenticated,
     if should_ignore_submission(request):
         # silently ignore submission if it meets ignore-criteria
         return SubmissionPost.submission_ignored_response()
+
+    if toggles.FORM_SUBMISSION_BLACKLIST.enabled(domain):
+        return SubmissionPost.get_blacklisted_response()
 
     try:
         instance, attachments = couchforms.get_instance_and_attachment(request)
@@ -81,23 +89,16 @@ def _process_form(request, domain, app_id, user_id, authenticated,
         openrosa_headers=couchforms.get_openrosa_headers(request),
     ).get_response()
     if response.status_code == 400:
-        db_response = get_db('couchlog').save_doc({
-            'request': unicode(request),
-            'response': unicode(response),
-        })
         logging.error(
             'Status code 400 for a form submission. '
             'Response is: \n{0}\n'
-            'See couchlog db for more info: {1}'.format(
-                unicode(response),
-                db_response['id'],
-            )
         )
     return response
 
 
 @csrf_exempt
 @require_POST
+@check_domain_migration
 def post(request, domain, app_id=None):
     try:
         if domain_requires_auth(domain):
@@ -130,7 +131,7 @@ def _noauth_post(request, domain, app_id=None):
     case_updates = get_case_updates(form_json)
 
     def form_ok(form_json):
-        return from_demo_user(form_json) or is_device_report(form_json)
+        return (from_demo_user(form_json) or is_device_report(form_json))
 
     def case_block_ok(case_updates):
         """
@@ -168,7 +169,9 @@ def _noauth_post(request, domain, app_id=None):
         return True
 
     if not (form_ok(form_json) and case_block_ok(case_updates)):
-        return HttpResponseForbidden()
+        if request.GET.get('submit_mode') != DEMO_SUBMIT_MODE:
+            # invalid submissions under demo mode submission can be processed
+            return HttpResponseForbidden()
 
     return _process_form(
         request=request,
@@ -192,6 +195,7 @@ def _secure_post_digest(request, domain, app_id=None):
     )
 
 
+@handle_401_response
 @login_or_basic_ex(allow_cc_users=True)
 def _secure_post_basic(request, domain, app_id=None):
     """only ever called from secure post"""
@@ -206,6 +210,7 @@ def _secure_post_basic(request, domain, app_id=None):
 
 @csrf_exempt
 @require_POST
+@check_domain_migration
 def secure_post(request, domain, app_id=None):
     authtype_map = {
         'digest': _secure_post_digest,

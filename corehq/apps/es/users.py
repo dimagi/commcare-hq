@@ -18,10 +18,9 @@ of all unknown users, web users, and demo users on a domain.
     query = (user_es.UserES()
              .domain(self.domain)
              .OR(*user_filters)
-             .show_inactive()
-             .fields([]))
+             .show_inactive())
 
-    owner_ids = query.run().doc_ids
+    owner_ids = query.get_ids()
 """
 from copy import deepcopy
 from .es_query import HQESQuery
@@ -43,6 +42,7 @@ class UserES(HQESQuery):
             mobile_users,
             web_users,
             user_ids,
+            primary_location,
             location,
             last_logged_in,
         ] + super(UserES, self).builtin_filters
@@ -55,6 +55,19 @@ class UserES(HQESQuery):
         query = deepcopy(self)
         query._default_filters['active'] = {"term": {"is_active": False}}
         return query
+
+    def users_at_locations_and_descendants(self, location_ids):
+        from corehq.apps.locations.models import SQLLocation
+        location_ids = SQLLocation.objects.get_locations_and_children_ids(location_ids)
+        return self.location(location_ids)
+
+    def users_at_locations(self, location_ids):
+        return self.location(location_ids)
+
+    def users_at_accessible_locations(self, domain_name, user):
+        from corehq.apps.locations.models import SQLLocation
+        accessible_location_ids = SQLLocation.active_objects.accessible_location_ids(domain_name, user)
+        return self.users_at_locations(accessible_location_ids)
 
 
 def domain(domain):
@@ -109,7 +122,8 @@ def user_ids(user_ids):
     return filters.term("_id", list(user_ids))
 
 
-def location(location_id):
+def primary_location(location_id):
+    # by primary location
     return filters.OR(
         filters.AND(mobile_users(), filters.term('location_id', location_id)),
         filters.AND(
@@ -117,3 +131,26 @@ def location(location_id):
             filters.term('domain_memberships.location_id', location_id)
         ),
     )
+
+
+def location(location_id):
+    # by any assigned-location primary or not
+    return filters.OR(
+        filters.AND(mobile_users(), filters.term('assigned_location_ids', location_id)),
+        filters.AND(
+            web_users(),
+            filters.term('domain_memberships.assigned_location_ids', location_id)
+        ),
+    )
+
+
+def user_ids_at_locations_and_descendants(location_ids):
+    return UserES().users_at_locations_and_descendants(location_ids).exclude_source().run().hits
+
+
+def user_ids_at_locations(location_ids):
+    return UserES().users_at_locations(location_ids).exclude_source().run().hits
+
+
+def user_ids_at_accessible_locations(domain_name, user):
+    return UserES().users_at_accessible_locations(domain_name, user).exclude_source().run().hits

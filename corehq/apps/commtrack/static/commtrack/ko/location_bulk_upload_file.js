@@ -11,14 +11,12 @@ $(function () {
     function ConsumptionOptionsViewModel(base_url) {
         this.base_url = base_url;
         this.include_consumption = ko.observable(false);
-        this.include_ids = ko.observable(false);
         self = this;
         this.url = ko.computed(function() {
             return (
                 self.base_url + "?"
                 + (self.include_consumption() ? "include_consumption=true" : "")
                 + ((self.include_consumption() && self.include_ids()) ? "&" : "")
-                + (self.include_ids() ? "include_ids=true" : "")
             );
         });
     }

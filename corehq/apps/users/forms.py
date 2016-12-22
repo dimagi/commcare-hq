@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth.forms import SetPasswordForm
 from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
@@ -6,11 +7,12 @@ from crispy_forms.layout import Div, Fieldset, HTML, Layout, Submit
 import datetime
 from dimagi.utils.django.fields import TrimmedCharField
 from django import forms
+from django.core.exceptions import ValidationError
 from django.core.validators import EmailValidator, validate_email
 from django.core.urlresolvers import reverse
 from django.forms.widgets import PasswordInput
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_noop, string_concat
 from django.template.loader import get_template
 from django.template import Context
 from django_countries.data import COUNTRIES
@@ -18,7 +20,8 @@ from django_countries.data import COUNTRIES
 from corehq import toggles
 from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password
 from corehq.apps.domain.models import Domain
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.permissions import user_can_access_location_id
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username, cc_user_domain
 from corehq.apps.app_manager.models import validate_lang
@@ -31,6 +34,7 @@ from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.style import crispy as hqcrispy
 
 from corehq.util.soft_assert import soft_assert
+from dimagi.utils.decorators.memoized import memoized
 
 import re
 
@@ -383,10 +387,10 @@ class SetUserPasswordForm(SetPasswordForm):
 
         if self.project.strong_mobile_passwords:
             self.fields['new_password1'].widget = forms.TextInput()
-            self.fields['new_password1'].help_text = mark_safe("""
-                <i class="fa fa-warning"></i> This password will not be shown again. <br />
-                <span data-bind="text: passwordHelp, css: color">
-            """)
+            self.fields['new_password1'].help_text = mark_safe_lazy(string_concat('<i class="fa fa-warning"></i>',
+                 ugettext_lazy("This password is automatically generated. Please copy it or create your own. It will not be shown again."),
+                 '<br /><span data-bind="text: passwordHelp, css: color">'
+            ))
             initial_password = _generate_strong_password()
 
         self.helper = FormHelper()
@@ -538,21 +542,34 @@ class NewMobileWorkerForm(forms.Form):
         label=ugettext_noop("Password"),
     )
 
-    def __init__(self, project, *args, **kwargs):
+    def __init__(self, project, user, *args, **kwargs):
         super(NewMobileWorkerForm, self).__init__(*args, **kwargs)
         email_string = u"@{}.commcarehq.org".format(project.name)
         max_chars_username = 80 - len(email_string)
         self.project = project
+        self.user = user
+        self.can_access_all_locations = user.has_permission(self.project.name, 'access_all_locations')
+        if not self.can_access_all_locations:
+            self.fields['location_id'].required = True
 
         if self.project.strong_mobile_passwords:
-            self.fields['password'].widget = forms.TextInput()
-            self.fields['password'].help_text = mark_safe("""
-                <i class="fa fa-warning"></i> This password will not be shown again. <br />
-                <span data-bind="text: passwordHelp, css: color">
-            """)
+            if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
+                validator = "validate_password_draconian"
+            else:
+                validator = "validate_password_standard"
+            self.fields['password'].widget = forms.TextInput(attrs={
+                validator: "",
+                "ng_keydown": "markNonDefault()",
+                "class": "default",
+            })
+            self.fields['password'].help_text = mark_safe_lazy(string_concat('<i class="fa fa-warning"></i>',
+                ugettext_lazy('This password is automatically generated. Please copy it or create your own. It will not be shown again.'),
+                '<br />'
+            ))
 
         if project.uses_locations:
-            self.fields['location_id'].widget = AngularLocationSelectWidget()
+            self.fields['location_id'].widget = AngularLocationSelectWidget(
+                require=not self.can_access_all_locations)
             location_field = crispy.Field(
                 'location_id',
                 ng_model='mobileWorker.location_id',
@@ -606,9 +623,14 @@ class NewMobileWorkerForm(forms.Form):
                     ng_model='mobileWorker.password',
                     data_bind="value: password, valueUpdate: 'input'",
                 ),
-                css_class="check-password",
             )
         )
+
+    def clean_location_id(self):
+        location_id = self.cleaned_data['location_id']
+        if not user_can_access_location_id(self.project.name, self.user, location_id):
+            raise forms.ValidationError("You do not have access to that location.")
+        return location_id
 
     def clean_username(self):
         username = self.cleaned_data['username']
@@ -698,42 +720,86 @@ class AngularLocationSelectWidget(forms.Widget):
         scope uses availableLocations to search in
     """
 
-    def __init__(self, attrs=None):
+    def __init__(self, require=False, attrs=None):
+        self.require = require
         super(AngularLocationSelectWidget, self).__init__(attrs)
 
     def render(self, name, value, attrs=None):
+        # The .format() means I have to use 4 braces to end up with {{$select.selected.name}}
         return """
-          <ui-select  ng-model="mobileWorker.location_id" theme="select2" style="width: 300px;">
-            <ui-select-match placeholder="Select location...">{{$select.selected.name}}</ui-select-match>
+          <ui-select {validator} ng-model="mobileWorker.location_id" theme="select2" style="width: 300px;">
+            <ui-select-match placeholder="Select location...">{{{{$select.selected.name}}}}</ui-select-match>
             <ui-select-choices refresh="searchLocations($select.search)" refresh-delay="0" repeat="location.id as location in availableLocations | filter:$select.search">
               <div ng-bind-html="location.name | highlight: $select.search"></div>
             </ui-select-choices>
           </ui-select>
-        """
+        """.format(validator='validate-location=""' if self.require else '')
 
 
 class SupplyPointSelectWidget(forms.Widget):
 
-    def __init__(self, attrs=None, domain=None, id='supply-point', multiselect=False):
+    def __init__(self, domain, attrs=None, id='supply-point', multiselect=False, query_url=None):
         super(SupplyPointSelectWidget, self).__init__(attrs)
         self.domain = domain
         self.id = id
         self.multiselect = multiselect
+        if query_url:
+            self.query_url = query_url
+        else:
+            self.query_url = reverse('corehq.apps.locations.views.child_locations_for_select2', args=[domain])
 
     def render(self, name, value, attrs=None):
+        location_ids = value.split(',') if value else []
+        from corehq.apps.locations.util import get_locations_from_ids
+        try:
+            locations = get_locations_from_ids(location_ids, self.domain)
+        except SQLLocation.DoesNotExist:
+            locations = []
+        initial_data = [{'id': loc.location_id, 'name': loc.display_name} for loc in locations]
+
         return get_template('locations/manage/partials/autocomplete_select_widget.html').render(Context({
             'id': self.id,
             'name': name,
             'value': value or '',
-            'query_url': reverse('corehq.apps.locations.views.child_locations_for_select2', args=[self.domain]),
+            'query_url': self.query_url,
             'multiselect': self.multiselect,
+            'initial_data': initial_data,
+        }))
+
+
+class PrimaryLocationWidget(forms.Widget):
+    """
+    Options for this field are dynamically set in JS depending on what options are selected
+    for 'assigned_locations'. This works in conjunction with SupplyPointSelectWidget.
+    """
+    def __init__(self, css_id, source_css_id, attrs=None):
+        """
+        args:
+            css_id: css_id of primary_location field
+            source_css_id: css_id of assigned_locations field
+        """
+        super(PrimaryLocationWidget, self).__init__(attrs)
+        self.css_id = css_id
+        self.source_css_id = source_css_id
+
+    def render(self, name, value, attrs=None):
+        return get_template('locations/manage/partials/drilldown_location_widget.html').render(Context({
+            'css_id': self.css_id,
+            'source_css_id': self.source_css_id,
+            'name': name,
+            'value': value or ''
         }))
 
 
 class CommtrackUserForm(forms.Form):
-    location = forms.CharField(
-        label=ugettext_noop("Location"),
-        required=False
+    assigned_locations = forms.CharField(
+        label=ugettext_noop("Locations"),
+        required=False,
+    )
+    primary_location = forms.CharField(
+        label=ugettext_noop("Primary Location"),
+        required=False,
+        help_text=ugettext_lazy('Primary Location must always be set to one of above locations')
     )
     program_id = forms.ChoiceField(
         label=ugettext_noop("Program"),
@@ -742,14 +808,20 @@ class CommtrackUserForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
-        domain = None
+        self.domain = None
         if 'domain' in kwargs:
-            domain = kwargs['domain']
+            self.domain = kwargs['domain']
             del kwargs['domain']
         super(CommtrackUserForm, self).__init__(*args, **kwargs)
-        self.fields['location'].widget = SupplyPointSelectWidget(domain=domain)
-        if Domain.get_by_name(domain).commtrack_enabled:
-            programs = Program.by_domain(domain, wrap=False)
+        self.fields['assigned_locations'].widget = SupplyPointSelectWidget(
+            self.domain, multiselect=True, id='id_assigned_locations'
+        )
+        self.fields['primary_location'].widget = PrimaryLocationWidget(
+            css_id='id_primary_location',
+            source_css_id='id_assigned_locations'
+        )
+        if self.commtrack_enabled:
+            programs = Program.by_domain(self.domain, wrap=False)
             choices = list((prog['_id'], prog['name']) for prog in programs)
             choices.insert(0, ('', ''))
             self.fields['program_id'].choices = choices
@@ -765,16 +837,77 @@ class CommtrackUserForm(forms.Form):
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
+    @property
+    @memoized
+    def commtrack_enabled(self):
+        return Domain.get_by_name(self.domain).commtrack_enabled
+
     def save(self, user):
-        location_id = self.cleaned_data['location']
-        # This means it will clear the location associations set in a domain
-        # with multiple locations configured. It is acceptable for now because
-        # multi location config is a not really supported special flag for IPM.
-        if location_id:
-            if location_id != user.location_id:
-                user.set_location(Location.get(location_id))
+        # todo: Avoid multiple user.save
+        domain_membership = user.get_domain_membership(self.domain)
+        if self.commtrack_enabled:
+            domain_membership.program_id = self.cleaned_data['program_id']
+
+        self._update_location_data(user)
+
+    def _update_location_data(self, user):
+        location_id = self.cleaned_data['primary_location']
+        location_ids = self.cleaned_data['assigned_locations']
+
+        if user.is_commcare_user():
+            old_location_id = user.location_id
+            if location_id != old_location_id:
+                if location_id:
+                    user.set_location(SQLLocation.objects.get(location_id=location_id))
+                else:
+                    user.unset_location()
+
+            old_location_ids = user.assigned_location_ids
+            if set(location_ids) != set(old_location_ids):
+                user.reset_locations(location_ids)
         else:
-            user.unset_location()
+            domain_membership = user.get_domain_membership(self.domain)
+            old_location_id = domain_membership.location_id
+            if location_id != old_location_id:
+                if location_id:
+                    user.set_location(self.domain, SQLLocation.objects.get(location_id=location_id))
+                else:
+                    user.unset_location(self.domain)
+
+            old_location_ids = domain_membership.assigned_location_ids
+            if set(location_ids) != set(old_location_ids):
+                user.reset_locations(self.domain, location_ids)
+
+    def clean_assigned_locations(self):
+        # select2 (< 4.0) doesn't format multiselect for remote data as an array
+        #   but formats it as comma-seperated list, so we need to clean the returned data
+        from corehq.apps.locations.models import SQLLocation
+        from corehq.apps.locations.util import get_locations_from_ids
+
+        value = self.cleaned_data.get('assigned_locations')
+        if not isinstance(value, basestring) or value.strip() == '':
+            return []
+
+        location_ids = [location_id.strip() for location_id in value.split(',')]
+        try:
+            locations = get_locations_from_ids(location_ids, self.domain)
+        except SQLLocation.DoesNotExist:
+            raise ValidationError(_('One or more of the locations was not found.'))
+
+        return [location.location_id for location in locations]
+
+    def clean(self):
+        cleaned_data = super(CommtrackUserForm, self).clean()
+
+        primary_location_id = cleaned_data['primary_location']
+        assigned_location_ids = cleaned_data.get('assigned_locations', [])
+        if primary_location_id:
+            if primary_location_id not in assigned_location_ids:
+                self.add_error('primary_location',
+                               _("Primary location can only be one of user's locations"))
+        if assigned_location_ids and not primary_location_id:
+            self.add_error('primary_location',
+                           _("Primary location can't be empty if user has any locations set"))
 
 
 class DomainRequestForm(forms.Form):
@@ -908,7 +1041,7 @@ class SelfRegistrationForm(forms.Form):
         layout_fields = [
             crispy.Fieldset(
                 _('Register'),
-                crispy.Field('username'),
+                crispy.Field('username', placeholder='sam123'),
                 crispy.Field('password'),
                 crispy.Field('password2'),
                 crispy.Field('email'),
@@ -925,11 +1058,11 @@ class SelfRegistrationForm(forms.Form):
 
     username = TrimmedCharField(
         required=True,
-        label=ugettext_lazy('Username (create a username)'),
+        label=ugettext_lazy('Create a Username'),
     )
     password = forms.CharField(
         required=True,
-        label=ugettext_lazy('Password (create a password)'),
+        label=ugettext_lazy('Create a Password'),
         widget=PasswordInput(),
     )
     password2 = forms.CharField(
@@ -939,7 +1072,7 @@ class SelfRegistrationForm(forms.Form):
     )
     email = forms.EmailField(
         required=False,
-        label=ugettext_lazy('Email address'),
+        label=ugettext_lazy('Email address (used for tasks like resetting your password)'),
     )
 
     def clean_username(self):

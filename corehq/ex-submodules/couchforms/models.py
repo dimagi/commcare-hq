@@ -102,7 +102,6 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
                     ComputedDocumentMixin, CouchDocLockableMixIn,
                     AbstractXFormInstance):
     """An XForms instance."""
-    migrating_blobs_from_couch = True
     domain = StringProperty()
     app_id = StringProperty()
     xmlns = StringProperty()
@@ -197,6 +196,10 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
     @property
     def deletion_id(self):
         return getattr(self, '-deletion_id', None)
+
+    @property
+    def deletion_date(self):
+        return getattr(self, '-deletion_date', None)
 
     @property
     def metadata(self):

@@ -68,7 +68,8 @@ class BaseSqlData(SqlData):
     @property
     def rows(self):
         formatter = DataFormatter(TableDataFormat(self.columns, no_value=self.no_value))
-        return list(formatter.format(self.data, keys=self.keys, group_by=self.group_by))
+        rows = list(formatter.format(self.data, keys=self.keys, group_by=self.group_by))
+        return rows
 
     # this is copy/paste from the
     # https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/reports/sqlreport.py#L383
@@ -254,7 +255,7 @@ class TauxDeRuptures(BaseSqlData):
     @property
     def filters(self):
         filter = super(TauxDeRuptures, self).filters
-        filter.append("total_stock_total = 0")
+        filter.append(EQ("total_stock_total", "zero"))
         if 'archived_locations' in self.config:
             filter.append(_locations_filter(self.config['archived_locations']))
         return filter

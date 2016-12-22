@@ -24,7 +24,7 @@
                 <label class="sr-only" for="property">{% trans "Filter properties" %}</label>
                 <input type="text" class="form-control" id="property" placeholder="Filter properties" ng-model="propertySearch.name">
               </div>
-              <button class="btn btn-default" ng-click="propertySearch.name = ''"><i class="fa fa-times"></i></button>
+              <button class="btn btn-default" ng-click="propertySearch.name = ''" type="button"><i class="fa fa-times"></i></button>
             </form>
         </div>
         <div class="col-xs-8">
@@ -60,6 +60,10 @@
                         &nbsp;{% trans "Show Calculations" %}
                     </button>
                 </div>
+                <a class="btn btn-primary" href="{{ caseDownloadURL }}?lang={{ lang }}">
+                    <i class="fa fa-download"></i>
+                    {% trans "Download" %}
+                </a>
             </div>
          </div>
     </div>

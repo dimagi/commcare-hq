@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-import copy
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import logging
@@ -39,8 +38,8 @@ from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.domain.utils import normalize_domain_name, domain_restricts_superusers
 from corehq.apps.domain.models import Domain, LicenseAgreement
 from corehq.apps.users.util import (
-    normalize_username,
     user_display_string,
+    user_location_data,
 )
 from corehq.apps.users.tasks import tag_forms_as_deleted_rebuild_associated_cases, \
     tag_cases_as_deleted_and_remove_indices
@@ -84,9 +83,12 @@ class Permissions(DocumentSchema):
     edit_commcare_users = BooleanProperty(default=False)
     edit_data = BooleanProperty(default=False)
     edit_apps = BooleanProperty(default=False)
+    access_all_locations = BooleanProperty(default=True)
 
     view_reports = BooleanProperty(default=False)
     view_report_list = StringListProperty(default=[])
+
+    edit_billing = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):
@@ -162,6 +164,7 @@ class Permissions(DocumentSchema):
             edit_data=True,
             edit_apps=True,
             view_reports=True,
+            edit_billing=True
         )
 
 
@@ -170,10 +173,12 @@ class UserRolePresets(object):
     APP_EDITOR = "App Editor"
     READ_ONLY = "Read Only"
     FIELD_IMPLEMENTER = "Field Implementer"
+    BILLING_ADMIN = "Billing Admin"
     INITIAL_ROLES = (
         READ_ONLY,
         APP_EDITOR,
         FIELD_IMPLEMENTER,
+        BILLING_ADMIN
     )
 
     @classmethod
@@ -183,6 +188,7 @@ class UserRolePresets(object):
             cls.READ_ONLY: lambda: Permissions(view_reports=True),
             cls.FIELD_IMPLEMENTER: lambda: Permissions(edit_commcare_users=True, view_reports=True),
             cls.APP_EDITOR: lambda: Permissions(edit_apps=True, view_reports=True),
+            cls.BILLING_ADMIN: lambda: Permissions(edit_billing=True)
         }
 
     @classmethod
@@ -327,6 +333,19 @@ class UserRole(QuickCachedDocumentMixin, Document):
 
         return assigned_user_ids
 
+    @classmethod
+    def get_preset_permission_by_name(cls, name):
+        matches = {k for k, v in PERMISSIONS_PRESETS.iteritems() if v['name'] == name}
+        return matches.pop() if matches else None
+
+    @classmethod
+    def preset_and_domain_role_names(cls, domain_name):
+        return cls.preset_permissions_names().union(set([role.name for role in cls.by_domain(domain_name)]))
+
+    @classmethod
+    def preset_permissions_names(cls):
+        return {details['name'] for role, details in PERMISSIONS_PRESETS.iteritems()}
+
 PERMISSIONS_PRESETS = {
     'edit-apps': {'name': 'App Editor', 'permissions': Permissions(edit_apps=True, view_reports=True)},
     'field-implementer': {'name': 'Field Implementer', 'permissions': Permissions(edit_commcare_users=True, view_reports=True)},
@@ -365,6 +384,7 @@ class DomainMembership(Membership):
     override_global_tz = BooleanProperty(default=False)
     role_id = StringProperty()
     location_id = StringProperty()
+    assigned_location_ids = StringListProperty()
     program_id = StringProperty()
 
     @property
@@ -755,12 +775,27 @@ class EulaMixin(DocumentSchema):
         return current_eula
 
 
+class DeviceIdLastUsed(DocumentSchema):
+    device_id = StringProperty()
+    last_used = DateTimeProperty()
+
+    def __eq__(self, other):
+        return all(getattr(self, p) == getattr(other, p) for p in self.properties())
+
+
 class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMixin):
     """
     A user (for web and commcare)
     """
     base_doc = 'CouchUser'
+
+    # todo: it looks like this is only ever set to a useless string and we should probably just remove it
+    # https://github.com/dimagi/commcare-hq/pull/14087#discussion_r90423396
     device_ids = ListProperty()
+
+    # this is the real list of devices
+    devices = SchemaListProperty(DeviceIdLastUsed)
+
     phone_numbers = ListProperty()
     created_on = DateTimeProperty(default=datetime(year=1900, month=1, day=1))
     #    For now, 'status' is things like:
@@ -774,6 +809,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     announcements_seen = ListProperty()
     user_data = DictProperty()
     location_id = StringProperty()
+    assigned_location_ids = StringListProperty()
     has_built_app = BooleanProperty(default=False)
 
     _user = None
@@ -865,6 +901,11 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     def name_in_filters(self):
         username = self.username.split("@")[0]
         return "%s <%s>" % (self.full_name, username) if self.full_name else username
+
+    @property
+    def days_since_created(self):
+        # Note this does not round, but returns the floor of days since creation
+        return (datetime.utcnow() - self.created_on).days
 
     formatted_name = full_name
     name = full_name
@@ -1058,12 +1099,12 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         except User.DoesNotExist:
             django_user = User(username=self.username)
         for attr in DjangoUserMixin.ATTRS:
-            attr_val = getattr(self, attr) or ''
+            attr_val = getattr(self, attr)
+            if not attr_val and attr != 'last_login':
+                attr_val = ''
             # truncate names when saving to django
             if attr == 'first_name' or attr == 'last_name':
                 attr_val = attr_val[:30]
-            if attr == 'last_login' and attr_val == '':
-                attr_val = None
             setattr(django_user, attr, attr_val)
         django_user.DO_NOT_SAVE_COUCH_USER= True
         return django_user
@@ -1135,6 +1176,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             return cls.wrap_correctly(result['doc'])
         else:
             return None
+
 
     def clear_quickcache_for_user(self):
         from corehq.apps.hqwebapp.templatetags.hq_shared_tags import _get_domain_list
@@ -1303,7 +1345,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             dm = self.get_domain_membership(domain)
             return dm.viewable_reports() if dm else []
 
-    def can_view_any_reports(self, domain):
+    def can_view_some_reports(self, domain):
         return self.can_view_reports(domain) or bool(self.get_viewable_reports(domain))
 
     def can_access_any_exports(self, domain=None):
@@ -1357,6 +1399,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             role_id = data["role_id"]
             del data['role_id']
             should_save = True
+        # Todo; remove after migration
+        from corehq.apps.users.management.commands import add_multi_location_property
+        add_multi_location_property.Command().migrate_user(data)
+
         self = super(CommCareUser, cls).wrap(data)
         if should_save:
             self.domain_membership = DomainMembership(domain=data.get('domain', ""))
@@ -1525,8 +1571,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         from corehq.apps.groups.models import Group
         # get faked location group objects
         groups = []
-        if self.sql_location:
-            groups.extend(self.sql_location.get_case_sharing_groups(self._id))
+        for sql_location in self.get_sql_locations(self.domain):
+            groups.extend(sql_location.get_case_sharing_groups(self._id))
 
         groups += [group for group in Group.by_user(self) if group.case_sharing]
         return groups
@@ -1604,10 +1650,37 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 pass
         return None
 
+    def get_location_ids(self, domain):
+        return self.assigned_location_ids
+
+    def get_sql_locations(self, domain):
+        from corehq.apps.locations.models import SQLLocation
+        if self.assigned_location_ids:
+            return SQLLocation.objects.filter(location_id__in=self.assigned_location_ids)
+        else:
+            return SQLLocation.objects.none()
+
+    def add_to_assigned_locations(self, location):
+        if self.location_id:
+            if location.location_id in self.assigned_location_ids:
+                return
+            self.assigned_location_ids.append(location.location_id)
+            self.get_domain_membership(self.domain).assigned_location_ids.append(location.location_id)
+            self.user_data['commcare_location_ids'] = user_location_data(self.assigned_location_ids)
+            self.save()
+        else:
+            self.set_location(location)
+
+    @memoized
+    def get_sql_location(self, domain):
+        return self.sql_location
+
     def set_location(self, location):
         """
-        Set the location, and all important user data, for
+        Set the primary location, and all important user data, for
         the user.
+
+        :param location: may be a sql or couch location
         """
         from corehq.apps.fixtures.models import UserFixtureType
 
@@ -1638,25 +1711,92 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             location.group_id
         })
 
-        self.location_id = location.location_id
         self.update_fixture_status(UserFixtureType.LOCATION)
+        self.location_id = location.location_id
         self.get_domain_membership(self.domain).location_id = location.location_id
+        if self.location_id not in self.assigned_location_ids:
+            self.assigned_location_ids.append(self.location_id)
+            self.get_domain_membership(self.domain).assigned_location_ids.append(self.location_id)
+            self.user_data['commcare_location_ids'] = user_location_data(self.assigned_location_ids)
         self.save()
 
-    def unset_location(self):
+    def unset_location(self, fall_back_to_next=False):
         """
-        Unset the location and remove all associated user data and cases
+        Resets primary location to next available location from assigned_location_ids.
+            If there are no more locations in assigned_location_ids,
+            then the primary location and user data are cleared
+
+            If fall_back_to_next is True, primary location is not set to next but cleared.
+            This option exists only to be backwards compatible when user can only have one location
         """
         from corehq.apps.fixtures.models import UserFixtureType
+        from corehq.apps.locations.models import SQLLocation
+        old_primary_location_id = self.location_id
+        if old_primary_location_id:
+            self.assigned_location_ids.remove(old_primary_location_id)
+            self.get_domain_membership(self.domain).assigned_location_ids.remove(old_primary_location_id)
 
-        self.user_data.pop('commcare_location_id', None)
-        self.user_data.pop('commtrack-supply-point', None)
-        self.user_data.pop('commcare_primary_case_sharing_id', None)
-        self.location_id = None
-        self.clear_location_delegates()
-        self.update_fixture_status(UserFixtureType.LOCATION)
-        self.get_domain_membership(self.domain).location_id = None
-        self.save()
+        if self.assigned_location_ids:
+            self.user_data['commcare_location_ids'] = user_location_data(self.assigned_location_ids)
+        elif self.user_data.get('commcare_location_ids'):
+            self.user_data.pop('commcare_location_ids')
+
+        if self.assigned_location_ids and fall_back_to_next:
+            new_primary_location_id = self.assigned_location_ids[0]
+            self.set_location(SQLLocation.objects.get(location_id=new_primary_location_id))
+        else:
+            self.user_data.pop('commcare_location_id', None)
+            self.user_data.pop('commtrack-supply-point', None)
+            self.user_data.pop('commcare_primary_case_sharing_id', None)
+            self.location_id = None
+            self.clear_location_delegates()
+            self.update_fixture_status(UserFixtureType.LOCATION)
+            self.get_domain_membership(self.domain).location_id = None
+            self.save()
+
+    def unset_location_by_id(self, location_id, fall_back_to_next=False):
+        """
+        Unset a location that the user is assigned to that may or may not be primary location.
+            If the location_id is primary-location, then next available location from
+            assigned_location_ids is set as the primary-location.
+            If fall_back_to_next is True, primary location is not set to next
+        """
+        if location_id == self.location_id:
+            # check if primary location
+            self.unset_location(fall_back_to_next)
+        else:
+            self.assigned_location_ids.remove(location_id)
+            self.get_domain_membership(self.domain).assigned_location_ids.remove(location_id)
+
+            if self.assigned_location_ids:
+                self.user_data['commcare_location_ids'] = user_location_data(self.assigned_location_ids)
+            else:
+                self.user_data.pop('commcare_location_ids')
+            self.save()
+
+    def reset_locations(self, location_ids):
+        """
+        Reset user's assigned_locations to given location_ids and update user data.
+            This should be called after updating primary location via set_location/unset_location
+            If primary-location is not set, then next available location from
+            assigned_location_ids is set as the primary-location
+        """
+        from corehq.apps.locations.models import SQLLocation
+
+        self.assigned_location_ids = location_ids
+        self.get_domain_membership(self.domain).assigned_location_ids = location_ids
+        if location_ids:
+            self.user_data.update({
+                'commcare_location_ids': user_location_data(location_ids)
+            })
+        else:
+            self.user_data.pop('commcare_location_ids')
+
+        # try to set primary-location if not set already
+        if not self.location_id and location_ids:
+            self.set_location(SQLLocation.objects.get(location_id=location_ids[0]))
+        else:
+            self.save()
 
     @property
     def locations(self):
@@ -1665,12 +1805,11 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         locations per user flag set. It will error if you try
         to call it on a normal domain.
         """
+        from corehq.apps.locations.models import SQLLocation
         if not self.project.supports_multiple_locations_per_user:
             raise InvalidLocationConfig(
                 "Attempting to access multiple locations for a user in a domain that does not support this."
             )
-
-        from corehq.apps.locations.models import Location
 
         def _get_linked_supply_point_ids():
             mapping = self.get_location_map_case()
@@ -1681,12 +1820,11 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         def _get_linked_supply_points():
             return SupplyInterface(self.domain).get_supply_points(_get_linked_supply_point_ids())
 
-        def _gen():
-            location_ids = [sp.location_id for sp in _get_linked_supply_points()]
-            for doc in iter_docs(Location.get_db(), location_ids):
-                yield Location.wrap(doc)
-
-        return list(_gen())
+        location_ids = [sp.location_id for sp in _get_linked_supply_points()]
+        return list(SQLLocation.objects
+                    .filter(domain=self.domain,
+                            location_id__in=location_ids)
+                    .couch_locations())
 
     def supply_point_index_mapping(self, supply_point, clear=False):
         from corehq.apps.commtrack.exceptions import (
@@ -1852,6 +1990,23 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         case = CaseAccessors(self.domain).get_case_by_domain_hq_user_id(self._id, USERCASE_TYPE)
         return case.case_id if case else None
 
+    def update_device_id_last_used(self, device_id, when=None):
+        """
+        Sets the last_used date for the device to be the current time
+
+        Does NOT save the user object.
+        """
+        when = when or datetime.utcnow()
+        for user_device_id_last_used in self.devices:
+            if user_device_id_last_used.device_id == device_id:
+                user_device_id_last_used.last_used = when
+                break
+        else:
+            self.devices.append(DeviceIdLastUsed(
+                device_id=device_id,
+                last_used=when
+            ))
+
 
 class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     program_id = StringProperty()
@@ -1939,16 +2094,67 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             if user_doc['email'].endswith('@dimagi.com'):
                 yield user_doc['email']
 
+    def add_to_assigned_locations(self, domain, location):
+        membership = self.get_domain_membership(domain)
+
+        if membership.location_id:
+            if location.location_id in membership.assigned_location_ids:
+                return
+            membership.assigned_location_ids.append(location.location_id)
+            self.save()
+        else:
+            self.set_location(domain, location)
+
     def set_location(self, domain, location_object_or_id):
+        # set the primary location for user's domain_membership
         if isinstance(location_object_or_id, basestring):
             location_id = location_object_or_id
         else:
-            location_id = location_object_or_id._id
-        self.get_domain_membership(domain).location_id = location_id
+            location_id = location_object_or_id.location_id
+
+        membership = self.get_domain_membership(domain)
+        membership.location_id = location_id
+        if self.location_id not in membership.assigned_location_ids:
+            membership.assigned_location_ids.append(location_id)
         self.save()
 
-    def unset_location(self, domain):
-        self.get_domain_membership(domain).location_id = None
+    def unset_location(self, domain, fall_back_to_next=False):
+        """
+        Change primary location to next location from assigned_location_ids,
+        if there are no more locations in assigned_location_ids, primary location is cleared
+        """
+        membership = self.get_domain_membership(domain)
+        old_location_id = membership.location_id
+        if old_location_id:
+            membership.assigned_location_ids.remove(old_location_id)
+        if membership.assigned_location_ids and fall_back_to_next:
+            membership.location_id = membership.assigned_location_ids[0]
+        else:
+            membership.location_id = None
+        self.save()
+
+    def unset_location_by_id(self, domain, location_id, fall_back_to_next=False):
+        """
+        Unset a location that the user is assigned to that may or may not be primary location
+        """
+        membership = self.get_domain_membership(domain)
+        primary_id = membership.location_id
+        if location_id == primary_id:
+            # check if primary location
+            self.unset_location(domain, fall_back_to_next)
+        else:
+            membership.assigned_location_ids.remove(location_id)
+            self.save()
+
+    def reset_locations(self, domain, location_ids):
+        """
+        reset locations to given list of location_ids. Before calling this, primary location
+            should be explicitly set/unset via set_location/unset_location
+        """
+        membership = self.get_domain_membership(domain)
+        membership.assigned_location_ids = location_ids
+        if not membership.location_id and location_ids:
+            membership.location_id = location_ids[0]
         self.save()
 
     def get_location_id(self, domain):
@@ -1959,11 +2165,19 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         from corehq.apps.locations.models import SQLLocation
         loc_id = self.get_location_id(domain)
         if loc_id:
-            try:
-                return SQLLocation.objects.get(location_id=loc_id)
-            except SQLLocation.DoesNotExist:
-                pass
-        return None
+            return SQLLocation.objects.get_or_None(domain=domain, location_id=loc_id)
+
+    def get_location_ids(self, domain):
+        return getattr(self.get_domain_membership(domain), 'assigned_location_ids', None)
+
+    @memoized
+    def get_sql_locations(self, domain=None):
+        from corehq.apps.locations.models import SQLLocation
+        loc_ids = self.get_location_ids(domain)
+        if loc_ids:
+            return SQLLocation.objects.get_locations(loc_ids)
+        else:
+            return SQLLocation.objects.none()
 
     @memoized
     def get_location(self, domain):

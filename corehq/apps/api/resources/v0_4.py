@@ -1,32 +1,14 @@
-from collections import defaultdict
-
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseForbidden, HttpResponse, HttpResponseBadRequest
 from tastypie import fields
-from tastypie.bundle import Bundle
 from tastypie.authentication import Authentication
+from tastypie.bundle import Bundle
 from tastypie.exceptions import BadRequest
 
-from casexml.apps.case.models import CommCareCase
-from corehq.apps.api.resources.auth import DomainAdminAuthentication, RequirePermissionAuthentication
-from corehq.apps.api.resources.v0_1 import _safe_bool
-from corehq.apps.api.resources.meta import CustomResourceMeta
-from corehq.form_processor.exceptions import XFormNotFound
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
-from couchforms.models import doc_types, XFormInstance
 from casexml.apps.case import xform as casexml_xform
-from custom.hope.models import HOPECase, CC_BIHAR_NEWBORN, CC_BIHAR_PREGNANCY
-
-from corehq.apps.api.util import get_object_or_not_exist, object_does_not_exist, get_obj
-from corehq.apps.app_manager import util as app_manager_util
-from corehq.apps.app_manager.models import Application, RemoteApp
-from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
-from corehq.apps.repeaters.models import Repeater, repeater_types
-from corehq.apps.groups.models import Group
-from corehq.apps.cloudcare.api import ElasticCaseQuery
-from corehq.apps.users.util import format_username
-from corehq.apps.users.models import CouchUser, Permissions
-
+from corehq.apps.api.es import XFormES, CaseES, ElasticAPIQuerySet, es_search
+from corehq.apps.api.fields import ToManyDocumentsField, UseIfRequested, ToManyDictField, ToManyListDictField
+from corehq.apps.api.models import ESXFormInstance, ESCase
 from corehq.apps.api.resources import (
     CouchResourceMixin,
     DomainSpecificResourceMixin,
@@ -35,10 +17,22 @@ from corehq.apps.api.resources import (
     v0_1,
     v0_3,
 )
-from corehq.apps.api.es import XFormES, CaseES, ElasticAPIQuerySet, es_search
-from corehq.apps.api.fields import ToManyDocumentsField, UseIfRequested, ToManyDictField, ToManyListDictField
+from corehq.apps.api.resources.auth import DomainAdminAuthentication, RequirePermissionAuthentication
+from corehq.apps.api.resources.meta import CustomResourceMeta
+from corehq.apps.api.resources.v0_1 import _safe_bool
 from corehq.apps.api.serializers import CommCareCaseSerializer, XFormInstanceSerializer
-
+from corehq.apps.api.util import get_object_or_not_exist, get_obj
+from corehq.apps.app_manager import util as app_manager_util
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.apps.app_manager.models import Application, RemoteApp
+from corehq.apps.cloudcare.api import ElasticCaseQuery
+from corehq.apps.groups.models import Group
+from corehq.apps.repeaters.models import Repeater
+from corehq.apps.repeaters.utils import get_all_repeater_types
+from corehq.apps.users.models import CouchUser, Permissions
+from corehq.apps.users.util import format_username
+from couchforms.models import doc_types
+from custom.hope.models import HOPECase, CC_BIHAR_NEWBORN, CC_BIHAR_PREGNANCY
 from no_exceptions.exceptions import Http400
 
 # By the time a test case is running, the resource is already instantiated,
@@ -51,7 +45,13 @@ xform_doc_types = doc_types()
 
 
 class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
-    id = fields.CharField(attribute='form_id', readonly=True, unique=True)
+    """This version of the form resource is built of Elasticsearch data
+    which gets wrapped by ``ESXFormInstance``.
+    No type conversion is done e.g. dates and some fields are named differently than in the
+    Python models.
+    """
+
+    id = fields.CharField(attribute='_id', readonly=True, unique=True)
 
     domain = fields.CharField(attribute='domain')
     form = fields.DictField(attribute='form_data')
@@ -59,7 +59,7 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
     version = fields.CharField(attribute='version')
     uiversion = fields.CharField(attribute='uiversion', blank=True, null=True)
     metadata = fields.DictField(attribute='metadata', blank=True, null=True)
-    received_on = fields.DateTimeField(attribute="received_on")
+    received_on = fields.CharField(attribute="received_on")
 
     app_id = fields.CharField(attribute='app_id', null=True)
     build_id = fields.CharField(attribute='build_id', null=True)
@@ -106,10 +106,8 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
 
     def obj_get(self, bundle, **kwargs):
         instance_id = kwargs['pk']
-        try:
-            return FormAccessors(kwargs['domain']).get_form(instance_id)
-        except XFormNotFound:
-            raise object_does_not_exist("XFormInstance", instance_id)
+        domain = kwargs['domain']
+        return self.xform_es(domain).get_document(instance_id)
 
     def xform_es(self, domain):
         return MOCK_XFORM_ES or XFormES(domain)
@@ -128,17 +126,10 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
         else:
             es_query['filter']['and'].append({'term': {'doc_type': 'xforminstance'}})
 
-        def wrapper(doc):
-            if doc['doc_type'] in xform_doc_types:
-                doc.pop('user_id', None)  # needed when xform is stored in sql
-                return xform_doc_types[doc['doc_type']].wrap(doc)
-            else:
-                return doc
-
         # Note that XFormES is used only as an ES client, for `run_query` against the proper index
         return ElasticAPIQuerySet(
             payload=es_query,
-            model=wrapper,
+            model=ESXFormInstance,
             es_client=self.xform_es(domain)
         ).order_by('-received_on')
 
@@ -149,7 +140,7 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
 
     class Meta(CustomResourceMeta):
         authentication = RequirePermissionAuthentication(Permissions.edit_data)
-        object_class = XFormInstance
+        object_class = ESXFormInstance
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
         resource_name = 'form'
@@ -184,7 +175,7 @@ class RepeaterResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourc
 
     def obj_get(self, bundle, **kwargs):
         return get_object_or_not_exist(Repeater, kwargs['pk'], kwargs['domain'],
-                                       additional_doc_types=repeater_types.keys())
+                                       additional_doc_types=get_all_repeater_types().keys())
 
     def obj_create(self, bundle, request=None, **kwargs):
         bundle.obj.domain = kwargs['domain']
@@ -214,57 +205,28 @@ class RepeaterResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourc
         list_allowed_methods = ['get', 'post']
 
 
-def group_by_dict(objs, fn):
-    """
-    Itertools.groupby returns a transient iterator with alien
-    data types in it. This returns a dictionary of lists.
-    Less efficient but clients can write naturally and used
-    only for things that have to fit in memory easily anyhow.
-    """
-    result = defaultdict(list)
-    for obj in objs:
-
-        key = fn(obj)
-        result[key].append(obj)
-    return result
-
-
-def _child_cases_attribute(case):
-    return {
-        index.identifier: CaseAccessors(case.domain).get_case(index.referenced_id)
-        for index in case.reverse_indices
-    }
-
-
-def _parent_cases_attribute(case):
-    return {
-        index.identifier: CaseAccessors(case.domain).get_case(index.referenced_id)
-        for index in case.indices
-    }
-
-
 class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResource, DomainSpecificResourceMixin):
     xforms_by_name = UseIfRequested(ToManyListDictField(
         'corehq.apps.api.resources.v0_4.XFormInstanceResource',
-        attribute=lambda case: group_by_dict(case.get_forms(), lambda form: form.name)
+        attribute='xforms_by_name'
     ))
 
     xforms_by_xmlns = UseIfRequested(ToManyListDictField(
         'corehq.apps.api.resources.v0_4.XFormInstanceResource',
-        attribute=lambda case: group_by_dict(case.get_forms(), lambda form: form.xmlns)
+        attribute='xforms_by_xmlns'
     ))
 
     child_cases = UseIfRequested(
         ToManyDictField(
             'corehq.apps.api.resources.v0_4.CommCareCaseResource',
-            attribute=_child_cases_attribute
+            attribute='child_cases'
         )
     )
 
     parent_cases = UseIfRequested(
         ToManyDictField(
             'corehq.apps.api.resources.v0_4.CommCareCaseResource',
-            attribute=_parent_cases_attribute
+            attribute='parent_cases'
         )
     )
 
@@ -274,6 +236,11 @@ class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResourc
     date_modified = fields.CharField(attribute='modified_on', default="1900-01-01")
     server_date_modified = fields.CharField(attribute='server_modified_on', default="1900-01-01")
     server_date_opened = fields.CharField(attribute='server_opened_on', default="1900-01-01")
+
+    def obj_get(self, bundle, **kwargs):
+        case_id = kwargs['pk']
+        domain = kwargs['domain']
+        return self.case_es(domain).get_document(case_id)
 
     def case_es(self, domain):
         return MOCK_CASE_ES or CaseES(domain)
@@ -293,14 +260,15 @@ class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResourc
         # Note that CaseES is used only as an ES client, for `run_query` against the proper index
         return ElasticAPIQuerySet(
             payload=query,
-            model=CommCareCase,
+            model=ESCase,
             es_client=self.case_es(domain)
         ).order_by('server_modified_on')
 
     class Meta(v0_3.CommCareCaseResource.Meta):
-        max_limit = 100 # Today, takes ~25 seconds for some domains
+        max_limit = 1000
         serializer = CommCareCaseSerializer()
         ordering = ['server_date_modified', 'date_modified']
+        object_class = ESCase
 
 
 class GroupResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):

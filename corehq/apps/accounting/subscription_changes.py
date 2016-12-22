@@ -1,6 +1,7 @@
 import datetime
 import json
 
+from couchdbkit import ResourceConflict
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _, ungettext
@@ -36,15 +37,17 @@ class BaseModifySubscriptionHandler(object):
         self.privileges = filter(lambda x: x in self.supported_privileges(), changed_privs)
 
     def get_response(self):
-        return filter(
-            lambda message: message is not None,
-            map(
-                lambda privilege: self.privilege_to_response_function()[privilege](
-                    self.domain, self.new_plan_version
-                ),
-                self.privileges
-            )
-        )
+        responses = []
+        for privilege in self.privileges:
+            try:
+                response = self.privilege_to_response_function()[privilege](self.domain, self.new_plan_version)
+            except ResourceConflict:
+                # Something else updated the domain. Reload and try again.
+                self.domain = Domain.get_by_name(self.domain.name)
+                response = self.privilege_to_response_function()[privilege](self.domain, self.new_plan_version)
+            if response is not None:
+                responses.append(response)
+        return responses
 
     @property
     def action_type(self):
@@ -631,6 +634,6 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
             reports = _get_report_builder_reports(project)
             if reports:
                 return _fmt_alert(_(
-                    "You have %(number_of_reports) report builder reports."
+                    "You have %(number_of_reports)d report builder reports. "
                     "By selecting this plan you will lose access to those reports."
                 ) % {'number_of_reports': len(reports)})

@@ -9,7 +9,6 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 from casexml.apps.phone.tests.utils import synclog_id_from_restore_payload
-from corehq.apps.change_feed import topics
 from corehq.apps.commtrack.models import ConsumptionConfig, StockRestoreConfig
 from corehq.apps.domain.models import Domain
 from corehq.apps.consumption.shortcuts import set_default_monthly_consumption_for_domain
@@ -25,7 +24,7 @@ from corehq.apps.commtrack import const
 from corehq.apps.commtrack.tests.util import CommTrackTest, get_ota_balance_xml, FIXED_USER, extract_balance_xml, \
     get_single_balance_block, get_single_transfer_block
 from casexml.apps.case.tests.util import check_xml_line_by_line, check_user_has_case
-from corehq.apps.receiverwrapper import submit_form_locally
+from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.commtrack.const import DAYS_IN_MONTH
 from corehq.apps.commtrack.tests.data.balances import (
@@ -390,7 +389,7 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         self.submit_xml_form(balance_submission(initial_amounts))
 
         # then mark some receipts
-        transfers = [(p._id, float(50 - 10*i)) for i, p in enumerate(self.products)]
+        transfers = [(p._id, float(50 - 10*i + 3)) for i, p in enumerate(self.products)]
         # then set to 50
         final = float(50)
         balance_amounts = [(p._id, final) for p in self.products]
@@ -430,7 +429,7 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         form = submit_case_blocks(
             case_blocks=get_single_balance_block(case_id='', product_id=self.products[0]._id, quantity=100),
             domain=self.domain.name,
-        )
+        )[0]
         instance = FormAccessors(self.domain.name).get_form(form.form_id)
         self.assertTrue(instance.is_error)
         self.assertTrue('IllegalCaseId' in instance.problem)
@@ -442,7 +441,7 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
                 src_id='', dest_id='', product_id=self.products[0]._id, quantity=100,
             ),
             domain=self.domain.name,
-        )
+        )[0]
         instance = FormAccessors(self.domain.name).get_form(form.form_id)
         self.assertTrue(instance.is_error)
         self.assertTrue('IllegalCaseId' in instance.problem)
@@ -695,7 +694,7 @@ def _report_soh(soh_reports, case_id, domain):
         )
         for report in soh_reports
     ]
-    form = submit_case_blocks(balance_blocks, domain)
+    form = submit_case_blocks(balance_blocks, domain)[0]
     return json_format_datetime(FormAccessors(domain).get_form(form.form_id).received_on)
 
 

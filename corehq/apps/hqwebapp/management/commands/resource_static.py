@@ -1,7 +1,7 @@
 import hashlib
 import json
 import os
-from django.core.management.base import LabelCommand
+from django.core.management.base import BaseCommand
 from django.contrib.staticfiles import finders
 from django.conf import settings
 from dimagi.utils import gitinfo
@@ -11,7 +11,7 @@ rcache = cache.caches['redis']
 RESOURCE_PREFIX = '#resource_%s'
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = "Prints the paths of all the static files"
     args = "clear"
 

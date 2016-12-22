@@ -1,0 +1,55 @@
+--- 
++++ 
+@@ -1,7 +1,7 @@
+ {% load i18n %}
+ {% load hq_shared_tags %}
+ 
+-{% include 'app_manager/v1/partials/case_config_shared.html' %}
++{% include 'app_manager/v2/partials/case_config_shared.html' %}
+ 
+ <script type="text/html" id="remove-action-modal-template">
+     <div class="modal-dialog">
+@@ -74,7 +74,7 @@
+                 <!-- /ko -->
+                 <!-- /ko -->
+                 {% endif %}
+-    
++
+                 <!-- ko if:  !auto_select && $index() > 0 -->
+                 <div class="form-group" data-bind="css: {'has-warning': validate_subcase()}">
+                     <label class="col-sm-2 control-label">
+@@ -106,10 +106,10 @@
+                 </div>
+                 <!-- /ko -->
+             <!-- /ko -->
+-    
++
+             <!-- ko if:  actionType === 'open' -->
+                 <div class="form-group" data-bind="visible: allow_subcase, css: {'has-warning': validate_subcase()}">
+-    
++
+                     <label class="control-label col-sm-2">{% trans "Parent Indices" %}</label>
+                     <div class="col-sm-4">
+                         <div data-bind="foreach: case_indices">
+@@ -118,10 +118,10 @@
+                                 <select class="form-control"
+                                         data-bind="optstr: $parents[1].getCaseTags('subcase', $parent), value: tag">
+                                 </select>
+-    
++
+                                 <label>{% trans "Reference ID" %}</label>
+                                 <input type="text" class="form-control" data-bind="value: reference_id"/>
+-    
++
+                                 <label>{% trans "Relationship" %}</label>
+                                 <select class="form-control"
+                                         data-bind="options: $parent.relationshipTypes,
+@@ -133,7 +133,7 @@
+                                 </button>
+                             </div>
+                         </div>
+-    
++
+                         <button class="btn btn-default" data-bind="click: addCaseIndex">
+                             <i class="fa fa-plus"></i>
+                             {% trans "Add parent index" %}

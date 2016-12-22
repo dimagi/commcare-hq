@@ -10,8 +10,11 @@ import pytz
 
 from couchdbkit import ResourceNotFound
 import dateutil
+from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
+from django.core.validators import validate_email
 from django.views.decorators.debug import sensitive_post_parameters
+from django.views.decorators.http import require_GET
 from django.views.generic import View
 from django.db.models import Sum
 from django.conf import settings
@@ -29,7 +32,10 @@ from PIL import Image
 from django.utils.translation import ugettext as _, ugettext_lazy
 from django.contrib.auth.models import User
 
+from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.apps.calendar_fixture.forms import CalendarFixtureForm
+from corehq.apps.calendar_fixture.models import CalendarFixtureSettings
 from corehq.apps.case_search.models import (
     CaseSearchConfig,
     CaseSearchConfigJSON,
@@ -37,6 +43,9 @@ from corehq.apps.case_search.models import (
     disable_case_search,
 )
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
+from corehq.apps.locations.forms import LocationFixtureForm
+from corehq.apps.locations.models import LocationFixtureConfiguration
+from corehq.apps.repeaters.repeater_generators import RegisterGenerator
 
 from corehq.const import USER_DATE_FORMAT
 from corehq.tabs.tabclasses import ProjectSettingsTab
@@ -67,12 +76,14 @@ from corehq.apps.accounting.utils import (
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.smsbillables.async_handlers import SMSRatesAsyncHandler, SMSRatesSelect2AsyncHandler
 from corehq.apps.smsbillables.forms import SMSRateCalculatorForm
-from corehq.apps.users.models import Invitation, CouchUser
+from corehq.apps.toggle_ui.views import ToggleEditView
+from corehq.apps.users.models import Invitation, CouchUser, Permissions
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA, TRANSFER_DOMAIN
 from custom.openclinica.forms import OpenClinicaSettingsForm
 from custom.openclinica.models import OpenClinicaSettings
 from dimagi.utils.couch.resource_conflict import retry_resource
+from dimagi.utils.web import json_request, json_response
 from corehq import privileges, feature_previews
 from django_prbac.utils import has_privilege
 from corehq.apps.accounting.models import (
@@ -101,7 +112,8 @@ from corehq.apps.domain.forms import (
     ConfirmNewSubscriptionForm, ProBonoForm, EditBillingAccountInfoForm,
     ConfirmSubscriptionRenewalForm, SnapshotFixtureForm, TransferDomainForm,
     SelectSubscriptionTypeForm, INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS, AdvancedExtendedTrialForm,
-    ContractedPartnerForm, DimagiOnlyEnterpriseForm)
+    ContractedPartnerForm, DimagiOnlyEnterpriseForm, USE_PARENT_LOCATION_CHOICE,
+    USE_LOCATION_CHOICE)
 from corehq.apps.domain.models import (
     Domain,
     LICENSES,
@@ -112,14 +124,14 @@ from corehq.apps.hqwebapp.views import BaseSectionPageView, BasePageView, CRUDPa
 from corehq.apps.domain.forms import ProjectSettingsForm
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_ip, json_response, get_site_domain
-from corehq.apps.users.decorators import require_can_edit_web_users
+from corehq.apps.users.decorators import require_can_edit_web_users, require_permission
 from corehq.apps.repeaters.forms import GenericRepeaterForm, FormRepeaterForm
-from corehq.apps.repeaters.models import Repeater, FormRepeater, CaseRepeater, ShortFormRepeater, \
-    AppStructureRepeater, RepeatRecord, repeater_types, RegisterGenerator
+from corehq.apps.repeaters.models import Repeater, RepeatRecord
 from corehq.apps.repeaters.dbaccessors import (
     get_paged_repeat_records,
     get_repeat_record_count,
 )
+from corehq.apps.repeaters.utils import get_all_repeater_types
 from corehq.apps.repeaters.const import (
     RECORD_FAILURE_STATE,
     RECORD_PENDING_STATE,
@@ -377,6 +389,7 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
     def basic_info_form(self):
         initial = {
             'hr_name': self.domain_object.hr_name or self.domain_object.name,
+            'project_description': self.domain_object.project_description,
             'default_timezone': self.domain_object.default_timezone,
             'case_sharing': json.dumps(self.domain_object.case_sharing),
             'call_center_enabled': self.domain_object.call_center_config.enabled,
@@ -385,32 +398,24 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
             'call_center_case_type': self.domain_object.call_center_config.case_type,
             'commtrack_enabled': self.domain_object.commtrack_enabled,
         }
-        if self.request.method == 'POST':
-            if self.can_user_see_meta:
-                return DomainMetadataForm(
-                    self.request.POST,
-                    self.request.FILES,
-                    domain=self.domain_object,
-                    can_use_custom_logo=self.can_use_custom_logo,
-                )
-            return DomainGlobalSettingsForm(
-                self.request.POST,
-                self.request.FILES,
-                domain=self.domain_object,
-                can_use_custom_logo=self.can_use_custom_logo
-            )
         if self.can_user_see_meta:
             initial.update({
                 'is_test': self.domain_object.is_test,
                 'cloudcare_releases': self.domain_object.cloudcare_releases,
             })
+            form_cls = DomainMetadataForm
+        else:
+            form_cls = DomainGlobalSettingsForm
 
-            return DomainMetadataForm(
-                can_use_custom_logo=self.can_use_custom_logo,
+        if self.request.method == 'POST':
+            return form_cls(
+                self.request.POST,
+                self.request.FILES,
                 domain=self.domain_object,
-                initial=initial
+                can_use_custom_logo=self.can_use_custom_logo,
             )
-        return DomainGlobalSettingsForm(
+
+        return form_cls(
             initial=initial,
             domain=self.domain_object,
             can_use_custom_logo=self.can_use_custom_logo
@@ -422,8 +427,8 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
         config = self.domain_object.call_center_config
         if config.use_user_location_as_owner:
             if config.user_location_ancestor_level == 1:
-                return DomainGlobalSettingsForm.USE_PARENT_LOCATION_CHOICE
-            return DomainGlobalSettingsForm.USE_LOCATION_CHOICE
+                return USE_PARENT_LOCATION_CHOICE
+            return USE_LOCATION_CHOICE
         return self.domain_object.call_center_config.case_owner_id
 
     @property
@@ -445,6 +450,8 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
                 messages.success(request, _("Project settings saved!"))
             else:
                 messages.error(request, _("There seems to have been an error saving your settings. Please try again!"))
+            return HttpResponseRedirect(self.page_url)
+
         return self.get(request, *args, **kwargs)
 
 
@@ -544,7 +551,7 @@ def test_repeater(request, domain):
     url = request.POST["url"]
     repeater_type = request.POST['repeater_type']
     format = request.POST.get('format', None)
-    repeater_class = repeater_types[repeater_type]
+    repeater_class = get_all_repeater_types()[repeater_type]
     form = GenericRepeaterForm(
         {"url": url, "format": format},
         domain=domain,
@@ -590,9 +597,9 @@ def logo(request, domain):
     return HttpResponse(logo[0], content_type=logo[1])
 
 
-class DomainAccountingSettings(BaseAdminProjectSettingsView):
+class DomainAccountingSettings(BaseProjectSettingsView):
 
-    @method_decorator(login_and_domain_required)
+    @method_decorator(require_permission(Permissions.edit_billing))
     def dispatch(self, request, *args, **kwargs):
         return super(DomainAccountingSettings, self).dispatch(request, *args, **kwargs)
 
@@ -617,7 +624,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
 
     @property
     def can_purchase_credits(self):
-        return self.request.couch_user.is_domain_admin(self.domain)
+        return self.request.couch_user.can_edit_billing()
 
     @property
     @memoized
@@ -1001,21 +1008,21 @@ class BaseStripePaymentView(DomainAccountingSettings):
 
     @property
     def account(self):
-        raise NotImplementedError("you must impmement the property account")
+        raise NotImplementedError("you must implement the property account")
 
     @property
     @memoized
-    def domain_admin(self):
-        if self.request.couch_user.is_domain_admin(self.domain):
+    def billing_admin(self):
+        if self.request.couch_user.can_edit_billing():
             return self.request.couch_user.username
         else:
             raise PaymentRequestError(
-                "The logged in user was not a domain admin."
+                "The logged in user was not a billing admin."
             )
 
     def get_or_create_payment_method(self):
         return StripePaymentMethod.objects.get_or_create(
-            web_user=self.domain_admin,
+            web_user=self.billing_admin,
             method_type=PaymentMethodType.STRIPE,
         )[0]
 
@@ -1085,6 +1092,16 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
 
     def post(self, request, *args, **kwargs):
         emails = request.POST.get('emails', []).split()
+        invalid_emails = []
+        for email in emails:
+            try:
+                validate_email(email)
+            except ValidationError:
+                invalid_emails.append(email)
+        if invalid_emails:
+            message = (_('The following e-mail addresses contain invalid characters, or are missing required '
+                         'characters: ') + ', '.join(['"{}"'.format(email) for email in invalid_emails]))
+            return json_response({'error': {'message': message}})
         amount = Decimal(request.POST.get('amount', 0))
         wire_invoice_factory = DomainWireInvoiceFactory(request.domain, contact_emails=emails)
         try:
@@ -1094,7 +1111,8 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
 
         return json_response({'success': True})
 
-    def _get_items(self, request):
+    @staticmethod
+    def _get_items(request):
         features = [{'type': get_feature_name(feature_type[0], SoftwareProductType.COMMCARE),
                      'amount': Decimal(request.POST.get(feature_type[0], 0))}
                     for feature_type in FeatureType.CHOICES
@@ -1152,8 +1170,7 @@ class WireInvoiceView(View):
     http_method_names = ['post']
     urlname = 'domain_wire_invoice'
 
-    @method_decorator(login_and_domain_required)
-    @method_decorator(domain_admin_required)
+    @method_decorator(require_permission(Permissions.edit_billing))
     def dispatch(self, request, *args, **kwargs):
         return super(WireInvoiceView, self).dispatch(request, *args, **kwargs)
 
@@ -1172,8 +1189,7 @@ class WireInvoiceView(View):
 class BillingStatementPdfView(View):
     urlname = 'domain_billing_statement_download'
 
-    @method_decorator(login_and_domain_required)
-    @method_decorator(domain_admin_required)
+    @method_decorator(require_permission(Permissions.edit_billing))
     def dispatch(self, request, *args, **kwargs):
         return super(BillingStatementPdfView, self).dispatch(request, *args, **kwargs)
 
@@ -1462,7 +1478,7 @@ class ConfirmSelectedPlanView(SelectPlanView):
     @property
     @memoized
     def selected_plan_version(self):
-        return DefaultProductPlan.get_default_plan(self.edition).plan.get_version()
+        return DefaultProductPlan.get_default_plan_version(self.edition)
 
     @property
     def downgrade_messages(self):
@@ -1650,7 +1666,7 @@ class ConfirmSubscriptionRenewalView(DomainAccountingSettings, AsyncHandlerMixin
     @property
     @memoized
     def next_plan_version(self):
-        plan_version = DefaultProductPlan.get_default_plan(self.new_edition)
+        plan_version = DefaultProductPlan.get_default_plan_version(self.new_edition)
         if plan_version is None:
             log_accounting_error(
                 "Could not find a matching renewable plan "
@@ -2075,6 +2091,7 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
     template_name = 'domain/admin/case_search.html'
 
     @method_decorator(domain_admin_required)
+    @toggles.SYNC_SEARCH_CASE_CLAIM.required_decorator()
     def dispatch(self, request, *args, **kwargs):
         return super(CaseSearchConfigView, self).dispatch(request, *args, **kwargs)
 
@@ -2125,16 +2142,56 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
         }
 
 
-class RepeaterMixin(object):
+class CalendarFixtureConfigView(BaseAdminProjectSettingsView):
+    urlname = 'calendar_fixture_config'
+    page_title = ugettext_lazy('Calendar Fixture')
+    template_name = 'domain/admin/calendar_fixture.html'
+
+    @method_decorator(domain_admin_required)
+    @toggles.CUSTOM_CALENDAR_FIXTURE.required_decorator()
+    def dispatch(self, request, *args, **kwargs):
+        return super(CalendarFixtureConfigView, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        calendar_settings = CalendarFixtureSettings.for_domain(self.domain)
+        form = CalendarFixtureForm(request.POST, instance=calendar_settings)
+        if form.is_valid():
+            form.save()
+            messages.success(request, _("Calendar configuration updated successfully"))
+
+        return self.get(request, *args, **kwargs)
 
     @property
-    def friendly_repeater_names(self):
-        return {
-            'FormRepeater': _("Forms"),
-            'CaseRepeater': _("Cases"),
-            'ShortFormRepeater': _("Form Stubs"),
-            'AppStructureRepeater': _("App Schema Changes"),
-        }
+    def page_context(self):
+        calendar_settings = CalendarFixtureSettings.for_domain(self.domain)
+        form = CalendarFixtureForm(instance=calendar_settings)
+        return {'form': form}
+
+
+class LocationFixtureConfigView(BaseAdminProjectSettingsView):
+    urlname = 'location_fixture_config'
+    page_title = ugettext_lazy('Location Fixture')
+    template_name = 'domain/admin/location_fixture.html'
+
+    @method_decorator(domain_admin_required)
+    @toggles.FLAT_LOCATION_FIXTURE.required_decorator()
+    def dispatch(self, request, *args, **kwargs):
+        return super(LocationFixtureConfigView, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        location_settings = LocationFixtureConfiguration.for_domain(self.domain)
+        form = LocationFixtureForm(request.POST, instance=location_settings)
+        if form.is_valid():
+            form.save()
+            messages.success(request, _("Location configuration updated successfully"))
+
+        return self.get(request, *args, **kwargs)
+
+    @property
+    def page_context(self):
+        location_settings = LocationFixtureConfiguration.for_domain(self.domain)
+        form = LocationFixtureForm(instance=location_settings)
+        return {'form': form}
 
 
 class DomainForwardingRepeatRecords(GenericTabularReport):
@@ -2257,7 +2314,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         )
 
 
-class DomainForwardingOptionsView(BaseAdminProjectSettingsView, RepeaterMixin):
+class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
     urlname = 'domain_forwarding'
     page_title = ugettext_lazy("Data Forwarding")
     template_name = 'domain/admin/domain_forwarding.html'
@@ -2268,11 +2325,15 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView, RepeaterMixin):
 
     @property
     def repeaters(self):
-        available_repeaters = [
-            FormRepeater, CaseRepeater, ShortFormRepeater, AppStructureRepeater,
+        return [
+            (
+                r.__name__,
+                r.by_domain(self.domain),
+                r.friendly_name,
+                r.get_custom_url(self.domain)
+            )
+            for r in get_all_repeater_types().values() if r.available_for_domain(self.domain)
         ]
-        return [(r.__name__, r.by_domain(self.domain), self.friendly_repeater_names[r.__name__])
-                for r in available_repeaters]
 
     @property
     def page_context(self):
@@ -2282,7 +2343,7 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView, RepeaterMixin):
         }
 
 
-class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
+class AddRepeaterView(BaseAdminProjectSettingsView):
     urlname = 'add_repeater'
     page_title = ugettext_lazy("Forward Data")
     template_name = 'domain/admin/add_form_repeater.html'
@@ -2309,15 +2370,19 @@ class AddRepeaterView(BaseAdminProjectSettingsView, RepeaterMixin):
 
     @property
     def page_name(self):
-        return "Forward %s" % self.friendly_repeater_names.get(self.repeater_type, "Data")
+        return self.repeater_class.friendly_name
 
     @property
     @memoized
     def repeater_class(self):
         try:
-            return repeater_types[self.repeater_type]
+            return get_all_repeater_types()[self.repeater_type]
         except KeyError:
-            raise Http404()
+            raise Http404(
+                "No such repeater {}. Valid types: {}".format(
+                    self.repeater_type, get_all_repeater_types.keys()
+                )
+            )
 
     @property
     @memoized
@@ -2419,15 +2484,12 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
         if self.request.method == 'POST':
             return DomainInternalForm(can_edit_eula, self.request.POST)
         initial = {
-            'deployment_date': self.domain_object.deployment.date.date
-            if self.domain_object.deployment.date else '',
             'countries': self.domain_object.deployment.countries,
             'is_test': self.domain_object.is_test,
         }
         internal_attrs = [
             'sf_contract_id',
             'sf_account_id',
-            'services',
             'initiative',
             'self_started',
             'area',
@@ -2440,6 +2502,7 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             'experienced_threshold',
             'amplifies_workers',
             'amplifies_project',
+            'data_access_threshold',
             'business_unit',
             'workshop_region',
         ]
@@ -2514,6 +2577,21 @@ class EditInternalCalculationsView(BaseInternalDomainSettingsView):
             'calcs': CALCS,
             'order': CALC_ORDER,
         }
+
+
+@login_and_domain_required
+@require_superuser
+@require_GET
+def toggle_diff(request, domain):
+    params = json_request(request.GET)
+    other_domain = params.get('domain')
+    diff = []
+    if Domain.get_by_name(other_domain):
+        diff = [{'slug': t.slug, 'label': t.label, 'url': reverse(ToggleEditView.urlname, args=[t.slug])}
+                for t in feature_previews.all_previews() + all_toggles()
+                if t.enabled(request.domain) and not t.enabled(other_domain)]
+        diff.sort(cmp=lambda x, y: cmp(x['label'], y['label']))
+    return json_response(diff)
 
 
 @login_and_domain_required
@@ -2628,6 +2706,10 @@ class ProBonoStaticView(ProBonoMixin, BasePageView):
     urlname = 'pro_bono_static'
     use_domain_field = True
 
+    @use_select2
+    def dispatch(self, request, *args, **kwargs):
+        return super(ProBonoStaticView, self).dispatch(request, *args, **kwargs)
+
     @property
     def requesting_domain(self):
         return self.pro_bono_form.cleaned_data['domain']
@@ -2637,6 +2719,10 @@ class ProBonoView(ProBonoMixin, DomainAccountingSettings):
     template_name = 'domain/pro_bono/domain.html'
     urlname = 'pro_bono'
     use_domain_field = False
+
+    @use_select2
+    def dispatch(self, request, *args, **kwargs):
+        return super(ProBonoView, self).dispatch(request, *args, **kwargs)
 
     @property
     def requesting_domain(self):

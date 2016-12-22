@@ -1,3 +1,5 @@
+from django.utils.translation import ugettext_lazy as _
+
 import jsonfield
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
@@ -22,12 +24,29 @@ class EmergencyOrderStatusUpdate(models.Model):
     STATUS_ETA_DELAYED = 'etaDelayed'
     STATUS_DELIVERED = 'delivered'
 
+    STATUS_CHOICES = (
+        (STATUS_PENDING, _('Pending')),
+        (STATUS_ERROR, _('Error')),
+        (STATUS_RECEIVED, _('Received')),
+        (STATUS_REJECTED, _('Rejected')),
+        (STATUS_CONFIRMED, _('Confirmed')),
+        (STATUS_CANCELLED_BY_USER, _('Cancelled by user')),
+        (STATUS_APPROVED, _('Approved')),
+        (STATUS_CANCELLED, _('Cancelled')),
+        (STATUS_CANCELLED_IN_FLIGHT, _('Cancelled in Flight')),
+        (STATUS_DISPATCHED, _('Dispatched')),
+        (STATUS_APPROACHING_ETA, _('Approaching Eta')),
+        (STATUS_ETA_DELAYED, _('Eta delayed')),
+        (STATUS_DELIVERED, _('Delivered'))
+    )
+
     class Meta:
+        app_label = 'zipline'
         index_together = [
             ['order', 'package_number'],
         ]
 
-    order = models.ForeignKey('EmergencyOrder')
+    order = models.ForeignKey('EmergencyOrder', on_delete=models.CASCADE)
 
     # The timestamp in CommCareHQ that the status update was received
     timestamp = models.DateTimeField()
@@ -105,6 +124,10 @@ class EmergencyOrderStatusUpdate(models.Model):
 
 
 class EmergencyOrder(models.Model):
+
+    class Meta:
+        app_label = 'zipline'
+
     domain = models.CharField(max_length=126)
 
     # The id of the user who initiated the order
@@ -182,6 +205,8 @@ class EmergencyOrder(models.Model):
 class EmergencyOrderPackage(models.Model):
 
     class Meta:
+        app_label = 'zipline'
+
         index_together = [
             ['order', 'package_number'],
         ]
@@ -191,7 +216,7 @@ class EmergencyOrderPackage(models.Model):
         ]
 
     # (order, package_number) matches up with the same-named fields on EmergencyOrderStatusUpdate
-    order = models.ForeignKey('EmergencyOrder')
+    order = models.ForeignKey('EmergencyOrder', on_delete=models.CASCADE)
     package_number = models.IntegerField()
 
     # Same format as EmergencyOrder.products_requested; represents products and quantities
@@ -269,6 +294,7 @@ class BaseOrderableProduct(models.Model):
 
     class Meta:
         abstract = True
+        app_label = 'zipline'
         unique_together = [
             ['domain', 'code'],
         ]

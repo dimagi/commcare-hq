@@ -12,6 +12,7 @@ from corehq.apps.sms.messages import (
     MSG_MOBILE_WORKER_JAVA_INVITATION,
     MSG_MOBILE_WORKER_ANDROID_INVITATION,
     MSG_REGISTRATION_WELCOME_MOBILE_WORKER,
+    MSG_REGISTRATION_INSTALL_COMMCARE,
 )
 from corehq.apps.sms.models import (SQLMobileBackendMapping, SelfRegistrationInvitation,
     SMS, OUTGOING, PhoneNumber)
@@ -19,15 +20,17 @@ from corehq.apps.sms.resources.v0_5 import SelfRegistrationUserInfo
 from corehq.apps.sms.tests.util import BaseSMSTest, delete_domain_phone_numbers
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.util import format_username
+from corehq.const import GOOGLE_PLAY_STORE_COMMCARE_URL
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from django_prbac.models import Role
 from django.test import Client, TestCase
-from mock import patch
+from mock import patch, Mock
 
 
 DUMMY_APP_ODK_URL = 'http://localhost/testapp'
 DUMMY_REGISTRATION_URL = 'http://localhost/register'
 DUMMY_APP_INFO_URL = 'http://localhost/appinfo'
+DUMMY_APP_INFO_URL_B64 = base64.b64encode(DUMMY_APP_INFO_URL)
 
 
 def noop(*args, **kwargs):
@@ -126,17 +129,15 @@ class RegistrationTestCase(BaseSMSTest):
         user_data = {'abc': 'def'}
 
         # Initiate Registration Workflow
-        with patch.object(SelfRegistrationInvitation, 'get_app_odk_url', return_value=DUMMY_APP_ODK_URL):
-            SelfRegistrationInvitation.initiate_workflow(
-                self.domain,
-                [SelfRegistrationUserInfo('999123', user_data)],
-                app_id=self.app_id,
-            )
+        SelfRegistrationInvitation.initiate_workflow(
+            self.domain,
+            [SelfRegistrationUserInfo('999123', user_data)],
+            app_id=self.app_id,
+        )
 
         self.assertRegistrationInvitation(
             phone_number='999123',
             app_id=self.app_id,
-            odk_url=DUMMY_APP_ODK_URL,
             phone_type=None,
             android_only=False,
             require_email=False,
@@ -152,7 +153,6 @@ class RegistrationTestCase(BaseSMSTest):
         self.assertRegistrationInvitation(
             phone_number='999123',
             app_id=self.app_id,
-            odk_url=DUMMY_APP_ODK_URL,
             phone_type=SelfRegistrationInvitation.PHONE_TYPE_OTHER,
             android_only=False,
             require_email=False,
@@ -183,17 +183,15 @@ class RegistrationTestCase(BaseSMSTest):
         user_data = {'abc': 'def'}
 
         # Initiate Registration Workflow
-        with patch.object(SelfRegistrationInvitation, 'get_app_odk_url', return_value=DUMMY_APP_ODK_URL):
-            SelfRegistrationInvitation.initiate_workflow(
-                self.domain,
-                [SelfRegistrationUserInfo('999123', user_data)],
-                app_id=self.app_id,
-            )
+        SelfRegistrationInvitation.initiate_workflow(
+            self.domain,
+            [SelfRegistrationUserInfo('999123', user_data)],
+            app_id=self.app_id,
+        )
 
         self.assertRegistrationInvitation(
             phone_number='999123',
             app_id=self.app_id,
-            odk_url=DUMMY_APP_ODK_URL,
             phone_type=None,
             android_only=False,
             require_email=False,
@@ -204,14 +202,15 @@ class RegistrationTestCase(BaseSMSTest):
         self.assertLastOutgoingSMS('+999123', [_MESSAGES[MSG_MOBILE_WORKER_INVITATION_START]])
 
         # Choose phone type 'android'
-        with patch.object(SelfRegistrationInvitation, 'get_user_registration_url', return_value=DUMMY_REGISTRATION_URL), \
+        with patch('corehq.apps.sms.models.SelfRegistrationInvitation.odk_url') as mock_odk_url, \
+                patch.object(SelfRegistrationInvitation, 'get_user_registration_url', return_value=DUMMY_REGISTRATION_URL), \
                 patch.object(SelfRegistrationInvitation, 'get_app_info_url', return_value=DUMMY_APP_INFO_URL):
+            mock_odk_url.__get__ = Mock(return_value=DUMMY_APP_ODK_URL)
             incoming('+999123', '1', self.backend.hq_api_id)
 
         self.assertRegistrationInvitation(
             phone_number='999123',
             app_id=self.app_id,
-            odk_url=DUMMY_APP_ODK_URL,
             phone_type=SelfRegistrationInvitation.PHONE_TYPE_ANDROID,
             android_only=False,
             require_email=False,
@@ -221,7 +220,7 @@ class RegistrationTestCase(BaseSMSTest):
 
         self.assertLastOutgoingSMS('+999123', [
             _MESSAGES[MSG_MOBILE_WORKER_ANDROID_INVITATION].format(DUMMY_REGISTRATION_URL),
-            '[commcare app - do not delete] {}'.format(DUMMY_APP_INFO_URL),
+            '[commcare app - do not delete] {}'.format(DUMMY_APP_INFO_URL_B64),
         ])
 
         invite = self._get_sms_registration_invitation()
@@ -250,9 +249,10 @@ class RegistrationTestCase(BaseSMSTest):
         self.domain_obj.save()
 
         # Initiate Registration Workflow
-        with patch.object(SelfRegistrationInvitation, 'get_app_odk_url', return_value=DUMMY_APP_ODK_URL), \
+        with patch('corehq.apps.sms.models.SelfRegistrationInvitation.odk_url') as mock_odk_url, \
                 patch.object(SelfRegistrationInvitation, 'get_user_registration_url', return_value=DUMMY_REGISTRATION_URL), \
                 patch.object(SelfRegistrationInvitation, 'get_app_info_url', return_value=DUMMY_APP_INFO_URL):
+            mock_odk_url.__get__ = Mock(return_value=DUMMY_APP_ODK_URL)
             SelfRegistrationInvitation.initiate_workflow(
                 self.domain,
                 [SelfRegistrationUserInfo('999123')],
@@ -263,7 +263,6 @@ class RegistrationTestCase(BaseSMSTest):
         self.assertRegistrationInvitation(
             phone_number='999123',
             app_id=self.app_id,
-            odk_url=DUMMY_APP_ODK_URL,
             phone_type=SelfRegistrationInvitation.PHONE_TYPE_ANDROID,
             android_only=True,
             require_email=False,
@@ -273,7 +272,7 @@ class RegistrationTestCase(BaseSMSTest):
 
         self.assertLastOutgoingSMS('+999123', [
             _MESSAGES[MSG_MOBILE_WORKER_ANDROID_INVITATION].format(DUMMY_REGISTRATION_URL),
-            '[commcare app - do not delete] {}'.format(DUMMY_APP_INFO_URL),
+            '[commcare app - do not delete] {}'.format(DUMMY_APP_INFO_URL_B64),
         ])
 
         invite = self._get_sms_registration_invitation()
@@ -302,13 +301,12 @@ class RegistrationTestCase(BaseSMSTest):
         self.domain_obj.save()
 
         # Initiate Registration Workflow
-        with patch.object(SelfRegistrationInvitation, 'get_app_odk_url', return_value=DUMMY_APP_ODK_URL):
-            SelfRegistrationInvitation.initiate_workflow(
-                self.domain,
-                [SelfRegistrationUserInfo('999123')],
-                app_id=self.app_id,
-                custom_first_message='Custom Message',
-            )
+        SelfRegistrationInvitation.initiate_workflow(
+            self.domain,
+            [SelfRegistrationUserInfo('999123')],
+            app_id=self.app_id,
+            custom_first_message='Custom Message',
+        )
 
         self.assertLastOutgoingSMS('+999123', ['Custom Message'])
 
@@ -318,9 +316,10 @@ class RegistrationTestCase(BaseSMSTest):
         self.domain_obj.save()
 
         # Initiate Registration Workflow
-        with patch.object(SelfRegistrationInvitation, 'get_app_odk_url', return_value=DUMMY_APP_ODK_URL), \
+        with patch('corehq.apps.sms.models.SelfRegistrationInvitation.odk_url') as mock_odk_url, \
                 patch.object(SelfRegistrationInvitation, 'get_user_registration_url', return_value=DUMMY_REGISTRATION_URL), \
                 patch.object(SelfRegistrationInvitation, 'get_app_info_url', return_value=DUMMY_APP_INFO_URL):
+            mock_odk_url.__get__ = Mock(return_value=DUMMY_APP_ODK_URL)
             SelfRegistrationInvitation.initiate_workflow(
                 self.domain,
                 [SelfRegistrationUserInfo('999123')],
@@ -331,7 +330,48 @@ class RegistrationTestCase(BaseSMSTest):
 
         self.assertLastOutgoingSMS('+999123', [
             'Sign up here: {}'.format(DUMMY_REGISTRATION_URL),
-            '[commcare app - do not delete] {}'.format(DUMMY_APP_INFO_URL),
+            '[commcare app - do not delete] {}'.format(DUMMY_APP_INFO_URL_B64),
+        ])
+
+    def test_resend_install_link(self):
+        self.domain_obj.sms_mobile_worker_registration_enabled = True
+        self.domain_obj.enable_registration_welcome_sms_for_mobile_worker = True
+        self.domain_obj.save()
+
+        with patch.object(SelfRegistrationInvitation, 'get_app_info_url', return_value=DUMMY_APP_INFO_URL):
+            success_numbers, invalid_format_numbers, error_numbers = SelfRegistrationInvitation.send_install_link(
+                self.domain,
+                [SelfRegistrationUserInfo('999123')],
+                self.app_id
+            )
+            self.assertEqual(success_numbers, ['999123'])
+            self.assertEqual(invalid_format_numbers, [])
+            self.assertEqual(error_numbers, [])
+
+        self.assertLastOutgoingSMS('+999123', [
+            _MESSAGES[MSG_REGISTRATION_INSTALL_COMMCARE].format(GOOGLE_PLAY_STORE_COMMCARE_URL),
+            '[commcare app - do not delete] {}'.format(DUMMY_APP_INFO_URL_B64),
+        ])
+
+    def test_resend_install_link_with_custom_message(self):
+        self.domain_obj.sms_mobile_worker_registration_enabled = True
+        self.domain_obj.enable_registration_welcome_sms_for_mobile_worker = True
+        self.domain_obj.save()
+
+        with patch.object(SelfRegistrationInvitation, 'get_app_info_url', return_value=DUMMY_APP_INFO_URL):
+            success_numbers, invalid_format_numbers, error_numbers = SelfRegistrationInvitation.send_install_link(
+                self.domain,
+                [SelfRegistrationUserInfo('999123')],
+                self.app_id,
+                custom_message='Click here to reinstall CommCare: {}'
+            )
+            self.assertEqual(success_numbers, ['999123'])
+            self.assertEqual(invalid_format_numbers, [])
+            self.assertEqual(error_numbers, [])
+
+        self.assertLastOutgoingSMS('+999123', [
+            'Click here to reinstall CommCare: {}'.format(GOOGLE_PLAY_STORE_COMMCARE_URL),
+            '[commcare app - do not delete] {}'.format(DUMMY_APP_INFO_URL_B64),
         ])
 
 
@@ -355,7 +395,7 @@ class RegistrationAPITestCase(TestCase):
         domain_obj = Domain(name=name, sms_mobile_worker_registration_enabled=True)
         domain_obj.save()
 
-        plan = DefaultProductPlan.get_default_plan(edition=SoftwarePlanEdition.ADVANCED)
+        plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.ADVANCED)
         account = BillingAccount.get_or_create_account_by_domain(
             name, created_by="automated-test-" + cls.__name__
         )[0]

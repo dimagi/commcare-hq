@@ -155,7 +155,7 @@ class MultiTopicCheckpointEventHandler(PillowCheckpointEventHandler):
             checkpoint_doc.save()
 
     def fire_change_processed(self, change, context):
-        if context.changes_seen % self.checkpoint_frequency == 0 and context.do_set_checkpoint:
+        if self.should_update_checkpoint(context):
             updated_to = self.change_feed.get_current_checkpoint_offsets()
             self.checkpoint.update_to(json.dumps(updated_to))
 
@@ -170,6 +170,7 @@ def change_from_kafka_message(message):
         )
     except UnknownDocumentStore:
         document_store = None
+        notify_error("Unknown document store: {}".format(change_meta.data_source_type))
     return Change(
         id=change_meta.document_id,
         sequence_id=message.offset,

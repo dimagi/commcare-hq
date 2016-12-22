@@ -1,5 +1,7 @@
-from django.conf.urls import *
+from django.conf.urls import url
 
-urlpatterns = patterns('corehq.messaging.smsbackends.sislog.views',
-    url(r'^in/?$', 'sms_in', name='sms_in'),
-)
+from corehq.messaging.smsbackends.sislog.views import sms_in
+
+urlpatterns = [
+    url(r'^in/?$', sms_in, name='sms_in'),
+]

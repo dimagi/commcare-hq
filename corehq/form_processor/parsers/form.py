@@ -5,7 +5,7 @@ from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import Attachment
 from corehq.form_processor.utils import convert_xform_to_json, adjust_datetimes
 from couchforms import XMLSyntaxError
-from couchforms.exceptions import DuplicateError
+from couchforms.exceptions import DuplicateError, MissingXMLNSError
 from dimagi.utils.couch import LockManager, ReleaseOnError
 
 
@@ -75,7 +75,7 @@ def process_xform_xml(domain, instance, attachments=None):
 
     try:
         return _create_new_xform(domain, instance, attachments=attachments)
-    except XMLSyntaxError as e:
+    except (MissingXMLNSError, XMLSyntaxError) as e:
         return _get_submission_error(domain, instance, e)
     except DuplicateError as e:
         return _handle_id_conflict(instance, e.xform, domain)
@@ -100,6 +100,9 @@ def _create_new_xform(domain, instance_xml, attachments=None):
 
     assert attachments is not None
     form_data = convert_xform_to_json(instance_xml)
+    if not form_data.get('@xmlns'):
+        raise MissingXMLNSError("Form is missing a required field: XMLNS")
+
     adjust_datetimes(form_data)
 
     xform = interface.new_xform(form_data)

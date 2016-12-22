@@ -1,11 +1,11 @@
 import json
 from corehq.apps.sms.api import incoming
-from corehq.apps.sms.views import NewIncomingBackendView
+from corehq.apps.sms.views import IncomingBackendView
 from corehq.messaging.smsbackends.apposit.models import SQLAppositBackend
 from django.http import HttpResponse, HttpResponseBadRequest
 
 
-class AppositIncomingView(NewIncomingBackendView):
+class AppositIncomingView(IncomingBackendView):
     urlname = 'apposit_incoming'
 
     @property
@@ -30,6 +30,7 @@ class AppositIncomingView(NewIncomingBackendView):
             message,
             SQLAppositBackend.get_api_id(),
             backend_message_id=message_id,
+            domain_scope=self.domain,
             backend_id=self.backend_couch_id
         )
         return HttpResponse("")

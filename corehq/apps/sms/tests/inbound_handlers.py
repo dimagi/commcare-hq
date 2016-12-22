@@ -266,7 +266,8 @@ class KeywordTestCase(TouchformsTestCase):
         sms = incoming("999123", "x", "TEST")
         self.assertMetadataEqual(sms, session._id, WORKFLOW_KEYWORD)
 
-        sms = self.assertLastOutboundSMSEquals(self.user1, "%s date" % get_message(MSG_INVALID_DATE))
+        sms = self.assertLastOutboundSMSEquals(self.user1, "%s date" %
+            get_message(MSG_INVALID_DATE, context=('YYYYMMDD',)))
         self.assertMetadataEqual(sms, session._id, WORKFLOW_KEYWORD)
 
         sms = incoming("999123", "20140101", "TEST")
@@ -331,10 +332,9 @@ class KeywordTestCase(TouchformsTestCase):
         self.assertLastOutboundSMSEquals(self.user1, get_message(MSG_MISSING_EXTERNAL_ID))
         self.assertNoNewSubmission(form)
 
-        def get_field_and_message(field_name, msg_id):
-            msg1 = get_message(MSG_FIELD_DESCRIPTOR,
-                context=(field_name,))
-            msg2 = get_message(msg_id)
+        def get_field_and_message(field_name, msg_id, additional_context=None):
+            msg1 = get_message(MSG_FIELD_DESCRIPTOR, context=(field_name,))
+            msg2 = get_message(msg_id, context=additional_context)
             return "%s%s" % (msg1, msg2)
 
         # Test validation on all fields from structured sms: positional args
@@ -363,7 +363,8 @@ class KeywordTestCase(TouchformsTestCase):
         self.assertLastOutboundSMSEquals(self.user1, get_field_and_message("q_long", MSG_INVALID_LONG))
         self.assertNoNewSubmission(form)
         incoming("999123", "validation_test_ss_1 abc 2 c 50 21.3 -100 x 2345", "TEST")
-        self.assertLastOutboundSMSEquals(self.user1, get_field_and_message("q_date", MSG_INVALID_DATE))
+        self.assertLastOutboundSMSEquals(self.user1,
+            get_field_and_message("q_date", MSG_INVALID_DATE, ('YYYYMMDD',)))
         self.assertNoNewSubmission(form)
         incoming("999123", "validation_test_ss_1 abc 2 c 50 21.3 -100 20140101 x", "TEST")
         self.assertLastOutboundSMSEquals(self.user1, get_field_and_message("q_time", MSG_INVALID_TIME))
@@ -412,7 +413,8 @@ class KeywordTestCase(TouchformsTestCase):
         self.assertLastOutboundSMSEquals(self.user1, get_field_and_message("q_long", MSG_INVALID_LONG))
         self.assertNoNewSubmission(form)
         incoming("999123", "validation_test_ss_2,abc,2,1 c,50,21.3,-100,x,2345", "TEST")
-        self.assertLastOutboundSMSEquals(self.user1, get_field_and_message("q_date", MSG_INVALID_DATE))
+        self.assertLastOutboundSMSEquals(self.user1,
+            get_field_and_message("q_date", MSG_INVALID_DATE, ('YYYYMMDD',)))
         self.assertNoNewSubmission(form)
         incoming("999123", "validation_test_ss_2,abc,2,1 c,50,21.3,-100,20140101,x", "TEST")
         self.assertLastOutboundSMSEquals(self.user1, get_field_and_message("q_time", MSG_INVALID_TIME))
@@ -461,7 +463,8 @@ class KeywordTestCase(TouchformsTestCase):
         self.assertLastOutboundSMSEquals(self.user1, get_field_and_message("ARG6", MSG_INVALID_LONG))
         self.assertNoNewSubmission(form)
         incoming("999123", "validation_test_ss_3,arg1abc,arg22,arg31 c,arg450,arg521.3,arg6-100,arg7x,arg82345", "TEST")
-        self.assertLastOutboundSMSEquals(self.user1, get_field_and_message("ARG7", MSG_INVALID_DATE))
+        self.assertLastOutboundSMSEquals(self.user1,
+            get_field_and_message("ARG7", MSG_INVALID_DATE, ('YYYYMMDD',)))
         self.assertNoNewSubmission(form)
         incoming("999123", "validation_test_ss_3,arg1abc,arg22,arg31 c,arg450,arg521.3,arg6-100,arg720140101,arg8x", "TEST")
         self.assertLastOutboundSMSEquals(self.user1, get_field_and_message("ARG8", MSG_INVALID_TIME))
@@ -510,7 +513,8 @@ class KeywordTestCase(TouchformsTestCase):
         self.assertLastOutboundSMSEquals(self.user1, get_field_and_message("ARG6", MSG_INVALID_LONG))
         self.assertNoNewSubmission(form)
         incoming("999123", "validation_test_ss_4,arg1=abc,arg2=2,arg3=1 c,arg4=50,arg5=21.3,arg6=-100,arg7=x,arg8=2345", "TEST")
-        self.assertLastOutboundSMSEquals(self.user1, get_field_and_message("ARG7", MSG_INVALID_DATE))
+        self.assertLastOutboundSMSEquals(self.user1,
+            get_field_and_message("ARG7", MSG_INVALID_DATE, ('YYYYMMDD',)))
         self.assertNoNewSubmission(form)
         incoming("999123", "validation_test_ss_4,arg1=abc,arg2=2,arg3=1 c,arg4=50,arg5=21.3,arg6=-100,arg7=20140101,arg8=x", "TEST")
         self.assertLastOutboundSMSEquals(self.user1, get_field_and_message("ARG8", MSG_INVALID_TIME))

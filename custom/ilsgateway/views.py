@@ -22,7 +22,7 @@ from django.utils.translation import ugettext_noop
 from django.views.decorators.http import require_POST
 from corehq.apps.domain.decorators import domain_admin_required, login_and_domain_required
 from corehq.const import SERVER_DATETIME_FORMAT_NO_SEC
-from custom.ilsgateway import DashboardReport
+from custom.ilsgateway.tanzania.reports.dashboard_report import DashboardReport
 from custom.ilsgateway.forms import SupervisionDocumentForm, ILSConfigForm
 from custom.ilsgateway.oneoff import recalculate_moshi_rural_task, recalculate_non_facilities_task
 from custom.ilsgateway.tanzania import make_url

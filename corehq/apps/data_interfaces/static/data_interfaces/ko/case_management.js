@@ -73,7 +73,7 @@ var CaseManagement = function (o) {
             $row.find('td:nth-child(4)').html(username +group_label+' <span class="label label-info" title="' + username +
                                             '">updated</span>');
             $row.find('td:nth-child(5)').html('Today ' + date_message);
-            $checkbox.attr("checked", false).change();
+            $checkbox.prop("checked", false).change();
         };
     };
 

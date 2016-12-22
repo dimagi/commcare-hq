@@ -21,9 +21,9 @@ DOT_INTERPOLATE_PATTERN = r'(\D|^)\.(\D|$)'
 
 CASE_REFERENCE_VALIDATION_ERROR = ugettext_lazy(
     "Your form uses an expression which references a case, but cases are not available. Please go to form "
-    "settings and either remove the case reference or (1) make sure that the module is set to display the "
-    "module first and then form, and (2) make sure that all forms in this module update or close a case "
-    "(which means registration forms must go in a different module)."
+    "settings and either remove the case reference or (1) make sure that the menu mode is set to display the "
+    "menu first and then form, and (2) make sure that all forms in this case list update or close a case "
+    "(which means registration forms must go in a different case list)."
 )
 
 
@@ -187,7 +187,7 @@ class UserCaseXPath(XPath):
 
     def case(self):
         user_id = session_var(var='userid', path='context')
-        return CaseTypeXpath(USERCASE_TYPE).case().select('hq_user_id', user_id).select_raw(1)
+        return CaseTypeXpath(USERCASE_TYPE).case().select('hq_user_id', user_id)
 
 
 class CaseXPath(XPath):

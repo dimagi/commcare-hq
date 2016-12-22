@@ -183,7 +183,7 @@
                 $wells.height(highest);
             });
         }
-        $(window).load(assure_correct_spacing);
+        $(window).on('load', assure_correct_spacing);
         $(window).resize(assure_correct_spacing);
     </script>
     <script>

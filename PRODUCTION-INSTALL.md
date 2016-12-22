@@ -2,7 +2,7 @@ CommCare HQ in Production
 =========================
 
 This is a complete guide for setting up a production deployment of CommCare HQ
-on Ubuntu 12.04 LTS.  It has only been tested on 32-bit Ubuntu.
+on Ubuntu 16.04 LTS.
 
 Doing this highly discouraged unless you have a specific reason for not using
 CommCareHQ.org, because it requires a lot of knowledge and work to set up, let
@@ -12,126 +12,84 @@ The steps used here are almost identical to those used by india.commcarehq.org,
 which is a single-server deployment of CommCare HQ.  For more complicated
 deployment needs, contact Dimagi.
 
+Single server setup requires ~4GB RAM minimum.
+
 ### Create a new superuser
 
 Log in to your server and create a new superuser to run CommCare HQ and its
 helper processes:
 
-    sudo adduser cchq
-    sudo adduser cchq sudo
+    sudo adduser commcarehq
 
 ### Install dependencies
 
 As any superuser, run the following commands in order to install all of the
-dependencies for HQ.  As noted at the top of install.sh, you need to download
-the tar.gz for the latest JDK 7 for your architecture from
-http://www.oracle.com/technetwork/java/javase/downloads/index.html and save the
-file as `jdk.tar.gz` in the same directory before running `install.sh`.
+dependencies for HQ.
 
-    wget https://raw.github.com/dimagi/commcare-hq/master/install.sh
-    chmod +x install.sh
-    ./install.sh
+    sudo apt install postgresql postgresql-server-dev-all couchdb elasticsearch git libffi-dev python-pip virtualenv libxslt1-dev redis-server zookeeper nginx supervisor npm jython
+    
+Edit `/etc/default/elasticsearch` and uncomment `START_DAEMON=true` line if present.
+Then start all required services:
 
-If the script asks you to choose a Java installation, be sure to select the
-option for `/usr/lib/jvm/jdk1.7.0`.
+    sudo service postgresql start
+    sudo service couchdb start
+    sudo service redis start
+    sudo service elasticsearch start
 
 ### Create a CouchDB database
 
     curl -X PUT http://localhost:5984/commcarehq
 
-
-### Define a server configuration
-
-Now, switch to your local machine.
-
-First we'll install Git and [Fabric](http://fabfile.org), which lets you manage
-your remote deploy by running commands over SSH.
-
-    sudo apt-get install git python-pip
-    sudo pip install --upgrade pip
-    sudo pip install fabric
-
-You should clone the official CommCare HQ repo located at
-https://github.com/dimagi/commcare-hq in order to modify the configuration for
-your server.  You can either create a fork on Github or just clone the repo and
-maintain a fork locally.
-
-    git clone git://github.com/dimagi/commcare-hq.git
-    cd commcare-hq
-
-Next, edit `fabfile.py` to add a new task definition for your server:
-
-```python
-@task
-def myserver():
-    env.environment = 'myserver'
-    env.sudo_user = 'cchq'   # change this if you used a different username
-    env.hosts = ['<my server ip>']
-    env.user = prompt("Username: ", default=env.user)
-    env.django_port = '8001'
-
-    _setup_path()
-
-    env.roledefs = {
-        'couch': [],
-        'pg': [],
-        'rabbitmq': [],
-        'django_celery': [],
-        'django_app': [],
-        'django_public': [],
-        'django_pillowtop': [],
-        'formsplayer': [],
-        'remote_es': [],
-        'staticfiles': [],
-        'lb': [],
-        'deploy': [],
-
-        'django_monolith': ['<my server ip>'],
-    }
-    env.roles = ['django_monolith']
-    env.es_endpoint = 'localhost'
-```
-
-Replace both occurrences of `myserver` above with a name for your deployment
-and both occurences of `<my server ip>` with the IP address of your server.
-
 ### Create Postgres user and database
 
-Now we will run our first fabric task. For all fabric tasks, be sure to specify
-the name of the user you created above when prompted for a username.
+    sudo -upostgresql createuser commcarehq
+    sudo -upostgresql createdb -O commcarehq commcarehq
+    
+### Install and start kafka
 
-This will prompt you for a password to create a `cchq` Postgres user (or
-whatever username you have specified as `env.sudo_user`), and create a
-`commcare-hq_myserver` database on the remote server by SSH-ing in and running
-the necessary commands.
-
-   fab myserver create_pg_user
-   fab myserver create_pg_db
-
+    wget http://www-eu.apache.org/dist/kafka/0.10.1.0/kafka_2.11-0.10.1.0.tgz
+	tar xf kafka_2.11-0.10.1.0.tgz
+	cd kafka_2.11-0.10.1.0
+    bin/zookeeper-server-start.sh -daemon config/zookeeper.properties
+	bin/kafka-server-start.sh -daemon config/server.properties
+    
+(check for https://kafka.apache.org/downloads for most recent version).
 
 ### Set up code checkouts, virtualenvs, and apache config
 
-This will clone the codebase on the remote server, set up a virtualenv for
-all of the necessary Python packages, and install them.  Then it will create and
-enable an Apache configuration file that makes Apache handle requests for static
-files and delegate the rest to the Django process.
+Login as commcare user and chdir to /home/commcarehq:
 
-   fab myserver bootstrap
+    sudo su commcare
+    cd ~
+
+Clone CommCare repository with it's dependencies:
+
+    git clone --depth 1 https://github.com/dimagi/commcare-hq.git
+	git submodule update --depth 5 --init --recursive
+    
+(--depth is optional to speedup download if you don't need entire commit history)
+
+Create virtualenv:
+
+    virtualenv .
+
+And install all required packages:
+
+    bin/pip install -r commcare-hq/requirements/requirements.txt -r commcare-hq/requirements/prod-requirements.txt -r commcare-hq/requirements/dev-requirements.txt
 
 ### Edit localsettings.py
 
-Log in to the remote server as the user you created and edit
-`/home/cchq/www/myserver/code_root/localsettings.py` to set your Django database
-settings.  The relevant part should look something like this (where `myserver`
-is the name you used above):
+Copy `/home/commcare-hq/commcare-hq/localsettings.example.py`
+to `/home/commcare-hq/commcare-hq/localsettings.py` and edit it to set your Django database
+settings.  The relevant part should look something like this:
 
 ```python
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'commcare-hq_myserver',
-        'USER': 'cchq',  # change this if you used a different username
-        'PASSWORD': '<password you used in create_pg_user',
+        'NAME': 'commcarehq', # change this if you used a different database name during createdb
+        'USER': 'commcarehq',  # change this if you used a different username
+        'PASSWORD': '',
         'HOST': 'localhost',
         'PORT': '5432'
     }
@@ -143,6 +101,10 @@ COUCH_USERNAME = ''
 COUCH_PASSWORD = ''
 COUCH_DATABASE_NAME = 'commcarehq'
 ```
+
+Add this required settings at the end of local_settings.py
+
+    from dev_settings import SHARED_DRIVE_ROOT, LOCAL_APPS
 
 Also make sure that the directory or directories containing `LOG_FILE` and
 `DJANGO_LOG_FILE` exist and are writeable by the cchq user.
@@ -156,27 +118,27 @@ edit `localsettings.py` and ensure that `DEFAULT_PROTOCOL` is `http` and not
 
 ### Sync HQ with databases
 
-While still logged in to the remote server, navigate to `code_root/` and execute
+While still logged in to the remote server, navigate to `/home/commcarehq/commcare-hq/` and execute
 all of the commands from [Set up your django environment](https://github.com/dimagi/commcare-hq#set-up-your-django-environment) 
 in the main README, except instead of `./manage.py`, use the full path of the
 Python binary for the production virtualenv.  For example:
 
-    /home/cchq/www/myserver/python_env/bin/python manage.py sync_couch_views
-    /home/cchq/www/myserver/python_env/bin/python manage.py migrate --noinput
+    /home/commcarehq/bin/python manage.py sync_couch_views
+    env CCHQ_IS_FRESH_INSTALL=1 /home/commcarehq/bin/python manage.py migrate --noinput
+    /home/commcarehq/bin/python manage.py compilejsi18n
+    /home/commcarehq/bin/python manage.py bootstrap mydomain myuser mypassword
+    /home/commcarehq/bin/python manage.py create_kafka_topics
+    /home/commcarehq/bin/python manage.py ptop_preindex
+    /home/commcarehq/bin/python manage.py ptop_es_manage --flip_all_aliases
 
 Note that for the touchforms localsettings, it should correspond to whatever
 `env.django_port` is for the environment you added the the fabfile, so
 `localhost:8001` in this instance.
 
-Once you have a completed `localsettings.py` (the one in `code_root`, not the
-one in `touchforms/backend/` mentioned in the README), be sure to copy it to
-`/home/cchq/www/myserver/code_root_preindex/localsettings.py`.
-
 ### Configure Supervisor
 
 We use [Supervisor](http://supervisord.org/) to start and manage all of the helper
-processes for HQ.  Supervisor and its upstart script are automatically installed
-by `install.sh`, but we need to configure supervisor with our process
+processes for HQ.  Ыe need to configure supervisor with our process
 definitions.  To do this, edit `/etc/supervisord.conf` on the remote machine and
 replace the last two lines
 
@@ -186,33 +148,51 @@ replace the last two lines
 with
 
     [include]
-    files = /home/cchq/services/supervisor/*.conf
+    files = /home/commcarehq/commcare-hq/services/supervisor/*.conf
+    
+Create `/home/commcarehq/commcare-hq/services/supervisor`
+    
+    mkdir -p services/supervisor
+    
+And populate it with process definitions:
 
-Then run
+    for i in `ls deployment/commcare-hq-deploy/fab/services/templates/`; do /home/commcarehq/bin/python manage.py make_supervisor_conf --conf_file $i --conf_destination services/supervisor --params '{"project":"commcarehq", "environment": "prod", "code_current": "/home/commcarehq/commcare-hq/", "django_bind": "127.0.0.1", "django_port": 8000, "flower_port": 5555, "log_dir":"/tmp", "virtualenv_current":"/home/commcarehq/", "sudo_user": "commcarehq", "celery_params": {"concurrency": 1}}'; done
+    
+### Install bower & collect static files
+    
+    npm install bower
+    nodejs node_modules/bower/bin/bower install
+    /home/commcarehq/bin/python manage.py collectstatic --noinput
 
-    sudo supervisorctl reload
+### Configure & start web server
 
-### Start HQ
+Logout from commcare user now and use ordinary superuser account.
+Create file /etc/nginx/sites-enabled/commcarehq with following contents:
+```
+server {
+    listen 80;
 
-Back on your local machine, run the following from your local checkout:
+    server_name yourdomainnamehere;
 
-    fab myserver preindex_views
-    fab myserver deploy
+    client_max_body_size 500m;
+    proxy_read_timeout 900;
 
-The last part of the deploy (services_restart) will fail due to our inability to
-reproduce some implicit fact about our production setup on CommCareHQ.org that
-allows it succeed there.  To deal with this, just log in to the remote server
-and run the following after every deploy:
+    location /static/ {
+         # fix path as needed
+         alias /home/commcarehq/commcare-hq/staticfiles/;
+    }
 
-    sudo supervisorctl stop all
-    sudo supervisorctl update
-    sudo supervisorctl reload
-    sudo supervisorctl start all
+    location / {
+        proxy_pass   http://localhost:8000;
+    }
+}
+```
 
-You can see the status of all HQ processes by running `sudo supervisorctl status`.
-Some processes which aren't necessary in a single-server deployment may have
-failed because we didn't bother to set them up.
+And restart nginx and supervisor:
 
+    sudo service nginx restart
+    sudo service supervisor restart
+    
 ### Congrats!
 
 You now have a working production installation of CommCare HQ.  

@@ -13,8 +13,13 @@ from sniffer.api import runnable, select_runnable, file_validator
 
 @select_runnable('python_tests')
 @file_validator
-def py_files(filename):
-    return filename.endswith('.py') and not os.path.basename(filename).startswith('.')
+def python_test_files(filename):
+    return (
+        filename.endswith('.py') or
+        filename.endswith('.json') or
+        filename.endswith('.xml') and
+        not os.path.basename(filename).startswith('.')
+    )
 
 
 # Here we instruct the 'javascript_tests' runnable to be kicked off

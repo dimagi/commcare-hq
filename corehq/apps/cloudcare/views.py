@@ -7,12 +7,14 @@ from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404
 from django.shortcuts import get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.cache import cache_page
 from django.views.generic import View
+from django.views.generic.base import TemplateView
 
 from couchdbkit import ResourceConflict
 
@@ -30,13 +32,21 @@ from xml2json.lib import xml2json
 
 from corehq import toggles, privileges
 from corehq.apps.accounting.decorators import requires_privilege_for_commcare_user, requires_privilege_with_fallback
-from corehq.apps.app_manager.dbaccessors import get_app, get_latest_build_doc, \
-    get_brief_apps_in_domain
+from corehq.apps.app_manager.dbaccessors import (
+    get_latest_build_doc,
+    get_brief_apps_in_domain,
+    get_latest_released_app_doc,
+    get_app_ids_in_domain,
+    get_current_app,
+    wrap_app,
+)
+from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.exceptions import FormNotFoundException, ModuleNotFoundException
-from corehq.apps.app_manager.models import Application, ApplicationBase
+from corehq.apps.app_manager.models import Application, ApplicationBase, RemoteApp
 from corehq.apps.app_manager.suite_xml.sections.details import get_instances_for_module
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.app_manager.util import get_cloudcare_session_data
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.cloudcare.api import (
     api_closed_to_status,
     CaseAPIResult,
@@ -51,11 +61,13 @@ from corehq.apps.cloudcare.decorators import require_cloudcare_access
 from corehq.apps.cloudcare.exceptions import RemoteAppError
 from corehq.apps.cloudcare.models import ApplicationAccess
 from corehq.apps.cloudcare.touchforms_api import BaseSessionDataHelper, CaseSessionDataHelper
+from corehq.apps.cloudcare.const import WEB_APPS_ENVIRONMENT, PREVIEW_APP_ENVIRONMENT
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest_ex, domain_admin_required
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.formdetails import readable
 from corehq.apps.style.decorators import (
     use_datatables,
+    use_legacy_jquery,
     use_jquery_ui,
 )
 from corehq.apps.users.models import CouchUser, CommCareUser
@@ -73,6 +85,7 @@ def default(request, domain):
     return HttpResponseRedirect(reverse('cloudcare_main', args=[domain, '']))
 
 
+@use_legacy_jquery
 def insufficient_privilege(request, domain, *args, **kwargs):
     context = {
         'domain': domain,
@@ -84,6 +97,7 @@ def insufficient_privilege(request, domain, *args, **kwargs):
 class CloudcareMain(View):
 
     @use_datatables
+    @use_legacy_jquery
     @use_jquery_ui
     @method_decorator(require_cloudcare_access)
     @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
@@ -104,11 +118,20 @@ class CloudcareMain(View):
         if not preview:
             apps = get_cloudcare_apps(domain)
             if request.project.use_cloudcare_releases:
-                # replace the apps with the last starred build of each app, removing the ones that aren't starred
-                apps = filter(
-                    lambda app: app.is_released,
-                    [get_app(domain, app['_id'], latest=True) for app in apps]
+
+                if (toggles.CLOUDCARE_LATEST_BUILD.enabled(domain) or
+                        toggles.CLOUDCARE_LATEST_BUILD.enabled(request.couch_user.username)):
+                    get_cloudcare_app = get_latest_build_doc
+                else:
+                    get_cloudcare_app = get_latest_released_app_doc
+
+                apps = map(
+                    lambda app: get_cloudcare_app(domain, app['_id']),
+                    apps,
                 )
+                apps = filter(None, apps)
+                apps = map(wrap_app, apps)
+
                 # convert to json
                 apps = [get_app_json(app) for app in apps]
             else:
@@ -117,8 +140,13 @@ class CloudcareMain(View):
                 apps = [get_app_json(ApplicationBase.wrap(app)) for app in apps if app]
 
         else:
-            apps = get_brief_apps_in_domain(domain)
-            apps = [get_app_json(app) for app in apps if app and app.application_version == V2]
+            # big TODO: write a new apps view for Formplayer, can likely cut most out now
+            if toggles.USE_FORMPLAYER_FRONTEND.enabled(domain):
+                apps = get_cloudcare_apps(domain)
+            else:
+                apps = get_brief_apps_in_domain(domain)
+            apps = [get_app_json(app) for app in apps if app and (
+                isinstance(app, RemoteApp) or app.application_version == V2)]
             meta = get_meta(request)
             track_clicked_preview_on_hubspot(request.couch_user, request.COOKIES, meta)
 
@@ -199,7 +227,6 @@ class CloudcareMain(View):
             "apps_raw": apps,
             "preview": preview,
             "maps_api_key": settings.GMAPS_API_KEY,
-            "offline_enabled": toggles.OFFLINE_CLOUDCARE.enabled(request.user.username),
             "sessions_enabled": request.couch_user.is_commcare_user(),
             "use_cloudcare_releases": request.project.use_cloudcare_releases,
             "username": request.user.username,
@@ -211,6 +238,137 @@ class CloudcareMain(View):
             return render(request, "cloudcare/formplayer_home.html", context)
         else:
             return render(request, "cloudcare/cloudcare_home.html", context)
+
+
+@location_safe
+class FormplayerMain(View):
+
+    preview = False
+    urlname = 'formplayer_main'
+
+    @use_datatables
+    @use_legacy_jquery
+    @use_jquery_ui
+    @method_decorator(require_cloudcare_access)
+    @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
+    def dispatch(self, request, *args, **kwargs):
+        return super(FormplayerMain, self).dispatch(request, *args, **kwargs)
+
+    def fetch_app(self, domain, app_id):
+        username = self.request.couch_user.username
+        if (toggles.CLOUDCARE_LATEST_BUILD.enabled(domain) or
+                toggles.CLOUDCARE_LATEST_BUILD.enabled(username)):
+            return get_latest_build_doc(domain, app_id)
+        else:
+            return get_latest_released_app_doc(domain, app_id)
+
+    def get(self, request, domain):
+        app_access = ApplicationAccess.get_by_domain(domain)
+        app_ids = get_app_ids_in_domain(domain)
+
+        apps = map(
+            lambda app_id: self.fetch_app(domain, app_id),
+            app_ids,
+        )
+        apps = filter(None, apps)
+        apps = filter(lambda app: app.get('cloudcare_enabled') or self.preview, apps)
+        apps = filter(lambda app: app_access.user_can_access_app(request.couch_user, app), apps)
+        apps = sorted(apps, key=lambda app: app['name'])
+
+        def _default_lang():
+            try:
+                return apps[0]['langs'][0]
+            except Exception:
+                return 'en'
+
+        # default language to user's preference, followed by
+        # first app's default, followed by english
+        language = request.couch_user.language or _default_lang()
+
+        context = {
+            "domain": domain,
+            "language": language,
+            "apps": apps,
+            "maps_api_key": settings.GMAPS_API_KEY,
+            "username": request.user.username,
+            "formplayer_url": settings.FORMPLAYER_URL,
+            "single_app_mode": False,
+            "home_url": reverse(self.urlname, args=[domain]),
+            "environment": WEB_APPS_ENVIRONMENT,
+        }
+        return render(request, "cloudcare/formplayer_home.html", context)
+
+
+class FormplayerMainPreview(FormplayerMain):
+
+    preview = True
+    urlname = 'formplayer_main_preview'
+
+    @use_legacy_jquery
+    def dispatch(self, request, *args, **kwargs):
+        return super(FormplayerMain, self).dispatch(request, *args, **kwargs)
+
+    def fetch_app(self, domain, app_id):
+        return get_current_app(domain, app_id)
+
+
+class FormplayerPreviewSingleApp(View):
+
+    urlname = 'formplayer_single_app'
+
+    @use_datatables
+    @use_legacy_jquery
+    @use_jquery_ui
+    @method_decorator(require_cloudcare_access)
+    @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
+    def dispatch(self, request, *args, **kwargs):
+        return super(FormplayerPreviewSingleApp, self).dispatch(request, *args, **kwargs)
+
+    def get(self, request, domain, app_id, **kwargs):
+        app_access = ApplicationAccess.get_by_domain(domain)
+
+        app = get_current_app(domain, app_id)
+
+        if not app_access.user_can_access_app(request.couch_user, app):
+            raise Http404()
+
+        def _default_lang():
+            try:
+                return app['langs'][0]
+            except Exception:
+                return 'en'
+
+        # default language to user's preference, followed by
+        # first app's default, followed by english
+        language = request.couch_user.language or _default_lang()
+
+        context = {
+            "domain": domain,
+            "language": language,
+            "apps": [app],
+            "maps_api_key": settings.GMAPS_API_KEY,
+            "username": request.user.username,
+            "formplayer_url": settings.FORMPLAYER_URL,
+            "single_app_mode": True,
+            "home_url": reverse(self.urlname, args=[domain, app_id]),
+            "environment": WEB_APPS_ENVIRONMENT,
+        }
+        return render(request, "cloudcare/formplayer_home.html", context)
+
+
+class PreviewAppView(TemplateView):
+    template_name = 'preview_app/base.html'
+    urlname = 'preview_app'
+
+    @use_legacy_jquery
+    def get(self, request, *args, **kwargs):
+        app = get_app(request.domain, kwargs.pop('app_id'))
+        return self.render_to_response({
+            'app': app,
+            'formplayer_url': settings.FORMPLAYER_URL,
+            "maps_api_key": settings.GMAPS_API_KEY,
+            "environment": PREVIEW_APP_ENVIRONMENT,
+        })
 
 
 @login_and_domain_required
@@ -319,7 +477,7 @@ def get_cases(request, domain):
             usercase_id = CommCareUser.get_by_user_id(user_id).get_usercase_id()
             usercase = accessor.get_case(usercase_id) if usercase_id else None
             return json_response(map(
-                lambda case: CaseAPIResult(id=case['_id'], couch_doc=case, id_only=ids_only),
+                lambda case: CaseAPIResult(domain=domain, id=case['_id'], couch_doc=case, id_only=ids_only),
                 filter(None, [case, case.parent, usercase])
             ))
 
@@ -332,7 +490,7 @@ def get_cases(request, domain):
         # owned case list + footprint
         case = accessor.get_case(case_id)
         assert case.domain == domain
-        cases = [CaseAPIResult(id=case_id, couch_doc=case, id_only=ids_only)]
+        cases = [CaseAPIResult(domain=domain, id=case_id, couch_doc=case, id_only=ids_only)]
     else:
         filters = get_filters_from_request_params(request_params)
         status = api_closed_to_status(request_params.get('closed', 'false'))
@@ -354,7 +512,6 @@ def filter_cases(request, domain, app_id, module_id, parent_id=None):
     xpath = EntriesHelper.get_filter_xpath(module)
     instances = get_instances_for_module(app, module, additional_xpaths=[xpath])
     extra_instances = [{'id': inst.id, 'src': inst.src} for inst in instances]
-    use_formplayer = toggles.USE_FORMPLAYER.enabled(domain)
     accessor = CaseAccessors(domain)
 
     # touchforms doesn't like this to be escaped
@@ -370,7 +527,7 @@ def filter_cases(request, domain, app_id, module_id, parent_id=None):
 
         helper = BaseSessionDataHelper(domain, request.couch_user)
         result = helper.filter_cases(xpath, additional_filters, DjangoAuth(auth_cookie),
-                                     extra_instances=extra_instances, use_formplayer=use_formplayer)
+                                     extra_instances=extra_instances)
         if result.get('status', None) == 'error':
             code = result.get('code', 500)
             message = result.get('message', _("Something went wrong filtering your cases."))
@@ -542,6 +699,36 @@ def sync_db_api(request, domain):
         return json_response(response)
 
 
+class ReadableQuestions(View):
+
+    urlname = 'readable_questions'
+
+    @csrf_exempt
+    @method_decorator(cloudcare_api)
+    def dispatch(self, request, *args, **kwargs):
+        return super(ReadableQuestions, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, domain):
+        instance_xml = request.POST.get('instanceXml').encode('utf-8')
+        app_id = request.POST.get('appId')
+        xmlns = request.POST.get('xmlns')
+
+        _, form_data_json = xml2json(instance_xml)
+        pretty_questions = readable.get_questions(domain, app_id, xmlns)
+
+        readable_form = readable.get_readable_form_data(form_data_json, pretty_questions)
+
+        rendered_readable_form = render_to_string(
+            'reports/form/partials/readable_form.html',
+            {'questions': readable_form}
+        )
+
+        return json_response({
+            'form_data': rendered_readable_form,
+            'form_questions': pretty_questions
+        })
+
+
 @cloudcare_api
 def render_form(request, domain):
     # get session
@@ -580,7 +767,13 @@ class HttpResponseConflict(HttpResponse):
 class EditCloudcareUserPermissionsView(BaseUserSettingsView):
     template_name = 'cloudcare/config.html'
     urlname = 'cloudcare_app_settings'
-    page_title = ugettext_noop("CloudCare Permissions")
+
+    @property
+    def page_title(self):
+        if toggles.USE_FORMPLAYER_FRONTEND.enabled(self.domain):
+            return _("Web Apps Permissions")
+        else:
+            return _("CloudCare Permissions")
 
     @method_decorator(domain_admin_required)
     @method_decorator(requires_privilege_with_fallback(privileges.CLOUDCARE))

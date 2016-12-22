@@ -29,10 +29,10 @@ class RandrHandler(KeywordHandler):
     def _handle(self, help=False):
         location = self.user.location
         status_type = None
-        if location.location_type == 'FACILITY':
+        if location.location_type_name == 'FACILITY':
             status_type = SupplyPointStatusTypes.R_AND_R_FACILITY
             self.respond(SUBMITTED_CONFIRM, sp_name=location.name, contact_name=self.user.name)
-        elif location.location_type == 'DISTRICT':
+        elif location.location_type_name == 'DISTRICT':
             if help:
                 quantities = [0, 0, 0]
                 self.respond(SUBMITTED_REMINDER_DISTRICT)

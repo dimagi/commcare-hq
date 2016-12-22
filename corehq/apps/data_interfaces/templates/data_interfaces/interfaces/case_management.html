@@ -35,7 +35,7 @@
             $caseManagement.find('.dataTables_length select').change(selectNone);
 
             function selectNone() {
-                $caseManagement.find('input.selected-commcare-case:checked').removeProp('checked').change();
+                $caseManagement.find('input.selected-commcare-case:checked').prop('checked', false).change();
             }
         }
 

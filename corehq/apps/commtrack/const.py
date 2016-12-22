@@ -60,45 +60,6 @@ RequisitionActions = enum(
     RECEIPTS='requisition-receipts',
 )
 
-# feels a bit silly to duplicate this
-ORDERED_REQUISITION_ACTIONS = (
-    RequisitionActions.REQUEST,
-    RequisitionActions.APPROVAL,
-    RequisitionActions.FULFILL,
-    RequisitionActions.PACK,
-    RequisitionActions.RECEIPTS,
-)
-
-
-class RequisitionStatus(object):
-    """a const for our requisition status choices"""
-    REQUESTED = "requested"
-    APPROVED = "approved"
-    FULFILLED = "fulfilled"
-    RECEIVED = "received"
-    CANCELED = "canceled"
-    CHOICES = [REQUESTED, APPROVED, FULFILLED, RECEIVED, CANCELED]
-    CHOICES_PENDING = [REQUESTED, APPROVED, FULFILLED]
-    CHOICES_CLOSED = [RECEIVED, CANCELED]
-
-    @classmethod
-    def by_action_type(cls, type):
-        return {
-            RequisitionActions.REQUEST: cls.REQUESTED,
-            RequisitionActions.APPROVAL: cls.APPROVED,
-            RequisitionActions.FULFILL: cls.FULFILLED,
-            RequisitionActions.RECEIPTS: cls.RECEIVED,
-        }[type]
-
-    @classmethod
-    def to_action_type(cls, status):
-        return {
-            cls.REQUESTED: RequisitionActions.REQUEST,
-            cls.APPROVED: RequisitionActions.APPROVAL,
-            cls.FULFILLED: RequisitionActions.FULFILL,
-            cls.RECEIVED: RequisitionActions.RECEIPTS,
-        }[status]
-
 
 def get_commtrack_user_id(domain):
     # abstracted out in case we one day want to back this

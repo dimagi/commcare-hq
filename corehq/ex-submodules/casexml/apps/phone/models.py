@@ -79,7 +79,11 @@ class OTARestoreUser(object):
 
     @property
     def sql_location(self):
-        raise NotImplementedError()
+        "User's primary SQLLocation"
+        return self._couch_user.get_sql_location(self.domain)
+
+    def get_sql_locations(self, domain):
+        return self._couch_user.get_sql_locations(domain)
 
     def get_fixture_data_items(self):
         raise NotImplementedError()
@@ -105,11 +109,10 @@ class OTARestoreUser(object):
     def get_ucr_filter_value(self, ucr_filter, ui_filter):
         return ucr_filter.get_filter_value(self._couch_user, ui_filter)
 
+    @memoized
     def get_locations_to_sync(self):
-        """
-        Returns a LocationSet object contianing all locations that should sync
-        """
-        raise NotImplementedError()
+        from corehq.apps.locations.fixtures import get_all_locations_to_sync
+        return get_all_locations_to_sync(self)
 
 
 class OTARestoreWebUser(OTARestoreUser):
@@ -119,10 +122,6 @@ class OTARestoreWebUser(OTARestoreUser):
 
         assert isinstance(couch_user, WebUser)
         super(OTARestoreWebUser, self).__init__(domain, couch_user, **kwargs)
-
-    @property
-    def sql_location(self):
-        return None
 
     @property
     def locations(self):
@@ -151,11 +150,6 @@ class OTARestoreWebUser(OTARestoreUser):
 
         return UserFixtureStatus.DEFAULT_LAST_MODIFIED
 
-    def get_locations_to_sync(self):
-        # todo: not yet implemented for web users
-        from corehq.apps.locations.fixtures import LocationSet
-        return LocationSet()
-
 
 class OTARestoreCommCareUser(OTARestoreUser):
 
@@ -166,15 +160,8 @@ class OTARestoreCommCareUser(OTARestoreUser):
         super(OTARestoreCommCareUser, self).__init__(domain, couch_user, **kwargs)
 
     @property
-    def sql_location(self):
-        return self._couch_user.sql_location
-
-    @property
     def locations(self):
         return self._couch_user.locations
-
-    def set_location(self, location):
-        return self._couch_user.set_location(location)
 
     def get_fixture_data_items(self):
         from corehq.apps.fixtures.models import FixtureDataItem
@@ -212,11 +199,6 @@ class OTARestoreCommCareUser(OTARestoreUser):
         from corehq.apps.fixtures.models import UserFixtureType
 
         return self._couch_user.fixture_status(UserFixtureType.LOCATION)
-
-    @memoized
-    def get_locations_to_sync(self):
-        from corehq.apps.locations.fixtures import get_all_locations_to_sync
-        return get_all_locations_to_sync(self)
 
 
 class CaseState(LooselyEqualDocumentSchema, IndexHoldingMixIn):
@@ -260,8 +242,10 @@ LOG_FORMAT_SIMPLIFIED = 'simplified'
 
 class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
     date = DateTimeProperty()
-    # domain = StringProperty()
+    domain = StringProperty()  # this is only added as of 11/2016 - not guaranteed to be set
     user_id = StringProperty()
+    build_id = StringProperty()  # this is only added as of 11/2016 and only works with app-aware sync
+
     previous_log_id = StringProperty()  # previous sync log, forming a chain
     duration = IntegerProperty()  # in seconds
     log_format = StringProperty()
@@ -936,7 +920,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
         try:
             self.case_ids_on_phone.remove(to_remove)
         except KeyError:
-            _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'], exponential_backoff=False)
+            _assert = soft_assert(notify_admins=True, exponential_backoff=False)
             should_fail_softly = _domain_has_legacy_toggle_set()
             if should_fail_softly:
                 pass
@@ -956,7 +940,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
         for index in deleted_indices.values():
             if not _domain_has_legacy_toggle_set():
                 # unblocking http://manage.dimagi.com/default.asp?185850#1039475
-                _assert = soft_assert(to=['czue' + '@' + 'dimagi.com'], exponential_backoff=True,
+                _assert = soft_assert(notify_admins=True, exponential_backoff=True,
                                       fail_if_debug=True)
                 _assert(index in (all_to_remove | set([checked_case_id])),
                         "expected {} in {} but wasn't".format(index, all_to_remove))

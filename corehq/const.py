@@ -18,3 +18,5 @@ OPENROSA_DEFAULT_VERSION = OPENROSA_VERSION_1
 OPENROSA_VERSION_MAP = {
     'ASYNC_RESTORE': OPENROSA_VERSION_2,
 }
+
+GOOGLE_PLAY_STORE_COMMCARE_URL = 'https://play.google.com/store/apps/details?id=org.commcare.dalvik&hl=en'

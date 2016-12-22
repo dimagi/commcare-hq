@@ -110,6 +110,16 @@
                     });
                 }
             });
+
+            var projectInfoUrl = '<a href="{% url 'domain_internal_settings' '___' %}">domain</a>';
+            self.getNamespaceHtml = function(namespace, value) {
+                if (namespace === 'domain') {
+                    return projectInfoUrl.replace('___', value);
+                } else {
+                    return namespace;
+                }
+            };
+
         }
 
         var $home = $('#toggle_editing_ko');
@@ -136,7 +146,8 @@
             {% if toggle_meta.description %}
                 <p>{{ toggle_meta.description|safe }}</p>
             {% endif %}
-            <p>{% trans "This flag is tagged as: " %}<span class="label label-{{ toggle_meta.tag.css_class }}">{{ toggle_meta.tag.name }}</span></p>
+            <p><span class="label label-{{ toggle_meta.tag.css_class }}">{{ toggle_meta.tag.name }}</span></p>
+            <p>{{ toggle_meta.tag.description }}</p>
             {% if toggle_meta.help_link %}
             <p><a href="{{ toggle_meta.help_link }}" target="_blank">{% trans "More information" %}</a></p>
             {% endif %}
@@ -175,7 +186,9 @@
                                 <a href="#" class="btn btn-danger" data-bind="click: $parent.removeItem"><i class="fa fa-trash"></i></a>
                             </div>
                             <input class="input-medium form-control" type="text" data-bind="value: value">
-                            <span class="input-group-addon" data-bind="html: namespace" style="font-family:monospace;"></span>
+                            <span class="input-group-addon"
+                                  data-bind="html: $parent.getNamespaceHtml(namespace(), value())"
+                                  style="font-family:monospace;"></span>
                             <span data-bind="text: last_used, visible: last_used" class="input-group-addon"></span>
                         </div>
                     </div>

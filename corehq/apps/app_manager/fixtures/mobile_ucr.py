@@ -8,6 +8,8 @@ from casexml.apps.phone.models import OTARestoreUser
 
 from corehq import toggles
 from corehq.apps.app_manager.models import ReportModule
+from corehq.apps.app_manager.suite_xml.features.mobile_ucr import is_valid_mobile_select_filter_type
+from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
 from corehq.util.xml_utils import serialize
 
 from corehq.apps.userreports.exceptions import UserReportsError, ReportConfigurationNotFoundError
@@ -62,11 +64,17 @@ class ReportFixturesProvider(object):
             report_config.report_id, restore_user.domain
         )
 
-        # TODO: Convert to be compatiable with restore_user
+        # TODO: Convert to be compatible with restore_user
+        # apply filters specified in report module
         all_filter_values = {
             filter_slug: restore_user.get_ucr_filter_value(filter, report.get_ui_filter(filter_slug))
             for filter_slug, filter in report_config.filters.items()
         }
+        # apply all prefilters
+        prefilters = [ReportFilterFactory.from_spec(p, report) for p in report.prefilters]
+        prefilter_values = {prefilter.name: prefilter.value() for prefilter in prefilters}
+        all_filter_values.update(prefilter_values)
+        # filter out nulls
         filter_values = {
             filter_slug: filter_value for filter_slug, filter_value in all_filter_values.items()
             if filter_value is not None
@@ -74,7 +82,7 @@ class ReportFixturesProvider(object):
         defer_filters = {
             filter_slug: report.get_ui_filter(filter_slug)
             for filter_slug, filter_value in all_filter_values.items()
-            if filter_value is None
+            if filter_value is None and is_valid_mobile_select_filter_type(report.get_ui_filter(filter_slug))
         }
         data_source.set_filter_values(filter_values)
         data_source.defer_filters(defer_filters)
@@ -133,7 +141,7 @@ class ReportFixturesProvider(object):
             rows_elem.append(_row_to_row_elem(
                 dict(
                     zip(
-                        map(lambda column_config: column_config.column_id, data_source.column_configs),
+                        map(lambda column_config: column_config.column_id, data_source.top_level_columns),
                         map(str, total_row)
                     )
                 ),

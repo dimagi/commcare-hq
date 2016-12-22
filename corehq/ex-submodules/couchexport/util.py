@@ -41,10 +41,10 @@ intersect_filters = intersect_functions
 
 
 def clear_attachments(schema_or_doc):
-    if schema_or_doc and '_attachments' in schema_or_doc:
-        del schema_or_doc['_attachments']
-    if schema_or_doc and 'case_attachments' in schema_or_doc:
-        del schema_or_doc['case_attachments']
+    for noisy_property in ('_attachments', 'external_blobs', 'case_attachments'):
+        if schema_or_doc and noisy_property in schema_or_doc:
+            del schema_or_doc[noisy_property]
+
     if schema_or_doc:
         for action in schema_or_doc.get('actions', []):
             if 'attachments' in action and 'updated_unknown_properties' in action:

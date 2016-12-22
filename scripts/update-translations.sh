@@ -33,9 +33,19 @@ echo "Pulling translations from transifex"
 tx pull -f
 
 echo "Gathering all translation strings.  Note that this will probably take a while"
-./manage.py makemessages --all
+./manage.py makemessages --all --ignore 'corehq/apps/app_manager/tests/data/v2_diffs*' --ignore 'node_modules'
+
+if [[ $1 -ne "0" ]]; then
+    abort "Looks like there's a problem running makemessages, you should probably fix it."
+fi
+
 echo "Gathering javascript translation strings.  This will also probably take a while"
 ./manage.py makemessages -d djangojs --all
+
+if [[ $1 -ne "0" ]]; then
+    abort "Looks like there's a problem translating the javascript strings, you should probably fix it."
+fi
+
 echo "Compiling translation files."
 ./manage.py compilemessages
 
@@ -52,3 +62,5 @@ echo "Committing and pushing changes"
 git add locale/
 git commit --edit --message="Update translations." --message="[ci skip]"
 git push origin master
+
+echo "Translations updated successfully!"

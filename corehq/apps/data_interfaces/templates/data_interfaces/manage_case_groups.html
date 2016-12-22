@@ -31,7 +31,7 @@
                             if (data) {
                                 isPollingActive = false;
                                 $('#upload-notice').html(
-                                    _.template($('#template-bulk-status').text(), data)
+                                    _.template($('#template-bulk-status').text())(data)
                                 );
                             } else {
                                 retry();

@@ -68,6 +68,10 @@
         $(":submit").prop("disabled", false);
     });
 
+    if ($('#js-unrecognized-data').length > 0) {
+      $(":submit").prop("disabled", false);
+    }
+
     {% if user_type == "mobile" %}
     $("button:submit", $userInformationForm).on("click", function(){
         ga_track_event("Edit Mobile Worker", "Updated user info", "{{couch_user_id|escapejs}}", {

@@ -8,7 +8,7 @@ DOMS_TO_IGNORE = ['bug-reports']  # we don't care about updating media to includ
 class Command(BaseCommand):
     help = 'Adds domains that have apps w/ media to that media files list of valid domains'
 
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option('-s', '--since',
             help="Begin at this domain. (Alphabetically Descending"),
         make_option('-d', '--domain',

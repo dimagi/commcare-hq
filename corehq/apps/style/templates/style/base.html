@@ -155,6 +155,7 @@
 
         {# Core Libraries #}
         {% if not request.use_requirejs %}
+        {% include "style/includes/jquery.html" %}
         {% compress js %}
         {% include "style/includes/core_libraries.html" %}
         {% endcompress %}
@@ -170,8 +171,6 @@
             <script src="{% static 'jquery-ui/ui/position.js' %}"></script>
 
             <!-- Individual widgets and interactions -->
-            <script src="{% static 'jquery-ui/ui/menu.js' %}"></script>
-            <script src="{% static 'jquery-ui/ui/autocomplete.js' %}"></script>
             <script src="{% static 'jquery-ui/ui/button.js' %}"></script>
             <script src="{% static 'jquery-ui/ui/datepicker.js' %}"></script>
             <script src="{% static 'jquery-ui/ui/draggable.js' %}"></script>
@@ -234,6 +233,7 @@
         {% maintenance_alert %}
         <!-- .hide used for A/B test of account creation page -->
         <div class="hq-container{% if is_register_user %} molly{% endif %}">
+            {% block navigation %}
             <div id="hq-navigation"
                  class="navbar navbar-default navbar-static-top navbar-hq-main-menu">
                 <div class="container-fluid">
@@ -280,46 +280,47 @@
                     </nav>
                 </div>
             </div>
+            {% endblock navigation %}
             {% if request.project.is_snapshot %}
                 <div class="alert alert-info">
                     {% trans "This is a snapshot of " %}{{ request.project.copied_from.display_name }}
                 </div>
             {% endif %}
 
-            {% if not no_header %}
-                <!--[if IE]>
-                    <div id="unsupported-browser" class="alert alert-error alert-block alert-full">
-                        <p><i class="fa fa-warning-sign"></i><strong>{% trans 'CommCare HQ does not work well with Internet Explorer.'%}</strong></p>
-                        <p>
-                            {% blocktrans %}
-                            We recommend
-                            <a href="https://www.google.com/chrome">Chrome</a>
-                            or <a href="http://www.mozilla.org/">Firefox</a>.
-                            {% endblocktrans %}
-                        </p>
-                    </div>
-                <![endif]-->
-                <div class="container-fluid">
-                    <div class="row">
-                        <div class="col-sm-12">
-                           {% if messages %}
-                                {% for message in messages %}
-                                    <div class="alert alert-margin-top fade in alert-block alert-full page-level-alert{% if message.tags %} {{ message.tags }}{% endif %}">
-                                        <a class="close" data-dismiss="alert" href="#">&times;</a>
-                                        {% if 'html' in message.tags %}{{ message|safe }}{% else %}{{ message }}{% endif %}
-                                    </div>
-                                {% endfor %}
-                            {% endif %}
-                            <div id="message-alerts" class="ko-template" data-bind="foreach: alerts" class="hide"><!-- TODO: support requirejs -->
-                                <div data-bind="attr: {'class': alert_class}">
+            <!--[if IE]>
+                <div id="unsupported-browser" class="alert alert-error alert-block alert-full">
+                    <p><i class="fa fa-warning-sign"></i><strong>{% trans 'CommCare HQ does not work well with Internet Explorer.'%}</strong></p>
+                    <p>
+                        {% blocktrans %}
+                        We recommend
+                        <a href="https://www.google.com/chrome">Chrome</a>
+                        or <a href="http://www.mozilla.org/">Firefox</a>.
+                        {% endblocktrans %}
+                    </p>
+                </div>
+            <![endif]-->
+            {% block messages %}
+            <div id="hq-messages-container" class="container-fluid messages-container">
+                <div class="row">
+                    <div class="col-sm-12">
+                       {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-margin-top fade in alert-block alert-full page-level-alert{% if message.tags %} {{ message.tags }}{% endif %}">
                                     <a class="close" data-dismiss="alert" href="#">&times;</a>
-                                    <span data-bind="text: message"></span>
+                                    {% if 'html' in message.tags %}{{ message|safe }}{% else %}{{ message }}{% endif %}
                                 </div>
+                            {% endfor %}
+                        {% endif %}
+                        <div id="message-alerts" class="ko-template hide" data-bind="foreach: alerts"><!-- TODO: support requirejs -->
+                            <div data-bind="attr: {'class': alert_class}">
+                                <a class="close" data-dismiss="alert" href="#">&times;</a>
+                                <span data-bind="html: message"></span>
                             </div>
                         </div>
                     </div>
                 </div>
-            {% endif %}
+            </div>
+            {% endblock messages %}
             {% block content %}{% endblock content %}
         </div>
 
@@ -329,6 +330,7 @@
             }
         </div>
 
+        {% block footer %}
         <footer>
             <nav id="hq-footer"
                  role="navigation"
@@ -367,7 +369,7 @@
                 </div>
             </nav>
         </footer>
-
+        {% endblock %}
         {# modals #}
         {% block modals %}{% endblock modals %}
 
@@ -380,6 +382,7 @@
                 requirejs.config({
                     baseUrl: "{% static '' %}",
                     paths: {
+                        {% include "style/includes/jquery.html" %}
                         {% include "style/includes/core_libraries.html" %}
                         "bootstrap": "{% static 'bootstrap/dist/js/bootstrap.min' %}",
                         "knockout": "{% static 'knockout/dist/knockout.debug' %}",
@@ -482,35 +485,53 @@
                 This is the knockout-based, javascript analog of messages in Django.
 
                 Use the function `alert_user` to make a message appear on the page.
-                This accepts two args, message, and emphasis.  Emphasis corresponds to bootstrap
-                styling, and can be "success", "danger", "info", or "warning"
+                This accepts three args, message, emphasis and append.
+                Emphasis corresponds to bootstrap styling, and can be
+                "success", "danger", "info", or "warning".
+                If specified, "append" will cause the message to be appended to the existing notification
+                bubble (as opposed to making a new bubble).
+                NOTE: append will change the class of the alert if it is more severe
+                (success < info < warning < danger)
 
-                alert_user("Awesome job!", "success");
+                alert_user("Awesome job!", "success", true);
             */
             function message_alert (message, tags) {
                 var alert_obj = {
-                    "message": message,
-                    "alert_class": "alert fade in alert-block alert-full page-level-alert"
+                    "message": ko.observable(message),
+                    "alert_class": ko.observable(
+                        "alert fade in alert-block alert-full page-level-alert message-alert"
+                    )
                 };
                 if (tags) {
-                    alert_obj.alert_class += " " + tags;
+                    alert_obj.alert_class(alert_obj.alert_class() + " " + tags);
                 }
                 return alert_obj;
             }
             var message_alerts = ko.observableArray();
 
-            function alert_user (message, emphasis) {
-                message_alerts.push(message_alert(message, "alert-" + emphasis));
+            function alert_user (message, emphasis, append) {
+                var tags = "alert-" + emphasis;
+                if (!append || message_alerts().length === 0) {
+                    message_alerts.push(message_alert(message, tags));
+                } else {
+                    var alert = message_alerts()[0];
+                    alert.message(alert.message() + "<br>" + message);
+                    if (!alert.alert_class().includes(tags)) {
+                        alert.alert_class(alert.alert_class() + ' ' + tags);
+                    }
+                }
             }
 
+            // remove closed alerts from backend model
+            $(document).on('close.bs.alert','.message-alert', function (e) {
+                message_alerts.remove(ko.dataFor(this));
+            });
+
             var message_element = $("#message-alerts").get(0);
-            // if not no_header
-            if (typeof message_element !== 'undefined') {
-                ko.cleanNode(message_element);
-                $(message_element).koApplyBindings({
-                    alerts: message_alerts
-                });
-            }
+            ko.cleanNode(message_element);
+            $(message_element).koApplyBindings({
+                alerts: message_alerts
+            });
 
         </script>
         {% endaddtoblock %}

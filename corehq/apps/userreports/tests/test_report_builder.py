@@ -2,7 +2,6 @@ import os
 from django.test import TestCase, SimpleTestCase
 from mock import patch
 
-from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.userreports.dbaccessors import delete_all_report_configs
@@ -62,7 +61,7 @@ class ReportBuilderDBTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.app = Application.new_app('domain', 'Untitled Application', application_version=APP_V2)
+        cls.app = Application.new_app('domain', 'Untitled Application')
         module = cls.app.add_module(Module.new_module('Untitled Module', None))
         cls.form = cls.app.new_form(module.id, "Untitled Form", 'en', read(['data', 'forms', 'simple.xml']))
         cls.app.save()
@@ -91,7 +90,8 @@ class ReportBuilderTest(ReportBuilderDBTest):
             self.form.unique_id,
             existing_report=None,
             data={
-                'filters': '[]',
+                'user_filters': '[]',
+                'default_filters': '[]',
                 'columns': '[{"property": "/data/first_name", "display_text": "first name"}]',
             }
         )
@@ -106,7 +106,8 @@ class ReportBuilderTest(ReportBuilderDBTest):
             self.form.unique_id,
             existing_report=None,
             data={
-                'filters': '[]',
+                'user_filters': '[]',
+                'default_filters': '[]',
                 'columns': '[{"property": "/data/first_name", "display_text": "first name"}]',
             }
         )
@@ -130,7 +131,8 @@ class ReportBuilderTest(ReportBuilderDBTest):
             existing_report=None,
             data={
                 'group_by': 'closed',
-                'filters': '[]',
+                'user_filters': '[]',
+                'default_filters': '[]',
                 'columns': '[{"property": "closed", "display_text": "closed", "calculation": "Count per Choice"}]',
             }
         )
@@ -148,7 +150,8 @@ class ReportBuilderTest(ReportBuilderDBTest):
             existing_report=report,
             data={
                 'group_by': 'user_id',
-                'filters': '[]',
+                'user_filters': '[]',
+                'default_filters': '[]',
                 # Note that a "Sum" calculation on the closed case property isn't very sensical, but doing it so
                 # that I can have a numeric calculation without having to create real case properties for this case
                 #  type.
@@ -179,7 +182,8 @@ class ReportBuilderTest(ReportBuilderDBTest):
             self.form.unique_id,
             existing_report=None,
             data={
-                'filters': '[]',
+                'user_filters': '[]',
+                'default_filters': '[]',
                 'columns': '[{"property": "/data/first_name", "display_text": "first name"}]',
             }
         )
@@ -201,7 +205,8 @@ class ReportBuilderTest(ReportBuilderDBTest):
             self.form.unique_id,
             existing_report=report,
             data={
-                'filters': '[]',
+                'user_filters': '[]',
+                'default_filters': '[]',
                 'columns': '[{"property": "/data/first_name", "display_text": "first name"}]',
             }
         )
@@ -243,7 +248,8 @@ class MultiselectQuestionTest(ReportBuilderDBTest):
             "form",
             self.form.unique_id,
             data={
-                'filters': '[]',
+                'user_filters': '[]',
+                'default_filters': '[]',
                 'columns': '[{"property": "/data/first_name", "display_text": "first name"}]',
             }
         )
@@ -266,7 +272,8 @@ class MultiselectQuestionTest(ReportBuilderDBTest):
             "form",
             self.form.unique_id,
             data={
-                'filters': '[]',
+                'user_filters': '[]',
+                'default_filters': '[]',
                 'group_by': '/data/state'
             }
         )

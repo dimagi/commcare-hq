@@ -5,6 +5,8 @@ import collections
 import itertools
 from django import forms
 from django.utils.translation import ugettext as _
+
+from corehq import toggles
 from corehq.apps.app_manager.analytics import get_exports_by_application
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain, get_app
 from corehq.apps.app_manager.const import USERCASE_TYPE
@@ -164,7 +166,8 @@ class ApplicationDataRMIHelper(object):
         self.as_dict = as_dict
         default_form_placeholder = AppFormRMIPlaceholder(
             application=_("Select Application"),
-            module=_("Select Module"),
+            module=_("Select Menu" if toggles.APP_MANAGER_V2.enabled(domain)
+                     else "Select Module"),
             form=_("Select Form"),
         )
         self.form_placeholders = form_placeholders or default_form_placeholder
@@ -398,10 +401,17 @@ class ApplicationDataRMIHelper(object):
         return chosen_by_choice
 
     @staticmethod
-    def _get_item_name(item, has_app, app_lang, default_name):
+    def _get_item_name(item, has_app, app_langs, default_name):
         item_name = None
         if has_app and item is not None:
-            item_name = item['name'].get(app_lang) or item['name'].get('en')
+            for app_lang in app_langs:
+                item_name = item['name'].get(app_lang)
+                if item_name:
+                    break
+
+            # As last resort try english
+            if not item_name:
+                item_name = item['name'].get('en')
         return item_name or default_name
 
     def _get_modules_and_forms(self, as_dict=True):
@@ -409,22 +419,23 @@ class ApplicationDataRMIHelper(object):
         forms_by_app_by_module = {}
         for form in self._all_forms:
             has_app = form.get('has_app', False)
+            app_langs = []
             if self.user.language in form['app'].get('langs', {}):
-                app_lang = self.user.language
-            else:
-                app_lang = form['app']['langs'][0] if 'langs' in form['app'] else 'en'
+                app_langs.append(self.user.language)
+
+            app_langs.append(form['app']['langs'][0] if 'langs' in form['app'] else 'en')
             app_id = form['app']['id'] if has_app else self.UNKNOWN_SOURCE
             module = form.get('module')
             module_id = (module['id'] if has_app and module is not None
                          else self.UNKNOWN_SOURCE)
             module_name = self._get_item_name(
-                module, has_app, app_lang, _("Unknown Module")
+                module, has_app, app_langs, _("Unknown Module")
             )
             form_xmlns = form['xmlns']
             form_name = form_xmlns
             if not form.get('show_xmlns', False):
                 form_name = self._get_item_name(
-                    form.get('form'), has_app, app_lang,
+                    form.get('form'), has_app, app_langs,
                     "{} (potential matches)".format(form_xmlns)
                 )
             module_choice = RMIDataChoice(

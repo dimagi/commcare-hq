@@ -1,8 +1,8 @@
-from django.conf.urls import *
+from django.conf.urls import url
 
 from .views import DropboxAuthCallback, DropboxAuthInitiate
 
-urlpatterns = patterns('corehq.apps.dropbox.views',
+urlpatterns = [
     url(r'^initiate/$', DropboxAuthInitiate.as_view(), name=DropboxAuthInitiate.slug),
     url(r'^finalize/$', DropboxAuthCallback.as_view(), name=DropboxAuthCallback.slug),
-)
+]

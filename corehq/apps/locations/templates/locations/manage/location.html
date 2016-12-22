@@ -80,9 +80,9 @@
                   ga_track_event('Organization Structure', 'Edit', 'Create Child Location');
               }
           });
-            
+
           gaTrackLink($("#edit_users :button[type='submit']"), 'Organization Structure', 'Edit', 'Update Users at this Location')
-            
+
           $('#move_confirm').click(function(e) {
               e.preventDefault();
               document.forms['loc_form'].submit();
@@ -108,8 +108,8 @@
           </a>
           {% endif %}
 
-          {% if location.sql_location.supply_point_id %}
-          <a class="btn btn-default" href="{% url "case_details" domain location.sql_location.supply_point_id %}">
+          {% if location.supply_point_id %}
+          <a class="btn btn-default" href="{% url "case_details" domain location.supply_point_id %}">
             <i class="fa fa-external-link"></i> {% trans "View Location Case" %}
           </a>
           {% endif %}

@@ -1,14 +1,17 @@
 from django.test import SimpleTestCase
+from mock import patch, Mock
 
 from corehq.apps.accounting.models import (
     Subscription, BillingAccount, DefaultProductPlan, SoftwarePlanEdition,
     Subscriber)
+from corehq.apps.accounting.subscription_changes import DomainDowngradeActionHandler
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import (
     Permissions, UserRole, UserRolePresets, WebUser, CommCareUser,
 )
+from corehq.privileges import REPORT_BUILDER_ADD_ON_PRIVS
 
 
 class TestSubscriptionEmailLogic(SimpleTestCase):
@@ -17,7 +20,11 @@ class TestSubscriptionEmailLogic(SimpleTestCase):
         self._run_test(None, Subscription(is_trial=True), False)
 
     def test_non_trial_with_no_previous(self):
-        self._run_test(None, Subscription(is_trial=False), True)
+        self._run_test(None, Subscription(is_trial=False), False)
+
+    def test_non_trial_with_previous(self):
+        self._run_test(Subscription(is_trial=False), Subscription(is_trial=False), True)
+        self._run_test(Subscription(is_trial=True), Subscription(is_trial=False), True)
 
     def _run_test(self, old_sub, new_sub, expected_output):
         self.assertEqual(expected_output, Subscriber.should_send_subscription_notification(old_sub, new_sub))
@@ -62,7 +69,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
 
         self.account = BillingAccount.get_or_create_account_by_domain(
             self.domain.name,created_by=self.admin_user.username)[0]
-        self.advanced_plan = DefaultProductPlan.get_default_plan(edition=SoftwarePlanEdition.ADVANCED)
+        self.advanced_plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.ADVANCED)
 
     def test_cancellation(self):
         subscription = Subscription.new_domain_subscription(
@@ -70,7 +77,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
             web_user=self.admin_user.username
         )
         self._change_std_roles()
-        subscription.cancel_subscription(web_user=self.admin_user.username)
+        subscription.change_plan(DefaultProductPlan.get_default_plan_version())
 
         custom_role = UserRole.get(self.custom_role.get_id)
         self.assertTrue(custom_role.is_archived)
@@ -96,13 +103,10 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
             web_user=self.admin_user.username
         )
         self._change_std_roles()
-        subscription.cancel_subscription(web_user=self.admin_user.username)
+        new_subscription = subscription.change_plan(DefaultProductPlan.get_default_plan_version())
         custom_role = UserRole.get(self.custom_role.get_id)
         self.assertTrue(custom_role.is_archived)
-        subscription = Subscription.new_domain_subscription(
-            self.account, self.domain.name, self.advanced_plan,
-            web_user=self.admin_user.username
-        )
+        new_subscription.change_plan(self.advanced_plan, web_user=self.admin_user.username)
         custom_role = UserRole.get(self.custom_role.get_id)
         self.assertFalse(custom_role.is_archived)
 
@@ -120,7 +124,6 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
 
         self._assertInitialRoles()
         self._assertStdUsers()
-        subscription.cancel_subscription(web_user=self.admin_user.username)
 
     def _change_std_roles(self):
         for u in self.user_roles:
@@ -160,3 +163,34 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         generator.delete_all_subscriptions()
         generator.delete_all_accounts()
         super(TestUserRoleSubscriptionChanges, self).tearDown()
+
+
+class TestSubscriptionChangeResourceConflict(BaseAccountingTest):
+
+    def setUp(self):
+        self.domain_name = 'test-domain-changes'
+        self.domain = Domain(
+            name=self.domain_name,
+            is_active=True,
+            description='spam',
+        )
+        self.domain.save()
+
+    def test_domain_changes(self):
+        role = Mock()
+        role.memberships_granted.all.return_value = []
+        version = Mock()
+        version.role.get_cached_role.return_value = role
+        handler = DomainDowngradeActionHandler(
+            self.domain, new_plan_version=version, changed_privs=REPORT_BUILDER_ADD_ON_PRIVS
+        )
+
+        conflicting_domain = Domain.get_by_name(self.domain_name)
+        conflicting_domain.description = 'eggs'
+        conflicting_domain.save()
+
+        get_by_name_func = Domain.get_by_name
+        with patch('corehq.apps.accounting.subscription_changes.Domain') as Domain_patch:
+            Domain_patch.get_by_name.side_effect = lambda name: get_by_name_func(name)
+            handler.get_response()
+            Domain_patch.get_by_name.assert_called_with(self.domain_name)

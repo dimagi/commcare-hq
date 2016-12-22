@@ -3,7 +3,8 @@ import os
 import datetime
 from django.test import SimpleTestCase, TestCase
 from corehq.apps.userreports.models import DataSourceConfiguration
-from corehq.apps.userreports.sql import IndicatorSqlAdapter
+from corehq.apps.userreports.tests.utils import run_with_all_ucr_backends
+from corehq.apps.userreports.util import get_indicator_adapter
 
 
 DOC_ID = 'repeat-id'
@@ -73,9 +74,9 @@ class RepeatDataSourceConfigurationTest(RepeatDataSourceTestMixin, SimpleTestCas
 
 class RepeatDataSourceBuildTest(RepeatDataSourceTestMixin, TestCase):
 
+    @run_with_all_ucr_backends
     def test_table_population(self):
-
-        adapter = IndicatorSqlAdapter(self.config)
+        adapter = get_indicator_adapter(self.config)
         # Delete and create table
         adapter.rebuild_table()
 
@@ -91,6 +92,7 @@ class RepeatDataSourceBuildTest(RepeatDataSourceTestMixin, TestCase):
 
         # Save this document into the table
         adapter.save(doc)
+        adapter.refresh_table()
 
         # Get rows from the table
         rows = adapter.get_query_object()
@@ -99,7 +101,6 @@ class RepeatDataSourceBuildTest(RepeatDataSourceTestMixin, TestCase):
                 'start_time': r.start_time,
                 'end_time': r.end_time,
                 'person': r.person,
-
             } for r in rows
         ]
         # Check those rows against the expected result

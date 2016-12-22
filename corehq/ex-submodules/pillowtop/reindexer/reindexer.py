@@ -1,6 +1,7 @@
 import time
 from abc import ABCMeta, abstractmethod
 from datetime import datetime
+from elasticsearch import TransportError
 
 import six
 from corehq.apps.change_feed.document_types import is_deletion
@@ -13,6 +14,7 @@ from pillowtop.utils import prepare_bulk_payloads, build_bulk_payload, ErrorColl
 
 MAX_TRIES = 3
 RETRY_TIME_DELAY_FACTOR = 15
+MAX_PAYLOAD_SIZE = 10 ** 7  # ~10 MB
 
 
 class Reindexer(six.with_metaclass(ABCMeta)):
@@ -57,11 +59,14 @@ class PillowChangeProviderReindexer(PillowReindexer):
         return options
 
     def reindex(self):
-        for change in self.change_provider.iter_all_changes(start_from=self.start_from):
+        for i, change in enumerate(self.change_provider.iter_all_changes(start_from=self.start_from)):
             try:
                 self.pillow.process_change(change)
             except Exception:
                 pillow_logging.exception("Unable to process change: %s", change.id)
+
+            if i % 1000:
+                pillow_logging.info("Processed %s docs", i)
 
 
 def _clean_index(es, index_info):
@@ -138,8 +143,7 @@ class BulkPillowReindexProcessor(BaseDocProcessor):
         for change, exception in error_collector.errors:
             pillow_logging.error("Error procesing doc %s: %s", change.id, exception)
 
-        max_payload_size = pow(10, 8)  # ~ 100Mb
-        payloads = prepare_bulk_payloads(bulk_changes, max_payload_size)
+        payloads = prepare_bulk_payloads(bulk_changes, MAX_PAYLOAD_SIZE)
         if len(payloads) > 1:
             pillow_logging.info("Payload split into %s parts" % len(payloads))
 
@@ -179,7 +183,7 @@ class BulkPillowReindexProcessor(BaseDocProcessor):
     @staticmethod
     def _doc_to_change(doc):
         return Change(
-            id=doc['_id'], sequence_id=None, document=doc, deleted=is_deletion(doc['doc_type'])
+            id=doc['_id'], sequence_id=None, document=doc, deleted=is_deletion(doc.get('doc_type'))
         )
 
 
@@ -210,6 +214,9 @@ class ResumableBulkElasticPillowReindexer(Reindexer):
         _clean_index(self.es, self.index_info)
 
     def reindex(self):
+        if not self.es.indices.exists(self.index_info.index):
+            self.reset = True  # if the index doesn't exist always reset the processing
+
         processor = BulkDocProcessor(
             self.doc_provider,
             self.doc_processor,
@@ -224,4 +231,11 @@ class ResumableBulkElasticPillowReindexer(Reindexer):
 
         processor.run()
 
-        _prepare_index_for_usage(self.es, self.index_info)
+        try:
+            _prepare_index_for_usage(self.es, self.index_info)
+        except TransportError:
+            raise Exception(
+                'The Elasticsearch index was missing after reindex! If the index was manually deleted '
+                'you can fix this by running ./manage.py ptop_reindexer_v2 [index-name] --reset or '
+                './manage.py ptop_preindex --reset.'
+            )

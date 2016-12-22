@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('is_pilot', models.BooleanField(default=False)),
                 ('closest_supply_points', models.ManyToManyField(related_name='+', to='locations.SQLLocation')),
-                ('sql_location', models.ForeignKey(to='locations.SQLLocation', unique=True)),
+                ('sql_location', models.ForeignKey(to='locations.SQLLocation', unique=True, on_delete=models.CASCADE)),
             ],
             options={
             },

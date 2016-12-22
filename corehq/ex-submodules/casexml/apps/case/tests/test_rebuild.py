@@ -39,7 +39,8 @@ def _post_util(create=False, case_id=None, user_id=None, owner_id=None,
                       case_type=case_type or 'test',
                       date_modified=date_modified,
                       update=kwargs,
-                      close=close).as_xml()
+                      close=close)
+    block = block.as_xml()
     post_case_blocks([block], form_extras)
     return case_id
 
@@ -73,7 +74,7 @@ class CaseRebuildTest(TestCase):
         _post_util(case_id=case_id, p1='p1', p2='p2')
 
         case = CommCareCase.get(case_id)
-        self.assertEqual(2, len(case.actions)) # create + update
+        self.assertEqual(3, len(case.actions))  # (1) create & (2) update date opened (3) update properties
         self.assertTrue(case.actions[0] != case.actions[1])
         self.assertTrue(case.actions[1] == case.actions[1])
 
@@ -106,11 +107,13 @@ class CaseRebuildTest(TestCase):
         self.assertEqual(case.p1, 'p1-1') # original
         self.assertEqual(case.p2, 'p2-2') # updated
         self.assertEqual(case.p3, 'p3-2') # new
-        self.assertEqual(3, len(case.actions)) # create + 2 updates
-        a1 = case.actions[1]
+        self.assertEqual(4, len(case.actions)) # create + update (2 actions) + 2 updates
+        a0 = case.actions[1]
+        self.assertEqual(a0.updated_known_properties['opened_on'], case.opened_on.date())
+        a1 = case.actions[2]
         self.assertEqual(a1.updated_unknown_properties['p1'], 'p1-1')
         self.assertEqual(a1.updated_unknown_properties['p2'], 'p2-1')
-        a2 = case.actions[2]
+        a2 = case.actions[3]
         self.assertEqual(a2.updated_unknown_properties['p2'], 'p2-2')
         self.assertEqual(a2.updated_unknown_properties['p3'], 'p3-2')
 
@@ -180,11 +183,11 @@ class CaseRebuildTest(TestCase):
         self.assertEqual(None, rebuild_case_from_forms('anydomain', 'notarealid', RebuildWithReason(reason='test')))
 
     def test_couch_rebuild_deleted_case(self):
-        """
-        Note: Can't run this on SQL because if a case gets hard deleted then there is no way to find
-        out which forms created / updated it without going through ALL the forms in the domain.
-        ie. there is no SQL equivalent to the "form_case_index/form_case_index" couch view
-        """
+        # Note: Can't run this on SQL because if a case gets hard deleted then
+        # there is no way to find out which forms created / updated it without
+        # going through ALL the forms in the domain. ie. there is no SQL
+        # equivalent to the "form_case_index/form_case_index" couch view
+
         case_id = _post_util(create=True)
         _post_util(case_id=case_id, p1='p1', p2='p2')
 
@@ -197,7 +200,7 @@ class CaseRebuildTest(TestCase):
         case = rebuild_case_from_forms(REBUILD_TEST_DOMAIN, case_id, RebuildWithReason(reason='test'))
         self.assertEqual(case.p1, 'p1')
         self.assertEqual(case.p2, 'p2')
-        self.assertEqual(2, len(primary_actions(case)))  # create + update
+        self.assertEqual(3, len(primary_actions(case)))  # create + update
 
     def test_couch_reconcile_actions(self):
         now = datetime.utcnow()
@@ -210,19 +213,19 @@ class CaseRebuildTest(TestCase):
 
         original_actions = [deepcopy(a) for a in case.actions]
         original_form_ids = [id for id in case.xform_ids]
-        self.assertEqual(3, len(original_actions))
+        self.assertEqual(4, len(original_actions))
         self.assertEqual(3, len(original_form_ids))
         self._assertListEqual(original_actions, case.actions)
 
         # test reordering
-        case.actions = [case.actions[2], case.actions[1], case.actions[0]]
+        case.actions = [case.actions[3], case.actions[2], case.actions[1], case.actions[0]]
         self._assertListNotEqual(original_actions, case.actions)
         update_strategy.reconcile_actions()
         self._assertListEqual(original_actions, case.actions)
 
         # test duplication
         case.actions = case.actions * 3
-        self.assertEqual(9, len(case.actions))
+        self.assertEqual(12, len(case.actions))
         self._assertListNotEqual(original_actions, case.actions)
         update_strategy.reconcile_actions()
         self._assertListEqual(original_actions, case.actions)
@@ -238,7 +241,7 @@ class CaseRebuildTest(TestCase):
         # treated differently
         case.actions = original_actions + [deepcopy(case.actions[2])]
         case.actions[-1].updated_unknown_properties['new'] = 'mismatch'
-        self.assertEqual(4, len(case.actions))
+        self.assertEqual(5, len(case.actions))
         self._assertListNotEqual(original_actions, case.actions)
         update_strategy.reconcile_actions()
         self._assertListNotEqual(original_actions, case.actions)

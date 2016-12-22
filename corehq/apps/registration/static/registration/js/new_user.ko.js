@@ -173,6 +173,7 @@ hqDefine('registration/js/new_user.ko.js', function () {
                 password: self.password(),
                 project_name: self.projectName(),
                 eula_confirmed: self.eulaConfirmed(),
+                xform: defaults.xform,
             };
         };
 

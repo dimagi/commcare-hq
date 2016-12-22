@@ -1,11 +1,11 @@
 import os
 from couchdbkit import Database
 from dimagi.utils.couch.database import get_db
-from django.core.management.base import LabelCommand, CommandError
+from django.core.management.base import BaseCommand, CommandError
 from corehq.apps.domainsync.config import DocumentTransform, save
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = ("Copy couch docs given as comma-separated list of IDs or path to file containing one ID per line. "
             "If domain is supplied save the doc with the given domain instead of its original domain.")
     args = '<sourcedb> <doc_ids_or_file_path> (<domain>)'

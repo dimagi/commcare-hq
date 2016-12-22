@@ -1,4 +1,6 @@
 from collections import defaultdict
+from corehq.apps.hqcase.analytics import get_number_of_cases_in_domain
+from corehq.apps.users.dbaccessors.all_commcare_users import get_web_user_count, get_mobile_user_count
 from corehq.util.dates import iso_string_to_datetime
 from datetime import date, datetime, timedelta
 from dateutil.relativedelta import relativedelta
@@ -7,17 +9,15 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
 from corehq.apps.app_manager.dbaccessors import domain_has_apps
-from corehq.apps.hqcase.dbaccessors import get_number_of_cases_in_domain, \
-    get_number_of_cases_per_domain
 from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.apps.es.sms import SMSES
 from corehq.apps.es.forms import FormES
 from corehq.apps.hqadmin.reporting.reports import (
     get_mobile_users,
 )
-from couchforms.analytics import get_number_of_forms_per_domain, \
-    get_number_of_forms_in_domain, domain_has_submission_in_last_30_days, \
-    get_first_form_submission_received, get_last_form_submission_received
+from couchforms.analytics import get_number_of_forms_in_domain, \
+    domain_has_submission_in_last_30_days, get_first_form_submission_received, \
+    get_last_form_submission_received
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.reminders.models import CaseReminderHandler
@@ -27,22 +27,11 @@ from dimagi.utils.parsing import json_format_datetime
 
 
 def num_web_users(domain, *args):
-    key = ["active", domain, 'WebUser']
-    row = CouchUser.get_db().view('users/by_domain', startkey=key, endkey=key+[{}]).one()
-    return row["value"] if row else 0
+    return get_web_user_count(domain, include_inactive=False)
 
 
 def num_mobile_users(domain, *args):
-    startkey = ['active', domain, 'CommCareUser']
-    endkey = startkey + [{}]
-    result = CouchUser.get_db().view(
-        'users/by_domain',
-        startkey=startkey,
-        endkey=endkey,
-        include_docs=False,
-        reduce=True
-    ).one()
-    return result['value'] if result else 0
+    return get_mobile_user_count(domain, include_inactive=False)
 
 
 DISPLAY_DATE_FORMAT = '%Y/%m/%d %H:%M:%S'
@@ -192,6 +181,13 @@ def display_time(submission_time, display=True):
         return json_format_datetime(submission_time)
 
 
+def first_domain_for_user(domain):
+    domain_obj = Domain.get_by_name(domain)
+    if domain_obj:
+        return domain_obj.first_domain_for_user
+    return None
+
+
 def first_form_submission(domain, display=True):
     try:
         submission_time = get_first_form_submission_received(domain)
@@ -282,6 +278,7 @@ CALCS = {
 CALC_FNS = {
     'num_web_users': num_web_users,
     "num_mobile_users": num_mobile_users,
+    "first_domain_for_user": first_domain_for_user,
     "forms": forms,
     "forms_in_last": forms_in_last,
     "sms": sms,
@@ -316,7 +313,7 @@ def dom_calc(calc_tag, dom, extra_arg=''):
     return ans
 
 
-def _all_domain_stats():
+def all_domain_stats():
     webuser_counts = defaultdict(lambda: 0)
     commcare_counts = defaultdict(lambda: 0)
 
@@ -329,13 +326,55 @@ def _all_domain_stats():
             'CommCareUser': commcare_counts
         }[doc_type][domain] = value
 
-    form_counts = get_number_of_forms_per_domain()
-    case_counts = get_number_of_cases_per_domain()
+    return {
+        "web_users": webuser_counts,
+        "commcare_users": commcare_counts,
+    }
 
-    return {"web_users": webuser_counts,
-            "commcare_users": commcare_counts,
-            "forms": form_counts,
-            "cases": case_counts}
+
+def calced_props(dom, id, all_stats):
+    return {
+        "_id": id,
+        "cp_n_web_users": int(all_stats["web_users"].get(dom, 0)),
+        "cp_n_active_cc_users": int(CALC_FNS["mobile_users"](dom)),
+        "cp_n_cc_users": int(all_stats["commcare_users"].get(dom, 0)),
+        "cp_n_active_cases": int(CALC_FNS["cases_in_last"](dom, 120)),
+        "cp_n_users_submitted_form": total_distinct_users([dom]),
+        "cp_n_inactive_cases": int(CALC_FNS["inactive_cases_in_last"](dom, 120)),
+        "cp_n_30_day_cases": int(CALC_FNS["cases_in_last"](dom, 30)),
+        "cp_n_60_day_cases": int(CALC_FNS["cases_in_last"](dom, 60)),
+        "cp_n_90_day_cases": int(CALC_FNS["cases_in_last"](dom, 90)),
+        "cp_n_cases": int(CALC_FNS["cases"](dom)),
+        "cp_n_forms": int(CALC_FNS["forms"](dom)),
+        "cp_n_forms_30_d": int(CALC_FNS["forms_in_last"](dom, 30)),
+        "cp_n_forms_60_d": int(CALC_FNS["forms_in_last"](dom, 60)),
+        "cp_n_forms_90_d": int(CALC_FNS["forms_in_last"](dom, 90)),
+        "cp_first_domain_for_user": CALC_FNS["first_domain_for_user"](dom),
+        "cp_first_form": CALC_FNS["first_form_submission"](dom, False),
+        "cp_last_form": CALC_FNS["last_form_submission"](dom, False),
+        "cp_is_active": CALC_FNS["active"](dom),
+        "cp_has_app": CALC_FNS["has_app"](dom),
+        "cp_last_updated": json_format_datetime(datetime.utcnow()),
+        "cp_n_in_sms": int(CALC_FNS["sms"](dom, "I")),
+        "cp_n_out_sms": int(CALC_FNS["sms"](dom, "O")),
+        "cp_n_sms_ever": int(CALC_FNS["sms_in_last"](dom)),
+        "cp_n_sms_30_d": int(CALC_FNS["sms_in_last"](dom, 30)),
+        "cp_n_sms_60_d": int(CALC_FNS["sms_in_last"](dom, 60)),
+        "cp_n_sms_90_d": int(CALC_FNS["sms_in_last"](dom, 90)),
+        "cp_sms_ever": int(CALC_FNS["sms_in_last_bool"](dom)),
+        "cp_sms_30_d": int(CALC_FNS["sms_in_last_bool"](dom, 30)),
+        "cp_n_sms_in_30_d": int(CALC_FNS["sms_in_in_last"](dom, 30)),
+        "cp_n_sms_in_60_d": int(CALC_FNS["sms_in_in_last"](dom, 60)),
+        "cp_n_sms_in_90_d": int(CALC_FNS["sms_in_in_last"](dom, 90)),
+        "cp_n_sms_out_30_d": int(CALC_FNS["sms_out_in_last"](dom, 30)),
+        "cp_n_sms_out_60_d": int(CALC_FNS["sms_out_in_last"](dom, 60)),
+        "cp_n_sms_out_90_d": int(CALC_FNS["sms_out_in_last"](dom, 90)),
+        "cp_n_j2me_30_d": int(CALC_FNS["j2me_forms_in_last"](dom, 30)),
+        "cp_n_j2me_60_d": int(CALC_FNS["j2me_forms_in_last"](dom, 60)),
+        "cp_n_j2me_90_d": int(CALC_FNS["j2me_forms_in_last"](dom, 90)),
+        "cp_j2me_90_d_bool": int(CALC_FNS["j2me_forms_in_last_bool"](dom, 90)),
+        "cp_300th_form": CALC_FNS["300th_form_submission"](dom)
+    }
 
 
 def total_distinct_users(domains=None):

@@ -1,4 +1,4 @@
-from django.core.management.base import LabelCommand
+from django.core.management.base import BaseCommand
 from corehq.apps.indicators.models import (CaseDataInFormIndicatorDefinition, FormDataAliasIndicatorDefinition,
                                            FormDataInCaseIndicatorDefinition, BaseDocumentIndicatorDefinition)
 from mvp.models import MVP
@@ -8,7 +8,7 @@ from mvp.static_definitions.question_id_mapping import (CHILD_CLOSE_FORM_QUESTIO
                                                         CHILD_REGISTRATION_QUESTION_IDS)
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = "Create the indicator definitions necessary to compute MVP Indicators."
     args = ""
     label = ""

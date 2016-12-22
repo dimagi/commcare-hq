@@ -24,8 +24,9 @@ class FilesystemBlobDB(AbstractBlobDB):
         assert isabs(rootdir), rootdir
         self.rootdir = rootdir
 
-    def put(self, content, basename="", bucket=DEFAULT_BUCKET):
-        identifier = self.get_identifier(basename)
+    def put(self, content, bucket=DEFAULT_BUCKET, identifier=None):
+        if identifier is None:
+            identifier = self.get_short_identifier()
         path = self.get_path(identifier, bucket)
         dirpath = dirname(path)
         if not isdir(dirpath):
@@ -49,6 +50,10 @@ class FilesystemBlobDB(AbstractBlobDB):
             raise NotFound(identifier, bucket)
         return open(path, "rb")
 
+    def exists(self, identifier, bucket=DEFAULT_BUCKET):
+        path = self.get_path(identifier, bucket)
+        return exists(path)
+
     def delete(self, *args, **kw):
         identifier, bucket = self.get_args_for_delete(*args, **kw)
         if identifier is None:
@@ -61,6 +66,15 @@ class FilesystemBlobDB(AbstractBlobDB):
             return False
         remove(path)
         return True
+
+    def bulk_delete(self, paths):
+        success = True
+        for path in paths:
+            if not exists(path):
+                success = False
+            else:
+                os.remove(path)
+        return success
 
     def copy_blob(self, content, info, bucket):
         raise NotImplementedError

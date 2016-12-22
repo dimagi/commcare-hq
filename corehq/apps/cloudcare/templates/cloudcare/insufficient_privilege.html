@@ -4,6 +4,10 @@
 
 {% block main_column %}
     <div>
-      {% trans "Sorry! Your domain subscription does not include CloudCare. Please do upgrade." %}
+    {% if request|is_new_cloudcare %}
+    {% trans "Sorry! Your domain subscription does not include web apps. Please upgrade." %}
+    {% else %}
+    {% trans "Sorry! Your domain subscription does not include CloudCare. Please upgrade." %}
+    {% endif %}
     </div>
 {% endblock %}

@@ -42,7 +42,6 @@ class TestLocationSync(TestCase):
         cls.state = loc_types['state']
         cls.county = loc_types['county']
         cls.city = loc_types['city']
-        cls.db = Location.get_db()
 
     @classmethod
     def tearDownClass(cls):
@@ -68,7 +67,7 @@ class TestLocationSync(TestCase):
 
     def assertNumLocations(self, number):
         self.assertEqual(SQLLocation.objects.count(), number)
-        self.assertEqual(get_doc_count_by_type(self.db, 'Location'), number)
+        self.assertEqual(get_doc_count_by_type(Location.get_db(), 'Location'), number)
 
     def test_sync_couch_to_sql(self):
         mass = couch_loc("Massachusetts", self.state)
@@ -208,3 +207,12 @@ class TestLocationSync(TestCase):
 
     def test_sql_failure_on_sql_edit(self):
         self._failure_on_edit(class_to_edit="sql", failure="sql")
+
+    def test_to_json(self):
+        mass = couch_loc("Massachusetts", self.state)
+        couch_dict = mass.to_json()
+        couch_dict.pop('_rev')
+        couch_dict.pop('last_modified')  # this varies slightly
+        sql_dict = mass.sql_location.to_json()
+        # make sure the sql version is a superset of the couch version
+        self.assertDictContainsSubset(couch_dict, sql_dict)

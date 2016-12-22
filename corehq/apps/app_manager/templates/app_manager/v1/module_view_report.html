@@ -1,0 +1,34 @@
+{% extends "app_manager/v1/managed_app.html" %}
+{% load xforms_extras %}
+{% load hq_shared_tags %}
+{% load reports_core_tags %}
+{% load i18n %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static 'app_manager/js/report-module.js' %}"></script>
+    <script src="{% static 'reports_core/js/choice-list-api.js' %}"></script>
+    {% include "app_manager/v1/partials/xpathValidator.html" %}
+{% endblock %}
+{% block js-inline %}{{ block.super }}
+    {% include "app_manager/v1/partials/report_configs_js.html" %}
+{% endblock %}
+{% block form-view %}
+    {% if warnings %}
+        <div class="alert alert-danger" data-bind="visible: !contextVariables.requires_case_details()">
+        {% for warning in warnings %}
+            {{ warning }}
+        {% endfor %}
+        </div>
+    {% endif %}
+    {% include 'app_manager/v1/partials/module_view_heading.html' %}
+    {% include 'app_manager/v1/partials/mobile_report_configs.html' %}
+{% endblock %}
+
+{% block modals %}{{ block.super }}
+{% include "app_manager/v1/partials/nav_menu_media_modals.html" %}
+{% endblock modals %}
+
+{% block breadcrumbs %}
+    {{ block.super }}
+    {% include 'app_manager/v1/partials/module_view_breadcrumbs.html' %}
+{% endblock %}

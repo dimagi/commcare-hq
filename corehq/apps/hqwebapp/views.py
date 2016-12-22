@@ -36,12 +36,14 @@ import httpagentparser
 from couchdbkit import ResourceNotFound
 from two_factor.views import LoginView
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
+from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
 
 from corehq.form_processor.utils.general import should_use_sql_backend
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.couch.database import get_db
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
+from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.web import get_url_base, json_response, get_site_domain
 from soil import DownloadBase
 from soil import views as soil_views
@@ -60,7 +62,7 @@ from corehq.apps.hqadmin.management.commands.deploy_in_progress import DEPLOY_IN
 from corehq.apps.hqwebapp.doc_info import get_doc_info, get_object_info
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
-from corehq.apps.reports.util import is_mobile_worker_with_report_access
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
@@ -111,7 +113,10 @@ def not_found(request, template_name='404.html'):
 
 
 @require_GET
+@location_safe
 def redirect_to_default(req, domain=None):
+    from corehq.apps.cloudcare.views import FormplayerMain
+
     if not req.user.is_authenticated():
         if domain != None:
             url = reverse('domain_login', args=[domain])
@@ -122,9 +127,9 @@ def redirect_to_default(req, domain=None):
                     url = reverse(HomePublicView.urlname)
                 except ImportError:
                     # this happens when the prelogin app is not included.
-                    url = reverse('landing_page')
+                    url = reverse('login')
             else:
-                url = reverse('landing_page')
+                url = reverse('login')
     elif domain and _two_factor_needed(domain, req):
         return TemplateResponse(
             request=req,
@@ -142,11 +147,14 @@ def redirect_to_default(req, domain=None):
         elif 1 == len(domains):
             if domains[0]:
                 domain = domains[0].name
+                couch_user = req.couch_user
 
-                if (req.couch_user.is_commcare_user()
-                    and not is_mobile_worker_with_report_access(
-                        req.couch_user, domain)):
-                    url = reverse("cloudcare_main", args=[domain, ""])
+                if (couch_user.is_commcare_user() and
+                        couch_user.can_view_some_reports(domain)):
+                    if toggles.USE_FORMPLAYER_FRONTEND.enabled(domain):
+                        url = reverse(FormplayerMain.urlname, args=[domain])
+                    else:
+                        url = reverse("cloudcare_main", args=[domain, ""])
                 else:
                     from corehq.apps.dashboard.views import dashboard_default
                     return dashboard_default(req, domain)
@@ -163,16 +171,6 @@ def _two_factor_needed(domain_name, request):
     domain = Domain.get_by_name(domain_name)
     if domain:
         return domain.two_factor_auth and not request.user.is_verified()
-
-
-def landing_page(req, template_name="home.html"):
-    # this view, and the one below, is overridden because
-    # we need to set the base template to use somewhere
-    # somewhere that the login page can access it.
-    if req.user.is_authenticated():
-        return HttpResponseRedirect(reverse('homepage'))
-    req.base_template = settings.BASE_TEMPLATE
-    return HQLoginView.as_view()(req)
 
 
 def yui_crossdomain(req):
@@ -228,6 +226,10 @@ def server_up(req):
             "always_check": True,
             "check_func": checks.check_redis,
         },
+        "formplayer": {
+            "always_check": True,
+            "check_func": checks.check_formplayer
+        },
     }
 
     failed = False
@@ -253,15 +255,16 @@ def server_up(req):
         return HttpResponse("success")
 
 
-def no_permissions(request, redirect_to=None, template_name="403.html"):
+def no_permissions(request, redirect_to=None, template_name="403.html", message=None):
     """
     403 error handler.
     """
     t = loader.get_template(template_name)
-    return HttpResponseForbidden(t.render(RequestContext(request,
-        {'MEDIA_URL': settings.MEDIA_URL,
-         'STATIC_URL': settings.STATIC_URL
-        })))
+    return HttpResponseForbidden(t.render(RequestContext(request, {
+        'MEDIA_URL': settings.MEDIA_URL,
+        'STATIC_URL': settings.STATIC_URL,
+        'message': message,
+    })))
 
 
 def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
@@ -294,7 +297,10 @@ def _login(req, domain_name, template_name):
     req.base_template = settings.BASE_TEMPLATE
 
     context = {}
-    if domain_name:
+    custom_landing_page = getattr(settings, 'CUSTOM_LANDING_TEMPLATE', False)
+    if custom_landing_page:
+        template_name = custom_landing_page
+    elif domain_name:
         domain = Domain.get_by_name(domain_name)
         req_params = req.GET if req.method == 'GET' else req.POST
         context.update({
@@ -483,15 +489,26 @@ def bug_report(req):
         '500traceback',
     )])
 
+    domain_object = Domain.get_by_name(report['domain'])
+    current_project_description = domain_object.project_description
+    new_project_description = req.POST.get('project_description')
+    if (req.couch_user.is_domain_admin(domain=report['domain']) and
+            new_project_description and
+            current_project_description != new_project_description):
+
+        domain_object.project_description = new_project_description
+        domain_object.save()
+
     report['user_agent'] = req.META['HTTP_USER_AGENT']
     report['datetime'] = datetime.utcnow()
     report['feature_flags'] = toggles.toggles_dict(username=report['username'],
                                                    domain=report['domain']).keys()
     report['feature_previews'] = feature_previews.previews_dict(report['domain']).keys()
     report['scale_backend'] = should_use_sql_backend(report['domain']) if report['domain'] else False
+    report['project_description'] = domain_object.project_description
 
     try:
-        couch_user = CouchUser.get_by_username(report['username'])
+        couch_user = req.couch_user
         full_name = couch_user.full_name
         if couch_user.is_commcare_user():
             email = report['email']
@@ -525,6 +542,7 @@ def bug_report(req):
         u"Feature Flags: {feature_flags}\n"
         u"Feature Previews: {feature_previews}\n"
         u"Is scale backend: {scale_backend}\n"
+        u"Project description: {project_description}\n"
         u"Message:\n\n"
         u"{message}\n"
         ).format(**report)
@@ -1110,8 +1128,21 @@ class DataTablesAJAXPaginationMixin(object):
 
 @always_allow_browser_caching
 @login_and_domain_required
+@location_safe
 def toggles_js(request, domain, template='hqwebapp/js/toggles_template.js'):
     return render(request, template, {
         'toggles_dict': toggles.toggle_values_by_name(username=request.user.username, domain=domain),
         'previews_dict': feature_previews.preview_values_by_name(domain=domain)
+    })
+
+
+@require_superuser
+def couch_doc_counts(request, domain):
+    from casexml.apps.case.models import CommCareCase
+    from couchforms.models import XFormInstance
+    start = string_to_datetime(request.GET.get('start')) if request.GET.get('start') else None
+    end = string_to_datetime(request.GET.get('end')) if request.GET.get('end') else None
+    return json_response({
+        cls.__name__: get_doc_count_in_domain_by_class(domain, cls, start, end)
+        for cls in [CommCareCase, XFormInstance]
     })

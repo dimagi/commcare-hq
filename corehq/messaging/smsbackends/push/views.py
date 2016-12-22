@@ -1,12 +1,12 @@
 from corehq.apps.sms.api import incoming
-from corehq.apps.sms.views import NewIncomingBackendView
+from corehq.apps.sms.views import IncomingBackendView
 from corehq.messaging.smsbackends.push.models import PushBackend
 from django.http import HttpResponse, HttpResponseBadRequest
 from lxml import etree
 from xml.sax.saxutils import unescape
 
 
-class PushIncomingView(NewIncomingBackendView):
+class PushIncomingView(IncomingBackendView):
     urlname = 'push_sms_in'
 
     @property
@@ -45,6 +45,7 @@ class PushIncomingView(NewIncomingBackendView):
             number,
             text,
             PushBackend.get_api_id(),
+            domain_scope=self.domain,
             backend_id=self.backend_couch_id
         )
         return HttpResponse("OK")

@@ -6,6 +6,7 @@ from corehq.apps.export.models import (
     CaseExportDataSchema,
     FormExportInstance,
     CaseExportInstance,
+    InferredSchema,
 )
 from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
@@ -14,11 +15,11 @@ from corehq.apps.export.dbaccessors import (
     get_case_export_instances,
     get_all_daily_saved_export_instances,
     get_properly_wrapped_export_instance,
+    get_inferred_schema,
 )
 
 
 class TestExportDBAccessors(TestCase):
-    dependent_apps = ['corehq.apps.export', 'corehq.couchapps']
     domain = 'my-domain'
     app_id = '1234'
     xmlns = 'http://openthatrose.com'
@@ -52,7 +53,7 @@ class TestExportDBAccessors(TestCase):
             domain=cls.domain,
             case_type='other',
         )
-        cls.case_schema_before = FormExportDataSchema(
+        cls.case_schema_before = CaseExportDataSchema(
             domain=cls.domain,
             case_type=cls.case_type,
             created_on=datetime.utcnow() - timedelta(1)
@@ -96,7 +97,6 @@ class TestExportDBAccessors(TestCase):
 
 
 class TestExportInstanceDBAccessors(TestCase):
-    dependent_apps = ['corehq.apps.export', 'corehq.couchapps']
 
     domain = 'my-domain'
 
@@ -168,3 +168,41 @@ class TestExportInstanceDBAccessors(TestCase):
 
         instance = get_properly_wrapped_export_instance(self.case_instance._id)
         self.assertEqual(type(instance), type(self.case_instance))
+
+
+class TestInferredSchemasDBAccessors(TestCase):
+
+    domain = 'inferred-domain'
+    case_type = 'inferred'
+
+    @classmethod
+    def setUpClass(cls):
+        cls.inferred_schema = InferredSchema(
+            domain=cls.domain,
+            case_type=cls.case_type,
+        )
+        cls.inferred_schema_other = InferredSchema(
+            domain=cls.domain,
+            case_type='other',
+        )
+
+        cls.schemas = [
+            cls.inferred_schema,
+            cls.inferred_schema_other,
+        ]
+        for schema in cls.schemas:
+            schema.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        for schema in cls.schemas:
+            schema.delete()
+
+    def test_get_inferred_schema(self):
+        result = get_inferred_schema(self.domain, self.case_type)
+        self.assertIsNotNone(result)
+        self.assertEqual(result._id, self.inferred_schema._id)
+
+    def test_get_inferred_schema_missing(self):
+        result = get_inferred_schema(self.domain, 'not-here')
+        self.assertIsNone(result)

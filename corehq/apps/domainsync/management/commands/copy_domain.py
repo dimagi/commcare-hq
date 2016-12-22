@@ -10,9 +10,8 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domainsync.management.commands.copy_utils import copy_postgres_data_for_docs
 from corehq.util.couchdb_management import CouchConfig
 from corehq.util.dates import iso_string_to_date
-from dimagi.utils.couch.database import get_db, iter_docs
+from dimagi.utils.couch.database import iter_docs
 from corehq.apps.domainsync.config import DocumentTransform, save
-from couchdbkit.client import Database
 from optparse import make_option
 
 # doctypes we want to be careful not to copy, which must be explicitly
@@ -30,10 +29,10 @@ NUM_PROCESSES = 8
 
 class Command(BaseCommand):
     help = "Copies the contents of a domain to another database. " \
-           "If tagetdb is not specified, the target is the database " \
+           "If targetdb is not specified, the target is the database " \
            "specified by COUCH_DATABASE in your settings."
     args = '<sourcedb> <domain> [<targetdb>]'
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option('--include',
                     action='store',
                     dest='doc_types',
@@ -101,7 +100,7 @@ class Command(BaseCommand):
             raise CommandError('Usage is copy_domain %s' % self.args)
         self.exclude_dbs = (
             # these have data we don't want to copy
-            'receiverwrapper', 'couchlog', 'auditcare', 'fluff-bihar', 'fluff-opm',
+            'receiverwrapper', 'auditcare', 'fluff-bihar', 'fluff-opm',
             'fluff-mc', 'fluff-cvsu', 'mvp-indicators', 'm4change',
             # todo: missing domain/docs, but probably want to add back
             'meta',

@@ -87,9 +87,10 @@
         "calculate_total": false,
         "type": "field",
         "display": {
-          "en": "Woman",
+          "mar": "\u0938\u094d\u0924\u094d\u0930\u0940",
           "tel": "\u0c38\u0c4d\u0c24\u0c4d\u0c30\u0c40",
-          "hin": "\u092e\u0939\u093f\u0932\u093e\u092f\u0947"
+          "hin": "\u092e\u0939\u093f\u0932\u093e\u092f\u0947",
+          "en": "Woman"
         }
       },
       {
@@ -103,9 +104,10 @@
         "calculate_total": false,
         "type": "field",
         "display": {
-          "en": "Estimated Date of Delivery",
+          "mar": "\u092a\u094d\u0930\u0938\u0942\u0924\u093f\u091a\u0940 \u0938\u0902\u092d\u093e\u0935\u094d\u092f \u0924\u093e\u0930\u0940\u0916",
           "tel": "\u0c05\u0c02\u0c1a\u0c28\u0c3e\u0c35\u0c47\u0c2f\u0c2c\u0c21\u0c4d\u0c21 \u0c21\u0c46\u0c32\u0c3f\u0c35\u0c30\u0c40  \u0c24\u0c47\u0c26\u0c40",
-          "hin": "\u092a\u094d\u0930\u0938\u092c \u0915\u0940 \u0905\u0928\u0941\u092e\u093e\u0928\u093f\u0924 \u0924\u093f\u0925\u093f"
+          "hin": "\u092a\u094d\u0930\u0938\u092c \u0915\u0940 \u0905\u0928\u0941\u092e\u093e\u0928\u093f\u0924 \u0924\u093f\u0925\u093f",
+          "en": "Estimated Date of Delivery"
         }
       }
     ],

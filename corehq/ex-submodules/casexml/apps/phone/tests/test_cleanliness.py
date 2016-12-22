@@ -710,7 +710,7 @@ class GetDependentCasesTest(TestCase):
     def test_returns_nothing_with_no_dependencies(self):
         case = CaseStructure()
         self.factory.create_or_update_case(case)
-        self.assertEqual(set(), get_dependent_case_info(self.domain, case.case_id).all_ids)
+        self.assertEqual(set(), get_dependent_case_info(self.domain, [case.case_id]).all_ids)
 
     @run_with_all_backends
     def test_returns_simple_extension(self):

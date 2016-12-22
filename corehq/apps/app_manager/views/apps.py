@@ -24,6 +24,7 @@ from corehq.apps.app_manager.exceptions import ConflictingCaseTypeError, \
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs, \
     validate_langs, CASE_TYPE_CONFLICT_MSG
 from corehq import toggles, privileges
+from toggle.shortcuts import set_toggle
 from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager import id_strings
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
@@ -31,10 +32,10 @@ from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.tour import tours
 from corehq.apps.translations.models import Translation
 from corehq.apps.app_manager.const import (
-    APP_V1,
     APP_V2,
     MAJOR_RELEASE_TO_VERSION,
     AUTO_SELECT_USERCASE,
+    DEFAULT_FETCH_LIMIT,
 )
 from corehq.apps.app_manager.util import (
     get_settings_values,
@@ -119,13 +120,14 @@ def default_new_app(request, domain):
     if tours.NEW_APP.is_enabled(request.user):
         identify.delay(request.couch_user.username, {'First Template App Chosen': 'blank'})
     lang = 'en'
-    app = Application.new_app(
-        domain, _("Untitled Application"), lang=lang,
-        application_version=APP_V2
-    )
-    module = Module.new_module(_("Untitled Module"), lang)
-    app.add_module(module)
-    form = app.new_form(0, "Untitled Form", lang)
+    app = Application.new_app(domain, _("Untitled Application"), lang=lang)
+
+    if not toggles.APP_MANAGER_V2.enabled(domain):
+        # APP MANAGER V2 is completely blank on new app
+        module = Module.new_module(_("Untitled Module"), lang)
+        app.add_module(module)
+        form = app.new_form(0, "Untitled Form", lang)
+
     if request.project.secure_submissions:
         app.secure_submissions = True
     clear_app_cache(request, domain)
@@ -138,7 +140,9 @@ def get_app_view_context(request, app):
     is_cloudcare_allowed = has_privilege(request, privileges.CLOUDCARE)
     context = {}
 
-    settings_layout = copy.deepcopy(get_commcare_settings_layout()[app.get_doc_type()])
+    settings_layout = copy.deepcopy(
+        get_commcare_settings_layout(request.domain)[app.get_doc_type()]
+    )
     for section in settings_layout:
         new_settings = []
         for setting in section['settings']:
@@ -215,6 +219,11 @@ def get_app_view_context(request, app):
         )
     })
     context['is_app_view'] = True
+    try:
+        context['fetchLimit'] = int(request.GET.get('limit', DEFAULT_FETCH_LIMIT))
+    except ValueError:
+        context['fetchLimit'] = DEFAULT_FETCH_LIMIT
+
     return context
 
 
@@ -243,25 +252,19 @@ def get_apps_base_context(request, domain, app):
         'timezone': timezone,
     }
 
-    if app:
-        v2_app = app.application_version == APP_V2
+    if app and not app.is_remote_app():
+        app.assert_app_v2()
         context.update({
             'show_care_plan': (
-                v2_app
-                and not app.has_careplan_module
+                not app.has_careplan_module
                 and toggles.APP_BUILDER_CAREPLAN.enabled(request.user.username)
             ),
             'show_advanced': (
-                v2_app
-                and (
-                    toggles.APP_BUILDER_ADVANCED.enabled(domain)
-                    or getattr(app, 'commtrack_enabled', False)
-                )
+                toggles.APP_BUILDER_ADVANCED.enabled(domain)
+                or getattr(app, 'commtrack_enabled', False)
             ),
-            'show_shadow_modules': (
-                v2_app
-                and toggles.APP_BUILDER_SHADOW_MODULES.enabled(domain)
-            ),
+            'show_report_modules': toggles.MOBILE_UCR.enabled(domain),
+            'show_shadow_modules': toggles.APP_BUILDER_SHADOW_MODULES.enabled(domain),
         })
 
     return context
@@ -271,20 +274,15 @@ def get_apps_base_context(request, domain, app):
 @require_can_edit_apps
 def app_source(request, domain, app_id):
     app = get_app(domain, app_id)
-    return HttpResponse(app.export_json())
-
-
-@require_can_edit_apps
-def copy_app_check_domain(request, domain, name, app_id_or_source):
-    app_copy = import_app_util(app_id_or_source, domain, {'name': name})
-    return back_to_main(request, app_copy.domain, app_id=app_copy._id)
+    return json_response(app.export_json(dump_json=False))
 
 
 @require_can_edit_apps
 def copy_app(request, domain):
     app_id = request.POST.get('app')
     form = CopyApplicationForm(
-        app_id, request.POST, export_zipped_apps_enabled=toggles.EXPORT_ZIPPED_APPS.enabled(request.user.username)
+        domain, app_id, request.POST,
+        export_zipped_apps_enabled=toggles.EXPORT_ZIPPED_APPS.enabled(request.user.username)
     )
     if form.is_valid():
         gzip = request.FILES.get('gzip')
@@ -295,8 +293,15 @@ def copy_app(request, domain):
         else:
             app_id_or_source = app_id
 
-        return copy_app_check_domain(request, form.cleaned_data['domain'], form.cleaned_data['name'],
-                                     app_id_or_source)
+        def _inner(request, domain, data):
+            clear_app_cache(request, domain)
+            if data['toggles']:
+                for slug in data['toggles'].split(","):
+                    set_toggle(slug, domain, True, namespace=toggles.NAMESPACE_DOMAIN)
+            app_copy = import_app_util(app_id_or_source, domain, {'name': data['name']})
+            return back_to_main(request, app_copy.domain, app_id=app_copy._id)
+
+        return login_and_domain_required(_inner)(request, form.cleaned_data['domain'], form.cleaned_data)
     else:
         from corehq.apps.app_manager.views.view_generic import view_generic
         return view_generic(request, domain, app_id=app_id, copy_app_form=form)
@@ -341,7 +346,7 @@ def export_gzip(req, domain, app_id):
 
 
 @require_can_edit_apps
-def import_app(request, domain, template="app_manager/import_app.html"):
+def import_app(request, domain, template="app_manager/v1/import_app.html"):
     if request.method == "POST":
         clear_app_cache(request, domain)
         name = request.POST.get('name')
@@ -408,11 +413,10 @@ def new_app(request, domain):
     "Adds an app to the database"
     lang = 'en'
     type = request.POST["type"]
-    application_version = request.POST.get('application_version', APP_V1)
     cls = str_to_cls[type]
     form_args = []
     if cls == Application:
-        app = cls.new_app(domain, "Untitled Application", lang=lang, application_version=application_version)
+        app = cls.new_app(domain, "Untitled Application", lang=lang)
         module = Module.new_module("Untitled Module", lang)
         app.add_module(module)
         form = app.new_form(0, "Untitled Form", lang)
@@ -585,7 +589,6 @@ def edit_app_attr(request, domain, app_id, attr):
         'use_j2me_endpoint',
         # Application only
         'cloudcare_enabled',
-        'application_version',
         'case_sharing',
         'translation_strategy',
         'auto_gps_capture',
@@ -601,7 +604,6 @@ def edit_app_attr(request, domain, app_id, attr):
     resp = {"update": {}}
     # For either type of app
     easy_attrs = (
-        ('application_version', None),
         ('build_spec', BuildSpec.from_string),
         ('case_sharing', None),
         ('cloudcare_enabled', None),
@@ -616,6 +618,7 @@ def edit_app_attr(request, domain, app_id, attr):
         ('translation_strategy', None),
         ('auto_gps_capture', None),
         ('use_grid_menus', None),
+        ('grid_form_menus', None),
         ('comment', None),
         ('custom_base_url', None),
         ('use_j2me_endpoint', None),
@@ -667,12 +670,6 @@ def edit_app_attr(request, domain, app_id, attr):
         app.set_custom_suite(hq_settings['custom_suite'])
 
     return HttpResponse(json.dumps(resp))
-
-
-@require_can_edit_apps
-def get_commcare_version(request, app_id, app_version):
-    options = CommCareBuildConfig.fetch().get_menu(app_version)
-    return json_response(options)
 
 
 @no_conflict_require_POST

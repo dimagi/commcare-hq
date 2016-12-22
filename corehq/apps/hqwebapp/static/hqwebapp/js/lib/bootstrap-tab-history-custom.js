@@ -51,9 +51,10 @@ $(function () {
                 }, null, State.url);
             }
         }
+        link.parent().removeClass('active');    // force tab to load
         link.tab('show');
     };
-    $(window).bind('load', statechange);
+    $(window).on('load', statechange);
     History.Adapter.bind(window, 'statechange', statechange);
     History.Adapter.bind(window, 'statechange', function () {
         var State = History.getState();
@@ -68,6 +69,9 @@ $(function () {
         var url = event.target.href.split("#")[0];
         var tab = event.target.href.split("#")[1];
         var pageTitle = $(this).attr('data-pagetitle');
+        if (pageTitle) {
+            document.title = pageTitle;
+        }
 
         var State = History.getState();
 

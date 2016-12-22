@@ -1,4 +1,4 @@
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.sms.api import (
     MessageMetadata,
     add_msg_tags,
@@ -92,7 +92,8 @@ def global_keyword_update(v, text, msg, text_words, open_sessions):
 
             site_code = site_code[0].lower()
 
-            location = Location.by_site_code(v.domain, site_code)
+            location = SQLLocation.objects.get_or_None(domain=v.domain,
+                                                       site_code=site_code)
             if location:
                 v.owner.set_location(location)
                 send_sms_to_verified_number(

@@ -64,7 +64,24 @@ class SelfRegistrationInfo(object):
         self.users.append(user_info)
 
 
-class UserSelfRegistrationValidation(Validation):
+class SelfRegistrationReinstallInfo(object):
+
+    def __init__(self, app_id, reinstall_message=None):
+        self.app_id = app_id
+        if isinstance(reinstall_message, basestring):
+            self.reinstall_message = reinstall_message.strip()
+        else:
+            self.reinstall_message = None
+        self.users = []
+
+    def add_user(self, user_info):
+        """
+        :param user_info: should be an instance of SelfRegistrationUserInfo
+        """
+        self.users.append(user_info)
+
+
+class BaseUserSelfRegistrationValidation(Validation):
 
     def _validate_toplevel_fields(self, data, field_defs):
         """
@@ -111,6 +128,12 @@ class UserSelfRegistrationValidation(Validation):
             phone_numbers.add(phone_number)
 
     def is_valid(self, bundle, request=None):
+        raise NotImplementedError()
+
+
+class UserSelfRegistrationValidation(BaseUserSelfRegistrationValidation):
+
+    def is_valid(self, bundle, request=None):
         if not request:
             raise SelfRegistrationApiException('Expected request to be present')
 
@@ -131,14 +154,28 @@ class UserSelfRegistrationValidation(Validation):
         return {}
 
 
-class UserSelfRegistrationResource(HqBaseResource):
-    registration_result = None
+class UserSelfRegistrationReinstallValidation(BaseUserSelfRegistrationValidation):
 
-    class Meta:
-        authentication = RequirePermissionAuthentication(Permissions.edit_data)
-        resource_name = 'sms_user_registration'
-        allowed_methods = ['post']
-        validation = UserSelfRegistrationValidation()
+    def is_valid(self, bundle, request=None):
+        if not request:
+            raise SelfRegistrationApiException('Expected request to be present')
+
+        try:
+            self._validate_toplevel_fields(bundle.data, [
+                FieldDefinition('app_id', True, basestring),
+                FieldDefinition('users', True, list),
+                FieldDefinition('reinstall_message', False, basestring),
+            ])
+
+            self._validate_app_id(request.domain, bundle.data['app_id'])
+            self._validate_users(bundle.data['users'])
+        except SelfRegistrationValidationException as e:
+            return e.errors
+
+        return {}
+
+
+class BaseUserSelfRegistrationResource(HqBaseResource):
 
     def dispatch(self, request_type, request, **kwargs):
         domain_obj = Domain.get_by_name(request.domain)
@@ -160,7 +197,26 @@ class UserSelfRegistrationResource(HqBaseResource):
                 )
             )
         else:
-            return super(UserSelfRegistrationResource, self).dispatch(request_type, request, **kwargs)
+            return super(BaseUserSelfRegistrationResource, self).dispatch(request_type, request, **kwargs)
+
+    def detail_uri_kwargs(self, bundle_or_obj):
+        return {}
+
+
+class UserSelfRegistrationResource(BaseUserSelfRegistrationResource):
+    """
+    Used to initiate the mobile worker self-registration workflow over SMS.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(UserSelfRegistrationResource, self).__init__(*args, **kwargs)
+        self.registration_result = None
+
+    class Meta:
+        authentication = RequirePermissionAuthentication(Permissions.edit_data)
+        resource_name = 'sms_user_registration'
+        allowed_methods = ['post']
+        validation = UserSelfRegistrationValidation()
 
     def full_hydrate(self, bundle):
         if not self.is_valid(bundle):
@@ -213,5 +269,58 @@ class UserSelfRegistrationResource(HqBaseResource):
             content_type='application/json',
         )
 
-    def detail_uri_kwargs(self, bundle_or_obj):
-        return {}
+
+class UserSelfRegistrationReinstallResource(BaseUserSelfRegistrationResource):
+    """
+    Used to resend the CommCare install link to a user's phone.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(UserSelfRegistrationReinstallResource, self).__init__(*args, **kwargs)
+        self.reinstall_result = None
+
+    class Meta:
+        authentication = RequirePermissionAuthentication(Permissions.edit_data)
+        resource_name = 'sms_user_registration_reinstall'
+        allowed_methods = ['post']
+        validation = UserSelfRegistrationReinstallValidation()
+
+    def full_hydrate(self, bundle):
+        if not self.is_valid(bundle):
+            raise ImmediateHttpResponse(response=self.error_response(bundle.request, bundle.errors))
+
+        data = bundle.data
+
+        obj = SelfRegistrationReinstallInfo(
+            data.get('app_id'),
+            data.get('reinstall_message')
+        )
+        for user_info in data.get('users', []):
+            obj.add_user(SelfRegistrationUserInfo(
+                user_info.get('phone_number')
+            ))
+        bundle.obj = obj
+        return bundle
+
+    def obj_create(self, bundle, **kwargs):
+        bundle = self.full_hydrate(bundle)
+        self.reinstall_result = SelfRegistrationInvitation.send_install_link(
+            bundle.request.domain,
+            bundle.obj.users,
+            bundle.obj.app_id,
+            custom_message=bundle.obj.reinstall_message
+        )
+        return bundle
+
+    def post_list(self, request, **kwargs):
+        super(UserSelfRegistrationReinstallResource, self).post_list(request, **kwargs)
+        success_numbers, invalid_format_numbers, error_numbers = self.reinstall_result
+
+        return HttpResponse(
+            json.dumps({
+                'success_numbers': success_numbers,
+                'invalid_format_numbers': invalid_format_numbers,
+                'error_numbers': error_numbers,
+            }),
+            content_type='application/json',
+        )

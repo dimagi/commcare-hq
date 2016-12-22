@@ -1,13 +1,16 @@
 from collections import defaultdict, namedtuple, OrderedDict
 from copy import deepcopy
 import functools
+from itertools import chain
 import json
 import os
 import uuid
 import yaml
 from corehq import toggles
-from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
-from corehq.apps.app_manager.exceptions import SuiteError
+from corehq.apps.app_manager.dbaccessors import (
+    get_apps_in_domain, get_case_sharing_apps_in_domain
+)
+from corehq.apps.app_manager.exceptions import SuiteError, SuiteValidationError
 from corehq.apps.app_manager.xpath import DOT_INTERPOLATE_PATTERN, UserCaseXPath
 from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.app_manager.tasks import create_user_cases
@@ -173,6 +176,15 @@ def is_valid_case_type(case_type, module):
     return matches_regex and prevent_usercase_type
 
 
+def module_case_hierarchy_has_circular_reference(module):
+    from corehq.apps.app_manager.suite_xml.utils import get_select_chain
+    try:
+        get_select_chain(module.get_app(), module)
+        return False
+    except SuiteValidationError:
+        return True
+
+
 class ParentCasePropertyBuilder(object):
 
     def __init__(self, app, defaults=(), per_type_defaults=None):
@@ -194,11 +206,25 @@ class ParentCasePropertyBuilder(object):
                 forms_info.append((module.case_type, form))
         return forms_info
 
+    @property
     @memoized
-    def get_parent_types_and_contributed_properties(self, case_type):
+    def case_sharing_app_forms_info(self):
+        forms_info = []
+        for app in self.get_other_case_sharing_apps_in_domain():
+            for module in app.get_modules():
+                for form in module.get_forms():
+                    forms_info.append((module.case_type, form))
+        return forms_info
+
+    @memoized
+    def get_parent_types_and_contributed_properties(self, case_type, include_shared_properties=True):
         parent_types = set()
         case_properties = set()
-        for m_case_type, form in self.forms_info:
+        forms_info = self.forms_info
+        if self.app.case_sharing and include_shared_properties:
+            forms_info += self.case_sharing_app_forms_info
+
+        for m_case_type, form in forms_info:
             p_types, c_props = form.get_parent_types_and_contributed_properties(m_case_type, case_type)
             parent_types.update(p_types)
             case_properties.update(c_props)
@@ -211,8 +237,7 @@ class ParentCasePropertyBuilder(object):
 
     @memoized
     def get_other_case_sharing_apps_in_domain(self):
-        apps = get_apps_in_domain(self.app.domain, include_remote=False)
-        return [a for a in apps if a.case_sharing and a.id != self.app.id]
+        return get_case_sharing_apps_in_domain(self.app.domain, self.app.id)
 
     @memoized
     def get_properties(self, case_type, already_visited=(),
@@ -234,8 +259,9 @@ class ParentCasePropertyBuilder(object):
                 # reference, then I think it will not appear in the schema.
                 case_properties.update(p for p in updates if "/" not in p)
 
-        parent_types, contributed_properties = \
-            self.get_parent_types_and_contributed_properties(case_type)
+        parent_types, contributed_properties = self.get_parent_types_and_contributed_properties(
+            case_type, include_shared_properties=include_shared_properties
+        )
         case_properties.update(contributed_properties)
         if include_parent_properties:
             get_properties_recursive = functools.partial(
@@ -314,6 +340,17 @@ def get_case_properties(app, case_types, defaults=(),
     )
 
 
+def get_shared_case_types(app):
+    shared_case_types = set()
+
+    if app.case_sharing:
+        apps = get_case_sharing_apps_in_domain(app.domain, app.id)
+        for app in apps:
+            shared_case_types |= set(chain(*[m.get_case_types() for m in app.get_modules()]))
+
+    return shared_case_types
+
+
 def get_per_type_defaults(domain, case_types=None):
     from corehq.apps.callcenter.utils import get_call_center_case_type_if_enabled
 
@@ -346,7 +383,7 @@ def get_casedb_schema(form):
     """
     app = form.get_app()
     base_case_type = form.get_module().case_type
-    case_types = app.get_case_types()
+    case_types = app.get_case_types() | get_shared_case_types(app)
     per_type_defaults = get_per_type_defaults(app.domain, case_types)
     builder = ParentCasePropertyBuilder(app, ['case_name'], per_type_defaults)
     related = builder.get_parent_type_map(case_types, allow_multiple_parents=True)
@@ -394,16 +431,19 @@ def get_session_schema(form):
     from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
     structure = {}
     datums = EntriesHelper(form.get_app()).get_datums_meta_for_form_generic(form)
-    for datum in datums:
-        if not datum.is_new_case_id and datum.case_type:
-            session_var = datum.datum.id
-            structure[session_var] = {
-                "reference": {
-                    "source": "casedb",
-                    "subset": "case",
-                    "key": "@case_id",
-                },
-            }
+    datums = [
+        d for d in datums
+        if not d.is_new_case_id and d.case_type and d.requires_selection
+    ]
+    if len(datums):
+        session_var = datums[-1].datum.id
+        structure[session_var] = {
+            "reference": {
+                "source": "casedb",
+                "subset": "case",
+                "key": "@case_id",
+            },
+        }
     return {
         "id": "commcaresession",
         "uri": "jr://instance/session",
@@ -755,3 +795,18 @@ def get_sort_and_sort_only_columns(detail, sort_elements):
         for field, (element, element_order) in sort_elements.items()
     ]
     return sort_only_elements, sort_columns
+
+
+def get_app_manager_template(domain, v1, v2):
+    """
+    Given the name of the domain, a template string v1, and a template string v2,
+    return the template for V2 if the APP_MANAGER_V2 toggle is enabled.
+
+    :param domain: String, domain name
+    :param v1: String, template name for V1
+    :param v2: String, template name for V2
+    :return: String, either v1 or v2 depending on toggle
+    """
+    if domain is not None and toggles.APP_MANAGER_V2.enabled(domain):
+        return v2
+    return v1

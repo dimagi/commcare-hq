@@ -22,11 +22,7 @@ class TranslationMixin(Document):
         self.translations[lang] = translations
 
 
-class TranslationDoc(TranslationMixin):
-    pass
-
-
-class StandaloneTranslationDoc(TranslationDoc, CouchDocLockableMixIn):
+class StandaloneTranslationDoc(TranslationMixin, CouchDocLockableMixIn):
     """
     There is either 0 or 1 StandaloneTranslationDoc doc for each (domain, area).
     """

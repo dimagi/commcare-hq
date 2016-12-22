@@ -1,5 +1,4 @@
 from django.apps import apps
-from django.core.exceptions import ImproperlyConfigured
 from django.db import connection
 
 
@@ -10,8 +9,8 @@ class BaseDeletion(object):
 
     def is_app_installed(self):
         try:
-            return apps.get_app(self.app_label)
-        except ImproperlyConfigured:
+            return bool(apps.get_app_config(self.app_label))
+        except LookupError:
             return False
 
 
@@ -95,16 +94,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('locations', 'SQLLocation', 'domain'),
     ModelDeletion('locations', 'LocationType', 'domain'),
     ModelDeletion('stock', 'DocDomainMapping', 'domain_name'),
-    ModelDeletion('accounting', 'SubscriptionAdjustment', 'subscription__subscriber__domain'),
-    ModelDeletion('accounting', 'BillingRecord', 'invoice__subscription__subscriber__domain'),
-    ModelDeletion('accounting', 'CreditAdjustment', 'invoice__subscription__subscriber__domain'),
-    ModelDeletion('accounting', 'CreditAdjustment', 'credit_line__subscription__subscriber__domain'),
-    ModelDeletion('accounting', 'CreditAdjustment', 'related_credit__subscription__subscriber__domain'),
-    ModelDeletion('accounting', 'LineItem', 'invoice__subscription__subscriber__domain'),
-    ModelDeletion('accounting', 'CreditLine', 'subscription__subscriber__domain'),
-    ModelDeletion('accounting', 'Invoice', 'subscription__subscriber__domain'),
-    ModelDeletion('accounting', 'Subscription', 'subscriber__domain'),
-    ModelDeletion('accounting', 'Subscriber', 'domain'),
+    ModelDeletion('domain_migration_flags', 'DomainMigrationProgress', 'domain'),
     ModelDeletion('sms', 'SMS', 'domain'),
     ModelDeletion('sms', 'SQLLastReadMessage', 'domain'),
     ModelDeletion('sms', 'ExpectedCallback', 'domain'),

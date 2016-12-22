@@ -2,7 +2,7 @@ from django import template
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 
-from corehq.tabs import MENU_TABS
+from corehq.tabs.config import MENU_TABS
 from corehq.tabs.exceptions import TabClassError, TabClassErrorSummary
 from corehq.tabs.utils import path_starts_with_url
 
@@ -103,7 +103,7 @@ def format_sidebar(context):
     active_tab = context.get('active_tab', None)
     request = context['request']
 
-    sections = active_tab.sidebar_items if active_tab else None
+    sections = active_tab.filtered_sidebar_items if active_tab else None
 
     if sections:
         # set is_active on active sidebar item by modifying nav by reference

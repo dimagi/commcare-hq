@@ -37,7 +37,7 @@
         _.each(valid_sub_areas, function(val) {
             var $opt = $("<option></option>").attr("value", val).text(val);
             if (val == chosen_sub_area) {
-                $opt.attr("selected", "selected");
+                $opt.prop("selected", true);
             }
              $subarea.append($opt);
         });

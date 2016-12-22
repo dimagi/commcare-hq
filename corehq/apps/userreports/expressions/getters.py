@@ -47,20 +47,32 @@ class NestedDictGetter(object):
         self.property_path = property_path
 
     def __call__(self, item, context=None):
-        if not isinstance(item, dict):
-            return None
-        try:
-            return recursive_lookup(item, self.property_path)
-        except (KeyError, TypeError):
-            # key errors are missing keys
-            # type errors are valid keys that return the wrong type
-            return None
+        return safe_recursive_lookup(item, self.property_path)
+
+
+def safe_recursive_lookup(item, path):
+    """
+    Like recursive_lookup but returns `None` on any expected errors.
+    """
+    if not isinstance(item, dict):
+        return None
+    try:
+        return recursive_lookup(item, path)
+    except (KeyError, TypeError, ValueError):
+        # key errors are missing keys
+        # type errors are valid keys that return the wrong type
+        # value errors are empty keys
+        return None
 
 
 def recursive_lookup(dict_object, keys):
     """
     Given a dict object and list of keys, nest into those keys.
-    Raises KeyError if the path isn't found.
+
+    :raises KeyError if the path isn't found.
+    :raises TypeError if dict_object is not a dict
+    :raises ValueError if keys is empty
+
     >>> recursive_lookup({'foo': 1}, ['foo'])
     1
     >>> recursive_lookup({'foo': {'bar': 1}}, ['foo'])

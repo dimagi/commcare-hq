@@ -3,6 +3,7 @@ from crispy_forms.layout import Fieldset, Hidden, Layout
 from crispy_forms.bootstrap import StrictButton
 from django import forms
 from django.utils.translation import ugettext as _
+from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.domain.models import Domain
 from corehq.apps.style import crispy as hqcrispy
 
@@ -10,13 +11,22 @@ from corehq.apps.style import crispy as hqcrispy
 class CopyApplicationForm(forms.Form):
     domain = forms.CharField(
         label=_("Copy this app to project"),
-        widget=forms.TextInput(attrs={"data-bind": "typeahead: domain_names"}))
-    name = forms.CharField(required=False, label=_('Name'))
+        widget=forms.TextInput(attrs={
+            "data-bind": "autocompleteSelect2: domain_names",
+        }))
+    name = forms.CharField(required=True, label=_('Name'))
 
-    def __init__(self, app_id, *args, **kwargs):
+    # Toggles to enable when copying the app
+    toggles = forms.CharField(required=False, widget=forms.HiddenInput, max_length=5000)
+
+    def __init__(self, from_domain, app_id, *args, **kwargs):
         export_zipped_apps_enabled = kwargs.pop('export_zipped_apps_enabled', False)
         super(CopyApplicationForm, self).__init__(*args, **kwargs)
-        fields = ['domain', 'name']
+        fields = ['domain', 'name', 'toggles']
+        if app_id:
+            app = get_app(from_domain, app_id)
+            if app:
+                self.fields['name'].initial = app.name
         if export_zipped_apps_enabled:
             self.fields['gzip'] = forms.FileField(required=False)
             fields.append('gzip')
@@ -31,7 +41,7 @@ class CopyApplicationForm(forms.Form):
             ),
             Hidden('app', app_id),
             hqcrispy.FormActions(
-                StrictButton(_('Copy'), type='submit', css_class='btn-primary')
+                StrictButton(_('Copy'), type='button', css_class='btn-primary')
             )
         )
 

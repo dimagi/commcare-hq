@@ -5,7 +5,7 @@ from corehq.apps.commtrack.models import StockState
 from corehq.form_processor.models import (
     CommCareCaseIndexSQL, CommCareCaseSQL, CaseTransaction,
     XFormInstanceSQL, XFormOperationSQL, XFormAttachmentSQL,
-    LedgerValue)
+    LedgerValue, CaseAttachmentSQL)
 
 
 class DeletableModelSerializer(serializers.ModelSerializer):
@@ -22,13 +22,19 @@ class DeletableModelSerializer(serializers.ModelSerializer):
 
 
 class XFormOperationSQLSerializer(serializers.ModelSerializer):
+    user = serializers.CharField(source="user_id")
+
     class Meta:
         model = XFormOperationSQL
+        exclude = ('id', 'form', 'user_id')
 
 
 class XFormAttachmentSQLSerializer(serializers.ModelSerializer):
+    id = serializers.UUIDField(source="attachment_id")
+
     class Meta:
         model = XFormAttachmentSQL
+        fields = ('id', 'content_type', 'content_length')
 
 
 class XFormInstanceSQLSerializer(DeletableModelSerializer):
@@ -72,6 +78,9 @@ class JsonFieldSerializerMixin(object):
 
 class XFormInstanceSQLRawDocSerializer(JsonFieldSerializerMixin, DeletableModelSerializer):
     state = XFormStateField()
+    history = XFormOperationSQLSerializer(many=True, read_only=True)
+    form = serializers.JSONField(source='form_data')
+    external_blobs = serializers.JSONField(source='serialized_attachments')
 
     class Meta:
         model = XFormInstanceSQL
@@ -111,18 +120,29 @@ class CommCareCaseSQLRawDocSerializer(JsonFieldSerializerMixin, DeletableModelSe
         model = CommCareCaseSQL
 
 
+class CaseAttachmentSQLSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CaseAttachmentSQL
+        fields = (
+            'content_type',
+            'content_length',
+            'name',
+        )
+
+
 class CommCareCaseSQLSerializer(DeletableModelSerializer):
     _id = serializers.CharField(source='case_id')
     doc_type = serializers.CharField()
     user_id = serializers.CharField(source='modified_by')
     indices = CommCareCaseIndexSQLSerializer(many=True, read_only=True)
     actions = CaseTransactionActionSerializer(many=True, read_only=True, source='non_revoked_transactions')
+    case_attachments = serializers.JSONField(source='serialized_attachments')
     case_json = serializers.JSONField()
     xform_ids = serializers.ListField()
 
     class Meta:
         model = CommCareCaseSQL
-        exclude = ('case_json',)
+        exclude = ('id', 'case_json',)
 
 
 class CommCareCaseSQLAPISerializer(serializers.ModelSerializer):
@@ -164,7 +184,14 @@ class CommCareCaseSQLAPISerializer(serializers.ModelSerializer):
 
 class LedgerValueSerializer(serializers.ModelSerializer):
     _id = serializers.CharField(source='ledger_id')
+    location_id = serializers.CharField()
     case_id = serializers.CharField()
+
+    def __init__(self, *args, **kwargs):
+        include_location_id = kwargs.pop('include_location_id', False)
+        if not include_location_id:
+            self.fields.pop('location_id')
+        super(LedgerValueSerializer, self).__init__(*args, **kwargs)
 
     class Meta:
         model = LedgerValue
@@ -172,7 +199,7 @@ class LedgerValueSerializer(serializers.ModelSerializer):
 
 
 class StockStateSerializer(serializers.ModelSerializer):
-    _id = serializers.IntegerField(source='id')
+    _id = serializers.CharField(source='id')
     entry_id = serializers.CharField(source='product_id')
     location_id = serializers.CharField(source='sql_location.location_id')
     balance = serializers.IntegerField(source='stock_on_hand')

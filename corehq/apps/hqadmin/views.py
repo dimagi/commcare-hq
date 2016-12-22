@@ -1,15 +1,16 @@
 from lxml import etree
+from lxml.builder import E
 
 import HTMLParser
 import json
 import socket
-import csv
 from datetime import timedelta, date, datetime
 from collections import defaultdict, namedtuple, OrderedDict
 from StringIO import StringIO
 
 import dateutil
-from django.utils.datastructures import SortedDict
+from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.csv import UnicodeWriter
 from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_POST
 from django.conf import settings
@@ -19,7 +20,7 @@ from django.contrib.auth import login
 from django.core import management, cache
 from django.shortcuts import render
 from django.template.loader import render_to_string
-from django.views.generic import FormView, TemplateView
+from django.views.generic import FormView, TemplateView, View
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_lazy
 from django.http import (
@@ -27,6 +28,8 @@ from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseNotFound,
+    JsonResponse,
+    StreamingHttpResponse,
 )
 from restkit import Resource
 from restkit.errors import Unauthorized
@@ -36,10 +39,13 @@ from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.xml import SYNC_XMLNS
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.callcenter.utils import CallCenterCase
+from corehq.apps.domain.auth import basicauth
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.style.decorators import use_datatables, use_jquery_ui, \
     use_nvd3_v3
+from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
 from corehq.form_processor.serializers import XFormInstanceSQLRawDocSerializer, \
@@ -59,7 +65,10 @@ from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain
 from corehq.apps.data_analytics.models import MALTRow, GIRRow
 from corehq.apps.data_analytics.const import GIR_FIELDS
 from corehq.apps.data_analytics.admin import MALTRowAdmin
-from corehq.apps.domain.decorators import require_superuser, require_superuser_or_developer
+from corehq.apps.domain.decorators import (
+    require_superuser, require_superuser_or_developer,
+    login_or_basic, domain_admin_required,
+    check_lockout)
 from corehq.apps.domain.models import Domain
 from corehq.apps.ota.views import get_restore_response, get_restore_params
 from corehq.apps.users.models import CommCareUser, WebUser, CouchUser
@@ -77,12 +86,13 @@ from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.utils import get_all_pillows_json, get_pillow_json, get_pillow_config_by_name
 
 from . import service_checks, escheck
-from .forms import AuthenticateAsForm, BrokenBuildsForm
+from .forms import AuthenticateAsForm, BrokenBuildsForm, SuperuserManagementForm, ReprocessMessagingCaseUpdatesForm
 from .history import get_recent_changes, download_changes
-from .models import HqDeploy, VCMMigration
+from .models import HqDeploy
 from .reporting.reports import get_project_spaces, get_stats_data
 from .utils import get_celery_stats
-
+from corehq.apps.es.domains import DomainES
+from corehq.apps.es import filters
 
 @require_superuser
 def default(request):
@@ -149,6 +159,51 @@ class AuthenticateAs(BaseAdminSectionView):
             request.user.backend = 'django.contrib.auth.backends.ModelBackend'
             login(request, request.user)
             return HttpResponseRedirect('/')
+        return self.get(request, *args, **kwargs)
+
+
+class SuperuserManagement(BaseAdminSectionView):
+    urlname = 'superuser_management'
+    page_title = _("Grant or revoke superuser access")
+    template_name = 'hqadmin/superuser_management.html'
+
+    @method_decorator(require_superuser)
+    def dispatch(self, *args, **kwargs):
+        return super(SuperuserManagement, self).dispatch(*args, **kwargs)
+
+    @property
+    def page_context(self):
+        # only staff can toggle is_staff
+        can_toggle_is_staff = self.request.user.is_staff
+        # render validation errors if rendered after POST
+        args = [can_toggle_is_staff, self.request.POST] if self.request.POST else [can_toggle_is_staff]
+        return {
+            'form': SuperuserManagementForm(*args)
+        }
+
+    def post(self, request, *args, **kwargs):
+        can_toggle_is_staff = request.user.is_staff
+        form = SuperuserManagementForm(can_toggle_is_staff, self.request.POST)
+        if form.is_valid():
+            users = form.cleaned_data['users']
+            is_superuser = 'is_superuser' in form.cleaned_data['privileges']
+            is_staff = 'is_staff' in form.cleaned_data['privileges']
+
+            for user in users:
+                # save user object only if needed and just once
+                should_save = False
+                if user.is_superuser is not is_superuser:
+                    user.is_superuser = is_superuser
+                    should_save = True
+
+                if can_toggle_is_staff and user.is_staff is not is_staff:
+                    user.is_staff = is_staff
+                    should_save = True
+
+                if should_save:
+                    user.save()
+            messages.success(request, _("Successfully updated superuser permissions"))
+
         return self.get(request, *args, **kwargs)
 
 
@@ -275,7 +330,7 @@ def system_ajax(request):
 @require_superuser_or_developer
 def check_services(request):
 
-    def run_test(test):
+    def run_test(service_name, test):
         try:
             result = test()
         except Exception as e:
@@ -284,9 +339,10 @@ def check_services(request):
         else:
             status = "SUCCESS" if result.success else "FAILURE"
             msg = result.msg
-        return "{} {}: {}<br/>".format(status, test.__name__, msg)
+        return "{} {}: {}<br/>".format(status, service_name, msg)
 
-    return HttpResponse("<pre>" + "".join(map(run_test, service_checks.checks)) + "</pre>")
+    results = [run_test(service_name, test) for service_name, test in service_checks.CHECKS.items()]
+    return HttpResponse("<pre>" + "".join(results) + "</pre>")
 
 
 class SystemInfoView(BaseAdminSectionView):
@@ -395,6 +451,10 @@ class AdminRestoreView(TemplateView):
     template_name = 'hqadmin/admin_restore.html'
 
     @method_decorator(require_superuser)
+    def dispatch(self, request, *args, **kwargs):
+        return super(AdminRestoreView, self).dispatch(request, *args, **kwargs)
+
+
     def get(self, request, *args, **kwargs):
         full_username = request.GET.get('as', '')
         if not full_username or '@' not in full_username:
@@ -415,6 +475,12 @@ class AdminRestoreView(TemplateView):
             response, _ = self._get_restore_response()
             return response
 
+        download = request.GET.get('download') == 'true'
+        if download:
+            response, _ = self._get_restore_response()
+            response['Content-Disposition'] = "attachment; filename={}-restore.xml".format(username)
+            return response
+
         return super(AdminRestoreView, self).get(request, *args, **kwargs)
 
     def _get_restore_response(self):
@@ -427,17 +493,46 @@ class AdminRestoreView(TemplateView):
         context = super(AdminRestoreView, self).get_context_data(**kwargs)
         response, timing_context = self._get_restore_response()
         timing_context = timing_context or TimingContext(self.user.username)
-        string_payload = ''.join(response.streaming_content)
-        xml_payload = etree.fromstring(string_payload)
-        restore_id_element = xml_payload.find('{{{0}}}Sync/{{{0}}}restore_id'.format(SYNC_XMLNS))
+        if isinstance(response, StreamingHttpResponse):
+            string_payload = ''.join(response.streaming_content)
+            xml_payload = etree.fromstring(string_payload)
+            restore_id_element = xml_payload.find('{{{0}}}Sync/{{{0}}}restore_id'.format(SYNC_XMLNS))
+            num_cases = len(xml_payload.findall('{http://commcarehq.org/case/transaction/v2}case'))
+        else:
+            if response.status_code in (401, 404):
+                # corehq.apps.ota.views.get_restore_response couldn't find user or user didn't have perms
+                xml_payload = E.error(response.content)
+            elif response.status_code == 412:
+                # RestoreConfig.get_response returned HttpResponse 412. Response content is already XML
+                xml_payload = response.content
+            else:
+                message = _('Unexpected restore response {}: {}. '
+                            'If you believe this is a bug please report an issue.').format(response.status_code,
+                                                                                           response.content)
+                xml_payload = E.error(message)
+            restore_id_element = None
+            num_cases = 0
         formatted_payload = etree.tostring(xml_payload, pretty_print=True)
         context.update({
             'payload': formatted_payload,
             'restore_id': restore_id_element.text if restore_id_element is not None else None,
             'status_code': response.status_code,
-            'timing_data': timing_context.to_list()
+            'timing_data': timing_context.to_list(),
+            'num_cases': num_cases,
         })
         return context
+
+
+class DomainAdminRestoreView(AdminRestoreView):
+    urlname = 'domain_admin_restore'
+
+    def dispatch(self, request, *args, **kwargs):
+        return TemplateView.dispatch(self, request, *args, **kwargs)
+
+    @method_decorator(login_or_basic)
+    @method_decorator(domain_admin_required)
+    def get(self, request, *args, **kwargs):
+        return super(DomainAdminRestoreView, self).get(request, *args, **kwargs)
 
 
 class ManagementCommandsView(BaseAdminSectionView):
@@ -458,127 +553,6 @@ class ManagementCommandsView(BaseAdminSectionView):
         context["hide_filters"] = True
         context["commands"] = commands
         return context
-
-
-class VCMMigrationView(BaseAdminSectionView):
-    urlname = 'vcm_migration'
-    page_title = ugettext_lazy("Vellum Case Management Migration")
-    template_name = 'hqadmin/vcm_migration.html'
-    email_template_html = 'hqadmin/vcm_email_content.html'
-    email_template_txt = 'hqadmin/vcm_email_content.txt'
-
-    email_subject = _("CommCare Easy References Upgrade")
-    email_from = settings.REPORT_BUILDER_ADD_ON_EMAIL
-
-    @property
-    def migration_date(self):
-        return force_to_date(datetime.now() + timedelta(days=14))
-
-    @property
-    def page_context(self):
-        context = get_hqadmin_base_context(self.request)
-        context.update({
-            'audits': VCMMigration.objects.order_by('-migrated', '-emailed', 'domain'),
-            'email_body': render_to_string(self.email_template_html, {
-                'domain': 'DOMAIN',
-                'migration_date': self.migration_date,
-                'email': self.email_from,
-            }),
-            'email_subject': self.email_subject,
-            'url': reverse(self.urlname),
-        })
-        return context
-
-    def post(self, request, *args, **kwargs):
-        action = self.request.POST['action']
-
-        # Ajax request
-        if action == 'notes':
-            migration = VCMMigration.objects.get(domain=self.request.POST['domain'])
-            migration.notes = self.request.POST['notes']
-            migration.save()
-            return json_response({'success': 'success'})
-
-        # Form submission
-        if action == 'add':
-            emails = self.request.POST['items'].split(",")
-            notes = self.request.POST['notes']
-            errors = []
-            successes = []
-            for email in emails:
-                user = CouchUser.get_by_username(email)
-                if not user:
-                    errors.append("User {} not found".format(email))
-                else:
-                    for domain in user.domains:
-                        try:
-                            migration = VCMMigration.objects.get(domain=domain)
-                            successes.append("Updated domain {} for {}".format(domain, email))
-                        except VCMMigration.DoesNotExist:
-                            migration = VCMMigration.objects.create(domain=domain)
-                            successes.append("Added domain {} for {}".format(domain, email))
-                        finally:
-                            if notes:
-                                if migration.notes:
-                                    migration.notes = migration.notes + '; '
-                                else:
-                                    migration.notes = ''
-                                migration.notes = migration.notes + notes
-                                migration.save()
-            if len(successes):
-                messages.success(request, mark_safe("<br>".join(successes)), extra_tags='html')
-            if len(errors):
-                messages.error(request, mark_safe("<br>".join(errors)), extra_tags='html')
-        else:
-            domains = self.request.POST['items'].split(",")
-            errors = set([])
-            successes = set([])
-            for domain in domains:
-                migration = VCMMigration.objects.get(domain=domain)
-                if not migration.notes:
-                    migration.notes = ''
-                app_count = 0
-                if action == 'email':
-                    email_context = {
-                        'domain': domain,
-                        'migration_date': self.migration_date,
-                        'email': self.email_from,
-                    }
-                    html_content = render_to_string(self.email_template_html, email_context)
-                    text_content = render_to_string(self.email_template_txt, email_context)
-                    send_html_email_async.delay(
-                        self.email_subject,
-                        migration.admins,
-                        html_content,
-                        text_content=text_content,
-                        email_from=self.email_from)
-                    migration.emailed = datetime.now()
-                    migration.save()
-                    successes.add(domain)
-                elif action == 'migrate':
-                    for app_id in get_app_ids_in_domain(domain):
-                        try:
-                            management.call_command('migrate_app_to_cmitfb', app_id)
-                            app_count = app_count + 1
-                        except Exception:
-                            if migration.notes:
-                                migration.notes = migration.notes + '; '
-                            migration.notes = migration.notes + "failed on app {}".format(app_id)
-                            errors.add(domain)
-                    if domain not in errors:
-                        if migration.notes:
-                            migration.notes = migration.notes + '; '
-                        migration.notes = migration.notes + "successfully migrated {} domains".format(app_count)
-                        successes.add(domain)
-                    migration.migrated = datetime.now()
-                    migration.save()
-            if len(successes):
-                messages.success(request, "Succeeded with the following {} domains: {}".format(
-                                 len(successes), ", ".join(successes)))
-            if len(errors):
-                messages.error(request, "Errors in the following {} domains: {}".format(
-                               len(errors), ", ".join(errors)))
-        return self.get(request, *args, **kwargs)
 
 
 @require_POST
@@ -617,7 +591,7 @@ class FlagBrokenBuilds(FormView):
 
 
 @require_superuser
-@datespan_in_request(from_param="startdate", to_param="enddate", default_days=365)
+@datespan_in_request(from_param="startdate", to_param="enddate", default_days=90)
 def stats_data(request):
     histo_type = request.GET.get('histogram_type')
     interval = request.GET.get("interval", "week")
@@ -707,15 +681,16 @@ def _lookup_id_in_database(doc_id, db_name=None):
         'deleted': 'danger',
     })
 
+    response = {"doc_id": doc_id}
     if db_name:
         dbs = [_get_db_from_db_name(db_name)]
+        response['selected_db'] = db_name
     else:
         couch_dbs = couch_config.all_dbs_by_slug.values()
         sql_dbs = _SQL_DBS.values()
         dbs = couch_dbs + sql_dbs
 
     db_results = []
-    response = {"doc_id": doc_id}
     for db in dbs:
         try:
             doc = db.get(doc_id)
@@ -794,8 +769,17 @@ def raw_doc(request):
     if db_name and "__" in db_name:
         db_name = db_name.split("__")[-1]
     context = _lookup_id_in_database(doc_id, db_name) if doc_id else {}
+
+    if request.GET.get("raw", False):
+        if 'doc' in context:
+            return HttpResponse(context['doc'], content_type="application/json")
+        else:
+            return HttpResponse(json.dumps({"status": "missing"}),
+                                content_type="application/json", status=404)
+
     other_couch_dbs = sorted(filter(None, couch_config.all_dbs_by_slug.keys()))
     context['all_databases'] = ['commcarehq'] + other_couch_dbs + _SQL_DBS.keys()
+    context['use_code_mirror'] = request.GET.get('code_mirror', 'true').lower() == 'true'
     return render(request, "hqadmin/raw_couch.html", context)
 
 
@@ -842,7 +826,7 @@ def callcenter_test(request):
         query_date = date.today()
 
     def view_data(case_id, indicators):
-        new_dict = SortedDict()
+        new_dict = OrderedDict()
         key_list = sorted(indicators.keys())
         for key in key_list:
             new_dict[key] = indicators[key]
@@ -897,7 +881,7 @@ class DownloadMALTView(BaseAdminSectionView):
             except (ValueError, ValidationError):
                 messages.error(
                     request,
-                    _("Enter a valid year-month. e.g. 2015-09 (for December 2015)")
+                    _("Enter a valid year-month. e.g. 2015-09 (for September 2015)")
                 )
         return super(DownloadMALTView, self).get(request, *args, **kwargs)
 
@@ -927,7 +911,7 @@ class DownloadGIRView(BaseAdminSectionView):
             except (ValueError, ValidationError):
                 messages.error(
                     request,
-                    _("Enter a valid year-month. e.g. 2015-09 (for December 2015)")
+                    _("Enter a valid year-month. e.g. 2015-09 (for September 2015)")
                 )
         return super(DownloadGIRView, self).get(request, *args, **kwargs)
 
@@ -936,6 +920,8 @@ def _gir_csv_response(month, year):
     query_month = "{year}-{month}-01".format(year=year, month=month)
     prev_month = "{year}-{month}-01".format(year=year, month=month - 1)
     two_ago = "{year}-{month}-01".format(year=year, month=month - 2)
+    if not GIRRow.objects.filter(month=query_month).exists():
+        return HttpResponse('Sorry, that month is not yet available')
     queryset = GIRRow.objects.filter(month__in=[query_month, prev_month, two_ago]).order_by('-month')
     domain_months = defaultdict(list)
     for item in queryset:
@@ -943,7 +929,7 @@ def _gir_csv_response(month, year):
     field_names = GIR_FIELDS
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = u'attachment; filename=gir.csv'
-    writer = csv.writer(response)
+    writer = UnicodeWriter(response)
     writer.writerow(list(field_names))
     for months in domain_months.values():
         writer.writerow(months[0].export_row(months[1:]))
@@ -1043,3 +1029,101 @@ class DimagisphereView(TemplateView):
         context = super(DimagisphereView, self).get_context_data(**kwargs)
         context['tvmode'] = 'tvmode' in self.request.GET
         return context
+
+
+class ReprocessMessagingCaseUpdatesView(BaseAdminSectionView):
+    urlname = 'reprocess_messaging_case_updates'
+    page_title = ugettext_lazy("Reprocess Messaging Case Updates")
+    template_name = 'hqadmin/messaging_case_updates.html'
+
+    @method_decorator(require_superuser)
+    def dispatch(self, request, *args, **kwargs):
+        return super(ReprocessMessagingCaseUpdatesView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    @memoized
+    def form(self):
+        if self.request.method == 'POST':
+            return ReprocessMessagingCaseUpdatesForm(self.request.POST)
+        return ReprocessMessagingCaseUpdatesForm()
+
+    @property
+    def page_context(self):
+        context = get_hqadmin_base_context(self.request)
+        context.update({
+            'form': self.form,
+        })
+        return context
+
+    def get_case(self, case_id):
+        try:
+            return CaseAccessorSQL.get_case(case_id)
+        except CaseNotFound:
+            pass
+
+        try:
+            return CaseAccessorCouch.get_case(case_id)
+        except ResourceNotFound:
+            pass
+
+        return None
+
+    def post(self, request, *args, **kwargs):
+        from corehq.apps.reminders.signals import case_changed_receiver as reminders_case_changed_receiver
+        from corehq.apps.sms.signals import case_changed_receiver as sms_case_changed_receiver
+
+        if self.form.is_valid():
+            case_ids = self.form.cleaned_data['case_ids']
+            case_ids_not_processed = []
+            case_ids_processed = []
+            for case_id in case_ids:
+                case = self.get_case(case_id)
+                if not case or case.doc_type != 'CommCareCase':
+                    case_ids_not_processed.append(case_id)
+                else:
+                    reminders_case_changed_receiver(None, case)
+                    sms_case_changed_receiver(None, case)
+                    case_ids_processed.append(case_id)
+
+            if case_ids_processed:
+                messages.success(self.request,
+                    _("Processed the following case ids: {}").format(','.join(case_ids_processed)))
+
+            if case_ids_not_processed:
+                messages.error(self.request,
+                    _("Could not find cases belonging to these case ids: {}")
+                    .format(','.join(case_ids_not_processed)))
+
+        return self.get(request, *args, **kwargs)
+
+
+def top_five_projects_by_country(request):
+    data = {}
+    internalMode = request.user.is_superuser
+    attributes = ['internal.area', 'internal.sub_area', 'cp_n_active_cc_users', 'deployment.countries']
+
+    if internalMode:
+        attributes = ['name', 'internal.organization_name', 'internal.notes'] + attributes
+
+    if 'country' in request.GET:
+        country = request.GET.get('country')
+        projects = (DomainES().is_active_project().real_domains()
+                    .filter(filters.term('deployment.countries', country))
+                    .sort('cp_n_active_cc_users', True).source(attributes).size(5).run().hits)
+        data = {country: projects, 'internal': internalMode}
+
+    return json_response(data)
+
+
+class WebUserDataView(View):
+    urlname = 'web_user_data'
+
+    @method_decorator(check_lockout)
+    @method_decorator(basicauth())
+    def get(self, request, *args, **kwargs):
+        couch_user = CouchUser.from_django_user(request.user)
+        if couch_user.is_web_user():
+            data = {'domains': couch_user.domains}
+            return JsonResponse(data)
+        else:
+            return HttpResponse('Only web users can access this endpoint', status=400)

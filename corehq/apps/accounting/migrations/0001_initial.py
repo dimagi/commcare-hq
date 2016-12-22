@@ -38,7 +38,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='BillingContactInfo',
             fields=[
-                ('account', models.OneToOneField(primary_key=True, serialize=False, to='accounting.BillingAccount')),
+                ('account', models.OneToOneField(primary_key=True, serialize=False, to='accounting.BillingAccount', on_delete=models.CASCADE)),
                 ('first_name', models.CharField(max_length=50, null=True, verbose_name='First Name', blank=True)),
                 ('last_name', models.CharField(max_length=50, null=True, verbose_name='Last Name', blank=True)),
                 ('emails', models.CharField(help_text='We will email communications regarding your account to the emails specified here.', max_length=200, null=True, verbose_name='Contact Emails')),
@@ -387,7 +387,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='softwareplanversion',
             name='role',
-            field=models.ForeignKey(to='django_prbac.Role'),
+            field=models.ForeignKey(to='django_prbac.Role', on_delete=models.CASCADE),
             preserve_default=True,
         ),
         migrations.AddField(

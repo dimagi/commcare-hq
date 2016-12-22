@@ -131,13 +131,11 @@ class FormProcessorInterface(object):
             raise
         except Exception as e:
             xforms_being_saved = [form.form_id for form in forms if form]
-            error_message = u'Unexpected error bulk saving docs {}: {}, doc_ids: {}'.format(
-                type(e).__name__,
-                unicode(e),
-                ', '.join(xforms_being_saved)
+            error_message = u'Unexpected error bulk saving docs during form processing ({})'.format(
+                ', '.join(xforms_being_saved),
             )
             from corehq.form_processor.submission_post import handle_unexpected_error
-            handle_unexpected_error(self, forms.submitted, error_message)
+            handle_unexpected_error(self, forms.submitted, e, error_message)
             raise
 
     def hard_delete_case_and_forms(self, case, xforms):

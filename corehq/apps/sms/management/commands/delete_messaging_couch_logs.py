@@ -14,7 +14,7 @@ BULK_DELETE_INTERVAL = 5
 class Command(BaseCommand):
     args = ""
     help = ("Deletes all messaging logs stored in couch")
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option("--verify",
                     action="store_true",
                     dest="verify",

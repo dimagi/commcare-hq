@@ -14,7 +14,7 @@ from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from corehq.apps.receiverwrapper import submit_form_locally
+from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, \
     run_with_all_backends
@@ -1469,6 +1469,7 @@ class MultiUserSyncTest(SyncBaseTest):
             date_modified=time,
             case_id=case_id,
             user_id=self.user_id,
+            date_opened=time.date(),
             update={
                 'greeting': 'hello',
                 'greeting_2': 'hello'

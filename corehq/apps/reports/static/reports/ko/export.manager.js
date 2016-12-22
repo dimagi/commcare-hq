@@ -63,21 +63,25 @@ var ExportManager = function (o) {
             var autoRefresh = true;
             var pollDownloader = function () {
                 if (autoRefresh && $('#ready_'+params.data.download_id).length === 0) {
-                    $.get(params.data.download_url, function(data) {
-                        self.$modal.find(self.exportModalLoadedData).html(data);
-                        self.setUpEventTracking({
-                            xmlns: params.xmlns,
-                            isBulkDownload: params.isBulkDownload,
-                            exportName: params.exportName,
-                            isMultimedia: params.isMultimedia
-                        });
-                        if (autoRefresh) {
-                            setTimeout(pollDownloader, 2000);
-                        }
-                    }).error(function () {
-                        self.$modal.find(self.exportModalLoading).addClass('hide');
-                        self.$modal.find(self.exportModalLoadedData).html('<p class="alert alert-error">Oh no! Your download was unable to be completed. We have been notified and are already hard at work solving this issue.</p>');
-                        autoRefresh = false;
+                    $.get({
+                        url: params.data.download_url,
+                        success: function(data) {
+                            self.$modal.find(self.exportModalLoadedData).html(data);
+                            self.setUpEventTracking({
+                                xmlns: params.xmlns,
+                                isBulkDownload: params.isBulkDownload,
+                                exportName: params.exportName,
+                                isMultimedia: params.isMultimedia
+                            });
+                            if (autoRefresh) {
+                                setTimeout(pollDownloader, 2000);
+                            }
+                        },
+                        error: function () {
+                            self.$modal.find(self.exportModalLoading).addClass('hide');
+                            self.$modal.find(self.exportModalLoadedData).html('<p class="alert alert-error">Oh no! Your download was unable to be completed. We have been notified and are already hard at work solving this issue.</p>');
+                            autoRefresh = false;
+                        },
                     });
                 } else {
                     self.$modal.find(self.exportModalLoading).addClass('hide');
@@ -156,7 +160,7 @@ var ExportManager = function (o) {
     if(!self.isNewExporter) {
         self.updateSelectedExports = function (data, event) {
             var $checkbox = $(event.srcElement || event.currentTarget);
-            var add_to_list = ($checkbox.attr('checked') === 'checked'),
+            var add_to_list = $checkbox.prop('checked'),
                 downloadButton = $checkbox.parent().parent().parent().find('.dl-export');
             if (add_to_list) {
                 $checkbox.parent().find('.label').removeClass('label-info').addClass('label-success');
@@ -169,7 +173,7 @@ var ExportManager = function (o) {
     } else {
         self.updateSelectedExports = function (data, event) {
             var $checkbox = $(event.srcElement || event.currentTarget);
-            var add_to_list = ($checkbox.attr('checked') === 'checked'),
+            var add_to_list = $checkbox.prop('checked'),
                 export_id = $checkbox.attr('value');
             if (add_to_list) {
                 $checkbox.parent().find('.label').removeClass('label-info').addClass('label-success');
@@ -433,12 +437,12 @@ var ExportManager = function (o) {
                 check_class = (self.is_custom) ? '.select-custom' : '.select-bulk';
             if ($toggleBtn.data('all'))
                 $.each($(check_class), function () {
-                    $(this).attr('checked', true);
+                    $(this).prop('checked', true);
                     self.updateSelectedExports({}, {srcElement: this});
                 });
             else
                 $.each($(check_class), function () {
-                    $(this).attr('checked', false);
+                    $(this).prop('checked', false);
                     self.updateSelectedExports({}, {srcElement: this});
                 });
         };
@@ -448,12 +452,12 @@ var ExportManager = function (o) {
                 check_class = '.select-export';
             if ($toggleBtn.data('all')) {
                 $.each($(check_class), function () {
-                    $(this).attr('checked', true);
+                    $(this).prop('checked', true);
                     self.updateSelectedExports({}, {srcElement: this});
                 });
             } else {
                 $.each($(check_class), function () {
-                    $(this).attr('checked', false);
+                    $(this).prop('checked', false);
                     self.updateSelectedExports({}, {srcElement: this});
                 });
             }
@@ -529,7 +533,7 @@ ko.bindingHandlers.updateCustomSheetName = {
             allSheetNames = allBindingsAccessor().checkForUniqueSheetName;
         var $parentRow = $(element).parent().parent().parent(),
             exportID = $(element).data('exportid');
-        if($parentRow.find('.select-custom').attr('checked') === 'checked') {
+        if($parentRow.find('.select-custom').prop('checked')) {
             $(element).parent().fadeIn();
             if(exportID)
                 allSheetNames()[exportID] = $(element).val();

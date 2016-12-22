@@ -2,12 +2,14 @@ import json
 from StringIO import StringIO
 
 from django.test import SimpleTestCase
+from django.core.cache import cache
 from elasticsearch.exceptions import ConnectionError
 from mock import patch
 from openpyxl import load_workbook
 
 from corehq.apps.export.const import (
     DEID_DATE_TRANSFORM,
+    CASE_NAME_TRANSFORM,
 )
 from corehq.apps.export.export import (
     _get_writer,
@@ -15,6 +17,10 @@ from corehq.apps.export.export import (
     _write_export_instance,
     ExportFile,
     get_export_file,
+)
+from corehq.apps.export.const import (
+    MISSING_VALUE,
+    EMPTY_VALUE,
 )
 from corehq.apps.export.models import (
     TableConfiguration,
@@ -160,7 +166,7 @@ class WriterTest(SimpleTestCase):
                 {
                     u'My table': {
                         u'headers': [u'MC | one', u'MC | two', 'MC | extra'],
-                        u'rows': [[None, 1, 'extra'], [1, 1, '']],
+                        u'rows': [[EMPTY_VALUE, 1, 'extra'], [1, 1, '']],
 
                     }
                 }
@@ -260,8 +266,8 @@ class WriterTest(SimpleTestCase):
                         u'rows': [
                             ['question-id', '2'],
                             ['question-id', '2'],
-                            [None, None],
-                            [None, None],
+                            [MISSING_VALUE, MISSING_VALUE],
+                            [MISSING_VALUE, MISSING_VALUE],
                         ],
                     }
                 }
@@ -299,7 +305,7 @@ class WriterTest(SimpleTestCase):
                 {
                     u'My table': {
                         u'headers': [u'Date'],
-                        u'rows': [[None], [couch_to_excel_datetime('2015-07-22T14:16:49.584880Z', None)]],
+                        u'rows': [[MISSING_VALUE], [couch_to_excel_datetime('2015-07-22T14:16:49.584880Z', None)]],
 
                     }
                 }
@@ -478,7 +484,7 @@ class ExportTest(SimpleTestCase):
             cls.es = get_es_new()
             initialize_index_and_mapping(cls.es, CASE_INDEX_INFO)
 
-        case = new_case(foo="apple", bar="banana", date='2016-4-24')
+        case = new_case(_id='robin', name='batman', foo="apple", bar="banana", date='2016-4-24')
         send_to_elasticsearch('cases', case.to_json())
 
         case = new_case(owner_id="some_other_owner", foo="apple", bar="banana", date='2016-4-04')
@@ -491,10 +497,12 @@ class ExportTest(SimpleTestCase):
         send_to_elasticsearch('cases', case.to_json())
 
         cls.es.indices.refresh(CASE_INDEX_INFO.index)
+        cache.clear()
 
     @classmethod
     def tearDownClass(cls):
         ensure_index_deleted(CASE_INDEX_INFO.index)
+        cache.clear()
         super(ExportTest, cls).tearDownClass()
 
     def test_get_export_file(self):
@@ -546,6 +554,58 @@ class ExportTest(SimpleTestCase):
                 }
             )
 
+    def test_case_name_transform(self):
+        docs = [
+            {
+                'domain': 'my-domain',
+                '_id': '1234',
+                "form": {
+                    "caseid": "robin",
+                },
+            },
+            {
+                'domain': 'my-domain',
+                '_id': '1234',
+                "form": {
+                    "caseid": "i-do-not-exist",
+                },
+            }
+        ]
+        export_instance = FormExportInstance(
+            export_format=Format.JSON,
+            tables=[
+                TableConfiguration(
+                    label="My table",
+                    selected=True,
+                    columns=[
+                        ExportColumn(
+                            label="case_name",
+                            item=ScalarItem(
+                                path=[PathNode(name='form'), PathNode(name='caseid')],
+                                transform=CASE_NAME_TRANSFORM,
+                            ),
+                            selected=True
+                        ),
+                    ]
+                )
+            ]
+        )
+        writer = _get_writer([export_instance])
+        with writer.open([export_instance]):
+            _write_export_instance(writer, export_instance, docs)
+
+        with ExportFile(writer.path, writer.format) as export:
+            self.assertEqual(
+                json.loads(export),
+                {
+                    u'My table': {
+                        u'headers': [u'case_name'],
+                        u'rows': [[u'batman'], [MISSING_VALUE]],
+
+                    }
+                }
+            )
+
     @patch('couchexport.deid.DeidGenerator.random_number', return_value=3)
     def test_export_transforms(self, _):
         export_file = get_export_file(
@@ -584,7 +644,7 @@ class ExportTest(SimpleTestCase):
                             u'DEID Date Transform column [sensitive]',
                         ],
                         u'rows': [
-                            [None],
+                            [MISSING_VALUE],
                             [u'2016-04-07'],
                             [u'2016-04-27'],  # offset by 3 since that's the mocked random offset
                         ],

@@ -1,17 +1,19 @@
-from django.core.management.base import LabelCommand, CommandError
+from django.core.management.base import BaseCommand, CommandError
 from optparse import make_option
 import simplejson
+from elasticsearch.exceptions import NotFoundError
+
 from corehq.elastic import get_es_new
 from corehq.pillows.utils import get_all_expected_es_indices
 from pillowtop.es_utils import assume_alias
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = "."
     args = ""
     label = ""
 
-    option_list = LabelCommand.option_list + (
+    option_list = (
         make_option('--flip_all_aliases',
                     action='store_true',
                     dest='flip_all',
@@ -46,8 +48,12 @@ class Command(LabelCommand):
                 '',
             ])).lower() == 'code red':
                 for index_info in es_indices:
-                    es.indices.delete(index_info.index)
-                    print 'deleted elastic index: {}'.format(index_info.index)
+                    try:
+                        es.indices.delete(index_info.index)
+                    except NotFoundError:
+                        print 'elastic index not present: {}'.format(index_info.index)
+                    else:
+                        print 'deleted elastic index: {}'.format(index_info.index)
             else:
                 print 'Safety first!'
             return

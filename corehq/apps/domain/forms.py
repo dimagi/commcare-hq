@@ -6,8 +6,9 @@ import sys
 import uuid
 from urlparse import urlparse, parse_qs
 
-import dateutil
 from captcha.fields import CaptchaField
+
+from corehq.apps.callcenter.views import CallCenterOwnerOptionsView
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
@@ -19,11 +20,12 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.hashers import UNUSABLE_PASSWORD_PREFIX
 from django.contrib.auth.tokens import default_token_generator
-from django.contrib.sites.models import get_current_site
+from django.contrib.sites.shortcuts import get_current_site
 from django.core.urlresolvers import reverse
 from django.db import transaction
+from django.db.models import F
 from django.forms.fields import (ChoiceField, CharField, BooleanField,
-    ImageField, IntegerField)
+                                 ImageField, IntegerField, Field)
 from django.forms.widgets import  Select
 from django.template.loader import render_to_string
 from django.utils.encoding import smart_str, force_bytes
@@ -67,27 +69,24 @@ from corehq.apps.app_manager.models import Application, FormBase, RemoteApp
 from corehq.apps.app_manager.const import AMPLIFIES_YES, AMPLIFIES_NOT_SET, AMPLIFIES_NO
 from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
     AREA_CHOICES, SUB_AREA_CHOICES, BUSINESS_UNITS, TransferDomainRequest)
-from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.tasks import send_mail_async, send_html_email_async
 from corehq.apps.reminders.models import CaseReminderHandler
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.apps.style import crispy as hqcrispy
-from corehq.apps.style.forms.widgets import BootstrapCheckboxInput
-from corehq.apps.users.models import WebUser, CommCareUser, CouchUser
+from corehq.apps.style.forms.widgets import BootstrapCheckboxInput, Select2Ajax
+from corehq.apps.users.models import WebUser, CouchUser
 from corehq.privileges import (
     REPORT_BUILDER_5,
     REPORT_BUILDER_ADD_ON_PRIVS,
     REPORT_BUILDER_TRIAL,
 )
-from corehq.toggles import CALL_CENTER_LOCATION_OWNERS, HIPAA_COMPLIANCE_CHECKBOX
+from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
 from dimagi.utils.decorators.memoized import memoized
 
 # used to resize uploaded custom logos, aspect ratio is preserved
 LOGO_SIZE = (211, 32)
-
-logger = logging.getLogger(__name__)
 
 
 def tf_choices(true_txt, false_txt):
@@ -466,9 +465,21 @@ class SubAreaMixin():
         return sub_area
 
 
+USE_LOCATION_CHOICE = "user_location"
+USE_PARENT_LOCATION_CHOICE = 'user_parent_location'
+
+
+class CallCenterOwnerWidget(Select2Ajax):
+
+    def set_domain(self, domain):
+        self.domain = domain
+
+    def render(self, name, value, attrs=None):
+        value_to_render = CallCenterOwnerOptionsView.convert_owner_id_to_select_choice(value, self.domain)
+        return super(CallCenterOwnerWidget, self).render(name, value_to_render, attrs=attrs)
+
+
 class DomainGlobalSettingsForm(forms.Form):
-    USE_LOCATION_CHOICE = "user_location"
-    USE_PARENT_LOCATION_CHOICE = 'user_parent_location'
     LOCATION_CHOICES = [USE_LOCATION_CHOICE, USE_PARENT_LOCATION_CHOICE]
     CASES_AND_FIXTURES_CHOICE = "cases_and_fixtures"
     CASES_ONLY_CHOICE = "cases_only"
@@ -478,6 +489,15 @@ class DomainGlobalSettingsForm(forms.Form):
         help_text=ugettext_lazy("This name will appear in the upper right corner "
                                 "when you are in this project. Changing this name "
                                 "will not change the URL of the project.")
+    )
+    project_description = forms.CharField(
+        label=ugettext_lazy("Project Description"),
+        widget=forms.Textarea,
+        required=False,
+        max_length=1000,
+        help_text=ugettext_lazy(
+            "Please provide a short description of your project (Max 1000 characters)."
+        )
     )
     default_timezone = TimeZoneChoiceField(label=ugettext_noop("Default Timezone"), initial="UTC")
 
@@ -517,9 +537,9 @@ class DomainGlobalSettingsForm(forms.Form):
         ),
         required=False,
     )
-    call_center_case_owner = ChoiceField(
+    call_center_case_owner = Field(
+        widget=CallCenterOwnerWidget(attrs={'placeholder': ugettext_lazy('Select an Owner...')}),
         label=ugettext_lazy("Call Center Case Owner"),
-        initial=None,
         required=False,
         help_text=ugettext_lazy("Select the person who will be listed as the owner "
                     "of all cases created for call center users.")
@@ -563,27 +583,11 @@ class DomainGlobalSettingsForm(forms.Form):
                 del self.fields['call_center_case_owner']
                 del self.fields['call_center_case_type']
             else:
-                groups = Group.get_case_sharing_groups(self.domain)
-                users = CommCareUser.by_domain(self.domain)
-
-                call_center_user_choices = [
-                    (user._id, user.raw_username + ' [user]') for user in users
-                ]
-                call_center_group_choices = [
-                    (group._id, group.name + ' [group]') for group in groups
-                ]
-                call_center_location_choices = []
-                if CALL_CENTER_LOCATION_OWNERS.enabled(self.domain):
-                    call_center_location_choices = [
-                        (self.USE_LOCATION_CHOICE, ugettext_lazy("user's location [location]")),
-                        (self.USE_PARENT_LOCATION_CHOICE, ugettext_lazy("user's location's parent [location]")),
-                    ]
-
-                self.fields["call_center_case_owner"].choices = \
-                    [('', '')] + \
-                    call_center_location_choices + \
-                    call_center_user_choices + \
-                    call_center_group_choices
+                owner_field = self.fields['call_center_case_owner']
+                owner_field.widget.set_url(
+                    reverse(CallCenterOwnerOptionsView.url_name, args=(self.domain,))
+                )
+                owner_field.widget.set_domain(self.domain)
 
     def clean_default_timezone(self):
         data = self.cleaned_data['default_timezone']
@@ -633,7 +637,7 @@ class DomainGlobalSettingsForm(forms.Form):
             if owner in self.LOCATION_CHOICES:
                 cc_config.call_center_case_owner = None
                 cc_config.use_user_location_as_owner = True
-                cc_config.user_location_ancestor_level = 1 if owner == self.USE_PARENT_LOCATION_CHOICE else 0
+                cc_config.user_location_ancestor_level = 1 if owner == USE_PARENT_LOCATION_CHOICE else 0
             else:
                 cc_config.case_owner_id = owner
                 cc_config.use_user_location_as_owner = False
@@ -656,6 +660,7 @@ class DomainGlobalSettingsForm(forms.Form):
 
     def save(self, request, domain):
         domain.hr_name = self.cleaned_data['hr_name']
+        domain.project_description = self.cleaned_data['project_description']
         self._save_logo_configuration(domain)
         self._save_call_center_configuration(domain)
         self._save_timezone_configuration(domain)
@@ -910,6 +915,14 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                    "Programs that use CommCare data to make programmatic decisions."
                    )
     )
+    data_access_threshold = IntegerField(
+        label=ugettext_noop("Minimum Monthly Data Accesses"),
+        required=False,
+        help_text=ugettext_lazy(
+            "Minimum number of times project staff are expected to access CommCare data each month. "
+            "The default value is 20."
+        )
+    )
 
     def __init__(self, can_edit_eula, *args, **kwargs):
         super(DomainInternalForm, self).__init__(*args, **kwargs)
@@ -953,6 +966,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                 'experienced_threshold',
                 'amplifies_workers',
                 'amplifies_project',
+                'data_access_threshold',
                 crispy.Div(*additional_fields),
             ),
             crispy.Fieldset(
@@ -995,6 +1009,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             amplifies_workers=self.cleaned_data['amplifies_workers'],
             amplifies_project=self.cleaned_data['amplifies_project'],
             business_unit=self.cleaned_data['business_unit'],
+            data_access_threshold=self.cleaned_data['data_access_threshold'],
             **kwargs
         )
 
@@ -1069,7 +1084,7 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
 
     This small change is why we can't use the default PasswordReset form.
     """
-    email = forms.EmailField(label=ugettext_lazy("Username"), max_length=254,
+    email = forms.EmailField(label=ugettext_lazy("Email"), max_length=254,
                              widget=forms.TextInput(attrs={'class': 'form-control'}))
     if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
         captcha = CaptchaField(label=ugettext_lazy("Type the letters in the box"))
@@ -1102,7 +1117,7 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
              # WARNING: Django 1.7 passes this in automatically. do not remove
              html_email_template_name=None,
              use_https=False, token_generator=default_token_generator,
-             from_email=None, request=None):
+             from_email=None, request=None, **kwargs):
         """
         Generates a one-use only link for resetting password and sends to the
         user.
@@ -1361,24 +1376,26 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                 if not account_save_success:
                     return False
 
+                # changing a plan overrides future subscriptions
+                future_subscriptions = Subscription.objects.filter(
+                    subscriber__domain=self.domain,
+                    date_start__gt=datetime.date.today()
+                )
+                if future_subscriptions.count() > 0:
+                    future_subscriptions.update(date_end=F('date_start'))
+
                 if self.current_subscription is not None:
-                    if self.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY:
-                        self.current_subscription.cancel_subscription(
-                            adjustment_method=SubscriptionAdjustmentMethod.USER,
-                            web_user=self.creating_user,
-                        )
-                    else:
-                        subscription = self.current_subscription.change_plan(
-                            self.plan_version,
-                            web_user=self.creating_user,
-                            adjustment_method=SubscriptionAdjustmentMethod.USER,
-                            service_type=SubscriptionType.PRODUCT,
-                            pro_bono_status=ProBonoStatus.NO,
-                        )
-                        subscription.is_active = True
-                        if subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE:
-                            subscription.do_not_invoice = True
-                        subscription.save()
+                    subscription = self.current_subscription.change_plan(
+                        self.plan_version,
+                        web_user=self.creating_user,
+                        adjustment_method=SubscriptionAdjustmentMethod.USER,
+                        service_type=SubscriptionType.PRODUCT,
+                        pro_bono_status=ProBonoStatus.NO,
+                    )
+                    subscription.is_active = True
+                    if subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE:
+                        subscription.do_not_invoice = True
+                    subscription.save()
                 else:
                     subscription = Subscription.new_domain_subscription(
                         self.account, self.domain, self.plan_version,
@@ -1394,9 +1411,12 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                         subscription.do_not_invoice = True
                     subscription.save()
                 return True
-        except Exception:
-            logger.exception("There was an error subscribing the domain '%s' to plan '%s'. "
-                             "Go quickly!" % (self.domain, self.plan_version.plan.name))
+        except Exception as e:
+            log_accounting_error(
+                "There was an error subscribing the domain '%s' to plan '%s'. Message: %s "
+                % (self.domain, self.plan_version.plan.name, e.message),
+                show_stack_trace=True,
+            )
         return False
 
 
@@ -1504,9 +1524,11 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
 
 
 class ProBonoForm(forms.Form):
-    contact_email = forms.EmailField(label=ugettext_lazy("Contact email"))
+    contact_email = forms.CharField(label=ugettext_lazy("Email To"))
     organization = forms.CharField(label=ugettext_lazy("Organization"))
     project_overview = forms.CharField(widget=forms.Textarea, label="Project overview")
+    airtime_expense = forms.CharField(label=ugettext_lazy("Estimated annual expenditures on airtime:"))
+    device_expense = forms.CharField(label=ugettext_lazy("Estimated annual expenditures on devices:"))
     pay_only_features_needed = forms.CharField(widget=forms.Textarea, label="Pay only features needed")
     duration_of_project = forms.CharField(help_text=ugettext_lazy(
         "We grant pro-bono subscriptions to match the duration of your "
@@ -1538,6 +1560,8 @@ class ProBonoForm(forms.Form):
                     style=('' if use_domain_field else 'display:none'),
                 ),
                 'project_overview',
+                'airtime_expense',
+                'device_expense',
                 'pay_only_features_needed',
                 'duration_of_project',
                 'num_expected_users',
@@ -1703,9 +1727,7 @@ class DimagiOnlyEnterpriseForm(InternalSubscriptionManagementForm):
 
     @transaction.atomic
     def process_subscription_management(self):
-        enterprise_plan_version = DefaultProductPlan.get_default_plan(
-            SoftwarePlanEdition.ENTERPRISE
-        ).plan.get_version()
+        enterprise_plan_version = DefaultProductPlan.get_default_plan_version(SoftwarePlanEdition.ENTERPRISE)
         if self.current_subscription:
             self.current_subscription.change_plan(
                 enterprise_plan_version,
@@ -1791,7 +1813,7 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
 
     @transaction.atomic
     def process_subscription_management(self):
-        advanced_trial_plan_version = DefaultProductPlan.get_default_plan(
+        advanced_trial_plan_version = DefaultProductPlan.get_default_plan_version(
             edition=SoftwarePlanEdition.ADVANCED, is_trial=True,
         )
         if self.current_subscription:
@@ -1975,7 +1997,7 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
                 "CommCare %s edition with privilege REPORT_BUILDER_5 was not found! Requires manual setup."
                 % edition
             )
-            new_plan_version = DefaultProductPlan.get_default_plan(
+            new_plan_version = DefaultProductPlan.get_default_plan_version(
                 edition=self.cleaned_data['software_plan_edition'],
             )
 

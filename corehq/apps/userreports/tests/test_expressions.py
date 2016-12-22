@@ -178,6 +178,23 @@ class ExpressionFromSpecTest(SimpleTestCase):
 
 class PropertyPathExpressionTest(SimpleTestCase):
 
+    def test_datatype(self):
+        spec = {
+            'type': 'property_path',
+            'property_path': ['path', 'to', 'foo'],
+        }
+        item = {
+            'path': {'to': {'foo': '1.0'}}
+        }
+        tests = (
+            ('string', '1.0'),
+            ('decimal', Decimal(1.0)),
+            ('integer', 1)
+        )
+        for datatype, value in tests:
+            spec['datatype'] = datatype
+            self.assertEqual(value, ExpressionFactory.from_spec(spec)(item))
+
     def test_property_path_bad_type(self):
         getter = ExpressionFactory.from_spec({
             'type': 'property_path',
@@ -850,7 +867,9 @@ def test_add_days_to_date_expression(self, source_doc, count_expression, expecte
             "b": 5
         },
         5 + 2
-    )
+    ),
+    ({}, "a + b", {"a": Decimal(2), "b": Decimal(3)}, Decimal(5)),
+    ({}, "a + b", {"a": Decimal(2.2), "b": Decimal(3.1)}, Decimal(5.3)),
 ])
 def test_valid_eval_expression(self, source_doc, statement, context, expected_value):
     expression = ExpressionFactory.from_spec({
@@ -858,7 +877,8 @@ def test_valid_eval_expression(self, source_doc, statement, context, expected_va
         "statement": statement,
         "context_variables": context
     })
-    self.assertEqual(expression(source_doc), expected_value)
+    # almostEqual handles decimal (im)precision - it means "equal to 7 places"
+    self.assertAlmostEqual(expression(source_doc), expected_value)
 
 
 @generate_cases([
@@ -917,6 +937,34 @@ def test_unsupported_evaluator_statements(self, eq, context):
         "context_variables": context
     })
     self.assertEqual(expression({}), None)
+
+
+@generate_cases([
+    ("a/b", {"a": 5, "b": None}, TypeError),
+    ("a/b", {"a": 5, "b": 0}, ZeroDivisionError),
+])
+def test_errors_in_evaluator_statements(self, eq, context, error_type):
+    with self.assertRaises(error_type):
+        eval_statements(eq, context)
+    expression = ExpressionFactory.from_spec({
+        "type": "evaluator",
+        "statement": eq,
+        "context_variables": context
+    })
+    self.assertEqual(expression({}), None)
+
+
+class TestEvaluatorTypes(SimpleTestCase):
+
+    def test_datatype(self):
+        spec = {
+            "type": "evaluator",
+            "statement": '1.0 + a',
+            "context_variables": {'a': 1.0}
+        }
+        self.assertEqual(type(ExpressionFactory.from_spec(spec)({})), float)
+        spec['datatype'] = 'integer'
+        self.assertEqual(type(ExpressionFactory.from_spec(spec)({})), int)
 
 
 class TestFormsExpressionSpec(TestCase):
@@ -1020,6 +1068,7 @@ class TestIterationNumberExpression(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestIterationNumberExpression, cls).setUpClass()
         cls.spec = ExpressionFactory.from_spec({'type': 'base_iteration_number'})
 
     def test_default(self):

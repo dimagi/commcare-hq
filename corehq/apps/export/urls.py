@@ -1,4 +1,4 @@
-from django.conf.urls import *
+from django.conf.urls import url
 from corehq.apps.export.views import (
     CreateCustomFormExportView,
     CreateCustomCaseExportView,
@@ -19,10 +19,10 @@ from corehq.apps.export.views import (
     DownloadNewFormExportView,
     BulkDownloadNewFormExportView,
     DownloadNewCaseExportView,
+    download_daily_saved_export,
 )
 
-urlpatterns = patterns(
-    'corehq.apps.export.views',
+urlpatterns = [
     url(r"^custom/form/$",
         FormExportListView.as_view(),
         name=FormExportListView.urlname),
@@ -81,6 +81,6 @@ urlpatterns = patterns(
         DeleteNewCustomExportView.as_view(),
         name=DeleteNewCustomExportView.urlname),
     url(r"^custom/dailysaved/download/(?P<export_instance_id>[\w\-]+)/$",
-        "download_daily_saved_export",
+        download_daily_saved_export,
         name="download_daily_saved_export"),
-)
+]

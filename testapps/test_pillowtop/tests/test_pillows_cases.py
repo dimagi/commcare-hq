@@ -452,7 +452,7 @@ EXAMPLE_CASE = {
 
 class testReportCaseProcessing(TestCase):
 
-    @softer_assert
+    @softer_assert()
     def testXFormPillowSingleCaseProcess(self):
         """
         Test that xform pillow can process and cleanup a single xform with a case submission
@@ -463,7 +463,7 @@ class testReportCaseProcessing(TestCase):
         self.assertIsNone(changed['form']['case'].get('@date_modified'))
         self.assertIsNotNone(xform['form']['case']['@date_modified'])
 
-    @softer_assert
+    @softer_assert()
     def testXFormPillowListCaseProcess(self):
         """
         Test that xform pillow can process and cleanup a single xform with a list of cases in it
@@ -490,7 +490,7 @@ class testReportCaseProcessing(TestCase):
         self.assertEqual(changed_with_owner_id.get("owner_id"), "testuser")
         self.assertEqual(changed_with_no_owner_id.get("owner_id"), "testuser")
 
-    @softer_assert
+    @softer_assert()
     def testReportXFormTransform(self):
         form = XFORM_SINGLE_CASE
         form['domain'] = settings.ES_XFORM_FULL_INDEX_DOMAINS[0]

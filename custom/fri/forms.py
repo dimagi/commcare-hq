@@ -1,9 +1,8 @@
 from django.forms.forms import Form
 from django.forms.fields import *
 from django.core.exceptions import ValidationError
-from corehq.util.spreadsheets.excel import WorksheetNotFound, \
-    WorkbookJSONReader
-from openpyxl.utils.exceptions import InvalidFileException
+from corehq.util.workbook_json.excel import WorksheetNotFound, \
+    WorkbookJSONReader, InvalidExcelFileException
 from django.utils.translation import ugettext as _
 
 
@@ -18,7 +17,7 @@ class MessageBankForm(Form):
 
         try:
             workbook = WorkbookJSONReader(value)
-        except InvalidFileException:
+        except InvalidExcelFileException:
             raise ValidationError(_("Invalid format. Please convert to Excel 2007 or higher (.xlsx) and try again."))
 
         try:

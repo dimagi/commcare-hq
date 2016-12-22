@@ -1,5 +1,8 @@
+import functools
 import uuid
+import datetime
 from django.test import TestCase
+from casexml.apps.case.models import CommCareCase
 from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.domain.dbaccessors import (
     count_downloads_for_all_snapshots,
@@ -34,14 +37,23 @@ class DBAccessorsTest(TestCase):
         cls.project.delete()
 
     def test_get_doc_count_in_domain_by_class(self):
-        group = Group(domain=self.domain)
-        group.save()
-        self.addCleanup(group.delete)
-        group2 = Group(domain=self.domain)
-        group2.save()
-        self.addCleanup(group2.delete)
-        count = get_doc_count_in_domain_by_class(self.domain, Group)
-        self.assertEqual(count, 2)
+        case = CommCareCase(domain=self.domain, opened_on=datetime.datetime(2000, 1, 1))
+        case.save()
+        self.addCleanup(case.delete)
+        case2 = CommCareCase(domain=self.domain, opened_on=datetime.datetime(2001, 1, 1))
+        case2.save()
+        self.addCleanup(case2.delete)
+
+        get = functools.partial(
+            get_doc_count_in_domain_by_class, self.domain, CommCareCase)
+
+        self.assertEqual(get(), 2)
+        self.assertEqual(get(start_date=datetime.datetime(1999, 7, 1)), 2)
+        self.assertEqual(get(start_date=datetime.datetime(2000, 7, 1)), 1)
+        self.assertEqual(get(start_date=datetime.datetime(2001, 7, 1)), 0)
+        self.assertEqual(get(end_date=datetime.datetime(2001, 7, 1)), 2)
+        self.assertEqual(get(end_date=datetime.datetime(2000, 7, 1)), 1)
+        self.assertEqual(get(end_date=datetime.datetime(1999, 7, 1)), 0)
 
     def test_get_doc_ids_in_domain_by_class(self):
         user_role = UserRole(domain=self.domain)

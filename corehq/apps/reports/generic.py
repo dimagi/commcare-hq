@@ -22,6 +22,7 @@ from corehq.apps.style.decorators import (
     use_datatables,
     use_select2,
     use_daterangepicker,
+    use_nvd3,
 )
 from corehq.apps.users.models import CouchUser
 from corehq.util.timezones.utils import get_timezone_for_user
@@ -458,7 +459,7 @@ class GenericReportView(object):
                 has_datespan=has_datespan,
                 show=(
                     self.override_permissions_check
-                    or self.request.couch_user.can_view_any_reports(self.domain)
+                    or self.request.couch_user.can_view_some_reports(self.domain)
                 ),
                 is_emailable=self.emailable,
                 is_export_all = self.exportable_all,
@@ -582,11 +583,11 @@ class GenericReportView(object):
         rendered_filters = None
         if bool(self.request.GET.get('hq_filters')):
             self.update_filter_context()
-            rendered_filters = render_to_string(self.template_filters, self.context,
-                context_instance=RequestContext(self.request)
+            rendered_filters = render_to_string(
+                self.template_filters, self.context, request=self.request
             )
-        rendered_report = render_to_string(self.template_report, self.context,
-            context_instance=RequestContext(self.request)
+        rendered_report = render_to_string(
+            self.template_report, self.context, request=self.request
         )
 
         return dict(
@@ -611,8 +612,8 @@ class GenericReportView(object):
             Renders just the filters for the report to be fetched asynchronously.
         """
         self.update_filter_context()
-        rendered_filters = render_to_string(self.template_filters, self.context,
-            context_instance=RequestContext(self.request)
+        rendered_filters = render_to_string(
+            self.template_filters, self.context, request=self.request
         )
         return HttpResponse(json.dumps(dict(
             filters=rendered_filters,
@@ -696,6 +697,7 @@ class GenericReportView(object):
         """
         return []
 
+    @use_nvd3
     @use_jquery_ui
     @use_select2
     @use_datatables

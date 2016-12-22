@@ -38,7 +38,7 @@ class Command(BaseCommand):
     help = "Creates an HqDeploy document to record a successful deployment."
     args = "[user]"
 
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option('--user', help='User', default=False),
         make_option('--environment', help='Environment {production|staging etc...}', default=settings.SERVER_ENVIRONMENT),
         make_option('--mail_admins', help='Mail Admins', default=False, action='store_true'),
@@ -70,26 +70,34 @@ class Command(BaseCommand):
                   "{} pillow errors queued for retry\n".format(rows_updated)
 
         deploy_notification_text = (
-            "CommCareHQ has been successfully deployed to *{}* by *{}* in *{}* minutes. "
-            "Monitor the {{dashboard_link}}. "
-            "Check the integration {{integration_tests_link}}. "
-            "Find the diff {{diff_link}}".format(
+            "CommCareHQ has been successfully deployed to *{}* by *{}* in *{}* minutes. ".format(
                 options['environment'],
                 options['user'],
                 minutes or '?',
             )
         )
 
+        if options['environment'] == 'production':
+            deploy_notification_text += "Monitor the {dashboard_link}. "
+
         if settings.MOBILE_INTEGRATION_TEST_TOKEN:
+            deploy_notification_text += "Check the integration {integration_tests_link}. "
             requests.get(
                 'https://jenkins.dimagi.com/job/integration-tests/build',
                 params={'token': settings.MOBILE_INTEGRATION_TEST_TOKEN},
             )
 
+        deploy_notification_text += "Find the diff {diff_link}"
+
         if hasattr(settings, 'MIA_THE_DEPLOY_BOT_API'):
             link = diff_link(STYLE_SLACK, compare_url)
+            if options['environment'] == 'staging':
+                channel = '#staging'
+            else:
+                channel = '#hq-ops'
             requests.post(settings.MIA_THE_DEPLOY_BOT_API, data=json.dumps({
                 "username": "Igor the Iguana",
+                "channel": channel,
                 "text": deploy_notification_text.format(
                     dashboard_link=dashboard_link(STYLE_SLACK, DASHBOARD_URL),
                     diff_link=link,

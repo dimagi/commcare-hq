@@ -9,7 +9,7 @@
   "config": {
     "title": "Issue Tracker - Issues By Ticket Level",
     "description": "",
-    "visible": false,
+    "visible": true,
     "aggregation_columns": [
       "ticket_level"
     ],

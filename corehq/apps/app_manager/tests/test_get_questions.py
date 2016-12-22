@@ -1,9 +1,11 @@
 import os
+import uuid
 
+from django.template.loader import render_to_string
 from django.test.testcases import SimpleTestCase
 
 from corehq.util.test_utils import TestFileMixin
-from corehq.apps.app_manager.models import Application, Module, APP_V2
+from corehq.apps.app_manager.models import Application, Module
 
 QUESTIONS = [
     {
@@ -25,6 +27,7 @@ QUESTIONS = [
                      "instance('casedb')/casedb/case[@case_id=instance('casedb')/casedb/case["
                      "@case_id=instance('commcaresession')/session/data/case_id]/index/parent"
                      "]/parent_property_1"),
+        'comment': None,
     },
     {
         'tag': 'input',
@@ -37,6 +40,7 @@ QUESTIONS = [
         'type': 'Text',
         'required': False,
         'relevant': None,
+        'comment': "This is a comment",
     },
     {
         'tag': 'input',
@@ -49,6 +53,7 @@ QUESTIONS = [
         'type': 'Text',
         'required': False,
         'relevant': None,
+        'comment': None,
     },
     {
         'tag': 'trigger',
@@ -61,6 +66,7 @@ QUESTIONS = [
         'type': 'Trigger',
         'required': False,
         'relevant': None,
+        'comment': None,
     },
     {
         'tag': 'input',
@@ -73,6 +79,7 @@ QUESTIONS = [
         'type': 'Text',
         'required': False,
         'relevant': None,
+        'comment': None,
     },
     {
         'tag': 'select1',
@@ -92,6 +99,7 @@ QUESTIONS = [
         'type': 'Select',
         'required': False,
         'relevant': None,
+        'comment': None,
     },
     {
         'tag': 'input',
@@ -104,6 +112,7 @@ QUESTIONS = [
         'type': 'Int',
         'required': False,
         'relevant': None,
+        'comment': None,
     },
     {
         'tag': 'input',
@@ -116,6 +125,7 @@ QUESTIONS = [
         'type': 'Text',
         'required': False,
         'relevant': None,
+        'comment': None,
     },
     {
         'tag': 'hidden',
@@ -140,11 +150,7 @@ class GetFormQuestionsTest(SimpleTestCase, TestFileMixin):
     maxDiff = None
 
     def setUp(self):
-        self.app = Application.new_app(
-            self.domain,
-            "Test",
-            application_version=APP_V2,
-        )
+        self.app = Application.new_app(self.domain, "Test")
         self.app.add_module(Module.new_module("Module", 'en'))
         module = self.app.get_module(0)
         module.case_type = 'test'
@@ -168,7 +174,7 @@ class GetFormQuestionsTest(SimpleTestCase, TestFileMixin):
 
     def test_get_questions(self):
         form = self.app.get_form(self.form_unique_id)
-        questions = form.wrapped_xform().get_questions(['en', 'es'], include_translations=True, form=form)
+        questions = form.wrapped_xform().get_questions(['en', 'es'], include_translations=True)
 
         non_label_questions = [
             q for q in QUESTIONS if q['tag'] not in ('label', 'trigger')]
@@ -178,7 +184,7 @@ class GetFormQuestionsTest(SimpleTestCase, TestFileMixin):
     def test_get_questions_with_triggers(self):
         form = self.app.get_form(self.form_unique_id)
         questions = form.wrapped_xform().get_questions(
-            ['en', 'es'], include_triggers=True, include_translations=True, form=form)
+            ['en', 'es'], include_triggers=True, include_translations=True)
 
         self.assertEqual(questions, QUESTIONS)
 
@@ -210,3 +216,13 @@ class GetFormQuestionsTest(SimpleTestCase, TestFileMixin):
             questions,
         )[0]
         self.assertEqual(repeat_question['repeat'], '/data/repeat_name')
+
+    def test_blank_form(self):
+        blank_form = render_to_string("app_manager/blank_form.xml", context={
+            'xmlns': str(uuid.uuid4()).upper()
+        })
+        form = self.app.new_form(self.app.get_module(0).id, 'blank', 'en')
+        form.source = blank_form
+
+        questions = form.get_questions(['en'])
+        self.assertEqual([], questions)

@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from corehq.toggles import EMG_AND_REC_SMS_HANDLERS
+from corehq.toggles import EMG_AND_REC_SMS_HANDLERS, NAMESPACE_DOMAIN
 from custom.ilsgateway.tanzania.reminders import REC_HELP, REC_CONFIRMATION, REC_ERROR, INVALID_PRODUCT_CODE
 from custom.ilsgateway.tests.handlers.utils import ILSTestScript, TEST_DOMAIN
 from custom.zipline.api import ProductQuantity
@@ -12,7 +12,7 @@ class ReceiptTest(ILSTestScript):
     @classmethod
     def setUpClass(cls):
         super(ReceiptTest, cls).setUpClass()
-        EMG_AND_REC_SMS_HANDLERS.set('domain:ils-test-domain', True)
+        EMG_AND_REC_SMS_HANDLERS.set('ils-test-domain', True, namespace=NAMESPACE_DOMAIN)
         cls.order = EmergencyOrder(
             domain=TEST_DOMAIN,
             requesting_user_id=cls.user1.get_id,

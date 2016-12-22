@@ -41,6 +41,11 @@ class FormES(HQESQuery):
     def domain_aggregation(self):
         return self.terms_aggregation('domain', 'domain')
 
+    def only_archived(self):
+        """Include only archived forms, which are normally excluded"""
+        return (self.remove_default_filter('is_xform_instance')
+                .filter(filters.doc_type('xformarchived')))
+
 
 def xmlns(xmlnss):
     return filters.term('xmlns.exact', xmlnss)

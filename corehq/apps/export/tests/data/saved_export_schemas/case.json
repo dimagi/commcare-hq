@@ -4,7 +4,7 @@
    "doc_type": "SavedExportSchema",
    "domain": null,
    "name": "Case Example",
-   "index": "[\"aspace\", \"RegCase\"]",
+   "index": "[\"convert-domain\", \"RegCase\"]",
    "transform_dates": true,
    "filter_function": "[]",
    "schema_id": "92e5f9a6624a637c2080957475cd3a85",
@@ -35,10 +35,10 @@
                    "index": "age",
                    "show": false,
                    "is_sensitive": false,
-                   "transform": null,
+                   "transform": "couchexport.deid.deid_ID",
                    "doc_type": "ExportColumn",
                    "tag": null,
-                   "display": "age"
+                   "display": "Age Label"
                },
                {
                    "index": "balding",

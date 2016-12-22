@@ -3,14 +3,21 @@ describe("PropertyListItem Behavior", function () {
 
     var PropertyListItem = hqImport("userreports/js/builder_view_models.js").PropertyListItem;
     var identityFunc = function (x) {return x;};
+    var nullFunc = function (x) { return null; };
 
     it("Validates display text", function () {
-        var item = new PropertyListItem(identityFunc);
+        var item = new PropertyListItem(identityFunc, nullFunc, true);
         assert.equal(item.displayText(), "");
         assert.isFalse(item.displayTextIsValid());
 
         item.inputBoundDisplayText("foo");
         assert.equal(item.displayText(), "foo");
+        assert.isTrue(item.displayTextIsValid());
+    });
+
+    it("Validates empty display text", function () {
+        var item = new PropertyListItem(identityFunc, nullFunc, false);
+        assert.equal(item.displayText(), "");
         assert.isTrue(item.displayTextIsValid());
     });
 

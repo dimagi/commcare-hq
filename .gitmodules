@@ -4,9 +4,6 @@
 [submodule "submodules/dimagi-utils-src"]
 	path = submodules/dimagi-utils-src
 	url = git://github.com/dimagi/dimagi-utils.git
-[submodule "submodules/couchlog-src"]
-	path = submodules/couchlog-src
-	url = git://github.com/dimagi/couchlog.git
 [submodule "submodules/auditcare-src"]
 	path = submodules/auditcare-src
 	url = git://github.com/dimagi/auditcare.git
@@ -37,9 +34,6 @@
 [submodule "submodules/django-no-exceptions"]
 	path = submodules/django-no-exceptions
 	url = git://github.com/dimagi/django-no-exceptions.git
-[submodule "submodules/toggle"]
-	path = submodules/toggle
-	url = https://github.com/dimagi/toggle.git
 [submodule "submodules/django-prbac-src"]
 	path = submodules/django-prbac-src
 	url = git://github.com/dimagi/django-prbac.git
@@ -49,9 +43,6 @@
 [submodule "corehq/apps/hqmedia/static/hqmedia/MediaUploader"]
 	path = corehq/apps/hqmedia/static/hqmedia/MediaUploader
 	url = git://github.com/dimagi/MediaUploader.git
-[submodule "submodules/bootstrap3_crispy"]
-	path = submodules/bootstrap3_crispy
-	url = https://github.com/dimagi/django-crispy-forms.git
 [submodule "corehq/apps/prelogin"]
 	path = corehq/apps/prelogin
 	url = https://github.com/dimagi/commcarehq-prelogin.git

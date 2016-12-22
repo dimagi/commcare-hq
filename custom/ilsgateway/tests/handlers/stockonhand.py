@@ -264,7 +264,7 @@ class ILSSoHTest(ILSTestScript):
         """
         verified_number = self.user1.get_verified_number()
         msg = incoming(
-            verified_number.phone_number, message, verified_number.backend_id, domain_scope=verified_number.domain
+            verified_number.phone_number, message, verified_number.backend_id
         )
         self.assertIsNotNone(msg)
 

@@ -4,8 +4,7 @@ import calendar
 from dateutil.relativedelta import relativedelta
 from dimagi.ext.jsonobject import JsonObject
 from jsonobject.base_properties import DefaultProperty
-from corehq.apps.userreports.expressions.getters import transform_date, transform_int, \
-    transform_datetime
+from corehq.apps.userreports.expressions.getters import transform_date, transform_int
 from corehq.apps.userreports.specs import TypeProperty
 
 

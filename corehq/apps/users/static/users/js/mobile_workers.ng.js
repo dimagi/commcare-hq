@@ -11,7 +11,13 @@
     var $formElements = {
         username: function () {
             return $('#id_username').parent();
-        }
+        },
+        password: function () {
+            return $('#id_password').parent();
+        },
+        passwordHint: function () {
+            return $('#hint_id_password');
+        },
     };
 
     var visualFormCtrl = {
@@ -33,7 +39,49 @@
             $formElements.username()
                 .removeClass('has-success has-pending')
                 .addClass('has-error');
-        }
+        },
+        passwordSuccess: function () {
+            $formElements.password()
+                .removeClass('has-error has-pending')
+                .addClass('has-success');
+            if ($formElements.password().hasClass('non-default')) {
+                $formElements.passwordHint()
+                    .text(gettext('Good Job! Your password is strong!'));
+            }
+        },
+        passwordAlmost: function () {
+            $formElements.password()
+                .removeClass('has-error has-success')
+                .addClass('has-pending');
+            if ($formElements.password().hasClass('non-default')) {
+                $formElements.passwordHint()
+                    .text(gettext('Your password is almost strong enough!'));
+            }
+        },
+        passwordError: function () {
+            $formElements.password()
+                .removeClass('has-success has-pending')
+                .addClass('has-error');
+            if ($formElements.password().hasClass('non-default')) {
+                $formElements.passwordHint()
+                    .text(gettext('Your password is too weak! Try adding numbers or symbols!'));
+            }
+        },
+        markDefault: function () {
+            $formElements.password()
+                .removeClass('non-default')
+                .addClass('default');
+            $formElements.passwordHint().html(
+                '<i class="fa fa-warning"></i>' +
+                gettext('This password is automatically generated. Please copy it or create your own. It will not be shown again.') +
+                ' <br />'
+            );
+        },
+        markNonDefault: function () {
+            $formElements.password()
+                .removeClass('default')
+                .addClass('non-default');
+        },
     };
 
     var STATUS = {
@@ -144,6 +192,14 @@
         $scope.customFormFieldNames = customFieldNames;
         $scope.generateStrongPasswords = generateStrongPasswords;
 
+        $scope.markNonDefault = function (password) {
+            visualFormCtrl.markNonDefault();
+        };
+
+        $scope.markDefault = function (password) {
+            visualFormCtrl.markDefault();
+        };
+
         $scope.availableLocations = [];
 
         $scope.searchLocations = function (query) {
@@ -180,6 +236,13 @@
             $("#newMobileWorkerModal").modal('hide');
             $scope.workers.push($scope.mobileWorker);
             workerCreationFactory.stageNewMobileWorker($scope.mobileWorker);
+        };
+
+        $scope.retryMobileWorker = function (worker) {
+            $scope.initializeMobileWorker(worker);
+            $scope.usernameAvailabilityStatus = USERNAME_STATUS.AVAILABLE;
+            $scope.usernameStatusMessage = 'Username is available.';
+            $scope.markNonDefault();
         };
     };
 
@@ -259,8 +322,69 @@
         };
     };
 
+    mobileWorkerDirectives.validatePasswordStandard = function ($http, $q, djangoRMI) {
+        return {
+            restrict: 'AE',
+            require: 'ngModel',
+            link: function ($scope, $elem, $attr, ctrl) {
+                ctrl.$validators.validatePassword = function (password) {
+                    if (!password) {
+                        return false;
+                    }
+                    var score = zxcvbn(password, ['dimagi', 'commcare', 'hq', 'commcarehq']).score,
+                        goodEnough = score > 1;
+
+                    if (goodEnough) {
+                        visualFormCtrl.passwordSuccess();
+                    } else if (score < 1) {
+                        visualFormCtrl.passwordError();
+                    } else {
+                        visualFormCtrl.passwordAlmost();
+                    }
+
+                    return goodEnough;
+                };
+            }
+        };
+    };
+
+    mobileWorkerDirectives.validatePasswordDraconian = function ($http, $q, djangoRMI) {
+        return {
+            restrict: 'AE',
+            require: 'ngModel',
+            link: function ($scope, $elem, $attr, ctrl) {
+                ctrl.$validators.validatePassword = function (password) {
+                    if (!password) {
+                        return false;
+                    }
+                    $formElements.password()
+                        .removeClass('has-error has-success')
+                        .addClass('has-pending');
+                    if ($formElements.password().hasClass('non-default')) {
+                        $formElements.passwordHint()
+                            .text(gettext("Password Requirements: 1 special character, " +
+                                          "1 number, 1 capital letter, minimum length of 8 characters."));
+                    }
+
+                    return true;
+                };
+            },
+        };
+    };
+
+    mobileWorkerDirectives.validateLocation = function ($http, $q, djangoRMI) {
+        return {
+            restrict: 'AE',
+            require: 'ngModel',
+            link: function ($scope, $elem, $attr, ctrl) {
+                ctrl.$validators.validateLocation = function (location_id) {
+                    return !!location_id;
+                };
+            },
+        };
+    };
+
     mobileWorkers.directive(mobileWorkerDirectives);
     mobileWorkers.factory(mobileWorkerFactories);
     mobileWorkers.controller(mobileWorkerControllers);
-    
 }(window.angular));

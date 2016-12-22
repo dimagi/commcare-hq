@@ -34,13 +34,13 @@ var ManageRemindersViewModel = function (
 
     self.start_property_offset_type = ko.observable(initial.start_property_offset_type);
     self.start_property_offset_type.subscribe(function(val) {
-        var initial_timing = $.parseJSON(initial.event_timing);
+        var initial_timing = JSON.parse(initial.event_timing);
         var allow_offset_timing_with_date = (
             initial.start_property_offset_type === self.choices.START_REMINDER_ON_CASE_DATE &&
             initial_timing.event_interpretation === "OFFSET"
         );
         $("#id_event_timing").children("option").each(function(i) {
-            var j = $.parseJSON($(this).val());
+            var j = JSON.parse($(this).val());
             if(allow_offset_timing_with_date && val === self.choices.START_REMINDER_ON_CASE_DATE &&
                j.event_interpretation === "OFFSET") {
                 //This is here to allow editing of any old reminders that started on a date but
@@ -99,7 +99,7 @@ var ManageRemindersViewModel = function (
     });
 
     self.event_interpretation = ko.computed(function () {
-        var event_timing = $.parseJSON(self.event_timing());
+        var event_timing = JSON.parse(self.event_timing());
         return event_timing.event_interpretation;
     });
 
@@ -139,7 +139,7 @@ var ManageRemindersViewModel = function (
     });
 
     self.isOffsetTimingUsed = ko.computed(function () {
-        var timing = $.parseJSON(self.event_timing());
+        var timing = JSON.parse(self.event_timing());
         return timing.event_interpretation === "OFFSET";
     });
 
@@ -187,7 +187,7 @@ var ManageRemindersViewModel = function (
     });
 
     self.init = function () {
-        var events = $.parseJSON(initial.events || '[]');
+        var events = JSON.parse(initial.events || '[]');
         if (self.ui_type === self.choices.UI_SIMPLE_FIXED) {
             // only use the first event in the list
             events = [events[0]];
@@ -346,12 +346,12 @@ var ReminderEvent = function (
     self.available_languages = available_languages;
 
     self.fire_time_type = ko.computed(function () {
-        var event_timing = $.parseJSON(self.event_timing());
+        var event_timing = JSON.parse(self.event_timing());
         return event_timing.fire_time_type;
     });
 
     self.isEventImmediate = ko.computed(function () {
-        var event_timing = $.parseJSON(self.event_timing());
+        var event_timing = JSON.parse(self.event_timing());
         return event_timing.special === self.choices.EVENT_TIMING_IMMEDIATE;
     });
 

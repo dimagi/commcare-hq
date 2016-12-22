@@ -13,7 +13,7 @@ $(function() {
         saveUrl: '{% url "add_report_config" domain %}'
     });
     $("button.send-stopper").click(function () {
-        $(this).text("{% trans 'Saving' %}").prepend('<i class="fa fa-refresh fa-spin"></i> ').addClass('btn disabled').attr('disabled', 'disabled');
+        $(this).text("{% trans 'Saving' %}").prepend('<i class="fa fa-refresh fa-spin"></i> ').addClass('btn disabled').prop('disabled', true);
         $(this).parents('form').submit();
     });
     gaTrackLink($('#create_scheduled_report'), 'Scheduled Reports', 'Configure a scheduled report');

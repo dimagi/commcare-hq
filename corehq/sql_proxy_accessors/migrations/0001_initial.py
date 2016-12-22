@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from django.conf import settings
 from django.db import migrations
 
-from corehq.sql_db.config import PartitionConfig
+from corehq.sql_db.config import partition_config
 from corehq.sql_db.management.commands.configure_pl_proxy_cluster import get_drop_server_sql, \
     get_pl_proxy_server_config_sql, get_user_mapping_sql
 from corehq.sql_db.operations import HqRunSQL, noop_migration, RawSQLMigration
@@ -20,7 +20,7 @@ def create_update_pl_proxy_config():
 
     drop_server_sql = get_drop_server_sql()
     sql_statements = [
-        get_pl_proxy_server_config_sql(PartitionConfig().get_shards()),
+        get_pl_proxy_server_config_sql(partition_config.get_shards()),
         get_user_mapping_sql()
     ]
 

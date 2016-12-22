@@ -52,7 +52,7 @@
         "start_offset": ""
     },
     "history": [],
-    "initial_processing_complete": false,
+    "initial_processing_complete": null,
     "partial_submission": false,
     "received_on": "2013-09-21T04:16:59Z",
     "xmlns": "http://openrosa.org/formdesigner/badmetauser",

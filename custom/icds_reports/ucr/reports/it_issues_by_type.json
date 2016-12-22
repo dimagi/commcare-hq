@@ -9,7 +9,7 @@
   "config": {
     "title": "Issue Tracker - Issues By Type",
     "description": "",
-    "visible": false,
+    "visible": true,
     "aggregation_columns": [
       "problem_area"
     ],

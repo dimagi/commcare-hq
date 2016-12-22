@@ -1,4 +1,4 @@
-from manage_cloudant import authenticate_cloudant_instance
+from manage_cloudant import authenticate_cloudant_instance, run_ask_runs
 
 if __name__ == '__main__':
 
@@ -12,6 +12,10 @@ if __name__ == '__main__':
 
     cloudant_instance = authenticate_cloudant_instance(args.username)
 
+    ask_runs = []
+
     for database in args.databases:
         if not cloudant_instance.database_exists(database):
-            cloudant_instance.create_database(database)
+            ask_runs.append(cloudant_instance.create_database(database))
+
+    run_ask_runs(ask_runs)

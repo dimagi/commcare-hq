@@ -8,16 +8,28 @@ from corehq.apps.export.models.new import MAIN_TABLE, \
 
 from corehq.util.context_managers import drop_connected_signals
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.apps.app_manager.models import XForm, Application
+from corehq.apps.app_manager.models import XForm, Application, OpenSubCaseAction
 from corehq.apps.app_manager.signals import app_post_save
-from corehq.apps.export.dbaccessors import delete_all_export_data_schemas
+from corehq.apps.export.dbaccessors import delete_all_export_data_schemas, delete_all_inferred_schemas
+from corehq.apps.export.tasks import add_inferred_export_properties
 from corehq.apps.export.models import (
     FormExportDataSchema,
     CaseExportDataSchema,
     ExportDataSchema,
+    InferredExportGroupSchema,
+    InferredSchema,
+    ExportGroupSchema,
+    ExportItem,
+    LabelItem,
     PARENT_CASE_TABLE,
 )
-from corehq.apps.export.const import PROPERTY_TAG_UPDATE, DATA_SCHEMA_VERSION
+from corehq.apps.export.const import (
+    KNOWN_CASE_PROPERTIES,
+    PROPERTY_TAG_UPDATE,
+    FORM_DATA_SCHEMA_VERSION,
+    CASE_ATTRIBUTES,
+    CASE_CREATE_ELEMENTS,
+)
 
 
 class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
@@ -45,6 +57,25 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         form_items = filter(lambda item: item.tag is None, group_schema.items)
         self.assertEqual(form_items[0].path, [PathNode(name='form'), PathNode(name='question1')])
         self.assertEqual(form_items[1].path, [PathNode(name='form'), PathNode(name='question2')])
+
+    def test_labels_in_xform(self):
+        form_xml = self.get_xml('form_with_labels')
+
+        schema = FormExportDataSchema._generate_schema_from_xform(
+            XForm(form_xml),
+            [],
+            ['en'],
+            self.app_id,
+            1
+        )
+
+        self.assertEqual(len(schema.group_schemas), 1)
+
+        group_schema = schema.group_schemas[0]
+
+        self.assertEqual(len(group_schema.items), 1)
+        self.assertEqual(group_schema.items[0].path, [PathNode(name='form'), PathNode(name='label')])
+        self.assertIsInstance(group_schema.items[0], LabelItem)
 
     def test_xform_parsing_with_repeat_group(self):
         form_xml = self.get_xml('repeat_group_form')
@@ -98,6 +129,53 @@ class TestFormExportDataSchema(SimpleTestCase, TestXmlMixin):
         self.assertEqual(form_items[1].path, [PathNode(name='form'), PathNode(name='question2')])
         self.assertEqual(form_items[1].options[0].value, 'choice1')
         self.assertEqual(form_items[1].options[1].value, 'choice2')
+
+    def test_repeat_subcases_schema_generation(self):
+        form_xml = self.get_xml('nested_repeat_form')
+        repeats_with_subcases = [
+            OpenSubCaseAction(
+                repeat_context='/data/repeat',
+                case_properties={
+                    'weight': '/data/repeat/group/weight',
+                }
+            ),
+            OpenSubCaseAction(
+                repeat_context='/data/repeat/nested_repeat',
+                case_properties={
+                    'age': '/data/repeat/nested_repeat/age',
+                }
+            ),
+        ]
+
+        schema = FormExportDataSchema._generate_schema_from_repeat_subcases(
+            XForm(form_xml),
+            repeats_with_subcases,
+            ['en'],
+            self.app_id,
+            1,
+        )
+
+        self.assertEqual(len(schema.group_schemas), 2)
+
+        group_schema = schema.group_schemas[0]
+        attribute_items = filter(lambda item: item.path[-1].name in CASE_ATTRIBUTES, group_schema.items)
+
+        self.assertEqual(len(attribute_items), len(CASE_ATTRIBUTES))
+        self.assertTrue(all(map(
+            lambda item: item.readable_path.startswith('form.repeat.case'),
+            attribute_items,
+        )))
+
+        create_items = filter(lambda item: item.path[-1].name in CASE_CREATE_ELEMENTS, group_schema.items)
+        self.assertEqual(len(create_items), len(CASE_CREATE_ELEMENTS))
+        self.assertTrue(all(map(
+            lambda item: item.readable_path.startswith('form.repeat.case.create'),
+            create_items,
+        )))
+
+        update_items = list(set(group_schema.items) - set(create_items) - set(attribute_items))
+        self.assertEqual(len(update_items), 1)
+        self.assertEqual(update_items[0].readable_path, 'form.repeat.case.update.group.weight')
 
     def test_xform_parsing_with_stock_questions(self):
         form_xml = self.get_xml('stock_form')
@@ -225,7 +303,7 @@ class TestCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
         group_schema = schema.group_schemas[0]
 
         update_items = filter(lambda item: item.tag == PROPERTY_TAG_UPDATE, group_schema.items)
-        self.assertEqual(len(update_items), 2)
+        self.assertEqual(len(update_items), 2 + len(KNOWN_CASE_PROPERTIES))
 
     def test_get_app_build_ids_to_process(self):
         from corehq.apps.app_manager.dbaccessors import AppBuildVersion
@@ -394,13 +472,63 @@ class TestMergingCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
         self.assertEqual(group_schema2.last_occurrences[app_id], 2)
         self.assertEqual(
             len(group_schema2.items),
-            len(case_property_mapping['candy'])
+            len(case_property_mapping['candy']) + len(KNOWN_CASE_PROPERTIES),
         )
+
+    def test_inferred_schema_merge(self):
+        schema = CaseExportDataSchema(
+            domain='my-domain',
+            group_schemas=[
+                ExportGroupSchema(
+                    path=MAIN_TABLE,
+                    items=[ExportItem(
+                        path=[PathNode(name='case_property')]
+                    )],
+                )
+            ]
+        )
+        inferred_schema = CaseExportDataSchema(
+            domain='my-domain',
+            group_schemas=[
+                ExportGroupSchema(
+                    path=MAIN_TABLE,
+                    items=[ExportItem(
+                        path=[PathNode(name='case_property')],
+                        inferred=True,
+                        inferred_from=set(['One']),
+                    )],
+                    inferred=True,
+                )
+            ]
+        )
+        inferred_schema_two = CaseExportDataSchema(
+            domain='my-domain',
+            group_schemas=[
+                ExportGroupSchema(
+                    path=MAIN_TABLE,
+                    items=[ExportItem(
+                        path=[PathNode(name='case_property')],
+                        inferred=True,
+                        inferred_from=set(['Two']),
+                    )],
+                    inferred=True,
+                )
+            ]
+        )
+        merged = ExportDataSchema._merge_schemas(schema, inferred_schema, inferred_schema_two)
+        self.assertEqual(len(merged.group_schemas), 1)
+        self.assertTrue(merged.group_schemas[0].inferred)
+        group_schema = merged.group_schemas[0]
+        self.assertEqual(len(group_schema.items), 1)
+        self.assertTrue(group_schema.items[0].inferred)
+        self.assertEqual(group_schema.items[0].inferred_from, set(['One', 'Two']))
 
 
 class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
     file_path = ['data']
     root = os.path.dirname(__file__)
+    case_type = 'wonderwoman'
+    domain = 'aspace'
 
     @classmethod
     def setUpClass(cls):
@@ -419,11 +547,35 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
             for app in cls.apps:
                 app.save()
 
+        cls.inferred_schema = InferredSchema(
+            domain=cls.domain,
+            case_type=cls.case_type,
+            group_schemas=[
+                InferredExportGroupSchema(
+                    path=MAIN_TABLE,
+                    items=[
+                        ExportItem(
+                            path=[PathNode(name='data'), PathNode(name='case_property')],
+                            label='Inferred 1',
+                            inferred=True
+                        ),
+                        ExportItem(
+                            path=[PathNode(name='data'), PathNode(name='case_property_2')],
+                            label='Inferred 1',
+                            inferred=True
+                        ),
+                    ],
+                    inferred=True
+                ),
+            ]
+        )
+        cls.inferred_schema.save()
+
     @classmethod
     def tearDownClass(cls):
         for app in cls.apps:
             app.delete()
-        # to circumvent domain.delete()'s recursive deletion that this test doesn't need
+        cls.inferred_schema.delete()
 
     def tearDown(self):
         delete_all_export_data_schemas()
@@ -469,6 +621,21 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
         self.assertEqual(new_schema.last_app_versions[app._id], app.version)
         self.assertEqual(len(new_schema.group_schemas), 1)
 
+    def test_build_with_inferred_schema(self):
+        app = self.current_app
+
+        schema = CaseExportDataSchema.generate_schema_from_builds(
+            app.domain,
+            app._id,
+            self.case_type,
+        )
+
+        group_schema = schema.group_schemas[0]
+        self.assertEqual(group_schema.path, MAIN_TABLE)
+        self.assertTrue(group_schema.inferred)
+        inferred_items = filter(lambda item: item.inferred, group_schema.items)
+        self.assertEqual(len(inferred_items), 2)
+
 
 class TestExportDataSchemaVersionControl(TestCase, TestXmlMixin):
 
@@ -487,6 +654,7 @@ class TestExportDataSchemaVersionControl(TestCase, TestXmlMixin):
 
     def tearDown(self):
         delete_all_export_data_schemas()
+        super(TestExportDataSchemaVersionControl, self).tearDown()
 
     def test_rebuild_version_control(self):
         app = self.current_app
@@ -505,16 +673,16 @@ class TestExportDataSchemaVersionControl(TestCase, TestXmlMixin):
         self.assertEqual(schema._id, existing_schema._id)
 
         with patch(
-                'corehq.apps.export.models.new.DATA_SCHEMA_VERSION',
-                DATA_SCHEMA_VERSION + 1):
+                'corehq.apps.export.models.new.FORM_DATA_SCHEMA_VERSION',
+                FORM_DATA_SCHEMA_VERSION + 1):
             rebuilt_schema = FormExportDataSchema.generate_schema_from_builds(
                 app.domain,
                 app._id,
                 'my_sweet_xmlns'
             )
         self.assertNotEqual(schema._id, rebuilt_schema._id)
-        self.assertEqual(schema.version, DATA_SCHEMA_VERSION)
-        self.assertEqual(rebuilt_schema.version, DATA_SCHEMA_VERSION + 1)
+        self.assertEqual(schema.version, FORM_DATA_SCHEMA_VERSION)
+        self.assertEqual(rebuilt_schema.version, FORM_DATA_SCHEMA_VERSION + 1)
 
 
 class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
@@ -547,6 +715,7 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
 
     def tearDown(self):
         delete_all_export_data_schemas()
+        delete_all_inferred_schemas()
 
     def test_basic_application_schema(self):
         schema = CaseExportDataSchema.generate_schema_from_builds(
@@ -594,6 +763,93 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
         self.assertEqual(new_schema.last_app_versions[app._id], app.version)
         # One for case, one for case history
         self.assertEqual(len(new_schema.group_schemas), 2)
+
+    def test_build_with_inferred_schema(self):
+        app = self.current_app
+
+        schema = CaseExportDataSchema.generate_schema_from_builds(
+            app.domain,
+            app._id,
+            self.case_type,
+        )
+        # Main table
+        group_schema = schema.group_schemas[0]
+        self.assertEqual(len(group_schema.items), 2)
+
+        add_inferred_export_properties(
+            'TestSend',
+            app.domain,
+            self.case_type,
+            ['question2', 'new-property'],
+        )
+
+        schema = CaseExportDataSchema.generate_schema_from_builds(
+            app.domain,
+            app._id,
+            self.case_type,
+        )
+        # Main table
+        group_schema = schema.group_schemas[0]
+
+        # Only the new property should be added. The repeated one should be merged
+        self.assertEqual(len(group_schema.items), 3)
+
+
+class TestBuildingCaseSchemaFromMultipleApplications(TestCase, TestXmlMixin):
+    file_path = ['data']
+    root = os.path.dirname(__file__)
+    domain = 'aspace'
+    case_type = 'candy'
+
+    @classmethod
+    def setUpClass(cls):
+        cls.current_app = Application.wrap(cls.get_json('basic_case_application'))
+
+        cls.first_build = Application.wrap(cls.get_json('basic_case_application'))
+        cls.first_build._id = '123'
+        cls.first_build.copy_of = cls.current_app.get_id
+        cls.first_build.version = 3
+
+        cls.other_build = Application.wrap(cls.get_json('basic_case_application'))
+        cls.other_build._id = '456'
+        cls.other_build.copy_of = 'other-app-id'
+        cls.other_build.version = 4
+        cls.other_build.has_submissions = True
+
+        cls.apps = [
+            cls.current_app,
+            cls.first_build,
+            cls.other_build,
+        ]
+        with drop_connected_signals(app_post_save):
+            for app in cls.apps:
+                app.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        for app in cls.apps:
+            app.delete()
+
+    def tearDown(self):
+        delete_all_export_data_schemas()
+
+    def test_multiple_app_schema_generation(self):
+        schema = CaseExportDataSchema.generate_schema_from_builds(
+            self.domain,
+            self.current_app._id,
+            self.case_type,
+        )
+
+        self.assertEqual(
+            schema.last_app_versions[self.other_build.copy_of],
+            self.other_build.version,
+        )
+        # One for case, one for case history
+        self.assertEqual(len(schema.group_schemas), 2)
+
+        group_schema = schema.group_schemas[0]
+        self.assertEqual(group_schema.last_occurrences[self.current_app._id], self.current_app.version)
+        self.assertEqual(len(group_schema.items), 2)
 
 
 class TestBuildingParentCaseSchemaFromApplication(TestCase, TestXmlMixin):

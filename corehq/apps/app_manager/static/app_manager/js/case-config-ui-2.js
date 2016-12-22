@@ -1,4 +1,4 @@
-/*globals $, COMMCAREHQ, ko, _ */
+/*globals $, COMMCAREHQ, ko, _*/
 
 hqDefine('app_manager/js/case-config-ui-2.js', function () {
     "use strict";
@@ -20,7 +20,7 @@ hqDefine('app_manager/js/case-config-ui-2.js', function () {
             actions.subcases = a.subcases;
             return actions;
         }(params.actions));
-        self.questions = params.questions;
+        self.questions = ko.observable(params.questions);
         self.save_url = params.save_url;
         // `requires` is a ko observable so it can be read by another UI
         self.requires = params.requires;
@@ -28,7 +28,6 @@ hqDefine('app_manager/js/case-config-ui-2.js', function () {
         self.reserved_words = params.reserved_words;
         self.moduleCaseTypes = params.moduleCaseTypes;
         self.allowUsercase = params.allowUsercase;
-        self.vellumCaseManagement = params.vellumCaseManagement;
 
         self.setPropertiesMap = function (propertiesMap) {
             self.propertiesMap = ko.mapping.fromJS(propertiesMap);
@@ -96,7 +95,7 @@ hqDefine('app_manager/js/case-config-ui-2.js', function () {
         });
 
         var questionMap = {};
-        _(self.questions).each(function (question) {
+        _(self.questions()).each(function (question) {
             questionMap[question.value] = question;
         });
         self.get_repeat_context = function(path) {
@@ -108,7 +107,7 @@ hqDefine('app_manager/js/case-config-ui-2.js', function () {
         };
 
         var questionScores = {};
-        _(self.questions).each(function (question, i) {
+        _(self.questions()).each(function (question, i) {
             questionScores[question.value] = i;
         });
         self.questionScores = questionScores;
@@ -122,10 +121,14 @@ hqDefine('app_manager/js/case-config-ui-2.js', function () {
         };
 
         self.getQuestions = function (filter, excludeHidden, includeRepeat, excludeTrigger) {
-            return caseConfigUtils.getQuestions(self.questions, filter, excludeHidden, includeRepeat, excludeTrigger);
+            return caseConfigUtils.getQuestions(self.questions(), filter, excludeHidden, includeRepeat, excludeTrigger);
+        };
+
+        self.refreshQuestions = function(url, moduleId, formId, event){
+            return caseConfigUtils.refreshQuestions(self.questions,url, moduleId, formId, event);
         };
         self.getAnswers = function (condition) {
-            return caseConfigUtils.getAnswers(self.questions, condition);
+            return caseConfigUtils.getAnswers(self.questions(), condition);
         };
 
         self.change = function () {
@@ -168,20 +171,23 @@ hqDefine('app_manager/js/case-config-ui-2.js', function () {
                 self.ensureBlankProperties();
                 self.forceRefreshTextchangeBinding($home);
 
-                $usercaseMgmt.koApplyBindings(self);
-                if (self.allowUsercase) {
-                    $usercaseMgmt.on('textchange', 'input', self.usercaseChange)
-                                 .on('change', 'select, input[type="hidden"]', self.usercaseChange)
-                                 .on('click', 'a', self.usercaseChange);
-                    self.caseConfigViewModel.usercase_transaction.ensureBlankProperties();
-                } else {
-                    $usercaseMgmt.find('input').prop('disabled', true);
-                    $usercaseMgmt.find('select').prop('disabled', true);
-                    $usercaseMgmt.find('a').off('click');
-                    // Remove "Load properties" / "Save properties" link
-                    _.each($usercaseMgmt.find('.firstProperty'), function (elem) { elem.remove(); });
+                if ($usercaseMgmt.length) {
+                    $usercaseMgmt.koApplyBindings(self);
+                    if (self.allowUsercase) {
+                        $usercaseMgmt.on('textchange', 'input', self.usercaseChange)
+                                     .on('change', 'select, input[type="hidden"]', self.usercaseChange)
+                                     .on('click', 'a', self.usercaseChange);
+                        self.caseConfigViewModel.usercase_transaction.ensureBlankProperties();
+                    } else {
+                        $usercaseMgmt.find('input').prop('disabled', true);
+                        $usercaseMgmt.find('select').prop('disabled', true);
+                        $usercaseMgmt.find('a').off('click');
+                        // Remove "Load properties" / "Save properties" link
+                        _.each($usercaseMgmt.find('.firstProperty'), function (elem) { elem.remove(); });
+                    }
+                    self.forceRefreshTextchangeBinding($usercaseMgmt);
                 }
-                self.forceRefreshTextchangeBinding($usercaseMgmt);
+
             });
 
         };
@@ -772,9 +778,6 @@ hqDefine('app_manager/js/case-config-ui-2.js', function () {
                     }),
                     case_preload: ko.computed(function () {
                         return caseConfig.caseConfigViewModel.actionType() === 'update';
-                    }),
-                    vellum_case_management: ko.computed(function () {
-                        return caseConfig.caseConfigViewModel.actionType() === 'update' && caseConfig.vellumCaseManagement;
                     }),
                     repeats: function () {
                         return false;

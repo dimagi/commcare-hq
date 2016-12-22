@@ -1,5 +1,4 @@
 from collections import namedtuple, defaultdict
-from datetime import timedelta
 from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.models import Form
 from corehq.apps.es import FormES

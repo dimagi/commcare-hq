@@ -56,7 +56,7 @@ class ReadonlyCaseDocumentStore(ReadOnlyDocumentStore):
 class ReadonlyLedgerV2DocumentStore(ReadOnlyDocumentStore):
 
     def __init__(self, domain):
-        assert should_use_sql_backend(domain), "Only SQL backend supported"
+        assert should_use_sql_backend(domain), "Only SQL backend supported: {}".format(domain)
         self.domain = domain
         self.ledger_accessors = LedgerAccessorSQL
         self.case_accessors = CaseAccessorSQL
@@ -106,4 +106,4 @@ class LedgerV1DocumentStore(DjangoDocumentStore):
         def _doc_gen_fn(obj):
             return obj.to_json()
 
-        super(LedgerV1DocumentStore, self).__init__(StockState, _doc_gen_fn)
+        super(LedgerV1DocumentStore, self).__init__(StockState, _doc_gen_fn, model_manager=StockState.include_archived)

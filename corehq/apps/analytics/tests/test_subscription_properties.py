@@ -21,6 +21,7 @@ class TestSubscriptionProperties(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestSubscriptionProperties, cls).setUpClass()
         generator.instantiate_accounting()
 
         cls.base_domain = Domain(name="base", is_active=True)
@@ -28,7 +29,6 @@ class TestSubscriptionProperties(TestCase):
         cls.user = WebUser.create(cls.base_domain.name, "tarso", "*****")
         cls.user.save()
 
-        cls._to_delete = []
         cls.community = Domain(name="community", is_active=True)
         cls.community.save()
         cls._setup_subscription(cls.community.name, SoftwarePlanEdition.COMMUNITY)
@@ -42,7 +42,7 @@ class TestSubscriptionProperties(TestCase):
 
     @classmethod
     def _setup_subscription(cls, domain_name, software_plan):
-        plan = DefaultProductPlan.get_default_plan(edition=software_plan)
+        plan = DefaultProductPlan.get_default_plan_version(edition=software_plan)
         account = BillingAccount.get_or_create_account_by_domain(
             domain_name, created_by="automated-test" + cls.__name__
         )[0]
@@ -53,43 +53,42 @@ class TestSubscriptionProperties(TestCase):
             date_start=datetime.date.today() - datetime.timedelta(days=1),
             date_end=datetime.date.today() + datetime.timedelta(days=5))
         subscription.save()
-        cls._to_delete.append(account)
-        cls._to_delete.append(subscription)
 
     @classmethod
     def tearDownClass(cls):
-        SubscriptionAdjustment.objects.all().delete()
-        for obj in [cls.base_domain, cls.community, cls.enterprise] + cls._to_delete:
-            obj.delete()
+        generator.delete_all_subscriptions()
+        generator.delete_all_accounts()
+        cls.base_domain.delete()
         cls.user.delete()
+        super(TestSubscriptionProperties, cls).tearDownClass()
 
     def test_properties(self):
         properties = get_subscription_properties_by_user(self.user)
-        self.assertEqual(properties['is_on_community_plan'], 'yes')
-        self.assertEqual(properties['is_on_standard_plan'], 'no')
-        self.assertEqual(properties['is_on_pro_plan'], 'no')
-        self.assertEqual(properties['max_edition_of_paying_plan'], SoftwarePlanEdition.ENTERPRISE)
+        self.assertEqual(properties['_is_on_community_plan'], 'yes')
+        self.assertEqual(properties['_is_on_standard_plan'], 'no')
+        self.assertEqual(properties['_is_on_pro_plan'], 'no')
+        self.assertEqual(properties['_max_edition_of_paying_plan'], SoftwarePlanEdition.ENTERPRISE)
 
     def test_probono_properties(self):
         properties = get_subscription_properties_by_user(self.user)
 
-        self.assertEqual(properties['is_on_pro_bono_plan'], 'no')
+        self.assertEqual(properties['_is_on_pro_bono_plan'], 'no')
         self._change_to_probono(self.community.name, ProBonoStatus.YES)
         properties = get_subscription_properties_by_user(self.user)
-        self.assertEqual(properties['is_on_pro_bono_plan'], 'yes')
+        self.assertEqual(properties['_is_on_pro_bono_plan'], 'yes')
 
-        self.assertEqual(properties['is_on_discounted_plan'], 'no')
+        self.assertEqual(properties['_is_on_discounted_plan'], 'no')
         self._change_to_probono(self.community.name, ProBonoStatus.DISCOUNTED)
         properties = get_subscription_properties_by_user(self.user)
-        self.assertEqual(properties['is_on_discounted_plan'], 'yes')
+        self.assertEqual(properties['_is_on_discounted_plan'], 'yes')
 
     def test_extended_trial(self):
         properties = get_subscription_properties_by_user(self.user)
 
-        self.assertEqual(properties['is_on_extended_trial_plan'], 'no')
+        self.assertEqual(properties['_is_on_extended_trial_plan'], 'no')
         self._change_to_extended_trial(self.community.name)
         properties = get_subscription_properties_by_user(self.user)
-        self.assertEqual(properties['is_on_extended_trial_plan'], 'yes')
+        self.assertEqual(properties['_is_on_extended_trial_plan'], 'yes')
 
     def _change_to_probono(self, domain_name, pro_bono_status):
         plan, subscription = Subscription.get_subscribed_plan_by_domain(domain_name)

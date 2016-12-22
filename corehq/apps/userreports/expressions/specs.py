@@ -1,16 +1,13 @@
 import json
 from simpleeval import InvalidExpression
+from corehq.apps.locations.document_store import LOCATION_DOC_TYPE
 from corehq.apps.userreports.document_stores import get_document_store
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.couch import get_db_by_doc_type
 from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, DictProperty
 from jsonobject.base_properties import DefaultProperty
-from corehq.apps.userreports.expressions.getters import (
-    DictGetter,
-    NestedDictGetter,
-    TransformedGetter,
-    transform_from_datatype)
+from corehq.apps.userreports.expressions.getters import transform_from_datatype, safe_recursive_lookup
 from corehq.apps.userreports.indicators.specs import DataTypeProperty
 from corehq.apps.userreports.specs import TypeProperty, EvaluationContext
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
@@ -52,14 +49,9 @@ class PropertyNameGetterSpec(JsonObject):
     property_name = StringProperty(required=True)
     datatype = DataTypeProperty(required=False)
 
-    @property
-    def expression(self):
-        transform = transform_from_datatype(self.datatype)
-        getter = DictGetter(self.property_name)
-        return TransformedGetter(getter, transform)
-
     def __call__(self, item, context=None):
-        return self.expression(item, context)
+        raw_value = item.get(self.property_name, None) if isinstance(item, dict) else None
+        return transform_from_datatype(self.datatype)(raw_value)
 
 
 class PropertyPathGetterSpec(JsonObject):
@@ -67,14 +59,9 @@ class PropertyPathGetterSpec(JsonObject):
     property_path = ListProperty(unicode, required=True)
     datatype = DataTypeProperty(required=False)
 
-    @property
-    def expression(self):
-        transform = transform_from_datatype(self.datatype)
-        getter = NestedDictGetter(self.property_path)
-        return TransformedGetter(getter, transform)
-
     def __call__(self, item, context=None):
-        return self.expression(item, context)
+        transform = transform_from_datatype(self.datatype)
+        return transform(safe_recursive_lookup(item, self.property_path))
 
 
 class NamedExpressionSpec(JsonObject):
@@ -194,22 +181,29 @@ class RelatedDocExpressionSpec(JsonObject):
     value_expression = DictProperty(required=True)
 
     def configure(self, doc_id_expression, value_expression):
-        if get_db_by_doc_type(self.related_doc_type) is None:
+        non_couch_doc_types = (LOCATION_DOC_TYPE,)
+        if (self.related_doc_type not in non_couch_doc_types
+                and get_db_by_doc_type(self.related_doc_type) is None):
             raise BadSpecError(u'Cannot determine database for document type {}!'.format(self.related_doc_type))
 
         self._doc_id_expression = doc_id_expression
         self._value_expression = value_expression
-        # used in caching
-        self._vary_on = json.dumps(self.value_expression, sort_keys=True)
 
     def __call__(self, item, context=None):
         doc_id = self._doc_id_expression(item, context)
         if doc_id:
             return self.get_value(doc_id, context)
 
-    @quickcache(['self._vary_on', 'doc_id'])
-    def get_value(self, doc_id, context):
+    def _vary_on(self, doc_id, context):
+        # For caching. Gets called with the same params as get_value.
+        return [
+            context.root_doc['domain'],
+            doc_id,
+            json.dumps(self.value_expression, sort_keys=True)
+        ]
 
+    @quickcache(_vary_on)
+    def get_value(self, doc_id, context):
         try:
             assert context.root_doc['domain']
             document_store = get_document_store(context.root_doc['domain'], self.related_doc_type)
@@ -258,6 +252,7 @@ class EvalExpressionSpec(JsonObject):
     type = TypeProperty('evaluator')
     statement = StringProperty(required=True)
     context_variables = DictProperty(required=True)
+    datatype = DataTypeProperty(required=False)
 
     def configure(self, context_variables):
         self._context_variables = context_variables
@@ -265,8 +260,9 @@ class EvalExpressionSpec(JsonObject):
     def __call__(self, item, context=None):
         var_dict = self.get_variables(item, context)
         try:
-            return eval_statements(self.statement, var_dict)
-        except (InvalidExpression, SyntaxError):
+            untransformed_value = eval_statements(self.statement, var_dict)
+            return transform_from_datatype(self.datatype)(untransformed_value)
+        except (InvalidExpression, SyntaxError, TypeError, ZeroDivisionError):
             return None
 
     def get_variables(self, item, context):

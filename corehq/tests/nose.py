@@ -17,26 +17,19 @@ import sys
 import threading
 import types
 from fnmatch import fnmatch
-from unittest.case import TestCase
 
 from django.apps import apps
 
-import couchlog.signals
 from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django import loading
+from django.core.management import call_command
 from mock import patch, Mock
 from nose.plugins import Plugin
 from django.apps import AppConfig
 from django.conf import settings
-try:
-    from django.db.backends.base.creation import TEST_DATABASE_PREFIX
-except ImportError:
-    # TODO - remove when django >= 1.8
-    from django.db.backends.creation import TEST_DATABASE_PREFIX
+from django.db.backends.base.creation import TEST_DATABASE_PREFIX
 from django.db.utils import OperationalError
 from django_nose.plugin import DatabaseContext
-
-from corehq.tests.optimizer import optimize_apps_for_test_labels
 
 log = logging.getLogger(__name__)
 
@@ -49,7 +42,6 @@ class HqTestFinderPlugin(Plugin):
     INCLUDE_DIRS = [
         "corehq/ex-submodules/*",
         "submodules/auditcare-src",
-        "submodules/couchlog-src",
         "submodules/dimagi-utils-src",
         "submodules/django-digest-src",
         "submodules/toggle",
@@ -139,10 +131,6 @@ class ErrorOnDbAccessContext(object):
         self.original_db_enabled = settings.DB_ENABLED
         settings.DB_ENABLED = False
 
-        # do not log request exceptions to couch for non-database tests
-        couchlog.signals.got_request_exception.disconnect(
-            couchlog.signals.log_request_exception)
-
         self.db_patch = patch('django.db.backends.utils.CursorWrapper')
         db_mock = self.db_patch.start()
         error = RuntimeError(
@@ -167,66 +155,7 @@ class ErrorOnDbAccessContext(object):
         settings.DB_ENABLED = self.original_db_enabled
         for cls in self.db_classes:
             del cls._db
-        couchlog.signals.got_request_exception.connect(
-            couchlog.signals.log_request_exception)
         self.db_patch.stop()
-
-
-class AppLabelsPlugin(Plugin):
-    """A plugin that supplies a list of app labels for the migration optimizer
-
-    See `corehq.tests.optimizer`
-    """
-    enabled = True
-    user_specified_test_names = []  # globally referenced singleton
-
-    def options(self, parser, env):
-        parser.add_option('--no-migration-optimizer', action="store_true",
-                          default=env.get('NOSE_NO_MIGRATION_OPTIMIZER'),
-                          help="Disable migration optimizer. "
-                               "[NOSE_NO_MIGRATION_OPTIMIZER]")
-
-    def configure(self, options, conf):
-        type(self).enabled = not options.no_migration_optimizer
-
-    def loadTestsFromNames(self, names, module=None):
-        if names == ['.'] and os.getcwd() == settings.BASE_DIR:
-            # no user specified names
-            return
-        type(self).user_specified_test_names = names
-
-    @classmethod
-    def get_test_labels(cls, tests):
-        """Get a list of app labels and possibly tests for the db app optimizer
-
-        This should be called after `loadTestsFromNames` has been called.
-        """
-        test_apps = set(app.name for app in apps.get_app_configs()
-                        if app.name not in settings.APPS_TO_EXCLUDE_FROM_TESTS
-                        and not app.name.startswith('django.'))
-        if not cls.user_specified_test_names:
-            return [AppConfig.create(app).label for app in test_apps]
-
-        def iter_names(test):
-            # a.b.c -> a.b.c, a.b, a
-            if isinstance(test.context, type):
-                name = test.context.__module__
-            elif isinstance(test.context, types.ModuleType):
-                name = test.context.__name__
-            else:
-                raise RuntimeError("unknown test type: {!r}".format(test))
-            parts = name.split(".")
-            num_parts = len(parts)
-            for i in range(num_parts):
-                yield ".".join(parts[:num_parts - i])
-
-        labels = set()
-        for test in tests:
-            for name in iter_names(test):
-                if name in test_apps:
-                    labels.add((AppConfig.create(name).label, test.context))
-                    break
-        return list(labels)
 
 
 class HqdbContext(DatabaseContext):
@@ -247,19 +176,17 @@ class HqdbContext(DatabaseContext):
       databses, but do not teardown after running tests. This is
       convenient when the existing databases are outdated and need to be
       rebuilt.
-    - `REUSE_DB=optimize` : same as reset, but use migration optimizer
-      to reduce the number of database migrations.
     - `REUSE_DB=teardown` : skip database setup; do normal teardown after
       running tests.
+    - `REUSE_DB=migrate` : same as `REUSE_DB=1` except migrate databases
+      before running tests.
     """
 
     def __init__(self, tests, runner):
         reuse_db = os.environ.get("REUSE_DB")
-        self.skip_setup_for_reuse_db = reuse_db and reuse_db not in ["reset", "optimize"]
+        self.skip_setup_for_reuse_db = reuse_db and reuse_db != "reset"
         self.skip_teardown_for_reuse_db = reuse_db and reuse_db != "teardown"
-        self.optimize_migrations = AppLabelsPlugin.enabled and reuse_db in [None, "optimize"]
-        if self.optimize_migrations:
-            self.test_labels = AppLabelsPlugin.get_test_labels(tests)
+        self.run_migrations_for_reuse_db = reuse_db and reuse_db == "migrate"
         super(HqdbContext, self).__init__(tests, runner)
 
     @classmethod
@@ -276,10 +203,6 @@ class HqdbContext(DatabaseContext):
         if self.should_skip_test_setup():
             return
 
-        if self.optimize_migrations:
-            self.optimizer = optimize_apps_for_test_labels(self.test_labels)
-            self.optimizer.__enter__()
-
         from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
         self.blob_db = TemporaryFilesystemBlobDB()
 
@@ -290,33 +213,36 @@ class HqdbContext(DatabaseContext):
             databases = {app_name: uri for app_name, uri in databases}
         self.apps = [self.verify_test_db(*item) for item in databases.items()]
 
-        if self.skip_setup_for_reuse_db:
-            from django.db import connections
-            old_names = []
-            for connection in connections.all():
-                db = connection.settings_dict
-                assert db["NAME"].startswith(TEST_DATABASE_PREFIX), db["NAME"]
-                try:
-                    connection.ensure_connection()
-                except OperationalError:
-                    break  # cannot connect; resume normal setup
-                old_names.append((connection, db["NAME"], True))
-            else:
-                self.old_names = old_names, []
-                return  # skip remaining setup
+        if self.skip_setup_for_reuse_db and self._databases_ok():
+            if self.run_migrations_for_reuse_db:
+                call_command('migrate_multi', interactive=False)
+            return  # skip remaining setup
 
         sys.__stdout__.write("\n")  # newline for creating database message
         if "REUSE_DB" in os.environ:
             sys.__stdout__.write("REUSE_DB={REUSE_DB!r} ".format(**os.environ))
         super(HqdbContext, self).setup()
 
+    def _databases_ok(self):
+        from django.db import connections
+        old_names = []
+        for connection in connections.all():
+            db = connection.settings_dict
+            assert db["NAME"].startswith(TEST_DATABASE_PREFIX), db["NAME"]
+            try:
+                connection.ensure_connection()
+            except OperationalError:
+                return False
+            old_names.append((connection, db["NAME"], True))
+
+        self.old_names = old_names, []
+        return True
+
     def teardown(self):
         if self.should_skip_test_setup():
             return
 
         self.blob_db.close()
-        if self.optimize_migrations:
-            self.optimizer.__exit__(None, None, None)
 
         if self.skip_teardown_for_reuse_db:
             return

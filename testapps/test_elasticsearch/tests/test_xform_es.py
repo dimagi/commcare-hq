@@ -18,6 +18,7 @@ class XFormESTestCase(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(XFormESTestCase, cls).setUpClass()
         cls.now = datetime.datetime.utcnow()
         cls.forms = []
         with trap_extra_setup(ConnectionError):
@@ -25,6 +26,7 @@ class XFormESTestCase(SimpleTestCase):
             initialize_index_and_mapping(cls.es, XFORM_INDEX_INFO)
 
     def setUp(self):
+        super(XFormESTestCase, self).setUp()
         self.test_id = uuid.uuid4().hex
 
     @classmethod
@@ -38,11 +40,12 @@ class XFormESTestCase(SimpleTestCase):
         cls.es.indices.refresh(XFORM_INDEX_INFO.index)
 
     @classmethod
-    def tearDown(cls):
+    def tearDownClass(cls):
         for form in cls.forms:
             cls.es.delete(XFORM_INDEX_INFO.index, XFORM_INDEX_INFO.type, form.wrapped_form.form_id)
         cls.es.indices.refresh(XFORM_INDEX_INFO.index)
         cls.forms = []
+        super(XFormESTestCase, cls).tearDownClass()
 
     def test_forms_are_in_index(self):
         for form in self.forms:

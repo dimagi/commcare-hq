@@ -1,5 +1,5 @@
 # coding=utf-8
-from corehq.apps.app_manager.const import APP_V2, CAREPLAN_GOAL, CAREPLAN_TASK
+from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK
 from corehq.apps.app_manager.exceptions import XFormException
 from corehq.apps.app_manager.models import (
     AdvancedForm,
@@ -18,7 +18,7 @@ from corehq.apps.app_manager.models import (
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.util import new_careplan_module
-from corehq.apps.app_manager.xform import XForm
+from corehq.apps.app_manager.xform import XForm, find_missing_instances
 from mock import patch
 
 
@@ -26,7 +26,7 @@ class FormPreparationV2Test(SimpleTestCase, TestXmlMixin):
     file_path = 'data', 'form_preparation_v2'
 
     def setUp(self):
-        self.app = Application.new_app('domain', 'New App', APP_V2)
+        self.app = Application.new_app('domain', 'New App')
         self.app.version = 3
         self.module = self.app.add_module(Module.new_module('New Module', lang='en'))
         self.form = self.app.new_form(0, 'New Form', lang='en')
@@ -101,6 +101,12 @@ class FormPreparationV2Test(SimpleTestCase, TestXmlMixin):
         with self.assertRaises(XFormException):
             self.form.render_xform()
 
+    def test_instance_check(self):
+        xml = self.get_xml('missing_instances')
+        missing_instances, missing_unknown_instances = find_missing_instances(XForm(xml))
+        self.assertEqual({'ledgerdb'}, missing_instances)
+        self.assertEqual({'casebd', 'custom2'}, missing_unknown_instances)
+
 
 class SubcaseRepeatTest(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'form_preparation_v2')
@@ -123,7 +129,7 @@ class SubcaseRepeatTest(SimpleTestCase, TestXmlMixin):
                             self.get_xml('multiple_subcase_repeat'))
 
     def test_subcase_repeat_mixed_form(self):
-        app = Application.new_app(None, "Untitled Application", application_version=APP_V2)
+        app = Application.new_app(None, "Untitled Application")
         module_0 = app.add_module(Module.new_module('parent', None))
         module_0.unique_id = 'm0'
         module_0.case_type = 'parent'
@@ -212,7 +218,7 @@ class FormPreparationCareplanTest(SimpleTestCase, TestXmlMixin):
     file_path = 'data', 'form_preparation_careplan'
 
     def setUp(self):
-        self.app = Application.new_app('domain', 'New App', APP_V2)
+        self.app = Application.new_app('domain', 'New App')
         self.app.version = 3
         self.module = self.app.add_module(Module.new_module('New Module', lang='en'))
         self.form = self.app.new_form(0, 'New Form', lang='en')
@@ -244,7 +250,7 @@ class FormPreparationV2TestAdvanced(SimpleTestCase, TestXmlMixin):
     file_path = 'data', 'form_preparation_v2_advanced'
 
     def setUp(self):
-        self.app = Application.new_app('domain', 'New App', APP_V2)
+        self.app = Application.new_app('domain', 'New App')
         self.app.version = 3
         self.module = self.app.add_module(AdvancedModule.new_module('New Module', lang='en'))
         self.module.case_type = 'test_case_type'
@@ -350,7 +356,7 @@ class FormPreparationChildModules(SimpleTestCase, TestXmlMixin):
     file_path = 'data', 'form_preparation_v2_advanced'
 
     def setUp(self):
-        self.app = Application.new_app('domain', 'New App', APP_V2)
+        self.app = Application.new_app('domain', 'New App')
         self.app.version = 3
 
     def test_child_module_adjusted_datums_advanced_module(self):
@@ -419,7 +425,7 @@ class BaseIndexTest(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'form_preparation_v2_advanced')
 
     def setUp(self):
-        self.app = Application.new_app('domain', 'New App', APP_V2)
+        self.app = Application.new_app('domain', 'New App')
         self.app.version = 3
         self.parent_module = self.app.add_module(Module.new_module('New Module', lang='en'))
         self.parent_form = self.app.new_form(0, 'New Form', lang='en')
@@ -579,6 +585,7 @@ class TestXForm(SimpleTestCase, TestXmlMixin):
             (condition_case('false()', 'never')),
             (condition_case("/data/question1 = 'yes'", 'if', '/data/question1', 'yes')),
             (condition_case("selected(/data/question1, 'yes')", 'if', '/data/question1', 'yes', 'selected')),
+            (condition_case("/data/question1", 'if', '/data/question1', None, 'boolean_true')),
         ]
 
         for case in cases:
@@ -587,7 +594,7 @@ class TestXForm(SimpleTestCase, TestXmlMixin):
 
     @classmethod
     def construct_form(cls):
-        app = Application.new_app('domain', 'New App', APP_V2)
+        app = Application.new_app('domain', 'New App')
         app.add_module(Module.new_module('New Module', lang='en'))
         form = app.new_form(0, 'MySuperSpecialForm', lang='en')
         return form

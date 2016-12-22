@@ -49,8 +49,8 @@ class Migration(migrations.Migration):
                 ('subtype', casexml.apps.stock.models.TruncatingCharField(max_length=20, null=True, blank=True)),
                 ('quantity', models.DecimalField(null=True, max_digits=20, decimal_places=5)),
                 ('stock_on_hand', models.DecimalField(max_digits=20, decimal_places=5)),
-                ('report', models.ForeignKey(to='stock.StockReport')),
-                ('sql_product', models.ForeignKey(to='products.SQLProduct')),
+                ('report', models.ForeignKey(to='stock.StockReport', on_delete=models.CASCADE)),
+                ('sql_product', models.ForeignKey(to='products.SQLProduct', on_delete=models.CASCADE)),
             ],
             options={
             },

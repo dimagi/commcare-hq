@@ -485,7 +485,7 @@
            "name": {
                "en": "Management"
            },
-           "case_type": "",
+           "case_type": "wonderwoman",
            "task_list": {
                "doc_type": "CaseList",
                "show": false,

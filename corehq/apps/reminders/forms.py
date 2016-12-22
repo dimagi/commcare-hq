@@ -591,7 +591,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
             FieldWithHelpBubble(
                 'case_type',
                 css_class="input-xlarge",
-                data_bind="value: case_type, typeahead: available_case_types",
+                data_bind="value: case_type, autocompleteSelect2: available_case_types",
                 placeholder=_("Enter a Case Type"),
                 help_bubble_text=_(
                     "Choose which case type this reminder will be "
@@ -613,7 +613,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                         InlineField(
                             'start_property',
                             css_class="input-xlarge",
-                            data_bind="typeahead: getAvailableCaseProperties",
+                            data_bind="autocompleteSelect2: getAvailableCaseProperties",
                         ),
                         css_class='col-sm-6'
                     ),
@@ -677,7 +677,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     'start_date',
                     placeholder=_("Enter Case Property"),
                     css_class="input-xlarge",
-                    data_bind="typeahead: getAvailableCaseProperties",
+                    data_bind="autocompleteSelect2: getAvailableCaseProperties",
                 ),
                 hqcrispy.B3MultiField(
                     "",
@@ -723,7 +723,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     InlineField(
                         'recipient_case_match_property',
                         css_class="input-xlarge",
-                        data_bind="typeahead: getAvailableSubcaseProperties",
+                        data_bind="autocompleteSelect2: getAvailableSubcaseProperties",
                     ),
                     css_class='col-sm-6'
                 ),
@@ -853,7 +853,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     InlineField(
                         'until',
                         css_class="input-large",
-                        data_bind="typeahead: getAvailableCaseProperties",
+                        data_bind="autocompleteSelect2: getAvailableCaseProperties",
                     ),
                     css_class="col-sm-6",
                     data_bind="visible: isUntilVisible",
@@ -2444,7 +2444,7 @@ class BroadcastForm(Form):
         self.fields['case_group_id'].choices = case_group_choices(self.domain)
         self.fields['user_group_id'].choices = user_group_choices(self.domain)
         self.fields['location_ids'].widget = SupplyPointSelectWidget(
-            domain=self.domain,
+            self.domain,
             multiselect=True,
         )
 

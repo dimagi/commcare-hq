@@ -1,4 +1,4 @@
-from manage_cloudant import authenticate_cloudant_instance
+from manage_cloudant import authenticate_cloudant_instance, run_ask_runs
 
 if __name__ == '__main__':
 
@@ -13,5 +13,9 @@ if __name__ == '__main__':
 
     cloudant_instance = authenticate_cloudant_instance(args.username)
 
+    ask_runs = []
     for database in args.databases:
-        cloudant_instance.get_db(database).revoke_api_key_access(args.api_key_to_revoke)
+        ask_runs.append(
+            cloudant_instance.get_db(database).revoke_api_key_access(args.api_key_to_revoke))
+
+    run_ask_runs(ask_runs)

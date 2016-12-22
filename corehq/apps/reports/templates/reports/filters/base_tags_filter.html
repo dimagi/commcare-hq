@@ -9,6 +9,8 @@
 {% endblock %}
 {% block filter_js %}
 <script>
-    $('#{{ css_id }}').select2({tags:{{ tags|JSON }}, allowClear: true});
+    $(function(){
+        $('#{{ css_id }}').select2({tags:{{ tags|JSON }}, allowClear: true});
+    });
 </script>
 {% endblock %}

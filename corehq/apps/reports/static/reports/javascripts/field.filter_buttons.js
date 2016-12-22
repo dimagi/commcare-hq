@@ -8,17 +8,17 @@ var linkButtonGroup = function (groupId, can_be_empty) {
 	
         if($(this).hasClass('active')) {
             $(this).addClass('btn-success');
-            $activeCheckbox.attr("checked", true);
+            $activeCheckbox.prop("checked", true);
         } else {
             $(this).removeClass('btn-success');
-            $activeCheckbox.attr("checked", false);
+            $activeCheckbox.prop("checked", false);
         }
         $activeCheckbox.trigger('change');
 
         if((!$(jqGroupId).children().hasClass('btn-success')) && !can_be_empty) {
             var $firstChild = $(jqGroupId).children().first();
             $firstChild.addClass('btn-success');
-            $('#'+$firstChild.data("checkfilter")).attr("checked", true);
+            $('#'+$firstChild.data("checkfilter")).prop("checked", true);
             if ($(this).data("checkfilter") != $firstChild.data("checkfilter")) {
                 $firstChild.removeClass('active');
             } else {

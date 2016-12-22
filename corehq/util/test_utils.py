@@ -12,7 +12,6 @@ from contextlib import contextmanager
 
 from functools import wraps
 from django.conf import settings
-from django.test.utils import override_settings
 
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.decorators import ContextDecorator
@@ -68,25 +67,16 @@ class trap_extra_setup(ContextDecorator):
             raise SkipTest("{}{}: {}".format(msg, type(err).__name__, err))
 
 
-def softer_assert(func=None):
+class softer_assert(ContextDecorator):
     """A decorator/context manager to disable hardened soft_assert for tests"""
-    @contextmanager
-    def softer_assert():
-        patch = mock.patch("corehq.util.soft_assert.core.is_hard_mode",
+    def __enter__(self):
+        self.patch = mock.patch("corehq.util.soft_assert.core.is_hard_mode",
                            new=lambda: False)
-        patch.start()
-        try:
-            yield
-        finally:
-            patch.stop()
+        self.patch.start()
+        return self
 
-    if func is not None:
-        @functools.wraps(func)
-        def wrapper(*args, **kw):
-            with softer_assert():
-                return func(*args, **kw)
-        return wrapper
-    return softer_assert()
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.patch.stop()
 
 
 class TestFileMixin(object):
@@ -147,14 +137,20 @@ class DocTestMixin(object):
         self.assertEqual(type(doc1), type(doc2))
         self.assertEqual(doc1.to_json(), doc2.to_json())
 
+    def assert_doc_sets_equal(self, docs1, docs2):
+        self.assertEqual(
+            sorted([(doc._id, type(doc), doc.to_json()) for doc in docs1]),
+            sorted([(doc._id, type(doc), doc.to_json()) for doc in docs2]),
+        )
+
     def assert_doc_lists_equal(self, docs1, docs2):
         self.assertEqual(
-            sorted([(doc._id, doc.to_json()) for doc in docs1]),
-            sorted([(doc._id, doc.to_json()) for doc in docs2]),
+            [(type(doc), doc.to_json()) for doc in docs1],
+            [(type(doc), doc.to_json()) for doc in docs2],
         )
 
 
-def mock_out_couch(views=None, docs=None):
+class mock_out_couch(object):
     """
     Mock out calls to couch so you can use SimpleTestCase
 
@@ -162,16 +158,52 @@ def mock_out_couch(views=None, docs=None):
         class TestMyStuff(SimpleTestCase):
             ...
 
+        with mock_out_couch() as fake_db:
+            fake_db.save_doc({...})
+
     You can optionally pass default return values for specific views and doc
     gets.  See the FakeCouchDb docstring for more specifics.
     """
-    from fakecouch import FakeCouchDb
-    db = FakeCouchDb(views=views, docs=docs)
+    def __init__(self, views=None, docs=None):
+        from fakecouch import FakeCouchDb
+        self.views = views
+        self.docs = docs
+        self.db = FakeCouchDb(views=views, docs=docs)
 
-    def _get_db(*args):
-        return db
+        @classmethod
+        def _get_db(*args):
+            return self.db
 
-    return mock.patch('dimagi.ext.couchdbkit.Document.get_db', new=_get_db)
+        self.patches = [
+            mock.patch('dimagi.ext.couchdbkit.Document.get_db', new=_get_db),
+            mock.patch('dimagi.ext.couchdbkit.SafeSaveDocument.get_db', new=_get_db),
+            mock.patch('dimagi.utils.couch.undo.UndoableDocument.get_db', new=_get_db),
+        ]
+
+    def __call__(self, func):
+        if isinstance(func, type):
+            return self._patch_class(func)
+        else:
+            @wraps(func)
+            def decorated(*args, **kwds):
+                with self:
+                    return func(*args, **kwds)
+            return decorated
+
+    def _patch_class(self, klass):
+        for patch in self.patches:
+            klass = patch(klass)
+        return klass
+
+    def __enter__(self):
+        for patch in self.patches:
+            patch.start()
+
+        return self.db
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        for patch in self.patches:
+            patch.stop()
 
 
 def NOOP(*args, **kwargs):
@@ -232,42 +264,6 @@ def run_with_multiple_configs(fn, run_configs):
         return helper(*args, **kwargs)
 
     return inner
-
-
-class OverridableSettingsTestMixin(object):
-    """Backport of core Django functionality to 1.7. Can be removed
-    once Django >= 1.8
-    https://github.com/django/django/commit/d89f56dc4d03f6bf6602536b8b62602ec0d46d2f
-
-    Usage:
-
-      @override_settings(A_SETTING=True)
-      class SomeTests(TestCase, OverridableSettingsTestMixin):
-
-          @classmethod
-          def setUpClass(cls):
-              super(SomeTests, cls).setUpClass()
-              # settings.A_SETTING is True here
-
-          @classmethod
-          def tearDownClass(cls):
-              # teardown stuff
-              # don't forget to call super to undo override_settings
-              super(SomeTests, cls).tearDownClass()
-    """
-    @classmethod
-    def setUpClass(cls):
-        super(OverridableSettingsTestMixin, cls).setUpClass()
-        if cls._overridden_settings:
-            cls._cls_overridden_context = override_settings(**cls._overridden_settings)
-            cls._cls_overridden_context.enable()
-
-    @classmethod
-    def tearDownClass(cls):
-        if hasattr(cls, '_cls_overridden_context'):
-            cls._cls_overridden_context.disable()
-            delattr(cls, '_cls_overridden_context')
-        super(OverridableSettingsTestMixin, cls).tearDownClass()
 
 
 class log_sql_output(ContextDecorator):
@@ -400,9 +396,9 @@ def create_and_save_a_form(domain):
 
 def _create_case(domain, **kwargs):
     from casexml.apps.case.mock import CaseBlock
-    from casexml.apps.case.util import post_case_blocks
-    return post_case_blocks(
-        [CaseBlock(**kwargs).as_xml()], domain=domain
+    from corehq.apps.hqcase.utils import submit_case_blocks
+    return submit_case_blocks(
+        [CaseBlock(**kwargs).as_string()], domain=domain
     )
 
 
@@ -514,3 +510,20 @@ def update_case(domain, case_id, case_properties, user_id=None):
     post_case_blocks(
         [CaseBlock(**kwargs).as_xml()], domain=domain
     )
+
+
+def make_make_path(current_directory):
+    """
+    returns a utility function for generating absolute paths
+    from paths relative to `current_directory`
+
+    example:
+
+        _make_path = make_make_path(__file__)
+        _make_path('files', 'myfile.txt')
+    """
+
+    def _make_path(*args):
+        return os.path.join(os.path.dirname(current_directory), *args)
+
+    return _make_path

@@ -223,21 +223,25 @@ class AutoFilterTests(TestCase):
             domain=DOMAIN,
             username='drew',
             location_id=cls.nyc.location_id,
+            assigned_location_ids=[cls.nyc.location_id],
         )
         cls.jon = CommCareUser(
             domain=DOMAIN,
             username='jon',
             location_id=cls.cambridge.location_id,
+            assigned_location_ids=[cls.cambridge.location_id],
         )
         cls.nate = CommCareUser(
             domain=DOMAIN,
             username='nate',
             location_id=cls.somerville.location_id,
+            assigned_location_ids=[cls.somerville.location_id],
         )
         cls.sheel = CommCareUser(
             domain=DOMAIN,
             username='sheel',
             location_id=cls.somerville.location_id,
+            assigned_location_ids=[cls.somerville.location_id],
             last_login=datetime.datetime.now(),
             date_joined=datetime.datetime.now(),
         )
@@ -257,6 +261,10 @@ class AutoFilterTests(TestCase):
         cls.new_york.delete()
         cls.massachusetts.delete()
         cls.usa.delete()
+        cls.city.delete()
+        cls.state.delete()
+        cls.country.delete()
+        cls.domain.delete()
 
     def test_filter_by_case_sharing_group_id(self):
         result = _filter_by_case_sharing_group_id(self.sheel, None)

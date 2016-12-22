@@ -29,9 +29,7 @@ class TestDomainViews(TestCase):
         self.user.eula.signed = True
         self.user.save()
 
-        self.app = Application.new_app(domain="fandago",
-                                       name="cheeto",
-                                       application_version=APP_V1)
+        self.app = Application.new_app(domain="fandago", name="cheeto")
         self.app.save()
 
     def tearDown(self):

@@ -18,6 +18,7 @@
 
     <!-- Core Libraries -->
     {% block core_libraries %}
+    {% include "style/includes/jquery.html" %}
     {% include "style/includes/core_libraries.html" %}
     {% include "style/includes/ko.html" %}
     <script src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
@@ -30,7 +31,9 @@
   <body>
       <!-- HTML Fixtures -->
       <div id="mocha"></div>
+      <div id="mocha-fixtures" style="display:none">
       {% block fixtures %}{% endblock %}
+      </div>
       {% block mocha_tests %}{% endblock %}
       <script charset="utf-8">
 	// Only tests run in real browser, injected script run if options.run == true

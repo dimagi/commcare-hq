@@ -8,7 +8,9 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect, Http404, HttpResponseForbidden, JsonResponse
+from django.http import (
+    HttpResponse, HttpResponseRedirect, Http404, HttpResponseForbidden, JsonResponse,
+)
 from django.template.response import TemplateResponse
 from django.utils.decorators import method_decorator
 from django.utils.http import urlquote
@@ -35,7 +37,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.hqwebapp.signals import clear_login_attempts
 
 ########################################################################################################
-from corehq.toggles import IS_DEVELOPER
+from corehq.toggles import IS_DEVELOPER, DATA_MIGRATION
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +82,7 @@ def login_and_domain_required(view_func):
             if user.is_authenticated() and user.is_active:
                 if not domain.is_active:
                     msg = _((
-                        'The domain "{domain}" has been deactivated. '
+                        'The domain "{domain}" has not yet been activated. '
                         'Please report an issue if you think this is a mistake.'
                     ).format(domain=domain_name))
                     messages.info(req, msg)
@@ -228,7 +230,8 @@ def two_factor_check(api_key):
     def _outer(fn):
         @wraps(fn)
         def _inner(request, domain, *args, **kwargs):
-            if not api_key and Domain.get_by_name(domain).two_factor_auth:
+            dom = Domain.get_by_name(domain)
+            if not api_key and dom and dom.two_factor_auth:
                 token = request.META.get('HTTP_X_COMMCAREHQ_OTP')
                 if token and match_token(request.user, token):
                     return fn(request, *args, **kwargs)
@@ -385,3 +388,14 @@ def require_previewer(view_func):
     return shim
 
 cls_require_previewer = cls_to_view(additional_decorator=require_previewer)
+
+
+def check_domain_migration(view_func):
+    def wrapped_view(request, domain, *args, **kwargs):
+        if DATA_MIGRATION.enabled(domain):
+            return HttpResponse('Service Temporarily Unavailable',
+                                content_type='text/plain', status=503)
+        return view_func(request, domain, *args, **kwargs)
+
+    wrapped_view.domain_migration_handled = True
+    return wraps(view_func)(wrapped_view)

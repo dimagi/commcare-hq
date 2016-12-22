@@ -82,7 +82,7 @@ hqDefine('style/js/components/multiselect_utils', function () {
                     if (that.search_left.val().length > 0) {
                         $('#' + selectAllId).addClass('disabled').prop('disabled', true);
                     } else {
-                        $('#' + selectAllId).removeClass('disabled').removeProp('disabled');
+                        $('#' + selectAllId).removeClass('disabled').prop('disabled', false);
                     }
                 });
 
@@ -98,7 +98,7 @@ hqDefine('style/js/components/multiselect_utils', function () {
                     if (that.search_right.val().length > 0) {
                         $('#' + removeAllId).addClass('disabled').prop('disabled', true);
                     } else {
-                        $('#' + removeAllId).removeClass('disabled').removeProp('disabled');
+                        $('#' + removeAllId).removeClass('disabled').prop('disabled', false);
                     }
                 });
             },
@@ -106,13 +106,13 @@ hqDefine('style/js/components/multiselect_utils', function () {
                 this.search_left.cache();
                 // remove search option so that user doesn't get confused
                 this.search_right.val('').search('');
-                $('#' + removeAllId).removeClass('disabled').removeProp('disabled');
+                $('#' + removeAllId).removeClass('disabled').prop('disabled', false);
                 this.search_right.cache();
             },
             afterDeselect: function(){
                 // remove search option so that user doesn't get confused
                 this.search_left.val('').search('');
-                $('#' + selectAllId).removeClass('disabled').removeProp('disabled');
+                $('#' + selectAllId).removeClass('disabled').prop('disabled', false);
                 this.search_left.cache();
                 this.search_right.cache();
             },

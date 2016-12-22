@@ -1,6 +1,7 @@
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_noop
 
+from corehq.apps.locations.models import SQLLocation
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import PhoneTime
 from dimagi.utils.decorators.memoized import memoized
@@ -8,9 +9,9 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.es import filters, users as user_es, cases as case_es
 from corehq.apps.es.es_query import HQESQuery
 from corehq.apps.locations.dbaccessors import get_users_location_ids
-from corehq.apps.locations.util import get_locations_and_children
 from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
+from corehq.apps.reports.exceptions import BadRequestError
 from corehq.apps.reports.filters.search import SearchFilter
 from corehq.apps.reports.filters.select import SelectOpenCloseFilter
 from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
@@ -18,6 +19,7 @@ from corehq.apps.reports.generic import ElasticProjectInspectionReport
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import ProjectReportParametersMixin
 from corehq.apps.reports.standard.inspect import ProjectInspectionReport
+from corehq.elastic import ESError
 
 from .data_sources import CaseInfo, CaseDisplay
 
@@ -77,7 +79,11 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     @property
     @memoized
     def es_results(self):
-        return self._build_query().run().raw
+        try:
+            return self._build_query().run().raw
+        except ESError as e:
+            if e.args[0].info.get('status') == 400:
+                raise BadRequestError()
 
     def get_special_owner_ids(self, admin, unknown, demo, commtrack):
         if not any([admin, unknown, demo]):
@@ -89,12 +95,11 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
             (demo, user_es.demo_users()),
         ] if include]
 
-        query = (user_es.UserES()
-                 .domain(self.domain)
-                 .OR(*user_filters)
-                 .show_inactive()
-                 .fields([]))
-        owner_ids = query.run().doc_ids
+        owner_ids = (user_es.UserES()
+                     .domain(self.domain)
+                     .OR(*user_filters)
+                     .show_inactive()
+                     .get_ids())
 
         if commtrack:
             owner_ids.append("commtrack-system")
@@ -127,7 +132,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         # Show cases owned by any selected locations, user locations, or their children
         loc_ids = set(EMWF.selected_location_ids(mobile_user_and_group_slugs) +
                       get_users_location_ids(self.domain, selected_user_ids))
-        location_owner_ids = get_locations_and_children(loc_ids).location_ids()
+        location_owner_ids = SQLLocation.objects.get_locations_and_children_ids(loc_ids)
 
         # Get user ids for each user in specified reporting groups
         report_group_q = HQESQuery(index="groups").domain(self.domain)\
@@ -138,14 +143,13 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         selected_reporting_group_users = list(set().union(*user_lists))
 
         # Get ids for each sharing group that contains a user from selected_reporting_group_users OR a user that was specifically selected
-        share_group_q = (HQESQuery(index="groups")
-                         .domain(self.domain)
-                         .doc_type("Group")
-                         .term("case_sharing", True)
-                         .term("users", (selected_reporting_group_users +
-                                         selected_user_ids))
-                         .fields([]))
-        sharing_group_ids = share_group_q.run().doc_ids
+        sharing_group_ids = (HQESQuery(index="groups")
+                             .domain(self.domain)
+                             .doc_type("Group")
+                             .term("case_sharing", True)
+                             .term("users", (selected_reporting_group_users +
+                                             selected_user_ids))
+                             .get_ids())
 
         owner_ids = list(set().union(
             special_owner_ids,

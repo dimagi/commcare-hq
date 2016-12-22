@@ -10,23 +10,16 @@ from django.apps import apps as default_apps
 from django.core.management.base import BaseCommand
 
 from corehq.apps.accounting.bootstrap.config.cchq_software_plan_bootstrap import (
-    BOOTSTRAP_EDITION_TO_ROLE,
-    BOOTSTRAP_FEATURE_RATES,
-    BOOTSTRAP_FEATURE_RATES_FOR_TESTING,
-    BOOTSTRAP_PRODUCT_RATES,
-    FEATURE_TYPES,
-    PRODUCT_TYPES,
+    BOOTSTRAP_CONFIG, BOOTSTRAP_CONFIG_TESTING
 )
 from corehq.apps.accounting.bootstrap.utils import ensure_plans
-
-
-logger = logging.getLogger(__name__)
+from corehq.apps.accounting.utils import log_accounting_info
 
 
 class Command(BaseCommand):
     help = 'Populate a fresh db with standard set of Software Plans.'
 
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option('--dry-run', action='store_true', default=False,
                     help='Do not actually modify the database, just verbosely log what happen'),
         make_option('--verbose', action='store_true', default=False,
@@ -36,19 +29,14 @@ class Command(BaseCommand):
     )
 
     def handle(self, dry_run=False, verbose=False, testing=False, *args, **options):
-        logger.info('Bootstrapping standard plans. Custom plans will have to be created via the admin UIs.')
+        log_accounting_info(
+            'Bootstrapping standard plans. Custom plans will have to be created via the admin UIs.'
+        )
 
         if testing:
-            logger.info("Initializing Plans and Roles for Testing")
-            edition_to_feature_rate = BOOTSTRAP_FEATURE_RATES_FOR_TESTING
+            log_accounting_info("Initializing Plans and Roles for Testing")
+            config = BOOTSTRAP_CONFIG_TESTING
         else:
-            edition_to_feature_rate = BOOTSTRAP_FEATURE_RATES
+            config = BOOTSTRAP_CONFIG
 
-        ensure_plans(
-            edition_to_role=BOOTSTRAP_EDITION_TO_ROLE,
-            edition_to_product_rate=BOOTSTRAP_PRODUCT_RATES,
-            edition_to_feature_rate=edition_to_feature_rate,
-            feature_types=FEATURE_TYPES,
-            product_types=PRODUCT_TYPES,
-            dry_run=dry_run, verbose=verbose, apps=default_apps,
-        )
+        ensure_plans(config, dry_run=dry_run, verbose=verbose, apps=default_apps)

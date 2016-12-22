@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('user_id', models.CharField(max_length=128, db_index=True)),
-                ('location', models.ForeignKey(to='locations.SQLLocation')),
+                ('location', models.ForeignKey(to='locations.SQLLocation', on_delete=models.CASCADE)),
             ],
             options={
             },

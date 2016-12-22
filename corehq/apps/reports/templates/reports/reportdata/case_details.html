@@ -3,11 +3,10 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block title %}Case: {{ report.name }}{% endblock %}
+{% block title %}Case: {{ case.name }}{% endblock %}
 
 {% block head %} {{ block.super }}
     {% include "imports/proptable.html" %}
-    {% include "imports/fancy-code.html" %}
     <style type="text/css">
         .dataTables_length select {
             display: inline-block;
@@ -17,7 +16,7 @@
 
 {% block js-inline %}{{ block.super }}
     <script>
-    $(document).ready(function() {
+    $(function() {
         // this adds clickable links to our form and case elements
         var form_lookup_dict = {{ form_lookups|JSON }};
         var urlBase = "{% url "render_form_data" domain 'placeholder-formid' %}";

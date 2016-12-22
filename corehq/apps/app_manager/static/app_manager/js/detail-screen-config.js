@@ -1,4 +1,4 @@
-/*globals $, _, uiElement, eventize, lcsMerge, COMMCAREHQ */
+/*globals $, _, uiElement, eventize, COMMCAREHQ, DOMPurify */
 
 hqDefine('app_manager/js/detail-screen-config.js', function () {
     var module = {};
@@ -39,39 +39,47 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
          * Enable autocomplete on the given jquery element with the given autocomplete
          * options.
          * @param $elem
-         * @param options
+         * @param options: Array of strings.
          */
         setUpAutocomplete: function($elem, options){
-            $elem.$edit_view.autocomplete({
-                source: function (request, response) {
-                    var availableTags = _.map(options, function(value) {
-                        var label = value;
-                        if (module.CC_DETAIL_SCREEN.isAttachmentProperty(value)) {
-                            label = (
-                                '<i class="fa fa-paperclip"></i> ' +
-                                label.substring(label.indexOf(":") + 1)
-                            );
-                        }
-                        return {value: value, label: label};
-                    });
-                    response(
-                        $.ui.autocomplete.filter(availableTags, request.term)
-                    );
-                },
-                minLength: 0,
+            if (!_.contains(options, $elem.value)) {
+                options.unshift($elem.value);
+            }
+            $elem.$edit_view.select2({
+                minimumInputLength: 0,
                 delay: 0,
-                select: function (event, ui) {
-                    $elem.val(ui.item.value);
-                    $elem.fire('change');
-                }
-            }).focus(function () {
-                $(this).autocomplete('search');
-            }).data("ui-autocomplete")._renderItem = function (ul, item) {
-                return $("<li></li>")
-                    .data("item.autocomplete", item)
-                    .append($("<a></a>").html(item.label))
-                    .appendTo(ul);
-            };
+                data: {
+                    results: _.map(options, function(o) {
+                        return {
+                            id: o,
+                            text: o,
+                        };
+                    }),
+                },
+                // Allow manually entered text in drop down, which is not supported by legacy select2.
+                createSearchChoice: function(term, data) {
+                    if (!_.find(data, function(d) { return d.text === term; })) {
+                        return {
+                            id: term,
+                            text: term,
+                        };
+                    }
+                },
+                escapeMarkup: function (m) { return DOMPurify.sanitize(m); },
+                formatResult: function(result) {
+                    var formatted = result.id;
+                    if (module.CC_DETAIL_SCREEN.isAttachmentProperty(result.id)) {
+                        formatted = (
+                            '<i class="fa fa-paperclip"></i> ' +
+                            result.id.substring(result.id.indexOf(":") + 1)
+                        );
+                    }
+                    return DOMPurify.sanitize(formatted);
+                },
+            }).on('change', function() {
+                $elem.val($elem.$edit_view.value);
+                $elem.fire('change');
+            });
             return $elem;
         }
 
@@ -203,19 +211,42 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         };
     };
 
-    var searchViewModel = function (searchProperties, lang, saveButton) {
+    var searchViewModel = function (searchProperties, includeClosed, defaultProperties, lang, saveButton) {
         var self = this,
-            DEFAULT_CLAIM_RELEVANT= "count(instance('casedb')/casedb/case[@case_id=instance('querysession')/session/data/case_id]) = 0";
+            DEFAULT_CLAIM_RELEVANT= "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0";
 
         var SearchProperty = function (name, label) {
             var self = this;
             self.name = ko.observable(name);
             self.label = ko.observable(label);
+
+            self.name.subscribe(function () {
+                saveButton.fire('change');
+            });
+            self.label.subscribe(function () {
+                saveButton.fire('change');
+            });
+        };
+
+        var DefaultProperty = function (property, defaultValue) {
+            var self = this;
+            self.property = ko.observable(property);
+            self.defaultValue = ko.observable(defaultValue);
+
+            self.property.subscribe(function () {
+                saveButton.fire('change');
+            });
+            self.defaultValue.subscribe(function () {
+                saveButton.fire('change');
+            });
         };
 
         self.relevant = ko.observable();
         self.default_relevant = ko.observable(true);
+        self.includeClosed = ko.observable(includeClosed);
         self.searchProperties = ko.observableArray();
+        self.defaultProperties = ko.observableArray();
+
         if (searchProperties.length > 0) {
             for (var i = 0; i < searchProperties.length; i++) {
                 // property labels come in keyed by lang.
@@ -228,9 +259,6 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         } else {
             self.searchProperties.push(new SearchProperty('', ''));
         }
-        self.searchProperties.subscribe(function () {
-            saveButton.fire('change');
-        });
 
         self.addProperty = function () {
             self.searchProperties.push(new SearchProperty('', ''));
@@ -254,6 +282,36 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
             );
         };
 
+        if (defaultProperties.length > 0) {
+            for (var k = 0; k < defaultProperties.length; k++) {
+                self.defaultProperties.push(new DefaultProperty(
+                    defaultProperties[k].property,
+                    defaultProperties[k].defaultValue
+                ));
+            }
+        } else {
+            self.defaultProperties.push(new DefaultProperty('', ''));
+        }
+        self.addDefaultProperty = function () {
+            self.defaultProperties.push(new DefaultProperty('',''));
+        };
+        self.removeDefaultProperty = function (property) {
+            self.defaultProperties.remove(property);
+        };
+        self._getDefaultProperties = function () {
+            return _.map(
+                _.filter(
+                    self.defaultProperties(),
+                    function (p) { return p.property().length > 0; }  // Skip properties where property is blank
+                ),
+                function (p) {
+                    return {
+                        property: p.property(),
+                        defaultValue: p.defaultValue(),
+                    };
+                }
+            );
+        };
         self._getRelevant = function() {
             if (self.default_relevant()) {
                 if (!self.relevant() || self.relevant().trim() === "") {
@@ -269,8 +327,23 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
             return {
                 properties: self._getProperties(),
                 relevant: self._getRelevant(),
+                include_closed: self.includeClosed(),
+                default_properties: self._getDefaultProperties(),
             };
         };
+
+        self.includeClosed.subscribe(function () {
+            saveButton.fire('change');
+        });
+        self.default_relevant.subscribe(function () {
+            saveButton.fire('change');
+        });
+        self.searchProperties.subscribe(function () {
+            saveButton.fire('change');
+        });
+        self.defaultProperties.subscribe(function () {
+            saveButton.fire('change');
+        });
     };
 
     var caseListLookupViewModel = function($el, state, lang, saveButton) {
@@ -288,9 +361,9 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         };
 
         self.initSaveButtonListeners = function($el){
-            $el.find('input[type=text], textarea').bind('textchange', _fireChange);
-            $el.find('input[type=checkbox]').bind('change', _fireChange);
-            $el.find(".case-list-lookup-icon button").bind("click", _fireChange); // Trigger save button when icon upload buttons are clicked
+            $el.find('input[type=text], textarea').on('textchange', _fireChange);
+            $el.find('input[type=checkbox]').on('change', _fireChange);
+            $el.find(".case-list-lookup-icon button").on("click", _fireChange); // Trigger save button when icon upload buttons are clicked
         };
 
         var _remove_empty = function(type){
@@ -864,8 +937,18 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                 this.containsCustomXMLConfiguration = options.containsCustomXMLConfiguration;
                 this.allowsTabs = options.allowsTabs;
                 this.useCaseTiles = ko.observable(spec[this.columnKey].use_case_tiles ? "yes" : "no");
+                this.showCaseTileColumn = ko.computed(function () {
+                    return that.useCaseTiles() === "yes" && COMMCAREHQ.toggleEnabled('CASE_LIST_TILE');
+                });
                 this.persistCaseContext = ko.observable(spec[this.columnKey].persist_case_context || false);
                 this.persistentCaseContextXML = ko.observable(spec[this.columnKey].persistent_case_context_xml|| 'case_name');
+                this.customVariablesViewModel = {
+                    enabled: COMMCAREHQ.toggleEnabled('CASE_LIST_CUSTOM_VARIABLES'),
+                    xml: ko.observable(spec[this.columnKey].custom_variables || ""),
+                };
+                this.customVariablesViewModel.xml.subscribe(function(){
+                    that.fireChange();
+                });
                 this.persistTileOnForms = ko.observable(spec[this.columnKey].persist_tile_on_forms || false);
                 this.enableTilePullDown = ko.observable(spec[this.columnKey].pull_down_tile || false);
                 this.allowsEmptyColumns = options.allowsEmptyColumns;
@@ -1098,6 +1181,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                     if (this.containsCustomXMLConfiguration){
                         data.custom_xml = this.config.customXMLViewModel.xml();
                     }
+                    data[this.columnKey + '_custom_variables'] = this.customVariablesViewModel.xml();
                     if (this.containsSearchConfiguration) {
                         data.search_properties = JSON.stringify(this.config.search.serialize());
                     }
@@ -1243,6 +1327,8 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                     // Set up case search
                     this.search = new searchViewModel(
                         spec.searchProperties || [],
+                        spec.includeClosed,
+                        spec.defaultProperties,
                         spec.lang,
                         this.shortScreen.saveButton
                     );
@@ -1285,7 +1371,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
             LATE_FLAG_EXTRA_LABEL: ' Days late ',
             FILTER_XPATH_EXTRA_LABEL: '',
             INVISIBLE_FORMAT: 'Search Only',
-            ADDRESS_FORMAT: 'Address (Android/CloudCare)',
+            ADDRESS_FORMAT: 'Address',
             PICTURE_FORMAT: 'Picture',
             AUDIO_FORMAT: 'Audio',
             CALC_XPATH_FORMAT: 'Calculate',
@@ -1314,7 +1400,8 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
             {value: "enum", label: DetailScreenConfig.message.ENUM_FORMAT},
             {value: "late-flag", label: DetailScreenConfig.message.LATE_FLAG_FORMAT},
             {value: "invisible", label: DetailScreenConfig.message.INVISIBLE_FORMAT},
-            {value: "address", label: DetailScreenConfig.message.ADDRESS_FORMAT}
+            {value: "address", label: DetailScreenConfig.message.ADDRESS_FORMAT},
+            {value: "distance", label: DetailScreenConfig.message.DISTANCE_FORMAT}
         ];
 
         if (COMMCAREHQ.toggleEnabled('MM_CASE_PROPERTIES')) {
@@ -1336,11 +1423,6 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
             );
         }
 
-        if (COMMCAREHQ.toggleEnabled('CASE_LIST_DISTANCE_SORT')) {
-            DetailScreenConfig.MENU_OPTIONS.push(
-                {value: "distance", label: DetailScreenConfig.message.DISTANCE_FORMAT + ' (Preview!)'}
-            );
-        }
         DetailScreenConfig.field_format_warning_message = "Must begin with a letter and contain only letters, numbers, '-', and '_'";
 
         DetailScreenConfig.field_val_re = new RegExp(

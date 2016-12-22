@@ -1,10 +1,10 @@
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
-from django.core.management.base import LabelCommand
+from django.core.management.base import BaseCommand
 
 DEPLOY_IN_PROGRESS_FLAG = 'deploy_in_progress'
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = """
     Sets a deploy_in_progress flag when we purposefully shut down services during deploy
     """

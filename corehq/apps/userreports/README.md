@@ -57,6 +57,7 @@ An overview of the design, API and data structures used here.
     - [Report Filters](#report-filters)
         - [Numeric Filters](#numeric-filters)
         - [Date filters](#date-filters)
+        - [Quarter filters](#quarter-filters)
         - [Dynamic choice lists](#dynamic-choice-lists)
             - [Choice providers](#choice-providers)
         - [Choice lists](#choice-lists)
@@ -76,6 +77,7 @@ An overview of the design, API and data structures used here.
         - [Aggregate by 'username' column](#aggregate-by-username-column)
         - [Aggregate by two columns](#aggregate-by-two-columns)
     - [Transforms](#transforms)
+        - [Translations and arbitrary mappings](#translations-and-arbitrary-mappings)
         - [Displaying username instead of user ID](#displaying-username-instead-of-user-id)
         - [Displaying username minus @domain.commcarehq.org instead of user ID](#displaying-username-minus-domaincommcarehqorg-instead-of-user-id)
         - [Displaying owner name instead of owner ID](#displaying-owner-name-instead-of-owner-id)
@@ -1096,7 +1098,21 @@ Date filters allow you filter on a date. They will show a datepicker in the UI.
 Date filters have an optional `compare_as_string` option that allows the date
 filter to be compared against an indicator of data type `string`. You shouldn't
 ever need to use this option (make your column a `date` or `datetime` type
-instead), but it exists because the report builder needs it. 
+instead), but it exists because the report builder needs it.
+
+### Quarter filters
+
+Quarter filters are similar to date filters, but a choice is restricted only to the particular quarter of the year. They will show inputs for year and quarter in the UI.
+
+```
+{
+  "type": "quarter",
+  "slug": "modified_on",
+  "field": "modified_on",
+  "display": "Modified on",
+  "required": false
+}
+```
 
 ### Pre-Filters
 
@@ -1199,7 +1215,10 @@ Choice lists allow manual configuration of a fixed, specified number of choices 
 
 ### Internationalization
 
-Report builders may specify translations for the filter display value. See the section on internationalization in the Report Column section for more information.
+Report builders may specify translations for the filter display value.
+Also see the sections on internationalization in the Report Column and
+the [translations transform](#translations-and-arbitrary-mappings).
+
 ```json
 {
     "type": "choice_list",
@@ -1222,7 +1241,7 @@ Reports are made up of columns. The currently supported column types ares:
 
 Field columns have a type of `"field"`. Here's an example field column that shows the owner name from an associated `owner_id`:
 
-```
+```json
 {
     "type": "field",
     "field": "owner_id",
@@ -1233,7 +1252,7 @@ Field columns have a type of `"field"`. Here's an example field column that show
         "type": "custom",
         "custom_type": "owner_display"
     },
-    "aggregation": "simple",
+    "aggregation": "simple"
 }
 ```
 
@@ -1290,6 +1309,16 @@ Here's an example of an aggregate date column that aggregates the `received_on` 
   }
 ```
 
+AggregateDate supports an optional "format" parameter, which accepts the same [format string](https://docs.python.org/2/library/datetime.html#strftime-strptime-behavior) as [Date formatting](#date-formatting). If you don't specify a format, the default will be "%Y-%m", which will show as, for example, "2008-09".
+
+Keep in mind that the only variables available for formatting are `year` and `month`, but that still gives you a fair range, e.g.
+
+| format    | Example result    |
+| --------- | ----------------- |
+| "%Y-%m"   | "2008-09"         |
+| "%B, %Y"  | "September, 2008" |
+| "%b (%y)" | "Sep (08)"        |
+
 
 ### Expanded Columns
 
@@ -1339,6 +1368,36 @@ Then you will get a report like this:
 
 Expanded columns have an optional parameter `"max_expansion"` (defaults to 10) which limits the number of columns that can be created.  WARNING: Only override the default if you are confident that there will be no adverse performance implications for the server.
 
+### Expression columns
+
+Expression columns can be used to do just-in-time calculations on the data coming out of reports.
+They allow you to use any UCR expression on the data in the report row.
+These can be referenced according to the `column_id`s from the other defined column.
+They can support advanced use cases like doing math on two different report columns,
+or doing conditional logic based on the contents of another column.
+
+A simple example is below, which assumes another called "number" in the report and shows
+how you could make a column that is 10 times that column.
+
+
+```json
+{
+    "type": "expression",
+    "column_id": "by_tens",
+    "display": "Counting by tens",
+    "expression": {
+        "type": "evaluator",
+        "statement": "a * b",
+        "context_variables": {
+            "a": {
+                "type": "property_name",
+                "property_name": "number"
+            },
+            "b": 10
+        }
+    }
+}
+```
 
 ### The "aggregation" column property
 
@@ -1366,9 +1425,11 @@ Column IDs in percentage fields *must be unique for the whole report*. If you us
 To sum a column and include the result in a totals row at the bottom of the report, set the `calculate_total` value in the column configuration to `true`.
 
 ### Internationalization
-Report columns can be translated into multiple languages. To specify translations
-for a column header, use an object as the `display` value in the configuration
-instead of a string. For example:
+Report columns can be translated into multiple languages.
+To translate values in a given column check out
+the [translations transform](#translations-and-arbitrary-mappings) below.
+To specify translations for a column header, use an object as the `display`
+value in the configuration instead of a string. For example:
 ```
 {
     "type": "field",
@@ -1404,6 +1465,8 @@ In most simple reports you will only have one level of aggregation. See examples
 
 ### No aggregation
 
+Note that if you use `is_primary_key` in any of your columns, you must include all primary key columns here.
+
 ```json
 ["doc_id"]
 ```
@@ -1423,11 +1486,73 @@ In most simple reports you will only have one level of aggregation. See examples
 ## Transforms
 
 Transforms can be used in two places - either to manipulate the value of a column just before it gets saved to a data source, or to transform the value returned by a column just before it reaches the user in a report.
+Here's an example of a transform used in a report config 'field' column:
+
+```json
+{
+    "type": "field",
+    "field": "owner_id",
+    "column_id": "owner_id",
+    "display": "Owner Name",
+    "format": "default",
+    "transform": {
+        "type": "custom",
+        "custom_type": "owner_display"
+    },
+    "aggregation": "simple"
+}
+```
+
 The currently supported transform types are shown below:
+
+### Translations and arbitrary mappings
+
+The translations transform can be used to give human readable strings:
+
+```json
+{
+    "type": "translation",
+    "translations": {
+        "lmp": "Last Menstrual Period",
+        "edd": "Estimated Date of Delivery"
+    }
+}
+```
+
+And for translations:
+
+```json
+{
+    "type": "translation",
+    "translations": {
+        "lmp": {
+            "en": "Last Menstrual Period",
+            "es": "Fecha Última Menstruación",
+        },
+        "edd": {
+            "en": "Estimated Date of Delivery",
+            "es": "Fecha Estimada de Parto",
+        }
+    }
+}
+```
+
+To use this in a mobile ucr, set the `'mobile_or_web'` property to `'mobile'`
+
+```json
+{
+    "type": "translation",
+    "mobile_or_web": "mobile",
+    "translations": {
+        "lmp": "Last Menstrual Period",
+        "edd": "Estimated Date of Delivery"
+    }
+}
+```
 
 ### Displaying username instead of user ID
 
-```
+```json
 {
     "type": "custom",
     "custom_type": "user_display"
@@ -1436,7 +1561,7 @@ The currently supported transform types are shown below:
 
 ### Displaying username minus @domain.commcarehq.org instead of user ID
 
-```
+```json
 {
     "type": "custom",
     "custom_type": "user_without_domain_display"
@@ -1445,7 +1570,7 @@ The currently supported transform types are shown below:
 
 ### Displaying owner name instead of owner ID
 
-```
+```json
 {
     "type": "custom",
     "custom_type": "owner_display"
@@ -1454,7 +1579,7 @@ The currently supported transform types are shown below:
 
 ### Displaying month name instead of month index
 
-```
+```json
 {
     "type": "custom",
     "custom_type": "month_display"
@@ -1465,7 +1590,7 @@ The currently supported transform types are shown below:
 
 Rounds decimal and floating point numbers to two decimal places.
 
-```
+```json
 {
     "type": "custom",
     "custom_type": "short_decimal_display"
@@ -1483,7 +1608,7 @@ If the format string is not valid or the input is not a number then the original
 
 #### Round to the nearest whole number
 
-```
+```json
 {
     "type": "number_format",
     "custom_type": "{0:.0f}"
@@ -1492,7 +1617,7 @@ If the format string is not valid or the input is not a number then the original
 
 #### Always round to 3 decimal places
 
-```
+```json
 {
     "type": "number_format",
     "custom_type": "{0:.3f}"
@@ -1502,7 +1627,7 @@ If the format string is not valid or the input is not a number then the original
 ### Date formatting
 Formats dates with the given format string. See [here](https://docs.python.org/2/library/datetime.html#strftime-strptime-behavior) for an explanation of format string behavior.
 If there is an error formatting the date, the transform is not applied to that value.
-```
+```json
 {
    "type": "date_format", 
    "format": "%Y-%m-%d %H:%M"

@@ -16,7 +16,6 @@ from corehq.apps.accounting.models import (
     Invoice,
     LineItem,
     SoftwarePlanEdition,
-    SoftwareProductType,
     Subscriber,
     Subscription,
     SubscriptionAdjustment,
@@ -57,10 +56,7 @@ class BaseInvoiceTestCase(BaseAccountingTest):
             date_end=subscription_end_date,
         )
 
-        self.community_plan = DefaultProductPlan.objects.get(
-            product_type=SoftwareProductType.COMMCARE,
-            edition=SoftwarePlanEdition.COMMUNITY
-        ).plan.get_version()
+        self.community_plan = DefaultProductPlan.get_default_plan_version()
 
     def tearDown(self):
         CreditAdjustment.objects.all().delete()
@@ -158,11 +154,7 @@ class TestInvoice(BaseInvoiceTestCase):
     def test_date_due_not_set_small_invoice(self):
         """Date Due doesn't get set if the invoice is small"""
         Subscription.objects.all().delete()
-        plan = DefaultProductPlan.objects.get(
-            edition=SoftwarePlanEdition.STANDARD,
-            product_type=SoftwareProductType.COMMCARE,
-            is_trial=False
-        ).plan.get_version()
+        plan_version = DefaultProductPlan.get_default_plan_version(SoftwarePlanEdition.STANDARD)
 
         subscription_length = 5  # months
         subscription_start_date = datetime.date(2016, 2, 23)
@@ -172,7 +164,7 @@ class TestInvoice(BaseInvoiceTestCase):
             self.domain,
             date_start=subscription_start_date,
             date_end=subscription_end_date,
-            plan_version=plan,
+            plan_version=plan_version,
         )
 
         invoice_date_small = utils.months_from_date(subscription.date_start, 1)
@@ -185,11 +177,7 @@ class TestInvoice(BaseInvoiceTestCase):
     def test_date_due_set_large_invoice(self):
         """Date Due only gets set for a large invoice (> $100)"""
         Subscription.objects.all().delete()
-        plan = DefaultProductPlan.objects.get(
-            edition=SoftwarePlanEdition.ADVANCED,
-            product_type=SoftwareProductType.COMMCARE,
-            is_trial=False
-        ).plan.get_version()
+        plan_version = DefaultProductPlan.get_default_plan_version(SoftwarePlanEdition.ADVANCED)
 
         subscription_length = 5  # months
         subscription_start_date = datetime.date(2016, 2, 23)
@@ -199,7 +187,7 @@ class TestInvoice(BaseInvoiceTestCase):
             self.domain,
             date_start=subscription_start_date,
             date_end=subscription_end_date,
-            plan_version=plan
+            plan_version=plan_version
         )
 
         invoice_date_large = utils.months_from_date(subscription.date_start, 3)
@@ -212,11 +200,7 @@ class TestInvoice(BaseInvoiceTestCase):
     def test_date_due_gets_set_autopay(self):
         """Date due always gets set for autopay """
         Subscription.objects.all().delete()
-        plan = DefaultProductPlan.objects.get(
-            edition=SoftwarePlanEdition.STANDARD,
-            product_type=SoftwareProductType.COMMCARE,
-            is_trial=False
-        ).plan.get_version()
+        plan_version = DefaultProductPlan.get_default_plan_version(SoftwarePlanEdition.STANDARD)
 
         subscription_length = 4
         subscription_start_date = datetime.date(2016, 2, 23)
@@ -226,7 +210,7 @@ class TestInvoice(BaseInvoiceTestCase):
             self.domain,
             date_start=subscription_start_date,
             date_end=subscription_end_date,
-            plan_version=plan
+            plan_version=plan_version
         )
 
         autopay_subscription.account.update_autopay_user(self.billing_contact.username, self.domain)
@@ -265,7 +249,7 @@ class TestContractedInvoices(BaseInvoiceTestCase):
         For contracted invoices, emails should be sent to finance@dimagi.com
         """
 
-        expected_recipient = ["finance@dimagi.com"]
+        expected_recipient = ["finance@dimagi.com", "accounts@dimagi.com"]
 
         tasks.generate_invoices(self.invoice_date)
 
@@ -295,7 +279,6 @@ class TestProductLineItem(BaseInvoiceTestCase):
     def setUp(self):
         super(TestProductLineItem, self).setUp()
         self.product_rate = self.subscription.plan_version.product_rate
-        self.prorate = Decimal("%.2f" % round(self.product_rate.monthly_fee / 30, 2))
 
     def test_standard(self):
         """
@@ -348,8 +331,22 @@ class TestProductLineItem(BaseInvoiceTestCase):
 
             product_line_item = product_line_items.get()
 
-            self.assertGreater(product_line_item.quantity, 1)
-            self.assertEqual(product_line_item.unit_cost, self.prorate)
+            days_prorated_by_invoice_start_date = {
+                datetime.date(2016, 2, 23): 7,
+                datetime.date(2017, 5, 1): 22,
+            }
+            days_in_month_by_invoice_start_date = {
+                datetime.date(2016, 2, 23): 29,
+                datetime.date(2017, 5, 1): 31,
+            }
+
+            self.assertEqual(product_line_item.quantity, days_prorated_by_invoice_start_date[invoice.date_start])
+            self.assertEqual(
+                product_line_item.unit_cost,
+                Decimal("%.2f" % round(
+                    self.product_rate.monthly_fee / days_in_month_by_invoice_start_date[invoice.date_start], 2
+                ))
+            )
             self.assertIsNotNone(product_line_item.unit_description)
 
             self.assertEqual(product_line_item.base_cost, Decimal('0.0000'))

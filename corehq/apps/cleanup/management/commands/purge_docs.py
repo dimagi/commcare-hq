@@ -1,10 +1,10 @@
-from django.core.management.base import LabelCommand
+from django.core.management.base import BaseCommand
 import sys
 from corehq.apps.domain.models import Domain
 from corehq.util.couch import get_db_by_doc_type
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = "Purge ALL documents of a particular type. E.g. purge_docs MyDocType,AnotherOne"
 
     def handle(self, doc_types, *args, **options):

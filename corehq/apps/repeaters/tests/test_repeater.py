@@ -9,14 +9,14 @@ from django.test import TestCase
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException, IgnoreDocument
-from corehq.apps.receiverwrapper import submit_form_locally
+from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.repeaters.tasks import check_repeaters
 from corehq.apps.repeaters.models import (
     CaseRepeater,
     FormRepeater,
     RepeatRecord,
-    RegisterGenerator)
-from corehq.apps.repeaters.repeater_generators import BasePayloadGenerator
+)
+from corehq.apps.repeaters.repeater_generators import BasePayloadGenerator, RegisterGenerator
 from corehq.apps.repeaters.const import MIN_RETRY_WAIT, POST_TIMEOUT
 from corehq.apps.repeaters.dbaccessors import delete_all_repeat_records
 from corehq.form_processor.tests.utils import run_with_all_backends, FormProcessorTestUtils
@@ -159,7 +159,7 @@ class RepeaterTest(BaseRepeaterTest):
         record = RepeatRecord(domain=self.domain, next_check=now)
         self.assertIsNone(record.last_checked)
 
-        record.update_failure()
+        record.set_next_try()
         self.assertTrue(record.last_checked > now)
         self.assertEqual(record.next_check, record.last_checked + MIN_RETRY_WAIT)
 
@@ -392,6 +392,16 @@ class RepeaterFailureTest(BaseRepeaterTest):
         self.repeater.delete()
         delete_all_repeat_records()
         super(RepeaterFailureTest, self).tearDown()
+
+    @run_with_all_backends
+    def test_get_payload_exception(self):
+        repeat_record = self.repeater.register(CaseAccessors(self.domain_name).get_case(CASE_ID))
+        with self.assertRaises(Exception):
+            with patch.object(CaseRepeater, 'get_payload', side_effect=Exception('Boom!')):
+                repeat_record.fire()
+
+        self.assertEquals(repeat_record.failure_reason, 'Boom!')
+        self.assertFalse(repeat_record.succeeded)
 
     @run_with_all_backends
     def test_failure(self):

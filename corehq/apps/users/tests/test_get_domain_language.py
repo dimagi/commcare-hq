@@ -5,7 +5,6 @@ from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.pillows.mappings.app_mapping import APP_INDEX_INFO
 from pillowtop.es_utils import initialize_index_and_mapping
 
-from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application
 from corehq.util.elastic import delete_es_index
 from corehq.util.test_utils import trap_extra_setup
@@ -23,11 +22,11 @@ class TestDomainLanguages(TestCase):
             cls.es = get_es_new()
             initialize_index_and_mapping(cls.es, APP_INDEX_INFO)
 
-        cls.app1 = Application.new_app(cls.domain, 'My Application 1', APP_V2)
+        cls.app1 = Application.new_app(cls.domain, 'My Application 1')
         cls.app1.langs = ['en', 'es']
         cls.app1.save()
         send_to_elasticsearch('apps', cls.app1.to_json())
-        cls.app2 = Application.new_app(cls.domain, 'My Application 2', APP_V2)
+        cls.app2 = Application.new_app(cls.domain, 'My Application 2')
         cls.app2.langs = ['fr']
         cls.app2.save()
         send_to_elasticsearch('apps', cls.app2.to_json())

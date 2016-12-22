@@ -8,6 +8,7 @@ from casexml.apps.case.exceptions import UsesReferrals, VersionNotSupported
 from casexml.apps.case.xform import get_case_updates
 from casexml.apps.case.xml import V2
 from casexml.apps.case.xml.parser import KNOWN_PROPERTIES
+from corehq.apps.couch_sql_migration.progress import couch_sql_migration_in_progress
 from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL, CaseTransaction, CaseAttachmentSQL
 from corehq.form_processor.update_strategy_base import UpdateStrategy
 from django.utils.translation import ugettext as _
@@ -49,14 +50,19 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
             self.case.track_create(transaction)
 
     def _apply_case_update(self, case_update, xformdoc):
-        if case_update.has_referrals():
+        sql_migration_in_progress = couch_sql_migration_in_progress(xformdoc.domain)
+        if case_update.has_referrals() and not sql_migration_in_progress:
             logging.error('Form {} touching case {} in domain {} is still using referrals'.format(
                 xformdoc.form_id, case_update.id, getattr(xformdoc, 'domain', None))
             )
             raise UsesReferrals(_('Sorry, referrals are no longer supported!'))
 
-        if case_update.version and case_update.version != V2:
+        if case_update.version and case_update.version != V2 and not sql_migration_in_progress:
             raise VersionNotSupported
+
+        if not case_update.user_id and xformdoc.user_id:
+            # hack for migration from V1 case blocks
+            case_update.user_id = xformdoc.user_id
 
         if xformdoc.is_deprecated:
             return
@@ -71,6 +77,14 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         modified_on = case_update.guess_modified_on()
         if self.case.modified_on is None or modified_on > self.case.modified_on:
             self.case.modified_on = modified_on
+
+        # edge case if form updates case before it's been created (or creation form archived)
+        if not self.case.opened_on:
+            self.case.opened_on = modified_on
+        if not self.case.opened_by:
+            self.case.opened_by = case_update.user_id
+        if not self.case.owner_id:
+            self.case.owner_id = case_update.user_id
 
     def _apply_action(self, case_update, action, xform):
         if action.action_type_slug == const.CASE_ACTION_CREATE:
@@ -97,13 +111,6 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
     def _apply_create_action(self, case_update, create_action):
         self._update_known_properties(create_action)
 
-        if not self.case.opened_on:
-            self.case.opened_on = case_update.guess_modified_on()
-        if not self.case.opened_by:
-            self.case.opened_by = case_update.user_id
-        if not self.case.owner_id:
-            self.case.owner_id = case_update.user_id
-
     def _apply_update_action(self, update_action):
         self._update_known_properties(update_action)
 
@@ -111,6 +118,9 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
             if key == 'location_id':
                 # special treatment of location_id
                 self.case.location_id = value
+            elif key == 'name':
+                # replicate legacy behaviour
+                self.case.name = value
             elif key not in const.CASE_TAGS:
                 self.case.case_json[key] = value
 
@@ -154,15 +164,12 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
             new_attachment = CaseAttachmentSQL.from_case_update(att)
             if new_attachment.is_present:
                 form_attachment = xform.get_attachment_meta(att.attachment_src)
-                new_attachment.update_from_attachment(form_attachment)
-
                 if identifier in current_attachments:
                     existing_attachment = current_attachments[identifier]
-                    existing_attachment.update_from_attachment(new_attachment)
-                    existing_attachment.copy_content(form_attachment)
+                    existing_attachment.from_form_attachment(form_attachment)
                     self.case.track_update(existing_attachment)
                 else:
-                    new_attachment.copy_content(form_attachment)
+                    new_attachment.from_form_attachment(form_attachment)
                     new_attachment.case = self.case
                     self.case.track_create(new_attachment)
             elif identifier in current_attachments:
@@ -188,11 +195,13 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         for prop, default_value in KNOWN_PROPERTIES.items():
             setattr(self.case, prop, default_value)
 
-        self.case.closed = False
+        self.case.opened_on = None
+        self.case.opened_by = ''
         self.case.modified_on = None
+        self.case.modified_by = ''
+        self.case.closed = False
         self.case.closed_on = None
         self.case.closed_by = ''
-        self.case.opened_by = None
 
     def rebuild_from_transactions(self, transactions, rebuild_transaction, unarchived_form_id=None):
         """

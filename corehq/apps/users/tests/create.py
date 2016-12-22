@@ -2,8 +2,6 @@ from django.test import TestCase
 
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CouchUser, WebUser, CommCareUser
-from casexml.apps.phone.xml import USER_REGISTRATION_XMLNS,\
-    USER_REGISTRATION_XMLNS_DEPRECATED
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 

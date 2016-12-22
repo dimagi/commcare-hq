@@ -108,16 +108,17 @@ hqDefine('app_manager/js/form_workflow.js', function() {
         self.autoLink = ko.observable();
         self.forms = workflow.forms || [];
         self.datums = ko.observableArray();
+        self.manualDatums = ko.observable(false);
         self.datumsFetched = ko.observable(false);
         self.serializedDatums = ko.observable('');
 
         self.get_form_by_id = function(form_id) {
-            return _.find(self.forms, function(form){ return form.uniqueId === form_id; })
+            return _.find(self.forms, function(form){ return form.uniqueId === form_id; });
         };
 
         self.serializeDatums = function() {
             var jsonDatums = JSON.stringify(_.map(self.datums(), function (datum) {
-                return {'name': datum.name, 'xpath': datum.xpath()}
+                return {'name': datum.name, 'xpath': datum.xpath()};
             }));
             self.serializedDatums(jsonDatums);
         };
@@ -133,9 +134,23 @@ hqDefine('app_manager/js/form_workflow.js', function() {
             });
         };
 
+        self.enableManualDatums = function(){
+            self.manualDatums(true);
+        };
+
+        self.disableManualDatums = function(){
+            self.manualDatums(false);
+            $('#form-workflow .workflow-change-trigger').trigger('change');
+            self.datums.removeAll();
+        };
+
        // initialize
         self.autoLink(self.get_form_by_id(self.formId()).autoLink);
         self.datums(self.wrap_datums(datums));
+        self.manualDatums(self.datums().length && self.autoLink());
+        self.showLinkDatums = ko.computed(function(){
+            return (!self.autoLink() || self.manualDatums());
+        });
 
         self.formId.subscribe(function(form_id) {
             self.autoLink(self.get_form_by_id(form_id).autoLink);
@@ -149,10 +164,10 @@ hqDefine('app_manager/js/form_workflow.js', function() {
                 workflow.formDatumsUrl,
                 {form_id: self.formId()},
                 function (data) {
-                    self.datums(self.wrap_datums(data))
+                    self.datums(self.wrap_datums(data));
                 },
                 "json"
-            )
+            );
         };
 
         self.errors = ko.computed(function() {

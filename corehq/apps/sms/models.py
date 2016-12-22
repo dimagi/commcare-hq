@@ -1,10 +1,12 @@
 #!/usr/bin/env python
+import base64
 import jsonfield
 import uuid
 from dimagi.ext.couchdbkit import *
 
 from datetime import datetime, timedelta
 from django.db import models, transaction
+from django.http import Http404
 from collections import namedtuple
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import Form
@@ -17,9 +19,12 @@ from corehq.apps.sms.mixin import (CommCareMobileContactMixin,
 from corehq.apps.sms import util as smsutil
 from corehq.apps.sms.messages import (MSG_MOBILE_WORKER_INVITATION_START,
     MSG_MOBILE_WORKER_ANDROID_INVITATION, MSG_MOBILE_WORKER_JAVA_INVITATION,
-    get_message)
+    MSG_REGISTRATION_INSTALL_COMMCARE, get_message)
+from corehq.const import GOOGLE_PLAY_STORE_COMMCARE_URL
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
+from dimagi.utils.couch.migration import SyncSQLToCouchMixin
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.load_balance import load_balance
 from django.utils.translation import ugettext_noop, ugettext_lazy
 
@@ -80,7 +85,7 @@ class Log(models.Model):
     location_id = models.CharField(max_length=126, null=True)
 
     # The MessagingSubEvent that this log is tied to
-    messaging_subevent = models.ForeignKey('MessagingSubEvent', null=True, on_delete=models.PROTECT)
+    messaging_subevent = models.ForeignKey('sms.MessagingSubEvent', null=True, on_delete=models.PROTECT)
 
     def set_system_error(self, message=None):
         self.error = True
@@ -194,7 +199,9 @@ class SMSBase(UUIDGeneratorMixin, Log):
     queued_timestamp = models.DateTimeField(null=True)
     processed_timestamp = models.DateTimeField(null=True)
 
-    # If the message was simulated from a domain, this is the domain
+    # When an SMS is received on a domain-owned backend, we set this to
+    # the domain name. This can be used by the framework to handle domain-specific
+    # processing of unregistered contacts.
     domain_scope = models.CharField(max_length=126, null=True)
 
     # Set to True to send the message regardless of whether the destination
@@ -477,7 +484,9 @@ class PhoneBlacklist(models.Model):
         return False
 
 
-class PhoneNumber(models.Model):
+class PhoneNumber(UUIDGeneratorMixin, models.Model):
+    UUIDS_TO_GENERATE = ['couch_id']
+
     couch_id = models.CharField(max_length=126, db_index=True, null=True)
     domain = models.CharField(max_length=126, db_index=True, null=True)
     owner_doc_type = models.CharField(max_length=126, null=True)
@@ -1159,7 +1168,7 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
         (MessagingEvent.RECIPIENT_WEB_USER, ugettext_noop('Web User')),
     )
 
-    parent = models.ForeignKey('MessagingEvent')
+    parent = models.ForeignKey('MessagingEvent', on_delete=models.CASCADE)
     date = models.DateTimeField(null=False, db_index=True)
     recipient_type = models.CharField(max_length=3, choices=RECIPIENT_CHOICES, null=False)
     recipient_id = models.CharField(max_length=126, null=True)
@@ -1229,7 +1238,6 @@ class SelfRegistrationInvitation(models.Model):
     app_id = models.CharField(max_length=126, null=True)
     expiration_date = models.DateField(null=False)
     created_date = models.DateTimeField(null=False)
-    odk_url = models.CharField(max_length=126, null=True)
     phone_type = models.CharField(max_length=20, null=True, choices=PHONE_TYPE_CHOICES)
     registered_date = models.DateTimeField(null=True)
 
@@ -1245,6 +1253,17 @@ class SelfRegistrationInvitation(models.Model):
 
     class Meta:
         app_label = 'sms'
+
+    @property
+    @memoized
+    def odk_url(self):
+        if not self.app_id:
+            return None
+
+        try:
+            return self.get_app_odk_url(self.domain, self.app_id)
+        except Http404:
+            return None
 
     @property
     def already_registered(self):
@@ -1300,12 +1319,22 @@ class SelfRegistrationInvitation(models.Model):
             args=[self.domain, self.token]
         )
 
-    def get_app_info_url(self):
+    @classmethod
+    def get_app_info_url(cls, domain, app_id):
         from corehq.apps.sms.views import InvitationAppInfoView
         return absolute_reverse(
             InvitationAppInfoView.urlname,
-            args=[self.domain, self.token]
+            args=[domain, app_id]
         )
+
+    @classmethod
+    def get_sms_install_link(cls, domain, app_id):
+        """
+        If CommCare detects this SMS on the phone during start up,
+        it gives the user the option to install the given app.
+        """
+        app_info_url = cls.get_app_info_url(domain, app_id)
+        return '[commcare app - do not delete] %s' % base64.b64encode(app_info_url)
 
     def send_step2_android_sms(self, custom_message=None):
         from corehq.apps.sms.api import send_sms
@@ -1326,13 +1355,11 @@ class SelfRegistrationInvitation(models.Model):
         )
 
         if self.odk_url:
-            app_info_url = self.get_app_info_url()
-            message = '[commcare app - do not delete] %s' % app_info_url
             send_sms(
                 self.domain,
                 None,
                 self.phone_number,
-                message,
+                self.get_sms_install_link(self.domain, self.app_id),
             )
 
     def expire(self):
@@ -1422,10 +1449,6 @@ class SelfRegistrationInvitation(models.Model):
         invalid_format_numbers = []
         numbers_in_use = []
 
-        odk_url = None
-        if app_id:
-            odk_url = cls.get_app_odk_url(domain, app_id)
-
         for user_info in users:
             phone_number = apply_leniency(user_info.phone_number)
             try:
@@ -1450,7 +1473,6 @@ class SelfRegistrationInvitation(models.Model):
                 app_id=app_id,
                 expiration_date=expiration_date,
                 created_date=datetime.utcnow(),
-                odk_url=odk_url,
                 android_only=android_only,
                 require_email=require_email,
                 custom_user_data=user_info.custom_user_data or {},
@@ -1464,6 +1486,67 @@ class SelfRegistrationInvitation(models.Model):
             success_numbers.append(phone_number)
 
         return (success_numbers, invalid_format_numbers, numbers_in_use)
+
+    @classmethod
+    def send_install_link(cls, domain, users, app_id, custom_message=None):
+        """
+        This method sends two SMS to each user: 1) an SMS with the link to the
+        Google Play store to install Commcare, and 2) an install SMS for the
+        given app.
+
+        Use this method to reinstall CommCare on a user's phone. The user must
+        already have a mobile worker account. If the user doesn't yet have a
+        mobile worker account, use SelfRegistrationInvitation.initiate_workflow()
+        so that they can set one up as part of the process.
+
+        :param domain: the name of the domain this request is for
+        :param users: a list of SelfRegistrationUserInfo objects
+        :param app_id: the app_id of the app for which to send the install link
+        :param custom_message: (optional) a custom message to use when sending the
+        Google Play URL.
+        """
+        from corehq.apps.sms.api import send_sms, send_sms_to_verified_number
+
+        if custom_message:
+            custom_message = custom_message.format(GOOGLE_PLAY_STORE_COMMCARE_URL)
+
+        domain_translated_message = custom_message or get_message(
+            MSG_REGISTRATION_INSTALL_COMMCARE,
+            domain=domain,
+            context=(GOOGLE_PLAY_STORE_COMMCARE_URL,)
+        )
+        sms_install_link = cls.get_sms_install_link(domain, app_id)
+
+        success_numbers = []
+        invalid_format_numbers = []
+        error_numbers = []
+
+        for user in users:
+            try:
+                CommCareMobileContactMixin.validate_number_format(user.phone_number)
+            except InvalidFormatException:
+                invalid_format_numbers.append(user.phone_number)
+                continue
+
+            phone_number = PhoneNumber.by_phone(user.phone_number)
+            if phone_number:
+                if phone_number.domain != domain:
+                    error_numbers.append(user.phone_number)
+                    continue
+                user_translated_message = custom_message or get_message(
+                    MSG_REGISTRATION_INSTALL_COMMCARE,
+                    verified_number=phone_number,
+                    context=(GOOGLE_PLAY_STORE_COMMCARE_URL,)
+                )
+                send_sms_to_verified_number(phone_number, user_translated_message)
+                send_sms_to_verified_number(phone_number, sms_install_link)
+            else:
+                send_sms(domain, None, user.phone_number, domain_translated_message)
+                send_sms(domain, None, user.phone_number, sms_install_link)
+
+            success_numbers.append(user.phone_number)
+
+        return (success_numbers, invalid_format_numbers, error_numbers)
 
 
 class ActiveMobileBackendManager(models.Manager):
@@ -1927,12 +2010,12 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
         with transaction.atomic():
             self.__clear_shared_domain_cache(domains)
             self.mobilebackendinvitation_set.all().delete()
-            self.mobilebackendinvitation_set = [
-                MobileBackendInvitation(
+            for domain in domains:
+                MobileBackendInvitation.objects.create(
                     domain=domain,
                     accepted=True,
-                ) for domain in domains
-            ]
+                    backend=self,
+                )
 
     def soft_delete(self):
         with transaction.atomic():
@@ -2089,7 +2172,7 @@ class SQLMobileBackendMapping(models.Model):
     prefix = models.CharField(max_length=25)
 
     # The backend to use for the given phone prefix
-    backend = models.ForeignKey('SQLMobileBackend')
+    backend = models.ForeignKey('SQLMobileBackend', on_delete=models.CASCADE)
 
     @classmethod
     def __set_default_domain_backend(cls, domain, backend_type, backend=None):
@@ -2174,7 +2257,7 @@ class MobileBackendInvitation(models.Model):
     domain = models.CharField(max_length=126, null=True, db_index=True)
 
     # The backend that is being shared
-    backend = models.ForeignKey('SQLMobileBackend')
+    backend = models.ForeignKey('SQLMobileBackend', on_delete=models.CASCADE)
     accepted = models.BooleanField(default=False)
 
 
@@ -2189,6 +2272,7 @@ class MigrationStatus(models.Model):
     MIGRATION_DOMAIN_DEFAULT_BACKEND = 'domain_default_backend'
     MIGRATION_LOGS = 'logs'
     MIGRATION_PHONE_NUMBERS = 'phone_numbers'
+    MIGRATION_KEYWORDS = 'keywords'
 
     class Meta:
         db_table = 'messaging_migrationstatus'
@@ -2213,6 +2297,160 @@ class MigrationStatus(models.Model):
             return True
         except cls.DoesNotExist:
             return False
+
+
+class Keyword(SyncSQLToCouchMixin, models.Model):
+    """
+    A Keyword allows a project to define actions to be taken when a contact
+    in the project sends an inbound SMS starting with a certain word.
+    """
+
+    class Meta:
+        index_together = (
+            ('domain', 'keyword')
+        )
+
+    couch_id = models.CharField(max_length=126, null=True, db_index=True)
+    domain = models.CharField(max_length=126, db_index=True)
+
+    # The word which is used to invoke this Keyword's KeywordActions
+    keyword = models.CharField(max_length=126)
+    description = models.TextField(null=True)
+
+    # When specified, this is the delimiter that is used in the structured SMS format.
+    # If None, the delimiter is any consecutive white space.
+    # This is ignored unless this Keyword is describing a structured SMS
+    # (i.e., it has a KeywordAction with action equal to ACTION_STRUCTURED_SMS)
+    delimiter = models.CharField(max_length=126, null=True)
+
+    # If a SQLXFormsSession (i.e., an sms survey) is open for a contact when they invoke this
+    # Keyword, override_open_sessions tells what to do with it. If True, the SQLXFormsSession
+    # will be closed and this Keyword will be invoked. If False, this Keyword will be
+    # skipped and the form session handler will count the text as the next
+    # answer in the open survey.
+    override_open_sessions = models.NullBooleanField()
+
+    # List of doc types representing the only types of contacts who should be
+    # able to invoke this keyword. Empty list means anyone can invoke.
+    # Example: ['CommCareUser', 'CommCareCase']
+    initiator_doc_type_filter = jsonfield.JSONField(default=list)
+
+    last_modified = models.DateTimeField(auto_now=True)
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        from corehq.apps.reminders.models import SurveyKeyword
+        return SurveyKeyword
+
+    def _migration_sync_to_couch(self, couch_obj):
+        from corehq.apps.reminders.models import SurveyKeywordAction
+
+        couch_obj.domain = self.domain
+        couch_obj.keyword = self.keyword
+        couch_obj.description = self.description
+        couch_obj.delimiter = self.delimiter
+        couch_obj.override_open_sessions = self.override_open_sessions
+        couch_obj.initiator_doc_type_filter = self.initiator_doc_type_filter
+
+        couch_obj.actions = []
+        for sql_action in self.keywordaction_set.all():
+            couch_obj.actions.append(SurveyKeywordAction(
+                recipient=sql_action.recipient,
+                recipient_id=sql_action.recipient_id,
+                action=sql_action.action,
+                message_content=sql_action.message_content,
+                form_unique_id=sql_action.form_unique_id,
+                use_named_args=sql_action.use_named_args,
+                named_args=sql_action.named_args,
+                named_args_separator=sql_action.named_args_separator
+            ))
+
+        couch_obj.save(sync_to_sql=False)
+
+
+class KeywordAction(models.Model):
+    """
+    When a Keyword is invoked, its KeywordActions are processed. A KeywordAction
+    defines the action to take (which could be sending an SMS, or starting an
+    SMS survey, for example) and the recipient of that action.
+    """
+
+    class InvalidModelStateException(Exception):
+        pass
+
+    # Send an SMS
+    ACTION_SMS = "sms"
+
+    # Start an SMS Survey
+    ACTION_SMS_SURVEY = "survey"
+
+    # Process the text as structured SMS. The expected format of the structured
+    # SMS is described using the fields on this object.
+    ACTION_STRUCTURED_SMS = "structured_sms"
+
+    # The recipient of this action is the contact who invoked the keyword.
+    RECIPIENT_SENDER = "SENDER"
+
+    # The recipient of this action is the owner of the case contact who invoked
+    # the keyword.
+    RECIPIENT_OWNER = "OWNER"
+
+    # The recipient of this action is a user group (Group) with id given by
+    # recipient_id.
+    RECIPIENT_USER_GROUP = "USER_GROUP"
+
+    # The Keyword that this KeywordAction belongs to
+    keyword = models.ForeignKey('Keyword', on_delete=models.CASCADE)
+
+    # One of the ACTION_* constants representing the action to take
+    action = models.CharField(max_length=126)
+
+    # One of the RECIPIENT_* constants representing the recipient of this action
+    recipient = models.CharField(max_length=126)
+
+    # Represents the id of the recipient, when necessary
+    recipient_id = models.CharField(max_length=126, null=True)
+
+    # Only used for action == ACTION_SMS
+    message_content = models.TextField(null=True)
+
+    # Only used for action in [ACTION_SMS_SURVEY, ACTION_STRUCTURED_SMS]
+    # The form unique id of the form to use as a survey when processing this action.
+    form_unique_id = models.CharField(max_length=126, null=True)
+
+    # Only used for action == ACTION_STRUCTURED_SMS
+    # Set to True if the expected structured SMS format should name the values
+    # being passed. For example the format "register name=joe age=20" would set
+    # this to True, while the format "register joe 20" would set it to False.
+    use_named_args = models.NullBooleanField()
+
+    # Only used for action == ACTION_STRUCTURED_SMS
+    # When use_named_args is True, this is a dictionary of {arg name (caps) : form question xpath}
+    # So for example, in structured SMS "register name=joe age=20", the expected
+    # arg names are NAME and AGE. They would be keys in this dictionary and their
+    # corresponding values would be the corresponding question xpaths in the form
+    # referenced by form_unique_id, for example /data/name and /data/age.
+    named_args = jsonfield.JSONField(default=dict)
+
+    # Only used for action == ACTION_STRUCTURED_SMS
+    # When use_named_args is True, this is the separator to be used between arg name
+    # and value in the structured SMS.
+    # So for example, in structured SMS "register name=joe age=20", the separator
+    # is "=".
+    # This can be None in which case there is no separator (i.e., "report a100 b200")
+    named_args_separator = models.CharField(max_length=126, null=True)
+
+    def save(self, *args, **kwargs):
+        if self.recipient == self.RECIPIENT_USER_GROUP and not self.recipient_id:
+            raise self.InvalidModelStateException("Expected a value for recipient_id")
+
+        if self.action == self.ACTION_SMS and not self.message_content:
+            raise self.InvalidModelStateException("Expected a value for message_content")
+
+        if self.action in [self.ACTION_SMS_SURVEY, self.ACTION_STRUCTURED_SMS] and not self.form_unique_id:
+            raise self.InvalidModelStateException("Expected a value for form_unique_id")
+
+        super(KeywordAction, self).save(*args, **kwargs)
 
 
 from corehq.apps.sms import signals

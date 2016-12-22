@@ -25,8 +25,18 @@ hqDefine('export/js/models.js', function () {
         // of the Save button.
         self.saveState = ko.observable(constants.SAVE_STATES.READY);
 
+        // True if the form has no errors
+        self.isValid = ko.pureComputed(function() {
+            if (!self.hasDailySavedAccess && self.is_daily_saved_export()) {
+                return false;
+            }
+            return true;
+        });
+
         // The url to save the export to.
         self.saveUrl = options.saveUrl;
+        self.hasExcelDashboardAccess = Boolean(options.hasExcelDashboardAccess);
+        self.hasDailySavedAccess = Boolean(options.hasDailySavedAccess);
 
         // If any column has a deid transform, show deid column
         self.isDeidColumnVisible = ko.observable(self.is_deidentified() || _.any(self.tables(), function(table) {
@@ -34,6 +44,24 @@ hqDefine('export/js/models.js', function () {
                 return column.selected() && column.deid_transform();
             });
         }));
+
+        self.hasHtmlFormat = ko.pureComputed(function() {
+            return this.export_format() === constants.EXPORT_FORMATS.HTML;
+        }, self);
+        self.hasDisallowedHtmlFormat = ko.pureComputed(function() {
+            return this.hasHtmlFormat() && !this.hasExcelDashboardAccess;
+        }, self);
+
+        self.export_format.subscribe(function (newFormat){
+            // Selecting Excel Dashboard format automatically checks the daily saved export box
+            if (newFormat === constants.EXPORT_FORMATS.HTML) {
+                self.is_daily_saved_export(true);
+            } else {
+                if (!self.hasExcelDashboardAccess){
+                    self.is_daily_saved_export(false);
+                }
+            }
+        });
     };
 
     ExportInstance.prototype.getFormatOptionValues = function() {
@@ -79,16 +107,19 @@ hqDefine('export/js/models.js', function () {
 
         self.saveState(constants.SAVE_STATES.SAVING);
         serialized = self.toJS();
-        $.post(self.saveUrl, JSON.stringify(serialized))
-            .success(function(data) {
+        $.post({
+            url: self.saveUrl,
+            data: JSON.stringify(serialized),
+            success: function(data) {
                 self.recordSaveAnalytics(function() {
                     self.saveState(constants.SAVE_STATES.SUCCESS);
                     utils.redirect(data.redirect);
                 });
-            })
-            .fail(function() {
+            },
+            error: function() {
                 self.saveState(constants.SAVE_STATES.ERROR);
-            });
+            },
+        });
     };
 
     /**
@@ -292,6 +323,7 @@ hqDefine('export/js/models.js', function () {
         e.preventDefault();
         table.columns.push(new UserDefinedExportColumn({
             selected: true,
+            is_editable: true,
             deid_transform: null,
             doc_type: 'UserDefinedExportColumn',
             label: '',
@@ -484,6 +516,10 @@ hqDefine('export/js/models.js', function () {
         return gettext(this.help_text);
     };
 
+    ExportColumn.prototype.isEditable = function() {
+        return false;
+    };
+
     ExportColumn.mapping = {
         include: [
             'item',
@@ -525,6 +561,14 @@ hqDefine('export/js/models.js', function () {
         return true;
     };
 
+    UserDefinedExportColumn.prototype.formatProperty = function() {
+        return _.map(this.custom_path(), function(node) { return node.name(); }).join('.');
+    };
+
+    UserDefinedExportColumn.prototype.isEditable = function() {
+        return this.is_editable();
+    };
+
     UserDefinedExportColumn.prototype.customPathToNodes = function() {
         this.custom_path(utils.customPathToNodes(this.customPathString()));
     };
@@ -536,6 +580,7 @@ hqDefine('export/js/models.js', function () {
             'doc_type',
             'custom_path',
             'label',
+            'is_editable',
         ],
         custom_path: {
             create: function(options) {

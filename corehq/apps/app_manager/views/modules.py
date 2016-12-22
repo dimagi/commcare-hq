@@ -1,7 +1,9 @@
 # coding=utf-8
+import os
 from collections import OrderedDict, namedtuple
 import json
 import logging
+from lxml import etree
 
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _, gettext_lazy
@@ -33,7 +35,7 @@ from corehq.apps.app_manager.util import (
     prefix_usercase_properties,
     commtrack_ledger_sections,
     module_offers_search,
-)
+    module_case_hierarchy_has_circular_reference)
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.userreports.models import ReportConfiguration, \
     StaticReportConfiguration
@@ -47,15 +49,18 @@ from corehq.apps.app_manager.models import (
     DeleteModuleRecord,
     DetailColumn,
     DetailTab,
+    FormActionCondition,
     Module,
     ModuleNotFoundException,
+    OpenCaseAction,
     ParentSelect,
     ReportModule,
     ShadowModule,
     SortElement,
     ReportAppConfig,
+    UpdateCaseAction,
     FixtureSelect,
-)
+    DefaultCaseSearchProperty)
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
 
@@ -64,20 +69,20 @@ logger = logging.getLogger(__name__)
 
 def get_module_template(module):
     if isinstance(module, CareplanModule):
-        return "app_manager/module_view_careplan.html"
+        return "app_manager/v1/module_view_careplan.html"
     elif isinstance(module, AdvancedModule):
-        return "app_manager/module_view_advanced.html"
+        return "app_manager/v1/module_view_advanced.html"
     elif isinstance(module, ReportModule):
-        return 'app_manager/module_view_report.html'
+        return 'app_manager/v1/module_view_report.html'
     else:
-        return "app_manager/module_view.html"
+        return "app_manager/v1/module_view.html"
 
 
 def get_module_view_context(app, module, lang=None):
     # shared context
     context = {
         'edit_name_url': reverse(
-            'corehq.apps.app_manager.views.edit_module_attr',
+            'edit_module_attr',
             args=[app.domain, app.id, module.id, 'name']
         )
     }
@@ -149,6 +154,8 @@ def _get_advanced_module_view_context(app, module, lang=None):
         'child_module_enabled': True,
         'is_search_enabled': case_search_enabled_for_domain(app.domain),
         'search_properties': module.search_config.properties if module_offers_search(module) else [],
+        'include_closed': module.search_config.include_closed if module_offers_search(module) else False,
+        'default_properties': module.search_config.default_properties if module_offers_search(module) else [],
         'schedule_phases': [
             {
                 'id': schedule.id,
@@ -183,6 +190,8 @@ def _get_basic_module_view_context(app, module, lang=None):
         ),
         'is_search_enabled': case_search_enabled_for_domain(app.domain),
         'search_properties': module.search_config.properties if module_offers_search(module) else [],
+        'include_closed': module.search_config.include_closed if module_offers_search(module) else False,
+        'default_properties': module.search_config.default_properties if module_offers_search(module) else [],
     }
 
 
@@ -193,11 +202,12 @@ def _get_shadow_module_view_context(app, module, lang=None):
         return {
             'unique_id': mod.unique_id,
             'name': trans(mod.name, langs),
+            'root_module_id': mod.root_module_id,
             'forms': [{'unique_id': f.unique_id, 'name': trans(f.name, langs)} for f in mod.get_forms()]
         }
 
     return {
-        'modules': [get_mod_dict(m) for m in app.modules if m.module_type == 'basic'],
+        'modules': [get_mod_dict(m) for m in app.modules if m.module_type in ['basic', 'advanced']],
         'excluded_form_ids': module.excluded_form_ids,
     }
 
@@ -242,7 +252,7 @@ def _get_fixture_columns_by_type(domain):
 
 
 def _setup_case_property_builder(app):
-    defaults = ('name', 'date-opened', 'status')
+    defaults = ('name', 'date-opened', 'status', 'last_modified')
     if app.case_sharing:
         defaults += ('#owner_name',)
     per_type_defaults = None
@@ -344,11 +354,11 @@ class AllowWithReason(namedtuple('AllowWithReason', 'allow reason')):
     @property
     def message(self):
         if self.reason == self.ALL_FORMS_REQUIRE_CASE:
-            return gettext_lazy('Not all forms in the module update a case.')
+            return gettext_lazy('Not all forms in the case list update a case.')
         elif self.reason == self.MODULE_IN_ROOT:
-            return gettext_lazy("The module's 'Menu Mode' is not configured as 'Display module and then forms'")
+            return gettext_lazy("'Menu Mode' is not configured as 'Display and then forms'")
         elif self.reason == self.PARENT_SELECT_ACTIVE:
-            return gettext_lazy("The module has 'Parent Selection' configured.")
+            return gettext_lazy("'Parent Selection' is configured.")
 
 
 @no_conflict_require_POST
@@ -383,6 +393,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         "source_module_id": None,
         "task_list": ('task_list-show', 'task_list-label'),
         "excl_form_ids": None,
+        "display_style": None
     }
 
     if attr not in attributes:
@@ -406,7 +417,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
     resp = {'update': {}, 'corrections': {}}
     if should_edit("case_type"):
         case_type = request.POST.get("case_type", None)
-        if is_valid_case_type(case_type, module):
+        if not case_type or is_valid_case_type(case_type, module):
             old_case_type = module["case_type"]
             module["case_type"] = case_type
             for cp_mod in (mod for mod in app.modules if isinstance(mod, CareplanModule)):
@@ -431,6 +442,8 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
             return HttpResponseBadRequest("case type is improperly formatted")
     if should_edit("put_in_root"):
         module["put_in_root"] = json.loads(request.POST.get("put_in_root"))
+    if should_edit("display_style"):
+        module["display_style"] = request.POST.get("display_style")
     if should_edit("source_module_id"):
         module["source_module_id"] = request.POST.get("source_module_id")
     if should_edit("display_separately"):
@@ -438,12 +451,12 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
     if should_edit("parent_module"):
         parent_module = request.POST.get("parent_module")
         module.parent_select.module_id = parent_module
+        if module_case_hierarchy_has_circular_reference(module):
+            return HttpResponseBadRequest(_("The case hierarchy contains a circular reference."))
     if should_edit("auto_select_case"):
         module["auto_select_case"] = request.POST.get("auto_select_case") == 'true'
 
-    if (feature_previews.MODULE_FILTER.enabled(app.domain) and
-            app.enable_module_filtering and
-            should_edit('module_filter')):
+    if app.enable_module_filtering and should_edit('module_filter'):
         module['module_filter'] = request.POST.get('module_filter')
 
     if should_edit('case_list_form_id'):
@@ -486,7 +499,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
             name = request.POST.get(attribute, None)
             module[attribute][lang] = name
             if should_edit("name"):
-                resp['update'].update({'.variable-module_name': module.name[lang]})
+                resp['update'] = {'.variable-module_name': trans(module.name, [lang], use_delim=False)}
     if should_edit('comment'):
         module.comment = request.POST.get('comment')
     for SLUG in ('case_list', 'task_list'):
@@ -507,7 +520,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
                 app.get_module(module_id)
                 module["root_module_id"] = request.POST.get("root_module_id")
             except ModuleNotFoundException:
-                messages.error(_("Unknown Module"))
+                messages.error(_("Unknown Menu"))
 
     if should_edit('excl_form_ids') and isinstance(module, ShadowModule):
         excl = request.POST.getlist('excl_form_ids')
@@ -540,7 +553,7 @@ def _new_report_module(request, domain, app, name, lang):
         ReportAppConfig(
             report_id=report._id,
             header={lang: report.title},
-            description={lang: report.description},
+            description={lang: report.description} if report.description else None,
         )
         for report in ReportConfiguration.by_domain(domain)
     ]
@@ -647,6 +660,10 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
     pull_down_tile = params.get("enableTilePullDown", None)
     case_list_lookup = params.get("case_list_lookup", None)
     search_properties = params.get("search_properties")
+    custom_variables = {
+        'short': params.get("short_custom_variables", None),
+        'long': params.get("long_custom_variables", None)
+    }
 
     app = get_app(domain, app_id)
     module = app.get_module(module_id)
@@ -688,6 +705,25 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
         detail.short.filter = filter
     if custom_xml is not None:
         detail.short.custom_xml = custom_xml
+
+    if custom_variables['short'] is not None:
+        try:
+            etree.fromstring("<variables>{}</variables>".format(custom_variables['short']))
+        except etree.XMLSyntaxError as error:
+            return HttpResponseBadRequest(
+                "There was an issue with your custom variables: {}".format(error.message)
+            )
+        detail.short.custom_variables = custom_variables['short']
+
+    if custom_variables['long'] is not None:
+        try:
+            etree.fromstring("<variables>{}</variables>".format(custom_variables['long']))
+        except etree.XMLSyntaxError as error:
+            return HttpResponseBadRequest(
+                "There was an issue with your custom variables: {}".format(error.message)
+            )
+        detail.long.custom_variables = custom_variables['long']
+
     if sort_elements is not None:
         detail.short.sort_elements = []
         for sort_element in sort_elements:
@@ -699,6 +735,8 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
             detail.short.sort_elements.append(item)
     if parent_select is not None:
         module.parent_select = ParentSelect.wrap(parent_select)
+        if module_case_hierarchy_has_circular_reference(module):
+            return HttpResponseBadRequest(_("The case hierarchy contains a circular reference."))
     if fixture_select is not None:
         module.fixture_select = FixtureSelect.wrap(fixture_select)
     if search_properties is not None:
@@ -715,7 +753,12 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
                     search_properties.get('relevant')
                     if search_properties.get('relevant') is not None
                     else CLAIM_DEFAULT_RELEVANT_CONDITION
-                )
+                ),
+                include_closed=bool(search_properties.get('include_closed')),
+                default_properties=[
+                    DefaultCaseSearchProperty.wrap(p)
+                    for p in search_properties.get('default_properties')
+                ]
             )
 
     resp = {}
@@ -747,8 +790,7 @@ def edit_report_module(request, domain, app_id, module_id):
         )
         return HttpResponseBadRequest(_("There was a problem processing your request."))
 
-    if (feature_previews.MODULE_FILTER.enabled(domain) and
-            app.enable_module_filtering):
+    if app.enable_module_filtering:
         module['module_filter'] = request.POST.get('module_filter')
     module.media_image.update(params['multimedia']['mediaImage'])
     module.media_audio.update(params['multimedia']['mediaAudio'])
@@ -775,7 +817,8 @@ def validate_module_for_build(request, domain, app_id, module_id, ajax=True):
     errors = module.validate_for_build()
     lang, langs = get_langs(request, app)
 
-    response_html = render_to_string('app_manager/partials/build_errors.html', {
+    response_html = render_to_string('app_manager/v1/partials/build_errors.html', {
+        'request': request,
         'app': app,
         'build_errors': errors,
         'not_actual_build': True,
@@ -796,12 +839,51 @@ def new_module(request, domain, app_id):
     lang = request.COOKIES.get('lang', app.langs[0])
     name = request.POST.get('name')
     module_type = request.POST.get('module_type', 'case')
-    if module_type == 'case':
+
+    if module_type == 'case' or module_type == 'survey':  # survey option added for V2
+
+        if toggles.APP_MANAGER_V2.enabled(domain):
+            if module_type == 'case':
+                name = name or 'Case List'
+            else:
+                name = name or 'Surveys'
+
         module = app.add_module(Module.new_module(name, lang))
         module_id = module.id
-        app.new_form(module_id, "Untitled Form", lang)
+
+        form_id = None
+        if toggles.APP_MANAGER_V2.enabled(domain):
+            if module_type == 'case':
+                # registration form
+                register = app.new_form(module_id, "Register", lang)
+                with open(os.path.join(
+                        os.path.dirname(__file__), '..', 'static',
+                        'app_manager', 'xml', 'registration_form.xml')) as f:
+                    register.source = f.read()
+                register.actions.open_case = OpenCaseAction(
+                    condition=FormActionCondition(type='always'),
+                    name_path=u'/data/name')
+                register.actions.update_case = UpdateCaseAction(
+                    condition=FormActionCondition(type='always'))
+
+                # make case type unique across app
+                app_case_types = set(
+                    [module.case_type for module in app.modules if
+                     module.case_type])
+                module.case_type = 'case'
+                suffix = 0
+                while module.case_type in app_case_types:
+                    suffix = suffix + 1
+                    module.case_type = 'case-{}'.format(suffix)
+            else:
+                form = app.new_form(module_id, "Survey", lang)
+            form_id = 0
+        else:
+            app.new_form(module_id, "Untitled Form", lang)
+
         app.save()
-        response = back_to_main(request, domain, app_id=app_id, module_id=module_id)
+        response = back_to_main(request, domain, app_id=app_id,
+                                module_id=module_id, form_id=form_id)
         response.set_cookie('suppress_build_errors', 'yes')
         return response
     elif module_type in MODULE_TYPE_MAP:
@@ -855,31 +937,26 @@ def view_module(request, domain, app_id, module_id):
     return view_generic(request, domain, app_id, module_id)
 
 
-common_module_validations = [
-    (lambda app: app.application_version == APP_V1,
-     _('Please upgrade you app to > 2.0 in order to add this module'))
-]
-
 FN = 'fn'
 VALIDATIONS = 'validations'
 MODULE_TYPE_MAP = {
     'careplan': {
         FN: _new_careplan_module,
-        VALIDATIONS: common_module_validations + [
+        VALIDATIONS: [
             (lambda app: app.has_careplan_module,
              _('This application already has a Careplan module'))
         ]
     },
     'advanced': {
         FN: _new_advanced_module,
-        VALIDATIONS: common_module_validations
+        VALIDATIONS: []
     },
     'report': {
         FN: _new_report_module,
-        VALIDATIONS: common_module_validations
+        VALIDATIONS: []
     },
     'shadow': {
         FN: _new_shadow_module,
-        VALIDATIONS: common_module_validations
+        VALIDATIONS: []
     },
 }

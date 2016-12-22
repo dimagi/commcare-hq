@@ -1,6 +1,5 @@
 {% load hq_shared_tags %}
 {% if request.use_requirejs %}
-    "jquery": "{% static 'jquery/dist/jquery.min' %}",
     "jquery.form": "{% static 'jquery-form/jquery.form' %}",
     "underscore": "{% static 'underscore/underscore' %}",
     "underscore-mixins": "{% static 'style/js/underscore-mixins' %}",
@@ -8,7 +7,6 @@
     "hq_extensions": "{% static 'style/js/hq_extensions.jquery' %}",
     "rmi": "{% static 'jquery.rmi/jquery.rmi' %}",
 {% else %}
-    <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
     <script src="{% static 'jquery-form/jquery.form.js' %}"></script>
     <script src="{% static 'underscore/underscore.js' %}"></script>
     <script src="{% static 'style/js/underscore-mixins.js' %}"></script>

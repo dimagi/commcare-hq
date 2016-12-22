@@ -13,7 +13,7 @@ from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersM
 from corehq.apps.reports.filters.commtrack import SelectReportingType
 from corehq.form_processor.utils.general import should_use_sql_backend
 from dimagi.utils.couch.loosechange import map_reduce
-from corehq.apps.locations.models import Location, SQLLocation
+from corehq.apps.locations.models import SQLLocation
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop
 from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, get_product_id_name_mapping, \
@@ -26,7 +26,7 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin, Datespan
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
-        return project.commtrack_enabled
+        return project and project.commtrack_enabled
 
     @property
     @memoized
@@ -62,8 +62,7 @@ class CommtrackReportMixin(ProjectReport, ProjectReportParametersMixin, Datespan
     @memoized
     def active_location(self):
         loc_id = self.request_params.get('location_id')
-        if loc_id:
-            return Location.get(loc_id)
+        return SQLLocation.objects.get_or_None(domain=self.domain, location_id=loc_id)
 
     @property
     @memoized
@@ -224,7 +223,7 @@ class SimplifiedInventoryReport(GenericTabularReport, CommtrackReportMixin):
     @property
     @memoized
     def products(self):
-        products = SQLProduct.objects.filter(domain=self.domain)
+        products = SQLProduct.active_objects.filter(domain=self.domain)
         if self.program_id:
             products = products.filter(program_id=self.program_id)
         return list(products.order_by('name'))
@@ -420,7 +419,7 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
 
         def child_loc(path):
             root = self.active_location
-            ix = path.index(root._id) if root else -1
+            ix = path.index(root.location_id) if root else -1
             try:
                 return path[ix + 1]
             except IndexError:
@@ -494,4 +493,6 @@ class ReportingRatesReport(GenericTabularReport, CommtrackReportMixin):
     @property
     def charts(self):
         if 'location_id' in self.request.GET: # hack: only get data if we're loading an actual report
-            return [PieChart(None, _('Current Reporting'), self.master_pie_chart_data())]
+            chart = PieChart(_('Current Reporting'), 'current_reporting', [])
+            chart.data = self.master_pie_chart_data()
+            return [chart]

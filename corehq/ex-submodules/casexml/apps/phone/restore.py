@@ -78,7 +78,11 @@ def restore_cache_key(prefix, user_id, version=None):
 
 def stream_response(payload, headers=None, status=200):
     try:
-        response = StreamingHttpResponse(FileWrapper(payload), content_type="text/xml", status=status)
+        response = StreamingHttpResponse(
+            FileWrapper(payload),
+            content_type="text/xml; charset=utf-8",
+            status=status
+        )
         if headers:
             for header, value in headers.items():
                 response[header] = value
@@ -350,6 +354,10 @@ class RestoreParams(object):
         self.include_item_count = include_item_count
         self.app = app
 
+    @property
+    def app_id(self):
+        return self.app._id if self.app else None
+
 
 class RestoreCacheSettings(object):
     """
@@ -501,6 +509,8 @@ class RestoreState(object):
         previous_log_rev = None if self.is_initial else self.last_sync_log._rev
         last_seq = str(get_db().info()["update_seq"])
         new_synclog = SyncLog(
+            domain=self.restore_user.domain,
+            build_id=self.params.app_id,
             user_id=self.restore_user.user_id,
             last_seq=last_seq,
             owner_ids_on_phone=list(self.owner_ids),
@@ -591,7 +601,7 @@ class RestoreConfig(object):
         self.validate()
         self.delete_cached_payload_if_necessary()
 
-        cached_response = self._get_cached_response()
+        cached_response = self.get_cached_response()
         if cached_response:
             return cached_response
         # Start new sync
@@ -609,7 +619,7 @@ class RestoreConfig(object):
         self.set_cached_payload_if_necessary(response, self.restore_state.duration)
         return response
 
-    def _get_cached_response(self):
+    def get_cached_response(self):
         if self.overwrite_cache:
             return CachedResponse(None)
 
@@ -633,7 +643,7 @@ class RestoreConfig(object):
             task = get_async_restore_payload.delay(self)
             new_task = True
             # store the task id in cache
-            self.cache.set(self.async_cache_key, task.id, timeout=None)
+            self.cache.set(self.async_cache_key, task.id, timeout=24 * 60 * 60)
         try:
             response = task.get(timeout=self._get_task_timeout(new_task))
         except TimeoutError:
@@ -689,7 +699,7 @@ class RestoreConfig(object):
                 e.message,
                 ResponseNature.OTA_RESTORE_ERROR
             )
-            return HttpResponse(response, content_type="text/xml",
+            return HttpResponse(response, content_type="text/xml; charset=utf-8",
                                 status=412)  # precondition failed
 
     def set_cached_payload_if_necessary(self, resp, duration):

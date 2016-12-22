@@ -1,3 +1,4 @@
+/* globals django */
 (function () {
 
 /**
@@ -28,7 +29,7 @@ var MapItem = function(item, index, mappingContext){
 
 
     var app_manager = hqImport('app_manager/js/app_manager_media.js');
-    var uploaders = hqImport('#app_manager/partials/nav_menu_media_js_common.html');
+    var uploaders = hqImport('#app_manager/v1/partials/nav_menu_media_js_common.html');
     // attach a media-manager if item.value is a file-path to icon
     if (mappingContext.values_are_icons()) {
         var actualPath = item.value[mappingContext.lang];
@@ -97,6 +98,23 @@ function MapList(o) {
     self.values_are_icons = ko.observable(o.values_are_icons || false);
     self.multimedia = o.multimedia;
     self.property_name = o.property_name;
+
+    self.labels = ko.computed(function() {
+        if (this.values_are_icons()) {
+            return {
+                placeholder: django.gettext('Calculation'),
+                duplicated: django.gettext('Calculation is duplicated'),
+                addButton: django.gettext('Add Image'),
+            };
+        }
+        else {
+            return {
+                placeholder: django.gettext('Key'),
+                duplicated: django.gettext('Key is duplicated'),
+                addButton: django.gettext('Add Key, Value Mapping'),
+            };
+        }
+    }, this);
 
     self.setItems = function (items) {
         self.items(_(items).map(function (item, i) {
@@ -171,7 +189,8 @@ uiElement.key_value_mapping = function (o) {
     m.openModal = function () {
         // create a throw-away modal every time
         // lets us create a sandbox for editing that you can cancel
-        var $modalDiv = $('<div data-bind="template: \'key_value_mapping_modal\'"></div>');
+        var $modalDiv = $(document.createElement("div"));
+        $modalDiv.attr("data-bind", "template: 'key_value_mapping_modal'");
         var copy = new MapList({
             lang: o.lang,
             langs: o.langs,
@@ -197,7 +216,10 @@ uiElement.key_value_mapping = function (o) {
 
         var $modal = $modalDiv.find('.modal');
         $modal.appendTo('body');
-        $modal.modal('show');
+        $modal.modal({
+            show: true,
+            backdrop: 'static',
+        });
         $modal.on('hidden', function () {
             $modal.remove();
         });
@@ -205,7 +227,8 @@ uiElement.key_value_mapping = function (o) {
     m.setEdit = function (edit) {
         m.edit(edit);
     };
-    var $div = $('<div data-bind="template: \'key_value_mapping_template\'"></div>');
+    var $div = $(document.createElement("div"));
+    $div.attr("data-bind", "template: \'key_value_mapping_template\'");
     $div.koApplyBindings(m);
     m.ui = $div;
     eventize(m);

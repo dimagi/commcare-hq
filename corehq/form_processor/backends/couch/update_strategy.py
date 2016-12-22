@@ -1,4 +1,3 @@
-import base64
 import copy
 from functools import cmp_to_key
 import logging
@@ -6,6 +5,7 @@ from PIL import Image
 from StringIO import StringIO
 from couchdbkit import BadValueError
 import sys
+from datetime import date, datetime
 from casexml.apps.case import const
 from casexml.apps.case.const import CASE_ACTION_COMMTRACK
 from casexml.apps.case.exceptions import ReconciliationError, MissingServerDate, UsesReferrals
@@ -18,6 +18,22 @@ from corehq.util.couch_helpers import CouchAttachmentsBuilder
 from couchforms.models import XFormInstance
 from dimagi.utils.logging import notify_exception
 from dimagi.ext.couchdbkit import StringProperty
+
+
+def coerce_to_datetime(v):
+    if isinstance(v, date) and not isinstance(v, datetime):
+        return datetime.combine(v, datetime.min.time())
+    else:
+        return v
+
+
+PROPERTY_TYPE_MAPPING = {
+    'opened_on': coerce_to_datetime
+}
+
+
+def _convert_type(property_name, value):
+    return PROPERTY_TYPE_MAPPING.get(property_name, lambda x: x)(value)
 
 
 def _is_override(xform):
@@ -277,7 +293,7 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
         Note that all unexpected attributes are ignored (thrown away)
         """
         for k, v in create_action.updated_known_properties.items():
-            setattr(self.case, k, v)
+            setattr(self.case, k, _convert_type(k, v))
 
         if not self.case.opened_on:
             self.case.opened_on = create_action.date
@@ -289,7 +305,7 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
         Applies updates to a case
         """
         for k, v in update_action.updated_known_properties.items():
-            setattr(self.case, k, v)
+            setattr(self.case, k, _convert_type(k, v))
 
         properties = self.case.properties()
         for item in update_action.updated_unknown_properties:

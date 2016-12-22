@@ -1,4 +1,5 @@
 import datetime
+from dateutil.relativedelta import relativedelta
 from decimal import Decimal
 import json
 
@@ -422,6 +423,10 @@ class SubscriptionForm(forms.Form):
         choices=FundingSource.CHOICES,
         initial=FundingSource.CLIENT,
     )
+    skip_auto_downgrade = forms.BooleanField(
+        label=ugettext_lazy("Exclude from automated downgrade process"),
+        required=False
+    )
     set_subscription = forms.CharField(widget=forms.HiddenInput, required=False)
 
     def __init__(self, subscription, account_id, web_user, *args, **kwargs):
@@ -501,6 +506,7 @@ class SubscriptionForm(forms.Form):
             self.fields['service_type'].initial = subscription.service_type
             self.fields['pro_bono_status'].initial = subscription.pro_bono_status
             self.fields['funding_source'].initial = subscription.funding_source
+            self.fields['skip_auto_downgrade'].initial = subscription.skip_auto_downgrade
 
             if (
                 subscription.date_start is not None
@@ -582,6 +588,7 @@ class SubscriptionForm(forms.Form):
                 'service_type',
                 'pro_bono_status',
                 'funding_source',
+                hqcrispy.B3MultiField("Skip Auto Downgrade", 'skip_auto_downgrade'),
                 'set_subscription'
             ),
             hqcrispy.FormActions(
@@ -615,7 +622,6 @@ class SubscriptionForm(forms.Form):
             'plan_product',
             SoftwareProductType.COMMCARE
         )
-
 
     @transaction.atomic
     def create_subscription(self):
@@ -658,6 +664,7 @@ class SubscriptionForm(forms.Form):
             service_type=self.cleaned_data['service_type'],
             pro_bono_status=self.cleaned_data['pro_bono_status'],
             funding_source=self.cleaned_data['funding_source'],
+            skip_auto_downgrade=self.cleaned_data['skip_auto_downgrade'],
         )
 
     def clean_active_accounts(self):
@@ -950,6 +957,22 @@ class SuppressSubscriptionForm(forms.Form):
                 ),
             ),
         )
+
+    def clean(self):
+        from corehq.apps.accounting.views import InvoiceSummaryView
+
+        invoices = self.subscription.invoice_set.all()
+        if invoices:
+            raise ValidationError(mark_safe(
+                "Cannot suppress subscription. Suppress these invoices first: %s"
+                % ', '.join(map(
+                    lambda invoice: '<a href="{edit_url}">{name}</a>'.format(
+                        edit_url=reverse(InvoiceSummaryView.urlname, args=[invoice.id]),
+                        name=invoice.invoice_number,
+                    ),
+                    invoices
+                ))
+            ))
 
 
 class PlanInformationForm(forms.Form):
@@ -1701,12 +1724,13 @@ class TriggerInvoiceForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super(TriggerInvoiceForm, self).__init__(*args, **kwargs)
         today = datetime.date.today()
+        one_month_ago = today - relativedelta(months=1)
 
-        self.fields['month'].initial = today.month
+        self.fields['month'].initial = one_month_ago.month
         self.fields['month'].choices = MONTHS.items()
-        self.fields['year'].initial = today.year
+        self.fields['year'].initial = one_month_ago.year
         self.fields['year'].choices = [
-            (y, y) for y in range(today.year, 2012, -1)
+            (y, y) for y in range(one_month_ago.year, 2012, -1)
         ]
 
         self.helper = FormHelper()
@@ -1895,10 +1919,9 @@ class AdjustBalanceForm(forms.Form):
         self.invoice = invoice
         super(AdjustBalanceForm, self).__init__(*args, **kwargs)
         self.fields['adjustment_type'].choices = (
-            ('current', 'Add Credit of Current Balance: %s' %
+            ('current', 'Pay off Current Balance: %s' %
                         get_money_str(self.invoice.balance)),
-            ('credit', 'Add CREDIT of Custom Amount'),
-            ('debit', 'Add DEBIT of Custom Amount'),
+            ('credit', 'Pay off Custom Amount'),
         )
         self.fields['invoice_id'].initial = invoice.id
         self.helper = FormHelper()
@@ -1959,8 +1982,6 @@ class AdjustBalanceForm(forms.Form):
             return self.invoice.balance
         elif adjustment_type == 'credit':
             return Decimal(self.cleaned_data['custom_amount'])
-        elif adjustment_type == 'debit':
-            return -Decimal(self.cleaned_data['custom_amount'])
         else:
             raise ValidationError(_("Received invalid adjustment type: %s")
                                   % adjustment_type)

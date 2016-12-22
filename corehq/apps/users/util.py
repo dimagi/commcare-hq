@@ -10,7 +10,7 @@ from corehq import privileges
 from django.core.cache import cache
 from django_prbac.utils import has_privilege
 
-from casexml.apps.case.const import UNOWNED_EXTENSION_OWNER_ID
+from casexml.apps.case.const import UNOWNED_EXTENSION_OWNER_ID, ARCHIVED_CASE_OWNER_ID
 
 # SYSTEM_USER_ID is used when submitting xml to make system-generated case updates
 SYSTEM_USER_ID = 'system'
@@ -22,6 +22,7 @@ WEIRD_USER_IDS = [
     'demo_user_group_id',  # demo mode with case sharing enabled
     UNOWNED_EXTENSION_OWNER_ID,
     SYSTEM_USER_ID,
+    ARCHIVED_CASE_OWNER_ID,
 ]
 
 
@@ -35,6 +36,12 @@ def format_username(username, domain):
 
 
 def normalize_username(username, domain=None):
+    """
+    Returns a lower-case username. Checks that it is a valid e-mail
+    address, or a valid "local part" of an e-mail address.
+
+    :raises ValidationError on invalid e-mail
+    """
     from django.core.validators import validate_email
 
     username = re.sub(r'\s+', '.', username).lower()
@@ -144,14 +151,14 @@ def doc_value_wrapper(doc_cls, value_cls):
 
 def can_add_extra_mobile_workers(request):
     from corehq.apps.users.models import CommCareUser
-    from corehq.apps.accounting.models import BillingAccount
+    from corehq.apps.accounting.models import Subscription
     num_web_users = CommCareUser.total_by_domain(request.domain)
     user_limit = request.plan.user_limit
     if user_limit == -1 or num_web_users < user_limit:
         return True
     if not has_privilege(request, privileges.ALLOW_EXCESS_USERS):
-        account = BillingAccount.get_account_by_domain(request.domain)
-        if account is None or account.date_confirmed_extra_charges is None:
+        current_subscription = Subscription.get_subscribed_plan_by_domain(request.domain)[1]
+        if current_subscription is None or current_subscription.account.date_confirmed_extra_charges is None:
             return False
     return True
 
@@ -165,3 +172,8 @@ def user_display_string(username, first_name="", last_name=""):
             yield u' "%s"' % html.escape(full_name)
 
     return safestring.mark_safe(''.join(parts()))
+
+
+def user_location_data(location_ids):
+    # Spec for 'commcare_location_ids' custom data field
+    return ' '.join(location_ids)

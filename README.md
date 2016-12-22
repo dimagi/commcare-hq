@@ -12,7 +12,7 @@ CommCare HQ is a server-side tool to help manage community health workers.
 It seamlessly integrates with CommCare mobile and CommCare ODK, as well as
 providing generic domain management and form data-collection functionality.
 
-More in depth docs are available on [ReadTheDocs](http://commcare-hq.readthedocs.org/en/latest/)
+More in depth docs are available on [ReadTheDocs](http://commcare-hq.readthedocs.io/)
 
 ### Key Components
 
@@ -107,7 +107,15 @@ with NodeJS. An up-to-date version is available on the NodeSource repository.
 3. Run bower with:
 
         $ bower install
+        
 
+### Install JS-XPATH
+
+This is required for the server side xpath validation. See [package.json](package.json) for exact version.
+
+```
+npm install dimagi/js-xpath#v0.0.2-rc1
+```
 
 ### Using LESS: 3 Options
 
@@ -256,10 +264,15 @@ the following contents:
 URL_ROOT = 'http://localhost:8000/a/{{DOMAIN}}'
 ```
 
+#### New CloudCare
+
+A new version of CloudCare has been released. To use this new version, please
+refer to the install instructions [here](https://github.com/dimagi/formplayer).
+
 Running CommCare HQ
 -------------------
 
-Make sure the required services are running (PostgreSQL, Redis, Elasticsearch, CouchDB).
+Make sure the required services are running (PostgreSQL, Redis, CouchDB, Kafka, Elasticsearch).
 
 Then run the following separately:
 
@@ -413,7 +426,7 @@ Then skip to "Setting up a virtualenv".
 Otherwise, install the following software from your OS package manager or the
 individual project sites when necessary.
 
-+ Python 2.6 or 2.7 (use 32 bit if you're on Windows see `Alternate steps for Windows` section below)
++ Python 2.7 (use 32 bit if you're on Windows see `Alternate steps for Windows` section below)
 + pip  (If you use virtualenv (see below) this will be installed automatically)
 + CouchDB >= 1.0 (1.2 recommended) (install from OS package manager (`sudo apt-get install couchdb`) or [here][couchdb])
    For Mac users
@@ -470,6 +483,10 @@ automatically, set the cluster name to your hostname in /etc/elasticsearch/elast
 ```yaml
 cluster.name: <your hostname>
 ```
+
+#### Kafka Configuration
+
+See [changes_feed README](./corehq/apps/change_feed/README.md).
 
 #### CouchDB Configuration
 

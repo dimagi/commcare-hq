@@ -6,6 +6,7 @@ slug is kept intact.
 from django.utils.translation import ugettext_lazy as _
 from django_prbac.utils import has_privilege as prbac_has_privilege
 
+from corehq.util.quickcache import quickcache
 from .toggles import StaticToggle, NAMESPACE_DOMAIN, TAG_PREVIEW, \
     all_toggles_by_name_in_scope
 
@@ -37,6 +38,7 @@ class FeaturePreview(StaticToggle):
         return prbac_has_privilege(request, self.privilege)
 
 
+@quickcache([])
 def all_previews():
     return all_toggles_by_name_in_scope(globals()).values()
 
@@ -102,17 +104,6 @@ CALLCENTER = FeaturePreview(
         'and offer guidance towards solutions.'),
     help_link='https://help.commcarehq.org/display/commcarepublic/How+to+set+up+a+Supervisor-Call+Center+Application',
     save_fn=enable_callcenter,
-)
-
-
-MODULE_FILTER = FeaturePreview(
-    slug='module_filter',
-    label=_('Module Filtering'),
-    description=_(
-        'Similar to form display conditions, hide your module unless the condition is met. Most commonly used'
-        ' in conjunction with '
-        '<a href="https://help.commcarehq.org/display/commcarepublic/Custom+User+Data">custom user data</a>.'
-    ),
 )
 
 

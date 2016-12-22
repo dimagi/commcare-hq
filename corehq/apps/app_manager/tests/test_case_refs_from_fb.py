@@ -1,8 +1,9 @@
+import json
 from django.test import SimpleTestCase
 from mock import patch
 
 from corehq.apps.app_manager.models import AdvancedForm, Form, PreloadAction
-from corehq.apps.app_manager.views.forms import _update_case_refs_from_form_builder
+from corehq.apps.app_manager.views.forms import _get_case_references
 
 
 class FormCaseReferenceTest(SimpleTestCase):
@@ -10,8 +11,39 @@ class FormCaseReferenceTest(SimpleTestCase):
     def setUp(self):
         self.form = Form()
 
-    def test_one_reference(self):
-        ref_json = {
+    def test_one_reference_old_format(self):
+        post_data = {
+            "references": json.dumps({
+                "preload": {
+                    "/data/question": "name"
+                },
+                "condition": {
+                    "answer": None,
+                    "question": None,
+                    "type": "always",
+                    "operator": None,
+                }
+            })
+        }
+        self.form.case_references = _get_case_references(post_data)
+        self.assertEqual(self.form.case_references,
+            {"load": {"/data/question": ["name"]}})
+        self.assertFalse(self.form.actions.load_from_form.preload)
+
+    def test_two_references(self):
+        refs = {
+            "load": {
+                "/data/question": ["name", "dob"],
+                "/data/other_question": ["close_reason"],
+            },
+        }
+        post_data = {"case_references": json.dumps(refs)}
+        self.form.case_references = _get_case_references(post_data)
+        self.assertEqual(self.form.case_references, refs)
+        self.assertFalse(self.form.actions.load_from_form.preload)
+
+    def test_legacy_preload_action_case_references(self):
+        self.form.actions.load_from_form = PreloadAction({
             "preload": {
                 "/data/question": "name"
             },
@@ -21,25 +53,9 @@ class FormCaseReferenceTest(SimpleTestCase):
                 "type": "always",
                 "operator": None,
             }
-        }
-        _update_case_refs_from_form_builder(self.form, ref_json)
-        self.assertEqual(self.form.actions.load_from_form.to_json(), ref_json)
-
-    def test_two_references(self):
-        ref_json = {
-            "preload": {
-                "/data/question": "name",
-                "/data/other_question": "close_reason"
-            },
-            "condition": {
-                "answer": None,
-                "question": None,
-                "type": "always",
-                "operator": None,
-            }
-        }
-        _update_case_refs_from_form_builder(self.form, ref_json)
-        self.assertEqual(self.form.actions.load_from_form.to_json(), ref_json)
+        })
+        self.assertEqual(self.form.case_references,
+            {"load": {"/data/question": ["name"]}})
 
 
 class AdvancedFormCaseReferenceTest(SimpleTestCase):
@@ -48,34 +64,31 @@ class AdvancedFormCaseReferenceTest(SimpleTestCase):
         self.form = AdvancedForm()
 
     def test_one_reference(self):
-        ref_json = {
-            "preload": {
-                "/data/question": "name"
-            },
-            "condition": {
-                "answer": None,
-                "question": None,
-                "type": "always",
-                "operator": None,
-            }
+        post_data = {
+            "references": json.dumps({
+                "preload": {
+                    "/data/question": "name"
+                },
+                "condition": {
+                    "answer": None,
+                    "question": None,
+                    "type": "always",
+                    "operator": None,
+                }
+            })
         }
-        with patch.object(PreloadAction, 'wrap') as mock:
-            _update_case_refs_from_form_builder(self.form, ref_json)
-            self.assertFalse(mock.called)
+        self.form.case_references = _get_case_references(post_data)
+        self.assertEqual(self.form.case_references, {})
+        self.assertFalse(hasattr(self.form.actions, "load_from_form"))
 
     def test_two_references(self):
-        ref_json = {
-            "preload": {
-                "/data/question": "name",
-                "/data/other_question": "close_reason"
+        refs = {
+            "load": {
+                "/data/question": ["name", "dob"],
+                "/data/other_question": ["close_reason"],
             },
-            "condition": {
-                "answer": None,
-                "question": None,
-                "type": "always",
-                "operator": None,
-            }
         }
-        with patch.object(PreloadAction, 'wrap') as mock:
-            _update_case_refs_from_form_builder(self.form, ref_json)
-            self.assertFalse(mock.called)
+        post_data = {"case_references": json.dumps(refs)}
+        self.form.case_references = _get_case_references(post_data)
+        self.assertEqual(self.form.case_references, {})
+        self.assertFalse(hasattr(self.form.actions, "load_from_form"))

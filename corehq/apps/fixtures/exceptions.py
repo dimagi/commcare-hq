@@ -6,20 +6,13 @@ class FixtureDownloadError(FixtureException):
     pass
 
 
+class FixtureAPIRequestError(FixtureException):
+    pass
+
+
 class FixtureUploadError(FixtureException):
-    pass
-
-
-class DuplicateFixtureTagException(FixtureUploadError):
-    pass
-
-
-class ExcelMalformatException(FixtureUploadError):
-    pass
-
-
-class FixtureAPIException(Exception):
-    pass
+    def __init__(self, errors):
+        self.errors = errors
 
 
 class FixtureTypeCheckError(Exception):
@@ -28,7 +21,3 @@ class FixtureTypeCheckError(Exception):
 
 class FixtureVersionError(Exception):
     pass
-
-
-
-

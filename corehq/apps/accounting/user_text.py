@@ -34,7 +34,11 @@ DESC_BY_EDITION = {
         'description': _("For projects scaling regionally or country wide (1,001+ people) that require "
                          "the full CommCare feature set. Your organization will receive discounted "
                          "pricing and dedicated enterprise-level support from Dimagi.")
-    }
+    },
+    Edition.RESELLER: {
+        'name': _("Reseller"),
+        'description': _("Reseller")
+    },
 }
 
 FEATURE_TYPE_TO_NAME = {

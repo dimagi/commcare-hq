@@ -7,6 +7,7 @@ from corehq.apps.users.models import CommCareUser
 from django.test import TestCase, SimpleTestCase
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.domain.shortcuts import create_domain
+from .util import LocationHierarchyPerTest
 
 
 class LocationProducts(TestCase):
@@ -167,10 +168,6 @@ class LocationsTest(LocationTestBase):
             test_state1.parent._id
         )
 
-        # is_root
-        self.assertTrue(self.user.location.is_root)
-        self.assertFalse(test_state1.is_root)
-
         # Location.root_locations
         compare(
             [self.user.location],
@@ -187,22 +184,10 @@ class LocationsTest(LocationTestBase):
             Location.filter_by_type(self.domain.name, 'village', test_state1)
         )
 
-        # Location.get_in_domain
         create_domain('rejected')
         bootstrap_location_types('rejected')
         test_village2.domain = 'rejected'
         test_village2.save()
-        self.assertEqual(
-            Location.get_in_domain(self.domain.name, test_village1._id)._id,
-            test_village1._id
-        )
-        self.assertIsNone(
-            Location.get_in_domain(self.domain.name, test_village2._id),
-        )
-        self.assertIsNone(
-            Location.get_in_domain(self.domain.name, 'not-a-real-id'),
-        )
-
         self.assertEqual(
             {loc.location_id for loc in [self.user.location, test_state1, test_state2,
                                  test_village1]},
@@ -228,3 +213,59 @@ class LocationsTest(LocationTestBase):
 
 class WrapLocationTest(WrapGroupTestMixin, SimpleTestCase):
     document_class = Location
+
+
+class TestDeleteLocations(LocationHierarchyPerTest):
+    location_type_names = ['state', 'county', 'city']
+    location_structure = [
+        ('Massachusetts', [
+            ('Middlesex', [
+                ('Cambridge', []),
+                ('Somerville', []),
+            ]),
+            ('Suffolk', [
+                ('Boston', []),
+            ])
+        ])
+    ]
+
+    def test_trickle_down_delete(self):
+        self.locations['Middlesex'].delete()
+        self.assertItemsEqual(
+            SQLLocation.objects.filter(domain=self.domain).values_list('name', flat=True),
+            ['Massachusetts', 'Suffolk', 'Boston']
+        )
+
+    def test_delete_queryset(self):
+        (SQLLocation.objects
+         .filter(domain=self.domain,
+                 name__in=['Boston', 'Suffolk', 'Cambridge'])
+         .delete())
+        self.assertItemsEqual(
+            SQLLocation.objects.filter(domain=self.domain).values_list('name', flat=True),
+            ['Massachusetts', 'Middlesex', 'Somerville']
+        )
+
+    def test_delete_queryset_across_domains(self):
+        other_domain = 'upside-down-domain'
+        create_domain(other_domain)
+        location_type = LocationType.objects.create(
+            domain=other_domain,
+            name="The Upside Down",
+            administrative=True,
+        )
+        self.addCleanup(lambda: location_type.delete())
+        SQLLocation.objects.create(
+            domain=other_domain, name='Evil Suffolk', location_type=location_type
+        )
+        self.assertItemsEqual(
+            SQLLocation.objects.all().values_list('name', flat=True),
+            ['Massachusetts', 'Middlesex', 'Cambridge', 'Somerville', 'Suffolk', 'Boston', 'Evil Suffolk']
+        )
+        (SQLLocation.objects
+         .filter(name__in=['Boston', 'Suffolk', 'Cambridge', 'Evil Suffolk'])
+         .delete())
+        self.assertItemsEqual(
+            SQLLocation.objects.all().values_list('name', flat=True),
+            ['Massachusetts', 'Middlesex', 'Somerville']
+        )

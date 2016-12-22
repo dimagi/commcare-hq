@@ -9,6 +9,7 @@ from django.views.decorators.http import require_GET
 from django.conf import settings
 from django.contrib import messages
 from corehq.apps.app_manager.views.apps import get_apps_base_context
+from corehq.apps.app_manager.views.notifications import get_facility_for_form, notify_form_opened
 
 from corehq.apps.app_manager.views.utils import back_to_main, bail
 from corehq import toggles, privileges, feature_previews
@@ -34,6 +35,8 @@ from corehq.apps.app_manager.decorators import require_can_edit_apps
 from corehq.apps.analytics.tasks import track_entered_form_builder_on_hubspot
 from corehq.apps.analytics.utils import get_meta
 from corehq.apps.tour import tours
+from corehq.apps.analytics import ab_tests
+from corehq.apps.domain.models import Domain
 
 
 logger = logging.getLogger(__name__)
@@ -41,6 +44,7 @@ logger = logging.getLogger(__name__)
 
 @require_can_edit_apps
 def form_designer(request, domain, app_id, module_id=None, form_id=None):
+
     def _form_uses_case(module, form):
         return module and module.case_type and form.requires_case()
 
@@ -83,7 +87,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         vellum_plugins.append("commtrack")
     if toggles.VELLUM_SAVE_TO_CASE.enabled(domain):
         vellum_plugins.append("saveToCase")
-    if (app.vellum_case_management and _form_uses_case(module, form) and _form_is_basic(form)):
+    if (_form_uses_case(module, form) and _form_is_basic(form)):
         vellum_plugins.append("databrowser")
 
     vellum_features = toggles.toggles_dict(username=request.user.username,
@@ -97,7 +101,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         'lookup_tables': domain_has_privilege(domain, privileges.LOOKUP_TABLES),
         'templated_intents': domain_has_privilege(domain, privileges.TEMPLATED_INTENTS),
         'custom_intents': domain_has_privilege(domain, privileges.CUSTOM_INTENTS),
-        'rich_text': app.vellum_case_management,
+        'rich_text': True,
     })
 
     has_schedule = (
@@ -118,8 +122,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
             if getattr(f, 'schedule', False) and f.schedule.enabled
         ])
 
-    if tours.VELLUM_CASE_MANAGEMENT.is_enabled(request.user) \
-        and app.vellum_case_management and form.requires_case():
+    if tours.VELLUM_CASE_MANAGEMENT.is_enabled(request.user) and form.requires_case():
         request.guided_tour = tours.VELLUM_CASE_MANAGEMENT.get_tour_data()
 
     context = get_apps_base_context(request, domain, app)
@@ -134,10 +137,28 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         'plugins': vellum_plugins,
         'app_callout_templates': next(app_callout_templates),
         'scheduler_data_nodes': scheduler_data_nodes,
-        'no_header': True,
-        'include_fullstory': include_fullstory
+        'include_fullstory': include_fullstory,
+        'notifications_enabled': request.user.is_superuser,
+        'notify_facility': get_facility_for_form(domain, app_id, form.unique_id),
     })
-    return render(request, 'app_manager/form_designer.html', context)
+    notify_form_opened(domain, request.couch_user, app_id, form.unique_id)
+
+    live_preview_ab = ab_tests.ABTest(ab_tests.LIVE_PREVIEW, request)
+    domain_obj = Domain.get_by_name(domain)
+    context.update({
+        'live_preview_ab': live_preview_ab.context,
+        'is_onboarding_domain': domain_obj.is_onboarding_domain,
+        'show_live_preview': (
+            toggles.PREVIEW_APP.enabled(domain)
+            or toggles.PREVIEW_APP.enabled(request.couch_user.username)
+            or (domain_obj.is_onboarding_domain
+                and live_preview_ab.version == ab_tests.LIVE_PREVIEW_ENABLED)
+        )
+    })
+
+    response = render(request, 'app_manager/v1/form_designer.html', context)
+    live_preview_ab.update_response(response)
+    return response
 
 
 @require_GET

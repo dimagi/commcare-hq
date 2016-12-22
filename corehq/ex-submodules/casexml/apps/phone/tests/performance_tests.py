@@ -1,6 +1,5 @@
 from unittest import skip
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.phone.caselogic import get_related_cases
 from casexml.apps.phone.tests.test_sync_mode import SyncBaseTest, PARENT_TYPE
 from casexml.apps.phone.tests.utils import (
     synclog_from_restore_payload,
@@ -83,7 +82,6 @@ class SyncPerformanceTest(SyncBaseTest):
     @skip('Comment out to profile')
     @line_profile([
         RestoreConfig.get_payload,
-        get_related_cases,
     ])
     def test_profile_get_related_cases(self):
         total_parent_cases = 50
@@ -116,7 +114,6 @@ class SyncPerformanceTest(SyncBaseTest):
     @skip('Comment out to profile')
     @line_profile([
         RestoreConfig.get_payload,
-        get_related_cases,
     ])
     def test_profile_get_related_cases_grandparent(self):
         total_parent_cases = 5

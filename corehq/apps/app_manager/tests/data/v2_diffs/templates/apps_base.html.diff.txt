@@ -1,0 +1,142 @@
+--- 
++++ 
+@@ -5,6 +5,14 @@
+ {% load timezone_tags %}
+ {% load i18n %}
+ {% load compress %}
++
++{% block page_sidebar_classes %}
++appmanager-sidebar
++{% endblock %}
++
++{% block page_content_classes %}
++appmanager-main-container{% if formdesigner %} formdesigner-content-wrapper{% endif %}
++{% endblock %}
+ 
+ {% block title %}{% trans "Applications" %}{% endblock %}
+ 
+@@ -17,25 +25,33 @@
+   {% endcompress %}
+ 
+   {% if less_debug %}
+-  <link type="text/less"
+-        rel="stylesheet"
+-        media="all"
+-        href="{% static 'app_manager/less/app_manager.debug.less' %}" />
+-  <link type="text/less"
+-        rel="stylesheet"
+-        media="all"
+-        href="{% static 'app_manager/less/preview_app.debug.less' %}"/>
+-  {% else %}
+-  {% compress css %}
+-      <link type="text/less"
+-            rel="stylesheet"
+-            media="all"
+-            href="{% static 'app_manager/less/app_manager.less' %}" />
+-      <link type="text/less"
+-            rel="stylesheet"
+-            media="all"
+-            href="{% static 'app_manager/less/preview_app.less' %}"/>
+-  {% endcompress %}
++    <link type="text/less"
++          rel="stylesheet"
++          media="all"
++          href="{% static 'app_manager/less/font-workflow.less' %}" />
++    <link type="text/less"
++          rel="stylesheet"
++          media="all"
++          href="{% static 'app_manager/less/new_appmanager.debug.less' %}" />
++    <link type="text/less"
++          rel="stylesheet"
++          media="all"
++          href="{% static 'app_manager/less/preview_app.debug.less' %}"/>
++    {% else %}
++    {% compress css %}
++        <link type="text/less"
++              rel="stylesheet"
++              media="all"
++              href="{% static 'app_manager/less/font-workflow.less' %}" />
++        <link type="text/less"
++              rel="stylesheet"
++              media="all"
++              href="{% static 'app_manager/less/new_appmanager.less' %}" />
++        <link type="text/less"
++              rel="stylesheet"
++              media="all"
++              href="{% static 'app_manager/less/preview_app.less' %}"/>
++    {% endcompress %}
+   {% endif %}
+ 
+ {% endblock %}
+@@ -64,9 +80,11 @@
+     <script src="{% static 'style/js/ui-element.js' %}"></script>
+     <script src="{% static 'langcodes/js/langcodes.js' %}"></script>
+     <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
+-    {% if show_live_preview %}
++
++
+     <script src="{% static 'app_manager/js/preview_app.js' %}"></script>
+-    {% endif %}
++
++
+ {% endblock %}
+ 
+ {% block js-inline %}{{ block.super }}
+@@ -77,39 +95,28 @@
+             keyboard: false,
+             show: true
+         }).on('hide.bs.modal', function () {
+-            window.location = "{% url "default_app" domain %}";
++            window.location = "{% url "corehq.apps.app_manager.views.view_app" domain %}";
+         });
+-        {% if show_live_preview %}
+-            var previewApp = hqImport('app_manager/js/preview_app.js');
+-            previewApp.initPreviewWindow(hqLayout);
+-        {% endif %}
+ 
+-        // push LIVE PREVIEW ab test state to kissmetrics
+-      {% if is_onboarding_domain %}
+-        window.analytics.workflow(["set", {"{{ live_preview_ab.name }}": "{{ live_preview_ab.version }}"}]);
+-      {% endif %}
++        var previewApp = hqImport('app_manager/js/preview_app.js');
++        previewApp.initPreviewWindow(hqLayout);
++
+     });
+     $(function () {
+        $('.appmanager-content').fadeIn();
+        $('.appmanager-loading').fadeOut();
+     });
++
++    hqLayout.utils.setIsAppbuilderResizing(true);
++
+     </script>
+ {% endblock %}
+ 
+-{% block page_breadcrumbs %}
+-    {% if not formdesigner %}
+-        <ul class="breadcrumb breadcrumb-hq-section">
+-            <li>{% trans 'Applications' %}</li>
+-            {% block breadcrumbs %}{% endblock %}
+-        </ul>
+-    {% endif %}
+-{% endblock %}
++{% block page_breadcrumbs %}{% endblock %}
+ 
+ {% block content %}
+   {{ block.super }}
+-  {% if show_live_preview %}
+-    {% include 'app_manager/v1/partials/preview_app.html'%}
+-  {% endif %}
++  {% include 'app_manager/v2/partials/preview_app.html'%}
+ {% endblock %}
+ 
+ {% block page_content %}
+@@ -143,7 +150,7 @@
+                 {% endblocktrans %}
+             </p>
+             <br>
+-            {% include 'app_manager/v1/partials/new_app_buttons.html' %}
++            {% include 'app_manager/v2/partials/new_app_buttons.html' %}
+         </div>
+     {% endif %}
+ </div>

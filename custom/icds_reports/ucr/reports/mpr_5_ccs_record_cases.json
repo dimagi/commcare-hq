@@ -325,6 +325,24 @@
         "field": "lactating",
         "calculate_total": true,
         "type": "field"
+      },
+      {
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "thr_total_rations_pregnant",
+        "field": "thr_total_rations_pregnant",
+        "calculate_total": true,
+        "type": "field",
+        "display": "thr_total_rations_pregnant"
+      },
+      {
+        "format": "default",
+        "aggregation": "sum",
+        "column_id": "thr_total_rations_lactating",
+        "field": "thr_total_rations_lactating",
+        "calculate_total": true,
+        "type": "field",
+        "display": "thr_total_rations_lactating"
       }
     ],
     "sort_expression": [],

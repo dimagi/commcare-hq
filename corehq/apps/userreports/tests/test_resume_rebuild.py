@@ -8,10 +8,12 @@ class DataSourceResumeBuildTest(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(DataSourceResumeBuildTest, cls).setUpClass()
         cls._data_source = get_sample_data_source()
         cls._resume_helper = DataSourceResumeHelper(cls._data_source)
 
     def setUp(self):
+        super(DataSourceResumeBuildTest, self).setUp()
         self._resume_helper.clear_ids()
 
     def test_set_ids(self):

@@ -17,7 +17,6 @@ NOSE_ARGS = [
     #'--with-fixture-bundling',
 ]
 NOSE_PLUGINS = [
-    'corehq.tests.nose.AppLabelsPlugin',
     'corehq.tests.nose.HqTestFinderPlugin',
     'corehq.tests.noseplugins.dividedwerun.DividedWeRunPlugin',
     'corehq.tests.noseplugins.djangomigrations.DjangoMigrationsPlugin',

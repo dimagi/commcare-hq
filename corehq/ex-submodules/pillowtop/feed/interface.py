@@ -11,6 +11,7 @@ class ChangeMeta(jsonobject.JsonObject):
     This is only used in kafka-based pillows.
     """
     document_id = DefaultProperty(required=True)
+    document_rev = jsonobject.StringProperty()  # Only relevant for Couch documents
     data_source_type = jsonobject.StringProperty(required=True)
     data_source_name = jsonobject.StringProperty(required=True)
     document_type = DefaultProperty()

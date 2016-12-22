@@ -73,7 +73,7 @@ def schedule_detail_variables(module, detail, detail_column_infos):
                 """
                 if not form.schedule_form_id:
                     raise ScheduleError(
-                        _("Form '{form_name}' in module '{module_name}' is missing an abbreviation")
+                        _("'{form_name}' in '{module_name}' is missing an abbreviation")
                         .format(form_name=trans(form["name"], langs=[module.get_app().default_language]),
                                 module_name=module.default_name()))
                 form_xpath = ScheduleFormXPath(form, phase, module)

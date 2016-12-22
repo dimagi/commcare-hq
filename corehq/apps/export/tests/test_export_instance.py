@@ -7,7 +7,11 @@ from corehq.apps.export.models import (
     StockItem,
     MultipleChoiceItem,
     FormExportDataSchema,
+    CaseExportDataSchema,
+    InferredSchema,
+    InferredExportGroupSchema,
     ExportGroupSchema,
+    CaseExportInstance,
     FormExportInstance,
     TableConfiguration,
     SplitExportColumn,
@@ -35,6 +39,7 @@ class TestExportInstanceGeneration(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestExportInstanceGeneration, cls).setUpClass()
         cls.app_id = '1234'
         cls.schema = FormExportDataSchema(
             group_schemas=[
@@ -146,6 +151,61 @@ class TestExportInstanceGeneration(SimpleTestCase):
 
 
 @mock.patch(
+    'corehq.apps.export.models.new.get_request',
+    return_value=MockRequest(domain='my-domain'),
+)
+@mock.patch(
+    'corehq.apps.export.models.new.Domain.get_by_name',
+    return_value=mock.MagicMock(),
+)
+class TestExportInstanceGenerationWithInferredSchema(SimpleTestCase):
+    app_id = '1234'
+    case_type = 'inferred'
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestExportInstanceGenerationWithInferredSchema, cls).setUpClass()
+        cls.schema = CaseExportDataSchema(
+            app_id=cls.app_id,
+            case_type=cls.case_type,
+            group_schemas=[
+                ExportGroupSchema(
+                    path=MAIN_TABLE,
+                    items=[
+                        ExportItem(
+                            path=[PathNode(name='data'), PathNode(name='case_property')],
+                            label='Question 1',
+                            last_occurrences={cls.app_id: 3},
+                        ),
+                    ],
+                    last_occurrences={cls.app_id: 3},
+                ),
+            ],
+        )
+        cls.inferred_schema = InferredSchema(
+            case_type=cls.case_type,
+            group_schemas=[
+                InferredExportGroupSchema(
+                    path=MAIN_TABLE,
+                    items=[
+                        ExportItem(
+                            path=[PathNode(name='data'), PathNode(name='case_property')],
+                            label='Inferred 1',
+                            inferred=True
+                        ),
+                        ExportItem(
+                            path=[PathNode(name='data'), PathNode(name='case_property_2')],
+                            label='Inferred 1',
+                            inferred=True
+                        ),
+                    ],
+                    inferred=True
+                ),
+            ]
+        )
+
+
+@mock.patch(
     'corehq.apps.export.models.new.FormExportInstanceDefaults.get_default_instance_name',
     return_value='dummy-name'
 )
@@ -158,6 +218,7 @@ class TestExportInstanceGenerationMultipleApps(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestExportInstanceGenerationMultipleApps, cls).setUpClass()
         cls.app_id = '1234'
         cls.second_app_id = '5678'
         cls.schema = FormExportDataSchema(

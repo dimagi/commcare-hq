@@ -32,3 +32,10 @@ def is_identifier_invalid(name):
         return True
 
     return False
+
+
+def get_fields_without_attributes(fields):
+    fields_without_attributes = []
+    for fixture_field in fields:
+        fields_without_attributes.append(fixture_field.field_name)
+    return fields_without_attributes

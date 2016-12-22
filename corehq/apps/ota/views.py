@@ -15,7 +15,9 @@ from corehq.const import OPENROSA_VERSION_MAP, OPENROSA_DEFAULT_VERSION
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.case_search.models import CaseSearchConfig
-from corehq.apps.domain.decorators import domain_admin_required, login_or_digest_or_basic_or_apikey
+from corehq.apps.domain.decorators import (
+    domain_admin_required, login_or_digest_or_basic_or_apikey, check_domain_migration
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin, EditMyProjectSettingsView
 from corehq.apps.es.case_search import CaseSearchES, flatten_result
@@ -23,6 +25,7 @@ from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.ota.forms import PrimeRestoreCacheForm, AdvancedPrimeRestoreCacheForm
 from corehq.apps.ota.tasks import queue_prime_restore
 from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.apps.locations.permissions import location_safe
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_MAX_RESULTS
 from corehq.tabs.tabclasses import ProjectSettingsTab
@@ -32,11 +35,14 @@ from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCach
 from django.http import HttpResponse
 from soil import MultipleTaskDownload
 
-from .utils import demo_user_restore_response, get_restore_user, is_permitted_to_restore
+from .utils import demo_user_restore_response, get_restore_user, is_permitted_to_restore, handle_401_response
 
 
+@location_safe
 @json_error
+@handle_401_response
 @login_or_digest_or_basic_or_apikey()
+@check_domain_migration
 def restore(request, domain, app_id=None):
     """
     We override restore because we have to supply our own
@@ -48,8 +54,10 @@ def restore(request, domain, app_id=None):
     return response
 
 
+@location_safe
 @json_error
 @login_or_digest_or_basic_or_apikey()
+@check_domain_migration
 def search(request, domain):
     """
     Accepts search criteria as GET params, e.g. "https://www.commcarehq.org/a/domain/phone/search/?a=b&c=d"
@@ -60,12 +68,18 @@ def search(request, domain):
         case_type = criteria.pop('case_type')
     except KeyError:
         return HttpResponse('Search request must specify case type', status=400)
+    try:
+        include_closed = criteria.pop('include_closed')
+    except KeyError:
+        include_closed = False
 
     search_es = (CaseSearchES()
                  .domain(domain)
                  .case_type(case_type)
-                 .is_closed(False)
                  .size(CASE_SEARCH_MAX_RESULTS))
+
+    if include_closed != 'True':
+        search_es = search_es.is_closed(False)
 
     try:
         config = CaseSearchConfig.objects.get(domain=domain)
@@ -88,10 +102,12 @@ def search(request, domain):
     return HttpResponse(fixtures, content_type="text/xml")
 
 
+@location_safe
 @csrf_exempt
 @require_POST
 @json_error
 @login_or_digest_or_basic_or_apikey()
+@check_domain_migration
 def claim(request, domain):
     """
     Allows a user to claim a case that they don't own.

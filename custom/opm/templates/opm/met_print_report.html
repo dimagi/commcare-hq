@@ -4,8 +4,9 @@
 {% if show_time_notice %}{% endif %}
 
 {% block js %}
-    <script src="{% static 'opm/js/opm_utils.js' %}"></script>
+    <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
     {{ block.super }}
+    <script src="{% static 'opm/js/opm_utils.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}

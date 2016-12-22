@@ -14,6 +14,13 @@
             {% trans "Set Performance Threshold" %}
             </a>
         </p>
+        {% else %}
+            <p class="text-muted">
+                {% blocktrans %}
+                Please use the "Report an Issue" option from the help menu if you would like to change the performance threshold.
+                It is currently set to {{ threshold }} forms per month.
+                {% endblocktrans %}
+            </p>
         {% endif %}
     </div>
     <div class="col-md-6">

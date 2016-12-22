@@ -21,7 +21,6 @@ from corehq.apps.sms.api import (
     incoming,
     send_sms_with_backend_name,
     send_sms_to_verified_number,
-    DomainScopeValidationError,
     MessageMetadata,
 )
 from corehq.apps.sms.resources.v0_5 import SelfRegistrationUserInfo
@@ -64,15 +63,16 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils import is_commcarecase
+from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.util.dates import iso_string_to_datetime
-from corehq.util.spreadsheets.excel import WorkbookJSONReader
+from corehq.util.soft_assert import soft_assert
+from corehq.util.workbook_json.excel import WorkbookJSONReader
 from corehq.util.timezones.conversions import ServerTime, UserTime
 from corehq.util.quickcache import quickcache
 from django.contrib import messages
 from django.db.models import Q
-from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.utils import get_timezone_for_user
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
@@ -355,28 +355,20 @@ class TestSMSMessageView(BaseDomainView):
 
     def post(self, request, *args, **kwargs):
         message = request.POST.get("message", "")
-        domain_scope = None if request.couch_user.is_superuser else self.domain
-        try:
-            incoming(self.phone_number, message, "TEST", domain_scope=domain_scope)
+        phone_entry = PhoneNumber.by_phone(self.phone_number)
+        if phone_entry and phone_entry.domain != self.domain:
+            messages.error(
+                request,
+                _("Invalid phone number being simulated. Please choose a "
+                  "two-way phone number belonging to a contact in your project.")
+            )
+        else:
+            incoming(self.phone_number, message, SQLTestSMSBackend.get_api_id(), domain_scope=self.domain)
             messages.success(
                 request,
-                _("Test message sent.")
+                _("Test message received.")
             )
-        except DomainScopeValidationError:
-            messages.error(
-                request,
-                _("Invalid phone number being simulated. You may only "
-                  "simulate SMS from verified numbers belonging to contacts "
-                  "in this domain.")
-            )
-        except Exception:
-            notify_exception(request)
-            messages.error(
-                request,
-                _("An error has occurred. Please try again in a few minutes "
-                  "and if the issue persists, please contact CommCareHQ "
-                  "Support.")
-            )
+
         return self.get(request, *args, **kwargs)
 
 
@@ -1670,6 +1662,7 @@ class SMSLanguagesView(BaseMessagingSectionView):
     page_title = ugettext_noop("Languages")
 
     @use_jquery_ui
+    @use_select2
     @method_decorator(domain_admin_required)
     def dispatch(self, *args, **kwargs):
         return super(SMSLanguagesView, self).dispatch(*args, **kwargs)
@@ -1842,6 +1835,8 @@ class SMSSettingsView(BaseMessagingSectionView):
                     [w.to_json() for w in domain_obj.restricted_sms_times],
                 "send_to_duplicated_case_numbers":
                     enabled_disabled(domain_obj.send_to_duplicated_case_numbers),
+                "sms_survey_date_format":
+                    domain_obj.sms_survey_date_format,
                 "use_custom_case_username":
                     default_custom(domain_obj.custom_case_username),
                 "custom_case_username":
@@ -1905,6 +1900,8 @@ class SMSSettingsView(BaseMessagingSectionView):
                  "custom_case_username"),
                 ("send_to_duplicated_case_numbers",
                  "send_to_duplicated_case_numbers"),
+                ("sms_survey_date_format",
+                 "sms_survey_date_format"),
                 ("sms_conversation_length",
                  "sms_conversation_length"),
                 ("count_messages_as_read_by_anyone",
@@ -2116,49 +2113,56 @@ class InvitationAppInfoView(View, DomainViewMixin):
 
     @property
     @memoized
-    def token(self):
-        token = self.kwargs.get('token')
-        if not token:
+    def app_id(self):
+        app_id = self.kwargs.get('app_id')
+        if not app_id:
             raise Http404()
-        return token
+        return app_id
+
+    @property
+    def token(self):
+        return self.app_id
 
     @property
     @memoized
     def invitation(self):
-        invitation = SelfRegistrationInvitation.by_token(self.token)
-        if not invitation:
-            raise Http404()
-        return invitation
+        return SelfRegistrationInvitation.by_token(self.token)
+
+    @property
+    @memoized
+    def odk_url(self):
+        try:
+            odk_url = SelfRegistrationInvitation.get_app_odk_url(self.domain, self.app_id)
+        except Http404:
+            odk_url = None
+
+        if odk_url:
+            return odk_url
+
+        if self.invitation:
+            # There shouldn't be many instances of this. Once we stop getting these asserts,
+            # we can stop supporting the old way of looking up the SelfRegistrationInvitation
+            # by token, and only support the new way of looking up the app by app id.
+            _assert = soft_assert('@'.join(['gcapalbo', 'dimagi.com']), exponential_backoff=False)
+            _assert(False, "InvitationAppInfoView references invitation token")
+            if self.invitation.odk_url:
+                return self.invitation.odk_url
+
+        raise Http404()
 
     def get(self, *args, **kwargs):
-        if not self.invitation.odk_url:
-            raise Http404()
-        url = str(self.invitation.odk_url).strip()
+        url = str(self.odk_url).strip()
         response = 'ccapp: %s signature: %s' % (url, sign(url))
         response = base64.b64encode(response)
         return HttpResponse(response)
 
-    def post(self, *args, **kwargs):
-        return self.get(*args, **kwargs)
-
 
 class IncomingBackendView(View):
 
-    def dispatch(self, request, api_key, *args, **kwargs):
-        try:
-            api_user = ApiUser.get('ApiUser-%s' % api_key)
-        except ResourceNotFound:
-            return HttpResponse(status=401)
-
-        if api_user.doc_type != 'ApiUser' or not api_user.has_permission(PERMISSION_POST_SMS):
-            return HttpResponse(status=401)
-
-        return super(IncomingBackendView, self).dispatch(request, api_key, *args, **kwargs)
-
-
-class NewIncomingBackendView(View):
-    domain = None
-    backend_couch_id = None
+    def __init__(self, *args, **kwargs):
+        super(IncomingBackendView, self).__init__(*args, **kwargs)
+        self.domain = None
+        self.backend_couch_id = None
 
     @property
     def backend_class(self):
@@ -2177,4 +2181,4 @@ class NewIncomingBackendView(View):
         except SQLMobileBackend.DoesNotExist:
             return HttpResponse(status=401)
 
-        return super(NewIncomingBackendView, self).dispatch(request, api_key, *args, **kwargs)
+        return super(IncomingBackendView, self).dispatch(request, api_key, *args, **kwargs)

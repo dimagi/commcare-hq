@@ -2,7 +2,7 @@ import threading
 
 from django.conf import settings
 
-from corehq.toggles import NEW_EXPORTS, TF_USES_SQLITE_BACKEND
+from corehq.toggles import OLD_EXPORTS, TF_DOES_NOT_USE_SQLITE_BACKEND
 
 _thread_local = threading.local()
 
@@ -17,6 +17,12 @@ def get_local_domain_sql_backend_override(domain):
 def set_local_domain_sql_backend_override(domain):
     use_sql_backend_dict = getattr(_thread_local, 'use_sql_backend', {})
     use_sql_backend_dict[domain] = True
+    _thread_local.use_sql_backend = use_sql_backend_dict
+
+
+def clear_local_domain_sql_backend_override(domain):
+    use_sql_backend_dict = getattr(_thread_local, 'use_sql_backend', {})
+    use_sql_backend_dict.pop(domain, None)
     _thread_local.use_sql_backend = use_sql_backend_dict
 
 
@@ -56,11 +62,11 @@ def _get_domain_name_and_object(domain_object_or_name):
 
 
 def use_new_exports(domain_name):
-    return NEW_EXPORTS.enabled(domain_name) or should_use_sql_backend(domain_name)
+    return (not OLD_EXPORTS.enabled(domain_name)) or should_use_sql_backend(domain_name)
 
 
 def use_sqlite_backend(domain_name):
-    return TF_USES_SQLITE_BACKEND.enabled(domain_name) or should_use_sql_backend(domain_name)
+    return not TF_DOES_NOT_USE_SQLITE_BACKEND.enabled(domain_name) or should_use_sql_backend(domain_name)
 
 
 def is_commcarecase(obj):

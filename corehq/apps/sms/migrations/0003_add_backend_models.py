@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 
 from django.db import models, migrations
 import dimagi.utils.couch.migration
-import uuidfield.fields
 import jsonfield.fields
 
 
@@ -20,7 +19,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('couch_id', models.CharField(max_length=126, null=True, db_index=True)),
                 ('backend_type', models.CharField(default=b'SMS', max_length=3, choices=[(b'SMS', 'SMS'), (b'IVR', 'IVR')])),
-                ('inbound_api_key', uuidfield.fields.UUIDField(unique=True, max_length=32, editable=False, blank=True)),
+                ('inbound_api_key', models.UUIDField(unique=True, max_length=32, editable=False, blank=True)),
                 ('hq_api_id', models.CharField(max_length=126, null=True)),
                 ('is_global', models.BooleanField(default=False)),
                 ('domain', models.CharField(max_length=126, null=True, db_index=True)),
@@ -47,7 +46,7 @@ class Migration(migrations.Migration):
                 ('domain', models.CharField(max_length=126, null=True)),
                 ('backend_type', models.CharField(max_length=3, choices=[(b'SMS', 'SMS'), (b'IVR', 'IVR')])),
                 ('prefix', models.CharField(max_length=25)),
-                ('backend', models.ForeignKey(to='sms.SQLMobileBackend')),
+                ('backend', models.ForeignKey(to='sms.SQLMobileBackend', on_delete=models.CASCADE)),
             ],
             options={
                 'db_table': 'messaging_mobilebackendmapping',
@@ -59,7 +58,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('domain', models.CharField(max_length=126, null=True, db_index=True)),
-                ('backend', models.ForeignKey(to='sms.SQLMobileBackend')),
+                ('backend', models.ForeignKey(to='sms.SQLMobileBackend', on_delete=models.CASCADE)),
                 ('accepted', models.BooleanField(default=False)),
             ],
             options={

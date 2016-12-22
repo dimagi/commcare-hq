@@ -1,10 +1,11 @@
 import json
+from itertools import groupby
 
 from django.conf import settings
 from django.utils.safestring import mark_safe
 
 from dimagi.utils.logging import notify_exception
-from pillowtop.utils import force_seq_int, get_all_pillow_instances
+from pillowtop.utils import force_seq_int, get_couch_pillow_instances
 from restkit import Resource
 
 from .models import PillowCheckpointSeqStore
@@ -13,7 +14,7 @@ EPSILON = 10000000
 
 
 def pillow_seq_store():
-    for pillow in get_all_pillow_instances():
+    for pillow in get_couch_pillow_instances():
         checkpoint = pillow.checkpoint
         store, created = PillowCheckpointSeqStore.objects.get_or_create(checkpoint_id=checkpoint.checkpoint_id)
         db_seq = checkpoint.get_current_sequence_id()
@@ -84,3 +85,42 @@ def get_celery_stats():
             worker_info.append(' '.join([worker_name, status_html, tasks_html]))
         worker_status = '<br>'.join(worker_info)
     return mark_safe(worker_status)
+
+
+def parse_celery_pings(worker_responses):
+    pings = {}
+    for worker in worker_responses:
+        assert len(worker.keys()) == 1
+
+        worker_fullname = worker.keys()[0]
+        pings[worker_fullname] = worker[worker_fullname].get('ok') == 'pong'
+    return pings
+
+
+def parse_celery_workers(celery_workers):
+    """
+    Parses the response from the flower get workers api into a list of hosts
+    we expect to be running and a list of hosts we expect to be stopped
+    """
+    expect_stopped = []
+    expect_running = filter(
+        lambda hostname: not hostname.endswith('_timestamp'),
+        celery_workers.keys(),
+    )
+
+    timestamped_workers = filter(
+        lambda hostname: hostname.endswith('_timestamp'),
+        celery_workers.keys(),
+    )
+
+    def _strip_timestamp(hostname):
+        return '.'.join(hostname.split('.')[:-1])
+
+    timestamped_workers = sorted(timestamped_workers, key=_strip_timestamp)
+
+    for hostname, group in groupby(timestamped_workers, _strip_timestamp):
+
+        sorted_workers = sorted(list(group), reverse=True)
+        expect_running.append(sorted_workers.pop(0))
+        expect_stopped.extend(sorted_workers)
+    return expect_running, expect_stopped

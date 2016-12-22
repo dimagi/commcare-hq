@@ -23,7 +23,7 @@ var mk_translation_ui = function (spec) {
                     $(this).remove();
                     translation_ui.deleteTranslation(that.key.val());
                 }).css({cursor: 'pointer'}).attr('title', "Delete Translation");
-                
+
                 this.$add = $('<button class="btn btn-default"><i></i></button>').addClass(COMMCAREHQ.icons.ADD).click(function () {
                     // remove any trailing whitespace from the input box
                     that.key.val($.trim(that.key.val()));
@@ -42,6 +42,7 @@ var mk_translation_ui = function (spec) {
                 $('<div/>').addClass("col-sm-3").append(this.value.ui).appendTo(this.ui);
                 $('<div/>').addClass("col-sm-1").append(this.$delete).append(this.$add).appendTo(this.ui);
                 $('<div/>').addClass("col-sm-5").append(this.$error).appendTo(this.ui);
+                this.ui = $('<div/>').append(this.ui);
                 this.$error.hide()
 
                 var helperFunction = function () {
@@ -52,37 +53,45 @@ var mk_translation_ui = function (spec) {
 
                 this.value.on('change', helperFunction);
 
-                this.value.ui.find('input').autocomplete({
-                    select: helperFunction
-                });
-
-                this.value.ui.find('input').focus(function () {
-                    var input = $(this);
-                    if (!suggestionCache.hasOwnProperty('-' + that.key.val())) {
-                        $.ajax({
-                            type: "get",
-                            url: suggestionURL,
-                            data: {
-                                lang: translation_ui.lang,
-                                key: that.key.val()
-                            },
-                            dataType: "json",
-                            success: function (data) {
-                                suggestionCache['-' + that.key.val()] = data;
-                                input.autocomplete({
-                                    source: function(request, response) {
-                                        response($.ui.autocomplete.filter(suggestionCache['-' + that.key.val()], ''));
-                                    },
-                                    minLength: 0
-                                });
-                                input.autocomplete('search');
-                            }
+                this.value.ui.find('input').select2({
+                    minimumInputLength: 0,
+                    delay: 100,
+                    allowClear: 1,
+                    placeholder: ' ',   // allowClear requires a placeholder
+                    initSelection: function(element, callback) {
+                        callback({
+                            id: element.val(),
+                            text: element.val(),
                         });
-                    } else {
-                        input.autocomplete('search');
-                    }
-                })
-                
+                    },
+                    createSearchChoice: function(term, data) {
+                        if (term !== "" && !_.find(data, function(d) { return d.text === term; })) {
+                            return {
+                                id: term,
+                                text: term,
+                            };
+                        }
+                    },
+                    ajax: {
+                        url: suggestionURL,
+                        data: function (term, page) {
+                            return {
+                                lang: translation_ui.lang,
+                                key: that.key.val(),
+                            };
+                        },
+                        results: function(data, page) {
+                            return {
+                                results: _.map(_.compact(data), function(item) {
+                                    return {
+                                        id: item,
+                                        text: item,
+                                    };
+                                }),
+                            };
+                        },
+                    },
+                });
             };
             Translation.init = function (key, value) {
                 return new Translation(key, value);
@@ -91,10 +100,12 @@ var mk_translation_ui = function (spec) {
                 setSolid: function (solid) {
                     this.solid = solid;
                     if (solid) {
+                        this.ui.find("legend").closest(".row").remove();
                         this.key.setEdit(false);
                         this.$delete.show();
                         this.$add.hide();
                     } else {
+                        this.ui.prepend("<div class='row'><div class='col-sm-12'><legend>Add Translation</legend></div></div>");
                         this.key.setEdit(true);
                         this.$delete.hide();
                         this.$add.show();

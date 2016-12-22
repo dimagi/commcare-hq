@@ -1,4 +1,4 @@
-from django.core.management.base import LabelCommand
+from django.core.management.base import BaseCommand
 
 from corehq.apps.accounting.models import Currency
 from corehq.apps.sms.models import INCOMING, OUTGOING
@@ -23,7 +23,7 @@ def bootstrap_unicel_gateway(apps):
     log_smsbillables_info("Updated Unicel gateway fees.")
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = "bootstrap Unicel gateway fees"
     args = ""
     label = ""

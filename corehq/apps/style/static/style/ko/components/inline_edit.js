@@ -1,3 +1,4 @@
+/* global DOMPurify */
 /*
  * Component for an inline editing widget: a piece of text that, when clicked on, turns into an input (textarea or
  * text input). The input is accompanied by a save button capable of saving the new value to the server via ajax.
@@ -79,6 +80,7 @@ hqDefine('style/ko/components/inline_edit.js', function() {
                     return;
                 }
 
+                self.value(DOMPurify.sanitize(self.value()));
                 self.readOnlyValue = self.value();
                 var data = self.saveParams;
                 _.each(data, function(value, key) {
@@ -86,7 +88,7 @@ hqDefine('style/ko/components/inline_edit.js', function() {
                 });
                 data[self.saveValueName] = self.value();
                 self.isSaving(true);
-                $(window).bind("beforeunload", self.beforeUnload);
+                $(window).on("beforeunload", self.beforeUnload);
 
                 $.ajax({
                     url: self.url,
@@ -100,13 +102,13 @@ hqDefine('style/ko/components/inline_edit.js', function() {
                         if (self.postSave) {
                             self.postSave(data);
                         }
-                        $(window).unbind("beforeunload", self.beforeUnload);
+                        $(window).off("beforeunload", self.beforeUnload);
                     },
                     error: function () {
                         self.isEditing(true);
                         self.isSaving(false);
                         self.hasError(true);
-                        $(window).unbind("beforeunload", self.beforeUnload);
+                        $(window).off("beforeunload", self.beforeUnload);
                     },
                 });
             };
@@ -117,17 +119,6 @@ hqDefine('style/ko/components/inline_edit.js', function() {
                 self.value(self.readOnlyValue);
                 self.isEditing(false);
                 self.hasError(false);
-            };
-
-            // Revert to read-only mode on blur, without saving, unless the input
-            // blurred only because focus jumped to one of the buttons (i.e., user pressed tab)
-            self.blur = function() {
-                setTimeout(function() {
-                    if (!self.saveHasFocus() && !self.cancelHasFocus() && !self.hasError()) {
-                        self.isEditing(false);
-                        self.value(self.readOnlyValue);
-                    }
-                }, 200);
             };
         },
         template: '<div class="ko-inline-edit inline" data-bind="css: {\'has-error\': hasError()}">\
@@ -144,13 +135,12 @@ hqDefine('style/ko/components/inline_edit.js', function() {
                 <span class="placeholder text-muted" data-bind="text: placeholder, css: readOnlyClass, visible: !value()"></span>\
             </div>\
             <div class="read-write form-inline" data-bind="visible: isEditing()">\
-                <div class="form-group langcode-container">\
+                <div class="form-group langcode-container" data-bind="css: {\'has-lang\': lang}">\
                     <!-- ko if: nodeName === "textarea" -->\
                         <textarea class="form-control" data-bind="\
                             attr: {name: name, id: id, placeholder: placeholder, rows: rows, cols: cols},\
                             value: value,\
                             hasFocus: isEditing(),\
-                            event: {blur: blur},\
                         "></textarea>\
                     <!-- /ko -->\
                     <!-- ko if: nodeName === "input" -->\
@@ -158,7 +148,6 @@ hqDefine('style/ko/components/inline_edit.js', function() {
                             attr: {name: name, id: id, placeholder: placeholder, rows: rows, cols: cols},\
                             value: value,\
                             hasFocus: isEditing(),\
-                            event: {blur: blur},\
                         " />\
                     <!-- /ko -->\
                     <!-- ko if: lang -->\

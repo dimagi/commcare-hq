@@ -99,8 +99,10 @@
         "calculate_total": false,
         "type": "field",
         "display": {
-          "en": "Child Name",
-          "hin": "\u0928\u093e\u092e"
+          "mar": "\u092e\u0942\u0932",
+          "tel": "\u0c2a\u0c3f\u0c32\u0c4d\u0c32\u0c32\u0c41",
+          "hin": "\u0928\u093e\u092e",
+          "en": "Child Name"
         }
       },
       {
@@ -114,8 +116,10 @@
         "calculate_total": false,
         "type": "field",
         "display": {
-          "en": "Date of Birth",
-          "hin": "\u091c\u0928\u094d\u092e \u0924\u093f\u0925\u093f"
+          "mar": "\u091c\u0928\u094d\u092e \u0924\u093e\u0930\u0940\u0916",
+          "tel": "\u0c2a\u0c41\u0c1f\u0c4d\u0c1f\u0c3f\u0c28 \u0c24\u0c47\u0c26\u0c40",
+          "hin": "\u091c\u0928\u094d\u092e \u0924\u093f\u0925\u093f",
+          "en": "Date of Birth"
         }
       },
       {
@@ -129,8 +133,10 @@
         "calculate_total": false,
         "type": "field",
         "display": {
-          "en": "Sex",
-          "hin": "\u0932\u093f\u0902\u0917"
+          "mar": "\u0932\u093f\u0902\u0917",
+          "tel": "\u0c2a\u0c32\u0c3f\u0c02\u0c17\u0c02",
+          "hin": "\u0932\u093f\u0902\u0917",
+          "en": "Sex"
         }
       }
     ],

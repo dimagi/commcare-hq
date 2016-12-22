@@ -1,12 +1,43 @@
 import re
-
+import uuid
 from corehq.apps.locations.models import SQLLocation
-
+from corehq.apps.sms.util import strip_plus
+from corehq.apps.users.forms import clean_mobile_worker_username
+from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.users.util import format_username
 from custom.ilsgateway.tanzania.handlers.keyword import KeywordHandler
 from custom.ilsgateway.tanzania.reminders import REGISTER_HELP, \
     REGISTRATION_CONFIRM_DISTRICT, REGISTRATION_CONFIRM, Roles, REGISTER_UNKNOWN_DISTRICT, REGISTER_UNKNOWN_CODE
+from dimagi.utils.couch import CriticalSection
 
-DISTRICT_PREFIXES = ['d', 'm', 'tb', 'tg', 'dm', 'mz', 'mt', 'mb', 'ir', 'tb', 'ms']
+DISTRICT_PREFIXES = [
+    'd', 'dm', 'dr',
+    'ir',
+    'm', 'mb', 'ms', 'mt', 'mz',
+    'tb', 'tg',
+]
+
+
+def generate_username(domain, first_name, last_name):
+    if first_name and last_name:
+        username = u'%s_%s' % (first_name, last_name)
+    elif first_name:
+        username = first_name
+    else:
+        username = 'user_' + uuid.uuid4().hex[:8]
+
+    username = re.sub('[^\w]', '', username)
+    username = username[:40]
+
+    if CouchUser.username_exists(format_username(username, domain)):
+        for i in range(2, 10000):
+            tmp_username = u'%s-%s' % (username, i)
+            if not CouchUser.username_exists(format_username(tmp_username, domain)):
+                username = tmp_username
+                break
+
+    # Perform standard validation
+    return clean_mobile_worker_username(domain, username)
 
 
 class RegisterHandler(KeywordHandler):
@@ -83,7 +114,6 @@ class RegisterHandler(KeywordHandler):
                 self.respond(REGISTER_UNKNOWN_CODE, msd_code=msd_code)
                 return True
 
-        self.user.set_location(loc)
         split_name = name.split(' ', 2)
         first_name = ''
         last_name = ''
@@ -92,9 +122,25 @@ class RegisterHandler(KeywordHandler):
         elif split_name:
             first_name = split_name[0]
 
+        if not self.user:
+            key = u'generating ils username for %s, %s, %s' % (self.domain, first_name, last_name)
+            with CriticalSection([key]):
+                username = generate_username(self.domain, first_name, last_name)
+                password = uuid.uuid4().hex
+                self.user = CommCareUser.create(
+                    self.domain,
+                    username,
+                    password,
+                    phone_number=strip_plus(self.msg.phone_number)
+                )
+            self.verified_contact = self.user.save_verified_number(self.domain, self.msg.phone_number, True)
+            # As per earlier ILSGateway system, set language by default to Swahili
+            self.user.language = 'sw'
+
         if first_name or last_name:
             self.user.first_name = first_name
             self.user.last_name = last_name
+        self.user.set_location(loc)
         self.user.is_active = True
         self.user.user_data['role'] = role
         self.user.save()

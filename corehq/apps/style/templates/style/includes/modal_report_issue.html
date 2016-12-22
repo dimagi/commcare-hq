@@ -17,12 +17,17 @@
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{% trans 'Close' %}</span></button>
                     <h4 class="modal-title">{% trans "Report an Issue with CommCare HQ" %}</h4>
+                    <br/>
+                    <p>
+                        <b>{% trans "Please submit this report from page where issue is occurring" %}</b>
+                    </p>
+
                 </div>
                 <div class="modal-body">
                     <div class="form-horizontal">
                         <div class="form-group" id="bug-report-subject-form-group">
                             <label for="bug-report-subject"
-                                   class="col-sm-3 control-label">{% trans "Short Description" %}</label>
+                                   class="col-sm-3 control-label">{% trans "Short Description" %} *</label>
                             <div class="col-sm-9">
                                 <input type="text"
                                        class="form-control"
@@ -42,7 +47,7 @@
                                           class="form-control"
                                           id="bug-report-message"
                                           rows="3"
-                                          placeholder="{% trans "Please try to include as much information as possible." %}"></textarea>
+                                          placeholder="{% trans "Please describe the issue and list any steps you took to see this issue." %}"></textarea>
                             </div>
                         </div>
 
@@ -67,9 +72,27 @@
                         </div>
                         {% endif %}
 
+                        {% if request.couch_user.is_domain_admin %}
+                        <div class="form-group">
+                            <label for="bug-report-project-description"
+                                   class="col-sm-3 control-label">{% trans "Project Description" %}</label>
+                            <div class="col-sm-9">
+                                <textarea name="project_description"
+                                          class="form-control"
+                                          id="bug-report-project-description"
+                                          rows="3"
+                                          placeholder="{% trans 'Please provide a short description of your organization and the work it is doing.' %}">{% spaceless %}
+                                          {% if request.project.project_description %}
+                                          {{ request.project.project_description }}
+                                          {% endif %}
+                                {% endspaceless %}</textarea>
+                            </div>
+                        </div>
+                        {% endif %}
+
                         <div class="form-group" id="bug-report-cc-form-group">
                             <label for="bug-report-cc"
-                                   class="col-sm-3 control-label">{% trans "Other recipients (optional)" %}</label>
+                                   class="col-sm-3 control-label">{% trans "Other recipients" %}</label>
                             <div class="col-sm-9">
                                 <input type="text"
                                        name="cc"
@@ -91,6 +114,11 @@
                                    class="col-sm-3 control-label">{% trans 'Upload file' %}</label>
                             <div class="col-sm-9">
                                 <input type="file" id="bug-report-file" name="report_issue"/>
+                                <p class="help-block">
+                                    {% blocktrans %}
+                                    Please upload any files relevant to your issue.
+                                    {% endblocktrans %}
+                                </p>
                                 <p class="help-block">
                                     <i class="fa fa-warning"></i>
                                     {% blocktrans %}
@@ -121,7 +149,7 @@
     {% if request.use_requirejs %}
         requirejs(['jquery', 'bootstrap'], function($) {
     {% else %}
-        $(window).load(function(){
+        $(window).on('load', function(){
     {% endif %}
             $('#modalTrial30Day').modal('show');
         });
