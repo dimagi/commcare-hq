@@ -231,21 +231,22 @@ class EnikshayCaseFactory(object):
             'walk_related': False,
         }
 
-        matching_test_case = next((
-            extension_case for extension_case in self.case_accessor.get_cases([
-                index.referenced_id for index in
-                self.case_accessor.get_case(occurrence_structure.case_id).reverse_indices
-            ])
-            if (
-                extension_case.type == TEST_CASE_TYPE
-                and followup.id == int(extension_case.dynamic_case_properties().get('migration_followup_id', -1))
-            )
-        ), None)
-        if matching_test_case:
-            kwargs['case_id'] = matching_test_case.case_id
-            kwargs['attrs']['create'] = False
-        else:
-            kwargs['attrs']['create'] = True
+        if self.existing_occurrence_case:
+            matching_test_case = next((
+                extension_case for extension_case in self.case_accessor.get_cases([
+                    index.referenced_id for index in
+                    self.case_accessor.get_case(occurrence_structure.case_id).reverse_indices
+                ])
+                if (
+                    extension_case.type == TEST_CASE_TYPE
+                    and followup.id == int(extension_case.dynamic_case_properties().get('migration_followup_id', -1))
+                )
+            ), None)
+            if matching_test_case:
+                kwargs['case_id'] = matching_test_case.case_id
+                kwargs['attrs']['create'] = False
+            else:
+                kwargs['attrs']['create'] = True
 
         return CaseStructure(**kwargs)
 
