@@ -142,7 +142,7 @@ class TestLocationQuerysetOrder(LocationHierarchyTestCase):
     def test_backwards_insertion(self):
         mass = self.make_loc("Mass", "state")
         suffolk = self.make_loc("Suffolk", "county", mass)
-        dorcester = self.make_loc("Dorcester", "city", suffolk)
+        dorchester = self.make_loc("Dorchester", "city", suffolk)
         boston = self.make_loc("Boston", "city", suffolk)
         middlesex = self.make_loc("Middlesex", "county", mass)
         somerville = self.make_loc("Somerville", "city", middlesex)
@@ -160,7 +160,7 @@ class TestLocationQuerysetOrder(LocationHierarchyTestCase):
                         "Somerville",
                     "Suffolk",
                         "Boston",
-                        "Dorcester",
+                        "Dorchester",
             ]
         )
 
@@ -172,7 +172,7 @@ class TestLocationQuerysetOrder(LocationHierarchyTestCase):
         middlesex = self.make_loc("Middlesex", "county", mass)
         arlington = self.make_loc("Arlington", "city", middlesex)
         boston = self.make_loc("Boston", "city", suffolk)
-        dorcester = self.make_loc("Dorcester", "city", suffolk)
+        dorchester = self.make_loc("Dorchester", "city", suffolk)
         somerville = self.make_loc("Somerville", "city", middlesex)
 
         cambridge = cambridge.sql_location
@@ -190,6 +190,6 @@ class TestLocationQuerysetOrder(LocationHierarchyTestCase):
                         "Somerville",
                     "Suffolk",
                         "Boston",
-                        "Dorcester",
+                        "Dorchester",
             ]
         )
