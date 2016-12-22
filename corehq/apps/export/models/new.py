@@ -11,6 +11,7 @@ from django.core.urlresolvers import reverse
 
 from corehq.apps.export.esaccessors import get_ledger_section_entry_combinations
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.decorators.profile import profile
 from couchdbkit import SchemaListProperty, SchemaProperty, BooleanProperty, DictProperty
 
 from corehq import feature_previews
@@ -1043,6 +1044,7 @@ class ExportDataSchema(Document):
         app_label = 'export'
 
     @classmethod
+    @profile('generate_schema_from_builds')
     def generate_schema_from_builds(cls, domain, app_id, identifier, force_rebuild=False):
         """Builds a schema from Application builds for a given identifier
 
@@ -1380,11 +1382,12 @@ class CaseExportDataSchema(ExportDataSchema):
         case_property_mapping = get_case_properties(
             app,
             [case_type],
-            include_parent_properties=False
+            include_parent_properties=False,
+            include_shared_properties=False,
         )
         parent_types, _ = (
             ParentCasePropertyBuilder(app)
-            .get_parent_types_and_contributed_properties(case_type)
+            .get_parent_types_and_contributed_properties(case_type, include_shared_properties=False)
         )
         case_schemas = []
         case_schemas.append(CaseExportDataSchema._generate_schema_from_case_property_mapping(
