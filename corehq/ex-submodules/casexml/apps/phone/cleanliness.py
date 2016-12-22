@@ -203,7 +203,14 @@ def _get_info_by_case_id(index_infos, case_id):
 
 
 def get_dependent_case_info(domain, case_ids):
-    """ Fetches all dependent cases of cases passed in"""
+    """
+    Fetches all dependent cases of cases passed in.
+
+    This includes:
+     1. any cases that the passed in cases index (e.g. parent cases)
+     2. any extensions of the passed in cases
+     3. (1) and (2) above, for any dependencies that are pulled in
+    """
     assert not isinstance(case_ids, basestring)
     all_dependencies = set()
     direct_dependencies = _get_direct_dependencies(domain, case_ids)

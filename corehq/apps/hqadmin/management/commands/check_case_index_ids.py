@@ -1,13 +1,12 @@
 import csv
-from django.core.management import BaseCommand
-from casexml.apps.case.cleanup import close_cases
+from django.core.management import BaseCommand, call_command
 from corehq.apps.receiverwrapper.util import get_app_version_info
-from corehq.apps.reports.views import FormDataView
+from corehq.apps.reports.util import resync_case_to_es
 from corehq.apps.users.util import cached_owner_id_to_display
 from corehq.elastic import ES_MAX_CLAUSE_COUNT
 from corehq.apps.es.cases import CaseES
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.util.view_utils import absolute_reverse
+from corehq.form_processor.exceptions import CaseNotFound
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 
 
 class Command(BaseCommand):
@@ -17,12 +16,12 @@ class Command(BaseCommand):
         parser.add_argument('domain', nargs='+')
         parser.add_argument('--filename', dest='filename', default='badcaserefs.csv')
         parser.add_argument('--debug', action='store_true', dest='debug', default=False)
-        parser.add_argument('--close-all', action='store_true', dest='close_all', default=False)
+        parser.add_argument('--cleanup', action='store_true', dest='cleanup', default=False)
 
     def handle(self, *args, **options):
         domain = options['domain']
         debug = options['debug']
-        close_all = options['close_all']
+        cleanup = options['cleanup']
         domain_query = CaseES().domain(domain)
         valid_case_ids = set(domain_query.get_ids())
         referenced_case_ids = {
@@ -90,13 +89,34 @@ class Command(BaseCommand):
                             row.append(app_version_info.build_version)
                         writer.writerow(row)
 
-        if close_all:
-            if raw_input('\n'.join([
-                'Are you sure you want to close these {} cases? (y/N)'.format(len(cases_with_invalid_references)),
-            ])).lower() == 'y':
-                case_ids = [case['_id'] for case in cases_with_invalid_references]
-                form, closed_cases = close_cases(case_ids)
-                print 'closed {} cases. You can undo this by archiving this form: {}'.format(
-                    len(closed_cases),
-                    absolute_reverse(FormDataView.urlname, args=form.form_id)
-                )
+        if cleanup:
+            missing = set()
+            deleted = set()
+            exists = set()
+            for invalid_id in invalid_referenced_ids:
+                try:
+                    case = CaseAccessors(domain).get_case(invalid_id)
+                except CaseNotFound:
+                    missing.add(invalid_id)
+                else:
+                    if case.is_deleted:
+                        deleted.add(case)
+                    else:
+                        exists.add(case)
+
+            for case_to_resync in exists:
+                # if the case actually exists resync it to fix the es search
+                resync_case_to_es(domain, case_to_resync)
+
+            if exists:
+                print 'resynced {} cases that were actually not deleted'.format(len(exists))
+
+            for case in deleted:
+                # delete the deleted case's entire network in one go
+                call_command('delete_related_cases', domain, case.case_id)
+
+            for case in cases_with_invalid_references:
+                for index in case['indices']:
+                    if index['referenced_id'] in missing:
+                        # this is just an invalid reference. no recourse but to delete the case itself
+                        call_command('delete_related_cases', domain, case['_id'])
