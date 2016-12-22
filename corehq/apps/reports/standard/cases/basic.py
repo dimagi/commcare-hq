@@ -48,10 +48,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
         )
         accessible_user_ids = user_ids_at_locations(accessible_location_ids)
         accessible_ids = accessible_user_ids + list(accessible_location_ids)
-        return (
-            case_es.owner(accessible_ids),
-            case_es.owner(accessible_user_ids)
-        )
+        return case_es.owner(accessible_ids)
 
     def _build_query(self):
         query = (case_es.CaseES()
