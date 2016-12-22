@@ -738,7 +738,7 @@ class LocationTreeValidator(object):
                             u"Error with location in sheet '{}', at row {}. {}: {}").format(
                                 location.location_type, location.index, field, issue
                         ))
-                        
+
         return errors
 
 
