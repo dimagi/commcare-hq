@@ -3,6 +3,13 @@ from datetime import datetime
 from django.db import models
 
 
+def _parse_datetime_or_null_to_date(datetime_str):
+    if datetime_str == 'NULL':
+        return ''
+    else:
+        return datetime.strptime(datetime_str, '%Y-%m-%d %H:%M:%S.%f').date()
+
+
 class PatientDetail(models.Model):
     PregId = models.CharField(max_length=255, primary_key=True)
     scode = models.CharField(max_length=255, null=True)
@@ -154,10 +161,7 @@ class PatientDetail(models.Model):
 
     @property
     def treatment_initiation_date(self):
-        if self.InitiationDate1 == 'NULL':
-            return None
-        else:
-            return datetime.strptime(self.InitiationDate1, '%Y-%m-%d %H:%M:%S.%f').date()
+        return _parse_datetime_or_null_to_date(self.InitiationDate1)
 
 
 class Outcome(models.Model):
