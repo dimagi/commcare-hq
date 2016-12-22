@@ -97,7 +97,7 @@ class EnikshayCaseFactory(object):
             'attrs': {
                 'case_type': PERSON_CASE_TYPE,
                 'external_id': self.nikshay_id,
-                # 'owner_id': self._location.location_id,
+                'owner_id': self._location.location_id,
                 'update': {
                     'age': self.patient_detail.page,
                     'age_entered': self.patient_detail.page,

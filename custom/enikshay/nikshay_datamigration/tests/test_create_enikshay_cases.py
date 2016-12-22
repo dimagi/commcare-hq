@@ -68,7 +68,7 @@ class TestCreateEnikshayCases(TestCase):
             name='nik'
         )
 
-        SQLLocation.objects.create(
+        self.loc = SQLLocation.objects.create(
             domain=self.domain.name,
             location_type=loc_type,
             metadata={
@@ -125,6 +125,7 @@ class TestCreateEnikshayCases(TestCase):
         )
         self.assertEqual('MH-ABD-05-16-0001', person_case.external_id)
         self.assertEqual('A B C', person_case.name)
+        self.assertEqual(self.loc.location_id, person_case.owner_id)
         # make sure the case is only created/modified by a single form
         self.assertEqual(1, len(person_case.xform_ids))
 
