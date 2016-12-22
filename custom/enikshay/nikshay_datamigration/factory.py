@@ -3,7 +3,7 @@ from datetime import datetime
 from dimagi.utils.decorators.memoized import memoized
 
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
-from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
+from casexml.apps.case.mock import CaseStructure, CaseIndex
 from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.enikshay.case_utils import get_open_occurrence_case_from_person, get_open_episode_case_from_occurrence
@@ -32,7 +32,6 @@ class EnikshayCaseFactory(object):
     def __init__(self, domain, patient_detail, nikshay_codes_to_location):
         self.domain = domain
         self.patient_detail = patient_detail
-        self.factory = CaseFactory(domain=domain)
         self.case_accessor = CaseAccessors(domain)
         self.nikshay_codes_to_location = nikshay_codes_to_location
 
@@ -83,10 +82,6 @@ class EnikshayCaseFactory(object):
                 )
             except ENikshayCaseNotFound:
                 return None
-
-    def create_cases(self):
-        structures_to_create = self.get_case_structures_to_create()
-        self.factory.create_or_update_cases(structures_to_create)
 
     def get_case_structures_to_create(self):
         person_structure = self.get_person_case_structure()
