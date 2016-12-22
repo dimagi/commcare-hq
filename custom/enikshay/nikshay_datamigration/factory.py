@@ -110,8 +110,6 @@ class EnikshayCaseFactory(object):
                     'last_name': self.patient_detail.last_name,
                     'name': self.patient_detail.pname,
                     'nikshay_id': self.nikshay_id,
-                    'permanent_address_district_choice': self.patient_detail.Dtocode,
-                    'permanent_address_state_choice': self.patient_detail.scode,
                     'person_id': 'FROM_NIKSHAY_' + self.nikshay_id,
                     'phi': self.patient_detail.PHI,
                     'secondary_contact_name_address': (
