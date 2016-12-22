@@ -85,16 +85,12 @@ class EnikshayCaseFactory(object):
                 return None
 
     def create_cases(self):
-        self.create_person_occurrence_episode_cases()
-        self.create_test_cases()
-
-    def create_person_occurrence_episode_cases(self):
-        episode_structure = self.get_episode_case_structure()
+        person_structure = self.get_person_case_structure()
+        ocurrence_structure = self.get_occurrence_case_structure(person_structure)
+        episode_structure = self.get_episode_case_structure(ocurrence_structure)
         self.factory.create_or_update_case(episode_structure)
-
-    def create_test_cases(self):
         self.factory.create_or_update_cases(
-            [self.get_test_case_structure(followup) for followup in self._followups]
+            [self.get_test_case_structure(followup, ocurrence_structure) for followup in self._followups]
         )
 
     @memoized
@@ -144,7 +140,7 @@ class EnikshayCaseFactory(object):
         return CaseStructure(**kwargs)
 
     @memoized
-    def get_occurrence_case_structure(self):
+    def get_occurrence_case_structure(self, person_structure):
         """
         This gets the occurrence case structure with a nested person case structure.
         """
@@ -156,12 +152,11 @@ class EnikshayCaseFactory(object):
                     'nikshay_id': self.nikshay_id,
                     'occurrence_episode_count': 1,
                     'occurrence_id': datetime.utcnow().strftime('%Y%m%d%H%M%S%f')[:-3],
-
                     'migration_created_case': 'true',
                 },
             },
             'indices': [CaseIndex(
-                self.get_person_case_structure(),
+                person_structure,
                 identifier='host',
                 relationship=CASE_INDEX_EXTENSION,
                 related_type=PERSON_CASE_TYPE,
@@ -180,7 +175,7 @@ class EnikshayCaseFactory(object):
         return CaseStructure(**kwargs)
 
     @memoized
-    def get_episode_case_structure(self):
+    def get_episode_case_structure(self, occurrence_structure):
         """
         This gets the episode case structure with a nested occurrence and person case structures
         inside of it.
@@ -202,7 +197,7 @@ class EnikshayCaseFactory(object):
                 },
             },
             'indices': [CaseIndex(
-                self.get_occurrence_case_structure(),
+                occurrence_structure,
                 identifier='host',
                 relationship=CASE_INDEX_EXTENSION,
                 related_type=OCCURRENCE_CASE_TYPE,
@@ -218,11 +213,7 @@ class EnikshayCaseFactory(object):
         return CaseStructure(**kwargs)
 
     @memoized
-    def get_test_case_structure(self, followup):
-        # cz 12/22: is this comment still valid? to check with Nick
-        # TODO - pass outcome as argument
-        occurrence_structure = self.get_occurrence_case_structure()
-
+    def get_test_case_structure(self, followup, occurrence_structure):
         kwargs = {
             'attrs': {
                 'create': True,
