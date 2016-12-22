@@ -9,7 +9,6 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.enikshay.case_utils import get_open_occurrence_case_from_person, get_open_episode_case_from_occurrence
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 from custom.enikshay.nikshay_datamigration.models import Outcome, Followup
-from dimagi.utils.decorators.profile import line_profile, profile
 
 
 PERSON_CASE_TYPE = 'person'
