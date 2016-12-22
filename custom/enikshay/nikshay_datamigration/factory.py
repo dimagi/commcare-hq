@@ -12,6 +12,9 @@ from custom.enikshay.nikshay_datamigration.models import Outcome, Followup
 from dimagi.utils.decorators.profile import line_profile, profile
 
 
+PERSON_CASE_TYPE = 'person'
+
+
 def validate_number(string_value):
     if string_value is None or string_value.strip() == '':
         return None
@@ -95,7 +98,7 @@ class EnikshayCaseFactory(object):
     def get_person_case_structure(self):
         kwargs = {
             'attrs': {
-                'case_type': 'person',
+                'case_type': PERSON_CASE_TYPE,
                 'external_id': self.nikshay_id,
                 # 'owner_id': self._location.location_id,
                 'update': {
@@ -158,7 +161,7 @@ class EnikshayCaseFactory(object):
                 self.get_person_case_structure(),
                 identifier='host',
                 relationship=CASE_INDEX_EXTENSION,
-                related_type=self.get_person_case_structure().attrs['case_type'],
+                related_type=PERSON_CASE_TYPE,
             )],
         }
         if outcome:
