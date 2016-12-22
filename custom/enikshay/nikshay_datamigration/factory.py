@@ -99,7 +99,6 @@ class EnikshayCaseFactory(object):
                 'external_id': self.nikshay_id,
                 # 'owner_id': self._location.location_id,
                 'update': {
-                    'aadhaar_number': self.patient_detail.paadharno,
                     'age': self.patient_detail.page,
                     'age_entered': self.patient_detail.page,
                     'contact_phone_number': validate_phone_number(self.patient_detail.pmob),
@@ -128,6 +127,9 @@ class EnikshayCaseFactory(object):
                 },
             },
         }
+
+        if self.patient_detail.paadharno is not None:
+            kwargs['attrs']['update']['aadhaar_number'] = self.patient_detail.paadharno
 
         if self.existing_person_case is not None:
             kwargs['case_id'] = self.existing_person_case.case_id
