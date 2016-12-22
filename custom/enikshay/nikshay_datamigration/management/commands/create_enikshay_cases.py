@@ -10,6 +10,21 @@ logger = logging.getLogger('nikshay_datamigration')
 
 class Command(BaseCommand):
 
+    def add_arguments(self, parser):
+        parser.add_argument('domain')
+        parser.add_argument(
+            '--start',
+            dest='start',
+            default=0,
+            type=int,
+        )
+        parser.add_argument(
+            '--limit',
+            dest='limit',
+            default=None,
+            type=int,
+        )
+
     def handle(self, domain, **options):
         base_query = PatientDetail.objects.all()
 
@@ -53,18 +68,3 @@ class Command(BaseCommand):
         logger.info('Number of attempts: %d.' % counter)
         logger.info('Number of successes: %d.' % num_succeeded)
         logger.info('Number of failures: %d.' % num_failed)
-
-    def add_arguments(self, parser):
-        parser.add_argument('domain')
-        parser.add_argument(
-            '--start',
-            dest='start',
-            default=0,
-            type=int,
-        )
-        parser.add_argument(
-            '--limit',
-            dest='limit',
-            default=None,
-            type=int,
-        )
