@@ -1541,24 +1541,25 @@ def _merge_lists(one, two, keyfn, resolvefn, copyfn):
     """
 
     merged = []
-    two_keys = set(map(lambda obj: keyfn(obj), two))
+
+    two_keys = {keyfn(obj): obj for obj in two}
 
     for obj in one:
+        obj_key = keyfn(obj)
 
-        if keyfn(obj) in two_keys:
+        if obj_key in two_keys:
             # If obj exists in both list, must merge
-            two_keys.remove(keyfn(obj))
             new_obj = resolvefn(
                 obj,
-                filter(lambda other: keyfn(other) == keyfn(obj), two)[0],
+                two_keys.pop(obj_key),
             )
         else:
             new_obj = copyfn(obj)
 
         merged.append(new_obj)
 
-    # Filter any objects we've already added by merging
-    filtered = filter(lambda obj: keyfn(obj) in two_keys, two)
+    # Get the rest of the objects in the second list
+    filtered = two_keys.values()
     merged.extend(
         # Map objects to new object
         map(lambda obj: copyfn(obj), filtered)
