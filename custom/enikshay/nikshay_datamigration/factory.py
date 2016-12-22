@@ -180,6 +180,7 @@ class EnikshayCaseFactory(object):
             'attrs': {
                 'case_type': EPISODE_CASE_TYPE,
                 'update': {
+                    'date_of_mo_signature': self.patient_detail.date_of_mo_signature,
                     'date_reported': self.patient_detail.pregdate1,  # is this right?
                     'disease_classification': self.patient_detail.disease_classification,
                     'dots_99_enabled': 'false',

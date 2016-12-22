@@ -86,7 +86,7 @@ class PatientDetail(models.Model):
     pregdate1 = models.DateField()
     cvisitedDate1 = models.CharField(max_length=255)
     InitiationDate1 = models.CharField(max_length=255)  # datetime or 'NULL'
-    dotmosignDate1 = models.CharField(max_length=255)
+    dotmosignDate1 = models.CharField(max_length=255)  # datetime or 'NULL'
 
     @property
     def first_name(self):
@@ -162,6 +162,10 @@ class PatientDetail(models.Model):
     @property
     def treatment_initiation_date(self):
         return _parse_datetime_or_null_to_date(self.InitiationDate1)
+
+    @property
+    def date_of_mo_signature(self):
+        return _parse_datetime_or_null_to_date(self.dotmosignDate1)
 
 
 class Outcome(models.Model):

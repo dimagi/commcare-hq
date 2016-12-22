@@ -41,7 +41,8 @@ class TestCreateEnikshayCases(TestCase):
             atbtreatment='',
             Ptype=4,
             pcategory=4,
-            InitiationDate1='2016-12-22 16:06:47.726'
+            InitiationDate1='2016-12-22 16:06:47.726',
+            dotmosignDate1='2016-12-23 00:00:00.000',
         )
         self.outcome = Outcome.objects.create(
             PatientId=self.patient_detail,
@@ -160,6 +161,7 @@ class TestCreateEnikshayCases(TestCase):
         episode_case = self.case_accessor.get_case(episode_case_ids[0])
         self.assertEqual(
             OrderedDict([
+                ('date_of_mo_signature', '2016-12-23'),
                 ('date_reported', '2016-12-13'),
                 ('disease_classification', 'pulmonary'),
                 ('dots_99_enabled', 'false'),
