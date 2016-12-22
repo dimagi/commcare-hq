@@ -34,6 +34,9 @@ class FixtureHasLocationsMixin(TestXmlMixin):
     root = os.path.dirname(__file__)
     file_path = ['data']
 
+    # Adding this feature flag allows rendering of hierarchical fixture where requested
+    # and wont interfere with flat fixture generation
+    @flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
     def _assert_fixture_has_locations(self, xml_name, desired_locations, flat=False):
         ids = {
             "{}_id".format(desired_location.lower().replace(" ", "_")): (
@@ -78,6 +81,7 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
         super(LocationFixturesTest, self).setUp()
         self.user = create_restore_user(self.domain, 'user', '123')
 
+    @flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
     def test_no_user_locations_returns_empty(self, uses_locations):
         empty_fixture = "<fixture id='commtrack:locations' user_id='{}' />".format(self.user.user_id)
         fixture = ElementTree.tostring(location_fixture_generator(self.user, V2)[0])
@@ -244,6 +248,7 @@ class WebUserLocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsM
         delete_all_users()
         self.user = create_restore_user(self.domain, 'web_user', '123', is_mobile_user=False)
 
+    @flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
     def test_no_user_locations_returns_empty(self, uses_locations):
         empty_fixture = "<fixture id='commtrack:locations' user_id='{}' />".format(self.user.user_id)
         fixture = ElementTree.tostring(location_fixture_generator(self.user, V2)[0])

@@ -13,6 +13,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from casexml.apps.case.tests.util import check_xml_line_by_line
 from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.util.test_utils import flag_enabled
 
 DOMAIN = 'fixture-test'
 SA_PROVINCES = 'sa_provinces'
@@ -34,10 +35,11 @@ class OtaWebUserFixtureTest(TestCase):
     @run_with_all_backends
     def test_basic_fixture_generation(self):
         fixture_xml = list(generator.get_fixtures(self.restore_user, version=V2))
-        self.assertEqual(len(fixture_xml), 1)
+        self.assertEqual(len(fixture_xml), 2)
         self.assertEqual(fixture_xml[0].findall('./groups/group'), [])
 
 
+# @flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
 class OtaFixtureTest(TestCase):
 
     @classmethod
