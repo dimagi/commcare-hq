@@ -62,12 +62,10 @@ class EnikshayCaseFactory(object):
 
     @memoized
     def get_person_case_structure(self):
-        nikshay_id = self.patient_detail.PregId
-
         kwargs = {
             'attrs': {
                 'case_type': 'person',
-                'external_id': nikshay_id,
+                'external_id': self.nikshay_id,
                 # 'owner_id': self._location.location_id,
                 'update': {
                     'aadhaar_number': self.patient_detail.paadharno,
@@ -82,7 +80,7 @@ class EnikshayCaseFactory(object):
                     'last_name': self.patient_detail.last_name,
                     'middle_name': self.patient_detail.middle_name,
                     'name': self.patient_detail.pname,
-                    'nikshay_id': nikshay_id,
+                    'nikshay_id': self.nikshay_id,
                     'permanent_address_district_choice': self.patient_detail.Dtocode,
                     'permanent_address_state_choice': self.patient_detail.scode,
                     'phi': self.patient_detail.PHI,
@@ -118,7 +116,7 @@ class EnikshayCaseFactory(object):
                 'case_type': 'occurrence',
                 'update': {
                     'name': 'Occurrence #1',
-                    'nikshay_id': self.patient_detail.PregId,
+                    'nikshay_id': self.nikshay_id,
                     'occurrence_episode_count': 1,
                     'occurrence_id': datetime.utcnow().strftime('%Y%m%d%H%M%S%f')[:-3],
 
