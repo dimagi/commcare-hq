@@ -109,7 +109,6 @@ class EnikshayCaseFactory(object):
                     'dob_known': 'no',
                     'first_name': self.patient_detail.first_name,
                     'last_name': self.patient_detail.last_name,
-                    'middle_name': self.patient_detail.middle_name,
                     'name': self.patient_detail.pname,
                     'nikshay_id': self.nikshay_id,
                     'permanent_address_district_choice': self.patient_detail.Dtocode,

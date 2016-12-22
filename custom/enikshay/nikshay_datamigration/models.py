@@ -83,11 +83,7 @@ class PatientDetail(models.Model):
 
     @property
     def first_name(self):
-        return self._list_of_names[0]
-
-    @property
-    def middle_name(self):
-        return ' '.join(self._list_of_names[1:-1])
+        return ' '.join(self._list_of_names[:-1])
 
     @property
     def last_name(self):
