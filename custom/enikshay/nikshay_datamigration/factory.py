@@ -145,6 +145,7 @@ class EnikshayCaseFactory(object):
             'attrs': {
                 'case_type': OCCURRENCE_CASE_TYPE,
                 'update': {
+                    'current_episode_type': 'confirmed_tb',
                     'name': 'Occurrence #1',
                     'nikshay_id': self.nikshay_id,
                     'occurrence_episode_count': 1,

@@ -133,6 +133,7 @@ class TestCreateEnikshayCases(TestCase):
         occurrence_case = self.case_accessor.get_case(occurrence_case_ids[0])
         self.assertEqual(
             OrderedDict([
+                ('current_episode_type', 'confirmed_tb'),
                 ('hiv_status', 'negative'),
                 ('migration_created_case', 'true'),
                 ('nikshay_id', 'MH-ABD-05-16-0001'),
