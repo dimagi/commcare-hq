@@ -149,7 +149,6 @@ class EnikshayCaseFactory(object):
                     'ihv_date': self.patient_detail.ihv_date,
                     'initial_home_visit_status': self.patient_detail.initial_home_visit_status,
                     'name': 'Occurrence #1',
-                    'nikshay_id': self.nikshay_id,
                     'occurrence_episode_count': 1,
                     'occurrence_id': datetime.utcnow().strftime('%Y%m%d%H%M%S%f')[:-3],
                     'migration_created_case': 'true',

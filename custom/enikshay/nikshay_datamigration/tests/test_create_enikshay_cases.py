@@ -139,7 +139,6 @@ class TestCreateEnikshayCases(TestCase):
                 ('ihv_date', '2016-12-25'),
                 ('initial_home_visit_status', 'completed'),
                 ('migration_created_case', 'true'),
-                ('nikshay_id', 'MH-ABD-05-16-0001'),
                 ('occurrence_episode_count', '1'),
                 ('occurrence_id', '20160908010203004'),
             ]),
