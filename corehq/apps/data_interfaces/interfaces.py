@@ -10,6 +10,7 @@ from corehq.apps.es import cases as case_es
 from corehq.apps.es.users import user_ids_at_locations
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.display import FormDisplay
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.generic import GenericReportView
@@ -38,6 +39,7 @@ class DataInterface(GenericReportView):
         return reverse('data_interfaces_default', args=[self.request.project])
 
 
+@location_safe
 class CaseReassignmentInterface(CaseListMixin, DataInterface):
     name = ugettext_noop("Reassign Cases")
     slug = "reassign_cases"
@@ -225,6 +227,7 @@ class ArchiveOrNormalFormFilter(BaseSingleOptionFilter):
         return FormManagementMode(self.request.GET.get(self.slug)).mode_name
 
 
+@location_safe
 class BulkFormManagementInterface(SubmitHistoryMixin, DataInterface, ProjectReport):
     name = ugettext_noop("Manage Forms")
     slug = "bulk_archive_forms"
