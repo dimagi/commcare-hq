@@ -10,6 +10,7 @@ from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation, LocationType
+from corehq.apps.locations.tests.util import LocationStructure, setup_location_types_with_structure
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
 from custom.enikshay.nikshay_datamigration.models import Followup, Outcome, PatientDetail
@@ -64,15 +65,14 @@ class TestCreateEnikshayCases(TestCase):
         self.domain = Domain(name='enikshay-test-domain')
         self.domain.save()
 
-        loc_type = LocationType.objects.create(
-            code='phi',
-            domain=self.domain.name,
-            name='PHI',
-        )
+        location_structure = [
+            LocationStructure('PHI', 'phi', [])
+        ]
+        location_types = setup_location_types_with_structure(self.domain.name, location_structure)
 
         self.loc = SQLLocation.objects.create(
             domain=self.domain.name,
-            location_type=loc_type,
+            location_type=location_types['PHI'],
             metadata={
                 'nikshay_code': 'MH-ABD-05-16',
             },
