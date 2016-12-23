@@ -30,7 +30,7 @@ class ReportFixturesProvider(object):
         if not toggles.MOBILE_UCR.enabled(restore_user.domain):
             return []
 
-        apps = [app] if app else (a for a in get_apps_in_domain(restore_user.domain, include_remote=False))
+        apps = [app] if app else [a for a in get_apps_in_domain(restore_user.domain, include_remote=False)]
         report_configs = [
             report_config
             for app_ in apps

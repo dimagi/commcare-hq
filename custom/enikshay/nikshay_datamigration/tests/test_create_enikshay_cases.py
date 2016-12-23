@@ -6,12 +6,14 @@ from django.test import TestCase
 
 from mock import patch
 
+from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
 from custom.enikshay.nikshay_datamigration.models import Followup, Outcome, PatientDetail
+from custom.enikshay.tests.utils import setup_enikshay_locations
 
 
 class TestCreateEnikshayCases(TestCase):
@@ -20,12 +22,11 @@ class TestCreateEnikshayCases(TestCase):
         super(TestCreateEnikshayCases, self).setUp()
         self.patient_detail = PatientDetail.objects.create(
             PregId='MH-ABD-05-16-0001',
-            scode='MA',
-            Dtocode='Middlesex',
             Tbunitcode=1,
             pname='A B C',
             pgender='M',
             page=18,
+            poccupation='4',
             paadharno=867386000000,
             paddress='Cambridge MA',
             pmob='9987328695',
@@ -41,7 +42,9 @@ class TestCreateEnikshayCases(TestCase):
             atbtreatment='',
             Ptype=4,
             pcategory=4,
-            InitiationDate1='2016-12-22 16:06:47.726'
+            cvisitedDate1='2016-12-25 00:00:00.000',
+            InitiationDate1='2016-12-22 16:06:47.726',
+            dotmosignDate1='2016-12-23 00:00:00.000',
         )
         self.outcome = Outcome.objects.create(
             PatientId=self.patient_detail,
@@ -60,18 +63,30 @@ class TestCreateEnikshayCases(TestCase):
         self.domain = Domain(name='enikshay-test-domain')
         self.domain.save()
 
-        loc_type = LocationType.objects.create(
-            domain=self.domain.name,
-            name='nik'
-        )
+        locations = setup_enikshay_locations(self.domain.name)
+        self.sto = locations['STO']
+        self.sto.metadata = {
+            'nikshay_code': 'MH',
+        }
+        self.sto.save()
 
-        SQLLocation.objects.create(
-            domain=self.domain.name,
-            location_type=loc_type,
-            metadata={
-                'nikshay_code': 'MH-ABD-05-16',
-            },
-        )
+        self.dto = locations['DTO']
+        self.dto.metadata = {
+            'nikshay_code': 'MH-ABD',
+        }
+        self.dto.save()
+
+        self.tu = locations['TU']
+        self.tu.metadata = {
+            'nikshay_code': 'MH-ABD-05',
+        }
+        self.tu.save()
+
+        self.phi = locations['PHI']
+        self.phi.metadata = {
+            'nikshay_code': 'MH-ABD-05-16',
+        }
+        self.phi.save()
 
         self.case_accessor = CaseAccessors(self.domain.name)
 
@@ -104,38 +119,38 @@ class TestCreateEnikshayCases(TestCase):
                 ('age_entered', '18'),
                 ('contact_phone_number', '9987328695'),
                 ('current_address', 'Cambridge MA'),
-                ('current_address_district_choice', 'Middlesex'),
-                ('current_address_state_choice', 'MA'),
+                ('current_address_district_choice', self.dto.location_id),
+                ('current_address_state_choice', self.sto.location_id),
                 ('dob_known', 'no'),
-                ('first_name', 'A'),
+                ('first_name', 'A B'),
                 ('last_name', 'C'),
-                ('middle_name', 'B'),
                 ('migration_created_case', 'true'),
                 ('nikshay_id', 'MH-ABD-05-16-0001'),
-                ('permanent_address_district_choice', 'Middlesex'),
-                ('permanent_address_state_choice', 'MA'),
-                ('phi', '2'),
+                ('person_id', 'FROM_NIKSHAY_MH-ABD-05-16-0001'),
+                ('phi', 'PHI'),
                 ('secondary_contact_name_address', 'Secondary name, Secondary address'),
                 ('secondary_contact_phone_number', '123'),
                 ('sex', 'male'),
-                ('tu_choice', '1'),
+                ('tu_choice', 'TU'),
             ]),
             person_case.dynamic_case_properties()
         )
         self.assertEqual('MH-ABD-05-16-0001', person_case.external_id)
         self.assertEqual('A B C', person_case.name)
+        self.assertEqual(self.phi.location_id, person_case.owner_id)
         # make sure the case is only created/modified by a single form
         self.assertEqual(1, len(person_case.xform_ids))
-
 
         occurrence_case_ids = self.case_accessor.get_case_ids_in_domain(type='occurrence')
         self.assertEqual(1, len(occurrence_case_ids))
         occurrence_case = self.case_accessor.get_case(occurrence_case_ids[0])
         self.assertEqual(
             OrderedDict([
+                ('current_episode_type', 'confirmed_tb'),
                 ('hiv_status', 'negative'),
+                ('ihv_date', '2016-12-25'),
+                ('initial_home_visit_status', 'completed'),
                 ('migration_created_case', 'true'),
-                ('nikshay_id', 'MH-ABD-05-16-0001'),
                 ('occurrence_episode_count', '1'),
                 ('occurrence_id', '20160908010203004'),
             ]),
@@ -152,6 +167,7 @@ class TestCreateEnikshayCases(TestCase):
             ),
             occurrence_case.indices[0]
         )
+        self.assertEqual('-', occurrence_case.owner_id)
         # make sure the case is only created/modified by a single form
         self.assertEqual(1, len(occurrence_case.xform_ids))
 
@@ -160,10 +176,13 @@ class TestCreateEnikshayCases(TestCase):
         episode_case = self.case_accessor.get_case(episode_case_ids[0])
         self.assertEqual(
             OrderedDict([
-                ('date_reported', '2016-12-13'),
+                ('date_of_mo_signature', '2016-12-23'),
                 ('disease_classification', 'pulmonary'),
+                ('dots_99_enabled', 'false'),
+                ('episode_pending_registration', 'no'),
                 ('episode_type', 'confirmed_tb'),
                 ('migration_created_case', 'true'),
+                ('occupation', 'engineer'),
                 ('patient_type_choice', 'treatment_after_failure'),
                 ('treatment_initiation_date', '2016-12-22'),
                 ('treatment_supporter_designation', 'health_worker'),
@@ -173,6 +192,9 @@ class TestCreateEnikshayCases(TestCase):
             ]),
             episode_case.dynamic_case_properties()
         )
+        self.assertEqual('Episode #1: Confirmed TB (Patient)', episode_case.name)
+        self.assertEqual(datetime(2016, 12, 13), episode_case.opened_on)
+        self.assertEqual('-', episode_case.owner_id)
         self.assertEqual(len(episode_case.indices), 1)
         self._assertIndexEqual(
             CommCareCaseIndex(
@@ -226,6 +248,7 @@ class TestCreateEnikshayCases(TestCase):
             ]
         )
         for test_case in test_cases:
+            self.assertEqual('-', test_case.owner_id)
             self.assertEqual(len(test_case.indices), 1)
             self._assertIndexEqual(
                 CommCareCaseIndex(
@@ -264,6 +287,19 @@ class TestCreateEnikshayCases(TestCase):
         self.assertEqual(1, len(episode_case_ids))
         episode_case = self.case_accessor.get_case(episode_case_ids[0])
         self.assertEqual(episode_case.dynamic_case_properties()['disease_classification'], 'extra_pulmonary')
+
+    @run_with_all_backends
+    def test_location_not_found(self):
+        self.phi.delete()
+        call_command('create_enikshay_cases', self.domain.name)
+
+        person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
+        self.assertEqual(1, len(person_case_ids))
+        person_case = self.case_accessor.get_case(person_case_ids[0])
+        self.assertEqual(person_case.owner_id, ARCHIVED_CASE_OWNER_ID)
+        self.assertEqual(person_case.dynamic_case_properties()['archive_reason'], 'migration_location_not_found')
+        self.assertEqual(person_case.dynamic_case_properties()['migration_error'], 'location_not_found')
+        self.assertEqual(person_case.dynamic_case_properties()['migration_error_details'], 'MH-ABD-05-16')
 
     def _assertIndexEqual(self, index_1, index_2):
         self.assertEqual(index_1.identifier, index_2.identifier)

@@ -252,7 +252,7 @@ hqDefine('app_manager/js/report-module.js', function () {
             'user_id'
         ];
         this.date_range_options = [
-            'last7', 'last30', 'thismonth', 'lastmonth', 'lastyear', 'thisquarter', 'lastquarter',
+            'last7', 'last30', 'thismonth', 'lastmonth', 'thisyear', 'lastyear', 'thisquarter', 'lastquarter',
         ];
         this.date_operators = ['=', '<', '<=', '>', '>=', 'between'];
         this.numeric_operators = ['=', '!=', '<', '<=', '>', '>='];

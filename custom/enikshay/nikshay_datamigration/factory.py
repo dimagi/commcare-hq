@@ -2,7 +2,7 @@ from datetime import datetime
 
 from dimagi.utils.decorators.memoized import memoized
 
-from casexml.apps.case.const import CASE_INDEX_EXTENSION
+from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID, CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseStructure, CaseIndex
 from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -97,24 +97,19 @@ class EnikshayCaseFactory(object):
             'attrs': {
                 'case_type': PERSON_CASE_TYPE,
                 'external_id': self.nikshay_id,
-                # 'owner_id': self._location.location_id,
                 'update': {
-                    'aadhaar_number': self.patient_detail.paadharno,
                     'age': self.patient_detail.page,
                     'age_entered': self.patient_detail.page,
                     'contact_phone_number': validate_phone_number(self.patient_detail.pmob),
                     'current_address': self.patient_detail.paddress,
-                    'current_address_district_choice': self.patient_detail.Dtocode,
-                    'current_address_state_choice': self.patient_detail.scode,
+                    'current_address_district_choice': self.district.location_id,
+                    'current_address_state_choice': self.state.location_id,
                     'dob_known': 'no',
                     'first_name': self.patient_detail.first_name,
                     'last_name': self.patient_detail.last_name,
-                    'middle_name': self.patient_detail.middle_name,
                     'name': self.patient_detail.pname,
                     'nikshay_id': self.nikshay_id,
-                    'permanent_address_district_choice': self.patient_detail.Dtocode,
-                    'permanent_address_state_choice': self.patient_detail.scode,
-                    'phi': self.patient_detail.PHI,
+                    'person_id': 'FROM_NIKSHAY_' + self.nikshay_id,
                     'secondary_contact_name_address': (
                         (self.patient_detail.cname or '')
                         + ', '
@@ -122,12 +117,30 @@ class EnikshayCaseFactory(object):
                     ),
                     'secondary_contact_phone_number': validate_phone_number(self.patient_detail.cmob),
                     'sex': self.patient_detail.sex,
-                    'tu_choice': self.patient_detail.Tbunitcode,
+                    'tu_choice': self.tu.name,
 
                     'migration_created_case': 'true',
                 },
             },
         }
+
+        if self.phi:
+            if self.phi.location_type.code == 'phi':
+                kwargs['attrs']['owner_id'] = self.phi.location_id
+                kwargs['attrs']['update']['phi'] = self.phi.name
+            else:
+                kwargs['attrs']['owner_id'] = ARCHIVED_CASE_OWNER_ID
+                kwargs['attrs']['update']['archive_reason'] = 'migration_not_phi_location'
+                kwargs['attrs']['update']['migration_error'] = 'not_phi_location'
+                kwargs['attrs']['update']['migration_error_details'] = self._nikshay_code
+        else:
+            kwargs['attrs']['owner_id'] = ARCHIVED_CASE_OWNER_ID
+            kwargs['attrs']['update']['archive_reason'] = 'migration_location_not_found'
+            kwargs['attrs']['update']['migration_error'] = 'location_not_found'
+            kwargs['attrs']['update']['migration_error_details'] = self._nikshay_code
+
+        if self.patient_detail.paadharno is not None:
+            kwargs['attrs']['update']['aadhaar_number'] = self.patient_detail.paadharno
 
         if self.existing_person_case is not None:
             kwargs['case_id'] = self.existing_person_case.case_id
@@ -144,9 +157,12 @@ class EnikshayCaseFactory(object):
         kwargs = {
             'attrs': {
                 'case_type': OCCURRENCE_CASE_TYPE,
+                'owner_id': '-',
                 'update': {
+                    'current_episode_type': 'confirmed_tb',
+                    'ihv_date': self.patient_detail.ihv_date,
+                    'initial_home_visit_status': self.patient_detail.initial_home_visit_status,
                     'name': 'Occurrence #1',
-                    'nikshay_id': self.nikshay_id,
                     'occurrence_episode_count': 1,
                     'occurrence_id': datetime.utcnow().strftime('%Y%m%d%H%M%S%f')[:-3],
                     'migration_created_case': 'true',
@@ -179,10 +195,16 @@ class EnikshayCaseFactory(object):
         kwargs = {
             'attrs': {
                 'case_type': EPISODE_CASE_TYPE,
+                'date_opened': self.patient_detail.pregdate1,
+                'owner_id': '-',
                 'update': {
-                    'date_reported': self.patient_detail.pregdate1,  # is this right?
+                    'date_of_mo_signature': self.patient_detail.date_of_mo_signature,
                     'disease_classification': self.patient_detail.disease_classification,
+                    'dots_99_enabled': 'false',
+                    'episode_pending_registration': 'no',
                     'episode_type': 'confirmed_tb',
+                    'name': 'Episode #1: Confirmed TB (Patient)',
+                    'occupation': self.patient_detail.occupation,
                     'patient_type_choice': self.patient_detail.patient_type_choice,
                     'treatment_initiation_date': self.patient_detail.treatment_initiation_date,
                     'treatment_supporter_designation': self.patient_detail.treatment_supporter_designation,
@@ -214,6 +236,7 @@ class EnikshayCaseFactory(object):
             'attrs': {
                 'create': True,
                 'case_type': TEST_CASE_TYPE,
+                'owner_id': '-',
                 'update': {
                     'date_tested': followup.TestDate,
 
@@ -265,8 +288,20 @@ class EnikshayCaseFactory(object):
         return Followup.objects.filter(PatientID=self.patient_detail)
 
     @property
-    def _location(self):
-        return self.nikshay_codes_to_location[self._nikshay_code]
+    def state(self):
+        return self.nikshay_codes_to_location.get(self.patient_detail.PregId.split('-')[0])
+
+    @property
+    def district(self):
+        return self.nikshay_codes_to_location.get('-'.join(self.patient_detail.PregId.split('-')[:2]))
+
+    @property
+    def tu(self):
+        return self.nikshay_codes_to_location.get('-'.join(self.patient_detail.PregId.split('-')[:3]))
+
+    @property
+    def phi(self):
+        return self.nikshay_codes_to_location.get(self._nikshay_code)
 
     @property
     def _nikshay_code(self):
