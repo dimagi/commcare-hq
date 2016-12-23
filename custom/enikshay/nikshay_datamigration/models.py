@@ -3,6 +3,13 @@ from datetime import datetime
 from django.db import models
 
 
+def _parse_datetime_or_null_to_date(datetime_str):
+    if datetime_str == 'NULL':
+        return ''
+    else:
+        return datetime.strptime(datetime_str, '%Y-%m-%d %H:%M:%S.%f').date()
+
+
 class PatientDetail(models.Model):
     PregId = models.CharField(max_length=255, primary_key=True)
     scode = models.CharField(max_length=255, null=True)
@@ -79,7 +86,7 @@ class PatientDetail(models.Model):
     pregdate1 = models.DateField()
     cvisitedDate1 = models.CharField(max_length=255)
     InitiationDate1 = models.CharField(max_length=255)  # datetime or 'NULL'
-    dotmosignDate1 = models.CharField(max_length=255)
+    dotmosignDate1 = models.CharField(max_length=255)  # datetime or 'NULL'
 
     @property
     def first_name(self):
@@ -129,6 +136,19 @@ class PatientDetail(models.Model):
         }[self.Ptype]
 
     @property
+    def occupation(self):
+        return {
+            '4': 'engineer',
+            '5': 'doctor_',
+            '11': 'lawyer',
+            '21': 'trader',
+            '27': 'labour',
+            '28': 'unemployed',
+            '29': 'worker',
+            '30': 'retired',
+        }.get(self.poccupation, 'undetermined_by_migration')
+
+    @property
     def treatment_supporter_designation(self):
         return {
             '1': 'health_worker',
@@ -154,10 +174,11 @@ class PatientDetail(models.Model):
 
     @property
     def treatment_initiation_date(self):
-        if self.InitiationDate1 == 'NULL':
-            return None
-        else:
-            return datetime.strptime(self.InitiationDate1, '%Y-%m-%d %H:%M:%S.%f').date()
+        return _parse_datetime_or_null_to_date(self.InitiationDate1)
+
+    @property
+    def date_of_mo_signature(self):
+        return _parse_datetime_or_null_to_date(self.dotmosignDate1)
 
 
 class Outcome(models.Model):

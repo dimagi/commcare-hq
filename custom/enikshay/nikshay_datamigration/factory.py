@@ -180,9 +180,14 @@ class EnikshayCaseFactory(object):
             'attrs': {
                 'case_type': EPISODE_CASE_TYPE,
                 'update': {
+                    'date_of_mo_signature': self.patient_detail.date_of_mo_signature,
                     'date_reported': self.patient_detail.pregdate1,  # is this right?
                     'disease_classification': self.patient_detail.disease_classification,
+                    'dots_99_enabled': 'false',
+                    'episode_pending_registration': 'no',
                     'episode_type': 'confirmed_tb',
+                    'name': 'Episode #1: Confirmed TB (Patient)',
+                    'occupation': self.patient_detail.occupation,
                     'patient_type_choice': self.patient_detail.patient_type_choice,
                     'treatment_initiation_date': self.patient_detail.treatment_initiation_date,
                     'treatment_supporter_designation': self.patient_detail.treatment_supporter_designation,
