@@ -775,5 +775,23 @@
         "outcome": [
             "a", "b", "c"
         ]
+    },
+    {
+        "name": "open_child_of_closed_extension",
+        "owned": [
+            "c"
+        ],
+        "subcases": [
+            ["c", "b"]
+        ],
+        "extensions": [
+            ["b", "a"]
+        ],
+        "closed": [
+            "a", "b"
+        ],
+        "outcome": [
+            "a", "b", "c"
+        ]
     }
 ]
