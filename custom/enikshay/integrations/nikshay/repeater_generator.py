@@ -112,7 +112,7 @@ class NikshayRegisterPatientPayloadGenerator(CaseRepeaterJsonPayloadGenerator):
                 },
             )
         else:
-            _save_error_message(payload_doc.domain, payload_doc.case_id, response.json())
+            _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(response.json()))
 
 
 def _get_nikshay_id_from_response(response):

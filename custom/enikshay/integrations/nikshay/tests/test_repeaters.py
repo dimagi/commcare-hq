@@ -236,3 +236,27 @@ class TestNikshayRegisterPatientPayloadGenerator(NikshayRepeaterTestBase):
         updated_episode_case = CaseAccessors(self.domain).get_case(self.episode_id)
         self._assert_case_property_equal(updated_episode_case, 'nikshay_registered', 'true')
         self._assert_case_property_equal(updated_episode_case, 'nikshay_error', 'duplicate')
+
+    @run_with_all_backends
+    def test_handle_failure(self):
+        message = {
+            "Nikshay_Message": "Success",
+            "Results": [
+                {
+                    "FieldName": "NikshayId",
+                    "Fieldvalue": "The INSERT statement conflicted with the FOREIGN KEY constraint \"FK_PatientsDetails_TBUnits\". The conflict occurred in database \"nikshay\", table \"dbo.TBUnits\".\u000d\u000a \u000d\u000aDM-ABC-01-16-0001\u000d\u000aThe statement has been terminated."  # noqa. yes, this is a real response.
+                }
+            ]
+        }
+        payload_generator = NikshayRegisterPatientPayloadGenerator(None)
+        payload_generator.handle_failure(
+            MockResponse(
+                400,
+                message,
+            ),
+            self.cases[self.episode_id],
+            None,
+        )
+        updated_episode_case = CaseAccessors(self.domain).get_case(self.episode_id)
+        self._assert_case_property_equal(updated_episode_case, 'nikshay_registered', 'false')
+        self._assert_case_property_equal(updated_episode_case, 'nikshay_error', unicode(message))
