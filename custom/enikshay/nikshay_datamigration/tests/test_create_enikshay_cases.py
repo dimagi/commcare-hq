@@ -121,7 +121,7 @@ class TestCreateEnikshayCases(TestCase):
                 ('migration_created_case', 'true'),
                 ('nikshay_id', 'MH-ABD-05-16-0001'),
                 ('person_id', 'FROM_NIKSHAY_MH-ABD-05-16-0001'),
-                ('phi', '2'),
+                ('phi', 'PHI'),
                 ('secondary_contact_name_address', 'Secondary name, Secondary address'),
                 ('secondary_contact_phone_number', '123'),
                 ('sex', 'male'),

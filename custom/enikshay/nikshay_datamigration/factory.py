@@ -110,7 +110,6 @@ class EnikshayCaseFactory(object):
                     'name': self.patient_detail.pname,
                     'nikshay_id': self.nikshay_id,
                     'person_id': 'FROM_NIKSHAY_' + self.nikshay_id,
-                    'phi': self.patient_detail.PHI,
                     'secondary_contact_name_address': (
                         (self.patient_detail.cname or '')
                         + ', '
@@ -128,6 +127,7 @@ class EnikshayCaseFactory(object):
         if self.phi:
             if self.phi.location_type.code == 'phi':
                 kwargs['attrs']['owner_id'] = self.phi.location_id
+                kwargs['attrs']['update']['phi'] = self.phi.name
             else:
                 kwargs['attrs']['owner_id'] = ARCHIVED_CASE_OWNER_ID
                 kwargs['attrs']['update']['archive_reason'] = 'migration_not_phi_location'
