@@ -102,11 +102,17 @@ class NikshayRegisterPatientPayloadGenerator(CaseRepeaterJsonPayloadGenerator):
             _save_error_message(payload_doc.domain, payload_doc.case_id, e.message)
 
     def handle_failure(self, response, payload_doc, repeat_record):
-        try:
-            error_message = response.json().get('Results', response.content)
-        except (JSONDecodeError, KeyError):
-            error_message = response.content
-        save_error_message(repeat_record, response.status_code, error_message)
+        if response.status_code == 409:  # Conflict
+            update_case(
+                payload_doc.domain,
+                payload_doc.case_id,
+                {
+                    "nikshay_registered": "true",
+                    "nikshay_error": "duplicate",
+                },
+            )
+        else:
+            _save_error_message(payload_doc.domain, payload_doc.case_id, response.json())
 
 
 def _get_nikshay_id_from_response(response):

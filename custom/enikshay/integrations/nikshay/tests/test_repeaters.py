@@ -213,3 +213,26 @@ class TestNikshayRegisterPatientPayloadGenerator(NikshayRepeaterTestBase):
             'nikshay_error',
             'No Nikshay ID received: {}'.format(response)
         )
+
+    @run_with_all_backends
+    def test_handle_duplicate(self):
+        payload_generator = NikshayRegisterPatientPayloadGenerator(None)
+        payload_generator.handle_failure(
+            MockResponse(
+                409,
+                {
+                    "Nikshay_Message": "Conflict",
+                    "Results": [
+                        {
+                            "FieldName": "NikshayId",
+                            "Fieldvalue": "Dublicate Entry"
+                        }
+                    ]
+                }
+            ),
+            self.cases[self.episode_id],
+            None,
+        )
+        updated_episode_case = CaseAccessors(self.domain).get_case(self.episode_id)
+        self._assert_case_property_equal(updated_episode_case, 'nikshay_registered', 'true')
+        self._assert_case_property_equal(updated_episode_case, 'nikshay_error', 'duplicate')
