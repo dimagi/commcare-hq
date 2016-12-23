@@ -178,14 +178,11 @@ class PatientDetail(models.Model):
 
     @property
     def ihv_date(self):
-        if self.cvisitedDate1 == 'NULL':
+        ihv_date_or_blank = _parse_datetime_or_null_to_date(self.cvisitedDate1)
+        if ihv_date_or_blank and ihv_date_or_blank == date(1900, 1, 1):
             return ''
         else:
-            ihv_date = datetime.strptime(self.cvisitedDate1, '%Y-%m-%d %H:%M:%S.%f').date()
-            if ihv_date == date(1900, 1, 1):
-                return ''
-            else:
-                return ihv_date
+            return ihv_date_or_blank
 
     @property
     def initial_home_visit_status(self):
