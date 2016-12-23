@@ -7,7 +7,9 @@ from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.es import cases as case_es
+from corehq.apps.es.users import user_ids_at_locations
 from corehq.apps.groups.models import Group
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.display import FormDisplay
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.generic import GenericReportView
@@ -17,6 +19,8 @@ from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
 from corehq.apps.reports.standard.inspect import SubmitHistoryMixin
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
+from corehq.apps.reports.filters.case_list import CaseListFilter as EMWF
+from corehq.apps.reports.filters.search import SearchFilter
 
 from .dispatcher import EditDataInterfaceDispatcher
 
@@ -92,6 +96,63 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface):
             user_ids=self.user_ids,
         )
         return context
+
+    def scope_filter(self):
+        # Filter to be applied in AND with filters for export to add scope for restricted user
+        # Restricts to cases owned by accessible locations and their respective users Or Cases
+        # Last Modified by accessible users
+        accessible_location_ids = (SQLLocation.active_objects.accessible_location_ids(
+            self.request.domain,
+            self.request.couch_user)
+        )
+        accessible_user_ids = user_ids_at_locations(accessible_location_ids)
+        accessible_ids = accessible_user_ids + list(accessible_location_ids)
+        return case_es.owner(accessible_ids)
+
+    def _build_query(self):
+        query = (case_es.CaseES()
+                 .domain(self.domain)
+                 .size(self.pagination.count)
+                 .start(self.pagination.start))
+        query.es_query['sort'] = self.get_sorting_block()
+        mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
+
+        if self.case_filter:
+            query = query.filter(self.case_filter)
+
+        query = query.NOT(case_es.case_type("user-owner-mapping-case"))
+
+        if self.case_type:
+            query = query.case_type(self.case_type)
+
+        if self.case_status:
+            query = query.is_closed(self.case_status == 'closed')
+
+        if self.request.can_access_all_locations and EMWF.show_all_data(mobile_user_and_group_slugs):
+            pass
+        elif self.request.can_access_all_locations and EMWF.show_project_data(mobile_user_and_group_slugs):
+            # Show everything but stuff we know for sure to exclude
+            user_types = EMWF.selected_user_types(mobile_user_and_group_slugs)
+            ids_to_exclude = self.get_special_owner_ids(
+                admin=HQUserType.ADMIN not in user_types,
+                unknown=HQUserType.UNKNOWN not in user_types,
+                demo=HQUserType.DEMO_USER not in user_types,
+                commtrack=False,
+            )
+            query = query.NOT(case_es.owner(ids_to_exclude))
+        else:  # Only show explicit matches
+            selected_case_owners = self.case_owners
+            if selected_case_owners:
+                query = query.owner(selected_case_owners)
+
+        if not self.request.can_access_all_locations:
+            query = query.OR(self.scope_filter())
+
+        search_string = SearchFilter.get_value(self.request, self.domain)
+        if search_string:
+            query = query.set_query({"query_string": {"query": search_string}})
+
+        return query
 
 
 class FormManagementMode(object):
