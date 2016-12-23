@@ -134,6 +134,7 @@ class PatientDetail(models.Model):
     @property
     def occupation(self):
         return {
+            '0': 'undetermined_by_migration',
             '1': 'legislators_or_senior_official',
             '2': 'corporate_manager',
             '3': 'general_manager',
@@ -164,7 +165,7 @@ class PatientDetail(models.Model):
             '28': 'new_worker_seeking_employment',
             '29': 'occupation_unidentifiable',
             '30': 'no_occupation_reported',
-        }.get(self.poccupation, 'undetermined_by_migration')
+        }[self.poccupation]
 
     @property
     def treatment_supporter_designation(self):
