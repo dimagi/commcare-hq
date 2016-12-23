@@ -994,6 +994,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
         _get_logger().debug('case ids before update: {}'.format(', '.join(self.case_ids_on_phone)))
         _get_logger().debug('dependent case ids before update: {}'.format(', '.join(self.dependent_case_ids_on_phone)))
         _get_logger().debug('index tree before update: {}'.format(self.index_tree))
+        _get_logger().debug('extension index tree before update: {}'.format(self.extension_index_tree))
 
         class CaseUpdate(object):
 
@@ -1099,6 +1100,11 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 for index in update.indices_to_add:
                     self._add_index(index, update)
                     made_changes = True
+
+        _get_logger().debug('case ids mid update: {}'.format(', '.join(self.case_ids_on_phone)))
+        _get_logger().debug('dependent case ids mid update: {}'.format(', '.join(self.dependent_case_ids_on_phone)))
+        _get_logger().debug('index tree mid update: {}'.format(self.index_tree))
+        _get_logger().debug('extension index tree mid update: {}'.format(self.extension_index_tree))
 
         for update in non_live_updates:
             if update.case_id in self.case_ids_on_phone:
