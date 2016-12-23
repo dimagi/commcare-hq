@@ -6,6 +6,7 @@ from django.test import TestCase
 
 from mock import patch
 
+from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation, LocationType
@@ -284,7 +285,7 @@ class TestCreateEnikshayCases(TestCase):
         person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
         self.assertEqual(1, len(person_case_ids))
         person_case = self.case_accessor.get_case(person_case_ids[0])
-        self.assertEqual(person_case.owner_id, '_archive_')
+        self.assertEqual(person_case.owner_id, ARCHIVED_CASE_OWNER_ID)
         self.assertEqual(person_case.dynamic_case_properties()['migration_archive_reason'], 'migration_location_not_found')
         self.assertEqual(person_case.dynamic_case_properties()['migration_error'], 'location_not_found')
         self.assertEqual(person_case.dynamic_case_properties()['migration_error_details'], 'MH-ABD-05-16')

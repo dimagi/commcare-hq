@@ -2,7 +2,7 @@ from datetime import datetime
 
 from dimagi.utils.decorators.memoized import memoized
 
-from casexml.apps.case.const import CASE_INDEX_EXTENSION
+from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID, CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseStructure, CaseIndex
 from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -129,7 +129,7 @@ class EnikshayCaseFactory(object):
             assert self._location.location_type.name == 'phi'
             kwargs['attrs']['owner_id'] = self._location.location_id
         else:
-            kwargs['attrs']['owner_id'] = '_archive_'
+            kwargs['attrs']['owner_id'] = ARCHIVED_CASE_OWNER_ID
             kwargs['attrs']['update']['migration_archive_reason'] = 'migration_location_not_found'
             kwargs['attrs']['update']['migration_error'] = 'location_not_found'
             kwargs['attrs']['update']['migration_error_details'] = self._nikshay_code
