@@ -181,9 +181,9 @@ class EnikshayCaseFactory(object):
         kwargs = {
             'attrs': {
                 'case_type': EPISODE_CASE_TYPE,
+                'date_opened': self.patient_detail.pregdate1,
                 'update': {
                     'date_of_mo_signature': self.patient_detail.date_of_mo_signature,
-                    'date_reported': self.patient_detail.pregdate1,  # is this right?
                     'disease_classification': self.patient_detail.disease_classification,
                     'dots_99_enabled': 'false',
                     'episode_pending_registration': 'no',
