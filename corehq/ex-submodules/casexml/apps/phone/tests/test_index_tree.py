@@ -457,10 +457,9 @@ class ExtensionCasesPurgingTest(SimpleTestCase):
                                      case_ids_on_phone=set(all_ids))
 
         sync_log.purge(host_id)
-        self.assertTrue(extension_of_extension_id in sync_log.case_ids_on_phone)
-        self.assertTrue(extension_id in sync_log.case_ids_on_phone)
-        self.assertTrue(host_id in sync_log.case_ids_on_phone)
-        self.fail()
+        self.assertFalse(host_id in sync_log.case_ids_on_phone)
+        self.assertFalse(extension_id in sync_log.case_ids_on_phone)
+        self.assertFalse(extension_of_extension_id in sync_log.case_ids_on_phone)
 
 
 def convert_list_to_dict(a_list):
