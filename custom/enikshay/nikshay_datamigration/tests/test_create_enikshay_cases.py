@@ -10,11 +10,10 @@ from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation, LocationType
-from corehq.apps.locations.tests.util import LocationStructure, setup_location_types_with_structure, \
-    setup_locations_with_structure, LocationTypeStructure
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
 from custom.enikshay.nikshay_datamigration.models import Followup, Outcome, PatientDetail
+from custom.enikshay.tests.utils import setup_enikshay_locations
 
 
 class TestCreateEnikshayCases(TestCase):
@@ -66,44 +65,7 @@ class TestCreateEnikshayCases(TestCase):
         self.domain = Domain(name='enikshay-test-domain')
         self.domain.save()
 
-        location_type_structure = [
-            LocationTypeStructure('ctd', [
-                LocationTypeStructure('sto', [
-                    LocationTypeStructure('cto', [
-                        LocationTypeStructure('dto', [
-                            LocationTypeStructure('tu', [
-                                LocationTypeStructure('phi', []),
-                                LocationTypeStructure('dmc', []),
-                            ]),
-                            LocationTypeStructure('drtb-hiv', []),
-                        ])
-                    ]),
-                    LocationTypeStructure('drtb', []),
-                    LocationTypeStructure('cdst', []),
-                ])
-            ])
-        ]
-        location_structure = [
-            LocationStructure('CTD', 'ctd', [
-                LocationStructure('STO', 'sto', [
-                    LocationStructure('CTO', 'cto', [
-                        LocationStructure('DTO', 'dto', [
-                            LocationStructure('TU', 'tu', [
-                                LocationStructure('PHI', 'phi', []),
-                                LocationStructure('DMC', 'dmc', []),
-                            ]),
-                            LocationStructure('DRTB-HIV', 'drtb-hiv', []),
-                        ])
-                    ]),
-                    LocationStructure('DRTB', 'drtb', []),
-                    LocationStructure('CDST', 'cdst', []),
-                ])
-            ])
-        ]
-
-        setup_location_types_with_structure(self.domain.name, location_type_structure)
-        locations = setup_locations_with_structure(self.domain.name, location_structure)
-
+        locations = setup_enikshay_locations(self.domain.name)
         self.phi = locations['PHI']
         self.phi.metadata = {
             'nikshay_code': 'MH-ABD-05-16',
