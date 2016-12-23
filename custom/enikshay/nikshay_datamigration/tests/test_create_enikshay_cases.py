@@ -22,8 +22,6 @@ class TestCreateEnikshayCases(TestCase):
         super(TestCreateEnikshayCases, self).setUp()
         self.patient_detail = PatientDetail.objects.create(
             PregId='MH-ABD-05-16-0001',
-            scode='MA',
-            Dtocode='Middlesex',
             Tbunitcode=1,
             pname='A B C',
             pgender='M',
@@ -66,6 +64,18 @@ class TestCreateEnikshayCases(TestCase):
         self.domain.save()
 
         locations = setup_enikshay_locations(self.domain.name)
+        self.sto = locations['STO']
+        self.sto.metadata = {
+            'nikshay_code': 'MH',
+        }
+        self.sto.save()
+
+        self.dto = locations['DTO']
+        self.dto.metadata = {
+            'nikshay_code': 'MH-ABD',
+        }
+        self.dto.save()
+
         self.phi = locations['PHI']
         self.phi.metadata = {
             'nikshay_code': 'MH-ABD-05-16',
@@ -103,8 +113,8 @@ class TestCreateEnikshayCases(TestCase):
                 ('age_entered', '18'),
                 ('contact_phone_number', '9987328695'),
                 ('current_address', 'Cambridge MA'),
-                ('current_address_district_choice', 'Middlesex'),
-                ('current_address_state_choice', 'MA'),
+                ('current_address_district_choice', self.dto.location_id),
+                ('current_address_state_choice', self.sto.location_id),
                 ('dob_known', 'no'),
                 ('first_name', 'A B'),
                 ('last_name', 'C'),

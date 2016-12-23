@@ -102,8 +102,8 @@ class EnikshayCaseFactory(object):
                     'age_entered': self.patient_detail.page,
                     'contact_phone_number': validate_phone_number(self.patient_detail.pmob),
                     'current_address': self.patient_detail.paddress,
-                    'current_address_district_choice': self.patient_detail.Dtocode,
-                    'current_address_state_choice': self.patient_detail.scode,
+                    'current_address_district_choice': self.district.location_id,
+                    'current_address_state_choice': self.state.location_id,
                     'dob_known': 'no',
                     'first_name': self.patient_detail.first_name,
                     'last_name': self.patient_detail.last_name,
@@ -286,6 +286,14 @@ class EnikshayCaseFactory(object):
     @memoized
     def _followups(self):
         return Followup.objects.filter(PatientID=self.patient_detail)
+
+    @property
+    def state(self):
+        return self.nikshay_codes_to_location.get(self.patient_detail.PregId.split('-')[0])
+
+    @property
+    def district(self):
+        return self.nikshay_codes_to_location.get('-'.join(self.patient_detail.PregId.split('-')[:2]))
 
     @property
     def phi(self):
