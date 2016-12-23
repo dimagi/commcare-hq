@@ -286,7 +286,7 @@ class TestCreateEnikshayCases(TestCase):
         self.assertEqual(1, len(person_case_ids))
         person_case = self.case_accessor.get_case(person_case_ids[0])
         self.assertEqual(person_case.owner_id, ARCHIVED_CASE_OWNER_ID)
-        self.assertEqual(person_case.dynamic_case_properties()['migration_archive_reason'], 'migration_location_not_found')
+        self.assertEqual(person_case.dynamic_case_properties()['archive_reason'], 'migration_location_not_found')
         self.assertEqual(person_case.dynamic_case_properties()['migration_error'], 'location_not_found')
         self.assertEqual(person_case.dynamic_case_properties()['migration_error_details'], 'MH-ABD-05-16')
 

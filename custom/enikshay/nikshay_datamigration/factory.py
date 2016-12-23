@@ -130,7 +130,7 @@ class EnikshayCaseFactory(object):
             kwargs['attrs']['owner_id'] = self._location.location_id
         else:
             kwargs['attrs']['owner_id'] = ARCHIVED_CASE_OWNER_ID
-            kwargs['attrs']['update']['migration_archive_reason'] = 'migration_location_not_found'
+            kwargs['attrs']['update']['archive_reason'] = 'migration_location_not_found'
             kwargs['attrs']['update']['migration_error'] = 'location_not_found'
             kwargs['attrs']['update']['migration_error_details'] = self._nikshay_code
 
