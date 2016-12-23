@@ -772,9 +772,7 @@
         "closed": [
             "a", "b"
         ],
-        "outcome": [
-            "a", "b", "c"
-        ]
+        "outcome": []
     },
     {
         "name": "open_child_of_closed_extension",
