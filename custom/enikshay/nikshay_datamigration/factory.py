@@ -2,7 +2,7 @@ from datetime import datetime
 
 from dimagi.utils.decorators.memoized import memoized
 
-from casexml.apps.case.const import CASE_INDEX_EXTENSION
+from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID, CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseStructure, CaseIndex
 from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -97,7 +97,6 @@ class EnikshayCaseFactory(object):
             'attrs': {
                 'case_type': PERSON_CASE_TYPE,
                 'external_id': self.nikshay_id,
-                # 'owner_id': self._location.location_id,
                 'update': {
                     'age': self.patient_detail.page,
                     'age_entered': self.patient_detail.page,
@@ -126,6 +125,20 @@ class EnikshayCaseFactory(object):
             },
         }
 
+        if self._location:
+            if self._location.location_type.code == 'phi':
+                kwargs['attrs']['owner_id'] = self._location.location_id
+            else:
+                kwargs['attrs']['owner_id'] = ARCHIVED_CASE_OWNER_ID
+                kwargs['attrs']['update']['archive_reason'] = 'migration_not_phi_location'
+                kwargs['attrs']['update']['migration_error'] = 'not_phi_location'
+                kwargs['attrs']['update']['migration_error_details'] = self._nikshay_code
+        else:
+            kwargs['attrs']['owner_id'] = ARCHIVED_CASE_OWNER_ID
+            kwargs['attrs']['update']['archive_reason'] = 'migration_location_not_found'
+            kwargs['attrs']['update']['migration_error'] = 'location_not_found'
+            kwargs['attrs']['update']['migration_error_details'] = self._nikshay_code
+
         if self.patient_detail.paadharno is not None:
             kwargs['attrs']['update']['aadhaar_number'] = self.patient_detail.paadharno
 
@@ -144,6 +157,7 @@ class EnikshayCaseFactory(object):
         kwargs = {
             'attrs': {
                 'case_type': OCCURRENCE_CASE_TYPE,
+                'owner_id': '-',
                 'update': {
                     'current_episode_type': 'confirmed_tb',
                     'ihv_date': self.patient_detail.ihv_date,
@@ -182,6 +196,7 @@ class EnikshayCaseFactory(object):
             'attrs': {
                 'case_type': EPISODE_CASE_TYPE,
                 'date_opened': self.patient_detail.pregdate1,
+                'owner_id': '-',
                 'update': {
                     'date_of_mo_signature': self.patient_detail.date_of_mo_signature,
                     'disease_classification': self.patient_detail.disease_classification,
@@ -221,6 +236,7 @@ class EnikshayCaseFactory(object):
             'attrs': {
                 'create': True,
                 'case_type': TEST_CASE_TYPE,
+                'owner_id': '-',
                 'update': {
                     'date_tested': followup.TestDate,
 
@@ -273,7 +289,7 @@ class EnikshayCaseFactory(object):
 
     @property
     def _location(self):
-        return self.nikshay_codes_to_location[self._nikshay_code]
+        return self.nikshay_codes_to_location.get(self._nikshay_code)
 
     @property
     def _nikshay_code(self):

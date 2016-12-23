@@ -6,6 +6,7 @@ from django.test import TestCase
 
 from mock import patch
 
+from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation, LocationType
@@ -64,11 +65,12 @@ class TestCreateEnikshayCases(TestCase):
         self.domain.save()
 
         loc_type = LocationType.objects.create(
+            code='phi',
             domain=self.domain.name,
-            name='nik'
+            name='PHI',
         )
 
-        SQLLocation.objects.create(
+        self.loc = SQLLocation.objects.create(
             domain=self.domain.name,
             location_type=loc_type,
             metadata={
@@ -125,9 +127,9 @@ class TestCreateEnikshayCases(TestCase):
         )
         self.assertEqual('MH-ABD-05-16-0001', person_case.external_id)
         self.assertEqual('A B C', person_case.name)
+        self.assertEqual(self.loc.location_id, person_case.owner_id)
         # make sure the case is only created/modified by a single form
         self.assertEqual(1, len(person_case.xform_ids))
-
 
         occurrence_case_ids = self.case_accessor.get_case_ids_in_domain(type='occurrence')
         self.assertEqual(1, len(occurrence_case_ids))
@@ -155,6 +157,7 @@ class TestCreateEnikshayCases(TestCase):
             ),
             occurrence_case.indices[0]
         )
+        self.assertEqual('-', occurrence_case.owner_id)
         # make sure the case is only created/modified by a single form
         self.assertEqual(1, len(occurrence_case.xform_ids))
 
@@ -181,6 +184,7 @@ class TestCreateEnikshayCases(TestCase):
         )
         self.assertEqual('Episode #1: Confirmed TB (Patient)', episode_case.name)
         self.assertEqual(datetime(2016, 12, 13), episode_case.opened_on)
+        self.assertEqual('-', episode_case.owner_id)
         self.assertEqual(len(episode_case.indices), 1)
         self._assertIndexEqual(
             CommCareCaseIndex(
@@ -234,6 +238,7 @@ class TestCreateEnikshayCases(TestCase):
             ]
         )
         for test_case in test_cases:
+            self.assertEqual('-', test_case.owner_id)
             self.assertEqual(len(test_case.indices), 1)
             self._assertIndexEqual(
                 CommCareCaseIndex(
@@ -272,6 +277,19 @@ class TestCreateEnikshayCases(TestCase):
         self.assertEqual(1, len(episode_case_ids))
         episode_case = self.case_accessor.get_case(episode_case_ids[0])
         self.assertEqual(episode_case.dynamic_case_properties()['disease_classification'], 'extra_pulmonary')
+
+    @run_with_all_backends
+    def test_location_not_found(self):
+        self.loc.delete()
+        call_command('create_enikshay_cases', self.domain.name)
+
+        person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
+        self.assertEqual(1, len(person_case_ids))
+        person_case = self.case_accessor.get_case(person_case_ids[0])
+        self.assertEqual(person_case.owner_id, ARCHIVED_CASE_OWNER_ID)
+        self.assertEqual(person_case.dynamic_case_properties()['archive_reason'], 'migration_location_not_found')
+        self.assertEqual(person_case.dynamic_case_properties()['migration_error'], 'location_not_found')
+        self.assertEqual(person_case.dynamic_case_properties()['migration_error_details'], 'MH-ABD-05-16')
 
     def _assertIndexEqual(self, index_1, index_2):
         self.assertEqual(index_1.identifier, index_2.identifier)
