@@ -445,6 +445,22 @@ class ExtensionCasesPurgingTest(SimpleTestCase):
         self.assertTrue(child_id in sync_log.case_ids_on_phone)
         self.assertTrue(host_id in sync_log.case_ids_on_phone)
 
+    def test_open_extension_of_extension(self):
+        [host_id, extension_id, extension_of_extension_id] = all_ids = ['host', 'extension', 'extension_of_extension']
+        extension_tree = IndexTree(indices={
+            extension_id: convert_list_to_dict([host_id]),
+            extension_of_extension_id: convert_list_to_dict([extension_id]),
+        })
+        sync_log = SimplifiedSyncLog(extension_index_tree=extension_tree,
+                                     dependent_case_ids_on_phone=set([host_id, extension_id]),
+                                     closed_cases=set([host_id, extension_id]),
+                                     case_ids_on_phone=set(all_ids))
+        sync_log.purge(host_id)
+        self.assertTrue(extension_of_extension_id in sync_log.case_ids_on_phone)
+        self.assertTrue(extension_id in sync_log.case_ids_on_phone)
+        self.assertTrue(host_id in sync_log.case_ids_on_phone)
+        self.fail()
+
 
 def convert_list_to_dict(a_list):
     return {str(i): item for i, item in enumerate(a_list)}
