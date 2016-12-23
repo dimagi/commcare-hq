@@ -121,6 +121,7 @@ class TestCreateEnikshayCases(TestCase):
                 ('current_address', 'Cambridge MA'),
                 ('current_address_district_choice', self.dto.location_id),
                 ('current_address_state_choice', self.sto.location_id),
+                ('dob', '1998-07-01'),
                 ('dob_known', 'no'),
                 ('first_name', 'A B'),
                 ('last_name', 'C'),

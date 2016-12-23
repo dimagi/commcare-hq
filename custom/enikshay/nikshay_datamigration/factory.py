@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -104,6 +104,7 @@ class EnikshayCaseFactory(object):
                     'current_address': self.patient_detail.paddress,
                     'current_address_district_choice': self.district.location_id,
                     'current_address_state_choice': self.state.location_id,
+                    'dob': date(date.today().year - self.patient_detail.page, 7, 1),
                     'dob_known': 'no',
                     'first_name': self.patient_detail.first_name,
                     'last_name': self.patient_detail.last_name,
