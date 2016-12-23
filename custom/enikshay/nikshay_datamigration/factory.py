@@ -126,8 +126,13 @@ class EnikshayCaseFactory(object):
         }
 
         if self._location:
-            assert self._location.location_type.code == 'phi'
-            kwargs['attrs']['owner_id'] = self._location.location_id
+            if self._location.location_type.code == 'phi':
+                kwargs['attrs']['owner_id'] = self._location.location_id
+            else:
+                kwargs['attrs']['owner_id'] = ARCHIVED_CASE_OWNER_ID
+                kwargs['attrs']['update']['archive_reason'] = 'migration_not_phi_location'
+                kwargs['attrs']['update']['migration_error'] = 'not_phi_location'
+                kwargs['attrs']['update']['migration_error_details'] = self._nikshay_code
         else:
             kwargs['attrs']['owner_id'] = ARCHIVED_CASE_OWNER_ID
             kwargs['attrs']['update']['archive_reason'] = 'migration_location_not_found'
