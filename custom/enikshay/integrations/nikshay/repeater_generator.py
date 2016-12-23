@@ -105,7 +105,7 @@ class NikshayRegisterPatientPayloadGenerator(CaseRepeaterJsonPayloadGenerator):
             error_message = response.json().get('Results', response.content)
         except (JSONDecodeError, KeyError):
             error_message = response.content
-        save_error_message(response.status_code, error_message)
+        save_error_message(repeat_record, response.status_code, error_message)
 
 
 def _get_person_case_properties(person_case, person_case_properties):
