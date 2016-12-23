@@ -615,10 +615,10 @@ class IndexTree(DocumentSchema):
     @staticmethod
     def get_all_dependencies(case_id, child_index_tree, extension_index_tree, closed_cases=None,
                              cached_child_map=None, cached_extension_map=None):
-        """Takes a child and extension index tree and returns returns a set of all dependencies of <case_id>
+        """
+        Takes a child and extension index tree and returns returns a set of all dependencies of <case_id>
 
-        Traverse each incoming index, return each touched case. Stop traversing
-        incoming extensions if they lead to closed cases.
+        Traverse each incoming index, return each touched case.
         Traverse each outgoing index in the extension tree, return each touched case
         """
         if closed_cases is None:
@@ -630,14 +630,10 @@ class IndexTree(DocumentSchema):
                 case_id,
                 cached_map=cached_extension_map
             )
-            open_incoming_extension_indices = {
-                case for case in incoming_extension_indices if case not in closed_cases
-            }
-            all_incoming_indices = itertools.chain(
+            all_incoming_indices = list(itertools.chain(
                 child_index_tree.get_cases_that_directly_depend_on_case(case_id, cached_map=cached_child_map),
-                open_incoming_extension_indices,
-            )
-
+                incoming_extension_indices,
+            ))
             for dependent_case in all_incoming_indices:
                 # incoming indices
                 if dependent_case not in all_cases:
