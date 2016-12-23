@@ -10,7 +10,8 @@ from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation, LocationType
-from corehq.apps.locations.tests.util import LocationStructure, setup_location_types_with_structure
+from corehq.apps.locations.tests.util import LocationStructure, setup_location_types_with_structure, \
+    setup_locations_with_structure, LocationTypeStructure
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
 from custom.enikshay.nikshay_datamigration.models import Followup, Outcome, PatientDetail
@@ -65,18 +66,21 @@ class TestCreateEnikshayCases(TestCase):
         self.domain = Domain(name='enikshay-test-domain')
         self.domain.save()
 
+        location_type_structure = [
+            LocationTypeStructure('phi', [])
+        ]
         location_structure = [
             LocationStructure('PHI', 'phi', [])
         ]
-        location_types = setup_location_types_with_structure(self.domain.name, location_structure)
 
-        self.loc = SQLLocation.objects.create(
-            domain=self.domain.name,
-            location_type=location_types['PHI'],
-            metadata={
-                'nikshay_code': 'MH-ABD-05-16',
-            },
-        )
+        setup_location_types_with_structure(self.domain.name, location_type_structure)
+        locations = setup_locations_with_structure(self.domain.name, location_structure)
+
+        self.phi = locations['PHI']
+        self.phi.metadata = {
+            'nikshay_code': 'MH-ABD-05-16',
+        }
+        self.phi.save()
 
         self.case_accessor = CaseAccessors(self.domain.name)
 
@@ -127,7 +131,7 @@ class TestCreateEnikshayCases(TestCase):
         )
         self.assertEqual('MH-ABD-05-16-0001', person_case.external_id)
         self.assertEqual('A B C', person_case.name)
-        self.assertEqual(self.loc.location_id, person_case.owner_id)
+        self.assertEqual(self.phi.location_id, person_case.owner_id)
         # make sure the case is only created/modified by a single form
         self.assertEqual(1, len(person_case.xform_ids))
 
@@ -280,7 +284,7 @@ class TestCreateEnikshayCases(TestCase):
 
     @run_with_all_backends
     def test_location_not_found(self):
-        self.loc.delete()
+        self.phi.delete()
         call_command('create_enikshay_cases', self.domain.name)
 
         person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
