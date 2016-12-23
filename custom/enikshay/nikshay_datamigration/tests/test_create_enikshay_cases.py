@@ -67,10 +67,38 @@ class TestCreateEnikshayCases(TestCase):
         self.domain.save()
 
         location_type_structure = [
-            LocationTypeStructure('phi', [])
+            LocationTypeStructure('ctd', [
+                LocationTypeStructure('sto', [
+                    LocationTypeStructure('cto', [
+                        LocationTypeStructure('dto', [
+                            LocationTypeStructure('tu', [
+                                LocationTypeStructure('phi', []),
+                                LocationTypeStructure('dmc', []),
+                            ]),
+                            LocationTypeStructure('drtb-hiv', []),
+                        ])
+                    ]),
+                    LocationTypeStructure('drtb', []),
+                    LocationTypeStructure('cdst', []),
+                ])
+            ])
         ]
         location_structure = [
-            LocationStructure('PHI', 'phi', [])
+            LocationStructure('CTD', 'ctd', [
+                LocationStructure('STO', 'sto', [
+                    LocationStructure('CTO', 'cto', [
+                        LocationStructure('DTO', 'dto', [
+                            LocationStructure('TU', 'tu', [
+                                LocationStructure('PHI', 'phi', []),
+                                LocationStructure('DMC', 'dmc', []),
+                            ]),
+                            LocationStructure('DRTB-HIV', 'drtb-hiv', []),
+                        ])
+                    ]),
+                    LocationStructure('DRTB', 'drtb', []),
+                    LocationStructure('CDST', 'cdst', []),
+                ])
+            ])
         ]
 
         setup_location_types_with_structure(self.domain.name, location_type_structure)
