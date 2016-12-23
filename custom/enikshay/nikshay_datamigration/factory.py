@@ -125,9 +125,9 @@ class EnikshayCaseFactory(object):
             },
         }
 
-        if self._location:
-            if self._location.location_type.code == 'phi':
-                kwargs['attrs']['owner_id'] = self._location.location_id
+        if self.phi:
+            if self.phi.location_type.code == 'phi':
+                kwargs['attrs']['owner_id'] = self.phi.location_id
             else:
                 kwargs['attrs']['owner_id'] = ARCHIVED_CASE_OWNER_ID
                 kwargs['attrs']['update']['archive_reason'] = 'migration_not_phi_location'
@@ -288,7 +288,7 @@ class EnikshayCaseFactory(object):
         return Followup.objects.filter(PatientID=self.patient_detail)
 
     @property
-    def _location(self):
+    def phi(self):
         return self.nikshay_codes_to_location.get(self._nikshay_code)
 
     @property
