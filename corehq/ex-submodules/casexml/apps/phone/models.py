@@ -613,16 +613,13 @@ class IndexTree(DocumentSchema):
         return json.dumps(self.indices, indent=2)
 
     @staticmethod
-    def get_all_dependencies(case_id, child_index_tree, extension_index_tree, closed_cases=None,
+    def get_all_dependencies(case_id, child_index_tree, extension_index_tree,
                              cached_child_map=None, cached_extension_map=None):
         """Takes a child and extension index tree and returns returns a set of all dependencies of <case_id>
 
         Traverse each incoming index, return each touched case.
         Traverse each outgoing index in the extension tree, return each touched case
         """
-        if closed_cases is None:
-            closed_cases = set()
-
         def _recursive_call(case_id, all_cases, cached_child_map, cached_extension_map):
             all_cases.add(case_id)
             incoming_extension_indices = extension_index_tree.get_cases_that_directly_depend_on_case(
@@ -814,7 +811,6 @@ class SimplifiedSyncLog(AbstractSyncLog):
         """
         relevant = IndexTree.get_all_dependencies(
             case_id,
-            closed_cases=self.closed_cases,
             child_index_tree=self.index_tree,
             extension_index_tree=self.extension_index_tree,
             cached_child_map=_reverse_index_map(self.index_tree.indices),
