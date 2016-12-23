@@ -335,7 +335,9 @@ class DateSpan(object):
             return "Invalid date span %s - %s" % (self.startdate_param, self.enddate_param)
 
         # if the dates comprise a month exactly, use that
-        if self.startdate.day == 1 and (self.enddate + datetime.timedelta(days=1)).day == 1:
+        if (self.startdate.day == 1 and
+                (self.enddate + datetime.timedelta(days=1)).day == 1
+                and (self.enddate - self.startdate) < datetime.timedelta(days=32)):
             return "%s %s" % (month_name[self.startdate.month], self.startdate.year)
 
         # if the end date is today or tomorrow, use "last N days syntax"
