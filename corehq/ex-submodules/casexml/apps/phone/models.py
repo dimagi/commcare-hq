@@ -826,13 +826,25 @@ class SimplifiedSyncLog(AbstractSyncLog):
     def _get_available_cases(self, relevant):
         """
         Mark all relevant cases that are open and have no outgoing extension indexes
-        as available. Traverse incoming extension indexes which don't lead to closed
+        as available.
+
+        Traverse incoming extension indexes which don't lead to closed
         cases, mark all touched cases as available
         """
+        def _case_is_available(case):
+            return (
+                case not in self.dependent_case_ids_on_phone  # all live cases are available
+                or (
+                    case not in self.closed_cases  # open
+                    and (
+                       not self.extension_index_tree.indices.get(case)
+                       or self.index_tree.indices.get(case)
+                    )
+                )
+            )
+
         incoming_extensions = _reverse_index_map(self.extension_index_tree.indices)
-        available = {case for case in relevant
-                     if case not in self.closed_cases
-                     and (not self.extension_index_tree.indices.get(case) or self.index_tree.indices.get(case))}
+        available = {case for case in relevant if _case_is_available(case)}
         new_available = set() | available
         while new_available:
             case_to_check = new_available.pop()
