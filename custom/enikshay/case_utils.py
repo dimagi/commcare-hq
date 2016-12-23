@@ -132,11 +132,15 @@ def get_adherence_cases_between_dates(domain, person_case_id, start_date, end_da
     return open_pertinent_adherence_cases
 
 
-def update_case(domain, case_id, updated_properties):
+def update_case(domain, case_id, updated_properties, external_id=None):
+    kwargs = {
+        'case_id': case_id,
+        'update': updated_properties,
+    }
+    if external_id is not None:
+        kwargs.update({'external_id': external_id})
+
     post_case_blocks(
-        [CaseBlock(
-            case_id=case_id,
-            update=updated_properties
-        ).as_xml()],
+        [CaseBlock(**kwargs).as_xml()],
         {'domain': domain}
     )

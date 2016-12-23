@@ -1,0 +1,2 @@
+class NikshayResponseException(Exception):
+    pass

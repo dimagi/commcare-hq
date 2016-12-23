@@ -2,6 +2,7 @@ import json
 from datetime import datetime
 from django.test import TestCase
 
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.test_utils import flag_enabled
 from custom.enikshay.integrations.nikshay.repeaters import NikshayRegisterPatientRepeater
 from custom.enikshay.tests.utils import ENikshayCaseStructureMixin
@@ -153,3 +154,33 @@ class TestNikshayRegisterPatientPayloadGenerator(NikshayRepeaterTestBase):
         self.assertEqual(payload['dotpType'], '5')
         self.assertEqual(payload['dotdesignation'], 'ngo_volunteer')
         self.assertEqual(payload['dateofInitiation'], '2015-03-03')
+
+    def _assert_case_property_equal(self, case, case_property, expected_value):
+        self.assertEqual(case.dynamic_case_properties().get(case_property), expected_value)
+
+    @run_with_all_backends
+    def test_handle_success(self):
+        nikshay_id = "NIKSHAY!"
+        self._create_nikshay_enabled_case()
+        payload_generator = NikshayRegisterPatientPayloadGenerator(None)
+        payload_generator.handle_success(
+            MockResponse(
+                201,
+                {
+                    "Nikshay_Message": "Success",
+                    "Results": [
+                        {
+                            "FieldName": "NikshayId",
+                            "Fieldvalue": nikshay_id,
+                        }
+                    ]
+                }
+            ),
+            self.cases[self.episode_id],
+            None,
+        )
+        updated_episode_case = CaseAccessors(self.domain).get_case(self.episode_id)
+        self._assert_case_property_equal(updated_episode_case, 'nikshay_registered', 'true')
+        self._assert_case_property_equal(updated_episode_case, 'nikshay_error', '')
+        self._assert_case_property_equal(updated_episode_case, 'nikshay_id', nikshay_id)
+        self.assertEqual(updated_episode_case.external_id, nikshay_id)

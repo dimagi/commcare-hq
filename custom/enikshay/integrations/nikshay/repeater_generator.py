@@ -7,6 +7,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.repeaters.repeater_generators import RegisterGenerator, CaseRepeaterJsonPayloadGenerator
 from custom.enikshay.case_utils import get_person_case_from_episode
 from custom.enikshay.integrations.nikshay.repeaters import NikshayRegisterPatientRepeater
+from custom.enikshay.integrations.nikshay.exceptions import NikshayResponseException
 from custom.enikshay.integrations.nikshay.field_mappings import (
     gender_mapping, occupation, episode_site,
     treatment_support_designation, patient_type_choice,
@@ -86,18 +87,18 @@ class NikshayRegisterPatientPayloadGenerator(CaseRepeaterJsonPayloadGenerator):
         # A success would be getting a nikshay_id for the patient
         # without it this would actually be a failure
         try:
-            nikshay_id = response.json()['Results']['Fieldvalue']
-            person_case_id = get_person_case_from_episode(payload_doc.domain, payload_doc.case_id).get_id
+            nikshay_id = _get_nikshay_id_from_response(response)
             update_case(
                 payload_doc.domain,
-                person_case_id,
+                payload_doc.case_id,
                 {
                     "nikshay_registered": "true",
                     "nikshay_id": nikshay_id,
-                    "external_id": nikshay_id
-                }
+                    "nikshay_error": "",
+                },
+                external_id=nikshay_id,
             )
-        except (JSONDecodeError, KeyError):
+        except NikshayResponseException:
             self.handle_failure(response, payload_doc, repeat_record)
 
     def handle_failure(self, response, payload_doc, repeat_record):
@@ -106,6 +107,18 @@ class NikshayRegisterPatientPayloadGenerator(CaseRepeaterJsonPayloadGenerator):
         except (JSONDecodeError, KeyError):
             error_message = response.content
         save_error_message(repeat_record, response.status_code, error_message)
+
+
+def _get_nikshay_id_from_response(response):
+    try:
+        results = response.json()['Results']
+        nikshay_ids = [result['Fieldvalue'] for result in results if result['FieldName'] == 'NikshayId']
+        if len(nikshay_ids) == 1:
+            return nikshay_ids[0]
+        else:
+            raise NikshayResponseException("Invalid Nikshay ID received")
+    except (JSONDecodeError, KeyError):
+        raise NikshayResponseException("Invalid JSON received")
 
 
 def _get_person_case_properties(person_case, person_case_properties):
