@@ -691,27 +691,6 @@ class IndexTree(DocumentSchema):
         cached_map = cached_map or _reverse_index_map(self.indices)
         return cached_map.get(case_id, [])
 
-    def get_all_cases_that_depend_on_case(self, case_id, cached_map=None):
-        """
-        Recursively builds a tree of all cases that depend on this case and returns
-        a flat set of case ids.
-
-        Allows passing in a cached map of reverse index references if you know you are going
-        to call it more than once in a row to avoid rebuilding that.
-        """
-
-        def _recursive_call(case_id, all_cases, cached_map):
-            all_cases.add(case_id)
-            for dependent_case in self.get_cases_that_directly_depend_on_case(case_id, cached_map=cached_map):
-                if dependent_case not in all_cases:
-                    all_cases.add(dependent_case)
-                    _recursive_call(dependent_case, all_cases, cached_map)
-
-        all_cases = set()
-        cached_map = cached_map or _reverse_index_map(self.indices)
-        _recursive_call(case_id, all_cases, cached_map)
-        return all_cases
-
     def delete_index(self, from_case_id, index_name):
         prior_ids = self.indices.pop(from_case_id, {})
         prior_ids.pop(index_name, None)

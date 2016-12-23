@@ -10,7 +10,7 @@ class TestExtendedFootprint(SimpleTestCase):
             child_id: convert_list_to_dict([parent_id]),
             parent_id: convert_list_to_dict([grandparent_id]),
         })
-        cases = tree.get_all_cases_that_depend_on_case(grandparent_id)
+        cases = IndexTree.get_all_dependencies(grandparent_id, tree, IndexTree())
         self.assertEqual(cases, set(all_cases))
 
     def test_multiple_children(self):
@@ -20,7 +20,7 @@ class TestExtendedFootprint(SimpleTestCase):
             child_id_2: convert_list_to_dict([parent_id]),
             parent_id: convert_list_to_dict([grandparent_id]),
         })
-        cases = tree.get_all_cases_that_depend_on_case(grandparent_id)
+        cases = IndexTree.get_all_dependencies(grandparent_id, tree, IndexTree())
         self.assertEqual(cases, set(all_cases))
 
     def test_simple_extension(self):
@@ -455,6 +455,7 @@ class ExtensionCasesPurgingTest(SimpleTestCase):
                                      dependent_case_ids_on_phone=set([host_id, extension_id]),
                                      closed_cases=set([host_id, extension_id]),
                                      case_ids_on_phone=set(all_ids))
+
         sync_log.purge(host_id)
         self.assertTrue(extension_of_extension_id in sync_log.case_ids_on_phone)
         self.assertTrue(extension_id in sync_log.case_ids_on_phone)
