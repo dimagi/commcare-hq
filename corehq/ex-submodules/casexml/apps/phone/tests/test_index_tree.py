@@ -99,30 +99,6 @@ class TestExtendedFootprint(SimpleTestCase):
         extension_dependencies = IndexTree.get_all_dependencies(extension_id, child_tree, extension_tree)
         self.assertEqual(set(all_ids), extension_dependencies)
 
-    def test_closed_extension_with_closed_extension(self):
-        [host_id, extension_id, extension_of_extension_id] = all_ids = ['host', 'extension', 'extension_of_extension']
-        extension_tree = IndexTree(indices={
-            extension_id: convert_list_to_dict([host_id]),
-            extension_of_extension_id: convert_list_to_dict([extension_id]),
-        })
-        child_tree = IndexTree()
-        extension_dependencies = IndexTree.get_all_dependencies(
-            host_id, child_tree, extension_tree, closed_cases=set([host_id, extension_id, extension_of_extension_id])
-        )
-        self.assertEqual(extension_dependencies, set(all_ids))
-
-    def test_closed_extension_with_open_extension(self):
-        [host_id, extension_id, extension_of_extension_id] = all_ids = ['host', 'extension', 'extension_of_extension']
-        extension_tree = IndexTree(indices={
-            extension_id: convert_list_to_dict([host_id]),
-            extension_of_extension_id: convert_list_to_dict([extension_id]),
-        })
-        child_tree = IndexTree()
-        extension_dependencies = IndexTree.get_all_dependencies(
-            host_id, child_tree, extension_tree, closed_cases=set([host_id, extension_id])
-        )
-        self.assertEqual(extension_dependencies, set(all_ids))
-
 
 class PurgingTest(SimpleTestCase):
 
