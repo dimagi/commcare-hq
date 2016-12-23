@@ -107,8 +107,8 @@ class DateFilterTestCase(SimpleTestCase):
             return filter.create_filter_value(reports_core_value).to_sql_values()
 
         val = get_query_value(compare_as_string=False)
-        self.assertEqual(type(val['my_slug_startdate']), datetime)
-        self.assertEqual(type(val['my_slug_enddate']), datetime)
+        self.assertEqual(type(val['my_slug_startdate']), date)
+        self.assertEqual(type(val['my_slug_enddate']), date)
 
         val = get_query_value(compare_as_string=True)
         self.assertEqual(type(val['my_slug_startdate']), str)
