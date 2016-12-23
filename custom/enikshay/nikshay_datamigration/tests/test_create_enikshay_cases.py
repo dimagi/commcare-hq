@@ -164,7 +164,6 @@ class TestCreateEnikshayCases(TestCase):
         self.assertEqual(
             OrderedDict([
                 ('date_of_mo_signature', '2016-12-23'),
-                ('date_reported', '2016-12-13'),
                 ('disease_classification', 'pulmonary'),
                 ('dots_99_enabled', 'false'),
                 ('episode_pending_registration', 'no'),
@@ -181,6 +180,7 @@ class TestCreateEnikshayCases(TestCase):
             episode_case.dynamic_case_properties()
         )
         self.assertEqual('Episode #1: Confirmed TB (Patient)', episode_case.name)
+        self.assertEqual(datetime(2016, 12, 13), episode_case.opened_on)
         self.assertEqual(len(episode_case.indices), 1)
         self._assertIndexEqual(
             CommCareCaseIndex(
