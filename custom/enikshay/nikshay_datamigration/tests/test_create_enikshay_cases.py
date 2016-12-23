@@ -13,6 +13,7 @@ from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
 from custom.enikshay.nikshay_datamigration.models import Followup, Outcome, PatientDetail
+from custom.enikshay.tests.utils import setup_enikshay_locations
 
 
 class TestCreateEnikshayCases(TestCase):
@@ -21,8 +22,6 @@ class TestCreateEnikshayCases(TestCase):
         super(TestCreateEnikshayCases, self).setUp()
         self.patient_detail = PatientDetail.objects.create(
             PregId='MH-ABD-05-16-0001',
-            scode='MA',
-            Dtocode='Middlesex',
             Tbunitcode=1,
             pname='A B C',
             pgender='M',
@@ -64,19 +63,30 @@ class TestCreateEnikshayCases(TestCase):
         self.domain = Domain(name='enikshay-test-domain')
         self.domain.save()
 
-        loc_type = LocationType.objects.create(
-            code='phi',
-            domain=self.domain.name,
-            name='PHI',
-        )
+        locations = setup_enikshay_locations(self.domain.name)
+        self.sto = locations['STO']
+        self.sto.metadata = {
+            'nikshay_code': 'MH',
+        }
+        self.sto.save()
 
-        self.loc = SQLLocation.objects.create(
-            domain=self.domain.name,
-            location_type=loc_type,
-            metadata={
-                'nikshay_code': 'MH-ABD-05-16',
-            },
-        )
+        self.dto = locations['DTO']
+        self.dto.metadata = {
+            'nikshay_code': 'MH-ABD',
+        }
+        self.dto.save()
+
+        self.tu = locations['TU']
+        self.tu.metadata = {
+            'nikshay_code': 'MH-ABD-05',
+        }
+        self.tu.save()
+
+        self.phi = locations['PHI']
+        self.phi.metadata = {
+            'nikshay_code': 'MH-ABD-05-16',
+        }
+        self.phi.save()
 
         self.case_accessor = CaseAccessors(self.domain.name)
 
@@ -109,25 +119,25 @@ class TestCreateEnikshayCases(TestCase):
                 ('age_entered', '18'),
                 ('contact_phone_number', '9987328695'),
                 ('current_address', 'Cambridge MA'),
-                ('current_address_district_choice', 'Middlesex'),
-                ('current_address_state_choice', 'MA'),
+                ('current_address_district_choice', self.dto.location_id),
+                ('current_address_state_choice', self.sto.location_id),
                 ('dob_known', 'no'),
                 ('first_name', 'A B'),
                 ('last_name', 'C'),
                 ('migration_created_case', 'true'),
                 ('nikshay_id', 'MH-ABD-05-16-0001'),
                 ('person_id', 'FROM_NIKSHAY_MH-ABD-05-16-0001'),
-                ('phi', '2'),
+                ('phi', 'PHI'),
                 ('secondary_contact_name_address', 'Secondary name, Secondary address'),
                 ('secondary_contact_phone_number', '123'),
                 ('sex', 'male'),
-                ('tu_choice', '1'),
+                ('tu_choice', 'TU'),
             ]),
             person_case.dynamic_case_properties()
         )
         self.assertEqual('MH-ABD-05-16-0001', person_case.external_id)
         self.assertEqual('A B C', person_case.name)
-        self.assertEqual(self.loc.location_id, person_case.owner_id)
+        self.assertEqual(self.phi.location_id, person_case.owner_id)
         # make sure the case is only created/modified by a single form
         self.assertEqual(1, len(person_case.xform_ids))
 
@@ -280,7 +290,7 @@ class TestCreateEnikshayCases(TestCase):
 
     @run_with_all_backends
     def test_location_not_found(self):
-        self.loc.delete()
+        self.phi.delete()
         call_command('create_enikshay_cases', self.domain.name)
 
         person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')

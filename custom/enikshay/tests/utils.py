@@ -2,6 +2,12 @@ from datetime import datetime
 
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
+from corehq.apps.locations.tests.util import (
+    LocationStructure,
+    LocationTypeStructure,
+    setup_location_types_with_structure,
+    setup_locations_with_structure,
+)
 from custom.enikshay.const import PRIMARY_PHONE_NUMBER, BACKUP_PHONE_NUMBER
 
 
@@ -111,3 +117,43 @@ class ENikshayCaseStructureMixin(object):
             )
             for adherence_date in adherence_dates
         ])
+
+
+def setup_enikshay_locations(domain_name):
+    location_type_structure = [
+        LocationTypeStructure('ctd', [
+            LocationTypeStructure('sto', [
+                LocationTypeStructure('cto', [
+                    LocationTypeStructure('dto', [
+                        LocationTypeStructure('tu', [
+                            LocationTypeStructure('phi', []),
+                            LocationTypeStructure('dmc', []),
+                        ]),
+                        LocationTypeStructure('drtb-hiv', []),
+                    ])
+                ]),
+                LocationTypeStructure('drtb', []),
+                LocationTypeStructure('cdst', []),
+            ])
+        ])
+    ]
+    location_structure = [
+        LocationStructure('CTD', 'ctd', [
+            LocationStructure('STO', 'sto', [
+                LocationStructure('CTO', 'cto', [
+                    LocationStructure('DTO', 'dto', [
+                        LocationStructure('TU', 'tu', [
+                            LocationStructure('PHI', 'phi', []),
+                            LocationStructure('DMC', 'dmc', []),
+                        ]),
+                        LocationStructure('DRTB-HIV', 'drtb-hiv', []),
+                    ])
+                ]),
+                LocationStructure('DRTB', 'drtb', []),
+                LocationStructure('CDST', 'cdst', []),
+            ])
+        ])
+    ]
+
+    setup_location_types_with_structure(domain_name, location_type_structure)
+    return setup_locations_with_structure(domain_name, location_structure)

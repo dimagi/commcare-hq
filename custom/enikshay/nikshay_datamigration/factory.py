@@ -102,15 +102,14 @@ class EnikshayCaseFactory(object):
                     'age_entered': self.patient_detail.page,
                     'contact_phone_number': validate_phone_number(self.patient_detail.pmob),
                     'current_address': self.patient_detail.paddress,
-                    'current_address_district_choice': self.patient_detail.Dtocode,
-                    'current_address_state_choice': self.patient_detail.scode,
+                    'current_address_district_choice': self.district.location_id,
+                    'current_address_state_choice': self.state.location_id,
                     'dob_known': 'no',
                     'first_name': self.patient_detail.first_name,
                     'last_name': self.patient_detail.last_name,
                     'name': self.patient_detail.pname,
                     'nikshay_id': self.nikshay_id,
                     'person_id': 'FROM_NIKSHAY_' + self.nikshay_id,
-                    'phi': self.patient_detail.PHI,
                     'secondary_contact_name_address': (
                         (self.patient_detail.cname or '')
                         + ', '
@@ -118,16 +117,17 @@ class EnikshayCaseFactory(object):
                     ),
                     'secondary_contact_phone_number': validate_phone_number(self.patient_detail.cmob),
                     'sex': self.patient_detail.sex,
-                    'tu_choice': self.patient_detail.Tbunitcode,
+                    'tu_choice': self.tu.name,
 
                     'migration_created_case': 'true',
                 },
             },
         }
 
-        if self._location:
-            if self._location.location_type.code == 'phi':
-                kwargs['attrs']['owner_id'] = self._location.location_id
+        if self.phi:
+            if self.phi.location_type.code == 'phi':
+                kwargs['attrs']['owner_id'] = self.phi.location_id
+                kwargs['attrs']['update']['phi'] = self.phi.name
             else:
                 kwargs['attrs']['owner_id'] = ARCHIVED_CASE_OWNER_ID
                 kwargs['attrs']['update']['archive_reason'] = 'migration_not_phi_location'
@@ -288,7 +288,19 @@ class EnikshayCaseFactory(object):
         return Followup.objects.filter(PatientID=self.patient_detail)
 
     @property
-    def _location(self):
+    def state(self):
+        return self.nikshay_codes_to_location.get(self.patient_detail.PregId.split('-')[0])
+
+    @property
+    def district(self):
+        return self.nikshay_codes_to_location.get('-'.join(self.patient_detail.PregId.split('-')[:2]))
+
+    @property
+    def tu(self):
+        return self.nikshay_codes_to_location.get('-'.join(self.patient_detail.PregId.split('-')[:3]))
+
+    @property
+    def phi(self):
         return self.nikshay_codes_to_location.get(self._nikshay_code)
 
     @property
