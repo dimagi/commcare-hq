@@ -65,8 +65,9 @@ class TestCreateEnikshayCases(TestCase):
         self.domain.save()
 
         loc_type = LocationType.objects.create(
+            code='phi',
             domain=self.domain.name,
-            name='phi',
+            name='PHI',
         )
 
         self.loc = SQLLocation.objects.create(

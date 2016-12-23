@@ -126,7 +126,7 @@ class EnikshayCaseFactory(object):
         }
 
         if self._location:
-            assert self._location.location_type.name == 'phi'
+            assert self._location.location_type.code == 'phi'
             kwargs['attrs']['owner_id'] = self._location.location_id
         else:
             kwargs['attrs']['owner_id'] = ARCHIVED_CASE_OWNER_ID
