@@ -962,7 +962,8 @@ class SimplifiedSyncLog(AbstractSyncLog):
         made_changes = False
         _get_logger().debug('updating sync log for {}'.format(self.user_id))
         _get_logger().debug('case ids before update: {}'.format(', '.join(self.case_ids_on_phone)))
-        _get_logger().debug('dependent case ids before update: {}'.format(', '.join(self.dependent_case_ids_on_phone)))
+        _get_logger().debug('dependent case ids before update: {}'.format(
+            ', '.join(self.dependent_case_ids_on_phone)))
         _get_logger().debug('index tree before update: {}'.format(self.index_tree))
         _get_logger().debug('extension index tree before update: {}'.format(self.extension_index_tree))
 
@@ -1072,7 +1073,8 @@ class SimplifiedSyncLog(AbstractSyncLog):
                     made_changes = True
 
         _get_logger().debug('case ids mid update: {}'.format(', '.join(self.case_ids_on_phone)))
-        _get_logger().debug('dependent case ids mid update: {}'.format(', '.join(self.dependent_case_ids_on_phone)))
+        _get_logger().debug('dependent case ids mid update: {}'.format(
+            ', '.join(self.dependent_case_ids_on_phone)))
         _get_logger().debug('index tree mid update: {}'.format(self.index_tree))
         _get_logger().debug('extension index tree mid update: {}'.format(self.extension_index_tree))
 
@@ -1089,7 +1091,8 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 made_changes = True
 
         _get_logger().debug('case ids after update: {}'.format(', '.join(self.case_ids_on_phone)))
-        _get_logger().debug('dependent case ids after update: {}'.format(', '.join(self.dependent_case_ids_on_phone)))
+        _get_logger().debug('dependent case ids after update: {}'.format(
+            ', '.join(self.dependent_case_ids_on_phone)))
         _get_logger().debug('index tree after update: {}'.format(self.index_tree))
         _get_logger().debug('extension index tree after update: {}'.format(self.extension_index_tree))
         if made_changes or case_list:

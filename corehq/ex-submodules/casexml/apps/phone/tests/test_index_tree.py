@@ -446,7 +446,8 @@ class ExtensionCasesPurgingTest(SimpleTestCase):
         self.assertTrue(host_id in sync_log.case_ids_on_phone)
 
     def test_open_extension_of_extension(self):
-        [host_id, extension_id, extension_of_extension_id] = all_ids = ['host', 'extension', 'extension_of_extension']
+        all_ids = ['host', 'extension', 'extension_of_extension']
+        host_id, extension_id, extension_of_extension_id = all_ids
         extension_tree = IndexTree(indices={
             extension_id: convert_list_to_dict([host_id]),
             extension_of_extension_id: convert_list_to_dict([extension_id]),
