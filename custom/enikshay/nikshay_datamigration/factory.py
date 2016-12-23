@@ -117,7 +117,7 @@ class EnikshayCaseFactory(object):
                     ),
                     'secondary_contact_phone_number': validate_phone_number(self.patient_detail.cmob),
                     'sex': self.patient_detail.sex,
-                    'tu_choice': self.patient_detail.Tbunitcode,
+                    'tu_choice': self.tu.name,
 
                     'migration_created_case': 'true',
                 },
@@ -294,6 +294,10 @@ class EnikshayCaseFactory(object):
     @property
     def district(self):
         return self.nikshay_codes_to_location.get('-'.join(self.patient_detail.PregId.split('-')[:2]))
+
+    @property
+    def tu(self):
+        return self.nikshay_codes_to_location.get('-'.join(self.patient_detail.PregId.split('-')[:3]))
 
     @property
     def phi(self):

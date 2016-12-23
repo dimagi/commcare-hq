@@ -76,6 +76,12 @@ class TestCreateEnikshayCases(TestCase):
         }
         self.dto.save()
 
+        self.tu = locations['TU']
+        self.tu.metadata = {
+            'nikshay_code': 'MH-ABD-05',
+        }
+        self.tu.save()
+
         self.phi = locations['PHI']
         self.phi.metadata = {
             'nikshay_code': 'MH-ABD-05-16',
@@ -125,7 +131,7 @@ class TestCreateEnikshayCases(TestCase):
                 ('secondary_contact_name_address', 'Secondary name, Secondary address'),
                 ('secondary_contact_phone_number', '123'),
                 ('sex', 'male'),
-                ('tu_choice', '1'),
+                ('tu_choice', 'TU'),
             ]),
             person_case.dynamic_case_properties()
         )
