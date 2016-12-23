@@ -2,10 +2,7 @@ import json
 from datetime import datetime
 from django.test import TestCase
 
-from casexml.apps.case.mock.mock import CaseIndex
-from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from corehq.util.test_utils import flag_enabled
-from custom.enikshay.const import PRIMARY_PHONE_NUMBER, BACKUP_PHONE_NUMBER
 from custom.enikshay.integrations.nikshay.repeaters import NikshayRegisterPatientRepeater
 from custom.enikshay.tests.utils import ENikshayCaseStructureMixin
 
@@ -56,7 +53,7 @@ class NikshayRepeaterTestBase(ENikshayCaseStructureMixin, TestCase):
             }
         )
 
-        return self.create_case(nikshay_enabled_case_on_update)
+        return self.create_case(nikshay_enabled_case_on_update)[0]
 
     def _create_nikshay_registered_case(self):
         nikshay_registered_case = CaseStructure(
@@ -70,69 +67,6 @@ class NikshayRepeaterTestBase(ENikshayCaseStructureMixin, TestCase):
             }
         )
         self.create_case(nikshay_registered_case)
-
-    def test_not_available_for_domain(self):
-        self.assertFalse(NikshayRegisterPatientRepeater.available_for_domain(self.domain))
-
-    @flag_enabled('NIKSHAY_INTEGRATION')
-    def test_available_for_domain(self):
-        self.assertTrue(NikshayRegisterPatientRepeater.available_for_domain(self.domain))
-
-    @property
-    def episode(self):
-        return CaseStructure(
-            case_id=self.episode_id,
-            attrs={
-                'create': True,
-                'case_type': 'episode',
-                "update": dict(
-                    person_name="Pippin",
-                    opened_on=datetime(1989, 6, 11, 0, 0),
-                    patient_type_choice="treatment_after_lfu",
-                    hiv_status="reactive",
-                    episode_type="confirmed_tb",
-                    default_adherence_confidence="high",
-                    occupation='engineer',
-                    date_of_diagnosis='2014-09-09',
-                    treatment_initiation_date='2015-03-03',
-                    disease_classification='extra_pulmonary',
-                    treatment_supporter_first_name='awesome',
-                    treatment_supporter_last_name='dot',
-                    treatment_supporter_mobile_number='123456789',
-                    treatment_supporter_designation='ngo_volunteer',
-                    site_choice='pleural_effusion'
-                )
-            },
-            indices=[CaseIndex(
-                self.occurrence,
-                identifier='host',
-                relationship=CASE_INDEX_EXTENSION,
-                related_type=self.occurrence.attrs['case_type'],
-            )],
-        )
-
-    @property
-    def person(self):
-        return CaseStructure(
-            case_id=self.person_id,
-            attrs={
-                "case_type": "person",
-                "create": True,
-                "update": {
-                    'name': "Pippin",
-                    'aadhaar_number': "499118665246",
-                    PRIMARY_PHONE_NUMBER: self.primary_phone_number,
-                    BACKUP_PHONE_NUMBER: self.secondary_phone_number,
-                    'merm_id': "123456789",
-                    'dob': "1987-08-15",
-                    'age': 20,
-                    'sex': 'male',
-                    'current_address': 'Mr. Everest',
-                    'secondary_contact_name_address': 'Mrs. Everestie',
-                    'previous_tb_treatment': 'yes'
-                }
-            },
-        )
 
 
 class TestNikshayRegisterPatientRepeater(NikshayRepeaterTestBase):
@@ -148,6 +82,13 @@ class TestNikshayRegisterPatientRepeater(NikshayRepeaterTestBase):
         self.repeater.white_listed_case_types = ['episode']
         self.repeater.save()
 
+    def test_not_available_for_domain(self):
+        self.assertFalse(NikshayRegisterPatientRepeater.available_for_domain(self.domain))
+
+    @flag_enabled('NIKSHAY_INTEGRATION')
+    def test_available_for_domain(self):
+        self.assertTrue(NikshayRegisterPatientRepeater.available_for_domain(self.domain))
+
     @run_with_all_backends
     def test_trigger(self):
         # nikshay not enabled
@@ -162,30 +103,30 @@ class TestNikshayRegisterPatientRepeater(NikshayRepeaterTestBase):
         self._create_nikshay_registered_case()
         self.assertEqual(1, len(self.repeat_records().all()))
 
+
+class TestNikshayRegisterPatientPayloadGenerator(NikshayRepeaterTestBase):
+    def setUp(self):
+        super(TestNikshayRegisterPatientPayloadGenerator, self).setUp()
+        self.cases = self.create_case_structure()
+
     @run_with_all_backends
     def test_payload_general_properties(self):
-        self.create_case(self.episode)
         episode_case = self._create_nikshay_enabled_case()
-        self.assertEqual(1, len(self.repeat_records().all()))
-        repeat_record = self.repeat_records().all()[0]
         payload = (json.loads(
-            NikshayRegisterPatientPayloadGenerator(self.repeater)
-            .get_payload(repeat_record, episode_case[0]))
+            NikshayRegisterPatientPayloadGenerator(None)
+            .get_payload(None, episode_case))
         )
         self.assertEqual(payload['Source'], ENIKSHAY_ID)
         self.assertEqual(payload['Local_ID'], self.person_id)
-        self.assertEqual(payload['regBy'], self.repeater.username)
+        self.assertEqual(payload['regBy'], self.cases[self.person_id].owner_id)
 
     @run_with_all_backends
     def test_payload_person_properties(self):
-        self.create_case(self.episode)
         episode_case = self._create_nikshay_enabled_case()
-        self.assertEqual(1, len(self.repeat_records().all()))
-        repeat_record = self.repeat_records().all()[0]
         payload = (json.loads(
-            NikshayRegisterPatientPayloadGenerator(self.repeater).get_payload(repeat_record, episode_case[0]))
+            NikshayRegisterPatientPayloadGenerator(None).get_payload(None, episode_case))
         )
-        self.assertEqual(payload['pname'], 'Pippin')
+        self.assertEqual(payload['pname'], "Pippin")
         self.assertEqual(payload['page'], '20')
         self.assertEqual(payload['pgender'], 'M')
         self.assertEqual(payload['paddress'], 'Mr. Everest')
@@ -197,12 +138,9 @@ class TestNikshayRegisterPatientRepeater(NikshayRepeaterTestBase):
 
     @run_with_all_backends
     def test_payload_episode_properties(self):
-        self.create_case(self.episode)
         episode_case = self._create_nikshay_enabled_case()
-        self.assertEqual(1, len(self.repeat_records().all()))
-        repeat_record = self.repeat_records().all()[0]
         payload = (json.loads(
-            NikshayRegisterPatientPayloadGenerator(self.repeater).get_payload(repeat_record, episode_case[0]))
+            NikshayRegisterPatientPayloadGenerator(None).get_payload(None, episode_case))
         )
         self.assertEqual(payload['sitedetail'], 2)
         self.assertEqual(payload['Ptype'], '6')

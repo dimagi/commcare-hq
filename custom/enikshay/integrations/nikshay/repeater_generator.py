@@ -68,13 +68,13 @@ class NikshayRegisterPatientPayloadGenerator(CaseRepeaterJsonPayloadGenerator):
         # "dcpulmunory": "P",
         # "IP_Address": "mk-ip-address",
         # "IP_From": "127.0.0.1",
-        person_case = get_person_case_from_episode(repeat_record.domain, episode_case.get_id)
+        person_case = get_person_case_from_episode(episode_case.domain, episode_case.get_id)
 
         episode_case_properties = episode_case.dynamic_case_properties()
         person_case_properties = person_case.dynamic_case_properties()
 
         properties_dict = {
-            "regBy": self.repeater.username,
+            "regBy": person_case.owner_id,
             "Local_ID": person_case.get_id,
             "Source": ENIKSHAY_ID
         }

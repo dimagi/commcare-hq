@@ -1,4 +1,5 @@
 from datetime import datetime
+import uuid
 
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
@@ -24,6 +25,7 @@ class ENikshayCaseStructureMixin(object):
             attrs={
                 "case_type": "person",
                 "create": True,
+                "owner_id": uuid.uuid4().hex,
                 "update": {
                     'name': "Pippin",
                     'aadhaar_number': "499118665246",
@@ -31,6 +33,11 @@ class ENikshayCaseStructureMixin(object):
                     BACKUP_PHONE_NUMBER: self.secondary_phone_number,
                     'merm_id': "123456789",
                     'dob': "1987-08-15",
+                    'age': 20,
+                    'sex': 'male',
+                    'current_address': 'Mr. Everest',
+                    'secondary_contact_name_address': 'Mrs. Everestie',
+                    'previous_tb_treatment': 'yes',
                 }
             },
         )
@@ -64,10 +71,19 @@ class ENikshayCaseStructureMixin(object):
                 "update": dict(
                     person_name="Pippin",
                     opened_on=datetime(1989, 6, 11, 0, 0),
-                    patient_type="new",
+                    patient_type_choice="treatment_after_lfu",
                     hiv_status="reactive",
                     episode_type="confirmed_tb",
                     default_adherence_confidence="high",
+                    occupation='engineer',
+                    date_of_diagnosis='2014-09-09',
+                    treatment_initiation_date='2015-03-03',
+                    disease_classification='extra_pulmonary',
+                    treatment_supporter_first_name='awesome',
+                    treatment_supporter_last_name='dot',
+                    treatment_supporter_mobile_number='123456789',
+                    treatment_supporter_designation='ngo_volunteer',
+                    site_choice='pleural_effusion',
                 )
             },
             indices=[CaseIndex(
