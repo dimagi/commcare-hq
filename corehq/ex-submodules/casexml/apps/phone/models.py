@@ -820,8 +820,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
             cached_child_map=_reverse_index_map(self.index_tree.indices),
             cached_extension_map=_reverse_index_map(self.extension_index_tree.indices),
         )
-        _get_logger().debug("Relevant cases: {}".format(relevant))
-
+        _get_logger().debug("Relevant cases of {}: {}".format(case_id, relevant))
         return relevant
 
     def _get_available_cases(self, relevant):
