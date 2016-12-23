@@ -143,29 +143,29 @@ def _get_person_case_properties(person_case, person_case_properties):
     'pname': u'home visit', 'scode': u'RJ', 'tcode': 'AB', dotphi': u'Test S1-C1-D1-T1 PHI 1',
     'pmob': u'1234567890', 'cname': u'123', 'caddress': u'123', 'pgender': 'T', 'page': u'79', 'pcategory': 1}
     """
-    person_properites = {}
+    person_properties = {}
     state_choice = person_case_properties.get('current_address_state_choice', None)
     district_choice = person_case_properties.get('current_address_district_choice', None)
     phi_location_id = person_case.owner_id
 
     if state_choice:
         state_location = SQLLocation.objects.get_or_None(location_id=state_choice)
-        person_properites['scode'] = state_location.metadata.get('nikshay_code', '')
+        person_properties['scode'] = state_location.metadata.get('nikshay_code', '')
     if district_choice:
         district_location = SQLLocation.objects.get_or_None(location_id=district_choice)
-        person_properites['dcode'] = district_location.metadata.get('nikshay_code')
+        person_properties['dcode'] = district_location.metadata.get('nikshay_code')
 
     if phi_location_id:
         phi_location = SQLLocation.objects.get_or_None(location_id=phi_location_id)
         if phi_location:
-            person_properites['dotphi'] = phi_location.metadata.get('nikshay_code', '')
+            person_properties['dotphi'] = phi_location.metadata.get('nikshay_code', '')
             tu_location = phi_location.parent
             if tu_location:
-                person_properites['tcode'] = tu_location.metadata.get('nikshay_code', '')
+                person_properties['tcode'] = tu_location.metadata.get('nikshay_code', '')
 
     person_category = '2' if person_case_properties.get('previous_tb_treatment', '') == 'yes' else '1'
 
-    person_properites = {
+    person_properties = {
         "pname": person_case.name,
         "pgender": gender_mapping.get(person_case_properties.get('sex', ''), ''),
         "page": person_case_properties.get('age', ''),
@@ -177,7 +177,7 @@ def _get_person_case_properties(person_case, person_case_properties):
         "pcategory": person_category
     }
 
-    return person_properites
+    return person_properties
 
 
 def _get_episode_case_properties(episode_case_properties):
