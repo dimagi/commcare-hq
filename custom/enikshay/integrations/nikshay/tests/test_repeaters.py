@@ -134,6 +134,7 @@ class NikshayRepeaterTestBase(ENikshayCaseStructureMixin, TestCase):
             },
         )
 
+
 class TestNikshayRegisterPatientRepeater(NikshayRepeaterTestBase):
 
     def setUp(self):
@@ -168,12 +169,14 @@ class TestNikshayRegisterPatientRepeater(NikshayRepeaterTestBase):
         self.assertEqual(1, len(self.repeat_records().all()))
         repeat_record = self.repeat_records().all()[0]
         payload = (json.loads(
-            NikshayRegisterPatientPayloadGenerator(self.repeater).get_payload(repeat_record,episode_case[0]))
+            NikshayRegisterPatientPayloadGenerator(self.repeater)
+            .get_payload(repeat_record, episode_case[0]))
         )
         self.assertEqual(payload['Source'], ENIKSHAY_ID)
         self.assertEqual(payload['Local_ID'], self.person_id)
         self.assertEqual(payload['regBy'], self.repeater.username)
 
+    @run_with_all_backends
     def test_payload_person_properties(self):
         self.create_case(self.episode)
         episode_case = self._create_nikshay_enabled_case()
@@ -182,7 +185,7 @@ class TestNikshayRegisterPatientRepeater(NikshayRepeaterTestBase):
         payload = (json.loads(
             NikshayRegisterPatientPayloadGenerator(self.repeater).get_payload(repeat_record, episode_case[0]))
         )
-        # self.assertEqual(payload['pname'], 'Pippin')
+        self.assertEqual(payload['pname'], 'Pippin')
         self.assertEqual(payload['page'], '20')
         self.assertEqual(payload['pgender'], 'M')
         self.assertEqual(payload['paddress'], 'Mr. Everest')
@@ -192,6 +195,7 @@ class TestNikshayRegisterPatientRepeater(NikshayRepeaterTestBase):
         self.assertEqual(payload['cmob'], self.secondary_phone_number)
         self.assertEqual(payload['pcategory'], '2')
 
+    @run_with_all_backends
     def test_payload_episode_properties(self):
         self.create_case(self.episode)
         episode_case = self._create_nikshay_enabled_case()

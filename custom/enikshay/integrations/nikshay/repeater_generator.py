@@ -137,7 +137,7 @@ def _get_person_case_properties(person_case, person_case_properties):
     person_category = '2' if person_case_properties.get('previous_tb_treatment', '') == 'yes' else '1'
 
     person_properites = {
-        "pname": person_case_properties.get('name', ''),
+        "pname": person_case.name,
         "pgender": gender_mapping.get(person_case_properties.get('sex', ''), ''),
         "page": person_case_properties.get('age', ''),
         "paddress": person_case_properties.get('current_address', ''),
