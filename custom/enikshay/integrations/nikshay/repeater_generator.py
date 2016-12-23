@@ -98,8 +98,8 @@ class NikshayRegisterPatientPayloadGenerator(CaseRepeaterJsonPayloadGenerator):
                 },
                 external_id=nikshay_id,
             )
-        except NikshayResponseException:
-            self.handle_failure(response, payload_doc, repeat_record)
+        except NikshayResponseException as e:
+            _save_error_message(payload_doc.domain, payload_doc.case_id, e.message)
 
     def handle_failure(self, response, payload_doc, repeat_record):
         try:
@@ -111,14 +111,24 @@ class NikshayRegisterPatientPayloadGenerator(CaseRepeaterJsonPayloadGenerator):
 
 def _get_nikshay_id_from_response(response):
     try:
-        results = response.json()['Results']
-        nikshay_ids = [result['Fieldvalue'] for result in results if result['FieldName'] == 'NikshayId']
-        if len(nikshay_ids) == 1:
-            return nikshay_ids[0]
-        else:
-            raise NikshayResponseException("Invalid Nikshay ID received")
-    except (JSONDecodeError, KeyError):
+        response_json = response.json()
+    except JSONDecodeError:
         raise NikshayResponseException("Invalid JSON received")
+
+    try:
+        message = response_json['Nikshay_Message']
+        if message == "Success":
+            results = response_json['Results']
+            nikshay_ids = [result['Fieldvalue'] for result in results if result['FieldName'] == 'NikshayId']
+        else:
+            raise NikshayResponseException("Nikshay message was: {}".format(message))
+    except KeyError:
+        raise NikshayResponseException("Response JSON not to spec: {}".format(response_json))
+
+    if len(nikshay_ids) == 1:
+        return nikshay_ids[0]
+    else:
+        raise NikshayResponseException("No Nikshay ID received: {}".format(response_json))
 
 
 def _get_person_case_properties(person_case, person_case_properties):
@@ -213,7 +223,12 @@ def _get_episode_case_properties(episode_case_properties):
     return episode_properties
 
 
-def save_error_message(repeat_record, status_code, error_message):
-    repeat_record.add_failure_reason(
-        "{}: {}".format(status_code, error_message)
+def _save_error_message(domain, case_id, error):
+    update_case(
+        domain,
+        case_id,
+        {
+            "nikshay_registered": "false",
+            "nikshay_error": error,
+        },
     )
