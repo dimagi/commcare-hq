@@ -42,6 +42,7 @@ class TestCreateEnikshayCases(TestCase):
             atbtreatment='',
             Ptype=4,
             pcategory=4,
+            cvisitedDate1='2016-12-25 00:00:00.000',
             InitiationDate1='2016-12-22 16:06:47.726',
             dotmosignDate1='2016-12-23 00:00:00.000',
         )
@@ -133,9 +134,11 @@ class TestCreateEnikshayCases(TestCase):
         occurrence_case = self.case_accessor.get_case(occurrence_case_ids[0])
         self.assertEqual(
             OrderedDict([
+                ('current_episode_type', 'confirmed_tb'),
                 ('hiv_status', 'negative'),
+                ('ihv_date', '2016-12-25'),
+                ('initial_home_visit_status', 'completed'),
                 ('migration_created_case', 'true'),
-                ('nikshay_id', 'MH-ABD-05-16-0001'),
                 ('occurrence_episode_count', '1'),
                 ('occurrence_id', '20160908010203004'),
             ]),
