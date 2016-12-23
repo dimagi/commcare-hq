@@ -8,17 +8,15 @@ from mock import patch
 
 from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
-from corehq.apps.domain.models import Domain
-from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
 from custom.enikshay.nikshay_datamigration.models import Followup, Outcome, PatientDetail
-from custom.enikshay.tests.utils import setup_enikshay_locations
+from custom.enikshay.tests.utils import ENikshayLocationStructureMixin
 
 
-class TestCreateEnikshayCases(TestCase):
-
+class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
     def setUp(self):
+        self.domain = "enikshay-test-domain"
         super(TestCreateEnikshayCases, self).setUp()
         self.patient_detail = PatientDetail.objects.create(
             PregId='MH-ABD-05-16-0001',
@@ -59,36 +57,7 @@ class TestCreateEnikshayCases(TestCase):
                 id=(i + 1),
                 PatientID=self.patient_detail,
             )
-
-        self.domain = Domain(name='enikshay-test-domain')
-        self.domain.save()
-
-        locations = setup_enikshay_locations(self.domain.name)
-        self.sto = locations['STO']
-        self.sto.metadata = {
-            'nikshay_code': 'MH',
-        }
-        self.sto.save()
-
-        self.dto = locations['DTO']
-        self.dto.metadata = {
-            'nikshay_code': 'MH-ABD',
-        }
-        self.dto.save()
-
-        self.tu = locations['TU']
-        self.tu.metadata = {
-            'nikshay_code': 'MH-ABD-05',
-        }
-        self.tu.save()
-
-        self.phi = locations['PHI']
-        self.phi.metadata = {
-            'nikshay_code': 'MH-ABD-05-16',
-        }
-        self.phi.save()
-
-        self.case_accessor = CaseAccessors(self.domain.name)
+        self.case_accessor = CaseAccessors(self.domain)
 
     def tearDown(self):
         Outcome.objects.all().delete()
@@ -96,18 +65,13 @@ class TestCreateEnikshayCases(TestCase):
         # Household.objects.all().delete()
         PatientDetail.objects.all().delete()
 
-        self.domain.delete()
-
-        SQLLocation.objects.all().delete()
-        LocationType.objects.all().delete()
-
         super(TestCreateEnikshayCases, self).tearDown()
 
     @run_with_all_backends
     @patch('custom.enikshay.nikshay_datamigration.factory.datetime')
     def test_case_creation(self, mock_datetime):
         mock_datetime.utcnow.return_value = datetime(2016, 9, 8, 1, 2, 3, 4123)
-        call_command('create_enikshay_cases', self.domain.name)
+        call_command('create_enikshay_cases', self.domain)
 
         person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
         self.assertEqual(1, len(person_case_ids))
@@ -262,7 +226,7 @@ class TestCreateEnikshayCases(TestCase):
 
     @run_with_all_backends
     def test_case_update(self):
-        call_command('create_enikshay_cases', self.domain.name)
+        call_command('create_enikshay_cases', self.domain)
 
         new_addhaar_number = 867386000001
         self.patient_detail.paadharno = new_addhaar_number
@@ -271,7 +235,7 @@ class TestCreateEnikshayCases(TestCase):
         self.outcome.HIVStatus = 'positive'
         self.outcome.save()
 
-        call_command('create_enikshay_cases', self.domain.name)
+        call_command('create_enikshay_cases', self.domain)
 
         person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
         self.assertEqual(1, len(person_case_ids))
@@ -291,7 +255,7 @@ class TestCreateEnikshayCases(TestCase):
     @run_with_all_backends
     def test_location_not_found(self):
         self.phi.delete()
-        call_command('create_enikshay_cases', self.domain.name)
+        call_command('create_enikshay_cases', self.domain)
 
         person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
         self.assertEqual(1, len(person_case_ids))
