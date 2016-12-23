@@ -249,3 +249,7 @@ class TestNikshayRegisterPatientPayloadGenerator(NikshayRepeaterTestBase):
         updated_episode_case = CaseAccessors(self.domain).get_case(self.episode_id)
         self._assert_case_property_equal(updated_episode_case, 'nikshay_registered', 'false')
         self._assert_case_property_equal(updated_episode_case, 'nikshay_error', unicode(message))
+
+
+class TestGetPersonLocations(ENikshayCaseStructureMixin):
+    pass

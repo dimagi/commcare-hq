@@ -7,7 +7,11 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.repeaters.repeater_generators import RegisterGenerator, CaseRepeaterJsonPayloadGenerator
 from custom.enikshay.case_utils import get_person_case_from_episode
 from custom.enikshay.integrations.nikshay.repeaters import NikshayRegisterPatientRepeater
-from custom.enikshay.integrations.nikshay.exceptions import NikshayResponseException
+from custom.enikshay.integrations.nikshay.exceptions import (
+    NikshayResponseException,
+    NikshayLocationNotFound,
+    NikshayCodeNotFound,
+)
 from custom.enikshay.integrations.nikshay.field_mappings import (
     gender_mapping, occupation, episode_site,
     treatment_support_designation, patient_type_choice,
@@ -137,6 +141,35 @@ def _get_nikshay_id_from_response(response):
         raise NikshayResponseException("No Nikshay ID received: {}".format(response_json))
 
 
+def get_person_locations(person_case):
+    location_properties = {}
+    try:
+        phi_location = SQLLocation.objects.get(location_id=person_case.owner_id)
+    except SQLLocation.DoesNotExist:
+        raise NikshayLocationNotFound(
+            "Location with id {location_id} not found. This is the owner for person with id: {person_id}"
+            .format(location_id=person_case.owner_id, person_id=person_case.case_id)
+        )
+
+    try:
+        tu_location = phi_location.parent
+        district_location = tu_location.parent
+        city_location = tu_location.parent
+        state_location = city_location.parent
+    except AttributeError:
+        raise NikshayLocationNotFound("Location structure error for person: {}".format(person_case.case_id))
+
+    try:
+        location_properties['scode'] = state_location.metadata['nikshay_code']
+        location_properties['dcode'] = district_location.metadata['nikshay_code']
+        location_properties['dotphi'] = phi_location.metadata['nikshay_code']
+        location_properties['tcode'] = tu_location.metadata['nikshay_code']
+    except (KeyError, AttributeError):
+        raise NikshayCodeNotFound("Nikshay codes not found")
+
+    return location_properties
+
+
 def _get_person_case_properties(person_case, person_case_properties):
     """
     :return: Example {'dcode': u'JLR', 'paddress': u'123, near asdf, Jalore, Rajasthan ', 'cmob': u'1234567890',
@@ -144,24 +177,7 @@ def _get_person_case_properties(person_case, person_case_properties):
     'pmob': u'1234567890', 'cname': u'123', 'caddress': u'123', 'pgender': 'T', 'page': u'79', 'pcategory': 1}
     """
     person_properties = {}
-    state_choice = person_case_properties.get('current_address_state_choice', None)
-    district_choice = person_case_properties.get('current_address_district_choice', None)
-    phi_location_id = person_case.owner_id
-
-    if state_choice:
-        state_location = SQLLocation.objects.get_or_None(location_id=state_choice)
-        person_properties['scode'] = state_location.metadata.get('nikshay_code', '')
-    if district_choice:
-        district_location = SQLLocation.objects.get_or_None(location_id=district_choice)
-        person_properties['dcode'] = district_location.metadata.get('nikshay_code')
-
-    if phi_location_id:
-        phi_location = SQLLocation.objects.get_or_None(location_id=phi_location_id)
-        if phi_location:
-            person_properties['dotphi'] = phi_location.metadata.get('nikshay_code', '')
-            tu_location = phi_location.parent
-            if tu_location:
-                person_properties['tcode'] = tu_location.metadata.get('nikshay_code', '')
+    person_properties.update(get_person_locations(person_case))
 
     person_category = '2' if person_case_properties.get('previous_tb_treatment', '') == 'yes' else '1'
 
