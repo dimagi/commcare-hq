@@ -11,7 +11,9 @@ from corehq.apps.locations.tests.util import (
     setup_location_types_with_structure,
     setup_locations_with_structure,
 )
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from custom.enikshay.const import PRIMARY_PHONE_NUMBER, BACKUP_PHONE_NUMBER
+from corehq.apps.users.models import CommCareUser
 
 
 class ENikshayCaseStructureMixin(object):
@@ -19,12 +21,20 @@ class ENikshayCaseStructureMixin(object):
         super(ENikshayCaseStructureMixin, self).setUp()
         self.domain = getattr(self, 'domain', 'fake-domain-from-mixin')
         self.factory = CaseFactory(domain=self.domain)
-
+        self.user = CommCareUser.create(
+            self.domain,
+            "jon-snow@user",
+            "123",
+        )
         self.person_id = u"person"
         self.occurrence_id = u"occurrence"
         self.episode_id = u"episode"
         self.primary_phone_number = "0123456789"
         self.secondary_phone_number = "0999999999"
+
+    def tearDown(self):
+        delete_all_users()
+        super(ENikshayCaseStructureMixin, self).tearDown()
 
     @property
     def person(self):
@@ -32,6 +42,7 @@ class ENikshayCaseStructureMixin(object):
             case_id=self.person_id,
             attrs={
                 "case_type": "person",
+                "user_id": self.user.user_id,
                 "create": True,
                 "owner_id": uuid.uuid4().hex,
                 "update": {
@@ -41,7 +52,7 @@ class ENikshayCaseStructureMixin(object):
                     BACKUP_PHONE_NUMBER: self.secondary_phone_number,
                     'merm_id': "123456789",
                     'dob': "1987-08-15",
-                    'age': 20,
+                    'age': '20',
                     'sex': 'male',
                     'current_address': 'Mr. Everest',
                     'secondary_contact_name_address': 'Mrs. Everestie',

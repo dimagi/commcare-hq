@@ -106,7 +106,7 @@ class ENikshayCaseUtilsTests(ENikshayCaseStructureMixin, TestCase):
         self.factory.create_or_update_cases([self.person])
         case_accessors = CaseAccessors(self.domain)
         person_case = case_accessors.get_case(self.person_id)
-        self.assertIsNone(person_case.dynamic_case_properties().get('age', None))
+        self.assertEqual(person_case.dynamic_case_properties().get('age', None), '20')
         update_case(self.domain, self.person_id, update_properties)
         person_case = case_accessors.get_case(self.person_id)
         self.assertEqual(person_case.dynamic_case_properties()['age'], '99')
