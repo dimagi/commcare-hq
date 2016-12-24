@@ -160,6 +160,7 @@ def get_person_locations(person_case):
     except AttributeError:
         raise NikshayLocationNotFound("Location structure error for person: {}".format(person_case.case_id))
     try:
+        # TODO: verify how location codes will be stored
         location_properties['scode'] = state_location.metadata['nikshay_code']
         location_properties['dcode'] = district_location.metadata['nikshay_code']
         location_properties['tcode'] = tu_location.metadata['nikshay_code']
