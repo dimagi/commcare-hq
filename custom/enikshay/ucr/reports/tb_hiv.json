@@ -16,7 +16,7 @@
         "description": "",
         "title": "TB-HIV Web Report",
         "sort_expression": [],
-        "visible": false,
+        "visible": true,
         "configured_charts": [],
         "aggregation_columns": [],
         "filters": [
