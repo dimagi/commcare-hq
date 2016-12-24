@@ -19,6 +19,7 @@ from corehq.apps.users.models import CommCareUser
 class ENikshayCaseStructureMixin(object):
     def setUp(self):
         super(ENikshayCaseStructureMixin, self).setUp()
+        delete_all_users()
         self.domain = getattr(self, 'domain', 'fake-domain-from-mixin')
         self.factory = CaseFactory(domain=self.domain)
         self.user = CommCareUser.create(
