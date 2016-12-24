@@ -78,6 +78,7 @@ class ENikshayCaseStructureMixin(object):
                 'create': True,
                 'case_type': 'episode',
                 "update": dict(
+                    name="Episode #1",
                     person_name="Pippin",
                     opened_on=datetime(1989, 6, 11, 0, 0),
                     patient_type_choice="treatment_after_lfu",
