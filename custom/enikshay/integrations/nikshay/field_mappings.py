@@ -68,3 +68,12 @@ episode_site = {
     'abdominal': 3,
     'others': 10,
 }
+dcpulmonory = {
+    'pulmonary': 'Y',
+    'extra_pulmonary': 'N',
+}
+
+dcexpulmonory = {
+    'pulmonary': 'N',
+    'extra_pulmonary': 'Y',
+}

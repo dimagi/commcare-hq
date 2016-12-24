@@ -2,6 +2,8 @@ import json
 import datetime
 
 from corehq.apps.locations.models import SQLLocation
+
+from corehq.apps.users.models import CouchUser
 from corehq.apps.repeaters.exceptions import RequestConnectionError
 from corehq.apps.repeaters.repeater_generators import RegisterGenerator, BasePayloadGenerator
 from custom.enikshay.case_utils import get_person_case_from_episode
@@ -12,9 +14,14 @@ from custom.enikshay.integrations.nikshay.exceptions import (
     NikshayCodeNotFound,
 )
 from custom.enikshay.integrations.nikshay.field_mappings import (
-    gender_mapping, occupation, episode_site,
-    treatment_support_designation, patient_type_choice,
-    disease_classification
+    gender_mapping,
+    occupation,
+    episode_site,
+    treatment_support_designation,
+    patient_type_choice,
+    disease_classification,
+    dcexpulmonory,
+    dcpulmonory,
 )
 from custom.enikshay.case_utils import update_case
 
@@ -41,12 +48,12 @@ class NikshayRegisterPatientPayloadGenerator(BasePayloadGenerator):
         cname
         caddress
         cmob
-        dcpulmunory # Pending
+        dcpulmunory
         dotname
         dotdesignation
         dotmob
         dotpType
-        dotcenter # Pending
+        dotcenter
         regBy # Used date_of_diagnosis instead of date_of_registration
         IP_From # Pending
         Local_ID
@@ -80,11 +87,12 @@ class NikshayRegisterPatientPayloadGenerator(BasePayloadGenerator):
 
         episode_case_properties = episode_case.dynamic_case_properties()
         person_case_properties = person_case.dynamic_case_properties()
-
         properties_dict = {
-            "regBy": person_case.owner_id,
+            "regBy": CouchUser.get(person_case.opened_by).name,
             "Local_ID": person_case.get_id,
-            "Source": ENIKSHAY_ID
+            "Source": ENIKSHAY_ID,
+            "dotcenter": "NA",
+            "IP_From": "127.0.0.1",
         }
         try:
             properties_dict.update(_get_person_case_properties(person_case, person_case_properties))
@@ -234,6 +242,8 @@ def _get_episode_case_properties(episode_case_properties):
             episode_case_properties.get('disease_classification', ''),
             ''
         ),
+        "dcpulmunory": dcpulmonory.get(episode_case_properties.get('disease_classification', ''), "N"),
+        "dcexpulmunory": dcexpulmonory.get(episode_case_properties.get('disease_classification', ''), "N"),
         "dotname": (' '.join(
             [episode_case_properties.get('treatment_supporter_first_name', ''),
              episode_case_properties.get('treatment_supporter_last_name', '')])
