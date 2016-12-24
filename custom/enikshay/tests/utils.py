@@ -174,6 +174,18 @@ class ENikshayLocationStructureMixin(object):
         LocationType.objects.all().delete()
         super(ENikshayLocationStructureMixin, self).tearDown()
 
+    def assign_person_to_location(self, location_id):
+        self.create_case(
+            CaseStructure(
+                case_id=self.person_id,
+                attrs={
+                    "update": dict(
+                        owner_id=location_id,
+                    )
+                }
+            )
+        )
+
     def _setup_enikshay_locations(self, domain_name):
         location_type_structure = [
             LocationTypeStructure('ctd', [

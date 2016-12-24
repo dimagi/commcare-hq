@@ -83,7 +83,10 @@ class NikshayRegisterPatientPayloadGenerator(CaseRepeaterJsonPayloadGenerator):
             "Local_ID": person_case.get_id,
             "Source": ENIKSHAY_ID
         }
-        properties_dict.update(_get_person_case_properties(person_case, person_case_properties))
+        try:
+            properties_dict.update(_get_person_case_properties(person_case, person_case_properties))
+        except NikshayLocationNotFound as e:
+            _save_error_message(person_case.domain, person_case.case_id, e)
         properties_dict.update(_get_episode_case_properties(episode_case_properties))
         return json.dumps(properties_dict)
 
@@ -154,18 +157,17 @@ def get_person_locations(person_case):
     try:
         tu_location = phi_location.parent
         district_location = tu_location.parent
-        city_location = tu_location.parent
+        city_location = district_location.parent
         state_location = city_location.parent
     except AttributeError:
         raise NikshayLocationNotFound("Location structure error for person: {}".format(person_case.case_id))
-
     try:
         location_properties['scode'] = state_location.metadata['nikshay_code']
         location_properties['dcode'] = district_location.metadata['nikshay_code']
-        location_properties['dotphi'] = phi_location.metadata['nikshay_code']
         location_properties['tcode'] = tu_location.metadata['nikshay_code']
-    except (KeyError, AttributeError):
-        raise NikshayCodeNotFound("Nikshay codes not found")
+        location_properties['dotphi'] = phi_location.metadata['nikshay_code']
+    except (KeyError, AttributeError) as e:
+        raise NikshayCodeNotFound("Nikshay codes not found: {}".format(e))
 
     return location_properties
 

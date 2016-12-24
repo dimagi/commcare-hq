@@ -5,10 +5,14 @@ from django.test import TestCase
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.test_utils import flag_enabled
 from custom.enikshay.integrations.nikshay.repeaters import NikshayRegisterPatientRepeater
-from custom.enikshay.tests.utils import ENikshayCaseStructureMixin
+from custom.enikshay.tests.utils import ENikshayCaseStructureMixin, ENikshayLocationStructureMixin
 
-from custom.enikshay.integrations.nikshay.repeater_generator import NikshayRegisterPatientPayloadGenerator, \
-    ENIKSHAY_ID
+from custom.enikshay.integrations.nikshay.repeater_generator import (
+    NikshayRegisterPatientPayloadGenerator,
+    ENIKSHAY_ID,
+    get_person_locations,
+)
+from custom.enikshay.integrations.nikshay.exceptions import NikshayLocationNotFound
 from corehq.form_processor.tests.utils import run_with_all_backends
 from casexml.apps.case.mock import CaseStructure
 from corehq.apps.repeaters.models import RepeatRecord
@@ -105,10 +109,11 @@ class TestNikshayRegisterPatientRepeater(NikshayRepeaterTestBase):
         self.assertEqual(1, len(self.repeat_records().all()))
 
 
-class TestNikshayRegisterPatientPayloadGenerator(NikshayRepeaterTestBase):
+class TestNikshayRegisterPatientPayloadGenerator(ENikshayLocationStructureMixin, NikshayRepeaterTestBase):
     def setUp(self):
         super(TestNikshayRegisterPatientPayloadGenerator, self).setUp()
         self.cases = self.create_case_structure()
+        self.assign_person_to_location(self.phi.location_id)
 
     @run_with_all_backends
     def test_payload_properties(self):
@@ -118,7 +123,7 @@ class TestNikshayRegisterPatientPayloadGenerator(NikshayRepeaterTestBase):
         )
         self.assertEqual(payload['Source'], ENIKSHAY_ID)
         self.assertEqual(payload['Local_ID'], self.person_id)
-        self.assertEqual(payload['regBy'], self.cases[self.person_id].owner_id)
+        self.assertEqual(payload['regBy'], self.phi.location_id)
 
         # From Person
         self.assertEqual(payload['pname'], "Pippin")
@@ -251,5 +256,24 @@ class TestNikshayRegisterPatientPayloadGenerator(NikshayRepeaterTestBase):
         self._assert_case_property_equal(updated_episode_case, 'nikshay_error', unicode(message))
 
 
-class TestGetPersonLocations(ENikshayCaseStructureMixin):
-    pass
+class TestGetPersonLocations(ENikshayCaseStructureMixin, ENikshayLocationStructureMixin, TestCase):
+    def setUp(self):
+        super(TestGetPersonLocations, self).setUp()
+        self.cases = self.create_case_structure()
+
+    def test_get_person_locations(self):
+        self.assign_person_to_location(self.phi.location_id)
+        person_case = CaseAccessors(self.domain).get_case(self.person_id)
+        expected_locations = {
+            'scode': self.sto.metadata['nikshay_code'],
+            'dcode': self.dto.metadata['nikshay_code'],
+            'tcode': self.tu.metadata['nikshay_code'],
+            'dotphi': self.phi.metadata['nikshay_code'],
+        }
+        self.assertEqual(expected_locations, get_person_locations(person_case))
+
+    def test_nikshay_location_not_found(self):
+        self.assign_person_to_location("-")
+        person_case = CaseAccessors(self.domain).get_case(self.person_id)
+        with self.assertRaises(NikshayLocationNotFound):
+            get_person_locations(person_case)
