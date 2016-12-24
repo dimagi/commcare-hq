@@ -46,6 +46,7 @@ class ENikshayCaseStructureMixin(object):
                     'current_address': 'Mr. Everest',
                     'secondary_contact_name_address': 'Mrs. Everestie',
                     'previous_tb_treatment': 'yes',
+                    'nikshay_registered': "false",
                 }
             },
         )

@@ -51,7 +51,7 @@ class NikshayRepeaterTestBase(ENikshayCaseStructureMixin, TestCase):
         nikshay_enabled_case_on_update = CaseStructure(
             case_id=self.episode_id,
             attrs={
-                'case_type': 'episode',
+                "create": False,
                 "update": dict(
                     episode_pending_registration='no',
                 )
@@ -64,8 +64,7 @@ class NikshayRepeaterTestBase(ENikshayCaseStructureMixin, TestCase):
         nikshay_registered_case = CaseStructure(
             case_id=self.episode_id,
             attrs={
-                'create': True,
-                'case_type': 'episode',
+                'create': False,
                 "update": dict(
                     nikshay_registered='true',
                 )

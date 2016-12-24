@@ -30,9 +30,10 @@ class NikshayRegisterPatientRepeater(CaseRepeater):
         # When case property episode.episode_pending_registration transitions from 'yes' to 'no',
         # and (episode.nikshay_registered != 'true'  or episode.nikshay_id != '')
         episode_case_properties = episode_case.dynamic_case_properties()
-        return (not episode_case_properties.get('nikshay_registered', False) and
-                not episode_case_properties.get('nikshay_id', None) and
-                episode_pending_registration_changed(episode_case)
+        return (
+            not episode_case_properties.get('nikshay_registered', 'false') == 'true' and
+            not episode_case_properties.get('nikshay_id', False) and
+            episode_pending_registration_changed(episode_case)
         )
 
 
