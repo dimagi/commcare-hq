@@ -125,10 +125,6 @@ class NikshayRegisterPatientPayloadGenerator(BasePayloadGenerator):
             _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(response.json()))
 
     def handle_exception(self, exception, repeat_record):
-        """Nikshay returns 404 when there are some errors... which is an exception
-        according to the requests module
-
-        """
         if isinstance(exception, RequestConnectionError):
             _save_error_message(repeat_record.domain, repeat_record.payload_id, unicode(exception))
 
