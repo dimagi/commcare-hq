@@ -880,7 +880,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 is_dependent_case = referenced_case in self.dependent_case_ids_on_phone
                 already_primed_for_removal = referenced_case in all_to_remove
                 if is_dependent_case and not already_primed_for_removal and referenced_case != checked_case_id:
-                    self.purge(referenced_case)
+                    self.purge(referenced_case, quiet_errors)
 
     def _remove_case(self, to_remove, all_to_remove, checked_case_id, quiet_errors):
         """Removes case from index trees, case_ids_on_phone and dependent_case_ids_on_phone if pertinent"""
