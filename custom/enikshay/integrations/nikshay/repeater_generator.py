@@ -1,8 +1,6 @@
 import json
 import datetime
 
-from simplejson import JSONDecodeError
-
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.repeaters.repeater_generators import RegisterGenerator, CaseRepeaterJsonPayloadGenerator
 from custom.enikshay.case_utils import get_person_case_from_episode
@@ -125,7 +123,7 @@ class NikshayRegisterPatientPayloadGenerator(CaseRepeaterJsonPayloadGenerator):
 def _get_nikshay_id_from_response(response):
     try:
         response_json = response.json()
-    except JSONDecodeError:
+    except ValueError:
         raise NikshayResponseException("Invalid JSON received")
 
     try:
