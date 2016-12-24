@@ -2,7 +2,8 @@ import json
 import datetime
 
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.repeaters.repeater_generators import RegisterGenerator, CaseRepeaterJsonPayloadGenerator
+from corehq.apps.repeaters.exceptions import RequestConnectionError
+from corehq.apps.repeaters.repeater_generators import RegisterGenerator, BasePayloadGenerator
 from custom.enikshay.case_utils import get_person_case_from_episode
 from custom.enikshay.integrations.nikshay.repeaters import NikshayRegisterPatientRepeater
 from custom.enikshay.integrations.nikshay.exceptions import (
@@ -21,7 +22,11 @@ ENIKSHAY_ID = 8
 
 
 @RegisterGenerator(NikshayRegisterPatientRepeater, 'case_json', 'JSON', is_default=True)
-class NikshayRegisterPatientPayloadGenerator(CaseRepeaterJsonPayloadGenerator):
+class NikshayRegisterPatientPayloadGenerator(BasePayloadGenerator):
+    @property
+    def content_type(self):
+        return 'application/json'
+
     def get_payload(self, repeat_record, episode_case):
         """
         mandatory_fields for Nikshay Registration API as of now
@@ -118,6 +123,14 @@ class NikshayRegisterPatientPayloadGenerator(CaseRepeaterJsonPayloadGenerator):
             )
         else:
             _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(response.json()))
+
+    def handle_exception(self, exception, repeat_record):
+        """Nikshay returns 404 when there are some errors... which is an exception
+        according to the requests module
+
+        """
+        if isinstance(exception, RequestConnectionError):
+            _save_error_message(repeat_record.domain, repeat_record.payload_id, unicode(exception))
 
 
 def _get_nikshay_id_from_response(response):

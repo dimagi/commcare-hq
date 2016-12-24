@@ -38,7 +38,7 @@ class BasePayloadGenerator(object):
         raise NotImplementedError()
 
     def get_headers(self):
-        return {'Content-type': self.content_type}
+        return {'Content-Type': self.content_type}
 
     def get_test_payload(self, domain):
         return (
@@ -59,6 +59,11 @@ class BasePayloadGenerator(object):
 
     def handle_failure(self, response, payload_doc, repeat_record):
         """handle a failed post
+        """
+        return True
+
+    def handle_exception(self, exception, repeat_record):
+        """handle an exception
         """
         return True
 
