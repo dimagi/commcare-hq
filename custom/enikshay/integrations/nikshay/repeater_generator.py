@@ -177,11 +177,7 @@ def _get_person_case_properties(person_case, person_case_properties):
     'pname': u'home visit', 'scode': u'RJ', 'tcode': 'AB', dotphi': u'Test S1-C1-D1-T1 PHI 1',
     'pmob': u'1234567890', 'cname': u'123', 'caddress': u'123', 'pgender': 'T', 'page': u'79', 'pcategory': 1}
     """
-    person_properties = {}
-    person_properties.update(get_person_locations(person_case))
-
     person_category = '2' if person_case_properties.get('previous_tb_treatment', '') == 'yes' else '1'
-
     person_properties = {
         "pname": person_case.name,
         "pgender": gender_mapping.get(person_case_properties.get('sex', ''), ''),
@@ -193,6 +189,7 @@ def _get_person_case_properties(person_case, person_case_properties):
         "cmob": person_case_properties.get('secondary_contact_phone_number', ''),
         "pcategory": person_category
     }
+    person_properties.update(get_person_locations(person_case))
 
     return person_properties
 
