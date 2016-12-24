@@ -24,7 +24,7 @@ class PatientDetail(models.Model):
             ('T', 'T'),
         ),
     )
-    page = models.CharField(max_length=255)
+    page = models.IntegerField()
     poccupation = models.CharField(max_length=255)
     paadharno = models.BigIntegerField(null=True)
     paddress = models.CharField(max_length=255)
