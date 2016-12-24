@@ -18,10 +18,12 @@ TEST_CASE_TYPE = 'test'
 
 
 def validate_phone_number(string_value):
-    if string_value is None or string_value.strip() == '':
+    if string_value is None or string_value.strip() in ['', '0']:
         return ''
     else:
-        return int(string_value)
+        phone_number = str(int(string_value))
+        assert len(phone_number) == 10
+        return phone_number
 
 
 class EnikshayCaseFactory(object):
