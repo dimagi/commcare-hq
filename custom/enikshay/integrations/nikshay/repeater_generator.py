@@ -231,7 +231,7 @@ def _get_episode_case_properties(episode_case_properties):
         ),
         "dotname": (' '.join(
             [episode_case_properties.get('treatment_supporter_first_name', ''),
-            episode_case_properties.get('treatment_supporter_last_name', '')])
+             episode_case_properties.get('treatment_supporter_last_name', '')])
         ),
         "dotmob": episode_case_properties.get('treatment_supporter_mobile_number', ''),
         # Can this mandatory field be made N/A if in case we don't collect this as in spec
