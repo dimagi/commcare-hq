@@ -1,3 +1,4 @@
+from collections import namedtuple
 from datetime import date, datetime
 
 from dimagi.utils.decorators.memoized import memoized
@@ -16,6 +17,9 @@ OCCURRENCE_CASE_TYPE = 'occurrence'
 EPISODE_CASE_TYPE = 'episode'
 TEST_CASE_TYPE = 'test'
 
+MockLocation = namedtuple('MockLocation', 'name location_id location_type')
+MockLocationType = namedtuple('MockLocationType', 'name code')
+
 
 def validate_phone_number(string_value):
     if string_value is None or string_value.strip() in ['', '0']:
@@ -31,11 +35,12 @@ class EnikshayCaseFactory(object):
     domain = None
     patient_detail = None
 
-    def __init__(self, domain, patient_detail, nikshay_codes_to_location):
+    def __init__(self, domain, patient_detail, nikshay_codes_to_location, test_phi=None):
         self.domain = domain
         self.patient_detail = patient_detail
         self.case_accessor = CaseAccessors(domain)
         self.nikshay_codes_to_location = nikshay_codes_to_location
+        self.test_phi = test_phi
 
     @property
     def nikshay_id(self):
@@ -292,18 +297,27 @@ class EnikshayCaseFactory(object):
 
     @property
     def state(self):
+        if self.test_phi is not None:
+            return MockLocation('FAKESTATE', 'fake_state_id', MockLocationType('state', 'state'))
         return self.nikshay_codes_to_location.get(self.patient_detail.PregId.split('-')[0])
 
     @property
     def district(self):
+        if self.test_phi is not None:
+            return MockLocation('FAKEDISTRICT', 'fake_district_id', MockLocationType('district', 'district'))
+
         return self.nikshay_codes_to_location.get('-'.join(self.patient_detail.PregId.split('-')[:2]))
 
     @property
     def tu(self):
+        if self.test_phi is not None:
+            return MockLocation('FAKETU', 'fake_tu_id', MockLocationType('tu', 'tu'))
         return self.nikshay_codes_to_location.get('-'.join(self.patient_detail.PregId.split('-')[:3]))
 
     @property
     def phi(self):
+        if self.test_phi is not None:
+            return MockLocation('FAKEPHI', self.test_phi, MockLocationType('phi', 'phi'))
         return self.nikshay_codes_to_location.get(self._nikshay_code)
 
     @property
