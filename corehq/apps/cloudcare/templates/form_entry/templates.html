@@ -137,7 +137,12 @@
                     <div class="collapse navbar-collapse" id="debugger-navbar-collapse">
                       <ul class="nav navbar-nav">
                         <li role="presentation" class="active">
-                            <a href="#debugger-form-data" aria-controls="debugger-form-data" role="tab" data-toggle="tab">
+                            <a
+                                href="#debugger-form-data"
+                                aria-controls="debugger-form-data"
+                                role="tab"
+                                data-toggle="tab"
+                                data-bind="click: collapseNavbar">
                                 {% trans "Form Data" %}
                             </a>
                         </li>
@@ -147,17 +152,29 @@
                                 aria-controls="debugger-xml-instance"
                                 role="tab"
                                 id="debugger-xml-instance-tab"
-                                data-toggle="tab">
+                                data-toggle="tab"
+                                data-bind="click: collapseNavbar"
+                                >
                                 {% trans "Form XML" %}
                             </a>
                         </li>
                         <li role="presentation">
-                            <a href="#debugger-evaluate" aria-controls="debugger-evaluate" role="tab" data-toggle="tab">
+                            <a
+                                href="#debugger-evaluate"
+                                aria-controls="debugger-evaluate"
+                                role="tab"
+                                data-bind="click: collapseNavbar"
+                                data-toggle="tab">
                                 {% trans "Evaluate XPath" %}
                             </a>
                         </li>
                         <li role="presentation">
-                            <a href="#debugger-settings" aria-controls="debugger-settings" role="tab" data-toggle="tab">
+                            <a
+                                href="#debugger-settings"
+                                aria-controls="debugger-settings"
+                                role="tab"
+                                data-bind="click: collapseNavbar"
+                                data-toggle="tab">
                                 {% trans "Settings" %}
                             </a>
                         </li>
