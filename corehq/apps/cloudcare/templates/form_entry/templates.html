@@ -105,14 +105,9 @@
             }
             ">
             <!-- Tab title -->
-            <div class="debugger-tab-title">
+            <div class="debugger-tab-title" data-bind="click: toggleState">
                 <i class="fa fa-table"></i>
                 <span class="debugger-title">{% trans "Data Preview" %}</span>
-                <a class="pull-right" data-bind="
-                    click: toggleState,
-                    text: isMinimized() ? gettext('Show Data Preview') : gettext('Hide Data Preview')
-                    ">
-                </a>
             </div>
 
             <!-- Debugger content -->
