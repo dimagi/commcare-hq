@@ -568,6 +568,7 @@ Formplayer.ViewModels.EvaluateXPath = function() {
             data: autocompleteData,
             searchKey: 'value',
             maxLen: Infinity,
+            highlightFirst: false,
             displayTpl: function(d) {
                 var icon = Formplayer.Utils.getIconFromType(d.type);
                 return '<li><i class="' + icon + '"></i> ${value}</li>';
