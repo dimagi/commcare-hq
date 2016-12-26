@@ -21,15 +21,17 @@
  
  <div data-bind="with: customXMLViewModel">
      <div data-bind="visible: enabled">
-@@ -66,7 +76,7 @@
+@@ -66,8 +76,8 @@
              </label>
          </div>
      </div>
 -    {% include 'app_manager/v1/partials/case_list_properties.html' %}
+-    {% include 'app_manager/v1/partials/case_list_module_overwrite.html' %}
 +    {% include 'app_manager/v2/partials/case_list_properties.html' %}
-     {% include 'app_manager/v1/partials/case_list_module_overwrite.html' %}
++    {% include 'app_manager/v2/partials/case_list_module_overwrite.html' %}
  </div>
  
+ {% if detail.type == 'case' %}
 @@ -75,7 +85,7 @@
      {% trans "Filtering and Sorting" %}
  </legend>
