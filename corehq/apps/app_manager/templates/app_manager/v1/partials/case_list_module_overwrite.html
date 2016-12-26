@@ -9,7 +9,7 @@
         <p class="help-block">{% trans "This will <strong>overwrite</strong> the current case list/details screen with the configuration from the selected module." %}</p>
         <label for="other_module_id">{% trans "Module" %}: </label>
         <select name='source_module_id' class='form-control'>{% for other_mod in app.get_modules %}
-            {% if other_mod.id !=  module.id and other_mod.module_type != 'report' %}
+            {% if other_mod.id !=  module.id and other_mod.module_type != 'report' and other_mod.case_type == module.case_type %}
                 <option value={{ other_mod.id }}>{{ other_mod.name|html_trans:langs }}</option>
             {% endif %}
         {% endfor %}</select>

@@ -120,6 +120,12 @@ def overwrite_module_case_list(request, domain, app_id, module_id):
             request,
             _("Sorry, couldn't find case list configuration for module {}. "
               "Please report an issue if you believe this is a mistake.").format(source_module.default_name()))
+    elif source_module.case_type != dest_module.case_type:
+        messages.error(
+            request,
+            _("Please choose a module with the same case type as the current one ({}).").format(
+                dest_module.case_type)
+        )
     else:
         setattr(dest_module.case_details, detail_type, getattr(source_module.case_details, detail_type))
         app.save()
