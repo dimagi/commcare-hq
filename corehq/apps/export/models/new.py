@@ -1068,10 +1068,7 @@ class ExportDataSchema(Document):
             app_id,
             current_schema.last_app_versions,
         )
-        if app_id:
-            app_build_ids.append(app_id)
-        else:
-            app_build_ids.extend(cls._get_current_app_ids_for_domain(domain))
+        app_build_ids.extend(cls._get_current_app_ids_for_domain(domain, app_id))
 
         current_schema = cls.update_schema_with_builds(current_schema, identifier, app_build_ids)
 
@@ -1221,8 +1218,8 @@ class FormExportDataSchema(ExportDataSchema):
         self.xmlns = form_xmlns
 
     @classmethod
-    def _get_current_app_ids_for_domain(cls, domain):
-        raise BadExportConfiguration('Form exports should only use one app_id and this should not be called')
+    def _get_current_app_ids_for_domain(cls, domain, app_id):
+        return [app_id]
 
     @staticmethod
     def _get_app_build_ids_to_process(domain, app_id, last_app_versions):
