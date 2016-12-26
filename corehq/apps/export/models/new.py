@@ -1073,19 +1073,7 @@ class ExportDataSchema(Document):
         else:
             app_build_ids.extend(cls._get_current_app_ids_for_domain(domain))
 
-        for app_doc in iter_docs(Application.get_db(), app_build_ids, chunksize=10):
-            if (not app_doc.get('has_submissions', False) and
-                    app_doc.get('copy_of')):
-                continue
-
-            app = Application.wrap(app_doc)
-            current_schema = cls._process_app_build(
-                current_schema,
-                app,
-                identifier,
-            )
-
-            current_schema.record_update(app.copy_of or app._id, app.version)
+        current_schema = cls.update_schema_with_builds(current_schema, identifier, app_build_ids)
 
         inferred_schema = cls._get_inferred_schema(domain, identifier)
         if inferred_schema:
@@ -1102,6 +1090,23 @@ class ExportDataSchema(Document):
             original_rev
         )
         return current_schema
+
+    @classmethod
+    def update_schema_with_builds(cls, schema, identifier, app_build_ids):
+        for app_doc in iter_docs(Application.get_db(), app_build_ids, chunksize=10):
+            if (not app_doc.get('has_submissions', False) and
+                    app_doc.get('copy_of')):
+                continue
+
+            app = Application.wrap(app_doc)
+            schema = cls._process_app_build(
+                schema,
+                app,
+                identifier,
+            )
+
+            schema.record_update(app.copy_of or app._id, app.version)
+        return schema
 
     @classmethod
     def _merge_schemas(cls, *schemas):
