@@ -1364,7 +1364,7 @@ class CaseExportDataSchema(ExportDataSchema):
         return get_inferred_schema(domain, case_type)
 
     @classmethod
-    def _get_current_app_ids_for_domain(cls, domain):
+    def _get_current_app_ids_for_domain(cls, domain, app_id):
         return get_app_ids_in_domain(domain)
 
     @staticmethod
