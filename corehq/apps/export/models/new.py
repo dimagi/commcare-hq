@@ -8,6 +8,7 @@ from couchdbkit import ResourceConflict
 from couchdbkit.ext.django.schema import IntegerProperty
 from django.utils.translation import ugettext as _
 from django.core.urlresolvers import reverse
+from celery.exceptions import TimeoutError
 
 from corehq.apps.export.esaccessors import get_ledger_section_entry_combinations
 from dimagi.utils.decorators.memoized import memoized
@@ -56,6 +57,7 @@ from corehq.apps.export.const import (
     DATA_SCHEMA_VERSION,
     MISSING_VALUE,
     EMPTY_VALUE,
+    SCHEMA_GENERATION_TIMEOUT,
     KNOWN_CASE_PROPERTIES,
     UNKNOWN_INFERRED_FROM,
 )
@@ -65,6 +67,7 @@ from corehq.apps.export.dbaccessors import (
     get_latest_form_export_schema,
     get_inferred_schema,
 )
+from corehq.apps.export.tasks import update_schema_with_builds_task
 from corehq.apps.export.utils import is_occurrence_deleted
 
 
@@ -1076,7 +1079,19 @@ class ExportDataSchema(Document):
         current_app_build_ids = cls._get_current_app_ids_for_domain(domain, app_id)
 
         current_schema = cls.update_schema_with_builds(current_schema, identifier, current_app_build_ids)
-        current_schema = cls.update_schema_with_builds(current_schema, identifier, historical_app_build_ids)
+        task = update_schema_with_builds_task.delay(
+            cls,
+            current_schema,
+            identifier,
+            historical_app_build_ids,
+        )
+        try:
+            current_schema = task.get(timeout=SCHEMA_GENERATION_TIMEOUT)
+        except TimeoutError:
+            # In this case, generating the schema has taken too long. Wait until later to
+            # generate the rest of the schema.
+            # TODO: Figure out how to properly handle this case
+            pass
 
         inferred_schema = cls._get_inferred_schema(domain, identifier)
         if inferred_schema:
