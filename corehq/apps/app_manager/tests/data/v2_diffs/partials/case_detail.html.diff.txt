@@ -9,12 +9,14 @@
  
  <div data-bind="saveButton: longScreen.saveButton"></div>
  
-@@ -16,7 +16,7 @@
+@@ -16,8 +16,8 @@
      ></span>
  </legend>
  <div data-bind="with: longScreen">
 -    {% include 'app_manager/v1/partials/case_list_properties.html' %}
+-    {% include 'app_manager/v1/partials/case_list_module_overwrite.html' %}
 +    {% include 'app_manager/v2/partials/case_list_properties.html' %}
++    {% include 'app_manager/v2/partials/case_list_module_overwrite.html' %}
  </div>
  
  {% if request|toggle_enabled:"DETAIL_LIST_TABS" %}

@@ -1,0 +1,29 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load xforms_extras %}
+{% load app_manager_extras %}
+{% if module.module_type != 'basic' or request|toggle_enabled:'COPY_CASE_CONFIGS' %}
+<form class="form-inline" method='POST' action='{% url "overwrite_module_case_list" domain app.id module.id %}'>
+    {% csrf_token %}
+    <fieldset>
+        <legend>{% trans "Use Configuration from Existing Module" %}</legend>
+            <p class="help-block">{% trans "This will <strong>overwrite</strong> the current case list/details screen with the configuration from the selected module." %}</p>
+    {% with app|get_available_modules_for_case_list_configuration:module as available_modules %}
+        {% if available_modules %}
+            <label for="other_module_id">{% trans "Module" %}: </label>
+            <select name='source_module_id' class='form-control'>{% for other_mod in app.get_modules %}
+                {% if other_mod.id !=  module.id and other_mod.module_type != 'report' and other_mod.case_type == module.case_type %}
+                    <option value={{ other_mod.id }}>{{ other_mod.name|html_trans:langs }}</option>
+                {% endif %}
+            {% endfor %}</select>
+            <input name="detail_type" type="hidden" data-bind="value: columnKey" />
+            <button class='btn btn-danger' type="submit">
+                <i class="fa fa-copy"></i>
+                {% trans "Overwrite Case List" %}
+        {% else %}
+            <p><em>{% trans "Didn't find any other modules with the same case type."%}</em></p>
+        {% endif %}
+    {% endwith %}
+    </fieldset>
+</form>
+{% endif %}

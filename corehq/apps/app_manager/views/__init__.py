@@ -95,6 +95,7 @@ from corehq.apps.app_manager.views.modules import (
     edit_module_detail_screens,
     edit_report_module,
     new_module,
+    overwrite_module_case_list,
     undo_delete_module,
     validate_module_for_build,
     view_module,

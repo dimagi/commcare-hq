@@ -966,3 +966,10 @@ NIMBUS_FORM_VALIDATION = PredictablyRandomToggle(
     [NAMESPACE_DOMAIN],
     randomness=0.1
 )
+
+COPY_CASE_CONFIGS = StaticToggle(
+    'copy_case_configs',
+    'Allow copying case list / details screens in basic modules.',
+    TAG_PRODUCT_CORE,
+    [NAMESPACE_DOMAIN]
+)
