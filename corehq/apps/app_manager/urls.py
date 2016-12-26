@@ -23,6 +23,7 @@ from corehq.apps.app_manager.views import (
     odk_media_qr_code, odk_install, short_url, short_odk_url, save_copy, revert_to_copy, delete_copy, list_apps,
     direct_ccz, download_index, download_file, formdefs, release_manager, get_form_questions,
 )
+from corehq.apps.app_manager.views.forms import overwrite_module_case_list
 from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
 from corehq.apps.hqmedia.urls import download_urls as media_download_urls
 
@@ -66,6 +67,7 @@ app_urls = [
     url(r'^copy/gzip$', export_gzip, name='gzip_app')
 ]
 
+
 urlpatterns = [
     url(r'^$', view_app, name='default_app'),
     url(r'^xform/(?P<form_unique_id>[\w-]+)/$', xform_display, name='xform_display'),
@@ -91,6 +93,8 @@ urlpatterns = [
     url(r'^delete_form/(?P<app_id>[\w-]+)/(?P<module_unique_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/$',
         delete_form, name="delete_form"),
 
+    url(r'^overwrite_module_case_list/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/$',
+        overwrite_module_case_list, name='overwrite_module_case_list'),
     url(r'^copy_form/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/(?P<form_id>[\w-]+)/$',
         copy_form, name='copy_form'),
 

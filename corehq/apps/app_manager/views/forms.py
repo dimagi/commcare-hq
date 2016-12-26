@@ -108,6 +108,26 @@ def delete_form(request, domain, app_id, module_unique_id, form_unique_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
+def overwrite_module_case_list(request, domain, app_id, module_id):
+    app = get_app(domain, app_id)
+    source_module_id = int(request.POST['source_module_id'])
+    detail_type = request.POST['detail_type']
+    assert detail_type in ['short', 'long']
+    source_module = app.get_module(source_module_id)
+    dest_module = app.get_module(module_id)
+    if not hasattr(source_module, 'case_details'):
+        messages.error(
+            _("Sorry, couldn't find case list configuration for module {}. "
+              "Please report an issue if you believe this is a mistake.").format(source_module.default_name()))
+    else:
+        setattr(dest_module.case_details, detail_type, getattr(source_module.case_details, detail_type))
+        app.save()
+        messages.success(request, _('Case list updated form module {}.').format(source_module.default_name()))
+    return back_to_main(request, domain, app_id=app_id, module_id=module_id)
+
+
+@no_conflict_require_POST
+@require_can_edit_apps
 def copy_form(request, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
     to_module_id = int(request.POST['to_module_id'])
