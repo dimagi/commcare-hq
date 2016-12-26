@@ -1063,14 +1063,20 @@ class ExportDataSchema(Document):
         else:
             current_schema = cls()
 
-        app_build_ids = cls._get_app_build_ids_to_process(
+        # These are build ids from past applications and are not necessarily the most current version
+        # They determine what the deleted items are.
+        historical_app_build_ids = cls._get_app_build_ids_to_process(
             domain,
             app_id,
             current_schema.last_app_versions,
         )
-        app_build_ids.extend(cls._get_current_app_ids_for_domain(domain, app_id))
 
-        current_schema = cls.update_schema_with_builds(current_schema, identifier, app_build_ids)
+        # These build ids represent the current state of the app and show what items are currently
+        # being used. These are essential to process.
+        current_app_build_ids = cls._get_current_app_ids_for_domain(domain, app_id)
+
+        current_schema = cls.update_schema_with_builds(current_schema, identifier, current_app_build_ids)
+        current_schema = cls.update_schema_with_builds(current_schema, identifier, historical_app_build_ids)
 
         inferred_schema = cls._get_inferred_schema(domain, identifier)
         if inferred_schema:
