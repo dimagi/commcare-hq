@@ -117,6 +117,7 @@ def overwrite_module_case_list(request, domain, app_id, module_id):
     dest_module = app.get_module(module_id)
     if not hasattr(source_module, 'case_details'):
         messages.error(
+            request,
             _("Sorry, couldn't find case list configuration for module {}. "
               "Please report an issue if you believe this is a mistake.").format(source_module.default_name()))
     else:
