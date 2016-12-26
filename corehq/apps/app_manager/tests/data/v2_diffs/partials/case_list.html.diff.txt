@@ -27,10 +27,10 @@
      </div>
 -    {% include 'app_manager/v1/partials/case_list_properties.html' %}
 +    {% include 'app_manager/v2/partials/case_list_properties.html' %}
+     {% include 'app_manager/v1/partials/case_list_module_overwrite.html' %}
  </div>
  
- {% if detail.type == 'case' %}
-@@ -74,7 +84,7 @@
+@@ -75,7 +85,7 @@
      {% trans "Filtering and Sorting" %}
  </legend>
  
@@ -39,7 +39,7 @@
  
  <div data-bind="with: sortRows">
  {% if app.enable_multi_sort %}
-@@ -201,42 +211,15 @@
+@@ -202,42 +212,15 @@
  </div>
  {% endif %}
  
