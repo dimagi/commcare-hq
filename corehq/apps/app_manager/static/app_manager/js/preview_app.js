@@ -182,6 +182,7 @@ hqDefine('app_manager/js/preview_app.js', function() {
                 /edit_module_detail_screens/.test(options.url) ||
                 /edit_app_attr/.test(options.url) ||
                 /edit_form_actions/.test(options.url) ||
+                /edit_commcare_settings/.test(options.url) ||
                 /patch_xform/.test(options.url)) {
                 $(module.SELECTORS.BTN_REFRESH).addClass('app-out-of-date');
             }
