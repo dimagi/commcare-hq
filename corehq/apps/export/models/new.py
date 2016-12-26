@@ -8,7 +8,7 @@ from couchdbkit import ResourceConflict
 from couchdbkit.ext.django.schema import IntegerProperty
 from django.utils.translation import ugettext as _
 from django.core.urlresolvers import reverse
-from celery.exceptions import TimeoutError
+from celery.exceptions import SoftTimeLimitExceeded
 
 from corehq.apps.export.esaccessors import get_ledger_section_entry_combinations
 from dimagi.utils.decorators.memoized import memoized
@@ -57,7 +57,6 @@ from corehq.apps.export.const import (
     DATA_SCHEMA_VERSION,
     MISSING_VALUE,
     EMPTY_VALUE,
-    SCHEMA_GENERATION_TIMEOUT,
     KNOWN_CASE_PROPERTIES,
     UNKNOWN_INFERRED_FROM,
 )
@@ -67,7 +66,7 @@ from corehq.apps.export.dbaccessors import (
     get_latest_form_export_schema,
     get_inferred_schema,
 )
-from corehq.apps.export.tasks import update_schema_with_builds_task
+from corehq.apps.export.tasks import update_schema_with_builds_task, generate_delayed_schema
 from corehq.apps.export.utils import is_occurrence_deleted
 
 
@@ -1039,6 +1038,7 @@ class ExportDataSchema(Document):
     group_schemas = SchemaListProperty(ExportGroupSchema)
     app_id = StringProperty()
     version = IntegerProperty(default=1)
+    processing_delayed_schemas = BooleanProperty(default=False)
 
     # A map of app_id to app_version. Represents the last time it saw an app and at what version
     last_app_versions = DictProperty()
@@ -1066,32 +1066,35 @@ class ExportDataSchema(Document):
         else:
             current_schema = cls()
 
-        # These are build ids from past applications and are not necessarily the most current version
-        # They determine what the deleted items are.
-        historical_app_build_ids = cls._get_app_build_ids_to_process(
-            domain,
-            app_id,
-            current_schema.last_app_versions,
-        )
 
         # These build ids represent the current state of the app and show what items are currently
         # being used. These are essential to process.
         current_app_build_ids = cls._get_current_app_ids_for_domain(domain, app_id)
 
         current_schema = cls.update_schema_with_builds(current_schema, identifier, current_app_build_ids)
-        task = update_schema_with_builds_task.delay(
-            cls,
-            current_schema,
-            identifier,
-            historical_app_build_ids,
-        )
-        try:
-            current_schema = task.get(timeout=SCHEMA_GENERATION_TIMEOUT)
-        except TimeoutError:
-            # In this case, generating the schema has taken too long. Wait until later to
-            # generate the rest of the schema.
-            # TODO: Figure out how to properly handle this case
-            pass
+
+        # Process all historical applications if we are not currently processing them
+        if not current_schema.processing_delayed_schemas:
+            # These are build ids from past applications and are not necessarily the most current version
+            # They determine what the deleted items are.
+            historical_app_build_ids = cls._get_app_build_ids_to_process(
+                domain,
+                app_id,
+                current_schema.last_app_versions,
+            )
+
+            task = update_schema_with_builds_task.delay(
+                cls,
+                current_schema,
+                identifier,
+                historical_app_build_ids,
+            )
+            try:
+                current_schema = task.get()
+            except SoftTimeLimitExceeded:
+                # In this case, generating the schema has taken too long. Wait until later to
+                # generate the rest of the schema.
+                current_schema.processing_delayed_schemas = True
 
         inferred_schema = cls._get_inferred_schema(domain, identifier)
         if inferred_schema:
@@ -1107,6 +1110,17 @@ class ExportDataSchema(Document):
             original_id,
             original_rev
         )
+
+        # Kick off a process to generate the delayed schemas
+        if current_schema.processing_delayed_schemas:
+            generate_delayed_schema.delay(
+                cls,
+                domain,
+                app_id,
+                identifier,
+                historical_app_build_ids,
+            )
+
         return current_schema
 
     @classmethod

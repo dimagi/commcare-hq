@@ -3,6 +3,7 @@ import logging
 from celery.task import task
 
 from corehq.apps.export.dbaccessors import get_inferred_schema
+from corehq.apps.export.const import SCHEMA_GENERATION_TIMEOUT
 from corehq.util.decorators import serial_task
 from corehq.util.quickcache import quickcache
 from couchexport.models import Format
@@ -96,6 +97,27 @@ def _cached_add_inferred_export_properties(sender, domain, case_type, properties
     inferred_schema.save()
 
 
-@task
+@task(soft_time_limit=SCHEMA_GENERATION_TIMEOUT)
 def update_schema_with_builds_task(schema_cls, schema, identifier, app_build_ids):
     return schema_cls.update_schema_with_builds(schema, identifier, app_build_ids)
+
+
+@task
+def generate_delayed_schema(schema_cls, domain, app_id, identifier, app_build_ids):
+    current_schema = schema_cls.get_latest_export_schema(domain, app_id, identifier)
+
+    # If there's not an original schema, that means that it got deleted somehow or
+    # error'd in saving. This is a rare event; we should ignore merging the delayed
+    # schema if it occurs.
+    if not current_schema:
+        return
+
+    delayed_schema = schema_cls.update_schema_with_builds(current_schema, identifier, app_build_ids)
+    current_schema = schema_cls._merge_schemas(current_schema, delayed_schema)
+    current_schema.processing_delayed_schemas = False
+    current_schema = schema_cls._save_export_schema(
+        current_schema,
+        current_schema._id,
+        current_schema._rev
+    )
+    return current_schema
