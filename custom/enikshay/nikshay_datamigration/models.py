@@ -170,6 +170,7 @@ class PatientDetail(models.Model):
     @property
     def treatment_supporter_designation(self):
         return {
+            '0': 'undetermined_by_migration',
             '1': 'health_worker',
             '2': 'tbhv',
             '3': 'asha_or_other_phi_hw',
