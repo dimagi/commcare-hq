@@ -3,7 +3,6 @@
 {% block js-inline %}{{ block.super }}
 <script type="text/javascript">
     $(function () {
-        var submitUrl = "{% url 'expression_evaluator' domain %}";
         var ExpressionModel = function (editor, submitUrl) {
             var self = this;
             self.editor = editor;
@@ -53,6 +52,7 @@
                 }
             };
         };
+        var submitUrl = "{% url 'expression_evaluator' domain %}";
         var expressionEditor = $('.CodeMirror')[0].CodeMirror;  // http://stackoverflow.com/a/24987585/8207
         var sampleExpression = {
             "type": "property_name",
