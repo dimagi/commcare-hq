@@ -29,9 +29,12 @@ from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
+from corehq.apps.userreports.document_stores import get_document_store
+from corehq.apps.userreports.expressions import ExpressionFactory
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.util import reverse
 from corehq.util.quickcache import quickcache
+from corehq.util.view_utils import json_error
 from couchexport.export import export_from_tables
 from couchexport.files import Temp
 from couchexport.models import Format
@@ -105,6 +108,7 @@ from corehq.apps.userreports.reports.util import has_location_filter
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.util.couch import get_document_or_404
+from pillowtop.dao.exceptions import DocumentNotFoundError
 
 
 def get_datasource_config_or_404(config_id, domain):
@@ -861,6 +865,46 @@ class ExpressionDebuggerView(BaseUserConfigReportsView):
     urlname = 'expression_debugger'
     template_name = 'userreports/expression_debugger.html'
     page_title = ugettext_lazy("Expression Debugger")
+
+
+@login_and_domain_required
+@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
+def evaluate_expression(request, domain):
+    doc_type = request.POST['doc_type']
+    doc_id = request.POST['doc_id']
+    try:
+        usable_type = {
+            'form': 'XFormInstance',
+            'case': 'CommCareCase',
+        }.get(doc_type, 'Unknown')
+        document_store = get_document_store(domain, usable_type)
+        doc = document_store.get_document(doc_id)
+        expression_text = request.POST['expression']
+        expression_json = json.loads(expression_text)
+        parsed_expression = ExpressionFactory.from_spec(expression_json)
+        result = parsed_expression(doc)
+        return json_response({
+            "result": result,
+        })
+    except DocumentNotFoundError:
+        return json_response(
+            {"error": _("{} with id {} not found in domain {}.").format(
+                doc_type, doc_id, domain
+            )},
+            status_code=500,
+        )
+    except BadSpecError as e:
+        return json_response(
+            {"error": _("Problem with expression: {}.").format(
+                e
+            )},
+            status_code=500,
+        )
+    except Exception as e:
+        return json_response(
+            {"error": unicode(e)},
+            status_code=500,
+        )
 
 
 class CreateDataSourceFromAppView(BaseUserConfigReportsView):

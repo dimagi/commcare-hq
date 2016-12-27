@@ -3,12 +3,15 @@
 {% block js-inline %}{{ block.super }}
 <script type="text/javascript">
     $(function () {
-        var ExpressionModel = function (editor) {
+        var submitUrl = "{% url 'expression_evaluator' domain %}";
+        var ExpressionModel = function (editor, submitUrl) {
             var self = this;
             self.editor = editor;
+            self.submitUrl = submitUrl;
             self.documentType = ko.observable();
             self.documentId = ko.observable();
             self.expressionText = ko.observable(editor.getValue());
+            self.uiFeedback = ko.observable();
 
             self.getExpressionJSON = function () {
                 try {
@@ -26,7 +29,28 @@
             }, self);
 
             self.evaluateExpression = function(formElement) {
-                console.log('evaluating expression!', self.documentType(), self.documentId(), self.expressionText(), self.hasError());
+                self.uiFeedback("");
+                if (self.hasError()) {
+                    self.uiFeedback("Please fix all parsing errors before evaluating.")
+                } else if (!self.documentId()) {
+                    self.uiFeedback("Please enter a document ID.")
+                }
+                else {
+                    $.post({
+                        url: self.submitUrl,
+                        data: {
+                            doc_type: self.documentType(),
+                            doc_id: self.documentId(),
+                            expression: self.expressionText(),
+                        },
+                        success: function (data) {
+                            self.uiFeedback("<strong>Result:</strong> " + data.result);
+                        },
+                        error: function (data) {
+                            self.uiFeedback("<strong>Failure!:</strong> " + data.responseJSON.error);
+                        },
+                    });
+                }
             };
         };
         var expressionEditor = $('.CodeMirror')[0].CodeMirror;  // http://stackoverflow.com/a/24987585/8207
@@ -36,7 +60,7 @@
         };
         var sampleText = JSON.stringify(sampleExpression, null, 2);
         expressionEditor.setValue(sampleText);
-        ko.applyBindings(new ExpressionModel(expressionEditor), $("form#expression-debugger").get(0));
+        ko.applyBindings(new ExpressionModel(expressionEditor, submitUrl), $("form#expression-debugger").get(0));
     });
 </script>
 {% endblock %}
@@ -47,8 +71,8 @@
             <label for="doc_type" class="col-sm-2 control-label">{% trans "Document Type" %}</label>
             <div class="col-sm-3">
                 <select id="doc_type" name="doc_type" class="form-control " data-bind="value: documentType">
-                    <option value="form">{% trans "Form" %}</option>
                     <option value="case">{% trans "Case" %}</option>
+                    <option value="form">{% trans "Form" %}</option>
                 </select>
             </div>
         </div>
@@ -66,9 +90,12 @@
         </div>
         <div class="form-group">
             <div class="col-sm-offset-2 col-sm-10">
-                <button type="submit" class="btn btn-primary" data-bind="enabled: hasError">{% trans "Evaluate!" %}</button>
+                <button type="submit" class="btn btn-primary">{% trans "Evaluate!" %}</button>
             </div>
         </div>
-        <p class="alert alert-danger" style="display: none;" data-bind="visible: hasError">{% trans "Your Expression has parse errors!" %}</p>
+        <p class="col-sm-offset-2 col-sm-10" data-bind="html: uiFeedback"></p>
+        <p class="alert alert-danger" style="display: none;" data-bind="visible: hasError">
+            {% trans 'Your Expression has parse errors! For more details try pasting into a <a href="http://jsonlint.com/" tagert="blank">JSON Validator</a>.' %}
+        </p>
     </form>
 {% endblock %}
