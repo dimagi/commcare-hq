@@ -172,10 +172,6 @@ class UserConfigReportsHomeView(BaseUserConfigReportsView):
     template_name = 'userreports/configurable_reports_home.html'
     page_title = ugettext_lazy("Reports Home")
 
-    @property
-    def page_context(self):
-        return {}
-
 
 class BaseEditConfigReportView(BaseUserConfigReportsView):
     template_name = 'userreports/edit_report_config.html'
