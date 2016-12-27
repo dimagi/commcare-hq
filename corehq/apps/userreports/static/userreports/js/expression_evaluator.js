@@ -1,4 +1,4 @@
-/* globals hqDefine moment alert_user */
+/* globals hqDefine */
 hqDefine('userreports/js/expression_evaluator.js', function () {
     var ExpressionModel = function (editor, submitUrl) {
         var self = this;
@@ -24,12 +24,12 @@ hqDefine('userreports/js/expression_evaluator.js', function () {
             return self.getExpressionJSON() === null;
         }, self);
 
-        self.evaluateExpression = function(formElement) {
+        self.evaluateExpression = function() {
             self.uiFeedback("");
             if (self.hasError()) {
-                self.uiFeedback("Please fix all parsing errors before evaluating.")
+                self.uiFeedback("Please fix all parsing errors before evaluating.");
             } else if (!self.documentId()) {
-                self.uiFeedback("Please enter a document ID.")
+                self.uiFeedback("Please enter a document ID.");
             }
             else {
                 $.post({

@@ -34,7 +34,6 @@ from corehq.apps.userreports.expressions import ExpressionFactory
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.util import reverse
 from corehq.util.quickcache import quickcache
-from corehq.util.view_utils import json_error
 from couchexport.export import export_from_tables
 from couchexport.files import Temp
 from couchexport.models import Format
