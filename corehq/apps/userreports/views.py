@@ -857,6 +857,12 @@ def report_source_json(request, domain, report_id):
     return json_response(config)
 
 
+class ExpressionDebuggerView(BaseUserConfigReportsView):
+    urlname = 'expression_debugger'
+    template_name = 'userreports/expression_debugger.html'
+    page_title = ugettext_lazy("Expression Debugger")
+
+
 class CreateDataSourceFromAppView(BaseUserConfigReportsView):
     urlname = 'create_configurable_data_source_from_app'
     template_name = "userreports/data_source_from_app.html"
