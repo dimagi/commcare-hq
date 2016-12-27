@@ -16,7 +16,7 @@
         "description": "",
         "title": "Patient Overview - Mobile",
         "sort_expression": [],
-        "visible": true,
+        "visible": false,
         "configured_charts": [],
         "aggregation_columns": [],
         "filters": [
