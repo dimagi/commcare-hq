@@ -123,6 +123,7 @@ from corehq.apps.users.models import (
     WebUser,
 )
 from corehq.util.couch import get_document_or_404
+from corehq.util.files import safe_filename_header
 from corehq.util.workbook_json.export import WorkBook
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import absolute_reverse, reverse
@@ -159,7 +160,6 @@ from .util import (
     get_group,
     group_filter,
     users_matching_filter,
-    safe_filename_header,
     resync_case_to_es)
 from corehq.apps.style.decorators import (
     use_jquery_ui,

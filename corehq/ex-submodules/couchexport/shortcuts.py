@@ -68,7 +68,7 @@ def export_response(file, format, filename, checkpoint=None):
             filename=filename,
             format=format
         )
-        from corehq.apps.reports.util import safe_filename_header
+        from corehq.util.files import safe_filename_header
         response['Content-Disposition'] = safe_filename_header(filename)
 
     if checkpoint:

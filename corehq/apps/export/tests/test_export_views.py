@@ -1,8 +1,7 @@
 # encoding: utf-8
 import json
 
-from django.http.response import HttpResponse
-from django.test import TestCase, SimpleTestCase
+from django.test import TestCase
 from django.core.urlresolvers import reverse
 
 from corehq.apps.users.models import WebUser
@@ -12,7 +11,6 @@ from corehq.apps.export.dbaccessors import (
     get_form_export_instances,
     get_case_export_instances,
 )
-from corehq.apps.export.tasks import _format_filename
 from corehq.apps.export.views import (
     CreateNewCustomFormExportView,
     CreateNewCustomCaseExportView,
@@ -169,33 +167,3 @@ class ExportViewTest(TestCase):
             follow=True
         )
         self.assertEqual(resp.status_code, 500)  # This is an ajax call which handles the 500
-
-
-class TestFormatFilename(SimpleTestCase):
-
-    def assertWorksAsHeader(self, filename):
-        # Django does some filename validation when trying to set this as a header
-        response = HttpResponse()
-        response['filename'] = filename
-
-    def test_basic_usage(self):
-        filename = _format_filename('test', 'zip')
-        self.assertEqual(filename, 'test.zip')
-        self.assertWorksAsHeader(filename)
-
-    def test_default_export_name(self):
-        # This (with .zip) is a valid filename
-        base_filename = "Surveys > Survey Category 1 (Ex. Household) > Survey 1: 2016-12-23 2016-12-23"
-        filename = _format_filename(base_filename, 'zip')
-        self.assertEqual(filename, base_filename + '.zip')
-        self.assertWorksAsHeader(filename)
-
-    def test_no_newlines(self):
-        filename = _format_filename('line 1\nline 2', 'zip')
-        self.assertEqual(filename, 'line 1line 2.zip')
-        self.assertWorksAsHeader(filename)
-
-    def test_newlines_and_wacky_unicode(self):
-        base_filename = u"ICDS CAS - AWW > ड्य\n ूलिस्ट > टीकों का रà\n ��कार्ड: 2016-05-31 2016-05-31.zip"
-        filename = _format_filename(base_filename, 'zip')
-        self.assertWorksAsHeader(filename)
