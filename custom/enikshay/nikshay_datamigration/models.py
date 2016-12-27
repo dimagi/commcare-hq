@@ -124,10 +124,10 @@ class PatientDetail(models.Model):
         return {
             '1': 'new',
             '2': 'recurrent',
-            '3': 'other_previously_treated',  # TODO - confirm
-            '4': 'treatment_after_failure',
-            '5': 'other_previously_treated',  # TODO - confirm
-            '6': 'treatment_after_lfu',
+            '3': 'treatment_after_failure',
+            '4': 'treatment_after_lfu',
+            '5': 'transfer_in',
+            '6': 'transfer_in',
             '7': 'transfer_in',
         }[self.Ptype]
 
