@@ -1,6 +1,74 @@
 {% extends "userreports/userreports_base.html" %}
 {% load i18n %}
+{% block js-inline %}{{ block.super }}
+<script type="text/javascript">
+    $(function () {
+        var ExpressionModel = function (editor) {
+            var self = this;
+            self.editor = editor;
+            self.documentType = ko.observable();
+            self.documentId = ko.observable();
+            self.expressionText = ko.observable(editor.getValue());
+
+            self.getExpressionJSON = function () {
+                try {
+                    return JSON.parse(self.expressionText());
+                } catch (err) {
+                    return null;
+                }
+            };
+            self.editor.on('change', function () {
+                self.expressionText(self.editor.getValue());
+            });
+
+            self.hasError = ko.computed(function () {
+                return self.getExpressionJSON() === null;
+            }, self);
+
+            self.evaluateExpression = function(formElement) {
+                console.log('evaluating expression!', self.documentType(), self.documentId(), self.expressionText(), self.hasError());
+            };
+        };
+        var expressionEditor = $('.CodeMirror')[0].CodeMirror;  // http://stackoverflow.com/a/24987585/8207
+        var sampleExpression = {
+            "type": "property_name",
+            "property_name": "name"
+        };
+        var sampleText = JSON.stringify(sampleExpression, null, 2);
+        expressionEditor.setValue(sampleText);
+        ko.applyBindings(new ExpressionModel(expressionEditor), $("form#expression-debugger").get(0));
+    });
+</script>
+{% endblock %}
 {% block page_content %}
     <h1>{% trans "Expression Debugger" %}</h1>
-    <p>There is nothing here yet.</p>
+    <form id="expression-debugger" class="form-horizontal" data-bind="submit: evaluateExpression">
+        <div class="form-group">
+            <label for="doc_type" class="col-sm-2 control-label">{% trans "Document Type" %}</label>
+            <div class="col-sm-3">
+                <select id="doc_type" name="doc_type" class="form-control " data-bind="value: documentType">
+                    <option value="form">{% trans "Form" %}</option>
+                    <option value="case">{% trans "Case" %}</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="doc_id" class="col-sm-2 control-label">{% trans "Document ID" %}</label>
+            <div class="col-sm-6">
+                <input type="doc_id" class="form-control" id="doc_id" data-bind="value: documentId">
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="" class="col-sm-2 control-label">{% trans "Expression JSON" %}</label>
+            <div class="col-sm-10">
+                <textarea id="expression" class="form-control jsonwidget" ></textarea>
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-10">
+                <button type="submit" class="btn btn-primary" data-bind="enabled: hasError">{% trans "Evaluate!" %}</button>
+            </div>
+        </div>
+        <p class="alert alert-danger" style="display: none;" data-bind="visible: hasError">{% trans "Your Expression has parse errors!" %}</p>
+    </form>
 {% endblock %}
