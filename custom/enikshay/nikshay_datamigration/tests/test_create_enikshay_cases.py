@@ -148,7 +148,7 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
                 ('episode_type', 'confirmed_tb'),
                 ('migration_created_case', 'true'),
                 ('occupation', 'physical_mathematical_and_engineering'),
-                ('patient_type_choice', 'treatment_after_failure'),
+                ('patient_type_choice', 'treatment_after_lfu'),
                 ('treatment_initiation_date', '2016-12-22'),
                 ('treatment_supporter_designation', 'health_worker'),
                 ('treatment_supporter_first_name', 'Bubble'),
