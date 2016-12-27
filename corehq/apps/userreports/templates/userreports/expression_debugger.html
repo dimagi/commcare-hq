@@ -21,7 +21,8 @@
 </script>
 {% endblock %}
 {% block page_content %}
-    <h1>{% trans "Expression Debugger" %}</h1>
+    <h1>{% trans "UCR Expression Debugger" %}</h1>
+    <p>{% trans "Paste an expression and document informaiton below to see the result of that expression evaluated on the document" %}</p>
     <form id="expression-debugger" class="form-horizontal" data-bind="submit: evaluateExpression">
         <div class="form-group">
             <label for="doc_type" class="col-sm-2 control-label">{% trans "Document Type" %}</label>
