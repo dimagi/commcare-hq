@@ -147,7 +147,7 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
                 ('episode_pending_registration', 'no'),
                 ('episode_type', 'confirmed_tb'),
                 ('migration_created_case', 'true'),
-                ('occupation', 'physical_mathematical_and_entineering'),
+                ('occupation', 'physical_mathematical_and_engineering'),
                 ('patient_type_choice', 'treatment_after_failure'),
                 ('treatment_initiation_date', '2016-12-22'),
                 ('treatment_supporter_designation', 'health_worker'),

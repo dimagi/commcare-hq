@@ -138,7 +138,7 @@ class PatientDetail(models.Model):
             '1': 'legislators_or_senior_official',
             '2': 'corporate_manager',
             '3': 'general_manager',
-            '4': 'physical_mathematical_and_entineering',
+            '4': 'physical_mathematical_and_engineering',
             '5': 'life_sciences_and_health',
             '6': 'teaching_professional',
             '7': 'other_professional',
