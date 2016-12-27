@@ -175,7 +175,7 @@ def _get_or_update_cases(xforms, case_db):
     domain = getattr(case_db, 'domain', None)
     touched_cases = FormProcessorInterface(domain).get_cases_from_forms(case_db, xforms)
     _validate_indices(case_db, [case_update_meta.case for case_update_meta in touched_cases.values()])
-    dirtiness_flags = _get_all_dirtiness_flags_from_cases(case_db, touched_cases)
+    dirtiness_flags = []#_get_all_dirtiness_flags_from_cases(case_db, touched_cases)
     extensions_to_close = get_all_extensions_to_close(domain, touched_cases.values())
     return CaseProcessingResult(
         domain,
