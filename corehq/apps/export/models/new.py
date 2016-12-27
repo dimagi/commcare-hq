@@ -800,8 +800,8 @@ class FormExportInstanceDefaults(ExportInstanceDefaults):
 
     @staticmethod
     def get_default_instance_name(schema):
-        return u'{}: {}'.format(
-            xmlns_to_name(schema.domain, schema.xmlns, schema.app_id),
+        return u'{} ({})'.format(
+            xmlns_to_name(schema.domain, schema.xmlns, schema.app_id, separator=" - "),
             datetime.now().strftime('%Y-%m-%d')
         )
 
