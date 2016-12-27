@@ -94,10 +94,7 @@ class EnikshayCaseFactory(object):
         person_structure = self.get_person_case_structure()
         ocurrence_structure = self.get_occurrence_case_structure(person_structure)
         episode_structure = self.get_episode_case_structure(ocurrence_structure)
-        test_structures = [
-            self.get_test_case_structure(followup, ocurrence_structure) for followup in self._followups
-        ]
-        return [episode_structure] + test_structures
+        return [episode_structure]
 
     def get_person_case_structure(self):
         kwargs = {
