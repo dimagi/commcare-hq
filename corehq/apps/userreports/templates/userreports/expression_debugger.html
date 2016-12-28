@@ -16,7 +16,7 @@
         };
         var sampleText = JSON.stringify(sampleExpression, null, 2);
         expressionEditor.setValue(sampleText);
-        ko.applyBindings(new ExpressionModel(expressionEditor, submitUrl), $("form#expression-debugger").get(0));
+        ko.applyBindings(new ExpressionModel(expressionEditor, submitUrl), document.getElementById('expression-debugger'));
     });
 </script>
 {% endblock %}
