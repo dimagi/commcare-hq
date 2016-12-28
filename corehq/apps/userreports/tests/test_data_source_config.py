@@ -1,3 +1,4 @@
+from copy import copy
 import datetime
 import time
 from mock import patch
@@ -177,8 +178,8 @@ class IndicatorNamedExpressionTest(SimpleTestCase):
                     'test': {
                         'type': 'boolean_expression',
                         'expression': {
-                            'type': 'property_name',
-                            'property_name': 'is_evil',
+                            'type': 'named',
+                            'name': 'is_evil',
                         },
                         'operator': 'eq',
                         'property_value': True,
@@ -282,11 +283,26 @@ class IndicatorNamedExpressionTest(SimpleTestCase):
         with self.assertRaises(BadSpecError):
             bad_config.validate()
 
-    def test_missing_no_named_in_named(self):
+    def test_no_self_lookups(self):
         bad_config = DataSourceConfiguration.wrap(self.indicator_configuration.to_json())
+        bad_config.named_expressions = copy(self.indicator_configuration.named_expressions)
         bad_config.named_expressions['broken'] = {
             "type": "named",
-            "name": "pregnant",
+            "name": "broken",
+        }
+        with self.assertRaises(BadSpecError):
+            bad_config.validate()
+
+    def test_no_recursive_lookups(self):
+        bad_config = DataSourceConfiguration.wrap(self.indicator_configuration.to_json())
+        bad_config.named_expressions = copy(self.indicator_configuration.named_expressions)
+        bad_config.named_expressions['broken'] = {
+            "type": "named",
+            "name": "also_broken",
+        }
+        bad_config.named_expressions['also_broken'] = {
+            "type": "named",
+            "name": "broken",
         }
         with self.assertRaises(BadSpecError):
             bad_config.validate()
