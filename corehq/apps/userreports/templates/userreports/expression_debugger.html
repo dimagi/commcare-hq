@@ -20,7 +20,10 @@
             documentType: '{{ request.GET.type }}',
             documentId: '{{ request.GET.id }}',
         };
-        ko.applyBindings(new ExpressionModel(expressionEditor, submitUrl, initialData), document.getElementById('expression-debugger'));
+        ko.applyBindings(
+            new ExpressionModel(expressionEditor, submitUrl, initialData),
+            document.getElementById('expression-debugger')
+        );
     });
 </script>
 {% endblock %}
