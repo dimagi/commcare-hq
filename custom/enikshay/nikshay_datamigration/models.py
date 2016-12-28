@@ -182,11 +182,11 @@ class PatientDetail(models.Model):
 
     @property
     def treatment_supporter_first_name(self):
-        return ' '.join(self.dotname.split(' ')[:-1]) if len(self._list_of_dot_names) > 1 else ''
+        return ' '.join(self._list_of_dot_names[:-1]) if len(self._list_of_dot_names) > 1 else ''
 
     @property
     def treatment_supporter_last_name(self):
-        return self.dotname.split(' ')[-1]
+        return self._list_of_dot_names[-1]
 
     @property
     def _list_of_dot_names(self):
