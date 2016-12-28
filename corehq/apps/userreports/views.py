@@ -890,14 +890,14 @@ def evaluate_expression(request, domain):
             {"error": _("{} with id {} not found in domain {}.").format(
                 doc_type, doc_id, domain
             )},
-            status_code=500,
+            status_code=404,
         )
     except BadSpecError as e:
         return json_response(
             {"error": _("Problem with expression: {}.").format(
                 e
             )},
-            status_code=500,
+            status_code=400,
         )
     except Exception as e:
         return json_response(
