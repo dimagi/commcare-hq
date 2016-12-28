@@ -539,9 +539,12 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
         cls.first_build.copy_of = cls.current_app.get_id
         cls.first_build.version = 3
 
+        cls.advanced_app = Application.wrap(cls.get_json('advanced_application'))
+
         cls.apps = [
             cls.current_app,
             cls.first_build,
+            cls.advanced_app,
         ]
         with drop_connected_signals(app_post_save):
             for app in cls.apps:
@@ -635,6 +638,22 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
         self.assertTrue(group_schema.inferred)
         inferred_items = filter(lambda item: item.inferred, group_schema.items)
         self.assertEqual(len(inferred_items), 2)
+
+    def test_build_with_advanced_app(self):
+        app = self.advanced_app
+
+        schema = FormExportDataSchema.generate_schema_from_builds(
+            app.domain,
+            app._id,
+            "http://openrosa.org/formdesigner/EF527477-EAE2-493C-B6FC-7D27A722FE1E",
+        )
+
+        group_schema = schema.group_schemas[1]  # The repeat schema
+
+        # Assert that all proper case attributes are added to advanced forms that open
+        # cases with repeats
+        path_suffixes = set(map(lambda item: item.path[-1].name, group_schema.items))
+        self.assertEqual(len(path_suffixes & set(CASE_ATTRIBUTES)), len(CASE_ATTRIBUTES))
 
 
 class TestExportDataSchemaVersionControl(TestCase, TestXmlMixin):
