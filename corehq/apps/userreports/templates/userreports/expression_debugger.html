@@ -16,7 +16,11 @@
         };
         var sampleText = JSON.stringify(sampleExpression, null, 2);
         expressionEditor.setValue(sampleText);
-        ko.applyBindings(new ExpressionModel(expressionEditor, submitUrl), document.getElementById('expression-debugger'));
+        var initialData = {
+            documentType: '{{ request.GET.type }}',
+            documentId: '{{ request.GET.id }}',
+        };
+        ko.applyBindings(new ExpressionModel(expressionEditor, submitUrl, initialData), document.getElementById('expression-debugger'));
     });
 </script>
 {% endblock %}
