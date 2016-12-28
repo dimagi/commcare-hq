@@ -439,22 +439,21 @@ class ShouldSyncLocationFixturesTest(TestCase):
         )
 
 
+@mock.patch('corehq.apps.domain.models.Domain.uses_locations', lambda: True)
 class LocationFixtureSyncSettingsTest(TestCase):
 
     def test_should_sync_hierarchical_format_default(self):
         self.assertEqual(False, should_sync_hierarchical_fixture(Domain()))
 
     def test_should_sync_flat_format_default(self):
-        self.assertEqual(True, should_sync_flat_fixture('some-domain'))
+        self.assertEqual(True, should_sync_flat_fixture(Domain()))
 
     @flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
-    @mock.patch('corehq.apps.accounting.utils.domain_has_privilege', lambda x, y: True)
     def test_sync_format_with_toggle_enabled(self):
         # Considering cases for domains during migration
         domain = uuid.uuid4().hex
         project = Domain(name=domain)
         project.save()
-        location_type = LocationType.objects.create(domain=domain, name='test-type')
 
         # in prep for migration to flat fixture as default, values set for domains which
         # have locations and does not have the old FF FLAT_LOCATION_FIXTURE enabled
@@ -473,19 +472,17 @@ class LocationFixtureSyncSettingsTest(TestCase):
         conf.save()
 
         self.assertEqual(False, should_sync_hierarchical_fixture(project))
-        self.assertEqual(True, should_sync_flat_fixture(domain))
+        self.assertEqual(True, should_sync_flat_fixture(project))
 
         self.addCleanup(project.delete)
-        self.addCleanup(location_type.delete)
 
     def test_sync_format_with_disabled_toggle(self):
         domain = uuid.uuid4().hex
         project = Domain(name=domain)
         project.save()
-        location_type = LocationType.objects.create(domain=domain, name='test-type')
 
         self.assertEqual(False, should_sync_hierarchical_fixture(project))
-        self.assertEqual(True, should_sync_flat_fixture(domain))
+        self.assertEqual(True, should_sync_flat_fixture(project))
 
         # This should not happen ideally since the conf can not be set without having HIERARCHICAL_LOCATION_FIXTURE
         # enabled. Considering that a domain has sync hierarchical fixture set to False without the FF
@@ -496,7 +493,6 @@ class LocationFixtureSyncSettingsTest(TestCase):
         conf.save()
 
         self.assertEqual(False, should_sync_hierarchical_fixture(project))
-        self.assertEqual(True, should_sync_flat_fixture(domain))
+        self.assertEqual(True, should_sync_flat_fixture(project))
 
         self.addCleanup(project.delete)
-        self.addCleanup(location_type.delete)

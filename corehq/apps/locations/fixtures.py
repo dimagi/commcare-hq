@@ -98,7 +98,7 @@ class HierarchicalLocationSerializer(object):
 class FlatLocationSerializer(object):
 
     def get_xml_nodes(self, fixture_id, restore_user, all_locations):
-        if not should_sync_flat_fixture(restore_user.domain):
+        if not should_sync_flat_fixture(restore_user.project):
             return []
 
         all_types = LocationType.objects.filter(domain=restore_user.domain).values_list(
@@ -138,10 +138,13 @@ def should_sync_hierarchical_fixture(project):
     )
 
 
-def should_sync_flat_fixture(domain):
+def should_sync_flat_fixture(project):
     # Sync flat fixture for domains with conf for flat fixture enabled
     # This does not check for toggle for migration to allow domains those domains to migrate to flat fixture
-    return LocationFixtureConfiguration.for_domain(domain).sync_flat_fixture
+    return (
+        project.uses_locations and
+        LocationFixtureConfiguration.for_domain(project.name).sync_flat_fixture
+    )
 
 
 location_fixture_generator = LocationFixtureProvider(
