@@ -25,6 +25,20 @@ hqDefine('userreports/js/expression_evaluator.js', function () {
             return self.getExpressionJSON() === null;
         }, self);
 
+        self.updateUrl = function () {
+            var currentParams = document.location.search.substring(1);
+            var newParams = $.param({
+                'id': self.documentId(),
+                'type': self.documentType(),
+            });
+            if (currentParams !== newParams) {
+                var newUrl = document.location.pathname + "?" + newParams;
+                if (history.pushState) {
+                    window.history.pushState(null, '', newUrl);
+                }
+            }
+        };
+
         self.evaluateExpression = function() {
             self.uiFeedback("");
             if (self.hasError()) {
@@ -42,6 +56,7 @@ hqDefine('userreports/js/expression_evaluator.js', function () {
                     },
                     success: function (data) {
                         self.uiFeedback("<strong>Result:</strong> " + JSON.stringify(data.result));
+                        self.updateUrl();
                     },
                     error: function (data) {
                         self.uiFeedback("<strong>Failure!:</strong> " + data.responseJSON.error);
