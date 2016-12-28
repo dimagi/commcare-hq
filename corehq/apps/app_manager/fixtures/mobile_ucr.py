@@ -95,7 +95,7 @@ class ReportFixturesProvider(object):
         )
         filters_elem = ReportFixturesProvider._get_filters_elem(defer_filters, filter_options_by_field)
 
-        report_elem = E.report(id=report_config.uuid)
+        report_elem = E.report(id=report_config.uuid, report_id=report_config.report_id)
         report_elem.append(filters_elem)
         report_elem.append(rows_elem)
         return report_elem
