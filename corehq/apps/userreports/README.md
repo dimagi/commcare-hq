@@ -633,7 +633,7 @@ Above returns list of ages. Note that the `property_path` in `map_expression` is
     "sort_expression": {
         "type": "property_path",
         "property_path": ["age"]
-    },
+    }
 }
 ```
 
