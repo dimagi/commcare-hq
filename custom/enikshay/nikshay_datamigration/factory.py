@@ -116,7 +116,6 @@ class EnikshayCaseFactory(object):
                     'first_name': self.patient_detail.first_name,
                     'last_name': self.patient_detail.last_name,
                     'name': self.patient_detail.pname,
-                    'nikshay_id': self.nikshay_id,
                     'person_id': 'FROM_NIKSHAY_' + self.nikshay_id,
                     'secondary_contact_name_address': (
                         (self.patient_detail.cname or '')
@@ -212,6 +211,7 @@ class EnikshayCaseFactory(object):
                     'episode_pending_registration': 'no',
                     'episode_type': 'confirmed_tb',
                     'name': 'Episode #1: Confirmed TB (Patient)',
+                    'nikshay_id': self.nikshay_id,
                     'occupation': self.patient_detail.occupation,
                     'patient_type_choice': self.patient_detail.patient_type_choice,
                     'treatment_initiation_date': self.patient_detail.treatment_initiation_date,
