@@ -582,7 +582,7 @@ We have following expressions that act on a list of objects or list of lists. Th
     "map_expression": {
         "type": "property_path",
         "property_path": ["age"]
-    },
+    }
 }
 ```
 Above returns list of ages. Note that the `property_path` in `map_expression` is relative to the repeat item rather than to the form.
