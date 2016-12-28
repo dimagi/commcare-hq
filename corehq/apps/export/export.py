@@ -59,7 +59,7 @@ class _Writer(object):
         assert self._path is None
 
         if len(export_instances) == 1:
-            name = export_instances[0].name
+            name = export_instances[0].name or ''
         else:
             name = ''
         name = safe_filename(name)
