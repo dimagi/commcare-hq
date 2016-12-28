@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from django.test import TestCase
+from django.test import SimpleTestCase
 from mock import patch
 
 from corehq.apps.app_manager.const import CLAIM_DEFAULT_RELEVANT_CONDITION
@@ -11,12 +11,12 @@ from corehq.apps.app_manager.models import (
     DefaultCaseSearchProperty
 )
 from corehq.apps.app_manager.tests.util import TestXmlMixin, SuiteMixin
-from corehq.util.test_utils import flag_enabled
+
 
 DOMAIN = 'test_domain'
 
 
-class RemoteRequestSuiteTest(TestCase, TestXmlMixin, SuiteMixin):
+class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     file_path = ('data', 'suite')
 
     def setUp(self):
@@ -46,7 +46,6 @@ class RemoteRequestSuiteTest(TestCase, TestXmlMixin, SuiteMixin):
             ],
         )
 
-    @flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
     def test_remote_request(self):
         """
         Suite should include remote-request if searching is configured
