@@ -655,7 +655,7 @@ Function Name  | Example
 
 ```json
 {
-    "type": "filter_items",
+    "type": "reduce_items",
     "items_expression": {
         "type": "property_name",
         "property_name": "family_repeat"
