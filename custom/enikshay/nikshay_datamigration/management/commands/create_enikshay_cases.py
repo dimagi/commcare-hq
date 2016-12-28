@@ -1,7 +1,9 @@
 import logging
 
 from django.core.management import BaseCommand
+import mock
 from casexml.apps.case.mock import CaseFactory
+from casexml.apps.phone.cleanliness import set_cleanliness_flags_for_domain
 
 from custom.enikshay.nikshay_datamigration.factory import EnikshayCaseFactory, get_nikshay_codes_to_location
 from custom.enikshay.nikshay_datamigration.models import PatientDetail
@@ -9,6 +11,14 @@ from custom.enikshay.nikshay_datamigration.models import PatientDetail
 logger = logging.getLogger('nikshay_datamigration')
 
 DEFAULT_NUMBER_OF_PATIENTS_PER_FORM = 50
+
+
+def mock_ownership_cleanliness_checks():
+    # this function is expensive so bypass this during processing
+    return mock.patch(
+        'casexml.apps.case.xform._get_all_dirtiness_flags_from_cases',
+        new=lambda case_db, touched_cases: [],
+    )
 
 
 class Command(BaseCommand):
@@ -40,6 +50,7 @@ class Command(BaseCommand):
             type=str,
         )
 
+    @mock_ownership_cleanliness_checks()
     def handle(self, domain, **options):
         base_query = PatientDetail.objects.all()
 
@@ -101,3 +112,8 @@ class Command(BaseCommand):
         logger.info('Number of attempts: %d.' % counter)
         logger.info('Number of successes: %d.' % num_succeeded)
         logger.info('Number of failures: %d.' % num_failed)
+
+        # since we circumvented cleanliness checks just call this at the end
+        logger.info('Setting cleanliness flags')
+        set_cleanliness_flags_for_domain(domain, force_full=True)
+        logger.info('Done!')
