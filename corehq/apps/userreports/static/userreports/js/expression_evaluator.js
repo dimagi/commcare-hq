@@ -1,11 +1,12 @@
 /* globals hqDefine */
 hqDefine('userreports/js/expression_evaluator.js', function () {
-    var ExpressionModel = function (editor, submitUrl) {
+    var ExpressionModel = function (editor, submitUrl, initialData) {
         var self = this;
+        initialData = initialData || {};
         self.editor = editor;
         self.submitUrl = submitUrl;
-        self.documentType = ko.observable();
-        self.documentId = ko.observable();
+        self.documentType = ko.observable(initialData.documentType);
+        self.documentId = ko.observable(initialData.documentId);
         self.expressionText = ko.observable(editor.getValue());
         self.uiFeedback = ko.observable();
 
@@ -24,6 +25,20 @@ hqDefine('userreports/js/expression_evaluator.js', function () {
             return self.getExpressionJSON() === null;
         }, self);
 
+        self.updateUrl = function () {
+            var currentParams = document.location.search.substring(1);
+            var newParams = $.param({
+                'id': self.documentId(),
+                'type': self.documentType(),
+            });
+            if (currentParams !== newParams) {
+                var newUrl = document.location.pathname + "?" + newParams;
+                if (history.pushState) {
+                    window.history.pushState(null, '', newUrl);
+                }
+            }
+        };
+
         self.evaluateExpression = function() {
             self.uiFeedback("");
             if (self.hasError()) {
@@ -40,7 +55,8 @@ hqDefine('userreports/js/expression_evaluator.js', function () {
                         expression: self.expressionText(),
                     },
                     success: function (data) {
-                        self.uiFeedback("<strong>Result:</strong> " + data.result);
+                        self.uiFeedback("<strong>Result:</strong> " + JSON.stringify(data.result));
+                        self.updateUrl();
                     },
                     error: function (data) {
                         self.uiFeedback("<strong>Failure!:</strong> " + data.responseJSON.error);

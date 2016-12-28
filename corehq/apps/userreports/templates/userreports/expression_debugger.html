@@ -16,13 +16,20 @@
         };
         var sampleText = JSON.stringify(sampleExpression, null, 2);
         expressionEditor.setValue(sampleText);
-        ko.applyBindings(new ExpressionModel(expressionEditor, submitUrl), $("form#expression-debugger").get(0));
+        var initialData = {
+            documentType: '{{ request.GET.type }}',
+            documentId: '{{ request.GET.id }}',
+        };
+        ko.applyBindings(
+            new ExpressionModel(expressionEditor, submitUrl, initialData),
+            document.getElementById('expression-debugger')
+        );
     });
 </script>
 {% endblock %}
 {% block page_content %}
     <h1>{% trans "UCR Expression Debugger" %}</h1>
-    <p>{% trans "Paste an expression and document informaiton below to see the result of that expression evaluated on the document" %}</p>
+    <p>{% trans "Paste an expression and document information below to see the result of that expression evaluated on the document." %}</p>
     <form id="expression-debugger" class="form-horizontal" data-bind="submit: evaluateExpression">
         <div class="form-group">
             <label for="doc_type" class="col-sm-2 control-label">{% trans "Document Type" %}</label>
@@ -52,7 +59,7 @@
         </div>
         <p class="col-sm-offset-2 col-sm-10" data-bind="html: uiFeedback"></p>
         <p class="alert alert-danger col-sm-offset-2 col-sm-10" style="display: none;" data-bind="visible: hasError">
-            {% trans 'Your Expression has parse errors! For more details try pasting into a <a href="http://jsonlint.com/" tagert="blank">JSON Validator</a>.' %}
+            {% trans 'Your Expression has parse errors! For more details try pasting into a <a href="http://jsonlint.com/" target="_blank">JSON Validator</a>.' %}
         </p>
     </form>
 {% endblock %}

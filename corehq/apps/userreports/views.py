@@ -32,6 +32,7 @@ from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, DATA_SOURCE
 from corehq.apps.userreports.document_stores import get_document_store
 from corehq.apps.userreports.expressions import ExpressionFactory
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
+from corehq.apps.userreports.specs import EvaluationContext
 from corehq.util import reverse
 from corehq.util.quickcache import quickcache
 from couchexport.export import export_from_tables
@@ -881,7 +882,7 @@ def evaluate_expression(request, domain):
         expression_text = request.POST['expression']
         expression_json = json.loads(expression_text)
         parsed_expression = ExpressionFactory.from_spec(expression_json)
-        result = parsed_expression(doc)
+        result = parsed_expression(doc, EvaluationContext(doc))
         return json_response({
             "result": result,
         })
@@ -890,14 +891,14 @@ def evaluate_expression(request, domain):
             {"error": _("{} with id {} not found in domain {}.").format(
                 doc_type, doc_id, domain
             )},
-            status_code=500,
+            status_code=404,
         )
     except BadSpecError as e:
         return json_response(
             {"error": _("Problem with expression: {}.").format(
                 e
             )},
-            status_code=500,
+            status_code=400,
         )
     except Exception as e:
         return json_response(
