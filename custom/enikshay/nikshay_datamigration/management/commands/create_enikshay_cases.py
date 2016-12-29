@@ -52,7 +52,7 @@ class Command(BaseCommand):
 
     @mock_ownership_cleanliness_checks()
     def handle(self, domain, **options):
-        base_query = PatientDetail.objects.all()
+        base_query = PatientDetail.objects.order_by('PregId')
 
         start = options['start']
         limit = options['limit']
