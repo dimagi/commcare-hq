@@ -231,6 +231,10 @@ class IndicatorNamedExpressionTest(SimpleTestCase):
             ]
         })
 
+    def test_named_expressions_serialization(self):
+        # in response to http://manage.dimagi.com/default.asp?244625
+        self.assertNotEqual({}, self.indicator_configuration.to_json()['named_expressions'])
+
     def test_filter_match(self):
         self.assertTrue(self.indicator_configuration.filter({
             'doc_type': 'CommCareCase',
