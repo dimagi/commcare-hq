@@ -8,7 +8,13 @@ from corehq.apps.export.models.new import MAIN_TABLE, \
 
 from corehq.util.context_managers import drop_connected_signals
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.apps.app_manager.models import XForm, Application, OpenSubCaseAction
+from corehq.apps.app_manager.models import (
+    XForm,
+    Application,
+    OpenSubCaseAction,
+    AdvancedModule,
+    AdvancedOpenCaseAction,
+)
 from corehq.apps.app_manager.signals import app_post_save
 from corehq.apps.export.dbaccessors import delete_all_export_data_schemas, delete_all_inferred_schemas
 from corehq.apps.export.tasks import add_inferred_export_properties
@@ -539,7 +545,18 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
         cls.first_build.copy_of = cls.current_app.get_id
         cls.first_build.version = 3
 
-        cls.advanced_app = Application.wrap(cls.get_json('advanced_application'))
+        cls.advanced_app = Application.new_app('domain', "Untitled Application")
+        module = cls.advanced_app.add_module(AdvancedModule.new_module('Untitled Module', None))
+        form = module.new_form("Untitled Form", cls.get_xml('repeat_group_form'))
+        form.xmlns = 'repeat-xmlns'
+        form.actions.open_cases = [
+            AdvancedOpenCaseAction(
+                case_type="advanced",
+                case_tag="open_case_0",
+                name_path="/data/question3/question4",
+                repeat_context="/data/question3",
+            )
+        ]
 
         cls.apps = [
             cls.current_app,
@@ -645,7 +662,7 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
         schema = FormExportDataSchema.generate_schema_from_builds(
             app.domain,
             app._id,
-            "http://openrosa.org/formdesigner/EF527477-EAE2-493C-B6FC-7D27A722FE1E",
+            "repeat-xmlns",
         )
 
         group_schema = schema.group_schemas[1]  # The repeat schema
