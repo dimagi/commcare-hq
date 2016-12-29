@@ -263,6 +263,15 @@ class Outcome(models.Model):
     loginDate = models.DateTimeField()
     OutcomeDate1 = models.CharField(max_length=255)  # datetimes and NULL
 
+    @property
+    def hiv_status(self):
+        return {
+            None: None,
+            'NULL': None,
+            'Pos': 'reactive',
+            'Neg': 'non_reactive',
+            'Unknown': 'unknown',
+        }[self.HIVStatus]
 
 class Followup(models.Model):
     id = models.AutoField(primary_key=True)

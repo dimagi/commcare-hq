@@ -182,9 +182,8 @@ class EnikshayCaseFactory(object):
                 related_type=PERSON_CASE_TYPE,
             )],
         }
-        if self._outcome:
-            # TODO - store with correct value
-            kwargs['attrs']['update']['hiv_status'] = self._outcome.HIVStatus
+        if self._outcome and self._outcome.hiv_status:
+            kwargs['attrs']['update']['hiv_status'] = self._outcome.hiv_status
 
         if self.existing_occurrence_case:
             kwargs['case_id'] = self.existing_occurrence_case.case_id

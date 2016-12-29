@@ -46,7 +46,7 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
         )
         self.outcome = Outcome.objects.create(
             PatientId=self.patient_detail,
-            HIVStatus='negative',
+            HIVStatus='Neg',
             loginDate=datetime(2016, 1, 2),
         )
         # Household.objects.create(
@@ -111,7 +111,7 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
         self.assertEqual(
             OrderedDict([
                 ('current_episode_type', 'confirmed_tb'),
-                ('hiv_status', 'negative'),
+                ('hiv_status', 'non_reactive'),
                 ('ihv_date', '2016-12-25'),
                 ('initial_home_visit_status', 'completed'),
                 ('migration_created_case', 'true'),
@@ -233,7 +233,7 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
         self.patient_detail.paadharno = new_addhaar_number
         self.patient_detail.dcpulmunory = 'N'
         self.patient_detail.save()
-        self.outcome.HIVStatus = 'positive'
+        self.outcome.HIVStatus = 'Pos'
         self.outcome.save()
 
         call_command('create_enikshay_cases', self.domain)
@@ -246,7 +246,7 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
         occurrence_case_ids = self.case_accessor.get_case_ids_in_domain(type='occurrence')
         self.assertEqual(1, len(occurrence_case_ids))
         occurrence_case = self.case_accessor.get_case(occurrence_case_ids[0])
-        self.assertEqual(occurrence_case.dynamic_case_properties()['hiv_status'], 'positive')
+        self.assertEqual(occurrence_case.dynamic_case_properties()['hiv_status'], 'reactive')
 
         episode_case_ids = self.case_accessor.get_case_ids_in_domain(type='episode')
         self.assertEqual(1, len(episode_case_ids))
