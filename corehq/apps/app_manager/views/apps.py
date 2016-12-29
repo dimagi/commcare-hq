@@ -396,7 +396,6 @@ def import_app(request, domain, template="app_manager/v1/import_app.html"):
         return render(request, template, {
             'domain': domain,
             'app': app,
-            'is_superuser': request.couch_user.is_superuser
         })
 
 
