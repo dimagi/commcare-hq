@@ -64,7 +64,7 @@ var uiElement;
         this.$edit_view = $elem.on('change textchange', function () {
             that.fire('change');
         });
-        $elem.data('lastValue', initialValue);
+
         this.$noedit_view = $('<span class="ui-element-input"/>');
 
         this.on('change', function () {
@@ -73,6 +73,9 @@ var uiElement;
         });
         this.setEdit(this.edit);
         this.val(initialValue);
+
+        // Trigger the textchange plugin's logic, so that it gets the correct initialValue set
+        $elem.trigger('keyup');
     };
     Input.prototype = {
         val: function (value) {
