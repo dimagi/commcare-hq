@@ -158,7 +158,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     @property
     @memoized
     def named_expression_objects(self):
-        named_expression_specs = copy(self.named_expressions)
+        named_expression_specs = deepcopy(self.named_expressions)
         named_expressions = {}
         spec_error = None
         while named_expression_specs:

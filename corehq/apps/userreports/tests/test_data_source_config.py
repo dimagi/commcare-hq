@@ -178,8 +178,8 @@ class IndicatorNamedExpressionTest(SimpleTestCase):
                     'test': {
                         'type': 'boolean_expression',
                         'expression': {
-                            'type': 'named',
-                            'name': 'is_evil',
+                            'type': 'property_name',
+                            'property_name': 'is_evil',
                         },
                         'operator': 'eq',
                         'property_value': True,
@@ -230,6 +230,10 @@ class IndicatorNamedExpressionTest(SimpleTestCase):
 
             ]
         })
+
+    def test_named_expressions_serialization(self):
+        # in response to http://manage.dimagi.com/default.asp?244625
+        self.assertNotEqual({}, self.indicator_configuration.to_json()['named_expressions'])
 
     def test_filter_match(self):
         self.assertTrue(self.indicator_configuration.filter({
@@ -285,7 +289,6 @@ class IndicatorNamedExpressionTest(SimpleTestCase):
 
     def test_no_self_lookups(self):
         bad_config = DataSourceConfiguration.wrap(self.indicator_configuration.to_json())
-        bad_config.named_expressions = copy(self.indicator_configuration.named_expressions)
         bad_config.named_expressions['broken'] = {
             "type": "named",
             "name": "broken",
@@ -295,7 +298,6 @@ class IndicatorNamedExpressionTest(SimpleTestCase):
 
     def test_no_recursive_lookups(self):
         bad_config = DataSourceConfiguration.wrap(self.indicator_configuration.to_json())
-        bad_config.named_expressions = copy(self.indicator_configuration.named_expressions)
         bad_config.named_expressions['broken'] = {
             "type": "named",
             "name": "also_broken",
