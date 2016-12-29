@@ -64,7 +64,6 @@ var uiElement;
         this.$edit_view = $elem.on('change textchange', function () {
             that.fire('change');
         });
-
         this.$noedit_view = $('<span class="ui-element-input"/>');
 
         this.on('change', function () {
