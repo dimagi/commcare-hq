@@ -1246,8 +1246,8 @@ class FormExportDataSchema(ExportDataSchema):
             open_case_actions = form.actions.subcases
 
         repeats_with_subcases = {
-            subcase_action for subcase_action in open_case_actions
-            if subcase_action.repeat_context
+            open_case_action for open_case_action in open_case_actions
+            if open_case_action.repeat_context
         }
         xform_schema = cls._generate_schema_from_xform(
             xform,
