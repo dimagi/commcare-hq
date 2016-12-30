@@ -1662,7 +1662,6 @@ class MappingItem(DocumentSchema):
         numeral, which is illegal.
         """
         if re.search(r'\W', self.key) or self.treat_as_expression:
-        #if ' ' in self.key or self.treat_as_expression:
             return 'h{hash}'.format(hash=hashlib.md5(self.key).hexdigest()[:8])
         else:
             return 'k{key}'.format(key=self.key)
