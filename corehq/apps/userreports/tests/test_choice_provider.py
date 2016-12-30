@@ -169,6 +169,10 @@ class LocationChoiceProviderTest(ChoiceProviderTestMixin, LocationHierarchyTestC
         choices = [choice for name, choice in choice_tuples]
         cls.web_user = WebUser.create(cls.domain, 'blah', 'password')
         cls.choice_provider = LocationChoiceProvider(report, None)
+        cls.choice_provider.configure({
+            "include_descendants": False,
+            "show_full_path": True,
+        })
         cls.static_choice_provider = StaticChoiceProvider(choices)
         cls.choice_query_context = partial(ChoiceQueryContext, user=cls.web_user)
 

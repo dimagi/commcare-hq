@@ -155,7 +155,7 @@ class LocationChoiceProvider(ChainableChoiceProvider):
     def __init__(self, report, filter_slug):
         super(LocationChoiceProvider, self).__init__(report, filter_slug)
         self.include_descendants = False
-        self.show_full_path = True
+        self.show_full_path = False
 
     def configure(self, spec):
         self.include_descendants = spec.get('include_descendants', self.include_descendants)

@@ -1184,7 +1184,7 @@ owner                | Select a possible case owner owner (user, group, or locat
 Location choice providers also support two additional configuration options:
 
 * "include_descendants" - Include descendant locations in the results. Defaults to `false`.
-* "show_full_path" - display the full path to the location in the filter.  Defaults to `true`.
+* "show_full_path" - display the full path to the location in the filter.  Defaults to `false`.
 
 Example assuming "village" is a location ID, which is converted to names using the location `choice_provider`:
 ```json
@@ -1196,7 +1196,7 @@ Example assuming "village" is a location ID, which is converted to names using t
   "datatype": "string",
   "choice_provider": {
       "type": "location",
-      "include_descendants": false,
+      "include_descendants": true,
       "show_full_path": true
   }
 }
