@@ -88,6 +88,7 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
                 ('dob', '1998-07-01'),
                 ('dob_known', 'no'),
                 ('first_name', 'A B'),
+                ('hiv_status', 'non_reactive'),
                 ('last_name', 'C'),
                 ('migration_created_case', 'true'),
                 ('person_id', 'FROM_NIKSHAY_MH-ABD-05-16-0001'),
@@ -111,7 +112,6 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
         self.assertEqual(
             OrderedDict([
                 ('current_episode_type', 'confirmed_tb'),
-                ('hiv_status', 'non_reactive'),
                 ('ihv_date', '2016-12-25'),
                 ('initial_home_visit_status', 'completed'),
                 ('migration_created_case', 'true'),
@@ -242,11 +242,11 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
         self.assertEqual(1, len(person_case_ids))
         person_case = self.case_accessor.get_case(person_case_ids[0])
         self.assertEqual(person_case.dynamic_case_properties()['aadhaar_number'], str(new_addhaar_number))
+        self.assertEqual(person_case.dynamic_case_properties()['hiv_status'], 'reactive')
 
         occurrence_case_ids = self.case_accessor.get_case_ids_in_domain(type='occurrence')
         self.assertEqual(1, len(occurrence_case_ids))
         occurrence_case = self.case_accessor.get_case(occurrence_case_ids[0])
-        self.assertEqual(occurrence_case.dynamic_case_properties()['hiv_status'], 'reactive')
 
         episode_case_ids = self.case_accessor.get_case_ids_in_domain(type='episode')
         self.assertEqual(1, len(episode_case_ids))
