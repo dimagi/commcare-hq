@@ -20,6 +20,7 @@ class DbaccessorsTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(DbaccessorsTest, cls).setUpClass()
         cls.case_upload_1 = CaseUploadRecord(
             upload_id=UUID('7ca20e75-8ba3-4d0d-9c9c-66371e8895dc'),
             task_id=UUID('a2ebc913-11e6-4b6b-b909-355a863e0682'),
@@ -37,6 +38,7 @@ class DbaccessorsTest(TestCase):
     def tearDownClass(cls):
         cls.case_upload_1.delete()
         cls.case_upload_2.delete()
+        super(DbaccessorsTest, cls).tearDownClass()
 
     def assert_model_lists_equal(self, list_1, list_2):
         self.assertEqual([(type(model), model_to_dict(model)) for model in list_1],
