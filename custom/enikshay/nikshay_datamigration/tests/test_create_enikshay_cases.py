@@ -231,6 +231,7 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
 
         new_addhaar_number = 867386000001
         self.patient_detail.paadharno = new_addhaar_number
+        self.patient_detail.cvisitedDate1 = '2016-12-31 00:00:00.000'
         self.patient_detail.dcpulmunory = 'N'
         self.patient_detail.save()
         self.outcome.HIVStatus = 'Pos'
@@ -247,6 +248,7 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
         occurrence_case_ids = self.case_accessor.get_case_ids_in_domain(type='occurrence')
         self.assertEqual(1, len(occurrence_case_ids))
         occurrence_case = self.case_accessor.get_case(occurrence_case_ids[0])
+        self.assertEqual(occurrence_case.dynamic_case_properties()['ihv_date'], '2016-12-31')
 
         episode_case_ids = self.case_accessor.get_case_ids_in_domain(type='episode')
         self.assertEqual(1, len(episode_case_ids))
