@@ -69,8 +69,7 @@ var BaseSelect2Handler = function (options) {
                 results: self.processResults,
                 500: function () {
                     self.error(
-                        "There was an issue communicating with the server. " +
-                        "Please try back later."
+                        gettext("There was an issue communicating with the server. Please try back later.")
                     );
                 }
             },
