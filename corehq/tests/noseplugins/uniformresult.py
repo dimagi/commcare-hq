@@ -3,10 +3,10 @@
 Usage:
 
     # collect django tests
-    COLLECT_ONLY=1 ./manage.py test -v2 --settings=settings 2> tests-django.txt
+    COLLECT_ONLY=1 ./manage.py test -v 2 --settings=settings 2> tests-django.txt
 
     # collect nose tests
-    ./manage.py test -v2 --collect-only --with-uniform-results 2> tests-nose.txt
+    ./manage.py test -v 2 --collect-only --with-uniform-results 2> tests-nose.txt
 
     # clean up django test output: s/skipped\ \'.*\'$/ok/
     # sort each output file
