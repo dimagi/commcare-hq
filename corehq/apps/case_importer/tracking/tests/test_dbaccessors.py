@@ -63,6 +63,7 @@ class FormAndCaseIdsTest(TestCase):
     def tearDownClass(cls):
         delete_all_cases()
         delete_all_xforms()
+        super(FormAndCaseIdsTest, cls).tearDownClass()
 
     def _get_config(self, excel_fields):
         return ImporterConfig(
