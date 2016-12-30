@@ -7,7 +7,7 @@ ko.bindingHandlers.hqbSubmitReady = {
             $(element).addClass("btn-primary").removeClass("disabled");
         else
             $(element).addClass("disabled").removeClass("btn-primary");
-    }
+    },
 };
 
 ko.bindingHandlers.fadeVisible = {
@@ -19,7 +19,7 @@ ko.bindingHandlers.fadeVisible = {
     update: function(element, valueAccessor) {
         var value = valueAccessor();
         ko.utils.unwrapObservable(value) ? $(element).fadeIn() : $(element).fadeOut();
-    }
+    },
 };
 
 ko.bindingHandlers.fadeVisibleInOnly = {
@@ -31,7 +31,7 @@ ko.bindingHandlers.fadeVisibleInOnly = {
     update: function(element, valueAccessor) {
         var value = valueAccessor();
         ko.utils.unwrapObservable(value) ? $(element).fadeIn() : $(element).hide();
-    }
+    },
 };
 
 ko.bindingHandlers.staticChecked = {
