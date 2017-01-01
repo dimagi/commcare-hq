@@ -9,6 +9,7 @@ from casexml.apps.case.xform import get_case_updates, is_device_report
 from corehq.apps.domain.decorators import (
     check_domain_migration, login_or_digest_ex, login_or_basic_ex
 )
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.receiverwrapper.auth import (
     AuthContext,
     WaivedAuthContext,
@@ -208,6 +209,7 @@ def _secure_post_basic(request, domain, app_id=None):
     )
 
 
+@location_safe
 @csrf_exempt
 @require_POST
 @check_domain_migration

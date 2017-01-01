@@ -13,6 +13,7 @@ from corehq.apps.casegroups.dbaccessors import get_case_groups_in_domain, \
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.users.permissions import can_view_form_exports, can_view_case_exports
 from corehq.util.workbook_json.excel import JSONReaderError, WorkbookJSONReader, \
     InvalidExcelFileException
@@ -476,6 +477,7 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
         return self.paginate_crud_response
 
 
+@location_safe
 class XFormManagementView(DataInterfaceSection):
     urlname = 'xform_management'
     page_title = ugettext_noop('Form Management')
@@ -498,7 +500,8 @@ class XFormManagementView(DataInterfaceSection):
             mode,
             self.domain,
             self.request.couch_user,
-            form_ids_or_query_string
+            form_ids_or_query_string,
+            self.request.can_access_all_locations
         )
         task_ref.set_task(task)
 
@@ -514,6 +517,7 @@ class XFormManagementView(DataInterfaceSection):
         return super(XFormManagementView, self).dispatch(request, *args, **kwargs)
 
 
+@location_safe
 class XFormManagementStatusView(DataInterfaceSection):
 
     urlname = 'xform_management_status'
@@ -538,6 +542,7 @@ class XFormManagementStatusView(DataInterfaceSection):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
 
 
+@location_safe
 @require_can_edit_data
 @require_form_management_privilege
 def xform_management_job_poll(request, domain, download_id,

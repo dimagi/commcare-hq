@@ -178,6 +178,7 @@ class ArchiveOrNormalFormFilter(BaseSingleOptionFilter):
         return FormManagementMode(self.request.GET.get(self.slug)).mode_name
 
 
+@location_safe
 class BulkFormManagementInterface(SubmitHistoryMixin, DataInterface, ProjectReport):
     name = ugettext_noop("Manage Forms")
     slug = "bulk_archive_forms"
