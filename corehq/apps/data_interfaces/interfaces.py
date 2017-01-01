@@ -8,12 +8,13 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.es import cases as case_es
 from corehq.apps.groups.models import Group
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.display import FormDisplay
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import ProjectReport
-from corehq.apps.reports.standard.cases.basic import CaseListMixin
+from corehq.apps.reports.standard.cases.basic import CaseListMixin, CaseExportScope
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
 from corehq.apps.reports.standard.inspect import SubmitHistoryMixin
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
@@ -34,7 +35,8 @@ class DataInterface(GenericReportView):
         return reverse('data_interfaces_default', args=[self.request.project])
 
 
-class CaseReassignmentInterface(CaseListMixin, DataInterface):
+@location_safe
+class CaseReassignmentInterface(CaseExportScope, CaseListMixin, DataInterface):
     name = ugettext_noop("Reassign Cases")
     slug = "reassign_cases"
     report_template_path = 'data_interfaces/interfaces/case_management.html'
