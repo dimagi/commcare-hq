@@ -112,8 +112,7 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
                  .domain(self.domain)
                  .filter(time_filter(gte=self.datespan.startdate,
                                      lt=self.datespan.enddate_adjusted)))
-        if self.request.can_access_all_locations or (not self.request.can_access_all_locations
-                                                     and filter(None, mobile_user_and_group_slugs)):
+        if filter(None, mobile_user_and_group_slugs):
             query = query.filter(self._get_users_filter(mobile_user_and_group_slugs))
 
         if not self.request.can_access_all_locations:
