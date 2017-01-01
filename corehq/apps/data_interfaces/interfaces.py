@@ -7,7 +7,9 @@ from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.es import cases as case_es
+from corehq.apps.es.users import user_ids_at_locations
 from corehq.apps.groups.models import Group
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.display import FormDisplay
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
@@ -85,12 +87,22 @@ class CaseReassignmentInterface(CaseExportScope, CaseListMixin, DataInterface):
     @property
     def report_context(self):
         context = super(CaseReassignmentInterface, self).report_context
-        active_users = self.get_all_users_by_domain(user_filter=tuple(HQUserType.all()), simplified=True)
+        if not self.request.can_access_all_locations:
+            accessible_location_ids = (SQLLocation.active_objects.accessible_location_ids(
+                self.request.domain,
+                self.request.couch_user)
+            )
+            accessible_user_ids = user_ids_at_locations(accessible_location_ids)
+            active_users = self.get_all_users_by_domain(user_filter=tuple(HQUserType.all()), simplified=True,
+                                                        user_ids=tuple(accessible_user_ids))
+        else:
+            active_users = self.get_all_users_by_domain(user_filter=tuple(HQUserType.all()), simplified=True)
+            context.update(groups=[dict(ownerid=group.get_id, name=group.name, type="group")
+                                   for group in self.all_case_sharing_groups],
+                           )
         context.update(
             users=[dict(ownerid=user.user_id, name=user.username_in_report, type="user")
                    for user in active_users],
-            groups=[dict(ownerid=group.get_id, name=group.name, type="group")
-                    for group in self.all_case_sharing_groups],
             user_ids=self.user_ids,
         )
         return context
