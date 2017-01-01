@@ -70,7 +70,8 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
         )
         selected_user_types = EMWF.selected_user_types(mobile_user_and_group_slugs)
         all_mobile_workers_selected = HQUserType.REGISTERED in selected_user_types
-        if not all_mobile_workers_selected or users_data.admin_and_demo_users:
+        if not self.request.can_access_all_locations or (not all_mobile_workers_selected or
+                                                         users_data.admin_and_demo_users):
             return form_es.user_id(truthy_only(
                 u.user_id for u in users_data.combined_users
             ))
