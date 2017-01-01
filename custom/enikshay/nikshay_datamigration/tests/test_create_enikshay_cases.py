@@ -149,6 +149,7 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
                 ('nikshay_id', 'MH-ABD-05-16-0001'),
                 ('occupation', 'physical_mathematical_and_engineering'),
                 ('patient_type_choice', 'treatment_after_lfu'),
+                ('treatment_initiated', 'yes_phi'),
                 ('treatment_initiation_date', '2016-12-22'),
                 ('treatment_supporter_designation', 'health_worker'),
                 ('treatment_supporter_first_name', 'Bubble'),
