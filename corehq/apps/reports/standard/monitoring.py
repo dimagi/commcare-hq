@@ -6,6 +6,7 @@ import operator
 from pygooglechart import ScatterChart
 import pytz
 
+from corehq import toggles
 from corehq.apps.es import filters
 from corehq.apps.es import cases as case_es
 from corehq.apps.es.aggregations import (
@@ -1336,16 +1337,25 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     num_avg_intervals = 3  # how many duration intervals we go back to calculate averages
     is_cacheable = True
 
-    fields = [
-        'corehq.apps.reports.filters.select.MultiGroupFilter',
-        'corehq.apps.reports.filters.users.UserOrGroupFilter',
-        'corehq.apps.reports.filters.select.MultiCaseTypeFilter',
-        'corehq.apps.reports.filters.dates.DatespanFilter',
-    ]
     fix_left_col = True
     emailable = True
 
     NO_FORMS_TEXT = ugettext_noop('None')
+
+    @property
+    def fields(self):
+        if toggles.EMWF_WORKER_ACTIVITY_REPORT.enabled(self.request.domain):
+            return [
+                'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
+                'corehq.apps.reports.filters.select.MultiCaseTypeFilter',
+                'corehq.apps.reports.filters.dates.DatespanFilter',
+            ]
+        return [
+            'corehq.apps.reports.filters.select.MultiGroupFilter',
+            'corehq.apps.reports.filters.users.UserOrGroupFilter',
+            'corehq.apps.reports.filters.select.MultiCaseTypeFilter',
+            'corehq.apps.reports.filters.dates.DatespanFilter',
+        ]
 
     @classmethod
     def display_in_dropdown(cls, domain=None, project=None, user=None):
@@ -1357,6 +1367,8 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     @property
     def view_by_groups(self):
+        if toggles.EMWF_WORKER_ACTIVITY_REPORT.enabled(self.request.domain):
+            return False
         return self.request.GET.get('view_by', None) == 'groups'
 
     @property
