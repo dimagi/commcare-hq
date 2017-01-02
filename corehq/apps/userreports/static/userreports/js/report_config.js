@@ -72,6 +72,8 @@ var reportBuilder = function () {
         self._sourceType = config['sourceType'];
         self._sourceId = config['sourceId'];
 
+        self.existingReportId = config['existingReport'];
+
         self.reportTitle = config["reportTitle"];
         self.columns = config["columns"];
         self.dataSourceUrl = config["dataSourceUrl"];  // Fetch the preview data asynchronously.
@@ -238,7 +240,7 @@ var reportBuilder = function () {
 
         self.serialize = function () {
             return {
-                "existing_report": config['existingReport'],
+                "existing_report": self.existingReportId,
                 "report_title": self.reportTitle,
                 "report_description": "",  // TODO: self.reportDescription,
                 "report_type": self.reportType(),
@@ -270,6 +272,9 @@ var reportBuilder = function () {
                     type: "POST",
                     data: JSON.stringify(self.serialize()),
                     dataType: 'json',
+                    success: function (data) {
+                        self.existingReportId = data['report_id'];
+                    }
                 });
             },
         });

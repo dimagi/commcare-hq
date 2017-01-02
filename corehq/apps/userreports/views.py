@@ -878,6 +878,10 @@ class ConfigureReport(ReportBuilderView):
                 return 'table' if report_data_['chart'] == 'none' else 'chart'
 
         report_data = json.loads(request.body)
+        if report_data['existing_report'] and not self.existing_report:
+            # This is the case if the user has clicked "Save" for a second time from the new report page
+            # i.e. the user created a report with the first click, but didn't navigate to the report view page
+            self.existing_report = ReportConfiguration.get(report_data['existing_report'])
 
         try:
             if self.existing_report:
@@ -915,7 +919,10 @@ class ConfigureReport(ReportBuilderView):
             })
             return self.get(request, domain)
         return json_response(
-            {'report_url': reverse(ConfigurableReport.slug, args=[self.domain, report_configuration._id])}
+            {
+                'report_url': reverse(ConfigurableReport.slug, args=[self.domain, report_configuration._id]),
+                'report_id': report_configuration._id,
+            }
         )
 
     def _confirm_report_limit(self):
