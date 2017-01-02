@@ -104,7 +104,7 @@
 {% endblock %}
 {% block posttable %}{% endblock %}
 {% endblock %}
-{% addtoblock initial_page_json %}
+{% block initial_page_json %}
     {% if report_table and report_table.datatables %}
         "renderReportTables": 1,
         "reportTablesOptions": {
@@ -126,5 +126,6 @@
             {% endif %}
         }
     {% endif %}
-{% endaddtoblock %}
+    {{ block.super }}
+{% endblock %}
 {% endblock %}
