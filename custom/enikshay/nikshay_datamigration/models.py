@@ -120,6 +120,22 @@ class PatientDetail(models.Model):
         }[self.dcpulmunory]
 
     @property
+    def site_choice(self):
+        return {
+            '0': 'other',
+            '1': 'lymph_node',
+            '2': 'pleural_effusion',
+            '3': 'abdominal',
+            '4': 'other',
+            '5': 'brain',
+            '6': 'spine',
+            '7': 'other',
+            '8': 'other',
+            '9': 'other',
+            '10': 'other',
+        }.get(self.dcexpulmunory.strip(), '')
+
+    @property
     def patient_type_choice(self):
         return {
             '1': 'new',
