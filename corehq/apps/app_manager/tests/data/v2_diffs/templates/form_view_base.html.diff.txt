@@ -55,33 +55,45 @@
  
          gaTrackLink($('.breadcrumb .view-form'), 'App Builder', 'View Form', 'Breadcrumb');
  
-@@ -286,7 +274,22 @@
+@@ -284,67 +272,56 @@
+     </script>
+ {% endblock %}
  
- {% block form-view %}
-     <div id="build_errors"></div>
+-{% block form-view %}
+-    <div id="build_errors"></div>
+-    {% inline_edit_trans form.name langs edit_name_url saveValueName='name' readOnlyClass='h3' postSave="function(data) { document.title = data.update['.variable-form_name'] + ' - CommCare HQ'; return hqImport('app_manager/js/app_manager.js').updateDOM(data.update);}" %}
+-    <br />
+-    <inline-edit params="
++{% block pre_page_content %}
++  <div class="appmanager-page-actions">
++      <a class="btn btn-purple js-preview-toggle" style="display: none;" href="#">
++        <span class="js-preview-action-show hide"><i class="fa fa-play-circle"></i> {% trans "Preview App" %}</span>
++        <span class="js-preview-action-hide hide"><i class="fa fa-pause-circle"></i> {% trans "Preview App" %}</span>
++      </a>
++  </div>
 +
-+        <div class="pull-right">
-+            <a class="btn btn-default js-preview-toggle" style="display: none;" href="#">
-+              <span class="js-preview-action-show hide"><i class="fa fa-play-circle"></i> {% trans "Preview Changes" %}</span>
-+              <span class="js-preview-action-hide hide"><i class="fa fa-pause-circle"></i> {% trans "Hide Preview" %}</span>
-+            </a>
-+        </div>
++  <div class="appmanager-edit-title">
++    {% if form.get_action_type == 'open' %}
++      {% inline_edit_trans_v2 form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-createform' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
++    {% elif form.requires_case %}
++      {% inline_edit_trans_v2 form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-updateform' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
++    {% else %}
++      {% inline_edit_trans_v2 form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-file-o' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
++    {% endif %}
++  </div>
 +
-+        {% if form.get_action_type == 'open' %}
-+        <h3 style="display: inline-block; margin-right: -5px;"><i class="fcc fcc-app-createform appmanager-icon-type"></i></h3>
-+        {% elif form.requires_case %}
-+        <h3 style="display: inline-block; margin-right: -5px;"><i class="fcc fcc-app-updateform appmanager-icon-type"></i></h3>
-+        {% endif %}
-+
-     {% inline_edit_trans form.name langs edit_name_url saveValueName='name' readOnlyClass='h3' postSave="function(data) { document.title = data.update['.variable-form_name'] + ' - CommCare HQ'; return hqImport('app_manager/js/app_manager.js').updateDOM(data.update);}" %}
-+
-     <br />
-     <inline-edit params="
++  <div class="appmanager-edit-description">
++    <inline-edit-v2 params="
          name: 'comment',
-@@ -298,53 +301,15 @@
+         id:'comment-id',
+-        readOnlyClass: 'app-comment',
++        containerClass: 'app-comment',
+         value: '{{ form.comment|escapejs }}',
+         placeholder: '{% trans "Enter form description here"|escapejs %}',
+         url: '{% url "edit_form_attr" domain app.id form.unique_id 'comment' %}',
          saveValueName: 'comment',
          cols: 50,
-     "></inline-edit>
+-    "></inline-edit>
 -    <br />
 -    <br />
 -    <div class="pull-right">
@@ -118,24 +130,37 @@
 -    </div>
 -
 -    <br/><br/><br/>
+-
+-    <div class="tabbable">
++    "></inline-edit-v2>
++  </div>
 +
-+    <div class="spacer"></div>
- 
-     <div class="tabbable">
++  <div id="build_errors"></div>
++{% endblock %}
++
++{% block form-view %}
++    <div class="tabbable appmanager-tabs-container">
          <ul class="nav nav-tabs">
++
++            {% if form.requires_case or form.get_action_type == 'open' %}
              <li class="active">
-                 <a href="#form-settings" id="tour-form-settings-tab" data-toggle="tab">{% trans "Settings" %}</a>
-             </li>
--            <li>
--                <a id="case-configuration-tab" href="#case-configuration" data-toggle="tab">
--                    {% trans "Case Management" %}
--                </a>
+-                <a href="#form-settings" id="tour-form-settings-tab" data-toggle="tab">{% trans "Settings" %}</a>
 -            </li>
+-            <li>
+                 <a id="case-configuration-tab" href="#case-configuration" data-toggle="tab">
+                     {% trans "Case Management" %}
+                 </a>
+             </li>
++            {% endif %}
++
++            <li {% if not form.requires_case and not form.get_action_type == 'open' %}class="active"{% endif %}>
++                <a href="#form-settings" id="tour-form-settings-tab" data-toggle="tab">{% trans "Settings" %}</a>
++            </li>
 +
              {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
              <li>
                  <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
-@@ -352,6 +317,7 @@
+@@ -352,6 +329,7 @@
                  </a>
              </li>
              {% endif %}{% endif %}
@@ -143,7 +168,7 @@
              {% if form.form_type == 'advanced_form' and module.has_schedule %}
                   <li>
                       <a href="#visit-scheduler" data-toggle="tab">
-@@ -359,27 +325,23 @@
+@@ -359,45 +337,46 @@
                       </a>
                   </li>
              {% endif %}
@@ -153,48 +178,79 @@
 +                <a href="#advanced" data-toggle="tab">{% trans "Actions" %}</a>
              </li>
          </ul>
-         <br>
-         <div class="tab-content">
+-        <br>
+-        <div class="tab-content">
++
++        <div class="tab-content appmanager-tab-content">
++
++            {% if form.requires_case or form.get_action_type == 'open' %}
++              <div class="tab-pane active" id="case-configuration">
++                  {% if xform_validation_missing %}
++                      <p class="alert alert-warning">
++                          {% trans "We were unable to validate your form due an error on the server. Proceed with caution." %}
++                      </p>
++                  {% endif %}
++                  {% if form_errors or xform_validation_errored %}
++                      <p class="alert alert-warning">
++                          {% trans "There are errors in your form. Fix your form in order to view and edit Case Management." %}
++                      </p>
++                  {% elif form.source %}
++                      <div class="casexml" id="casexml_home">
++                          {% block case_management_content %}
++                              {% include 'app_manager/v2/partials/case_config.html' %}
++                          {% endblock %}
++                      </div>
++                  {% else %}
++                      <p class="alert alert-warning">
++                          {% trans "Add questions to your form to make use of case management." %}
++                      </p>
++                  {% endif %}
++              </div>
++            {% endif %}
++
++
              {% if nav_form %}
 -                {% include "app_manager/v1/partials/form_tab_settings.html" %}
 -            {% endif %}
 -
-+                {% include "app_manager/v2/partials/form_tab_settings.html" %}
-+            {% endif %}
-+
-+            {% if form.requires_case or form.get_action_type == 'open' %}
-             <div class="tab-pane" id="case-configuration">
+-            <div class="tab-pane" id="case-configuration">
 -                {% if xform_validation_missing %}
 -                    <p class="alert alert-warning">
 -                        {% trans "We were unable to validate your form due an error on the server. Proceed with caution." %}
 -                    </p>
 -                {% endif %}
-                 {% if form_errors or xform_validation_errored %}
-                     <p class="alert alert-warning">
-                         {% trans "There are errors in your form. Fix your form in order to view and edit Case Management." %}
-                     </p>
+-                {% if form_errors or xform_validation_errored %}
+-                    <p class="alert alert-warning">
+-                        {% trans "There are errors in your form. Fix your form in order to view and edit Case Management." %}
+-                    </p>
 -                {% elif form.source %}
-                     <div class="help-block">
-                         {% blocktrans %}
-                             Cases give you a way to track patients, farms, etc. over time. You can choose to save
-@@ -388,7 +350,7 @@
-                     </div>
-                     <div class="casexml" id="casexml_home">
-                         {% block case_management_content %}
+-                    <div class="help-block">
+-                        {% blocktrans %}
+-                            Cases give you a way to track patients, farms, etc. over time. You can choose to save
+-                            data from a form to the case, which will store the data locally on the phone to use later.
+-                        {% endblocktrans %}
+-                    </div>
+-                    <div class="casexml" id="casexml_home">
+-                        {% block case_management_content %}
 -                            {% include 'app_manager/v1/partials/case_config.html' %}
-+                            {% include 'app_manager/v2/partials/case_config.html' %}
-                         {% endblock %}
-                     </div>
-                 {% else %}
-@@ -397,6 +359,7 @@
-                     </p>
-                 {% endif %}
-             </div>
+-                        {% endblock %}
+-                    </div>
+-                {% else %}
+-                    <p class="alert alert-warning">
+-                        {% trans "You have not created a form yet. Create a form in order to view and edit Case Management." %}
+-                    </p>
+-                {% endif %}
+-            </div>
+-
++                {% include "app_manager/v2/partials/form_tab_settings.html" %}
 +            {% endif %}
- 
++
++
++            {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
              <div class="tab-pane" id="usercase-configuration">
                  {% if form_errors or xform_validation_errored %}
-@@ -439,7 +402,7 @@
+                     <p class="alert alert-warning">
+@@ -439,7 +418,7 @@
                                  </p>
                                  </div>
                              {% endif %}
@@ -203,8 +259,11 @@
                          {% endblock %}
                      </div>
                  {% else %}
-@@ -450,21 +413,21 @@
+@@ -448,23 +427,25 @@
+                     </p>
+                 {% endif %}
              </div>
++            {% endif %}{% endif %}
  
              {% if form.form_type == 'advanced_form' and module.has_schedule %}
 -                {% include "app_manager/v1/partials/form_tab_visit_scheduler.html" %}
@@ -212,6 +271,7 @@
 -            {% include "app_manager/v1/partials/form_tab_advanced.html" %}
 +                {% include "app_manager/v2/partials/form_tab_visit_scheduler.html" %}
 +            {% endif %}
++
 +            {% include "app_manager/v2/partials/form_tab_advanced.html" %}
          </div>
      </div>

@@ -1661,7 +1661,7 @@ class MappingItem(DocumentSchema):
         The prepended characters prevent the variable name from starting with a
         numeral, which is illegal.
         """
-        if ' ' in self.key or self.treat_as_expression:
+        if re.search(r'\W', self.key) or self.treat_as_expression:
             return 'h{hash}'.format(hash=hashlib.md5(self.key).hexdigest()[:8])
         else:
             return 'k{key}'.format(key=self.key)

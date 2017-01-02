@@ -175,6 +175,7 @@ FormplayerFrontend.on("start", function (options) {
     user.domain = options.domain;
     user.formplayer_url = options.formplayer_url;
     user.debuggerEnabled = options.debuggerEnabled;
+    user.environment = options.environment;
     user.restoreAs = FormplayerFrontend.request('restoreAsUser', user.domain, user.username);
 
     savedDisplayOptions = _.pick(
@@ -417,6 +418,7 @@ FormplayerFrontend.on('refreshApplication', function(appId) {
         tfLoadingComplete(true);
     }).done(function() {
         tfLoadingComplete();
+        $("#cloudcare-notifications").empty();
         FormplayerFrontend.trigger('navigateHome');
     });
 });

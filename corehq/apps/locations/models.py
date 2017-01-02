@@ -282,7 +282,7 @@ class LocationQueriesMixin(object):
 
     def accessible_to_user(self, domain, user):
         if user.has_permission(domain, 'access_all_locations'):
-            return self.all()
+            return self.filter(domain=domain)
 
         assigned_location_ids = user.get_location_ids(domain)
         if not assigned_location_ids:

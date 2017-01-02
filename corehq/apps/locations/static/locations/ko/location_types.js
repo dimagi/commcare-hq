@@ -331,20 +331,3 @@ hqDefine('locations/ko/location_types.js', function(){
         'LocationTypeModel': LocationTypeModel,
     };
 });
-
-// TODO move to shared library
-(function () {
-    ko.bindingHandlers.bind_element = {
-        init: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
-            var field = valueAccessor() || '$e';
-            if (viewModel[field]) {
-                console.warn('warning: element already bound');
-                return;
-            }
-            viewModel[field] = element;
-            if (viewModel.onBind) {
-                viewModel.onBind(bindingContext);
-            }
-        },
-    };
-}());

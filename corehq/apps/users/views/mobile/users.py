@@ -958,15 +958,6 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
         except WorksheetNotFound:
             self.group_specs = []
 
-        self.location_specs = []
-        if Domain.get_by_name(self.domain).commtrack_enabled:
-            try:
-                self.location_specs = self.workbook.get_worksheet(title='locations')
-            except WorksheetNotFound:
-                # if there is no sheet for locations (since this was added
-                # later and is optional) we don't error
-                pass
-
         try:
             check_headers(self.user_specs)
         except UserUploadError as e:
@@ -1005,7 +996,6 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
             self.domain,
             self.user_specs,
             list(self.group_specs),
-            list(self.location_specs)
         )
         task_ref.set_task(task)
         return HttpResponseRedirect(

@@ -62,6 +62,7 @@ from corehq.apps.style.decorators import (
 )
 from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source, _clean_table_name
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
+from corehq.apps.userreports.document_stores import get_document_store
 from corehq.apps.userreports.exceptions import (
     BadBuilderConfigError,
     BadSpecError,
@@ -69,6 +70,7 @@ from corehq.apps.userreports.exceptions import (
     ReportConfigurationNotFoundError,
     UserQueryError,
 )
+from corehq.apps.userreports.expressions import ExpressionFactory
 from corehq.apps.userreports.models import (
     ReportConfiguration,
     DataSourceConfiguration,
@@ -92,6 +94,7 @@ from corehq.apps.userreports.reports.filters.choice_providers import (
     ChoiceQueryContext,
 )
 from corehq.apps.userreports.reports.view import ConfigurableReport
+from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.userreports.tasks import (
     rebuild_indicators,
@@ -115,6 +118,7 @@ from corehq.apps.userreports.reports.util import has_location_filter
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.util.couch import get_document_or_404
+from pillowtop.dao.exceptions import DocumentNotFoundError
 
 
 SAMPLE_DATA_MAX_ROWS = 100
@@ -186,10 +190,6 @@ class UserConfigReportsHomeView(BaseUserConfigReportsView):
     urlname = 'configurable_reports_home'
     template_name = 'userreports/configurable_reports_home.html'
     page_title = ugettext_lazy("Reports Home")
-
-    @property
-    def page_context(self):
-        return {}
 
 
 class BaseEditConfigReportView(BaseUserConfigReportsView):
@@ -1049,6 +1049,52 @@ def report_source_json(request, domain, report_id):
     config, _ = get_report_config_or_404(report_id, domain)
     config._doc.pop('_rev', None)
     return json_response(config)
+
+
+class ExpressionDebuggerView(BaseUserConfigReportsView):
+    urlname = 'expression_debugger'
+    template_name = 'userreports/expression_debugger.html'
+    page_title = ugettext_lazy("Expression Debugger")
+
+
+@login_and_domain_required
+@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
+def evaluate_expression(request, domain):
+    doc_type = request.POST['doc_type']
+    doc_id = request.POST['doc_id']
+    try:
+        usable_type = {
+            'form': 'XFormInstance',
+            'case': 'CommCareCase',
+        }.get(doc_type, 'Unknown')
+        document_store = get_document_store(domain, usable_type)
+        doc = document_store.get_document(doc_id)
+        expression_text = request.POST['expression']
+        expression_json = json.loads(expression_text)
+        parsed_expression = ExpressionFactory.from_spec(expression_json)
+        result = parsed_expression(doc, EvaluationContext(doc))
+        return json_response({
+            "result": result,
+        })
+    except DocumentNotFoundError:
+        return json_response(
+            {"error": _("{} with id {} not found in domain {}.").format(
+                doc_type, doc_id, domain
+            )},
+            status_code=404,
+        )
+    except BadSpecError as e:
+        return json_response(
+            {"error": _("Problem with expression: {}.").format(
+                e
+            )},
+            status_code=400,
+        )
+    except Exception as e:
+        return json_response(
+            {"error": unicode(e)},
+            status_code=500,
+        )
 
 
 class CreateDataSourceFromAppView(BaseUserConfigReportsView):

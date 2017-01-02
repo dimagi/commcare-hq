@@ -59,7 +59,7 @@
  {% endblock %}
  
  {% block breadcrumbs %}
-@@ -117,226 +137,47 @@
+@@ -117,226 +137,48 @@
  {% endblock %}
  
  {% block page_navigation %}
@@ -90,7 +90,8 @@
 +              </a>
 +          </div>
 +          <h2 class="appnav-name">
-+            <a id="demand-releases" href="{% url "view_app" domain app.id %}">
++            <a href="{% url "view_app" domain app.id %}"
++               class="variable-app_name">
 +                {{ app.name }}
              </a>
 -        </li>
@@ -302,13 +303,13 @@
 -    {% endif %}
 -    <li class="text-hq-nav-header">{% trans "Actions" %}</li>
 -    <li class="app-name-div{% if copy_app_form and copy_app_form.is_bound %} active{% endif %}">
--        <a href="{% url "view_app" domain app.id %}copy/#copy" {% if is_app_view %}data-toggle="tab"{% endif %}>
+-        <a href="{% url "view_app" domain app.id %}copy/#copy" {% if is_app_view %}data-toggle="tab"{% endif %} data-pagetitle="{% trans "Copy" %}: {{ app.name }}">
 -            <i class="fa fa-copy"></i>
 -            {% trans "Copy Application" %}
 -        </a>
 -    </li>
 -    <li>
--        <a href="{% url "view_app" domain app.id %}delete/#delete" {% if is_app_view %}data-toggle="tab"{% endif %}>
+-        <a href="{% url "view_app" domain app.id %}delete/#delete" {% if is_app_view %}data-toggle="tab"{% endif %} data-pagetitle="{% trans "Delete" %}: {{ app.name }}">
 -            <i class="fa fa-trash"></i>
 -            {% trans "Delete Application" %}
 -        </a>

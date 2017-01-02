@@ -79,7 +79,10 @@ var ExportManager = function (o) {
                         },
                         error: function () {
                             self.$modal.find(self.exportModalLoading).addClass('hide');
-                            self.$modal.find(self.exportModalLoadedData).html('<p class="alert alert-error">Oh no! Your download was unable to be completed. We have been notified and are already hard at work solving this issue.</p>');
+                            self.$modal.find(self.exportModalLoadedData).html('<p class="alert alert-error">' +
+                                gettext('Oh no! Your download was unable to be completed. ' +
+                                'We have been notified and are already hard at work solving this issue.') +
+                                '</p>');
                             autoRefresh = false;
                         },
                     });
@@ -187,9 +190,9 @@ var ExportManager = function (o) {
 
     self.downloadExport = function(params) {
         var displayDownloadError = function (response) {
-            displayModalError('Sorry, something unexpected went wrong and your download ' +
+            displayModalError(gettext('Sorry, something unexpected went wrong and your download ' +
                 'could not be completed. Please try again and report an issue if the problem ' +
-                'persists.'
+                'persists.')
             );
         };
         $.ajax({
@@ -210,9 +213,9 @@ var ExportManager = function (o) {
 
     self.downloadBulkExport = function(downloadUrl, data) {
         var displayDownloadError = function (response) {
-            displayModalError('Sorry, something unexpected went wrong and your download ' +
+            displayModalError(gettext('Sorry, something unexpected went wrong and your download ' +
                     'could not be completed. Please try again and report an issue if the problem ' +
-                    'persists.'
+                    'persists.')
             );
         };
         $.ajax({
@@ -318,7 +321,8 @@ var ExportManager = function (o) {
 
 
         if (self.is_custom && prepareExport.length == 0) {
-            displayModalError('No valid sheets were available for Custom Bulk Export. Please check for duplicate sheet names.');
+            displayModalError(gettext('No valid sheets were available for Custom Bulk Export. ' +
+                                      'Please check for duplicate sheet names.'));
             return;
         }
 

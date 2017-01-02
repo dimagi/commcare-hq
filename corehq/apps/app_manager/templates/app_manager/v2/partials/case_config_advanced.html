@@ -32,22 +32,22 @@
     <!-- /ko -->
     <div data-bind="if: actionType == 'load'" class="row">
         <div class="col-sm-6">
-            <div class="panel panel-default"
+            <div class="panel panel-appmanager"
                  data-bind="template: 'case-config:case-transaction:case-preload'"></div>
         </div>
         <div class="col-sm-6">
-            <div class="panel panel-default"
+            <div class="panel panel-appmanager"
                  data-bind="template: 'case-config:case-transaction:case-properties'"></div>
         </div>
     </div>
     <div data-bind="if: actionType == 'open'" class="row">
         <div class="col-sm-12">
-            <div class="panel panel-default" data-bind="template: 'case-config:case-transaction:case-properties'"></div>
+            <div class="panel panel-appmanager" data-bind="template: 'case-config:case-transaction:case-properties'"></div>
         </div>
     </div>
     <!-- ko if:  actionType !== 'load' || !auto_select || auto_select.mode() !== 'usercase' -->
     <div class="spacer"></div>
-    <div class="panel panel-default">
+    <div class="panel panel-appmanager">
         <div class="panel-body">
             <div class="form-horizontal">
 
@@ -165,7 +165,7 @@
 <script type="text/html" id="case-config:case-action">
     <div class="panel-heading clickable" data-toggle="collapse"
          data-bind="attr: {href: '#' + actionType + $index()}">
-        <h3 class="panel-title" data-bind="html: header"></h3>
+        <h4 class="panel-title" data-bind="html: header"></h4>
     </div>
     <div class="panel-collapse collapse" data-bind="attr: {id: actionType + $index()}">
         <div class="panel-body">
@@ -400,13 +400,13 @@
             </legend>
             <div id="case-load-accordion" class="panel-group" data-bind="foreach: load_update_cases">
                 <!-- ko if: auto_select -->
-                <div class="panel panel-default" data-bind="template: {name: 'case-config:case-action-auto-select'}"></div>
+                <div class="panel panel-appmanager" data-bind="template: {name: 'case-config:case-action-auto-select'}"></div>
                 <!-- /ko -->
                 <!-- ko if: load_case_from_fixture -->
-                <div class="panel panel-default" data-bind="template: {name: 'case-config:case-action-load-case-from-fixture'}"></div>
+                <div class="panel panel-appmanager" data-bind="template: {name: 'case-config:case-action-load-case-from-fixture'}"></div>
                 <!-- /ko -->
                 <!-- ko ifnot: auto_select || load_case_from_fixture -->
-                <div class="panel panel-default" data-bind="template: {name: 'case-config:case-action'}"></div>
+                <div class="panel panel-appmanager" data-bind="template: {name: 'case-config:case-action'}"></div>
                 <!-- /ko -->
             </div>
         </div>
@@ -416,7 +416,7 @@
                 {% trans "Open New Cases" %}
             </legend>
             <div id="case-open-accordion" class="panel-group" data-bind="foreach: open_cases">
-                <div class="panel panel-default" data-bind="template: {name: 'case-config:case-action'}"></div>
+                <div class="panel panel-appmanager" data-bind="template: {name: 'case-config:case-action'}"></div>
             </div>
         </div>
     </div>

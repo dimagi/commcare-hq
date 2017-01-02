@@ -1,53 +1,8 @@
 {% extends 'reports/async/basic.html' %}
 {% load report_tags %}
+{% load hq_shared_tags %}
 {% load i18n %}
 
-{% block js-inline %}
-<script id="caseUploadsResource" type="text/plain">{% url 'case_importer_uploads' domain %}</script>
-<script>
-(function () {
-    var caseUploadResource = $('#caseUploadsResource').text();
-    function RecentUploads() {
-        var self = {};
-        // this is used both for the state of the ajax request
-        // and for the state of celery task
-        self.states = {
-            NOT_STARTED: 0,
-            STARTED: 1,
-            SUCCESS: 2,
-            FAILED: 3,
-        };
-        self.case_uploads = ko.observableArray(null);
-        self.state = ko.observable(self.states.NOT_STARTED);
-        self.fetchCaseUploads = function () {
-            if (self.state() === self.states.NOT_STARTED) {
-                // only show spinner on first fetch
-                self.state(self.states.STARTED);
-            }
-            $.get(caseUploadResource).success(function (data) {
-                self.state(self.states.SUCCESS);
-                self.case_uploads(data);
-                var anyInProgress = _.any(self.case_uploads(), function (case_upload) {
-                    return case_upload.task_status.state === self.states.STARTED ||
-                            case_upload.task_status.state === self.states.NOT_STARTED;
-                });
-                if (anyInProgress) {
-                    _.delay(self.fetchCaseUploads, 15000);
-                }
-            }).error(function () {
-                self.state(self.states.FAILED);
-            });
-        };
-        return self;
-    }
-    $(function () {
-        var recentUploads = RecentUploads();
-        $('#recent-uploads').koApplyBindings(recentUploads);
-        _.delay(recentUploads.fetchCaseUploads);
-    });
-}());
-</script>
-{% endblock %}
 
 {% block page_content %}
     {% include 'case_importer/partials/help_message.html' %}
@@ -70,21 +25,6 @@
                     <input class="form-control" name="file" id="file" type="file" />
                 </div>
             </div>
-
-            <div class="form-group hide">
-                <label class="control-label col-sm-3">
-                    {% trans "File to Upload" %}
-                </label>
-                <div class="col-sm-6">
-                    <label class="checkbox" for="named_columns">
-                        <input type="checkbox"
-                               id="named_columns"
-                               name="named_columns"
-                               checked="checked" />
-                        {% trans "This file contains column headers" %}
-                    </label>
-                </div>
-            </div>
         </fieldset>
 
         <div class="form-actions">
@@ -98,68 +38,5 @@
 
 
     <h2>Recent Uploads</h2>
-    <div id="recent-uploads" class="ko-template">
-        <!--ko if: state() == states.SUCCESS && !_.isEmpty(case_uploads())-->
-        <table class="table table-striped">
-            <tr>
-                <th class="col-md-2">{% trans "Status" %}</th>
-                <th class="col-md-1">{% trans "Case Type" %}</th>
-                <th class="col-md-1">{% trans "Uploaded by" %}</th>
-                <th class="col-md-6">{% trans "Details" %}</th>
-                <th class="col-md-2">{% trans "Time" %}</th>
-            </tr>
-            <!--ko foreach: case_uploads-->
-            <tr>
-                <td class="col-md-2">
-                    <!--ko if: task_status.state == $root.states.SUCCESS-->
-                        <!--ko if: _.isEmpty(task_status.result.errors)-->
-                        <span class="label label-success">{% trans "Success" %}</span>
-                        <!--/ko-->
-                        <!--ko if: !_.isEmpty(task_status.result.errors)-->
-                        <span class="label label-warning">{% trans "Success with warnings" %}</span>
-                        <!--/ko-->
-                    <!--/ko-->
-                    <!--ko if: task_status.state == $root.states.FAILED-->
-                    <span class="label label-danger">{% trans "Failed" %}</span>
-                    <!--/ko-->
-                    <!--ko if: task_status.state == $root.states.NOT_STARTED-->
-                    {% trans "Waiting to start" %}
-                    <!--/ko-->
-                    <!--ko if: task_status.state == $root.states.STARTED-->
-                    <div class="progress">
-                        <div class="progress-bar progress-bar-info"
-                             role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"
-                             data-bind="attr: {style: 'width: ' + task_status.progress.percent + '%;'}">
-                            <span><!--ko text: task_status.progress.percent --><!--/ko-->%
-                                {% trans "Complete" %}</span>
-                          </div>
-                    </div>
-                    <!--/ko-->
-                </td>
-                <td class="col-md-1">
-                    <!--ko text: case_type--><!--/ko-->
-                </td>
-                <td class="col-md-1">
-                    <!--ko text: user--><!--/ko-->
-                </td>
-                <td class="col-md-6" data-bind="with: task_status">
-                    {% include 'case_importer/partials/ko_import_status.html' %}
-                </td>
-                <td class="col-md-2" data-bind="text: created"></td>
-            </tr>
-            <!--/ko-->
-        </table>
-        <!--/ko-->
-        <!--ko if: state() === states.SUCCESS && _.isEmpty(case_uploads())-->
-        <div class="alert alert-info">
-            You have no recent uploads.
-        </div>
-        <!--/ko-->
-        <!--ko if: state() === states.STARTED -->
-        <i class="fa fa-spinner fa-spin"></i>
-        <!--/ko-->
-        <!--ko if: state() === states.FAILED -->
-        <i class="fa fa-warning"></i>
-        <!--/ko-->
-    </div>
+    {% include 'case_importer/partials/import_history.html' %}
 {% endblock %}
