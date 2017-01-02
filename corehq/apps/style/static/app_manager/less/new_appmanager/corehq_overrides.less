@@ -1,3 +1,56 @@
+.button-variant(@color; @background; @border) {
+  color: @color;
+  background-color: @background;
+  border-color: @border;
+
+  &:focus,
+  &.focus {
+    color: @color;
+    background-color: darken(@background, 10%);
+        border-color: darken(@border, 25%);
+  }
+  &:hover {
+    color: @color;
+    background-color: darken(@background, 10%);
+        border-color: darken(@border, 12%);
+  }
+  &:active,
+  &.active,
+  .open > .dropdown-toggle& {
+    color: @color;
+    background-color: darken(@background, 10%);
+        border-color: darken(@border, 12%);
+
+    &:hover,
+    &:focus,
+    &.focus {
+      color: @color;
+      background-color: darken(@background, 17%);
+          border-color: darken(@border, 25%);
+    }
+  }
+  &:active,
+  &.active,
+  .open > .dropdown-toggle& {
+    background-image: none;
+  }
+  &.disabled,
+  &[disabled],
+  fieldset[disabled] & {
+    &:hover,
+    &:focus,
+    &.focus {
+      background-color: @background;
+          border-color: @border;
+    }
+  }
+
+  .badge {
+    color: @background;
+    background-color: @color;
+  }
+}
+
 body {
   background-color: @cc-bg;
 }
@@ -5,4 +58,21 @@ body {
 .messages-container {
   background-color: @cc-brand-mid;
   min-height: 5px;
+}
+
+.hq-help {
+  a {
+    .transition(color 1s);
+  }
+}
+
+.fd-container-question-type-group {
+  .btn-lg, .btn-group-lg > .btn {
+    font-size: 12px;
+  }
+}
+
+
+.btn-purple {
+  .button-variant(white; @cc-dark-cool-accent-mid; darken(@cc-dark-cool-accent-mid, 5));
 }

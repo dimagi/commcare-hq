@@ -3,7 +3,6 @@
   margin-left: @app-manager-sidebar-width;
   background-color: white;
   position:relative;
-  z-index:2;
   padding: 10px 20px;
   box-sizing: border-box;
 
@@ -39,3 +38,78 @@
   top: 30px;
 }
 
+.removed-languages {
+  margin-top: 2rem;
+}
+
+
+.ko-inline-edit {
+  .read-only .prefixed-icon i {
+    color: @cc-text;
+  }
+  .read-only .text.app-title {
+    margin-left: 2px;
+  }
+  .inline-edit-icon {
+    vertical-align: top;
+    i {
+      .transition(color 1s);
+    }
+  }
+  .inline-edit-icon.h3 {
+    font-size: 16px;
+  }
+  &:hover {
+    .read-only .inline-edit-icon i {
+      color: @cc-brand-mid;
+    }
+  }
+}
+
+.ko-inline-edit {
+  .read-write.h3 {
+     margin-top: 7.5px;
+     margin-bottom: 2px;
+  }
+  .read-write.app-comment {
+    white-space: normal;
+  }
+}
+
+.appmanager-edit-title .ko-inline-edit {
+  margin-left: -12px;
+
+  .read-write.h3 input{
+    margin-left: 12px;
+  }
+}
+.appmanager-edit-description .ko-inline-edit {
+  margin-left: -8px;
+  .read-write.app-comment {
+    margin-left: 8px;
+  }
+}
+
+.appmanager-page-actions {
+  float: right;
+  margin-top: 20px;
+}
+
+.form-group .upgrade-message {
+  padding-top: 7px;
+  margin-left: -5px;
+  display: inline-block;
+}
+
+.appmanager-tab-content p {
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+.ko-inline-edit .read-only .btn-langcode-preprocessed {
+  background-color: darken(@cc-bg, 10);
+  border: none;
+  color: @cc-text;
+  vertical-align: top;
+  margin-top: 6px;
+}

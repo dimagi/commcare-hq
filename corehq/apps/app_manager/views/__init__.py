@@ -29,6 +29,7 @@ from corehq.apps.app_manager.views.app_summary import (
 )
 from corehq.apps.app_manager.views.apps import (
     app_from_template,
+    app_settings,
     app_source,
     copy_app,
     default_new_app,
@@ -113,7 +114,6 @@ from corehq.apps.app_manager.views.releases import (
     odk_media_qr_code,
     odk_qr_code,
     paginate_releases,
-    release_manager,
     release_build,
     releases_ajax,
     revert_to_copy,

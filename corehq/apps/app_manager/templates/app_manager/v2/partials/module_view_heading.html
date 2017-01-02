@@ -2,31 +2,31 @@
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 
-<div class="pull-right">
-  <a class="btn btn-default js-preview-toggle" style="display: none;" href="#">
-    <span class="js-preview-action-show hide"><i class="fa fa-play-circle"></i> {% trans "Preview Changes" %}</span>
-    <span class="js-preview-action-hide hide"><i class="fa fa-pause-circle"></i> {% trans "Hide Preview" %}</span>
+<div class="appmanager-page-actions">
+  <a class="btn btn-purple js-preview-toggle" style="display: none;" href="#">
+    <span class="js-preview-action-show hide"><i class="fa fa-play-circle"></i> {% trans "Preview App" %}</span>
+    <span class="js-preview-action-hide hide"><i class="fa fa-pause-circle"></i> {% trans "Preview App" %}</span>
   </a>
 </div>
+<div class="appmanager-edit-title">
+  {% if module.case_type == '' %}
+      {% inline_edit_trans_v2 module.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-folder-open' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
+  {% else %}
+      {% inline_edit_trans_v2 module.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-bars' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
+  {% endif %}
+</div>
 
-{% if module.case_type == '' %}
-    <h3 style="display: inline-block; margin-right: -5px;"><i class="fa fa-folder-open"></i></h3>
-{% else %}
-    <h3 style="display: inline-block; margin-right: -5px;"><i class="fa fa-list"></i></h3>
-{% endif %}
-
-{% inline_edit_trans module.name langs edit_name_url saveValueName='name' readOnlyClass='h3' postSave="function(data) { document.title = data.update['.variable-module_name'] + ' - CommCare HQ'; return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
-<br />
-<inline-edit params="
+<div class="appmanager-edit-description">
+<inline-edit-v2 params="
     name: 'comment',
     id:'comment-id',
-    readOnlyClass: 'app-comment',
+    containerClass: 'app-comment',
     value: '{{ module.comment|escapejs }}',
     placeholder: 'Enter {% if module.case_type != '' %}case list{% endif %} description here',
     url: '{% url "edit_module_attr" domain app.id module.id 'comment' %}',
     saveValueName: 'comment',
     cols: 50,
-"></inline-edit>
+"></inline-edit-v2>
 <br />
 
 <div id="build_errors"></div>

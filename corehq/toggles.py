@@ -934,7 +934,7 @@ CLOUDCARE_LATEST_BUILD = StaticToggle(
 APP_MANAGER_V2 = StaticToggle(
     'app_manager_v2',
     'Prototype for case management onboarding (App Manager V2)',
-    TAG_EXPERIMENTAL,
+    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
 
@@ -943,6 +943,13 @@ SHOW_PREVIEW_APP_SETTINGS = StaticToggle(
     'Show preview app settings button',
     TAG_PRODUCT_CORE,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+USER_TESTING_SIMPLIFY = StaticToggle(
+    'user_testing_simplify',
+    'Simplify the UI for user testing experiments',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
 )
 
 DATA_MIGRATION = StaticToggle(

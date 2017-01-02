@@ -12,6 +12,7 @@ from corehq.apps.app_manager.views.apps import get_apps_base_context, \
     get_app_view_context
 from corehq.apps.app_manager.views.forms import \
     get_form_view_context_and_template
+from corehq.apps.app_manager.views.releases import get_releases_context
 from corehq.apps.app_manager.views.utils import bail, encode_if_unicode
 from corehq.apps.hqmedia.controller import (
     MultimediaImageUploadController,
@@ -30,6 +31,7 @@ from corehq.apps.app_manager.util import (
     get_all_case_properties,
     get_commcare_versions,
     get_usercase_properties,
+    get_app_manager_template,
 )
 from corehq import toggles
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
@@ -79,7 +81,12 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         if app.application_version == APP_V1:
             _assert = soft_assert()
             _assert(False, 'App version 1.0', {'domain': domain, 'app_id': app_id})
-            return render(request, 'app_manager/v1/no_longer_supported.html', {
+            template = get_app_manager_template(
+                domain,
+                'app_manager/v1/no_longer_supported.html',
+                'app_manager/v2/no_longer_supported.html',
+            )
+            return render(request, template, {
                 'domain': domain,
                 'app': app,
             })
@@ -87,7 +94,6 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
             # Soft assert but then continue rendering; template will contain a user-facing warning
             _assert = soft_assert(['jschweers' + '@' + 'dimagi.com'])
             _assert(False, 'vellum_case_management=False', {'domain': domain, 'app_id': app_id})
-
 
     context = get_apps_base_context(request, domain, app)
     if app and app.copy_of:
@@ -125,22 +131,34 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
 
         context.update(form_context)
     elif module:
-        template = get_module_template(module)
+        template = get_module_template(domain, module)
         # make sure all modules have unique ids
         app.ensure_module_unique_ids(should_save=True)
         module_context = get_module_view_context(app, module, lang)
         context.update(module_context)
     elif app:
-
-        # todo APP MANAGER V2 update template here
-        # if release_manager:
-
-        template = "app_manager/v1/app_view.html"
         context.update(get_app_view_context(request, app))
+
+        v2_template = ('app_manager/v2/app_view_release_manager.html'
+                       if release_manager
+                       else 'app_manager/v2/app_view_settings.html')
+
+        template = get_app_manager_template(
+            domain,
+            'app_manager/v1/app_view.html',
+            v2_template
+        )
+
+        if release_manager:
+            context.update(get_releases_context(request, domain, app_id))
+        context.update({
+            'is_app_settings_page': not release_manager,
+        })
     else:
         from corehq.apps.dashboard.views import NewUserDashboardView
         if toggles.APP_MANAGER_V2.enabled(domain):
             context.update(NewUserDashboardView.get_page_context(domain))
+            template = NewUserDashboardView.template_name
         else:
             return HttpResponseRedirect(reverse(NewUserDashboardView.urlname, args=[domain]))
 
