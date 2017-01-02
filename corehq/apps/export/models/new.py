@@ -22,7 +22,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_app_ids_and_versions,
     get_app_ids_in_domain,
 )
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models import Application, AdvancedFormActions
 from corehq.apps.app_manager.util import get_case_properties, ParentCasePropertyBuilder
 from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import Product
@@ -1240,9 +1240,14 @@ class FormExportDataSchema(ExportDataSchema):
 
         case_updates = form.get_case_updates(form.get_module().case_type)
         xform = form.wrapped_xform()
+        if isinstance(form.actions, AdvancedFormActions):
+            open_case_actions = form.actions.open_cases
+        else:
+            open_case_actions = form.actions.subcases
+
         repeats_with_subcases = {
-            subcase_action for subcase_action in form.actions.subcases
-            if subcase_action.repeat_context
+            open_case_action for open_case_action in open_case_actions
+            if open_case_action.repeat_context
         }
         xform_schema = cls._generate_schema_from_xform(
             xform,
