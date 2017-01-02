@@ -90,7 +90,7 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
                 err = True
                 errors.add(
                     error=ImportErrors.ImportErrorMessage,
-                    row_number=caseblocks[0]._id
+                    row_number=caseblocks[0].case_id
                 )
             else:
                 properties = set().union(*map(lambda c: set(c.dynamic_case_properties().keys()), cases))

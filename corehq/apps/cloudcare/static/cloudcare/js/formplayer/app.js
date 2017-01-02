@@ -418,6 +418,7 @@ FormplayerFrontend.on('refreshApplication', function(appId) {
         tfLoadingComplete(true);
     }).done(function() {
         tfLoadingComplete();
+        $("#cloudcare-notifications").empty();
         FormplayerFrontend.trigger('navigateHome');
     });
 });

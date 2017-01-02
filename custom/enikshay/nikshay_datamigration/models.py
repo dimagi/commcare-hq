@@ -1,4 +1,13 @@
+from datetime import date, datetime
+
 from django.db import models
+
+
+def _parse_datetime_or_null_to_date(datetime_str):
+    if datetime_str == 'NULL':
+        return ''
+    else:
+        return datetime.strptime(datetime_str, '%Y-%m-%d %H:%M:%S.%f').date()
 
 
 class PatientDetail(models.Model):
@@ -15,7 +24,7 @@ class PatientDetail(models.Model):
             ('T', 'T'),
         ),
     )
-    page = models.CharField(max_length=255)
+    page = models.IntegerField()
     poccupation = models.CharField(max_length=255)
     paadharno = models.BigIntegerField(null=True)
     paddress = models.CharField(max_length=255)
@@ -76,16 +85,12 @@ class PatientDetail(models.Model):
     dotprovider_id = models.CharField(max_length=255)
     pregdate1 = models.DateField()
     cvisitedDate1 = models.CharField(max_length=255)
-    InitiationDate1 = models.CharField(max_length=255)  # datetimes, look like they're all midnight
-    dotmosignDate1 = models.CharField(max_length=255)
+    InitiationDate1 = models.CharField(max_length=255)  # datetime or 'NULL'
+    dotmosignDate1 = models.CharField(max_length=255)  # datetime or 'NULL'
 
     @property
     def first_name(self):
-        return self._list_of_names[0]
-
-    @property
-    def middle_name(self):
-        return ' '.join(self._list_of_names[1:-1])
+        return ' '.join(self._list_of_names[:-1])
 
     @property
     def last_name(self):
@@ -119,16 +124,53 @@ class PatientDetail(models.Model):
         return {
             '1': 'new',
             '2': 'recurrent',
-            '3': 'other_previously_treated',  # TODO - confirm
-            '4': 'treatment_after_failure',
-            '5': 'other_previously_treated',  # TODO - confirm
-            '6': 'treatment_after_lfu',
+            '3': 'treatment_after_failure',
+            '4': 'treatment_after_lfu',
+            '5': 'transfer_in',
+            '6': 'transfer_in',
             '7': 'transfer_in',
         }[self.Ptype]
 
     @property
+    def occupation(self):
+        return {
+            '0': 'undetermined_by_migration',
+            '1': 'legislators_or_senior_official',
+            '2': 'corporate_manager',
+            '3': 'general_manager',
+            '4': 'physical_mathematical_and_engineering',
+            '5': 'life_sciences_and_health',
+            '6': 'teaching_professional',
+            '7': 'other_professional',
+            '8': 'physical_and_engineering_science_associate',
+            '9': 'life_sciences_and_health_associate',
+            '10': 'teaching_associate',
+            '11': 'other_associate',
+            '12': 'office_clerk',
+            '13': 'customer_services_clerk',
+            '14': 'person_protective_service_provider',
+            '15': 'model_sales_persons_demonstrator',
+            '16': 'market_oriented_agriculture_fishery',
+            '17': 'subsistence_agriculture_fishery',
+            '18': 'extraction_and_building_trade',
+            '19': 'metal_machinery_and_related',
+            '20': 'precision_handicraft_printing_and_related',
+            '21': 'other_craft_and_related',
+            '22': 'stationary_plant_and_related',
+            '23': 'machine_operator_or_assembler',
+            '24': 'driver_and_mobile_plant_operator',
+            '25': 'sales_and_services_elementary',
+            '26': 'agriculture_fishery_and_related',
+            '27': 'mining_construction_manufacturing_transport',
+            '28': 'new_worker_seeking_employment',
+            '29': 'occupation_unidentifiable',
+            '30': 'no_occupation_reported',
+        }[self.poccupation]
+
+    @property
     def treatment_supporter_designation(self):
         return {
+            '0': 'undetermined_by_migration',
             '1': 'health_worker',
             '2': 'tbhv',
             '3': 'asha_or_other_phi_hw',
@@ -140,15 +182,35 @@ class PatientDetail(models.Model):
 
     @property
     def treatment_supporter_first_name(self):
-        return ' '.join(self.dotname.split(' ')[:-1]) if len(self._list_of_dot_names) > 1 else ''
+        return ' '.join(self._list_of_dot_names[:-1]) if len(self._list_of_dot_names) > 1 else ''
 
     @property
     def treatment_supporter_last_name(self):
-        return self.dotname.split(' ')[-1]
+        return self._list_of_dot_names[-1]
 
     @property
     def _list_of_dot_names(self):
         return self.dotname.split(' ') if self.dotname else ['']
+
+    @property
+    def treatment_initiation_date(self):
+        return _parse_datetime_or_null_to_date(self.InitiationDate1)
+
+    @property
+    def date_of_mo_signature(self):
+        return _parse_datetime_or_null_to_date(self.dotmosignDate1)
+
+    @property
+    def ihv_date(self):
+        ihv_date_or_blank = _parse_datetime_or_null_to_date(self.cvisitedDate1)
+        if ihv_date_or_blank and ihv_date_or_blank == date(1900, 1, 1):
+            return ''
+        else:
+            return ihv_date_or_blank
+
+    @property
+    def initial_home_visit_status(self):
+        return 'completed' if self.ihv_date else 'unknown_from_migration'
 
 
 class Outcome(models.Model):
@@ -201,6 +263,15 @@ class Outcome(models.Model):
     loginDate = models.DateTimeField()
     OutcomeDate1 = models.CharField(max_length=255)  # datetimes and NULL
 
+    @property
+    def hiv_status(self):
+        return {
+            None: None,
+            'NULL': None,
+            'Pos': 'reactive',
+            'Neg': 'non_reactive',
+            'Unknown': 'unknown',
+        }[self.HIVStatus]
 
 class Followup(models.Model):
     id = models.AutoField(primary_key=True)

@@ -237,6 +237,8 @@
             <div id="hq-navigation"
                  class="navbar navbar-default navbar-static-top navbar-hq-main-menu">
                 <div class="container-fluid">
+
+                    {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}
                     <ul class="nav navbar-nav collapse-fullmenu-toggle" id="hq-fullmenu-responsive" role="menu">
                         <li>
                             <a href="#hq-full-menu" data-toggle="collapse">
@@ -245,6 +247,7 @@
                             </a>
                         </li>
                     </ul>
+                    {% endif %}
 
                     <div class="navbar-header hq-header">
                         <a href="{% url "homepage" %}" class="navbar-brand">
@@ -256,6 +259,8 @@
                             {% endif %}
                         </a>
                     </div>
+
+                    {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}
 
                     <ul class="nav navbar-nav collapse-mainmenu-toggle" id="hq-mainmenu-responsive" role="menu">
                         <li>
@@ -278,6 +283,8 @@
                             {% format_main_menu %}
                         {% endblock %}
                     </nav>
+                    {% endif %}
+
                 </div>
             </div>
             {% endblock navigation %}
@@ -387,7 +394,6 @@
                         "bootstrap": "{% static 'bootstrap/dist/js/bootstrap.min' %}",
                         "knockout": "{% static 'knockout/dist/knockout.debug' %}",
                         "ko.mapping": "{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min' %}",
-                        "ko.global_handlers": "{% static 'style/ko/global_handlers.ko' %}",
                         "ko.knockout_bindings": "{% static 'style/ko/knockout_bindings.ko' %}",
 
                         {% if request.use_datatables %}
@@ -408,7 +414,6 @@
                         "bootstrap": { deps: ['jquery'] },
                         "style/js/hq.helpers": { deps: ['jquery', 'bootstrap', 'knockout'] },
                         "ko.mapping": { deps: ['knockout'] },
-                        "ko.global_handlers": { deps: ['knockout'] },
                         "ko.knockout_bindings": { deps: ['knockout'] },
 
                         {% if request.use_datatables %}
@@ -422,7 +427,7 @@
                         },
                         {% endif %}
                     },
-                    deps: ['knockout', 'ko.mapping', 'ko.knockout_bindings', 'ko.global_handlers'],
+                    deps: ['knockout', 'ko.mapping', 'ko.knockout_bindings'],
                     callback: function (ko, mapping) {
                         ko.mapping = mapping;
                     }

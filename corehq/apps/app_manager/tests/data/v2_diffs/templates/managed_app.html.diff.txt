@@ -59,7 +59,7 @@
  {% endblock %}
  
  {% block breadcrumbs %}
-@@ -117,226 +137,47 @@
+@@ -117,226 +137,48 @@
  {% endblock %}
  
  {% block page_navigation %}
@@ -90,7 +90,8 @@
 +              </a>
 +          </div>
 +          <h2 class="appnav-name">
-+            <a id="demand-releases" href="{% url "view_app" domain app.id %}">
++            <a href="{% url "view_app" domain app.id %}"
++               class="variable-app_name">
 +                {{ app.name }}
              </a>
 -        </li>

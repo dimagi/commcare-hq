@@ -1,7 +1,15 @@
 from datetime import datetime
 
+from corehq.apps.domain.models import Domain
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
+from corehq.apps.locations.models import SQLLocation, LocationType
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
+from corehq.apps.locations.tests.util import (
+    LocationStructure,
+    LocationTypeStructure,
+    setup_location_types_with_structure,
+    setup_locations_with_structure,
+)
 from custom.enikshay.const import PRIMARY_PHONE_NUMBER, BACKUP_PHONE_NUMBER
 
 
@@ -111,3 +119,80 @@ class ENikshayCaseStructureMixin(object):
             )
             for adherence_date in adherence_dates
         ])
+
+
+class ENikshayLocationStructureMixin(object):
+    def setUp(self):
+        self.domain = getattr(self, 'domain', 'fake-domain-from-mixin')
+        self.project = Domain(name=self.domain)
+        self.project.save()
+        locations = self._setup_enikshay_locations(self.domain)
+        self.sto = locations['STO']
+        self.sto.metadata = {
+            'nikshay_code': 'MH',
+        }
+        self.sto.save()
+
+        self.dto = locations['DTO']
+        self.dto.metadata = {
+            'nikshay_code': 'MH-ABD',
+        }
+        self.dto.save()
+
+        self.tu = locations['TU']
+        self.tu.metadata = {
+            'nikshay_code': 'MH-ABD-05',
+        }
+        self.tu.save()
+
+        self.phi = locations['PHI']
+        self.phi.metadata = {
+            'nikshay_code': 'MH-ABD-05-16',
+        }
+        self.phi.save()
+        super(ENikshayLocationStructureMixin, self).setUp()
+
+    def tearDown(self):
+        self.project.delete()
+        SQLLocation.objects.all().delete()
+        LocationType.objects.all().delete()
+        super(ENikshayLocationStructureMixin, self).tearDown()
+
+    def _setup_enikshay_locations(self, domain_name):
+        location_type_structure = [
+            LocationTypeStructure('ctd', [
+                LocationTypeStructure('sto', [
+                    LocationTypeStructure('cto', [
+                        LocationTypeStructure('dto', [
+                            LocationTypeStructure('tu', [
+                                LocationTypeStructure('phi', []),
+                                LocationTypeStructure('dmc', []),
+                            ]),
+                            LocationTypeStructure('drtb-hiv', []),
+                        ])
+                    ]),
+                    LocationTypeStructure('drtb', []),
+                    LocationTypeStructure('cdst', []),
+                ])
+            ])
+        ]
+        location_structure = [
+            LocationStructure('CTD', 'ctd', [
+                LocationStructure('STO', 'sto', [
+                    LocationStructure('CTO', 'cto', [
+                        LocationStructure('DTO', 'dto', [
+                            LocationStructure('TU', 'tu', [
+                                LocationStructure('PHI', 'phi', []),
+                                LocationStructure('DMC', 'dmc', []),
+                            ]),
+                            LocationStructure('DRTB-HIV', 'drtb-hiv', []),
+                        ])
+                    ]),
+                    LocationStructure('DRTB', 'drtb', []),
+                    LocationStructure('CDST', 'cdst', []),
+                ])
+            ])
+        ]
+
+        setup_location_types_with_structure(domain_name, location_type_structure)
+        return setup_locations_with_structure(domain_name, location_structure)
