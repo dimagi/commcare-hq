@@ -2,7 +2,8 @@ from django.db import transaction
 from django.http import HttpResponseNotFound, HttpResponseForbidden, \
     StreamingHttpResponse, HttpResponseBadRequest
 
-from corehq.apps.case_importer.tracking.dbaccessors import get_case_upload_records
+from corehq.apps.case_importer.tracking.dbaccessors import get_case_upload_records, \
+    get_case_ids_for_case_upload, get_form_ids_for_case_upload
 from corehq.apps.case_importer.tracking.jsmodels import case_upload_to_user_json
 from corehq.apps.case_importer.tracking.models import CaseUploadRecord, \
     MAX_COMMENT_LENGTH
@@ -69,3 +70,29 @@ def case_upload_file(request, domain, upload_id):
 
     set_file_download(response, case_upload.upload_file_meta.filename)
     return response
+
+
+@require_can_edit_data
+def case_upload_form_ids(request, domain, upload_id):
+    try:
+        case_upload = CaseUploadRecord.objects.get(upload_id=upload_id, domain=domain)
+    except CaseUploadRecord.DoesNotExist:
+        return HttpResponseNotFound()
+
+    ids_stream = ('{}\n'.format(form_id)
+                  for form_id in get_form_ids_for_case_upload(case_upload))
+
+    return StreamingHttpResponse(ids_stream, content_type='text/plain')
+
+
+@require_can_edit_data
+def case_upload_case_ids(request, domain, upload_id):
+    try:
+        case_upload = CaseUploadRecord.objects.get(upload_id=upload_id, domain=domain)
+    except CaseUploadRecord.DoesNotExist:
+        return HttpResponseNotFound()
+
+    ids_stream = ('{}\n'.format(case_id)
+                  for case_id in get_case_ids_for_case_upload(case_upload))
+
+    return StreamingHttpResponse(ids_stream, content_type='text/plain')
