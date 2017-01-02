@@ -725,7 +725,7 @@ class LocationTreeValidator(object):
         errors = []
         for location in self.locations:
             location.lookup_old_collection_data(self.old_collection)  # This method sets location.db_object
-            exclude_fields = []
+            exclude_fields = ["location_type"]  # Skip foreign key validation
             if not location.db_object.location_id:
                 # Don't validate location_id if its blank because SQLLocation.save() will add it
                 exclude_fields.append("location_id")
