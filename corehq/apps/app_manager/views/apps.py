@@ -814,6 +814,6 @@ def drop_user_case(request, domain, app_id):
     app.save()
     messages.success(
         request,
-        _('You have successfully removed User Case properties from this application.')
+        _('You have successfully removed User Properties from this application.')
     )
     return back_to_main(request, domain, app_id=app_id)
