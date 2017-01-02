@@ -57,7 +57,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             }
 
             if (menuResponse.breadcrumbs) {
-                Menus.Controller.showBreadcrumbs(menuResponse.breadcrumbs);
+                Menus.Util.showBreadcrumbs(menuResponse.breadcrumbs);
             } else {
                 FormplayerFrontend.regions.breadcrumb.empty();
             }
@@ -69,22 +69,6 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
         showPersistentCaseTile: function (persistentCaseTile) {
             var detailView = Menus.Controller.getCaseTile(persistentCaseTile);
             FormplayerFrontend.regions.persistentCaseTile.show(detailView.render());
-        },
-
-        showBreadcrumbs: function (breadcrumbs) {
-            var breadcrumbsModel = [];
-            for (var i = 0; i < breadcrumbs.length; i++) {
-                var obj = {};
-                obj.data = breadcrumbs[i];
-                obj.id = i;
-                breadcrumbsModel.push(obj);
-            }
-            var detailCollection = new Backbone.Collection();
-            detailCollection.reset(breadcrumbsModel);
-            var breadcrumbView = new Menus.Views.BreadcrumbListView({
-                collection: detailCollection,
-            });
-            FormplayerFrontend.regions.breadcrumb.show(breadcrumbView.render());
         },
 
         showDetail: function (model, detailTabIndex) {
@@ -157,6 +141,22 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
     };
 
     Menus.Util = {
+        showBreadcrumbs: function (breadcrumbs) {
+            var breadcrumbsModel = [];
+            for (var i = 0; i < breadcrumbs.length; i++) {
+                var obj = {};
+                obj.data = breadcrumbs[i];
+                obj.id = i;
+                breadcrumbsModel.push(obj);
+            }
+            var detailCollection = new Backbone.Collection();
+            detailCollection.reset(breadcrumbsModel);
+            var breadcrumbView = new Menus.Views.BreadcrumbListView({
+                collection: detailCollection,
+            });
+            FormplayerFrontend.regions.breadcrumb.show(breadcrumbView.render());
+        },
+
         getMenuView: function (menuResponse) {
             var menuData = {
                 collection: menuResponse,
