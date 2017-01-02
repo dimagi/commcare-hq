@@ -18,6 +18,7 @@ class ASHAFunctionalityChecklistReport(GenericTabularReport, NRHMDatespanMixin, 
             'startdate': self.datespan.startdate,
             'enddate': self.datespan.enddate.replace(hour=23, minute=59, second=59),
             'af': self.request.GET.get('hierarchy_af'),
+            'is_checklist': 1
         }
 
     @property
@@ -72,7 +73,8 @@ class ASHAFunctionalityChecklistReport(GenericTabularReport, NRHMDatespanMixin, 
             data = ASHAAFChecklistData(config=dict(
                 doc_id=asha['doc_id'],
                 date=force_to_datetime(self.request.GET.get('date')),
-                domain=self.domain
+                domain=self.domain,
+                is_checklist=1
             )).data
             total = 0
             denominator = 0

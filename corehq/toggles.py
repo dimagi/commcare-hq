@@ -238,7 +238,7 @@ APP_BUILDER_SHADOW_MODULES = StaticToggle(
     'Shadow Modules',
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Shadow+Modules',
+    help_link='https://confluence.dimagi.com/display/internal/Shadow+Modules',
 )
 
 CASE_LIST_CUSTOM_XML = StaticToggle(
@@ -295,7 +295,7 @@ DETAIL_LIST_TAB_NODESETS = StaticToggle(
     'Associate a nodeset with a case detail tab',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Case+Detail+Nodesets',
+    help_link='https://confluence.dimagi.com/display/internal/Case+Detail+Nodesets',
 )
 
 GRAPH_CREATION = StaticToggle(
@@ -541,7 +541,7 @@ ENABLE_LOADTEST_USERS = StaticToggle(
     'Enable creating loadtest users on HQ',
     TAG_EXPERIMENTAL,
     namespaces=[NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Loadtest+Users',
+    help_link='https://confluence.dimagi.com/display/internal/Loadtest+Users',
 )
 
 MOBILE_UCR = StaticToggle(
@@ -824,7 +824,7 @@ GRID_MENUS = StaticToggle(
     'Allow using grid menus on Android',
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Grid+Views',
+    help_link='https://confluence.dimagi.com/display/internal/Grid+Views',
 )
 
 OLD_EXPORTS = StaticToggle(
@@ -934,7 +934,7 @@ CLOUDCARE_LATEST_BUILD = StaticToggle(
 APP_MANAGER_V2 = StaticToggle(
     'app_manager_v2',
     'Prototype for case management onboarding (App Manager V2)',
-    TAG_EXPERIMENTAL,
+    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
 
@@ -943,6 +943,13 @@ SHOW_PREVIEW_APP_SETTINGS = StaticToggle(
     'Show preview app settings button',
     TAG_PRODUCT_CORE,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+USER_TESTING_SIMPLIFY = StaticToggle(
+    'user_testing_simplify',
+    'Simplify the UI for user testing experiments',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
 )
 
 DATA_MIGRATION = StaticToggle(
@@ -971,5 +978,12 @@ USER_PROPERTY_EASY_REFS = StaticToggle(
     'user_property_easy_refs',
     'Easy-reference user properties in the form builder.',
     TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
+COPY_CASE_CONFIGS = StaticToggle(
+    'copy_case_configs',
+    'Allow copying case list / details screens in basic modules.',
+    TAG_PRODUCT_CORE,
     [NAMESPACE_DOMAIN]
 )

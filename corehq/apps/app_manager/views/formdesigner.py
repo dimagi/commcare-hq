@@ -21,6 +21,7 @@ from corehq.apps.app_manager.const import (
     SCHEDULE_GLOBAL_NEXT_VISIT_DATE,
 )
 from corehq.apps.app_manager.util import (
+    get_app_manager_template,
     get_casedb_schema,
     get_session_schema,
     app_callout_templates,
@@ -157,7 +158,13 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         )
     })
 
-    response = render(request, 'app_manager/v1/form_designer.html', context)
+    template = get_app_manager_template(
+        domain,
+        'app_manager/v1/form_designer.html',
+        'app_manager/v2/form_designer.html',
+    )
+
+    response = render(request, template, context)
     live_preview_ab.update_response(response)
     return response
 

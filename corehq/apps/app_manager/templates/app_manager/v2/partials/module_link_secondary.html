@@ -6,10 +6,10 @@
 
 {% if module.doc_type != 'CareplanModule' and module.doc_type != 'ReportModule' and module.doc_type != 'ShadowModule' %}
 
-  <form action="{% url "corehq.apps.app_manager.views.new_form" domain app.id module.id %}"
+  <form action="{% url "new_form" domain app.id module.id %}"
         data-moduleid="{{ module.id }}"
         data-updateprop="action"
-        data-updatevalue="{% url "corehq.apps.app_manager.views.new_form" domain app.id 'replacewithmoduleid' %}"
+        data-updatevalue="{% url "new_form" domain app.id 'replacewithmoduleid' %}"
         method="post"
         class="hide">
     {% csrf_token %}
@@ -18,7 +18,7 @@
   </form>
 
   <a href="#"
-     class="appnav-secondary new-form submit_on_click"
+     class="appnav-secondary js-new-form submit_on_click"
      data-case-action="{% if module.is_surveys %}none{% else %}update{% endif %}">
     <i class="fa fa-plus"></i>
 {#    <span class="text-muted">#}

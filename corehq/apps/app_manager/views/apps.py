@@ -27,6 +27,7 @@ from corehq import toggles, privileges
 from toggle.shortcuts import set_toggle
 from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager import id_strings
+from corehq.apps.dashboard.views import NewUserDashboardView
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.tour import tours
@@ -39,6 +40,7 @@ from corehq.apps.app_manager.const import (
 )
 from corehq.apps.app_manager.util import (
     get_settings_values,
+    get_app_manager_template,
 )
 from corehq.apps.domain.models import Domain
 from corehq.tabs.tabclasses import ApplicationsTab
@@ -90,6 +92,9 @@ def delete_app(request, domain, app_id):
     )
     app.save()
     clear_app_cache(request, domain)
+
+    if toggles.APP_MANAGER_V2.enabled(domain):
+        return HttpResponseRedirect(reverse(NewUserDashboardView.urlname, args=[domain]))
     return back_to_main(request, domain)
 
 
@@ -132,6 +137,8 @@ def default_new_app(request, domain):
         app.secure_submissions = True
     clear_app_cache(request, domain)
     app.save()
+    if toggles.APP_MANAGER_V2.enabled(request.domain):
+        return HttpResponseRedirect(reverse('view_app', args=[domain, app._id]))
     return HttpResponseRedirect(reverse('view_form', args=[domain, app._id, 0, 0]))
 
 
@@ -346,7 +353,12 @@ def export_gzip(req, domain, app_id):
 
 
 @require_can_edit_apps
-def import_app(request, domain, template="app_manager/v1/import_app.html"):
+def import_app(request, domain):
+    template = get_app_manager_template(
+        domain,
+        "app_manager/v1/import_app.html",
+        "app_manager/v2/import_app.html",
+    )
     if request.method == "POST":
         clear_app_cache(request, domain)
         name = request.POST.get('name')
@@ -396,15 +408,22 @@ def import_app(request, domain, template="app_manager/v1/import_app.html"):
         return render(request, template, {
             'domain': domain,
             'app': app,
-            'is_superuser': request.couch_user.is_superuser
         })
+
+
+@require_GET
+@require_deploy_apps
+def app_settings(request, domain, app_id=None):
+    from corehq.apps.app_manager.views.view_generic import view_generic
+    return view_generic(request, domain, app_id)
 
 
 @require_GET
 @require_deploy_apps
 def view_app(request, domain, app_id=None):
     from corehq.apps.app_manager.views.view_generic import view_generic
-    return view_generic(request, domain, app_id)
+    return view_generic(request, domain, app_id,
+                        release_manager=toggles.APP_MANAGER_V2.enabled(domain))
 
 
 @no_conflict_require_POST
@@ -699,9 +718,14 @@ def rearrange(request, domain, app_id, key):
         elif "modules" == key:
             app.rearrange_modules(i, j)
     except IncompatibleFormTypeException:
-        messages.error(request, _(
-            'The form can not be moved into the desired module.'
-        ))
+        if toggles.APP_MANAGER_V2.enabled(domain):
+            messages.error(request, _(
+                'The form cannot be moved into the desired menu.'
+            ))
+        else:
+            messages.error(request, _(
+                'The form can not be moved into the desired module.'
+            ))
         return back_to_main(request, domain, app_id=app_id, module_id=module_id)
     except (RearrangeError, ModuleNotFoundException):
         messages.error(request, _(

@@ -53,11 +53,11 @@
   <link type="text/less"
         rel="stylesheet"
         media="all"
-        href="{% static 'cloudcare/less/cloudcare.debug.less' %}" />
+        href="{% static 'cloudcare/less/formplayer-common.debug.less' %}" />
   <link type="text/less"
         rel="stylesheet"
         media="all"
-        href="{% static 'cloudcare/less/formplayer.debug.less' %}" />
+        href="{% static 'cloudcare/less/formplayer-webapp.debug.less' %}" />
   {% else %}
   {% compress css %}
       <link type="text/less"
@@ -67,11 +67,11 @@
       <link type="text/less"
             rel="stylesheet"
             media="all"
-            href="{% static 'cloudcare/less/cloudcare.less' %}"/>
+            href="{% static 'cloudcare/less/formplayer-common.less' %}"/>
       <link type="text/less"
             rel="stylesheet"
             media="all"
-            href="{% static 'cloudcare/less/formplayer.less' %}"/>
+            href="{% static 'cloudcare/less/formplayer-webapp.less' %}"/>
   {% endcompress %}
   {% endif %}
 {% endblock %}

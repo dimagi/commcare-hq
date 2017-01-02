@@ -147,8 +147,13 @@ class ASHAFacilitatorsData(SqlData):
             ),
             DatabaseColumn(
                 _("Total number of ASHAs for whom functionality checklist was filled"),
-                FunctionalityChecklistColumn(
-                    whens={'{} IS NOT NULL'.format(self._qualify_column('case_id')): 1},
+                CountUniqueColumn(
+                    "case_id",
+                    filters=[
+                        EQ('owner_id', 'af'),
+                        EQ('is_checklist', 'is_checklist'),
+                        BETWEEN('date', 'startdate', 'enddate')
+                    ],
                     alias="total_ashas_checklist"
                 )
             ),
@@ -236,7 +241,7 @@ class ASHAFunctionalityChecklistData(SqlData):
 
     @property
     def filters(self):
-        return [BETWEEN("date", "startdate", "enddate"), EQ('owner_id', 'af')]
+        return [BETWEEN("date", "startdate", "enddate"), EQ('owner_id', 'af'), EQ('is_checklist', 'is_checklist')]
 
     @property
     def group_by(self):
@@ -288,7 +293,7 @@ class ASHAAFChecklistData(SqlData):
 
     @property
     def filters(self):
-        return [EQ('doc_id', 'doc_id')]
+        return [EQ('doc_id', 'doc_id'), EQ('is_checklist', 'is_checklist')]
 
     @property
     def group_by(self):

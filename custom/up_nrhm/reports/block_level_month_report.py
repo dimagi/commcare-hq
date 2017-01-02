@@ -39,6 +39,7 @@ class BlockLevelMonthReport(GenericTabularReport, DatespanMixin, CustomProjectRe
             'domain': self.domain,
             'startdate': startdate.replace(hour=0, minute=0, second=0),
             'af': self.request.GET.get('hierarchy_af'),
+            'is_checklist': 1
         }
 
     @property

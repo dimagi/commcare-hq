@@ -46,9 +46,11 @@ def eval_statements(statement, variable_context):
 
 SUM = 'sum'
 COUNT = 'count'
+MIN = 'min'
+MAX = 'max'
 FIRST_ITEM = 'first_item'
 LAST_ITEM = 'last_item'
-SUPPORTED_UCR_AGGREGATIONS = [SUM, COUNT, FIRST_ITEM, LAST_ITEM]
+SUPPORTED_UCR_AGGREGATIONS = [SUM, COUNT, MIN, MAX, FIRST_ITEM, LAST_ITEM]
 
 
 def aggregate_items(items, fn_name):
@@ -56,6 +58,8 @@ def aggregate_items(items, fn_name):
     aggregation_fn_map = {
         SUM: _sum,
         COUNT: _count,
+        MIN: _min,
+        MAX: _max,
         FIRST_ITEM: _first_item,
         LAST_ITEM: _last_item,
     }
@@ -69,8 +73,20 @@ def aggregate_items(items, fn_name):
 
 
 def _sum(items):
+    return _type_safe_agggregate(sum, items)
+
+
+def _min(items):
+    return _type_safe_agggregate(min, items)
+
+
+def _max(items):
+    return _type_safe_agggregate(max, items)
+
+
+def _type_safe_agggregate(aggregate_fn, items):
     try:
-        return sum(items)
+        return aggregate_fn(items)
     except TypeError:
         return None
 

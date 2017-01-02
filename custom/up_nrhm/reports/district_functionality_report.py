@@ -44,6 +44,7 @@ class DistrictFunctionalityReport(GenericTabularReport, DatespanMixin, CustomPro
             'year': self.request.GET.get('year'),
             'month': self.request.GET.get('month'),
             'district': self.request.GET.get('hierarchy_district'),
+            'is_checklist': 1
         }
 
     @property

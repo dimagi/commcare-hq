@@ -5,12 +5,12 @@
     <div class="row top-spacer">
         {% if not request|toggle_enabled:'USER_PROPERTY_EASY_REFS' %}
         <div class="col-sm-6">
-            <div class="panel panel-default"
+            <div class="panel panel-appmanager"
                  data-bind="template: 'case-config:case-transaction:case-preload'"></div>
         </div>
         {% endif %}
         <div class="col-sm-6">
-            <div class="panel panel-default"
+            <div class="panel panel-appmanager"
                  data-bind="template: 'case-config:case-transaction:case-properties'"></div>
         </div>
     </div>

@@ -51,6 +51,7 @@ $(function () {
                 }, null, State.url);
             }
         }
+        link.parent().removeClass('active');    // force tab to load
         link.tab('show');
     };
     $(window).on('load', statechange);
@@ -68,6 +69,9 @@ $(function () {
         var url = event.target.href.split("#")[0];
         var tab = event.target.href.split("#")[1];
         var pageTitle = $(this).attr('data-pagetitle');
+        if (pageTitle) {
+            document.title = pageTitle;
+        }
 
         var State = History.getState();
 

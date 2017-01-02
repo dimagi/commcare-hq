@@ -241,7 +241,7 @@
         $scope.retryMobileWorker = function (worker) {
             $scope.initializeMobileWorker(worker);
             $scope.usernameAvailabilityStatus = USERNAME_STATUS.AVAILABLE;
-            $scope.usernameStatusMessage = 'Username is available.';
+            $scope.usernameStatusMessage = gettext('Username is available.');
             $scope.markNonDefault();
         };
     };
@@ -269,7 +269,7 @@
             .error(function () {
                 newWorker.creationStatus = STATUS.WARNING;
                 deferred.reject(
-                    "Sorry, there was an issue communicating with the server."
+                    gettext("Sorry, there was an issue communicating with the server.")
                 );
             });
 
@@ -312,7 +312,7 @@
                         .error(function () {
                             $scope.usernameAvailabilityStatus = USERNAME_STATUS.ERROR;
                             deferred.reject(
-                                "Sorry, there was an issue communicating with the server."
+                                gettext("Sorry, there was an issue communicating with the server.")
                             );
                         });
                     }
@@ -362,8 +362,8 @@
                         .addClass('has-pending');
                     if ($formElements.password().hasClass('non-default')) {
                         $formElements.passwordHint()
-                            .text(gettext("Password Requirements: 1 special character, " +
-                                          "1 number, 1 capital letter, minimum length of 8 characters."));
+                            .text(gettext(gettext("Password Requirements: 1 special character, " +
+                                          "1 number, 1 capital letter, minimum length of 8 characters.")));
                     }
 
                     return true;
