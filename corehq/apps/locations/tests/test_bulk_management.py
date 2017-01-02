@@ -1,7 +1,7 @@
 from collections import namedtuple
 
 from django.test import SimpleTestCase, TestCase
-from mock import patch, MagicMock
+from mock import MagicMock
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import LocationType, SQLLocation
@@ -192,6 +192,7 @@ class TestTreeUtils(SimpleTestCase):
         self.assertEqual(set(to_validator('a')), set(['a', 'b', 'c']))
         self.assertEqual(set(to_validator('b')), set(['b', 'c']))
         self.assertEqual(set(to_validator('c')), set(['c']))
+
 
 class MockLocationStub(LocationStub):
     def lookup_old_collection_data(self, old_collection):
