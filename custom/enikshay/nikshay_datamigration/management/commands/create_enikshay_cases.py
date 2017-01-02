@@ -49,10 +49,18 @@ class Command(BaseCommand):
             default=None,
             type=str,
         )
+        parser.add_argument(
+            '--startswith',
+            dest='startswith',
+            default='',
+            type=str,
+        )
 
     @mock_ownership_cleanliness_checks()
     def handle(self, domain, **options):
-        base_query = PatientDetail.objects.order_by('PregId')
+        base_query = PatientDetail.objects.filter(
+            PregId__startswith=options['startswith'],
+        ).order_by('PregId')
 
         start = options['start']
         limit = options['limit']
