@@ -238,6 +238,7 @@ var reportBuilder = function () {
 
         self.serialize = function () {
             return {
+                "existing_report": config['existingReport'],
                 "report_title": self.reportTitle,
                 "report_description": "",  // TODO: self.reportDescription,
                 "report_type": self.reportType(),
@@ -249,7 +250,19 @@ var reportBuilder = function () {
             };
         };
 
-        self.saveButton = COMMCAREHQ.SaveButton.init({
+        var button = COMMCAREHQ.SaveButton;
+        if (config['existingReport']) {
+            var button = COMMCAREHQ.makeSaveButton({
+                // The SAVE text is the only thing that distringuishes this from COMMCAREHQ.SaveButton
+                SAVE: django.gettext("Update Report"),
+                SAVING: django.gettext("Saving..."),
+                SAVED: django.gettext("Saved"),
+                RETRY: django.gettext("Try Again"),
+                ERROR_SAVING: django.gettext("There was an error saving")
+            }, 'btn btn-success');
+        }
+
+        self.saveButton = button.init({
             unsavedMessage: "You have unsaved settings.",
             save: function () {
                 self.saveButton.ajax({

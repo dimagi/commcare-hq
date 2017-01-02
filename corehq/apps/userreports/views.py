@@ -767,30 +767,89 @@ class ConfigureReport(ReportBuilderView):
         else:
             raise
 
-    def post(self, request, domain):
+    def _get_aggregation_columns(self, report_data):
+        return _get_aggregation_columns(
+            report_data['aggregate'], report_data['columns'], self.report_column_options
+        )
 
-        def get_data_source_configuration_kwargs(ds_builder_, app_, report_source_id_, columns,
-                                                 is_multiselect_chart_report=False):
-            aggregation_fields = [c['column_id'] for c in columns if c['is_group_by_column']]
-            if is_multiselect_chart_report:
-                base_item_expression = ds_builder_.base_item_expression(True, aggregation_fields[0])
-            else:
-                base_item_expression = ds_builder_.base_item_expression(False)
-            number_columns = [c['column_id'] for c in columns if c['is_numeric']]
-            return dict(
-                display_name=ds_builder_.data_source_name,
-                referenced_doc_type=ds_builder_.source_doc_type,
-                configured_filter=ds_builder_.filter,
-                configured_indicators=ds_builder_.indicators(
-                    number_columns, is_multiselect_chart_report
-                ),
-                base_item_expression=base_item_expression,
-                meta=DataSourceMeta(build=DataSourceBuildInformation(
-                    source_id=report_source_id_,
-                    app_id=app_._id,
-                    app_version=app_.version,
-                ))
-            )
+    def _get_columns(self, report_data):
+        return list(chain.from_iterable(
+            to_report_columns(c, i, self.report_column_options)
+            for i, c in enumerate(report_data['columns'])
+        ))
+
+    def _get_report_charts(self, report_data_):
+        report_type_funcs = {
+            'bar': lambda cols: [{
+                'type': 'multibar',
+                'x_axis_column': [c['column_id'] for c in cols if c['is_group_by_column']][0],  # 1st group by
+                'y_axis_columns': [c['column_id'] for c in cols if not c['is_group_by_column']],
+            }],
+            'pie': lambda cols: [{
+                "type": "pie",
+                "aggregation_column": [c['column_id'] for c in cols if c['is_group_by_column']][0],
+                "value_column": [c['column_id'] for c in cols if not c['is_group_by_column']][0],
+            }],
+            'none': lambda cols: [],
+        }
+        func = report_type_funcs[report_data_['chart']]
+        return func(report_data_['columns'])
+
+    def _update_data_source(self, report_data):
+        data_source = DataSourceConfiguration.get(self.existing_report.config_id)
+        if data_source.get_report_count() > 1:
+            # If another report is pointing at this data source, create a new
+            # data source for this report so that we can change the indicators
+            # without worrying about breaking another report.
+            data_source_config_id = self._build_data_source(report_data['columns'])
+            self.existing_report.config_id = data_source_config_id
+        else:
+            number_columns = [c['column_id'] for c in report_data['columns'] if c['is_numeric']]
+            indicators = self.ds_builder.indicators(number_columns)
+            if data_source.configured_indicators != indicators:
+                for property_name, value in self._get_data_source_configuration_kwargs(report_data['columns']).iteritems():
+                    setattr(data_source, property_name, value)
+                data_source.save()
+                rebuild_indicators.delay(data_source._id)
+
+    def _update_report(self, report_data):
+        self._update_data_source(report_data)
+        self.existing_report.aggregation_columns = self._get_aggregation_columns(report_data)
+        self.existing_report.columns = self._get_columns(report_data)
+        self.existing_report.filters = []  # TODO: report_data['user_filters'] + report_data['default_filters']
+        self.existing_report.configured_charts = self._get_report_charts(report_data)
+
+        self.existing_report.validate()
+        self.existing_report.save()
+
+    def _get_data_source_configuration_kwargs(self, columns, is_multiselect_chart_report=False):
+        aggregation_fields = [c['column_id'] for c in columns if c['is_group_by_column']]
+        if is_multiselect_chart_report:
+            base_item_expression = self.ds_builder.base_item_expression(True, aggregation_fields[0])
+        else:
+            base_item_expression = self.ds_builder.base_item_expression(False)
+        number_columns = [c['column_id'] for c in columns if c['is_numeric']]
+        return dict(
+            display_name=self.ds_builder.data_source_name,
+            referenced_doc_type=self.ds_builder.source_doc_type,
+            configured_filter=self.ds_builder.filter,
+            configured_indicators=self.ds_builder.indicators(
+                number_columns, is_multiselect_chart_report
+            ),
+            base_item_expression=base_item_expression,
+            meta=DataSourceMeta(build=DataSourceBuildInformation(
+                source_id=self.source_id,
+                app_id=self.app._id,
+                app_version=self.app.version,
+            ))
+        )
+
+    @property
+    @memoized
+    def ds_builder(self):
+        return DataSourceBuilder(self.domain, self.app, self.source_type, self.source_id)
+
+    def _build_data_source(self, columns):
 
         def build_data_source(domain_, ds_config_kwargs_):
             data_source_config = DataSourceConfiguration(
@@ -804,22 +863,11 @@ class ConfigureReport(ReportBuilderView):
             rebuild_indicators.delay(data_source_config._id)
             return data_source_config._id
 
-        def get_report_charts(report_data_):
-            report_type_funcs = {
-                'bar': lambda cols: [{
-                    'type': 'multibar',
-                    'x_axis_column': [c['column_id'] for c in cols if c['is_group_by_column']][0],  # 1st group by
-                    'y_axis_columns': [c['column_id'] for c in cols if not c['is_group_by_column']],
-                }],
-                'pie': lambda cols: [{
-                    "type": "pie",
-                    "aggregation_column": [c['column_id'] for c in cols if c['is_group_by_column']][0],
-                    "value_column": [c['column_id'] for c in cols if not c['is_group_by_column']][0],
-                }],
-                'none': lambda cols: [],
-            }
-            func = report_type_funcs[report_data_['chart']]
-            return func(report_data_['columns'])
+        ds_config_kwargs = self._get_data_source_configuration_kwargs(columns)
+        # TODO: Don't build new data source if there is an existing one
+        return build_data_source(self.domain, ds_config_kwargs)
+
+    def post(self, request, domain, *args, **kwargs):
 
         def get_builder_report_type(report_data_):
             # builder_report_type = StringProperty(choices=['chart', 'list', 'table', 'worker', 'map'])
@@ -829,38 +877,33 @@ class ConfigureReport(ReportBuilderView):
             elif report_data_['report_type'] == 'agg':
                 return 'table' if report_data_['chart'] == 'none' else 'chart'
 
-        self._confirm_report_limit()
-
         report_data = json.loads(request.body)
 
-        ds_builder = DataSourceBuilder(self.domain, self.app, self.source_type, self.source_id)
-        ds_config_kwargs = get_data_source_configuration_kwargs(ds_builder, self.app, self.source_id,
-                                                                report_data['columns'])
-        data_source_config_id = build_data_source(self.domain, ds_config_kwargs)
-
-        self._confirm_report_limit()
-
         try:
-            report_configuration = ReportConfiguration(
-                domain=self.domain,
-                config_id=data_source_config_id,
-                title=self._get_report_name(request),
-                aggregation_columns=_get_aggregation_columns(
-                    report_data['aggregate'], report_data['columns'], self.report_column_options
-                ),
-                columns=list(chain.from_iterable(
-                    to_report_columns(c, i, self.report_column_options)
-                    for i, c in enumerate(report_data['columns'])
-                )),
-                filters=[],  # TODO: report_data['user_filters'] + report_data['default_filters']
-                configured_charts=get_report_charts(report_data),
-                report_meta=ReportMeta(
-                    created_by_builder=True,
-                    builder_report_type=get_builder_report_type(report_data),
+            if self.existing_report:
+                self._update_report(report_data)
+                report_configuration = self.existing_report
+            else:
+                self._confirm_report_limit()
+                # TODO: Don't build new data source if there is an existing one
+                data_source_config_id = self._build_data_source(report_data['columns'])
+                self._confirm_report_limit()
+
+                report_configuration = ReportConfiguration(
+                    domain=self.domain,
+                    config_id=data_source_config_id,
+                    title=self._get_report_name(request),
+                    aggregation_columns=self._get_aggregation_columns(report_data),
+                    columns=self._get_columns(report_data),
+                    filters=[],  # TODO: report_data['user_filters'] + report_data['default_filters']
+                    configured_charts=self._get_report_charts(report_data),
+                    report_meta=ReportMeta(
+                        created_by_builder=True,
+                        builder_report_type=get_builder_report_type(report_data),
+                    )
                 )
-            )
-            report_configuration.validate()
-            report_configuration.save()
+                report_configuration.validate()
+                report_configuration.save()
         except BadSpecError as err:
             messages.error(request, str(err))
             notify_exception(request, str(err), details={
