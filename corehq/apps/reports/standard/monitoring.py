@@ -821,12 +821,8 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
     @property
     @memoized
     def all_users(self):
-        fields = ['_id', 'username', 'first_name', 'last_name', 'doc_type', 'is_active', 'email']
-        mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
-        users = EMWF.user_es_query(self.domain, mobile_user_and_group_slugs).fields(fields)\
-                .run().hits
-        users = map(util._report_user_dict, users)
-        return sorted(users, key=lambda u: u['username_in_report'])
+        user_query = EMWF.user_es_query(self.domain, self.request.GET.getlist(EMWF.slug))
+        return util.get_simplified_users(user_query)
 
     def paginate_list(self, data_list):
         if self.pagination:
