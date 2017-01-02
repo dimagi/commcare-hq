@@ -345,7 +345,7 @@ class OwnerChoiceProviderTest(LocationHierarchyTestCase, ChoiceProviderTestMixin
                              [cls.mobile_worker.username]),
             SearchableChoice(cls.web_user.get_id, cls.web_user.username,
                              [cls.web_user.username]),
-            SearchableChoice(cls.location.location_id, cls.location.get_path_display(),
+            SearchableChoice(cls.location.location_id, cls.location.display_name,
                              [cls.location.name, cls.location.site_code]),
         ]
         cls.choice_provider = OwnerChoiceProvider(report, None)
