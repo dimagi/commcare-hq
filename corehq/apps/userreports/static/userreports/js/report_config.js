@@ -1,4 +1,4 @@
-/* global _, $, COMMCAREHQ */
+/* global _, $, COMMCAREHQ, django */
 var reportBuilder = function () {
     var self = this;
 
@@ -254,7 +254,7 @@ var reportBuilder = function () {
 
         var button = COMMCAREHQ.SaveButton;
         if (config['existingReport']) {
-            var button = COMMCAREHQ.makeSaveButton({
+            button = COMMCAREHQ.makeSaveButton({
                 // The SAVE text is the only thing that distringuishes this from COMMCAREHQ.SaveButton
                 SAVE: django.gettext("Update Report"),
                 SAVING: django.gettext("Saving..."),
@@ -274,7 +274,7 @@ var reportBuilder = function () {
                     dataType: 'json',
                     success: function (data) {
                         self.existingReportId = data['report_id'];
-                    }
+                    },
                 });
             },
         });

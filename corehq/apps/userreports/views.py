@@ -807,7 +807,9 @@ class ConfigureReport(ReportBuilderView):
             number_columns = [c['column_id'] for c in report_data['columns'] if c['is_numeric']]
             indicators = self.ds_builder.indicators(number_columns)
             if data_source.configured_indicators != indicators:
-                for property_name, value in self._get_data_source_configuration_kwargs(report_data['columns']).iteritems():
+                for property_name, value in self._get_data_source_configuration_kwargs(
+                    report_data['columns']
+                ).iteritems():
                     setattr(data_source, property_name, value)
                 data_source.save()
                 rebuild_indicators.delay(data_source._id)
