@@ -365,7 +365,7 @@ def start_session_with_error_handling(domain, contact, app, module, form,
             error_code = MSG_FORM_ERROR
         else:
             notify_exception(None, message=('Could not process structured sms for'
-                'contact %s, domain %s, keyword %s' % (contact._id, domain, keyword)))
+                'contact %s, domain %s, keyword %s' % (contact.get_id, domain, keyword)))
             error_code = MSG_TOUCHFORMS_ERROR
 
         return (None, None, True, error_code)
@@ -489,7 +489,7 @@ def clean_up_and_send_response(msg, contact, session, error_occurred, error_msg,
         response_subevent = None
         if logged_event:
             response_subevent = logged_event.create_subevent_for_single_sms(
-                contact.doc_type, contact._id)
+                contact.doc_type, contact.get_id)
             metadata.messaging_subevent_id = response_subevent.pk
 
         send_sms_to_verified_number(verified_number, error_msg, metadata=metadata)
