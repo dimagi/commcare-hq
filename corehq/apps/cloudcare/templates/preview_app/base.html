@@ -162,18 +162,18 @@
               <div id="menu-region" class="content menu-content"></div>
               <small id="version-info"></small>
             </div>
+            <div class="scrollable-container dragscroll form-scrollable-container">
+              <section id="webforms" class="webforms" data-bind="template: { name: 'form-fullform-ko-template' }"></section>
+              {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
+                  <section id="cloudcare-debugger" data-bind="
+                  template: {
+                      name: 'instance-viewer-ko-template',
+                      afterRender: adjustWidth
+                  }
+              "></section>
+              {% endif %}
+            </div>
         </div>
-        <div class="scrollable-container dragscroll form-scrollable-container">
-          <section id="webforms" class="webforms" data-bind="template: { name: 'form-fullform-ko-template' }"></section>
-          {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
-              <section id="cloudcare-debugger" data-bind="
-              template: {
-                  name: 'instance-viewer-ko-template',
-                  afterRender: adjustWidth
-              }
-          "></section>
-        </div>
-        {% endif %}
 
         <script>
         $(function () {
