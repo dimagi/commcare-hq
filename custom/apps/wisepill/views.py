@@ -49,7 +49,8 @@ def device_data(request):
         for survey_keyword in Keyword.get_by_domain(case.domain).filter(keyword__iexact="DEVICE_EVENT"):
             for survey_keyword_action in survey_keyword.keywordaction_set.all():
                 if survey_keyword_action.action == KeywordAction.ACTION_STRUCTURED_SMS:
-                    handle_structured_sms(survey_keyword, survey_keyword_action, case, None, "DEVICE_EVENT,%s" % data, send_response=False)
+                    handle_structured_sms(survey_keyword, survey_keyword_action, case, None,
+                        "DEVICE_EVENT,%s" % data, send_response=False)
                     event.processed = True
                     event.save()
                     break
