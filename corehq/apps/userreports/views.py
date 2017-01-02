@@ -730,6 +730,7 @@ class ConfigureReport(ReportBuilderView):
             'report': {
                 "title": self.page_name
             },
+            'existing_report': self.existing_report,
             'columns': self.get_columns(),
             'source_type': self.source_type,
             'source_id': self.source_id,
