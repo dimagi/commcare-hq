@@ -146,6 +146,8 @@ class EnikshayCaseFactory(object):
             kwargs['attrs']['update']['migration_error'] = 'location_not_found'
             kwargs['attrs']['update']['migration_error_details'] = self._nikshay_code
 
+        if self._outcome and self._outcome.hiv_status:
+            kwargs['attrs']['update']['hiv_status'] = self._outcome.hiv_status
         if self.patient_detail.paadharno is not None:
             kwargs['attrs']['update']['aadhaar_number'] = self.patient_detail.paadharno
 
@@ -182,8 +184,6 @@ class EnikshayCaseFactory(object):
                 related_type=PERSON_CASE_TYPE,
             )],
         }
-        if self._outcome and self._outcome.hiv_status:
-            kwargs['attrs']['update']['hiv_status'] = self._outcome.hiv_status
 
         if self.existing_occurrence_case:
             kwargs['case_id'] = self.existing_occurrence_case.case_id
