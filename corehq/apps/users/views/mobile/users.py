@@ -877,7 +877,7 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
             if 'location_id' in request.GET:
                 try:
                     loc = SQLLocation.objects.get(domain=self.domain,
-                                                  location_id=request['location_id'])
+                                                  location_id=request.GET['location_id'])
                 except SQLLocation.DoesNotExist:
                     raise Http404()
                 user.set_location(loc)
