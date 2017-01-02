@@ -1445,7 +1445,10 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     @property
     def users_to_iterate(self):
-        if not self.group_ids:
+        if toggles.EMWF_WORKER_ACTIVITY_REPORT.enabled(self.request.domain):
+            user_query = EMWF.user_es_query(self.domain, self.request.GET.getlist(EMWF.slug))
+            return util.get_simplified_users(user_query)
+        elif not self.group_ids:
             ret = [util._report_user_dict(u) for u in list(CommCareUser.by_domain(self.domain))]
             return ret
         else:
