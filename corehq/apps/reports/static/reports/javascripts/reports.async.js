@@ -15,19 +15,19 @@ var HQAsyncReport = function (o) {
     self.loaderClass = '.report-loading';
 
     self.humanReadableErrors = {
-        400: "Please check your Internet connection!",
-        404: "Report Not Found.",
-        408: "Request timed out when rendering this report. This might be an issue with our servers"+
+        400: gettext("Please check your Internet connection!"),
+        404: gettext("Report Not Found."),
+        408: gettext("Request timed out when rendering this report. This might be an issue with our servers"+
             " or with your Internet connection. We encourage you to report an issue to CommCare HQ Support so we"+
-            " can look into any possible issues.",
-        500: "Problem Rendering Report. Our error monitoring tools have noticed this and we are working quickly to" +
+            " can look into any possible issues."),
+        500: gettext("Problem Rendering Report. Our error monitoring tools have noticed this and we are working quickly to" +
             " resolve this issue as soon as possible. We encourage you to contact CommCare HQ Support" +
             " if this issue persists for more than a few minutes. We appreciate any additional information" +
-            " you can give us about this problem so we can fix it immediately.",
-        502: "Bad Gateway. Please contact CommCare HQ Support.",
-        503: "CommCare HQ is experiencing server difficulties. We're working quickly to resolve it."+
-            " Thank you for your patience. We are extremely sorry.",
-        504: "Gateway Timeout. Please contact CommCare HQ Support."
+            " you can give us about this problem so we can fix it immediately."),
+        502: gettext("Bad Gateway. Please contact CommCare HQ Support."),
+        503: gettext("CommCare HQ is experiencing server difficulties. We're working quickly to resolve it."+
+            " Thank you for your patience. We are extremely sorry."),
+        504: gettext("Gateway Timeout. Please contact CommCare HQ Support."),
     };
 
 
@@ -173,7 +173,8 @@ var HQAsyncReport = function (o) {
         if (self.issueAttempts > 0) {
             self.hqLoading = $(self.loaderClass);
             self.hqLoading.find('.js-loading-spinner').addClass('hide');
-            self.hqLoading.find('h4').text('We were unsuccessful loading the report:').attr('style', 'margin-bottom: 10px;');
+            self.hqLoading.find('h4').text(gettext('We were unsuccessful loading the report:'))
+                                     .attr('style', 'margin-bottom: 10px;');
         }
     });
 
