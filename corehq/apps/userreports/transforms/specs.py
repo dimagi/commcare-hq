@@ -1,6 +1,8 @@
 from decimal import Decimal
+from django.utils.translation import get_language
 from dimagi.ext.jsonobject import DictProperty, JsonObject, StringProperty
 from corehq.apps.userreports.specs import TypeProperty
+from corehq.apps.userreports.util import localize
 from corehq.apps.userreports.transforms.custom.date import get_month_display, days_elapsed_from_date
 from corehq.apps.userreports.transforms.custom.numeric import \
     get_short_decimal_display
@@ -80,11 +82,19 @@ class NumberFormatTransform(Transform):
 class TranslationTransform(Transform):
     type = TypeProperty('translation')
     translations = DictProperty()
+    # For mobile, the transform is a no-op and translation happens in the app
+    mobile_or_web = StringProperty(default="web", choices=["mobile", "web"])
 
     def get_transform_function(self):
+        if self.mobile_or_web == "mobile":  # Mobile translation happens later
+            return lambda value: value
 
-        # For now, use the identity function
         def transform_function(value):
-            return value
+            if value not in self.translations:
+                return value
+
+            display = self.translations.get(value, {})
+            language = get_language()
+            return localize(display, language)
 
         return transform_function

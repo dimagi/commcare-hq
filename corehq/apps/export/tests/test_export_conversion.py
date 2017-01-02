@@ -18,6 +18,7 @@ from corehq.apps.export.models import (
     UserDefinedExportColumn,
     ExportItem,
     StockItem,
+    LabelItem,
     FormExportInstance,
     CaseExportInstance,
     MAIN_TABLE,
@@ -426,6 +427,11 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestConvertBase):
                             label='Question 1',
                             last_occurrences={cls.app_id: 3},
                         ),
+                        LabelItem(
+                            path=[PathNode(name='form'), PathNode(name='label')],
+                            label='label',
+                            last_occurrences={cls.app_id: 3},
+                        ),
                     ],
                     last_occurrences={cls.app_id: 3},
                 ),
@@ -486,6 +492,18 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestConvertBase):
             None,
         )
         self.assertEqual(column.label, 'Question One')
+        self.assertEqual(column.selected, True)
+
+    def test_label_conversion(self, _, __):
+        instance, _ = self._convert_form_export('basic_label')
+
+        table = instance.get_table(MAIN_TABLE)
+        index, column = table.get_column(
+            [PathNode(name='form'), PathNode(name='label')],
+            'LabelItem',
+            None,
+        )
+        self.assertEqual(column.label, 'My Label')
         self.assertEqual(column.selected, True)
 
     def test_conversion_with_text_nodes(self, _, __):

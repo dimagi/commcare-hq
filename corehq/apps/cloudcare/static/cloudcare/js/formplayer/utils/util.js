@@ -92,7 +92,12 @@ Util.getSavedDisplayOptions = function() {
 
 Util.getDisplayOptionsKey = function() {
     var user = FormplayerFrontend.request('currentUser');
-    return user.domain + ':' + user.username + ':' + 'displayOptions';
+    return [
+        user.environment,
+        user.domain,
+        user.username,
+        'displayOptions',
+    ].join(':');
 };
 
 Util.CloudcareUrl = function (options) {

@@ -1072,7 +1072,8 @@ BEGIN
 		'sum(valid_in_month) AS cases_child_health, ' ||
 		'sum(nutrition_status_weighed) AS wer_weighed, ' ||
 		'sum(wer_eligible) AS wer_eligible, ' ||
-		'CASE WHEN (sum(nutrition_status_weighed)::numeric / sum(wer_eligible)) >= 0.8 THEN 20 ' ||
+		'CASE WHEN sum(wer_eligible) = 0 THEN 1 ' ||
+			'WHEN (sum(nutrition_status_weighed)::numeric / sum(wer_eligible)) >= 0.8 THEN 20 ' ||
 			'WHEN (sum(nutrition_status_weighed)::numeric / sum(wer_eligible)) >= 0.6 THEN 10 ' ||
 			'ELSE 1 END AS wer_score, ' ||
 		'sum(thr_eligible) AS thr_eligible_child, ' ||
@@ -1670,6 +1671,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql;
+
 
 --Aggregate Location TABLE
 CREATE OR REPLACE FUNCTION aggregate_location_table() RETURNS VOID AS

@@ -7,6 +7,8 @@ import zipfile
 import csv
 import json
 import bz2
+from collections import OrderedDict
+
 from django.template import Context
 from django.template.loader import render_to_string, get_template
 import xlwt
@@ -243,7 +245,7 @@ class OnDiskExportWriter(ExportWriter):
     writer_class = CsvFileWriter
 
     def _init(self):
-        self.tables = {}
+        self.tables = OrderedDict()
         self.table_names = {}
 
     def _init_table(self, table_index, table_title):

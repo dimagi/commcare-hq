@@ -32,13 +32,13 @@ class TestMigratingBlobDB(get_base_class()):
         cls.s3db.close()
 
     def test_fall_back_to_fsdb(self):
-        info = self.fsdb.put(StringIO(b"content"), "test")
+        info = self.fsdb.put(StringIO(b"content"))
         with self.db.get(info.identifier) as fh:
             self.assertEqual(fh.read(), b"content")
 
     def test_copy_blob_masks_old_blob(self):
         content = StringIO(b"fs content")
-        info = self.fsdb.put(content, "test")
+        info = self.fsdb.put(content)
         content.seek(0)
         self.db.copy_blob(content, info, DEFAULT_BUCKET)
         self.assertEndsWith(
@@ -50,7 +50,7 @@ class TestMigratingBlobDB(get_base_class()):
                 self.assertEqual(fh.read(), b"fs content")
 
     def test_delete_from_both_fs_and_s3(self):
-        info = self.fsdb.put(StringIO(b"content"), "test")
+        info = self.fsdb.put(StringIO(b"content"))
         with self.fsdb.get(info.identifier) as content:
             self.db.copy_blob(content, info, DEFAULT_BUCKET)
         self.assertTrue(self.db.delete(info.identifier))

@@ -4,7 +4,7 @@
 {% load crispy_forms_tags %}
 
 <script type="text/html" id="CommcareSettings.widgets.select">
-    <span>
+  <span>
         <span data-bind="if: valueIsLegal()">
             <select class="col-sm-3 form-control" data-bind="
                 options: options,
@@ -26,42 +26,42 @@
 </script>
 
 <script type="text/html" id="CommcareSettings.widgets.bool">
-    <span class="col-sm-3">
+  <span class="col-sm-3">
         <input type="checkbox"
                data-bind="checked: boolValue, attr: {disabled: !enabled(), id: inputId}"/>
     </span>
 </script>
 
 <script type="text/html" id="CommcareSettings.widgets.customProperty">
-    <div class="row">
-            <div class="col-sm-5">
-                <input placeholder="Key" type="text" data-bind="value: key" class="form-control"/>
-            </div>
-            <div class="col-sm-1 text-center">
-                <i class="fa fa-arrow-right"></i>
-            </div>
-            <div class="col-sm-5">
-                <input placeholder="Value" type="text" data-bind="value: value" class="form-control" />
-            </div>
-            <div class="col-sm-1">
-                <button class="btn btn-danger" data-bind="click: $parent.onDestroyCustomProperty">
-                    <i class="fa fa-trash"></i>
-                </button>
-            </div>
+  <div class="row">
+    <div class="col-sm-5">
+      <input placeholder="Key" type="text" data-bind="value: key" class="form-control"/>
     </div>
+    <div class="col-sm-1 text-center">
+      <i class="fa fa-arrow-right"></i>
+    </div>
+    <div class="col-sm-5">
+      <input placeholder="Value" type="text" data-bind="value: value" class="form-control" />
+    </div>
+    <div class="col-sm-1">
+      <button class="btn btn-danger" data-bind="click: $parent.onDestroyCustomProperty">
+        <i class="fa fa-trash"></i>
+      </button>
+    </div>
+  </div>
 </script>
 
 <script type="text/html" id="CommcareSettings.widgets.image_uploader">
-    <a data-bind="visible: url(), attr: {href: url()}" target="_blank">
-        <img data-bind="
+  <a data-bind="visible: url(), attr: {href: url()}" target="_blank">
+    <img data-bind="
             attr: {
                 src: thumb_url()
             }
         "/>
-    </a>
-    <a data-toggle="modal"
-       class="btn btn-default"
-       data-bind="
+  </a>
+  <a data-toggle="modal"
+     class="btn btn-default"
+     data-bind="
         attr: {
             'data-hqmediapath': path,
             href: href
@@ -71,27 +71,27 @@
             mediaUploadComplete: uploadComplete
         }
     ">
-        <i class="fa fa-cloud-upload"></i>
-        <span data-bind="visible: url()">
+    <i class="fa fa-cloud-upload"></i>
+    <span data-bind="visible: url()">
             {% trans "Replace Logo" %}
         </span>
-        <span data-bind="visible: !url()">
+    <span data-bind="visible: !url()">
             {% trans "Upload Logo" %}
         </span>
-    </a>
-    <a class="btn btn-danger"
-       data-bind="
+  </a>
+  <a class="btn btn-danger"
+     data-bind="
            visible: url(),
            click: removeLogo
     ">
-        <i class="fa fa-remove"></i>
-    </a>
+    <i class="fa fa-remove"></i>
+  </a>
 </script>
 
 {% include 'hqmedia/partials/multimedia_js.html' %}
 
 <script type="text/html" id="CommcareSettings.widgets.text">
-    <span>
+  <span>
         <input type="text" class="col-sm-6 form-control" data-bind="
             value: visibleValue,
             valueUpdate: 'textchange',
@@ -101,7 +101,7 @@
 </script>
 
 <script type="text/html" id="CommcareSettings.widgets.number">
-    <span>
+  <span>
         <input type="number" class="col-sm-3 form-control" data-bind="
             value: visibleValue,
             valueUpdate: 'textchange',
@@ -111,103 +111,111 @@
 </script>
 
 <script type="text/html" id="CommcareSettings.widgets.textarea">
-    <span>
+  <span>
         <textarea type="text" data-bind="value: value, attr: {id: inputId}" class="form-control" />
     </span>
 </script>
 
 <script type="text/html" id="CommcareSettings.widgets.password">
-    <span>
+  <span>
         <input type="password" data-bind="passwordSetter: visibleValue" class="form-control" />
     </span>
 </script>
 
 <script>
-    $(function () {
-        var CommcareSettings = hqImport('app_manager/js/commcaresettings.js').CommcareSettings;
-        CommcareSettings.widgets.text_input = CommcareSettings.widgets.select;
-    });
+  $(function () {
+    var CommcareSettings = hqImport('app_manager/js/commcaresettings.js').CommcareSettings;
+    CommcareSettings.widgets.text_input = CommcareSettings.widgets.select;
+  });
 </script>
 
 <script type="text/html" id="CommcareSettings.widgets.text_input">
-    <span data-bind="template: 'CommcareSettings.widgets.select'"></span>
-    <aside id="custom-keys-help" data-bind="visible: visibleValue() === 'custom-keys'">
+  <span data-bind="template: 'CommcareSettings.widgets.select'"></span>
+  <aside id="custom-keys-help" data-bind="visible: visibleValue() === 'custom-keys'">
         <span>Customize through
             <a href="#" data-bind="click: function () {$('#custom-keys-example').slideToggle()}">{% trans "User Interface Translations" %}</a>.
         </span>
-        <div id="custom-keys-example" style="display: none;">
-            <h6>Example:</h6>
-            <div class="row">
-                <div class="col-sm-6">polish.TextField.charactersKey1</div><div class="col-sm-6">.,</div>
-                <div class="col-sm-6">polish.TextField.charactersKey2</div><div class="col-sm-6">abc2</div>
-                <div class="col-sm-6">polish.TextField.charactersKey3</div><div class="col-sm-6">def3</div>
-                <div class="col-sm-6">polish.TextField.charactersKey4</div><div class="col-sm-6">ghi4</div>
-                <div class="col-sm-6">polish.TextField.charactersKey5</div><div class="col-sm-6">jkl5</div>
-                <div class="col-sm-6">polish.TextField.charactersKey6</div><div class="col-sm-6">mno6</div>
-                <div class="col-sm-6">polish.TextField.charactersKey7</div><div class="col-sm-6">pqrs7</div>
-                <div class="col-sm-6">polish.TextField.charactersKey8</div><div class="col-sm-6">tuv8</div>
-                <div class="col-sm-6">polish.TextField.charactersKey9</div><div class="col-sm-6">wxyz9</div>
-                <div class="col-sm-6">polish.TextField.charactersKey0</div><div class="col-sm-6"> 0</div>
-            </div>
-        </div>
-    </aside>
+    <div id="custom-keys-example" style="display: none;">
+      <h6>Example:</h6>
+      <div class="row">
+        <div class="col-sm-6">polish.TextField.charactersKey1</div><div class="col-sm-6">.,</div>
+        <div class="col-sm-6">polish.TextField.charactersKey2</div><div class="col-sm-6">abc2</div>
+        <div class="col-sm-6">polish.TextField.charactersKey3</div><div class="col-sm-6">def3</div>
+        <div class="col-sm-6">polish.TextField.charactersKey4</div><div class="col-sm-6">ghi4</div>
+        <div class="col-sm-6">polish.TextField.charactersKey5</div><div class="col-sm-6">jkl5</div>
+        <div class="col-sm-6">polish.TextField.charactersKey6</div><div class="col-sm-6">mno6</div>
+        <div class="col-sm-6">polish.TextField.charactersKey7</div><div class="col-sm-6">pqrs7</div>
+        <div class="col-sm-6">polish.TextField.charactersKey8</div><div class="col-sm-6">tuv8</div>
+        <div class="col-sm-6">polish.TextField.charactersKey9</div><div class="col-sm-6">wxyz9</div>
+        <div class="col-sm-6">polish.TextField.charactersKey0</div><div class="col-sm-6"> 0</div>
+      </div>
+    </div>
+  </aside>
 </script>
 
 <div class="tabbable">
-    <ul class="nav nav-tabs">
-        <li class="active"><a href="#commcare-settings" data-toggle="tab">{% trans "Settings" %}</a></li>
-        {% if app.get_doc_type == 'Application' %}
-            <li><a id="demand-multimedia" href="#multimedia" data-toggle="tab">{% trans "Multimedia" %}</a></li>
-        {% endif %}
-        <li><a href="#languages" data-toggle="tab">{% trans "Languages" %}</a></li>
-        <li><a href="#actions" data-toggle="tab">{% trans "Actions" %}</a></li>
-    </ul>
-    <br>
-    <div class="tab-content">
-        <div class="tab-pane active" id="commcare-settings">
-            {% include 'app_manager/v2/partials/commcare_settings.html' %}
+  <ul class="nav nav-tabs">
+    <li class="active"><a href="#languages" data-toggle="tab">{% trans "Languages" %}</a></li>
+    {% if app.get_doc_type == 'Application' %}
+      <li><a href="#multimedia-tab" data-toggle="tab">{% trans "Multimedia" %}</a></li>
+    {% endif %}
+    <li><a href="#actions" data-toggle="tab">{% trans "Actions" %}</a></li>
+    <li><a href="#commcare-settings" data-toggle="tab">{% trans "Advanced Settings" %}</a></li>
+  </ul>
+  <div class="tab-content appmanager-tab-content">
+    {% if app.get_doc_type == 'Application' %}
+      <div class="tab-pane" id="multimedia-tab">
+        <div data-bind="if: load_state() === 'loading'">
+          <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
+          {% trans "Loading ..." %}
         </div>
-        {% if app.get_doc_type == 'Application' %}
-            <div class="tab-pane" id="multimedia">
-                <div data-bind="if: load_state() === 'loading'">
-                    <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
-                    {% trans "Loading ..." %}
-                </div>
-                <div data-bind="html: multimedia_page_html"></div>
-                <div data-bind="if: load_state() === 'error'">
-                    <button class="btn btn-default" data-bind="click: load_if_necessary">{% trans "Try again" %}</button>
-                </div>
-            </div>
-        {% endif %}
-        <div class="tab-pane" id="languages">
-            {% include 'app_manager/v2/languages.html' %}
+        <div data-bind="html: multimedia_page_html"></div>
+        <div data-bind="if: load_state() === 'error'">
+          <button class="btn btn-default" data-bind="click: load_if_necessary">{% trans "Try again" %}</button>
         </div>
-        <div class="tab-pane" id="actions">
-            {% if copy_app_form %}
-                <form class="form form-horizontal" method="post" action="{% url "copy_app" domain %}">
-                    {% crispy copy_app_form %}
-                </form>
-                <br>
-            {% endif %}
-            {% if request|toggle_enabled:"EXPORT_ZIPPED_APPS" %}
-                <legend>Export compressed application</legend>
-                <form action="{% url "gzip_app" domain app.id %}" method="POST">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fa fa-arrow-down"></i>
-                        {% trans "Download" %}
-                    </button>
-                </form>
-                <br>
-            {% endif %}
-            <legend>{% trans "Delete Application" %}</legend>
-            <form action="{% url "corehq.apps.app_manager.views.delete_app" domain app.id %}" method="POST">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-danger disable-on-submit">
-                    <i class="fa fa-trash"></i>
-                    {% trans "Delete this application" %}
-                </button>
-            </form>
-        </div>
+      </div>
+    {% endif %}
+    <div class="tab-pane active" id="languages">
+      {% include 'app_manager/v2/languages.html' %}
     </div>
+    <div class="tab-pane" id="actions">
+      {% if copy_app_form %}
+
+
+        <div class="panel panel-appmanager panel-appmanager-form">
+          <form class="form form-horizontal" method="post" action="{% url "copy_app" domain %}">
+            {% crispy copy_app_form %}
+          </form>
+        </div>
+      {% endif %}
+      {% if request|toggle_enabled:"EXPORT_ZIPPED_APPS" %}
+        <legend>Export compressed application</legend>
+        <form action="{% url "gzip_app" domain app.id %}" method="POST">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-primary">
+            <i class="fa fa-arrow-down"></i>
+            {% trans "Download" %}
+          </button>
+        </form>
+        <br>
+      {% endif %}
+      <div class="panel panel-appmanager panel-appmanager-form panel-appmanager-form-danger">
+        <form class="form form-horizontal" method="post" action="{% url "copy_app" domain %}">
+          <form action="{% url "delete_app" domain app.id %}" method="POST">
+            {% csrf_token %}
+            <legend>{% trans "Delete Application" %}</legend>
+            <div class="panel-body">
+              <button type="submit" class="btn btn-danger disable-on-submit">
+                <i class="fa fa-trash"></i>
+                {% trans "Delete this application" %}
+              </button>
+            </div>
+          </form>
+        </form>
+      </div>
+    </div>
+    <div class="tab-pane" id="commcare-settings">
+      {% include 'app_manager/v2/partials/commcare_settings.html' %}
+    </div>
+  </div>
 </div>

@@ -112,8 +112,7 @@ def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column, sort_o
     from corehq.apps.userreports.laboratory.experiment import UCRExperiment
 
     def _run_report(backend_to_use):
-        data_source = ReportFactory.from_spec(spec, include_prefilters=True)
-        data_source.override_backend_id(backend_to_use)
+        data_source = ReportFactory.from_spec(spec, include_prefilters=True, backend=backend_to_use)
         data_source.set_filter_values(filter_values)
         if sort_column:
             data_source.set_order_by(

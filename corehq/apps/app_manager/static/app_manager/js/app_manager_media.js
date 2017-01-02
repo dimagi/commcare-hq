@@ -151,7 +151,12 @@ hqDefine('app_manager/js/app_manager_media.js', function () {
     };
 
     function initNavMenuMedia(qualifier, imageRef, audioRef, objectMap, defaultFileName) {
-        var uploaders = hqImport('#app_manager/v1/partials/nav_menu_media_js_common.html');
+        var uploaders;
+        if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
+            uploaders = hqImport('#app_manager/v2/partials/nav_menu_media_js_common.html');
+        } else {
+            uploaders = hqImport('#app_manager/v1/partials/nav_menu_media_js_common.html');
+        }
         var $mediaImage = $('#' + qualifier + 'media_image'),
             $mediaAudio = $('#' + qualifier + 'media_audio');
 

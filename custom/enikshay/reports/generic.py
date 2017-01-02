@@ -32,9 +32,11 @@ class MultiReport(CustomProjectReport, GenericReportView):
             report.fields = self.fields
             report_instance = report(self.request, domain=self.domain)
             report_context = report_instance.report_context
+            report_table = report_context.get('report_table', {})
+            report_table['slug'] = report_instance.slug
             context['reports'].append({
                 'report': report_instance.context.get('report', {}),
-                'report_table': report_context.get('report_table', {})
+                'report_table': report_table
             })
         return context
 

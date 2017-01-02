@@ -8,7 +8,6 @@ from corehq.apps.es.aggregations import MinAggregation, SumAggregation, TermsAgg
 from corehq.apps.es.es_query import HQESQuery
 
 from corehq.apps.reports.api import ReportDataSource
-from corehq.apps.userreports.columns import get_expanded_column_config
 from corehq.apps.userreports.decorators import catch_and_raise_exceptions
 from corehq.apps.userreports.mixins import ConfigurableReportDataSourceMixin
 from corehq.apps.userreports.reports.sorting import ASCENDING, DESCENDING

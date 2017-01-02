@@ -34,7 +34,6 @@ requires imports/proptable.html to be included in the main template
 }
 
 </style>
-<script src="{% static 'clipboard/dist/clipboard.js' %}"></script>
 <script>
     $(function () {
         function _analytics_usage(action, callback) {
@@ -85,16 +84,20 @@ requires imports/proptable.html to be included in the main template
             document.getElementById('resave-form-btn').disabled=true;
             $('#resave-spinner').show();
         });
-        var clipboard = new Clipboard('.copy-xml', { text: function() { return $('#form-xml pre').text(); } }),
-            $copyBtn = $('.copy-xml');
-        $copyBtn.tooltip({
-            title: '{% trans "Copied!"|escapejs %}'
-        });
-        clipboard.on('success', function() {
-            $copyBtn.tooltip('show');
-            window.setTimeout(function() { $copyBtn.tooltip('hide'); }, 1000)
-        });
 
+        $.when(
+            $.getScript('{% static "clipboard/dist/clipboard.js" %}')
+        ).done(function () {
+            var clipboard = new Clipboard('.copy-xml', { text: function() { return $('#form-xml pre').text(); } }),
+                $copyBtn = $('.copy-xml');
+            $copyBtn.tooltip({
+                title: '{% trans "Copied!"|escapejs %}'
+            });
+            clipboard.on('success', function() {
+                $copyBtn.tooltip('show');
+                window.setTimeout(function() { $copyBtn.tooltip('hide'); }, 1000)
+            });
+        });
     });
 </script>
 <style>

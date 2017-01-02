@@ -94,7 +94,7 @@ class BlobMixin(Document):
 
         bucket = self._blobdb_bucket()
         # do we need to worry about BlobDB reading beyond content_length?
-        info = db.put(content, name, bucket)
+        info = db.put(content, bucket=bucket)
         self.external_blobs[name] = BlobMeta(
             id=info.identifier,
             content_type=content_type,
@@ -130,8 +130,12 @@ class BlobMixin(Document):
                 raise NotFound
             blob = db.get(meta.id, self._blobdb_bucket())
         except NotFound:
-            raise ResourceNotFound(u"{model} attachment: {name!r}".format(
-                                   model=type(self).__name__, name=name))
+            raise ResourceNotFound(
+                u"{model} {model_id} attachment: {name!r}".format(
+                    model=type(self).__name__,
+                    name=name,
+                    model_id=self._id,
+                ))
         if stream:
             return blob
 

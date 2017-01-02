@@ -14,7 +14,8 @@ from corehq.apps.export.transforms import (
 
 # When fixing a bug that requires existing schemas to be rebuilt,
 # bump the version number.
-DATA_SCHEMA_VERSION = 6
+FORM_DATA_SCHEMA_VERSION = 8
+CASE_DATA_SCHEMA_VERSION = 7
 
 DEID_ID_TRANSFORM = "deid_id"
 DEID_DATE_TRANSFORM = "deid_date"
@@ -51,6 +52,18 @@ PROPERTY_TAG_STOCK = 'stock'
 # Yeah... let's not hard code this list everywhere
 # This list comes from casexml.apps.case.xml.parser.CaseActionBase.from_v2
 KNOWN_CASE_PROPERTIES = ["type", "name", "external_id", "user_id", "owner_id", "opened_on"]
+
+# Attributes found on a case block. <case case_id="..." date_modified="..." ...>
+CASE_ATTRIBUTES = ['@case_id', '@date_modified', '@user_id']
+
+# Elements that are found in a case create block
+# <case>
+#   <create>
+#       <case_name>
+#       ...
+#   </create>
+# </case>
+CASE_CREATE_ELEMENTS = ['case_name', 'owner_id', 'case_type']
 
 FORM_EXPORT = 'form'
 CASE_EXPORT = 'case'
