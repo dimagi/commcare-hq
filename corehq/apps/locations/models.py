@@ -374,7 +374,7 @@ class OnlyUnarchivedLocationManager(LocationManager):
 
 class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
     domain = models.CharField(max_length=255, db_index=True)
-    name = models.CharField(max_length=100, null=True, blank=True)
+    name = models.CharField(max_length=100, null=True)
     location_id = models.CharField(max_length=100, db_index=True, unique=True)
     _migration_couch_id_name = "location_id"  # Used for SyncSQLToCouchMixin
     location_type = models.ForeignKey(LocationType, on_delete=models.CASCADE)
