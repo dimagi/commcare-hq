@@ -235,6 +235,7 @@ def _report_user_dict(user):
             is_active=user.get('is_active', None)
         )
 
+
 def get_simplified_users(user_es_query):
     """
     Accepts an instance of UserES and returns SimplifiedUserInfo dicts for the
