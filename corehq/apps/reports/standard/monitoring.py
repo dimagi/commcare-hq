@@ -6,6 +6,7 @@ import operator
 from pygooglechart import ScatterChart
 import pytz
 
+from corehq import toggles
 from corehq.apps.es import filters
 from corehq.apps.es import cases as case_es
 from corehq.apps.es.aggregations import (
@@ -820,12 +821,8 @@ class DailyFormStatsReport(WorkerMonitoringCaseReportTableBase, CompletionOrSubm
     @property
     @memoized
     def all_users(self):
-        fields = ['_id', 'username', 'first_name', 'last_name', 'doc_type', 'is_active', 'email']
-        mobile_user_and_group_slugs = self.request.GET.getlist(EMWF.slug)
-        users = EMWF.user_es_query(self.domain, mobile_user_and_group_slugs).fields(fields)\
-                .run().hits
-        users = map(util._report_user_dict, users)
-        return sorted(users, key=lambda u: u['username_in_report'])
+        user_query = EMWF.user_es_query(self.domain, self.request.GET.getlist(EMWF.slug))
+        return util.get_simplified_users(user_query)
 
     def paginate_list(self, data_list):
         if self.pagination:
@@ -1336,16 +1333,25 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     num_avg_intervals = 3  # how many duration intervals we go back to calculate averages
     is_cacheable = True
 
-    fields = [
-        'corehq.apps.reports.filters.select.MultiGroupFilter',
-        'corehq.apps.reports.filters.users.UserOrGroupFilter',
-        'corehq.apps.reports.filters.select.MultiCaseTypeFilter',
-        'corehq.apps.reports.filters.dates.DatespanFilter',
-    ]
     fix_left_col = True
     emailable = True
 
     NO_FORMS_TEXT = ugettext_noop('None')
+
+    @property
+    def fields(self):
+        if toggles.EMWF_WORKER_ACTIVITY_REPORT.enabled(self.request.domain):
+            return [
+                'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
+                'corehq.apps.reports.filters.select.MultiCaseTypeFilter',
+                'corehq.apps.reports.filters.dates.DatespanFilter',
+            ]
+        return [
+            'corehq.apps.reports.filters.select.MultiGroupFilter',
+            'corehq.apps.reports.filters.users.UserOrGroupFilter',
+            'corehq.apps.reports.filters.select.MultiCaseTypeFilter',
+            'corehq.apps.reports.filters.dates.DatespanFilter',
+        ]
 
     @classmethod
     def display_in_dropdown(cls, domain=None, project=None, user=None):
@@ -1357,6 +1363,8 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     @property
     def view_by_groups(self):
+        if toggles.EMWF_WORKER_ACTIVITY_REPORT.enabled(self.request.domain):
+            return False
         return self.request.GET.get('view_by', None) == 'groups'
 
     @property
@@ -1433,7 +1441,10 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
     @property
     def users_to_iterate(self):
-        if not self.group_ids:
+        if toggles.EMWF_WORKER_ACTIVITY_REPORT.enabled(self.request.domain):
+            user_query = EMWF.user_es_query(self.domain, self.request.GET.getlist(EMWF.slug))
+            return util.get_simplified_users(user_query)
+        elif not self.group_ids:
             ret = [util._report_user_dict(u) for u in list(CommCareUser.by_domain(self.domain))]
             return ret
         else:
