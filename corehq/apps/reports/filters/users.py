@@ -322,12 +322,12 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         location_ids = cls.selected_location_ids(mobile_user_and_group_slugs)
         users = []
 
-        if limit_user_ids:
-            user_ids = set(limit_user_ids).intersection(user_ids)
-
         if location_ids:
             for location_id in location_ids:
                 user_ids |= set(get_user_ids_by_location(domain, location_id))
+
+        if limit_user_ids:
+            user_ids = set(limit_user_ids).intersection(user_ids)
 
         if user_ids or HQUserType.REGISTERED in user_types:
             users = util.get_all_users_by_domain(
@@ -349,10 +349,14 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
 
         user_dict = {}
         for group in groups:
-            user_dict["%s|%s" % (group.name, group._id)] = util.get_all_users_by_domain(
+            users_in_group = util.get_all_users_by_domain(
                 group=group,
                 simplified=True
             )
+            if limit_user_ids:
+                users_in_group = filter(lambda user: user['user_id'] in limit_user_ids, users_in_group)
+            user_dict["%s|%s" % (group.name, group._id)] = users_in_group
+
         users_in_groups = flatten_list(user_dict.values())
         users_by_group = user_dict
         combined_users = remove_dups(all_users + users_in_groups, "user_id")
