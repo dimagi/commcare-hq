@@ -56,7 +56,7 @@ var SMSRateCalculator = function (form_data) {
                 },
                 error: function () {
                     self.calculatingRate(false);
-                    self.rate("There was an error fetching the SMS rate.");
+                    self.rate(gettext("There was an error fetching the SMS rate."));
                 }
             });
         }
@@ -103,7 +103,7 @@ var PublicSMSRateCalculator = function (form_data) {
                 error: function () {
                     self.calculatingRate(false);
                     self.hasError(true);
-                    self.rateErrorText("There was an error fetching the SMS rate.");
+                    self.rateErrorText(gettext("There was an error fetching the SMS rate."));
                 }
             });
     };

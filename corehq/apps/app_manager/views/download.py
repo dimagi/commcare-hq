@@ -11,11 +11,13 @@ from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 
+from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.decorators import safe_download
 from corehq.apps.app_manager.exceptions import ModuleNotFoundException, \
     AppManagerException, FormNotFoundException
-from corehq.apps.app_manager.util import add_odk_profile_after_build
+from corehq.apps.app_manager.util import add_odk_profile_after_build, \
+    get_app_manager_template
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs
 from corehq.apps.builds.jadjar import convert_XML_To_J2ME
 from corehq.apps.hqmedia.views import DownloadMultimediaZip
@@ -322,12 +324,18 @@ def download_media_profile(request, domain, app_id):
 
 
 @safe_download
-def download_index(request, domain, app_id, template="app_manager/v1/download_index.html"):
+def download_index(request, domain, app_id):
     """
     A landing page, mostly for debugging, that has links the jad and jar as well as
     all the resource files that will end up zipped into the jar.
 
     """
+    template = get_app_manager_template(
+        domain,
+        "app_manager/v1/download_index.html",
+        "app_manager/v2/download_index.html",
+    )
+
     files = []
     try:
         files = source_files(request.app)
@@ -361,18 +369,25 @@ def validate_form_for_build(request, domain, app_id, unique_form_id, ajax=True):
     lang, langs = get_langs(request, app)
 
     if ajax and "blank form" in [error.get('type') for error in errors]:
-        response_html = render_to_string('app_manager/v1/partials/create_form_prompt.html')
+        response_html = ("" if toggles.APP_MANAGER_V2.enabled(domain)
+                         else render_to_string('app_manager/v1/partials/create_form_prompt.html'))
     else:
-        response_html = render_to_string('app_manager/v1/partials/build_errors.html', {
-            'request': request,
-            'app': app,
-            'form': form,
-            'build_errors': errors,
-            'not_actual_build': True,
-            'domain': domain,
-            'langs': langs,
-            'lang': lang
-        })
+        response_html = render_to_string(
+            get_app_manager_template(
+                domain,
+                'app_manager/v1/partials/build_errors.html',
+                'app_manager/v2/partials/build_errors.html',
+            ), {
+                'request': request,
+                'app': app,
+                'form': form,
+                'build_errors': errors,
+                'not_actual_build': True,
+                'domain': domain,
+                'langs': langs,
+                'lang': lang
+            }
+        )
 
     if ajax:
         return json_response({

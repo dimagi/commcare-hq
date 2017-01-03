@@ -139,12 +139,12 @@ class Command(BaseCommand):
         self._copy_custom_data(LocationFieldsView.field_type)
 
         location_types = LocationType.objects.by_domain(self.existing_domain)
-        previous_location_type = None
+        location_types_map = {}
         for location_type in location_types:
-            if previous_location_type:
-                location_type.parent_type = previous_location_type
-            self.save_sql_copy(location_type, self.new_domain)
-            previous_location_type = location_type
+            if location_type.parent_type_id:
+                location_type.parent_type_id = location_types_map[location_type.parent_type_id]
+            old_id, new_id = self.save_sql_copy(location_type, self.new_domain)
+            location_types_map[old_id] = new_id
 
         def copy_location_hierarchy(location, id_map):
             new_lineage = []

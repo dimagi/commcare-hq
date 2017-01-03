@@ -1,7 +1,9 @@
+from django.db import transaction
 from corehq.apps.case_importer.exceptions import ImporterRefError
 from corehq.apps.case_importer.tracking.filestorage import transient_file_store, \
     persistent_file_store
-from corehq.apps.case_importer.tracking.models import CaseUploadRecord
+from corehq.apps.case_importer.tracking.models import CaseUploadRecord, \
+    CaseUploadFormRecord
 from corehq.apps.case_importer.util import open_spreadsheet_download_ref, get_spreadsheet
 from dimagi.utils.decorators.memoized import memoized
 
@@ -61,3 +63,10 @@ class CaseUpload(object):
     def store_task_result(self):
         if self._case_upload_record.set_task_status_json_if_finished():
             self._case_upload_record.save()
+
+    def record_form(self, form_id):
+        case_upload_record = self._case_upload_record
+        with transaction.atomic():
+            form_record = CaseUploadFormRecord(
+                case_upload_record=case_upload_record, form_id=form_id)
+            form_record.save()

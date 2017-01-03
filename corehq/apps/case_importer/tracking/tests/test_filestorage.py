@@ -7,15 +7,12 @@ from corehq.util.test_utils import generate_cases
 class FilestorageTest(TestCase):
     @classmethod
     def setUpClass(cls):
+        super(FilestorageTest, cls).setUpClass()
         cls.filename = '/tmp/test_file.txt'
         cls.content = 'this is the message\n'
 
         with open(cls.filename, 'w') as f:
             f.write(cls.content)
-
-    @classmethod
-    def tearDownClass(cls):
-        pass
 
 
 @generate_cases([(transient_file_store,),

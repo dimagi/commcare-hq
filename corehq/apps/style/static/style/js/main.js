@@ -97,8 +97,15 @@ COMMCAREHQ.updateDOM = function (update) {
     }
 };
 
-COMMCAREHQ.makeSaveButton = function(messageStrings, cssClass) {
+COMMCAREHQ.makeSaveButton = function(messageStrings, cssClass, barClass) {
     'use strict';
+    var BAR_STATE = {
+        SAVE: 'savebtn-bar-save',
+        SAVING: 'savebtn-bar-saving',
+        SAVED: 'savebtn-bar-saved',
+        RETRY: 'savebtn-bar-retry',
+    };
+    barClass = barClass || '';
     var SaveButton = {
         /*
          options: {
@@ -116,7 +123,7 @@ COMMCAREHQ.makeSaveButton = function(messageStrings, cssClass) {
                 }).addClass(cssClass),
                 $saving: $('<div/>').text(SaveButton.message.SAVING).addClass('btn btn-default disabled'),
                 $saved: $('<div/>').text(SaveButton.message.SAVED).addClass('btn btn-default disabled'),
-                ui: $('<div/>').addClass('pull-right'),
+                ui: $('<div/>').addClass('pull-right savebtn-bar ' + barClass),
                 setStateWhenReady: function (state) {
                     if (this.state === 'saving') {
                         this.nextState = state;
@@ -133,13 +140,21 @@ COMMCAREHQ.makeSaveButton = function(messageStrings, cssClass) {
                     this.$saving.detach();
                     this.$saved.detach();
                     this.$retry.detach();
+                    var buttonUi = this.ui;
+                    _.each(BAR_STATE, function (v, k) {
+                        buttonUi.removeClass(v);
+                    });
                     if (state === 'save') {
+                        this.ui.addClass(BAR_STATE.SAVE);
                         this.ui.append(this.$save);
                     } else if (state === 'saving') {
+                        this.ui.addClass(BAR_STATE.SAVING);
                         this.ui.append(this.$saving);
                     } else if (state === 'saved') {
+                        this.ui.addClass(BAR_STATE.SAVED);
                         this.ui.append(this.$saved);
                     } else if (state === 'retry') {
+                        this.ui.addClass(BAR_STATE.RETRY);
                         this.ui.append(this.$retry);
                     }
                 },
@@ -238,7 +253,7 @@ COMMCAREHQ.DeleteButton = COMMCAREHQ.makeSaveButton({
     SAVED: django.gettext("Deleted"),
     RETRY: django.gettext("Try Again"),
     ERROR_SAVING: django.gettext("There was an error deleting")
-}, 'btn btn-danger');
+}, 'btn btn-danger', 'savebtn-bar-danger');
 
 
 COMMCAREHQ.beforeUnload = [];

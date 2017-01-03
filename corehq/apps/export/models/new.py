@@ -22,7 +22,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_app_ids_and_versions,
     get_app_ids_in_domain,
 )
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models import Application, AdvancedFormActions
 from corehq.apps.app_manager.util import get_case_properties, ParentCasePropertyBuilder
 from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import Product
@@ -163,7 +163,7 @@ class ExportItem(DocumentSchema):
 
     @classmethod
     def merge(cls, one, two):
-        item = cls(one.to_json())
+        item = one
         item.last_occurrences = _merge_dicts(one.last_occurrences, two.last_occurrences, max)
         item.inferred = one.inferred or two.inferred
         item.inferred_from |= two.inferred_from
@@ -800,8 +800,8 @@ class FormExportInstanceDefaults(ExportInstanceDefaults):
 
     @staticmethod
     def get_default_instance_name(schema):
-        return u'{}: {}'.format(
-            xmlns_to_name(schema.domain, schema.xmlns, schema.app_id),
+        return u'{} ({})'.format(
+            xmlns_to_name(schema.domain, schema.xmlns, schema.app_id, separator=" - "),
             datetime.now().strftime('%Y-%m-%d')
         )
 
@@ -935,7 +935,6 @@ class MultipleChoiceItem(ExportItem):
                     value=option1.value,
                     last_occurrences=_merge_dicts(option1.last_occurrences, option2.last_occurrences, max)
                 ),
-            copyfn=lambda option: Option(option.to_json())
         )
 
         item.options = options
@@ -1126,24 +1125,20 @@ class ExportDataSchema(Document):
                     export_item.transform,
                 )
 
-            group_schema = ExportGroupSchema(
-                path=group_schema1.path,
-                last_occurrences=_merge_dicts(
-                    group_schema1.last_occurrences,
-                    group_schema2.last_occurrences,
-                    max
-                ),
-                inferred=group_schema1.inferred or group_schema2.inferred
+            group_schema1.last_occurrences = _merge_dicts(
+                group_schema1.last_occurrences,
+                group_schema2.last_occurrences,
+                max
             )
+            group_schema1.inferred = group_schema1.inferred or group_schema2.inferred
             items = _merge_lists(
                 group_schema1.items,
                 group_schema2.items,
                 keyfn=keyfn,
                 resolvefn=lambda item1, item2: item1.__class__.merge(item1, item2),
-                copyfn=lambda item: item.__class__(item.to_json()),
             )
-            group_schema.items = items
-            return group_schema
+            group_schema1.items = items
+            return group_schema1
 
         previous_group_schemas = schemas[0].group_schemas
         last_app_versions = schemas[0].last_app_versions
@@ -1153,7 +1148,6 @@ class ExportDataSchema(Document):
                 current_schema.group_schemas,
                 keyfn=lambda group_schema: _path_nodes_to_string(group_schema.path),
                 resolvefn=resolvefn,
-                copyfn=lambda group_schema: ExportGroupSchema(group_schema.to_json())
             )
             previous_group_schemas = group_schemas
             last_app_versions = _merge_dicts(
@@ -1246,9 +1240,14 @@ class FormExportDataSchema(ExportDataSchema):
 
         case_updates = form.get_case_updates(form.get_module().case_type)
         xform = form.wrapped_xform()
+        if isinstance(form.actions, AdvancedFormActions):
+            open_case_actions = form.actions.open_cases
+        else:
+            open_case_actions = form.actions.subcases
+
         repeats_with_subcases = {
-            subcase_action for subcase_action in form.actions.subcases
-            if subcase_action.repeat_context
+            open_case_action for open_case_action in open_case_actions
+            if open_case_action.repeat_context
         }
         xform_schema = cls._generate_schema_from_xform(
             xform,
@@ -1611,11 +1610,12 @@ def _path_nodes_to_string(path, separator=' '):
     return separator.join(["{}.{}".format(node.name, node.is_repeat) for node in path])
 
 
-def _merge_lists(one, two, keyfn, resolvefn, copyfn):
+def _merge_lists(one, two, keyfn, resolvefn):
     """Merges two lists. The algorithm is to first iterate over the first list. If the item in the first list
     does not exist in the second list, add that item to the merged list. If the item does exist in the second
     list, resolve the conflict using the resolvefn. After the first list has been iterated over, simply append
-    any items in the second list that have not already been added.
+    any items in the second list that have not already been added. If the items in the list are objects,
+    then the objects will be mutated directly and not copied.
 
     :param one: The first list to be merged.
     :param two: The second list to be merged.
@@ -1623,33 +1623,29 @@ def _merge_lists(one, two, keyfn, resolvefn, copyfn):
         identifier for that item.
     :param resolvefn: A function that takes two elements that resolve to the same key and returns a single
         element that has resolved the conflict between the two elements.
-    :param copyfn: A function that takes an element as its argument and returns a copy of it.
     :returns: A list of the merged elements
     """
 
     merged = []
-    two_keys = set(map(lambda obj: keyfn(obj), two))
+
+    two_keys = {keyfn(obj): obj for obj in two}
 
     for obj in one:
+        obj_key = keyfn(obj)
 
-        if keyfn(obj) in two_keys:
+        if obj_key in two_keys:
             # If obj exists in both list, must merge
-            two_keys.remove(keyfn(obj))
             new_obj = resolvefn(
                 obj,
-                filter(lambda other: keyfn(other) == keyfn(obj), two)[0],
+                two_keys.pop(obj_key),
             )
         else:
-            new_obj = copyfn(obj)
+            new_obj = obj
 
         merged.append(new_obj)
 
-    # Filter any objects we've already added by merging
-    filtered = filter(lambda obj: keyfn(obj) in two_keys, two)
-    merged.extend(
-        # Map objects to new object
-        map(lambda obj: copyfn(obj), filtered)
-    )
+    # Get the rest of the objects in the second list
+    merged.extend(two_keys.values())
     return merged
 
 

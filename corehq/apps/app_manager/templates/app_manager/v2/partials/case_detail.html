@@ -8,15 +8,20 @@
 
 {% include 'app_manager/v1/partials/custom_detail_variables.html' with screen='longScreen'%}
 
-<legend>
-    {% trans "Display Properties" %}
-    <span class="hq-help-template"
-        data-title="{% trans "Case Detail" %}"
-        data-content="{% trans "These properties will be displayed on a confirmation screen after a case has been selected. If no properties are listed here the confirmation screen will not be displayed at all." %}"
-    ></span>
-</legend>
-<div data-bind="with: longScreen">
-    {% include 'app_manager/v2/partials/case_list_properties.html' %}
+<div class="panel panel-appmanager">
+    <div class="panel-heading">
+        <h4 class="panel-title panel-title-nolink">
+            {% trans "Display Properties" %}
+            <span class="hq-help-template"
+                data-title="{% trans "Case Detail" %}"
+                data-content="{% trans "These properties will be displayed on a confirmation screen after a case has been selected. If no properties are listed here the confirmation screen will not be displayed at all." %}"
+            ></span>
+        </h4>
+    </div>
+    <div class="panel-body" data-bind="with: longScreen">
+        {% include 'app_manager/v2/partials/case_list_properties.html' %}
+        {% include 'app_manager/v2/partials/case_list_module_overwrite.html' %}
+    </div>
 </div>
 
 {% if request|toggle_enabled:"DETAIL_LIST_TABS" %}

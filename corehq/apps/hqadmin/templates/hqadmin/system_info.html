@@ -3,11 +3,6 @@
 {% load i18n %}
 {% load humanize %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'style/js/main.js' %}"></script>
-    <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
-{% endblock %}
-
 {% block js-inline %} {{ block.super }}
     <script>
         function format_date(datestring) {

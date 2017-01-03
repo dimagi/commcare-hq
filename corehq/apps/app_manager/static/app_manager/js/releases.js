@@ -333,8 +333,8 @@ hqDefine('app_manager/js/releases.js', function () {
                 });
             }
         };
-        self.reload_message = "Sorry, that didn't go through. " +
-                "Please reload your page and try again";
+        self.reload_message = gettext("Sorry, that didn't go through. " +
+                "Please reload your page and try again");
         self.deleteSavedApp = function (savedApp) {
             savedApp._deleteState('pending');
             $.post({
@@ -368,12 +368,12 @@ hqDefine('app_manager/js/releases.js', function () {
                     if (!data.latestRelease) {
                         self.actuallyMakeBuild();
                     } else if (data.latestRelease !== self.lastAppVersion()) {
-                        window.alert("The versions list has changed since you loaded the page.");
+                        window.alert(gettext("The versions list has changed since you loaded the page."));
                         self.reloadApps();
                     } else if (self.lastAppVersion() !== self.currentAppVersion()) {
                         self.actuallyMakeBuild();
                     } else {
-                        window.alert("No new changes to deploy!");
+                        window.alert(gettext("No new changes to deploy!"));
                     }
                 },
                 error: function () {

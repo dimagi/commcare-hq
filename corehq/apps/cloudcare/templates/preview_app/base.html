@@ -37,7 +37,7 @@
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
-                  href="{% static 'cloudcare/less/cloudcare.debug.less' %}" />
+                  href="{% static 'cloudcare/less/formplayer-common.debug.less' %}" />
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
@@ -71,7 +71,7 @@
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
-                  href="{% static 'cloudcare/less/cloudcare.less' %}"/>
+                  href="{% static 'cloudcare/less/formplayer-common.less' %}"/>
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
@@ -186,7 +186,7 @@
                 formplayer_url: "{{ formplayer_url }}",
                 singleAppMode: true,
                 phoneMode: true,
-                oneQuestionPerScreen: true,
+                oneQuestionPerScreen: !{{ request.couch_user.is_dimagi|JSON }},
                 allowedHost: "{{ request.get_host }}",
                 environment: {{ environment|JSON }},
                 {% if request|toggle_enabled:"INSTANCE_VIEWER" %}

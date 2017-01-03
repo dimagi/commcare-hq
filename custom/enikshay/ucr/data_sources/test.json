@@ -98,6 +98,86 @@
             {
                 "type": "expression",
                 "datatype": "string",
+                "column_id": "sample_dst_with_date",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "filters": [
+                            {
+                                "operator": "eq",
+                                "expression": {
+                                    "type": "property_name",
+                                    "property_name": "test_type_value"
+                                },
+                                "type": "boolean_expression",
+                                "property_value": "cbnaat"
+                            },
+                            {
+                                "operator": "gt",
+                                "expression": {
+                                    "type": "property_name",
+                                    "datatype": "integer",
+                                    "property_name": "number_of_samples_accepted"
+                                },
+                                "type": "boolean_expression",
+                                "property_value": 0
+                            }
+                        ],
+                        "type": "and"
+                    },
+                    "expression_if_true": {
+                        "type":"concatenate_strings",
+                        "expressions": [
+                            {
+                                "type": "constant",
+                                "constant": "Y"
+                            },
+                            {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "named",
+                                    "name": "sample_receipt_form"
+                                },
+                                "value_expression": {
+                                    "type": "property_path",
+                                    "property_path": [
+                                        "form",
+                                        "sample_receipt_date"
+                                    ]
+                                }
+                            }
+                        ],
+                        "separator": ", "
+                    },
+                    "expression_if_false": {
+                        "type":"concatenate_strings",
+                        "expressions": [
+                            {
+                                "type": "constant",
+                                "constant": "N"
+                            },
+                            {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "named",
+                                    "name": "sample_receipt_form"
+                                },
+                                "value_expression": {
+                                    "type": "property_path",
+                                    "property_path": [
+                                        "form",
+                                        "sample_receipt_date"
+                                    ]
+                                }
+                            }
+                        ],
+                        "separator": ", "
+                    }
+                }
+            },
+            {
+                "type": "expression",
+                "datatype": "string",
                 "column_id": "person_name",
                 "expression": {
                     "type": "related_doc",
@@ -192,10 +272,28 @@
             {
                 "type": "expression",
                 "datatype": "string",
+                "column_id": "referring_facility_type_name",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "referring_facility_type_name"
+                }
+            },
+            {
+                "type": "expression",
+                "datatype": "string",
                 "column_id": "purpose_of_testing",
                 "expression": {
                     "type": "property_name",
                     "property_name": "purpose_of_testing"
+                }
+            },
+            {
+                "type": "expression",
+                "datatype": "string",
+                "column_id": "diagnostic_test_reason",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "diagnostic_test_reason"
                 }
             },
             {
@@ -232,6 +330,114 @@
                     "value_expression": {
                         "type": "property_name",
                         "property_name": "nikshay_id"
+                    }
+                }
+            },
+            {
+                "type": "expression",
+                "datatype": "string",
+                "column_id": "treatment_initiation_date",
+                "expression": {
+                    "type": "nested",
+                    "related_doc_type": "CommCareCase",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "episode_case"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "treatment_initiation_date"
+                    }
+                }
+            },
+            {
+                "type": "expression",
+                "datatype": "string",
+                "column_id": "post_treatment",
+                "expression": {
+                    "type": "switch",
+                    "switch_on": {
+                        "type": "property_name",
+                        "property_name": "follow_up_test_reason"
+                    },
+                    "cases": {
+                        "posttreatment_6month": {
+                            "type": "constant",
+                            "constant": "6"
+                        },
+                        "posttreatment_12month": {
+                            "type": "constant",
+                            "constant": "12"
+                        },
+                        "posttreatment_18month": {
+                            "type": "constant",
+                            "constant": "18"
+                        },
+                        "posttreatment_24month": {
+                            "type": "constant",
+                            "constant": "24"
+                        }
+                    },
+                    "default": {
+                        "type": "constant",
+                        "constant": ""
+                    }
+                }
+            },
+            {
+                "type": "expression",
+                "datatype": "string",
+                "column_id": "regimen",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "operator": "eq",
+                        "expression": {
+                            "type": "nested",
+                            "related_doc_type": "CommCareCase",
+                            "argument_expression": {
+                                "type": "named",
+                                "name": "episode_case"
+                            },
+                            "value_expression": {
+                                "type": "property_name",
+                                "property_name": "patient_type_choice"
+                            }
+                        },
+                        "type": "boolean_expression",
+                        "property_value": "new"
+                    },
+                    "expression_if_true": {
+                        "type": "constant",
+                        "constant": "N"
+                    },
+                    "expression_if_false": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "in",
+                            "expression": {
+                                "type": "nested",
+                                "related_doc_type": "CommCareCase",
+                                "argument_expression": {
+                                    "type": "named",
+                                    "name": "episode_case"
+                                },
+                                "value_expression": {
+                                    "type": "property_name",
+                                    "property_name": "patient_type_choice"
+                                }
+                            },
+                            "type": "boolean_expression",
+                            "property_value": ["recurrent", "treatment_after_failure", "treatment_after_lfu", "other_previously_treated"]
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": "PT"
+                        },
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": ""
+                        }
                     }
                 }
             },
@@ -377,6 +583,26 @@
             {
                 "type": "expression",
                 "datatype": "string",
+                "column_id": "rif_resistance_result",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "test_update_form"
+                    },
+                    "value_expression": {
+                        "type": "property_path",
+                        "property_path": [
+                            "form",
+                            "cbnaat",
+                            "rif_resistance_result"
+                        ]
+                    }
+                }
+            },
+            {
+                "type": "expression",
+                "datatype": "string",
                 "column_id": "hiv_status",
                 "expression": {
                     "type": "related_doc",
@@ -435,6 +661,109 @@
                             "predominant_symptom"
                         ]
                     }
+                }
+            },
+            {
+                "type": "expression",
+                "datatype": "string",
+                "column_id": "specimen_type",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "test_update_form"
+                    },
+                    "value_expression": {
+                        "type": "property_path",
+                        "property_path": [
+                            "form",
+                            "specimen_type"
+                        ]
+                    }
+                }
+            },
+            {
+                "type": "expression",
+                "datatype": "string",
+                "column_id": "treatment_initiation_details",
+                "expression": {
+                    "type":"concatenate_strings",
+                    "expressions": [
+                        {
+                            "type": "nested",
+                            "argument_expression": {
+                                "type": "named",
+                                "name": "episode_case"
+                            },
+                            "value_expression": {
+                                "type": "property_name",
+                                "property_name": "tb_number"
+                            }
+                        },
+                        {
+                            "type": "nested",
+                            "argument_expression": {
+                                "type": "named",
+                                "name": "test_update_form"
+                            },
+                            "value_expression": {
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "person",
+                                    "tu_name"
+                                ]
+                            }
+                        },
+                        {
+                            "datatype": "string",
+                            "type": "concatenate_strings",
+                            "expressions": [
+                                {
+                                    "type": "nested",
+                                    "argument_expression": {
+                                        "type": "named",
+                                        "name": "episode_case"
+                                    },
+                                    "value_expression": {
+                                        "type": "property_name",
+                                        "property_name": "treatment_supporter_designation"
+                                    }
+                                },
+                                {
+                                    "datatype": "string",
+                                    "type": "concatenate_strings",
+                                    "expressions": [
+                                        {
+                                            "type": "nested",
+                                            "argument_expression": {
+                                                "type": "named",
+                                                "name": "episode_case"
+                                            },
+                                            "value_expression": {
+                                                "type": "property_name",
+                                                "property_name": "treatment_supporter_first_name"
+                                            }
+                                        },
+                                        {
+                                            "type": "nested",
+                                            "argument_expression": {
+                                                "type": "named",
+                                                "name": "episode_case"
+                                            },
+                                            "value_expression": {
+                                                "type": "property_name",
+                                                "property_name": "treatment_supporter_last_name"
+                                            }
+                                        }
+                                    ],
+                                    "separator": " "
+                                }
+                            ],
+                            "separator": ": "
+                        }
+                    ],
+                    "separator": ", "
                 }
             },
             {
@@ -760,6 +1089,56 @@
                                 "datatype": "integer"
                             }
                         }
+                    }
+                }
+            },
+            {
+                "type": "expression",
+                "datatype": "string",
+                "column_id": "history_of_att",
+                "expression": {
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "type": "named",
+                        "name": "person_id"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "previous_tb_treatment"
+                    }
+                }
+            },
+            {
+                "type": "expression",
+                "datatype": "string",
+                "column_id": "nikshay_id_cbnaat",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "operator": "eq",
+                        "expression": {
+                            "type": "property_name",
+                            "property_name": "test_type_value"
+                        },
+                        "type": "boolean_expression",
+                        "property_value": "cbnaat"
+                    },
+                    "expression_if_true": {
+                        "type": "nested",
+                        "related_doc_type": "CommCareCase",
+                        "argument_expression": {
+                            "type": "named",
+                            "name": "episode_case"
+                        },
+                        "value_expression": {
+                            "type": "property_name",
+                            "property_name": "nikshay_id"
+                        }
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": ""
                     }
                 }
             }
