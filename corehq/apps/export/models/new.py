@@ -8,6 +8,7 @@ from couchdbkit import ResourceConflict
 from couchdbkit.ext.django.schema import IntegerProperty
 from django.utils.translation import ugettext as _
 from django.core.urlresolvers import reverse
+from celery.exceptions import SoftTimeLimitExceeded
 
 from corehq.apps.export.esaccessors import get_ledger_section_entry_combinations
 from dimagi.utils.decorators.memoized import memoized
@@ -68,6 +69,7 @@ from corehq.apps.export.dbaccessors import (
     get_latest_form_export_schema,
     get_inferred_schema,
 )
+from corehq.apps.export.tasks import update_schema_with_builds_task, generate_delayed_schema
 from corehq.apps.export.utils import is_occurrence_deleted
 
 
@@ -1038,6 +1040,7 @@ class ExportDataSchema(Document):
     group_schemas = SchemaListProperty(ExportGroupSchema)
     app_id = StringProperty()
     version = IntegerProperty(default=1)
+    processing_delayed_schemas = BooleanProperty(default=False)
 
     # A map of app_id to app_version. Represents the last time it saw an app and at what version
     last_app_versions = DictProperty()
@@ -1065,29 +1068,35 @@ class ExportDataSchema(Document):
         else:
             current_schema = cls()
 
-        app_build_ids = cls._get_app_build_ids_to_process(
-            domain,
-            app_id,
-            current_schema.last_app_versions,
-        )
-        if app_id:
-            app_build_ids.append(app_id)
-        else:
-            app_build_ids.extend(cls._get_current_app_ids_for_domain(domain))
 
-        for app_doc in iter_docs(Application.get_db(), app_build_ids, chunksize=10):
-            if (not app_doc.get('has_submissions', False) and
-                    app_doc.get('copy_of')):
-                continue
+        # These build ids represent the current state of the app and show what items are currently
+        # being used. These are essential to process.
+        current_app_build_ids = cls._get_current_app_ids_for_domain(domain, app_id)
 
-            app = Application.wrap(app_doc)
-            current_schema = cls._process_app_build(
-                current_schema,
-                app,
-                identifier,
+        current_schema = cls.update_schema_with_builds(current_schema, identifier, current_app_build_ids)
+
+        # Process all historical applications if we are not currently processing them
+        if not current_schema.processing_delayed_schemas:
+            # These are build ids from past applications and are not necessarily the most current version
+            # They determine what the deleted items are.
+            historical_app_build_ids = cls._get_app_build_ids_to_process(
+                domain,
+                app_id,
+                current_schema.last_app_versions,
             )
 
-            current_schema.record_update(app.copy_of or app._id, app.version)
+            task = update_schema_with_builds_task.delay(
+                cls,
+                current_schema,
+                identifier,
+                historical_app_build_ids,
+            )
+            try:
+                current_schema = task.get()
+            except SoftTimeLimitExceeded:
+                # In this case, generating the schema has taken too long. Wait until later to
+                # generate the rest of the schema.
+                current_schema.processing_delayed_schemas = True
 
         inferred_schema = cls._get_inferred_schema(domain, identifier)
         if inferred_schema:
@@ -1103,7 +1112,35 @@ class ExportDataSchema(Document):
             original_id,
             original_rev
         )
+
+        # Kick off a process to generate the delayed schemas
+        if current_schema.processing_delayed_schemas:
+            generate_delayed_schema.delay(
+                cls,
+                domain,
+                app_id,
+                identifier,
+                historical_app_build_ids,
+            )
+
         return current_schema
+
+    @classmethod
+    def update_schema_with_builds(cls, schema, identifier, app_build_ids):
+        for app_doc in iter_docs(Application.get_db(), app_build_ids, chunksize=10):
+            if (not app_doc.get('has_submissions', False) and
+                    app_doc.get('copy_of')):
+                continue
+
+            app = Application.wrap(app_doc)
+            schema = cls._process_app_build(
+                schema,
+                app,
+                identifier,
+            )
+
+            schema.record_update(app.copy_of or app._id, app.version)
+        return schema
 
     @classmethod
     def _merge_schemas(cls, *schemas):
@@ -1217,8 +1254,8 @@ class FormExportDataSchema(ExportDataSchema):
         self.xmlns = form_xmlns
 
     @classmethod
-    def _get_current_app_ids_for_domain(cls, domain):
-        raise BadExportConfiguration('Form exports should only use one app_id and this should not be called')
+    def _get_current_app_ids_for_domain(cls, domain, app_id):
+        return [app_id]
 
     @staticmethod
     def _get_app_build_ids_to_process(domain, app_id, last_app_versions):
@@ -1448,7 +1485,7 @@ class CaseExportDataSchema(ExportDataSchema):
         return get_inferred_schema(domain, case_type)
 
     @classmethod
-    def _get_current_app_ids_for_domain(cls, domain):
+    def _get_current_app_ids_for_domain(cls, domain, app_id):
         return get_app_ids_in_domain(domain)
 
     @staticmethod

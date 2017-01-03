@@ -1,10 +1,8 @@
 import logging
 from celery.task import task
 
-from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
-from corehq.apps.export.export import get_export_file, rebuild_export
 from corehq.apps.export.dbaccessors import get_inferred_schema
-from corehq.apps.export.system_properties import MAIN_CASE_TABLE_PROPERTIES
+from corehq.apps.export.const import SCHEMA_GENERATION_TIMEOUT
 from corehq.util.decorators import serial_task
 from corehq.util.files import safe_filename_header
 from corehq.util.quickcache import quickcache
@@ -16,6 +14,8 @@ logger = logging.getLogger('export_migration')
 
 @task
 def populate_export_download_task(export_instances, filters, download_id, filename=None, expiry=10 * 60 * 60):
+    from corehq.apps.export.export import get_export_file
+
     export_file = get_export_file(
         export_instances,
         filters,
@@ -40,6 +40,8 @@ def populate_export_download_task(export_instances, filters, download_id, filena
 
 @task(queue='background_queue', ignore_result=True)
 def rebuild_export_task(export_instance, last_access_cutoff=None, filter=None):
+    from corehq.apps.export.export import rebuild_export
+
     rebuild_export(export_instance, last_access_cutoff, filter)
 
 
@@ -51,6 +53,8 @@ def add_inferred_export_properties(sender, domain, case_type, properties):
 @quickcache(['sender', 'domain', 'case_type', 'properties'], timeout=60 * 60)
 def _cached_add_inferred_export_properties(sender, domain, case_type, properties):
     from corehq.apps.export.models import MAIN_TABLE, PathNode, InferredSchema, ScalarItem
+    from corehq.apps.export.system_properties import MAIN_CASE_TABLE_PROPERTIES
+    from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
     """
     Adds inferred properties to the inferred schema for a case type.
 
@@ -87,3 +91,29 @@ def _cached_add_inferred_export_properties(sender, domain, case_type, properties
             group_schema.put_item(path, inferred_from=sender, item_cls=ScalarItem)
 
     inferred_schema.save()
+
+
+@task(soft_time_limit=SCHEMA_GENERATION_TIMEOUT)
+def update_schema_with_builds_task(schema_cls, schema, identifier, app_build_ids):
+    return schema_cls.update_schema_with_builds(schema, identifier, app_build_ids)
+
+
+@task
+def generate_delayed_schema(schema_cls, domain, app_id, identifier, app_build_ids):
+    current_schema = schema_cls.get_latest_export_schema(domain, app_id, identifier)
+
+    # If there's not an original schema, that means that it got deleted somehow or
+    # error'd in saving. This is a rare event; we should ignore merging the delayed
+    # schema if it occurs.
+    if not current_schema:
+        return
+
+    delayed_schema = schema_cls.update_schema_with_builds(current_schema, identifier, app_build_ids)
+    current_schema = schema_cls._merge_schemas(current_schema, delayed_schema)
+    current_schema.processing_delayed_schemas = False
+    current_schema = schema_cls._save_export_schema(
+        current_schema,
+        current_schema._id,
+        current_schema._rev
+    )
+    return current_schema
