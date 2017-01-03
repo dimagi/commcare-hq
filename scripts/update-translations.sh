@@ -32,25 +32,38 @@ fi
 echo "Pulling translations from transifex"
 tx pull -f
 
+if [[ $? -ne "0" ]]; then
+    abort "Pulling from transifex failed."
+fi
+
 echo "Gathering all translation strings.  Note that this will probably take a while"
 ./manage.py makemessages --all --ignore 'corehq/apps/app_manager/tests/data/v2_diffs*' --ignore 'node_modules'
 
-if [[ $1 -ne "0" ]]; then
+if [[ $? -ne "0" ]]; then
     abort "Looks like there's a problem running makemessages, you should probably fix it."
 fi
 
 echo "Gathering javascript translation strings.  This will also probably take a while"
 ./manage.py makemessages -d djangojs --all
 
-if [[ $1 -ne "0" ]]; then
+if [[ $? -ne "0" ]]; then
     abort "Looks like there's a problem translating the javascript strings, you should probably fix it."
 fi
 
 echo "Compiling translation files."
 ./manage.py compilemessages
 
+if [[ $? -ne "0" ]]; then
+    git checkout -- locale/
+    abort "./manage.py compilemessages failed.  This is probably due to a bad translation, maybe a translator messed up a format string or something.  Make an interrupt ticket or something to figure it out."
+fi
+
 echo "Pushing updates to transifex."
 tx push -st
+
+if [[ $? -ne "0" ]]; then
+    abort "Pushing to transifex failed."
+fi
 
 has_local_changes=`git diff-index HEAD` && true
 if [[ ! $has_local_changes ]]
@@ -59,8 +72,8 @@ then
 fi
 
 echo "Committing and pushing changes"
-git add locale/
-git commit --edit --message="Update translations." --message="[ci skip]"
+git add locale/ &&
+git commit --edit --message="Update translations." --message="[ci skip]" &&
 git push origin master
 
 echo "Translations updated successfully!"
