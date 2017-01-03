@@ -959,6 +959,18 @@ DATA_MIGRATION = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+EMWF_WORKER_ACTIVITY_REPORT = StaticToggle(
+    'emwf_worker_activity_report',
+    'Make the Worker Activity Report use the Groups or Users (EMWF) filter',
+    TAG_ONE_OFF,
+    namespaces=[NAMESPACE_DOMAIN],
+    description=(
+        "This flag allows you filter the users to display in the same way as the "
+        "other reports - by individual user, group, or location.  Note that this "
+        "will also force the report to always display by user."
+    ),
+)
+
 DATA_DICTIONARY = StaticToggle(
     'data_dictionary',
     'Domain level data dictionary of cases',

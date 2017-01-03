@@ -16,7 +16,7 @@ from corehq.apps.es.users import UserES
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.reminders.models import CaseReminderHandler, SurveyKeyword
-from corehq.apps.reports.util import _report_user_dict
+from corehq.apps.reports.util import get_simplified_users
 from corehq.apps.sms.verify import (
     initiate_sms_verification_workflow,
     VERIFICATION__ALREADY_IN_USE,
@@ -183,10 +183,9 @@ class EditGroupMembersView(BaseGroupsView):
     @property
     @memoized
     def all_users(self):
-        return map(_report_user_dict, sorted(
-            UserES().mobile_users().domain(self.domain).run().hits,
-            key=lambda user: user['username']
-        ))
+        return get_simplified_users(
+            UserES().mobile_users().domain(self.domain)
+        )
 
     @property
     @memoized
