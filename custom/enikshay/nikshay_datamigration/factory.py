@@ -231,6 +231,9 @@ class EnikshayCaseFactory(object):
             )],
         }
 
+        if self.patient_detail.disease_classification == 'extra_pulmonary':
+            kwargs['attrs']['update']['site_choice'] = self.patient_detail.site_choice
+
         if self.existing_episode_case:
             kwargs['case_id'] = self.existing_episode_case.case_id
             kwargs['attrs']['create'] = False
