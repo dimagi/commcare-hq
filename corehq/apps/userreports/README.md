@@ -1183,7 +1183,10 @@ user                 | Select a user
 owner                | Select a possible case owner owner (user, group, or location)
 
 
-Location choice providers also support an "include_descendants" property to include descendant locations in the results, which defaults to `false`.
+Location choice providers also support two additional configuration options:
+
+* "include_descendants" - Include descendant locations in the results. Defaults to `false`.
+* "show_full_path" - display the full path to the location in the filter.  Defaults to `false`.
 
 Example assuming "village" is a location ID, which is converted to names using the location `choice_provider`:
 ```json
@@ -1195,7 +1198,8 @@ Example assuming "village" is a location ID, which is converted to names using t
   "datatype": "string",
   "choice_provider": {
       "type": "location",
-      "include_descendants": false
+      "include_descendants": true,
+      "show_full_path": true
   }
 }
 ```
@@ -1328,13 +1332,13 @@ Expanded columns have a type of `"expanded"`. Expanded columns will be "expanded
 
 If you have a data source like this:
 ```
-+---------+----------+-------------+
++---------|----------|-------------+
 | Patient | district | test_result |
-+---------+----------+-------------+
++---------|----------|-------------+
 | Joe     | North    | positive    |
 | Bob     | North    | positive    |
 | Fred    | South    | negative    |
-+---------+----------+-------------+
++---------|----------|-------------+
 ```
 and a report configuration like this:
 ```
@@ -1360,12 +1364,12 @@ columns:
 ```
 Then you will get a report like this:
 ```
-+----------+----------------------+----------------------+
++----------|----------------------|----------------------+
 | district | test_result-positive | test_result-negative |
-+----------+----------------------+----------------------+
++----------|----------------------|----------------------+
 | North    | 2                    | 0                    |
 | South    | 0                    | 1                    |
-+----------+----------------------+----------------------+
++----------|----------------------|----------------------+
 ```
 
 Expanded columns have an optional parameter `"max_expansion"` (defaults to 10) which limits the number of columns that can be created.  WARNING: Only override the default if you are confident that there will be no adverse performance implications for the server.
