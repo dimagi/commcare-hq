@@ -92,7 +92,7 @@
                                    value: groupByOrAggregation">
                   <option value="groupBy">{% trans 'Display Each' %}</option>
                   <option value="simple">---</option>
-                  <!-- ko if: isNumeric -->
+                  <!-- ko if: !isNonNumeric -->
                   <option value="sum">{% trans 'Sum' %}</option>
                   <option value="avg">{% trans 'Average' %}</option>
                   <!-- /ko -->

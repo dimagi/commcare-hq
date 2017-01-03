@@ -612,7 +612,7 @@ def to_report_columns(column, index, column_options):
     #         u'column_id': u'modified_on_6457b79c',
     #         u'name': u'modified_on'
     #         u'label': u'modified on',
-    #         u'is_numeric': False,
+    #         u'is_non_numeric': True,
     #         u'is_group_by_column': False,
     #         u'aggregation': None,
     #     }
@@ -719,7 +719,7 @@ class ConfigureReport(ReportBuilderView):
                 'column_id': column.id,
                 'name': column.id,
                 'label': column.display,
-                'is_numeric': not column._is_non_numeric  # TODO: these are not the same things
+                'is_non_numeric': column._is_non_numeric
             }
         return map(remap_fields, columns.values())
 
@@ -803,7 +803,7 @@ class ConfigureReport(ReportBuilderView):
             data_source_config_id = self._build_data_source(report_data['columns'])
             self.existing_report.config_id = data_source_config_id
         else:
-            number_columns = [c['column_id'] for c in report_data['columns'] if c['is_numeric']]
+            number_columns = [c['column_id'] for c in report_data['columns'] if c.get("aggregation" in ['avg', 'sum'])]
             indicators = self.ds_builder.indicators(number_columns)
             if data_source.configured_indicators != indicators:
                 for property_name, value in self._get_data_source_configuration_kwargs(
@@ -829,7 +829,7 @@ class ConfigureReport(ReportBuilderView):
             base_item_expression = self.ds_builder.base_item_expression(True, aggregation_fields[0])
         else:
             base_item_expression = self.ds_builder.base_item_expression(False)
-        number_columns = [c['column_id'] for c in columns if c['is_numeric']]
+        number_columns = [c['column_id'] for c in columns if c.get("aggregation" in ['avg', 'sum'])]
         return dict(
             display_name=self.ds_builder.data_source_name,
             referenced_doc_type=self.ds_builder.source_doc_type,

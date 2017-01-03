@@ -8,8 +8,8 @@ var reportBuilder = function () {
         self.columnId = column["column_id"];
         self.name = column["name"];
         self.label = column["label"];
-        self.isNumeric = column["is_numeric"];
-        self.aggregation = column["is_numeric"] ? "simple": null;
+        self.isNonNumeric = column["is_non_numeric"];
+        self.aggregation = column["is_non_numeric"] ? null: "simple";
         self.isGroupByColumn = false;
 
         self.groupByOrAggregation = ko.observable(self.aggregation);
@@ -54,7 +54,7 @@ var reportBuilder = function () {
                 "column_id": self.columnId,
                 "name": self.name,
                 "label": self.label,
-                "is_numeric": self.isNumeric,
+                "is_non_numeric": self.isNonNumeric,
                 "is_group_by_column": self.isGroupByColumn,
                 "aggregation": self.aggregation,
             };
@@ -177,7 +177,7 @@ var reportBuilder = function () {
                 }
 
                 var aggColumns = _.filter(self.selectedColumns(), function (c) {
-                    return self.isAggregationEnabled && c.isNumeric && !c.isGroupByColumn;
+                    return self.isAggregationEnabled && !c.isGroupByColumn;
                 });
                 var groupByNames = _.map(
                     _.filter(self.selectedColumns(), function (c) {
