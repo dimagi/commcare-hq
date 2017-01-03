@@ -41,10 +41,11 @@ from corehq.apps.sms.models import (
     MessagingSubEvent,
     SMS,
     PhoneBlacklist,
+    Keyword,
 )
 from corehq.apps.sms.util import get_backend_name
 from corehq.apps.smsforms.models import SQLXFormsSession
-from corehq.apps.reminders.models import SurveyKeyword, CaseReminderHandler
+from corehq.apps.reminders.models import CaseReminderHandler
 from corehq.apps.reminders.views import (
     EditStructuredKeywordView,
     EditNormalKeywordView,
@@ -567,12 +568,10 @@ class BaseMessagingEventReport(BaseCommConnectLogReport):
     def get_keyword_display(self, keyword_id, content_cache):
         if keyword_id in content_cache:
             return content_cache[keyword_id]
+
         try:
-            keyword = SurveyKeyword.get(keyword_id)
-            if keyword.doc_type.endswith('-Deleted'):
-                # We'll get rid of this once we move to postgres
-                raise ResourceNotFound()
-        except ResourceNotFound:
+            keyword = Keyword.objects.get(couch_id=keyword_id)
+        except Keyword.DoesNotExist:
             display = _('(Deleted Keyword)')
         else:
             urlname = (EditStructuredKeywordView.urlname if keyword.is_structured_sms()

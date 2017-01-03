@@ -4,7 +4,7 @@ from datetime import datetime
 from django.http import HttpResponse, HttpResponseBadRequest
 from custom.apps.wisepill.models import WisePillDeviceEvent
 from corehq.apps.sms.handlers.keyword import handle_structured_sms
-from corehq.apps.reminders.models import SurveyKeyword, METHOD_STRUCTURED_SMS
+from corehq.apps.sms.models import Keyword, KeywordAction
 from corehq.apps.api.models import require_api_user_permission, PERMISSION_POST_WISEPILL
 from corehq.apps.domain.decorators import require_superuser
 from dimagi.utils.couch.database import iter_docs
@@ -46,15 +46,14 @@ def device_data(request):
     event.save()
     
     if case is not None:
-        survey_keywords = SurveyKeyword.get_all(case.domain)
-        for survey_keyword in survey_keywords:
-            if survey_keyword.keyword.upper() == "DEVICE_EVENT":
-                for survey_keyword_action in survey_keyword.actions:
-                    if survey_keyword_action.action == METHOD_STRUCTURED_SMS:
-                        handle_structured_sms(survey_keyword, survey_keyword_action, case, None, "DEVICE_EVENT,%s" % data, send_response=False)
-                        event.processed = True
-                        event.save()
-                        break
+        for survey_keyword in Keyword.get_by_domain(case.domain).filter(keyword__iexact="DEVICE_EVENT"):
+            for survey_keyword_action in survey_keyword.keywordaction_set.all():
+                if survey_keyword_action.action == KeywordAction.ACTION_STRUCTURED_SMS:
+                    handle_structured_sms(survey_keyword, survey_keyword_action, case, None,
+                        "DEVICE_EVENT,%s" % data, send_response=False)
+                    event.processed = True
+                    event.save()
+                    break
     
     return HttpResponse("")
 

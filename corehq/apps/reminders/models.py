@@ -1892,15 +1892,6 @@ class SurveyKeyword(SyncCouchToSQLMixin, Document):
         return self._id
     
     @classmethod
-    def get_all(cls, domain):
-        return cls.view("reminders/survey_keywords",
-            startkey=[domain],
-            endkey=[domain, {}],
-            include_docs=True,
-            reduce=False,
-        ).all()
-    
-    @classmethod
     def get_keyword(cls, domain, keyword):
         return cls.view("reminders/survey_keywords",
             key = [domain, keyword.upper()],
@@ -1909,7 +1900,7 @@ class SurveyKeyword(SyncCouchToSQLMixin, Document):
         ).one()
 
     @classmethod
-    def get_by_domain(cls, domain, limit=None, skip=None, include_docs=True):
+    def get_by_domain(cls, domain, limit=None, skip=None):
         extra_kwargs = {}
         if limit is not None:
             extra_kwargs['limit'] = limit
@@ -1919,7 +1910,7 @@ class SurveyKeyword(SyncCouchToSQLMixin, Document):
             'reminders/survey_keywords',
             startkey=[domain],
             endkey=[domain, {}],
-            include_docs=include_docs,
+            include_docs=True,
             reduce=False,
             **extra_kwargs
         ).all()
