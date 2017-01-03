@@ -12,22 +12,28 @@ TL;DR
 For those of you looking for a little more from this page,
 please keep reading.
 
-## File Organization
+## Static Files Organization
 
 JavaScript can currently live in a few different places.
-Here are the main places it tends to show up in the file structure
-of a Django app:
+JavaScript files belong in the `static` directory of a Django app,
+which we structure as follows:
 
 ```
 myapp/
   static/myapp/
-    js/
-      myjsfile.js
+    css/
+    font/
+    images/
+    js/       <= JavaScript
+    less/
+    lib/      <= Third-party code
+    spec/     <= JavaScript tests
+    ...       <= May contain other directories for data files, i.e., `json/`
   templates/myapp/
     mytemplate.html
 ```
 
-The best place for JavaScript to live is, of course, in a .js file.
+The best place for JavaScript to live is, of course, in a .js file
 But first a note about the other common case, JavaScript in your template.
 
 ## Using Django Template Tags and Variables
