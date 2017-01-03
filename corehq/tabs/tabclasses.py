@@ -26,6 +26,7 @@ from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from corehq.apps.userreports.util import has_report_builder_access
 from corehq.apps.users.permissions import can_view_form_exports, can_view_case_exports
 from corehq.form_processor.utils import use_new_exports
+from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown
 from custom.world_vision import WORLD_VISION_DOMAINS
@@ -422,6 +423,30 @@ class ProjectDataTab(UITab):
 
     @property
     @memoized
+    def can_view_dashboard_feeds(self):
+        return (
+            use_new_exports(self.domain) and
+            (self.can_view_case_exports or self.can_view_form_exports) and
+            domain_has_privilege(self.domain, EXCEL_DASHBOARD)
+        )
+
+    @property
+    @memoized
+    def can_view_daily_saved_exports(self):
+        return (
+            use_new_exports(self.domain) and
+            (self.can_view_case_exports or self.can_view_form_exports) and
+            domain_has_privilege(self.domain, DAILY_SAVED_EXPORT)
+        )
+
+    @property
+    @memoized
+    def use_new_daily_saved_exports_ui(self):
+        from corehq.apps.export.views import use_new_daily_saved_exports_ui
+        return use_new_daily_saved_exports_ui(self.domain)
+
+    @property
+    @memoized
     def can_only_see_deid_exports(self):
         from corehq.apps.export.views import user_can_view_deid_exports
         return (not self.can_view_form_exports
@@ -442,11 +467,15 @@ class ProjectDataTab(UITab):
 
         export_data_views = []
         if self.can_only_see_deid_exports:
-            from corehq.apps.export.views import DeIdFormExportListView, DownloadFormExportView
+            from corehq.apps.export.views import (
+                DeIdFormExportListView,
+                DownloadFormExportView,
+                DeIdDailySavedExportListView,
+                DeIdDashboardFeedListView,
+            )
             export_data_views.append({
                 'title': DeIdFormExportListView.page_title,
-                'url': reverse(DeIdFormExportListView.urlname,
-                               args=(self.domain,)),
+                'url': reverse(DeIdFormExportListView.urlname, args=(self.domain,)),
                 'subpages': [
                     {
                         'title': DownloadFormExportView.page_title,
@@ -454,6 +483,18 @@ class ProjectDataTab(UITab):
                     },
                 ]
             })
+            if use_new_exports(self.domain):
+                export_data_views.extend([
+                    {
+                        'title': DeIdDailySavedExportListView.page_title,
+                        'url': reverse(DeIdDailySavedExportListView.urlname, args=(self.domain,)),
+                    },
+                    {
+                        'title': DeIdDashboardFeedListView.page_title,
+                        'url': reverse(DeIdDashboardFeedListView.urlname, args=(self.domain,)),
+                    },
+                ])
+
         elif self.can_export_data:
             from corehq.apps.export.views import (
                 FormExportListView,
@@ -472,6 +513,18 @@ class ProjectDataTab(UITab):
                 EditCustomCaseExportView,
                 EditNewCustomFormExportView,
                 EditNewCustomCaseExportView,
+                DashboardFeedListView,
+                DailySavedExportListView,
+                CreateNewDailySavedFormExport,
+                CreateNewDailySavedCaseExport,
+                EditFormDailySavedExportView,
+                EditCaseDailySavedExportView,
+                CreateNewFormFeedView,
+                CreateNewCaseFeedView,
+                EditFormFeedView,
+                EditCaseFeedView,
+                DashboardFeedPaywall,
+                DailySavedExportPaywall
             )
             if use_new_exports(self.domain):
                 create_case_cls = CreateNewCustomCaseExportView
@@ -547,6 +600,70 @@ class ProjectDataTab(UITab):
                             } if self.can_edit_commcare_data else None,
                         ])
                     })
+            if self.can_view_daily_saved_exports:
+                if self.use_new_daily_saved_exports_ui:
+                    export_data_views.append({
+                    "title": DailySavedExportListView.page_title,
+                    "url": reverse(DailySavedExportListView.urlname, args=(self.domain,)),
+                    "show_in_dropdown": True,
+                    "subpages": filter(None, [
+                        {
+                            'title': CreateNewDailySavedFormExport.page_title,
+                            'urlname': CreateNewDailySavedFormExport.urlname,
+                        } if self.can_edit_commcare_data else None,
+                        {
+                            'title': CreateNewDailySavedCaseExport.page_title,
+                            'urlname': CreateNewDailySavedCaseExport.urlname,
+                        } if self.can_edit_commcare_data else None,
+                        {
+                            'title': EditFormDailySavedExportView.page_title,
+                            'urlname': EditFormDailySavedExportView.urlname,
+                        } if self.can_edit_commcare_data else None,
+                        {
+                            'title': EditCaseDailySavedExportView.page_title,
+                            'urlname': EditCaseDailySavedExportView.urlname,
+                        } if self.can_edit_commcare_data else None,
+                    ])
+                })
+            else:
+                export_data_views.append({
+                    'title': DailySavedExportListView.page_title,
+                    'url': reverse(DailySavedExportPaywall.urlname, args=(self.domain,)),
+                    'show_in_dropdown': True,
+                    'subpages': []
+                })
+            if self.can_view_dashboard_feeds:
+                if self.use_new_daily_saved_exports_ui:
+                    export_data_views.append({
+                    'title': DashboardFeedListView.page_title,
+                    'url': reverse(DashboardFeedListView.urlname, args=(self.domain,)),
+                    'show_in_dropdown': True,
+                    'subpages': filter(None, [
+                        {
+                            'title': CreateNewFormFeedView.page_title,
+                            'urlname': CreateNewFormFeedView.urlname,
+                        } if self.can_edit_commcare_data else None,
+                        {
+                            'title': CreateNewCaseFeedView.page_title,
+                            'urlname': CreateNewCaseFeedView.urlname,
+                        } if self.can_edit_commcare_data else None,
+                        {
+                            'title': EditFormFeedView.page_title,
+                            'urlname': EditFormFeedView.urlname,
+                        } if self.can_edit_commcare_data else None,
+                        {
+                            'title': EditCaseFeedView.page_title,
+                            'urlname': EditCaseFeedView.urlname,
+                        } if self.can_edit_commcare_data else None,
+                    ])
+                })
+            else:
+                export_data_views.append({
+                    'title': DashboardFeedListView.page_title,
+                    'url': reverse(DashboardFeedPaywall.urlname, args=(self.domain,)),
+                    'show_in_dropdown': True,
+                    'subpages': []
+                })
 
         if export_data_views:
             items.append([_("Export Data"), export_data_views])
@@ -587,19 +704,41 @@ class ProjectDataTab(UITab):
         from corehq.apps.export.views import (
             FormExportListView,
             CaseExportListView,
+            DashboardFeedListView,
+            DailySavedExportListView,
+            DailySavedExportPaywall,
+            DashboardFeedPaywall,
         )
-        return filter(None, [
-            dropdown_dict(
+        daily_saved_list_url = reverse(DailySavedExportListView.urlname, args=(self.domain,))
+        daily_saved_paywall_url = reverse(DailySavedExportPaywall.urlname, args=(self.domain,))
+        feed_list_url = reverse(DashboardFeedListView.urlname, args=(self.domain,))
+        feed_paywall_url = reverse(DashboardFeedPaywall.urlname, args=(self.domain,))
+        items = []
+        if self.can_view_form_exports:
+            items.append(dropdown_dict(
                 FormExportListView.page_title,
                 url=reverse(FormExportListView.urlname, args=(self.domain,))
-            ) if self.can_view_form_exports else None,
-            dropdown_dict(
+            ))
+        if self.can_view_case_exports:
+            items.append(dropdown_dict(
                 CaseExportListView.page_title,
                 url=reverse(CaseExportListView.urlname, args=(self.domain,))
-            ) if self.can_view_case_exports else None,
+            ))
+        if self.use_new_daily_saved_exports_ui:
+            items.append(dropdown_dict(
+                DailySavedExportListView.page_title,
+                url=daily_saved_list_url if self.can_view_daily_saved_exports else daily_saved_paywall_url
+            ))
+        if self.use_new_daily_saved_exports_ui:
+            items.append(dropdown_dict(
+                DashboardFeedListView.page_title,
+                url=feed_list_url if self.can_view_dashboard_feeds else feed_paywall_url
+            ))
+        items += [
             dropdown_dict(None, is_divider=True),
             dropdown_dict(_("View All"), url=self.url),
-        ])
+        ]
+        return items
 
 
 class ApplicationsTab(UITab):
