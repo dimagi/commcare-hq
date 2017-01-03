@@ -98,10 +98,10 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             'Response is: \n{0}\n'
         )
     elif response.status_code == 201:
-        datadog.statsd.gauge('commcare.xform_submissions.timings', timer.duration, tags={
-            'backend': 'sql' if should_use_sql_backend(domain) else 'couch',
-            'cases': len(cases),
-        })
+        datadog.statsd.gauge('commcare.xform_submissions.timings', timer.duration, tags=[
+            'backend:{}'.format('sql' if should_use_sql_backend(domain) else 'couch'),
+            'cases:{}'.format(len(cases))
+        ])
     return response
 
 
