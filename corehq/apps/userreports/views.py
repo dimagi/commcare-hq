@@ -1,9 +1,12 @@
-from collections import namedtuple
+import urllib
+from collections import namedtuple, OrderedDict
 import datetime
 import functools
 import json
 import os
 import tempfile
+import uuid
+from itertools import chain
 
 from django.conf import settings
 from django.contrib import messages
@@ -27,12 +30,8 @@ from corehq.apps.analytics.tasks import update_hubspot_properties
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
-from corehq.apps.reports.daterange import get_simple_dateranges
-from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
-from corehq.apps.userreports.document_stores import get_document_store
-from corehq.apps.userreports.expressions import ExpressionFactory
-from corehq.apps.userreports.rebuild import DataSourceResumeHelper
-from corehq.apps.userreports.specs import EvaluationContext
+from corehq.apps.userreports.reports.builder.columns import ColumnOption, MultiselectQuestionColumnOption, \
+    QuestionColumnOption
 from corehq.util import reverse
 from corehq.util.quickcache import quickcache
 from couchexport.export import export_from_tables
@@ -58,8 +57,12 @@ from corehq.apps.style.decorators import (
     use_daterangepicker,
     use_datatables,
     use_jquery_ui,
-    use_angular_js)
-from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source
+    use_angular_js,
+    use_nvd3,
+)
+from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source, _clean_table_name
+from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
+from corehq.apps.userreports.document_stores import get_document_store
 from corehq.apps.userreports.exceptions import (
     BadBuilderConfigError,
     BadSpecError,
@@ -67,6 +70,7 @@ from corehq.apps.userreports.exceptions import (
     ReportConfigurationNotFoundError,
     UserQueryError,
 )
+from corehq.apps.userreports.expressions import ExpressionFactory
 from corehq.apps.userreports.models import (
     ReportConfiguration,
     DataSourceConfiguration,
@@ -76,21 +80,27 @@ from corehq.apps.userreports.models import (
     get_report_config,
     report_config_id_is_static,
     id_is_static,
+    DataSourceMeta,
+    DataSourceBuildInformation,
+    ReportMeta,
 )
+from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.apps.userreports.reports.builder.forms import (
-    ConfigurePieChartReportForm,
-    ConfigureTableReportForm,
     DataSourceForm,
-    ConfigureBarChartReportForm,
-    ConfigureListReportForm,
-    ConfigureWorkerReportForm,
-    ConfigureMapReportForm)
+    ConfigureMapReportForm,
+    DataSourceBuilder,
+)
 from corehq.apps.userreports.reports.filters.choice_providers import (
     ChoiceQueryContext,
 )
 from corehq.apps.userreports.reports.view import ConfigurableReport
+from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
-from corehq.apps.userreports.tasks import rebuild_indicators, resume_building_indicators
+from corehq.apps.userreports.tasks import (
+    rebuild_indicators,
+    resume_building_indicators,
+    delete_data_source_task,
+)
 from corehq.apps.userreports.ui.forms import (
     ConfigurableReportEditForm,
     ConfigurableDataSourceEditForm,
@@ -102,13 +112,18 @@ from corehq.apps.userreports.util import (
     has_report_builder_access,
     has_report_builder_add_on_privilege,
     allowed_report_builder_reports,
-    number_of_report_builder_reports
+    number_of_report_builder_reports,
 )
 from corehq.apps.userreports.reports.util import has_location_filter
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.util.couch import get_document_or_404
 from pillowtop.dao.exceptions import DocumentNotFoundError
+
+
+SAMPLE_DATA_MAX_ROWS = 100
+TEMP_REPORT_PREFIX = '__tmp'
+TEMP_DATA_SOURCE_LIFESPAN = 24 * 60 * 60
 
 
 def get_datasource_config_or_404(config_id, domain):
@@ -257,7 +272,7 @@ class ReportBuilderView(BaseDomainView):
 
     @property
     def section_url(self):
-        return reverse(ReportBuilderTypeSelect.urlname, args=[self.domain])
+        return reverse(ReportBuilderDataSourceSelect.urlname, args=[self.domain])
 
 
 @quickcache(["domain"], timeout=0, memoize_timeout=4)
@@ -341,6 +356,7 @@ class ReportBuilderPaywallActivatingSubscription(ReportBuilderPaywallBase):
         return self.get(request, domain, *args, **kwargs)
 
 
+# TODO: kill
 class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
     template_name = "userreports/reportbuilder/report_type_select.html"
     urlname = 'report_builder_select_type'
@@ -467,10 +483,7 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
 class ReportBuilderDataSourceSelect(ReportBuilderView):
     template_name = 'userreports/reportbuilder/data_source_select.html'
     page_title = ugettext_lazy('Create Report')
-
-    @property
-    def report_type(self):
-        return self.kwargs['report_type']
+    urlname = 'report_builder_select_source'
 
     @property
     def page_context(self):
@@ -487,27 +500,68 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
     def form(self):
         max_allowed_reports = allowed_report_builder_reports(self.request)
         if self.request.method == 'POST':
-            return DataSourceForm(self.domain, self.report_type, max_allowed_reports, self.request.POST)
-        return DataSourceForm(self.domain, self.report_type, max_allowed_reports)
+            return DataSourceForm(self.domain, max_allowed_reports, self.request.POST)
+        return DataSourceForm(self.domain, max_allowed_reports)
+
+    def _get_config_kwargs(self, app_source):
+        app = Application.get(app_source.application)
+        builder = DataSourceBuilder(self.domain, app, app_source.source_type, app_source.source)
+        return {
+            'display_name': builder.data_source_name,
+            'referenced_doc_type': builder.source_doc_type,
+            'configured_filter': builder.filter,
+            'configured_indicators': builder.indicators(),
+            'base_item_expression': builder.base_item_expression(False),
+            'meta': DataSourceMeta(
+                build=DataSourceBuildInformation(
+                    source_id=app_source.source,
+                    app_id=app._id,
+                    app_version=app.version,
+                )
+            )
+        }
+
+    def _expire_data_source(self, data_source_config_id):
+        always_eager = settings.CELERY_ALWAYS_EAGER
+        # CELERY_ALWAYS_EAGER will cause the data source to be deleted immediately. Switch it off temporarily
+        settings.CELERY_ALWAYS_EAGER = False
+        delete_data_source_task.apply_async(
+            (self.domain, data_source_config_id),
+            countdown=TEMP_DATA_SOURCE_LIFESPAN
+        )
+        settings.CELERY_ALWAYS_EAGER = always_eager
+
+    def _build_temp_data_source(self, app_source, username):
+        data_source_config = DataSourceConfiguration(
+            domain=self.domain,
+            table_id=_clean_table_name(self.domain, uuid.uuid4().hex),
+            **self._get_config_kwargs(app_source)
+        )
+        data_source_config.validate()
+        data_source_config.save()
+        self._expire_data_source(data_source_config._id)
+        rebuild_indicators(data_source_config._id, username, limit=SAMPLE_DATA_MAX_ROWS)  # Do synchronously
+        return data_source_config._id
+
+    @staticmethod
+    def filter_data_source_changes(data_source_config_id):
+        """
+        Add filter to data source to prevent it from being updated by DB changes
+        """
+        # Reload using the ID instead of just passing in the object to avoid ResourceConflicts
+        data_source_config = DataSourceConfiguration.get(data_source_config_id)
+        data_source_config.configured_filter.update({
+            'type': 'constant',
+            'constant': False
+        })
+        data_source_config.save()
 
     def post(self, request, *args, **kwargs):
         if self.form.is_valid():
             app_source = self.form.get_selected_source()
-            url_names_map = {
-                'list': 'configure_list_report',
-                'chart': 'configure_chart_report',
-                'table': 'configure_table_report',
-                'worker': 'configure_worker_report',
-                'map': 'configure_map_report',
-            }
-            url_name = url_names_map[self.report_type]
-            get_params = {
-                'report_name': self.form.cleaned_data['report_name'],
-                'chart_type': self.form.cleaned_data['chart_type'],
-                'application': app_source.application,
-                'source_type': app_source.source_type,
-                'source': app_source.source,
-            }
+            data_source_config_id = self._build_temp_data_source(app_source, request.user.username)
+            self.filter_data_source_changes(data_source_config_id)
+
             track_workflow(
                 request.user.email,
                 "Successfully submitted the first part of the Report Builder "
@@ -520,8 +574,15 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
                 app_source.source_type,
             ])
 
+            get_params = {
+                'report_name': self.form.cleaned_data['report_name'],
+                'application': app_source.application,
+                'source_type': app_source.source_type,
+                'source': app_source.source,
+                'data_source': data_source_config_id,
+            }
             return HttpResponseRedirect(
-                reverse(url_name, args=[self.domain], params=get_params)
+                reverse(ConfigureReport.urlname, args=[self.domain], params=get_params)
             )
         else:
             return self.get(request, *args, **kwargs)
@@ -533,70 +594,149 @@ class EditReportInBuilder(View):
         report_id = kwargs['report_id']
         report = get_document_or_404(ReportConfiguration, request.domain, report_id)
         if report.report_meta.created_by_builder:
-            view_class = {
-                'chart': ConfigureChartReport,
-                'list': ConfigureListReport,
-                'worker': ConfigureWorkerReport,
-                'table': ConfigureTableReport,
-                'map': ConfigureMapReport,
-            }[report.report_meta.builder_report_type]
             try:
-                return view_class.as_view(existing_report=report)(request, *args, **kwargs)
+                return ConfigureReport.as_view(existing_report=report)(request, *args, **kwargs)
             except BadBuilderConfigError as e:
                 messages.error(request, e.message)
                 return HttpResponseRedirect(reverse(ConfigurableReport.slug, args=[request.domain, report_id]))
         raise Http404("Report was not created by the report builder")
 
 
-class ConfigureChartReport(ReportBuilderView):
+def to_report_columns(column, index, column_options):
+    """
+    column is the JSON that we get when saving or previewing a report. Return a column spec we can use to create a
+    ReportConfiguration.
+    """
+    # Example value of column:
+    #     {
+    #         u'column_id': u'modified_on_6457b79c',
+    #         u'name': u'modified_on'
+    #         u'label': u'modified on',
+    #         u'is_numeric': False,
+    #         u'is_group_by_column': False,
+    #         u'aggregation': None,
+    #     }
+
+    # Some wrangling in order to reused ColumnOption
+    reverse_map = {v: k for k, v in ColumnOption.aggregation_map.items()}
+    aggregation = reverse_map[column.get('aggregation') or 'simple']
+    return column_options[column['column_id']].to_column_dicts(index, column['label'], aggregation)
+
+
+def _get_aggregation_columns(aggregate, columns, column_options):
+    if aggregate:
+        aggregated_report_columns = [c['column_id'] for c in columns if c['is_group_by_column']]
+        aggregation_columns = [column_options[c].indicator_id for c in aggregated_report_columns]
+    else:
+        aggregation_columns = ["doc_id"]
+    return aggregation_columns
+
+
+def _report_column_options(domain, application, source_type, source):
+        builder = DataSourceBuilder(domain, application, source_type, source)
+        options = OrderedDict()
+        for id_, prop in builder.data_source_properties.iteritems():
+            if prop.type == "question":
+                if prop.source['type'] == "MSelect":
+                    option = MultiselectQuestionColumnOption(id_, prop.text, prop.column_id, prop.source)
+                else:
+                    option = QuestionColumnOption(id_, prop.text, prop.column_id, prop.is_non_numeric,
+                                                  prop.source)
+            else:
+                # meta properties
+                option = ColumnOption(id_, prop.text, prop.column_id, prop.is_non_numeric)
+            options[id_] = option
+        return options
+
+
+class ConfigureReport(ReportBuilderView):
+    urlname = 'configure_report'
     page_title = ugettext_lazy("Configure Report")
     template_name = "userreports/reportbuilder/configure_report.html"
     url_args = ['report_name', 'application', 'source_type', 'source']
-    report_title = ugettext_lazy("Chart Report: {}")
-    report_type = 'chart'
+    report_title = '{}'
     existing_report = None
 
     @use_jquery_ui
+    @use_datatables
+    @use_nvd3
     def dispatch(self, request, *args, **kwargs):
-        return super(ConfigureChartReport, self).dispatch(request, *args, **kwargs)
+        if self.existing_report:
+            self.source_type = {
+                "CommCareCase": "case",
+                "XFormInstance": "form"
+            }[self.existing_report.config.referenced_doc_type]
+            self.source_id = self.existing_report.config.meta.build.source_id
+            self.app_id = self.existing_report.config.meta.build.app_id
+            self.app = Application.get(self.app_id) if self.app_id else None
+        else:
+            self.app_id = self.request.GET['application']
+            self.app = Application.get(self.app_id)
+            self.source_type = self.request.GET['source_type']
+            self.source_id = self.request.GET['source']
+
+        return super(ConfigureReport, self).dispatch(request, *args, **kwargs)
+
 
     @property
     def page_name(self):
-        title = self.request.GET.get('report_name', '')
-        if self.existing_report:
-            title = self.existing_report.title
+        title = self._get_report_name()
         return _(self.report_title).format(title)
+
+    def _get_report_name(self, request=None):
+        if self.existing_report:
+            return self.existing_report.title
+        else:
+            request = request or self.request
+            return request.GET.get('report_name', '')
+
+    def _get_data_source(self, request=None):
+        """
+        Return the ID of the report's DataSourceConfiguration
+        """
+        if self.existing_report:
+            return self.existing_report.config_id
+        else:
+            request = request or self.request
+            return request.GET['data_source']
+
+    @property
+    @memoized
+    def report_column_options(self):
+        return _report_column_options(
+            self.domain,
+            self.app,
+            self.source_type,
+            self.source_id,
+        )
+
+    def get_columns(self):
+        columns = self.report_column_options
+        # TODO: All the fields are called different things. Let's change it on the front end eventually,
+        #       but re-map for now to see if its working
+
+        def remap_fields(column):
+            return {
+                'column_id': column.id,
+                'name': column.id,
+                'label': column.display,
+                'is_numeric': not column._is_non_numeric  # TODO: these are not the same things
+            }
+        return map(remap_fields, columns.values())
 
     @property
     def page_context(self):
-        try:
-            report_form = self.report_form
-        except Exception as e:
-            self.template_name = 'userreports/report_error.html'
-            error_response = {
-                'report_id': self.existing_report.get_id,
-                'is_static': self.existing_report.is_static,
-                'error_message': '',
-                'details': unicode(e)
-            }
-            return self._handle_exception(error_response, e)
-
         return {
             'report': {
                 "title": self.page_name
             },
-            'report_type': self.report_type,
-            'form': report_form,
-            'editing_existing_report': bool(self.existing_report),
-            'report_column_options': [p.to_dict() for p in report_form.report_column_options.values()],
-            'data_source_indicators': [p._asdict() for p in report_form.data_source_properties.values()],
-            # For now only use date ranges that don't require additional parameters
-            'date_range_options': [r._asdict() for r in get_simple_dateranges()],
-            'initial_user_filters': [f._asdict() for f in report_form.initial_user_filters],
-            'initial_default_filters': [f._asdict() for f in report_form.initial_default_filters],
-            'initial_columns': [
-                c._asdict() for c in getattr(report_form, 'initial_columns', [])
-            ],
+            'existing_report': self.existing_report,
+            'columns': self.get_columns(),
+            'source_type': self.source_type,
+            'source_id': self.source_id,
+            'application': self.app_id,
+            'data_source_url': reverse(ReportPreview.urlname,
+                                       args=[self.domain, self._get_data_source()]),
             'report_builder_events': self.request.session.pop(REPORT_BUILDER_EVENTS_KEY, [])
         }
 
@@ -627,107 +767,165 @@ class ConfigureChartReport(ReportBuilderView):
         else:
             raise
 
-    @property
-    @memoized
-    def configuration_form_class(self):
-        if self.existing_report:
-            type_ = self.existing_report.configured_charts[0]['type']
-        else:
-            type_ = self.request.GET.get('chart_type')
-        return {
-            'multibar': ConfigureBarChartReportForm,
-            'bar': ConfigureBarChartReportForm,
-            'pie': ConfigurePieChartReportForm,
-        }[type_]
-
-    @property
-    @memoized
-    def report_form(self):
-        args = [self.request.GET.get(f, '') for f in self.url_args] + [self.existing_report]
-        if self.request.method == 'POST':
-            args.append(self.request.POST)
-        return self.configuration_form_class(*args)
-
-    def _get_sum_avg_columns(self, columns):
-        """
-        Return a list of columns that have either sum or average aggregation types.
-        Items in the list are tuples of (column['field'], column['aggregation']).
-        """
-        return [
-            (col.get('field', None), col['aggregation'])
-            for col in columns
-            if col.get('aggregation', None) in ("sum", "average")
-        ]
-
-    def _track_invalid_form_events(self):
-        group_by_errors = self.report_form.errors.as_data().get('group_by', [])
-        if "required" in [e.code for e in group_by_errors]:
-            add_event(self.request, [
-                "Report Builder",
-                "Click on Done (No Group By Chosen)",
-                self.report_type,
-            ])
-
-    def _track_valid_form_events(self, existing_sum_avg_cols, report_configuration):
-        if self.report_type != "chart":
-            sum_avg_cols = self._get_sum_avg_columns(
-                report_configuration.columns)
-            # A column is "new" if there are no columns with the (property, agg) combo in the previous report
-            if not set(sum_avg_cols).issubset(set(existing_sum_avg_cols)):
-                add_event(self.request, [
-                    "Report Builder",
-                    "Changed Column Format to Sum or Average",
-                    self.report_type,
-                ])
-
-    def _track_new_report_events(self):
-        track_workflow(
-            self.request.user.email,
-            "Successfully created a new report in the Report Builder"
+    def _get_aggregation_columns(self, report_data):
+        return _get_aggregation_columns(
+            report_data['aggregate'], report_data['columns'], self.report_column_options
         )
-        add_event(self.request, [
-            "Report Builder",
-            "Click On Done On New Report (Successfully)",
-            self.report_type,
-        ])
 
-    def post(self, *args, **kwargs):
-        if self.report_form.is_valid():
-            existing_sum_avg_cols = []
-            if self.report_form.existing_report:
-                try:
-                    existing_sum_avg_cols = self._get_sum_avg_columns(
-                        self.report_form.existing_report.columns
-                    )
-                    report_configuration = self.report_form.update_report()
-                except ValidationError as e:
-                    messages.error(self.request, e.message)
-                    return self.get(*args, **kwargs)
+    def _get_columns(self, report_data):
+        return list(chain.from_iterable(
+            to_report_columns(c, i, self.report_column_options)
+            for i, c in enumerate(report_data['columns'])
+        ))
+
+    def _get_report_charts(self, report_data_):
+        report_type_funcs = {
+            'bar': lambda cols: [{
+                'type': 'multibar',
+                'x_axis_column': [c['column_id'] for c in cols if c['is_group_by_column']][0],  # 1st group by
+                'y_axis_columns': [c['column_id'] for c in cols if not c['is_group_by_column']],
+            }],
+            'pie': lambda cols: [{
+                "type": "pie",
+                "aggregation_column": [c['column_id'] for c in cols if c['is_group_by_column']][0],
+                "value_column": [c['column_id'] for c in cols if not c['is_group_by_column']][0],
+            }],
+            'none': lambda cols: [],
+        }
+        func = report_type_funcs[report_data_['chart']]
+        return func(report_data_['columns'])
+
+    def _update_data_source(self, report_data):
+        data_source = DataSourceConfiguration.get(self.existing_report.config_id)
+        if data_source.get_report_count() > 1:
+            # If another report is pointing at this data source, create a new
+            # data source for this report so that we can change the indicators
+            # without worrying about breaking another report.
+            data_source_config_id = self._build_data_source(report_data['columns'])
+            self.existing_report.config_id = data_source_config_id
+        else:
+            number_columns = [c['column_id'] for c in report_data['columns'] if c['is_numeric']]
+            indicators = self.ds_builder.indicators(number_columns)
+            if data_source.configured_indicators != indicators:
+                for property_name, value in self._get_data_source_configuration_kwargs(
+                    report_data['columns']
+                ).iteritems():
+                    setattr(data_source, property_name, value)
+                data_source.save()
+                rebuild_indicators.delay(data_source._id)
+
+    def _update_report(self, report_data):
+        self._update_data_source(report_data)
+        self.existing_report.aggregation_columns = self._get_aggregation_columns(report_data)
+        self.existing_report.columns = self._get_columns(report_data)
+        self.existing_report.filters = []  # TODO: report_data['user_filters'] + report_data['default_filters']
+        self.existing_report.configured_charts = self._get_report_charts(report_data)
+
+        self.existing_report.validate()
+        self.existing_report.save()
+
+    def _get_data_source_configuration_kwargs(self, columns, is_multiselect_chart_report=False):
+        aggregation_fields = [c['column_id'] for c in columns if c['is_group_by_column']]
+        if is_multiselect_chart_report:
+            base_item_expression = self.ds_builder.base_item_expression(True, aggregation_fields[0])
+        else:
+            base_item_expression = self.ds_builder.base_item_expression(False)
+        number_columns = [c['column_id'] for c in columns if c['is_numeric']]
+        return dict(
+            display_name=self.ds_builder.data_source_name,
+            referenced_doc_type=self.ds_builder.source_doc_type,
+            configured_filter=self.ds_builder.filter,
+            configured_indicators=self.ds_builder.indicators(
+                number_columns, is_multiselect_chart_report
+            ),
+            base_item_expression=base_item_expression,
+            meta=DataSourceMeta(build=DataSourceBuildInformation(
+                source_id=self.source_id,
+                app_id=self.app._id,
+                app_version=self.app.version,
+            ))
+        )
+
+    @property
+    @memoized
+    def ds_builder(self):
+        return DataSourceBuilder(self.domain, self.app, self.source_type, self.source_id)
+
+    def _build_data_source(self, columns):
+
+        def build_data_source(domain_, ds_config_kwargs_):
+            data_source_config = DataSourceConfiguration(
+                domain=domain_,
+                # The uuid gets truncated, so it's not really universally unique.
+                table_id=_clean_table_name(domain_, str(uuid.uuid4().hex)),
+                **ds_config_kwargs_
+            )
+            data_source_config.validate()
+            data_source_config.save()
+            rebuild_indicators.delay(data_source_config._id)
+            return data_source_config._id
+
+        ds_config_kwargs = self._get_data_source_configuration_kwargs(columns)
+        # TODO: Don't build new data source if there is an existing one
+        return build_data_source(self.domain, ds_config_kwargs)
+
+    def post(self, request, domain, *args, **kwargs):
+
+        def get_builder_report_type(report_data_):
+            # builder_report_type = StringProperty(choices=['chart', 'list', 'table', 'worker', 'map'])
+            assert report_data_['report_type'] in ('list', 'agg', 'map')
+            if report_data_['report_type'] in ('list', 'map'):
+                return report_data_['report_type']
+            elif report_data_['report_type'] == 'agg':
+                return 'table' if report_data_['chart'] == 'none' else 'chart'
+
+        report_data = json.loads(request.body)
+        if report_data['existing_report'] and not self.existing_report:
+            # This is the case if the user has clicked "Save" for a second time from the new report page
+            # i.e. the user created a report with the first click, but didn't navigate to the report view page
+            self.existing_report = ReportConfiguration.get(report_data['existing_report'])
+
+        try:
+            if self.existing_report:
+                self._update_report(report_data)
+                report_configuration = self.existing_report
             else:
                 self._confirm_report_limit()
-                try:
-                    report_configuration = self.report_form.create_report()
-                except BadSpecError as err:
-                    messages.error(self.request, str(err))
-                    notify_exception(self.request, str(err), details={
-                        'domain': self.domain,
-                        'report_form_class': self.report_form.__class__.__name__,
-                        'report_type': self.report_form.report_type,
-                        'group_by': getattr(self.report_form, 'group_by', 'Not set'),
-                        'user_filters': getattr(self.report_form, 'user_filters', 'Not set'),
-                        'default_filters': getattr(self.report_form, 'default_filters', 'Not set'),
-                    })
-                    return self.get(*args, **kwargs)
-                self._track_new_report_events()
+                # TODO: Don't build new data source if there is an existing one
+                data_source_config_id = self._build_data_source(report_data['columns'])
+                self._confirm_report_limit()
 
-            self._track_valid_form_events(existing_sum_avg_cols, report_configuration)
-            return HttpResponseRedirect(
-                reverse(ConfigurableReport.slug, args=[self.domain, report_configuration._id])
-            )
-        else:
-            self._track_invalid_form_events()
-
-        return self.get(*args, **kwargs)
+                report_configuration = ReportConfiguration(
+                    domain=self.domain,
+                    config_id=data_source_config_id,
+                    title=self._get_report_name(request),
+                    aggregation_columns=self._get_aggregation_columns(report_data),
+                    columns=self._get_columns(report_data),
+                    filters=[],  # TODO: report_data['user_filters'] + report_data['default_filters']
+                    configured_charts=self._get_report_charts(report_data),
+                    report_meta=ReportMeta(
+                        created_by_builder=True,
+                        builder_report_type=get_builder_report_type(report_data),
+                    )
+                )
+                report_configuration.validate()
+                report_configuration.save()
+        except BadSpecError as err:
+            messages.error(request, str(err))
+            notify_exception(request, str(err), details={
+                'domain': domain,
+                'report_type': report_data['report_type'],
+                # 'group_by': getattr(self.report_form, 'group_by', 'Not set'),
+                # 'user_filters': getattr(self.report_form, 'user_filters', 'Not set'),
+                # 'default_filters': getattr(self.report_form, 'default_filters', 'Not set'),
+            })
+            return self.get(request, domain)
+        return json_response(
+            {
+                'report_url': reverse(ConfigurableReport.slug, args=[self.domain, report_configuration._id]),
+                'report_id': report_configuration._id,
+            }
+        )
 
     def _confirm_report_limit(self):
         """
@@ -742,44 +940,38 @@ class ConfigureChartReport(ReportBuilderView):
             raise Http404()
 
 
-class ConfigureListReport(ConfigureChartReport):
-    report_title = ugettext_lazy("List Report: {}")
-    report_type = 'list'
+class ReportPreview(BaseDomainView):
+    urlname = 'report_preview'
 
-    @property
-    @memoized
-    def configuration_form_class(self):
-        return ConfigureListReportForm
+    def post(self, request, domain, data_source):
+        report_data = json.loads(urllib.unquote(request.body))
+        column_options = _report_column_options(
+            self.domain, Application.get(report_data['app']), report_data['source_type'], report_data['source_id']
+        )
 
-
-class ConfigureTableReport(ConfigureChartReport):
-    report_title = ugettext_lazy("Table Report: {}")
-    report_type = 'table'
-
-    @property
-    @memoized
-    def configuration_form_class(self):
-        return ConfigureTableReportForm
-
-
-class ConfigureWorkerReport(ConfigureChartReport):
-    report_title = ugettext_lazy("Worker Report: {}")
-    report_type = 'worker'
-
-    @property
-    @memoized
-    def configuration_form_class(self):
-        return ConfigureWorkerReportForm
+        table = ConfigurableReport.report_config_table(
+            domain=domain,
+            config_id=data_source,
+            title='{}_{}_{}'.format(TEMP_REPORT_PREFIX, domain, data_source),
+            description='',
+            aggregation_columns=_get_aggregation_columns(
+                report_data['aggregate'], report_data['columns'], column_options
+            ),
+            columns=list(chain.from_iterable(
+                to_report_columns(c, i, column_options) for i, c in enumerate(report_data['columns'])
+            )),
+            report_meta=ReportMeta(created_by_builder=True),
+        )  # is None if report configuration doesn't make sense or data source has expired
+        if table:
+            return json_response(table[0][1])
+        else:
+            return json_response({'status': 'error', 'message': 'Invalid report configuration'}, status_code=400)
 
 
-class ConfigureMapReport(ConfigureChartReport):
+class ConfigureMapReport(ConfigureReport):
+    urlname = 'configure_map_report'
     report_title = ugettext_lazy("Map Report: {}")
     report_type = 'map'
-
-    @property
-    @memoized
-    def configuration_form_class(self):
-        return ConfigureMapReportForm
 
 
 def delete_report(request, domain, report_id):
