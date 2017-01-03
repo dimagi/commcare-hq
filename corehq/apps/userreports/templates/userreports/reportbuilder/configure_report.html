@@ -245,6 +245,7 @@
             "sourceType": "{{ source_type }}",
             "dataSourceUrl": "{{ data_source_url }}",
             "existingReport": {% if existing_report %}{{ existing_report.get_id|JSON }}{% else %}null{% endif %},
+            "existingReportType": {{ existing_report_type|JSON }},
         });
         ko.applyBindings(reportConfig, $("#reportConfig").get(0));
     });

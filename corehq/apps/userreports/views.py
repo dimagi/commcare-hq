@@ -723,6 +723,13 @@ class ConfigureReport(ReportBuilderView):
             }
         return map(remap_fields, columns.values())
 
+    def _get_existing_report_type(self):
+        # TODO: Handle map reports
+        type_ = "list"
+        if self.existing_report.aggregation_columns != ["doc_id"]:
+            type_ = "agg"
+        return type_
+
     @property
     def page_context(self):
         return {
@@ -730,6 +737,7 @@ class ConfigureReport(ReportBuilderView):
                 "title": self.page_name
             },
             'existing_report': self.existing_report,
+            'existing_report_type': self._get_existing_report_type(),
             'column_options': self.get_column_option_dicts(),
             'source_type': self.source_type,
             'source_id': self.source_id,

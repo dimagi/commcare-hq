@@ -91,7 +91,7 @@ var reportBuilder = function () {
 
         self.reportTypeListLabel = (config['sourceType'] === "case") ? "Case List" : "Form List";
         self.reportTypeAggLabel = (config['sourceType'] === "case") ? "Case Summary" : "Form Summary";
-        self.reportType = ko.observable('list');
+        self.reportType = ko.observable(config['existingReportType']);
         self.reportType.subscribe(function (newValue) {
             var wasAggregationEnabled = self.isAggregationEnabled();
             self.isAggregationEnabled(newValue === "agg");
