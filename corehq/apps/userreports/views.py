@@ -677,7 +677,6 @@ class ConfigureReport(ReportBuilderView):
 
         return super(ConfigureReport, self).dispatch(request, *args, **kwargs)
 
-
     @property
     def page_name(self):
         title = self._get_report_name()
@@ -710,7 +709,7 @@ class ConfigureReport(ReportBuilderView):
             self.source_id,
         )
 
-    def get_columns(self):
+    def get_column_option_dicts(self):
         columns = self.report_column_options
         # TODO: All the fields are called different things. Let's change it on the front end eventually,
         #       but re-map for now to see if its working
@@ -731,7 +730,7 @@ class ConfigureReport(ReportBuilderView):
                 "title": self.page_name
             },
             'existing_report': self.existing_report,
-            'columns': self.get_columns(),
+            'column_options': self.get_column_option_dicts(),
             'source_type': self.source_type,
             'source_id': self.source_id,
             'application': self.app_id,

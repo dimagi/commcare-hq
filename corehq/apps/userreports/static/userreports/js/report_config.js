@@ -75,11 +75,11 @@ var reportBuilder = function () {
         self.existingReportId = config['existingReport'];
 
         self.reportTitle = config["reportTitle"];
-        self.columns = config["columns"];
+        self.columnOptions = config["columnOptions"];  // Columns that could be added to the report
         self.dataSourceUrl = config["dataSourceUrl"];  // Fetch the preview data asynchronously.
 
         self.selectedColumns = ko.observableArray(_.map(
-            self.columns.slice(0, 5),  // Start with just 5 indicators.
+            self.columnOptions.slice(0, 5),  // Start with just 5 indicators.
             function (column) {
                 return new reportBuilder.ReportColumn(column, self);
             }
@@ -220,7 +220,7 @@ var reportBuilder = function () {
         };
 
         self.addColumn = function () {
-            var column = _.find(self.columns, function (c) {
+            var column = _.find(self.columnOptions, function (c) {
                 return c["name"] === self.newColumnName();
             });
             self.selectedColumns.push(new reportBuilder.ReportColumn(column, self));
@@ -229,7 +229,7 @@ var reportBuilder = function () {
 
         self.otherColumns = ko.computed(function () {
             var names = _.map(self.selectedColumns(), function (c) { return c.name; });
-            return _.filter(self.columns, function (c) {
+            return _.filter(self.columnOptions, function (c) {
                 return !_.contains(names, c["name"]);
             });
         });

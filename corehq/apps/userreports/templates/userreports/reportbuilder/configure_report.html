@@ -109,7 +109,7 @@
             <tr>
               <td>&nbsp;</td>
               <td>
-                <select data-bind="options: columns,
+                <select data-bind="options: columnOptions,
                                    optionsText: 'label',
                                    optionsValue: 'name',
                                    value: newColumnName">
@@ -137,7 +137,7 @@
             <tr>
               <td>&nbsp;</td>
               <td>
-                <select data-bind="options: columns,
+                <select data-bind="options: columnOptions,
                                    optionsText: 'label',
                                    optionsValue: 'name',
                                    value: newColumnName">
@@ -175,7 +175,7 @@
             <tr>
               <td>&nbsp;</td>
               <td>
-                <select data-bind="options: columns,
+                <select data-bind="options: columnOptions,
                                    optionsText: 'label',
                                    optionsValue: 'name',
                                    value: newColumnName">
@@ -240,7 +240,7 @@
     $(document).ready(function() {
         var reportConfig = new reportBuilder.ReportConfig({
             "reportTitle": "{{ report.title|escapejs }}",
-            "columns": {{ columns|JSON }},
+            "columnOptions": {{ column_options|JSON }},
             "app": {{ application|JSON }},
             "sourceId": {{ source_id|JSON }},
             "sourceType": "{{ source_type }}",
