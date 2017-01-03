@@ -33,7 +33,7 @@ myapp/
     mytemplate.html
 ```
 
-The best place for JavaScript to live is, of course, in a .js file
+The best place for JavaScript to live is, of course, in a .js file.
 But first a note about the other common case, JavaScript in your template.
 
 ## Using Django Template Tags and Variables
