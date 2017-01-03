@@ -1,5 +1,5 @@
 /* global jQuery */
-hqDefine('reports/javascripts/reports.util.js', function () {
+hqDefine('reports/js/reports.util.js', function () {
     return {
         urlSerialize: function (filters, exclude) {
             exclude = exclude || [];
