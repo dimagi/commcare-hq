@@ -91,12 +91,11 @@
                 <select data-bind="fadeVisible: $parent.isAggregationEnabled,
                                    value: groupByOrAggregation">
                   <option value="groupBy">{% trans 'Display Each' %}</option>
-                  <option value="simple">---</option>
+                  <option value="expand">{% trans 'Count per Choice' %}</option>
                   <!-- ko if: !isNonNumeric -->
                   <option value="sum">{% trans 'Sum' %}</option>
                   <option value="avg">{% trans 'Average' %}</option>
                   <!-- /ko -->
-                  <option value="expand">{% trans 'Count per Choice' %}</option>
                 </select>
               </td>
               <td>
