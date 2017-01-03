@@ -5,11 +5,15 @@ var reportBuilder = function () {
     self.ReportColumn = function (column, parent) {
         var self = this;
 
+        self._defaultAggregation = function () {
+            return column["groupByOrAggregation"] || (self.isNonNumeric ? 'expand' : 'sum');
+        };
+
         self.columnId = column["column_id"];
         self.name = column["name"];
         self.label = column["label"];
         self.isNonNumeric = column["is_non_numeric"];
-        self.aggregation = column["is_non_numeric"] ? null: "simple";
+        self.aggregation = self._defaultAggregation();
         self.isGroupByColumn = false;
 
         self.groupByOrAggregation = ko.observable(self.aggregation);
@@ -68,6 +72,21 @@ var reportBuilder = function () {
      */
     self.ReportConfig = function (config) {
         var self = this;
+
+        /**
+         * Populate self.selectedColumns
+         */
+        self._initializeSelectedColumns = function() {
+            // Start with just 5 indicators as an example if we aren't editing an existing report with columns
+            var _selected_columns = config['initialColumns'] || self.columnOptions.slice(0, 5);
+            self.selectedColumns(_.map(
+                _selected_columns,
+                function (column) {
+                    return new reportBuilder.ReportColumn(column, self);
+                }
+            ));
+        };
+
         self._app = config['app'];
         self._sourceType = config['sourceType'];
         self._sourceId = config['sourceId'];
@@ -78,12 +97,9 @@ var reportBuilder = function () {
         self.columnOptions = config["columnOptions"];  // Columns that could be added to the report
         self.dataSourceUrl = config["dataSourceUrl"];  // Fetch the preview data asynchronously.
 
-        self.selectedColumns = ko.observableArray(_.map(
-            self.columnOptions.slice(0, 5),  // Start with just 5 indicators.
-            function (column) {
-                return new reportBuilder.ReportColumn(column, self);
-            }
-        ));
+
+        self.selectedColumns = ko.observableArray();
+        self._initializeSelectedColumns();
         self.selectedColumns.subscribe(function (newValue) {
             self.refreshPreview(newValue);
             self.saveButton.fire('change');
@@ -106,7 +122,7 @@ var reportBuilder = function () {
             self.saveButton.fire('change');
         });
 
-        self.isAggregationEnabled = ko.observable(false);
+        self.isAggregationEnabled = ko.observable(self.reportType() == "agg");
 
         self.newColumnName = ko.observable('');
 

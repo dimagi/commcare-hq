@@ -240,6 +240,7 @@
         var reportConfig = new reportBuilder.ReportConfig({
             "reportTitle": "{{ report.title|escapejs }}",
             "columnOptions": {{ column_options|JSON }},
+            "initialColumns": {{ initial_columns|JSON }},
             "app": {{ application|JSON }},
             "sourceId": {{ source_id|JSON }},
             "sourceType": "{{ source_type }}",

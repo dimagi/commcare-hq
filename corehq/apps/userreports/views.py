@@ -730,6 +730,70 @@ class ConfigureReport(ReportBuilderView):
             type_ = "agg"
         return type_
 
+    def _column_exists(self, column_id):
+        """
+        Return True if this column corresponds to a question/case property in
+        the current version of this form/case configuration.
+
+        This could be true if a user makes a report, modifies the app, then
+        edits the report.
+
+        column_id is a string like "data_date_q_d1b3693e"
+        """
+        return column_id in [c.indicator_id for c in self.report_column_options.values()]
+
+    def _get_column_option_by_indicator_id(self, indicator_column_id):
+        """
+        Return the ColumnOption corresponding to the given indicator id.
+        NOTE: This currently assumes that there is a one-to-one mapping between
+        ColumnOptions and data source indicators, but we may want to remove
+        this assumption as we add functionality to the report builder.
+        :param indicator_column_id: The column_id field of a data source
+            indicator configuration.
+        :return: The corresponding ColumnOption
+        """
+        for column_option in self.report_column_options.values():
+            if column_option.indicator_id == indicator_column_id:
+                return column_option
+
+    def _get_initial_columns(self):
+        """
+        Return a list of columns in the existing report.
+        If there is no existing report, return None
+        """
+        # TODO: Do something different for aggregated reports etc. (search for initial_columns functions to see what I mean)
+        # TODO: It would be nice to break this into smaller functions
+
+        if self.existing_report:
+            added_multiselect_columns = set()
+            cols = []
+            for c in self.existing_report.columns:
+                mselect_indicator_id = _get_multiselect_indicator_id(
+                    c['field'], self.existing_report.config.configured_indicators
+                )
+                indicator_id = mselect_indicator_id or c['field']
+                display = c['display']
+                exists = self._column_exists(indicator_id)
+
+                if mselect_indicator_id:
+                    if mselect_indicator_id not in added_multiselect_columns:
+                        added_multiselect_columns.add(mselect_indicator_id)
+                        display = MultiselectQuestionColumnOption.LABEL_DIVIDER.join(
+                            display.split(MultiselectQuestionColumnOption.LABEL_DIVIDER)[:-1]
+                        )
+                    else:
+                        continue
+                cols.append({
+                    "label": display,
+                    "column_id": self._get_column_option_by_indicator_id(indicator_id).id if exists else None,
+                    "name": self._get_column_option_by_indicator_id(indicator_id).id if exists else None,
+                    "is_non_numeric": self._get_column_option_by_indicator_id(indicator_id)._is_non_numeric if exists else None,
+                    "groupByOrAggregation": c.get('aggregation'),
+                    # TODO: This should be one of sum, avg, simple, groupBy
+                })
+            return cols
+        return None
+
     @property
     def page_context(self):
         return {
@@ -739,6 +803,7 @@ class ConfigureReport(ReportBuilderView):
             'existing_report': self.existing_report,
             'existing_report_type': self._get_existing_report_type(),
             'column_options': self.get_column_option_dicts(),
+            'initial_columns': self._get_initial_columns(),
             'source_type': self.source_type,
             'source_id': self.source_id,
             'application': self.app_id,
@@ -946,6 +1011,20 @@ class ConfigureReport(ReportBuilderView):
                 allowed_report_builder_reports(self.request)):
             raise Http404()
 
+
+def _get_multiselect_indicator_id(column_field, indicators):
+    """
+    If this column_field corresponds to a multiselect data source indicator, then return the id of the
+    indicator. Otherwise return None.
+    :param column_field: The "field" property of a report column
+    :return: a data source indicator id
+    """
+    # TODO: Remove this from the form where I coppied it
+    indicator_id = "_".join(column_field.split("_")[:-1])
+    for indicator in indicators:
+        if indicator['column_id'] == indicator_id and indicator['type'] == 'choice_list':
+            return indicator_id
+    return None
 
 class ReportPreview(BaseDomainView):
     urlname = 'report_preview'
