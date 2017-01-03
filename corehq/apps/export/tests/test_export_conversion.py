@@ -600,6 +600,18 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestConvertBase):
         )
         self.assertEqual(column.deid_transform, DEID_DATE_TRANSFORM)
 
+    def test_skippable_export_columns(self, _, __):
+        instance, _ = self._convert_form_export('skippable_properties')
+
+        table = instance.get_table(MAIN_TABLE)
+
+        index, column = table.get_column(
+            [PathNode(name='initial_processing_complete')], None, None
+        )
+        self.assertIsInstance(column, UserDefinedExportColumn)
+        self.assertFalse(column.is_editable)
+        self.assertEqual(column.custom_path, [PathNode(name='initial_processing_complete')])
+
     def test_system_property_conversion(self, _, __):
         instance, _ = self._convert_form_export('system_properties')
 
