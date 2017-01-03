@@ -226,7 +226,7 @@ class PatientDetail(models.Model):
 
     @property
     def initial_home_visit_status(self):
-        return 'completed' if self.ihv_date else 'unknown_from_migration'
+        return 'completed' if self.ihv_date else 'pending'
 
 
 class Outcome(models.Model):
