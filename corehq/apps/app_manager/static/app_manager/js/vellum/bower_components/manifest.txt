@@ -3,7 +3,7 @@
 │ │ └── jquery#3.1.1
 │ └── jquery#3.1.1
 ├── Caret.js#0.2.2 (latest is 0.3.1)
-├── MediaUploader#8a75015f15
+├── MediaUploader#d8e9105476
 ├── XMLWriter#ab8760d6e0
 ├─┬ bootstrap#3.3.7 (latest is 4.0.0-alpha.5)
 │ └── jquery#3.1.1
@@ -12,9 +12,10 @@
 ├── equivalent-xml-js#7de21be295
 ├── fuse.js#2.5.0 (latest is 2.6.1)
 ├── jquery#3.1.1
-├── jsdiff#3.1.0
+├── jsdiff#3.2.0
 ├─┬ jstree#3.3.3
 │ └── jquery#3.1.1
+├── jstree-actions#0.1.0 (latest is 0.1.1)
 ├── langcodes#b4ea78bae6
 ├── markdown-it#7.0.1 (latest is 8.2.2)
 ├── require-css#0.1.8
@@ -24,5 +25,6 @@
 ├── requirejs-text#2.0.15
 ├── requirejs-tpl#a3ca1e0e7f
 ├── underscore#1.8.3
+├── when#2.8.0 extraneous (latest is 3.7.7)
 ├── xpath#0.0.3
 └── xrayquire#ca32cdec50
