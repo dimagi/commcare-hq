@@ -633,20 +633,20 @@ def _get_aggregation_columns(aggregate, columns, column_options):
 
 
 def _report_column_options(domain, application, source_type, source):
-        builder = DataSourceBuilder(domain, application, source_type, source)
-        options = OrderedDict()
-        for id_, prop in builder.data_source_properties.iteritems():
-            if prop.type == "question":
-                if prop.source['type'] == "MSelect":
-                    option = MultiselectQuestionColumnOption(id_, prop.text, prop.column_id, prop.source)
-                else:
-                    option = QuestionColumnOption(id_, prop.text, prop.column_id, prop.is_non_numeric,
-                                                  prop.source)
+    builder = DataSourceBuilder(domain, application, source_type, source)
+    options = OrderedDict()
+    for id_, prop in builder.data_source_properties.iteritems():
+        if prop.type == "question":
+            if prop.source['type'] == "MSelect":
+                option = MultiselectQuestionColumnOption(id_, prop.text, prop.column_id, prop.source)
             else:
-                # meta properties
-                option = ColumnOption(id_, prop.text, prop.column_id, prop.is_non_numeric)
-            options[id_] = option
-        return options
+                option = QuestionColumnOption(id_, prop.text, prop.column_id, prop.is_non_numeric,
+                                              prop.source)
+        else:
+            # meta properties
+            option = ColumnOption(id_, prop.text, prop.column_id, prop.is_non_numeric)
+        options[id_] = option
+    return options
 
 
 class ConfigureReport(ReportBuilderView):
