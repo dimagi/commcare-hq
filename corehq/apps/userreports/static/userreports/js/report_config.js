@@ -316,11 +316,11 @@ var reportBuilder = function () {
             var isValid = true;
             if (!self.filterList.validate()) {
                 isValid = false;
-                $("#userFilterAccordion").collapse('show')
+                $("#userFilterAccordion").collapse('show');
             }
             if (!self.defaultFilterList.validate()) {
                 isValid = false;
-                $("#defaultFilterAccordion").collapse('show')
+                $("#defaultFilterAccordion").collapse('show');
             }
             if (!isValid){
                 alert('Invalid report configuration. Please fix the issues and try again.');
@@ -350,7 +350,7 @@ var reportBuilder = function () {
                 SAVING: django.gettext("Saving..."),
                 SAVED: django.gettext("Saved"),
                 RETRY: django.gettext("Try Again"),
-                ERROR_SAVING: django.gettext("There was an error saving")
+                ERROR_SAVING: django.gettext("There was an error saving"),
             }, 'btn btn-success');
         }
 
