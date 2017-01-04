@@ -20,7 +20,7 @@
  *  - errorMessage: Message to display if server returns an error.
  */
 
-hqDefine('style/ko/components/inline_edit_v2.js', function() {
+hqDefine('style/js/components/inline_edit_v2.js', function() {
     return {
         viewModel: function(params) {
             var self = this;
