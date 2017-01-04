@@ -1046,7 +1046,8 @@ class ExportDataSchema(Document):
         app_label = 'export'
 
     @classmethod
-    def generate_schema_from_builds(cls, domain, app_id, identifier, force_rebuild=False):
+    def generate_schema_from_builds(cls, domain, app_id, identifier, force_rebuild=False,
+            only_process_current_builds=False):
         """Builds a schema from Application builds for a given identifier
 
         :param domain: The domain that the export belongs to
@@ -1065,11 +1066,13 @@ class ExportDataSchema(Document):
         else:
             current_schema = cls()
 
-        app_build_ids = cls._get_app_build_ids_to_process(
-            domain,
-            app_id,
-            current_schema.last_app_versions,
-        )
+        app_build_ids = []
+        if not only_process_current_builds:
+            app_build_ids = cls._get_app_build_ids_to_process(
+                domain,
+                app_id,
+                current_schema.last_app_versions,
+            )
         app_build_ids.extend(cls._get_current_app_ids_for_domain(domain, app_id))
 
         for app_doc in iter_docs(Application.get_db(), app_build_ids, chunksize=10):
