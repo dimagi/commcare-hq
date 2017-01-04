@@ -75,13 +75,10 @@ from unittest import TestCase
 from StringIO import StringIO
 
 from django.conf import settings
-from testil import tempdir
 
-import corehq.blobs.s3db as mod
-from corehq.blobs.exceptions import ArgumentError
-from corehq.blobs.tests.util import TemporaryS3BlobDB
+from corehq.blobs.tests.util import get_id, TemporaryS3BlobDB
 from corehq.blobs.tests.test_fsdb import _BlobDBTests
-from corehq.util.test_utils import generate_cases, trap_extra_setup
+from corehq.util.test_utils import trap_extra_setup
 
 
 class TestS3BlobDB(TestCase, _BlobDBTests):
@@ -98,5 +95,5 @@ class TestS3BlobDB(TestCase, _BlobDBTests):
 
     def test_bucket_path(self):
         bucket = join("doctype", "8cd98f0")
-        self.db.put(StringIO(b"content"), bucket=bucket)
+        self.db.put(StringIO(b"content"), get_id(), bucket=bucket)
         self.assertEqual(self.db.get_path(bucket=bucket), bucket)
