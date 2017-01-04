@@ -7,7 +7,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.es import cases as case_es
-from corehq.apps.es.users import user_ids_at_locations, UserES
+from corehq.apps.es.users import UserES
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
@@ -93,7 +93,6 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface):
                 self.request.domain,
                 self.request.couch_user)
             )
-            accessible_user_ids = user_ids_at_locations(accessible_location_ids)
             user_query = UserES().location(accessible_location_ids)
             active_users = get_simplified_users(user_query)
         else:
