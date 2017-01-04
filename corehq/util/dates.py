@@ -2,7 +2,6 @@ import calendar
 import datetime
 import time
 
-from corehq.util.soft_assert import soft_assert
 from dimagi.utils.dates import add_months
 from dimagi.utils.parsing import ISO_DATE_FORMAT, ISO_DATETIME_FORMAT
 
@@ -19,9 +18,6 @@ def get_timestamp(date):
 
 def get_timestamp_millis(date):
     return 1000 * get_timestamp(date)
-
-
-_assert = soft_assert('droberts' + '@' + 'dimagi.com')
 
 
 def iso_string_to_datetime(iso_string, strict=False):
@@ -48,8 +44,6 @@ def iso_string_to_datetime(iso_string, strict=False):
     if strict:
         raise ValueError('iso_string_to_datetime input not in expected format: {}'.format(iso_string))
     else:
-        _assert(False, 'iso_string_to_datetime input not in expected format',
-                iso_string)
         from dimagi.utils.parsing import string_to_utc_datetime
         return string_to_utc_datetime(iso_string)
 

@@ -222,6 +222,8 @@
             <div id="hq-navigation"
                  class="navbar navbar-default navbar-static-top navbar-hq-main-menu">
                 <div class="container-fluid">
+
+                    {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}
                     <ul class="nav navbar-nav collapse-fullmenu-toggle" id="hq-fullmenu-responsive" role="menu">
                         <li>
                             <a href="#hq-full-menu" data-toggle="collapse">
@@ -230,6 +232,7 @@
                             </a>
                         </li>
                     </ul>
+                    {% endif %}
 
                     <div class="navbar-header hq-header">
                         <a href="{% url "homepage" %}" class="navbar-brand">
@@ -241,6 +244,8 @@
                             {% endif %}
                         </a>
                     </div>
+
+                    {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}
 
                     <ul class="nav navbar-nav collapse-mainmenu-toggle" id="hq-mainmenu-responsive" role="menu">
                         <li>
@@ -263,6 +268,8 @@
                             {% format_main_menu %}
                         {% endblock %}
                     </nav>
+                    {% endif %}
+
                 </div>
             </div>
             {% endblock navigation %}
@@ -528,15 +535,15 @@
 
         {% if request.use_maps %}
         {% compress js %}
-        <script src="{% static 'reports/javascripts/maps.js' %}"></script>
-        <script src="{% static 'reports/javascripts/maps_utils.js' %}"></script>
+        <script src="{% static 'reports/js/maps.js' %}"></script>
+        <script src="{% static 'reports/js/maps_utils.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
         {% if request.use_maps_async %}
         {% compress js %}
-        <script src="{% static 'reports/javascripts/async_maps.js' %}"></script>
-        <script src="{% static 'reports/javascripts/maps_utils.js' %}"></script>
+        <script src="{% static 'reports/js/async_maps.js' %}"></script>
+        <script src="{% static 'reports/js/maps_utils.js' %}"></script>
         {% endcompress %}
         {% endif %}
 

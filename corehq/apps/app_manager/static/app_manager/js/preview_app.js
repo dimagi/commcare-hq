@@ -35,52 +35,56 @@ hqDefine('app_manager/js/preview_app.js', function() {
 
     _private.isFormdesigner = false;
 
-    _private.showAppPreview = function() {
+    _private.showAppPreview = function(triggerAnalytics) {
         $(module.SELECTORS.PREVIEW_ACTION_TEXT_SHOW).addClass('hide');
         $(module.SELECTORS.PREVIEW_ACTION_TEXT_HIDE).removeClass('hide');
         if (_private.isFormdesigner) {
             $(module.SELECTORS.FORMDESIGNER).addClass('offset-for-preview');
         }
-        window.analytics.workflow("[app-preview] Clicked Show App Preview");
-        window.analytics.usage("[app-preview] Clicked Show App Preview");
+
+        if (triggerAnalytics) {
+            window.analytics.workflow("[app-preview] Clicked Show App Preview");
+            window.analytics.usage("[app-preview] Clicked Show App Preview");
+        }
 
     };
-    _private.hideAppPreview = function() {
+    _private.hideAppPreview = function(triggerAnalytics) {
         $(module.SELECTORS.PREVIEW_ACTION_TEXT_SHOW).removeClass('hide');
         $(module.SELECTORS.PREVIEW_ACTION_TEXT_HIDE).addClass('hide');
         if (_private.isFormdesigner) {
             $(module.SELECTORS.FORMDESIGNER).removeClass('offset-for-preview');
         }
-        window.analytics.workflow("[app-preview] Clicked Hide App Preview");
-        window.analytics.usage("[app-preview] Clicked Hide App Preview");
+
+        if (triggerAnalytics) {
+            window.analytics.workflow("[app-preview] Clicked Hide App Preview");
+            window.analytics.usage("[app-preview] Clicked Hide App Preview");
+        }
     };
 
-    _private.tabletView = function() {
+    _private.tabletView = function(triggerAnalytics) {
         var $appPreview = $(module.SELECTORS.PREVIEW_WINDOW);
         $appPreview.addClass('preview-tablet-mode');
         $(module.SELECTORS.OFFSET_FOR_PREVIEW).addClass('offset-for-tablet');
         _private.triggerPreviewEvent('tablet-view');
-        window.analytics.workflow('[app-preview] User turned on tablet mode');
+
+        if (triggerAnalytics) {
+            window.analytics.workflow('[app-preview] User turned on tablet mode');
+        }
     };
 
-    _private.phoneView = function() {
+    _private.phoneView = function(triggerAnalytics) {
         var $appPreview = $(module.SELECTORS.PREVIEW_WINDOW);
         $appPreview.removeClass('preview-tablet-mode');
         $(module.SELECTORS.OFFSET_FOR_PREVIEW).removeClass('offset-for-tablet');
         _private.triggerPreviewEvent('phone-view');
-        window.analytics.workflow('[app-preview] User turned off tablet mode');
+
+        if (triggerAnalytics) {
+            window.analytics.workflow('[app-preview] User turned off tablet mode');
+        }
     };
 
     _private.navigateBack = function() {
         _private.triggerPreviewEvent('back');
-    };
-
-    _private.refresh = function() {
-        _private.triggerPreviewEvent('refresh');
-
-        window.analytics.workflow("[app-preview] Clicked Refresh App Preview");
-        window.analytics.usage("[app-preview] Clicked Refresh App Preview");
-
     };
 
     _private.triggerPreviewEvent = function(action) {
@@ -94,9 +98,9 @@ hqDefine('app_manager/js/preview_app.js', function() {
     _private.toggleTabletView = function() {
         _private.toggleLocalStorageDatum(module.DATA.TABLET);
         if (localStorage.getItem(module.DATA.TABLET)) {
-            _private.tabletView();
+            _private.tabletView(true);
         } else {
-            _private.phoneView();
+            _private.phoneView(true);
         }
     };
 
@@ -113,9 +117,9 @@ hqDefine('app_manager/js/preview_app.js', function() {
         _private.toggleLocalStorageDatum(module.DATA.OPEN);
         $(window).trigger(module.EVENTS.RESIZE);
         if (localStorage.getItem(module.DATA.OPEN)) {
-            _private.showAppPreview();
+            _private.showAppPreview(true);
         } else {
-            _private.hideAppPreview();
+            _private.hideAppPreview(true);
         }
     };
 
@@ -175,6 +179,8 @@ hqDefine('app_manager/js/preview_app.js', function() {
         $('.js-preview-refresh').click(function() {
             $(module.SELECTORS.BTN_REFRESH).removeClass('app-out-of-date');
             _private.triggerPreviewEvent('refresh');
+            window.analytics.workflow("[app-preview] Clicked Refresh App Preview");
+            window.analytics.usage("[app-preview] Clicked Refresh App Preview");
         });
         $(document).ajaxComplete(function(e, xhr, options) {
             if (/edit_form_attr/.test(options.url) ||
@@ -182,6 +188,7 @@ hqDefine('app_manager/js/preview_app.js', function() {
                 /edit_module_detail_screens/.test(options.url) ||
                 /edit_app_attr/.test(options.url) ||
                 /edit_form_actions/.test(options.url) ||
+                /edit_commcare_settings/.test(options.url) ||
                 /patch_xform/.test(options.url)) {
                 $(module.SELECTORS.BTN_REFRESH).addClass('app-out-of-date');
             }

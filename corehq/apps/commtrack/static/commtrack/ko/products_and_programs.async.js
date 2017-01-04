@@ -24,8 +24,8 @@ var CommtrackProductsProgramsViewModel = function (o) {
                 error: function () {
                     view_model.initial_load(true);
                     $('.hide-until-load').fadeIn();
-                    $('#user-list-notification').text('Sorry, there was an problem contacting the server ' +
-                        'to fetch the data. Please, try again in a little bit.');
+                    $('#user-list-notification').text(gettext('Sorry, there was an problem contacting the server ' +
+                        'to fetch the data. Please, try again in a little bit.'));
                     view_model.currently_searching(false);
                 },
                 success: reloadList

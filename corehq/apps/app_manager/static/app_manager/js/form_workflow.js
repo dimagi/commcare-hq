@@ -50,7 +50,7 @@ hqDefine('app_manager/js/form_workflow.js', function() {
     };
 
     FormWorkflow.Errors = {
-        FORM_NOTFOUND: 'This form either no longer exists or has a different case type',
+        FORM_NOT_FOUND: gettext('This form either no longer exists or has a different case type'),
     };
 
 
@@ -78,7 +78,7 @@ hqDefine('app_manager/js/form_workflow.js', function() {
     };
 
     FormWorkflow.prototype.displayUnknownForm = function(formLink) {
-        if (_.contains(formLink.errors(), FormWorkflow.Errors.FORM_NOTFOUND)) {
+        if (_.contains(formLink.errors(), FormWorkflow.Errors.FORM_NOT_FOUND)) {
             return "Unknown form";
         }
     };
@@ -179,7 +179,7 @@ hqDefine('app_manager/js/form_workflow.js', function() {
             });
 
             if (!found) {
-                errors.push(FormWorkflow.Errors.FORM_NOTFOUND);
+                errors.push(FormWorkflow.Errors.FORM_NOT_FOUND);
             }
 
             return errors;

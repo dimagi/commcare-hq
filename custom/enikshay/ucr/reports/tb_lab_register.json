@@ -16,7 +16,7 @@
         "description": "",
         "title": "TB Lab Register",
         "sort_expression": [],
-        "visible": false,
+        "visible": true,
         "configured_charts": [],
         "aggregation_columns": ["doc_id"],
         "filters": [
@@ -142,7 +142,7 @@
                 "calculate_total": false
             },
             {
-                "display": "Name of Referring Health facility (PHI, ICTC, ART, Medical college, Private, Others, Specify)",
+                "display": "Name of Referring health facility",
                 "type": "field",
                 "field": "referring_facility_name",
                 "aggregation": "simple",
@@ -154,14 +154,33 @@
                 "calculate_total": false
             },
             {
-                "display": "Presumptive TB /RE/  Presumptive NTM",
+                "display": "Type of Referring health facility",
                 "type": "field",
-                "field": "purpose_of_testing",
+                "field": "referring_facility_type_name",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,
                 "format": "default",
                 "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Presumptive TB /RE/  Presumptive NTM",
+                "type": "field",
+                "field": "diagnostic_test_reason",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "presumptive_tb": "Presumptive TB",
+                        "repeat_exam_for_diagnosis": "RE",
+                        "private_referral": "Private Referral",
+                        "presumptive_ntm": "Presumptive NTM"
+                    }
                 },
                 "calculate_total": false
             },
@@ -190,9 +209,79 @@
                 "calculate_total": false
             },
             {
+                "display": "History of > 1 month ATT (Yes/No)",
+                "type": "field",
+                "field": "history_of_att",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "yes": "Yes",
+                        "no": "No"
+                    }
+                },
+                "calculate_total": false
+            },
+            {
                 "display": "Nikshay ID",
                 "type": "field",
                 "field": "nikshay_id",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Regimen - New (N) / Previously treated (PT)",
+                "type": "field",
+                "field": "regimen",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Month",
+                "type": "field",
+                "field": "treatment_initiation_date",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Type of specimen",
+                "type": "field",
+                "field": "specimen_type",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "sputum": "Sputum",
+                        "other": "Other"
+                    }
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Post treatment follow up month",
+                "type": "field",
+                "field": "post_treatment",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,
@@ -210,6 +299,12 @@
                 "description": null,
                 "format": "default",
                 "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "mucupurulent": "Mucopurulent",
+                        "blood_stained": "Blood stained",
+                        "saliva": "Saliva"
+                    }
                 },
                 "calculate_total": false
             },
@@ -222,6 +317,12 @@
                 "description": null,
                 "format": "default",
                 "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "mucupurulent": "Mucopurulent",
+                        "blood_stained": "Blood stained",
+                        "saliva": "Saliva"
+                    }
                 },
                 "calculate_total": false
             },
@@ -234,6 +335,14 @@
                 "description": null,
                 "format": "default",
                 "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "negative_not_seen": "Negative / Not seen",
+                        "scanty": "Scanty",
+                        "1plus": "1+",
+                        "2plus": "2+",
+                        "3plus": "3+"
+                    }
                 },
                 "calculate_total": false
             },
@@ -270,6 +379,12 @@
                 "description": null,
                 "format": "default",
                 "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "reactive": "Reactive",
+                        "non_reactive": "Non-Reactive",
+                        "unknown": "Unknown"
+                    }
                 },
                 "calculate_total": false
             },
@@ -277,6 +392,60 @@
                 "display": "Diabetic status (Diabetic / Non Diabetic / Unknown)",
                 "type": "field",
                 "field": "diabetes_status",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "diabetic": "Diabetic",
+                        "non_diabetic": "Non-Diabetic",
+                        "unknown": "Unknown"
+                    }
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Sample for DST sent (Y/N) with date",
+                "type": "field",
+                "field": "sample_dst_with_date",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "DST result",
+                "type": "field",
+                "field": "rif_resistance_result",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Nikshay ID (notification no.)",
+                "type": "field",
+                "field": "nikshay_id_cbnaat",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Treatment Initiation details/Referral for treatment",
+                "type": "field",
+                "field": "treatment_initiation_details",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,

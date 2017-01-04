@@ -249,7 +249,7 @@ class TestContractedInvoices(BaseInvoiceTestCase):
         For contracted invoices, emails should be sent to finance@dimagi.com
         """
 
-        expected_recipient = ["finance@dimagi.com", "accounts@dimagi.com"]
+        expected_recipient = ["accounts@dimagi.com"]
 
         tasks.generate_invoices(self.invoice_date)
 

@@ -1,4 +1,3 @@
-import urllib
 import logging
 from celery.task import task
 
@@ -7,9 +6,9 @@ from corehq.apps.export.export import get_export_file, rebuild_export
 from corehq.apps.export.dbaccessors import get_inferred_schema
 from corehq.apps.export.system_properties import MAIN_CASE_TABLE_PROPERTIES
 from corehq.util.decorators import serial_task
+from corehq.util.files import safe_filename_header
 from corehq.util.quickcache import quickcache
 from couchexport.models import Format
-from couchexport.tasks import escape_quotes
 from soil.util import expose_cached_download
 
 logger = logging.getLogger('export_migration')
@@ -27,16 +26,13 @@ def populate_export_download_task(export_instances, filters, download_id, filena
 
     file_format = Format.from_format(export_file.format)
     filename = filename or export_instances[0].name
-    escaped_filename = escape_quotes('%s.%s' % (filename, file_format.extension))
-    escaped_filename = urllib.quote(escaped_filename.encode('utf8'))
-
     payload = export_file.file.payload
     expose_cached_download(
         payload,
         expiry,
         ".{}".format(file_format.extension),
         mimetype=file_format.mimetype,
-        content_disposition='attachment; filename="%s"' % escaped_filename,
+        content_disposition=safe_filename_header(filename, file_format.extension),
         download_id=download_id,
     )
     export_file.file.delete()

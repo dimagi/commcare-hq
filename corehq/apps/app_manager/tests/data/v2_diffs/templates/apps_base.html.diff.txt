@@ -1,6 +1,11 @@
 --- 
 +++ 
-@@ -5,6 +5,14 @@
+@@ -1,10 +1,19 @@
+-{% extends 'style/base_section.html' %}
++{% extends 'style/two_column.html' %}
+ {% load xforms_extras %}
+ {% load url_extras %}
+ {% load hq_shared_tags %}
  {% load timezone_tags %}
  {% load i18n %}
  {% load compress %}
@@ -9,13 +14,14 @@
 +appmanager-sidebar
 +{% endblock %}
 +
++
 +{% block page_content_classes %}
 +appmanager-main-container{% if formdesigner %} formdesigner-content-wrapper{% endif %}
 +{% endblock %}
  
  {% block title %}{% trans "Applications" %}{% endblock %}
  
-@@ -17,25 +25,33 @@
+@@ -17,25 +26,33 @@
    {% endcompress %}
  
    {% if less_debug %}
@@ -68,7 +74,7 @@
    {% endif %}
  
  {% endblock %}
-@@ -64,9 +80,11 @@
+@@ -64,9 +81,11 @@
      <script src="{% static 'style/js/ui-element.js' %}"></script>
      <script src="{% static 'langcodes/js/langcodes.js' %}"></script>
      <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
@@ -82,12 +88,9 @@
  {% endblock %}
  
  {% block js-inline %}{{ block.super }}
-@@ -77,39 +95,28 @@
-             keyboard: false,
-             show: true
+@@ -79,37 +98,26 @@
          }).on('hide.bs.modal', function () {
--            window.location = "{% url "default_app" domain %}";
-+            window.location = "{% url "corehq.apps.app_manager.views.view_app" domain %}";
+             window.location = "{% url "default_app" domain %}";
          });
 -        {% if show_live_preview %}
 -            var previewApp = hqImport('app_manager/js/preview_app.js');
@@ -131,7 +134,7 @@
  {% endblock %}
  
  {% block page_content %}
-@@ -143,7 +150,7 @@
+@@ -143,7 +151,7 @@
                  {% endblocktrans %}
              </p>
              <br>

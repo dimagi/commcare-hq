@@ -46,6 +46,7 @@ from corehq.apps.app_manager.util import (
     CASE_XPATH_SUBSTRING_MATCHES,
     USER_CASE_XPATH_PATTERN_MATCHES,
     USER_CASE_XPATH_SUBSTRING_MATCHES,
+    get_app_manager_template,
 )
 from corehq.apps.app_manager.xform import (
     CaseError,
@@ -560,7 +561,10 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         'allow_form_filtering': not isinstance(form, CareplanForm) and not form_has_schedule,
         'allow_form_workflow': not isinstance(form, CareplanForm),
         'uses_form_workflow': form.post_form_workflow == WORKFLOW_FORM,
-        'allow_usercase': domain_has_privilege(request.domain, privileges.USER_CASE),
+        'allow_usercase': (
+            domain_has_privilege(request.domain, privileges.USER_CASE)
+            and not toggles.USER_TESTING_SIMPLIFY.enabled(request.domain)
+        ),
         'is_usercase_in_use': is_usercase_in_use(request.domain),
         'is_module_filter_enabled': app.enable_module_filtering,
         'edit_name_url': reverse('edit_form_attr', args=[app.domain, app.id, form.unique_id, 'name']),
@@ -615,7 +619,12 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
                 {'key': key, 'path': path} for key, path in form.case_preload.items()
             ],
         })
-        return "app_manager/v1/form_view_careplan.html", context
+        template = get_app_manager_template(
+            domain,
+            "app_manager/v1/form_view_careplan.html",
+            "app_manager/v2/form_view_careplan.html",
+        )
+        return template, context
     elif isinstance(form, AdvancedForm):
         def commtrack_programs():
             if app.commtrack_enabled:
@@ -630,12 +639,22 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             'commtrack_programs': all_programs + commtrack_programs(),
         })
         context.update(get_schedule_context(form))
-        return "app_manager/v1/form_view_advanced.html", context
+        template = get_app_manager_template(
+            domain,
+            "app_manager/v1/form_view_advanced.html",
+            "app_manager/v2/form_view_advanced.html",
+        )
+        return template, context
     else:
         context.update({
             'show_custom_ref': toggles.APP_BUILDER_CUSTOM_PARENT_REF.enabled(request.user.username),
         })
-        return "app_manager/v1/form_view.html", context
+        template = get_app_manager_template(
+            domain,
+            "app_manager/v1/form_view.html",
+            "app_manager/v2/form_view.html",
+        )
+        return template, context
 
 
 @require_can_edit_apps
@@ -701,8 +720,12 @@ def xform_display(request, domain, form_unique_id):
 
     if request.GET.get('format') == 'html':
         questions = [FormQuestionResponse(q) for q in questions]
-
-        return render(request, 'app_manager/v1/xform_display.html', {
+        template = get_app_manager_template(
+            domain,
+            'app_manager/v1/xform_display.html',
+            'app_manager/v2/xform_display.html',
+        )
+        return render(request, template, {
             'questions': questions_in_hierarchy(questions)
         })
     else:

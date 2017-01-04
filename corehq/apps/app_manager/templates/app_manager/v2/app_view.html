@@ -61,39 +61,50 @@
   {% endif %}
 {% endblock %}
 
-{% block form-view %}
-  <div class="pull-right">
-    <a class="btn btn-default js-preview-toggle" style="display: none;" href="#">
-      <span class="js-preview-action-show hide"><i class="fa fa-play-circle"></i> {% trans "Preview Changes" %}</span>
-      <span class="js-preview-action-hide hide"><i class="fa fa-pause-circle"></i> {% trans "Hide Preview" %}</span>
-    </a>
-    <a href="{% url "app_summary" domain app.id %}" class="btn btn-default">
-      <i class="fa fa-list-alt"></i>
-      {% trans "App Summary" %}
-    </a>
+{% block pre_page_content %}
+
+  <div class="appmanager-page-actions">
+      <a class="btn btn-purple js-preview-toggle" style="display: none;" href="#">
+        <span class="js-preview-action-show hide"><i class="fa fa-play-circle"></i> {% trans "Preview App" %}</span>
+        <span class="js-preview-action-hide hide"><i class="fa fa-pause-circle"></i> {% trans "Preview App" %}</span>
+      </a>
+      {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}
+          <a href="{% url "app_summary" domain app.id %}" class="btn btn-default">
+              <i class="fa fa-list-alt"></i>
+              {% trans "App Summary" %}
+          </a>
+      {% endif %}
   </div>
 
-  <inline-edit params="
-      value: '{{ app.name|escapejs }}',
-      readOnlyClass: 'h3',
-      url: '{% url "edit_app_attr" domain app.id 'name' %}',
-      placeholder: '{% trans "Untitled App"|escapejs %}',
-      postSave: function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); },
-      rows: 1,
-      saveValueName: 'name',
-  "></inline-edit>
-  <br />
-  <inline-edit params="
-      value: '{{ app.short_comment|escapejs }}',
-      url: '{% url "edit_app_attr" domain app.id 'comment' %}',
-      placeholder: '{% trans "Enter app description here"|escapejs %}',
-      saveValueName: 'comment',
-      readOnlyClass: 'app-comment',
-      cols: 50,
-  "></inline-edit>
+  <div class="appmanager-edit-title">
+    <inline-edit-v2 params="
+        value: '{{ app.name|escapejs }}',
+        containerClass: 'h3 app-title',
+        url: '{% url "edit_app_attr" domain app.id 'name' %}',
+        placeholder: '{% trans "Untitled App"|escapejs %}',
+        postSave: function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); },
+        rows: 1,
+        saveValueName: 'name',
+        nodeName: 'input',
+    "></inline-edit-v2>
+  </div>
 
+  <div class="appmanager-edit-description">
+    <inline-edit-v2 params="
+        value: '{{ app.short_comment|escapejs }}',
+        url: '{% url "edit_app_attr" domain app.id 'comment' %}',
+        placeholder: '{% trans "Enter app description here"|escapejs %}',
+        saveValueName: 'comment',
+        containerClass: 'app-comment',
+        cols: 50,
+    "></inline-edit-v2>
+  </div>
+{% endblock %}
+
+{% block form-view %}
+  <div class="appmanager-tabs-container">
   {% block app_view_tabs %}{% endblock app_view_tabs %}
-
+  </div>
 {% endblock %}
 
 {% block modals %}{{ block.super }}

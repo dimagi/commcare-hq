@@ -1,4 +1,4 @@
-{% extends 'style/base_section.html' %}
+{% extends 'style/two_column.html' %}
 {% load xforms_extras %}
 {% load url_extras %}
 {% load hq_shared_tags %}
@@ -9,6 +9,7 @@
 {% block page_sidebar_classes %}
 appmanager-sidebar
 {% endblock %}
+
 
 {% block page_content_classes %}
 appmanager-main-container{% if formdesigner %} formdesigner-content-wrapper{% endif %}
@@ -95,7 +96,7 @@ appmanager-main-container{% if formdesigner %} formdesigner-content-wrapper{% en
             keyboard: false,
             show: true
         }).on('hide.bs.modal', function () {
-            window.location = "{% url "corehq.apps.app_manager.views.view_app" domain %}";
+            window.location = "{% url "default_app" domain %}";
         });
 
         var previewApp = hqImport('app_manager/js/preview_app.js');

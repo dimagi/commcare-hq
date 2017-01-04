@@ -6,12 +6,12 @@
 {% block js %}{{ block.super }}
     {% block reports-js %}
     {% compress js %}
-    <script src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
+    <script src="{% static 'reports/js/config.dataTables.bootstrap.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/jquery.history.js' %}"></script>
-    <script src="{% static 'reports/javascripts/datepicker.js' %}"></script>
-    <script src="{% static 'reports/javascripts/reports.config.js' %}"></script>
-    <script src="{% static 'reports/javascripts/reports.util.js' %}"></script>
-    <script src="{% static 'reports/javascripts/reports.async.js' %}"></script>
+    <script src="{% static 'reports/js/datepicker.js' %}"></script>
+    <script src="{% static 'reports/js/reports.config.js' %}"></script>
+    <script src="{% static 'reports/js/reports.util.js' %}"></script>
+    <script src="{% static 'reports/js/reports.async.js' %}"></script>
 
     {% endcompress %}
     {% endblock %}
