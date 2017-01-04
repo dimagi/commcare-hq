@@ -22,10 +22,10 @@ class AtomicBlobs(object):
         self.puts = None
         self.deletes = None
 
-    def put(self, content, bucket=DEFAULT_BUCKET):
+    def put(self, content, identifier=None, bucket=DEFAULT_BUCKET):
         if self.puts is None:
             raise InvalidContext("AtomicBlobs context is not active")
-        info = self.db.put(content, bucket=bucket)
+        info = self.db.put(content, identifier, bucket=bucket)
         self.puts.append((info, bucket))
         return info
 

@@ -18,18 +18,18 @@ class AbstractBlobDB(object):
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def put(self, content, bucket=DEFAULT_BUCKET, identifier=None):
+    def put(self, content, identifier=None, bucket=DEFAULT_BUCKET):
         """Put a blob in persistent storage
 
         :param content: A file-like object in binary read mode.
-        :param bucket: Optional bucket name used to partition blob data
-        in the persistent storage medium. This may be delimited with
-        slashes (/). It must be a valid relative path.
         :param identifier: Optional identifier as the blob identifier (key).
         If not passed, a short identifier is generated that will be collision free
         only up to about 1000 keys. If more than a handful of objects are going to be
         in the same bucket, it's recommended to use `identifier=random_url_id(16)`
         for a 128-bit key.
+        :param bucket: Optional bucket name used to partition blob data
+        in the persistent storage medium. This may be delimited with
+        slashes (/). It must be a valid relative path.
         :returns: A `BlobInfo` named tuple. The returned object has a
         `identifier` member that must be used to get or delete the blob.
         """
