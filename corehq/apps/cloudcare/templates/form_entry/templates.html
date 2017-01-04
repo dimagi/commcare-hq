@@ -56,12 +56,8 @@
 </script>
 
 <script type="text/html" id="form-fullform-ko-template">
-    <div class="breadcrumb-form-container"
-         data-bind="css: { 'breadcrumb-form-single-question': showInFormNavigation }">
-      <ol class="breadcrumb breadcrumb-form">
-        <li class="js-home breadcrumb-text"><i class="fa fa-home"></i></li>
-        <li class="breadcrumb-text" data-bind="text: title"></li>
-      </ol>
+    <div class="webforms-nav-container"
+         data-bind="css: { 'webforms-nav-single-question': showInFormNavigation }">
       <div class="webforms-nav"
            data-bind="template: { name: 'form-navigation-ko-template' }"></div>
     </div>
@@ -97,7 +93,6 @@
 </script>
 
 <script type="text/html" id="instance-viewer-ko-template">
-        <hr/>
         <div id="instance-xml-home" class="debugger" data-bind="
             css: {
                 'debugger-minimized': isMinimized,
