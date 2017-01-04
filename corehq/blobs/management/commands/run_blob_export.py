@@ -1,8 +1,6 @@
 import logging
 import os
 import sys
-from datetime import datetime
-from optparse import make_option
 from django.core.management import BaseCommand, CommandError
 from corehq.blobs.migrate import EXPORTERS
 from corehq.blobs.zipdb import get_export_filename

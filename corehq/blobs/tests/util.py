@@ -6,6 +6,11 @@ import corehq.blobs as blobs
 from corehq.blobs.fsdb import FilesystemBlobDB
 from corehq.blobs.s3db import S3BlobDB
 from corehq.blobs.migratingdb import MigratingBlobDB
+from corehq.blobs.util import random_url_id
+
+
+def get_id():
+    return random_url_id(8)
 
 
 class TemporaryBlobDBMixin(object):
