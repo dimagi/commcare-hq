@@ -346,9 +346,14 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             )
         users_at_locations = []
         if location_ids:
+            user_ids_at_accessible_locations = user_ids_at_locations_and_descendants(location_ids)
+            if limit_user_ids:
+                user_ids_at_accessible_locations = (set(limit_user_ids).intersection(
+                    set(user_ids_at_accessible_locations))
+                )
             users_at_locations = util.get_all_users_by_domain(
                 domain=domain,
-                user_ids=user_ids_at_locations_and_descendants(location_ids),
+                user_ids=user_ids_at_accessible_locations,
                 simplified=True,
                 CommCareUser=CommCareUser,
             )
