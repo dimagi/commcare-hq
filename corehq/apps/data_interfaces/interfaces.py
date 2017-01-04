@@ -7,7 +7,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.es import cases as case_es
-from corehq.apps.es.users import user_ids_at_locations
+from corehq.apps.es.users import user_ids_at_locations, UserES
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
@@ -20,6 +20,7 @@ from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
 from corehq.apps.reports.standard.inspect import SubmitHistoryMixin
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
+from corehq.apps.reports.util import get_simplified_users
 
 from .dispatcher import EditDataInterfaceDispatcher
 
@@ -93,8 +94,8 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface):
                 self.request.couch_user)
             )
             accessible_user_ids = user_ids_at_locations(accessible_location_ids)
-            active_users = self.get_all_users_by_domain(user_filter=tuple(HQUserType.all()), simplified=True,
-                                                        user_ids=tuple(accessible_user_ids))
+            user_query = UserES().location(accessible_location_ids)
+            active_users = get_simplified_users(user_query)
         else:
             active_users = self.get_all_users_by_domain(user_filter=tuple(HQUserType.all()), simplified=True)
             context.update(groups=[dict(ownerid=group.get_id, name=group.name, type="group")
