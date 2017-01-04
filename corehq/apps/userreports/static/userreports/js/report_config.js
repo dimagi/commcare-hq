@@ -312,6 +312,16 @@ var reportBuilder = function () {
             return self.otherColumns().length > 0;
         });
 
+        self.validate = function () {
+            var isValid = true;
+            isValid = self.filterList.validate() && isValid;
+            isValid = self.defaultFilterList.validate() && isValid;
+            if (!isValid){
+                alert('Invalid report configuration. Please fix the issues and try again.');
+            }
+            return isValid;
+        };
+
         self.serialize = function () {
             return {
                 "existing_report": self.existingReportId,
@@ -341,31 +351,37 @@ var reportBuilder = function () {
         self.saveButton = button.init({
             unsavedMessage: "You have unsaved settings.",
             save: function () {
-                self.saveButton.ajax({
-                    url: window.location.href,  // POST here; keep URL params
-                    type: "POST",
-                    data: JSON.stringify(self.serialize()),
-                    dataType: 'json',
-                    success: function (data) {
-                        self.existingReportId = data['report_id'];
-                    },
-                });
+                var isValid = self.validate();
+                if (isValid) {
+                    self.saveButton.ajax({
+                        url: window.location.href,  // POST here; keep URL params
+                        type: "POST",
+                        data: JSON.stringify(self.serialize()),
+                        dataType: 'json',
+                        success: function (data) {
+                            self.existingReportId = data['report_id'];
+                        },
+                    });
+                }
             },
         });
         self.saveButton.ui.appendTo($("#saveButtonHolder"));
 
         $("#btnSaveView").click(function () {
-            $.ajax({
-                url: window.location.href,
-                type: "POST",
-                data: JSON.stringify(self.serialize()),
-                success: function (data) {
-                    // Redirect to the newly-saved report
-                    self.saveButton.setState('saved');
-                    window.location.href = data['report_url'];
-                },
-                dataType: 'json',
-            });
+            var isValid = self.validate();
+            if (isValid) {
+                $.ajax({
+                    url: window.location.href,
+                    type: "POST",
+                    data: JSON.stringify(self.serialize()),
+                    success: function (data) {
+                        // Redirect to the newly-saved report
+                        self.saveButton.setState('saved');
+                        window.location.href = data['report_url'];
+                    },
+                    dataType: 'json',
+                });
+            }
         });
 
         return self;
