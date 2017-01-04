@@ -141,6 +141,7 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
         episode_case = self.case_accessor.get_case(episode_case_ids[0])
         self.assertEqual(
             OrderedDict([
+                ('adherence_schedule_date_start', '2016-12-22'),
                 ('date_of_diagnosis', '2016-12-13'),
                 ('date_of_mo_signature', '2016-12-23'),
                 ('disease_classification', 'extra_pulmonary'),
