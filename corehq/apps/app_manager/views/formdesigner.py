@@ -21,10 +21,11 @@ from corehq.apps.app_manager.const import (
     SCHEDULE_GLOBAL_NEXT_VISIT_DATE,
 )
 from corehq.apps.app_manager.util import (
+    get_app_manager_template,
     get_casedb_schema,
     get_session_schema,
     app_callout_templates,
-    get_app_manager_template,
+    is_usercase_in_use,
 )
 from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
 from corehq.apps.app_manager.dbaccessors import get_app
@@ -177,49 +178,8 @@ def get_form_data_schema(request, domain, form_unique_id):
     if `form_unique_id` is provided.
 
     :returns: A list of data source schema definitions. A data source schema
-    definition is a dictionary with the following format:
-    ```
-    {
-        "id": string (default instance id)
-        "uri": string (instance src)
-        "path": string (path of root nodeset, not including `instance(...)`)
-        "name": string (human readable name)
-        "structure": {
-            element: {
-                "name": string (optional human readable name)
-                "structure": {
-                    nested-element: { ... }
-                },
-            },
-            ref-element: {
-                "reference": {
-                    "source": string (optional data source id, defaults to this data source)
-                    "subset": string (optional subset id)
-                    "key": string (referenced property)
-                }
-            },
-            @attribute: { },
-            ...
-        },
-        "subsets": [
-            {
-                "id": string (unique identifier for this subset)
-                "key": string (unique identifier property name)
-                "name": string (optional human readable name)
-                "structure": { ... }
-                "related": {
-                    string (relationship): string (related subset name),
-                    ...
-                }
-            },
-            ...
-        ]
-    }
-    ```
-    A structure may contain nested structure elements. A nested element
-    may contain one of "structure" (a concrete structure definition) or
-    "reference" (a link to some other structure definition). Any
-    structure item may have a human readable "name".
+    definition is a dictionary. For details on the content of the dictionary,
+    see https://github.com/dimagi/Vellum/blob/master/src/datasources.js
     """
     data = []
 
@@ -233,7 +193,7 @@ def get_form_data_schema(request, domain, form_unique_id):
 
     try:
         data.append(get_session_schema(form))
-        if form and form.requires_case():
+        if form.requires_case() or is_usercase_in_use(app):
             data.append(get_casedb_schema(form))
     except Exception as e:
         return HttpResponseBadRequest(e)
