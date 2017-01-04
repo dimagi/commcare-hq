@@ -500,8 +500,7 @@ class XFormManagementView(DataInterfaceSection):
             mode,
             self.domain,
             self.request.couch_user,
-            form_ids_or_query_string,
-            self.request.can_access_all_locations
+            form_ids_or_query_string
         )
         task_ref.set_task(task)
 

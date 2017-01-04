@@ -43,8 +43,7 @@ def bulk_archive_forms(domain, couch_user, uploaded_data):
 
 
 @task
-def bulk_form_management_async(archive_or_restore, domain, couch_user, form_ids_or_query_string,
-                               can_access_all_locations):
+def bulk_form_management_async(archive_or_restore, domain, couch_user, form_ids_or_query_string):
     # form_ids_or_query_string - can either be list of formids or a BulkFormMangementInterface query url
     def get_ids_from_url(query_string, domain, couch_user):
         from django.http import HttpRequest, QueryDict
@@ -54,7 +53,7 @@ def bulk_form_management_async(archive_or_restore, domain, couch_user, form_ids_
         _request.user = couch_user.get_django_user()
         _request.domain = domain
         _request.couch_user.current_domain = domain
-        _request.can_access_all_locations = can_access_all_locations
+        _request.can_access_all_locations = couch_user.has_permission(domain, 'access_all_locations')
 
         _request.GET = QueryDict(query_string)
         dispatcher = EditDataInterfaceDispatcher()
