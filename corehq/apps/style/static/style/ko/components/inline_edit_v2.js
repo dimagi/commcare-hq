@@ -126,7 +126,7 @@ hqDefine('style/ko/components/inline_edit_v2.js', function() {
         template: '<div class="ko-inline-edit inline" data-bind="css: {\'has-error\': hasError()}">\
             <div class="read-only" data-bind="visible: !isEditing(), click: edit">\
                 <span data-bind="visible: isSaving()" class="pull-right">\
-                    <img src="/static/hqstyle/img/loading.gif"/>\
+                    <img src="/static/hqstyle/images/loading.gif"/>\
                 </span>\
                 <!-- ko if: iconClass -->\
                 <span class="prefixed-icon" data-bind="css: containerClass">\
