@@ -90,7 +90,7 @@ from corehq.apps.userreports.reports.builder.forms import (
     DataSourceForm,
     ConfigureMapReportForm,
     DataSourceBuilder,
-    REPORT_BUILDER_FILTER_TYPE_MAP)
+    REPORT_BUILDER_FILTER_TYPE_MAP, DefaultFilterViewModel, UserFilterViewModel)
 from corehq.apps.userreports.reports.filters.choice_providers import (
     ChoiceQueryContext,
 )
@@ -677,6 +677,9 @@ class ConfigureReport(ReportBuilderView):
             self.source_id = self.request.GET['source']
 
         self.data_source_builder = DataSourceBuilder(self.domain, self.app, self.source_type, self.source_id)
+        self._properties_by_column = {
+            p.column_id: p for p in self.data_source_builder.data_source_properties.values()
+        }
 
         return super(ConfigureReport, self).dispatch(request, *args, **kwargs)
 
@@ -745,6 +748,27 @@ class ConfigureReport(ReportBuilderView):
         """
         return column_id in [c.indicator_id for c in self.report_column_options.values()]
 
+    def _data_source_prop_exists(self, indicator_id):
+        """
+        Return True if there exists a DataSourceProperty corresponding to the
+        given data source indicator id.
+        :param indicator_id:
+        :return:
+        """
+        return indicator_id in self._properties_by_column
+
+    def _get_property_id_by_indicator_id(self, indicator_column_id):
+        """
+        Return the data source property id corresponding to the given data
+        source indicator column id.
+        :param indicator_column_id: The column_id field of a data source indicator
+            configuration dictionary
+        :return: A DataSourceProperty property id, e.g. "/data/question1"
+        """
+        data_source_property = self._properties_by_column.get(indicator_column_id)
+        if data_source_property:
+            return data_source_property.id
+
     def _get_column_option_by_indicator_id(self, indicator_column_id):
         """
         Return the ColumnOption corresponding to the given indicator id.
@@ -808,7 +832,8 @@ class ConfigureReport(ReportBuilderView):
 
             # TODO: Consider renaming this because it's more like "possible" data source props
             'data_source_properties': [p._asdict() for p in self.data_source_builder.data_source_properties.values()],
-
+            'initial_user_filters': [f._asdict() for f in self.get_initial_user_filters()],
+            'initial_default_filters': [f._asdict() for f in self.get_initial_default_filters()],
             'column_options': self.get_column_option_dicts(),
             'initial_columns': self._get_initial_columns(),
             'source_type': self.source_type,
@@ -850,6 +875,86 @@ class ConfigureReport(ReportBuilderView):
         return _get_aggregation_columns(
             report_data['aggregate'], report_data['columns'], self.report_column_options
         )
+
+    @memoized
+    def get_initial_default_filters(self):
+        return [self._get_filter_view_model(f) for f in self.existing_report.prefilters] if self.existing_report else []
+
+    @memoized
+    def get_initial_user_filters(self):
+        if self.existing_report:
+            return [self._get_filter_view_model(f) for f in self.existing_report.filters_without_prefilters]
+        if self.source_type == 'case':
+            return self._default_case_report_filters
+        else:
+            # self.source_type == 'form'
+            return self._default_form_report_filters
+
+    def _get_filter_view_model(self, filter):
+        """
+        Given a ReportFilter, return a FilterViewModel representing
+        the knockout view model representing this filter in the report builder.
+
+        """
+        exists = self._data_source_prop_exists(filter['field'])
+        if filter['type'] == 'pre':
+            return DefaultFilterViewModel(
+                exists_in_current_version=exists,
+                display_text='',
+                format='Value' if filter['pre_value'] else 'Date',
+                property=self._get_property_id_by_indicator_id(filter['field']) if exists else None,
+                data_source_field=filter['field'] if not exists else None,
+                pre_value=filter['pre_value'],
+                pre_operator=filter['pre_operator'],
+            )
+        else:
+            filter_type_map = {
+                'dynamic_choice_list': 'Choice',
+                # This exists to handle the `closed` filter that might exist
+                'choice_list': 'Choice',
+                'date': 'Date',
+                'numeric': 'Numeric'
+            }
+            return UserFilterViewModel(
+                exists_in_current_version=exists,
+                display_text=filter['display'],
+                format=filter_type_map[filter['type']],
+                property=self._get_property_id_by_indicator_id(filter['field']) if exists else None,
+                data_source_field=filter['field'] if not exists else None
+            )
+
+    @property
+    @memoized
+    def _default_case_report_filters(self):
+        return [
+            UserFilterViewModel(
+                exists_in_current_version=True,
+                property='closed',
+                data_source_field=None,
+                display_text=_('Closed'),
+                format='Choice',
+            ),
+            UserFilterViewModel(
+                exists_in_current_version=True,
+                property='computed/owner_name',
+                data_source_field=None,
+                display_text=_('Case Owner'),
+                format='Choice',
+            ),
+        ]
+
+    @property
+    @memoized
+    def _default_form_report_filters(self):
+        return [
+            UserFilterViewModel(
+                exists_in_current_version=True,
+                property='timeEnd',
+                data_source_field=None,
+                display_text='Form completion time',
+                format='Date',
+            ),
+        ]
 
     def _get_filters(self, report_data):
         """

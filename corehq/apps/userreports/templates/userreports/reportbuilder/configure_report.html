@@ -191,9 +191,9 @@
 {% block js-inline %}{{ block.super }}
 <script>
 
-  var ReportBuilder = {
-    Constants: hqImport("userreports/js/constants.js"),
-  }
+    var ReportBuilder = {
+      Constants: hqImport("userreports/js/constants.js"),
+    };
 
     $(document).ready(function() {
         var reportConfig = new reportBuilder.ReportConfig({
@@ -207,6 +207,8 @@
             "existingReport": {% if existing_report %}{{ existing_report.get_id|JSON }}{% else %}null{% endif %},
             "existingReportType": {{ existing_report_type|JSON }},
             "dataSourceProperties": {{ data_source_properties|JSON }},
+            "initialDefaultFilters": {{ initial_default_filters|JSON }},
+            "initialUserFilters": {{ initial_user_filters|JSON }},
         });
         ko.applyBindings(reportConfig, $("#reportConfig").get(0));
     });

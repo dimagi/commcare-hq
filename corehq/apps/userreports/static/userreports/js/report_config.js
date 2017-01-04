@@ -164,7 +164,7 @@ var reportBuilder = function () {
         self.filterList = new PropertyList({
             hasFormatCol: self._sourceType === "case",
             hasCalculationCol: false,
-            initialCols: [],
+            initialCols: config['initialUserFilters'],
             buttonText: 'Add User Filter',
             analyticsAction: 'Add User Filter',
             propertyHelpText: django.gettext('Choose the property you would like to add as a filter to this report.'),
@@ -182,7 +182,7 @@ var reportBuilder = function () {
             hasCalculationCol: false,
             hasDisplayCol: false,
             hasFilterValueCol: true,
-            initialCols: [],
+            initialCols: config['initialDefaultFilters'],
             buttonText: 'Add Default Filter',
             analyticsAction: 'Add Default Filter',
             propertyHelpText: django.gettext('Choose the property you would like to add as a filter to this report.'),
