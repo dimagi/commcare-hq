@@ -479,7 +479,6 @@ SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 PROBONO_SUPPORT_EMAIL = 'pro-bono@dimagi.com'
 CCHQ_BUG_REPORT_EMAIL = 'commcarehq-bug-reports@dimagi.com'
 ACCOUNTS_EMAIL = 'accounts@dimagi.com'
-FINANCE_EMAIL = 'finance@dimagi.com'
 DATA_EMAIL = 'datatree@dimagi.com'
 SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange@dimagi.com'
 INTERNAL_SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange+internal@dimagi.com'
