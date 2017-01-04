@@ -2,7 +2,6 @@ from __future__ import absolute_import
 
 import re
 from abc import ABCMeta, abstractmethod
-from uuid import uuid4
 
 from corehq.blobs import DEFAULT_BUCKET
 from corehq.blobs.exceptions import ArgumentError
