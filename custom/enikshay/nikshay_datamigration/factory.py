@@ -9,13 +9,12 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.enikshay.case_utils import get_open_occurrence_case_from_person, get_open_episode_case_from_occurrence
 from custom.enikshay.exceptions import ENikshayCaseNotFound
-from custom.enikshay.nikshay_datamigration.models import Outcome, Followup
+from custom.enikshay.nikshay_datamigration.models import Outcome
 
 
 PERSON_CASE_TYPE = 'person'
 OCCURRENCE_CASE_TYPE = 'occurrence'
 EPISODE_CASE_TYPE = 'episode'
-TEST_CASE_TYPE = 'test'
 
 MockLocation = namedtuple('MockLocation', 'name location_id location_type')
 MockLocationType = namedtuple('MockLocationType', 'name code')
@@ -94,10 +93,7 @@ class EnikshayCaseFactory(object):
         person_structure = self.get_person_case_structure()
         ocurrence_structure = self.get_occurrence_case_structure(person_structure)
         episode_structure = self.get_episode_case_structure(ocurrence_structure)
-        test_structures = [
-            self.get_test_case_structure(followup, ocurrence_structure) for followup in self._followups
-        ]
-        return [episode_structure] + test_structures
+        return [episode_structure]
 
     def get_person_case_structure(self):
         kwargs = {
@@ -243,48 +239,6 @@ class EnikshayCaseFactory(object):
 
         return CaseStructure(**kwargs)
 
-    def get_test_case_structure(self, followup, occurrence_structure):
-        kwargs = {
-            'attrs': {
-                'create': True,
-                'case_type': TEST_CASE_TYPE,
-                'owner_id': '-',
-                'update': {
-                    'date_tested': followup.TestDate,
-
-                    'migration_created_case': 'true',
-                    'migration_followup_id': followup.id,
-                },
-            },
-            'indices': [CaseIndex(
-                occurrence_structure,
-                identifier='host',
-                relationship=CASE_INDEX_EXTENSION,
-                related_type=occurrence_structure.attrs['case_type'],
-            )],
-            # this prevents creating duplicate occurrence data on creation of the test cases
-            'walk_related': False,
-        }
-
-        if self.existing_occurrence_case:
-            matching_test_case = next((
-                extension_case for extension_case in self.case_accessor.get_cases([
-                    index.referenced_id for index in
-                    self.existing_occurrence_case.reverse_indices
-                ])
-                if (
-                    extension_case.type == TEST_CASE_TYPE
-                    and followup.id == int(extension_case.dynamic_case_properties().get('migration_followup_id', -1))
-                )
-            ), None)
-            if matching_test_case:
-                kwargs['case_id'] = matching_test_case.case_id
-                kwargs['attrs']['create'] = False
-            else:
-                kwargs['attrs']['create'] = True
-
-        return CaseStructure(**kwargs)
-
     @property
     @memoized
     def _outcome(self):
@@ -293,11 +247,6 @@ class EnikshayCaseFactory(object):
             return zero_or_one_outcomes[0]
         else:
             return None
-
-    @property
-    @memoized
-    def _followups(self):
-        return Followup.objects.filter(PatientID=self.patient_detail)
 
     @property
     def state(self):
