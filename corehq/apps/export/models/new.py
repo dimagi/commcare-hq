@@ -1087,7 +1087,11 @@ class ExportDataSchema(Document):
                 identifier,
             )
 
-            current_schema.record_update(app.copy_of or app._id, app.version)
+            # Only record the version of builds on the schema. We don't care about
+            # whether or not the schema has seen the current build because that always
+            # gets processed.
+            if app.copy_of:
+                current_schema.record_update(app.copy_of, app.version)
 
         inferred_schema = cls._get_inferred_schema(domain, identifier)
         if inferred_schema:
