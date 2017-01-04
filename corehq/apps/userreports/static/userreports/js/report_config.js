@@ -174,6 +174,9 @@ var reportBuilder = function () {
             propertyOptions: config['dataSourceProperties'],
             selectablePropertyOptions: _getSelectableProperties(config['dataSourceProperties']),
         });
+        self.filterList.serializedProperties.subscribe(function () {
+            self.saveButton.fire("change");
+        });
         self.defaultFilterList = new PropertyList({
             hasFormatCol: true,
             hasCalculationCol: false,
@@ -188,6 +191,9 @@ var reportBuilder = function () {
             reportType: self.reportType(),
             propertyOptions: config['dataSourceProperties'],
             selectablePropertyOptions: _getSelectableProperties(config['dataSourceProperties']),
+        });
+        self.defaultFilterList.serializedProperties.subscribe(function () {
+            self.saveButton.fire("change");
         });
 
         self.refreshPreview = function (columns) {
