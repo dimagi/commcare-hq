@@ -76,6 +76,7 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
 
     def setUp(self):
         super(LocationFixturesTest, self).setUp()
+        delete_all_users()
         self.user = create_restore_user(self.domain, 'user', '123')
 
     def test_no_user_locations_returns_empty(self, uses_locations):
@@ -213,6 +214,21 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
             'include_without_expanding',
             ['Massachusetts', 'Suffolk', 'Boston', 'Revere', 'New York']
         )
+
+    def test_include_without_expanding_same_level(self, uses_locations):
+        # I want a list of all the counties, but only the cities in my county
+        self.user._couch_user.set_location(self.locations['Boston'].couch_location)
+        location_type = self.locations['Boston'].location_type
+
+        # Get all the counties
+        location_type.include_without_expanding = self.locations['Middlesex'].location_type
+        # Expand downwards from my county
+        location_type.expand_from = self.locations['Middlesex'].location_type
+        location_type.save()
+        self._assert_fixture_has_locations(
+            'include_without_expanding_same_level',
+            ['Massachusetts', 'New York', 'Middlesex', 'Suffolk', 'New York City', 'Boston', 'Revere']
+        )  # (New York City is of type "county")
 
 
 @mock.patch.object(Domain, 'uses_locations', return_value=True)  # removes dependency on accounting
