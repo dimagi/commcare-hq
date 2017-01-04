@@ -5,11 +5,15 @@ var reportBuilder = function () {
     self.ReportColumn = function (column, parent) {
         var self = this;
 
+        self._defaultAggregation = function () {
+            return column["groupByOrAggregation"] || (self.isNonNumeric ? 'expand' : 'sum');
+        };
+
         self.columnId = column["column_id"];
         self.name = column["name"];
         self.label = column["label"];
-        self.isNumeric = column["is_numeric"];
-        self.aggregation = column["is_numeric"] ? "simple": null;
+        self.isNonNumeric = column["is_non_numeric"];
+        self.aggregation = self._defaultAggregation();
         self.isGroupByColumn = false;
 
         self.groupByOrAggregation = ko.observable(self.aggregation);
@@ -54,7 +58,7 @@ var reportBuilder = function () {
                 "column_id": self.columnId,
                 "name": self.name,
                 "label": self.label,
-                "is_numeric": self.isNumeric,
+                "is_non_numeric": self.isNonNumeric,
                 "is_group_by_column": self.isGroupByColumn,
                 "aggregation": self.aggregation,
             };
@@ -68,6 +72,21 @@ var reportBuilder = function () {
      */
     self.ReportConfig = function (config) {
         var self = this;
+
+        /**
+         * Populate self.selectedColumns
+         */
+        self._initializeSelectedColumns = function() {
+            // Start with just 5 indicators as an example if we aren't editing an existing report with columns
+            var _selected_columns = config['initialColumns'] || self.columnOptions.slice(0, 5);
+            self.selectedColumns(_.map(
+                _selected_columns,
+                function (column) {
+                    return new reportBuilder.ReportColumn(column, self);
+                }
+            ));
+        };
+
         self._app = config['app'];
         self._sourceType = config['sourceType'];
         self._sourceId = config['sourceId'];
@@ -75,15 +94,12 @@ var reportBuilder = function () {
         self.existingReportId = config['existingReport'];
 
         self.reportTitle = config["reportTitle"];
-        self.columns = config["columns"];
+        self.columnOptions = config["columnOptions"];  // Columns that could be added to the report
         self.dataSourceUrl = config["dataSourceUrl"];  // Fetch the preview data asynchronously.
 
-        self.selectedColumns = ko.observableArray(_.map(
-            self.columns.slice(0, 5),  // Start with just 5 indicators.
-            function (column) {
-                return new reportBuilder.ReportColumn(column, self);
-            }
-        ));
+
+        self.selectedColumns = ko.observableArray();
+        self._initializeSelectedColumns();
         self.selectedColumns.subscribe(function (newValue) {
             self.refreshPreview(newValue);
             self.saveButton.fire('change');
@@ -91,7 +107,7 @@ var reportBuilder = function () {
 
         self.reportTypeListLabel = (config['sourceType'] === "case") ? "Case List" : "Form List";
         self.reportTypeAggLabel = (config['sourceType'] === "case") ? "Case Summary" : "Form Summary";
-        self.reportType = ko.observable('list');
+        self.reportType = ko.observable(config['existingReportType']);
         self.reportType.subscribe(function (newValue) {
             var wasAggregationEnabled = self.isAggregationEnabled();
             self.isAggregationEnabled(newValue === "agg");
@@ -106,7 +122,7 @@ var reportBuilder = function () {
             self.saveButton.fire('change');
         });
 
-        self.isAggregationEnabled = ko.observable(false);
+        self.isAggregationEnabled = ko.observable(self.reportType() == "agg");
 
         self.newColumnName = ko.observable('');
 
@@ -177,7 +193,7 @@ var reportBuilder = function () {
                 }
 
                 var aggColumns = _.filter(self.selectedColumns(), function (c) {
-                    return self.isAggregationEnabled && c.isNumeric && !c.isGroupByColumn;
+                    return self.isAggregationEnabled && !c.isGroupByColumn;
                 });
                 var groupByNames = _.map(
                     _.filter(self.selectedColumns(), function (c) {
@@ -220,7 +236,7 @@ var reportBuilder = function () {
         };
 
         self.addColumn = function () {
-            var column = _.find(self.columns, function (c) {
+            var column = _.find(self.columnOptions, function (c) {
                 return c["name"] === self.newColumnName();
             });
             self.selectedColumns.push(new reportBuilder.ReportColumn(column, self));
@@ -229,7 +245,7 @@ var reportBuilder = function () {
 
         self.otherColumns = ko.computed(function () {
             var names = _.map(self.selectedColumns(), function (c) { return c.name; });
-            return _.filter(self.columns, function (c) {
+            return _.filter(self.columnOptions, function (c) {
                 return !_.contains(names, c["name"]);
             });
         });
