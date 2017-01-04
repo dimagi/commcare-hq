@@ -1,6 +1,6 @@
 /* globals _, ko, $ */
 
-hqDefine('locations/ko/location_types.js', function(){
+hqDefine('locations/js/location_types.js', function(){
     'use strict';
     var ROOT_LOCATION_ID = -1;
 
