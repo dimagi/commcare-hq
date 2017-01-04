@@ -7,7 +7,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.util import namedtupledict
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.locations.dbaccessors import get_user_ids_by_location
+from corehq.apps.es.users import user_ids_at_locations_and_descendants
 from corehq.util import remove_dups, flatten_list
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.commtrack.models import SQLLocation
@@ -323,8 +323,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         users = []
 
         if location_ids:
-            for location_id in location_ids:
-                user_ids |= set(get_user_ids_by_location(domain, location_id))
+            user_ids |= set(user_ids_at_locations_and_descendants(location_ids))
 
         if limit_user_ids:
             user_ids = set(limit_user_ids).intersection(user_ids)
