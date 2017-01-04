@@ -109,8 +109,6 @@ class EnikshayCaseFactory(object):
                     'age_entered': self.patient_detail.page,
                     'contact_phone_number': validate_phone_number(self.patient_detail.pmob),
                     'current_address': self.patient_detail.paddress,
-                    'current_address_district_choice': self.district.location_id,
-                    'current_address_state_choice': self.state.location_id,
                     'dob': date(date.today().year - self.patient_detail.page, 7, 1),
                     'dob_known': 'no',
                     'first_name': self.patient_detail.first_name,
@@ -124,7 +122,6 @@ class EnikshayCaseFactory(object):
                     ),
                     'secondary_contact_phone_number': validate_phone_number(self.patient_detail.cmob),
                     'sex': self.patient_detail.sex,
-                    'tu_choice': self.tu.name,
 
                     'migration_created_case': 'true',
                 },
@@ -135,6 +132,9 @@ class EnikshayCaseFactory(object):
             if self.phi.location_type.code == 'phi':
                 kwargs['attrs']['owner_id'] = self.phi.location_id
                 kwargs['attrs']['update']['phi'] = self.phi.name
+                kwargs['attrs']['update']['tu_choice'] = self.tu.name
+                kwargs['attrs']['update']['current_address_district_choice'] = self.district.location_id
+                kwargs['attrs']['update']['current_address_state_choice'] = self.state.location_id
             else:
                 kwargs['attrs']['owner_id'] = ARCHIVED_CASE_OWNER_ID
                 kwargs['attrs']['update']['archive_reason'] = 'migration_not_phi_location'
@@ -330,8 +330,42 @@ class EnikshayCaseFactory(object):
 
 
 def get_nikshay_codes_to_location(domain):
+    """
+    Assuming that if a phi has a nikshay-code, its TU, DTO, and STO do too
+    """
     return {
-        location.metadata.get('nikshay_code'): location
-        for location in SQLLocation.objects.filter(domain=domain)
-        if 'nikshay_code' in location.metadata
+        nikshay_code: location
+        for phi in SQLLocation.objects.filter(domain=domain).filter(location_type__code='phi')
+        for nikshay_code, location in _get_all_nikshay_codes(phi)
+        if 'nikshay_code' in phi.metadata
     }
+
+
+def _get_all_nikshay_codes(phi):
+    tu = phi.parent
+    dto = tu.parent
+    sto = dto.parent.parent
+
+    phi_code = phi.metadata.get('nikshay_code')
+    tu_code = tu.metadata.get('nikshay_code')
+    dto_code = dto.metadata.get('nikshay_code')
+    sto_code = sto.metadata.get('nikshay_code')
+
+    return [
+        (
+            "%s-%s-%s-%s" % (sto_code, dto_code, tu_code, phi_code),
+            phi
+        ),
+        (
+            "%s-%s-%s" % (sto_code, dto_code, tu_code),
+            tu
+        ),
+        (
+            "%s-%s" % (sto_code, dto_code),
+            dto
+        ),
+        (
+            "%s" % sto_code,
+            sto
+        ),
+    ]
