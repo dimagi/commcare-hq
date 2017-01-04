@@ -92,7 +92,7 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
                 ('hiv_status', 'non_reactive'),
                 ('last_name', 'C'),
                 ('migration_created_case', 'true'),
-                ('person_id', 'FROM_NIKSHAY_MH-ABD-05-16-0001'),
+                ('person_id', 'N-MH-ABD-05-16-0001'),
                 ('phi', 'PHI'),
                 ('secondary_contact_name_address', 'Secondary name, Secondary address'),
                 ('secondary_contact_phone_number', '1234567890'),
