@@ -87,7 +87,7 @@ domain_specific = [
 
 urlpatterns = [
     url(r'^favicon\.ico$', RedirectView.as_view(
-        url=static('hqwebapp/img/favicon2.png'), permanent=True)),
+        url=static('hqwebapp/images/favicon2.png'), permanent=True)),
     url(r'^auditcare/', include('auditcare.urls')),
     url(r'^admin/', include(admin.site.urls)),
     url(r'^analytics/', include('corehq.apps.analytics.urls')),

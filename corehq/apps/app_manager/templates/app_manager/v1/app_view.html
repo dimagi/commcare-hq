@@ -273,7 +273,7 @@
         <div class="tab-pane" id="releases">
             <!-- templates only; will be populated asynchronously -->
             <script type="text/html" class="hq-loading">
-                <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
+                <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator" />
                 {% trans "Loading..." %}
             </script>
             <script type="text/html" class="hq-loading-error">
@@ -293,7 +293,7 @@
         {% if app.get_doc_type == "Application" %}
             <div class="tab-pane multimedia" id="multimedia">
                 <div data-bind="if: load_state() === 'loading'">
-                    <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
+                    <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator" />
                     {% trans "Loading ..." %}
                 </div>
                 <div data-bind="html: multimedia_page_html"></div>
