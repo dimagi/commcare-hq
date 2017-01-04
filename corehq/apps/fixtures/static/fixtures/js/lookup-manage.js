@@ -1,6 +1,22 @@
-var somethingWentWrong = $("#FailText").text();
-$(function () {
+/* global define */
+/**
+ *  Handles fixtures' "Manage Tables" page.
+ */
+define([
+    "jquery",
+    "knockout",
+    "style/js/hq.helpers",
+], function(
+    $,
+    ko
+) {
     "use strict";
+    var somethingWentWrong = $("#FailText").text();
+    var initialPageData = $.parseJSON($("#initial-page-json").text()),
+        FixtureDownloadUrl = initialPageData.FixtureDownloadUrl,
+        TableViewUrl = initialPageData.TableViewUrl,
+        DataTypeUrl = initialPageData.DataTypeUrl,
+        UpdateTableUrl = initialPageData.UpdateTableUrl;
     function log (x) {
         return x;
     }
@@ -333,8 +349,8 @@ $(function () {
         };
         self.removeDataType = function (dataType) {
             if (confirm("Are you sure you want to delete the table '" + dataType.tag() + "'?")){
-                    self.data_types.destroy(dataType);
-                    dataType.save();                 
+                self.data_types.destroy(dataType);
+                dataType.save();
             }
             return false;
         };

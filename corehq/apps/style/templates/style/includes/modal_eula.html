@@ -30,8 +30,12 @@
     </div>
     {% url "eula_basic" as eula_url %}
     {% include 'style/includes/load_into_modal.html' with modal_id="eulaModal" load_from=eula_url %}
-    <script>
+    <script type="text/javascript">
+    {% if request.use_requirejs %}
+        requirejs(['jquery', 'bootstrap'], function($) {
+    {% else %}
         $(window).on('load', function(){
+    {% endif %}
             $('#eulaModal').modal('show');
         });
     </script>

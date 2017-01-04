@@ -1,6 +1,21 @@
 {% extends 'reports/filters/base.html' %}
 {% load hq_shared_tags %}
 {% block filter_content %}
+    <div class="reports-filters-single-option">
+        <div class="initial-data hide">
+            {
+                {% if pagination.enabled %}
+                    "pagination": true,
+                    "url": "{{ pagination.url }}",
+                    "handler": "{{ pagination.handler }}",
+                    "action": "{{ pagination.action }}"
+                {% else %}
+                    "pagination": false,
+                    "selectOptions": {{ select.options|JSON }},
+                    "selectCurrent": "{{ select.selected|safe|default:'' }}"
+                {% endif %}
+            }
+        </div>
     {% if pagination.enabled %}
         <input id="{{ css_id }}"
                class="input form-control"
@@ -14,53 +29,17 @@
                 data-bind="options: select_params, optionsText: 'text', optionsValue: 'val', {% if select.default_text %}optionsCaption: '{{ select.default_text }}', {% endif %}value: current_selection"
                 name="{{ slug }}"></select>
     {% endif %}
+    </div>
 {% endblock %}
+
 {% block filter_js %}
 <script>
-    $(function () {
-        {% if pagination.enabled %}
-            $('#{{ css_id }}').select2({
-                ajax: {
-                    url: '{{ pagination.url }}',
-                    type: 'POST',
-                    dataType: 'json',
-                    quietMills: 250,
-                    data: function (term, page) {
-                        return {
-                            q: term,
-                            page: page,
-                            handler: '{{ pagination.handler }}',
-                            action: '{{ pagination.action }}'
-                        }
-                    },
-                    results: function (data, page) {
-                        if (data.success) {
-                            var limit = data.limit;
-                            var hasMore = (page * limit) < data.total;
-                            return {
-                                results: data.items,
-                                more: hasMore
-                            };
-                        } else {
-                            console.log(data.error);
-                        }
-                    }
-                },
-                allowClear: true,
-                initSelection: function (elem, callback) {
-                    var val = $(elem).val();
-                    callback({
-                        id: val,
-                        text: val
-                    });
-                }
-            });
-        {% else %}
-            $('#{{ css_id }}').parent().koApplyBindings({
-                select_params: {{ select.options|JSON }},
-                current_selection: ko.observable('{{ select.selected|safe|default:'' }}'),
-            });
-            $('#{{ css_id }}').select2();
-        {% endif %}
-    });
-</script>{% endblock %}
+    if (!USE_REQUIREJS) {
+        $.when(
+            $.getScript("{% static 'reports/javascripts/filters.js' %}")
+        ).done(function() {
+            hqImport('reports/javascripts/filters.js').init();
+        });
+    }
+</script>
+{% endblock %}

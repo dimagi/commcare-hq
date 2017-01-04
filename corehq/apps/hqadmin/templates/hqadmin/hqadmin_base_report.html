@@ -17,7 +17,7 @@
     <script>
         {% if aoColumns %}
         $(function() {
-                var reportTables = new HQReportDataTables({
+                var reportTables = hqImport('reports/javascripts/config.dataTables.bootstrap.js').HQReportDataTables({
                     {% if aoColumns %}aoColumns: {{ aoColumns|JSON }}{% endif %},
                 });
                 reportTables.render();

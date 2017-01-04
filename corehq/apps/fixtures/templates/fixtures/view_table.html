@@ -16,6 +16,10 @@
     {% endif%}
 {% endblock %}
 
+{% block requirejs_entry %}
+    requirejs(["{% static 'fixtures/js/lookup-view.js' %}"]);
+{% endblock requirejs_entry %}
+
 {% block page_content %}
 {% block reportcontent %}
 {% block reporttable %}
@@ -100,44 +104,28 @@
 {% endblock %}
 {% block posttable %}{% endblock %}
 {% endblock %}
+{% block initial_page_json %}
+    {% if report_table and report_table.datatables %}
+        "renderReportTables": 1,
+        "reportTablesOptions": {
+            "slug": "{{ report.slug }}",
+            "defaultRows": {{ report_table.default_rows|default:10 }},
+            "startAtRowNum": {{ report_table.start_at_row|default:0 }},
+            "showAllRowsOption": {{ report_table.show_all_rows|JSON }},
+            "autoWidth": {{ report_table.headers.auto_width|JSON }}
+            {% if report_table.headers.render_aoColumns %}, "aoColumns": {{ report_table.headers.render_aoColumns|JSON }}{% endif %}
+            {% if report_table.headers.custom_sort %}, "customSort": {{ report_table.headers.custom_sort|JSON }}{% endif %}
+            {% if report_table.pagination.is_on %}
+                , "ajaxSource": "{{ report_table.pagination.source }}"
+                , "ajaxParams": {{ report_table.pagination.params|JSON }}
+            {% endif %}
+            {% if report_table.left_col.is_fixed %}
+                , "fixColumns": true
+                , "fixColsNumLeft": {{ report_table.left_col.fixed.num }}
+                , "fixColsWidth": {{ report_table.left_col.fixed.width }}
+            {% endif %}
+        }
+    {% endif %}
+    {{ block.super }}
 {% endblock %}
-
-{% block js-inline %} {{ block.super }}
-    <script>
-
-        {% if report_table and report_table.datatables %}
-            var reportTables = new HQReportDataTables({
-                dataTableElem: '#report_table_{{ report.slug }}',
-                defaultRows: {{ report_table.default_rows|default:10 }},
-                startAtRowNum: {{ report_table.start_at_row|default:0 }},
-                showAllRowsOption: {{ report_table.show_all_rows|JSON }},
-
-                {% if report_table.headers.render_aoColumns %}aoColumns: {{ report_table.headers.render_aoColumns|JSON }},{% endif %}
-                autoWidth: {{ report_table.headers.auto_width|JSON }},
-                {% if report_table.headers.custom_sort %}customSort: {{ report_table.headers.custom_sort|JSON }},{% endif %}
-
-                {% if report_table.pagination.is_on %}
-                    ajaxSource: '{{ report_table.pagination.source }}',
-                    ajaxParams: {{ report_table.pagination.params|JSON }},
-                {% endif %}
-
-                {% if report_table.left_col.is_fixed %}
-                    fixColumns: true,
-                    fixColsNumLeft: {{ report_table.left_col.fixed.num }},
-                    fixColsWidth: {{ report_table.left_col.fixed.width }},
-                {% endif %}
-            });
-            if (typeof standardHQReport !== 'undefined') {
-                standardHQReport.handleTabularReportCookies(reportTables);
-            }
-            reportTables.render();
-        {% endif %}
-
-        $(function() {
-            $('.header-popover').popover({
-                trigger: 'hover',
-                placement: 'bottom'
-            });
-        });
-    </script>
 {% endblock %}

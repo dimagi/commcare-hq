@@ -1,7 +1,10 @@
 <script>
+{% if request.use_requirejs %}
+    requirejs(["jquery", "bootstrap"], function($) {
+{% else %}
     $(function() {
+{% endif %}
         $("#{{ modal_id }}").on("show.bs.modal", function() {
-            console.log('shown');
             $(this).find(".modal-body .fetched-data").load("{{ load_from }}");
         });
     });

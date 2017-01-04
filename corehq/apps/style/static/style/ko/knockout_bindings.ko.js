@@ -1,4 +1,5 @@
-/* global DOMPurify */
+/* global hqGlobal, DOMPurify */
+hqGlobal("style/ko/knockout_bindings.ko", ['jQuery', 'knockout'], function($, ko) {
 
 ko.bindingHandlers.hqbSubmitReady = {
     update: function(element, valueAccessor) {
@@ -343,84 +344,6 @@ ko.bindingHandlers.bootstrapTabs = {
         }, 0);
     }
 };
-
-function ValueOrNoneUI(opts) {
-    /* Helper used with exitInput/enterInput */
-    var self = this;
-    var wrapObservable = function (o) {
-        if (ko.isObservable(o)) {
-            return o;
-        } else {
-            return ko.observable(o);
-        }
-    };
-
-    self.messages = opts.messages;
-    self.inputName = opts.inputName;
-    self.inputCss = opts.inputCss;
-    self.inputAttr = opts.inputAttr;
-    self.defaultValue = opts.defaultValue;
-
-
-    self.allowed = wrapObservable(opts.allowed);
-    self.inputValue = wrapObservable(opts.value || '');
-    self.hasValue = ko.observable(!!self.inputValue());
-    self.hasFocus = ko.observable();
-
-    // make the input get preloaded with the defaultValue
-    self.hasFocus.subscribe(function (value) {
-        if (!self.inputValue()) {
-            self.inputValue(self.defaultValue);
-        }
-    });
-
-    self.value = ko.computed({
-        read: function () {
-            if (self.hasValue()) {
-                return self.inputValue() || '';
-            } else {
-                return '';
-            }
-        },
-        write: function (value) {
-            self.inputValue(value)
-        }
-    });
-    self.setHasValue = function (hasValue, event) {
-        var before = self.value(),
-            after;
-        self.hasValue(hasValue);
-        after = self.value();
-        if (before !== after) {
-            $(event.toElement).change();
-        }
-    };
-    self.enterInput = function (data, event) {
-        if (self.allowed()) {
-            self.hasFocus(true);
-        }
-        self.setHasValue(true, event);
-    };
-    self.exitInput = function (data, event) {
-        self.setHasValue(false, event);
-        self.value('');
-    };
-}
-
-function _makeClickHelper(fnName, icon) {
-    return {
-        init: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
-            var $el = $(element);
-            $('<i></i>').addClass(icon).prependTo($el);
-            return ko.bindingHandlers.click.init(element, function () {
-                return valueAccessor()[fnName];
-            }, allBindingsAccessor, viewModel, bindingContext);
-        }
-    };
-}
-
-ko.bindingHandlers.exitInput = _makeClickHelper('exitInput', 'icon icon-remove fa fa-remove');
-ko.bindingHandlers.enterInput = _makeClickHelper('enterInput', 'icon icon-plus fa fa-plus');
 
 ko.bindingHandlers.makeHqHelp = {
     update: function (element, valueAccessor) {
@@ -783,3 +706,5 @@ ko.bindingHandlers.bind_element = {
         }
     }
 };
+
+});
