@@ -135,19 +135,19 @@ class ENikshayLocationStructureMixin(object):
 
         self.dto = locations['DTO']
         self.dto.metadata = {
-            'nikshay_code': 'MH-ABD',
+            'nikshay_code': 'ABD',
         }
         self.dto.save()
 
         self.tu = locations['TU']
         self.tu.metadata = {
-            'nikshay_code': 'MH-ABD-05',
+            'nikshay_code': '05',
         }
         self.tu.save()
 
         self.phi = locations['PHI']
         self.phi.metadata = {
-            'nikshay_code': 'MH-ABD-05-16',
+            'nikshay_code': '16',
         }
         self.phi.save()
         super(ENikshayLocationStructureMixin, self).setUp()

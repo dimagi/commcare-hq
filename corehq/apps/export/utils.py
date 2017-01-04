@@ -32,6 +32,7 @@ from .const import (
     FORM_EXPORT,
     DEID_TRANSFORM_FUNCTIONS,
     TRANSFORM_FUNCTIONS,
+    SKIPPABLE_PROPERTIES,
 )
 
 
@@ -227,7 +228,7 @@ def convert_saved_export_to_export_instance(
                     info.append('Column has deid_transform: {}'.format(transform))
                 ordering.append(new_column)
             except SkipConversion, e:
-                if is_remote_app_migration or force_convert_columns:
+                if is_remote_app_migration or force_convert_columns or column.index in SKIPPABLE_PROPERTIES:
                     # In the event that we skip a column and it's a remote application,
                     # just add a user defined column
                     if export_type == CASE_EXPORT:

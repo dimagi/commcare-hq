@@ -32,7 +32,8 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
             cname='Secondary name',
             caddress='Secondary address',
             cmob='1234567890',
-            dcpulmunory='Y',
+            dcpulmunory='N',
+            dcexpulmunory='3',
             dotname='Bubble Bubbles',
             dotmob='9876543210',
             dotpType=1,
@@ -91,7 +92,7 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
                 ('hiv_status', 'non_reactive'),
                 ('last_name', 'C'),
                 ('migration_created_case', 'true'),
-                ('person_id', 'FROM_NIKSHAY_MH-ABD-05-16-0001'),
+                ('person_id', 'N-MH-ABD-05-16-0001'),
                 ('phi', 'PHI'),
                 ('secondary_contact_name_address', 'Secondary name, Secondary address'),
                 ('secondary_contact_phone_number', '1234567890'),
@@ -140,8 +141,10 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
         episode_case = self.case_accessor.get_case(episode_case_ids[0])
         self.assertEqual(
             OrderedDict([
+                ('adherence_schedule_date_start', '2016-12-22'),
+                ('date_of_diagnosis', '2016-12-13'),
                 ('date_of_mo_signature', '2016-12-23'),
-                ('disease_classification', 'pulmonary'),
+                ('disease_classification', 'extra_pulmonary'),
                 ('dots_99_enabled', 'false'),
                 ('episode_pending_registration', 'no'),
                 ('episode_type', 'confirmed_tb'),
@@ -149,6 +152,7 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
                 ('nikshay_id', 'MH-ABD-05-16-0001'),
                 ('occupation', 'physical_mathematical_and_engineering'),
                 ('patient_type_choice', 'treatment_after_lfu'),
+                ('site_choice', 'abdominal'),
                 ('treatment_initiated', 'yes_phi'),
                 ('treatment_initiation_date', '2016-12-22'),
                 ('treatment_supporter_designation', 'health_worker'),

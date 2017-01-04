@@ -278,6 +278,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         user_ids = cls.selected_user_ids(mobile_user_and_group_slugs)
         user_types = cls.selected_user_types(mobile_user_and_group_slugs)
         group_ids = cls.selected_group_ids(mobile_user_and_group_slugs)
+        location_ids = cls.selected_location_ids(mobile_user_and_group_slugs)
 
         user_type_filters = []
         if HQUserType.ADMIN in user_types:
@@ -295,9 +296,13 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             return q.OR(*user_type_filters)
         else:
             # return matching user types and exact matches
+            location_ids = list(SQLLocation.active_objects
+                                .get_locations_and_children(location_ids)
+                                .location_ids())
             id_filter = filters.OR(
                 filters.term("_id", user_ids),
                 filters.term("__group_ids", group_ids),
+                user_es.location(location_ids),
             )
             if user_type_filters:
                 return q.OR(

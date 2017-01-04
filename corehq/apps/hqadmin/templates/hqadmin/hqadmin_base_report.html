@@ -6,10 +6,10 @@
 
 {% block js %}{{ block.super }}
     {% if request.use_datatables %}
-        <script src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
+        <script src="{% static 'reports/js/config.dataTables.bootstrap.js' %}"></script>
     {% endif %}
     {% if request.use_jquery_ui %}
-        <script src="{% static 'reports/javascripts/datepicker.js' %}"></script>
+        <script src="{% static 'reports/js/datepicker.js' %}"></script>
     {% endif %}
 {% endblock %}
 

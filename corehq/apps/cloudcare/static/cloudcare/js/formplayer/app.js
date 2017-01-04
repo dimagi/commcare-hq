@@ -82,7 +82,7 @@ FormplayerFrontend.reqres.setHandler('currentUser', function () {
 
 FormplayerFrontend.on('clearForm', function () {
     $('#webforms').html("");
-    $('#menu-container').removeClass('hide');
+    $('.menu-scrollable-container').removeClass('hide');
     $('#webforms-nav').html("");
     $('#cloudcare-debugger').html("");
     $('.atwho-container').remove();
@@ -122,6 +122,8 @@ FormplayerFrontend.reqres.setHandler('handleNotification', function(notification
 
 FormplayerFrontend.on('startForm', function (data) {
     FormplayerFrontend.request("clearMenu");
+    FormplayerFrontend.Menus.Util.showBreadcrumbs(data.breadcrumbs);
+
     data.onLoading = tfLoading;
     data.onLoadingComplete = tfLoadingComplete;
     var user = FormplayerFrontend.request('currentUser');
@@ -132,7 +134,7 @@ FormplayerFrontend.on('startForm', function (data) {
     data.formplayerEnabled = true;
     data.displayOptions = $.extend(true, {}, user.displayOptions);
     data.onerror = function (resp) {
-        showError(resp.human_readable_message || resp.message, $("#cloudcare-notifications"));
+        showError(resp.exception, $("#cloudcare-notifications"));
     };
     data.onsubmit = function (resp) {
         if (resp.status === "success") {
@@ -162,7 +164,7 @@ FormplayerFrontend.on('startForm', function (data) {
     };
     var sess = new WebFormSession(data);
     sess.renderFormXml(data, $('#webforms'));
-    $('#menu-container').addClass('hide');
+    $('.menu-scrollable-container').addClass('hide');
 });
 
 FormplayerFrontend.on("start", function (options) {

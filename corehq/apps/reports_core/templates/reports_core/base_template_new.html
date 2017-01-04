@@ -11,12 +11,12 @@
 {% endblock stylesheets %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'reports/javascripts/config.dataTables.bootstrap.js' %}"></script>
+    <script src="{% static 'reports/js/config.dataTables.bootstrap.js' %}"></script>
     <script src="{% static 'reports_core/js/choice-list-api.js' %}"></script>
     <script src="{% static 'reports_core/js/charts.js' %}"></script>
     <script src="{% static 'reports_core/js/maps.js' %}"></script>
     <script src="{% static 'leaflet/dist/leaflet.js' %}"></script>
-    <script src="{% static 'reports/javascripts/maps_utils.js' %}"></script>
+    <script src="{% static 'reports/js/maps_utils.js' %}"></script>
 {% endblock %}
 
 {% block head %}{{ block.super }}
