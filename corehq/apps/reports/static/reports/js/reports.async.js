@@ -52,7 +52,7 @@ var HQAsyncReport = function (o) {
             self.standardReport.filterSubmitButton.addClass('disabled');
         }
         self.filterForm.submit(function () {
-            var params = hqImport('reports/javascripts/reports.util.js').urlSerialize(this);
+            var params = hqImport('reports/js/reports.util.js').urlSerialize(this);
             History.pushState(null,window.location.title,
                 window.location.pathname + '?' + params
                 + (self.additionalWindowParams ? '&' + self.additionalWindowParams: ''));
