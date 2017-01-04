@@ -30,6 +30,7 @@ from corehq.apps.analytics.tasks import update_hubspot_properties
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
+from corehq.apps.userreports.reports.builder import get_filter_format_from_question_type
 from corehq.apps.userreports.reports.builder.columns import ColumnOption, MultiselectQuestionColumnOption, \
     QuestionColumnOption
 from corehq.util import reverse
@@ -89,13 +90,13 @@ from corehq.apps.userreports.reports.builder.forms import (
     DataSourceForm,
     ConfigureMapReportForm,
     DataSourceBuilder,
-)
+    REPORT_BUILDER_FILTER_TYPE_MAP)
 from corehq.apps.userreports.reports.filters.choice_providers import (
     ChoiceQueryContext,
 )
 from corehq.apps.userreports.reports.view import ConfigurableReport
 from corehq.apps.userreports.specs import EvaluationContext
-from corehq.apps.userreports.sql import IndicatorSqlAdapter
+from corehq.apps.userreports.sql import IndicatorSqlAdapter, get_column_name
 from corehq.apps.userreports.tasks import (
     rebuild_indicators,
     resume_building_indicators,
@@ -675,6 +676,8 @@ class ConfigureReport(ReportBuilderView):
             self.source_type = self.request.GET['source_type']
             self.source_id = self.request.GET['source']
 
+        self.data_source_builder = DataSourceBuilder(self.domain, self.app, self.source_type, self.source_id)
+
         return super(ConfigureReport, self).dispatch(request, *args, **kwargs)
 
     @property
@@ -802,6 +805,10 @@ class ConfigureReport(ReportBuilderView):
             },
             'existing_report': self.existing_report,
             'existing_report_type': self._get_existing_report_type(),
+
+            # TODO: Consider renaming this because it's more like "possible" data source props
+            'data_source_properties': [p._asdict() for p in self.data_source_builder.data_source_properties.values()],
+
             'column_options': self.get_column_option_dicts(),
             'initial_columns': self._get_initial_columns(),
             'source_type': self.source_type,
@@ -843,6 +850,65 @@ class ConfigureReport(ReportBuilderView):
         return _get_aggregation_columns(
             report_data['aggregate'], report_data['columns'], self.report_column_options
         )
+
+    def _get_filters(self, report_data):
+        """
+        Return the dict filter configurations to be used by the
+        ReportConfiguration that this form produces.
+        """
+
+        def _make_report_filter(conf, index):
+            property = self.data_source_builder.data_source_properties[conf["property"]]
+            col_id = property.column_id
+
+            selected_filter_type = conf['format']
+            if not selected_filter_type or self.source_type == 'form':
+                if property.type == 'question':
+                    filter_format = get_filter_format_from_question_type(
+                        property.source['type']
+                    )
+                else:
+                    assert property.type == 'meta'
+                    filter_format = get_filter_format_from_question_type(
+                        property.source[1]
+                    )
+            else:
+                filter_format = REPORT_BUILDER_FILTER_TYPE_MAP[selected_filter_type]
+
+            ret = {
+                "field": col_id,
+                "slug": "{}_{}".format(col_id, index),
+                "display": conf["display_text"],
+                "type": filter_format
+            }
+            if conf['format'] == 'Date':
+                ret.update({'compare_as_string': True})
+            if conf.get('pre_value') or conf.get('pre_operator'):
+                ret.update({
+                    'type': 'pre',  # type could have been "date"
+                    'pre_operator': conf.get('pre_operator', None),
+                    'pre_value': conf.get('pre_value', []),
+                })
+            return ret
+
+        user_filter_configs = report_data['user_filters']
+        default_filter_configs = report_data['default_filters']
+        filters = [_make_report_filter(f, i) for i, f in enumerate(user_filter_configs + default_filter_configs)]
+        if self.source_type == 'case':
+            # The UI doesn't support specifying "choice_list" filters, only "dynamic_choice_list" filters.
+            # But, we want to make the open/closed filter a cleaner "choice_list" filter, so we do that here.
+            self._convert_closed_filter_to_choice_list(filters)
+        return filters
+
+    @classmethod
+    def _convert_closed_filter_to_choice_list(cls, filters):
+        for f in filters:
+            if f['field'] == get_column_name('closed') and f['type'] == 'dynamic_choice_list':
+                f['type'] = 'choice_list'
+                f['choices'] = [
+                    {'value': 'True'},
+                    {'value': 'False'}
+                ]
 
     def _get_columns(self, report_data):
         return list(chain.from_iterable(
@@ -890,7 +956,7 @@ class ConfigureReport(ReportBuilderView):
         self._update_data_source(report_data)
         self.existing_report.aggregation_columns = self._get_aggregation_columns(report_data)
         self.existing_report.columns = self._get_columns(report_data)
-        self.existing_report.filters = []  # TODO: report_data['user_filters'] + report_data['default_filters']
+        self.existing_report.filters = self._get_filters(report_data)
         self.existing_report.configured_charts = self._get_report_charts(report_data)
 
         self.existing_report.validate()
@@ -973,7 +1039,7 @@ class ConfigureReport(ReportBuilderView):
                     title=self._get_report_name(request),
                     aggregation_columns=self._get_aggregation_columns(report_data),
                     columns=self._get_columns(report_data),
-                    filters=[],  # TODO: report_data['user_filters'] + report_data['default_filters']
+                    filters=self._get_filters(report_data),
                     configured_charts=self._get_report_charts(report_data),
                     report_meta=ReportMeta(
                         created_by_builder=True,
@@ -1025,6 +1091,7 @@ def _get_multiselect_indicator_id(column_field, indicators):
         if indicator['column_id'] == indicator_id and indicator['type'] == 'choice_list':
             return indicator_id
     return None
+
 
 class ReportPreview(BaseDomainView):
     urlname = 'report_preview'

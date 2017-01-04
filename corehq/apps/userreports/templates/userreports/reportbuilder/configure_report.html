@@ -7,6 +7,8 @@
     <script src="{% static 'app_manager/js/case-knockout-bindings.js' %}"></script>
     <script src="{% static 'userreports/js/constants.js' %}"></script>
     <script src="{% static 'userreports/js/report_config.js' %}"></script>
+    <script src="{% static 'userreports/js/builder_view_models.js' %}"></script>
+    <script src="{% static 'userreports/js/utils.js' %}"></script>
 {% endblock %}
 
 {% block pre_page_content %}{% endblock %}{# Avoid the spacer #}
@@ -120,83 +122,6 @@
           </tbody>
         </table>
       </div>
-
-      <div>
-        <h3>{% trans 'User Filters' %}</h3>
-        <table class="table">
-          <thead>
-            <th> </th>
-            <th>{% trans 'Property' %}</th>
-            <th>{% trans 'Display Text' %}</th>
-            <th>{% trans 'Format' %}</th>
-            <th> </th>
-          </thead>
-
-          <tbody>
-            <tr>
-              <td>&nbsp;</td>
-              <td>
-                <select data-bind="options: columnOptions,
-                                   optionsText: 'label',
-                                   optionsValue: 'name',
-                                   value: newColumnName">
-                </select>
-              </td>
-              <td>
-                <input type="text" />
-              </td>
-              <td>
-                <select>
-                  <option>Choice</option>
-                  <option>Date</option>
-                </select>
-              </td>
-              <td>
-                <button class="btn btn-primary"><i class="fa fa-plus"></i></button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div>
-        <h3>{% trans 'Default Filters' %}</h3>
-        <table class="table">
-          <thead>
-            <th> </th>
-            <th>{% trans 'Property' %}</th>
-            <th>{% trans 'Format' %}</th>
-            <th>{% trans 'Filter Value' %}</th>
-            <th> </th>
-          </thead>
-
-          <tbody>
-            <tr>
-              <td>&nbsp;</td>
-              <td>
-                <select data-bind="options: columnOptions,
-                                   optionsText: 'label',
-                                   optionsValue: 'name',
-                                   value: newColumnName">
-                </select>
-              </td>
-              <td>
-                <select>
-                  <option>Value</option>
-                  <option>Date</option>
-                </select>
-              </td>
-              <td>
-                <input type="text" />
-              </td>
-              <td>
-                <button class="btn btn-primary"><i class="fa fa-plus"></i></button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
     </div>
 
     <div class="col-md-7">
@@ -230,11 +155,45 @@
         <table id="preview" class="table"></table>
       </div>
     </div>
+
+    <div data-bind="with: filterList">
+      <h3>
+        {% trans 'User Filters'%}
+        <br>
+        <div class="subtext">
+          <small>
+            {% blocktrans %}
+              Add filters to your report to allow viewers to select which data the report will display.
+              These filters will be displayed at the top of your report.
+            {% endblocktrans %}
+          </small>
+        </div>
+      </h3>
+      {% include 'userreports/partials/property_list_configuration.html' %}
+    </div>
+    <div data-bind="with: defaultFilterList">
+      <h3>
+        {% trans 'Default Filters'%}
+        <br>
+        <div class="subtext">
+          <small>
+            {% blocktrans %}
+              These filters are not displayed to report viewers and are always applied to the data.
+            {% endblocktrans %}
+          </small>
+        </div>
+      </h3>
+      {% include 'userreports/partials/property_list_configuration.html' %}
+    </div>
   </div>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
 <script>
+
+  var ReportBuilder = {
+    Constants: hqImport("userreports/js/constants.js"),
+  }
 
     $(document).ready(function() {
         var reportConfig = new reportBuilder.ReportConfig({
@@ -247,6 +206,7 @@
             "dataSourceUrl": "{{ data_source_url }}",
             "existingReport": {% if existing_report %}{{ existing_report.get_id|JSON }}{% else %}null{% endif %},
             "existingReportType": {{ existing_report_type|JSON }},
+            "dataSourceProperties": {{ data_source_properties|JSON }},
         });
         ko.applyBindings(reportConfig, $("#reportConfig").get(0));
     });

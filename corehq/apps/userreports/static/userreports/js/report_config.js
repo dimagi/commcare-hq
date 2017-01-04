@@ -138,6 +138,58 @@ var reportBuilder = function () {
 
         self.previewChart = ko.observable(false);
 
+        var _getSelectableProperties = function (dataSourceIndicators) {
+
+            var utils = hqImport('userreports/js/utils.js');
+
+            var optionsContainQuestions = _.any(dataSourceIndicators, function (o) {
+                return o.type === 'question';
+            });
+
+            // Convert the DataSourceProperty and ColumnOption passed through the template
+            // context into objects with the correct format for the select2 and
+            // questionsSelect knockout bindings.
+            if (optionsContainQuestions) {
+                return _.compact(_.map(
+                    dataSourceIndicators, utils.convertDataSourcePropertyToQuestionsSelectFormat
+                ));
+            } else {
+                return _.compact(_.map(
+                    dataSourceIndicators, utils.convertDataSourcePropertyToSelect2Format
+                ));
+            }
+        };
+
+        var PropertyList = hqImport('userreports/js/builder_view_models.js').PropertyList;
+        self.filterList = new PropertyList({
+            hasFormatCol: self._sourceType === "case",
+            hasCalculationCol: false,
+            initialCols: [],
+            buttonText: 'Add User Filter',
+            analyticsAction: 'Add User Filter',
+            propertyHelpText: django.gettext('Choose the property you would like to add as a filter to this report.'),
+            displayHelpText: django.gettext('Web users viewing the report will see this display text instead of the property name. Name your filter something easy for users to understand.'),
+            formatHelpText: django.gettext('What type of property is this filter?<br/><br/><strong>Date</strong>: Select this if the property is a date.<br/><strong>Choice</strong>: Select this if the property is text or multiple choice.'),
+            reportType: self.reportType(),
+            propertyOptions: config['dataSourceProperties'],
+            selectablePropertyOptions: _getSelectableProperties(config['dataSourceProperties']),
+        });
+        self.defaultFilterList = new PropertyList({
+            hasFormatCol: true,
+            hasCalculationCol: false,
+            hasDisplayCol: false,
+            hasFilterValueCol: true,
+            initialCols: [],
+            buttonText: 'Add Default Filter',
+            analyticsAction: 'Add Default Filter',
+            propertyHelpText: django.gettext('Choose the property you would like to add as a filter to this report.'),
+            formatHelpText: django.gettext('What type of property is this filter?<br/><br/><strong>Date</strong>: Select this to filter the property by a date range.<br/><strong>Value</strong>: Select this to filter the property by a single value.'),
+            filterValueHelpText: django.gettext('What value or date range must the property be equal to?'),
+            reportType: self.reportType(),
+            propertyOptions: config['dataSourceProperties'],
+            selectablePropertyOptions: _getSelectableProperties(config['dataSourceProperties']),
+        });
+
         self.refreshPreview = function (columns) {
             columns = typeof columns !== "undefined" ? columns : self.selectedColumns();
             $('#preview').hide();
@@ -263,8 +315,8 @@ var reportBuilder = function () {
                 "aggregate": self.isAggregationEnabled(),
                 "chart": self.selectedChart(),
                 "columns": _.map(self.selectedColumns(), function (c) { return c.serialize(); }),
-                "default_filters": [],  // TODO: self.defaultFilters,
-                "user_filters": [],  // TODO: self.userFilters,
+                "default_filters": JSON.parse(self.defaultFilterList.serializedProperties()),
+                "user_filters": JSON.parse(self.filterList.serializedProperties()),
             };
         };
 

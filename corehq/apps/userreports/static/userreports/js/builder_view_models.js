@@ -168,7 +168,7 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         // select2 or questionsSelect binding can handle.
         this.selectablePropertyOptions = options.selectablePropertyOptions;
 
-        this.reportType = options.reportType;
+        this.reportType = ko.observable(options.reportType);
         this.buttonText = getOrDefault(options, 'buttonText', 'Add property');
         // True if at least one column is required.
         this.requireColumns = getOrDefault(options, 'requireColumns', false);
@@ -181,7 +181,7 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         this.calcHelpText = getOrDefault(options, 'calcHelpText', null);
         this.filterValueHelpText = getOrDefault(options, 'filterValueHelpText', null);
         this.analyticsAction = getOrDefault(options, 'analyticsAction', null);
-        this.analyticsLabel = getOrDefault(options, 'analyticsLabel', this.reportType);
+        this.analyticsLabel = getOrDefault(options, 'analyticsLabel', this.reportType());
 
         this.hasDisplayCol = getOrDefault(options, 'hasDisplayCol', true);
         this.hasFormatCol = getOrDefault(options, 'hasFormatCol', true);
