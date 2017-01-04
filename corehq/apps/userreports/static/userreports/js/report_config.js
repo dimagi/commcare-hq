@@ -138,6 +138,64 @@ var reportBuilder = function () {
 
         self.previewChart = ko.observable(false);
 
+        var _getSelectableProperties = function (dataSourceIndicators) {
+
+            var utils = hqImport('userreports/js/utils.js');
+
+            var optionsContainQuestions = _.any(dataSourceIndicators, function (o) {
+                return o.type === 'question';
+            });
+
+            // Convert the DataSourceProperty and ColumnOption passed through the template
+            // context into objects with the correct format for the select2 and
+            // questionsSelect knockout bindings.
+            if (optionsContainQuestions) {
+                return _.compact(_.map(
+                    dataSourceIndicators, utils.convertDataSourcePropertyToQuestionsSelectFormat
+                ));
+            } else {
+                return _.compact(_.map(
+                    dataSourceIndicators, utils.convertDataSourcePropertyToSelect2Format
+                ));
+            }
+        };
+
+        var PropertyList = hqImport('userreports/js/builder_view_models.js').PropertyList;
+        self.filterList = new PropertyList({
+            hasFormatCol: self._sourceType === "case",
+            hasCalculationCol: false,
+            initialCols: config['initialUserFilters'],
+            buttonText: 'Add User Filter',
+            analyticsAction: 'Add User Filter',
+            propertyHelpText: django.gettext('Choose the property you would like to add as a filter to this report.'),
+            displayHelpText: django.gettext('Web users viewing the report will see this display text instead of the property name. Name your filter something easy for users to understand.'),
+            formatHelpText: django.gettext('What type of property is this filter?<br/><br/><strong>Date</strong>: Select this if the property is a date.<br/><strong>Choice</strong>: Select this if the property is text or multiple choice.'),
+            reportType: self.reportType(),
+            propertyOptions: config['dataSourceProperties'],
+            selectablePropertyOptions: _getSelectableProperties(config['dataSourceProperties']),
+        });
+        self.filterList.serializedProperties.subscribe(function () {
+            self.saveButton.fire("change");
+        });
+        self.defaultFilterList = new PropertyList({
+            hasFormatCol: true,
+            hasCalculationCol: false,
+            hasDisplayCol: false,
+            hasFilterValueCol: true,
+            initialCols: config['initialDefaultFilters'],
+            buttonText: 'Add Default Filter',
+            analyticsAction: 'Add Default Filter',
+            propertyHelpText: django.gettext('Choose the property you would like to add as a filter to this report.'),
+            formatHelpText: django.gettext('What type of property is this filter?<br/><br/><strong>Date</strong>: Select this to filter the property by a date range.<br/><strong>Value</strong>: Select this to filter the property by a single value.'),
+            filterValueHelpText: django.gettext('What value or date range must the property be equal to?'),
+            reportType: self.reportType(),
+            propertyOptions: config['dataSourceProperties'],
+            selectablePropertyOptions: _getSelectableProperties(config['dataSourceProperties']),
+        });
+        self.defaultFilterList.serializedProperties.subscribe(function () {
+            self.saveButton.fire("change");
+        });
+
         self.refreshPreview = function (columns) {
             columns = typeof columns !== "undefined" ? columns : self.selectedColumns();
             $('#preview').hide();
@@ -254,6 +312,22 @@ var reportBuilder = function () {
             return self.otherColumns().length > 0;
         });
 
+        self.validate = function () {
+            var isValid = true;
+            if (!self.filterList.validate()) {
+                isValid = false;
+                $("#userFilterAccordion").collapse('show')
+            }
+            if (!self.defaultFilterList.validate()) {
+                isValid = false;
+                $("#defaultFilterAccordion").collapse('show')
+            }
+            if (!isValid){
+                alert('Invalid report configuration. Please fix the issues and try again.');
+            }
+            return isValid;
+        };
+
         self.serialize = function () {
             return {
                 "existing_report": self.existingReportId,
@@ -263,8 +337,8 @@ var reportBuilder = function () {
                 "aggregate": self.isAggregationEnabled(),
                 "chart": self.selectedChart(),
                 "columns": _.map(self.selectedColumns(), function (c) { return c.serialize(); }),
-                "default_filters": [],  // TODO: self.defaultFilters,
-                "user_filters": [],  // TODO: self.userFilters,
+                "default_filters": JSON.parse(self.defaultFilterList.serializedProperties()),
+                "user_filters": JSON.parse(self.filterList.serializedProperties()),
             };
         };
 
@@ -283,31 +357,37 @@ var reportBuilder = function () {
         self.saveButton = button.init({
             unsavedMessage: "You have unsaved settings.",
             save: function () {
-                self.saveButton.ajax({
-                    url: window.location.href,  // POST here; keep URL params
-                    type: "POST",
-                    data: JSON.stringify(self.serialize()),
-                    dataType: 'json',
-                    success: function (data) {
-                        self.existingReportId = data['report_id'];
-                    },
-                });
+                var isValid = self.validate();
+                if (isValid) {
+                    self.saveButton.ajax({
+                        url: window.location.href,  // POST here; keep URL params
+                        type: "POST",
+                        data: JSON.stringify(self.serialize()),
+                        dataType: 'json',
+                        success: function (data) {
+                            self.existingReportId = data['report_id'];
+                        },
+                    });
+                }
             },
         });
         self.saveButton.ui.appendTo($("#saveButtonHolder"));
 
         $("#btnSaveView").click(function () {
-            $.ajax({
-                url: window.location.href,
-                type: "POST",
-                data: JSON.stringify(self.serialize()),
-                success: function (data) {
-                    // Redirect to the newly-saved report
-                    self.saveButton.setState('saved');
-                    window.location.href = data['report_url'];
-                },
-                dataType: 'json',
-            });
+            var isValid = self.validate();
+            if (isValid) {
+                $.ajax({
+                    url: window.location.href,
+                    type: "POST",
+                    data: JSON.stringify(self.serialize()),
+                    success: function (data) {
+                        // Redirect to the newly-saved report
+                        self.saveButton.setState('saved');
+                        window.location.href = data['report_url'];
+                    },
+                    dataType: 'json',
+                });
+            }
         });
 
         return self;
