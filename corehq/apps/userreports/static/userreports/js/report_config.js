@@ -314,8 +314,14 @@ var reportBuilder = function () {
 
         self.validate = function () {
             var isValid = true;
-            isValid = self.filterList.validate() && isValid;
-            isValid = self.defaultFilterList.validate() && isValid;
+            if (!self.filterList.validate()) {
+                isValid = false;
+                $("#userFilterAccordion").collapse('show')
+            }
+            if (!self.defaultFilterList.validate()) {
+                isValid = false;
+                $("#defaultFilterAccordion").collapse('show')
+            }
             if (!isValid){
                 alert('Invalid report configuration. Please fix the issues and try again.');
             }
