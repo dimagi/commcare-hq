@@ -168,7 +168,7 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         // select2 or questionsSelect binding can handle.
         this.selectablePropertyOptions = options.selectablePropertyOptions;
 
-        this.reportType = options.reportType;
+        this.reportType = ko.observable(options.reportType);
         this.buttonText = getOrDefault(options, 'buttonText', 'Add property');
         // True if at least one column is required.
         this.requireColumns = getOrDefault(options, 'requireColumns', false);
@@ -181,7 +181,7 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         this.calcHelpText = getOrDefault(options, 'calcHelpText', null);
         this.filterValueHelpText = getOrDefault(options, 'filterValueHelpText', null);
         this.analyticsAction = getOrDefault(options, 'analyticsAction', null);
-        this.analyticsLabel = getOrDefault(options, 'analyticsLabel', this.reportType);
+        this.analyticsLabel = getOrDefault(options, 'analyticsLabel', this.reportType());
 
         this.hasDisplayCol = getOrDefault(options, 'hasDisplayCol', true);
         this.hasFormatCol = getOrDefault(options, 'hasFormatCol', true);
@@ -248,73 +248,6 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         return _.find(this.propertyOptions, function (opt) {return opt.id === property_id;});
     };
 
-    /**
-     * Return an object representing the given DataSourceProperty object
-     * in the format expected by the select2 binding.
-     * @param {object} dataSourceProperty - A js object representation of a
-     *  DataSourceProperty python object.
-     * @returns {object} - A js object in the format expected by the select2
-     *  knockout binding.
-     */
-    var convertDataSourcePropertyToSelect2Format = function (dataSourceProperty) {
-        return dataSourceProperty;
-    };
-    /**
-     * Return an object representing the given DataSourceProperty object
-     * in the format expected by the questionsSelect binding.
-     * @param {object} dataSourceProperty - A js object representation of a
-     *  DataSourceProperty python object.
-     * @returns {object} - A js object in the format expected by the questionsSelect
-     *  knockout binding.
-     */
-    var convertDataSourcePropertyToQuestionsSelectFormat = function (dataSourceProperty) {
-        if (dataSourceProperty.type === 'question') {
-            return dataSourceProperty.source;
-        } else if (dataSourceProperty.type === 'meta') {
-            return {
-                value: dataSourceProperty.source[0],
-                label: dataSourceProperty.text,
-                type: dataSourceProperty.type,
-            };
-        }
-    };
-    /**
-     * Return an object representing the given ColumnOption object in the format
-     * expected by the select2 binding.
-     * @param {object} columnOption - A js object representation of a
-     *  ColumnOption python object.
-     * @returns {object} - A js object in the format expected by the select2
-     *  knockout binding.
-     */
-    var convertReportColumnOptionToSelect2Format = function (columnOption) {
-        return {
-            id: columnOption.id,
-            text: columnOption.display,
-        };
-    };
-    /**
-     * Return an object representing the given ColumnOption object in the format
-     * expected by the questionsSelect binding.
-     * @param {object} columnOption - A js object representation of a
-     *  ColumnOption python object.
-     * @returns {object} - A js object in the format expected by the questionsSelect
-     *  knockout binding.
-     */
-    var convertReportColumnOptionToQuestionsSelectFormat = function (columnOption) {
-        var questionSelectRepresentation;
-        if (columnOption.question_source) {
-            questionSelectRepresentation = Object.assign({}, columnOption.question_source);
-        } else {
-            questionSelectRepresentation = {
-                value: columnOption.id,
-                label: columnOption.display,
-            };
-        }
-        questionSelectRepresentation.aggregation_options = columnOption.aggregation_options;
-        return questionSelectRepresentation;
-    };
-
-
     var ConfigForm = function (
             reportType,
             sourceType,
@@ -331,22 +264,24 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         this.dataSourceIndicators = dataSourceIndicators;
         this.reportColumnOptions = reportColumnOptions;
 
+        var utils = hqImport("userreports/js/utils.js");
+
         // Convert the DataSourceProperty and ColumnOption passed through the template
         // context into objects with the correct format for the select2 and
         // questionsSelect knockout bindings.
         if (this.optionsContainQuestions) {
             this.selectableDataSourceIndicators = _.compact(_.map(
-                this.dataSourceIndicators, convertDataSourcePropertyToQuestionsSelectFormat
+                this.dataSourceIndicators, utils.convertDataSourcePropertyToQuestionsSelectFormat
             ));
             this.selectableReportColumnOptions = _.compact(_.map(
-                this.reportColumnOptions, convertReportColumnOptionToQuestionsSelectFormat
+                this.reportColumnOptions, utils.convertReportColumnOptionToQuestionsSelectFormat
             ));
         } else {
             this.selectableDataSourceIndicators = _.compact(_.map(
-                this.dataSourceIndicators, convertDataSourcePropertyToSelect2Format
+                this.dataSourceIndicators, utils.convertDataSourcePropertyToSelect2Format
             ));
             this.selectableReportColumnOptions = _.compact(_.map(
-                this.reportColumnOptions, convertReportColumnOptionToSelect2Format
+                this.reportColumnOptions, utils.convertReportColumnOptionToSelect2Format
             ));
         }
         this.dateRangeOptions = dateRangeOptions;
