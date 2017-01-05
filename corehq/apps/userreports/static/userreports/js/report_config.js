@@ -160,14 +160,8 @@ var reportBuilder = function () {
          * @private
          */
         var _getSelectableProperties = function (dataSourceIndicators) {
-
             var utils = hqImport('userreports/js/utils.js');
-
-            var optionsContainQuestions = _.any(dataSourceIndicators, function (o) {
-                return o.type === 'question';
-            });
-
-            if (optionsContainQuestions) {
+            if (self._optionsContainQuestions(dataSourceIndicators)) {
                 return _.compact(_.map(
                     dataSourceIndicators, utils.convertDataSourcePropertyToQuestionsSelectFormat
                 ));
@@ -177,6 +171,20 @@ var reportBuilder = function () {
                 ));
             }
         };
+
+        /**
+         * Return true if the given data source indicators contain question indicators (as opposed to just meta
+         * properties or case properties)
+         * @param dataSourceIndicators
+         * @private
+         */
+        self._optionsContainQuestions = function (dataSourceIndicators) {
+            return _.any(dataSourceIndicators, function (o) {
+                return o.type === 'question';
+            });
+        };
+
+        self.optionsContainQuestions = self._optionsContainQuestions(config['dataSourceProperties']);
 
         var PropertyList = hqImport('userreports/js/builder_view_models.js').PropertyList;
         self.filterList = new PropertyList({
