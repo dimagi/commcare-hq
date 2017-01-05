@@ -117,7 +117,7 @@ var PermissionsManager = function (options) {
 
     self.init = function () {
         if (options.multiSelectField) {
-            var multiselect_utils = hqImport('style/js/components/multiselect_utils');
+            var multiselect_utils = hqImport('style/js/multiselect_utils');
             multiselect_utils.createFullMultiselectWidget(
                 'id_' + options.multiSelectField.slug,
                 options.multiSelectField.titleSelect,
