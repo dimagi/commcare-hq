@@ -26,7 +26,7 @@
                 "required": false,
                 "display": "Case Open Date",
                 "field": "date_reported",
-                "type": "quarter",
+                "type": "date",
                 "slug": "date_reported"
             },
             {
@@ -262,6 +262,18 @@
                 "calculate_total": false
             },
             {
+                "display": "Post treatment follow up month",
+                "type": "field",
+                "field": "post_treatment",
+                "aggregation": "simple",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
                 "display": "Type of specimen",
                 "type": "field",
                 "field": "specimen_type",
@@ -275,18 +287,6 @@
                         "sputum": "Sputum",
                         "other": "Other"
                     }
-                },
-                "calculate_total": false
-            },
-            {
-                "display": "Post treatment follow up month",
-                "type": "field",
-                "field": "post_treatment",
-                "aggregation": "simple",
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {
                 },
                 "calculate_total": false
             },
@@ -355,6 +355,14 @@
                 "description": null,
                 "format": "default",
                 "transform": {
+                    "type": "translation",
+                    "translations": {
+                        "negative_not_seen": "Negative / Not seen",
+                        "scanty": "Scanty",
+                        "1plus": "1+",
+                        "2plus": "2+",
+                        "3plus": "3+"
+                    }
                 },
                 "calculate_total": false
             },
