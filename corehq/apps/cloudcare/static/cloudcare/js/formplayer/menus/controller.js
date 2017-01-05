@@ -98,7 +98,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             });
             var tabCollection = new Backbone.Collection();
             tabCollection.reset(tabModels);
-            
+
             var tabListView = new Menus.Views.DetailTabListView({
                 collection: tabCollection,
                 showDetail: function (detailTabIndex) {

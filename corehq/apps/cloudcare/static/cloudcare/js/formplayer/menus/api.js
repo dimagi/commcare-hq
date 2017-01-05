@@ -9,7 +9,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
 
     Menus.API = {
 
-        getMenus: function (params) {
+        getMenus: function (params, route) {
 
             var user = FormplayerFrontend.request('currentUser'),
                 formplayerUrl = user.formplayer_url,
@@ -59,64 +59,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 "installReference": params.installReference,
                 "oneQuestionPerScreen": displayOptions.oneQuestionPerScreen,
             });
-            options.url = formplayerUrl + '/navigate_menu';
-
-            menus = new FormplayerFrontend.Menus.Collections.MenuSelect();
-
-            if (Object.freeze) {
-                Object.freeze(options);
-            }
-            menus.fetch($.extend(true, {}, options));
-            return defer.promise();
-        },
-
-        getDetails: function (params) {
-
-            var user = FormplayerFrontend.request('currentUser'),
-                formplayerUrl = user.formplayer_url,
-                displayOptions = user.displayOptions || {},
-                defer = $.Deferred(),
-                options,
-                menus;
-            options = {
-                success: function (parsedDetails, response) {
-                    if (response.exception){
-                        FormplayerFrontend.trigger(
-                            'showError',
-                            response.exception,
-                            response.type === 'html'
-                        );
-                    } else {
-                        FormplayerFrontend.trigger('clearProgress');
-                        defer.resolve(parsedDetails);
-                    }
-                },
-                error: function () {
-                    FormplayerFrontend.trigger(
-                        'showError',
-                        gettext('Unable to connect to form playing service. ' +
-                                'Please report an issue if you continue to see this message.')
-                    );
-                    defer.reject();
-                },
-            };
-
-            options.data = JSON.stringify({
-                "username": user.username,
-                "restoreAs": user.restoreAs,
-                "domain": user.domain,
-                "app_id": params.appId,
-                "locale": user.language,
-                "selections": params.steps,
-                "offset": params.page * 10,
-                "search_text": params.search,
-                "menu_session_id": params.sessionId,
-                "query_dictionary": params.queryDict,
-                "previewCommand": params.previewCommand,
-                "installReference": params.installReference,
-                "oneQuestionPerScreen": displayOptions.oneQuestionPerScreen,
-            });
-            options.url = formplayerUrl + '/get_details';
+            options.url = formplayerUrl + '/' + route;
 
             menus = new FormplayerFrontend.Menus.Collections.MenuSelect();
 
@@ -129,11 +72,11 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
     };
 
     FormplayerFrontend.reqres.setHandler("app:select:menus", function (options) {
-        return Menus.API.getMenus(options);
+        return Menus.API.getMenus(options, 'navigate_menu');
     });
 
     FormplayerFrontend.reqres.setHandler("entity:get:details", function (options) {
-        return Menus.API.getDetails(options);
+        return Menus.API.getMenus(options, 'get_details');
     });
 });
 
