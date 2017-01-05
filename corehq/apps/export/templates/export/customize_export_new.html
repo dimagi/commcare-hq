@@ -191,9 +191,10 @@
                     {% trans "Process all applications for deleted questions" %}
                 </label>
                 <div class="col-sm-9 col-md-8 col-lg-6">
-                    <button class="btn btn-default" data-bind="click: onBeginSchemaBuild">
-                        {% trans "Process" %}
-                    </button>
+                    <button class="btn btn-default" data-bind="
+                        click: onBeginSchemaBuild,
+                        text: schemaProgressText
+                    "></button>
                     <div class="help-block" data-bind="visible: errorOnBuildSchema">
                         {% trans "Unable to process applications. Please report an issue if this persists" %}
                     </div>

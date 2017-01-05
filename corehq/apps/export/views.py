@@ -1842,6 +1842,10 @@ class GenerateSchemaFromAllBuildsView(View):
         status = get_task_status(download.task)
         return json_response({
             'download_id': download_id,
+            'success': status.success(),
+            'failed': status.failed(),
+            'missing': status.missing(),
+            'not_started': status.not_started(),
             'progress': status.progress._asdict(),
         })
 
@@ -1853,6 +1857,7 @@ class GenerateSchemaFromAllBuildsView(View):
             request.POST.get('app_id'),
             request.POST.get('identifier'),
         ))
+        download.save()
         return json_response({
             'download_id': download.download_id
         })

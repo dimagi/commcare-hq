@@ -8,6 +8,7 @@ from couchdbkit import ResourceConflict
 from couchdbkit.ext.django.schema import IntegerProperty
 from django.utils.translation import ugettext as _
 from django.core.urlresolvers import reverse
+from soil.progress import set_task_progress
 
 from corehq.apps.export.esaccessors import get_ledger_section_entry_combinations
 from dimagi.utils.decorators.memoized import memoized
@@ -1047,17 +1048,22 @@ class ExportDataSchema(Document):
 
     @classmethod
     def generate_schema_from_builds(cls, domain, app_id, identifier, force_rebuild=False,
-            only_process_current_builds=False):
+            only_process_current_builds=False, task=None):
         """Builds a schema from Application builds for a given identifier
 
         :param domain: The domain that the export belongs to
         :param app_id: The app_id that the export belongs to (or None if export is not associated with an app.
         :param identifier: The unique identifier of the schema being exported.
             case_type for Case Exports and xmlns for Form Exports
+        :param only_process_current_builds: Only process the current apps, not any builds. This
+            means that deleted items may not be present in the schema since past builds have not been
+            processed.
+        :param task: A celery task to update the progress of the build
         :returns: Returns a ExportDataSchema instance
         """
 
         original_id, original_rev = None, None
+        apps_processed = 0
         current_schema = cls.get_latest_export_schema(domain, app_id, identifier)
         if (current_schema
                 and not force_rebuild
@@ -1092,6 +1098,9 @@ class ExportDataSchema(Document):
             # gets processed.
             if app.copy_of:
                 current_schema.record_update(app.copy_of, app.version)
+
+            apps_processed += 1
+            set_task_progress(task, apps_processed, len(app_build_ids))
 
         inferred_schema = cls._get_inferred_schema(domain, identifier)
         if inferred_schema:

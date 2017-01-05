@@ -25,6 +25,7 @@ hqDefine('export/js/models.js', function () {
         self.buildSchemaProgress = ko.observable(0);
         self.showBuildSchemaProgressBar = ko.observable(false);
         self.errorOnBuildSchema = ko.observable(false);
+        self.schemaProgressText = ko.observable(gettext('Process'));
 
         // Detetrmines the state of the save. Used for controlling the presentaiton
         // of the Save button.
@@ -72,11 +73,32 @@ hqDefine('export/js/models.js', function () {
     ExportInstance.prototype.onBeginSchemaBuild = function(exportInstance, e) {
         var self = this,
             $btn = $(e.currentTarget),
+            errorHandler,
+            successHandler,
             buildSchemaUrl = urls.reverse('build_schema', this.domain()),
             identifier = ko.utils.unwrapObservable(this.case_type) || ko.utils.unwrapObservable(this.xmlns);
 
         this.showBuildSchemaProgressBar(true);
-        $btn.prop('disable', true);
+        this.buildSchemaProgress(0);
+
+        self.schemaProgressText(gettext('Processing...'));
+        $btn.attr('disabled', true);
+        $btn.addClass('disabled');
+        $btn.addSpinnerToButton();
+
+        errorHandler = function() {
+            $btn.attr('disabled', false);
+            $btn.removeSpinnerFromButton();
+            $btn.removeClass('disabled');
+            self.errorOnBuildSchema(true);
+            self.schemaProgressText(gettext('Process'));
+        };
+
+        successHandler = function() {
+            $btn.removeSpinnerFromButton();
+            self.schemaProgressText(gettext('Processing Complete. Refresh page.'));
+        };
+
         $.ajax({
             url: buildSchemaUrl,
             type: 'POST',
@@ -87,16 +109,13 @@ hqDefine('export/js/models.js', function () {
             },
             dataType: 'json',
             success: function(response) {
-                self.checkBuildSchemaProgress(response.download_id);
+                self.checkBuildSchemaProgress(response.download_id, successHandler, errorHandler);
             },
-            error: function() {
-                $btn.prop('disable', false);
-                self.errorOnBuildSchema(true);
-            },
+            error: errorHandler,
         });
     };
 
-    ExportInstance.prototype.checkBuildSchemaProgress = function(downloadId) {
+    ExportInstance.prototype.checkBuildSchemaProgress = function(downloadId, successHandler, errorHandler) {
         var self = this,
             buildSchemaUrl = urls.reverse('build_schema', this.domain());
 
@@ -108,14 +127,27 @@ hqDefine('export/js/models.js', function () {
             },
             dataType: 'json',
             success: function(response) {
-                // If there's no progress that most likely means the task has finished
-                if (!response.progress) {
+                if (response.success) {
                     self.buildSchemaProgress(100);
+                    self.showBuildSchemaProgressBar(false);
+                    successHandler();
+                    return;
+                }
+
+                if (response.failed) {
+                    self.errorOnBuildSchema(true);
+                    return;
+                }
+
+                self.buildSchemaProgress(response.progress.percent || 0);
+                if (response.not_started || response.progress.current !== response.progress.total) {
+                    window.setTimeout(
+                        self.checkBuildSchemaProgress.bind(self, response.download_id, successHandler, errorHandler),
+                        2000
+                    );
                 }
             },
-            error: function() {
-                self.errorOnBuildSchema(true);
-            },
+            error: errorHandler,
         });
     };
 
