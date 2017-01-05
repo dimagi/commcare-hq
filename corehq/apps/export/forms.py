@@ -104,7 +104,11 @@ class DateSpanField(forms.CharField):
 class CreateExportTagForm(forms.Form):
     # common fields
     model_type = forms.ChoiceField(
-        choices=[("", ugettext_lazy("Select model type")), ('case', ugettext_lazy('case')), ('form', ugettext_lazy('form'))]
+        choices=[
+            ("", ugettext_lazy("Select model type")),
+            ('case', ugettext_lazy('case')),
+            ('form', ugettext_lazy('form')),
+        ]
     )
     app_type = forms.CharField()
     application = forms.CharField()
@@ -541,7 +545,8 @@ class DashboardFeedFilterForm(forms.Form):
                     ng_required="formData.date_range === 'since' || formData.date_range === 'range'"
                 ),
                 ng_show="formData.date_range === 'range' || formData.date_range === 'since'",
-                ng_class="{'has-error': feedFiltersForm.start_date.$invalid && !feedFiltersForm.start_date.$pristine}",
+                ng_class=\
+                    "{'has-error': feedFiltersForm.start_date.$invalid && !feedFiltersForm.start_date.$pristine}",
             ),
             crispy.Div(
                 crispy.Field(
@@ -560,7 +565,10 @@ class DashboardFeedFilterForm(forms.Form):
         """
 
         # Only one of these fields should have any data in it.
-        emwf_field = 'emwf_form_filter' if self.cleaned_data['emwf_form_filter'] is not None else 'emwf_case_filter'
+        if self.cleaned_data['emwf_form_filter'] is not None:
+            emwf_field = 'emwf_form_filter'
+        else:
+            emwf_field = 'emwf_case_filter'
         emwf_selections = [x['id'] for x in self.cleaned_data[emwf_field]]
 
         if self.cleaned_data['emwf_form_filter']:
@@ -825,7 +833,8 @@ class AbstractExportFilterBuilder(object):
                     return
                 datespan.set_timezone(self.timezone)
             except AttributeError:
-                # Some date_intervals (e.g. DatePeriod instances) don't have a set_timezone() or is_valid() methods.
+                # Some date_intervals (e.g. DatePeriod instances) don't have a set_timezone() or is_valid()
+                # methods.
                 pass
             return self.date_filter_class(gte=datespan.startdate, lt=datespan.enddate + timedelta(days=1))
 
@@ -944,7 +953,9 @@ class CaseExportFilterBuilder(AbstractExportFilterBuilder):
             )
             case_filter = [NOT(OwnerFilter(ids_to_exclude))]
         else:
-            case_filter = self._get_filters_from_slugs(can_access_all_locations, group_ids, selected_user_types, location_ids, user_ids)
+            case_filter = self._get_filters_from_slugs(
+                can_access_all_locations, group_ids, selected_user_types, location_ids, user_ids
+            )
 
         date_filter = self._get_datespan_filter(datespan)
         if date_filter:
@@ -955,7 +966,8 @@ class CaseExportFilterBuilder(AbstractExportFilterBuilder):
 
         return case_filter
 
-    def _get_filters_from_slugs(self, can_access_all_locations, selected_group_ids, selected_user_types, location_ids, user_ids):
+    def _get_filters_from_slugs(self, can_access_all_locations, selected_group_ids, selected_user_types,
+                                location_ids, user_ids):
         """
         for full organization access:
             for selected groups return group ids and groups user ids otherwise fetches case sharing groups and
@@ -980,10 +992,13 @@ class CaseExportFilterBuilder(AbstractExportFilterBuilder):
         return [OR(
             OwnerFilter(list(owner_filter_ids)),
             LastModifiedByFilter(last_modified_filter_ids),
-            *self._get_group_independent_filters(can_access_all_locations, selected_user_types, location_ids, user_ids)
+            *self._get_group_independent_filters(
+                can_access_all_locations, selected_user_types, location_ids, user_ids
+            )
         )]
 
-    def _get_group_independent_filters(self, can_access_all_locations, selected_user_types, location_ids, user_ids):
+    def _get_group_independent_filters(self, can_access_all_locations, selected_user_types, location_ids,
+                                       user_ids):
         # filters for location and users for both and user type in case of full access
         if can_access_all_locations:
             user_types = selected_user_types

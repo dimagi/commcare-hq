@@ -1,3 +1,4 @@
+/* globals clipboard */
 (function (angular, undefined) {
     'use strict';
     // module: hq.list_exports
@@ -90,7 +91,7 @@
             var clipboard = new Clipboard($event.target, {
                 target: function (trigger) {
                     return trigger.nextElementSibling;
-                }
+                },
             });
             clipboard.onClick($event);
             clipboard.destroy();
@@ -151,7 +152,7 @@
         $scope.formElement = filterFormElements;
 
 
-        $rootScope.$watch("filterModalExport", function (newSelectedExport, oldSelectedExport) {
+        $rootScope.$watch("filterModalExport", function (newSelectedExport) {
             if (newSelectedExport) {
                 if (!(newSelectedExport.id in self.nonPristineExportFilters)) {
                     // Mark the form as pristine if we are editing filters of a different export than before
@@ -169,7 +170,7 @@
             }
         });
 
-        $scope.$watch("formData.date_range", function(newDateRange, oldDateRange) {
+        $scope.$watch("formData.date_range", function(newDateRange) {
             if (!newDateRange) {
                 $scope.formData.date_range = "last7";
             } else {

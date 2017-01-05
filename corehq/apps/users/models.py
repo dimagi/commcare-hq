@@ -848,7 +848,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         else:
             return self.username
 
-
     @property
     def username_in_report(self):
         return user_display_string(self.username, self.first_name, self.last_name)

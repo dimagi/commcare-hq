@@ -601,28 +601,28 @@ class ProjectDataTab(UITab):
             if self.can_view_daily_saved_exports:
                 if self.use_new_daily_saved_exports_ui:
                     export_data_views.append({
-                    "title": DailySavedExportListView.page_title,
-                    "url": reverse(DailySavedExportListView.urlname, args=(self.domain,)),
-                    "show_in_dropdown": True,
-                    "subpages": filter(None, [
-                        {
-                            'title': CreateNewDailySavedFormExport.page_title,
-                            'urlname': CreateNewDailySavedFormExport.urlname,
-                        } if self.can_edit_commcare_data else None,
-                        {
-                            'title': CreateNewDailySavedCaseExport.page_title,
-                            'urlname': CreateNewDailySavedCaseExport.urlname,
-                        } if self.can_edit_commcare_data else None,
-                        {
-                            'title': EditFormDailySavedExportView.page_title,
-                            'urlname': EditFormDailySavedExportView.urlname,
-                        } if self.can_edit_commcare_data else None,
-                        {
-                            'title': EditCaseDailySavedExportView.page_title,
-                            'urlname': EditCaseDailySavedExportView.urlname,
-                        } if self.can_edit_commcare_data else None,
-                    ])
-                })
+                        "title": DailySavedExportListView.page_title,
+                        "url": reverse(DailySavedExportListView.urlname, args=(self.domain,)),
+                        "show_in_dropdown": True,
+                        "subpages": filter(None, [
+                            {
+                                'title': CreateNewDailySavedFormExport.page_title,
+                                'urlname': CreateNewDailySavedFormExport.urlname,
+                            } if self.can_edit_commcare_data else None,
+                            {
+                                'title': CreateNewDailySavedCaseExport.page_title,
+                                'urlname': CreateNewDailySavedCaseExport.urlname,
+                            } if self.can_edit_commcare_data else None,
+                            {
+                                'title': EditFormDailySavedExportView.page_title,
+                                'urlname': EditFormDailySavedExportView.urlname,
+                            } if self.can_edit_commcare_data else None,
+                            {
+                                'title': EditCaseDailySavedExportView.page_title,
+                                'urlname': EditCaseDailySavedExportView.urlname,
+                            } if self.can_edit_commcare_data else None,
+                        ])
+                    })
             else:
                 export_data_views.append({
                     'title': DailySavedExportListView.page_title,

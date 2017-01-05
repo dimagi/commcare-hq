@@ -1057,7 +1057,9 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
             'hasFile': has_file,
             'index': index,  # This can be removed when we're off legacy exports
             'fileData': file_data,
-            'filters': DashboardFeedFilterForm.get_form_data_from_export_instance_filters(filters, self.domain, export_type),
+            'filters': DashboardFeedFilterForm.get_form_data_from_export_instance_filters(
+                filters, self.domain, export_type
+            ),
             'isLocationSafeForUser': filters.is_location_safe_for_user(self.request),
             "locationRestrictions": location_restrictions,
         }
@@ -1459,7 +1461,6 @@ class DashboardFeedListView(DailySavedExportListView):
             "form": EditFormFeedView,
             "case": EditCaseFeedView
         }[model]
-
 
     @property
     def page_context(self):
@@ -1886,7 +1887,9 @@ class DailySavedExportMixin(object):
         instance.is_daily_saved_export = True
 
         span = datespan_from_beginning(self.domain_object, _get_timezone(self.domain, self.request.couch_user))
-        instance.filters.date_period = DatePeriod(period_type="range", begin=span.startdate.date(), end=span.enddate.date())
+        instance.filters.date_period = DatePeriod(
+            period_type="range", begin=span.startdate.date(), end=span.enddate.date()
+        )
         if not self.request.can_access_all_locations:
             accessible_location_ids = (SQLLocation.active_objects.accessible_location_ids(
                 self.request.domain,

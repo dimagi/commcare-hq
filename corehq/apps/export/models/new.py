@@ -539,7 +539,9 @@ class ExportInstanceFilters(DocumentSchema):
         if self.can_access_all_locations and not request.can_access_all_locations:
             return False
         elif not self.can_access_all_locations:
-            users_accessible_locations = SQLLocation.active_objects.accessible_location_ids(request.domain, request.couch_user)
+            users_accessible_locations = SQLLocation.active_objects.accessible_location_ids(
+                request.domain, request.couch_user
+            )
             if not set(self.accessible_location_ids).issubset(users_accessible_locations):
                 return False
         return True
@@ -830,7 +832,9 @@ class CaseExportInstance(ExportInstance):
     def get_filters(self):
         if self.filters:
             from corehq.apps.export.forms import CaseExportFilterBuilder
-            filter_builder = CaseExportFilterBuilder(Domain.get_by_name(self.domain), get_timezone_for_domain(self.domain))
+            filter_builder = CaseExportFilterBuilder(
+                Domain.get_by_name(self.domain), get_timezone_for_domain(self.domain)
+            )
             return filter_builder.get_filter(
                 self.filters.can_access_all_locations,
                 self.filters.accessible_location_ids,
@@ -881,7 +885,9 @@ class FormExportInstance(ExportInstance):
     def get_filters(self):
         if self.filters:
             from corehq.apps.export.forms import FormExportFilterBuilder
-            filter_builder = FormExportFilterBuilder(Domain.get_by_name(self.domain), get_timezone_for_domain(self.domain))
+            filter_builder = FormExportFilterBuilder(
+                Domain.get_by_name(self.domain), get_timezone_for_domain(self.domain)
+            )
             return filter_builder.get_filter(
                 self.filters.can_access_all_locations,
                 self.filters.accessible_location_ids,
