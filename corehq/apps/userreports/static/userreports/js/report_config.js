@@ -68,14 +68,14 @@ var reportBuilder = function () {
             parent.saveButton.fire('change');
         };
 
-        self.serialize = function () {
+        self.serialize = function (reportAggEnabled) {
             return {
                 "column_id": self.columnId,
                 "name": self.name,
                 "label": self.label,
                 "is_non_numeric": self.isNonNumeric,
-                "is_group_by_column": self.isGroupByColumn(),
-                "aggregation": self.aggregation(),
+                "is_group_by_column": reportAggEnabled ? self.isGroupByColumn() : false,
+                "aggregation": reportAggEnabled ? self.aggregation() : null,
             };
         };
 
@@ -225,7 +225,7 @@ var reportBuilder = function () {
                 type: 'post',
                 contentType: 'application/json; charset=utf-8',
                 data: JSON.stringify({
-                    'columns': _.map(columns, function (c) { return c.serialize(); }),
+                    'columns': _.map(columns, function (c) { return c.serialize(self.isAggregationEnabled()); }),
                     'aggregate': self.isAggregationEnabled(),
                     'app': self._app,
                     'source_type': self._sourceType,
@@ -354,7 +354,7 @@ var reportBuilder = function () {
                 "report_type": self.reportType(),
                 "aggregate": self.isAggregationEnabled(),
                 "chart": self.selectedChart(),
-                "columns": _.map(self.selectedColumns(), function (c) { return c.serialize(); }),
+                "columns": _.map(self.selectedColumns(), function (c) { return c.serialize(self.isAggregationEnabled()); }),
                 "default_filters": JSON.parse(self.defaultFilterList.serializedProperties()),
                 "user_filters": JSON.parse(self.filterList.serializedProperties()),
             };
