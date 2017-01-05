@@ -13,38 +13,21 @@ var reportBuilder = function () {
         self.name = column["name"];
         self.label = column["label"];
         self.isNonNumeric = column["is_non_numeric"];
-        self.isGroupByColumn = false;
 
         self.groupByOrAggregation = ko.observable(self._defaultAggregation());
         self.groupByOrAggregation.subscribe(function (newValue) {
-            var index = parent.selectedColumns.indexOf(self);
-            var lookAhead = index;
-
-            if (newValue === "groupBy") {
-                if (self.isGroupByColumn === false) {
-                    // Move group-by column before aggregated columns
-                    while (lookAhead > 0 && !parent.selectedColumns()[lookAhead - 1].isGroupByColumn) {
-                        lookAhead--;
-                    }
-                }
-                self.isGroupByColumn = true;
-            } else {
-                if (self.isGroupByColumn === true) {
-                    // Move aggregated column after group-by columns
-                    var end = parent.selectedColumns().length - 1;
-                    while (lookAhead < end && parent.selectedColumns()[lookAhead + 1].isGroupByColumn) {
-                        lookAhead++;
-                    }
-                }
-                self.isGroupByColumn = false;
-            }
-
-            if (lookAhead !== index) {
-                parent.selectedColumns.splice(index, 1);  // Remove self
-                parent.selectedColumns.splice(lookAhead, 0, self);  // Insert self
-            }
+            self._reorderSelectedColumns(newValue);
             parent.refreshPreview();
         });
+
+        self.isGroupByColumn = ko.pureComputed(function () {
+            return self.groupByOrAggregation() === "groupBy"
+        });
+        self._previousGroupBy = null;
+        self.groupByOrAggregation.subscribe(function (oldValue) {
+            self._previousGroupBy = oldValue;
+        }, null, "beforeChange");
+
 
         self.aggregation = ko.pureComputed(function () {
             if (self.groupByOrAggregation() === 'groupBy') {
@@ -52,6 +35,34 @@ var reportBuilder = function () {
             }
             return self.groupByOrAggregation();
         });
+
+        self._reorderSelectedColumns = function (newValue) {
+            var index = parent.selectedColumns.indexOf(self);
+            var lookAhead = index;
+            var oldValueWasGroupBy = self._previousGroupBy === "groupBy";
+
+            if (newValue === "groupBy") {
+                if (oldValueWasGroupBy === false) {
+                    // Move group-by column before aggregated columns
+                    while (lookAhead > 0 && !parent.selectedColumns()[lookAhead - 1].isGroupByColumn()) {
+                        lookAhead--;
+                    }
+                }
+            } else {
+                if (oldValueWasGroupBy === true) {
+                    // Move aggregated column after group-by columns
+                    var end = parent.selectedColumns().length - 1;
+                    while (lookAhead < end && parent.selectedColumns()[lookAhead + 1].isGroupByColumn()) {
+                        lookAhead++;
+                    }
+                }
+            }
+
+            if (lookAhead !== index) {
+                parent.selectedColumns.splice(index, 1);  // Remove self
+                parent.selectedColumns.splice(lookAhead, 0, self);  // Insert self
+            }
+        };
 
         self.notifyButton = function () {
             parent.saveButton.fire('change');
@@ -63,7 +74,7 @@ var reportBuilder = function () {
                 "name": self.name,
                 "label": self.label,
                 "is_non_numeric": self.isNonNumeric,
-                "is_group_by_column": self.isGroupByColumn,
+                "is_group_by_column": self.isGroupByColumn(),
                 "aggregation": self.aggregation(),
             };
         };
@@ -254,11 +265,11 @@ var reportBuilder = function () {
                 }
 
                 var aggColumns = _.filter(self.selectedColumns(), function (c) {
-                    return self.isAggregationEnabled && !c.isGroupByColumn;
+                    return self.isAggregationEnabled && !c.isGroupByColumn();
                 });
                 var groupByNames = _.map(
                     _.filter(self.selectedColumns(), function (c) {
-                        return c.isGroupByColumn === true;
+                        return c.isGroupByColumn() === true;
                     }),
                     function (c) { return c.name; }
                 );
