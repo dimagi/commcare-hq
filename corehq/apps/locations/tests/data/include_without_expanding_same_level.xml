@@ -10,6 +10,16 @@
       <supply_point_id />
       <location_data />
       <countys>
+        <county id="{middlesex_id}">
+          <name>Middlesex</name>
+          <site_code>middlesex</site_code>
+          <external_id />
+          <latitude />
+          <longitude />
+          <location_type>county</location_type>
+          <supply_point_id />
+          <location_data />
+        </county>
         <county id="{suffolk_id}">
           <name>Suffolk</name>
           <site_code>suffolk</site_code>
@@ -56,7 +66,7 @@
       <countys>
         <county id="{new_york_city_id}">
           <name>New York City</name>
-          <site_code>new york city</site_code>
+          <site_code>new_york_city</site_code>
           <external_id />
           <latitude />
           <longitude />
