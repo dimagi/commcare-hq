@@ -1,5 +1,5 @@
 /*globals hqDefine, ko, $ */
-hqDefine('commtrack/ko/sms.js', function () {
+hqDefine('commtrack/js/sms.js', function () {
     'use strict';
     function CommtrackSettingsViewModel(other_sms_codes) {
         this.keyword = ko.observable();

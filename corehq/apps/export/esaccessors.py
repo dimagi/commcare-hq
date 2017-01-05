@@ -29,7 +29,7 @@ def get_case_export_base_query(domain, case_type):
 def get_groups_user_ids(group_ids):
     q = (GroupES()
          .doc_id(group_ids))
-    return q.values_list("users", flat=True)
+    return [user for user_list in q.values_list("users", flat=True) for user in user_list]
 
 
 def get_ledger_section_entry_combinations(domain):

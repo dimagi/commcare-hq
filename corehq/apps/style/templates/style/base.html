@@ -563,7 +563,7 @@
         {% compress js %}
         <script src="{% static 'multiselect/js/jquery.multi-select.js' %}"></script>
         <script src="{% static 'quicksearch/dist/jquery.quicksearch.min.js' %}"></script>
-        <script src="{% static 'style/js/components/multiselect_utils.js' %}"></script>
+        <script src="{% static 'style/js/multiselect_utils.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
@@ -583,7 +583,7 @@
 
         {% if request.use_ko_validation %}
           <script src="{% static 'knockout-validation/dist/knockout.validation.min.js' %}"></script>
-          <script src="{% static 'style/ko/validators.ko.js' %}"></script>
+          <script src="{% static 'style/js/validators.ko.js' %}"></script>
         {% endif %}
 
         {# This should be loaded relatively late, because as a non-static import it takes longer to load #}

@@ -1,6 +1,6 @@
 /* global django:false _:false */
 
-hqDefine('style/js/components/multiselect_utils', function () {
+hqDefine('style/js/multiselect_utils', function () {
     var multiselect_utils = {};
 
     var _renderHeader = function (title, action, search) {

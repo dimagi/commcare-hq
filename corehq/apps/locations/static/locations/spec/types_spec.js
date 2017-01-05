@@ -3,8 +3,8 @@
 
 describe('Location Types', function() {
 
-    var LocationSettingsViewModel = hqImport('locations/ko/location_types.js').LocationSettingsViewModel,
-        LocationTypeModel = hqImport('locations/ko/location_types.js').LocationTypeModel;
+    var LocationSettingsViewModel = hqImport('locations/js/location_types.js').LocationSettingsViewModel,
+        LocationTypeModel = hqImport('locations/js/location_types.js').LocationTypeModel;
 
     var extract_name = function(loc_type){
         return loc_type.name();
