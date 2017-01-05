@@ -8,6 +8,7 @@
 hqDefine('export/js/models.js', function () {
     var constants = hqImport('export/js/const.js');
     var utils = hqImport('export/js/utils.js');
+    var urls = hqImport('hqwebapp/js/urllib.js');
 
     /**
      * ExportInstance
@@ -20,6 +21,9 @@ hqDefine('export/js/models.js', function () {
         options = options || {};
         var self = this;
         ko.mapping.fromJS(instanceJSON, ExportInstance.mapping, self);
+
+        self.buildSchemaProgress = ko.observable(0);
+        self.showBuildSchemaProgressBar = ko.observable(false);
 
         // Detetrmines the state of the save. Used for controlling the presentaiton
         // of the Save button.
@@ -61,6 +65,55 @@ hqDefine('export/js/models.js', function () {
                     self.is_daily_saved_export(false);
                 }
             }
+        });
+    };
+
+    ExportInstance.prototype.onBeginSchemaBuild = function(exportInstance, e) {
+        var self = this,
+            $btn = $(e.currentTarget),
+            buildSchemaUrl = urls.reverse('build_schema', this.domain()),
+            identifier = ko.utils.unwrapObservable(this.case_type) || ko.utils.unwrapObservable(this.xmlns);
+
+        this.showBuildSchemaProgressBar(true);
+        $btn.prop('disable', true);
+        $.ajax({
+            url: buildSchemaUrl,
+            type: 'POST',
+            data: {
+                type: this.type(),
+                app_id: this.app_id(),
+                identifier: identifier,
+            },
+            dataType: 'json',
+            success: function(response) {
+                self.checkBuildSchemaProgress(response.download_id);
+            },
+            error: function() {
+                $btn.prop('disable', false);
+            },
+        });
+    };
+
+    ExportInstance.prototype.checkBuildSchemaProgress = function(downloadId) {
+        var self = this,
+            buildSchemaUrl = urls.reverse('build_schema', this.domain());
+
+        $.ajax({
+            url: buildSchemaUrl,
+            type: 'GET',
+            data: {
+                download_id: downloadId,
+            },
+            dataType: 'json',
+            success: function(response) {
+                // If there's no progress that most likely means the task has finished
+                if (!response.progress) {
+                    self.buildSchemaProgress(100);
+                }
+            },
+            error: function() {
+                console.log('error');
+            },
         });
     };
 
@@ -219,6 +272,10 @@ hqDefine('export/js/models.js', function () {
             'transform_dates',
             'include_errors',
             'is_deidentified',
+            'domain',
+            'app_id',
+            'case_type',
+            'xmlns',
             'is_daily_saved_export',
         ],
         tables: {

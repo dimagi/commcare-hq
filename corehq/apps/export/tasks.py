@@ -87,3 +87,13 @@ def _cached_add_inferred_export_properties(sender, domain, case_type, properties
             group_schema.put_item(path, inferred_from=sender, item_cls=ScalarItem)
 
     inferred_schema.save()
+
+
+@task(queue='background_queue')
+def generate_schema_for_all_builds(schema_cls, domain, app_id, identifier):
+    schema_cls.generate_schema_from_builds(
+        domain,
+        app_id,
+        identifier,
+        only_process_current_builds=False,
+    )

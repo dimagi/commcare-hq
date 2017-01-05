@@ -30,6 +30,7 @@ from django.utils.decorators import method_decorator
 import json
 import re
 from django.utils.safestring import mark_safe
+from django.views.generic import View
 
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 import pytz
@@ -45,6 +46,7 @@ from corehq.apps.export.utils import (
     revert_new_exports,
 )
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
+from corehq.apps.export.tasks import generate_schema_for_all_builds
 from corehq.apps.export.exceptions import (
     ExportNotFound,
     ExportAppException,
@@ -116,6 +118,7 @@ from dimagi.utils.couch.undo import DELETED_SUFFIX
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import get_download_context
+from soil.progress import get_task_status
 
 
 def user_can_view_deid_exports(domain, couch_user):
@@ -1819,6 +1822,40 @@ class DownloadNewCaseExportView(GenericDownloadNewExportMixin, DownloadCaseExpor
         accessible_user_ids = user_ids_at_locations(accessible_location_ids)
         accessible_ids = accessible_user_ids + list(accessible_location_ids)
         return OR(OwnerFilter(accessible_ids), LastModifiedByFilter(accessible_user_ids))
+
+
+class GenerateSchemaFromAllBuildsView(View):
+    urlname = 'build_full_schema'
+
+    def export_cls(self, type_):
+        return CaseExportDataSchema if type_ == CASE_EXPORT else FormExportDataSchema
+
+    def get(self, request, *args, **kwargs):
+        download_id = request.GET.get('download_id')
+        download = DownloadBase.get(download_id)
+        if download is None:
+            return json_response({
+                'download_id': download_id,
+                'progress': None,
+            })
+
+        status = get_task_status(download.task)
+        return json_response({
+            'download_id': download_id,
+            'progress': status.progress._asdict(),
+        })
+
+    def post(self, request, *args, **kwargs):
+        download = DownloadBase()
+        download.set_task(generate_schema_for_all_builds.delay(
+            self.export_cls(kwargs.get('type')),
+            request.domain,
+            request.POST.get('app_id'),
+            request.POST.get('identifier'),
+        ))
+        return json_response({
+            'download_id': download.download_id
+        })
 
 
 @csrf_exempt
