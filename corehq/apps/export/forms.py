@@ -545,7 +545,7 @@ class DashboardFeedFilterForm(forms.Form):
                     ng_required="formData.date_range === 'since' || formData.date_range === 'range'"
                 ),
                 ng_show="formData.date_range === 'range' || formData.date_range === 'since'",
-                ng_class=\
+                ng_class=
                     "{'has-error': feedFiltersForm.start_date.$invalid && !feedFiltersForm.start_date.$pristine}",
             ),
             crispy.Div(

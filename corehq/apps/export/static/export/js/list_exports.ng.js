@@ -1,4 +1,4 @@
-/* globals clipboard */
+/* globals Clipboard */
 (function (angular, undefined) {
     'use strict';
     // module: hq.list_exports
