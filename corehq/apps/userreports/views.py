@@ -731,10 +731,11 @@ class ConfigureReport(ReportBuilderView):
 
     def _get_existing_report_type(self):
         # TODO: Handle map reports
-        type_ = "list"
-        if self.existing_report.aggregation_columns != ["doc_id"]:
-            type_ = "agg"
-        return type_
+        if self.existing_report:
+            type_ = "list"
+            if self.existing_report.aggregation_columns != ["doc_id"]:
+                type_ = "agg"
+            return type_
 
     def _column_exists(self, column_id):
         """
