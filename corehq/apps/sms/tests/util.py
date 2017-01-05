@@ -155,7 +155,7 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
             override_open_sessions=override_open_sessions,
             initiator_doc_type_filter=initiator_filter or [],
         )
-        k.save(sync_to_couch=False)
+        k.save()
 
         k.keywordaction_set.create(
             recipient=recipient,
@@ -163,9 +163,6 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
             action=KeywordAction.ACTION_SMS,
             message_content=reply_sms,
         )
-
-        # Sync to Couch; We can remove this after syncing SurveyKeywords is no longer needed
-        k.save()
 
     def create_survey_keyword(self, keyword, form_unique_id, delimiter=None,
             override_open_sessions=True, initiator_filter=None):
@@ -178,16 +175,13 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
             override_open_sessions=override_open_sessions,
             initiator_doc_type_filter=initiator_filter or [],
         )
-        k.save(sync_to_couch=False)
+        k.save()
 
         k.keywordaction_set.create(
             recipient=KeywordAction.RECIPIENT_SENDER,
             action=KeywordAction.ACTION_SMS_SURVEY,
             form_unique_id=form_unique_id,
         )
-
-        # Sync to Couch; We can remove this after syncing SurveyKeywords is no longer needed
-        k.save()
 
     def create_structured_sms_keyword(self, keyword, form_unique_id, reply_sms,
             delimiter=None, named_args=None, named_args_separator=None,
@@ -201,7 +195,7 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
             override_open_sessions=override_open_sessions,
             initiator_doc_type_filter=initiator_filter or [],
         )
-        k.save(sync_to_couch=False)
+        k.save()
 
         k.keywordaction_set.create(
             recipient=KeywordAction.RECIPIENT_SENDER,
@@ -217,9 +211,6 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
             named_args=(named_args or {}),
             named_args_separator=named_args_separator,
         )
-
-        # Sync to Couch; We can remove this after syncing SurveyKeywords is no longer needed
-        k.save()
 
     def create_site(self):
         site = Site(id=settings.SITE_ID, domain=self.live_server_url,

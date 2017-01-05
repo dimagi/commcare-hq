@@ -12,7 +12,7 @@
 ├── equivalent-xml-js#7de21be295
 ├── fuse.js#2.5.0 (latest is 2.6.1)
 ├── jquery#3.1.1
-├── jsdiff#3.1.0
+├── jsdiff#3.1.0 (3.2.0 available)
 ├─┬ jstree#3.3.3
 │ └── jquery#3.1.1
 ├── langcodes#b4ea78bae6

@@ -548,7 +548,7 @@ class AddStructuredKeywordView(BaseMessagingSectionView):
                 if self.keyword_form.cleaned_data['allow_keyword_use_by'] == 'cases':
                     self.keyword.initiator_doc_type_filter.append('CommCareCase')
 
-                self.keyword.save(sync_to_couch=False)
+                self.keyword.save()
 
                 self.keyword.keywordaction_set.all().delete()
                 if self.keyword_form.cleaned_data['sender_content_type'] != NO_RESPONSE:
@@ -576,8 +576,6 @@ class AddStructuredKeywordView(BaseMessagingSectionView):
                         form_unique_id=self.keyword_form.cleaned_data['other_recipient_form_unique_id'],
                     )
 
-                # Sync to Couch; We can remove this after syncing SurveyKeywords is no longer needed
-                self.keyword.save()
                 return HttpResponseRedirect(reverse(KeywordsListView.urlname, args=[self.domain]))
         return self.get(request, *args, **kwargs)
 

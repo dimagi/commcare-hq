@@ -23,7 +23,6 @@ from corehq.apps.sms.messages import (MSG_MOBILE_WORKER_INVITATION_START,
 from corehq.const import GOOGLE_PLAY_STORE_COMMCARE_URL
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
-from dimagi.utils.couch.migration import SyncSQLToCouchMixin
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.load_balance import load_balance
 from django.utils.translation import ugettext_noop, ugettext_lazy
@@ -2296,11 +2295,12 @@ class MigrationStatus(models.Model):
             return False
 
 
-class Keyword(SyncSQLToCouchMixin, models.Model):
+class Keyword(UUIDGeneratorMixin, models.Model):
     """
     A Keyword allows a project to define actions to be taken when a contact
     in the project sends an inbound SMS starting with a certain word.
     """
+    UUIDS_TO_GENERATE = ['couch_id']
 
     class Meta:
         index_together = (
@@ -2375,36 +2375,6 @@ class Keyword(SyncSQLToCouchMixin, models.Model):
     @quickcache(['domain'], timeout=60 * 60)
     def domain_has_keywords(cls, domain):
         return cls.get_by_domain(domain).count() > 0
-
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        from corehq.apps.reminders.models import SurveyKeyword
-        return SurveyKeyword
-
-    def _migration_sync_to_couch(self, couch_obj):
-        from corehq.apps.reminders.models import SurveyKeywordAction
-
-        couch_obj.domain = self.domain
-        couch_obj.keyword = self.keyword
-        couch_obj.description = self.description
-        couch_obj.delimiter = self.delimiter
-        couch_obj.override_open_sessions = self.override_open_sessions
-        couch_obj.initiator_doc_type_filter = self.initiator_doc_type_filter
-
-        couch_obj.actions = []
-        for sql_action in self.keywordaction_set.all():
-            couch_obj.actions.append(SurveyKeywordAction(
-                recipient=sql_action.recipient,
-                recipient_id=sql_action.recipient_id,
-                action=sql_action.action,
-                message_content=sql_action.message_content,
-                form_unique_id=sql_action.form_unique_id,
-                use_named_args=sql_action.use_named_args,
-                named_args=sql_action.named_args,
-                named_args_separator=sql_action.named_args_separator
-            ))
-
-        couch_obj.save(sync_to_sql=False)
 
 
 class KeywordAction(models.Model):
