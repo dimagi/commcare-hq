@@ -300,8 +300,11 @@ hqDefine('locations/js/location_types.js', function(){
             if (self.expand_from() !== ROOT_LOCATION_ID){
                 if (typeof(self.expand_from()) === 'undefined' || self.expand_from() === null){
                     options = self.parents().reverse();
+                    options.push(self);
                 } else {
-                    options = self.view.loc_types_by_id()[self.expand_from()].parents();
+                    var expand_from_type = self.view.loc_types_by_id()[self.expand_from()];
+                    options = expand_from_type.parents();
+                    options.push(expand_from_type);
                     options = options.reverse();
                 }
                 return options;
