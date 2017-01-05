@@ -38,7 +38,7 @@ def get_headers():
 
 
 class CaseFindingAllTBPatientsReport(EnikshayReport):
-    name = ugettext_lazy('Block 1: All TB patients registered in the quarter')
+    name = ugettext_lazy('Block 1: All TB patients notified in the quarter')
     slug = 'case_finding_all_tb_patients_report'
 
     @property
