@@ -24,6 +24,7 @@ hqDefine('export/js/models.js', function () {
 
         self.buildSchemaProgress = ko.observable(0);
         self.showBuildSchemaProgressBar = ko.observable(false);
+        self.errorOnBuildSchema = ko.observable(false);
 
         // Detetrmines the state of the save. Used for controlling the presentaiton
         // of the Save button.
@@ -90,6 +91,7 @@ hqDefine('export/js/models.js', function () {
             },
             error: function() {
                 $btn.prop('disable', false);
+                self.errorOnBuildSchema(true);
             },
         });
     };
@@ -112,7 +114,7 @@ hqDefine('export/js/models.js', function () {
                 }
             },
             error: function() {
-                console.log('error');
+                self.errorOnBuildSchema(true);
             },
         });
     };
