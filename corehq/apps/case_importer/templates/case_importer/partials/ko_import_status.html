@@ -39,23 +39,21 @@
     <!--ko if: !_.isEmpty(result.errors)-->
     <div class="alert alert-warning">
         <ul class="list-unstyled">
-        <!--ko foreach: _.pairs(result.errors).map(_.partial(_.object, ['error','columns']))-->
-            <!--ko foreach: _.pairs(columns).map(_.partial(_.object, ['column', 'value']))-->
-                <!--ko if: value.rows-->
-                <li>
-                    <p>
-                        <strong data-bind="text: value.error"></strong>
-                        <!--ko if: column !== 'null'--> {% trans 'in column' %}
-                            <strong data-bind="text: column"></strong><!--/ko-->
-                    </p>
-                    <p data-bind="text: value.description">
-                    </p>
-                    <p>
-                        <span>{% trans "Affected rows:" %}</span>
-                        <span data-bind="text: value.rows.join(', ')"></span>
-                    </p>
-                </li>
-                <!--/ko-->
+        <!--ko foreach: result.errors-->
+            <!--ko if: rows-->
+            <li>
+                <p>
+                    <strong data-bind="text: title"></strong>
+                    <!--ko if: column--> {% trans 'in column' %}
+                        <strong data-bind="text: column"></strong><!--/ko-->
+                </p>
+                <p data-bind="text: description">
+                </p>
+                <p>
+                    <span>{% trans "Affected rows:" %}</span>
+                    <span data-bind="text: rows.join(', ')"></span>
+                </p>
+            </li>
             <!--/ko-->
         <!--/ko-->
         </ul>

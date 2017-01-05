@@ -1321,6 +1321,13 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
     actions = SchemaProperty(FormActions)
     case_references_data = DictProperty()
 
+    @classmethod
+    def wrap(cls, data):
+        # rare schema bug: http://manage.dimagi.com/default.asp?239236
+        if data.get('case_references') == []:
+            del data['case_references']
+        return super(Form, cls).wrap(data)
+
     def add_stuff_to_xform(self, xform, build_profile_id=None):
         super(Form, self).add_stuff_to_xform(xform, build_profile_id)
         xform.add_case_and_meta(self)
@@ -1661,7 +1668,7 @@ class MappingItem(DocumentSchema):
         The prepended characters prevent the variable name from starting with a
         numeral, which is illegal.
         """
-        if ' ' in self.key or self.treat_as_expression:
+        if re.search(r'\W', self.key) or self.treat_as_expression:
             return 'h{hash}'.format(hash=hashlib.md5(self.key).hexdigest()[:8])
         else:
             return 'k{key}'.format(key=self.key)

@@ -115,6 +115,8 @@ def not_found(request, template_name='404.html'):
 @require_GET
 @location_safe
 def redirect_to_default(req, domain=None):
+    from corehq.apps.cloudcare.views import FormplayerMain
+
     if not req.user.is_authenticated():
         if domain != None:
             url = reverse('domain_login', args=[domain])
@@ -140,22 +142,28 @@ def redirect_to_default(req, domain=None):
             domains = [Domain.get_by_name(domain)]
         else:
             domains = Domain.active_for_user(req.user)
+
         if 0 == len(domains) and not req.user.is_superuser:
             return redirect('registration_domain')
         elif 1 == len(domains):
             if domains[0]:
                 domain = domains[0].name
                 couch_user = req.couch_user
-
-                if (couch_user.is_commcare_user() and
-                        couch_user.can_view_some_reports(domain)):
-                    url = reverse("cloudcare_main", args=[domain, ""])
-                else:
-                    from corehq.apps.dashboard.views import dashboard_default
-                    return dashboard_default(req, domain)
-
+                from corehq.apps.users.models import DomainMembershipError
+                try:
+                    if (couch_user.is_commcare_user() and
+                            couch_user.can_view_some_reports(domain)):
+                        if toggles.USE_FORMPLAYER_FRONTEND.enabled(domain):
+                            url = reverse(FormplayerMain.urlname, args=[domain])
+                        else:
+                            url = reverse("cloudcare_main", args=[domain, ""])
+                    else:
+                        from corehq.apps.dashboard.views import dashboard_default
+                        return dashboard_default(req, domain)
+                except DomainMembershipError:
+                    raise Http404()
             else:
-                raise Http404
+                raise Http404()
         else:
             url = settings.DOMAIN_SELECT_URL
     return HttpResponseRedirect(url)
@@ -537,6 +545,7 @@ def bug_report(req):
         u"Feature Flags: {feature_flags}\n"
         u"Feature Previews: {feature_previews}\n"
         u"Is scale backend: {scale_backend}\n"
+        u"Project description: {project_description}\n"
         u"Message:\n\n"
         u"{message}\n"
         ).format(**report)

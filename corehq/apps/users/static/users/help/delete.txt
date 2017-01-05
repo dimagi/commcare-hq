@@ -1,4 +1,0 @@
-<p>Deleting a user removes any record of them, including all of the forms they ever submitted and their
-associated cases. We recommend only deleting users that never corresponded to real people to begin with,
-such as users created while testing an application.</p>
-<p>If you are unsure, it is safer to <strong>archive</strong> a user.</p>

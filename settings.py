@@ -115,6 +115,7 @@ DATADOG_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.datadog.log")
 UCR_TIMING_FILE = "%s/%s" % (FILEPATH, "ucr.timing.log")
 UCR_DIFF_FILE = "%s/%s" % (FILEPATH, "ucr.diff.log")
 UCR_EXCEPTION_FILE = "%s/%s" % (FILEPATH, "ucr.exception.log")
+NIKSHAY_DATAMIGRATION = "%s/%s" % (FILEPATH, "nikshay_datamigration.log")
 
 LOCAL_LOGGING_HANDLERS = {}
 LOCAL_LOGGING_LOGGERS = {}
@@ -361,10 +362,12 @@ HQ_APPS = (
     'custom.icds',
     'custom.icds_reports',
     'custom.pnlppgi',
+)
 
-    # eNikshay / UATBC
+ENIKSHAY_APPS = (
     'custom.enikshay',
     'custom.enikshay.integrations.ninetyninedots',
+    'custom.enikshay.nikshay_datamigration',
 )
 
 # DEPRECATED use LOCAL_APPS instead; can be removed with testrunner.py
@@ -404,7 +407,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'dimagi.utils',
 )
 
-INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
+INSTALLED_APPS = DEFAULT_APPS + HQ_APPS + ENIKSHAY_APPS
 
 
 # after login, django redirects to this URL
@@ -476,7 +479,6 @@ SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 PROBONO_SUPPORT_EMAIL = 'pro-bono@dimagi.com'
 CCHQ_BUG_REPORT_EMAIL = 'commcarehq-bug-reports@dimagi.com'
 ACCOUNTS_EMAIL = 'accounts@dimagi.com'
-FINANCE_EMAIL = 'finance@dimagi.com'
 DATA_EMAIL = 'datatree@dimagi.com'
 SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange@dimagi.com'
 INTERNAL_SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange+internal@dimagi.com'
@@ -870,6 +872,8 @@ TABLEAU_URL_ROOT = "https://icds.commcarehq.org/"
 
 ONBOARDING_DOMAIN_TEST_DATE = ()
 
+HQ_INSTANCE = 'development'
+
 try:
     # try to see if there's an environmental variable set for local_settings
     custom_settings = os.environ.get('CUSTOMSETTINGS', None)
@@ -1049,6 +1053,14 @@ LOGGING = {
         'null': {
             'class': 'logging.NullHandler',
         },
+        'nikshay_datamigration': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'verbose',
+            'filename': NIKSHAY_DATAMIGRATION,
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 20  # Backup 200 MB of logs
+        },
     },
     'loggers': {
         '': {
@@ -1108,33 +1120,38 @@ LOGGING = {
         'datadog-metrics': {
             'handlers': ['datadog'],
             'level': 'INFO',
-            'propogate': False,
+            'propagate': False,
         },
         'ucr_timing': {
             'handlers': ['ucr_timing'],
             'level': 'INFO',
-            'propogate': True,
+            'propagate': True,
         },
         'ucr_diff': {
             'handlers': ['ucr_diff'],
             'level': 'INFO',
-            'propogate': True,
+            'propagate': True,
         },
         'ucr_exception': {
             'handlers': ['ucr_exception'],
             'level': 'INFO',
-            'propogate': True,
+            'propagate': True,
         },
         'boto3': {
             'handlers': ['console'],
             'level': 'WARNING',
-            'propogate': True
+            'propagate': True
         },
         'botocore': {
             'handlers': ['console'],
             'level': 'WARNING',
-            'propogate': True
-        }
+            'propagate': True
+        },
+        'nikshay_datamigration': {
+            'handlers': ['nikshay_datamigration', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
     }
 }
 
@@ -1851,7 +1868,15 @@ DOMAIN_MODULE_MAP = {
     'icds-cas': 'custom.icds_reports',
     'testing-ipm-senegal': 'custom.intrahealth',
     'up-nrhm': 'custom.up_nrhm',
+
     'enikshay-test': 'custom.enikshay',
+    'enikshay': 'custom.enikshay',
+    'enikshay-test-2': 'custom.enikshay',
+    'enikshay-test-3': 'custom.enikshay',
+    'enikshay-nikshay-migration-test': 'custom.enikshay',
+    'enikshay-domain-copy-test': 'custom.enikshay',
+    'enikshay-aks-audit': 'custom.enikshay',
+    'np-migration-3': 'custom.enikshay',
 
     'crs-remind': 'custom.apps.crs_reports',
 

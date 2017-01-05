@@ -9,7 +9,7 @@
 {% endblock %}
 {% block js %}{{ block.super }}
     <script src="{% static 'app_manager/js/commcaresettings.js' %}"></script>
-    <script src="{% static 'hqwebapp/ko/bulk_upload_file.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/bulk_upload_file.js' %}"></script>
     <script src="{% static 'app_manager/js/supported-languages.js' %}"></script>
     <script src="{% static 'app_manager/js/password_setter.jquery.js' %}"></script>
     <script src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
@@ -43,7 +43,7 @@
                 permissions: {
                     cloudcare: {{ is_cloudcare_allowed|BOOL }}
                 },
-                warning: '{% trans "This is not an allowed value for this field" %}'
+                warning: '{% trans "This is not an allowed value for this field"|escapejs %}'
             }
         };
 
@@ -273,7 +273,7 @@
         <div class="tab-pane" id="releases">
             <!-- templates only; will be populated asynchronously -->
             <script type="text/html" class="hq-loading">
-                <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
+                <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator" />
                 {% trans "Loading..." %}
             </script>
             <script type="text/html" class="hq-loading-error">
@@ -285,7 +285,7 @@
                 </button>
             </script>
         </div>
-        <div class="tab-pane{% if not copy_app_form.is_bound %} active{% endif %}" id="app-settings">
+        <div class="tab-pane" id="app-settings">
             {% include "app_manager/v1/partials/app-settings.html" %}
         </div>
         {% include 'app_manager/v1/languages.html' %}
@@ -293,7 +293,7 @@
         {% if app.get_doc_type == "Application" %}
             <div class="tab-pane multimedia" id="multimedia">
                 <div data-bind="if: load_state() === 'loading'">
-                    <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
+                    <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator" />
                     {% trans "Loading ..." %}
                 </div>
                 <div data-bind="html: multimedia_page_html"></div>

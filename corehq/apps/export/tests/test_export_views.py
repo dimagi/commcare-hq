@@ -1,3 +1,4 @@
+# encoding: utf-8
 import json
 
 from django.test import TestCase

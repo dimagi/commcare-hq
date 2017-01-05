@@ -11,6 +11,7 @@ from soil import DownloadBase
 from couchexport.export import FormattedRow, get_writer
 from couchexport.files import Temp
 from couchexport.models import Format
+from corehq.util.files import safe_filename
 from corehq.apps.export.esaccessors import (
     get_form_export_base_query,
     get_case_export_base_query,
@@ -58,9 +59,10 @@ class _Writer(object):
         assert self._path is None
 
         if len(export_instances) == 1:
-            name = export_instances[0].name
+            name = export_instances[0].name or ''
         else:
             name = ''
+        name = safe_filename(name)
 
         fd, self._path = tempfile.mkstemp()
         with os.fdopen(fd, 'wb') as file:

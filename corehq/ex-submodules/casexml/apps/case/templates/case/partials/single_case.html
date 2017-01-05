@@ -98,7 +98,9 @@
                                 <span data-bind="text: form_count"></span>
                             </li>
                         </ul>
-                        <div class="hq-loading" data-bind="visible: $root.data_loading">Loading <img src="/static/hqwebapp/img/ajax-loader.gif" alt="loading indicator"></div>
+                        <div class="hq-loading" data-bind="visible: $root.data_loading">
+                            {% trans "Loading" %}
+                            <img src="/static/hqwebapp/images/ajax-loader.gif" alt="loading indicator"></div>
                         <table class="table table-striped datatable table-hover">
                             <thead>
                             <tr>

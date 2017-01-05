@@ -158,8 +158,28 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     @property
     @memoized
     def named_expression_objects(self):
-        return {name: ExpressionFactory.from_spec(expression, FactoryContext.empty())
-                for name, expression in self.named_expressions.items()}
+        named_expression_specs = deepcopy(self.named_expressions)
+        named_expressions = {}
+        spec_error = None
+        while named_expression_specs:
+            number_generated = 0
+            for name, expression in named_expression_specs.items():
+                try:
+                    named_expressions[name] = ExpressionFactory.from_spec(
+                        expression,
+                        FactoryContext(named_expressions=named_expressions, named_filters={})
+                    )
+                    number_generated += 1
+                    del named_expression_specs[name]
+                except BadSpecError as spec_error:
+                    # maybe a nested name resolution issue, try again on the next pass
+                    pass
+            if number_generated == 0 and named_expression_specs:
+                # we unsuccessfully generated anything on this pass and there are still unresolved
+                # references. we have to fail.
+                assert spec_error is not None
+                raise spec_error
+        return named_expressions
 
     @property
     @memoized

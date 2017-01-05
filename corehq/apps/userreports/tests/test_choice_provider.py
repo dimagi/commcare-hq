@@ -157,17 +157,22 @@ class LocationChoiceProviderTest(ChoiceProviderTestMixin, LocationHierarchyTestC
         delete_all_users()
         super(LocationChoiceProviderTest, cls).setUpClass()
         report = ReportConfiguration(domain=cls.domain)
-        choices = [
-            SearchableChoice(
+        choice_tuples = [
+            (location.name, SearchableChoice(
                 location.location_id,
-                location.display_name,
+                location.get_path_display(),
                 searchable_text=[location.site_code, location.name]
-            )
+            ))
             for location in cls.locations.itervalues()
         ]
-        choices.sort(key=lambda choice: choice.display)
+        choice_tuples.sort()
+        choices = [choice for name, choice in choice_tuples]
         cls.web_user = WebUser.create(cls.domain, 'blah', 'password')
         cls.choice_provider = LocationChoiceProvider(report, None)
+        cls.choice_provider.configure({
+            "include_descendants": False,
+            "show_full_path": True,
+        })
         cls.static_choice_provider = StaticChoiceProvider(choices)
         cls.choice_query_context = partial(ChoiceQueryContext, user=cls.web_user)
 
@@ -191,7 +196,7 @@ class LocationChoiceProviderTest(ChoiceProviderTestMixin, LocationHierarchyTestC
         scoped_choices = [
             SearchableChoice(
                 location.location_id,
-                location.display_name,
+                location.get_path_display(),
                 searchable_text=[location.site_code, location.name]
             )
             for location in [

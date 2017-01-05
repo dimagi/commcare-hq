@@ -14,13 +14,19 @@ MS_RESOLVED_STOCKOUTS = _('The following commodities %(products_names)s are now 
                           'Please place your order now.')
 
 STOP_MESSAGE = _('You have requested to stop reminders to this number. '
-                 'Send "help" to this number for instructions on how to reactivate.')
+                 'Send "reminder on" if you wish to start the reminders again.')
 
 START_MESSAGE = _('You have requested to receive reminders to this number. '
-                  'Send "help" to this number for instructions on how to stop this.')
+                  'Send "reminder off" if you wish to stop the reminders.')
 
 HELP_TEXT = _("Txt 'help stock' 4 the format of stock reports; 'help codes' 4 commodity codes; "
-              "'start' or 'stop' 2 start and stop reminders.")
+              "'help reminder' for help with starting or stopping reminders.")
 
 NO_SUPPLY_POINT_MESSAGE = "You are not associated with a facility. " \
                           "Please contact your DHIO or RHIO for help."
+
+DEACTIVATE_REMINDERS = ('The system is currently sending you reminders every week to submit your stock reports. '
+                        'To stop the reminders, send "reminder off"')
+
+REACTIVATE_REMINDERS = ('The system is currently not sending you reminders. To get reminders every week to submit '
+                        'your stock reports, send "reminder on"')

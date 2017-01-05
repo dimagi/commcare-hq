@@ -95,7 +95,7 @@
                                                         <code class="bitly" data-bind="text: app_code"></code>
                                                     </span>
                                                     <img data-bind="visible: generating_url()"
-                                                        src="{% static 'hqwebapp/img/ajax-loader.gif' %}"/>
+                                                        src="{% static 'hqwebapp/images/ajax-loader.gif' %}"/>
                                                     <span class="text-warning" data-bind="
                                                         visible: failed_url_generation() && !generating_url()
                                                         ">
@@ -261,7 +261,7 @@
                                                 </form>
                                             </div>
                                             <div data-bind="visible: $parent.generating_url()">
-                                                <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}"/>
+                                                <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}"/>
                                             </div>
                                             <div data-bind="visible: !$parent.sms_url($index()) && !$parent.generating_url()">
                                                 <span class="label label-danger">

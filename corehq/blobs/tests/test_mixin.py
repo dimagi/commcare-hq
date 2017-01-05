@@ -5,10 +5,10 @@ from base64 import b64encode
 from copy import deepcopy
 from hashlib import md5
 from os.path import join
-from unittest import TestCase
 from StringIO import StringIO
 
 from django.conf import settings
+from django.test import SimpleTestCase
 
 import corehq.blobs.mixin as mod
 from corehq.blobs import DEFAULT_BUCKET
@@ -19,7 +19,7 @@ from corehq.util.test_utils import generate_cases, trap_extra_setup
 from dimagi.ext.couchdbkit import Document
 
 
-class BaseTestCase(TestCase):
+class BaseTestCase(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -580,7 +580,7 @@ class TestBlobHelper(BaseTestCase):
             "external_blobs": {"not-found.txt": {"id": "hahaha"}},
         }, couch)
         self.assertFalse(obj.migrating_blobs_from_couch)
-        with self.assertRaises(mod.ResourceNotFound):
+        with self.assertRaisesMessage(mod.ResourceNotFound, '{} attachment'.format(obj._id)):
             obj.fetch_attachment("not-found.txt")
 
     def test_fetch_attachment_not_found_while_migrating(self):
@@ -590,7 +590,7 @@ class TestBlobHelper(BaseTestCase):
             "external_blobs": {"not-found.txt": {"id": "nope"}},
         }, self.couch)
         self.assertTrue(obj.migrating_blobs_from_couch)
-        with self.assertRaises(mod.ResourceNotFound):
+        with self.assertRaisesMessage(mod.ResourceNotFound, '{} attachment'.format(obj._id)):
             obj.fetch_attachment("not-found.txt")
 
     def test_put_and_fetch_attachment_from_blob_db(self):
@@ -847,8 +847,8 @@ class PutInOldBlobDB(TemporaryMigratingBlobDB):
 
 class PutInOldCopyToNewBlobDB(TemporaryMigratingBlobDB):
 
-    def put(self, content, basename="", bucket=DEFAULT_BUCKET):
-        info = self.old_db.put(content, basename, bucket)
+    def put(self, content, identifier=None, bucket=DEFAULT_BUCKET):
+        info = self.old_db.put(content, identifier, bucket=bucket)
         content.seek(0)
         self.copy_blob(content, info, bucket)
         return info
