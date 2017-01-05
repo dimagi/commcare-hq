@@ -6,10 +6,9 @@
 
 FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone, Marionette, $) {
 
-
     Menus.API = {
 
-        getMenus: function (params, route) {
+        queryFormplayer: function (params, route) {
 
             var user = FormplayerFrontend.request('currentUser'),
                 formplayerUrl = user.formplayer_url,
@@ -72,11 +71,11 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
     };
 
     FormplayerFrontend.reqres.setHandler("app:select:menus", function (options) {
-        return Menus.API.getMenus(options, 'navigate_menu');
+        return Menus.API.queryFormplayer(options, 'navigate_menu');
     });
 
     FormplayerFrontend.reqres.setHandler("entity:get:details", function (options) {
-        return Menus.API.getMenus(options, 'get_details');
+        return Menus.API.queryFormplayer(options, 'get_details');
     });
 });
 
