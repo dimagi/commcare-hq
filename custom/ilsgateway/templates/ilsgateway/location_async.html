@@ -37,7 +37,7 @@
 
   var LOAD_LOCS_URL = '{{ api_root }}';
 
-  $.getScript("{% static 'locations/ko/location_drilldown.async.js' %}", function() {
+  $.getScript("{% static 'locations/js/location_drilldown.async.js' %}", function() {
 
       var locs = {{ locations|JSON }};
       var selected = '{{ loc_id }}';
