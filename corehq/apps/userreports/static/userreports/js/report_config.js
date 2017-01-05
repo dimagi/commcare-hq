@@ -13,10 +13,9 @@ var reportBuilder = function () {
         self.name = column["name"];
         self.label = column["label"];
         self.isNonNumeric = column["is_non_numeric"];
-        self.aggregation = self._defaultAggregation();
         self.isGroupByColumn = false;
 
-        self.groupByOrAggregation = ko.observable(self.aggregation);
+        self.groupByOrAggregation = ko.observable(self._defaultAggregation());
         self.groupByOrAggregation.subscribe(function (newValue) {
             var index = parent.selectedColumns.indexOf(self);
             var lookAhead = index;
@@ -29,7 +28,6 @@ var reportBuilder = function () {
                     }
                 }
                 self.isGroupByColumn = true;
-                self.aggregation = null;
             } else {
                 if (self.isGroupByColumn === true) {
                     // Move aggregated column after group-by columns
@@ -39,7 +37,6 @@ var reportBuilder = function () {
                     }
                 }
                 self.isGroupByColumn = false;
-                self.aggregation = newValue;
             }
 
             if (lookAhead !== index) {
@@ -47,6 +44,13 @@ var reportBuilder = function () {
                 parent.selectedColumns.splice(lookAhead, 0, self);  // Insert self
             }
             parent.refreshPreview();
+        });
+
+        self.aggregation = ko.pureComputed(function () {
+            if (self.groupByOrAggregation() === 'groupBy') {
+                return null;
+            }
+            return self.groupByOrAggregation();
         });
 
         self.notifyButton = function () {
@@ -60,7 +64,7 @@ var reportBuilder = function () {
                 "label": self.label,
                 "is_non_numeric": self.isNonNumeric,
                 "is_group_by_column": self.isGroupByColumn,
-                "aggregation": self.aggregation,
+                "aggregation": self.aggregation(),
             };
         };
 
