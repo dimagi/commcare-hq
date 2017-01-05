@@ -124,7 +124,7 @@ hqDefine('style/js/components/inline_edit.js', function() {
         template: '<div class="ko-inline-edit inline" data-bind="css: {\'has-error\': hasError()}">\
             <div class="read-only" data-bind="visible: !isEditing(), click: edit">\
                 <span data-bind="visible: isSaving()" class="pull-right">\
-                    <img src="/static/hqstyle/img/loading.gif"/>\
+                    <img src="/static/hqstyle/images/loading.gif"/>\
                 </span>\
                 <!-- ko if: lang -->\
                     <span class="btn btn-xs btn-info btn-langcode-preprocessed pull-right"\
