@@ -523,7 +523,7 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
         }
 
     def _expire_data_source(self, data_source_config_id):
-        always_eager = settings.CELERY_ALWAYS_EAGER
+        always_eager = hasattr(settings, "CELERY_ALWAYS_EAGER") and settings.CELERY_ALWAYS_EAGER
         # CELERY_ALWAYS_EAGER will cause the data source to be deleted immediately. Switch it off temporarily
         settings.CELERY_ALWAYS_EAGER = False
         delete_data_source_task.apply_async(
