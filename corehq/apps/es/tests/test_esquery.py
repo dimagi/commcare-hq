@@ -157,14 +157,6 @@ class TestESQuery(ElasticTestMixin, TestCase):
                  .users_at_locations(location_ids))
         self._check_user_location_query(query, location_ids)
 
-    @patch('corehq.apps.locations.models.OnlyUnarchivedLocationManager.accessible_location_ids')
-    def test_users_at_accessible_locations(self, mocked_locations):
-        location_ids = ['09d1a58cb849e53bb3a456a5957d998a', '09d1a58cb849e53bb3a456a5957d99ba']
-        mocked_locations.return_value = location_ids
-        query = (users.UserES()
-                 .users_at_accessible_locations('testapp', 'user'))
-        self._check_user_location_query(query, location_ids)
-
     def test_remove_all_defaults(self):
         # Elasticsearch fails if you pass it an empty list of filters
         query = (users.UserES()
