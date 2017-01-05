@@ -19,7 +19,7 @@ FormplayerFrontend.module("Users.Views", function(Views, FormplayerFrontend, Bac
         templateHelpers: function() {
             return {
                 restoreAs: this.model.restoreAs,
-                username: this.model.username,
+                username: this.model.getDisplayUsername(),
             };
         },
         onClickClearUser: function() {

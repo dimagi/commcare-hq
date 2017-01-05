@@ -7,6 +7,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.util import namedtupledict
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.es.users import user_ids_at_locations_and_descendants
 from corehq.util import remove_dups, flatten_list
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.commtrack.models import SQLLocation
@@ -315,13 +316,17 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     @classmethod
     def pull_users_and_groups(cls, domain, mobile_user_and_group_slugs,
                               include_inactive=False, limit_user_ids=None):
-        user_ids = cls.selected_user_ids(mobile_user_and_group_slugs)
+        user_ids = set(cls.selected_user_ids(mobile_user_and_group_slugs))
         user_types = cls.selected_user_types(mobile_user_and_group_slugs)
         group_ids = cls.selected_group_ids(mobile_user_and_group_slugs)
+        location_ids = cls.selected_location_ids(mobile_user_and_group_slugs)
         users = []
 
+        if location_ids:
+            user_ids |= set(user_ids_at_locations_and_descendants(location_ids))
+
         if limit_user_ids:
-            user_ids = set(limit_user_ids).intersection(set(user_ids))
+            user_ids = set(limit_user_ids).intersection(user_ids)
 
         if user_ids or HQUserType.REGISTERED in user_types:
             users = util.get_all_users_by_domain(
@@ -343,10 +348,14 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
 
         user_dict = {}
         for group in groups:
-            user_dict["%s|%s" % (group.name, group._id)] = util.get_all_users_by_domain(
+            users_in_group = util.get_all_users_by_domain(
                 group=group,
                 simplified=True
             )
+            if limit_user_ids:
+                users_in_group = filter(lambda user: user['user_id'] in limit_user_ids, users_in_group)
+            user_dict["%s|%s" % (group.name, group._id)] = users_in_group
+
         users_in_groups = flatten_list(user_dict.values())
         users_by_group = user_dict
         combined_users = remove_dups(all_users + users_in_groups, "user_id")
