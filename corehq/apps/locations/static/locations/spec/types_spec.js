@@ -82,17 +82,17 @@ describe('Location Types', function() {
                     this.block_model.include_without_expanding_options(),
                     extract_name
                 ),
-                    desired_loc_types_returned = _.map([this.state_model, this.district_model], extract_name);
+                    desired_loc_types_returned = _.map([this.state_model, this.district_model, this.block_model], extract_name);
                 assert.sameMembers(desired_loc_types_returned, returned_loc_types);
             });
 
-            it('Provides everything above the expand from level', function(){
+            it('Provides everything above and including the expand from level', function(){
                 this.block_model.expand_from(this.district_model.pk);
                 var returned_loc_types = _.map(
                     this.block_model.include_without_expanding_options(),
                     extract_name
                 ),
-                    desired_loc_types_returned = _.map([this.state_model], extract_name);
+                    desired_loc_types_returned = _.map([this.state_model, this.district_model], extract_name);
                 assert.sameMembers(desired_loc_types_returned, returned_loc_types);
             });
 
