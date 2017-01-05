@@ -152,6 +152,13 @@ var reportBuilder = function () {
 
         self.previewChart = ko.observable(false);
 
+        /**
+         * Convert the data source properties passed through the template
+         * context into objects with the correct format for the select2 and
+         * questionsSelect knockout bindings.
+         * @param dataSourceIndicators
+         * @private
+         */
         var _getSelectableProperties = function (dataSourceIndicators) {
 
             var utils = hqImport('userreports/js/utils.js');
@@ -160,9 +167,6 @@ var reportBuilder = function () {
                 return o.type === 'question';
             });
 
-            // Convert the DataSourceProperty and ColumnOption passed through the template
-            // context into objects with the correct format for the select2 and
-            // questionsSelect knockout bindings.
             if (optionsContainQuestions) {
                 return _.compact(_.map(
                     dataSourceIndicators, utils.convertDataSourcePropertyToQuestionsSelectFormat
