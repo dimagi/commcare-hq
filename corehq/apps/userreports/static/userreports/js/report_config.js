@@ -93,7 +93,6 @@ var reportBuilder = function () {
 
         self.existingReportId = config['existingReport'];
 
-        self.reportTitle = config["reportTitle"];
         self.columnOptions = config["columnOptions"];  // Columns that could be added to the report
         self.dataSourceUrl = config["dataSourceUrl"];  // Fetch the preview data asynchronously.
 
@@ -331,8 +330,8 @@ var reportBuilder = function () {
         self.serialize = function () {
             return {
                 "existing_report": self.existingReportId,
-                "report_title": self.reportTitle,
-                "report_description": "",  // TODO: self.reportDescription,
+                "report_title": $('#report-title').val(), // From the inline-edit component
+                "report_description": $('#report-description').val(),  // From the inline-edit component
                 "report_type": self.reportType(),
                 "aggregate": self.isAggregationEnabled(),
                 "chart": self.selectedChart(),

@@ -824,10 +824,8 @@ class ConfigureReport(ReportBuilderView):
     @property
     def page_context(self):
         return {
-            'report': {
-                "title": self.page_name
-            },
             'existing_report': self.existing_report,
+            'report_title': self.page_name,
             'existing_report_type': self._get_existing_report_type(),
 
             # TODO: Consider renaming this because it's more like "possible" data source props
@@ -1059,6 +1057,8 @@ class ConfigureReport(ReportBuilderView):
 
     def _update_report(self, report_data):
         self._update_data_source(report_data)
+        self.existing_report.title = report_data['report_title'] or self.existing_report.title
+        self.existing_report.description = report_data['report_description'] or self.existing_report.description
         self.existing_report.aggregation_columns = self._get_aggregation_columns(report_data)
         self.existing_report.columns = self._get_columns(report_data)
         self.existing_report.filters = self._get_filters(report_data)
@@ -1141,7 +1141,8 @@ class ConfigureReport(ReportBuilderView):
                 report_configuration = ReportConfiguration(
                     domain=self.domain,
                     config_id=data_source_config_id,
-                    title=self._get_report_name(request),
+                    title=report_data['report_title'],
+                    description=report_data['report_description'],
                     aggregation_columns=self._get_aggregation_columns(report_data),
                     columns=self._get_columns(report_data),
                     filters=self._get_filters(report_data),

@@ -9,12 +9,13 @@
     <script src="{% static 'userreports/js/report_config.js' %}"></script>
     <script src="{% static 'userreports/js/builder_view_models.js' %}"></script>
     <script src="{% static 'userreports/js/utils.js' %}"></script>
+    <script src="{% static 'style/js/hq.helpers.js' %}"></script>
 {% endblock %}
 
 {% block pre_page_content %}{% endblock %}{# Avoid the spacer #}
 
 {% block page_content %}
-  <div id="reportConfig">
+  <div id="reportConfig" class="ko-template">
     <div class="pull-right page-actions-toolbar">
       {% if existing_report %}
         <a
@@ -31,7 +32,23 @@
 
     {# See `style/two_column.html` #}
     <div class="page-header" style="margin-top: 0;">
-      <h1 style="font-size: 1.8em;" data-bind="text: reportTitle"></h1>
+      <div class="h1">
+        <inline-edit params="
+          value: '{{ report_title|escapejs }}',
+          id: 'report-title',
+          placeholder: '{% trans "Enter report name here"|escapejs %}',
+          cols: 50,
+        "></inline-edit>
+      </div>
+      <div>
+        <inline-edit params="
+          value: {% if existing_report %}'{{ existing_report.description|escapejs }}'{% else %}null{% endif %},
+          id: 'report-description',
+          placeholder: '{% trans "Enter report description here"|escapejs %}',
+          readOnlyClass: 'app-comment',
+          cols: 50,
+        "></inline-edit>
+      </div>
     </div>
 
     <!-- TODO: <div>Enter a description here</div> -->
@@ -212,7 +229,6 @@
 
     $(document).ready(function() {
         var reportConfig = new reportBuilder.ReportConfig({
-            "reportTitle": "{{ report.title|escapejs }}",
             "columnOptions": {{ column_options|JSON }},
             "initialColumns": {{ initial_columns|JSON }},
             "app": {{ application|JSON }},
@@ -225,7 +241,7 @@
             "initialDefaultFilters": {{ initial_default_filters|JSON }},
             "initialUserFilters": {{ initial_user_filters|JSON }},
         });
-        ko.applyBindings(reportConfig, $("#reportConfig").get(0));
+        $("#reportConfig").koApplyBindings(reportConfig)
     });
 
 </script>
