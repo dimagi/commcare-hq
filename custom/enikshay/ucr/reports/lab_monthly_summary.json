@@ -44,7 +44,7 @@
         ],
         "columns": [
             {
-                "display": "TB Suspects Examined for Diagnosis",
+                "display": "TB Presumptives Examined for Diagnosis",
                 "type": "field",
                 "field": "suspect_examined_for_diagnosis",
                 "aggregation": "sum",
@@ -56,34 +56,9 @@
                 "calculate_total": false
             },
             {
-                "display": "TB Suspects found positive",
+                "display": "TB Presumptives found positive",
                 "type": "field",
                 "field": "suspect_examined_for_diagnosis_positive",
-                "aggregation": "sum",
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {
-                },
-                "calculate_total": false
-            },
-            {
-                "display": "TB suspects undergoing Repeat Sputum Examination",
-                "column_id": "tb_suspects_undergoing",
-                "type": "field",
-                "field": "suspect_repeat_for_diagnosis",
-                "aggregation": "sum",
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {
-                },
-                "calculate_total": false
-            },
-            {
-                "display": "TB Suspects found positive on Repeat Sputum Examination",
-                "type": "field",
-                "field": "suspect_repeat_for_diagnosis_positive",
                 "aggregation": "sum",
                 "sortable": false,
                 "description": null,

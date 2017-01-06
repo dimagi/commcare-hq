@@ -107,7 +107,7 @@ class DatespanFilter(BaseFilter):
 
         def date_or_nothing(param):
             if param:
-                return datetime.combine(iso_string_to_date(param), time())
+                return iso_string_to_date(param)
             else:
                 return None
         try:

@@ -289,21 +289,6 @@ class Outcome(models.Model):
             'Unknown': 'unknown',
         }[self.HIVStatus]
 
-class Followup(models.Model):
-    id = models.AutoField(primary_key=True)
-    PatientID = models.ForeignKey(PatientDetail)
-    IntervalId = models.CharField(max_length=255)
-    TestDate = models.CharField(max_length=255, null=True)
-    DMC = models.CharField(max_length=255)
-    LabNo = models.CharField(max_length=255, null=True)
-    SmearResult = models.CharField(max_length=255)
-    PatientWeight = models.CharField(max_length=255)
-    DmcStoCode = models.CharField(max_length=255)
-    DmcDtoCode = models.CharField(max_length=255)
-    DmcTbuCode = models.CharField(max_length=255)
-    RegBy = models.CharField(max_length=255)
-    regdate = models.CharField(max_length=255)
-
 
 # class Household(models.Model):
 #     PatientID = models.ForeignKey(APatientDetail)  # have to move to end of excel CSV

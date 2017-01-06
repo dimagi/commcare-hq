@@ -10,7 +10,7 @@ from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
-from custom.enikshay.nikshay_datamigration.models import Followup, Outcome, PatientDetail
+from custom.enikshay.nikshay_datamigration.models import Outcome, PatientDetail
 from custom.enikshay.tests.utils import ENikshayLocationStructureMixin
 
 
@@ -53,16 +53,10 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
         # Household.objects.create(
         #     PatientID=patient_detail,
         # )
-        for i in range(5):
-            Followup.objects.create(
-                id=(i + 1),
-                PatientID=self.patient_detail,
-            )
         self.case_accessor = CaseAccessors(self.domain)
 
     def tearDown(self):
         Outcome.objects.all().delete()
-        Followup.objects.all().delete()
         # Household.objects.all().delete()
         PatientDetail.objects.all().delete()
 
@@ -177,58 +171,6 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
         )
         # make sure the case is only created/modified by a single form
         self.assertEqual(1, len(episode_case.xform_ids))
-
-        test_case_ids = set(self.case_accessor.get_case_ids_in_domain(type='test'))
-        self.assertEqual(5, len(test_case_ids))
-        test_cases = [
-            self.case_accessor.get_case(test_case_id)
-            for test_case_id in test_case_ids
-        ]
-        self.assertItemsEqual(
-            [
-                test_case.dynamic_case_properties()
-                for test_case in test_cases
-            ],
-            [
-                OrderedDict([
-                    ('date_tested', ''),
-                    ('migration_created_case', 'true'),
-                    ('migration_followup_id', str(1)),
-                ]),
-                OrderedDict([
-                    ('date_tested', ''),
-                    ('migration_created_case', 'true'),
-                    ('migration_followup_id', str(2)),
-                ]),
-                OrderedDict([
-                    ('date_tested', ''),
-                    ('migration_created_case', 'true'),
-                    ('migration_followup_id', str(3)),
-                ]),
-                OrderedDict([
-                    ('date_tested', ''),
-                    ('migration_created_case', 'true'),
-                    ('migration_followup_id', str(4)),
-                ]),
-                OrderedDict([
-                    ('date_tested', ''),
-                    ('migration_created_case', 'true'),
-                    ('migration_followup_id', str(5)),
-                ]),
-            ]
-        )
-        for test_case in test_cases:
-            self.assertEqual('-', test_case.owner_id)
-            self.assertEqual(len(test_case.indices), 1)
-            self._assertIndexEqual(
-                CommCareCaseIndex(
-                    identifier='host',
-                    referenced_type='occurrence',
-                    referenced_id=occurrence_case.get_id,
-                    relationship='extension',
-                ),
-                test_case.indices[0]
-            )
 
     @run_with_all_backends
     def test_case_update(self):

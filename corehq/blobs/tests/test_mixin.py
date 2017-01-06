@@ -847,8 +847,8 @@ class PutInOldBlobDB(TemporaryMigratingBlobDB):
 
 class PutInOldCopyToNewBlobDB(TemporaryMigratingBlobDB):
 
-    def put(self, content, bucket=DEFAULT_BUCKET):
-        info = self.old_db.put(content, bucket=bucket)
+    def put(self, content, identifier=None, bucket=DEFAULT_BUCKET):
+        info = self.old_db.put(content, identifier, bucket=bucket)
         content.seek(0)
         self.copy_blob(content, info, bucket)
         return info
