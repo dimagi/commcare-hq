@@ -75,7 +75,7 @@ MAKE_REPORT_CONFIG = lambda domain, report_id: ReportConfiguration(
             choices=[
                 FilterChoice(value='r', display='red'),
                 FilterChoice(value='g', display='green'),
-                FilterChoice(value='b', display='blue'),
+                FilterChoice(value='b', display='black'),
             ]
         ).to_json()
     ],
@@ -140,9 +140,9 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
         with mock_report_configurations(cls.report_configs_by_id):
             cls.suite = cls.app.create_suite()
         cls.data = [
-            {'color_94ec39e6': 'red', 'count': 2, 'computed_owner_name_40cc88a0': 'cory'},
-            {'color_94ec39e6': 'black', 'count': 1, 'computed_owner_name_40cc88a0': 'ctsims'},
-            {'color_94ec39e6': 'red', 'count': 3, 'computed_owner_name_40cc88a0': 'daniel'},
+            {'color_94ec39e6': 'red', 'count': 2, 'computed_owner_name_40cc88a0': 'cory', 'fav_color_abc123': 'g'},
+            {'color_94ec39e6': 'black', 'count': 1, 'computed_owner_name_40cc88a0': 'ctsims', 'fav_color_abc123': 'r'},
+            {'color_94ec39e6': 'red', 'count': 3, 'computed_owner_name_40cc88a0': 'daniel', 'fav_color_abc123': 'r'},
         ]
         with mock_report_data(cls.data):
             with mock_report_configuration_get(cls.report_configs_by_id):
@@ -247,16 +247,19 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
               <column id="color_94ec39e6">red</column>
               <column id="computed_owner_name_40cc88a0">cory</column>
               <column id="count">2</column>
+              <column id="fav_color_abc123">g</column>
             </row>
             <row index="1" is_total_row="False">
               <column id="color_94ec39e6">black</column>
               <column id="computed_owner_name_40cc88a0">ctsims</column>
               <column id="count">1</column>
+              <column id="fav_color_abc123">r</column>
             </row>
             <row index="2" is_total_row="False">
               <column id="color_94ec39e6">red</column>
               <column id="computed_owner_name_40cc88a0">daniel</column>
               <column id="count">3</column>
+              <column id="fav_color_abc123">r</column>
             </row>
           </rows>
         </partial>
@@ -267,9 +270,8 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
         <partial>
           <filters>
             <filter field="fav_color_abc123_1">
-              <option value="r">red</option>
               <option value="g">green</option>
-              <option value="b">blue</option>
+              <option value="r">red</option>
             </filter>
             <filter field="computed_owner_name_40cc88a0_1">
               <option value="ctsims">Clayton Sims</option>
