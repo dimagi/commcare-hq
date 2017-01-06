@@ -29,6 +29,8 @@
                     <div data-bind="visible: filter.selectedValue.doc_type() === 'StaticDatespanFilter'">
                         <select class="form-control" data-bind="
                             options: $root.staticFilterData.dateRangeOptions,
+                            optionsText: 'description',
+                            optionsValue: 'slug',
                             value: filter.selectedValue.date_range
                         "></select>
                     </div>

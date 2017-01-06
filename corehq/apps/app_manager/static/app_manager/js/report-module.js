@@ -298,7 +298,7 @@ hqDefine('app_manager/js/report-module.js', function () {
             'username',
             'user_id'
         ];
-        this.dateRangeOptions = _.map(options.dateRangeOptions, function (choice) { return choice.slug; });
+        this.dateRangeOptions = options.dateRangeOptions;
         this.dateOperators = ['=', '<', '<=', '>', '>=', 'between'];
         this.numericOperators = ['=', '!=', '<', '<=', '>', '>='];
     }
