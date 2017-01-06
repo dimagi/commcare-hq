@@ -3597,20 +3597,33 @@ def _filter_by_parent_location_id(user, ui_filter):
     return ui_filter.value(**{ui_filter.name: location_parent})
 
 
-_filter_type_to_func = {
-    'case_sharing_group': _filter_by_case_sharing_group_id,
-    'location_id': _filter_by_location_id,
-    'parent_location_id': _filter_by_parent_location_id,
-    'username': _filter_by_username,
-    'user_id': _filter_by_user_id,
-}
+AutoFilterConfig = namedtuple('AutoFilterConfig', ['slug', 'filter_function', 'short_description'])
+
+
+def get_auto_filter_configurations():
+    return [
+        AutoFilterConfig('case_sharing_group', _filter_by_case_sharing_group_id, 'case_sharing_group'),
+        AutoFilterConfig('location_id', _filter_by_location_id, 'location_id'),
+        AutoFilterConfig('parent_location_id', _filter_by_parent_location_id, 'parent_location_id'),
+        AutoFilterConfig('username', _filter_by_username, 'username'),
+        AutoFilterConfig('user_id', _filter_by_user_id, 'user_id'),
+    ]
+
+
+def _get_filter_function(slug):
+    matched_configs = [config for config in get_all_mobile_filter_configs() if config.slug == slug]
+    if not matched_configs:
+        raise ValueError('Unexpected ID for AutoFilter', slug)
+    else:
+        assert len(matched_configs) == 1
+        return matched_configs[0].filter_function
 
 
 class AutoFilter(ReportAppFilter):
-    filter_type = StringProperty(choices=_filter_type_to_func.keys())
+    filter_type = StringProperty(choices=[f.slug for f in get_auto_filter_configurations()])
 
     def get_filter_value(self, user, ui_filter):
-        return _filter_type_to_func[self.filter_type](user, ui_filter)
+        return _get_filter_function(self.filter_type)(user, ui_filter)
 
 
 class CustomDataAutoFilter(ReportAppFilter):
