@@ -3530,30 +3530,31 @@ class ReportAppFilter(DocumentSchema):
     @classmethod
     def wrap(cls, data):
         if cls is ReportAppFilter:
-            doc_type = data['doc_type']
-            doc_type_to_filter_class = {
-                'AutoFilter': AutoFilter,
-                'CustomDataAutoFilter': CustomDataAutoFilter,
-                'StaticChoiceFilter': StaticChoiceFilter,
-                'StaticChoiceListFilter': StaticChoiceListFilter,
-                'StaticDatespanFilter': StaticDatespanFilter,
-                'CustomDatespanFilter': CustomDatespanFilter,
-                'CustomMonthFilter': CustomMonthFilter,
-                'MobileSelectFilter': MobileSelectFilter,
-                'AncestorLocationTypeFilter': AncestorLocationTypeFilter,
-                'NumericFilter': NumericFilter,
-            }
-            try:
-                klass = doc_type_to_filter_class[doc_type]
-            except KeyError:
-                raise ValueError('Unexpected doc_type for ReportAppFilter', doc_type)
-            else:
-                return klass.wrap(data)
+            return get_report_filter_class_for_doc_type(data['doc_type']).wrap(data)
         else:
             return super(ReportAppFilter, cls).wrap(data)
 
     def get_filter_value(self, user, ui_filter):
         raise NotImplementedError
+
+
+def get_report_filter_class_for_doc_type(doc_type):
+    doc_type_to_filter_class = {
+        'AutoFilter': AutoFilter,
+        'CustomDataAutoFilter': CustomDataAutoFilter,
+        'StaticChoiceFilter': StaticChoiceFilter,
+        'StaticChoiceListFilter': StaticChoiceListFilter,
+        'StaticDatespanFilter': StaticDatespanFilter,
+        'CustomDatespanFilter': CustomDatespanFilter,
+        'CustomMonthFilter': CustomMonthFilter,
+        'MobileSelectFilter': MobileSelectFilter,
+        'AncestorLocationTypeFilter': AncestorLocationTypeFilter,
+        'NumericFilter': NumericFilter,
+    }
+    try:
+        return doc_type_to_filter_class[doc_type]
+    except KeyError:
+        raise ValueError('Unexpected doc_type for ReportAppFilter', doc_type)
 
 
 def _filter_by_case_sharing_group_id(user, ui_filter):
