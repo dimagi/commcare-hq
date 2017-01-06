@@ -7,7 +7,7 @@ describe('ExportInstance model', function() {
     var basicFormExport, savedFormExport;
     hqImport('hqwebapp/js/urllib.js').registerUrl(
         "build_schema", "/a/---/data/export/build_full_schema/"
-    )
+    );
     beforeEach(function() {
         basicFormExport = _.clone(SampleExportInstances.basic, { saveUrl: 'http://saveurl/' });
         savedFormExport = _.clone(SampleExportInstances.saved, { saveUrl: 'http://saveurl/' });
