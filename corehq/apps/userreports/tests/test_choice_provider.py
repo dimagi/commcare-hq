@@ -13,7 +13,7 @@ from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.userreports.reports.filters.choice_providers import (
     ChoiceQueryContext, LocationChoiceProvider, UserChoiceProvider, GroupChoiceProvider,
-    OwnerChoiceProvider, StaticChoiceProvider)
+    OwnerChoiceProvider, StaticChoiceProvider, SearchableChoice)
 from corehq.apps.users.models import CommCareUser, WebUser, DomainMembership
 from corehq.apps.users.util import normalize_username
 
