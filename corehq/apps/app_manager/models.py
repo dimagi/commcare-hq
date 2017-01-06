@@ -3602,11 +3602,13 @@ AutoFilterConfig = namedtuple('AutoFilterConfig', ['slug', 'filter_function', 's
 
 def get_auto_filter_configurations():
     return [
-        AutoFilterConfig('case_sharing_group', _filter_by_case_sharing_group_id, 'case_sharing_group'),
-        AutoFilterConfig('location_id', _filter_by_location_id, 'location_id'),
-        AutoFilterConfig('parent_location_id', _filter_by_parent_location_id, 'parent_location_id'),
-        AutoFilterConfig('username', _filter_by_username, 'username'),
-        AutoFilterConfig('user_id', _filter_by_user_id, 'user_id'),
+        AutoFilterConfig('case_sharing_group', _filter_by_case_sharing_group_id,
+                         _("The user's case sharing group")),
+        AutoFilterConfig('location_id', _filter_by_location_id, _("The user's assigned location")),
+        AutoFilterConfig('parent_location_id', _filter_by_parent_location_id,
+                         _("The parent location of the user's assigned location")),
+        AutoFilterConfig('username', _filter_by_username, _("The user's username")),
+        AutoFilterConfig('user_id', _filter_by_user_id, _("The user's ID")),
     ]
 
 
