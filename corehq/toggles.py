@@ -443,9 +443,10 @@ MOBILE_PRIVILEGES_FLAG = StaticToggle(
 
 MULTIPLE_LOCATIONS_PER_USER = StaticToggle(
     'multiple_locations',
-    "Enable multiple locations per user on domain.",
+    "(Deprecated) Enable multiple locations per user on domain.",
     TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    description="Don't enable this flag."
 )
 
 PRODUCTS_PER_LOCATION = StaticToggle(
@@ -554,9 +555,10 @@ MOBILE_UCR = StaticToggle(
 
 RESTRICT_WEB_USERS_BY_LOCATION = StaticToggle(
     'restrict_web_users_by_location',
-    "Allow project to restrict web user permissions by location (deprecated)",
+    "(Deprecated) Allow project to restrict web user permissions by location",
     TAG_ONE_OFF,
     namespaces=[NAMESPACE_DOMAIN],
+    description="Don't enable this flag."
 )
 
 API_THROTTLE_WHITELIST = StaticToggle(
@@ -687,9 +689,10 @@ MULTIPLE_CHOICE_CUSTOM_FIELD = StaticToggle(
 
 RESTRICT_FORM_EDIT_BY_LOCATION = StaticToggle(
     'restrict_form_edit_by_location',
-    "Restrict ability to edit/archive forms by the web user's location",
+    "(Deprecated) Restrict ability to edit/archive forms by the web user's location",
     TAG_ONE_OFF,
     namespaces=[NAMESPACE_DOMAIN],
+    description="Don't enable this flag."
 )
 
 SUPPORT = StaticToggle(
