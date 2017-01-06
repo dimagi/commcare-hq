@@ -5,6 +5,9 @@ describe('ExportInstance model', function() {
     var constants = hqImport('export/js/const.js');
     var viewModels = hqImport('export/js/models.js');
     var basicFormExport, savedFormExport;
+    hqImport('hqwebapp/js/urllib.js').registerUrl(
+        "build_schema", "/a/---/data/export/build_full_schema/"
+    )
     beforeEach(function() {
         basicFormExport = _.clone(SampleExportInstances.basic, { saveUrl: 'http://saveurl/' });
         savedFormExport = _.clone(SampleExportInstances.saved, { saveUrl: 'http://saveurl/' });
@@ -70,6 +73,93 @@ describe('ExportInstance model', function() {
             assert.isFalse(instanceSaved.isNew());
         });
 
+    });
+
+    describe('#onBeginSchemaBuild', function() {
+        var instance;
+        beforeEach(function() {
+            instance = new viewModels.ExportInstance(basicFormExport);
+            sinon.spy($, "ajax");
+        });
+
+        afterEach(function() {
+            $.ajax.restore();
+        });
+
+        it('should trigger build', function() {
+            instance.onBeginSchemaBuild(instance, {});
+
+            assert.equal(instance.buildSchemaProgress(), 0);
+            assert.isTrue(instance.showBuildSchemaProgressBar());
+            assert.isTrue($.ajax.called);
+        });
+
+    });
+
+    describe('#checkBuildSchemaProgress', function() {
+        var instance,
+            requests,
+            clock,
+            xhr;
+        beforeEach(function() {
+            requests = [];
+            instance = new viewModels.ExportInstance(basicFormExport);
+            clock = sinon.useFakeTimers();
+            xhr = sinon.useFakeXMLHttpRequest();
+            xhr.onCreate = function (xhr) {
+                requests.push(xhr);
+            };
+        });
+
+        afterEach(function() {
+            xhr.restore();
+            clock.restore();
+        });
+
+        it('successfully check for pending build', function() {
+            var successSpy = sinon.spy(),
+                response = {
+                    success: false,
+                    failed: false,
+                    not_started: false,
+                    progress: {
+                        percent: 50,
+                        current: 50,
+                        total: 100,
+                    },
+                },
+                successResponse = {
+                    success: true,
+                    failed: false,
+                    progress: {},
+                };
+            instance.checkBuildSchemaProgress('123', successSpy, sinon.spy());
+
+            assert.equal(requests.length, 1);
+            // Respond with pending build
+            requests[0].respond(
+                200,
+                { 'Content-Type': 'application/json' },
+                JSON.stringify(response)
+            );
+
+            // Should not have queued up a new request yet
+            assert.equal(requests.length, 1);
+            assert.equal(instance.buildSchemaProgress(), 50);
+
+            // Fast forward time, should trigger another request
+            clock.tick(2001);
+            assert.equal(requests.length, 2);
+            requests[1].respond(
+                200,
+                { 'Content-Type': 'application/json' },
+                JSON.stringify(successResponse)
+            );
+
+            assert.isTrue(successSpy.called);
+            assert.equal(instance.buildSchemaProgress(), 100);
+            assert.isFalse(instance.showBuildSchemaProgressBar());
+        });
     });
 
     describe('#save', function() {
