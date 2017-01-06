@@ -4,7 +4,6 @@ from django.core.management.base import BaseCommand
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation, Location
-from dimagi.utils.couch.database import iter_bulk_delete
 
 
 class Command(BaseCommand):
