@@ -61,7 +61,7 @@ from corehq.apps.app_manager.models import (
     ReportAppConfig,
     UpdateCaseAction,
     FixtureSelect,
-    DefaultCaseSearchProperty, get_all_mobile_filter_configs)
+    DefaultCaseSearchProperty, get_all_mobile_filter_configs, get_auto_filter_configurations)
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
 
@@ -257,11 +257,16 @@ def _get_report_module_context(app, module):
     filter_choices = [
         {'slug': f.doc_type, 'description': f.short_description} for f in get_all_mobile_filter_configs()
     ]
+    auto_filter_choices = [
+        {'slug': f.slug, 'description': f.short_description} for f in get_auto_filter_configurations()
+
+    ]
     return {
         'all_reports': [_report_to_config(r) for r in all_reports],
         'current_reports': [r.to_json() for r in module.report_configs],
         'warnings': warnings,
         'filter_choices': filter_choices,
+        'auto_filter_choices': auto_filter_choices,
         'daterange_choices': [choice._asdict() for choice in get_simple_dateranges()],
     }
 

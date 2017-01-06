@@ -280,13 +280,7 @@ hqDefine('app_manager/js/report-module.js', function () {
         this.filterChoices = options.filterChoices;
         // support "unselected"
         this.filterChoices.unshift({slug: null, description: 'No filter'});
-        this.autoFilterTypes = [
-            'case_sharing_group',
-            'location_id',
-            'parent_location_id',
-            'username',
-            'user_id'
-        ];
+        this.autoFilterChoices = options.autoFilterChoices;
         this.dateRangeOptions = options.dateRangeOptions;
         this.dateOperators = ['=', '<', '<=', '>', '>=', 'between'];
         this.numericOperators = ['=', '!=', '<', '<=', '>', '>='];

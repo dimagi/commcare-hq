@@ -24,7 +24,9 @@
                 <div class="form-group">
                     <div data-bind="visible: filter.selectedValue.doc_type() === 'AutoFilter'">
                         <select class="form-control" data-bind="
-                            options: $root.staticFilterData.autoFilterTypes,
+                            options: $root.staticFilterData.autoFilterChoices,
+                            optionsText: 'description',
+                            optionsValue: 'slug',
                             value: filter.selectedValue.filter_type
                         "></select>
                     </div>

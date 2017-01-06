@@ -16,11 +16,10 @@
                 {{ multimedia.menu.default_file_name|JSON }}
         );
         var saveURL = "{% url "edit_report_module" domain app.id module.id %}";
-        var dateRanges = {{ daterange_choices|JSON }};
-        var filterChoices = {{ filter_choices|JSON }};
         var staticData = new StaticFilterData({
-            filterChoices: filterChoices,
-            dateRangeOptions: dateRanges,
+            filterChoices: {{ filter_choices|JSON }},
+            dateRangeOptions: {{ daterange_choices|JSON }},
+            autoFilterChoices: {{ auto_filter_choices|JSON }},
         });
         var reportModule = new ReportModule({
             staticFilterData: staticData,
