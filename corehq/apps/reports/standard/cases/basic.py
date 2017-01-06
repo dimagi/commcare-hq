@@ -70,9 +70,7 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
             )
             query = query.NOT(case_es.owner(ids_to_exclude))
         else:  # Only show explicit matches
-            selected_case_owners = self.case_owners
-            if selected_case_owners:
-                query = query.owner(selected_case_owners)
+            query = query.owner(self.case_owners)
 
         if not self.request.can_access_all_locations:
             query = query.OR(self.scope_filter())
