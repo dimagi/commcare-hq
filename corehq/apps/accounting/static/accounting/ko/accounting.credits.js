@@ -28,6 +28,7 @@ hqDefine('accounting/ko/accounting.credits.js', function () {
         self.products = products;
         self.features = features;
         self.paymentHandler = paymentHandler;
+        self.plain_credit = ko.observable(new PlainCreditItem(paymentHandler));
 
         self.triggerPayment = function(paymentMethod) {
             self.paymentHandler.reset();
@@ -35,9 +36,22 @@ hqDefine('accounting/ko/accounting.credits.js', function () {
             self.paymentHandler.costItem(new PrepaymentItems({
                 products: self.products,
                 features: self.features,
+                plain_credit: self.plain_credit,
             }));
         };
     };
+
+    var PlainCreditItem = function(paymentHandler) {
+        'use strict';
+        var self = this;
+        self.name = ko.observable("Credits");
+        self.creditType = ko.observable("plain_credit");
+        self.addAmount = ko.observable(0);
+        self.addAmountValid = ko.computed(function(){
+            return  parseFloat(self.addAmount()) === 0 || (parseFloat(self.addAmount()) >= 0.5);
+        });
+        self.paymentHandler = paymentHandler;
+    }
 
     var CreditItem = function (category, data, paymentHandler, can_purchase_credits) {
         'use strict';
