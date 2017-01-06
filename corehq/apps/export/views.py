@@ -10,6 +10,7 @@ from django.template.defaultfilters import filesizeformat
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 
+from corehq.toggles import DO_NOT_PROCESS_OLD_BUILDS
 from corehq.apps.export.export import get_export_download, get_export_size
 from corehq.apps.export.filters import (
     FormSubmittedByFilter,
@@ -1507,6 +1508,7 @@ class CreateNewCustomFormExportView(BaseModifyNewCustomView):
             self.domain,
             app_id,
             xmlns,
+            only_process_current_builds=DO_NOT_PROCESS_OLD_BUILDS.enabled(self.domain),
         )
         self.export_instance = self.export_instance_cls.generate_instance_from_schema(schema)
 
@@ -1527,6 +1529,7 @@ class CreateNewCustomCaseExportView(BaseModifyNewCustomView):
             self.domain,
             app_id,
             case_type,
+            only_process_current_builds=DO_NOT_PROCESS_OLD_BUILDS.enabled(self.domain),
         )
         self.export_instance = self.export_instance_cls.generate_instance_from_schema(schema)
 
