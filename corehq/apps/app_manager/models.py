@@ -3543,15 +3543,19 @@ MobileFilterConfig = namedtuple('MobileFilterConfig', ['doc_type', 'filter_class
 
 def get_all_mobile_filter_configs():
     return [
-        MobileFilterConfig('AutoFilter', AutoFilter, _('Automatically filter based on a user property')),
-        MobileFilterConfig('CustomDataAutoFilter', CustomDataAutoFilter, _('CustomDataAutoFilter')),
-        MobileFilterConfig('StaticChoiceFilter', StaticChoiceFilter, _('StaticChoiceFilter')),
-        MobileFilterConfig('StaticChoiceListFilter', StaticChoiceListFilter, _('StaticChoiceListFilter')),
+        MobileFilterConfig('AutoFilter', AutoFilter, _('Value equal to a standard user property')),
+        MobileFilterConfig('CustomDataAutoFilter', CustomDataAutoFilter,
+                           _('Value equal to a custom user property')),
+        MobileFilterConfig('StaticChoiceFilter', StaticChoiceFilter, _('An exact match of a constant value')),
+        MobileFilterConfig('StaticChoiceListFilter', StaticChoiceListFilter,
+                           _('An exact match of a dynamic property')),
         MobileFilterConfig('StaticDatespanFilter', StaticDatespanFilter, _('A standard date range')),
         MobileFilterConfig('CustomDatespanFilter', CustomDatespanFilter, _('A custom range relative to today')),
-        MobileFilterConfig('CustomMonthFilter', CustomMonthFilter, _('CustomMonthFilter')),
+        MobileFilterConfig('CustomMonthFilter', CustomMonthFilter,
+                           _("Custom Month Filter (you probably don't want this")),
         MobileFilterConfig('MobileSelectFilter', MobileSelectFilter, _('Show choices on mobile device')),
-        MobileFilterConfig('AncestorLocationTypeFilter', AncestorLocationTypeFilter, _('AncestorLocationTypeFilter')),
+        MobileFilterConfig('AncestorLocationTypeFilter', AncestorLocationTypeFilter,
+                           _("Ancestor location of the user's assigned location of a particular type")),
         MobileFilterConfig('NumericFilter', NumericFilter, _('A numeric expression')),
     ]
 
