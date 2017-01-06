@@ -297,11 +297,11 @@ hqDefine('app_manager/js/report-module.js', function () {
             'username',
             'user_id'
         ];
-        this.date_range_options = [
+        this.dateRangeOptions = [
             'last7', 'last30', 'thismonth', 'lastmonth', 'lastyear', 'thisquarter', 'lastquarter',
         ];
-        this.date_operators = ['=', '<', '<=', '>', '>=', 'between'];
-        this.numeric_operators = ['=', '!=', '<', '<=', '>', '>='];
+        this.dateOperators = ['=', '<', '<=', '>', '>=', 'between'];
+        this.numericOperators = ['=', '!=', '<', '<=', '>', '>='];
     }
 
     function ReportModule(options) {
