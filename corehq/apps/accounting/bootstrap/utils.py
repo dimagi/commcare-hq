@@ -87,24 +87,24 @@ def ensure_plans(config, dry_run, verbose, apps):
             default_product_plan.product_type = SoftwareProductType.COMMCARE
         if dry_run:
             log_accounting_info(
-                "[DRY RUN] Setting plan as default for edition '%s'."
-                % (default_product_plan.edition,)
+                "[DRY RUN] Setting plan as default for edition '%s' with is_trial='%s'."
+                % (default_product_plan.edition, is_trial)
             )
         else:
             try:
                 default_product_plan = DefaultProductPlan.objects.get(edition=edition, is_trial=is_trial)
                 if verbose:
                     log_accounting_info(
-                        "Default for edition '%s' already exists."
-                        % (default_product_plan.edition,)
+                        "Default for edition '%s' with is_trial='%s' already exists."
+                        % (default_product_plan.edition, is_trial)
                     )
             except DefaultProductPlan.DoesNotExist:
                 default_product_plan.plan = software_plan
                 default_product_plan.save()
                 if verbose:
                     log_accounting_info(
-                        "Setting plan as default for edition '%s'."
-                        % (default_product_plan.edition,)
+                        "Setting plan as default for edition '%s' with is_trial='%s'."
+                        % (default_product_plan.edition, is_trial)
                     )
 
 
