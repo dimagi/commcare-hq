@@ -3538,23 +3538,31 @@ class ReportAppFilter(DocumentSchema):
         raise NotImplementedError
 
 
+MobileFilterConfig = namedtuple('MobileFilterConfig', ['doc_type', 'filter_class', 'short_description'])
+
+
+def get_all_mobile_filter_configs():
+    return [
+        MobileFilterConfig('AutoFilter', AutoFilter, _('Automatically filter based on a user property')),
+        MobileFilterConfig('CustomDataAutoFilter', CustomDataAutoFilter, _('CustomDataAutoFilter')),
+        MobileFilterConfig('StaticChoiceFilter', StaticChoiceFilter, _('StaticChoiceFilter')),
+        MobileFilterConfig('StaticChoiceListFilter', StaticChoiceListFilter, _('StaticChoiceListFilter')),
+        MobileFilterConfig('StaticDatespanFilter', StaticDatespanFilter, _('A standard date range')),
+        MobileFilterConfig('CustomDatespanFilter', CustomDatespanFilter, _('A custom range relative to today')),
+        MobileFilterConfig('CustomMonthFilter', CustomMonthFilter, _('CustomMonthFilter')),
+        MobileFilterConfig('MobileSelectFilter', MobileSelectFilter, _('Show choices on mobile device')),
+        MobileFilterConfig('AncestorLocationTypeFilter', AncestorLocationTypeFilter, _('AncestorLocationTypeFilter')),
+        MobileFilterConfig('NumericFilter', NumericFilter, _('A numeric expression')),
+    ]
+
+
 def get_report_filter_class_for_doc_type(doc_type):
-    doc_type_to_filter_class = {
-        'AutoFilter': AutoFilter,
-        'CustomDataAutoFilter': CustomDataAutoFilter,
-        'StaticChoiceFilter': StaticChoiceFilter,
-        'StaticChoiceListFilter': StaticChoiceListFilter,
-        'StaticDatespanFilter': StaticDatespanFilter,
-        'CustomDatespanFilter': CustomDatespanFilter,
-        'CustomMonthFilter': CustomMonthFilter,
-        'MobileSelectFilter': MobileSelectFilter,
-        'AncestorLocationTypeFilter': AncestorLocationTypeFilter,
-        'NumericFilter': NumericFilter,
-    }
-    try:
-        return doc_type_to_filter_class[doc_type]
-    except KeyError:
+    matched_configs = [config for config in get_all_mobile_filter_configs() if config.doc_type == doc_type]
+    if not matched_configs:
         raise ValueError('Unexpected doc_type for ReportAppFilter', doc_type)
+    else:
+        assert len(matched_configs) == 1
+        return matched_configs[0].filter_class
 
 
 def _filter_by_case_sharing_group_id(user, ui_filter):
