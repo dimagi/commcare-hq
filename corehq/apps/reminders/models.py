@@ -2132,9 +2132,42 @@ class ScheduleInstance(UUIDGeneratorMixin, models.Model):
         while self.active and self.next_event_due < datetime.utcnow():
             self.move_to_next_event()
 
+    def expand_recipients(self):
+        """
+        Can be used as a generator to iterate over all individual contacts who
+        are the recipients of this ScheduleInstance.
+        """
+        if self.recipient_type in ('CommCareCase', 'CommCareUser', 'WebUser'):
+            yield self.recipient
+        elif self.recipient_type == 'CommCareCaseGroup':
+            case_group = self.recipient
+            for case in case_group.get_cases():
+                yield case
+        elif self.recipient_type == 'Group':
+            group = self.recipient
+            for user in group.get_users(is_active=True, only_commcare=False):
+                yield user
+        elif self.recipient_type == 'Location':
+            location = self.recipient
+            if self.schedule.include_descendant_locations:
+                location_ids = location.get_descendants(include_self=True).filter(is_archived=False).location_ids()
+            else:
+                location_ids = [location.location_id]
+
+            user_ids = set()
+            for location_id in location_ids:
+                for user in get_all_users_by_location(self.domain, location_id):
+                    if user.is_active and user.get_id not in user_ids:
+                        user_ids.add(user.get_id)
+                        yield user
+        else:
+            raise self.UnknownRecipient(self.recipient_type)
+
     def handle_current_event(self):
         current_event = self.schedule_events[self.current_event_num]
-        current_event.get_content().handle(self.recipient)
+        content = current_event.get_content()
+        for recipient in self.expand_recipients():
+            content.handle(recipient)
         # As a precaution, always explicitly move to the next event after processing the current
         # event to prevent ever getting stuck on the current event.
         self.move_to_next_event()
@@ -2149,6 +2182,11 @@ class Schedule(models.Model):
     schedule_length = models.IntegerField()
     total_iterations = models.IntegerField()
 
+    # Only matters when the recipient of a ScheduleInstance is a Location
+    # If False, only include users at that location as recipients
+    # If True, include all users at that location or at any descendant locations as recipients
+    include_descendant_locations = models.BooleanField(default=False)
+
     @property
     def ordered_events(self):
         return self.event_set.order_by('order')
@@ -2161,10 +2199,10 @@ class Schedule(models.Model):
             total_iterations=total_iterations
         )
 
-    def add_daily_schedule_event(self, time):
+    def add_event(self, day=0, time=None):
         return self.event_set.create(
             order=self.ordered_events.count(),
-            day=0,
+            day=day,
             time=time
         )
 
@@ -2212,6 +2250,10 @@ class Content(models.Model):
         pass
 
     def handle(self, recipient):
+        """
+        :param recipient: a CommCareUser, WebUser, or CommCareCase/SQL
+        representing the contact who should receive the content.
+        """
         method = {
             self.CONTENT_SMS: self.handle_sms,
         }.get(self.content_type)
