@@ -148,7 +148,7 @@ class Command(BaseCommand):
 
         def copy_location_hierarchy(location, id_map):
             new_lineage = []
-            for ancestor in location.lineage:
+            for ancestor in location.sql_location.lineage:
                 try:
                     new_lineage.append(id_map[ancestor])
                 except KeyError:
