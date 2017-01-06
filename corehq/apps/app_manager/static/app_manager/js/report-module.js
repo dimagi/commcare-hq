@@ -1,3 +1,4 @@
+/* globals hqDefine _ */
 hqDefine('app_manager/js/report-module.js', function () {
     // TODO: Ideally the separator would be defined in one place. Right now it is
     //       also defined corehq.apps.userreports.reports.filters.CHOICE_DELIMITER
