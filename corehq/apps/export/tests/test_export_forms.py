@@ -405,7 +405,7 @@ class TestFilterCaseESExportDownloadForm(TestCase):
         self.export_filter.get_case_filter(self.group_ids_slug, True, None)
         selected_user_types.assert_called_once_with(self.group_ids_slug)
         get_locations_ids.assert_called_once_with([])
-        get_users_filter.assert_called_once_with(get_user_ids.return_value)
+        get_users_filter.assert_called_once_with(list(get_user_ids.return_value))
         get_user_ids.assert_called_once_with(self.group_ids_slug)
 
 
@@ -423,5 +423,5 @@ class TestFilterCaseESExportDownloadForm(TestCase):
 
         self.export_filter.get_case_filter(self.group_ids_slug, False, ['some', 'location', 'ids'])
         get_locations_ids.assert_called_once_with([])
-        get_users_filter.assert_called_once_with(get_user_ids.return_value)
+        get_users_filter.assert_called_once_with(list(get_user_ids.return_value))
         get_user_ids.assert_called_once_with(self.group_ids_slug)

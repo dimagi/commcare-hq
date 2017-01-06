@@ -182,6 +182,7 @@ class ExportViewTest(TestCase):
         export = exports[0]
 
         filter_form_data = {
+            "emwf_case_filter": [],
             "type_or_group": "group",
             "date_range": "range",
             "start_date": "1992-01-30",
