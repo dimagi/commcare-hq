@@ -750,6 +750,7 @@ class DefaultProductPlan(models.Model):
 
     class Meta:
         app_label = 'accounting'
+        unique_together = ('edition', 'is_trial')
 
     @classmethod
     def get_default_plan_version(cls, edition=None, is_trial=False):
