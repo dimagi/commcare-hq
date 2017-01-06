@@ -278,6 +278,8 @@ hqDefine('app_manager/js/report-module.js', function () {
 
     function StaticFilterData(options) {
         this.filterChoices = options.filterChoices;
+        // support "unselected"
+        this.filterChoices.unshift({slug: null, description: 'No filter'});
         this.autoFilterTypes = [
             'case_sharing_group',
             'location_id',
