@@ -38,7 +38,7 @@
                                 <label><span>today() - </span><span data-bind="text: filter.display"></span></label>
                                 <select class="form-control"
                                         data-bind="
-                                            options: report.filterConfig.date_operators,
+                                            options: $root.staticFilterData.date_operators,
                                             value: filter.selectedValue.operator
                                 "></select>
                             </div>
