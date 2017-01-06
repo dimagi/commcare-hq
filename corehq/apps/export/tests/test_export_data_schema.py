@@ -545,6 +545,7 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
         cls.first_build._id = '123'
         cls.first_build.copy_of = cls.current_app.get_id
         cls.first_build.version = 3
+        cls.first_build.has_submissions = True
 
         cls.advanced_app = Application.new_app('domain', "Untitled Application")
         module = cls.advanced_app.add_module(AdvancedModule.new_module('Untitled Module', None))
@@ -622,13 +623,14 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
         )
 
         self.assertEqual(len(schema.group_schemas), 1)
-        self.assertEqual(schema.last_app_versions[app._id], app.version)
+        self.assertEqual(schema.last_app_versions[app._id], self.first_build.version)
 
         # After the first schema has been saved let's add a second app to process
         second_build = Application.wrap(self.get_json('basic_application'))
         second_build._id = '456'
         second_build.copy_of = app.get_id
         second_build.version = 6
+        second_build.has_submissions = True
         second_build.save()
         self.addCleanup(second_build.delete)
 
@@ -639,7 +641,7 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
         )
 
         self.assertEqual(new_schema._id, schema._id)
-        self.assertEqual(new_schema.last_app_versions[app._id], app.version)
+        self.assertEqual(new_schema.last_app_versions[app._id], second_build.version)
         self.assertEqual(len(new_schema.group_schemas), 1)
 
     def test_build_with_inferred_schema(self):
@@ -801,6 +803,7 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
         cls.first_build._id = '123'
         cls.first_build.copy_of = cls.current_app.get_id
         cls.first_build.version = 3
+        cls.first_build.has_submissions = True
 
         cls.apps = [
             cls.current_app,
@@ -842,7 +845,7 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
             self.case_type,
         )
 
-        self.assertEqual(schema.last_app_versions[app._id], app.version)
+        self.assertEqual(schema.last_app_versions[app._id], self.first_build.version)
         # One for case, one for case history
         self.assertEqual(len(schema.group_schemas), 2)
 
@@ -851,6 +854,7 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
         second_build._id = '456'
         second_build.copy_of = app.get_id
         second_build.version = 6
+        second_build.has_submissions = True
         with drop_connected_signals(app_post_save):
             second_build.save()
         self.addCleanup(second_build.delete)
@@ -862,7 +866,7 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
         )
 
         self.assertEqual(new_schema._id, schema._id)
-        self.assertEqual(new_schema.last_app_versions[app._id], app.version)
+        self.assertEqual(new_schema.last_app_versions[app._id], second_build.version)
         # One for case, one for case history
         self.assertEqual(len(new_schema.group_schemas), 2)
 
