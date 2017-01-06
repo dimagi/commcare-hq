@@ -229,21 +229,6 @@ hqDefine('app_manager/js/report-module.js', function () {
                 }
             });
         };
-
-        // TODO - add user-friendly text
-        this.filterDocTypes = [
-            null,
-            'AutoFilter',
-            'StaticDatespanFilter',
-            'CustomDatespanFilter',
-            'CustomMonthFilter',
-            'CustomDataAutoFilter',
-            'StaticChoiceListFilter',
-            'StaticChoiceFilter',
-            'MobileSelectFilter',
-            'AncestorLocationTypeFilter',
-            'NumericFilter',
-        ];
     }
 
     function ReportConfig(report_id, display,
@@ -291,6 +276,20 @@ hqDefine('app_manager/js/report-module.js', function () {
     }
 
     function StaticFilterData() {
+        // TODO - add user-friendly text
+        this.filterDocTypes = [
+            null,
+            'AutoFilter',
+            'StaticDatespanFilter',
+            'CustomDatespanFilter',
+            'CustomMonthFilter',
+            'CustomDataAutoFilter',
+            'StaticChoiceListFilter',
+            'StaticChoiceFilter',
+            'MobileSelectFilter',
+            'AncestorLocationTypeFilter',
+            'NumericFilter',
+        ];
         this.autoFilterTypes = [
             'case_sharing_group',
             'location_id',
