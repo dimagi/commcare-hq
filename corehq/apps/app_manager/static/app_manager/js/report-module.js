@@ -277,20 +277,7 @@ hqDefine('app_manager/js/report-module.js', function () {
     }
 
     function StaticFilterData(options) {
-        // TODO - add user-friendly text
-        this.filterDocTypes = [
-            null,
-            'AutoFilter',
-            'StaticDatespanFilter',
-            'CustomDatespanFilter',
-            'CustomMonthFilter',
-            'CustomDataAutoFilter',
-            'StaticChoiceListFilter',
-            'StaticChoiceFilter',
-            'MobileSelectFilter',
-            'AncestorLocationTypeFilter',
-            'NumericFilter',
-        ];
+        this.filterChoices = options.filterChoices;
         this.autoFilterTypes = [
             'case_sharing_group',
             'location_id',

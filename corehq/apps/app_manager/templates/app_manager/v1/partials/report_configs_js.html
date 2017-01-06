@@ -17,8 +17,10 @@
         );
         var saveURL = "{% url "edit_report_module" domain app.id module.id %}";
         var dateRanges = {{ daterange_choices|JSON }};
+        var filterChoices = {{ filter_choices|JSON }};
         var staticData = new StaticFilterData({
-            dateRangeOptions: dateRanges
+            filterChoices: filterChoices,
+            dateRangeOptions: dateRanges,
         });
         var reportModule = new ReportModule({
             staticFilterData: staticData,

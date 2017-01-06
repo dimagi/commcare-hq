@@ -14,7 +14,9 @@
             <th>
                 <div class="form-group">
                     <select class="form-control" data-bind="
-                        options: $root.staticFilterData.filterDocTypes,
+                        options: $root.staticFilterData.filterChoices,
+                        optionsText: 'description',
+                        optionsValue: 'slug',
                         value: selectedValue.doc_type
                     ">
                     </select>
