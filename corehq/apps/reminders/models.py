@@ -2092,16 +2092,7 @@ class ScheduleInstance(UUIDGeneratorMixin, models.Model):
         else:
             self.start_date = ServerTime(datetime.utcnow()).user_time(self.timezone).done().date()
 
-        first_event = self.schedule_events[0]
-        self.start_date += timedelta(days=first_event.day)
-
-        timestamp = datetime.combine(self.start_date, first_event.time)
-        self.next_event_due = (
-            UserTime(timestamp, self.timezone)
-            .server_time()
-            .done()
-            .replace(tzinfo=None)
-        )
+        self.set_next_event_due_timestamp()
 
         if not start_date and self.next_event_due < datetime.utcnow():
             self.start_date += timedelta(days=1)
