@@ -244,13 +244,6 @@ hqDefine('app_manager/js/report-module.js', function () {
             'AncestorLocationTypeFilter',
             'NumericFilter',
         ];
-        this.autoFilterTypes = [
-            'case_sharing_group',
-            'location_id',
-            'parent_location_id',
-            'username',
-            'user_id'
-        ];
     }
 
     function ReportConfig(report_id, display,
@@ -298,6 +291,13 @@ hqDefine('app_manager/js/report-module.js', function () {
     }
 
     function StaticFilterData() {
+        this.autoFilterTypes = [
+            'case_sharing_group',
+            'location_id',
+            'parent_location_id',
+            'username',
+            'user_id'
+        ];
         this.date_range_options = [
             'last7', 'last30', 'thismonth', 'lastmonth', 'lastyear', 'thisquarter', 'lastquarter',
         ];

@@ -22,7 +22,7 @@
                 <div class="form-group">
                     <div data-bind="visible: filter.selectedValue.doc_type() === 'AutoFilter'">
                         <select class="form-control" data-bind="
-                            options: report.filterConfig.autoFilterTypes,
+                            options: $root.staticFilterData.autoFilterTypes,
                             value: filter.selectedValue.filter_type
                         "></select>
                     </div>
