@@ -739,7 +739,6 @@ class DefaultProductPlan(models.Model):
     The latest SoftwarePlanVersion that's linked to this plan will be the one used to create a new subscription if
     nothing is found for that domain.
     """
-    product_type = models.CharField(max_length=25, choices=SoftwareProductType.CHOICES)
     edition = models.CharField(
         default=SoftwarePlanEdition.COMMUNITY,
         choices=SoftwarePlanEdition.CHOICES,
@@ -757,7 +756,7 @@ class DefaultProductPlan(models.Model):
         edition = edition or SoftwarePlanEdition.COMMUNITY
         try:
             default_product_plan = DefaultProductPlan.objects.select_related('plan').get(
-                product_type=SoftwareProductType.COMMCARE, edition=edition, is_trial=is_trial
+                edition=edition, is_trial=is_trial
             )
             return default_product_plan.plan.get_version()
         except DefaultProductPlan.DoesNotExist:
