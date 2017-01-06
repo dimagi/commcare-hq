@@ -133,15 +133,13 @@ def get_display_data(data, prop_def, processors=None, timezone=pytz.utc):
     processors.update(default_processors)
 
     expr = prop_def.pop('expr')
-    name = prop_def.pop('name') or _format_slug_string_for_display(expr)
+    name = prop_def.pop('name', _format_slug_string_for_display(expr))
     format = prop_def.pop('format', None)
     process = prop_def.pop('process', None)
     timeago = prop_def.get('timeago', False)
 
-    if callable(expr):
-        val = expr(data)
-    else:
-        val = data.get(expr, None)
+    # todo: nested attributes, jsonpath, indexing into related documents
+    val = data.get(expr, None)
 
     if prop_def.pop('parse_date', None):
         val = _parse_date_or_datetime(val)
