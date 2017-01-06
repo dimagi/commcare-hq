@@ -1630,6 +1630,7 @@ class EditNewCustomFormExportView(BaseEditNewCustomExportView):
             self.domain,
             export_instance.app_id,
             export_instance.xmlns,
+            only_process_current_builds=DO_NOT_PROCESS_OLD_BUILDS.enabled(self.domain),
         )
 
 
@@ -1643,6 +1644,7 @@ class EditNewCustomCaseExportView(BaseEditNewCustomExportView):
             self.domain,
             self.request.GET.get('app_id'),
             export_instance.case_type,
+            only_process_current_builds=DO_NOT_PROCESS_OLD_BUILDS.enabled(self.domain),
         )
 
 
