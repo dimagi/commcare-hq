@@ -59,11 +59,13 @@ def ensure_plans(config, dry_run, verbose, apps):
 
             software_plan_version = SoftwarePlanVersion(role=role, plan=software_plan)
 
+            # TODO - squash migrations and remove this
             # must save before assigning many-to-many relationship
             if hasattr(SoftwarePlanVersion, 'product_rates'):
                 software_plan_version.save()
 
             product_rate.save()
+            # TODO - squash migrations and remove this
             if hasattr(SoftwarePlanVersion, 'product_rates'):
                 software_plan_version.product_rates.add(product_rate)
             elif hasattr(SoftwarePlanVersion, 'product_rate'):
@@ -71,6 +73,7 @@ def ensure_plans(config, dry_run, verbose, apps):
             else:
                 raise AccountingError('SoftwarePlanVersion does not have product_rate or product_rates field')
 
+            # TODO - squash migrations and remove this
             # must save before assigning many-to-many relationship
             if hasattr(SoftwarePlanVersion, 'product_rate'):
                 software_plan_version.save()
@@ -83,6 +86,7 @@ def ensure_plans(config, dry_run, verbose, apps):
         default_product_plan = DefaultProductPlan(
             edition=edition, is_trial=is_trial
         )
+        # TODO - squash migrations and remove this
         if hasattr(default_product_plan, 'product_type'):
             default_product_plan.product_type = SoftwareProductType.COMMCARE
         if dry_run:
