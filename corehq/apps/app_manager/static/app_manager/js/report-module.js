@@ -251,7 +251,6 @@ hqDefine('app_manager/js/report-module.js', function () {
             'username',
             'user_id'
         ];
-        this.numeric_operators = ['=', '!=', '<', '<=', '>', '>='];
     }
 
     function ReportConfig(report_id, display,
@@ -303,7 +302,7 @@ hqDefine('app_manager/js/report-module.js', function () {
             'last7', 'last30', 'thismonth', 'lastmonth', 'lastyear', 'thisquarter', 'lastquarter',
         ];
         this.date_operators = ['=', '<', '<=', '>', '>=', 'between'];
-
+        this.numeric_operators = ['=', '!=', '<', '<=', '>', '>='];
     }
 
     function ReportModule(options) {
