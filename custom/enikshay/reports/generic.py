@@ -2,6 +2,7 @@ from collections import namedtuple
 
 from sqlagg.filters import IN, AND, GTE, LT
 
+from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.reports.sqlreport import SqlTabularReport, SqlData
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
@@ -32,15 +33,17 @@ class MultiReport(CustomProjectReport, GenericReportView):
             report.fields = self.fields
             report_instance = report(self.request, domain=self.domain)
             report_context = report_instance.report_context
+            report_table = report_context.get('report_table', {})
+            report_table['slug'] = report_instance.slug
             context['reports'].append({
                 'report': report_instance.context.get('report', {}),
-                'report_table': report_context.get('report_table', {})
+                'report_table': report_table
             })
         return context
 
 
 class EnikshayMultiReport(MultiReport):
-    fields = (QuarterFilter, EnikshayLocationFilter)
+    fields = (DatespanFilter, EnikshayLocationFilter)
 
 
 class EnikshayReport(DatespanMixin, CustomProjectReport, SqlTabularReport):
@@ -48,12 +51,11 @@ class EnikshayReport(DatespanMixin, CustomProjectReport, SqlTabularReport):
 
     @property
     def report_config(self):
-        datespan = QuarterFilter.get_value(self.request, self.domain)
         return EnikshayReportConfig(
             domain=self.domain,
             locations_id=EnikshayLocationFilter.get_value(self.request, self.domain),
-            start_date=datespan.startdate,
-            end_date=datespan.enddate
+            start_date=self.datespan.startdate,
+            end_date=self.datespan.enddate
         )
 
 

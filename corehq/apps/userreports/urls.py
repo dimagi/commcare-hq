@@ -18,7 +18,7 @@ from corehq.apps.userreports.views import (
     export_data_source,
     data_source_status,
     choice_list_api,
-)
+    ExpressionDebuggerView, evaluate_expression)
 
 urlpatterns = [
     url(r'^$', UserConfigReportsHomeView.as_view(),
@@ -51,7 +51,10 @@ urlpatterns = [
         name='export_configurable_data_source'),
     url(r'^data_sources/status/(?P<config_id>[\w-]+)/$', data_source_status,
         name='configurable_data_source_status'),
+    url(r'^expression_debugger/$', ExpressionDebuggerView.as_view(),
+        name='expression_debugger'),
 
     # apis
     url(r'^api/choice_list/(?P<report_id>[\w-]+)/(?P<filter_id>[\w-]+)/$', choice_list_api, name='choice_list_api'),
+    url(r'^expression_evaluator/$', evaluate_expression, name='expression_evaluator'),
 ]

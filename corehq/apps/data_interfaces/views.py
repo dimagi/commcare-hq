@@ -207,7 +207,7 @@ class ArchiveFormView(DataInterfaceSection):
         context.update({
             'bulk_upload': {
                 "download_url": static(
-                    'data_interfaces/files/forms_bulk_example.xlsx'),
+                    'data_interfaces/xlsx/forms_bulk_example.xlsx'),
                 "adjective": _("example"),
                 "verb": _("archive"),
                 "plural_noun": _("forms"),
@@ -306,7 +306,7 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
         context.update({
             'bulk_upload': {
                 "download_url": static(
-                    'data_interfaces/files/cases_bulk_example.xlsx'),
+                    'data_interfaces/xlsx/cases_bulk_example.xlsx'),
                 "adjective": _("case"),
                 "plural_noun": _("cases"),
             },
@@ -420,7 +420,7 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
             'detailsUrl': reverse('case_details', args=[self.domain, case.case_id]),
             'name': case.name,
             'externalId': case.external_id if case.external_id else '--',
-            'phoneNumber': getattr(case, 'contact_phone_number', '--'),
+            'phoneNumber': case.get_case_property('contact_phone_number') or '--',
         }
 
     def get_create_form(self, is_blank=False):

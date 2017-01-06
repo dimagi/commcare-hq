@@ -2,24 +2,41 @@
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 
-<fieldset>
-    <legend>
-        <a data-toggle="collapse" href="#supported-languages" class="collapsed">
-            <i class="fa fa-angle-double-down"></i> Language List
-        </a>
-    </legend>
-    <div class="collapse" id="supported-languages">
-        {% include "app_manager/v2/partials/supported-languages.html" %}
-        <div class="spacer"></div>
+<div class="panel-group" id="language-settings-options">
+    <div class="panel panel-appmanager">
+      <div class="panel-heading">
+        <h4 class="panel-title">
+          <a data-toggle="collapse"
+             data-parent="#language-settings-options"
+             href="#supported-languages"
+             class="collapse in">
+            <i class="fa fa-angle-double-down"></i>
+            {% trans "Language List" %}
+          </a>
+        </h4>
+      </div>
+      <div class="panel-collapse collapse in" id="supported-languages">
+        <div class="panel-body">
+          {% include "app_manager/v2/partials/supported-languages.html" %}
+        </div>
+      </div>
     </div>
-    {% if not app.is_remote_app %}
-    <legend>
-        <a data-toggle="collapse" href="#commcare-translations" class="collapsed">
-            <i class="fa fa-angle-double-down"></i> CommCare Translations
-        </a>
-    </legend>
-    {% if app.get_doc_type == "Application" %}
-    <div class="collapse" id="commcare-translations">
+
+    {% if not app.is_remote_app and app.get_doc_type == "Application" %}
+      <div class="panel panel-appmanager">
+        <div class="panel-heading">
+          <h4 class="panel-title">
+            <a data-toggle="collapse"
+               data-parent="#language-settings-options"
+               href="#commcare-translations"
+               class="collapsed">
+              <i class="fa fa-angle-double-down"></i>
+              {% trans "CommCare Translations" %}
+            </a>
+          </h4>
+        </div>
+        <div class="panel-collapse collapse" id="commcare-translations">
+          <div class="panel-body">
             <section id="translations_ui">
                 <p class="help-block">
                     {% blocktrans %}
@@ -36,25 +53,49 @@
                     {% endblocktrans %}
                 </p>
             </section>
-        <div class="spacer"></div>
-    </div>
+          </div>
+        </div>
+      </div>
     {% endif %}
-    <legend>
-        <a data-toggle="collapse" href="#bulk-commcare-translations" class="collapsed">
-            <i class="fa fa-angle-double-down"></i> Bulk CommCare Translations
-        </a>
-    </legend>
-    <div class="collapse" id="bulk-commcare-translations">
-        {% include "style/partials/bulk_upload.html" with bulk_upload=bulk_ui_translation_upload bulk_upload_form=bulk_ui_translation_form no_header=True %}
-        <div class="spacer"></div>
-    </div>
+
+    {% if not app.is_remote_app %}
+      <div class="panel panel-appmanager">
+        <div class="panel-heading">
+          <h4 class="panel-title">
+            <a data-toggle="collapse"
+               data-parent="#language-settings-options"
+               href="#bulk-commcare-translations"
+               class="collapsed">
+              <i class="fa fa-angle-double-down"></i>
+              {% trans "Bulk CommCare Translations" %}
+            </a>
+          </h4>
+        </div>
+        <div class="panel-collapse collapse" id="bulk-commcare-translations">
+          <div class="panel-body">
+              {% include "style/partials/bulk_upload.html" with bulk_upload=bulk_ui_translation_upload bulk_upload_form=bulk_ui_translation_form no_header=True %}
+          </div>
+        </div>
+      </div>
     {% endif %}
-    <legend>
-        <a data-toggle="collapse" href="#bulk-application-translations" class="collapsed">
-            <i class="fa fa-angle-double-down"></i> Bulk Application Translations
-        </a>
-    </legend>
-    <div class="collapse" id="bulk-application-translations">
-        {% include "style/partials/bulk_upload.html" with bulk_upload=bulk_app_translation_upload bulk_upload_form=bulk_app_translation_form no_header=True %}
+
+    <div class="panel panel-appmanager">
+      <div class="panel-heading">
+        <h4 class="panel-title">
+          <a data-toggle="collapse"
+             data-parent="#language-settings-options"
+             href="#bulk-application-translations"
+             class="collapsed">
+            <i class="fa fa-angle-double-down"></i>
+            {% trans "Bulk Application Translations" %}
+          </a>
+        </h4>
+      </div>
+      <div class="panel-collapse collapse" id="bulk-application-translations">
+        <div class="panel-body">
+          {% include "style/partials/bulk_upload.html" with bulk_upload=bulk_app_translation_upload bulk_upload_form=bulk_app_translation_form no_header=True %}
+        </div>
+      </div>
     </div>
-</fieldset>
+
+</div>

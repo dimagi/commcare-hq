@@ -24,6 +24,7 @@ from corehq.apps.reminders.event_handlers import TRIAL_MAX_EMAILS
 from corehq.apps.reminders.util import DotExpandedDict, get_form_list
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.crispy import ErrorsOnlyField
+from corehq.apps.sms.models import Keyword
 from corehq.apps.style.crispy import FieldWithHelpBubble, B3MultiField
 from corehq.apps.users.forms import SupplyPointSelectWidget
 from corehq import toggles
@@ -53,7 +54,6 @@ from .models import (
     METHOD_EMAIL,
     CASE_CRITERIA,
     QUESTION_RETRY_CHOICES,
-    SurveyKeyword,
     RECIPIENT_PARENT_CASE,
     RECIPIENT_SUBCASE,
     FIRE_TIME_RANDOM,
@@ -2212,8 +2212,8 @@ class KeywordForm(Form):
             raise ValidationError(_("This field is required."))
         if len(value.split()) > 1:
             raise ValidationError(_("Keyword should be one word."))
-        duplicate = SurveyKeyword.get_keyword(self._cchq_domain, value)
-        if duplicate is not None and duplicate._id != self._sk_id:
+        duplicate = Keyword.get_keyword(self._cchq_domain, value)
+        if duplicate and duplicate.couch_id != self._sk_id:
             raise ValidationError(_("Keyword already exists."))
         return value
 

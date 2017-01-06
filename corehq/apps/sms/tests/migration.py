@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from django.test import TestCase
+from couchdbkit import ResourceNotFound
 import random
 import string
 
@@ -8,13 +9,12 @@ class BaseMigrationTestCase(TestCase):
 
     def setUp(self):
         self.domain = 'test-sms-sql-migration'
-        self.deleteAllLogs()
 
-    def deleteAllLogs(self):
+    def deleteAllObjects(self):
         pass
 
     def tearDown(self):
-        self.deleteAllLogs()
+        self.deleteAllObjects()
 
     def randomBoolean(self):
         return [True, False][random.randint(0, 1)]
@@ -30,6 +30,18 @@ class BaseMigrationTestCase(TestCase):
         result -= timedelta(minutes=random.randint(0, max_lookback))
         result = result.replace(microsecond=0)
         return result
+
+    def randomList(self, min_items=0, max_items=2):
+        return [self.randomString() for i in range(random.randint(min_items, max_items))]
+
+    def randomChoice(self, choices):
+        return choices[random.randint(0, len(choices) - 1)]
+
+    def randomDict(self, min_items=0, max_items=2):
+        return {
+            self.randomString(): self.randomString()
+            for i in range(random.randint(min_items, max_items))
+        }
 
     def checkFieldValues(self, object1, object2, fields):
         for field_name in fields:

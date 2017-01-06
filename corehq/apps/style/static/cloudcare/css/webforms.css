@@ -15,7 +15,8 @@
 
 /* Override default nprogress bar color to match CommCareHQ */
 #nprogress .bar {
-  background: #004ebc;
+  background: #47b700;
+  height: 4px;
 }
 
 #nprogress .peg {

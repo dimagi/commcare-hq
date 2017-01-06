@@ -61,11 +61,13 @@ from corehq.apps.cloudcare.decorators import require_cloudcare_access
 from corehq.apps.cloudcare.exceptions import RemoteAppError
 from corehq.apps.cloudcare.models import ApplicationAccess
 from corehq.apps.cloudcare.touchforms_api import BaseSessionDataHelper, CaseSessionDataHelper
+from corehq.apps.cloudcare.const import WEB_APPS_ENVIRONMENT, PREVIEW_APP_ENVIRONMENT
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest_ex, domain_admin_required
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.formdetails import readable
 from corehq.apps.style.decorators import (
     use_datatables,
+    use_legacy_jquery,
     use_jquery_ui,
 )
 from corehq.apps.users.models import CouchUser, CommCareUser
@@ -83,6 +85,7 @@ def default(request, domain):
     return HttpResponseRedirect(reverse('cloudcare_main', args=[domain, '']))
 
 
+@use_legacy_jquery
 def insufficient_privilege(request, domain, *args, **kwargs):
     context = {
         'domain': domain,
@@ -94,6 +97,7 @@ def insufficient_privilege(request, domain, *args, **kwargs):
 class CloudcareMain(View):
 
     @use_datatables
+    @use_legacy_jquery
     @use_jquery_ui
     @method_decorator(require_cloudcare_access)
     @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
@@ -243,6 +247,7 @@ class FormplayerMain(View):
     urlname = 'formplayer_main'
 
     @use_datatables
+    @use_legacy_jquery
     @use_jquery_ui
     @method_decorator(require_cloudcare_access)
     @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
@@ -289,6 +294,7 @@ class FormplayerMain(View):
             "formplayer_url": settings.FORMPLAYER_URL,
             "single_app_mode": False,
             "home_url": reverse(self.urlname, args=[domain]),
+            "environment": WEB_APPS_ENVIRONMENT,
         }
         return render(request, "cloudcare/formplayer_home.html", context)
 
@@ -297,6 +303,10 @@ class FormplayerMainPreview(FormplayerMain):
 
     preview = True
     urlname = 'formplayer_main_preview'
+
+    @use_legacy_jquery
+    def dispatch(self, request, *args, **kwargs):
+        return super(FormplayerMain, self).dispatch(request, *args, **kwargs)
 
     def fetch_app(self, domain, app_id):
         return get_current_app(domain, app_id)
@@ -307,6 +317,7 @@ class FormplayerPreviewSingleApp(View):
     urlname = 'formplayer_single_app'
 
     @use_datatables
+    @use_legacy_jquery
     @use_jquery_ui
     @method_decorator(require_cloudcare_access)
     @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
@@ -340,6 +351,7 @@ class FormplayerPreviewSingleApp(View):
             "formplayer_url": settings.FORMPLAYER_URL,
             "single_app_mode": True,
             "home_url": reverse(self.urlname, args=[domain, app_id]),
+            "environment": WEB_APPS_ENVIRONMENT,
         }
         return render(request, "cloudcare/formplayer_home.html", context)
 
@@ -348,12 +360,14 @@ class PreviewAppView(TemplateView):
     template_name = 'preview_app/base.html'
     urlname = 'preview_app'
 
+    @use_legacy_jquery
     def get(self, request, *args, **kwargs):
         app = get_app(request.domain, kwargs.pop('app_id'))
         return self.render_to_response({
             'app': app,
             'formplayer_url': settings.FORMPLAYER_URL,
             "maps_api_key": settings.GMAPS_API_KEY,
+            "environment": PREVIEW_APP_ENVIRONMENT,
         })
 
 

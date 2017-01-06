@@ -673,7 +673,7 @@ class MultipleSelectionForm(forms.Form):
         <script>
             // Multiselect widget
             $(function () {
-                var multiselect_utils = hqImport('style/js/components/multiselect_utils');
+                var multiselect_utils = hqImport('style/js/multiselect_utils');
                 multiselect_utils.createFullMultiselectWidget(
                     'id_of_multiselect_field',
                     django.gettext("Available Things"),
@@ -750,17 +750,14 @@ class SupplyPointSelectWidget(forms.Widget):
 
     def render(self, name, value, attrs=None):
         location_ids = value.split(',') if value else []
-        from corehq.apps.locations.util import get_locations_from_ids
-        try:
-            locations = get_locations_from_ids(location_ids, self.domain)
-        except SQLLocation.DoesNotExist:
-            locations = []
+        locations = list(SQLLocation.active_objects
+                         .filter(domain=self.domain, location_id__in=location_ids))
         initial_data = [{'id': loc.location_id, 'name': loc.display_name} for loc in locations]
 
         return get_template('locations/manage/partials/autocomplete_select_widget.html').render(Context({
             'id': self.id,
             'name': name,
-            'value': value or '',
+            'value': ','.join(loc.location_id for loc in locations),
             'query_url': self.query_url,
             'multiselect': self.multiselect,
             'initial_data': initial_data,

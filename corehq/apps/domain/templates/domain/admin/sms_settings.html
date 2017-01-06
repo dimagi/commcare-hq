@@ -4,8 +4,7 @@
 {% load i18n %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
-    <script src="{% static 'commtrack/ko/sms.js' %}"></script>
+    <script src="{% static 'commtrack/js/sms.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
@@ -13,7 +12,7 @@
     $(function () {
         var settings = {{ settings|JSON }};
         var other_sms_codes = {{ other_sms_codes|JSON }};
-        var initCommtrackSettingsView = hqImport('commtrack/ko/sms.js').initCommtrackSettingsView;
+        var initCommtrackSettingsView = hqImport('commtrack/js/sms.js').initCommtrackSettingsView;
         initCommtrackSettingsView($('#settings'), settings, other_sms_codes);
     });
     </script>

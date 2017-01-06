@@ -7,8 +7,8 @@
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
     <script src="{% static 'style/js/ui-element.js' %}"></script>
-    <script src="{% static 'hqwebapp/ko/base_list_view_model.js' %}"></script>
-    <script src="{% static 'commtrack/ko/products_and_programs.async.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/base_list_view_model.js' %}"></script>
+    <script src="{% static 'commtrack/js/products_and_programs.async.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -49,7 +49,7 @@
 
         <div class="row" data-bind="visible: !initial_load()">
             <div class="col-sm-12">
-                <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
+                <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator" />
                 {% trans 'Loading products...' %}
             </div>
         </div>

@@ -24,8 +24,7 @@ class FilesystemBlobDB(AbstractBlobDB):
         assert isabs(rootdir), rootdir
         self.rootdir = rootdir
 
-    def put(self, content, basename="", bucket=DEFAULT_BUCKET):
-        identifier = self.get_identifier(basename)
+    def put(self, content, identifier, bucket=DEFAULT_BUCKET):
         path = self.get_path(identifier, bucket)
         dirpath = dirname(path)
         if not isdir(dirpath):

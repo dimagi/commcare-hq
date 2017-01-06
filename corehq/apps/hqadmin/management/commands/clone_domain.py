@@ -21,8 +21,6 @@ types = [
     'apps',
     'user_fields',
     'user_roles',
-    'reminders',
-    'keywords',
     'auto_case_updates',
 ]
 
@@ -75,14 +73,6 @@ class Command(BaseCommand):
         if self._clone_type(options, 'user_roles'):
             from corehq.apps.users.models import UserRole
             self._copy_all_docs_of_type(UserRole)
-
-        if self._clone_type(options, 'reminders'):
-            from corehq.apps.reminders.models import CaseReminderHandler
-            self._copy_all_docs_of_type(CaseReminderHandler)
-
-        if self._clone_type(options, 'keywords'):
-            from corehq.apps.reminders.models import SurveyKeyword
-            self._copy_all_docs_of_type(SurveyKeyword)
 
         if self._clone_type(options, 'auto_case_updates'):
             self.copy_auto_case_update_rules()
@@ -149,16 +139,16 @@ class Command(BaseCommand):
         self._copy_custom_data(LocationFieldsView.field_type)
 
         location_types = LocationType.objects.by_domain(self.existing_domain)
-        previous_location_type = None
+        location_types_map = {}
         for location_type in location_types:
-            if previous_location_type:
-                location_type.parent_type = previous_location_type
-            self.save_sql_copy(location_type, self.new_domain)
-            previous_location_type = location_type
+            if location_type.parent_type_id:
+                location_type.parent_type_id = location_types_map[location_type.parent_type_id]
+            old_id, new_id = self.save_sql_copy(location_type, self.new_domain)
+            location_types_map[old_id] = new_id
 
         def copy_location_hierarchy(location, id_map):
             new_lineage = []
-            for ancestor in location.lineage:
+            for ancestor in location.sql_location.lineage:
                 try:
                     new_lineage.append(id_map[ancestor])
                 except KeyError:
@@ -206,7 +196,7 @@ class Command(BaseCommand):
     @property
     def report_map(self):
         if not self._report_map:
-            self.copy_ucr_data(self.existing_domain, self.new_domain)
+            self.copy_ucr_data()
         return self._report_map
 
     def copy_applications(self):

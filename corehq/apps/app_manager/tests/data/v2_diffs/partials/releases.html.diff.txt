@@ -1,25 +1,5 @@
 --- 
 +++ 
-@@ -18,7 +18,7 @@
-         {# The '___' in these urls will later be replaced by an app's _id ReleasesMain's url function #}
-         var urls = {
-             fetch: '{% url "paginate_releases" domain app.id %}',
--            delete: '{% url "delete_copy" domain app.id %}',
-+            delete: '{% url "corehq.apps.app_manager.views.delete_copy" domain app.id %}',
-             cloudcare: '{% url "cloudcare_get_app" domain '___' %}',
-             compare: '{% url "diff" domain '___' '___' %}',
-             jad: '{% url "download_jad" domain '___' %}',
-@@ -29,8 +29,8 @@
-             source: '{% url "download_index" domain '___' %}',
-             summary: '{% url "app_summary" domain '___' %}',
-             release: '{% url "release_build" domain app.id '___' %}',
--            newBuild: '{% url "save_copy" domain app.id %}',
--            revertBuild: '{% url "revert_to_copy" domain app.id %}',
-+            newBuild: '{% url "corehq.apps.app_manager.views.save_copy" domain app.id %}',
-+            revertBuild: '{% url "corehq.apps.app_manager.views.revert_to_copy" domain app.id %}',
-             currentVersion: '{% url "current_app_version" domain app.id %}',
-             hubspot_click_deploy: '{% url "hubspot_click_deploy" %}',
-             download_zip: '{% url "download_ccz" app.domain '___' %}',
 @@ -46,9 +46,11 @@
              fetchLimit: {{ fetchLimit }},
          };
@@ -44,20 +24,49 @@
  </script>
  <script>
      $(function () {
-@@ -67,7 +69,11 @@
+@@ -67,7 +69,13 @@
      });
  </script>
  
 -{% if build_profile_access %}
 +{% if intro_only %}
-+    Intro content goes here. Why don't you click on <b>New</b> on the left?
++  {% blocktrans %}
++    Please click <strong>Add...</strong> to the left to start building your application!
++  {% endblocktrans %}
 +{% else %}
 +
 +{% if intro_only and build_profile_access %}
  <div class="tabbable">
      <ul class="nav nav-tabs">
          <li class="active"><a href="#versions-tab" data-toggle="tab">{% trans "Versions" %}</a></li>
-@@ -325,17 +331,18 @@
+@@ -104,7 +112,7 @@
+                 ">{% trans 'Make New Version' %}</button>
+ 
+     <div id="build-errors-wrapper"></div>
+-    <table class="table">
++    <table class="table table-releases">
+         <tr>
+             <th colspan="2">{% trans "Version" %}</th>
+             <th colspan="2">{% trans "Date &amp; Time" %}</th>
+@@ -199,7 +207,7 @@
+                 </td>
+                 <td>
+                     <b data-bind="text: comment_user_name"></b>
+-                    <inline-edit params="
++                    <inline-edit-v2 params="
+                         value: build_comment,
+                         rows: 1,
+                         placeholder: '{% trans "(Click here to add a comment)"|escapejs %}',
+@@ -207,7 +215,7 @@
+                         saveParams: {'build_id': id},
+                         saveValueName: 'comment',
+                         errorMessage:'{% trans "Error updating comment.  Please try again."|escapejs %}',
+-                    "></inline-edit>
++                    "></inline-edit-v2>
+                     {% if request|toggle_enabled:"VIEW_BUILD_SOURCE" %}
+                         <h6>
+                             {% blocktrans %}
+@@ -325,17 +333,18 @@
          </div>
      </script>
      <script type="text/html" id="deploy-build-modal-template">
