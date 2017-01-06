@@ -1,6 +1,6 @@
 import jsonfield
 import pytz
-from datetime import timedelta, datetime, date, time
+from datetime import timedelta, datetime, date, time, tzinfo
 import re
 import uuid
 from collections import namedtuple
@@ -2046,10 +2046,16 @@ class ScheduleInstance(UUIDGeneratorMixin, models.Model):
         if not timezone:
             timezone = get_timezone_for_domain(self.domain)
 
-        try:
-            return coerce_timezone_value(timezone)
-        except ValidationError:
-            return pytz.UTC
+        if isinstance(timezone, tzinfo):
+            return timezone
+
+        if isinstance(timezone, basestring):
+            try:
+                return coerce_timezone_value(timezone)
+            except ValidationError:
+                pass
+
+        return pytz.UTC
 
     @classmethod
     def get_or_create_for_recipient(cls, schedule, recipient_type, recipient_id, start_date=None):
