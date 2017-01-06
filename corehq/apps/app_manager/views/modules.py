@@ -14,6 +14,7 @@ from django.contrib import messages
 from corehq.apps.app_manager.views.media_utils import process_media_attribute, \
     handle_media_edits
 from corehq.apps.case_search.models import case_search_enabled_for_domain
+from corehq.apps.reports.daterange import get_simple_dateranges
 
 from dimagi.utils.logging import notify_exception
 
@@ -257,6 +258,7 @@ def _get_report_module_context(app, module):
         'all_reports': [_report_to_config(r) for r in all_reports],
         'current_reports': [r.to_json() for r in module.report_configs],
         'warnings': warnings,
+        'daterange_choices': [choice._asdict() for choice in get_simple_dateranges()],
     }
 
 

@@ -276,7 +276,7 @@ hqDefine('app_manager/js/report-module.js', function () {
         };
     }
 
-    function StaticFilterData() {
+    function StaticFilterData(options) {
         // TODO - add user-friendly text
         this.filterDocTypes = [
             null,
@@ -298,9 +298,7 @@ hqDefine('app_manager/js/report-module.js', function () {
             'username',
             'user_id'
         ];
-        this.dateRangeOptions = [
-            'last7', 'last30', 'thismonth', 'lastmonth', 'lastyear', 'thisquarter', 'lastquarter',
-        ];
+        this.dateRangeOptions = _.map(options.dateRangeOptions, function (choice) { return choice.slug; });
         this.dateOperators = ['=', '<', '<=', '>', '>=', 'between'];
         this.numericOperators = ['=', '!=', '<', '<=', '>', '>='];
     }
@@ -310,7 +308,7 @@ hqDefine('app_manager/js/report-module.js', function () {
         var currentReports = options.currentReports || [];
         var availableReports = options.availableReports || [];
         var saveURL = options.saveURL;
-        self.staticFilterData = new StaticFilterData();
+        self.staticFilterData = options.staticFilterData;
         self.lang = options.lang;
         self.moduleName = options.moduleName;
         self.moduleFilter = options.moduleFilter === "None" ? "" : options.moduleFilter;
@@ -430,6 +428,7 @@ hqDefine('app_manager/js/report-module.js', function () {
     }
     return {
         ReportModule: ReportModule,
+        StaticFilterData: StaticFilterData,
         select2Separator: select2Separator
     };
 });
