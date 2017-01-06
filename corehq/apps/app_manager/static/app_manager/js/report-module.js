@@ -251,9 +251,6 @@ hqDefine('app_manager/js/report-module.js', function () {
             'username',
             'user_id'
         ];
-        this.date_range_options = [
-            'last7', 'last30', 'thismonth', 'lastmonth', 'thisyear', 'lastyear', 'thisquarter', 'lastquarter',
-        ];
         this.date_operators = ['=', '<', '<=', '>', '>=', 'between'];
         this.numeric_operators = ['=', '!=', '<', '<=', '>', '>='];
     }
@@ -302,11 +299,18 @@ hqDefine('app_manager/js/report-module.js', function () {
         };
     }
 
+    function StaticFilterData() {
+        this.date_range_options = [
+            'last7', 'last30', 'thismonth', 'lastmonth', 'lastyear', 'thisquarter', 'lastquarter',
+        ];
+    }
+
     function ReportModule(options) {
         var self = this;
         var currentReports = options.currentReports || [];
         var availableReports = options.availableReports || [];
         var saveURL = options.saveURL;
+        self.staticFilterData = new StaticFilterData();
         self.lang = options.lang;
         self.moduleName = options.moduleName;
         self.moduleFilter = options.moduleFilter === "None" ? "" : options.moduleFilter;
