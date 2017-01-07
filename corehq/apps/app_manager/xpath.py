@@ -58,7 +58,7 @@ def dot_interpolate(string, replacement):
                 if string[i] == ".":
                     # Replace dot with replacement, unless this looks like a decimal number
                     if (i == 0 or re.match(r'\D', string[i - 1])):
-                        if (i == len(string)  - 1 or re.match(r'\D', string[i + 1])):
+                        if (i == len(string) - 1 or re.match(r'\D', string[i + 1])):
                             new += replacement
                             i = i + 1
                             continue
