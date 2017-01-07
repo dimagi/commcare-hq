@@ -181,9 +181,10 @@ def get_tables_as_rows(data, definition, processors=None, timezone=pytz.utc):
     sections = []
 
     for section in definition:
-        rows = [[get_display_data(data, prop, timezone=timezone, processors=processors)
-                 for prop in row] 
-                for row in section['layout']]
+        rows = [
+            [get_display_data(data, prop, timezone=timezone, processors=processors) for prop in row]
+            for row in section['layout']
+        ]
 
         max_row_len = max(map(len, rows)) if rows else 0
         for row in rows:
