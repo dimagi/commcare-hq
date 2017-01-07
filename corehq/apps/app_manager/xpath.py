@@ -17,6 +17,8 @@ from corehq.apps.app_manager.exceptions import (
 from django.utils.translation import ugettext as _, ugettext_lazy
 
 
+# Note that this may match strings that do not need interpolation, such as "blah == 'ellipsis...'",
+# but it should not miss any strings that do need interpolation.
 DOT_INTERPOLATE_PATTERN = r'(\D|^)\.(\D|$)'
 
 CASE_REFERENCE_VALIDATION_ERROR = ugettext_lazy(
