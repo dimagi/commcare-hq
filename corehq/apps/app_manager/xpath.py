@@ -31,8 +31,34 @@ def dot_interpolate(string, replacement):
     """
     Replaces non-decimal dots in `string` with `replacement`
     """
-    repl = '\g<1>%s\g<2>' % replacement
-    return re.sub(DOT_INTERPOLATE_PATTERN, repl, string)
+    i = 0
+    quote = ""
+    new = ""
+    while i < len(string):
+        if string[i] == "\\":
+            new = new + string[i] + string[i + 1]
+            i = i + 2
+            continue
+        if not quote:
+            if string[i] in "\"'":
+                quote = string[i]
+                new = new + string[i]
+                i = i + 1
+                continue
+            elif string[i] == "." and (i == 0 or re.match(r'\D', string[i - 1])) and (i == len(string)  - 1 or re.match(r'\D', string[i + 1])):
+                new = new + replacement
+                i = i + 1
+                continue
+            else:
+                new = new + string[i]
+                i = i + 1
+                continue
+        else:
+            if string[i] == quote:
+                quote = ""
+            new = new + string[i]
+            i = i + 1
+    return new
 
 
 def interpolate_xpath(string, case_xpath=None, fixture_xpath=None, module=None, form=None):

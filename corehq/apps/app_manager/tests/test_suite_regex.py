@@ -18,6 +18,9 @@ class RegexTest(SimpleTestCase):
             ('.53 < hello.', '.53 < hello%s'),
             ('./name + ", Jr."', '%s/name + ", Jr."'),
             ("./name + ', Jr.'", "%s/name + ', Jr.'"),
+            ("'a.b' > .", "'a.b' > %s"),
+            ("\"it's a dot .\" > .", "\"it's a dot .\" > %s"),
+            ("\"it's a \\\"dot\\\" .\" > .", "\"it's a \\\"dot\\\" .\" > %s"),
         ]
         for case in cases:
             self.assertEqual(
