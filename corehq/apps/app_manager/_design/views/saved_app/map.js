@@ -1,5 +1,5 @@
 function(doc){
-    if((doc.doc_type == 'Application' || doc.doc_type == 'RemoteApp') && doc.copy_of != null) {
+    if((doc.doc_type == 'Application' || doc.doc_type == 'RemoteApp' || doc.doc_type == 'LinkedApplication') && doc.copy_of != null) {
         emit([doc.domain, doc.copy_of, doc.version], {
             doc_type: doc.doc_type,
             short_url: doc.short_url,
