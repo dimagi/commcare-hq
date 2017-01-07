@@ -180,10 +180,6 @@ class SupplyPointDisplayWrapper(CaseDisplayWrapper):
                             "expr": "location_site_code",
                             "name": _("Code"),
                         },
-                        #{
-                            #"expr": "last_reported",
-                            #"name": _("Last Reported"),
-                        #},
                     ],
                     [
                         {
