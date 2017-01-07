@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -2,109 +2,61 @@
+@@ -2,109 +2,60 @@
  {% load xforms_extras %}
  {% load hq_shared_tags %}
  <div class="tab-pane" id="advanced">
@@ -38,39 +38,6 @@
 -                            </div>
 -                        </div>
 -                    </div>
-+
-+    <div class="panel panel-appmanager">
-+        <div class="panel-heading">
-+            <h4 class="panel-title panel-title-nolink">
-+                {% trans "XForm" %}
-+            </h4>
-+        </div>
-+        <div class="panel-body">
-+            <ul class="nav nav-pills nav-stacked">
-+                <li>
-+                    <a href="#upload-xform" data-toggle="modal">
-+                        <i class="fa fa-arrow-up"></i>
-+                        {% trans "Upload" %}
-+                    </a>
-+                </li>
-+                <li>
-+                    <a {% if not form.source %}class="disabled"{% endif %}
-+                       href="{% url "get_xform_source" domain app.id module.id form.id %}?download=true">
-+                        <i class="fa fa-arrow-down"></i>
-+                        {% trans "Download" %}
-+                    </a>
-+                </li>
-+                <li>
-+                    <a id="xform-source-opener"
-+                       class="{% if not form.source %}disabled{% endif %}"
-+                       data-href="{% url "get_xform_source" domain app.id module.id form.id %}">
-+                        <i class="fa fa-search"></i>
-+                        {% trans "View" %}
-+                    </a>
-+                </li>
-+            </ul>
-+        </div>
-+    </div>
 +    {% if allow_form_copy%}
 +        <div class="panel panel-appmanager">
 +            <form class="form-inline" method='POST' action='{% url "copy_form" domain app.id module.id form.id %}'>
@@ -160,4 +127,36 @@
          </fieldset>
 -    </form>
      {% endif %}
++    <div class="panel panel-appmanager">
++        <div class="panel-heading">
++            <h4 class="panel-title panel-title-nolink">
++                {% trans "XForm" %}
++            </h4>
++        </div>
++        <div class="panel-body">
++            <ul class="nav nav-pills nav-stacked">
++                <li>
++                    <a href="#upload-xform" data-toggle="modal">
++                        <i class="fa fa-arrow-up"></i>
++                        {% trans "Upload" %}
++                    </a>
++                </li>
++                <li>
++                    <a {% if not form.source %}class="disabled"{% endif %}
++                       href="{% url "get_xform_source" domain app.id module.id form.id %}?download=true">
++                        <i class="fa fa-arrow-down"></i>
++                        {% trans "Download" %}
++                    </a>
++                </li>
++                <li>
++                    <a id="xform-source-opener"
++                       class="{% if not form.source %}disabled{% endif %}"
++                       data-href="{% url "get_xform_source" domain app.id module.id form.id %}">
++                        <i class="fa fa-search"></i>
++                        {% trans "View" %}
++                    </a>
++                </li>
++            </ul>
++        </div>
++    </div>
  </div>
