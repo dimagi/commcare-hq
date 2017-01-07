@@ -138,10 +138,7 @@ def get_display_data(data, prop_def, processors=None, timezone=pytz.utc):
     process = prop_def.pop('process', None)
     timeago = prop_def.get('timeago', False)
 
-    if callable(expr):
-        val = expr(data)
-    else:
-        val = data.get(expr, None)
+    val = eval_expr(expr, data)
 
     if prop_def.pop('parse_date', None):
         val = _parse_date_or_datetime(val)
@@ -168,6 +165,18 @@ def get_display_data(data, prop_def, processors=None, timezone=pytz.utc):
         "name": name,
         "value": val
     }
+
+
+def eval_expr(expr, dict_data):
+    """
+    If expr is a string, will do a dict lookup using that string as a key.
+
+    If expr is a callable, will call it on the dict.
+    """
+    if callable(expr):
+        return expr(dict_data)
+    else:
+        return dict_data.get(expr, None)
 
 
 def get_tables_as_rows(data, definition, processors=None, timezone=pytz.utc):
