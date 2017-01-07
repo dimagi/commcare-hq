@@ -549,7 +549,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
         return export_response(temp, Format.XLS_2007, self.title)
 
     @classmethod
-    def report_config_table(cls, domain, **kwargs):
+    def report_preview_data(cls, domain, **kwargs):
 
         with tmp_report_config(domain, **kwargs) as report_config:
             view = cls(request=HttpRequest())

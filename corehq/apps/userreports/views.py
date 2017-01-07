@@ -838,7 +838,7 @@ class ConfigureReport(ReportBuilderView):
             'source_type': self.source_type,
             'source_id': self.source_id,
             'application': self.app_id,
-            'data_source_url': reverse(ReportPreview.urlname,
+            'report_preview_url': reverse(ReportPreview.urlname,
                                        args=[self.domain, self._get_data_source()]),
             'report_builder_events': self.request.session.pop(REPORT_BUILDER_EVENTS_KEY, [])
         }

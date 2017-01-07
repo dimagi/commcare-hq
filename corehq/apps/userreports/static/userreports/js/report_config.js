@@ -109,7 +109,7 @@ var reportBuilder = function () {
         self.existingReportId = config['existingReport'];
 
         self.columnOptions = config["columnOptions"];  // Columns that could be added to the report
-        self.dataSourceUrl = config["dataSourceUrl"];  // Fetch the preview data asynchronously.
+        self.reportPreviewUrl = config["reportPreviewUrl"];  // Fetch the preview data asynchronously.
 
 
         self.selectedColumns = ko.observableArray();
@@ -229,7 +229,7 @@ var reportBuilder = function () {
                 return;  // Nothing to do.
             }
             $.ajax({
-                url: self.dataSourceUrl,
+                url: self.reportPreviewUrl,
                 type: 'post',
                 contentType: 'application/json; charset=utf-8',
                 data: JSON.stringify({
