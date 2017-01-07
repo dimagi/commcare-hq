@@ -29,35 +29,39 @@ CASE_REFERENCE_VALIDATION_ERROR = ugettext_lazy(
 
 def dot_interpolate(string, replacement):
     """
-    Replaces non-decimal dots in `string` with `replacement`
+    Replaces non-decimal, non-quoted dots in `string` with `replacement`
     """
-    i = 0
-    quote = ""
+    quote = ""  # " or ' if inside a string, else blank
     new = ""
+    i = 0
     while i < len(string):
+        # Ignore backslash-escaped characters
         if string[i] == "\\":
-            new = new + string[i] + string[i + 1]
+            new += string[i:i + 2]
             i = i + 2
             continue
-        if not quote:
-            if string[i] in "\"'":
-                quote = string[i]
-                new = new + string[i]
-                i = i + 1
-                continue
-            elif string[i] == "." and (i == 0 or re.match(r'\D', string[i - 1])) and (i == len(string)  - 1 or re.match(r'\D', string[i + 1])):
-                new = new + replacement
-                i = i + 1
-                continue
-            else:
-                new = new + string[i]
-                i = i + 1
-                continue
-        else:
+
+        if quote:
+            # We're inside a quoted string: just check to see if it's ending
             if string[i] == quote:
                 quote = ""
-            new = new + string[i]
-            i = i + 1
+            new += string[i]
+        else:
+            if string[i] in "\"'":
+                # We're entering a quoted string: just record the quote type
+                quote = string[i]
+                new += string[i]
+            else:
+                # Non-quote character, not inside a quoted string
+                if string[i] == ".":
+                    # Replace dot with replacement, unless this looks like a decimal number
+                    if (i == 0 or re.match(r'\D', string[i - 1])):
+                        if (i == len(string)  - 1 or re.match(r'\D', string[i + 1])):
+                            new += replacement
+                            i = i + 1
+                            continue
+                new += string[i]
+        i = i + 1
     return new
 
 
