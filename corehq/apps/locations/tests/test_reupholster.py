@@ -2,7 +2,6 @@ from django.test import TestCase
 from corehq.apps.domain.shortcuts import create_domain
 
 from ..models import Location, LocationType
-from ..util import get_lineage_from_location_id, get_lineage_from_location
 from .test_locations import LocationTestBase
 from .util import make_loc, delete_all_locations
 
@@ -29,28 +28,28 @@ class TestPathLineageAndHierarchy(LocationTestBase):
 
     def test_lineage(self):
         for i in range(len(self.all_locs)):
-            expected_lineage = list(reversed(self.all_loc_ids[:i+1]))
-            self.assertEqual(expected_lineage, get_lineage_from_location_id(self.all_loc_ids[i]))
-            self.assertEqual(expected_lineage, get_lineage_from_location(self.all_locs[i]))
+            # a location should not be included in its own lineage
+            expected_lineage = list(reversed(self.all_loc_ids[:i]))
+            self.assertEqual(expected_lineage, self.all_locs[i].lineage)
 
     def test_move(self):
-        original_parent = self.all_locs[1]
-        new_state = make_loc('New York', type='state')
-        new_district = make_loc('NYC', type='block', parent=original_parent)
-        self.assertEqual(original_parent._id, new_district.sql_location.parent.location_id)
-        # this is ugly, but how it is done in the UI
-        new_district.lineage = get_lineage_from_location(new_state)
-        new_district.save()
-        self.assertEqual(new_state._id, new_district.sql_location.parent.location_id)
+        original_parent = self.all_locs[1].sql_location
+        new_parent = make_loc('New York', type='state').sql_location
+        district = make_loc('NYC', type='block', parent=original_parent.couch_location).sql_location
+        self.assertEqual(original_parent.site_code, district.couch_location.parent.site_code)
+
+        district.parent = new_parent
+        district.save()
+        self.assertEqual(new_parent.site_code, district.couch_location.parent.site_code)
 
     def test_move_to_root(self):
-        original_parent = self.all_locs[1]
-        new_district = make_loc('NYC', type='block', parent=original_parent)
-        self.assertEqual(original_parent._id, new_district.sql_location.parent.location_id)
-        # this is ugly, but how it is done in the UI
-        new_district.lineage = []
-        new_district.save()
-        self.assertEqual(None, new_district.sql_location.parent)
+        original_parent = self.all_locs[1].sql_location
+        district = make_loc('NYC', type='block', parent=original_parent.couch_location).sql_location
+        self.assertEqual(original_parent.site_code, district.couch_location.parent.site_code)
+
+        district.parent = None
+        district.save()
+        self.assertEqual(None, district.couch_location.parent)
 
 
 class TestNoCouchLocationTypes(TestCase):
