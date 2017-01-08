@@ -323,7 +323,7 @@
             {% trans "Edit" %}
         </button>
         {% endif %}
-        {% if allow_cloudcare %}
+        {% if can_preview_form and allow_cloudcare %}
             {% if form.source %}
             <a id="cloudcare-preview-url" href="#" target="_blank" class="btn btn-default">
                 <i class="fa fa-play"></i>
