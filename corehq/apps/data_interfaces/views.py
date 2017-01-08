@@ -5,16 +5,20 @@ import uuid
 from couchdbkit import ResourceNotFound
 from django.contrib import messages
 from django.core.cache import cache
+from django.http import HttpResponseBadRequest
+
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.app_manager.util import all_case_properties_by_domain
 from corehq.apps.casegroups.dbaccessors import get_case_groups_in_domain, \
     get_number_of_case_groups_in_domain
 from corehq.apps.casegroups.models import CommCareCaseGroup
+from corehq.apps.es.users import user_ids_at_accessible_locations
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.users.permissions import can_view_form_exports, can_view_case_exports
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.workbook_json.excel import JSONReaderError, WorkbookJSONReader, \
     InvalidExcelFileException
 from corehq.util.timezones.conversions import ServerTime
@@ -494,13 +498,17 @@ class XFormManagementView(DataInterfaceSection):
 
     def post(self, request, *args, **kwargs):
         form_ids_or_query_string = self.get_form_ids_or_query_string(request)
+        form_ids = self.get_xform_ids(request)
+        if self.inaccessible_forms_accessed(form_ids, self.domain, request.couch_user):
+            return HttpResponseBadRequest()
+
         mode = self.request.POST.get('mode')
         task_ref = expose_cached_download(payload=None, expiry=1*60*60, file_extension=None)
         task = bulk_form_management_async.delay(
             mode,
             self.domain,
             self.request.couch_user,
-            form_ids_or_query_string
+            form_ids
         )
         task_ref.set_task(task)
 
@@ -510,6 +518,38 @@ class XFormManagementView(DataInterfaceSection):
                 args=[self.domain, mode, task_ref.download_id]
             )
         )
+
+    def inaccessible_forms_accessed(self, xform_ids, domain, couch_user):
+        xforms = FormAccessors(domain).get_forms(xform_ids)
+        xforms_user_ids = set([xform.user_id for xform in xforms])
+        accessible_user_ids = set(user_ids_at_accessible_locations(domain, couch_user))
+        return xforms_user_ids - accessible_user_ids
+
+    def get_xform_ids(self, request):
+        form_ids_or_query_string = self.get_form_ids_or_query_string(request)
+        if type(form_ids_or_query_string) == list:
+            xform_ids = form_ids_or_query_string
+        elif isinstance(form_ids_or_query_string, basestring):
+            from django.http import HttpRequest, QueryDict
+
+            _request = HttpRequest()
+            _request.couch_user = request.couch_user
+            _request.user = request.couch_user.get_django_user()
+            _request.domain = self.domain
+            _request.couch_user.current_domain = self.domain
+            _request.can_access_all_locations = request.couch_user.has_permission(self.domain,
+                                                                                  'access_all_locations')
+
+            _request.GET = QueryDict(form_ids_or_query_string)
+            dispatcher = EditDataInterfaceDispatcher()
+            xform_ids = dispatcher.dispatch(
+                _request,
+                render_as='form_ids',
+                domain=self.domain,
+                report_slug=BulkFormManagementInterface.slug,
+                skip_permissions_check=True,
+            )
+        return xform_ids
 
     @method_decorator(require_form_management_privilege)
     def dispatch(self, request, *args, **kwargs):
