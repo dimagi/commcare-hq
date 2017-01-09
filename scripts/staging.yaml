@@ -52,6 +52,8 @@ branches:
   - nh/new_rb  # Norman 11/22
   - nc/exports-with-conflict-res-branch  # Noah 12/11
   - dm/vellum-user-properties
+  - mk-243862-locations-submit-history # MK 1/9
+  - mk-243862-reassign-cases-manage-forms # MK 1/9
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
