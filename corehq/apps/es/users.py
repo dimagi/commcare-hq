@@ -145,3 +145,6 @@ def user_ids_at_locations_and_descendants(location_ids):
 
 def user_ids_at_locations(location_ids):
     return UserES().users_at_locations(location_ids).exclude_source().run().hits
+
+def user_ids_at_accessible_locations(domain_name, user):
+    return UserES().users_at_accessible_locations(domain_name, user).exclude_source().run().hits
