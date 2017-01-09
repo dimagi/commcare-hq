@@ -130,7 +130,8 @@ class MenuContributor(SuiteContributorByModule):
                         excluded_form_ids = id_module.excluded_form_ids
                     menu.commands.extend(get_commands(excluded_form_ids))
 
-                    menus.append(menu)
+                    if len(menu.commands):
+                        menus.append(menu)
 
         if self.app.grid_display_for_all_modules() or \
                 self.app.grid_display_for_some_modules() and module.grid_display_style():

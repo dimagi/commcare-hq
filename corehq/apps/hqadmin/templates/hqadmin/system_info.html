@@ -3,11 +3,6 @@
 {% load i18n %}
 {% load humanize %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'style/js/main.js' %}"></script>
-    <script src="{% static 'style/ko/knockout_bindings.ko.js' %}"></script>
-{% endblock %}
-
 {% block js-inline %} {{ block.super }}
     <script>
         function format_date(datestring) {
@@ -414,7 +409,7 @@
                 </thead>
                 <tbody>
                 <tr>
-                    <td><img src="{% static 'hqwebapp/img/dm.jpg' %}" alt="dan's legacy"></td>
+                    <td><img src="{% static 'hqwebapp/images/dm.jpg' %}" alt="dan's legacy"></td>
                     <td>
                         <ul>
                             <li><a href="{% url 'view_recent_changes' %}">Recent couch changes</a></li>

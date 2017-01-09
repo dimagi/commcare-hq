@@ -53,7 +53,7 @@
 
         $scope.formData.type_or_group = 'type';
         $scope.formData.user_types = ['mobile'];
-        $scope.formData['emw'] = hqImport('reports/javascripts/reports.util.js').urlSerialize($('form[name="exportFiltersForm"]'));
+        $scope.formData['emw'] = hqImport('reports/js/reports.util.js').urlSerialize($('form[name="exportFiltersForm"]'));
         if (formElement.user_type()) formElement.user_type().select2('val', ['mobile']);
 
         if (!_.isNull(defaultDateRange)) {
@@ -122,7 +122,7 @@
         };
 
         $scope.prepareExport = function () {
-            $scope.formData['emw'] = hqImport('reports/javascripts/reports.util.js').urlSerialize($('form[name="exportFiltersForm"]'));
+            $scope.formData['emw'] = hqImport('reports/js/reports.util.js').urlSerialize($('form[name="exportFiltersForm"]'));
             $scope.prepareExportError = null;
             $scope.preparingExport = true;
             analytics.workflow("Clicked Prepare Export");

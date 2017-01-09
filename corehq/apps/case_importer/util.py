@@ -37,9 +37,6 @@ class ImporterConfig(namedtuple('ImporterConfig', [
     'case_fields',
     'custom_fields',
     'search_column',
-    'key_column',
-    'value_column',
-    'named_columns',
     'case_type',
     'search_field',
     'create_new_cases',
@@ -48,6 +45,19 @@ class ImporterConfig(namedtuple('ImporterConfig', [
     Class for storing config values from the POST in a format that can
     be pickled and passed to celery tasks.
     """
+
+    def __new__(cls, *args, **kwargs):
+        args, kwargs = cls.__detect_schema_change(args, kwargs)
+        return super(cls, ImporterConfig).__new__(cls, *args, **kwargs)
+
+    @staticmethod
+    def __detect_schema_change(args, kwargs):
+        # before we removed key_column, value_column, named_columns
+        # from positions 5-7
+        if len(args) == 11 and not kwargs:
+            return args[:5] + args[8:], {}
+        else:
+            return args, kwargs
 
     def to_dict(self):
         return self._asdict()
@@ -71,9 +81,6 @@ class ImporterConfig(namedtuple('ImporterConfig', [
             case_fields=request.POST.getlist('case_field[]'),
             custom_fields=request.POST.getlist('custom_field[]'),
             search_column=request.POST['search_column'],
-            key_column=request.POST['key_column'],
-            value_column=request.POST['value_column'],
-            named_columns=request.POST['named_columns'] == 'True',
             case_type=request.POST['case_type'],
             search_field=request.POST['search_field'],
             create_new_cases=request.POST['create_new_cases'] == 'True',
@@ -85,12 +92,11 @@ ALLOWED_EXTENSIONS = ['xls', 'xlsx']
 
 class WorksheetWrapper(object):
 
-    def __init__(self, worksheet, column_headers):
+    def __init__(self, worksheet):
         self._worksheet = worksheet
-        self._column_headers = column_headers
 
     @classmethod
-    def from_workbook(cls, workbook, column_headers):
+    def from_workbook(cls, workbook):
         if not isinstance(workbook, Workbook):
             raise AssertionError(
                 "WorksheetWrapper.from_workbook called without Workbook object")
@@ -98,22 +104,18 @@ class WorksheetWrapper(object):
             raise AssertionError(
                 "WorksheetWrapper.from_workbook called with Workbook with no sheets")
         else:
-            return cls(workbook.worksheets[0], column_headers)
+            return cls(workbook.worksheets[0])
 
     def get_header_columns(self):
         if self.max_row > 0:
-            if self._column_headers:
-                return self.iter_rows().next()
-            else:
-                return ["Column {}".format(i) for i in range(self.max_row)]
+            return self.iter_rows().next()
         else:
             return []
 
     def _get_column_values(self, column_index):
         rows = self.iter_rows()
         # skip first row (header row)
-        if self._column_headers:
-            rows.next()
+        rows.next()
         for row in rows:
             yield row[column_index]
 
@@ -249,26 +251,6 @@ def parse_search_id(config, columns, row):
     return convert_field_value(search_id)
 
 
-def get_key_column_index(config, columns):
-    key_column = config.key_column
-    try:
-        key_column_index = columns.index(key_column)
-    except ValueError:
-        key_column_index = False
-
-    return key_column_index
-
-
-def get_value_column_index(config, columns):
-    value_column = config.value_column
-    try:
-        value_column_index = columns.index(value_column)
-    except ValueError:
-        value_column_index = False
-
-    return value_column_index
-
-
 def lookup_case(search_field, search_id, domain, case_type):
     """
     Attempt to find the case in CouchDB by the provided search_field and search_id.
@@ -308,15 +290,10 @@ def populate_updated_fields(config, columns, row):
     to trigger updates.
     """
     field_map = convert_custom_fields_to_struct(config)
-    key_column_index = get_key_column_index(config, columns)
-    value_column_index = get_value_column_index(config, columns)
     fields_to_update = {}
     for key in field_map:
         try:
-            if key_column_index and key == row[key_column_index]:
-                update_value = row[value_column_index]
-            else:
-                update_value = row[columns.index(key)]
+            update_value = row[columns.index(key)]
         except Exception:
             continue
 
@@ -342,21 +319,19 @@ def populate_updated_fields(config, columns, row):
     return fields_to_update
 
 
-def open_spreadsheet_download_ref(download_ref, column_headers=True):
+def open_spreadsheet_download_ref(filename):
     """
     open a spreadsheet download ref just to test there are no errors opening it
     """
-    if not download_ref:
-        raise ImporterRefError('null download ref')
-    with get_spreadsheet(download_ref.get_filename(), column_headers):
+    with get_spreadsheet(filename):
         pass
 
 
 @contextmanager
-def get_spreadsheet(filename, column_headers):
+def get_spreadsheet(filename):
     try:
         with open_any_workbook(filename) as workbook:
-            yield WorksheetWrapper.from_workbook(workbook, column_headers)
+            yield WorksheetWrapper.from_workbook(workbook)
     except SpreadsheetFileEncrypted as e:
         raise ImporterExcelFileEncrypted(e.message)
     except SpreadsheetFileNotFound as e:
@@ -426,6 +401,9 @@ def get_id_from_name(name, domain, cache):
 
 
 def get_case_properties_for_case_type(domain, case_type):
+    # todo: seems like poor boundaries for this function care about the backend
+    # todo: get_case_properties just always return the right answer,
+    # todo: possibly by moving this there.
     if should_use_sql_backend(domain):
         from corehq.apps.export.models import CaseExportDataSchema
         from corehq.apps.export.models.new import MAIN_TABLE

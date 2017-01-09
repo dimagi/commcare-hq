@@ -1247,7 +1247,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         else:
             couch_user.created_on = datetime.utcnow()
 
-        user_data = kwargs.get('user_data', {})
+        user_data = {'commcare_project': domain}
+        user_data.update(kwargs.get('user_data', {}))
         couch_user.user_data = user_data
         couch_user.sync_from_django_user(django_user)
         return couch_user
@@ -1398,6 +1399,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         if data.has_key('role_id'):
             role_id = data["role_id"]
             del data['role_id']
+            should_save = True
+        if not data.get('user_data', {}).get('commcare_project'):
+            data['user_data'] = dict(data['user_data'], **{'commcare_project': data['domain']})
             should_save = True
         # Todo; remove after migration
         from corehq.apps.users.management.commands import add_multi_location_property
@@ -1777,6 +1781,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def reset_locations(self, location_ids):
         """
         Reset user's assigned_locations to given location_ids and update user data.
+            This should be called after updating primary location via set_location/unset_location
             If primary-location is not set, then next available location from
             assigned_location_ids is set as the primary-location
         """
@@ -2146,6 +2151,10 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             self.save()
 
     def reset_locations(self, domain, location_ids):
+        """
+        reset locations to given list of location_ids. Before calling this, primary location
+            should be explicitly set/unset via set_location/unset_location
+        """
         membership = self.get_domain_membership(domain)
         membership.assigned_location_ids = location_ids
         if not membership.location_id and location_ids:

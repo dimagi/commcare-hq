@@ -6,17 +6,16 @@ from corehq.apps.case_importer import base
 from corehq.apps.case_importer import util as importer_util
 from corehq.apps.case_importer.exceptions import ImporterError
 from django.views.decorators.http import require_POST
+from corehq.apps.case_importer.suggested_fields import get_suggested_case_fields
 from corehq.apps.case_importer.tracking.case_upload_tracker import CaseUpload
 
-from corehq.apps.case_importer.util import get_case_properties_for_case_type, get_importer_error_message
+from corehq.apps.case_importer.util import get_importer_error_message
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.util.files import file_extention_from_filename
-from django.template.context import RequestContext
 
 from django.contrib import messages
-from django.shortcuts import render, render_to_response
+from django.shortcuts import render
 from django.utils.translation import ugettext as _
 
 require_can_edit_data = require_permission(Permissions.edit_data)
@@ -37,12 +36,6 @@ def excel_config(request, domain):
 
     This is the initial post when the user uploads the excel file
 
-    named_columns:
-        Whether or not the first row of the excel sheet contains
-        header strings for the columns. This defaults to True and
-        should potentially not be an option as it is always used
-        due to how important it is to see column headers
-        in the rest of the importer.
     """
     if request.method != 'POST':
         return HttpResponseRedirect(base.ImportCases.get_url(domain=domain))
@@ -50,7 +43,6 @@ def excel_config(request, domain):
     if not request.FILES:
         return render_error(request, domain, 'Please choose an Excel file to import.')
 
-    named_columns = request.POST.get('named_columns') == "on"
     uploaded_file_handle = request.FILES['file']
 
     extension = os.path.splitext(uploaded_file_handle.name)[1][1:].strip().lower()
@@ -66,17 +58,16 @@ def excel_config(request, domain):
                             'Excel file.')
 
     # stash content in the default storage for subsequent views
-    case_upload = CaseUpload.create(
-        uploaded_file_handle.read(),
-        file_extension=file_extention_from_filename(uploaded_file_handle.name))
+    case_upload = CaseUpload.create(uploaded_file_handle,
+                                    filename=uploaded_file_handle.name)
 
     request.session[EXCEL_SESSION_ID] = case_upload.upload_id
     try:
-        case_upload.check_file(named_columns)
+        case_upload.check_file()
     except ImporterError as e:
         return render_error(request, domain, get_importer_error_message(e))
 
-    with case_upload.get_spreadsheet(named_columns) as spreadsheet:
+    with case_upload.get_spreadsheet() as spreadsheet:
         columns = spreadsheet.get_header_columns()
         row_count = spreadsheet.max_row
 
@@ -101,7 +92,6 @@ def excel_config(request, domain):
     return render(
         request,
         "case_importer/excel_config.html", {
-            'named_columns': named_columns,
             'columns': columns,
             'unrecognized_case_types': unrecognized_case_types,
             'case_types_from_apps': case_types_from_apps,
@@ -122,9 +112,6 @@ def excel_fields(request, domain):
 
     Important values that are grabbed from the POST or defined by
     the user on this page:
-
-    named_columns:
-        Passed through from last step, see that for documentation
 
     case_type:
         The type of case we are matching to. When creating new cases,
@@ -148,11 +135,7 @@ def excel_fields(request, domain):
         Either case id or external id, determines which type of
         identification we are using to match to cases.
 
-    key_column/value_column:
-        These correspond to an advanced feature allowing a user
-        to modify a single case with multiple rows.
     """
-    named_columns = request.POST['named_columns']
     case_type = request.POST['case_type']
     try:
         search_column = request.POST['search_column']
@@ -164,72 +147,37 @@ def excel_fields(request, domain):
 
     search_field = request.POST['search_field']
     create_new_cases = request.POST.get('create_new_cases') == 'on'
-    key_value_columns = request.POST.get('key_value_columns') == 'on'
-    key_column = ''
-    value_column = ''
 
     case_upload = CaseUpload.get(request.session.get(EXCEL_SESSION_ID))
 
     try:
-        case_upload.check_file(named_columns)
+        case_upload.check_file()
     except ImporterError as e:
         return render_error(request, domain, get_importer_error_message(e))
 
-    with case_upload.get_spreadsheet(named_columns) as spreadsheet:
+    with case_upload.get_spreadsheet() as spreadsheet:
         columns = spreadsheet.get_header_columns()
-
-        if key_value_columns:
-            key_column = request.POST['key_column']
-            value_column = request.POST['value_column']
-
-            excel_fields = []
-            key_column_index = columns.index(key_column)
-
-            # if key/value columns were specified, get all the unique keys listed
-            if key_column_index:
-                excel_fields = spreadsheet.get_unique_column_values(key_column_index)
-
-            # concatenate unique key fields with the rest of the columns
-            excel_fields = columns + excel_fields
-            # remove key/value column names from list
-            excel_fields.remove(key_column)
-            if value_column in excel_fields:
-                excel_fields.remove(value_column)
-        else:
-            excel_fields = columns
-
-    case_fields = get_case_properties_for_case_type(domain, case_type)
+        excel_fields = columns
 
     # hide search column and matching case fields from the update list
-    try:
+    if search_column in excel_fields:
         excel_fields.remove(search_column)
-    except:
-        pass
 
-    try:
-        case_fields.remove(search_field)
-    except:
-        pass
+    field_specs = get_suggested_case_fields(
+        domain, case_type, exclude=[search_field])
 
-    # we can't actually update this so don't show it
-    try:
-        case_fields.remove('type')
-    except:
-        pass
+    case_field_specs = [field_spec.to_json() for field_spec in field_specs]
 
     return render(
         request,
         "case_importer/excel_fields.html", {
-            'named_columns': named_columns,
             'case_type': case_type,
             'search_column': search_column,
             'search_field': search_field,
             'create_new_cases': create_new_cases,
-            'key_column': key_column,
-            'value_column': value_column,
             'columns': columns,
             'excel_fields': excel_fields,
-            'case_fields': case_fields,
+            'case_field_specs': case_field_specs,
             'domain': domain,
             'report': {
                 'name': 'Import: Match columns to fields'
@@ -259,7 +207,7 @@ def excel_commit(request, domain):
 
     case_upload = CaseUpload.get(excel_id)
     try:
-        case_upload.check_file(config.named_columns)
+        case_upload.check_file()
     except ImporterError as e:
         return render_error(request, domain, get_importer_error_message(e))
 
@@ -267,42 +215,7 @@ def excel_commit(request, domain):
 
     request.session.pop(EXCEL_SESSION_ID, None)
 
-    return render(
-        request,
-        "case_importer/excel_commit.html", {
-            'download_id': case_upload.upload_id,
-            'template': 'case_importer/partials/import_status.html',
-            'domain': domain,
-            'report': {
-                'name': 'Import: Completed'
-            },
-            'slug': base.ImportCases.slug
-        }
-    )
-
-
-@require_can_edit_data
-def importer_job_poll(request, domain, download_id, template="case_importer/partials/import_status.html"):
-    case_upload = CaseUpload.get(download_id)
-    task_status = case_upload.get_task_status()
-    if task_status.failed():
-        context = RequestContext(request)
-        context.update({'error': task_status.error, 'url': base.ImportCases.get_url(domain=domain)})
-        return render_to_response('case_importer/partials/import_error.html', context_instance=context)
-    else:
-        context = RequestContext(request)
-        from soil.heartbeat import heartbeat_enabled, is_alive
-
-        context.update({
-            'result': task_status.result,
-            'error': task_status.error,
-            'is_ready': task_status.success(),
-            'progress': task_status.progress,
-            'download_id': case_upload.upload_id,
-            'is_alive': is_alive() if heartbeat_enabled() else True,
-        })
-        context['url'] = base.ImportCases.get_url(domain=domain)
-        return render_to_response(template, context_instance=context)
+    return HttpResponseRedirect(base.ImportCases.get_url(domain))
 
 
 def _spreadsheet_expired(req, domain):

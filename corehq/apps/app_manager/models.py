@@ -115,7 +115,9 @@ from corehq.apps.app_manager.util import (
     app_callout_templates,
     xpath_references_case,
     xpath_references_user_case,
-    module_case_hierarchy_has_circular_reference)
+    module_case_hierarchy_has_circular_reference,
+    get_correct_app_class
+)
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
@@ -1321,6 +1323,13 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
     actions = SchemaProperty(FormActions)
     case_references_data = DictProperty()
 
+    @classmethod
+    def wrap(cls, data):
+        # rare schema bug: http://manage.dimagi.com/default.asp?239236
+        if data.get('case_references') == []:
+            del data['case_references']
+        return super(Form, cls).wrap(data)
+
     def add_stuff_to_xform(self, xform, build_profile_id=None):
         super(Form, self).add_stuff_to_xform(xform, build_profile_id)
         xform.add_case_and_meta(self)
@@ -1661,7 +1670,7 @@ class MappingItem(DocumentSchema):
         The prepended characters prevent the variable name from starting with a
         numeral, which is illegal.
         """
-        if ' ' in self.key or self.treat_as_expression:
+        if re.search(r'\W', self.key) or self.treat_as_expression:
             return 'h{hash}'.format(hash=hashlib.md5(self.key).hexdigest()[:8])
         else:
             return 'k{key}'.format(key=self.key)
@@ -4430,6 +4439,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     # Whether or not the Application has had any forms submitted against it
     has_submissions = BooleanProperty(default=False)
 
+    # domains that are allowed to have linked apps with this master
+    linked_whitelist = StringListProperty()
+
     @classmethod
     def wrap(cls, data):
         should_save = False
@@ -5898,12 +5910,12 @@ class RemoteApp(ApplicationBase):
         return questions
 
 
-str_to_cls = {
-    "Application": Application,
-    "Application-Deleted": Application,
-    "RemoteApp": RemoteApp,
-    "RemoteApp-Deleted": RemoteApp,
-}
+class LinkedApplication(Application):
+    """
+    An app that can pull changes from an app in a different domain.
+    """
+    # This is the id of the master application
+    master = StringProperty()
 
 
 def import_app(app_id_or_source, domain, source_properties=None, validate_source_domain=None):
@@ -5913,10 +5925,9 @@ def import_app(app_id_or_source, domain, source_properties=None, validate_source
         src_dom = source['domain']
         if validate_source_domain:
             validate_source_domain(src_dom)
-        source = source.export_json()
-        source = json.loads(source)
+        source = source.export_json(dump_json=False)
     else:
-        cls = str_to_cls[app_id_or_source['doc_type']]
+        cls = get_correct_app_class(app_id_or_source)
         # Don't modify original app source
         app = cls.wrap(deepcopy(app_id_or_source))
         source = app.export_json(dump_json=False)
@@ -5929,7 +5940,7 @@ def import_app(app_id_or_source, domain, source_properties=None, validate_source
     if source_properties is not None:
         for key, value in source_properties.iteritems():
             source[key] = value
-    cls = str_to_cls[source['doc_type']]
+    cls = get_correct_app_class(source)
     # Allow the wrapper to update to the current default build_spec
     if 'build_spec' in source:
         del source['build_spec']

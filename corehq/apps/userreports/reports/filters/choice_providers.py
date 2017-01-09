@@ -88,6 +88,41 @@ class ChoiceProvider(object):
         pass
 
 
+class SearchableChoice(Choice):
+
+    def __new__(cls, value, display, searchable_text=None):
+        self = super(SearchableChoice, cls).__new__(cls, value, display)
+        self.searchable_text = [text for text in searchable_text or []
+                                if text is not None]
+        return self
+
+
+class StaticChoiceProvider(ChoiceProvider):
+
+    def __init__(self, choices):
+        """
+        choices must be passed in in desired sort order
+        """
+        self.choices = [
+            choice if isinstance(choice, SearchableChoice)
+            else SearchableChoice(
+                choice.value, choice.display,
+                searchable_text=[choice.display]
+            )
+            for choice in choices
+        ]
+        super(StaticChoiceProvider, self).__init__(None, None)
+
+    def query(self, query_context):
+        filtered_set = [choice for choice in self.choices
+                        if any(query_context.query in text for text in choice.searchable_text)]
+        return filtered_set[query_context.offset:query_context.offset + query_context.limit]
+
+    def get_choices_for_known_values(self, values):
+        return {choice for choice in self.choices
+                if choice.value in values}
+
+
 class ChainableChoiceProvider(ChoiceProvider):
     __metaclass__ = ABCMeta
 
@@ -155,9 +190,11 @@ class LocationChoiceProvider(ChainableChoiceProvider):
     def __init__(self, report, filter_slug):
         super(LocationChoiceProvider, self).__init__(report, filter_slug)
         self.include_descendants = False
+        self.show_full_path = False
 
     def configure(self, spec):
         self.include_descendants = spec.get('include_descendants', self.include_descendants)
+        self.show_full_path = spec.get('show_full_path', self.show_full_path)
 
     def _locations_query(self, query_text, user):
         active_locations = SQLLocation.active_objects
@@ -200,7 +237,9 @@ class LocationChoiceProvider(ChainableChoiceProvider):
         return [Choice(SHOW_ALL_CHOICE, "[{}]".format(ugettext('Show All')))]
 
     def _locations_to_choices(self, locations):
-        return [Choice(loc.location_id, loc.display_name) for loc in locations]
+        def display(loc):
+            return loc.get_path_display() if self.show_full_path else loc.display_name
+        return [Choice(loc.location_id, display(loc)) for loc in locations]
 
 
 class UserChoiceProvider(ChainableChoiceProvider):

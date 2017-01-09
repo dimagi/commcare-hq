@@ -73,11 +73,11 @@ class StockStatusMapReport(GenericMapReport, CommtrackReportMixin):
                     'icon': {
                         'column': col_id('category'),
                         'categories': {
-                            'stockout': '/static/commtrack/img/stockout.png',
-                            'understock': '/static/commtrack/img/warning.png',
-                            'adequate': '/static/commtrack/img/goodstock.png',
-                            'overstock': '/static/commtrack/img/overstock.png',
-                            '_null': '/static/commtrack/img/no_data.png',
+                            'stockout': '/static/commtrack/images/stockout.png',
+                            'understock': '/static/commtrack/images/warning.png',
+                            'adequate': '/static/commtrack/images/goodstock.png',
+                            'overstock': '/static/commtrack/images/overstock.png',
+                            '_null': '/static/commtrack/images/no_data.png',
                         },
                     }
                 }

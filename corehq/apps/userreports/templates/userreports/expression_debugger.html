@@ -1,0 +1,65 @@
+{% extends "userreports/userreports_base.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% block js %}{{ block.super }}
+    <script src="{% static 'userreports/js/expression_evaluator.js' %}"></script>
+{% endblock %}
+{% block js-inline %}{{ block.super }}
+<script type="text/javascript">
+    $(function () {
+        var ExpressionModel = hqImport('userreports/js/expression_evaluator.js').ExpressionModel;
+        var submitUrl = "{% url 'expression_evaluator' domain %}";
+        var expressionEditor = $('.CodeMirror')[0].CodeMirror;  // http://stackoverflow.com/a/24987585/8207
+        var sampleExpression = {
+            "type": "property_name",
+            "property_name": "name"
+        };
+        var sampleText = JSON.stringify(sampleExpression, null, 2);
+        expressionEditor.setValue(sampleText);
+        var initialData = {
+            documentType: '{{ request.GET.type }}',
+            documentId: '{{ request.GET.id }}',
+        };
+        ko.applyBindings(
+            new ExpressionModel(expressionEditor, submitUrl, initialData),
+            document.getElementById('expression-debugger')
+        );
+    });
+</script>
+{% endblock %}
+{% block page_content %}
+    <h1>{% trans "UCR Expression Debugger" %}</h1>
+    <p>{% trans "Paste an expression and document information below to see the result of that expression evaluated on the document." %}</p>
+    <form id="expression-debugger" class="form-horizontal" data-bind="submit: evaluateExpression">
+        <div class="form-group">
+            <label for="doc_type" class="col-sm-2 control-label">{% trans "Document Type" %}</label>
+            <div class="col-sm-3">
+                <select id="doc_type" name="doc_type" class="form-control " data-bind="value: documentType">
+                    <option value="case">{% trans "Case" %}</option>
+                    <option value="form">{% trans "Form" %}</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="doc_id" class="col-sm-2 control-label">{% trans "Document ID" %}</label>
+            <div class="col-sm-6">
+                <input type="doc_id" class="form-control" id="doc_id" data-bind="value: documentId">
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="" class="col-sm-2 control-label">{% trans "Expression JSON" %}</label>
+            <div class="col-sm-10">
+                <textarea id="expression" class="form-control jsonwidget" ></textarea>
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-10">
+                <button type="submit" class="btn btn-primary">{% trans "Evaluate!" %}</button>
+            </div>
+        </div>
+        <p class="col-sm-offset-2 col-sm-10" data-bind="html: uiFeedback"></p>
+        <p class="alert alert-danger col-sm-offset-2 col-sm-10" style="display: none;" data-bind="visible: hasError">
+            {% trans 'Your Expression has parse errors! For more details try pasting into a <a href="http://jsonlint.com/" target="_blank">JSON Validator</a>.' %}
+        </p>
+    </form>
+{% endblock %}

@@ -577,14 +577,12 @@ class EditSoftwarePlanView(AccountingSectionView, AsyncHandlerMixin):
         if 'update_version' in request.POST:
             if self.software_plan_version_form.is_valid():
                 self.software_plan_version_form.save(request)
-                return HttpResponseRedirect(self.page_url)
             else:
                 for errors in self.software_plan_version_form.errors:
                     for error in errors:
                         messages.error(request, error)
         elif self.plan_info_form.is_valid():
-            self.plan_info_form.update_plan(self.plan)
-            messages.success(request, "The %s Software Plan was successfully updated." % self.plan.name)
+            self.plan_info_form.update_plan(request, self.plan)
         return self.get(request, *args, **kwargs)
 
 
