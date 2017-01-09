@@ -119,7 +119,7 @@ from corehq.apps.app_manager.util import (
     get_correct_app_class
 )
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
-    validate_xform, check_for_missing_instances
+    validate_xform
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from .exceptions import (
     AppEditingError,
@@ -992,11 +992,11 @@ class FormBase(DocumentSchema):
         xform.normalize_itext()
         xform.strip_vellum_ns_attributes()
         xform.set_version(self.get_version())
+        xform.add_missing_instances()
 
     def render_xform(self, build_profile_id=None):
         xform = XForm(self.source)
         self.add_stuff_to_xform(xform, build_profile_id)
-        check_for_missing_instances(xform)
         return xform.render()
 
     @quickcache(['self.source', 'langs', 'include_triggers', 'include_groups', 'include_translations'])
