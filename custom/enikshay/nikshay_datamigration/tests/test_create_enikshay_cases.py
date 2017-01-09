@@ -47,6 +47,7 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
         )
         self.outcome = Outcome.objects.create(
             PatientId=self.patient_detail,
+            Outcome='NULL',
             HIVStatus='Neg',
             loginDate=datetime(2016, 1, 2),
         )
