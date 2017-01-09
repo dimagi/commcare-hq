@@ -1122,7 +1122,15 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
                     for pt in SoftwareProductType.CHOICES
                     if Decimal(request.POST.get(pt[0], 0)) > 0]
 
-        return products + features
+        items = products + features
+
+        if Decimal(request.POST.get('plain_credit', 0)) > 0:
+            items.append({
+                'type': 'General Credits',
+                'amount': Decimal(request.POST.get('plain_credit', 0))
+            })
+
+        return items
 
 
 class InvoiceStripePaymentView(BaseStripePaymentView):
