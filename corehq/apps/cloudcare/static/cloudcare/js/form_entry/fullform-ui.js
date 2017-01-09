@@ -450,8 +450,6 @@ Formplayer.ViewModels.CloudCareDebugger = function() {
     // Whether or not the debugger is in the middle of updating from an ajax request
     self.updating = ko.observable(false);
 
-    // Whether or not to auto update after every question answer
-    self.autoUpdate = ko.observable(true);
     self.toggleState = function() {
         self.isMinimized(!self.isMinimized());
         // Wait to set the content heigh until after the CSS animation has completed.
@@ -479,7 +477,7 @@ Formplayer.ViewModels.CloudCareDebugger = function() {
 
     $.unsubscribe('debugger.update');
     $.subscribe('debugger.update', function(e) {
-        if (self.autoUpdate() && !self.isMinimized()) {
+        if (!self.isMinimized()) {
             self.updating(true);
             $.publish('formplayer.' + Formplayer.Const.FORMATTED_QUESTIONS, self.updateDebugger);
         }
