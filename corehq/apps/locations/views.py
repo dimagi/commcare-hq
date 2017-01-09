@@ -889,7 +889,7 @@ def location_export(request, domain):
         return HttpResponseRedirect(reverse(LocationsListView.urlname, args=[domain]))
     include_consumption = request.GET.get('include_consumption') == 'true'
     response = HttpResponse(content_type=Format.from_format('xlsx').mimetype)
-    response['Content-Disposition'] = 'attachment; filename="locations.xlsx"'
+    response['Content-Disposition'] = 'attachment; filename="{}_locations.xlsx"'.format(domain)
     dump_locations(response, domain, include_consumption=include_consumption)
     return response
 
