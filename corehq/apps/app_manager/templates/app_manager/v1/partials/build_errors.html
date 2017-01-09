@@ -276,17 +276,17 @@
                                     must go in a different module).
                                 {% endblocktrans %}
                             {% endif %}
-                        {% case "invalid user case xpath reference" %}
+                        {% case "invalid user property xpath reference" %}
                             {% if error.form %}
                                 {% url "view_form" domain app.id error.module.id error.form.id as form_url %}
                                 {% blocktrans with form_name=error.form.name|trans:langs %}
-                                    Your form display condition for form <a href="{{ form_url }}">{{ form_name }}</a> refers to a user case,
-                                    but your project does not use user case management. Please remove the user case reference.
+                                    Your form display condition for form <a href="{{ form_url }}">{{ form_name }}</a> refers to a user property,
+                                    but your project does not use user properties. Please remove the user property reference.
                                 {% endblocktrans %}
                             {% else %}
                                 {% blocktrans %}
-                                    You have a display condition which refers to a user case, but your project does not use user case management.
-                                    Please remove the user case reference.
+                                    You have a display condition which refers to a user property, but your project does not use user properties.
+                                    Please remove the user property reference.
                                 {% endblocktrans %}
                             {% endif %}
                         {% case "error" %}
