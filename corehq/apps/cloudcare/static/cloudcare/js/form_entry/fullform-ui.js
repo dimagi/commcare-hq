@@ -446,6 +446,8 @@ Formplayer.ViewModels.CloudCareDebugger = function() {
     self.isMinimized = ko.observable(true);
     self.instanceXml = ko.observable('');
     self.formattedQuestionsHtml = ko.observable('');
+    // Whether or not to auto update after every question answer
+    self.autoUpdate = ko.observable(true);
     self.toggleState = function() {
         self.isMinimized(!self.isMinimized());
         // Wait to set the content heigh until after the CSS animation has completed.
@@ -460,12 +462,14 @@ Formplayer.ViewModels.CloudCareDebugger = function() {
 
     $.unsubscribe('debugger.update');
     $.subscribe('debugger.update', function(e) {
-        $.publish('formplayer.' + Formplayer.Const.FORMATTED_QUESTIONS, function(resp) {
-            self.formattedQuestionsHtml(resp.formattedQuestions);
-            self.instanceXml(resp.instanceXml);
-            self.evalXPath.autocomplete(resp.questionList);
-            self.evalXPath.recentXPathQueries(resp.recentXPathQueries || []);
-        });
+        if (self.autoUpdate()) {
+            $.publish('formplayer.' + Formplayer.Const.FORMATTED_QUESTIONS, function(resp) {
+                self.formattedQuestionsHtml(resp.formattedQuestions);
+                self.instanceXml(resp.instanceXml);
+                self.evalXPath.autocomplete(resp.questionList);
+                self.evalXPath.recentXPathQueries(resp.recentXPathQueries || []);
+            });
+        }
     });
 
     self.setContentHeight = function() {
