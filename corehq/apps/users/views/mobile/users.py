@@ -673,7 +673,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         users_query = self._user_query(query, page - 1, limit)
 
         # run with a blank query to fetch total records with same scope as in search
-        total_records = self._user_query('', 0, 0).run().total
+        total_records = self._user_query('', 0, 0).count()
         if in_data.get('showDeactivatedUsers', False):
             users_query = users_query.show_only_inactive()
         users_data = users_query.run()
