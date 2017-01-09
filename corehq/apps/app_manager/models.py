@@ -3532,30 +3532,43 @@ class ReportAppFilter(DocumentSchema):
     @classmethod
     def wrap(cls, data):
         if cls is ReportAppFilter:
-            doc_type = data['doc_type']
-            doc_type_to_filter_class = {
-                'AutoFilter': AutoFilter,
-                'CustomDataAutoFilter': CustomDataAutoFilter,
-                'StaticChoiceFilter': StaticChoiceFilter,
-                'StaticChoiceListFilter': StaticChoiceListFilter,
-                'StaticDatespanFilter': StaticDatespanFilter,
-                'CustomDatespanFilter': CustomDatespanFilter,
-                'CustomMonthFilter': CustomMonthFilter,
-                'MobileSelectFilter': MobileSelectFilter,
-                'AncestorLocationTypeFilter': AncestorLocationTypeFilter,
-                'NumericFilter': NumericFilter,
-            }
-            try:
-                klass = doc_type_to_filter_class[doc_type]
-            except KeyError:
-                raise ValueError('Unexpected doc_type for ReportAppFilter', doc_type)
-            else:
-                return klass.wrap(data)
+            return get_report_filter_class_for_doc_type(data['doc_type']).wrap(data)
         else:
             return super(ReportAppFilter, cls).wrap(data)
 
     def get_filter_value(self, user, ui_filter):
         raise NotImplementedError
+
+
+MobileFilterConfig = namedtuple('MobileFilterConfig', ['doc_type', 'filter_class', 'short_description'])
+
+
+def get_all_mobile_filter_configs():
+    return [
+        MobileFilterConfig('AutoFilter', AutoFilter, _('Value equal to a standard user property')),
+        MobileFilterConfig('CustomDataAutoFilter', CustomDataAutoFilter,
+                           _('Value equal to a custom user property')),
+        MobileFilterConfig('StaticChoiceFilter', StaticChoiceFilter, _('An exact match of a constant value')),
+        MobileFilterConfig('StaticChoiceListFilter', StaticChoiceListFilter,
+                           _('An exact match of a dynamic property')),
+        MobileFilterConfig('StaticDatespanFilter', StaticDatespanFilter, _('A standard date range')),
+        MobileFilterConfig('CustomDatespanFilter', CustomDatespanFilter, _('A custom range relative to today')),
+        MobileFilterConfig('CustomMonthFilter', CustomMonthFilter,
+                           _("Custom Month Filter (you probably don't want this")),
+        MobileFilterConfig('MobileSelectFilter', MobileSelectFilter, _('Show choices on mobile device')),
+        MobileFilterConfig('AncestorLocationTypeFilter', AncestorLocationTypeFilter,
+                           _("Ancestor location of the user's assigned location of a particular type")),
+        MobileFilterConfig('NumericFilter', NumericFilter, _('A numeric expression')),
+    ]
+
+
+def get_report_filter_class_for_doc_type(doc_type):
+    matched_configs = [config for config in get_all_mobile_filter_configs() if config.doc_type == doc_type]
+    if not matched_configs:
+        raise ValueError('Unexpected doc_type for ReportAppFilter', doc_type)
+    else:
+        assert len(matched_configs) == 1
+        return matched_configs[0].filter_class
 
 
 def _filter_by_case_sharing_group_id(user, ui_filter):
@@ -3586,20 +3599,35 @@ def _filter_by_parent_location_id(user, ui_filter):
     return ui_filter.value(**{ui_filter.name: location_parent})
 
 
-_filter_type_to_func = {
-    'case_sharing_group': _filter_by_case_sharing_group_id,
-    'location_id': _filter_by_location_id,
-    'parent_location_id': _filter_by_parent_location_id,
-    'username': _filter_by_username,
-    'user_id': _filter_by_user_id,
-}
+AutoFilterConfig = namedtuple('AutoFilterConfig', ['slug', 'filter_function', 'short_description'])
+
+
+def get_auto_filter_configurations():
+    return [
+        AutoFilterConfig('case_sharing_group', _filter_by_case_sharing_group_id,
+                         _("The user's case sharing group")),
+        AutoFilterConfig('location_id', _filter_by_location_id, _("The user's assigned location")),
+        AutoFilterConfig('parent_location_id', _filter_by_parent_location_id,
+                         _("The parent location of the user's assigned location")),
+        AutoFilterConfig('username', _filter_by_username, _("The user's username")),
+        AutoFilterConfig('user_id', _filter_by_user_id, _("The user's ID")),
+    ]
+
+
+def _get_filter_function(slug):
+    matched_configs = [config for config in get_all_mobile_filter_configs() if config.slug == slug]
+    if not matched_configs:
+        raise ValueError('Unexpected ID for AutoFilter', slug)
+    else:
+        assert len(matched_configs) == 1
+        return matched_configs[0].filter_function
 
 
 class AutoFilter(ReportAppFilter):
-    filter_type = StringProperty(choices=_filter_type_to_func.keys())
+    filter_type = StringProperty(choices=[f.slug for f in get_auto_filter_configurations()])
 
     def get_filter_value(self, user, ui_filter):
-        return _filter_type_to_func[self.filter_type](user, ui_filter)
+        return _get_filter_function(self.filter_type)(user, ui_filter)
 
 
 class CustomDataAutoFilter(ReportAppFilter):
