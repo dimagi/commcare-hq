@@ -21,7 +21,8 @@ from corehq.apps.app_manager.views import (
     edit_report_module, validate_module_for_build, commcare_profile, edit_commcare_profile, edit_commcare_settings,
     edit_app_langs, edit_app_attr, edit_app_ui_translations, get_app_ui_translations, rearrange, odk_qr_code,
     odk_media_qr_code, odk_install, short_url, short_odk_url, save_copy, revert_to_copy, delete_copy, list_apps,
-    direct_ccz, download_index, download_file, formdefs, release_manager, get_form_questions,
+    direct_ccz, download_index, download_file, formdefs, get_form_questions, pull_master_app,
+    update_linked_whitelist, overwrite_module_case_list, app_settings
 )
 from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
 from corehq.apps.hqmedia.urls import download_urls as media_download_urls
@@ -38,10 +39,7 @@ app_urls = [
     url(r'^delete/$', view_app, name='app_delete'),
     url(r'^$', view_app, name='view_app'),
     url(r'^releases/$', view_app, name='release_manager'),
-
-    # placeholder for app manager v2
-    url(r'^releases_v2/$', release_manager, name='release_manager_v2'),
-
+    url(r'^settings/$', app_settings, name='app_settings'),
     url(r'^releases_ajax/$', releases_ajax, name='release_manager_ajax'),
     url(r'^current_version/$', current_app_version, name='current_app_version'),
     url(r'^releases/json/$', paginate_releases, name='paginate_releases'),
@@ -66,6 +64,7 @@ app_urls = [
     url(r'^copy/gzip$', export_gzip, name='gzip_app')
 ]
 
+
 urlpatterns = [
     url(r'^$', view_app, name='default_app'),
     url(r'^xform/(?P<form_unique_id>[\w-]+)/$', xform_display, name='xform_display'),
@@ -84,6 +83,8 @@ urlpatterns = [
     url(r'^default_new_app/$', default_new_app, name='default_new_app'),
     url(r'^new_form/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/$', new_form, name='new_form'),
     url(r'^drop_user_case/(?P<app_id>[\w-]+)/$', drop_user_case, name='drop_user_case'),
+    url(r'^pull_master/(?P<app_id>[\w-]+)/$', pull_master_app, name='pull_master_app'),
+    url(r'^linked_whitelist/(?P<app_id>[\w-]+)/$', update_linked_whitelist, name='update_linked_whitelist'),
 
     url(r'^delete_app/(?P<app_id>[\w-]+)/$', delete_app, name='delete_app'),
     url(r'^delete_module/(?P<app_id>[\w-]+)/(?P<module_unique_id>[\w-]+)/$',
@@ -91,6 +92,8 @@ urlpatterns = [
     url(r'^delete_form/(?P<app_id>[\w-]+)/(?P<module_unique_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/$',
         delete_form, name="delete_form"),
 
+    url(r'^overwrite_module_case_list/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/$',
+        overwrite_module_case_list, name='overwrite_module_case_list'),
     url(r'^copy_form/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/(?P<form_id>[\w-]+)/$',
         copy_form, name='copy_form'),
 

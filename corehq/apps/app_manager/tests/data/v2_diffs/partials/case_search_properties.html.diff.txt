@@ -1,0 +1,38 @@
+--- 
++++ 
+@@ -23,9 +23,9 @@
+     </script>
+ 
+     <form>
+-        <div class="panel panel-default">
++        <div class="panel panel-appmanager">
+             <div class="panel-heading">
+-                <h4 class="panel-title">{% trans "Search Properties" %}</h4>
++                <h4 class="panel-title panel-title-nolink">{% trans "Search Properties" %}</h4>
+             </div>
+             <div class="panel-body">
+                 <p>{% trans "Search against the following case properties." %}</p>
+@@ -49,9 +49,9 @@
+                 </p>
+             </div>
+         </div>
+-        <div class="panel panel-default">
++        <div class="panel panel-appmanager">
+             <div class="panel-heading">
+-                <h4 class="panel-title">{% trans "Default Search Properties" %}</h4>
++                <h4 class="panel-title panel-title-nolink">{% trans "Default Search Properties" %}</h4>
+             </div>
+             <div class="panel-body">
+                 <p>{% trans "Filter based on a specific value of any case property. These are applied to every search and are hidden from the user." %}</p>
+@@ -93,9 +93,9 @@
+                 </p>
+             </div>
+         </div>
+-        <div class="panel panel-default">
++        <div class="panel panel-appmanager">
+             <div class="panel-heading">
+-                <h4 class="panel-title">{% trans "Search and Claim Options" %}</h4>
++                <h4 class="panel-title panel-title-nolink">{% trans "Search and Claim Options" %}</h4>
+             </div>
+             <div class="panel-body">
+                 <div class="form-group">

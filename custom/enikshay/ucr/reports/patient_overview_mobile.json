@@ -1,7 +1,14 @@
 {
     "domains": [
         "enikshay-test",
-        "enikshay-test-test"
+        "enikshay-test-test",
+        "enikshay",
+        "enikshay-test-2",
+        "enikshay-test-3",
+        "enikshay-nikshay-migration-test",
+        "enikshay-domain-copy-test",
+        "enikshay-aks-audit",
+        "np-migration-3"
     ],
     "data_source_table": "episode",
     "report_id": "patient_overview_mobile",
@@ -19,7 +26,7 @@
                 "required": false,
                 "display": "Case Open Date",
                 "field": "opened_on",
-                "type": "quarter",
+                "type": "date",
                 "show_all": true,
                 "slug": "patient_registration_date"
             },

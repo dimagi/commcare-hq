@@ -34,7 +34,7 @@ def prepare_fixture_download(table_ids, domain, task, download_id):
         60 * 60 * 2,
         file_extension=".xlsx",
         mimetype=Format.from_format(format).mimetype,
-        content_disposition='attachment; filename="%s_fixtures.xlsx"' % domain,
+        content_disposition='attachment; filename="%s_lookup-tables.xlsx"' % domain,
         download_id=download_id,
     )
 

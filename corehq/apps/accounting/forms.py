@@ -44,6 +44,7 @@ from corehq.apps.accounting.models import (
     CreditAdjustmentReason,
     CreditLine,
     Currency,
+    DefaultProductPlan,
     EntryPoint,
     Feature,
     FeatureRate,
@@ -1039,12 +1040,16 @@ class PlanInformationForm(forms.Form):
         plan.save()
         return plan
 
-    def update_plan(self, plan):
-        plan.name = self.cleaned_data['name']
-        plan.description = self.cleaned_data['description']
-        plan.edition = self.cleaned_data['edition']
-        plan.visibility = self.cleaned_data['visibility']
-        plan.save()
+    def update_plan(self, request, plan):
+        if DefaultProductPlan.objects.filter(plan=self.plan).exists():
+            messages.warning(request, "You cannot modify a non-custom software plan.")
+        else:
+            plan.name = self.cleaned_data['name']
+            plan.description = self.cleaned_data['description']
+            plan.edition = self.cleaned_data['edition']
+            plan.visibility = self.cleaned_data['visibility']
+            plan.save()
+            messages.success(request, "The %s Software Plan was successfully updated." % self.plan.name)
 
 
 class SoftwarePlanVersionForm(forms.Form):
@@ -1518,6 +1523,9 @@ class SoftwarePlanVersionForm(forms.Form):
 
     @transaction.atomic
     def save(self, request):
+        if DefaultProductPlan.objects.filter(plan=self.plan).exists():
+            messages.warning(request, "You cannot modify a non-custom software plan.")
+            return
         if not self.is_update:
             messages.info(request, "No changes to rates and roles were present, so the current version was kept.")
             return

@@ -80,19 +80,51 @@
                  } else {
                      $(this).closest('.form-group').removeClass('has-error');
                      hideCaseTypeError();
-@@ -231,62 +241,70 @@
+@@ -230,63 +240,69 @@
+     </script>
  {% endblock %}
  
++{% block pre_page_content %}
++  {% include 'app_manager/v2/partials/module_view_heading.html' %}
++{% endblock %}
++
  {% block form-view %}
 -    {% include 'app_manager/v1/partials/module_view_heading.html' %}
-+{% include 'app_manager/v2/partials/module_view_heading.html' %}
- <div class="tabbable">
+-<div class="tabbable">
 -<ul class="nav nav-tabs" id="module-view-tabs">
 -    {% block tab-headers %}
 -    <li class="active"><a href="#module-settings" data-toggle="tab">{% trans "Settings" %}</a></li>
 -    {% if module.module_type != 'shadow' %}
 -    <li><a href="#case-settings" data-toggle="tab">{% trans "Case Management" %}</a></li>
--    {% endif %}
++  <div class="tabbable appmanager-tabs-container">
++
++    {% if module.case_type != "" %}
++      <ul class="nav nav-tabs" id="module-view-tabs">
++        {% block tab-headers %}
++          <li class="active"><a href="#module-settings" data-toggle="tab">{% trans "Settings" %}</a></li>
++          {% if module.module_type == 'shadow' %}
++            <li><a href="#case-settings" data-toggle="tab">{% trans "Case Management" %}</a></li>
++          {% endif %}
++          {% if module.case_type != "" %}
++            {% for detail in details %}
++              <li>
++                <a href="#{{ detail.type }}-detail-screen-config-tab" data-toggle="tab">
++                  {{ detail.label }}
++                </a>
++              </li>
++              {% if detail.long %}
++                <li>
++                  <a href="#{{ detail.type }}-detail-screen-detail-config-tab" data-toggle="tab">
++                    {{ detail.detail_label }}
++                  </a>
++                </li>
++              {% endif %}
++            {% endfor %}
++          {% endif %}
++        {% endblock %}{# endblock tab-headers #}
++      </ul>
++      <div class="spacer"></div>
+     {% endif %}
 -    {% for detail in details %}
 -    <li>
 -        <a href="#{{ detail.type }}-detail-screen-config-tab" data-toggle="tab">
@@ -110,40 +142,30 @@
 -    {% endblock %}{# endblock tab-headers #}
 -</ul>
 -<div class="spacer"></div>
-+
-+{% if module.case_type != "" %}
-+  <ul class="nav nav-tabs" id="module-view-tabs">
-+      {% block tab-headers %}
-+      <li class="active"><a href="#module-settings" data-toggle="tab">{% trans "Settings" %}</a></li>
-+      {% if module.module_type == 'shadow' %}
-+        <li><a href="#case-settings" data-toggle="tab">{% trans "Case Management" %}</a></li>
-+      {% endif %}
-+      {% if module.case_type != "" %}
-+        {% for detail in details %}
-+          <li>
-+              <a href="#{{ detail.type }}-detail-screen-config-tab" data-toggle="tab">
-+                  {{ detail.label }}
-+              </a>
-+          </li>
-+          {% if detail.long %}
-+            <li>
-+                <a href="#{{ detail.type }}-detail-screen-detail-config-tab" data-toggle="tab">
-+                    {{ detail.detail_label }}
-+                </a>
-+            </li>
-+          {% endif %}
-+        {% endfor %}
-+      {% endif %}
-+      {% endblock %}{# endblock tab-headers #}
-+  </ul>
-+  <div class="spacer"></div>
-+{% endif %}
-+
- <div class="tab-content">
-     {% block tab-content %}
-     <div class="tab-pane active" id="module-settings">
+-<div class="tab-content">
+-    {% block tab-content %}
+-    <div class="tab-pane active" id="module-settings">
 -        {% include "app_manager/v1/partials/module_view_settings.html" %}
-+        {% include "app_manager/v2/partials/module_view_settings.html" %}
++
++    <div class="tab-content">
++      {% block tab-content %}
++        <div class="tab-pane active" id="module-settings">
++          {% include "app_manager/v2/partials/module_view_settings.html" %}
++        </div>
++
++        {% if module.case_type != "" %}
++          {% for detail in details %}
++            <div class="tab-pane" id="{{ detail.type }}-detail-screen-config-tab">
++              {% include 'app_manager/v2/partials/case_list.html' %}
++            </div>
++            {% if detail.long %}
++              <div class="tab-pane" id="{{ detail.type }}-detail-screen-detail-config-tab">
++                {% include 'app_manager/v2/partials/case_detail.html' %}
++              </div>
++            {% endif %}
++          {% endfor %}
++        {% endif %}
++      {% endblock %}
      </div>
 -    <div class="tab-pane" id="case-settings">
 -        {% block case-management-tab-content %}
@@ -159,28 +181,11 @@
 -    <div class="tab-pane" id="{{ detail.type }}-detail-screen-detail-config-tab">
 -        {% include 'app_manager/v1/partials/case_detail.html' %}
 -    </div>
-+{#    <div class="tab-pane" id="case-settings">#}
-+{#        {% block case-management-tab-content %}#}
-+{#            {% include "app_manager/v1/partials/module_view_case_management.html" %}#}
-+{#        {% endblock %}#}
-+{#    </div>#}
-+
-+    {% if module.case_type != "" %}
-+      {% for detail in details %}
-+        <div class="tab-pane" id="{{ detail.type }}-detail-screen-config-tab">
-+            {% include 'app_manager/v2/partials/case_list.html' %}
-+        </div>
-+        {% if detail.long %}
-+          <div class="tab-pane" id="{{ detail.type }}-detail-screen-detail-config-tab">
-+              {% include 'app_manager/v2/partials/case_detail.html' %}
-+          </div>
-+        {% endif %}
-+      {% endfor %}
-     {% endif %}
+-    {% endif %}
 -    {% endfor %}
-     {% endblock %}{# endblock tab-content #}
+-    {% endblock %}{# endblock tab-content #}
  </div>
- </div>
+-</div>
  {% endblock %}
  
  {% block modals %}{{ block.super }}

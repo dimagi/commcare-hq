@@ -104,16 +104,22 @@ class TestAppManagerV2Diffs(SimpleTestCase):
             )
             filename_v1 = os.path.join(v1_dir, test_file)
             filename_v2 = os.path.join(v2_dir, test_file)
-
-            with open(diff_filename, 'r') as diff_file:
-                existing_diff_lines = diff_file.readlines()
-                current_diff = get_diff(filename_v1, filename_v2)
-                self.assertEqual(
-                    "".join(existing_diff_lines),
-                    "".join(current_diff),
-                    DIFF_FAILURE_MSG.format(
-                        test_file, filename_v1, filename_v2
+            try:
+                with open(diff_filename, 'r') as diff_file:
+                    existing_diff_lines = diff_file.readlines()
+                    current_diff = get_diff(filename_v1, filename_v2)
+                    self.assertEqual(
+                        "".join(existing_diff_lines),
+                        "".join(current_diff),
+                        DIFF_FAILURE_MSG.format(
+                            test_file, filename_v1, filename_v2
+                        )
                     )
+            except IOError:
+                raise Exception(
+                    "Issue opening diff file. "
+                    "You may need to manually create it using ./manage.py build_app_manager_v2_diffs.\n"
+                    "File path is {}".format(diff_filename)
                 )
 
     def test_yaml_01_diffs_exist(self):

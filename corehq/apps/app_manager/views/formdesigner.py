@@ -24,6 +24,7 @@ from corehq.apps.app_manager.util import (
     get_casedb_schema,
     get_session_schema,
     app_callout_templates,
+    get_app_manager_template,
 )
 from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
 from corehq.apps.app_manager.dbaccessors import get_app
@@ -150,12 +151,19 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         'is_onboarding_domain': domain_obj.is_onboarding_domain,
         'show_live_preview': (
             toggles.PREVIEW_APP.enabled(domain)
+            or toggles.PREVIEW_APP.enabled(request.couch_user.username)
             or (domain_obj.is_onboarding_domain
                 and live_preview_ab.version == ab_tests.LIVE_PREVIEW_ENABLED)
         )
     })
 
-    response = render(request, 'app_manager/v1/form_designer.html', context)
+    template = get_app_manager_template(
+        domain,
+        'app_manager/v1/form_designer.html',
+        'app_manager/v2/form_designer.html',
+    )
+
+    response = render(request, template, context)
     live_preview_ab.update_response(response)
     return response
 

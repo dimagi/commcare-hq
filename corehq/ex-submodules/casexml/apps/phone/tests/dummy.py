@@ -5,6 +5,7 @@ from casexml.apps.case.xml.generator import date_to_xml_string
 DUMMY_ID = "foo"
 DUMMY_USERNAME = "mclovin"
 DUMMY_PASSWORD = "changeme"
+DUMMY_PROJECT = "domain"
 
 
 def dummy_user():
@@ -27,6 +28,7 @@ def dummy_user_xml(user=None):
     password = user.password if user else DUMMY_PASSWORD
     user_id = user.user_id if user else DUMMY_ID
     date_joined = user.date_joined if user else datetime.utcnow()
+    project = user.domain if user else DUMMY_PROJECT
 
     return """
     <Registration xmlns="http://openrosa.org/user/registration">
@@ -35,16 +37,18 @@ def dummy_user_xml(user=None):
         <uuid>{}</uuid>
         <date>{}</date>
         <user_data>
-            <data key="commcare_first_name"/>
+            <data key="commcare_project">{}</data>
             <data key="commcare_last_name"/>
-            <data key="something">arbitrary</data>
             <data key="commcare_phone_number"/>
+            <data key="something">arbitrary</data>
+            <data key="commcare_first_name"/>
         </user_data>
     </Registration>""".format(
         username,
         password,
         user_id,
-        date_to_xml_string(date_joined)
+        date_to_xml_string(date_joined),
+        project
     )
 
 DUMMY_RESTORE_XML_TEMPLATE = ("""

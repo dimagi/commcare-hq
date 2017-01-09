@@ -25,6 +25,7 @@ from .new import (
     InferredExportGroupSchema,
     ExportGroupSchema,
     TableConfiguration,
+    LabelItem,
     ScalarItem,
     GeopointItem,
     CaseIndexItem,

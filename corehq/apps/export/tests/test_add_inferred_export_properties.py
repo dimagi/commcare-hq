@@ -17,8 +17,7 @@ class InferredSchemaSignalTest(TestCase):
         caches['locmem'].clear()
         caches['default'].clear()
 
-    def _add_props(self, props, num_queries=5):
-        # should be 3, but the transaction in tests adds two when creating a case type
+    def _add_props(self, props, num_queries=3):
         with self.assertNumQueries(num_queries):
             add_inferred_export_properties(
                 'TestSend',
@@ -47,7 +46,7 @@ class InferredSchemaSignalTest(TestCase):
         props_two = set(['one', 'three'])
         combined_props = props | props_two
         self._add_props(props)
-        self._add_props(props_two, 3)
+        self._add_props(props_two)
 
         schema = get_inferred_schema(self.domain, self.case_type)
         group_schema = schema.group_schemas[0]

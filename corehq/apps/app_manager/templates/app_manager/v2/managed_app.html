@@ -152,7 +152,8 @@
               </a>
           </div>
           <h2 class="appnav-name">
-            <a id="demand-releases" href="{% url "view_app" domain app.id %}">
+            <a href="{% url "view_app" domain app.id %}"
+               class="variable-app_name">
                 {{ app.name }}
             </a>
           </h2>

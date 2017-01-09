@@ -8,6 +8,7 @@ from casexml.apps.phone.models import OTARestoreUser
 
 from corehq import toggles
 from corehq.apps.app_manager.models import ReportModule
+from corehq.apps.app_manager.suite_xml.features.mobile_ucr import is_valid_mobile_select_filter_type
 from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
 from corehq.util.xml_utils import serialize
 
@@ -29,7 +30,7 @@ class ReportFixturesProvider(object):
         if not toggles.MOBILE_UCR.enabled(restore_user.domain):
             return []
 
-        apps = [app] if app else (a for a in get_apps_in_domain(restore_user.domain, include_remote=False))
+        apps = [app] if app else [a for a in get_apps_in_domain(restore_user.domain, include_remote=False)]
         report_configs = [
             report_config
             for app_ in apps
@@ -81,7 +82,7 @@ class ReportFixturesProvider(object):
         defer_filters = {
             filter_slug: report.get_ui_filter(filter_slug)
             for filter_slug, filter_value in all_filter_values.items()
-            if filter_value is None
+            if filter_value is None and is_valid_mobile_select_filter_type(report.get_ui_filter(filter_slug))
         }
         data_source.set_filter_values(filter_values)
         data_source.defer_filters(defer_filters)
@@ -94,7 +95,7 @@ class ReportFixturesProvider(object):
         )
         filters_elem = ReportFixturesProvider._get_filters_elem(defer_filters, filter_options_by_field)
 
-        report_elem = E.report(id=report_config.uuid)
+        report_elem = E.report(id=report_config.uuid, report_id=report_config.report_id)
         report_elem.append(filters_elem)
         report_elem.append(rows_elem)
         return report_elem

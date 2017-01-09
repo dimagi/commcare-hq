@@ -1,8 +1,8 @@
 function (doc) {
-    if ( (doc.doc_type === "Application" || doc.doc_type === "Application-Deleted")
+    if ( (doc.doc_type === "Application" || doc.doc_type === "Application-Deleted" || doc.doc_type === "LinkedApplication" || doc.doc_type === "LinkedApplication-Deleted")
         && doc.copy_of === null) {
         // all xforms bound to an application at some point in time
-        var is_deleted = doc.doc_type === 'Application-Deleted';
+        var is_deleted = (doc.doc_type === 'Application-Deleted' || doc.doc_type === 'LinkedApplication-Deleted');
         var status = (is_deleted) ? "deleted" : "active";
 
         for (var m = 0; m < doc.modules.length; m++) {

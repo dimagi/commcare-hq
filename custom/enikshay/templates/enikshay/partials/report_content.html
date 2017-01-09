@@ -1,6 +1,6 @@
 {% load i18n %}
 
-<table id="report_table_{{ report.slug }}" class="table table-striped datatable" {% if pagination.filter %} data-filter="true"{% endif %}>
+<table id="report_table_{{ report_table.slug }}" class="table table-striped datatable" {% if pagination.filter %} data-filter="true"{% endif %}>
     <thead>
     {%  if report_table.headers.complex %}
         {{ report_table.headers.render_html|safe }}

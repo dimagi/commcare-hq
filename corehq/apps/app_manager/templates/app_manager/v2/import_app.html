@@ -39,9 +39,8 @@
         {% csrf_token %}
 {% if app %}
         <p>Import application <strong>{{ app.name }}</strong> from domain <strong>{{ app.domain }}</strong>?</p>
-{% else %}
-        <div class="form-horizontal{% if not is_superuser %} hide{% endif %}">
 {% endif %}
+        <div class="form-horizontal">
             <div class="form-group">
                 <label class="col-sm-2 control-label">Name</label>
                 <div class="col-sm-10">

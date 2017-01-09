@@ -11,46 +11,11 @@ from corehq.apps.locations.tests.util import delete_all_locations
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import ReportConfiguration
-from corehq.apps.userreports.reports.filters.choice_providers import ChoiceProvider, \
-    ChoiceQueryContext, LocationChoiceProvider, UserChoiceProvider, GroupChoiceProvider, \
-    OwnerChoiceProvider
+from corehq.apps.userreports.reports.filters.choice_providers import (
+    ChoiceQueryContext, LocationChoiceProvider, UserChoiceProvider, GroupChoiceProvider,
+    OwnerChoiceProvider, StaticChoiceProvider, SearchableChoice)
 from corehq.apps.users.models import CommCareUser, WebUser, DomainMembership
 from corehq.apps.users.util import normalize_username
-
-
-class SearchableChoice(Choice):
-
-    def __new__(cls, value, display, searchable_text=None):
-        self = super(SearchableChoice, cls).__new__(cls, value, display)
-        self.searchable_text = [text for text in searchable_text or []
-                                if text is not None]
-        return self
-
-
-class StaticChoiceProvider(ChoiceProvider):
-
-    def __init__(self, choices):
-        """
-        choices must be passed in in desired sort order
-        """
-        self.choices = [
-            choice if isinstance(choice, SearchableChoice)
-            else SearchableChoice(
-                choice.value, choice.display,
-                searchable_text=[choice.display]
-            )
-            for choice in choices
-        ]
-        super(StaticChoiceProvider, self).__init__(None, None)
-
-    def query(self, query_context):
-        filtered_set = [choice for choice in self.choices
-                        if any(query_context.query in text for text in choice.searchable_text)]
-        return filtered_set[query_context.offset:query_context.offset + query_context.limit]
-
-    def get_choices_for_known_values(self, values):
-        return {choice for choice in self.choices
-                if choice.value in values}
 
 
 class StaticChoiceProviderTest(SimpleTestCase):
@@ -157,17 +122,22 @@ class LocationChoiceProviderTest(ChoiceProviderTestMixin, LocationHierarchyTestC
         delete_all_users()
         super(LocationChoiceProviderTest, cls).setUpClass()
         report = ReportConfiguration(domain=cls.domain)
-        choices = [
-            SearchableChoice(
+        choice_tuples = [
+            (location.name, SearchableChoice(
                 location.location_id,
-                location.display_name,
+                location.get_path_display(),
                 searchable_text=[location.site_code, location.name]
-            )
+            ))
             for location in cls.locations.itervalues()
         ]
-        choices.sort(key=lambda choice: choice.display)
+        choice_tuples.sort()
+        choices = [choice for name, choice in choice_tuples]
         cls.web_user = WebUser.create(cls.domain, 'blah', 'password')
         cls.choice_provider = LocationChoiceProvider(report, None)
+        cls.choice_provider.configure({
+            "include_descendants": False,
+            "show_full_path": True,
+        })
         cls.static_choice_provider = StaticChoiceProvider(choices)
         cls.choice_query_context = partial(ChoiceQueryContext, user=cls.web_user)
 
@@ -191,7 +161,7 @@ class LocationChoiceProviderTest(ChoiceProviderTestMixin, LocationHierarchyTestC
         scoped_choices = [
             SearchableChoice(
                 location.location_id,
-                location.display_name,
+                location.get_path_display(),
                 searchable_text=[location.site_code, location.name]
             )
             for location in [

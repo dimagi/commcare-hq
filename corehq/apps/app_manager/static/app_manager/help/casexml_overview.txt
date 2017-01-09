@@ -1,3 +1,0 @@
-<p>
-Cases and referrals are a way of preserving information across multiple interactions with CommCare on the mobile phone.
-</p>
