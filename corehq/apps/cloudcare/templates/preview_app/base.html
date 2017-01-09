@@ -164,14 +164,14 @@
             </div>
             <div class="scrollable-container dragscroll form-scrollable-container">
               <section id="webforms" class="webforms" data-bind="template: { name: 'form-fullform-ko-template' }"></section>
-              {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
-                  <section id="cloudcare-debugger" data-bind="
+            {% if request.couch_user.can_edit_data %}
+              <section id="cloudcare-debugger" data-bind="
                   template: {
                       name: 'instance-viewer-ko-template',
                       afterRender: adjustWidth
                   }
               "></section>
-              {% endif %}
+            {% endif %}
             </div>
         </div>
 
@@ -189,7 +189,7 @@
                 oneQuestionPerScreen: !{{ request.couch_user.is_dimagi|JSON }},
                 allowedHost: "{{ request.get_host }}",
                 environment: {{ environment|JSON }},
-                {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
+                {% if request.couch_user.can_edit_data %}
                 debuggerEnabled: true,
                 {% endif %}
             });
