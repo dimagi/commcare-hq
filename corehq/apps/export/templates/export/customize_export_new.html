@@ -109,8 +109,6 @@
                         </label>
                     </div>
 
-                    {% if not use_new_exports %}
-                    {# In new exports, daily saved exports are created at a different view #}
                     <div class="checkbox">
                         <label>
                             <input
@@ -132,7 +130,6 @@
                             ></span>
                         {% endif %}
                     </div>
-                    {% endif%}
 
                 {% if export_instance.type == 'form' %}
                     <div class="checkbox">
