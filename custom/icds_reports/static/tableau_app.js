@@ -54,6 +54,11 @@ function setUpInitialTableauParams() {
 
 function setUpNav(viz) {
     var sheets = workbook.getPublishedSheetsInfo();
+
+    // Filter out the sheets for a single AWC. These are accessed via drilldown
+    sheets = _.filter(sheets, function(sheet) {
+        return (sheet.getName() != "Demographics" && sheet.getName() != 'AWC-Info');
+    })
     _.each(sheets, function(sheet) {
         addNavigationLink(sheet.getName(), sheet.getIsActive());
     });
