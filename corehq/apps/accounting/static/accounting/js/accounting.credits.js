@@ -51,7 +51,7 @@ hqDefine('accounting/js/accounting.credits.js', function () {
             return  parseFloat(self.addAmount()) === 0 || (parseFloat(self.addAmount()) >= 0.5);
         });
         self.paymentHandler = paymentHandler;
-    }
+    };
 
     var CreditItem = function (category, data, paymentHandler, can_purchase_credits) {
         'use strict';
