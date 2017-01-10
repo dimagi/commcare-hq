@@ -1014,12 +1014,6 @@ class ConfigureReport(ReportBuilderView):
                     {'value': 'False'}
                 ]
 
-    def _get_columns(self, report_data):
-        return list(chain.from_iterable(
-            to_report_columns(c, i, self.report_column_options)
-            for i, c in enumerate(report_data['columns'])
-        ))
-
     def _get_report_charts(self, report_data_):
         report_type_funcs = {
             'bar': lambda cols: [{
@@ -1061,7 +1055,7 @@ class ConfigureReport(ReportBuilderView):
         self.existing_report.title = report_data['report_title'] or self.existing_report.title
         self.existing_report.description = report_data['report_description'] or self.existing_report.description
         self.existing_report.aggregation_columns = self._get_aggregation_columns(report_data)
-        self.existing_report.columns = self._get_columns(report_data)
+        self.existing_report.columns = ReportBuilderHelper(self.domain, self.app, self.source_type, self.source_id).get_columns(report_data)
         self.existing_report.filters = self._get_filters(report_data)
         self.existing_report.configured_charts = self._get_report_charts(report_data)
 
@@ -1145,7 +1139,7 @@ class ConfigureReport(ReportBuilderView):
                     title=report_data['report_title'],
                     description=report_data['report_description'],
                     aggregation_columns=self._get_aggregation_columns(report_data),
-                    columns=self._get_columns(report_data),
+                    columns=ReportBuilderHelper(self.domain, self.app, self.source_type, self.source_id).get_columns(report_data),
                     filters=self._get_filters(report_data),
                     configured_charts=self._get_report_charts(report_data),
                     report_meta=ReportMeta(
@@ -1185,6 +1179,51 @@ class ConfigureReport(ReportBuilderView):
             raise Http404()
 
 
+class ReportBuilderHelper(object):
+
+    def __init__(self, domain, app, source_type, source_id):
+        self.domain = domain
+        self.app = app
+        self.source_type = source_type
+        self.source_id = source_id
+
+        self.data_source_builder = DataSourceBuilder(self.domain, self.app, self.source_type, self.source_id)
+
+    @property
+    @memoized
+    def report_column_options(self):
+        return _report_column_options(
+            self.domain,
+            self.app,
+            self.source_type,
+            self.source_id,
+        )
+
+    def get_columns(self, config):
+        columns = list(chain.from_iterable(
+            to_report_columns(c, i, self.report_column_options)
+            for i, c in enumerate(config['columns'])
+        ))
+
+        if config['location_field']:
+            prop = self.data_source_builder.data_source_properties[config['location_field']]
+            loc_field_id = prop.column_id
+            loc_field_text = prop.text
+
+            # TODO: Confirm this
+            # Add the location indicator to the columns if it's not already present.
+            # displaying_loc_column = bool([c for c in columns if c['field'] == loc_field_id])
+            # if not displaying_loc_column:
+            columns += [{
+                "column_id": loc_field_id,
+                "type": "location",
+                'field': loc_field_id,
+                'display': loc_field_text
+            }]
+
+        return columns
+
+
 def _get_multiselect_indicator_id(column_field, indicators):
     """
     If this column_field corresponds to a multiselect data source indicator, then return the id of the
@@ -1205,8 +1244,11 @@ class ReportPreview(BaseDomainView):
 
     def post(self, request, domain, data_source):
         report_data = json.loads(urllib.unquote(request.body))
+        app = Application.get(report_data['app'])
+        source_type = report_data['source_type']
+        source_id = report_data['source_id']
         column_options = _report_column_options(
-            self.domain, Application.get(report_data['app']), report_data['source_type'], report_data['source_id']
+            self.domain, app, source_type, source_id
         )
 
         table = ConfigurableReport.report_config_table(
@@ -1217,9 +1259,7 @@ class ReportPreview(BaseDomainView):
             aggregation_columns=_get_aggregation_columns(
                 report_data['aggregate'], report_data['columns'], column_options
             ),
-            columns=list(chain.from_iterable(
-                to_report_columns(c, i, column_options) for i, c in enumerate(report_data['columns'])
-            )),
+            columns=ReportBuilderHelper(self.domain, app, source_type, source_id).get_columns(report_data),
             report_meta=ReportMeta(created_by_builder=True),
         )  # is None if report configuration doesn't make sense or data source has expired
         if table:
