@@ -2,6 +2,14 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
+{% block head %}{{ block.super }}
+    <style>
+        .map-preview {
+            height: 500px;
+        }
+    </style>
+{% endblock %}
+
 {% block js %}{{ block.super }}
     <script src="{% static 'style/js/main.js' %}"></script>
     <script src="{% static 'app_manager/js/case-knockout-bindings.js' %}"></script>
@@ -209,6 +217,28 @@
 
         <div id="chart"></div>
       </div>
+
+      <div class="well" id="map-preview" data-bind="fadeVisible: reportType() === 'map'">
+        <h3 style="display: inline-block">{% trans 'Map Preview' %}</h3>
+        <div>
+          Location field:
+          <!-- ko ifnot: optionsContainQuestions -->
+          <input type="text" class="form-control" data-bind="select2: selectablePropertyOptions, value: location_field">
+          <!-- /ko -->
+          <!-- ko if: optionsContainQuestions -->
+          <input class="form-control" type="hidden" data-bind="
+            questionsSelect: selectablePropertyOptions,
+            value: location_field,
+          "/>
+          <!-- /ko -->
+        </div>
+        <br/>
+        <div id="map-preview-container" data-bind="css: {'map-preview': displayMapPreview}"></div>
+        <div id="zoomtofit" class="leaflet-control-layers" style="display: none;">
+            <div id="zoomtofit-target" class="zoomtofit leaflet-control-layers-toggle" title="{% trans "Fit all data into view" %}"></div>
+        </div>
+      </div>
+
       <div class="well">
         <h3>{% trans 'Data Table' %}</h3>
         <table id="preview" class="table"></table>
@@ -240,6 +270,8 @@
             "dataSourceProperties": {{ data_source_properties|JSON }},
             "initialDefaultFilters": {{ initial_default_filters|JSON }},
             "initialUserFilters": {{ initial_user_filters|JSON }},
+            "initialLocation": {{ initial_location|JSON }},
+            "mapboxAccessToken": {{ MAPBOX_ACCESS_TOKEN|JSON }},
         });
         $("#reportConfig").koApplyBindings(reportConfig)
     });

@@ -557,7 +557,8 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             view._lang = "en"
             view._report_config_id = report_config._id
             try:
-                table = view.export_table
+                export_table = view.export_table
+                datatables_data = json.loads(view.get_ajax({}).content)
             except UserReportsError:
                 # User posted an invalid report configuration
                 return None
@@ -566,7 +567,11 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
                 # TODO: It would be more helpful just to quietly recreate the data source config from GET params
                 return None
             else:
-                return table
+                return {
+                    "table": export_table[0][1],
+                    "map_config": view.spec.map_config,
+                    "map_data": datatables_data,
+                }
 
 
 # Base class for classes that provide custom rendering for UCRs

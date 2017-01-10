@@ -784,6 +784,10 @@ class ConfigureReport(ReportBuilderView):
             if column_option.indicator_id == indicator_column_id:
                 return column_option
 
+    def _get_initial_location(self):
+        if self.existing_report:
+            return self._get_property_id_by_indicator_id(self.existing_report.location_column_id)
+
     def _get_initial_columns(self):
         """
         Return a list of columns in the existing report.
@@ -835,12 +839,14 @@ class ConfigureReport(ReportBuilderView):
             'initial_default_filters': [f._asdict() for f in self.get_initial_default_filters()],
             'column_options': self.get_column_option_dicts(),
             'initial_columns': self._get_initial_columns(),
+            'initial_location': self._get_initial_location(),
             'source_type': self.source_type,
             'source_id': self.source_id,
             'application': self.app_id,
             'report_preview_url': reverse(ReportPreview.urlname,
                                        args=[self.domain, self._get_data_source()]),
-            'report_builder_events': self.request.session.pop(REPORT_BUILDER_EVENTS_KEY, [])
+            'report_builder_events': self.request.session.pop(REPORT_BUILDER_EVENTS_KEY, []),
+            'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
         }
 
     def _handle_exception(self, response, exception):
@@ -1251,7 +1257,7 @@ class ReportPreview(BaseDomainView):
             self.domain, app, source_type, source_id
         )
 
-        table = ConfigurableReport.report_config_table(
+        response_data = ConfigurableReport.report_preview_data(
             domain=domain,
             config_id=data_source,
             title='{}_{}_{}'.format(TEMP_REPORT_PREFIX, domain, data_source),
@@ -1262,8 +1268,8 @@ class ReportPreview(BaseDomainView):
             columns=ReportBuilderHelper(self.domain, app, source_type, source_id).get_columns(report_data),
             report_meta=ReportMeta(created_by_builder=True),
         )  # is None if report configuration doesn't make sense or data source has expired
-        if table:
-            return json_response(table[0][1])
+        if response_data:
+            return json_response(response_data)
         else:
             return json_response({'status': 'error', 'message': 'Invalid report configuration'}, status_code=400)
 

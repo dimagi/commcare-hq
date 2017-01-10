@@ -102,6 +102,8 @@ var reportBuilder = function () {
             ));
         };
 
+        self._mapboxAccessToken = config['mapboxAccessToken'];
+
         self._app = config['app'];
         self._sourceType = config['sourceType'];
         self._sourceId = config['sourceId'];
@@ -184,7 +186,13 @@ var reportBuilder = function () {
             });
         };
 
+        self.location_field = ko.observable(config['initialLocation']);
+        self.location_field.subscribe(function () {
+            self.refreshPreview(self.selectedColumns());
+        });
+
         self.optionsContainQuestions = self._optionsContainQuestions(config['dataSourceProperties']);
+        self.selectablePropertyOptions = _getSelectableProperties(config['dataSourceProperties']);
 
         var PropertyList = hqImport('userreports/js/builder_view_models.js').PropertyList;
         self.filterList = new PropertyList({
@@ -198,7 +206,7 @@ var reportBuilder = function () {
             formatHelpText: django.gettext('What type of property is this filter?<br/><br/><strong>Date</strong>: Select this if the property is a date.<br/><strong>Choice</strong>: Select this if the property is text or multiple choice.'),
             reportType: self.reportType(),
             propertyOptions: config['dataSourceProperties'],
-            selectablePropertyOptions: _getSelectableProperties(config['dataSourceProperties']),
+            selectablePropertyOptions: self.selectablePropertyOptions,
         });
         self.filterList.serializedProperties.subscribe(function () {
             self.saveButton.fire("change");
@@ -216,7 +224,7 @@ var reportBuilder = function () {
             filterValueHelpText: django.gettext('What value or date range must the property be equal to?'),
             reportType: self.reportType(),
             propertyOptions: config['dataSourceProperties'],
-            selectablePropertyOptions: _getSelectableProperties(config['dataSourceProperties']),
+            selectablePropertyOptions: self.selectablePropertyOptions,
         });
         self.defaultFilterList.serializedProperties.subscribe(function () {
             self.saveButton.fire("change");
@@ -233,6 +241,7 @@ var reportBuilder = function () {
                 type: 'post',
                 contentType: 'application/json; charset=utf-8',
                 data: JSON.stringify({
+                    'location_field': self.location_field(),
                     'columns': _.map(columns, function (c) { return c.serialize(self.isAggregationEnabled()); }),
                     'aggregate': self.isAggregationEnabled(),
                     'app': self._app,
@@ -244,11 +253,26 @@ var reportBuilder = function () {
             });
         };
 
+        // true if a map is being displayed. This is different than reportType === "map", because this is
+        // only true if the preview function returned a mapSpec.
+        self.displayMapPreview = ko.observable(false);
+
         self.renderReportPreview = function (data) {
             self._renderTablePreview(data['table']);
             self._renderChartPreview(data['table']);
+            self._renderMapPreview(data['map_config'], data["map_data"]);
         };
 
+        self._renderMapPreview = function (mapSpec, mapData) {
+            if (self.reportType() === "map" && mapSpec) {
+                self.displayMapPreview(true);
+                mapSpec.mapboxAccessToken = self._mapboxAccessToken;
+                var render = hqImport('reports_core/js/maps.js').render;
+                render(mapSpec, mapData.aaData, $("#map-preview-container"));
+            } else {
+                self.displayMapPreview(false);
+            }
+        };
 
         self._renderChartPreview = function (data) {
             var charts = hqImport('reports_core/js/charts.js');
@@ -370,6 +394,7 @@ var reportBuilder = function () {
                 "aggregate": self.isAggregationEnabled(),
                 "chart": self.selectedChart(),
                 "columns": _.map(self.selectedColumns(), function (c) { return c.serialize(self.isAggregationEnabled()); }),
+                "location_field": self.location_field(),  
                 "default_filters": JSON.parse(self.defaultFilterList.serializedProperties()),
                 "user_filters": JSON.parse(self.filterList.serializedProperties()),
             };
