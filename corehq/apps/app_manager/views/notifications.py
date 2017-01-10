@@ -22,7 +22,7 @@ def notify_event(domain, couch_user, app_id, unique_form_id, message):
     message = message.encode('utf-8') if isinstance(message, unicode) else message
     doc_url = 'https://confluence.dimagi.com/display/internal/App+Builder+Notifications'
     what = _('what is this?')
-    message = '{} (<a href="{}" target="_blank">{}</a>)'.format(message, doc_url, what)
+    message = u'{} (<a href="{}" target="_blank">{}</a>)'.format(message, doc_url, what)
     message_obj = RedisMessage(json.dumps({
         'domain': domain,
         'user_id': couch_user._id,
