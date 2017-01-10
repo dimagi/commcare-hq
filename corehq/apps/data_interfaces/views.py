@@ -498,10 +498,12 @@ class XFormManagementView(DataInterfaceSection):
 
     def post(self, request, *args, **kwargs):
         form_ids = self.get_xform_ids(request)
-        inaccessible_forms_accessed = self.inaccessible_forms_accessed(form_ids, self.domain, request.couch_user)
-        if inaccessible_forms_accessed:
-            return HttpResponseBadRequest(
-                "Inaccessible forms accessed. Id(s): %s " % ','.join(inaccessible_forms_accessed))
+        if not self.request.can_access_all_locations:
+            inaccessible_forms_accessed = self.inaccessible_forms_accessed(
+                form_ids, self.domain, request.couch_user)
+            if inaccessible_forms_accessed:
+                return HttpResponseBadRequest(
+                    "Inaccessible forms accessed. Id(s): %s " % ','.join(inaccessible_forms_accessed))
 
         mode = self.request.POST.get('mode')
         task_ref = expose_cached_download(payload=None, expiry=1*60*60, file_extension=None)
