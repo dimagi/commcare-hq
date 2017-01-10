@@ -79,7 +79,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                     value: 'fixture'
                 },
                 {
-                    label: 'User Case',
+                    label: 'User Properties',
                     value: 'usercase'
                 }
             ];
