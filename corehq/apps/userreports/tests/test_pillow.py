@@ -190,8 +190,17 @@ class ProcessRelatedDocTypePillowTest(TestCase):
     @softer_assert()
     def setUp(self):
         self.pillow = get_kafka_ucr_pillow()
+        self.config = get_data_source_with_related_doc_type()
+        self.config.save()
+        self.adapter = get_indicator_adapter(self.config)
+
+        self.pillow.bootstrap(configs=[self.config])
         with trap_extra_setup(KafkaUnavailableError):
             self.pillow.get_change_feed().get_current_offsets()
+
+    def tearDown(self):
+        self.config.delete()
+        self.adapter.drop_table()
 
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
     def test_process_doc_from_sql_stale(self):
@@ -201,15 +210,6 @@ class ProcessRelatedDocTypePillowTest(TestCase):
 
         http://manage.dimagi.com/default.asp?245341
         '''
-        config = get_data_source_with_related_doc_type()
-        config.save()
-
-        self.pillow.bootstrap(configs=[config])
-
-        adapter = get_indicator_adapter(config)
-
-        self.addCleanup(config.delete)
-        self.addCleanup(adapter.drop_table)
 
         for i in range(3):
             since = self.pillow.get_change_feed().get_current_offsets()
@@ -233,7 +233,7 @@ class ProcessRelatedDocTypePillowTest(TestCase):
                 ], domain=self.domain
             )
             self.pillow.process_changes(since=since, forever=False)
-            rows = adapter.get_query_object()
+            rows = self.adapter.get_query_object()
             self.assertEqual(rows.count(), 1)
             row = rows[0]
             self.assertEqual(int(row.parent_property), i)
