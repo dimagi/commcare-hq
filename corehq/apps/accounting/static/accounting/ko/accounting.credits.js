@@ -28,7 +28,7 @@ hqDefine('accounting/ko/accounting.credits.js', function () {
         self.products = products;
         self.features = features;
         self.paymentHandler = paymentHandler;
-        self.plain_credit = ko.observable(new PlainCreditItem(paymentHandler));
+        self.general_credit = ko.observable(new GeneralCreditItem(paymentHandler));
 
         self.triggerPayment = function(paymentMethod) {
             self.paymentHandler.reset();
@@ -36,16 +36,16 @@ hqDefine('accounting/ko/accounting.credits.js', function () {
             self.paymentHandler.costItem(new PrepaymentItems({
                 products: self.products,
                 features: self.features,
-                plain_credit: self.plain_credit,
+                general_credit: self.general_credit,
             }));
         };
     };
 
-    var PlainCreditItem = function(paymentHandler) {
+    var GeneralCreditItem = function(paymentHandler) {
         'use strict';
         var self = this;
         self.name = ko.observable("Credits");
-        self.creditType = ko.observable("plain_credit");
+        self.creditType = ko.observable("general_credit");
         self.addAmount = ko.observable(0);
         self.addAmountValid = ko.computed(function(){
             return  parseFloat(self.addAmount()) === 0 || (parseFloat(self.addAmount()) >= 0.5);

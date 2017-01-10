@@ -1135,10 +1135,10 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
 
         items = products + features
 
-        if Decimal(request.POST.get('plain_credit', 0)) > 0:
+        if Decimal(request.POST.get('general_credit', 0)) > 0:
             items.append({
                 'type': 'General Credits',
-                'amount': Decimal(request.POST.get('plain_credit', 0))
+                'amount': Decimal(request.POST.get('general_credit', 0))
             })
 
         return items
