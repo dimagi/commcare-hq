@@ -325,7 +325,7 @@
             {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
             <li>
                 <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
-                    {% trans "User Case Management" %}
+                    {% trans "User Properties" %}
                 </a>
             </li>
             {% endif %}{% endif %}
@@ -384,10 +384,10 @@
                     </p>
                 {% elif form.source %}
                     <header class="clearfix">
-                        <h4 class="pull-left">{% trans "User Case Management" %}</h4>
+                        <h4 class="pull-left">{% trans "User Properties" %}</h4>
                         <span class="hq-help-template"
-                            data-title="{% trans "User Case Management" %}"
-                            data-content="{% trans "The user case allows you to store data about the user in a case and use that data in forms." %}"
+                            data-title="{% trans "User Properties" %}"
+                            data-content="{% trans "User properties allow you to store data about the user in a case and use that data in forms." %}"
                         ></span>
                     </header>
                     <div class="casexml" id="usercasexml_home">
@@ -395,15 +395,15 @@
                             {%  if form.uses_usercase and not allow_usercase %}
                                 <div class="container-fluid col-sm-6">
                                 <p>{% blocktrans %}
-                                    The User Case feature is no longer available because of the change in your
+                                    The User Properties feature is no longer available because of the change in your
                                     CommCare subscription. Although currently-deployed applications will still
                                     function properly, it will not be possible to update or redeploy them unless
-                                    the User Case functionality is removed, or you upgrade your CommCare
+                                    the User Properties functionality is removed, or you upgrade your CommCare
                                     subscription.
                                 {% endblocktrans %}</p>
 
                                 <p class="alert alert-danger">{% blocktrans %}
-                                    WARNING: By clicking "Remove User Case Properties" you will lose User Case
+                                    WARNING: By clicking "Remove User Properties" you will lose User Properties
                                     functionality if you redeploy your application. However, you will still be
                                     able to see all previously collected data.
                                 {% endblocktrans %}</p>
@@ -413,7 +413,7 @@
                                         {% trans "Change your subscription" %}
                                     </a>
                                     <a href="{% url 'drop_user_case' domain app.id %}" class="btn btn-danger">
-                                        {% trans "Remove User Case Properties" %}
+                                        {% trans "Remove User Properties" %}
                                     </a>
                                 </p>
                                 </div>
@@ -423,7 +423,7 @@
                     </div>
                 {% else %}
                     <p class="alert alert-warning">
-                        {% trans "You have not created a form yet. Create a form in order to view and edit User Case Management." %}
+                        {% trans "You have not created a form yet. Create a form in order to view and edit User Properties." %}
                     </p>
                 {% endif %}
             </div>
