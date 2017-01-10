@@ -51,8 +51,6 @@ class MessageTestCase(TestCase):
             location_type=cls.location_type
         )
 
-        cls.couch_location = cls.location.couch_location
-
     @classmethod
     def tearDownClass(cls):
         cls.mobile_user.delete()
@@ -167,7 +165,7 @@ class MessageTestCase(TestCase):
             expected_result['case']['last_modified_by'] = self.get_expected_template_params_for_mobile()
             self.assertEqual(get_message_template_params(case), expected_result)
 
-        with self.create_parent_case(owner=self.couch_location) as case:
+        with self.create_parent_case(owner=self.location) as case:
             expected_result = {'case': case.to_json()}
             expected_result['case']['owner'] = self.get_expected_template_params_for_location()
             expected_result['case']['last_modified_by'] = self.get_expected_template_params_for_mobile()
@@ -175,13 +173,13 @@ class MessageTestCase(TestCase):
 
     @run_with_all_backends
     def test_modified_by_template_params(self):
-        with self.create_parent_case(modified_by=self.mobile_user, owner=self.couch_location) as case:
+        with self.create_parent_case(modified_by=self.mobile_user, owner=self.location) as case:
             expected_result = {'case': case.to_json()}
             expected_result['case']['owner'] = self.get_expected_template_params_for_location()
             expected_result['case']['last_modified_by'] = self.get_expected_template_params_for_mobile()
             self.assertEqual(get_message_template_params(case), expected_result)
 
-        with self.create_parent_case(modified_by=self.web_user, owner=self.couch_location) as case:
+        with self.create_parent_case(modified_by=self.web_user, owner=self.location) as case:
             expected_result = {'case': case.to_json()}
             expected_result['case']['owner'] = self.get_expected_template_params_for_location()
             expected_result['case']['last_modified_by'] = self.get_expected_template_params_for_web()
