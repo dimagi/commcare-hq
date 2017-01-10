@@ -20,7 +20,7 @@ from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.signals import commcare_domain_pre_delete
-from corehq.apps.locations.models import Location, SQLLocation
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.util.quickcache import quickcache
@@ -295,17 +295,10 @@ class SupplyPointCase(CommCareCase):
 
     @property
     @memoized
-    def location(self):
-        if self.location_id is None:
-            return None
-        try:
-            return Location.get(self.location_id)
-        except ResourceNotFound:
-            return None
-
-    @property
     def sql_location(self):
         return SQLLocation.objects.get(location_id=self.location_id)
+
+    location = sql_location
 
 
 UNDERSTOCK_THRESHOLD = 0.5  # months
