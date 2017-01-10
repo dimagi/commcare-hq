@@ -245,22 +245,13 @@ var reportBuilder = function () {
         };
 
         self.renderReportPreview = function (data) {
+            self._renderTablePreview(data['table']);
+            self._renderChartPreview(data['table']);
+        };
+
+
+        self._renderChartPreview = function (data) {
             var charts = hqImport('reports_core/js/charts.js');
-
-            if (self.dataTable) {
-                self.dataTable.destroy();
-            }
-            $('#preview').empty();
-            self.dataTable = $('#preview').DataTable({
-                "autoWidth": false,
-                "ordering": false,
-                "paging": false,
-                "searching": false,
-                "columns": _.map(data[0], function(column) { return {"title": column}; }),
-                "data": data.slice(1),
-            });
-            $('#preview').show();
-
             if (self.selectedChart() !== "none") {
                 if (data) {
                     // data looks like headers, followed by rows of values
@@ -313,6 +304,22 @@ var reportBuilder = function () {
                     charts.render(chartSpecs, aaData, $('#chart'));
                 }
             }
+        };
+
+        self._renderTablePreview = function (data) {
+            if (self.dataTable) {
+                self.dataTable.destroy();
+            }
+            $('#preview').empty();
+            self.dataTable = $('#preview').DataTable({
+                "autoWidth": false,
+                "ordering": false,
+                "paging": false,
+                "searching": false,
+                "columns": _.map(data[0], function(column) { return {"title": column}; }),
+                "data": data.slice(1),
+            });
+            $('#preview').show();
         };
 
         self.removeColumn = function (column) {
