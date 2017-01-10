@@ -7,7 +7,10 @@ from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.es import cases as case_es
+from corehq.apps.es.users import UserES
 from corehq.apps.groups.models import Group
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.display import FormDisplay
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.generic import GenericReportView
@@ -17,6 +20,7 @@ from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
 from corehq.apps.reports.standard.inspect import SubmitHistoryMixin
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
+from corehq.apps.reports.util import get_simplified_users
 
 from .dispatcher import EditDataInterfaceDispatcher
 
@@ -34,6 +38,7 @@ class DataInterface(GenericReportView):
         return reverse('data_interfaces_default', args=[self.request.project])
 
 
+@location_safe
 class CaseReassignmentInterface(CaseListMixin, DataInterface):
     name = ugettext_noop("Reassign Cases")
     slug = "reassign_cases"
@@ -83,12 +88,21 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface):
     @property
     def report_context(self):
         context = super(CaseReassignmentInterface, self).report_context
-        active_users = self.get_all_users_by_domain(user_filter=tuple(HQUserType.all()), simplified=True)
+        if not self.request.can_access_all_locations:
+            accessible_location_ids = (SQLLocation.active_objects.accessible_location_ids(
+                self.request.domain,
+                self.request.couch_user)
+            )
+            user_query = UserES().location(accessible_location_ids)
+            active_users = get_simplified_users(user_query)
+        else:
+            active_users = self.get_all_users_by_domain(user_filter=tuple(HQUserType.all()), simplified=True)
+            context.update(groups=[dict(ownerid=group.get_id, name=group.name, type="group")
+                                   for group in self.all_case_sharing_groups],
+                           )
         context.update(
             users=[dict(ownerid=user.user_id, name=user.username_in_report, type="user")
                    for user in active_users],
-            groups=[dict(ownerid=group.get_id, name=group.name, type="group")
-                    for group in self.all_case_sharing_groups],
             user_ids=self.user_ids,
         )
         return context
@@ -164,6 +178,7 @@ class ArchiveOrNormalFormFilter(BaseSingleOptionFilter):
         return FormManagementMode(self.request.GET.get(self.slug)).mode_name
 
 
+@location_safe
 class BulkFormManagementInterface(SubmitHistoryMixin, DataInterface, ProjectReport):
     name = ugettext_noop("Manage Forms")
     slug = "bulk_archive_forms"
