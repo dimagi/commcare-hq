@@ -56,12 +56,8 @@
 </script>
 
 <script type="text/html" id="form-fullform-ko-template">
-    <div class="breadcrumb-form-container"
-         data-bind="css: { 'breadcrumb-form-single-question': showInFormNavigation }">
-      <ol class="breadcrumb breadcrumb-form">
-        <li class="js-home breadcrumb-text"><i class="fa fa-home"></i></li>
-        <li class="breadcrumb-text" data-bind="text: title"></li>
-      </ol>
+    <div class="webforms-nav-container"
+         data-bind="css: { 'webforms-nav-single-question': showInFormNavigation }">
       <div class="webforms-nav"
            data-bind="template: { name: 'form-navigation-ko-template' }"></div>
     </div>
@@ -97,7 +93,6 @@
 </script>
 
 <script type="text/html" id="instance-viewer-ko-template">
-        <hr/>
         <div id="instance-xml-home" class="debugger" data-bind="
             css: {
                 'debugger-minimized': isMinimized,
@@ -105,14 +100,9 @@
             }
             ">
             <!-- Tab title -->
-            <div class="debugger-tab-title">
+            <div class="debugger-tab-title" data-bind="click: toggleState">
                 <i class="fa fa-table"></i>
                 <span class="debugger-title">{% trans "Data Preview" %}</span>
-                <a class="pull-right" data-bind="
-                    click: toggleState,
-                    text: isMinimized() ? gettext('Show Data Preview') : gettext('Hide Data Preview')
-                    ">
-                </a>
             </div>
 
             <!-- Debugger content -->
@@ -137,7 +127,12 @@
                     <div class="collapse navbar-collapse" id="debugger-navbar-collapse">
                       <ul class="nav navbar-nav">
                         <li role="presentation" class="active">
-                            <a href="#debugger-form-data" aria-controls="debugger-form-data" role="tab" data-toggle="tab">
+                            <a
+                                href="#debugger-form-data"
+                                aria-controls="debugger-form-data"
+                                role="tab"
+                                data-toggle="tab"
+                                data-bind="click: collapseNavbar">
                                 {% trans "Form Data" %}
                             </a>
                         </li>
@@ -147,17 +142,29 @@
                                 aria-controls="debugger-xml-instance"
                                 role="tab"
                                 id="debugger-xml-instance-tab"
-                                data-toggle="tab">
+                                data-toggle="tab"
+                                data-bind="click: collapseNavbar"
+                                >
                                 {% trans "Form XML" %}
                             </a>
                         </li>
                         <li role="presentation">
-                            <a href="#debugger-evaluate" aria-controls="debugger-evaluate" role="tab" data-toggle="tab">
+                            <a
+                                href="#debugger-evaluate"
+                                aria-controls="debugger-evaluate"
+                                role="tab"
+                                data-bind="click: collapseNavbar"
+                                data-toggle="tab">
                                 {% trans "Evaluate XPath" %}
                             </a>
                         </li>
                         <li role="presentation">
-                            <a href="#debugger-settings" aria-controls="debugger-settings" role="tab" data-toggle="tab">
+                            <a
+                                href="#debugger-settings"
+                                aria-controls="debugger-settings"
+                                role="tab"
+                                data-bind="click: collapseNavbar"
+                                data-toggle="tab">
                                 {% trans "Settings" %}
                             </a>
                         </li>
@@ -236,9 +243,10 @@
       </form>
       <div class="row">
         <div class="col-sm-12">
-          <h3>{% trans "Recent Queries" %}</h3>
+          <h4>{% trans "Recent Queries" %}</h4>
         </div>
       </div>
+      <!-- ko if: recentXPathQueries().length -->
       <table class="table table-striped table-hover">
         <tbody data-bind="foreach: recentXPathQueries">
           <tr class="query-container" data-bind="click: $parent.onClickSavedQuery">
@@ -261,6 +269,14 @@
           </tr>
         </tbody>
       </table>
+      <!-- /ko -->
+      <!-- ko ifnot: recentXPathQueries().length -->
+      <div class="row">
+        <div class="col-sm-12">
+          <i>{% trans "No recent queries" %}</i>
+        </div>
+      </div>
+      <!-- /ko -->
 </script>
 
 <script type="text/html" id="question-fullform-ko-template">

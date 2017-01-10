@@ -142,25 +142,28 @@ def redirect_to_default(req, domain=None):
             domains = [Domain.get_by_name(domain)]
         else:
             domains = Domain.active_for_user(req.user)
+
         if 0 == len(domains) and not req.user.is_superuser:
             return redirect('registration_domain')
         elif 1 == len(domains):
             if domains[0]:
                 domain = domains[0].name
                 couch_user = req.couch_user
-
-                if (couch_user.is_commcare_user() and
-                        couch_user.can_view_some_reports(domain)):
-                    if toggles.USE_FORMPLAYER_FRONTEND.enabled(domain):
-                        url = reverse(FormplayerMain.urlname, args=[domain])
+                from corehq.apps.users.models import DomainMembershipError
+                try:
+                    if (couch_user.is_commcare_user() and
+                            couch_user.can_view_some_reports(domain)):
+                        if toggles.USE_FORMPLAYER_FRONTEND.enabled(domain):
+                            url = reverse(FormplayerMain.urlname, args=[domain])
+                        else:
+                            url = reverse("cloudcare_main", args=[domain, ""])
                     else:
-                        url = reverse("cloudcare_main", args=[domain, ""])
-                else:
-                    from corehq.apps.dashboard.views import dashboard_default
-                    return dashboard_default(req, domain)
-
+                        from corehq.apps.dashboard.views import dashboard_default
+                        return dashboard_default(req, domain)
+                except DomainMembershipError:
+                    raise Http404()
             else:
-                raise Http404
+                raise Http404()
         else:
             url = settings.DOMAIN_SELECT_URL
     return HttpResponseRedirect(url)

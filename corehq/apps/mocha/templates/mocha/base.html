@@ -14,10 +14,15 @@
     <script>
         mocha.setup('bdd')
         window.assert = chai.assert
+
+        function gettext(str) {
+            return str;
+        }
     </script>
 
     <!-- Core Libraries -->
     {% block core_libraries %}
+    {% include "style/includes/jquery.html" %}
     {% include "style/includes/core_libraries.html" %}
     {% include "style/includes/ko.html" %}
     <script src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>

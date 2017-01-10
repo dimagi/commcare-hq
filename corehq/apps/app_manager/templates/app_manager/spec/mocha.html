@@ -1,17 +1,21 @@
 {% extends "mocha/base.html" %}
 {% load hq_shared_tags %}
 
-{% block dependencies %}
-<script src="{% static 'knockout/knockout.js' %}"></script>
-<script src="{% static 'style/lib/knockout_plugins/knockout_mapping.ko.min.js' %}"></script>
+{% block core_libraries %}{{ block.super }}
+{% include "style/includes/angular.html" %}
+<script src="{% static 'angular-mocks/angular-mocks.js' %}"></script>
+{% endblock %}
 
+{% block dependencies %}
 <script src="{% static 'app_manager/js/form_workflow.js' %}"></script>
 <script src="{% static 'app_manager/js/download_async_modal.js' %}"></script>
 <script src="{% static 'app_manager/js/releases.js' %}"></script>
 <script src="{% static 'app_manager/js/app_manager_utils.js' %}"></script>
+<script src="{% static 'app_manager/js/app_summary.ng.js' %}"></script>
 {% endblock %}
 
 {% block mocha_tests %}
+<script src="{% static 'app_manager/spec/app_summary_spec.js' %}"></script>
 <script src="{% static 'app_manager/spec/form_workflow_spec.js' %}"></script>
 <script src="{% static 'app_manager/spec/download_async_modal_spec.js' %}"></script>
 <script src="{% static 'app_manager/spec/releases_spec.js' %}"></script>

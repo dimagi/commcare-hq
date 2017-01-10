@@ -61,12 +61,14 @@ USER_CASE_XPATH_SUBSTRING_MATCHES = [
 
 
 def app_doc_types():
-    from corehq.apps.app_manager.models import Application, RemoteApp
+    from corehq.apps.app_manager.models import Application, RemoteApp, LinkedApplication
     return {
         'Application': Application,
         'Application-Deleted': Application,
         'RemoteApp': RemoteApp,
         'RemoteApp-Deleted': RemoteApp,
+        'LinkedApplication': LinkedApplication,
+        'LinkedApplication-Deleted': LinkedApplication
     }
 
 

@@ -282,7 +282,7 @@ class LocationQueriesMixin(object):
 
     def accessible_to_user(self, domain, user):
         if user.has_permission(domain, 'access_all_locations'):
-            return self.all()
+            return self.filter(domain=domain)
 
         assigned_location_ids = user.get_location_ids(domain)
         if not assigned_location_ids:
@@ -379,13 +379,13 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
     _migration_couch_id_name = "location_id"  # Used for SyncSQLToCouchMixin
     location_type = models.ForeignKey(LocationType, on_delete=models.CASCADE)
     site_code = models.CharField(max_length=255)
-    external_id = models.CharField(max_length=255, null=True)
-    metadata = jsonfield.JSONField(default=dict)
+    external_id = models.CharField(max_length=255, null=True, blank=True)
+    metadata = jsonfield.JSONField(default=dict, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
     is_archived = models.BooleanField(default=False)
-    latitude = models.DecimalField(max_digits=20, decimal_places=10, null=True)
-    longitude = models.DecimalField(max_digits=20, decimal_places=10, null=True)
+    latitude = models.DecimalField(max_digits=20, decimal_places=10, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=20, decimal_places=10, null=True, blank=True)
     parent = TreeForeignKey('self', null=True, blank=True, related_name='children', on_delete=models.CASCADE)
 
     # Use getter and setter below to access this value
@@ -395,7 +395,7 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
     _products = models.ManyToManyField(SQLProduct)
     stocks_all_products = models.BooleanField(default=True)
 
-    supply_point_id = models.CharField(max_length=255, db_index=True, unique=True, null=True)
+    supply_point_id = models.CharField(max_length=255, db_index=True, unique=True, null=True, blank=True)
 
     objects = _tree_manager = LocationManager()
     # This should really be the default location manager

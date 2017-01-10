@@ -900,6 +900,9 @@ class XForm(WrappedNode):
 
         if the xform is bad, it will raise an XFormException
 
+        :param include_triggers: When set to True will return label questions as well as regular questions
+        :param include_groups: When set will return repeats and group questions
+        :param include_translations: When set to True will return all the translations for the question
         """
 
         if not self.exists():
@@ -911,7 +914,6 @@ class XForm(WrappedNode):
 
         control_nodes = self.get_control_nodes()
         leaf_data_nodes = self.get_leaf_data_nodes()
-        use_hashtags = not not form
 
         for node, path, repeat, group, items, is_leaf, data_type, relevant, required in control_nodes:
             excluded_paths.add(path)
@@ -934,10 +936,8 @@ class XForm(WrappedNode):
                 "relevant": relevant,
                 "required": required == "true()",
                 "comment": self._get_comment(leaf_data_nodes, path),
+                "hashtagValue": self.hashtag_path(path),
             }
-            if use_hashtags:
-                question.update({"hashtagValue": self.hashtag_path(path)})
-
             if include_translations:
                 question["translations"] = self.get_label_translations(node, langs)
 
@@ -993,16 +993,12 @@ class XForm(WrappedNode):
                                 "stock_type_attributes": dict(parent.attrib),
                             })
 
-                if use_hashtags:
-                    hashtag_path = self.hashtag_path(path)
-                    question.update({
-                        "label": hashtag_path,
-                        "hashtagValue": hashtag_path,
-                    })
-                else:
-                    question.update({
-                        "label": path,
-                    })
+                hashtag_path = self.hashtag_path(path)
+                question.update({
+                    "label": hashtag_path,
+                    "hashtagValue": hashtag_path,
+                })
+
                 if include_translations:
                     question["translations"] = {}
 

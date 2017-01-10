@@ -15,11 +15,9 @@ from corehq.apps.ivr.models import Call
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.apps.sms.models import (SMS, SQLMobileBackend, OUTGOING,
-    SQLMobileBackendMapping, PhoneNumber)
+    SQLMobileBackendMapping, PhoneNumber, Keyword, KeywordAction)
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.groups.models import Group
-from corehq.apps.reminders.models import (SurveyKeyword, SurveyKeywordAction,
-    RECIPIENT_SENDER, METHOD_SMS_SURVEY, METHOD_STRUCTURED_SMS, METHOD_SMS)
 from corehq.apps.app_manager.models import import_app
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.util.test_utils import unit_testing_only
@@ -147,90 +145,72 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
         return app
 
     def create_sms_keyword(self, keyword, reply_sms,
-        override_open_sessions=True, initiator_filter=None,
-        recipient=RECIPIENT_SENDER, recipient_id=None):
-        sk = SurveyKeyword(
+            override_open_sessions=True, initiator_filter=None,
+            recipient=KeywordAction.RECIPIENT_SENDER, recipient_id=None):
+
+        k = Keyword(
             domain=self.domain,
             keyword=keyword,
             description=keyword,
-            actions=[SurveyKeywordAction(
-                recipient=recipient,
-                recipient_id=recipient_id,
-                action=METHOD_SMS,
-                message_content=reply_sms,
-                form_unique_id=None,
-                use_named_args=False,
-                named_args={},
-                named_args_separator=None,
-            )],
-            delimiter=None,
             override_open_sessions=override_open_sessions,
             initiator_doc_type_filter=initiator_filter or [],
         )
-        sk.save()
-        self.keywords.append(sk)
-        return sk
+        k.save()
+
+        k.keywordaction_set.create(
+            recipient=recipient,
+            recipient_id=recipient_id,
+            action=KeywordAction.ACTION_SMS,
+            message_content=reply_sms,
+        )
 
     def create_survey_keyword(self, keyword, form_unique_id, delimiter=None,
-        override_open_sessions=True, initiator_filter=None):
-        sk = SurveyKeyword(
+            override_open_sessions=True, initiator_filter=None):
+
+        k = Keyword(
             domain=self.domain,
             keyword=keyword,
             description=keyword,
-            actions=[SurveyKeywordAction(
-                recipient=RECIPIENT_SENDER,
-                recipient_id=None,
-                action=METHOD_SMS_SURVEY,
-                message_content=None,
-                form_unique_id=form_unique_id,
-                use_named_args=False,
-                named_args={},
-                named_args_separator=None,
-            )],
             delimiter=delimiter,
             override_open_sessions=override_open_sessions,
             initiator_doc_type_filter=initiator_filter or [],
         )
-        sk.save()
-        self.keywords.append(sk)
-        return sk
+        k.save()
+
+        k.keywordaction_set.create(
+            recipient=KeywordAction.RECIPIENT_SENDER,
+            action=KeywordAction.ACTION_SMS_SURVEY,
+            form_unique_id=form_unique_id,
+        )
 
     def create_structured_sms_keyword(self, keyword, form_unique_id, reply_sms,
-        delimiter=None, named_args=None, named_args_separator=None,
-        override_open_sessions=True, initiator_filter=None):
-        sk = SurveyKeyword(
+            delimiter=None, named_args=None, named_args_separator=None,
+            override_open_sessions=True, initiator_filter=None):
+
+        k = Keyword(
             domain=self.domain,
             keyword=keyword,
             description=keyword,
-            actions=[
-                SurveyKeywordAction(
-                    recipient=RECIPIENT_SENDER,
-                    recipient_id=None,
-                    action=METHOD_SMS,
-                    message_content=reply_sms,
-                    form_unique_id=None,
-                    use_named_args=False,
-                    named_args={},
-                    named_args_separator=None,
-                ),
-                SurveyKeywordAction(
-                    recipient=RECIPIENT_SENDER,
-                    recipient_id=None,
-                    action=METHOD_STRUCTURED_SMS,
-                    message_content=None,
-                    form_unique_id=form_unique_id,
-                    use_named_args=(named_args is not None),
-                    named_args=(named_args or {}),
-                    named_args_separator=named_args_separator,
-                )
-            ],
             delimiter=delimiter,
             override_open_sessions=override_open_sessions,
             initiator_doc_type_filter=initiator_filter or [],
         )
-        sk.save()
-        self.keywords.append(sk)
-        return sk
+        k.save()
+
+        k.keywordaction_set.create(
+            recipient=KeywordAction.RECIPIENT_SENDER,
+            action=KeywordAction.ACTION_SMS,
+            message_content=reply_sms,
+        )
+
+        k.keywordaction_set.create(
+            recipient=KeywordAction.RECIPIENT_SENDER,
+            action=KeywordAction.ACTION_STRUCTURED_SMS,
+            form_unique_id=form_unique_id,
+            use_named_args=(named_args is not None),
+            named_args=(named_args or {}),
+            named_args_separator=named_args_separator,
+        )
 
     def create_site(self):
         site = Site(id=settings.SITE_ID, domain=self.live_server_url,

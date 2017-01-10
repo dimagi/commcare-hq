@@ -5,6 +5,7 @@ from corehq.apps.app_manager import models
 from corehq.apps.app_manager.suite_xml.xml_models import Locale, Text, Command, Entry, \
     SessionDatum, Detail, Header, Field, Template, Series, ConfigurationGroup, \
     ConfigurationItem, GraphTemplate, Graph, Xpath, XpathVariable
+from corehq.apps.reports_core.filters import DynamicChoiceListFilter, ChoiceListFilter
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.util.quickcache import quickcache
 
@@ -101,7 +102,7 @@ def _get_select_details(config):
                 ),
             )
         ]
-    ).serialize())
+    ).serialize().decode('utf-8'))
 
 
 def _get_summary_details(config, domain):
@@ -220,9 +221,7 @@ def _get_data_detail(config, domain):
 
             def _get_word_eval(word_translations, default_value):
                 word_eval = default_value
-                for lang_translation_pair in word_translations:
-                    lang = lang_translation_pair[0]
-                    translation = lang_translation_pair[1]
+                for lang, translation in word_translations.items():
                     word_eval = _get_conditional(
                         "$lang = '{lang}'".format(
                             lang=lang,
@@ -239,12 +238,17 @@ def _get_data_detail(config, domain):
                 default_val = "column[@id='{column_id}']"
                 xpath_function = default_val
                 for word, translations in transform['translations'].items():
+                    if isinstance(translations, basestring):
+                        # This is a flat mapping, not per-language translations
+                        word_eval = "'{}'".format(translations)
+                    else:
+                        word_eval = _get_word_eval(translations, default_val)
                     xpath_function = _get_conditional(
                         u"{value} = '{word}'".format(
                             value=default_val,
                             word=word,
                         ),
-                        _get_word_eval(translations, default_val),
+                        word_eval,
                         xpath_function
                     )
                 return Xpath(
@@ -295,7 +299,7 @@ class _MobileSelectFilterHelpers(object):
     def get_filters(config, domain):
         return [(slug, f) for slug, f in config.filters.items()
                 if isinstance(f, MobileSelectFilter)
-                and config.report(domain).get_ui_filter(slug)]
+                and is_valid_mobile_select_filter_type(config.report(domain).get_ui_filter(slug))]
 
     @staticmethod
     def get_datum_id(config, filter_slug):
@@ -309,7 +313,7 @@ class _MobileSelectFilterHelpers(object):
 
     @staticmethod
     def get_select_details(config, filter_slug, domain):
-        return models.Detail(custom_xml=Detail(
+        detail = Detail(
             id=_MobileSelectFilterHelpers.get_select_detail_id(config, filter_slug),
             title=Text(config.report(domain).get_ui_filter(filter_slug).label),
             fields=[
@@ -322,7 +326,8 @@ class _MobileSelectFilterHelpers(object):
                     ),
                 )
             ]
-        ).serialize())
+        ).serialize()
+        return models.Detail(custom_xml=detail.decode('utf-8'))
 
     @staticmethod
     def get_data_filter_xpath(config, domain):
@@ -331,3 +336,7 @@ class _MobileSelectFilterHelpers(object):
                 column_id=config.report(domain).get_ui_filter(slug).field,
                 datum_id=_MobileSelectFilterHelpers.get_datum_id(config, slug))
             for slug, f in _MobileSelectFilterHelpers.get_filters(config, domain)])
+
+
+def is_valid_mobile_select_filter_type(ui_filter):
+    return isinstance(ui_filter, DynamicChoiceListFilter) or isinstance(ui_filter, ChoiceListFilter)

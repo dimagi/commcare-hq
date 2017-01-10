@@ -624,7 +624,7 @@ class TestReportMultipleAggregations(ConfigurableReportTestMixin, TestCase):
         cls._delete_everything()
         super(TestReportMultipleAggregations, cls).tearDownClass()
 
-    def _create_report(self, aggregation_columns, columns):
+    def _create_report(self, aggregation_columns, columns, filters=None):
         backend_id = settings.OVERRIDE_UCR_BACKEND or UCR_SQL_BACKEND
         report_config = ReportConfiguration(
             domain=self.domain,
@@ -632,20 +632,13 @@ class TestReportMultipleAggregations(ConfigurableReportTestMixin, TestCase):
             title='foo',
             aggregation_columns=aggregation_columns,
             columns=columns,
+            filters=filters or [],
         )
         report_config.save()
         return report_config
 
-    def _create_view(self, report_config):
-        view = ConfigurableReport(request=HttpRequest())
-        view._domain = self.domain
-        view._lang = "en"
-        view._report_config_id = report_config._id
-        return view
-
-    @run_with_all_ucr_backends
-    def test_with_multiple_agg_columns(self):
-        report_config = self._create_report(
+    def _create_default_report(self, filters=None):
+        return self._create_report(
             aggregation_columns=[
                 'indicator_col_id_state',
                 'indicator_col_id_city'
@@ -672,6 +665,52 @@ class TestReportMultipleAggregations(ConfigurableReportTestMixin, TestCase):
                     'column_id': 'report_column_col_id_number',
                     'aggregation': 'sum'
                 }
+            ],
+            filters=filters,
+        )
+
+    def _create_view(self, report_config):
+        view = ConfigurableReport(request=HttpRequest())
+        view._domain = self.domain
+        view._lang = "en"
+        view._report_config_id = report_config._id
+        return view
+
+    @run_with_all_ucr_backends
+    def test_with_multiple_agg_columns(self):
+        report_config = self._create_default_report()
+        view = self._create_view(report_config)
+
+        self.assertEqual(
+            view.export_table,
+            [[
+                u'foo',
+                [
+                    [
+                        u'report_column_display_state',
+                        u'report_column_display_city',
+                        u'report_column_display_number'
+                    ],
+                    [u'MA', u'Boston', 7],
+                    [u'MA', u'Cambridge', 2],
+                    [u'TN', u'Nashville', 1],
+                ]
+            ]]
+        )
+
+    @run_with_all_ucr_backends
+    def test_with_prefilter(self):
+        report_config = self._create_default_report(
+            filters=[
+                {
+                    "pre_value": "MA",
+                    "datatype": "string",
+                    "pre_operator": "=",
+                    "display": "",
+                    "field": "indicator_col_id_state",
+                    "type": "pre",
+                    "slug": "indicator_col_id_state_1"
+                },
             ]
         )
         view = self._create_view(report_config)
@@ -688,7 +727,6 @@ class TestReportMultipleAggregations(ConfigurableReportTestMixin, TestCase):
                     ],
                     [u'MA', u'Boston', 7],
                     [u'MA', u'Cambridge', 2],
-                    [u'TN', u'Nashville', 1],
                 ]
             ]]
         )

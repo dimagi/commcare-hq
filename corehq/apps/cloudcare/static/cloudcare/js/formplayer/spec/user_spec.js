@@ -16,6 +16,22 @@ describe('User', function () {
             assert.throws(instantiate, /without domain/);
         });
     });
+
+    describe('CurrentUser Model', function() {
+        it('should get the display name of a mobile worker', function() {
+            var model = new FormplayerFrontend.Users.Models.CurrentUser();
+            model.username = 'worker@domain.commcarehq.org';
+            assert.equal(model.getDisplayUsername(), 'worker');
+        });
+
+        it('should get the display name of a web user', function() {
+            var model = new FormplayerFrontend.Users.Models.CurrentUser();
+            model.username = 'web@gmail.com';
+            assert.equal(model.getDisplayUsername(), 'web@gmail.com');
+        });
+
+    });
+
     describe('Utils', function() {
         var Utils = FormplayerFrontend.Utils.Users,
             username = 'clark@kent.com',

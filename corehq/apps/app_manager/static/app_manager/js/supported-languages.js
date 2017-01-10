@@ -13,7 +13,7 @@ hqDefine('app_manager/js/supported-languages.js', function () {
                     $.getJSON('/langcodes/langs.json', {term: lang}, function(res) {
                         var index = _.map(res, function(r) { return r.code; }).indexOf(lang);
                         if (index === -1) {
-                            self.message_content("Warning: unrecognized language");
+                            self.message_content(gettext("Warning: unrecognized language"));
                             self.show_error(true);
                         } else {
                             self.message_content(res[index].name);
@@ -46,7 +46,7 @@ hqDefine('app_manager/js/supported-languages.js', function () {
             }
         });
         this.saveButton = COMMCAREHQ.SaveButton.init({
-            unsavedMessage: "You have unsaved changes in your supported languages",
+            unsavedMessage: gettext("You have unsaved changes in your supported languages"),
             save: function () {
                 var message = self.validateGeneral();
                 if (message) {
@@ -55,7 +55,7 @@ hqDefine('app_manager/js/supported-languages.js', function () {
                 }
                 for (var i = 0; i < self.languages().length; i++) {
                     if (self.validateLanguage(self.languages()[i])) {
-                        alert("There are errors in your configuration");
+                        alert(gettext("There are errors in your configuration"));
                         return;
                     }
                 }
@@ -133,7 +133,7 @@ hqDefine('app_manager/js/supported-languages.js', function () {
                 return "";
             }
             if (!self.languages().length) {
-                message = "You must have at least one language";
+                message = gettext("You must have at least one language");
             }
             return message;
         };
@@ -145,9 +145,9 @@ hqDefine('app_manager/js/supported-languages.js', function () {
             }
             var message = "";
             if (!language) {
-                message = "Please enter language";
+                message = gettext("Please enter language");
             } else if (!/^[a-z]{2,3}(-[a-z]*)?$/.exec(language.langcode())) {
-                message = "Invalid language code";
+                message = gettext("Invalid language code");
             }
             for (var i = 0; i < self.languages().length; i++) {
                 self.languages()[i].langcode();
@@ -155,9 +155,9 @@ hqDefine('app_manager/js/supported-languages.js', function () {
                 if (message || language == self.languages()[i]) {
                     continue;
                 } else if (language.langcode() === self.languages()[i].langcode()) {
-                    message = "Language appears twice";
+                    message = gettext("Language appears twice");
                 } else if (language.originalLangcode() === self.languages()[i].originalLangcode()) {
-                    message = "This conflicts with a current language";
+                    message = gettext("This conflicts with a current language");
                 }
             }
             language.message_content(message);

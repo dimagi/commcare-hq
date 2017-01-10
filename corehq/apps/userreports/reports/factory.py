@@ -12,7 +12,7 @@ from corehq.apps.userreports.reports.specs import PieChartSpec, \
 class ReportFactory(object):
 
     @classmethod
-    def from_spec(cls, spec, include_prefilters=False):
+    def from_spec(cls, spec, include_prefilters=False, backend=None):
         from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
         order_by = [(o['field'], o['order']) for o in spec.sort_expression]
         filters = spec.filters if include_prefilters else spec.filters_without_prefilters
@@ -23,6 +23,7 @@ class ReportFactory(object):
             aggregation_columns=spec.aggregation_columns,
             columns=spec.report_columns,
             order_by=order_by,
+            backend=backend,
         )
 
 

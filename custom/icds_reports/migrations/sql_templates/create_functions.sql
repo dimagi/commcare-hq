@@ -1079,7 +1079,7 @@ BEGIN
 		'sum(thr_eligible) AS thr_eligible_child, ' ||
 		'sum(rations_21_plus_distributed) AS thr_rations_21_plus_distributed_child '
 		'FROM ' || quote_ident(_child_health_tablename) || ' ' ||
-		'WHERE month = ' || quote_literal(_start_date) || ' GROUP BY awc_id, month) ut ' ||
+		'WHERE month = ' || quote_literal(_start_date) || ' AND caste != ' || quote_literal(_all_text) || ' GROUP BY awc_id, month) ut ' ||
 	'WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id';
 
 	-- Aggregate monthly ccs record table
@@ -1096,7 +1096,7 @@ BEGIN
 		'sum(thr_eligible) AS thr_eligible_ccs, ' ||
 		'sum(rations_21_plus_distributed) AS thr_rations_21_plus_distributed_ccs '
 		'FROM ' || quote_ident(_ccs_record_tablename) || ' ' ||
-		'WHERE month = ' || quote_literal(_start_date) || ' GROUP BY awc_id, month) ut ' ||
+		'WHERE month = ' || quote_literal(_start_date) || ' AND caste != ' || quote_literal(_all_text) || ' GROUP BY awc_id, month) ut ' ||
 	'WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id';
 
 	-- Pass to combine THR information from ccs record and child health table

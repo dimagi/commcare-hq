@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms" xmlns="http://www.w3.org/2002/xforms" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:jr="http://openrosa.org/javarosa" xmlns:vellum="http://commcarehq.org/xforms/vellum">
+	<h:head>
+		<h:title>Mother</h:title>
+		<model>
+			<instance>
+				<data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="http://openrosa.org/formdesigner/E011B809-6A4D-4F91-8586-6ACC0522BFD8" uiVersion="1" version="1" name="Mother">
+					<child jr:template="">
+						<weight>
+							<name />
+						</weight>
+						<age />
+						<grand_child jr:template="">
+							<age />
+						</grand_child>
+					</child>
+				</data>
+			</instance>
+			<bind vellum:nodeset="#form/child" nodeset="/data/child" />
+			<bind vellum:nodeset="#form/child/weight" nodeset="/data/child/weight" />
+			<bind vellum:nodeset="#form/child/weight/name" nodeset="/data/child/weight/name" type="xsd:string" />
+			<bind vellum:nodeset="#form/child/age" nodeset="/data/child/age" type="xsd:int" />
+			<bind vellum:nodeset="#form/child/grand_child" nodeset="/data/child/grand_child" />
+			<bind vellum:nodeset="#form/child/grand_child/age" nodeset="/data/child/grand_child/age" type="xsd:string" />
+			<itext>
+				<translation lang="en" default="" />
+			</itext>
+		</model>
+	</h:head>
+	<h:body>
+		<group>
+			<repeat vellum:nodeset="#form/child" nodeset="/data/child">
+				<group vellum:ref="#form/child/weight" ref="/data/child/weight">
+					<input vellum:ref="#form/child/weight/name" ref="/data/child/weight/name" />
+				</group>
+				<input vellum:ref="#form/child/age" ref="/data/child/age" />
+				<group>
+					<repeat vellum:nodeset="#form/child/grand_child" nodeset="/data/child/grand_child">
+						<input vellum:ref="#form/child/grand_child/age" ref="/data/child/grand_child/age" />
+					</repeat>
+				</group>
+			</repeat>
+		</group>
+	</h:body>
+</h:html>

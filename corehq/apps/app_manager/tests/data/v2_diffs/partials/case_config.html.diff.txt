@@ -9,29 +9,79 @@
  
  <script type="text/html" id="remove-subcase-modal-template">
      <div class="modal-dialog">
-@@ -53,76 +53,97 @@
+@@ -28,101 +28,125 @@
+         name: 'case-config:condition',
+         data: {condition: condition, config: $data}
+     }, visible: allow.condition()"></div>
+-    <div data-bind="if: allow.case_preload()" class="row">
+-        <div class='col-sm-9 wide-select2s'>
+-            <div class="panel panel-default case-properties"
+-                 data-bind="template: 'case-config:case-transaction:case-properties'"></div>
++    <div data-bind="if: allow.case_preload()">
++        <div data-bind="if: !allow.vellum_case_management()">
++            <div class="panel panel-appmanager case-preload"
++                 data-bind="template: 'case-config:case-transaction:case-preload'"></div>
+         </div>
++        <div class="panel panel-appmanager case-properties"
++             data-bind="template: 'case-config:case-transaction:case-properties'"></div>
      </div>
+-    <div data-bind="if: !allow.case_preload()" class="row">
+-        <div class="col-sm-9">
+-            <div class="panel panel-default"
+-                 data-bind="template: 'case-config:case-transaction:case-properties'"></div>
++    <div data-bind="if: !allow.case_preload()">
++        <div class="panel panel-appmanager"
++             data-bind="template: 'case-config:case-transaction:case-properties'"></div>
++    </div>
++    {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}
++    {% if app.advanced_app_builder or form.get_action_type != 'open' %}
++        <div class="panel panel-appmanager">
++            <label class="panel-body">
++                <input type="checkbox" data-bind="checked: close_case"/>
++                {% trans "Close this case when the form is complete" %}
++            </label>
++            <div data-bind="template: {
++                name: 'case-config:condition',
++                data: {condition: $data.close_condition, config: $data},
++                if: $data.close_condition
++            }"></div>
+         </div>
+-    </div>
+-    <div class="panel panel-default">
+-        <label class="panel-body">
+-            <input type="checkbox" data-bind="checked: close_case"/>
+-            {% trans "Close this case when the form is complete" %}
+-        </label>
+-        <div data-bind="template: {
+-            name: 'case-config:condition',
+-            data: {condition: $data.close_condition, config: $data},
+-            if: $data.close_condition
+-        }"></div>
+-    </div>
++    {% endif %}
++    {% endif %}
  </script>
  
-+{% if not app.advanced_app_builder %}
-+    <div class="help-block">
-+        {% if form.get_action_type == 'open' %}
-+            This is a Registration form. Use the Registration form to add new cases to your Case List.
-+        {% else %}
-+            This is a Followup form. Use Followup forms to change cases in your Case List.
-+        {% endif %}
-+    </div>
-+{% endif %}
-+
-+{% if not form.source %}
-+    <p class="alert alert-warning">
-+        {% trans "You have not created a form yet. Create a form in order to set up saving." %}
-+    </p>
-+{% endif %}
++<div id="case-config-ko">
  
- <div id="case-config-ko">
+-<div id="case-config-ko">
      <div data-bind="saveButton: saveButton"></div>
++
++    <p class="lead">
++        {% if not app.advanced_app_builder %}
++            {% if form.get_action_type == 'open' %}
++                This is a <strong><i class="fcc fcc-app-createform"></i> Registration</strong> form. Use the Registration form to add new cases to your <strong><i class="fa fa-bars"></i> Case List</strong>.
++            {% else %}
++                This is a <strong><i class="fcc fcc-app-updateform"></i> Followup</strong> form. Use Followup forms to update cases in your <strong><i class="fa fa-bars"></i> Case List</strong>.
++            {% endif %}
++            <br />
++        {% endif %}
++        {% blocktrans %}
++            <strong>Cases</strong> give you a way to track patients, farms, and other entities over time.
++        {% endblocktrans %}
++    </p>
      <div data-bind="template: 'case-config:refresh-form-questions'"></div>
++
      <div data-bind="with: caseConfigViewModel">
 -        <div class="form-inline container-fluid">
 -            {% trans "This form " %}
@@ -74,7 +124,6 @@
 -                 data-bind="template: {name: 'case-config:case-transaction', data: case_transaction}">
 +        {% endif %}
 +        {% if form.source %}
-+            <div class="spacer"></div>
 +            <div data-bind="if: actionType() === 'update'">
 +                <div class="container-fluid"
 +                     data-bind="template: {name: 'case-config:case-transaction', data: case_transaction}">

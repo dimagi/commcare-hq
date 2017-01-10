@@ -454,6 +454,9 @@ Formplayer.ViewModels.CloudCareDebugger = function() {
         setTimeout(self.setContentHeight, 1001);
         window.analytics.workflow('[app-preview] User toggled CloudCare debugger');
     };
+    self.collapseNavbar = function() {
+        $('.navbar-collapse').collapse('hide');
+    };
 
     $.unsubscribe('debugger.update');
     $.subscribe('debugger.update', function(e) {
@@ -478,8 +481,8 @@ Formplayer.ViewModels.CloudCareDebugger = function() {
     };
 
     self.instanceXml.subscribe(function(newXml) {
-        var $instanceTab = $('#debugger-xml-instance-tab'),
-            codeMirror;
+        var codeMirror,
+            $instanceTab = $('#debugger-xml-instance-tab');
 
         codeMirror = CodeMirror(function(el) {
             $('#xml-viewer-pretty').html(el);
@@ -490,7 +493,7 @@ Formplayer.ViewModels.CloudCareDebugger = function() {
             readOnly: true,
             lineNumbers: true,
         });
-        $instanceTab.off();
+        $instanceTab.off('shown.bs.tab');
         $instanceTab.on('shown.bs.tab', function() {
             codeMirror.refresh();
         });
@@ -565,6 +568,7 @@ Formplayer.ViewModels.EvaluateXPath = function() {
             data: autocompleteData,
             searchKey: 'value',
             maxLen: Infinity,
+            highlightFirst: false,
             displayTpl: function(d) {
                 var icon = Formplayer.Utils.getIconFromType(d.type);
                 return '<li><i class="' + icon + '"></i> ${value}</li>';

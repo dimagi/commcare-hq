@@ -1,0 +1,80 @@
+<fixture id="commtrack:locations" user_id="{user_id}">
+  <states>
+    <state id="{massachusetts_id}">
+      <name>Massachusetts</name>
+      <site_code>massachusetts</site_code>
+      <external_id />
+      <latitude />
+      <longitude />
+      <location_type>state</location_type>
+      <supply_point_id />
+      <location_data />
+      <countys>
+        <county id="{middlesex_id}">
+          <name>Middlesex</name>
+          <site_code>middlesex</site_code>
+          <external_id />
+          <latitude />
+          <longitude />
+          <location_type>county</location_type>
+          <supply_point_id />
+          <location_data />
+        </county>
+        <county id="{suffolk_id}">
+          <name>Suffolk</name>
+          <site_code>suffolk</site_code>
+          <external_id />
+          <latitude />
+          <longitude />
+          <location_type>county</location_type>
+          <supply_point_id />
+          <location_data />
+          <citys>
+            <city id="{boston_id}">
+              <name>Boston</name>
+              <site_code>boston</site_code>
+              <external_id />
+              <latitude />
+              <longitude />
+              <location_type>city</location_type>
+              <supply_point_id />
+              <location_data />
+            </city>
+            <city id="{revere_id}">
+              <name>Revere</name>
+              <site_code>revere</site_code>
+              <external_id />
+              <latitude />
+              <longitude />
+              <location_type>city</location_type>
+              <supply_point_id />
+              <location_data />
+            </city>
+          </citys>
+        </county>
+      </countys>
+    </state>
+    <state id="{new_york_id}">
+      <name>New York</name>
+      <site_code>new_york</site_code>
+      <external_id />
+      <latitude />
+      <longitude />
+      <location_type>state</location_type>
+      <supply_point_id />
+      <location_data />
+      <countys>
+        <county id="{new_york_city_id}">
+          <name>New York City</name>
+          <site_code>new_york_city</site_code>
+          <external_id />
+          <latitude />
+          <longitude />
+          <location_type>county</location_type>
+          <supply_point_id />
+          <location_data />
+        </county>
+      </countys>
+    </state>
+  </states>
+</fixture>

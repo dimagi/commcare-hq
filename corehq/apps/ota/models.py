@@ -4,6 +4,7 @@ from django.db import models
 from casexml.apps.phone.restore import stream_response
 from corehq.blobs import get_blob_db
 from corehq.blobs.atomic import AtomicBlobs
+from corehq.blobs.util import random_url_id
 from corehq.blobs.exceptions import NotFound
 
 
@@ -68,7 +69,7 @@ class DemoUserRestore(models.Model):
         elif isinstance(restore, bytes):
             restore = StringIO(restore)
 
-        info = db.put(restore)
+        info = db.put(restore, random_url_id(16))
         self.restore_blob_id = info.identifier
         self.content_length = info.length
 

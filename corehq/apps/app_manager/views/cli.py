@@ -3,6 +3,8 @@ from django.template.loader import render_to_string
 
 from couchdbkit.exceptions import DocTypeError
 from couchdbkit.resource import ResourceNotFound
+
+from corehq.apps.app_manager.util import get_app_manager_template
 from dimagi.ext.couchdbkit import Document
 from dimagi.utils.web import json_response
 from soil import DownloadBase
@@ -94,7 +96,12 @@ def direct_ccz(request, domain):
     errors = app.validate_app()
     if errors:
         lang, langs = get_langs(request, app)
-        error_html = render_to_string('app_manager/v1/partials/build_errors.html', {
+        template = get_app_manager_template(
+            domain,
+            'app_manager/v1/partials/build_errors.html',
+            'app_manager/v2/partials/build_errors.html'
+        )
+        error_html = render_to_string(template, {
             'request': request,
             'app': app,
             'build_errors': errors,
