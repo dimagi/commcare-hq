@@ -23,14 +23,14 @@ def tableau(request, domain, workbook, worksheet):
 
     # set report view-by level based on user's location level
     couch_user = getattr(request, 'couch_user', None)
-    location_type_code, user_site_code, state_code, district_code, block_code = \
+    location_type_code, user_location_id, state_id, district_id, block_id = \
         _get_user_location(couch_user, domain)
     context.update({
         'view_by': location_type_code,
-        'view_by_value': user_site_code,
-        'state_code': state_code,
-        'district_code': district_code,
-        'block_code': block_code,
+        'view_by_value': user_location_id,
+        'state_id': state_id,
+        'district_id': district_id,
+        'block_id': block_id,
     })
 
     # the header is added by nginx
@@ -47,7 +47,7 @@ def tableau(request, domain, workbook, worksheet):
 
 def _get_user_location(user, domain):
     '''
-    Takes a couch_user and returns that users parentage and the location code
+    Takes a couch_user and returns that users parentage and the location id
     '''
     try:
         user_location_id = user.get_domain_membership(domain).location_id
@@ -55,27 +55,26 @@ def _get_user_location(user, domain):
         location_type_code = loc.location_type.code
 
         # Assuming no web users below block level
-        state_code = 'All'
-        district_code = 'All'
-        block_code = 'All'
+        state_id = 'All'
+        district_id = 'All'
+        block_id = 'All'
         if location_type_code == 'state':
-            state_code = loc.site_code
+            state_id = loc.location_id
         elif location_type_code == 'district':
-            state_code = loc.parent.site_code
-            district_code = loc.site_code
+            state_id = loc.parent.location_id
+            district_id = loc.location_id
         elif location_type_code == 'block':
-            state_code = loc.parent.parent.site_code
-            district_code = loc.parent.site_code
-            block_code = loc.site_code
+            state_id = loc.parent.parent.location_id
+            district_id = loc.parent.location_id
+            block_id = loc.location_id
 
-        user_site_code = loc.site_code
     except Exception:
         location_type_code = 'national'
-        user_site_code = ''
-        state_code = 'All'
-        district_code = 'All'
-        block_code = 'All'
-    return location_type_code, user_site_code, state_code, district_code, block_code
+        user_location_id = ''
+        state_id = 'All'
+        district_id = 'All'
+        block_id = 'All'
+    return location_type_code, user_location_id, state_id, district_id, block_id
 
 
 def get_tableau_trusted_url(client_ip):
