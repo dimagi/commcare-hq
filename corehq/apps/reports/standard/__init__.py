@@ -149,11 +149,6 @@ class ProjectReportParametersMixin(object):
         return [user.user_id for user in self.users]
 
     @property
-    @memoized
-    def usernames(self):
-        return {user.user_id: user.username_in_report for user in self.users}
-
-    @property
     def history(self):
         history = self.request_params.get('history', '')
         if history:
