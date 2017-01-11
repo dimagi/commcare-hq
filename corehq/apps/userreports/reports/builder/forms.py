@@ -830,6 +830,31 @@ class ConfigureNewReportBase(forms.Form):
         report.save()
         return report
 
+    def create_temp_report(self, data_source_id):
+        # TODO: Maybe replace this by just allowing a data source to be passed to create_report()?
+        """
+        Creates and saves a report config.
+
+        :raises BadSpecError if report is invalid
+        """
+        from corehq.apps.userreports.views import TEMP_REPORT_PREFIX
+        report = ReportConfiguration(
+            domain=self.domain,
+            config_id=data_source_id,
+            title=self.report_name,
+            aggregation_columns=self._report_aggregation_cols,
+            columns=self._report_columns,
+            filters=self._report_filters,
+            configured_charts=self._report_charts,
+            report_meta=ReportMeta(
+                created_by_builder=True,
+                builder_report_type=self.report_type
+            )
+        )
+        report.validate()
+        report.save()
+        return report
+
     @property
     @memoized
     def initial_default_filters(self):

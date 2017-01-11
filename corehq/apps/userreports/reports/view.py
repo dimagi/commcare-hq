@@ -102,13 +102,9 @@ def query_dict_to_dict(query_dict, domain):
 
 
 @contextmanager
-def tmp_report_config(domain, **kwargs):
-    report_config = ReportConfiguration(domain=domain, **kwargs)
-    report_config.save()
-    try:
-        yield report_config
-    finally:
-        report_config.delete()
+def tmp_report_config(domain, report_config):
+    yield report_config
+    report_config.delete()
 
 
 class ConfigurableReport(JSONResponseMixin, BaseDomainView):
@@ -549,9 +545,9 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
         return export_response(temp, Format.XLS_2007, self.title)
 
     @classmethod
-    def report_preview_data(cls, domain, **kwargs):
+    def report_preview_data(cls, domain, temp_report):
 
-        with tmp_report_config(domain, **kwargs) as report_config:
+        with tmp_report_config(temp_report) as report_config:
             view = cls(request=HttpRequest())
             view._domain = domain
             view._lang = "en"
