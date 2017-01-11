@@ -2,6 +2,7 @@ from collections import namedtuple
 import uuid
 from django.test import TestCase
 
+from corehq.apps.fixtures.models import FixtureDataType
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.util.test_utils import create_test_case
@@ -14,6 +15,7 @@ Handler = namedtuple('Handler', ['events'])
 class UCLACustomHandler(TestCase):
     domain = uuid.uuid4().hex
     case_type = 'ucla-reminder'
+    fixture_name = 'message_bank'
 
     def setUp(self):
         super(UCLACustomHandler, self).setUp()
@@ -33,5 +35,18 @@ class UCLACustomHandler(TestCase):
 
     @run_with_all_backends
     def test_message_bank_doesnt_exist(self):
+        with create_test_case(self.domain, self.case_type, 'test-case') as case:
+            self.assertIsNone(ucla_message_bank_content(self._reminder(), self._handler(), case))
+
+    @run_with_all_backends
+    def test_message_bank_doesnt_have_correct_properties(self):
+        data_type = FixtureDataType(
+            domain=self.domain,
+            tag=self.fixture_name,
+            fields=[],
+            item_attributes=[]
+        )
+        data_type.save()
+        self.addCleanup(data_type.delete)
         with create_test_case(self.domain, self.case_type, 'test-case') as case:
             self.assertIsNone(ucla_message_bank_content(self._reminder(), self._handler(), case))

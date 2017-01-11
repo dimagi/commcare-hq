@@ -14,5 +14,15 @@ def ucla_message_bank_content(reminder, handler, recipient):
         return None
 
     message_bank = message_bank[0]
+    attributes = message_bank.fields_without_attributes
+
+    try:
+        assert 'risk_profile' in attributes
+        assert 'sequence' in attributes
+        assert 'message' in attributes
+    except AssertionError:
+        message = "message_bank in {} must have risk_profile, sequence, and message".format(reminder.domain)
+        notify_exception(None, message=message)
+        return None
 
     return "custom message"
