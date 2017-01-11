@@ -26,10 +26,18 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
     };
     var setScrollableMaxHeight = function() {
         var maxHeight,
-            maxHeightForm;
+            maxHeightForm,
+            user = FormplayerFrontend.request('currentUser'),
+            debuggerHeight = 0;
+
+        if (user.debuggerEnabled) {
+            debuggerHeight = 34;
+        }
         maxHeight = ($(window).height() -
             FormplayerFrontend.regions.breadcrumb.$el.height());
-        maxHeightForm = $(window).height();
+
+        // Max height of the form is the space between the debugger and the breadcrumbs
+        maxHeightForm = maxHeight - debuggerHeight;
 
         $('.scrollable-container').css('max-height', maxHeight + 'px');
         $('.form-scrollable-container').css({
