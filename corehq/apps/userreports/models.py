@@ -607,9 +607,12 @@ class StaticReportConfiguration(JsonObject):
         return [ds for ds in cls.all() if ds.domain == domain]
 
     @classmethod
-    def by_id(cls, config_id):
+    def by_id(cls, config_id, domain=None):
         """
         Returns a ReportConfiguration object, NOT StaticReportConfigurations.
+
+        :param domain: Optionally specify domain name to validate access.
+                       Raises ``DocumentNotFound`` if domains don't match.
         """
         mapping = cls.by_id_mapping()
         if config_id not in mapping:
@@ -620,7 +623,14 @@ class StaticReportConfiguration(JsonObject):
             raise BadSpecError(_('The report configuration referenced by this report could '
                                  'not be found.'))
 
-        return cls._get_from_metadata(metadata)
+        config = cls._get_from_metadata(metadata)
+        if domain and config.domain != domain:
+            raise DocumentNotFound("Document {} of class {} not in domain {}!".format(
+                config_id,
+                config.__class__.__name__,
+                domain,
+            ))
+        return config
 
     @classmethod
     def by_ids(cls, config_ids):

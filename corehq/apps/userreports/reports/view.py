@@ -144,7 +144,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     @memoized
     def spec(self):
         if self.is_static:
-            return StaticReportConfiguration.by_id(self.report_config_id)
+            return StaticReportConfiguration.by_id(self.report_config_id, domain=self.domain)
         else:
             return get_document_or_not_found(ReportConfiguration, self.domain, self.report_config_id)
 
