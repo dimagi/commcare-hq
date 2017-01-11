@@ -132,6 +132,7 @@ def get_display_data(data, prop_def, processors=None, timezone=pytz.utc):
     processors = processors or {}
     processors.update(default_processors)
 
+    expr_name = _get_expr_name(prop_def)
     expr = prop_def.pop('expr')
     name = prop_def.pop('name', None) or _format_slug_string_for_display(expr)
     format = prop_def.pop('format', None)
@@ -161,10 +162,17 @@ def get_display_data(data, prop_def, processors=None, timezone=pytz.utc):
         val = mark_safe(format.format(val))
 
     return {
-        "expr": expr,
+        "expr": expr_name,
         "name": name,
         "value": val
     }
+
+
+def _get_expr_name(prop_def):
+    if callable(prop_def['expr']):
+        return prop_def['name']
+    else:
+        return prop_def['expr']
 
 
 def eval_expr(expr, dict_data):
