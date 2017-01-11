@@ -397,6 +397,11 @@ class ExpressionColumn(BaseReportColumn):
     expression = DefaultProperty(required=True)
 
     @property
+    def calculate_total(self):
+        """Using a function property so that it can't be overridden during wrapping"""
+        return False
+
+    @property
     @memoized
     def wrapped_expression(self):
         return ExpressionFactory.from_spec(self.expression)
