@@ -502,9 +502,18 @@ Formplayer.ViewModels.CloudCareDebugger = function() {
     // Called afterRender, ensures that the debugger takes the whole screen
     self.adjustWidth = function() {
         var $debug = $('#instance-xml-home'),
+            leftMargin = 0,
             $body = $('body');
 
-        $debug.width($body.width() - $debug.offset().left);
+        // HACK: we do not need to take into accunt the left margin for anything but
+        // Old cloudcare. When we do it messes up app preview's debugger width.
+        // If it's less than 5, we're in app preview so ignore it.
+        // Remove this once we're on new cloudcare.
+        if ($debug.offset().left > 5) {
+            leftMargin = $debug.offset();
+        }
+
+        $debug.width($body.width() - leftMargin);
     };
 };
 
