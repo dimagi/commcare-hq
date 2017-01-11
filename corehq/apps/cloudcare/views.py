@@ -39,6 +39,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app_ids_in_domain,
     get_current_app,
     wrap_app,
+    get_current_app_doc,
 )
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.exceptions import FormNotFoundException, ModuleNotFoundException
@@ -309,7 +310,7 @@ class FormplayerMainPreview(FormplayerMain):
         return super(FormplayerMain, self).dispatch(request, *args, **kwargs)
 
     def fetch_app(self, domain, app_id):
-        return get_current_app(domain, app_id)
+        return get_current_app_doc(domain, app_id)
 
 
 class FormplayerPreviewSingleApp(View):
