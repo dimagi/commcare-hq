@@ -398,7 +398,8 @@ class ExpressionColumn(BaseReportColumn):
 
     @property
     def calculate_total(self):
-        """Using a function property so that it can't be overridden during wrapping"""
+        """Calculating total not supported"""
+        # Using a function property so that it can't be overridden during wrapping
         return False
 
     @property
