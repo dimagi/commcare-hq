@@ -131,6 +131,7 @@ class NewUserDashboardView(BaseDashboardView):
         return templates
 
 
+@location_safe
 class DomainDashboardView(JSONResponseMixin, BaseDashboardView):
     urlname = 'dashboard_domain'
     page_title = ugettext_noop("HQ Dashboard")
