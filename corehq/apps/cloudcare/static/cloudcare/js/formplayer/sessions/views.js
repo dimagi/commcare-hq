@@ -40,7 +40,13 @@ FormplayerFrontend.module("SessionNavigate.SessionList", function (SessionList, 
 
     SessionList.SessionListView = Marionette.CompositeView.extend({
         tagName: "div",
-        template: "#session-view-list-template",
+        getTemplate: function() {
+            var user = FormplayerFrontend.request('currentUser');
+            if (user.environment === FormplayerFrontend.Constants.PREVIEW_APP_ENVIRONMENT) {
+                return "#session-view-list-preview-template";
+            }
+            return "#session-view-list-web-apps-template";
+        },
         childView: SessionList.SessionView,
         childViewContainer: "tbody",
     });

@@ -1247,7 +1247,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         else:
             couch_user.created_on = datetime.utcnow()
 
-        user_data = kwargs.get('user_data', {})
+        user_data = {'commcare_project': domain}
+        user_data.update(kwargs.get('user_data', {}))
         couch_user.user_data = user_data
         couch_user.sync_from_django_user(django_user)
         return couch_user
@@ -1398,6 +1399,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         if data.has_key('role_id'):
             role_id = data["role_id"]
             del data['role_id']
+            should_save = True
+        if not data.get('user_data', {}).get('commcare_project'):
+            data['user_data'] = dict(data['user_data'], **{'commcare_project': data['domain']})
             should_save = True
         # Todo; remove after migration
         from corehq.apps.users.management.commands import add_multi_location_property

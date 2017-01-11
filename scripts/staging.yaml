@@ -45,16 +45,15 @@
 trunk: master
 name: autostaging
 branches:
-  - case-import-history-fix-stale-tasks  # Danny 12/15
-  - case-importer-did-you-mean  # Danny 12/16
-  - vellum-staging # J$ 11/13
-#  - bmb/appmanager-v2-001  #bmb 10/26 if you pull master into this, please rebase
+  - general-credits-sr # sreddy 1/10
+  - vellum-staging # J$ 11/13  
   - django19
   - bmb/currentind-string # Biyeun 11/12
   - nh/new_rb  # Norman 11/22
-#  - es/location-ucr  # Ethan 11/30
   - nc/exports-with-conflict-res-branch  # Noah 12/11
   - dm/vellum-user-properties
+  - mk-243862-locations-submit-history # MK 1/9
+  - mk-243862-reassign-cases-manage-forms # MK 1/9
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

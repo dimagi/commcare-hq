@@ -236,6 +236,17 @@ def _report_user_dict(user):
         )
 
 
+def get_simplified_users(user_es_query):
+    """
+    Accepts an instance of UserES and returns SimplifiedUserInfo dicts for the
+    matching users, sorted by username.
+    """
+    fields = ['_id', 'username', 'first_name', 'last_name', 'doc_type', 'is_active', 'email']
+    users = user_es_query.fields(fields).run().hits
+    users = map(_report_user_dict, users)
+    return sorted(users, key=lambda u: u['username_in_report'])
+
+
 def format_datatables_data(text, sort_key, raw=None):
     # todo: this is redundant with report.table_cell()
     # should remove/refactor one of them away

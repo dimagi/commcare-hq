@@ -12,7 +12,7 @@
         <meta http-equiv="content-language" content="{{ LANGUAGE_CODE }}">
 
         {# link tags #}
-        <link rel="shortcut icon" href="{% static 'style/img/favicon.png' %}" />
+        <link rel="shortcut icon" href="{% static 'style/images/favicon.png' %}" />
         <link type="application/opensearchdescription+xml"
               rel="search"
               href="{% url 'osdd' %}"
@@ -324,12 +324,12 @@
                     <div class="row">
                         <div class="col-xs-12">
                             <a href="http://www.commcarehq.org/" class="footer-link-img">
-                                <img src="{% static 'hqwebapp/img/commcare-flower-footer.png' %}"
+                                <img src="{% static 'hqwebapp/images/commcare-flower-footer.png' %}"
                                      alt="CommCare"
                                      height="30"  />
                             </a>
                             <a href="http://www.dimagi.com/" class="footer-link-img">
-                                <img src="{% static 'hqwebapp/img/dimagi-footer.png' %}"
+                                <img src="{% static 'hqwebapp/images/dimagi-footer.png' %}"
                                      alt="Powered by Dimagi, Inc."
                                      height="20"/>
                             </a>
@@ -535,15 +535,15 @@
 
         {% if request.use_maps %}
         {% compress js %}
-        <script src="{% static 'reports/javascripts/maps.js' %}"></script>
-        <script src="{% static 'reports/javascripts/maps_utils.js' %}"></script>
+        <script src="{% static 'reports/js/maps.js' %}"></script>
+        <script src="{% static 'reports/js/maps_utils.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
         {% if request.use_maps_async %}
         {% compress js %}
-        <script src="{% static 'reports/javascripts/async_maps.js' %}"></script>
-        <script src="{% static 'reports/javascripts/maps_utils.js' %}"></script>
+        <script src="{% static 'reports/js/async_maps.js' %}"></script>
+        <script src="{% static 'reports/js/maps_utils.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
@@ -563,7 +563,7 @@
         {% compress js %}
         <script src="{% static 'multiselect/js/jquery.multi-select.js' %}"></script>
         <script src="{% static 'quicksearch/dist/jquery.quicksearch.min.js' %}"></script>
-        <script src="{% static 'style/js/components/multiselect_utils.js' %}"></script>
+        <script src="{% static 'style/js/multiselect_utils.js' %}"></script>
         {% endcompress %}
         {% endif %}
 
@@ -583,7 +583,7 @@
 
         {% if request.use_ko_validation %}
           <script src="{% static 'knockout-validation/dist/knockout.validation.min.js' %}"></script>
-          <script src="{% static 'style/ko/validators.ko.js' %}"></script>
+          <script src="{% static 'style/js/validators.ko.js' %}"></script>
         {% endif %}
 
         {# This should be loaded relatively late, because as a non-static import it takes longer to load #}

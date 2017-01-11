@@ -1,15 +1,24 @@
 from datetime import datetime, date
-from django.test import SimpleTestCase
+
+from django.http import HttpRequest
+from django.test import SimpleTestCase, TestCase
 from mock import Mock
 
+import settings
 from corehq.apps.reports_core.exceptions import FilterValueException
 from corehq.apps.reports_core.filters import DatespanFilter, ChoiceListFilter, \
     NumericFilter, DynamicChoiceListFilter, Choice, PreFilter
+from corehq.apps.userreports.const import UCR_BACKENDS, UCR_SQL_BACKEND
 from corehq.apps.userreports.exceptions import BadSpecError
+from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE, \
     CHOICE_DELIMITER, NumericFilterValue, DateFilterValue, PreFilterValue
 from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
 from corehq.apps.userreports.reports.filters.specs import ReportFilter
+from corehq.apps.userreports.reports.view import ConfigurableReport
+from corehq.apps.userreports.tasks import rebuild_indicators
+from corehq.apps.userreports.tests.test_view import ConfigurableReportTestMixin
+from corehq.apps.userreports.util import get_indicator_adapter
 from dimagi.utils.dates import DateSpan
 
 
@@ -107,12 +116,153 @@ class DateFilterTestCase(SimpleTestCase):
             return filter.create_filter_value(reports_core_value).to_sql_values()
 
         val = get_query_value(compare_as_string=False)
-        self.assertEqual(type(val['my_slug_startdate']), datetime)
-        self.assertEqual(type(val['my_slug_enddate']), datetime)
+        self.assertEqual(type(val['my_slug_startdate']), date)
+        self.assertEqual(type(val['my_slug_enddate']), date)
 
         val = get_query_value(compare_as_string=True)
         self.assertEqual(type(val['my_slug_startdate']), str)
         self.assertEqual(type(val['my_slug_enddate']), str)
+
+
+class DateFilterDBTest(ConfigurableReportTestMixin, TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(DateFilterDBTest, cls).setUpClass()
+        cls._create_data()
+        cls._create_data_source()
+        cls.report_config = cls._create_report()
+
+    @classmethod
+    def _create_data(cls):
+        cls._new_case({"my_date": date(2017, 1, 1)}).save()
+
+    @classmethod
+    def _create_data_source(cls):
+        cls.data_sources = {}
+        cls.adapters = {}
+
+        # this is a hack to have both sql and es backends created in a class
+        # method. alternative would be to have these created on each test run
+        for backend_id in UCR_BACKENDS:
+            config = DataSourceConfiguration(
+                backend_id=backend_id,
+                domain=cls.domain,
+                display_name=cls.domain,
+                referenced_doc_type='CommCareCase',
+                table_id="foo",
+                configured_filter={
+                    "type": "boolean_expression",
+                    "operator": "eq",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "type"
+                    },
+                    "property_value": cls.case_type,
+                },
+                configured_indicators=[
+                    {
+                        "type": "expression",
+                        "expression": {
+                            "type": "property_name",
+                            "property_name": 'my_date'
+                        },
+                        "column_id": 'date_as_string',
+                        "display_name": 'date_as_string',
+                        "datatype": "string"
+                    },
+                    {
+                        "type": "expression",
+                        "expression": {
+                            "type": "property_name",
+                            "property_name": 'my_date'
+                        },
+                        "column_id": 'date_as_date',
+                        "datatype": "date"
+                    },
+                ],
+            )
+            config.validate()
+            config.save()
+            rebuild_indicators(config._id)
+            adapter = get_indicator_adapter(config)
+            adapter.refresh_table()
+            cls.data_sources[backend_id] = config
+            cls.adapters[backend_id] = adapter
+
+    @classmethod
+    def _create_report(cls):
+        backend_id = settings.OVERRIDE_UCR_BACKEND or UCR_SQL_BACKEND
+        report_config = ReportConfiguration(
+            domain=cls.domain,
+            config_id=cls.data_sources[backend_id]._id,
+            title='foo',
+            filters=[
+                {
+                    "type": "date",
+                    "field": "date_as_date",
+                    "slug": "date_as_date_filter",
+                    "display": "Date as Date filter"
+                },
+                {
+                    "type": "date",
+                    "field": "date_as_string",
+                    "slug": "date_as_string_filter",
+                    "display": "Date as String filter",
+                    "compare_as_string": True,
+                }
+            ],
+            aggregation_columns=['doc_id'],
+            columns=[{
+                # We don't really care what columns are returned, we're testing the filters
+                "type": "field",
+                "display": "doc_id",
+                "field": 'doc_id',
+                'column_id': 'doc_id',
+                'aggregation': 'simple'
+            }],
+        )
+        report_config.save()
+        return report_config
+
+    def _create_view(self, filter_values):
+        request = HttpRequest()
+        request.method = 'GET'
+        request.GET.update(filter_values)
+        view = ConfigurableReport(request=request)
+        view._domain = self.domain
+        view._lang = "en"
+        view._report_config_id = self.report_config._id
+        return view
+
+    @classmethod
+    def tearDownClass(cls):
+        for key, adapter in cls.adapters.iteritems():
+            adapter.drop_table()
+        cls._delete_everything()
+        super(DateFilterDBTest, cls).tearDownClass()
+
+    def docs_returned(self, export_table):
+        rows = export_table[0][1]
+        return len(rows) - 1  # the first row is the headers, not a document
+
+    def test_standard_date_filter(self):
+        # Confirm that date filters include rows that match the start and/or end date.
+        view = self._create_view({
+            "date_as_date_filter": "2017-01-01 to 2017-01-01",
+            "date_as_date_filter-start": "2017-01-01",
+            "date_as_date_filter-end": "2017-01-01",
+        })
+        self.assertEqual(1, self.docs_returned(view.export_table))
+
+    def test_string_date_filter(self):
+        # Confirm that "compare_as_string" date filters include rows that match the start and/ord end date
+        view = self._create_view({
+            "date_as_string_filter": "2017-01-01 to 2017-01-01",
+            "date_as_string_filter-start": "2017-01-01",
+            "date_as_string_filter-end": "2017-01-01",
+        })
+        self.assertEqual(1, self.docs_returned(view.export_table))
 
 
 class QuarterFilterTestCase(SimpleTestCase):

@@ -23,7 +23,6 @@ from corehq.apps.sms.messages import (MSG_MOBILE_WORKER_INVITATION_START,
 from corehq.const import GOOGLE_PLAY_STORE_COMMCARE_URL
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
-from dimagi.utils.couch.migration import SyncSQLToCouchMixin
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.load_balance import load_balance
 from django.utils.translation import ugettext_noop, ugettext_lazy
@@ -1040,20 +1039,17 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
 
     @classmethod
     def get_content_info_from_keyword(cls, keyword):
-        from corehq.apps.reminders.models import (METHOD_SMS, METHOD_SMS_SURVEY,
-            METHOD_STRUCTURED_SMS, RECIPIENT_SENDER)
-
         content_type = cls.CONTENT_NONE
         form_unique_id = None
         form_name = None
 
-        for action in keyword.actions:
-            if action.recipient == RECIPIENT_SENDER:
-                if action.action in (METHOD_SMS_SURVEY, METHOD_STRUCTURED_SMS):
+        for action in keyword.keywordaction_set.all():
+            if action.recipient == KeywordAction.RECIPIENT_SENDER:
+                if action.action in (KeywordAction.ACTION_SMS_SURVEY, KeywordAction.ACTION_STRUCTURED_SMS):
                     content_type = cls.CONTENT_SMS_SURVEY
                     form_unique_id = action.form_unique_id
                     form_name = cls.get_form_name_or_none(action.form_unique_id)
-                elif action.action == METHOD_SMS:
+                elif action.action == KeywordAction.ACTION_SMS:
                     content_type = cls.CONTENT_SMS
 
         return (content_type, form_unique_id, form_name)
@@ -1120,7 +1116,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             domain=keyword.domain,
             date=datetime.utcnow(),
             source=cls.SOURCE_KEYWORD,
-            source_id=keyword.get_id,
+            source_id=keyword.couch_id,
             content_type=content_type,
             form_unique_id=form_unique_id,
             form_name=form_name,
@@ -2299,11 +2295,12 @@ class MigrationStatus(models.Model):
             return False
 
 
-class Keyword(SyncSQLToCouchMixin, models.Model):
+class Keyword(UUIDGeneratorMixin, models.Model):
     """
     A Keyword allows a project to define actions to be taken when a contact
     in the project sends an inbound SMS starting with a certain word.
     """
+    UUIDS_TO_GENERATE = ['couch_id']
 
     class Meta:
         index_together = (
@@ -2337,35 +2334,47 @@ class Keyword(SyncSQLToCouchMixin, models.Model):
 
     last_modified = models.DateTimeField(auto_now=True)
 
+    def is_structured_sms(self):
+        return self.keywordaction_set.filter(action=KeywordAction.ACTION_STRUCTURED_SMS).count() > 0
+
+    @property
+    def get_id(self):
+        return self.couch_id
+
     @classmethod
-    def _migration_get_couch_model_class(cls):
-        from corehq.apps.reminders.models import SurveyKeyword
-        return SurveyKeyword
+    def get_keyword(cls, domain, keyword):
+        try:
+            return cls.objects.get(domain=domain, keyword__iexact=keyword)
+        except cls.DoesNotExist:
+            return None
 
-    def _migration_sync_to_couch(self, couch_obj):
-        from corehq.apps.reminders.models import SurveyKeywordAction
+    @classmethod
+    def get_by_domain(cls, domain, limit=None, skip=None):
+        qs = Keyword.objects.filter(domain=domain).order_by('keyword')
 
-        couch_obj.domain = self.domain
-        couch_obj.keyword = self.keyword
-        couch_obj.description = self.description
-        couch_obj.delimiter = self.delimiter
-        couch_obj.override_open_sessions = self.override_open_sessions
-        couch_obj.initiator_doc_type_filter = self.initiator_doc_type_filter
+        if skip is not None:
+            qs = qs[skip:]
 
-        couch_obj.actions = []
-        for sql_action in self.keywordaction_set.all():
-            couch_obj.actions.append(SurveyKeywordAction(
-                recipient=sql_action.recipient,
-                recipient_id=sql_action.recipient_id,
-                action=sql_action.action,
-                message_content=sql_action.message_content,
-                form_unique_id=sql_action.form_unique_id,
-                use_named_args=sql_action.use_named_args,
-                named_args=sql_action.named_args,
-                named_args_separator=sql_action.named_args_separator
-            ))
+        if limit is not None:
+            qs = qs[:limit]
 
-        couch_obj.save(sync_to_sql=False)
+        return qs
+
+    def save(self, *args, **kwargs):
+        self.clear_caches()
+        return super(Keyword, self).save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        self.clear_caches()
+        return super(Keyword, self).delete(*args, **kwargs)
+
+    def clear_caches(self):
+        self.domain_has_keywords.clear(Keyword, self.domain)
+
+    @classmethod
+    @quickcache(['domain'], timeout=60 * 60)
+    def domain_has_keywords(cls, domain):
+        return cls.get_by_domain(domain).count() > 0
 
 
 class KeywordAction(models.Model):

@@ -107,7 +107,7 @@ class DatespanFilter(BaseFilter):
 
         def date_or_nothing(param):
             if param:
-                return datetime.combine(iso_string_to_date(param), time())
+                return iso_string_to_date(param)
             else:
                 return None
         try:
@@ -277,16 +277,19 @@ class ChoiceListFilter(BaseFilter):
     """
     template = 'reports_core/filters/choice_list_filter.html'
 
-    def __init__(self, name, datatype, label='Choice List Filter',
+    def __init__(self, name, field, datatype, label='Choice List Filter',
                  css_id=None, choices=None):
+        from corehq.apps.userreports.reports.filters.choice_providers import StaticChoiceProvider
         params = [
             FilterParam(name, True),
         ]
         super(ChoiceListFilter, self).__init__(name=name, params=params)
+        self.field = field
         self.datatype = datatype
         self.label = label
         self.css_id = css_id or self.name
         self.choices = choices or []
+        self.choice_provider = StaticChoiceProvider(self.choices)
 
     def value(self, **kwargs):
         raw_value = kwargs[self.name]

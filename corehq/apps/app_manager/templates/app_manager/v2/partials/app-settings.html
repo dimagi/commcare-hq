@@ -129,6 +129,18 @@
   });
 </script>
 
+{% if linked_apps_enabled and app.get_doc_type != 'LinkedApplication' %}
+<script>
+     $(function () {
+        var domains = {{ app.linked_whitelist|JSON }};
+        var save = '{% url "update_linked_whitelist" domain app.id %}';
+        var LinkedWhitelist = hqImport('app_manager/js/linked_whitelist.js').LinkedWhitelist;
+        linkedWhitelist = new LinkedWhitelist(domains, save);
+        $('#whitelist-section').koApplyBindings(linkedWhitelist);
+     });
+</script>
+{% endif %}
+
 <script type="text/html" id="CommcareSettings.widgets.text_input">
   <span data-bind="template: 'CommcareSettings.widgets.select'"></span>
   <aside id="custom-keys-help" data-bind="visible: visibleValue() === 'custom-keys'">
@@ -154,68 +166,113 @@
 </script>
 
 <div class="tabbable">
-  <ul class="nav nav-tabs">
-    <li class="active"><a href="#languages" data-toggle="tab">{% trans "Languages" %}</a></li>
-    {% if app.get_doc_type == 'Application' %}
-      <li><a href="#multimedia-tab" data-toggle="tab">{% trans "Multimedia" %}</a></li>
-    {% endif %}
-    <li><a href="#actions" data-toggle="tab">{% trans "Actions" %}</a></li>
-    <li><a href="#commcare-settings" data-toggle="tab">{% trans "Advanced Settings" %}</a></li>
-  </ul>
-  <div class="tab-content appmanager-tab-content">
-    {% if app.get_doc_type == 'Application' %}
-      <div class="tab-pane" id="multimedia-tab">
-        <div data-bind="if: load_state() === 'loading'">
-          <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
-          {% trans "Loading ..." %}
+    <ul class="nav nav-tabs">
+        <li class="active"><a href="#languages" data-toggle="tab">{% trans "Languages" %}</a></li>
+        {% if app.get_doc_type == 'Application' %}
+            <li><a href="#multimedia-tab" data-toggle="tab">{% trans "Multimedia" %}</a></li>
+        {% endif %}
+        <li><a href="#actions" data-toggle="tab">{% trans "Actions" %}</a></li>
+        <li><a href="#commcare-settings" data-toggle="tab">{% trans "Advanced Settings" %}</a></li>
+    </ul>
+    <div class="tab-content appmanager-tab-content">
+        {% if app.get_doc_type == 'LinkedApplication' %}
+            <p> Your app is at version {{ app.version }}. The master app is at version {{ master_version }}. </p>
+            <a class="btn btn-primary"
+               href="{% url 'pull_master_app' domain app.id %}">
+                {% trans 'Update from Master App' %}
+            </a>
+        {% endif %}
+        <div class="tab-pane active" id="commcare-settings">
+            {% include 'app_manager/v2/partials/commcare_settings.html' %}
         </div>
-        <div data-bind="html: multimedia_page_html"></div>
-        <div data-bind="if: load_state() === 'error'">
-          <button class="btn btn-default" data-bind="click: load_if_necessary">{% trans "Try again" %}</button>
-        </div>
-      </div>
-    {% endif %}
-    <div class="tab-pane active" id="languages">
-      {% include 'app_manager/v2/languages.html' %}
-    </div>
-    <div class="tab-pane" id="actions">
-      {% if copy_app_form %}
-
-
-        <div class="panel panel-appmanager panel-appmanager-form">
-          <form class="form form-horizontal" method="post" action="{% url "copy_app" domain %}">
-            {% crispy copy_app_form %}
-          </form>
-        </div>
-      {% endif %}
-      {% if request|toggle_enabled:"EXPORT_ZIPPED_APPS" %}
-        <legend>Export compressed application</legend>
-        <form action="{% url "gzip_app" domain app.id %}" method="POST">
-          {% csrf_token %}
-          <button type="submit" class="btn btn-primary">
-            <i class="fa fa-arrow-down"></i>
-            {% trans "Download" %}
-          </button>
-        </form>
-        <br>
-      {% endif %}
-      <div class="panel panel-appmanager panel-appmanager-form panel-appmanager-form-danger">
-        <form class="form form-horizontal" method="post" action="{% url "copy_app" domain %}">
-          <form action="{% url "delete_app" domain app.id %}" method="POST">
-            {% csrf_token %}
-            <legend>{% trans "Delete Application" %}</legend>
-            <div class="panel-body">
-              <button type="submit" class="btn btn-danger disable-on-submit">
-                <i class="fa fa-trash"></i>
-                {% trans "Delete this application" %}
-              </button>
+        {% if app.get_doc_type == 'Application' %}
+            <div class="tab-pane" id="multimedia-tab">
+                <div data-bind="if: load_state() === 'loading'">
+                    <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator"/>
+                    {% trans "Loading ..." %}
+                </div>
+                <div data-bind="html: multimedia_page_html"></div>
+                <div data-bind="if: load_state() === 'error'">
+                    <button class="btn btn-default"
+                            data-bind="click: load_if_necessary">{% trans "Try again" %}</button>
+                </div>
             </div>
-          </form>
-        </form>
-      </div>
+        {% endif %}
+        {% if app.get_doc_type != 'LinkedApplication' %}
+            <div class="tab-pane active" id="languages">
+                {% include 'app_manager/v2/languages.html' %}
+            </div>
+        {% endif %}
+        <div class="tab-pane" id="actions">
+            {% if app.get_doc_type != 'LinkedApplication' %}
+                {% if copy_app_form %}
+                    <div class="panel panel-appmanager panel-appmanager-form">
+                        <form class="form form-horizontal" method="post" action="{% url "copy_app" domain %}">
+                            {% crispy copy_app_form %}
+                        </form>
+                    </div>
+                {% endif %}
+                {% if linked_apps_enabled %}
+                    <div id="whitelist-section" class="panel panel-appmanager panel-appmanager-form" data-bind="visible: linkedDomains().length > 0">
+                    <legend>{% trans 'Linked Project Whitelist' %}</legend>
+                    <div class="tab-pane">
+                        <div class="help-block">
+                            {% blocktrans %}
+                                Project spaces on this list are able to update linked applications
+                                with new changes to this application. Project spaces are automatically added to
+                                this list when this application is copied as a linked application to that project
+                                space. If you would like to prevent a project from making future updates,
+                                you can remove them from the list here.
+                            {% endblocktrans %}
+                        </div>
+                        <div data-bind="saveButton: saveButton"></div>
+                        <table class="table">
+                            <thead>
+                            <tr class="row">
+                                <th></th>
+                                <th>{% trans "Project Space" %}</th>
+                            </tr>
+                            </thead>
+                            <tbody data-bind="foreach: linkedDomains">
+                            <tr class="row">
+                                <td class="col-sm-1"><a href="#"><i class="fa fa-remove"
+                                                                    data-bind="click: $root.removeDomain"></i></a></td>
+                                <td class="col-sm-11"><span data-bind="text: $data"></span></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    </div>
+                {% endif %}
+                {% if request|toggle_enabled:"EXPORT_ZIPPED_APPS" %}
+                    <legend>Export compressed application</legend>
+                    <form action="{% url "gzip_app" domain app.id %}" method="POST">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa fa-arrow-down"></i>
+                            {% trans "Download" %}
+                        </button>
+                    </form>
+                    <br>
+                {% endif %}
+            {% endif %}
+            <div class="panel panel-appmanager panel-appmanager-form panel-appmanager-form-danger">
+                <form class="form form-horizontal" method="post" action="{% url "copy_app" domain %}">
+                    <form action="{% url "delete_app" domain app.id %}" method="POST">
+                        {% csrf_token %}
+                        <legend>{% trans "Delete Application" %}</legend>
+                        <div class="panel-body">
+                            <button type="submit" class="btn btn-danger disable-on-submit">
+                                <i class="fa fa-trash"></i>
+                                {% trans "Delete this application" %}
+                            </button>
+                        </div>
+                    </form>
+                </form>
+            </div>
+        </div>
+        <div class="tab-pane" id="commcare-settings">
+            {% include 'app_manager/v2/partials/commcare_settings.html' %}
+        </div>
     </div>
-    <div class="tab-pane" id="commcare-settings">
-      {% include 'app_manager/v2/partials/commcare_settings.html' %}
-    </div>
-  </div>
 </div>

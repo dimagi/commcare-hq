@@ -38,7 +38,7 @@ def get_headers():
 
 
 class CaseFindingAllTBPatientsReport(EnikshayReport):
-    name = ugettext_lazy('Block 1: All TB patients registered in the quarter')
+    name = ugettext_lazy('Block 1: All TB patients notified in the date range')
     slug = 'case_finding_all_tb_patients_report'
 
     @property
@@ -128,8 +128,8 @@ class TBHIVCollaboration(EnikshayReport):
     @property
     def headers(self):
         return DataTablesHeader(
-            DataTablesColumn(_('Of all Registered TB cases,'
-                             ' Number known to be tested for HIV before or during the TB treatment (a)')),
+            DataTablesColumn(_('Of all Notified TB cases, '
+                               'Number known to be tested for HIV before or during the TB treatment (a)')),
             DataTablesColumn(_('Of (a) Number known to be HIV infected (b)')),
             DataTablesColumn(_('Of (b) HIV reactive TB patients put on CPT')),
             DataTablesColumn(_('Of (c) HIV reactive TB patients put on ART (d)')),

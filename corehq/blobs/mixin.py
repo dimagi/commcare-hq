@@ -11,7 +11,7 @@ from os.path import join
 from corehq.blobs import BlobInfo, get_blob_db
 from corehq.blobs.exceptions import AmbiguousBlobStorageError, NotFound
 from corehq.blobs.interface import SAFENAME
-from corehq.blobs.util import ClosingContextProxy, document_method
+from corehq.blobs.util import ClosingContextProxy, document_method, random_url_id
 from couchdbkit.exceptions import InvalidAttachment, ResourceNotFound
 from dimagi.ext.couchdbkit import (
     Document,
@@ -77,6 +77,9 @@ class BlobMixin(Document):
     def put_attachment(self, content, name=None, content_type=None, content_length=None):
         """Put attachment in blob database
 
+        See `get_short_identifier()` for restrictions on the upper bound
+        for number of attachments per object.
+
         :param content: String or file object.
         """
         db = get_blob_db()
@@ -94,7 +97,7 @@ class BlobMixin(Document):
 
         bucket = self._blobdb_bucket()
         # do we need to worry about BlobDB reading beyond content_length?
-        info = db.put(content, bucket=bucket)
+        info = db.put(content, get_short_identifier(), bucket=bucket)
         self.external_blobs[name] = BlobMeta(
             id=info.identifier,
             content_type=content_type,
@@ -438,6 +441,31 @@ class DeferredBlobMixin(BlobMixin):
                 assert not self._deferred_blobs, self._deferred_blobs
         else:
             super(DeferredBlobMixin, self).save()
+
+
+def get_short_identifier():
+    """Get a short random identifier
+
+    The identifier is chosen from a 64 bit key space, which is suitably
+    large for no likely collisions in 1000 concurrent keys but kept
+    small to minimize key length. 1000 is an arbitrary number chosen as
+    an upper bound of the number of attachments associated with any
+    given object. We may need to change this if we ever expect an object
+    to have significantly more than 1000 attachments. The probability of
+    a collision with a 64 bit ID is:
+
+    k = 1000
+    N = 2 ** 64
+    (k ** 2) / (2 * N) = 2.7e-14
+
+    which is somewhere near the probability of a meteor landing on
+    your house. For most objects the number of blobs present at any
+    moment in time will be far lower, and therefore the probability
+    of a collision will be much lower as well.
+
+    http://preshing.com/20110504/hash-collision-probabilities/
+    """
+    return random_url_id(8)
 
 
 @contextmanager

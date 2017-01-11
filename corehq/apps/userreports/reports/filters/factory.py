@@ -62,6 +62,7 @@ def _build_choice_list_filter(spec, report):
         choices.insert(0, Choice(SHOW_ALL_CHOICE, _('Show all')))
     return ChoiceListFilter(
         name=wrapped.slug,
+        field=wrapped.field,
         datatype=wrapped.datatype,
         label=wrapped.display,
         choices=choices,

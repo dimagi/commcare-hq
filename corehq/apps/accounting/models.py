@@ -739,7 +739,6 @@ class DefaultProductPlan(models.Model):
     The latest SoftwarePlanVersion that's linked to this plan will be the one used to create a new subscription if
     nothing is found for that domain.
     """
-    product_type = models.CharField(max_length=25, choices=SoftwareProductType.CHOICES)
     edition = models.CharField(
         default=SoftwarePlanEdition.COMMUNITY,
         choices=SoftwarePlanEdition.CHOICES,
@@ -751,13 +750,14 @@ class DefaultProductPlan(models.Model):
 
     class Meta:
         app_label = 'accounting'
+        unique_together = ('edition', 'is_trial')
 
     @classmethod
     def get_default_plan_version(cls, edition=None, is_trial=False):
         edition = edition or SoftwarePlanEdition.COMMUNITY
         try:
             default_product_plan = DefaultProductPlan.objects.select_related('plan').get(
-                product_type=SoftwareProductType.COMMCARE, edition=edition, is_trial=is_trial
+                edition=edition, is_trial=is_trial
             )
             return default_product_plan.plan.get_version()
         except DefaultProductPlan.DoesNotExist:
@@ -1821,7 +1821,7 @@ class Invoice(InvoiceBase):
     @property
     def email_recipients(self):
         if self.subscription.service_type == SubscriptionType.IMPLEMENTATION:
-            return [settings.FINANCE_EMAIL, settings.ACCOUNTS_EMAIL]
+            return [settings.ACCOUNTS_EMAIL]
         else:
             return self.contact_emails
 
