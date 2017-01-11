@@ -29,8 +29,9 @@ class NikshayRegisterPatientRepeater(CaseRepeater):
     def allowed_to_forward(self, episode_case):
         # When case property episode.episode_pending_registration transitions from 'yes' to 'no',
         # and (episode.nikshay_registered != 'true'  or episode.nikshay_id != '')
+        allowed_case_types_and_users = self._allowed_case_type(episode_case) and self._allowed_user(episode_case)
         episode_case_properties = episode_case.dynamic_case_properties()
-        return (
+        return allowed_case_types_and_users and (
             not episode_case_properties.get('nikshay_registered', 'false') == 'true' and
             not episode_case_properties.get('nikshay_id', False) and
             episode_pending_registration_changed(episode_case)
