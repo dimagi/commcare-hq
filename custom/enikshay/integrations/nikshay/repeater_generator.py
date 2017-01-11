@@ -89,7 +89,7 @@ class NikshayRegisterPatientPayloadGenerator(BasePayloadGenerator):
         episode_case_properties = episode_case.dynamic_case_properties()
         person_case_properties = person_case.dynamic_case_properties()
         properties_dict = {
-            "regBy": CouchUser.get(person_case.opened_by).human_friendly_name,
+            "regBy": "tbu-dmdmo01",  # TODO: change this to a real username, store in localsettings
             "Local_ID": person_case.get_id,
             "Source": ENIKSHAY_ID,
             "dotcenter": "NA",
