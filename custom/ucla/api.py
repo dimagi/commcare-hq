@@ -32,4 +32,12 @@ def ucla_message_bank_content(reminder, handler, recipient):
         notify_exception(None, message=message)
         return None
 
+    case_props = recipient.dynamic_case_properties()
+    try:
+        assert 'risk_profile' in case_props
+    except AssertionError:
+        message = "case does not include risk_profile"
+        notify_exception(None, message=message)
+        return None
+
     return "custom message"

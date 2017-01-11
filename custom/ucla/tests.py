@@ -33,25 +33,7 @@ class UCLACustomHandler(TestCase):
     def _handler(self):
         return Handler(events=[])
 
-    @run_with_all_backends
-    def test_message_bank_doesnt_exist(self):
-        with create_test_case(self.domain, self.case_type, 'test-case') as case:
-            self.assertIsNone(ucla_message_bank_content(self._reminder(), self._handler(), case))
-
-    @run_with_all_backends
-    def test_message_bank_doesnt_have_correct_properties(self):
-        data_type = FixtureDataType(
-            domain=self.domain,
-            tag=self.fixture_name,
-            fields=[],
-            item_attributes=[]
-        )
-        data_type.save()
-        self.addCleanup(data_type.delete)
-        with create_test_case(self.domain, self.case_type, 'test-case') as case:
-            self.assertIsNone(ucla_message_bank_content(self._reminder(), self._handler(), case))
-
-    def test_not_passing_case(self):
+    def _setup_fixture_type(self):
         data_type = FixtureDataType(
             domain=self.domain,
             tag=self.fixture_name,
@@ -73,4 +55,32 @@ class UCLACustomHandler(TestCase):
         )
         data_type.save()
         self.addCleanup(data_type.delete)
+        return data_type
+
+    @run_with_all_backends
+    def test_message_bank_doesnt_exist(self):
+        with create_test_case(self.domain, self.case_type, 'test-case') as case:
+            self.assertIsNone(ucla_message_bank_content(self._reminder(), self._handler(), case))
+
+    @run_with_all_backends
+    def test_message_bank_doesnt_have_correct_properties(self):
+        data_type = FixtureDataType(
+            domain=self.domain,
+            tag=self.fixture_name,
+            fields=[],
+            item_attributes=[]
+        )
+        data_type.save()
+        self.addCleanup(data_type.delete)
+        with create_test_case(self.domain, self.case_type, 'test-case') as case:
+            self.assertIsNone(ucla_message_bank_content(self._reminder(), self._handler(), case))
+
+    def test_not_passing_case(self):
+        self._setup_fixture_type()
         self.assertIsNone(ucla_message_bank_content(self._reminder(), self._handler(), None))
+
+    @run_with_all_backends
+    def test_passing_case_without_risk_profile(self):
+        self._setup_fixture_type()
+        with create_test_case(self.domain, self.case_type, 'test-case') as case:
+            self.assertIsNone(ucla_message_bank_content(self._reminder(), self._handler(), case))
