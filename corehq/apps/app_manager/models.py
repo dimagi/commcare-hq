@@ -4814,7 +4814,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             })
         except UserCaseXPathValidationError as ucve:
             errors.append({
-                'type': 'invalid user case xpath reference',
+                'type': 'invalid user property xpath reference',
                 'module': ucve.module,
                 'form': ucve.form,
             })
@@ -5644,6 +5644,11 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 'message': _('Your application is using User Properties. You can remove User Properties '
                              'functionality by opening the User Properties tab in a form that uses it, and '
                              'clicking "Remove User Properties".')
+                           if toggles.USER_PROPERTY_EASY_REFS.enabled(self.domain) else
+                           # old message, to be removed with USER_PROPERTY_EASY_REFS toggle
+                           _('Your application is using User Case functionality. You can remove User Case '
+                             'functionality by opening the User Case Management tab in a form that uses it, and '
+                             'clicking "Remove User Case Properties".'),
             })
         return errors
 
