@@ -1000,7 +1000,7 @@ NIMBUS_FORM_VALIDATION = PredictablyRandomToggle(
     'Use Nimbus to validate XForms',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
-    randomness=0.4
+    randomness=1.0
 )
 
 COPY_CASE_CONFIGS = StaticToggle(
