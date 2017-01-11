@@ -19,12 +19,6 @@ class UCLACustomHandler(TestCase):
     case_type = 'ucla-reminder'
     fixture_name = 'message_bank'
 
-    def setUp(self):
-        super(UCLACustomHandler, self).setUp()
-
-    # def tearDown(self):
-    #     super(UCLACustomHandler, self).tearDown()
-
     def _reminder(self):
         return Reminder(
             domain=self.domain,
@@ -93,8 +87,6 @@ class UCLACustomHandler(TestCase):
         )
         data_item.save()
         self.addCleanup(data_item.delete)
-
-        return data_item
 
     @run_with_all_backends
     def test_message_bank_doesnt_exist(self):
