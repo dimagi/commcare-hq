@@ -163,9 +163,9 @@
                         <div class="form-group">
                             <label class="control-label col-sm-2">
                             {% if plan.has_credits_in_non_general_credit_line %}
-                                {% trans 'Credits Remaining' %}
-                            {% else %}
                                 {% trans 'Plan Credit' %}
+                            {% else %}
+                                {% trans 'Credits Remaining' %}
                             {% endif %}
                             </label>
                             <div class="col-sm-10">
@@ -231,9 +231,9 @@
                         <div class="form-group" data-bind="visible: isAccountVisible">
                             <label class="control-label col-sm-2">
                                 {% if plan.has_credits_in_non_general_credit_line %}
-                                    {% trans 'Credits Remaining' %}
-                                {% else %}
                                     {% trans 'Plan Credit' %}
+                                {% else %}
+                                    {% trans 'Credits Remaining' %}
                                 {% endif %}
                                 <div class="hq-help">
                                     <a href="#"
@@ -281,23 +281,6 @@
                     <thead>
                         <tr>
                             <th>{% trans "Feature" %}</th>
-                            <th>{% trans "Included in Software Plan" %}</th>
-                            <th>{% trans "Current Usage" %}</th>
-                        </tr>
-                    </thead>
-                    <tbody data-bind="foreach: features">
-                        <tr>
-                            <td data-bind="text: name"></td>
-                            <td data-bind="text: remaining"></td>
-                            <td data-bind="text: usage"></td>
-                        </tr>
-                    </tbody>
-                </table>
-            {% else %}
-                <table class="table table-bordered table-striped">
-                    <thead>
-                        <tr>
-                            <th>{% trans "Feature" %}</th>
                             <th>{% trans "Current Use" %}</th>
                             <th>{% trans "Remaining" %}</th>
                             {% if not plan.is_trial %}
@@ -319,6 +302,23 @@
                             <td data-bind="text: accountAmount"></td>
                             {% endif %}
                             {% endif %}
+                        </tr>
+                    </tbody>
+                </table>
+            {% else %}
+                <table class="table table-bordered table-striped">
+                    <thead>
+                        <tr>
+                            <th>{% trans "Feature" %}</th>
+                            <th>{% trans "Included in Software Plan" %}</th>
+                            <th>{% trans "Current Usage" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody data-bind="foreach: features">
+                        <tr>
+                            <td data-bind="text: name"></td>
+                            <td data-bind="text: remaining"></td>
+                            <td data-bind="text: usage"></td>
                         </tr>
                     </tbody>
                 </table>
