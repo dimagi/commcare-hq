@@ -1,5 +1,6 @@
 from datetime import datetime
 import dateutil
+import warnings
 from django.core.cache import cache
 from django.core.urlresolvers import reverse
 from corehq.apps.casegroups.models import CommCareCaseGroup
@@ -124,7 +125,6 @@ class ProjectReportParametersMixin(object):
     @property
     @memoized
     def users(self):
-        import warnings
         warnings.warn('Usage of this property is deprecated due to poor performance.', DeprecationWarning)
         if self.filter_group_name and not (self.group_id or self.individual):
             group = Group.by_name(self.domain, self.filter_group_name)
