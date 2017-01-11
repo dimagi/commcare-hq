@@ -6,6 +6,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CouchUser
 from corehq.apps.repeaters.exceptions import RequestConnectionError
 from corehq.apps.repeaters.repeater_generators import RegisterGenerator, BasePayloadGenerator
+from custom.enikshay import const
 from custom.enikshay.case_utils import get_person_case_from_episode
 from custom.enikshay.integrations.nikshay.repeaters import NikshayRegisterPatientRepeater
 from custom.enikshay.integrations.nikshay.exceptions import (
@@ -200,10 +201,10 @@ def _get_person_case_properties(person_case, person_case_properties):
         "pgender": gender_mapping.get(person_case_properties.get('sex', ''), ''),
         "page": person_case_properties.get('age', ''),
         "paddress": person_case_properties.get('current_address', ''),
-        "pmob": person_case_properties.get('contact_phone_number', ''),
+        "pmob": person_case_properties.get(const.PRIMARY_PHONE_NUMBER, ''),
         "cname": person_case_properties.get('secondary_contact_name_address', ''),
         "caddress": person_case_properties.get('secondary_contact_name_address', ''),
-        "cmob": person_case_properties.get('secondary_contact_phone_number', ''),
+        "cmob": person_case_properties.get(const.BACKUP_PHONE_NUMBER, ''),
         "pcategory": person_category
     }
     person_properties.update(get_person_locations(person_case))
