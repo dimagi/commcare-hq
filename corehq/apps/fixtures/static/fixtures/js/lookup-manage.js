@@ -341,7 +341,7 @@ $(function () {
         self.loadData = function () {
             self.loading(self.loading() + 3);
             $.ajax({
-                url: DataTypeUrl,
+                url: hqImport('hqwebapp/js/urllib.js').reverse('fixture_data_types'),
                 type: 'get',
                 dataType: 'json',
                 success: function (data) {
