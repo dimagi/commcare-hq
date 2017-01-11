@@ -35,6 +35,7 @@ from corehq.apps.data_interfaces.dispatcher import (
     EditDataInterfaceDispatcher,
     require_can_edit_data,
 )
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.style.decorators import use_typeahead, use_angular_js
 from corehq.const import SERVER_DATETIME_FORMAT
 from .dispatcher import require_form_management_privilege
@@ -51,6 +52,7 @@ from soil.util import expose_cached_download, get_download_context
 
 
 @login_and_domain_required
+@location_safe
 def default(request, domain):
     if not request.project or request.project.is_snapshot:
         raise Http404()
