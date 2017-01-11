@@ -45,7 +45,7 @@
 trunk: master
 name: autostaging
 branches:
-#  - general-credits-sr # sreddy 1/10
+  - general-credits-sr # sreddy 1/10
   - vellum-staging # J$ 11/13  
   - django19
   - bmb/currentind-string # Biyeun 11/12
