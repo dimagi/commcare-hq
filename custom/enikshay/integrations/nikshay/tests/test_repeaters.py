@@ -47,9 +47,12 @@ class NikshayRepeaterTestBase(ENikshayCaseStructureMixin, TestCase):
     def repeat_records(self):
         return RepeatRecord.all(domain=self.domain, due_before=datetime.utcnow())
 
-    def _create_nikshay_enabled_case(self):
+    def _create_nikshay_enabled_case(self, case_id=None):
+        if case_id is None:
+            case_id = self.episode_id
+
         nikshay_enabled_case_on_update = CaseStructure(
-            case_id=self.episode_id,
+            case_id=case_id,
             attrs={
                 "create": False,
                 "update": dict(
@@ -106,6 +109,13 @@ class TestNikshayRegisterPatientRepeater(NikshayRepeaterTestBase):
         # set as registered, should not register a new repeat record
         self._create_nikshay_registered_case()
         self.assertEqual(1, len(self.repeat_records().all()))
+
+    @run_with_all_backends
+    def test_trigger_different_case_type(self):
+        # different case type
+        self.create_case(self.person)
+        self._create_nikshay_enabled_case(case_id=self.person_id)
+        self.assertEqual(0, len(self.repeat_records().all()))
 
 
 class TestNikshayRegisterPatientPayloadGenerator(ENikshayLocationStructureMixin, NikshayRepeaterTestBase):
