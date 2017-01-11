@@ -34,4 +34,4 @@ class CaseDisplayDataTest(SimpleTestCase):
             'color': 'red'
         }
         self.assertEqual(get_display_data(data, column),
-                         {'expr': get_color, 'name': 'favorite color', 'value': 'red'})
+                         {'expr': 'favorite color', 'name': 'favorite color', 'value': 'red'})
