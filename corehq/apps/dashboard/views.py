@@ -3,7 +3,7 @@ from django.http import HttpResponseRedirect
 from django.utils.translation import ugettext_noop, ugettext as _
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 
-from corehq import privileges
+from corehq import privileges, toggles
 from corehq.apps.app_manager.dbaccessors import domain_has_apps, get_brief_apps_in_domain
 from corehq.apps.dashboard.models import (
     TileConfiguration,
@@ -22,6 +22,7 @@ from corehq.apps.users.permissions import can_view_case_exports, can_view_form_e
 from corehq.apps.users.views import DefaultProjectUserSettingsView
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.style.decorators import use_angular_js
+from corehq.apps.cloudcare.views import FormplayerMain
 from django_prbac.utils import has_privilege
 from django.conf import settings
 
@@ -39,6 +40,12 @@ def default_dashboard_url(request, domain):
         return reverse(settings.CUSTOM_DASHBOARD_PAGE_URL_NAMES[domain], args=[domain])
 
     if couch_user and not couch_user.has_permission(domain, 'access_all_locations'):
+        if couch_user.is_commcare_user():
+            if toggles.USE_FORMPLAYER_FRONTEND.enabled(domain):
+                formplayer_view = FormplayerMain.urlname
+            else:
+                formplayer_view = "corehq.apps.cloudcare.views.default"
+            return reverse(formplayer_view, args=[domain])
         if couch_user.has_permission(domain, 'view_reports'):
             return reverse(CaseExportListView.urlname, args=[domain])
         else:

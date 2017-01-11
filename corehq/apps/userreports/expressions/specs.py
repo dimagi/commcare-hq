@@ -194,20 +194,18 @@ class RelatedDocExpressionSpec(JsonObject):
         if doc_id:
             return self.get_value(doc_id, context)
 
-    def _vary_on(self, doc_id, context):
-        # For caching. Gets called with the same params as get_value.
-        return [
-            context.root_doc['domain'],
-            doc_id,
-            json.dumps(self.value_expression, sort_keys=True)
-        ]
+    def _context_cache_key(self, doc_id):
+        return '{}-{}'.format(self.related_doc_type, doc_id)
 
-    @quickcache(_vary_on)
     def get_value(self, doc_id, context):
         try:
             assert context.root_doc['domain']
             document_store = get_document_store(context.root_doc['domain'], self.related_doc_type)
-            doc = document_store.get_document(doc_id)
+
+            doc = context.get_cache_value(self._context_cache_key(doc_id))
+            if not doc:
+                doc = document_store.get_document(doc_id)
+                context.set_cache_value(self._context_cache_key(doc_id), doc)
             # ensure no cross-domain lookups of different documents
             if context.root_doc['domain'] != doc.get('domain'):
                 return None
