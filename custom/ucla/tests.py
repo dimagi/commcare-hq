@@ -24,9 +24,8 @@ class TestUCLACustomHandler(TestCase):
     def setUpClass(cls):
         super(TestUCLACustomHandler, cls).setUpClass()
         cls.domain = Domain.get_or_create_with_name(cls.domain_name, is_active=True)
-        cls.user = WebUser.create(cls.domain_name, 'dimagi@dimagi.com', '***')
-        cls.user.email = 'dimagi@dimagi.com'
-        cls.user.set_role(cls.domain_name, 'admin')
+        email = 'dimagi@dimagi.com'
+        cls.user = WebUser.create(cls.domain_name, email, '***', email=email)
         cls.user.save()
 
     @classmethod
