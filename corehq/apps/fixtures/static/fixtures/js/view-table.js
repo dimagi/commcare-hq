@@ -1,11 +1,8 @@
-(function () {
-    var initialPageData = {};
-    _.each($(".initial-page-data"), function(div) {
-        var data = $(div).data();
-        initialPageData[data.name] = data.value;
-    });
-    if (initialPageData.renderReportTables) {
-        var reportTables = new HQReportDataTables(_.pick(initialPageData, [
+$(function () {
+    var data = hqImport('hqwebapp/js/initial_page_data.js').get;
+    if (data('renderReportTables')) {
+        var options = {};
+        _.each([
             'slug',
             'defaultRows',
             'startAtRowNum',
@@ -18,7 +15,13 @@
             'fixColumns',
             'fixColsNumLeft',
             'fixColsWidth',
-        ]));
+        ], function(name) {
+            var value = data(name);
+            if (value !== undefined) {
+                options[name] = value;
+            }
+        });
+        var reportTables = new HQReportDataTables(options);
         if (typeof standardHQReport !== 'undefined') {
             standardHQReport.handleTabularReportCookies(reportTables);
         }
@@ -31,4 +34,4 @@
             placement: 'bottom'
         });
     });
-})();
+});
