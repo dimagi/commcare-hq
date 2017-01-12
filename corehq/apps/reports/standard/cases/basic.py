@@ -223,8 +223,6 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
                                                  selected_user_ids))
                                  .get_ids())
 
-        selected_location_ids = EMWF.selected_location_ids(mobile_user_and_group_slugs)
-
         owner_ids = list(set().union(
             special_owner_ids,
             selected_user_ids,
