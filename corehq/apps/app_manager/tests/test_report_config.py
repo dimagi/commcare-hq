@@ -7,7 +7,7 @@ from corehq.apps.app_manager.fixtures import report_fixture_generator
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 
 from corehq.apps.app_manager.models import ReportAppConfig, Application, ReportModule, \
-    ReportGraphConfig, MobileSelectFilter
+    ReportGraphConfig, MobileSelectFilter, _get_filter_function, _filter_by_user_id
 from corehq.apps.app_manager.tests.mocks.mobile_ucr import mock_report_configurations, \
     mock_report_configuration_get, mock_report_data
 from corehq.apps.app_manager.tests.util import TestXmlMixin
@@ -281,3 +281,10 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
           </filters>
         </partial>
         """, self.fixture, "reports/report/filters")
+
+
+class TestReportAutoFilters(SimpleTestCase):
+
+    def test_get_filter_function(self):
+        fn = _get_filter_function('user_id')
+        self.assertEqual(fn, _filter_by_user_id)
