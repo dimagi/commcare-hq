@@ -2,9 +2,11 @@ from collections import namedtuple
 import uuid
 from django.test import TestCase
 
+from corehq.apps.domain.models import Domain
 from corehq.apps.fixtures.models import (
     FixtureDataType, FixtureTypeField, FixtureDataItem, FieldList, FixtureItemField
 )
+from corehq.apps.users.models import WebUser
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.util.test_utils import create_test_case
 from custom.ucla.api import ucla_message_bank_content
@@ -13,14 +15,29 @@ Reminder = namedtuple('Reminder', ['domain', 'schedule_iteration_num', 'current_
 Handler = namedtuple('Handler', ['events'])
 
 
-class UCLACustomHandler(TestCase):
-    domain = uuid.uuid4().hex
+class TestUCLACustomHandler(TestCase):
+    domain_name = uuid.uuid4().hex
     case_type = 'ucla-reminder'
     fixture_name = 'message_bank'
 
+    @classmethod
+    def setUpClass(cls):
+        super(TestUCLACustomHandler, cls).setUpClass()
+        cls.domain = Domain.get_or_create_with_name(cls.domain_name, is_active=True)
+        cls.user = WebUser.create(cls.domain_name, 'dimagi@dimagi.com', '***')
+        cls.user.email = 'dimagi@dimagi.com'
+        cls.user.set_role(cls.domain_name, 'admin')
+        cls.user.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.user.delete()
+        cls.domain.delete()
+        super(TestUCLACustomHandler, cls).tearDownClass()
+
     def _reminder(self, iteration_num=1):
         return Reminder(
-            domain=self.domain,
+            domain=self.domain_name,
             schedule_iteration_num=iteration_num,
             current_event_sequence_num=0,
         )
@@ -30,7 +47,7 @@ class UCLACustomHandler(TestCase):
 
     def _setup_fixture_type(self):
         self.data_type = FixtureDataType(
-            domain=self.domain,
+            domain=self.domain_name,
             tag=self.fixture_name,
             fields=[
                 FixtureTypeField(
@@ -54,7 +71,7 @@ class UCLACustomHandler(TestCase):
 
     def _setup_data_item(self, risk='risk1', sequence='1', message='message1'):
         data_item = FixtureDataItem(
-            domain=self.domain,
+            domain=self.domain_name,
             data_type_id=self.data_type.get_id,
             fields={
                 "risk_profile": FieldList(
@@ -89,53 +106,53 @@ class UCLACustomHandler(TestCase):
 
     @run_with_all_backends
     def test_message_bank_doesnt_exist(self):
-        with create_test_case(self.domain, self.case_type, 'test-case') as case:
-            self.assertIsNone(ucla_message_bank_content(self._reminder(), self._handler(), case))
+        with create_test_case(self.domain_name, self.case_type, 'test-case') as case:
+            self.assertRaises(AssertionError, ucla_message_bank_content, self._reminder(), self._handler(), case)
 
     @run_with_all_backends
     def test_message_bank_doesnt_have_correct_properties(self):
         data_type = FixtureDataType(
-            domain=self.domain,
+            domain=self.domain_name,
             tag=self.fixture_name,
             fields=[],
             item_attributes=[]
         )
         data_type.save()
         self.addCleanup(data_type.delete)
-        with create_test_case(self.domain, self.case_type, 'test-case') as case:
-            self.assertIsNone(ucla_message_bank_content(self._reminder(), self._handler(), case))
+        with create_test_case(self.domain_name, self.case_type, 'test-case') as case:
+            self.assertRaises(AssertionError, ucla_message_bank_content, self._reminder(), self._handler(), case)
 
     def test_not_passing_case(self):
         self._setup_fixture_type()
-        self.assertIsNone(ucla_message_bank_content(self._reminder(), self._handler(), None))
+        self.assertRaises(AssertionError, ucla_message_bank_content, self._reminder(), self._handler(), None)
 
     @run_with_all_backends
     def test_passing_case_without_risk_profile(self):
         self._setup_fixture_type()
-        with create_test_case(self.domain, self.case_type, 'test-case') as case:
-            self.assertIsNone(ucla_message_bank_content(self._reminder(), self._handler(), case))
+        with create_test_case(self.domain_name, self.case_type, 'test-case') as case:
+            self.assertRaises(AssertionError, ucla_message_bank_content, self._reminder(), self._handler(), case)
 
     @run_with_all_backends
     def test_no_relevant_message_invalid_risk(self):
         self._setup_fixture_type()
-        with create_test_case(self.domain, self.case_type, 'test-case', {'risk_profile': 'risk2'}) as case:
-            self.assertIsNone(ucla_message_bank_content(self._reminder(), self._handler(), case))
+        with create_test_case(self.domain_name, self.case_type, 'test-case', {'risk_profile': 'risk2'}) as case:
+            self.assertRaises(AssertionError, ucla_message_bank_content, self._reminder(), self._handler(), case)
 
     @run_with_all_backends
     def test_no_relevant_message_invalid_seq_num(self):
         self._setup_fixture_type()
-        with create_test_case(self.domain, self.case_type, 'test-case', {'risk_profile': 'risk1'}) as case:
-            self.assertIsNone(ucla_message_bank_content(self._reminder(iteration_num=2), self._handler(), case))
+        with create_test_case(self.domain_name, self.case_type, 'test-case', {'risk_profile': 'risk1'}) as case:
+            self.assertRaises(AssertionError, ucla_message_bank_content, self._reminder(iteration_num=2), self._handler(), case)
 
     @run_with_all_backends
     def test_multiple_relevant_messages(self):
         self._setup_fixture_type()
         self._setup_data_item('risk1', '1', 'message2')
-        with create_test_case(self.domain, self.case_type, 'test-case', {'risk_profile': 'risk1'}) as case:
-            self.assertIsNone(ucla_message_bank_content(self._reminder(), self._handler(), case))
+        with create_test_case(self.domain_name, self.case_type, 'test-case', {'risk_profile': 'risk1'}) as case:
+            self.assertRaises(AssertionError, ucla_message_bank_content, self._reminder(), self._handler(), case)
 
     @run_with_all_backends
     def test_correct_message(self):
         self._setup_fixture_type()
-        with create_test_case(self.domain, self.case_type, 'test-case', {'risk_profile': 'risk1'}) as case:
+        with create_test_case(self.domain_name, self.case_type, 'test-case', {'risk_profile': 'risk1'}) as case:
             self.assertEqual(ucla_message_bank_content(self._reminder(), self._handler(), case), 'message1')
