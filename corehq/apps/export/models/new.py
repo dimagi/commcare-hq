@@ -748,6 +748,10 @@ class CaseExportInstance(ExportInstance):
     case_type = StringProperty()
     type = CASE_EXPORT
 
+    @property
+    def identifier(self):
+        return self.case_type
+
     @classmethod
     def _new_from_schema(cls, schema):
         return cls(
@@ -763,6 +767,10 @@ class FormExportInstance(ExportInstance):
 
     # Whether to include duplicates and other error'd forms in export
     include_errors = BooleanProperty(default=False)
+
+    @property
+    def identifier(self):
+        return self.xmlns
 
     @property
     def formname(self):

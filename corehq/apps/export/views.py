@@ -1457,6 +1457,13 @@ class BaseNewExportView(BaseExportView):
         }[self.export_type]
 
     @property
+    def export_schema_cls(self):
+        return {
+            FORM_EXPORT: FormExportDataSchema,
+            CASE_EXPORT: CaseExportDataSchema,
+        }[self.export_type]
+
+    @property
     def page_context(self):
         return {
             'export_instance': self.export_instance,
@@ -1493,6 +1500,15 @@ class BaseModifyNewCustomView(BaseNewExportView):
     def dispatch(self, request, *args, **kwargs):
         return super(BaseModifyNewCustomView, self).dispatch(request, *args, **kwargs)
 
+    @memoized
+    def get_export_schema(self, app_id, identifier):
+        return self.export_schema_cls.generate_schema_from_builds(
+            self.domain,
+            app_id,
+            identifier,
+            only_process_current_builds=DO_NOT_PROCESS_OLD_BUILDS.enabled(self.domain),
+        )
+
 
 @location_safe
 class CreateNewCustomFormExportView(BaseModifyNewCustomView):
@@ -1504,12 +1520,7 @@ class CreateNewCustomFormExportView(BaseModifyNewCustomView):
         app_id = request.GET.get('app_id')
         xmlns = request.GET.get('export_tag').strip('"')
 
-        schema = FormExportDataSchema.generate_schema_from_builds(
-            self.domain,
-            app_id,
-            xmlns,
-            only_process_current_builds=DO_NOT_PROCESS_OLD_BUILDS.enabled(self.domain),
-        )
+        schema = self.get_export_schema(self.domain, app_id, xmlns)
         self.export_instance = self.export_instance_cls.generate_instance_from_schema(schema)
 
         return super(CreateNewCustomFormExportView, self).get(request, *args, **kwargs)
@@ -1525,12 +1536,7 @@ class CreateNewCustomCaseExportView(BaseModifyNewCustomView):
         case_type = request.GET.get('export_tag').strip('"')
         app_id = request.GET.get('app_id')
 
-        schema = CaseExportDataSchema.generate_schema_from_builds(
-            self.domain,
-            app_id,
-            case_type,
-            only_process_current_builds=DO_NOT_PROCESS_OLD_BUILDS.enabled(self.domain),
-        )
+        schema = self.get_export_schema(self.domain, app_id, case_type)
         self.export_instance = self.export_instance_cls.generate_instance_from_schema(schema)
 
         return super(CreateNewCustomCaseExportView, self).get(request, *args, **kwargs)
@@ -1558,9 +1564,6 @@ class BaseEditNewCustomExportView(BaseModifyNewCustomView):
             )
         )
         return export._id
-
-    def get_export_schema(self, export_instance):
-        raise NotImplementedError()
 
     def get(self, request, *args, **kwargs):
         auto_select = True
@@ -1611,7 +1614,7 @@ class BaseEditNewCustomExportView(BaseModifyNewCustomView):
                 )
                 return HttpResponseRedirect(self.export_home_url)
 
-        schema = self.get_export_schema(export_instance)
+        schema = self.get_export_schema(self.request.GET.get('app_id'), export_instance.identifier)
         self.export_instance = self.export_instance_cls.generate_instance_from_schema(
             schema,
             saved_export=export_instance,
@@ -1625,27 +1628,11 @@ class EditNewCustomFormExportView(BaseEditNewCustomExportView):
     page_title = ugettext_lazy("Edit Form Export")
     export_type = FORM_EXPORT
 
-    def get_export_schema(self, export_instance):
-        return FormExportDataSchema.generate_schema_from_builds(
-            self.domain,
-            export_instance.app_id,
-            export_instance.xmlns,
-            only_process_current_builds=DO_NOT_PROCESS_OLD_BUILDS.enabled(self.domain),
-        )
-
 
 class EditNewCustomCaseExportView(BaseEditNewCustomExportView):
     urlname = 'edit_new_custom_export_case'
     page_title = ugettext_lazy("Edit Case Export")
     export_type = CASE_EXPORT
-
-    def get_export_schema(self, export_instance):
-        return CaseExportDataSchema.generate_schema_from_builds(
-            self.domain,
-            self.request.GET.get('app_id'),
-            export_instance.case_type,
-            only_process_current_builds=DO_NOT_PROCESS_OLD_BUILDS.enabled(self.domain),
-        )
 
 
 class DeleteNewCustomExportView(BaseModifyNewCustomView):
