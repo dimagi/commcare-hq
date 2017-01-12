@@ -64,6 +64,11 @@ class UserES(HQESQuery):
     def users_at_locations(self, location_ids):
         return self.location(location_ids)
 
+    def users_at_accessible_locations(self, domain_name, user):
+        from corehq.apps.locations.models import SQLLocation
+        accessible_location_ids = SQLLocation.active_objects.accessible_location_ids(domain_name, user)
+        return self.users_at_locations(accessible_location_ids)
+
 
 def domain(domain):
     return filters.OR(
