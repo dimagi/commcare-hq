@@ -2,6 +2,7 @@ from django.utils.translation import ugettext as _
 
 from dimagi.utils.decorators.memoized import memoized
 
+from corehq.apps.locations.permissions import location_safe
 from .users import ExpandedMobileWorkerFilter, EmwfUtils
 
 
@@ -28,6 +29,7 @@ class CaseListFilterUtils(EmwfUtils):
             return self.reporting_group_tuple(group)
 
 
+@location_safe
 class CaseListFilter(ExpandedMobileWorkerFilter):
     slug = 'case_list_filter'
     options_url = 'case_list_options'
