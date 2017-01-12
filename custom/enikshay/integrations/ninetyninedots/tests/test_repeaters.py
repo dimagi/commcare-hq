@@ -209,7 +209,7 @@ class TestRegisterPatientPayloadGenerator(ENikshayCaseStructureMixin, TestCase):
     def test_handle_success(self):
         cases = self.create_case_structure()
         payload_generator = RegisterPatientPayloadGenerator(None)
-        payload_generator.handle_success(MockResponse(201, {"success": "hooray"}), cases[self.episode_id])
+        payload_generator.handle_success(MockResponse(201, {"success": "hooray"}), cases[self.episode_id], None)
         updated_episode_case = CaseAccessors(self.domain).get_case(self.episode_id)
         self.assertEqual(
             updated_episode_case.dynamic_case_properties().get('dots_99_registered'),
@@ -227,7 +227,7 @@ class TestRegisterPatientPayloadGenerator(ENikshayCaseStructureMixin, TestCase):
         error = {
             "error": "Something went terribly wrong",
         }
-        payload_generator.handle_failure(MockResponse(400, error), cases[self.episode_id])
+        payload_generator.handle_failure(MockResponse(400, error), cases[self.episode_id], None)
         updated_episode_case = CaseAccessors(self.domain).get_case(self.episode_id)
         self.assertEqual(
             updated_episode_case.dynamic_case_properties().get('dots_99_registered'),

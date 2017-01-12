@@ -1,6 +1,7 @@
 import json
 from StringIO import StringIO
 
+import re
 from django.test import SimpleTestCase
 from django.core.cache import cache
 from elasticsearch.exceptions import ConnectionError
@@ -405,6 +406,44 @@ class WriterTest(SimpleTestCase):
                     }
                 }
             )
+
+    def test_multi_table_order(self):
+        tables = [
+            TableConfiguration(
+                label="My table {}".format(i),
+                selected=True,
+                path=[],
+                columns=[
+                    ExportColumn(
+                        label="Q{}".format(i),
+                        item=ScalarItem(
+                            path=[PathNode(name='form'), PathNode(name='q{}'.format(i))],
+                        ),
+                        selected=True,
+                    ),
+                ]
+            )
+            for i in range(10)
+        ]
+        export_instance = FormExportInstance(
+            export_format=Format.HTML,
+            tables=tables
+        )
+        writer = _get_writer([export_instance])
+        docs = [
+            {
+                'domain': 'my-domain',
+                '_id': '1234',
+                "form": {'q{}'.format(i): 'value {}'.format(i) for i in range(10)}
+            }
+        ]
+        with writer.open([export_instance]):
+            _write_export_instance(writer, export_instance, docs)
+        with ExportFile(writer.path, writer.format) as export:
+            exported_tables = [table for table in re.findall('<h2>(.*)</h2>', export)]
+
+        expected_tables = [t.label for t in tables]
+        self.assertEqual(expected_tables, exported_tables)
 
     def test_multiple_write_export_instance_calls(self):
         """

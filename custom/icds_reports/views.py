@@ -5,10 +5,12 @@ from django.template.loader import render_to_string
 from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.permissions import location_safe
 from . import const
 from .exceptions import TableauTokenException
 
 
+@location_safe
 @toggles.ICDS_REPORTS.required_decorator()
 @login_and_domain_required
 def tableau(request, domain, workbook, worksheet):

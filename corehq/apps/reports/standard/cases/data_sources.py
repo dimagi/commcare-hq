@@ -145,32 +145,16 @@ class CaseInfo(object):
         except Exception:
             return None
 
-    @memoized
     def _get_username(self, user_id):
-        username = self.report.usernames.get(user_id)
-        if not username:
-            mc = cache.caches['default']
-            cache_key = "%s.%s" % (CouchUser.__class__.__name__, user_id)
+        if not user_id:
+            return None
 
-            try:
-                if mc.has_key(cache_key):
-                    user_dict = json.loads(mc.get(cache_key))
-                else:
-                    user_obj = CouchUser.get_by_user_id(user_id) if user_id else None
-                    if user_obj:
-                        user_dict = user_obj.to_json()
-                    else:
-                        user_dict = {}
-                    cache_payload = json.dumps(user_dict)
-                    mc.set(cache_key, cache_payload)
-                if user_dict == {}:
-                    return None
-                else:
-                    user_obj = CouchUser.wrap(user_dict)
-                    username = user_obj.username
-            except Exception:
-                return None
-        return username
+        try:
+            user = CouchUser.get_by_user_id(user_id)
+            if user:
+                return user.username
+        except CouchUser.AccountTypeError:
+            return None
 
     def parse_date(self, date_string):
         try:

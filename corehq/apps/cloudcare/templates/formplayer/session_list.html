@@ -1,14 +1,25 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-<script type="text/template" id="session-view-list-template">
+<script type="text/template" id="session-view-list-preview-template">
     <div class="breadcrumb-form-container">
-      <ol class="breadcrumb breadcrumb-form">
-        <li class="js-home breadcrumb-text"><i class="fa fa-home"></i></li>
-        <li class="breadcrumb-text">{% trans "Incomplete Forms" %}</li>
-      </ol>
+       <ol class="breadcrumb breadcrumb-form">
+         <li class="breadcrumb-text">{% trans "Incomplete Forms" %}</li>
+       </ol>
     </div>
     <div class="module-menu-container module-menu-bar-offset">
+        <table class="table module-table">
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+</script>
+
+<script type="text/template" id="session-view-list-web-apps-template">
+    <div class="module-menu-container module-menu-bar-offset">
+        <div class="page-header menu-header">
+            <h1 class="page-title">{% trans "Incomplete Forms" %}</h1>
+        </div>
         <table class="table module-table">
             <tbody>
             </tbody>

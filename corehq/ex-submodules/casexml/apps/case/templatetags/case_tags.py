@@ -15,6 +15,7 @@ from django.utils.html import escape
 
 from corehq.apps.products.models import SQLProduct
 from couchdbkit import ResourceNotFound
+from corehq.apps.users.util import cached_owner_id_to_display
 
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 
@@ -118,6 +119,10 @@ class CaseDisplayWrapper(object):
                 'expr': "type",
             },
             {
+                'name': _('Owner'),
+                'expr': lambda c: cached_owner_id_to_display(c.get('owner_id')),
+            },
+            {
                 'name': _('Date Opened'),
                 'expr': "opened_on",
                 'parse_date': True,
@@ -175,10 +180,6 @@ class SupplyPointDisplayWrapper(CaseDisplayWrapper):
                             "expr": "location_site_code",
                             "name": _("Code"),
                         },
-                        #{
-                            #"expr": "last_reported",
-                            #"name": _("Last Reported"),
-                        #},
                     ],
                     [
                         {
