@@ -3615,7 +3615,7 @@ def get_auto_filter_configurations():
 
 
 def _get_filter_function(slug):
-    matched_configs = [config for config in get_all_mobile_filter_configs() if config.slug == slug]
+    matched_configs = [config for config in get_auto_filter_configurations() if config.slug == slug]
     if not matched_configs:
         raise ValueError('Unexpected ID for AutoFilter', slug)
     else:
