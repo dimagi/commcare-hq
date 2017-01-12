@@ -26,14 +26,9 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
     };
     var setScrollableMaxHeight = function() {
         var maxHeight,
-            maxHeightForm,
             user = FormplayerFrontend.request('currentUser'),
-            restoreAsBannerHeight = 0,
-            debuggerHeight = 0;
+            restoreAsBannerHeight = 0;
 
-        if (user.debuggerEnabled) {
-            debuggerHeight = 34;
-        }
         if (user.restoreAs) {
             restoreAsBannerHeight = FormplayerFrontend.regions.restoreAsBanner.$el.height();
         }
@@ -41,13 +36,10 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             FormplayerFrontend.regions.breadcrumb.$el.height() -
             restoreAsBannerHeight);
 
-        // Max height of the form is the space between the debugger and the breadcrumbs
-        maxHeightForm = maxHeight - debuggerHeight;
-
         $('.scrollable-container').css('max-height', maxHeight + 'px');
         $('.form-scrollable-container').css({
-            'min-height': maxHeightForm + 'px',
-            'max-height': maxHeightForm + 'px',
+            'min-height': maxHeight + 'px',
+            'max-height': maxHeight + 'px',
         });
     };
 

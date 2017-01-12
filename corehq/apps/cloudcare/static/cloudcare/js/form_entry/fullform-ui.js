@@ -504,7 +504,7 @@ Formplayer.ViewModels.CloudCareDebugger = function() {
         var $debug = $('#instance-xml-home'),
             $body = $('body');
 
-        $debug.width($body.width() - $debug.offset().left);
+        $debug.width($body.width());
     };
 };
 
