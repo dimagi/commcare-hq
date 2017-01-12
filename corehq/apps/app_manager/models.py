@@ -3614,7 +3614,7 @@ def get_auto_filter_configurations():
     ]
 
 
-def _get_filter_function(slug):
+def _get_auto_filter_function(slug):
     matched_configs = [config for config in get_auto_filter_configurations() if config.slug == slug]
     if not matched_configs:
         raise ValueError('Unexpected ID for AutoFilter', slug)
@@ -3627,7 +3627,7 @@ class AutoFilter(ReportAppFilter):
     filter_type = StringProperty(choices=[f.slug for f in get_auto_filter_configurations()])
 
     def get_filter_value(self, user, ui_filter):
-        return _get_filter_function(self.filter_type)(user, ui_filter)
+        return _get_auto_filter_function(self.filter_type)(user, ui_filter)
 
 
 class CustomDataAutoFilter(ReportAppFilter):
