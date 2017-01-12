@@ -2202,7 +2202,9 @@ class GenericDownloadNewExportMixin(object):
         Override to hook fetching mobile_user_and_group_slugs
         """
         filter_form_data, export_specs = self._get_form_data_and_specs(in_data)
-        mobile_user_and_group_slugs = self._get_mobile_user_and_group_slugs(filter_form_data['emw'])
+        mobile_user_and_group_slugs = self._get_mobile_user_and_group_slugs(
+            filter_form_data[LocationRestrictedMobileWorkerFilter.slug]
+        )
         try:
             export_filter = self.get_filters(filter_form_data, mobile_user_and_group_slugs)
         except ExportFormValidationException:
