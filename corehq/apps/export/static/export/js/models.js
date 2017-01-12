@@ -26,6 +26,7 @@ hqDefine('export/js/models.js', function () {
         self.showBuildSchemaProgressBar = ko.observable(false);
         self.errorOnBuildSchema = ko.observable(false);
         self.schemaProgressText = ko.observable(gettext('Process'));
+        self.numberOfAppsToProcess = options.numberOfAppsToProcess || 0;
 
         // Detetrmines the state of the save. Used for controlling the presentaiton
         // of the Save button.
@@ -241,6 +242,14 @@ hqDefine('export/js/models.js', function () {
         }
     };
 
+    ExportInstance.prototype.toggleShowDeleted = function(table) {
+        table.showDeleted(!table.showDeleted());
+
+        if (this.numberOfAppsToProcess > 0 && table.showDeleted()) {
+            $('#export-process-deleted-applications').modal('show');
+        }
+    };
+
     /**
      * showDeidColumn
      *
@@ -334,6 +343,7 @@ hqDefine('export/js/models.js', function () {
         var self = this;
         // Whether or not to show advanced columns in the UI
         self.showAdvanced = ko.observable(false);
+        self.showDeleted = ko.observable(false);
         ko.mapping.fromJS(tableJSON, TableConfiguration.mapping, self);
     };
 
