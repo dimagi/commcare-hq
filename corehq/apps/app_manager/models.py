@@ -1632,12 +1632,25 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
                                 questions,
                                 question_path
                             )
+
+        def parse_case_type(name, types={"#case": module_case_type,
+                                         "#user": USERCASE_TYPE}):
+            if name.startswith("#") and "/" in name:
+                full_name = name
+                hashtag, name = name.split("/", 1)
+                if hashtag not in types:
+                    hashtag, name = "#case", full_name
+            else:
+                hashtag = "#case"
+            return types[hashtag], name
+
         case_loads = self.case_references.get("load", {})
         for question_path, case_properties in case_loads.iteritems():
             for name in case_properties:
+                case_type, name = parse_case_type(name)
                 self.add_property_load(
                     app_case_meta,
-                    module_case_type,
+                    case_type,
                     name,
                     questions,
                     question_path
@@ -3614,8 +3627,8 @@ def get_auto_filter_configurations():
     ]
 
 
-def _get_filter_function(slug):
-    matched_configs = [config for config in get_all_mobile_filter_configs() if config.slug == slug]
+def _get_auto_filter_function(slug):
+    matched_configs = [config for config in get_auto_filter_configurations() if config.slug == slug]
     if not matched_configs:
         raise ValueError('Unexpected ID for AutoFilter', slug)
     else:
@@ -3627,7 +3640,7 @@ class AutoFilter(ReportAppFilter):
     filter_type = StringProperty(choices=[f.slug for f in get_auto_filter_configurations()])
 
     def get_filter_value(self, user, ui_filter):
-        return _get_filter_function(self.filter_type)(user, ui_filter)
+        return _get_auto_filter_function(self.filter_type)(user, ui_filter)
 
 
 class CustomDataAutoFilter(ReportAppFilter):
@@ -4801,7 +4814,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             })
         except UserCaseXPathValidationError as ucve:
             errors.append({
-                'type': 'invalid user case xpath reference',
+                'type': 'invalid user property xpath reference',
                 'module': ucve.module,
                 'form': ucve.form,
             })
@@ -5628,9 +5641,14 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if app_uses_usercase(self) and not domain_has_privilege(self.domain, privileges.USER_CASE):
             errors.append({
                 'type': 'subscription',
-                'message': _('Your application is using User Case functionality. You can remove User Case '
+                'message': _('Your application is using User Properties. You can remove User Properties '
+                             'functionality by opening the User Properties tab in a form that uses it, and '
+                             'clicking "Remove User Properties".')
+                           if toggles.USER_PROPERTY_EASY_REFS.enabled(self.domain) else
+                           # old message, to be removed with USER_PROPERTY_EASY_REFS toggle
+                           _('Your application is using User Case functionality. You can remove User Case '
                              'functionality by opening the User Case Management tab in a form that uses it, and '
-                             'clicking "Remove User Case Properties".')
+                             'clicking "Remove User Case Properties".'),
             })
         return errors
 

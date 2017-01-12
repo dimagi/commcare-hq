@@ -79,7 +79,8 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                     value: 'fixture'
                 },
                 {
-                    label: 'User Case',
+                    label: COMMCAREHQ.toggleEnabled('USER_PROPERTY_EASY_REFS') ?
+                            'User Properties' : 'User Case',
                     value: 'usercase'
                 }
             ];

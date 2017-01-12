@@ -923,3 +923,17 @@ class TestBulkManagement(TestCase):
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
         self.assertLocationsMatch(self.as_pairs(swap_parents))
         self.assertCouchSync()
+
+    def test_custom_data(self):
+        tree = [
+            ('State 1', 's1', 'state', '', '', False, '', '', '', {'a': 1}, {}, 0),
+            ('County 11', 'c1', 'county', 's1', '', False, '', '', '', {'b': 'test'}, {}, 0),
+        ]
+        result = self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            tree
+        )
+        self.assertEqual(result.errors, [])
+        self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
+        self.assertLocationsMatch(self.as_pairs(tree))
+        self.assertCouchSync()

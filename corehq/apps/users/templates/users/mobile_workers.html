@@ -352,13 +352,13 @@ $(function () {
                     </div>
                 </div>
                 <div class="alert alert-info"
-                     ng-show="!!query && paginatedItems.length == 0 && !notLoaded && !hasError">
+                     ng-show="total_records != 0 && paginatedItems.length == 0 && !notLoaded && !hasError">
                     {% blocktrans %}
                     No Mobile Workers were found that matched your query.
                     {% endblocktrans %}
                 </div>
                 <div class="alert alert-info"
-                     ng-show="!query && paginatedItems.length == 0 && !notLoaded && !hasError">
+                     ng-show="total_records == 0 && paginatedItems.length == 0 && !notLoaded && !hasError">
                     {% blocktrans %}
                         <strong>There are currently no Mobile Workers in this project.</strong>
                         Please Create a new Mobile Worker above to get started.

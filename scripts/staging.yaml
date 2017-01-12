@@ -45,7 +45,7 @@
 trunk: master
 name: autostaging
 branches:
-  - xform_submissions.timings # Danny 1/3
+  - general-credits-sr # sreddy 1/10
   - vellum-staging # J$ 11/13  
   - django19
   - bmb/currentind-string # Biyeun 11/12
@@ -58,11 +58,10 @@ submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
-    branches: []
-#      - commcare-2.32-jars # Aliza 12/5
+    branches:
+      - commcare_2.32 # WSP 1/12
   submodules/formtranslate-src:
     branches: []
-#      - commcare-2.32-jars # Aliza 12/5
   submodules/django-digest-src:
     branches: []
   submodules/dimagi-utils-src:

@@ -70,6 +70,7 @@ class ReportDataTest(TestCase):
                     "column_id": "number",
                     "display": "Number",
                     "aggregation": "simple",
+                    "calculate_total": True,
                 },
                 {
                     "type": "expression",
@@ -165,3 +166,11 @@ class ReportDataTest(TestCase):
         skipped = report_data_source.get_data(start=3)
         self.assertEqual(count - 3, len(skipped))
         self.assertEqual(original_data[3:], skipped)
+
+    # @run_with_all_ucr_backends  Doesn't work with ES backend yet
+    def test_total_row(self):
+        rows = self._add_some_rows(3)
+        report_data_source = ReportFactory.from_spec(self.report_config)
+
+        total_number = sum(row.number for row in rows)
+        self.assertEqual(report_data_source.get_total_row(), ['Total', total_number, '', ''])

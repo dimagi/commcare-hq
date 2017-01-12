@@ -44,6 +44,7 @@ from corehq.apps.es import AppES
 from corehq.apps.es.queries import search_string_query
 from corehq.apps.hqwebapp.utils import send_confirmation_email
 from corehq.apps.hqwebapp.views import BasePageView, logout
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.registration.forms import AdminInvitesUserForm, WebUserInvitationForm
 from corehq.apps.registration.utils import activate_new_user
 from corehq.apps.reports.util import get_possible_reports
@@ -117,6 +118,7 @@ class BaseUserSettingsView(BaseDomainView):
         return context
 
 
+@location_safe
 class DefaultProjectUserSettingsView(BaseUserSettingsView):
     urlname = "users_default"
 

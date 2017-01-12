@@ -25,10 +25,10 @@ from corehq.form_processor.utils import should_use_sql_backend
 from corehq.form_processor.utils.general import set_local_domain_sql_backend_override, \
     clear_local_domain_sql_backend_override
 from corehq.util.log import with_progress_bar
+from corehq.util.pagination import PaginationEventHandler
 from couchforms.models import XFormInstance, doc_types as form_doc_types, all_known_formlike_doc_types
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.undo import DELETED_SUFFIX
-from fluff.management.commands.ptop_reindexer_fluff import ReindexEventHandler
 from pillowtop.reindexer.change_providers.couch import CouchDomainDocTypeChangeProvider
 
 CASE_DOC_TYPES = ['CommCareCase', 'CommCareCase-Deleted', ]
@@ -460,7 +460,7 @@ def _get_main_form_iterator(domain):
         couch_db=XFormInstance.get_db(),
         domains=[domain],
         doc_types=['XFormInstance'],
-        event_handler=ReindexEventHandler(u'couch to sql migrator ({})'.format(domain)),
+        event_handler=PaginationEventHandler(),
     )
 
 
@@ -469,7 +469,7 @@ def _get_unprocessed_form_iterator(domain):
         couch_db=XFormInstance.get_db(),
         domains=[domain],
         doc_types=UNPROCESSED_DOC_TYPES,
-        event_handler=ReindexEventHandler(u'couch to sql migrator ({} unprocessed forms)'.format(domain)),
+        event_handler=PaginationEventHandler(),
     )
 
 
@@ -479,7 +479,7 @@ def _get_case_iterator(domain, doc_types=None):
         couch_db=XFormInstance.get_db(),
         domains=[domain],
         doc_types=doc_types,
-        event_handler=ReindexEventHandler(u'couch to sql migrator ({})'.format(domain)),
+        event_handler=PaginationEventHandler(),
     )
 
 
