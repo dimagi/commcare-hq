@@ -103,6 +103,7 @@ class CommCareMobileContactMixin(object):
         return PhoneNumber.by_owner_id(self.get_id)
 
     def get_two_way_numbers(self):
+        from corehq.apps.sms.models import PhoneNumber
         return {
             p.phone_number: p
             for p in PhoneNumber.by_owner_id(self.get_id).filter(is_two_way=True)
@@ -120,6 +121,7 @@ class CommCareMobileContactMixin(object):
             raise InvalidFormatException("Phone number format must consist of only digits.")
 
     def _create_phone_entry(self, phone_number):
+        from corehq.apps.sms.models import PhoneNumber
         return PhoneNumber.objects.create(
             domain=self.domain,
             owner_doc_type=self.doc_type,
@@ -136,8 +138,6 @@ class CommCareMobileContactMixin(object):
         return self._create_phone_entry(phone_number)
 
     def get_or_create_phone_entry(self, phone_number):
-        from corehq.apps.sms.models import PhoneNumber
-
         phone_number = apply_leniency(phone_number)
         self.validate_number_format(phone_number)
 

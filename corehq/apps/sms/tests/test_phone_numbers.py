@@ -103,7 +103,7 @@ class CaseContactPhoneNumberTestCase(TestCase):
         return case.get_phone_number()
 
     def assertPhoneNumberDetails(self, case, phone_number, sms_backend_id, ivr_backend_id,
-            verified, verification_pending, is_two_way, pk=None):
+            verified, pending_verification, is_two_way, pk=None):
         v = self.get_case_phone_number(case)
         self.assertEqual(v.domain, case.domain)
         self.assertEqual(v.owner_doc_type, case.doc_type)
@@ -112,7 +112,7 @@ class CaseContactPhoneNumberTestCase(TestCase):
         self.assertEqual(v.backend_id, sms_backend_id)
         self.assertEqual(v.ivr_backend_id, ivr_backend_id)
         self.assertEqual(v.verified, verified)
-        self.assertEqual(v.verification_pending, verification_pending)
+        self.assertEqual(v.pending_verification, pending_verification)
         self.assertEqual(v.is_two_way, is_two_way)
         self.assertEqual(v.contact_last_modified, case.server_modified_on)
 
@@ -132,7 +132,8 @@ class CaseContactPhoneNumberTestCase(TestCase):
             self.assertPhoneNumberDetails(case, '99987658765', None, None, True, False, True, pk=pk)
 
             case = self.set_case_property(case, 'contact_phone_number', '99987698769')
-            self.assertPhoneNumberDetails(case, '99987698769', None, None, True, False, True, pk=pk)
+            self.assertPhoneNumberDetails(case, '99987698769', None, None, True, False, True)
+            pk = self.get_case_phone_number(case).pk
 
             case = self.set_case_property(case, 'contact_backend_id', 'sms-backend')
             self.assertPhoneNumberDetails(case, '99987698769', 'sms-backend', None, True, False, True, pk=pk)
@@ -292,7 +293,7 @@ class SQLPhoneNumberTestCase(TestCase):
             owner_id='X',
             phone_number='999123',
             verified=True,
-            verification_pending=False,
+            pending_verification=False,
             is_two_way=True
         )
 
@@ -308,7 +309,7 @@ class SQLPhoneNumberTestCase(TestCase):
 
         # test pending
         number.verified = False
-        number.verification_pending = True
+        number.pending_verification = True
         number.is_two_way = False
         number.save()
         self.assertIsNone(PhoneNumber.get_two_way_number('999124'))
@@ -321,7 +322,7 @@ class SQLPhoneNumberTestCase(TestCase):
             owner_id='X',
             phone_number='999123',
             verified=True,
-            verification_pending=False,
+            pending_verification=False,
             is_two_way=True
         )
 
@@ -331,7 +332,7 @@ class SQLPhoneNumberTestCase(TestCase):
             owner_id='X',
             phone_number='999223',
             verified=True,
-            verification_pending=False,
+            pending_verification=False,
             is_two_way=True
         )
 

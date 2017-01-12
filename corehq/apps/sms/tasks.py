@@ -305,7 +305,7 @@ def _sync_case_phone_number(contact_case):
         if len(phone_numbers) > 1:
             raise PhoneNumberException("Expected zero or one phone entry for case %s" % contact_case.case_id)
 
-        phone_number = phonenumbers[0] if phone_numbers else None
+        phone_number = phone_numbers[0] if phone_numbers else None
         if (
             phone_number and
             phone_number.contact_last_modified and
@@ -318,12 +318,12 @@ def _sync_case_phone_number(contact_case):
                 phone_number.delete()
             return
 
+        if phone_number and phone_number.phone_number != phone_info.phone_number:
+            phone_number.delete()
+            phone_number = None
+
         if not phone_number:
             phone_number = contact_case.create_phone_entry(phone_info.phone_number)
-
-        if phone_number.phone_number != phone_info.phone_number:
-            phone_number.created_on = datetime.utcnow()
-            phone_number.phone_number = phone_info.phone_number
 
         phone_number.backend_id = phone_info.sms_backend_id
         phone_number.ivr_backend_id = phone_info.ivr_backend_id

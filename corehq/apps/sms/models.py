@@ -592,9 +592,12 @@ class PhoneNumber(UUIDGeneratorMixin, models.Model):
             return None
 
     @classmethod
-    @quickcache(['phone_number'], timeout=60 * 60)
     def get_two_way_number(cls, phone_number):
-        phone_number = apply_leniency(phone_number)
+        return cls._get_two_way_number(apply_leniency(phone_number))
+
+    @classmethod
+    @quickcache(['phone_number'], timeout=60 * 60)
+    def _get_two_way_number(cls, phone_number):
         try:
             return cls.objects.get(phone_number=phone_number, is_two_way=True)
         except cls.DoesNotExist:
@@ -615,8 +618,8 @@ class PhoneNumber(UUIDGeneratorMixin, models.Model):
     @classmethod
     def get_reserved_number(cls, phone_number):
         return (
-            cls.get_two_way_number(phone) or
-            cls.get_number_pending_verification(phone)
+            cls.get_two_way_number(phone_number) or
+            cls.get_number_pending_verification(phone_number)
         )
 
     @classmethod
@@ -665,9 +668,9 @@ class PhoneNumber(UUIDGeneratorMixin, models.Model):
         if old_owner_id and old_owner_id != owner_id:
             cls.by_owner_id.clear(cls, old_owner_id)
 
-        cls.get_two_way_number.clear(cls, phone_number)
+        cls._get_two_way_number.clear(cls, phone_number)
         if old_phone_number and old_phone_number != phone_number:
-            cls.get_two_way_number.clear(cls, old_phone_number)
+            cls._get_two_way_number.clear(cls, old_phone_number)
 
     def _clear_caches(self):
         self._clear_quickcaches(
