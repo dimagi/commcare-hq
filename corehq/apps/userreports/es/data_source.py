@@ -1,3 +1,4 @@
+from collections import OrderedDict
 import copy
 
 from django.utils.decorators import method_decorator
@@ -8,6 +9,7 @@ from corehq.apps.es.aggregations import MinAggregation, SumAggregation, TermsAgg
 from corehq.apps.es.es_query import HQESQuery
 
 from corehq.apps.reports.api import ReportDataSource
+from corehq.apps.reports.sqlreport import DataFormatter, DictDataFormat
 from corehq.apps.userreports.decorators import catch_and_raise_exceptions
 from corehq.apps.userreports.mixins import ConfigurableReportDataSourceMixin
 from corehq.apps.userreports.reports.sorting import ASCENDING, DESCENDING
@@ -54,25 +56,28 @@ class ConfigurableReportEsDataSource(ConfigurableReportDataSourceMixin, ReportDa
         else:
             ret = self._get_query_results(start, limit)
 
+        formatter = DataFormatter(DictDataFormat(self.columns, no_value=None))
+        formatted_data = formatter.format(ret, group_by=self.group_by).values()
+
         for report_column in self.top_level_db_columns:
-            report_column.format_data(ret)
+            report_column.format_data(formatted_data)
 
         for computed_column in self.top_level_computed_columns:
-            for row in ret:
+            for row in formatted_data:
                 row[computed_column.column_id] = computed_column.wrapped_expression(row)
 
-        return ret
+        return formatted_data
 
     @memoized
     def _get_query_results(self, start, limit):
         hits = self._get_query(start, limit).hits
-        ret = []
+        ret = OrderedDict()
 
         for row in hits:
             r = {}
             for report_column in self.top_level_db_columns:
                 r.update(report_column.get_es_data(row, self.config, self.lang, from_aggregation=False))
-            ret.append(r)
+            ret[row['doc_id']] = r
 
         return ret
 
@@ -123,16 +128,24 @@ class ConfigurableReportEsDataSource(ConfigurableReportDataSourceMixin, ReportDa
         top_buckets = aggs[self.aggregation_columns[0]]['buckets']
         hits = _parse_buckets(top_buckets, self.aggregation_columns[1:], self.aggregation_columns[0])
 
-        ret = []
+        ret = OrderedDict()
         start = start or 0
         end = start + (limit or len(hits))
         relevant_hits = hits[start:end]
 
         for row in relevant_hits:
-            r = {}
+            r_ = {}
             for report_column in self.top_level_columns:
-                r.update(report_column.get_es_data(row, self.config, self.lang))
-            ret.append(r)
+                r_.update(report_column.get_es_data(row, self.config, self.lang))
+
+            key = []
+            for col in self.group_by:
+                if col in row['past_bucket_values']:
+                    key += row['past_bucket_values'][col]
+                else:
+                    key += row[col]
+
+            ret[tuple(key)] = r_
 
         return ret
 
