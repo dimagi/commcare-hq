@@ -1430,6 +1430,9 @@ Column IDs in percentage fields *must be unique for the whole report*. If you us
 
 To sum a column and include the result in a totals row at the bottom of the report, set the `calculate_total` value in the column configuration to `true`.
 
+Not supported for the following column types:
+- expression
+
 ### Internationalization
 Report columns can be translated into multiple languages.
 To translate values in a given column check out
