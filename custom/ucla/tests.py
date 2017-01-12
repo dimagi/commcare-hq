@@ -18,15 +18,15 @@ class UCLACustomHandler(TestCase):
     case_type = 'ucla-reminder'
     fixture_name = 'message_bank'
 
-    def _reminder(self):
+    def _reminder(self, iteration_num=1):
         return Reminder(
             domain=self.domain,
-            schedule_iteration_num=0,
+            schedule_iteration_num=iteration_num,
             current_event_sequence_num=0,
         )
 
-    def _handler(self, num_events=0):
-        return Handler(events=[None] * num_events)
+    def _handler(self):
+        return Handler(events=[None])
 
     def _setup_fixture_type(self):
         self.data_type = FixtureDataType(
@@ -125,7 +125,7 @@ class UCLACustomHandler(TestCase):
     def test_no_relevant_message_invalid_seq_num(self):
         self._setup_fixture_type()
         with create_test_case(self.domain, self.case_type, 'test-case', {'risk_profile': 'risk1'}) as case:
-            self.assertIsNone(ucla_message_bank_content(self._reminder(), self._handler(num_events=1), case))
+            self.assertIsNone(ucla_message_bank_content(self._reminder(iteration_num=2), self._handler(), case))
 
     @run_with_all_backends
     def test_multiple_relevant_messages(self):
