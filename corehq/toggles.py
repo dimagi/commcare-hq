@@ -238,7 +238,7 @@ APP_BUILDER_SHADOW_MODULES = StaticToggle(
     'Shadow Modules',
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Shadow+Modules',
+    help_link='https://confluence.dimagi.com/display/internal/Shadow+Modules',
 )
 
 CASE_LIST_CUSTOM_XML = StaticToggle(
@@ -295,7 +295,7 @@ DETAIL_LIST_TAB_NODESETS = StaticToggle(
     'Associate a nodeset with a case detail tab',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Case+Detail+Nodesets',
+    help_link='https://confluence.dimagi.com/display/internal/Case+Detail+Nodesets',
 )
 
 GRAPH_CREATION = StaticToggle(
@@ -443,9 +443,10 @@ MOBILE_PRIVILEGES_FLAG = StaticToggle(
 
 MULTIPLE_LOCATIONS_PER_USER = StaticToggle(
     'multiple_locations',
-    "Enable multiple locations per user on domain.",
+    "(Deprecated) Enable multiple locations per user on domain.",
     TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    description="Don't enable this flag."
 )
 
 PRODUCTS_PER_LOCATION = StaticToggle(
@@ -541,7 +542,7 @@ ENABLE_LOADTEST_USERS = StaticToggle(
     'Enable creating loadtest users on HQ',
     TAG_EXPERIMENTAL,
     namespaces=[NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Loadtest+Users',
+    help_link='https://confluence.dimagi.com/display/internal/Loadtest+Users',
 )
 
 MOBILE_UCR = StaticToggle(
@@ -554,9 +555,10 @@ MOBILE_UCR = StaticToggle(
 
 RESTRICT_WEB_USERS_BY_LOCATION = StaticToggle(
     'restrict_web_users_by_location',
-    "Allow project to restrict web user permissions by location (deprecated)",
+    "(Deprecated) Allow project to restrict web user permissions by location",
     TAG_ONE_OFF,
     namespaces=[NAMESPACE_DOMAIN],
+    description="Don't enable this flag."
 )
 
 API_THROTTLE_WHITELIST = StaticToggle(
@@ -678,6 +680,13 @@ NINETYNINE_DOTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+NIKSHAY_INTEGRATION = StaticToggle(
+    'nikshay_integration',
+    'Enable patient registration in Nikshay',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
 MULTIPLE_CHOICE_CUSTOM_FIELD = StaticToggle(
     'multiple_choice_custom_field',
     'Allow project to use multiple choice field in custom fields',
@@ -687,9 +696,10 @@ MULTIPLE_CHOICE_CUSTOM_FIELD = StaticToggle(
 
 RESTRICT_FORM_EDIT_BY_LOCATION = StaticToggle(
     'restrict_form_edit_by_location',
-    "Restrict ability to edit/archive forms by the web user's location",
+    "(Deprecated) Restrict ability to edit/archive forms by the web user's location",
     TAG_ONE_OFF,
     namespaces=[NAMESPACE_DOMAIN],
+    description="Don't enable this flag."
 )
 
 SUPPORT = StaticToggle(
@@ -716,13 +726,6 @@ USE_FORMPLAYER_FRONTEND = StaticToggle(
     'use_formplayer_frontend',
     'Use New CloudCare',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN],
-)
-
-USE_FORMPLAYER = StaticToggle(
-    'use_formplayer',
-    'Use the new formplayer server',
-    TAG_ONE_OFF,
     [NAMESPACE_DOMAIN],
 )
 
@@ -831,7 +834,7 @@ GRID_MENUS = StaticToggle(
     'Allow using grid menus on Android',
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Grid+Views',
+    help_link='https://confluence.dimagi.com/display/internal/Grid+Views',
 )
 
 OLD_EXPORTS = StaticToggle(
@@ -941,7 +944,7 @@ CLOUDCARE_LATEST_BUILD = StaticToggle(
 APP_MANAGER_V2 = StaticToggle(
     'app_manager_v2',
     'Prototype for case management onboarding (App Manager V2)',
-    TAG_EXPERIMENTAL,
+    TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
 
@@ -952,11 +955,30 @@ SHOW_PREVIEW_APP_SETTINGS = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
+USER_TESTING_SIMPLIFY = StaticToggle(
+    'user_testing_simplify',
+    'Simplify the UI for user testing experiments',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN]
+)
+
 DATA_MIGRATION = StaticToggle(
     'data_migration',
     'Disable submissions and restores during a data migration',
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
+)
+
+EMWF_WORKER_ACTIVITY_REPORT = StaticToggle(
+    'emwf_worker_activity_report',
+    'Make the Worker Activity Report use the Groups or Users (EMWF) filter',
+    TAG_ONE_OFF,
+    namespaces=[NAMESPACE_DOMAIN],
+    description=(
+        "This flag allows you filter the users to display in the same way as the "
+        "other reports - by individual user, group, or location.  Note that this "
+        "will also force the report to always display by user."
+    ),
 )
 
 DATA_DICTIONARY = StaticToggle(
@@ -966,10 +988,24 @@ DATA_DICTIONARY = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+LINKED_APPS = StaticToggle(
+    'linked_apps',
+    'Allows master and linked apps',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
 NIMBUS_FORM_VALIDATION = PredictablyRandomToggle(
     'nimbus_form_validation',
     'Use Nimbus to validate XForms',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
-    randomness=0.1
+    randomness=1.0
+)
+
+COPY_CASE_CONFIGS = StaticToggle(
+    'copy_case_configs',
+    'Allow copying case list / details screens in basic modules.',
+    TAG_PRODUCT_CORE,
+    [NAMESPACE_DOMAIN]
 )

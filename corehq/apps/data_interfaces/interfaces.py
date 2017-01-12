@@ -103,7 +103,8 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface):
         context.update(
             users=[dict(ownerid=user.user_id, name=user.username_in_report, type="user")
                    for user in active_users],
-            user_ids=self.user_ids,
+            groups=[dict(ownerid=group.get_id, name=group.name, type="group")
+                    for group in self.all_case_sharing_groups],
         )
         return context
 

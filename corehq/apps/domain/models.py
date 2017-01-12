@@ -467,11 +467,11 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         return get_brief_apps_in_domain(self.name)
 
     def full_applications(self, include_builds=True):
-        from corehq.apps.app_manager.models import Application, RemoteApp
-        WRAPPERS = {'Application': Application, 'RemoteApp': RemoteApp}
+        from corehq.apps.app_manager.util import get_correct_app_class
+        from corehq.apps.app_manager.models import Application
 
         def wrap_application(a):
-            return WRAPPERS[a['doc']['doc_type']].wrap(a['doc'])
+            return get_correct_app_class(a['doc']).wrap(a['doc'])
 
         if include_builds:
             startkey = [self.name]

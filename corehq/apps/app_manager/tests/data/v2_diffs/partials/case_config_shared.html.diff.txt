@@ -1,6 +1,21 @@
 --- 
 +++ 
-@@ -11,7 +11,7 @@
+@@ -3,15 +3,19 @@
+ <script type="text/html" id="case-config:condition">
+     <!--ko with: condition -->
+     <span data-bind="text: $parent.actionType"></span>
+-    <div data-bind="visible: type() === 'always'">
+-        <a href="#" data-bind="click: function () {type('if')}"><i class="fa fa-plus"></i> {% trans "Only if the answer to..." %}</a>
+-    </div>
++
++    {% if app.advanced_app_builder or form.get_action_type != 'open' %}
++      <div data-bind="visible: type() === 'always'">
++          <a href="#" data-bind="click: function () {type('if')}"><i class="fa fa-plus"></i> {% trans "Only if the answer to..." %}</a>
++      </div>
++    {% endif %}
++
+     <div class="form-inline" data-bind="visible: type() === 'if'">
+         <a href="#" data-bind="click: function () {type('always')}">
              <i class="fa fa-remove"></i>
          </a>
          {% trans "Only if the answer to" %}
@@ -9,7 +24,7 @@
              This would normally use .form-control, but it's going to become a select2,
              which adds wonky height & borders on Firefox when it uses .form-control
          -->
-@@ -40,7 +40,7 @@
+@@ -40,7 +44,7 @@
  </script>
  
  <script type="text/html" id="case-config:case-properties:question">
@@ -18,12 +33,25 @@
          This would normally use .form-control, but it's going to become a select2,
          which adds wonky height & borders on Firefox when it uses .form-control
      -->
-@@ -73,12 +73,12 @@
+@@ -64,7 +68,7 @@
+         <input type="text" class="form-control" data-bind="
+             valueDefault: property.key,
+             default: property.defaultKey,
+-            casePropertySelect2: suggestedProperties,
++            casePropertySelect2: suggestedProperties
+         "/>
+     </span>
+     <span data-bind="visible: property.required()">
+@@ -73,12 +77,16 @@
  </script>
  
  <script type="text/html" id="case-config:case-transaction:case-preload">
 -    <div class="panel-heading panel-title">{% trans "Load the following case properties into the form" %}</div>
-+    <div class="panel-heading panel-title">{% trans "Load the following properties into the form" %}</div>
++    <div class="panel-heading">
++      <h4 class="panel-title panel-title-nolink">
++        {% trans "Load the following properties into the form" %}
++      </h4>
++    </div>
      <table class="table table-condensed" data-bind="visible: case_preload().length">
          <thead>
              <tr>
@@ -33,39 +61,130 @@
                  <th></th>
                  <th>{% trans "Question" %}</th>
              </tr>
-@@ -112,7 +112,7 @@
+@@ -112,9 +120,9 @@
      </table>
      <div class="panel-body">
          <div class="alert alert-block alert-info" data-bind="visible: !case_preload().length">
 -            {% trans "No case properties will be loaded" %}
 +            {% trans "No properties will be loaded" %}
          </div>
-         <a href="#" class="firstProperty" data-bind="click: addPreload, visible: !case_preload().length">
+-        <a href="#" class="firstProperty" data-bind="click: addPreload, visible: !case_preload().length">
++        <a href="#" class="firstProperty btn btn-default" data-bind="click: addPreload, visible: !case_preload().length">
              <i class="fa fa-plus"></i>
-@@ -123,7 +123,7 @@
+             {% trans "Load properties" %}
+         </a>
+@@ -122,50 +130,52 @@
+ </script>
  
  <script type="text/html" id="case-config:case-transaction:case-properties">
-     <div class="panel-heading panel-title">
+-    <div class="panel-heading panel-title">
 -        {% trans "Save data to the following case properties" %}
-+        {% trans "Save data to the following properties" %}
++    <div class="panel-heading">
++      <h4 class="panel-title panel-title-nolink">
++        <i class="fa fa-save"></i> {% trans "Save Question Answers to Case Properties" %}
++      </h4>
      </div>
-     <table class="table table-condensed" data-bind="visible: case_properties().length">
-         <thead>
-@@ -131,7 +131,7 @@
-                 <th></th>
-                 <th>{% trans "Question" %}</th>
-                 <th></th>
+-    <table class="table table-condensed" data-bind="visible: case_properties().length">
+-        <thead>
+-            <tr>
+-                <th></th>
+-                <th>{% trans "Question" %}</th>
+-                <th></th>
 -                <th>{% trans "Case Property" %}</th>
-+                <th>{% trans "Property" %}</th>
-             </tr>
-         </thead>
+-            </tr>
+-        </thead>
++    <div class="panel-body">
++        <table class="table table-savecaseprops" data-bind="visible: case_properties().length">
++            <thead>
++                <tr>
++                    <th class="col-sm-1"></th>
++                    <th class="col-sm-5">{% trans "Question Answer" %}</th>
++                    <th class="col-sm-1"></th>
++                    <th class="col-sm-5">{% trans "Case Property" %}</th>
++                </tr>
++            </thead>
  
-@@ -163,7 +163,7 @@
-     </table>
-     <div class="panel-body">
+-        <tbody data-bind="foreach: case_properties">
+-            <tr class="form-group" data-bind="css: {'has-error': validate, warning: (!validate() && required() && !path()) || (!validate() && !required() && !path() && key())}">
+-                <td class="col-sm-1">
+-                    <a href="#" data-bind="
+-                        click: $parent.removeProperty,
+-                        visible: !required() && !(isBlank() && $index() === $parent.case_properties().length - 1)
+-                    ">
+-                        <i class="fa fa-remove"></i>
+-                    </a>
+-                </td>
+-                <td class="col-sm-5">
+-                    <div data-bind="template: 'case-config:case-properties:question'"></div>
+-                </td>
+-                <td class="text-center col-sm-1">
+-                    <i class="fa fa-arrow-right"></i>
+-                </td>
+-                <td class="col-sm-5">
+-                    <div data-bind="template: {
+-                        name: 'case-config:case-properties:property',
+-                        data: {property: $data, suggestedProperties: case_transaction.suggestedSaveProperties}
+-                    }"></div>
+-                    <p class="help-block" data-bind="html: validate, visible: validate"></p>
+-                </td>
+-            </tr>
+-        </tbody>
+-    </table>
+-    <div class="panel-body">
++            <tbody data-bind="foreach: case_properties">
++                <tr class="form-group" data-bind="css: {'has-error': validate, warning: (!validate() && required() && !path()) || (!validate() && !required() && !path() && key())}">
++                    <td class="col-sm-1 text-center">
++                        <a href="#" class="btn btn-danger" data-bind="
++                            click: $parent.removeProperty,
++                            visible: !required() && !(isBlank() && $index() === $parent.case_properties().length - 1)
++                        ">
++                            <i class="fa fa-remove"></i>
++                        </a>
++                    </td>
++                    <td class="col-sm-5">
++                        <div data-bind="template: 'case-config:case-properties:question'"></div>
++                    </td>
++                    <td class="text-center col-sm-1">
++                        <i class="fa fa-arrow-right"></i>
++                    </td>
++                    <td class="col-sm-5">
++                        <div data-bind="template: {
++                            name: 'case-config:case-properties:property',
++                            data: {property: $data, suggestedProperties: case_transaction.suggestedSaveProperties}
++                        }"></div>
++                        <p class="help-block" data-bind="html: validate, visible: validate"></p>
++                    </td>
++                </tr>
++            </tbody>
++        </table>
          <div class="alert alert-block alert-info" data-bind="visible: !case_properties().length">
 -            {% trans "No case properties will be saved" %}
 +            {% trans "No properties will be saved" %}
          </div>
-         <a href="#" class="firstProperty" data-bind="click: addProperty, visible: !case_properties().length">
+-        <a href="#" class="firstProperty" data-bind="click: addProperty, visible: !case_properties().length">
++        <a href="#" class="firstProperty btn btn-default" data-bind="click: addProperty, visible: !case_properties().length">
              <i class="fa fa-plus"></i>
+             {% trans "Save properties" %}
+         </a>
+@@ -173,12 +183,14 @@
+ </script>
+ 
+ <script type="text/html" id="case-config:refresh-form-questions">
+-    <div style="margin-right: 1em;"
+-         class="btn btn-info refresh-form-questions pull-right"
+-         data-bind="click: function(data, event){
+-                    refreshQuestions('{% url 'get_form_questions' domain app.id %}', '{{module.id}}', '{{form.id}}', event);
+-                    analytics.usage('Refresh case management', 'Button Clicked');
+-                    }">
++  <p>
++    <button class="btn btn-info refresh-form-questions"
++            type="button"
++             data-bind="click: function(data, event){
++                        refreshQuestions('{% url 'get_form_questions' domain app.id %}', '{{module.id}}', '{{form.id}}', event);
++                        analytics.usage('Refresh case management', 'Button Clicked');
++                        }">
+         <i class="fa fa-refresh"></i>
+-    </div>
++    </button>
++  </p>
+ </script>

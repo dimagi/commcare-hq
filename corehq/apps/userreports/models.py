@@ -158,8 +158,28 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     @property
     @memoized
     def named_expression_objects(self):
-        return {name: ExpressionFactory.from_spec(expression, FactoryContext.empty())
-                for name, expression in self.named_expressions.items()}
+        named_expression_specs = deepcopy(self.named_expressions)
+        named_expressions = {}
+        spec_error = None
+        while named_expression_specs:
+            number_generated = 0
+            for name, expression in named_expression_specs.items():
+                try:
+                    named_expressions[name] = ExpressionFactory.from_spec(
+                        expression,
+                        FactoryContext(named_expressions=named_expressions, named_filters={})
+                    )
+                    number_generated += 1
+                    del named_expression_specs[name]
+                except BadSpecError as spec_error:
+                    # maybe a nested name resolution issue, try again on the next pass
+                    pass
+            if number_generated == 0 and named_expression_specs:
+                # we unsuccessfully generated anything on this pass and there are still unresolved
+                # references. we have to fail.
+                assert spec_error is not None
+                raise spec_error
+        return named_expressions
 
     @property
     @memoized
@@ -587,9 +607,12 @@ class StaticReportConfiguration(JsonObject):
         return [ds for ds in cls.all() if ds.domain == domain]
 
     @classmethod
-    def by_id(cls, config_id):
+    def by_id(cls, config_id, domain=None):
         """
         Returns a ReportConfiguration object, NOT StaticReportConfigurations.
+
+        :param domain: Optionally specify domain name to validate access.
+                       Raises ``DocumentNotFound`` if domains don't match.
         """
         mapping = cls.by_id_mapping()
         if config_id not in mapping:
@@ -600,7 +623,14 @@ class StaticReportConfiguration(JsonObject):
             raise BadSpecError(_('The report configuration referenced by this report could '
                                  'not be found.'))
 
-        return cls._get_from_metadata(metadata)
+        config = cls._get_from_metadata(metadata)
+        if domain and config.domain != domain:
+            raise DocumentNotFound("Document {} of class {} not in domain {}!".format(
+                config_id,
+                config.__class__.__name__,
+                domain,
+            ))
+        return config
 
     @classmethod
     def by_ids(cls, config_ids):

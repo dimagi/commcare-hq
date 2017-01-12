@@ -80,7 +80,9 @@ class _FormType(object):
             except KeyError:
                 self.app_id = None
 
-    def get_label(self, lang=None):
+    def get_label(self, lang=None, separator=None):
+        if separator is None:
+            separator = " > "
         form = get_form_analytics_metadata(self.domain, self.app_id, self.xmlns)
         if form and form.get('app'):
             langs = form['app']['langs']
@@ -88,7 +90,7 @@ class _FormType(object):
 
             if form.get('is_user_registration'):
                 form_name = "User Registration"
-                title = "%s > %s" % (app_name, form_name)
+                title = separator.join([app_name, form_name])
             else:
                 def _menu_name(menu, lang):
                     if lang and menu.get(lang):
@@ -102,7 +104,7 @@ class _FormType(object):
 
                 module_name = _menu_name(form["module"]["name"], lang)
                 form_name = _menu_name(form["form"]["name"], lang)
-                title = "%s > %s > %s" % (app_name, module_name, form_name)
+                title = separator.join([app_name, module_name, form_name])
 
             if form.get('app_deleted'):
                 title += ' [Deleted]'
@@ -114,5 +116,5 @@ class _FormType(object):
         return name
 
 
-def xmlns_to_name(domain, xmlns, app_id, lang=None):
-    return _FormType(domain, xmlns, app_id).get_label(lang)
+def xmlns_to_name(domain, xmlns, app_id, lang=None, separator=None):
+    return _FormType(domain, xmlns, app_id).get_label(lang, separator)

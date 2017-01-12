@@ -616,8 +616,8 @@ def update_form_translations(sheet, rows, missing_cols, app):
             if not text_node.exists():
                 msgs.append((
                     messages.warning,
-                    "Unrecognized translation label {0} in sheet {1}. That row"
-                    " has been skipped". format(label_id, sheet.worksheet.title)
+                    u"Unrecognized translation label {0} in sheet {1}. That row"
+                    u" has been skipped". format(label_id, sheet.worksheet.title)
                 ))
                 continue
 

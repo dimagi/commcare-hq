@@ -199,7 +199,7 @@ function XFormListViewModel() {
     };
 
     self.clickRow = function(item) {
-        $("#xform_data_panel").html("<img src='/static/hqwebapp/img/ajax-loader.gif' alt='loading indicator' />");
+        $("#xform_data_panel").html("<img src='/static/hqwebapp/images/ajax-loader.gif' alt='loading indicator' />");
         var idx = self.xforms().indexOf(item);
 
         self.get_xform_data(self.xforms()[idx].id());

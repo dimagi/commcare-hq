@@ -26,10 +26,23 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
     };
     var setScrollableMaxHeight = function() {
         var maxHeight,
-            maxHeightForm;
+            maxHeightForm,
+            user = FormplayerFrontend.request('currentUser'),
+            restoreAsBannerHeight = 0,
+            debuggerHeight = 0;
+
+        if (user.debuggerEnabled) {
+            debuggerHeight = 34;
+        }
+        if (user.restoreAs) {
+            restoreAsBannerHeight = FormplayerFrontend.regions.restoreAsBanner.$el.height();
+        }
         maxHeight = ($(window).height() -
-            FormplayerFrontend.regions.breadcrumb.$el.height());
-        maxHeightForm = $(window).height();
+            FormplayerFrontend.regions.breadcrumb.$el.height() -
+            restoreAsBannerHeight);
+
+        // Max height of the form is the space between the debugger and the breadcrumbs
+        maxHeightForm = maxHeight - debuggerHeight;
 
         $('.scrollable-container').css('max-height', maxHeight + 'px');
         $('.form-scrollable-container').css({

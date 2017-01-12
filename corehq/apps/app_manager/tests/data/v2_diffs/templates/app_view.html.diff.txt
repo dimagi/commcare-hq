@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,342 +1,105 @@
+@@ -1,393 +1,116 @@
 -{% extends "app_manager/v1/managed_app.html" %}
 +{% extends "app_manager/v2/managed_app.html" %}
  {% load xforms_extras %}
@@ -13,7 +13,7 @@
 -{% endblock %}
 -{% block js %}{{ block.super }}
 -    <script src="{% static 'app_manager/js/commcaresettings.js' %}"></script>
--    <script src="{% static 'hqwebapp/ko/bulk_upload_file.js' %}"></script>
+-    <script src="{% static 'hqwebapp/js/bulk_upload_file.js' %}"></script>
 -    <script src="{% static 'app_manager/js/supported-languages.js' %}"></script>
 -    <script src="{% static 'app_manager/js/password_setter.jquery.js' %}"></script>
 -    <script src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
@@ -28,6 +28,9 @@
 -    {{ block.super }}
 -    {% if app.get_doc_type == "Application" %}
 -        <script src="{% static 'translations/js/translations.js' %}"></script>
+-    {% endif %}
+-    {% if linked_apps_enabled %}
+-        <script src="{% static 'app_manager/js/linked_whitelist.js' %}"></script>
 -    {% endif %}
 -    {% if app %}
 -    <script>
@@ -47,7 +50,7 @@
 -                permissions: {
 -                    cloudcare: {{ is_cloudcare_allowed|BOOL }}
 -                },
--                warning: '{% trans "This is not an allowed value for this field" %}'
+-                warning: '{% trans "This is not an allowed value for this field"|escapejs %}'
 -            }
 -        };
 -
@@ -57,7 +60,16 @@
 -            $('#commcare-settings').koApplyBindings(COMMCAREHQ.appView.settings);
 -        });
 -
--        {% if not app.is_remote_app %}
+-        {% if not app.is_remote_app and app.get_doc_type != 'LinkedApplication' %}
+-            {% if linked_apps_enabled %}
+-             $(function () {
+-                var domains = {{ app.linked_whitelist|JSON }};
+-                var save = '{% url "update_linked_whitelist" domain app.id %}';
+-                var LinkedWhitelist = hqImport('app_manager/js/linked_whitelist.js').LinkedWhitelist;
+-                linkedWhitelist = new LinkedWhitelist(domains, save);
+-                $('#whitelist-tab').koApplyBindings(linkedWhitelist);
+-             });
+-            {% endif %}
 -        $(function () {
 -            var multimedia_tab = (function () {
 -                var self = {};
@@ -277,7 +289,7 @@
 +  <script src="{% static 'app_manager/js/releases.js' %}"></script>
 +  <script src="{% static 'app_manager/js/language-profiles.js' %}"></script>
 +
-+  <script src="{% static 'hqwebapp/ko/bulk_upload_file.js' %}"></script>
++  <script src="{% static 'hqwebapp/js/bulk_upload_file.js' %}"></script>
 +  <script src="{% static 'app_manager/js/supported-languages.js' %}"></script>
 +  <script src="{% static 'app_manager/js/password_setter.jquery.js' %}"></script>
 +  <script src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
@@ -317,11 +329,51 @@
 +          permissions: {
 +            cloudcare: {{ is_cloudcare_allowed|BOOL }}
 +          },
-+          warning: '{% trans "This is not an allowed value for this field" %}'
++          warning: '{% trans "This is not an allowed value for this field"|escapejs %}'
 +        }
 +      };
 +    </script>
 +  {% endif %}
++{% endblock %}
++
++{% block pre_page_content %}
++
++  <div class="appmanager-page-actions">
++      <a class="btn btn-purple js-preview-toggle" style="display: none;" href="#">
++        <span class="js-preview-action-show hide"><i class="fa fa-play-circle"></i> {% trans "Preview App" %}</span>
++        <span class="js-preview-action-hide hide"><i class="fa fa-pause-circle"></i> {% trans "Preview App" %}</span>
++      </a>
++      {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}
++          <a href="{% url "app_summary" domain app.id %}" class="btn btn-default">
++              <i class="fa fa-list-alt"></i>
++              {% trans "App Summary" %}
++          </a>
++      {% endif %}
++  </div>
++
++  <div class="appmanager-edit-title">
++    <inline-edit-v2 params="
++        value: '{{ app.name|escapejs }}',
++        containerClass: 'h3 app-title',
++        url: '{% url "edit_app_attr" domain app.id 'name' %}',
++        placeholder: '{% trans "Untitled App"|escapejs %}',
++        postSave: function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); },
++        rows: 1,
++        saveValueName: 'name',
++        nodeName: 'input',
++    "></inline-edit-v2>
++  </div>
++
++  <div class="appmanager-edit-description">
++    <inline-edit-v2 params="
++        value: '{{ app.short_comment|escapejs }}',
++        url: '{% url "edit_app_attr" domain app.id 'comment' %}',
++        placeholder: '{% trans "Enter app description here"|escapejs %}',
++        saveValueName: 'comment',
++        containerClass: 'app-comment',
++        cols: 50,
++    "></inline-edit-v2>
++  </div>
  {% endblock %}
  
  {% block form-view %}
@@ -329,7 +381,7 @@
 -        <div class="tab-pane" id="releases">
 -            <!-- templates only; will be populated asynchronously -->
 -            <script type="text/html" class="hq-loading">
--                <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
+-                <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator" />
 -                {% trans "Loading..." %}
 -            </script>
 -            <script type="text/html" class="hq-loading-error">
@@ -341,25 +393,15 @@
 -                </button>
 -            </script>
 -        </div>
--        <div class="tab-pane{% if not copy_app_form.is_bound %} active{% endif %}" id="app-settings">
+-        <div class="tab-pane" id="app-settings">
 -            {% include "app_manager/v1/partials/app-settings.html" %}
 -        </div>
 -        {% include 'app_manager/v1/languages.html' %}
-+  <div class="pull-right">
-+    <a class="btn btn-default js-preview-toggle" style="display: none;" href="#">
-+      <span class="js-preview-action-show hide"><i class="fa fa-play-circle"></i> {% trans "Preview Changes" %}</span>
-+      <span class="js-preview-action-hide hide"><i class="fa fa-pause-circle"></i> {% trans "Hide Preview" %}</span>
-+    </a>
-+    <a href="{% url "app_summary" domain app.id %}" class="btn btn-default">
-+      <i class="fa fa-list-alt"></i>
-+      {% trans "App Summary" %}
-+    </a>
-+  </div>
- 
+-
 -        {% if app.get_doc_type == "Application" %}
 -            <div class="tab-pane multimedia" id="multimedia">
 -                <div data-bind="if: load_state() === 'loading'">
--                    <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
+-                    <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator" />
 -                    {% trans "Loading ..." %}
 -                </div>
 -                <div data-bind="html: multimedia_page_html"></div>
@@ -367,42 +409,63 @@
 -                    <button class="btn btn-default" data-bind="click: load_if_necessary">{% trans "Try again" %}</button>
 -                </div>
 -            </div>
-+  <inline-edit params="
-+      value: '{{ app.name|escapejs }}',
-+      readOnlyClass: 'h3',
-+      url: '{% url "edit_app_attr" domain app.id 'name' %}',
-+      placeholder: '{% trans "Untitled App"|escapejs %}',
-+      postSave: function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); },
-+      rows: 1,
-+      saveValueName: 'name',
-+  "></inline-edit>
-+  <br />
-+  <inline-edit params="
-+      value: '{{ app.short_comment|escapejs }}',
-+      url: '{% url "edit_app_attr" domain app.id 'comment' %}',
-+      placeholder: '{% trans "Enter app description here"|escapejs %}',
-+      saveValueName: 'comment',
-+      readOnlyClass: 'app-comment',
-+      cols: 50,
-+  "></inline-edit>
- 
+-
 -        {% endif %}
 -        <div class="tab-pane{% if copy_app_form.is_bound %} active{% endif %}" id="copy">
--            <div>
--                <form class="form form-horizontal" method="post" action="{% url "copy_app" domain %}">
--                    {% crispy copy_app_form %}
--                </form>
--                {% if request|toggle_enabled:"EXPORT_ZIPPED_APPS" %}
--                    <h3>Export compressed application</h3>
--                    <form action="{% url "gzip_app" domain app.id %}" method="POST">
--                        {% csrf_token %}
--                        <button type="submit" class="btn btn-primary">
--                            <i class="fa fa-arrow-down"></i>
--                            {% trans "Download" %}
--                        </button>
--                    </form>
--                {% endif %}
+-            {% if linked_apps_enabled %}
+-            <div class="tabbable">
+-                <ul class="nav nav-tabs">
+-                    <li class="active"><a href="#copy-tab" data-toggle="tab">{% trans "Copy Application" %}</a></li>
+-                    <li><a href="#whitelist-tab" data-toggle="tab">{% trans "Linked Project Whitelist" %}</a></li>
+-                </ul>
+-                <div class="spacer"></div>
+-                <div class="tab-content">
+-                    <div id="copy-tab" class="tab-pane active">
+-            {% endif %}
+-                        <form class="form form-horizontal" method="post" action="{% url "copy_app" domain %}">
+-                            {% crispy copy_app_form %}
+-                        </form>
+-                        {% if request|toggle_enabled:"EXPORT_ZIPPED_APPS" %}
+-                            <h3>Export compressed application</h3>
+-                            <form action="{% url "gzip_app" domain app.id %}" method="POST">
+-                                {% csrf_token %}
+-                                <button type="submit" class="btn btn-primary">
+-                                    <i class="fa fa-arrow-down"></i>
+-                                    {% trans "Download" %}
+-                                </button>
+-                            </form>
+-                        {% endif %}
+-            {% if linked_apps_enabled %}
+-                    </div>
+-                    <div id="whitelist-tab" class="tab-pane">
+-                    <div class="help-block">
+-                        {% blocktrans %}
+-                            Project spaces on this list are able to update linked applications
+-                            with new changes to this application. Project spaces are automatically added to
+-                            this list when this application is copied as a linked application to that project
+-                            space. If you would like to prevent a project from making future updates,
+-                            you can remove them from the list here.
+-                        {% endblocktrans %}
+-                    </div>
+-                    <div data-bind="saveButton: saveButton"></div>
+-                    <table class="table">
+-                        <thead>
+-                            <tr class="row">
+-                                <th></th>
+-                                <th>{% trans "Project Space" %}</th>
+-                            </tr>
+-                        </thead>
+-                        <tbody data-bind="foreach: linkedDomains">
+-                            <tr class="row">
+-                                <td class="col-sm-1"><a href="#"><i class="fa fa-remove" data-bind="click: $root.removeDomain"></i></a></td>
+-                                <td class="col-sm-11"><span data-bind="text: $data"></span></td>
+-                            </tr>
+-                        </tbody>
+-                    </table>
+-                    </div>
+-                </div>
 -            </div>
+-            {% endif %}
 -        </div>
 -        <div class="tab-pane" id="delete">
 -            <h3>{% trans "Delete Application" %}</h3>
@@ -415,8 +478,9 @@
 -            </form>
 -        </div>
 -    </div>
++  <div class="appmanager-tabs-container">
 +  {% block app_view_tabs %}{% endblock app_view_tabs %}
-+
++  </div>
  {% endblock %}
  
  {% block modals %}{{ block.super }}

@@ -15,10 +15,78 @@
      var CaseConfig = hqImport('app_manager/js/case-config-ui-2.js').CaseConfig;
      var caseConfig = new CaseConfig({
          home: $('#casexml_home'),
-@@ -24,5 +24,5 @@
+@@ -24,5 +24,73 @@
          usercasePropertiesMap: {{ usercase_properties|JSON }},
      });
      caseConfig.init();
 -    {% endif %}
 +  {% endif %}
  {% endblock %}
++
++{% block modals %}{{ block.super }}
++<div class="modal fade" id="upload-xform">
++    <div class="modal-dialog">
++        <div class="modal-content">
++            <div class="modal-header">
++                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
++                <h4 class="modal-title">{% trans "Upload XForm" %}</h4>
++            </div>
++            <div class="modal-body">
++                <form method="POST"
++                      enctype="multipart/form-data"
++                      action="{% url "edit_form_attr" domain app.id form.get_unique_id 'xform' %}">
++                    {% csrf_token %}
++                    <input type="file" id="xform_file_input" name="xform" />
++                    <input type="hidden" name="ajax" value="false" />
++                    <button type="submit" id="xform_file_submit" class="btn btn-primary">
++                        {% trans "Upload" %}
++                    </button>
++                </form>
++            </div>
++            <div class="modal-footer">
++                <button type="button" class="btn btn-default" data-dismiss="modal" aria-hidden="true">
++                    {% trans "Close" %}
++                </button>
++            </div>
++        </div>
++    </div>
++</div>
++  <div class="xml-source modal fade">
++      <div class="modal-dialog">
++          <div class="modal-content">
++              <form action="{% url "edit_form_attr" domain app.id form.get_unique_id 'xform' %}" method="POST">
++              {% csrf_token %}
++              <div class="modal-header">
++                  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
++                  <h4 class="modal-title source-readonly">{% trans "XML Source" %}</h4>
++                  <h4 class="modal-title source-edit">{% trans "Edit XML Source" %}</h4>
++              </div>
++              <div class="modal-body">
++                  <div class="source-readonly">
++                      {% trans "Double-click to select all." %}
++                      <pre id="xform-source" class="brush: xml;"></pre>
++                  </div>
++                  <div class="source-edit">
++                      <textarea name="xform" id="xform-source-edit" class="form-control">
++                          {% trans "Loading..." %}
++                      </textarea><br />
++                  </div>
++              </div>
++              <div class="modal-footer">
++                  <input type="hidden" name="ajax" value="false" class="source-edit" />
++                  <button type="submit" class="btn btn-primary source-edit">{% trans "Save" %}</button>
++                  <button type="button" class="btn btn-default" data-dismiss="modal" aria-hidden="true">
++                      {% trans "Close" %}
++                  </button>
++                  <div class="checkbox source-edit pull-left">
++                      <label for="cleanup">
++                          <input type="checkbox" id="cleanup" name="cleanup" />
++                          {% trans "Clean up markup after saving (add newlines, reformat indentation, etc.) " %}
++                      </label>
++                  </div>
++              </div>
++              </form>
++          </div>
++      </div>
++  </div>
++{% endblock modals %}

@@ -6,6 +6,8 @@ from django.http import HttpResponse, Http404
 from django.http import HttpResponseRedirect
 from django.views.generic import View
 from django.utils.decorators import method_decorator
+
+from corehq.apps.app_manager.util import get_app_manager_template
 from django_prbac.decorators import requires_privilege
 from django.contrib import messages
 from django.shortcuts import render
@@ -91,20 +93,28 @@ def paginate_releases(request, domain, app_id):
     return json_response(saved_apps)
 
 
-def release_manager(request, domain, app_id):
-    from corehq.apps.app_manager.views.view_generic import view_generic
-    return view_generic(request, domain, app_id=app_id, release_manager=True)
-
-
 @require_deploy_apps
-def releases_ajax(request, domain, app_id, template='app_manager/v1/partials/releases.html'):
+def releases_ajax(request, domain, app_id):
+    template = get_app_manager_template(
+        domain,
+        "app_manager/v1/partials/releases.html",
+        "app_manager/v2/partials/releases.html",
+    )
+    context = get_releases_context(request, domain, app_id)
+    response = render(request, template, context)
+    response.set_cookie('lang', encode_if_unicode(context['lang']))
+    return response
+
+
+def get_releases_context(request, domain, app_id):
     app = get_app(domain, app_id)
     context = get_apps_base_context(request, domain, app)
     can_send_sms = domain_has_privilege(domain, privileges.OUTBOUND_SMS)
     build_profile_access = domain_has_privilege(domain, privileges.BUILD_PROFILES)
 
     context.update({
-        'intro_only': len(app.modules) == 0,
+        'intro_only': len(
+            app.modules) == 0 and toggles.APP_MANAGER_V2.enabled(domain),
         'release_manager': True,
         'can_send_sms': can_send_sms,
         'has_mobile_workers': get_doc_count_in_domain_by_class(domain, CommCareUser) > 0,
@@ -125,9 +135,7 @@ def releases_ajax(request, domain, app_id, template='app_manager/v1/partials/rel
             })
         except ReportConfigurationNotFoundError:
             pass
-    response = render(request, template, context)
-    response.set_cookie('lang', encode_if_unicode(context['lang']))
-    return response
+    return context
 
 
 @login_and_domain_required
@@ -208,9 +216,15 @@ def save_copy(request, domain, app_id):
         # Set if build is supported for Java Phones
         j2me_enabled_configs = CommCareBuildConfig.j2me_enabled_config_labels()
         copy['j2me_enabled'] = copy['menu_item_label'] in j2me_enabled_configs
+
+    template = get_app_manager_template(
+        domain,
+        "app_manager/v1/partials/build_errors.html",
+        "app_manager/v2/partials/build_errors.html",
+    )
     return json_response({
         "saved_app": copy,
-        "error_html": render_to_string('app_manager/v1/partials/build_errors.html', {
+        "error_html": render_to_string(template, {
             'request': request,
             'app': get_app(domain, app_id),
             'build_errors': errors,
@@ -282,7 +296,12 @@ def odk_install(request, domain, app_id, with_media=False):
                            params={'profile': build_profile_id}),
         "profile_url": profile_url,
     }
-    return render(request, "app_manager/v1/odk_install.html", context)
+    template = get_app_manager_template(
+        domain,
+        "app_manager/v1/odk_install.html",
+        "app_manager/v2/odk_install.html",
+    )
+    return render(request, template, context)
 
 
 def odk_qr_code(request, domain, app_id):
@@ -376,6 +395,11 @@ class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
 
     @use_angular_js
     def dispatch(self, request, *args, **kwargs):
+        self.template_name = get_app_manager_template(
+            self.domain,
+            self.template_name,
+            'app_manager/v2/app_diff.html',
+        )
         return super(AppDiffView, self).dispatch(request, *args, **kwargs)
 
     @property

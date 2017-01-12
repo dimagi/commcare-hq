@@ -18,6 +18,7 @@ from corehq.apps.export.models import (
     UserDefinedExportColumn,
     ExportItem,
     StockItem,
+    LabelItem,
     FormExportInstance,
     CaseExportInstance,
     MAIN_TABLE,
@@ -426,6 +427,11 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestConvertBase):
                             label='Question 1',
                             last_occurrences={cls.app_id: 3},
                         ),
+                        LabelItem(
+                            path=[PathNode(name='form'), PathNode(name='label')],
+                            label='label',
+                            last_occurrences={cls.app_id: 3},
+                        ),
                     ],
                     last_occurrences={cls.app_id: 3},
                 ),
@@ -486,6 +492,18 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestConvertBase):
             None,
         )
         self.assertEqual(column.label, 'Question One')
+        self.assertEqual(column.selected, True)
+
+    def test_label_conversion(self, _, __):
+        instance, _ = self._convert_form_export('basic_label')
+
+        table = instance.get_table(MAIN_TABLE)
+        index, column = table.get_column(
+            [PathNode(name='form'), PathNode(name='label')],
+            'LabelItem',
+            None,
+        )
+        self.assertEqual(column.label, 'My Label')
         self.assertEqual(column.selected, True)
 
     def test_conversion_with_text_nodes(self, _, __):
@@ -581,6 +599,18 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestConvertBase):
             [PathNode(name='form'), PathNode(name='deid_date')], 'ExportItem', None
         )
         self.assertEqual(column.deid_transform, DEID_DATE_TRANSFORM)
+
+    def test_skippable_export_columns(self, _, __):
+        instance, _ = self._convert_form_export('skippable_properties')
+
+        table = instance.get_table(MAIN_TABLE)
+
+        index, column = table.get_column(
+            [PathNode(name='initial_processing_complete')], None, None
+        )
+        self.assertIsInstance(column, UserDefinedExportColumn)
+        self.assertFalse(column.is_editable)
+        self.assertEqual(column.custom_path, [PathNode(name='initial_processing_complete')])
 
     def test_system_property_conversion(self, _, __):
         instance, _ = self._convert_form_export('system_properties')

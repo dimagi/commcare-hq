@@ -4,7 +4,7 @@
 {% load i18n %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'locations/ko/location_types.js' %}"></script>
+    <script src="{% static 'locations/js/location_types.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
@@ -13,7 +13,7 @@
             var loc_types = {{ location_types|JSON }};
             var commtrack_enabled = {{ commtrack_enabled|JSON }};
 
-            var locationSettingsModel = hqImport('locations/ko/location_types.js').LocationSettingsViewModel
+            var locationSettingsModel = hqImport('locations/js/location_types.js').LocationSettingsViewModel
             var model = new locationSettingsModel(loc_types, commtrack_enabled);
 
             var $settings = $('#settings');

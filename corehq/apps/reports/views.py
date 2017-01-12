@@ -123,6 +123,7 @@ from corehq.apps.users.models import (
     WebUser,
 )
 from corehq.util.couch import get_document_or_404
+from corehq.util.files import safe_filename_header
 from corehq.util.workbook_json.export import WorkBook
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import absolute_reverse, reverse
@@ -159,8 +160,7 @@ from .util import (
     get_group,
     group_filter,
     users_matching_filter,
-    safe_filename_header,
-)
+    resync_case_to_es)
 from corehq.apps.style.decorators import (
     use_jquery_ui,
     use_select2,
@@ -650,6 +650,7 @@ def touch_saved_reports_views(user, domain):
     ReportNotification.by_domain_and_owner(domain, user._id, limit=1, stale=False)
 
 
+@location_safe
 class AddSavedReportConfigView(View):
     name = 'add_report_config'
 
@@ -1360,12 +1361,8 @@ def rebuild_case_view(request, domain, case_id):
 def resave_case(request, domain, case_id):
     """Re-save the case to have it re-processed by pillows
     """
-    from corehq.form_processor.change_publishers import publish_case_saved
     case = _get_case_or_404(domain, case_id)
-    if should_use_sql_backend(domain):
-        publish_case_saved(case)
-    else:
-        CommCareCase.get_db().save_doc(case._doc)  # don't just call save to avoid signals
+    resync_case_to_es(domain, case)
     messages.success(
         request,
         _(u'Case %s was successfully saved. Hopefully it will show up in all reports momentarily.' % case.name),

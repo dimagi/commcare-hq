@@ -15,8 +15,9 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.es.users import UserES
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.analytics import users_have_locations
-from corehq.apps.reminders.models import CaseReminderHandler, SurveyKeyword
-from corehq.apps.reports.util import _report_user_dict
+from corehq.apps.sms.models import Keyword
+from corehq.apps.reminders.models import CaseReminderHandler
+from corehq.apps.reports.util import get_simplified_users
 from corehq.apps.sms.verify import (
     initiate_sms_verification_workflow,
     VERIFICATION__ALREADY_IN_USE,
@@ -183,10 +184,9 @@ class EditGroupMembersView(BaseGroupsView):
     @property
     @memoized
     def all_users(self):
-        return map(_report_user_dict, sorted(
-            UserES().mobile_users().domain(self.domain).run().hits,
-            key=lambda user: user['username']
-        ))
+        return get_simplified_users(
+            UserES().mobile_users().domain(self.domain)
+        )
 
     @property
     @memoized
@@ -212,7 +212,7 @@ class EditGroupMembersView(BaseGroupsView):
     def page_context(self):
         domain_has_reminders_or_keywords = (
             CaseReminderHandler.domain_has_reminders(self.domain) or
-            SurveyKeyword.domain_has_keywords(self.domain)
+            Keyword.domain_has_keywords(self.domain)
         )
         bulk_sms_verification_enabled = (
             domain_has_reminders_or_keywords and

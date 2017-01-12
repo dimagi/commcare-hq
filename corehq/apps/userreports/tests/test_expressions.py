@@ -743,13 +743,13 @@ class RelatedDocExpressionTest(SimpleTestCase):
         self.test_simple_lookup()
 
         my_doc = self.database.get('my-id')
+
+        context = EvaluationContext(my_doc, 0)
+        self.assertEqual('foo', self.expression(my_doc, context))
+
+        my_doc = self.database.get('my-id')
         self.database.mock_docs.clear()
-
-        self.assertEqual({}, self.database.mock_docs)
-        self.assertEqual('foo', self.expression(my_doc, EvaluationContext(my_doc, 0)))
-
-        same_expression = ExpressionFactory.from_spec(self.spec)
-        self.assertEqual('foo', same_expression(my_doc, EvaluationContext(my_doc, 0)))
+        self.assertEqual('foo', self.expression(my_doc, context))
 
 
 class RelatedDocExpressionDbTest(TestCase):
@@ -867,7 +867,9 @@ def test_add_days_to_date_expression(self, source_doc, count_expression, expecte
             "b": 5
         },
         5 + 2
-    )
+    ),
+    ({}, "a + b", {"a": Decimal(2), "b": Decimal(3)}, Decimal(5)),
+    ({}, "a + b", {"a": Decimal(2.2), "b": Decimal(3.1)}, Decimal(5.3)),
 ])
 def test_valid_eval_expression(self, source_doc, statement, context, expected_value):
     expression = ExpressionFactory.from_spec({
@@ -875,7 +877,8 @@ def test_valid_eval_expression(self, source_doc, statement, context, expected_va
         "statement": statement,
         "context_variables": context
     })
-    self.assertEqual(expression(source_doc), expected_value)
+    # almostEqual handles decimal (im)precision - it means "equal to 7 places"
+    self.assertAlmostEqual(expression(source_doc), expected_value)
 
 
 @generate_cases([
