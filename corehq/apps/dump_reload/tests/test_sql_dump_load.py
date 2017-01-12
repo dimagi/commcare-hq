@@ -495,6 +495,8 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             backend_id=None,
             ivr_backend_id=None,
             verified=True,
+            is_two_way=True,
+            pending_verification=False,
             contact_last_modified=datetime.utcnow()
         )
         phone_number.save()

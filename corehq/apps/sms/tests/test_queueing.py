@@ -2,7 +2,8 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.sms.api import send_sms, incoming
 from corehq.apps.sms.models import SMS, QueuedSMS
 from corehq.apps.sms.tasks import process_sms
-from corehq.apps.sms.tests.util import BaseSMSTest, setup_default_sms_test_backend
+from corehq.apps.sms.tests.util import (BaseSMSTest, setup_default_sms_test_backend,
+    delete_domain_phone_numbers)
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.users.models import CommCareUser
 from datetime import datetime, timedelta
@@ -53,18 +54,21 @@ class QueueingTestCase(BaseSMSTest):
         self.domain_obj = Domain.get(self.domain_obj._id)
         self.backend, self.backend_mapping = setup_default_sms_test_backend()
         self.contact = CommCareUser.create(self.domain, 'user1', 'abc', phone_number='999123')
-        self.contact.save_verified_number(self.domain, '999123', True)
+        entry = self.contact.get_or_create_phone_entry('999123')
+        entry.set_two_way()
+        entry.set_verified()
+        entry.save()
 
         SmsBillable.objects.filter(domain=self.domain).delete()
         QueuedSMS.objects.all().delete()
         SMS.objects.filter(domain=self.domain).delete()
 
     def tearDown(self):
-        self.contact.delete_verified_number('999123')
         self.contact.delete()
         self.backend.delete()
         self.backend_mapping.delete()
 
+        delete_domain_phone_numbers(self.domain)
         SmsBillable.objects.filter(domain=self.domain).delete()
         QueuedSMS.objects.all().delete()
         SMS.objects.filter(domain=self.domain).delete()

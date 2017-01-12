@@ -14,8 +14,8 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.mixin import UUIDGeneratorMixin
 from corehq.apps.users.models import CouchUser
 from corehq.apps.sms.mixin import (CommCareMobileContactMixin,
-    InvalidFormatException,
-    apply_leniency, BadSMSConfigException)
+    InvalidFormatException, PhoneNumberInUseException, apply_leniency,
+    BadSMSConfigException)
 from corehq.apps.sms import util as smsutil
 from corehq.apps.sms.messages import (MSG_MOBILE_WORKER_INVITATION_START,
     MSG_MOBILE_WORKER_ANDROID_INVITATION, MSG_MOBILE_WORKER_JAVA_INVITATION,
@@ -23,6 +23,7 @@ from corehq.apps.sms.messages import (MSG_MOBILE_WORKER_INVITATION_START,
 from corehq.const import GOOGLE_PLAY_STORE_COMMCARE_URL
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
+from dimagi.utils.couch import CriticalSection
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.load_balance import load_balance
 from django.utils.translation import ugettext_noop, ugettext_lazy
@@ -505,6 +506,16 @@ class PhoneNumber(UUIDGeneratorMixin, models.Model):
     ivr_backend_id = models.CharField(max_length=126, null=True)
     verified = models.NullBooleanField(default=False)
     contact_last_modified = models.DateTimeField(null=True)
+    created_on = models.DateTimeField(auto_now_add=True)
+
+    # If True, this phone number can be used for inbound SMS as well as outbound
+    # (because when we look up the phone number for inbound SMS, we get this entry back).
+    # If False, this phone number can only be used for outbound SMS because another
+    # PhoneNumber entry is marked with is_two_way=True for the same phone_number.
+    is_two_way = models.BooleanField()
+
+    # True if the verification workflow has been started and not completed for this PhoneNumber
+    pending_verification = models.BooleanField()
 
     def __init__(self, *args, **kwargs):
         super(PhoneNumber, self).__init__(*args, **kwargs)
@@ -553,26 +564,25 @@ class PhoneNumber(UUIDGeneratorMixin, models.Model):
 
     @classmethod
     def by_extensive_search(cls, phone_number):
-        # Try to look up the verified number entry directly
-        v = cls.by_phone(phone_number)
+        p = cls.get_two_way_number(phone_number)
 
         # If not found, try to see if any number in the database is a substring
         # of the number given to us. This can happen if the telco prepends some
         # international digits, such as 011...
-        if v is None:
-            v = cls.by_phone(phone_number[1:])
-        if v is None:
-            v = cls.by_phone(phone_number[2:])
-        if v is None:
-            v = cls.by_phone(phone_number[3:])
+        if not p:
+            p = cls.get_two_way_number(phone_number[1:])
+        if not p:
+            p = cls.get_two_way_number(phone_number[2:])
+        if not p:
+            p = cls.get_two_way_number(phone_number[3:])
 
         # If still not found, try to match only the last digits of numbers in
         # the database. This can happen if the telco removes the country code
         # in the caller id.
-        if v is None:
-            v = cls.by_suffix(phone_number)
+        if not p:
+            p = cls.get_two_way_number_by_suffix(phone_number)
 
-        return v
+        return p
 
     @classmethod
     def by_couch_id(cls, couch_id):
@@ -582,50 +592,52 @@ class PhoneNumber(UUIDGeneratorMixin, models.Model):
             return None
 
     @classmethod
-    def by_phone(cls, phone_number, include_pending=False):
-        result = cls._by_phone(apply_leniency(phone_number))
-        return cls._filter_pending(result, include_pending)
-
-    @classmethod
-    def by_suffix(cls, phone_number, include_pending=False):
-        """
-        Used to lookup a PhoneNumber, trying to exclude country code digits.
-        """
-        result = cls._by_suffix(apply_leniency(phone_number))
-        return cls._filter_pending(result, include_pending)
-
-    @classmethod
     @quickcache(['phone_number'], timeout=60 * 60)
-    def _by_phone(cls, phone_number):
+    def get_two_way_number(cls, phone_number):
+        phone_number = apply_leniency(phone_number)
         try:
-            return cls.objects.get(phone_number=phone_number)
+            return cls.objects.get(phone_number=phone_number, is_two_way=True)
         except cls.DoesNotExist:
             return None
 
     @classmethod
-    def _by_suffix(cls, phone_number):
-        # Decided not to cache this method since in order to clear the cache
-        # we'd have to clear using all suffixes of a number (which would involve
-        # up to ~10 cache clear calls on each save). Since this method is used so
-        # infrequently, it's better to not cache vs. clear so many keys on each
-        # save. Once all of our IVR gateways provide reliable caller id info,
-        # we can also remove this method.
+    def get_number_pending_verification(cls, phone_number):
+        phone_number = apply_leniency(phone_number)
         try:
-            return cls.objects.get(phone_number__endswith=phone_number)
+            return cls.objects.get(
+                phone_number=phone_number,
+                verified=False,
+                pending_verification=True
+            )
+        except cls.DoesNotExist:
+            return None
+
+    @classmethod
+    def get_reserved_number(cls, phone_number):
+        return (
+            cls.get_two_way_number(phone) or
+            cls.get_number_pending_verification(phone)
+        )
+
+    @classmethod
+    def get_two_way_number_by_suffix(cls, phone_number):
+        """
+        Used to lookup a two-way PhoneNumber, trying to exclude country code digits.
+
+        Decided not to cache this method since in order to clear the cache
+        we'd have to clear using all suffixes of a number (which would involve
+        up to ~10 cache clear calls on each save). Since this method is used so
+        infrequently, it's better to not cache vs. clear so many keys on each
+        save. Once all of our IVR gateways provide reliable caller id info,
+        we can also remove this method.
+        """
+        phone_number = apply_leniency(phone_number)
+        try:
+            return cls.objects.get(phone_number__endswith=phone_number, is_two_way=True)
         except cls.DoesNotExist:
             return None
         except cls.MultipleObjectsReturned:
             return None
-
-    @classmethod
-    def _filter_pending(cls, v, include_pending):
-        if v:
-            if include_pending:
-                return v
-            elif v.verified:
-                return v
-
-        return None
 
     @classmethod
     def by_domain(cls, domain, ids_only=False):
@@ -650,14 +662,12 @@ class PhoneNumber(UUIDGeneratorMixin, models.Model):
     @classmethod
     def _clear_quickcaches(cls, owner_id, phone_number, old_owner_id=None, old_phone_number=None):
         cls.by_owner_id.clear(cls, owner_id)
-
         if old_owner_id and old_owner_id != owner_id:
             cls.by_owner_id.clear(cls, old_owner_id)
 
-        cls._by_phone.clear(cls, phone_number)
-
+        cls.get_two_way_number.clear(cls, phone_number)
         if old_phone_number and old_phone_number != phone_number:
-            cls._by_phone.clear(cls, old_phone_number)
+            cls.get_two_way_number.clear(cls, old_phone_number)
 
     def _clear_caches(self):
         self._clear_quickcaches(
@@ -676,6 +686,33 @@ class PhoneNumber(UUIDGeneratorMixin, models.Model):
     def delete(self, *args, **kwargs):
         self._clear_caches()
         return super(PhoneNumber, self).delete(*args, **kwargs)
+
+    def verify_uniqueness(self):
+        entry = self.get_reserved_number(self.phone_number)
+        if entry and entry.pk != self.pk:
+            raise PhoneNumberInUseException()
+
+    def set_two_way(self):
+        with CriticalSection(['set-two-way-number-%s' % self.phone_number]):
+            if self.is_two_way:
+                return
+
+            self.verify_uniqueness()
+            self.is_two_way = True
+            self.save()
+
+    def set_pending_verification(self):
+        with CriticalSection(['set-pending-verification-number-%s' % self.phone_number]):
+            if self.verified or self.pending_verification:
+                return
+
+            self.verify_uniqueness()
+            self.pending_verification = True
+            self.save()
+
+    def set_verified(self):
+        self.verified = True
+        self.pending_verification = False
 
 
 class MessagingStatusMixin(object):
@@ -1453,7 +1490,7 @@ class SelfRegistrationInvitation(models.Model):
                 invalid_format_numbers.append(phone_number)
                 continue
 
-            if PhoneNumber.by_phone(phone_number, include_pending=True):
+            if PhoneNumber.get_reserved_number(phone_number):
                 numbers_in_use.append(phone_number)
                 continue
 
@@ -1524,7 +1561,7 @@ class SelfRegistrationInvitation(models.Model):
                 invalid_format_numbers.append(user.phone_number)
                 continue
 
-            phone_number = PhoneNumber.by_phone(user.phone_number)
+            phone_number = PhoneNumber.get_two_way_number(user.phone_number)
             if phone_number:
                 if phone_number.domain != domain:
                     error_numbers.append(user.phone_number)

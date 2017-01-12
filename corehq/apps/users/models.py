@@ -44,11 +44,7 @@ from corehq.apps.users.util import (
 from corehq.apps.users.tasks import tag_forms_as_deleted_rebuild_associated_cases, \
     tag_cases_as_deleted_and_remove_indices
 from corehq.apps.users.exceptions import InvalidLocationConfig
-from corehq.apps.sms.mixin import (
-    CommCareMobileContactMixin,
-    InvalidFormatException,
-    PhoneNumberInUseException,
-)
+from corehq.apps.sms.mixin import CommCareMobileContactMixin
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from dimagi.utils.mixins import UnicodeMixIn
@@ -954,7 +950,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
                 del self.phone_numbers[i]
                 break
         self.save()
-        self.delete_verified_number(phone_number)
+        self.delete_phone_entry(phone_number)
 
     def get_django_user(self):
         return User.objects.get(username__iexact=self.username)
@@ -982,26 +978,25 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         from corehq.apps.sms.models import PhoneNumber
         from corehq.apps.hqwebapp.doc_info import get_object_url
 
-        phone_entries = self.get_verified_numbers(True)
+        phone_entries = self.get_phone_entries()
 
         def get_phone_info(phone):
             info = {}
             phone_entry = phone_entries.get(phone)
 
-            if phone_entry:
-                status = 'verified' if phone_entry.verified else 'pending'
+            if phone_entry and phone_entry.verified:
+                status = 'verified'
+            elif phone_entry and phone_entry.pending_verification:
+                status = 'pending'
             else:
-                try:
-                    self.verify_unique_number(phone)
-                    status = 'unverified'
-                except PhoneNumberInUseException:
+                duplicate = PhoneNumber.get_reserved_number(phone)
+                if duplicate:
                     status = 'duplicate'
-                    duplicate = PhoneNumber.by_phone(phone, include_pending=True)
                     if requesting_user.is_member_of(duplicate.domain):
                         info['dup_url'] = get_object_url(duplicate.domain,
                             duplicate.owner_doc_type, duplicate.owner_id)
-                except InvalidFormatException:
-                    status = 'invalid'
+                else:
+                    status = 'unverified'
 
             info.update({'number': phone, 'status': status})
             return info
@@ -1560,7 +1555,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 self.user_id, self.domain, form_id_list, deletion_id, deletion_date, deleted_cases=deleted_cases
             )
 
-        for phone_number in self.get_verified_numbers(True).values():
+        for phone_number in self.get_phone_entries():
             phone_number.delete()
 
         try:

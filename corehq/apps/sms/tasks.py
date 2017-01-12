@@ -2,7 +2,7 @@ import math
 from datetime import datetime, timedelta
 from celery.task import task
 from corehq.apps.sms.mixin import (InvalidFormatException,
-    PhoneNumberInUseException)
+    PhoneNumberInUseException, PhoneNumberException)
 from corehq.apps.sms.models import (OUTGOING, INCOMING, SMS,
     PhoneLoadBalancingMixin, QueuedSMS, PhoneNumber)
 from corehq.apps.sms.api import (send_message_via_backend, process_incoming,
@@ -293,15 +293,6 @@ def sync_case_phone_number(self, case):
         self.retry(exc=e)
 
 
-def _phone_number_is_same(phone_number, phone_info):
-    return (
-        phone_number.phone_number == phone_info.phone_number and
-        phone_number.backend_id == phone_info.sms_backend_id and
-        phone_number.ivr_backend_id == phone_info.ivr_backend_id and
-        phone_number.verified
-    )
-
-
 def _sync_case_phone_number(contact_case):
     phone_info = contact_case.get_phone_info()
 
@@ -310,39 +301,46 @@ def _sync_case_phone_number(contact_case):
         lock_keys.append('verifying-phone-number-%s' % phone_info.phone_number)
 
     with CriticalSection(lock_keys, timeout=5 * 60):
-        phone_number = contact_case.get_verified_number()
+        phone_numbers = list(contact_case.get_phone_entries())
+        if len(phone_numbers) > 1:
+            raise PhoneNumberException("Expected zero or one phone entry for case %s" % contact_case.case_id)
+
+        phone_number = phonenumbers[0] if phone_numbers else None
         if (
             phone_number and
             phone_number.contact_last_modified and
             phone_number.contact_last_modified >= contact_case.server_modified_on
         ):
             return
-        if phone_info.requires_entry:
-            try:
-                contact_case.verify_unique_number(phone_info.phone_number)
-            except (InvalidFormatException, PhoneNumberInUseException):
-                if phone_number:
-                    phone_number.delete()
-                return
 
-            if not phone_number:
-                phone_number = PhoneNumber(
-                    domain=contact_case.domain,
-                    owner_doc_type=contact_case.doc_type,
-                    owner_id=contact_case.case_id,
-                )
-            elif _phone_number_is_same(phone_number, phone_info):
-                return
-
-            phone_number.phone_number = phone_info.phone_number
-            phone_number.backend_id = phone_info.sms_backend_id
-            phone_number.ivr_backend_id = phone_info.ivr_backend_id
-            phone_number.verified = True
-            phone_number.contact_last_modified = contact_case.server_modified_on
-            phone_number.save()
-        else:
+        if not phone_info.requires_entry:
             if phone_number:
                 phone_number.delete()
+            return
+
+        if not phone_number:
+            phone_number = contact_case.create_phone_entry(phone_info.phone_number)
+
+        if phone_number.phone_number != phone_info.phone_number:
+            phone_number.created_on = datetime.utcnow()
+            phone_number.phone_number = phone_info.phone_number
+
+        phone_number.backend_id = phone_info.sms_backend_id
+        phone_number.ivr_backend_id = phone_info.ivr_backend_id
+        phone_number.contact_last_modified = contact_case.server_modified_on
+
+        if phone_info.qualifies_as_two_way:
+            try:
+                phone_number.set_two_way()
+                phone_number.set_verified()
+            except PhoneNumberInUseException:
+                pass
+        else:
+            phone_number.is_two_way = False
+            phone_number.verified = False
+            phone_number.pending_verification = False
+
+        phone_number.save()
 
 
 @task(queue='background_queue', ignore_result=True, acks_late=True,

@@ -22,16 +22,17 @@ def initiate_sms_verification_workflow(contact, phone_number):
         contact.domain, contact.get_id, phone_number)
 
     with CriticalSection(['verifying-phone-number-%s' % phone_number]):
-        vn = PhoneNumber.by_phone(phone_number, include_pending=True)
-        if vn:
-            if vn.owner_id != contact.get_id:
+        p = PhoneNumber.get_reserved_number(phone_number)
+        if p:
+            if p.owner_id != contact.get_id:
                 return VERIFICATION__ALREADY_IN_USE
-            if vn.verified:
+            if p.verified:
                 return VERIFICATION__ALREADY_VERIFIED
             else:
                 result = VERIFICATION__RESENT_PENDING
         else:
-            contact.save_verified_number(contact.domain, phone_number, False)
+            entry = contact.get_or_create_phone_entry(phone_number)
+            entry.set_pending_verification()
             result = VERIFICATION__WORKFLOW_STARTED
             # Always create a new event when the workflow starts
             if logged_event:
@@ -79,9 +80,6 @@ def send_verification(domain, user, phone_number, logged_event):
 
 
 def process_verification(v, msg, verification_keywords=None):
-    if not v or v.verified:
-        return False
-
     verification_keywords = verification_keywords or ['123']
 
     logged_event = MessagingEvent.get_current_verification_event(
@@ -108,7 +106,8 @@ def process_verification(v, msg, verification_keywords=None):
     ):
         return False
 
-    v.verified = True
+    v.set_two_way()
+    v.set_verified()
     v.save()
 
     logged_event.completed()

@@ -97,7 +97,7 @@ class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabular
                 self.get_user_link(user),
                 _fmt(counts[OUTGOING]),
                 _fmt(counts[INCOMING]),
-                _fmt(len(user.get_verified_numbers()))
+                _fmt(len(user.get_two_way_numbers()))
             ]
 
         return [

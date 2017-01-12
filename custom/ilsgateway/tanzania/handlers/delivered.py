@@ -10,6 +10,7 @@ from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, 
 from custom.ilsgateway.tanzania.handlers.soh import parse_report
 from custom.ilsgateway.tanzania.reminders import DELIVERY_CONFIRM_DISTRICT, DELIVERY_PARTIAL_CONFIRM, \
     DELIVERY_CONFIRM_CHILDREN, DELIVERED_CONFIRM, INVALID_PRODUCT_CODE
+from custom.ilsgateway.tanzania.utils import send_translated_message
 
 
 class DeliveryFormatter(Formatter):
@@ -34,10 +35,7 @@ class DeliveredHandler(GenericStockReportHandler):
             users.extend(get_users_by_location_id(self.domain, location_id))
 
         for user in users:
-            if user.get_verified_number():
-                with localize(user.get_language_code()):
-                    send_sms_to_verified_number(user.get_verified_number(), DELIVERY_CONFIRM_CHILDREN %
-                                                {"district_name": location.name})
+            send_translated_message(user, DELIVERY_CONFIRM_CHILDREN, district_name=location.name)
 
     def on_success(self):
         SupplyPointStatus.objects.create(location_id=self.location_id,

@@ -98,28 +98,15 @@ class CommCareMobileContactMixin(object):
         """
         raise NotImplementedError('Please implement this method')
 
-    def get_verified_numbers(self, include_pending=False):
+    def get_phone_entries(self):
         from corehq.apps.sms.models import PhoneNumber
-        v = PhoneNumber.by_owner_id(self.get_id)
-        v = filter(lambda c: c.verified or include_pending, v)
-        return dict((c.phone_number, c) for c in v)
+        return PhoneNumber.by_owner_id(self.get_id)
 
-    def get_verified_number(self, phone=None):
-        """
-        Retrieves this contact's verified number entry by (self.doc_type, self.get_id).
-
-        return  the PhoneNumber entry
-        """
-        from corehq.apps.sms.util import strip_plus
-        verified = self.get_verified_numbers(True)
-        if not phone:
-            # for backwards compatibility with code that assumes only one verified phone #
-            if len(verified) > 0:
-                return sorted(verified.iteritems())[0][1]
-            else:
-                return None
-
-        return verified.get(strip_plus(phone))
+    def get_two_way_numbers(self):
+        return {
+            p.phone_number: p
+            for p in PhoneNumber.by_owner_id(self.get_id).filter(is_two_way=True)
+        }
 
     @classmethod
     def validate_number_format(cls, phone_number):
@@ -132,64 +119,39 @@ class CommCareMobileContactMixin(object):
         if (not phone_number) or (not phone_number_re.match(phone_number)):
             raise InvalidFormatException("Phone number format must consist of only digits.")
 
-    def verify_unique_number(self, phone_number):
-        """
-        Verifies that the given phone number is not already in use by any other contacts.
+    def _create_phone_entry(self, phone_number):
+        return PhoneNumber.objects.create(
+            domain=self.domain,
+            owner_doc_type=self.doc_type,
+            owner_id=self.get_id,
+            phone_number=phone_number,
+            verified=False,
+            pending_verification=False,
+            is_two_way=False
+        )
 
-        return  void
-        raises  InvalidFormatException if the phone number format is invalid
-        raises  PhoneNumberInUseException if the phone number is already in use by another contact
-        """
-        from corehq.apps.sms.models import PhoneNumber
+    def create_phone_entry(self, phone_number):
+        phone_number = apply_leniency(phone_number)
         self.validate_number_format(phone_number)
-        v = PhoneNumber.by_phone(phone_number, include_pending=True)
-        if v is not None and (v.owner_doc_type != self.doc_type or v.owner_id != self.get_id):
-            raise PhoneNumberInUseException("Phone number is already in use.")
+        return self._create_phone_entry(phone_number)
 
-    def save_verified_number(self, domain, phone_number, verified, backend_id=None, ivr_backend_id=None, only_one_number_allowed=False):
-        """
-        Saves the given phone number as this contact's verified phone number.
-
-        backend_id - the name of an SMSBackend to use when sending SMS to
-            this number; if specified, this will override any project or
-            global settings for which backend will be used to send sms to
-            this number
-
-        return  The PhoneNumber
-        raises  InvalidFormatException if the phone number format is invalid
-        raises  PhoneNumberInUseException if the phone number is already in use by another contact
-        """
+    def get_or_create_phone_entry(self, phone_number):
         from corehq.apps.sms.models import PhoneNumber
 
         phone_number = apply_leniency(phone_number)
-        self.verify_unique_number(phone_number)
-        if only_one_number_allowed:
-            v = self.get_verified_number()
-        else:
-            v = self.get_verified_number(phone_number)
-        if v is None:
-            v = PhoneNumber(
-                owner_doc_type=self.doc_type,
-                owner_id=self.get_id
-            )
-        v.domain = domain
-        v.phone_number = phone_number
-        v.verified = verified
-        v.backend_id = backend_id
-        v.ivr_backend_id = ivr_backend_id
-        v.save()
-        return v
+        self.validate_number_format(phone_number)
 
-    def delete_verified_number(self, phone_number=None):
-        """
-        Deletes this contact's phone number from the verified phone number list, freeing it up
-        for use by other contacts.
+        entries = self.get_phone_entries()
+        if phone_number in entries:
+            return entries[phone_number]
 
-        return  void
-        """
-        v = self.get_verified_number(phone_number)
-        if v is not None:
-            v.delete()
+        return self._create_phone_entry(phone_number)
+
+    def delete_phone_entry(self, phone_number):
+        phone_number = apply_leniency(phone_number)
+        entry = list(self.get_phone_entries().filter(phone_number=phone_number))
+        if entry:
+            entry[0].delete()
 
 
 class MessagingCaseContactMixin(CommCareMobileContactMixin):
@@ -199,6 +161,7 @@ class MessagingCaseContactMixin(CommCareMobileContactMixin):
             'PhoneInfo',
             [
                 'requires_entry',
+                'qualifies_as_two_way',
                 'phone_number',
                 'sms_backend_id',
                 'ivr_backend_id',
@@ -210,17 +173,30 @@ class MessagingCaseContactMixin(CommCareMobileContactMixin):
         contact_backend_id = self.get_case_property('contact_backend_id')
         contact_ivr_backend_id = self.get_case_property('contact_ivr_backend_id')
 
+        try:
+            self.validate_number_format(contact_phone_number)
+        except InvalidFormatException:
+            format_is_valid = False
+        else:
+            format_is_valid = True
+
         requires_entry = (
             contact_phone_number and
+            format_is_valid and
             contact_phone_number != '0' and
             not self.closed and
-            not self.is_deleted and
+            not self.is_deleted
+        )
+
+        qualifies_as_two_way = (
+            requires_entry and
             # For legacy reasons, any truthy value here suffices
             contact_phone_number_is_verified
         )
 
         return PhoneInfo(
             requires_entry,
+            qualifies_as_two_way,
             contact_phone_number,
             contact_backend_id,
             contact_ivr_backend_id
@@ -234,6 +210,13 @@ class MessagingCaseContactMixin(CommCareMobileContactMixin):
 
     def get_email(self):
         return self.get_case_property('commcare_email_address')
+
+    def get_phone_number(self):
+        entries = list(self.get_phone_entries())
+        if len(entries) == 0:
+            return None
+
+        return entries[0]
 
     @property
     def raw_username(self):
