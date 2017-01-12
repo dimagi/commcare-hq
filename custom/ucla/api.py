@@ -21,14 +21,14 @@ def ucla_message_bank_content(reminder, handler, recipient):
     message_bank = FixtureDataType.by_domain_tag(domain, 'message_bank').first()
 
     if not message_bank:
-        message = "Lookup Table message_bank not found in {}".format(domain)
+        message = u"Lookup Table message_bank not found in {}".format(domain)
         notify_dimagi_project_admins(domain, message=message)
         return None
 
     fields = message_bank.fields_without_attributes
 
     if any(field not in fields for field in REQUIRED_FIXTURE_FIELDS):
-        message = "message_bank in {} must have {}".format(
+        message = u"message_bank in {} must have {}".format(
             domain, ','.join(REQUIRED_FIXTURE_FIELDS)
         )
         notify_dimagi_project_admins(domain, message=message)
@@ -36,14 +36,14 @@ def ucla_message_bank_content(reminder, handler, recipient):
 
     if not is_commcarecase(recipient):
         recipient_id = getattr(recipient, '_id') if hasattr(recipient, '_id') else 'id_unknown'
-        message = "recipient {} must be a case in domain {}".format(recipient_id, domain)
+        message = u"recipient {} must be a case in domain {}".format(recipient_id, domain)
         notify_dimagi_project_admins(domain, message=message)
         return None
 
     try:
         risk_profile = recipient.dynamic_case_properties()[RISK_PROFILE_FIELD]
     except KeyError:
-        message = "case {} does not include risk_profile".format(recipient.case_id)
+        message = u"case {} does not include risk_profile".format(recipient.case_id)
         notify_dimagi_project_admins(domain, message=message)
         return None
 
@@ -61,9 +61,9 @@ def ucla_message_bank_content(reminder, handler, recipient):
 
     if len(custom_messages) != 1:
         if not custom_messages:
-            message = "No message for risk {}, seq {} in domain {}"
+            message = u"No message for risk {}, seq {} in domain {}"
         else:
-            message = "Multiple messages for risk {}, seq {} in domain {}"
+            message = u"Multiple messages for risk {}, seq {} in domain {}"
         message = message.format(risk_profile, current_message_seq_num, domain)
         notify_dimagi_project_admins(domain, message=message)
         return None
