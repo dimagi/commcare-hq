@@ -506,6 +506,7 @@ class ExportInstance(BlobMixin, Document):
     domain = StringProperty()
     tables = ListProperty(TableConfiguration)
     export_format = StringProperty(default='csv')
+    app_id = StringProperty()
 
     # Whether to split multiselects into multiple columns
     split_multiselects = BooleanProperty(default=False)
@@ -568,6 +569,7 @@ class ExportInstance(BlobMixin, Document):
             instance = cls._new_from_schema(schema)
 
         instance.name = instance.name or instance.defaults.get_default_instance_name(schema)
+        instance.app_id = schema.app_id
 
         latest_app_ids_and_versions = get_latest_app_ids_and_versions(
             schema.domain,
@@ -762,7 +764,6 @@ class CaseExportInstance(ExportInstance):
 
 class FormExportInstance(ExportInstance):
     xmlns = StringProperty()
-    app_id = StringProperty()
     type = FORM_EXPORT
 
     # Whether to include duplicates and other error'd forms in export
@@ -1239,6 +1240,8 @@ class FormExportDataSchema(ExportDataSchema):
 
     @classmethod
     def _get_current_app_ids_for_domain(cls, domain, app_id):
+        if not app_id:
+            raise BadExportConfiguration('Must include app id for form data schemas')
         return [app_id]
 
     @staticmethod
