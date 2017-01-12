@@ -100,7 +100,10 @@ class CommCareMobileContactMixin(object):
 
     def get_phone_entries(self):
         from corehq.apps.sms.models import PhoneNumber
-        return PhoneNumber.by_owner_id(self.get_id)
+        return {
+            p.phone_number: p
+            for p in PhoneNumber.by_owner_id(self.get_id)
+        }
 
     def get_two_way_numbers(self):
         from corehq.apps.sms.models import PhoneNumber
@@ -149,9 +152,9 @@ class CommCareMobileContactMixin(object):
 
     def delete_phone_entry(self, phone_number):
         phone_number = apply_leniency(phone_number)
-        entry = list(self.get_phone_entries().filter(phone_number=phone_number))
+        entry = self.get_phone_entries().get(phone_number)
         if entry:
-            entry[0].delete()
+            entry.delete()
 
 
 class MessagingCaseContactMixin(CommCareMobileContactMixin):
@@ -212,11 +215,11 @@ class MessagingCaseContactMixin(CommCareMobileContactMixin):
         return self.get_case_property('commcare_email_address')
 
     def get_phone_number(self):
-        entries = list(self.get_phone_entries())
+        entries = self.get_phone_entries()
         if len(entries) == 0:
             return None
 
-        return entries[0]
+        return entries.values()[0]
 
     @property
     def raw_username(self):

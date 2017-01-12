@@ -44,7 +44,7 @@ from corehq.apps.users.util import (
 from corehq.apps.users.tasks import tag_forms_as_deleted_rebuild_associated_cases, \
     tag_cases_as_deleted_and_remove_indices
 from corehq.apps.users.exceptions import InvalidLocationConfig
-from corehq.apps.sms.mixin import CommCareMobileContactMixin
+from corehq.apps.sms.mixin import CommCareMobileContactMixin, apply_leniency
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from dimagi.utils.mixins import UnicodeMixIn
@@ -982,7 +982,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
         def get_phone_info(phone):
             info = {}
-            phone_entry = phone_entries.get(phone)
+            phone_entry = phone_entries.get(apply_leniency(phone))
 
             if phone_entry and phone_entry.verified:
                 status = 'verified'
@@ -1555,7 +1555,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 self.user_id, self.domain, form_id_list, deletion_id, deletion_date, deleted_cases=deleted_cases
             )
 
-        for phone_number in self.get_phone_entries():
+        for phone_number in self.get_phone_entries().values():
             phone_number.delete()
 
         try:

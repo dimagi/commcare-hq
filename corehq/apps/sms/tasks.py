@@ -301,11 +301,11 @@ def _sync_case_phone_number(contact_case):
         lock_keys.append('verifying-phone-number-%s' % phone_info.phone_number)
 
     with CriticalSection(lock_keys, timeout=5 * 60):
-        phone_numbers = list(contact_case.get_phone_entries())
+        phone_numbers = contact_case.get_phone_entries()
         if len(phone_numbers) > 1:
             raise PhoneNumberException("Expected zero or one phone entry for case %s" % contact_case.case_id)
 
-        phone_number = phone_numbers[0] if phone_numbers else None
+        phone_number = phone_numbers.values()[0] if phone_numbers else None
         if (
             phone_number and
             phone_number.contact_last_modified and
