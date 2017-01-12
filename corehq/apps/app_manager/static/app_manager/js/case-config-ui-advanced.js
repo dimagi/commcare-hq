@@ -197,6 +197,10 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                         self.applyAccordion('open', 0);
                     }
                 });
+
+                $('.hq-help-template').each(function () {
+                    COMMCAREHQ.transformHelpTemplate($(this), true);
+                });
             });
         };
     };
@@ -637,7 +641,15 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                     // suggestedProperties need to be those of case type "commcare-user"
                     if (value === 'usercase') {
                         self.case_type('commcare-user');
+                    } else {
+                        self.case_type(null);
                     }
+
+                    _.defer(function () {
+                        $('.hq-help-template').each(function () {
+                            COMMCAREHQ.transformHelpTemplate($(this), true);
+                        });
+                    });
                 });
             }
 
@@ -695,6 +707,9 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                         } else if (mode === 'fixture') {
                             return 'Lookup table tag required';
                         }
+                    }
+                    if (!self.case_type()) {
+                        return 'Expected case type required';
                     }
                     return null;
                 } else {
