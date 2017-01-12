@@ -13,13 +13,13 @@ class ReminderUtilTest(TestCase):
         self.assertIsNone(get_two_way_number_for_recipient(self.user))
 
         self.user.phone_numbers = ['123', '456', '789']
-        entry = user.get_or_create_phone_entry('456')
+        entry = self.user.get_or_create_phone_entry('456')
         entry.set_two_way()
         entry.set_verified()
         entry.save()
         self.assertEqual(get_two_way_number_for_recipient(self.user).phone_number, '456')
 
-        entry = user.get_or_create_phone_entry('789')
+        entry = self.user.get_or_create_phone_entry('789')
         entry.set_two_way()
         entry.set_verified()
         entry.save()
@@ -31,6 +31,8 @@ class ReminderUtilTest(TestCase):
         self.assertEqual(v.phone_number, '789')
 
         v.verified = False
+        v.is_two_way = False
+        v.pending_verification = False
         v.save()
         self.assertEqual(get_two_way_number_for_recipient(self.user).phone_number, '456')
 

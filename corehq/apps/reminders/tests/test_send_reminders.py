@@ -318,7 +318,7 @@ class ReminderCallbackTestCase(BaseReminderTestCase):
         self.handler.save()
 
         self.user = CommCareUser.create(self.domain, 'chw.bob3', 'abc', phone_number='14445551234')
-        entry = user.get_or_create_phone_entry('14445551234')
+        entry = self.user.get_or_create_phone_entry('14445551234')
         entry.set_two_way()
         entry.set_verified()
         entry.save()

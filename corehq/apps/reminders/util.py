@@ -208,8 +208,8 @@ def get_two_way_number_for_recipient(recipient):
             # Retrieve the two-way number that's highest up in the list
             if isinstance(recipient, CouchUser):
                 for phone in recipient.phone_numbers:
-                    if phone in contact_verified_numbers:
-                        return contact_verified_numbers[phone]
+                    if phone in two_way_numbers:
+                        return two_way_numbers[phone]
                 raise Exception("Phone number list and PhoneNumber entries are out "
                     "of sync for user %s" % recipient.get_id)
             else:
