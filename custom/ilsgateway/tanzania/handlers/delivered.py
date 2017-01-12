@@ -10,7 +10,7 @@ from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, 
 from custom.ilsgateway.tanzania.handlers.soh import parse_report
 from custom.ilsgateway.tanzania.reminders import DELIVERY_CONFIRM_DISTRICT, DELIVERY_PARTIAL_CONFIRM, \
     DELIVERY_CONFIRM_CHILDREN, DELIVERED_CONFIRM, INVALID_PRODUCT_CODE
-from custom.ilsgateway.tanzania.utils import send_translated_message
+from custom.ilsgateway.utils import send_translated_message
 
 
 class DeliveryFormatter(Formatter):
