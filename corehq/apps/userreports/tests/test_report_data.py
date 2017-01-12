@@ -197,11 +197,10 @@ class ReportDataTest(TestCase):
         report_data_source = ReportFactory.from_spec(self.report_config)
 
         total_number = sum(row.number for row in rows)
-        self.assertEqual(report_data_source.get_total_row(), ['Total', total_number, '', ''])
+        self.assertEqual(report_data_source.get_total_row(), ['Total', total_number, '', '', ''])
 
     @run_with_all_ucr_backends
     def test_transform(self):
-        # FIXME This test currently succeeds with a SQL backend, and fails with an ES backend
         count = 5
         self._add_some_rows(count)
         report_data_source = ReportFactory.from_spec(self.report_config)
