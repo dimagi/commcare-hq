@@ -1016,3 +1016,10 @@ COPY_CASE_CONFIGS = StaticToggle(
     TAG_PRODUCT_CORE,
     [NAMESPACE_DOMAIN]
 )
+
+DO_NOT_PROCESS_OLD_BUILDS = StaticToggle(
+    'do_not_process_old_builds',
+    'Do not process old build for export generation',
+    TAG_PRODUCT_CORE,
+    [NAMESPACE_DOMAIN],
+)

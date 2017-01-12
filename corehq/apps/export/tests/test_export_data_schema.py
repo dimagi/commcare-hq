@@ -13,6 +13,7 @@ from corehq.apps.app_manager.models import (
     Application,
     OpenSubCaseAction,
     AdvancedModule,
+    Module,
     AdvancedOpenCaseAction,
 )
 from corehq.apps.app_manager.signals import app_post_save
@@ -544,6 +545,7 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
         cls.first_build._id = '123'
         cls.first_build.copy_of = cls.current_app.get_id
         cls.first_build.version = 3
+        cls.first_build.has_submissions = True
 
         cls.advanced_app = Application.new_app('domain', "Untitled Application")
         module = cls.advanced_app.add_module(AdvancedModule.new_module('Untitled Module', None))
@@ -621,13 +623,14 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
         )
 
         self.assertEqual(len(schema.group_schemas), 1)
-        self.assertEqual(schema.last_app_versions[app._id], app.version)
+        self.assertEqual(schema.last_app_versions[app._id], self.first_build.version)
 
         # After the first schema has been saved let's add a second app to process
         second_build = Application.wrap(self.get_json('basic_application'))
         second_build._id = '456'
         second_build.copy_of = app.get_id
         second_build.version = 6
+        second_build.has_submissions = True
         second_build.save()
         self.addCleanup(second_build.delete)
 
@@ -638,7 +641,7 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
         )
 
         self.assertEqual(new_schema._id, schema._id)
-        self.assertEqual(new_schema.last_app_versions[app._id], app.version)
+        self.assertEqual(new_schema.last_app_versions[app._id], second_build.version)
         self.assertEqual(len(new_schema.group_schemas), 1)
 
     def test_build_with_inferred_schema(self):
@@ -721,6 +724,71 @@ class TestExportDataSchemaVersionControl(TestCase, TestXmlMixin):
         self.assertEqual(rebuilt_schema.version, FORM_DATA_SCHEMA_VERSION + 1)
 
 
+class TestDelayedSchema(TestCase, TestXmlMixin):
+    domain = 'delayed-schemas'
+    file_path = ['data']
+    root = os.path.dirname(__file__)
+    xmlns = 'xmlns'
+
+    @classmethod
+    def setUpClass(cls):
+        cls.current_app = Application.new_app(cls.domain, "Untitled Application")
+        cls.current_app._id = '1234'
+        cls.current_app.version = 10
+        module = cls.current_app.add_module(Module.new_module('Untitled Module', None))
+        form = module.new_form("Untitled Form", 'en', attachment=cls.get_xml('basic_form'))
+        form.xmlns = cls.xmlns
+
+        cls.build = Application.new_app(cls.domain, "Untitled Application")
+        cls.build._id = '5678'
+        cls.build.copy_of = cls.current_app._id
+        cls.build.version = 5
+        cls.build.has_submissions = True
+        module = cls.build.add_module(Module.new_module('Untitled Module', None))
+        form = module.new_form("Untitled Form", 'en', attachment=cls.get_xml('basic_form_version2'))
+        form.xmlns = cls.xmlns
+
+        cls.apps = [
+            cls.current_app,
+            cls.build,
+        ]
+        with drop_connected_signals(app_post_save):
+            for app in cls.apps:
+                app.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        for app in cls.apps:
+            app.delete()
+
+    def tearDown(self):
+        delete_all_export_data_schemas()
+        delete_all_inferred_schemas()
+
+    def test_basic_delayed_schema(self):
+        schema = FormExportDataSchema.generate_schema_from_builds(
+            self.domain,
+            self.current_app._id,
+            self.xmlns,
+            only_process_current_builds=True
+        )
+
+        self.assertIsNone(schema.last_app_versions.get(self.current_app._id))
+        group_schema = schema.group_schemas[0]
+        self.assertEqual(len(group_schema.items), 2)
+
+        schema = FormExportDataSchema.generate_schema_from_builds(
+            self.domain,
+            self.current_app._id,
+            self.xmlns,
+            only_process_current_builds=False
+        )
+
+        self.assertEqual(schema.last_app_versions[self.current_app._id], self.build.version)
+        group_schema = schema.group_schemas[0]
+        self.assertEqual(len(group_schema.items), 3)
+
+
 class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
     file_path = ['data']
     root = os.path.dirname(__file__)
@@ -735,6 +803,7 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
         cls.first_build._id = '123'
         cls.first_build.copy_of = cls.current_app.get_id
         cls.first_build.version = 3
+        cls.first_build.has_submissions = True
 
         cls.apps = [
             cls.current_app,
@@ -776,7 +845,7 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
             self.case_type,
         )
 
-        self.assertEqual(schema.last_app_versions[app._id], app.version)
+        self.assertEqual(schema.last_app_versions[app._id], self.first_build.version)
         # One for case, one for case history
         self.assertEqual(len(schema.group_schemas), 2)
 
@@ -785,6 +854,7 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
         second_build._id = '456'
         second_build.copy_of = app.get_id
         second_build.version = 6
+        second_build.has_submissions = True
         with drop_connected_signals(app_post_save):
             second_build.save()
         self.addCleanup(second_build.delete)
@@ -796,7 +866,7 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
         )
 
         self.assertEqual(new_schema._id, schema._id)
-        self.assertEqual(new_schema.last_app_versions[app._id], app.version)
+        self.assertEqual(new_schema.last_app_versions[app._id], second_build.version)
         # One for case, one for case history
         self.assertEqual(len(new_schema.group_schemas), 2)
 
