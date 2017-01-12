@@ -1055,6 +1055,13 @@ class ExportDataSchema(Document):
     class Meta:
         app_label = 'export'
 
+    def get_number_of_apps_to_process(self):
+        return len(self._get_app_build_ids_to_process(
+            self.domain,
+            self.app_id,
+            self.last_app_versions,
+        ))
+
     @classmethod
     def generate_schema_from_builds(cls, domain, app_id, identifier, force_rebuild=False,
             only_process_current_builds=False, task=None):

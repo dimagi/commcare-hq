@@ -1509,6 +1509,16 @@ class BaseModifyNewCustomView(BaseNewExportView):
             only_process_current_builds=DO_NOT_PROCESS_OLD_BUILDS.enabled(self.domain),
         )
 
+    @property
+    def page_context(self):
+        result = super(BaseModifyNewCustomView, self).page_context
+        schema = self.get_export_schema(
+            self.request.GET.get('app_id') or getattr(self.export_instance, 'app_id'),
+            self.export_instance.identifier,
+        )
+        result['number_of_apps_to_process'] = schema.get_number_of_apps_to_process()
+        return result
+
 
 @location_safe
 class CreateNewCustomFormExportView(BaseModifyNewCustomView):
@@ -1614,7 +1624,10 @@ class BaseEditNewCustomExportView(BaseModifyNewCustomView):
                 )
                 return HttpResponseRedirect(self.export_home_url)
 
-        schema = self.get_export_schema(self.request.GET.get('app_id'), export_instance.identifier)
+        schema = self.get_export_schema(
+            self.request.GET.get('app_id') or getattr(export_instance, 'app_id'),
+            export_instance.identifier
+        )
         self.export_instance = self.export_instance_cls.generate_instance_from_schema(
             schema,
             saved_export=export_instance,

@@ -20,6 +20,7 @@
                     saveUrl: {{ request.get_full_path|safe|JSON }},
                     hasExcelDashboardAccess: {{ has_excel_dashboard_access|JSON }},
                     hasDailySavedAccess: {{ has_daily_saved_export_access|JSON }},
+                    numberOfAppsToProcess: {{ number_of_app_ids_to_process }},
                 }
             );
             hqImport('hqwebapp/js/urllib.js').registerUrl(
@@ -258,5 +259,6 @@
             {% include "export/dialogs/delete_custom_export_dialog.html" %}
         {% endwith %}
     {% endif %}
+    {% include "export/dialogs/process_deleted_questions.html" %}
 {% endblock %}
 
