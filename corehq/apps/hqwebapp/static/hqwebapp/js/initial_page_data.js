@@ -1,5 +1,15 @@
+/*
+ *  Manage data needed by JavaScript but supplied by server.
+ *
+ *  In django templates, use {% initial_page_data varName varValue %} to
+ *  define data, then in JavaScript use this module's get function to
+ *  access it.
+ */
 var COMMCAREHQ_INITIAL_PAGE_DATA = {};
 hqDefine('hqwebapp/js/initial_page_data.js', function () {
+    /*
+     * Fetch a named value.
+     */
     var get = function(name) {
         if (COMMCAREHQ_INITIAL_PAGE_DATA[name] === undefined) {
             gather();
@@ -7,6 +17,9 @@ hqDefine('hqwebapp/js/initial_page_data.js', function () {
         return COMMCAREHQ_INITIAL_PAGE_DATA[name];
     };
 
+    /*
+     *  Find any unregistered data. Error on any duplicates.
+     */
     var gather = function() {
         _.each($(".initial-page-data"), function(div) {
             var $div = $(div),
