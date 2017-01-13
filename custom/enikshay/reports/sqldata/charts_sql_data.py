@@ -34,7 +34,7 @@ class ChartsSqlData(EnikshaySqlData):
                 '',
                 CountColumn(
                     'doc_id',
-                    filters=convert_to_raw_filters_list(
+                    filters=self.filters + convert_to_raw_filters_list(
                         "current_episode_type = 'confirmed_tb'"
                     ),
                     alias='total_patients'
