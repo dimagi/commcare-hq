@@ -116,7 +116,7 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
         if not user_filter:
             user_filter = HQUserType.all()
         users = []
-        submitted_user_ids = get_all_user_ids_submitted(domain)
+        submitted_user_ids = set(get_all_user_ids_submitted(domain))
         registered_users_by_id = dict([(user.user_id, user) for user in CommCareUser.by_domain(domain)])
         if include_inactive:
             registered_users_by_id.update(dict([(u.user_id, u) for u in CommCareUser.by_domain(domain, is_active=False)]))
@@ -136,9 +136,7 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
 
         if user_filter[HQUserType.REGISTERED].show:
             # now add all the registered users who never submitted anything
-            for user_id, user in registered_users_by_id.items():
-                if user_id not in submitted_user_ids:
-                    users.append(user)
+            users.extend(user for id, user in registered_users_by_id.items()if id not in submitted_user_ids)
 
     if simplified:
         return [_report_user_dict(user) for user in users]
