@@ -4,6 +4,7 @@
 
 {% block js %}
     {{ block.super }}
+    <script src="{% static 'hqwebapp/js/urllib.js' %}"></script>
     <script src="{% static 'export/js/const.js' %}"></script>
     <script src="{% static 'export/js/utils.js' %}"></script>
     <script src="{% static 'export/js/models.js' %}"></script>
@@ -22,7 +23,9 @@
                     formatOptions: {{ format_options|JSON }},
                 }
             );
-
+            hqImport('hqwebapp/js/urllib.js').registerUrl(
+                "build_schema", "/a/---/data/export/build_full_schema/"
+            )
             $('#customize-export').koApplyBindings(customExportView);
             $('.export-tooltip').tooltip();
         });
@@ -164,31 +167,57 @@
         </fieldset>
         {% endif %}
 
-        {% if allow_deid %}
         <fieldset>
-            <legend>{% trans "Privacy Settings" %}</legend>
+            <legend>{% trans "Settings" %}</legend>
+            {% if allow_deid %}
             <div class="form-group">
-                <label for="is_safe" class="col-sm-4 col-md-3 col-lg-2 control-label"></label>
-                <div class="col-sm-4 col-md-3 col-lg-2 deid-column" data-bind="visible: isDeidColumnVisible()">
-                    <div class="checkbox">
-                        <label>
-                            <input type="checkbox" id="is_deidentified" data-bind="checked: is_deidentified" />
-                            {% trans "Publish as De-Identified" %}
-                        </label>
+                <label for="is_safe" class="col-sm-3 col-md-2 control-label"></label>
+                <div class="col-sm-9 col-md-8 col-lg-6 deid-column" >
+                    <div data-bind="visible: isDeidColumnVisible()">
+                        <div class="checkbox">
+                            <label>
+                                <input type="checkbox" id="is_deidentified" data-bind="checked: is_deidentified" />
+                                {% trans "Publish as De-Identified" %}
+                            </label>
+                        </div>
+                        <span class="help-inline">
+                            {% trans "Check only if this export has been fully and safely de-identified." %}
+                        </span>
                     </div>
-                    <span class="help-inline">
-                        {% trans "Check only if this export has been fully and safely de-identified." %}
-                    </span>
+                    <button class="btn btn-default" data-bind="
+                        visible: !isDeidColumnVisible(),
+                        click: showDeidColumn
+                    ">
+                        {% trans "Allow me to mark sensitive data" %}
+                    </button>
                 </div>
-                <button class="btn btn-default" data-bind="
-                    visible: !isDeidColumnVisible(),
-                    click: showDeidColumn
-                ">
-                    {% trans "Allow me to mark sensitive data" %}
-                </button>
             </div>
+            {% endif %}
+            {% if request|toggle_enabled:"DO_NOT_PROCESS_OLD_BUILDS" %}
+            <div class="form-group" data-bind="css: { 'has-error': errorOnBuildSchema }">
+                <label class="col-sm-3 col-md-2 control-label">
+                    {% trans "Process all applications for deleted questions" %}
+                </label>
+                <div class="col-sm-9 col-md-8 col-lg-6">
+                    <button class="btn btn-default" data-bind="
+                        click: onBeginSchemaBuild,
+                        text: schemaProgressText
+                    "></button>
+                    <div class="help-block" data-bind="visible: errorOnBuildSchema">
+                        {% trans "Unable to process applications. Please report an issue if this persists" %}
+                    </div>
+                    <div class="spacer"></div>
+                    <div class="progress " data-bind="visible: showBuildSchemaProgressBar">
+                      <div class="progress-bar" role="progressbar" data-bind="
+                          style: {
+                              width: buildSchemaProgress() + '%'
+                          }
+                      "></div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
         </fieldset>
-        {% endif %}
         <div class="form-actions">
             <div class="col-sm-offset-4 col-md-offset-3 col-lg-offset-2 col-sm-8 col-md-9 col-lg-10 controls">
                 <button type="submit" class="btn btn-lg btn-primary" data-bind="

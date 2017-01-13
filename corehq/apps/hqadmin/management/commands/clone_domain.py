@@ -132,8 +132,7 @@ class Command(BaseCommand):
         # TODO: FixtureOwnership - requires copying users & groups
 
     def copy_locations(self):
-        from corehq.apps.locations.models import LocationType
-        from corehq.apps.locations.models import Location
+        from corehq.apps.locations.models import LocationType, SQLLocation
         from corehq.apps.locations.views import LocationFieldsView
 
         self._copy_custom_data(LocationFieldsView.field_type)
@@ -146,30 +145,13 @@ class Command(BaseCommand):
             old_id, new_id = self.save_sql_copy(location_type, self.new_domain)
             location_types_map[old_id] = new_id
 
-        def copy_location_hierarchy(location, id_map):
-            new_lineage = []
-            for ancestor in location.lineage:
-                try:
-                    new_lineage.append(id_map[ancestor])
-                except KeyError:
-                    self.stderr.write("Ancestor {} for location {} missing".format(location._id, ancestor))
-            location.lineage = new_lineage
-
-            old_type_name = location.location_type_name
-            if not self.no_commmit:
-                location._sql_location_type = LocationType.objects.get(
-                    domain=self.new_domain,
-                    name=old_type_name,
-                )
-            children = location.get_children()
-            old_id, new_id = self.save_couch_copy(location, self.new_domain)
-            id_map[old_id] = new_id
-            for child in children:
-                copy_location_hierarchy(child, id_map)
-
-        locations = Location.root_locations(self.existing_domain)
-        for location in locations:
-            copy_location_hierarchy(location, {})
+        # MPTT sorts this queryset so we can just save in the same order
+        new_loc_ids_by_code = {}
+        for loc in SQLLocation.active_objects.filter(domain=self.existing_domain):
+            loc.location_id = ''
+            loc.parent_id = new_loc_ids_by_code[loc.parent.site_code] if loc.parent_id else None
+            _, new_id = self.save_sql_copy(loc, self.new_domain)
+            new_loc_ids_by_code[loc.site_code] = new_id
 
     def copy_products(self):
         from corehq.apps.products.models import Product

@@ -5,7 +5,7 @@ from corehq.apps.app_manager import models
 from corehq.apps.app_manager.suite_xml.xml_models import Locale, Text, Command, Entry, \
     SessionDatum, Detail, Header, Field, Template, Series, ConfigurationGroup, \
     ConfigurationItem, GraphTemplate, Graph, Xpath, XpathVariable
-from corehq.apps.reports_core.filters import DynamicChoiceListFilter
+from corehq.apps.reports_core.filters import DynamicChoiceListFilter, ChoiceListFilter
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.util.quickcache import quickcache
 
@@ -339,4 +339,4 @@ class _MobileSelectFilterHelpers(object):
 
 
 def is_valid_mobile_select_filter_type(ui_filter):
-    return isinstance(ui_filter, DynamicChoiceListFilter)
+    return isinstance(ui_filter, DynamicChoiceListFilter) or isinstance(ui_filter, ChoiceListFilter)

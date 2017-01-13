@@ -17,7 +17,7 @@ from corehq.apps.userreports.pillow import REBUILD_CHECK_INTERVAL, \
     ConfigurableReportTableManagerMixin, get_kafka_ucr_pillow, get_kafka_ucr_static_pillow
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.tests.utils import get_sample_data_source, get_sample_doc_and_indicators, \
-    doc_to_change, domain_lite, run_with_all_ucr_backends
+    doc_to_change, domain_lite, run_with_all_ucr_backends, get_data_source_with_related_doc_type
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.util.test_utils import softer_assert, trap_extra_setup
@@ -181,6 +181,62 @@ class IndicatorPillowTest(IndicatorPillowTestBase):
         self._check_sample_doc_state(expected_indicators)
 
         CaseAccessorSQL.hard_delete_cases(case.domain, [case.case_id])
+
+
+class ProcessRelatedDocTypePillowTest(TestCase):
+
+    domain = 'bug-domain'
+
+    @softer_assert()
+    def setUp(self):
+        self.pillow = get_kafka_ucr_pillow()
+        self.config = get_data_source_with_related_doc_type()
+        self.config.save()
+        self.adapter = get_indicator_adapter(self.config)
+
+        self.pillow.bootstrap(configs=[self.config])
+        with trap_extra_setup(KafkaUnavailableError):
+            self.pillow.get_change_feed().get_current_offsets()
+
+    def tearDown(self):
+        self.config.delete()
+        self.adapter.drop_table()
+
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    def test_process_doc_from_sql_stale(self):
+        '''
+        Ensures that when you update a case that the changes are reflected in
+        the UCR table.
+
+        http://manage.dimagi.com/default.asp?245341
+        '''
+
+        for i in range(3):
+            since = self.pillow.get_change_feed().get_current_offsets()
+            form, cases = post_case_blocks(
+                [
+                    CaseBlock(
+                        create=i == 0,
+                        case_id='parent-id',
+                        case_name='parent-name',
+                        case_type='bug',
+                        update={'update-prop-parent': i},
+                    ).as_xml(),
+                    CaseBlock(
+                        create=i == 0,
+                        case_id='child-id',
+                        case_name='child-name',
+                        case_type='bug-child',
+                        index={'parent': ('bug', 'parent-id')},
+                        update={'update-prop-child': i}
+                    ).as_xml()
+                ], domain=self.domain
+            )
+            self.pillow.process_changes(since=since, forever=False)
+            rows = self.adapter.get_query_object()
+            self.assertEqual(rows.count(), 1)
+            row = rows[0]
+            self.assertEqual(int(row.parent_property), i)
 
 
 class StaticKafkaIndicatorPillowTest(TestCase):

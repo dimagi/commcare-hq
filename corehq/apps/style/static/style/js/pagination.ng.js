@@ -70,6 +70,7 @@
                 $scope.total = data.response.total;
                 $scope.currentPage = data.response.page;
                 $scope.query = data.response.query;
+                $scope.total_records = data.response.total_records;
                 $cookies.put(paginationLimitCookieName, $scope.limit);
                 if ($scope.notLoaded) {
                     $scope.notLoaded = false;

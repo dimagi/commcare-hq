@@ -158,6 +158,7 @@
             </a>
         </li>
         {% endif %}
+        {% if app.get_doc_type != "LinkedApplication" %}
         <li>
             <a href="{% url "view_app" domain app.id %}languages/#languages-and-translations" {% if is_app_view %}data-toggle="tab" data-pagetitle="{% trans "Languages" %}: {{ app.name }}"{% endif %}>
                 <i class="fa fa-globe"></i>
@@ -179,6 +180,7 @@
                 </span>
             {% endif %}
         </li>
+        {% endif %}
         <li>
             <a href="{% url "app_summary" domain app.id %}">
                 <i class="fa fa-list"></i>
@@ -322,12 +324,14 @@
         </li>
     {% endif %}
     <li class="text-hq-nav-header">{% trans "Actions" %}</li>
+    {% if app.get_doc_type != "LinkedApplication" %}
     <li class="app-name-div{% if copy_app_form and copy_app_form.is_bound %} active{% endif %}">
         <a href="{% url "view_app" domain app.id %}copy/#copy" {% if is_app_view %}data-toggle="tab"{% endif %} data-pagetitle="{% trans "Copy" %}: {{ app.name }}">
             <i class="fa fa-copy"></i>
             {% trans "Copy Application" %}
         </a>
     </li>
+    {% endif %}
     <li>
         <a href="{% url "view_app" domain app.id %}delete/#delete" {% if is_app_view %}data-toggle="tab"{% endif %} data-pagetitle="{% trans "Delete" %}: {{ app.name }}">
             <i class="fa fa-trash"></i>

@@ -19,6 +19,7 @@ from corehq.apps.export.views import (
     DownloadNewFormExportView,
     BulkDownloadNewFormExportView,
     DownloadNewCaseExportView,
+    GenerateSchemaFromAllBuildsView,
     download_daily_saved_export,
     DashboardFeedListView,
     CreateNewCaseFeedView,
@@ -150,4 +151,11 @@ urlpatterns = [
     url(r"^daily_saved/paywall/$",
         DailySavedExportPaywall.as_view(),
         name=DailySavedExportPaywall.urlname),
+
+    url(r"^custom/dailysaved/download/(?P<export_instance_id>[\w\-]+)/$",
+        download_daily_saved_export,
+        name="download_daily_saved_export"),
+    url(r"^build_full_schema/$",
+        GenerateSchemaFromAllBuildsView.as_view(),
+        name=GenerateSchemaFromAllBuildsView.urlname),
 ]

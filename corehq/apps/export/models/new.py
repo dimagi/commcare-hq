@@ -8,6 +8,7 @@ from couchdbkit import ResourceConflict
 from couchdbkit.ext.django.schema import IntegerProperty
 from django.utils.translation import ugettext as _
 from django.core.urlresolvers import reverse
+from soil.progress import set_task_progress
 
 from corehq.apps.export.esaccessors import get_ledger_section_entry_combinations
 from corehq.apps.locations.models import SQLLocation
@@ -1170,17 +1171,23 @@ class ExportDataSchema(Document):
         app_label = 'export'
 
     @classmethod
-    def generate_schema_from_builds(cls, domain, app_id, identifier, force_rebuild=False):
+    def generate_schema_from_builds(cls, domain, app_id, identifier, force_rebuild=False,
+            only_process_current_builds=False, task=None):
         """Builds a schema from Application builds for a given identifier
 
         :param domain: The domain that the export belongs to
         :param app_id: The app_id that the export belongs to (or None if export is not associated with an app.
         :param identifier: The unique identifier of the schema being exported.
             case_type for Case Exports and xmlns for Form Exports
+        :param only_process_current_builds: Only process the current apps, not any builds. This
+            means that deleted items may not be present in the schema since past builds have not been
+            processed.
+        :param task: A celery task to update the progress of the build
         :returns: Returns a ExportDataSchema instance
         """
 
         original_id, original_rev = None, None
+        apps_processed = 0
         current_schema = cls.get_latest_export_schema(domain, app_id, identifier)
         if (current_schema
                 and not force_rebuild
@@ -1189,15 +1196,14 @@ class ExportDataSchema(Document):
         else:
             current_schema = cls()
 
-        app_build_ids = cls._get_app_build_ids_to_process(
-            domain,
-            app_id,
-            current_schema.last_app_versions,
-        )
-        if app_id:
-            app_build_ids.append(app_id)
-        else:
-            app_build_ids.extend(cls._get_current_app_ids_for_domain(domain))
+        app_build_ids = []
+        if not only_process_current_builds:
+            app_build_ids = cls._get_app_build_ids_to_process(
+                domain,
+                app_id,
+                current_schema.last_app_versions,
+            )
+        app_build_ids.extend(cls._get_current_app_ids_for_domain(domain, app_id))
 
         for app_doc in iter_docs(Application.get_db(), app_build_ids, chunksize=10):
             if (not app_doc.get('has_submissions', False) and
@@ -1211,7 +1217,14 @@ class ExportDataSchema(Document):
                 identifier,
             )
 
-            current_schema.record_update(app.copy_of or app._id, app.version)
+            # Only record the version of builds on the schema. We don't care about
+            # whether or not the schema has seen the current build because that always
+            # gets processed.
+            if app.copy_of:
+                current_schema.record_update(app.copy_of, app.version)
+
+            apps_processed += 1
+            set_task_progress(task, apps_processed, len(app_build_ids))
 
         inferred_schema = cls._get_inferred_schema(domain, identifier)
         if inferred_schema:
@@ -1341,8 +1354,8 @@ class FormExportDataSchema(ExportDataSchema):
         self.xmlns = form_xmlns
 
     @classmethod
-    def _get_current_app_ids_for_domain(cls, domain):
-        raise BadExportConfiguration('Form exports should only use one app_id and this should not be called')
+    def _get_current_app_ids_for_domain(cls, domain, app_id):
+        return [app_id]
 
     @staticmethod
     def _get_app_build_ids_to_process(domain, app_id, last_app_versions):
@@ -1572,7 +1585,7 @@ class CaseExportDataSchema(ExportDataSchema):
         return get_inferred_schema(domain, case_type)
 
     @classmethod
-    def _get_current_app_ids_for_domain(cls, domain):
+    def _get_current_app_ids_for_domain(cls, domain, app_id):
         return get_app_ids_in_domain(domain)
 
     @staticmethod

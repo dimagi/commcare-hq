@@ -8,6 +8,7 @@
 hqDefine('export/js/models.js', function () {
     var constants = hqImport('export/js/const.js');
     var utils = hqImport('export/js/utils.js');
+    var urls = hqImport('hqwebapp/js/urllib.js');
 
     /**
      * ExportInstance
@@ -20,6 +21,11 @@ hqDefine('export/js/models.js', function () {
         options = options || {};
         var self = this;
         ko.mapping.fromJS(instanceJSON, ExportInstance.mapping, self);
+
+        self.buildSchemaProgress = ko.observable(0);
+        self.showBuildSchemaProgressBar = ko.observable(false);
+        self.errorOnBuildSchema = ko.observable(false);
+        self.schemaProgressText = ko.observable(gettext('Process'));
 
         // Detetrmines the state of the save. Used for controlling the presentaiton
         // of the Save button.
@@ -65,6 +71,87 @@ hqDefine('export/js/models.js', function () {
                     self.is_daily_saved_export(false);
                 }
             }
+        });
+    };
+
+    ExportInstance.prototype.onBeginSchemaBuild = function(exportInstance, e) {
+        var self = this,
+            $btn = $(e.currentTarget),
+            errorHandler,
+            successHandler,
+            buildSchemaUrl = urls.reverse('build_schema', this.domain()),
+            identifier = ko.utils.unwrapObservable(this.case_type) || ko.utils.unwrapObservable(this.xmlns);
+
+        this.showBuildSchemaProgressBar(true);
+        this.buildSchemaProgress(0);
+
+        self.schemaProgressText(gettext('Processing...'));
+        $btn.attr('disabled', true);
+        $btn.addClass('disabled');
+        $btn.addSpinnerToButton();
+
+        errorHandler = function() {
+            $btn.attr('disabled', false);
+            $btn.removeSpinnerFromButton();
+            $btn.removeClass('disabled');
+            self.errorOnBuildSchema(true);
+            self.schemaProgressText(gettext('Process'));
+        };
+
+        successHandler = function() {
+            $btn.removeSpinnerFromButton();
+            self.schemaProgressText(gettext('Processing Complete. Refresh page.'));
+        };
+
+        $.ajax({
+            url: buildSchemaUrl,
+            type: 'POST',
+            data: {
+                type: this.type(),
+                app_id: this.app_id(),
+                identifier: identifier,
+            },
+            dataType: 'json',
+            success: function(response) {
+                self.checkBuildSchemaProgress(response.download_id, successHandler, errorHandler);
+            },
+            error: errorHandler,
+        });
+    };
+
+    ExportInstance.prototype.checkBuildSchemaProgress = function(downloadId, successHandler, errorHandler) {
+        var self = this,
+            buildSchemaUrl = urls.reverse('build_schema', this.domain());
+
+        $.ajax({
+            url: buildSchemaUrl,
+            type: 'GET',
+            data: {
+                download_id: downloadId,
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    self.buildSchemaProgress(100);
+                    self.showBuildSchemaProgressBar(false);
+                    successHandler();
+                    return;
+                }
+
+                if (response.failed) {
+                    self.errorOnBuildSchema(true);
+                    return;
+                }
+
+                self.buildSchemaProgress(response.progress.percent || 0);
+                if (response.not_started || response.progress.current !== response.progress.total) {
+                    window.setTimeout(
+                        self.checkBuildSchemaProgress.bind(self, response.download_id, successHandler, errorHandler),
+                        2000
+                    );
+                }
+            },
+            error: errorHandler,
         });
     };
 
@@ -225,6 +312,10 @@ hqDefine('export/js/models.js', function () {
             'transform_dates',
             'include_errors',
             'is_deidentified',
+            'domain',
+            'app_id',
+            'case_type',
+            'xmlns',
             'is_daily_saved_export',
         ],
         tables: {

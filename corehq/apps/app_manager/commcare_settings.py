@@ -87,10 +87,12 @@ def get_custom_commcare_settings():
 
 @memoized
 def get_commcare_settings_layout(domain):
-    return {
+    layout = {
         doc_type: _load_commcare_settings_layout(doc_type, domain)
-        for doc_type in ('Application', 'RemoteApp')
+        for doc_type in ('Application', 'RemoteApp', 'LinkedApplication')
     }
+    layout.update({'LinkedApplication': {}})
+    return layout
 
 
 @memoized

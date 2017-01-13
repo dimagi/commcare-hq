@@ -42,6 +42,16 @@ class ReportDataTest(TestCase):
                     "column_id": 'number',
                     "display_name": 'number',
                     "datatype": "integer"
+                },
+                {
+                    "type": "expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": 'number'
+                    },
+                    "column_id": 'string-number',
+                    "display_name": 'string-number',
+                    "datatype": "string"
                 }
             ],
         )
@@ -70,6 +80,7 @@ class ReportDataTest(TestCase):
                     "column_id": "number",
                     "display": "Number",
                     "aggregation": "simple",
+                    "calculate_total": True,
                 },
                 {
                     "type": "expression",
@@ -98,6 +109,20 @@ class ReportDataTest(TestCase):
                             }
                         }
                     }
+                },
+                {
+                    "type": "field",
+                    "field": 'string-number',
+                    "display": 'Display Number',
+                    "aggregation": "simple",
+                    "transform": {
+                        "type": "translation",
+                        "translations": {
+                            "0": "zero",
+                            "1": {"en": "one", "es": "uno"},
+                            "2": {"en": "two", "es": "dos"}
+                        },
+                    },
                 }
             ],
             filters=[],
@@ -165,3 +190,27 @@ class ReportDataTest(TestCase):
         skipped = report_data_source.get_data(start=3)
         self.assertEqual(count - 3, len(skipped))
         self.assertEqual(original_data[3:], skipped)
+
+    # @run_with_all_ucr_backends  Doesn't work with ES backend yet
+    def test_total_row(self):
+        rows = self._add_some_rows(3)
+        report_data_source = ReportFactory.from_spec(self.report_config)
+
+        total_number = sum(row.number for row in rows)
+        self.assertEqual(report_data_source.get_total_row(), ['Total', total_number, '', '', ''])
+
+    @run_with_all_ucr_backends
+    def test_transform(self):
+        count = 5
+        self._add_some_rows(count)
+        report_data_source = ReportFactory.from_spec(self.report_config)
+        original_data = report_data_source.get_data()
+        self.assertEqual(count, len(original_data))
+        rows_by_number = {int(row['number']): row for row in original_data}
+        # Make sure the translations happened
+        self.assertEqual(rows_by_number[0]['string-number'], "zero")
+        self.assertEqual(rows_by_number[1]['string-number'], "one")
+        self.assertEqual(rows_by_number[2]['string-number'], "two")
+        # These last two are untranslated
+        self.assertEqual(rows_by_number[3]['string-number'], "3")
+        self.assertEqual(rows_by_number[4]['string-number'], "4")

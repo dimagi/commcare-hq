@@ -48,7 +48,9 @@ from corehq.apps.app_manager.views.apps import (
     undo_delete_app,
     validate_language,
     view_app,
-    export_gzip
+    export_gzip,
+    pull_master_app,
+    update_linked_whitelist,
 )
 from corehq.apps.app_manager.views.cli import (
     direct_ccz,

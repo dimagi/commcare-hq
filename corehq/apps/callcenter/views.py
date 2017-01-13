@@ -2,7 +2,7 @@ from django.utils.translation import ugettext
 
 
 from corehq.apps.groups.models import Group
-from corehq.apps.locations.models import SQLLocation, Location
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.filters.api import EmwfOptionsView
 from corehq.apps.reports.util import _report_user_dict
@@ -80,8 +80,8 @@ class CallCenterOwnerOptionsView(EmwfOptionsView):
         owner = get_wrapped_owner(owner_id)
         if isinstance(owner, Group):
             return utils.reporting_group_tuple(owner)
-        elif isinstance(owner, Location):
-            return utils.location_tuple(owner.sql_location)
+        elif isinstance(owner, SQLLocation):
+            return utils.location_tuple(owner)
         elif isinstance(owner, CommCareUser):
             return utils.user_tuple(owner)
         elif owner is None:

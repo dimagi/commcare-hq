@@ -42,7 +42,7 @@ class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectRep
 
     @property
     def config(self):
-        week = self.request.GET.get('week')
+        week = int(self.request.GET.get('week'))
         year = self.request.GET.get('year')
         date = "%s-W%s-1" % (year, week + 1)
         monday = datetime.datetime.strptime(date, "%Y-W%W-%w")

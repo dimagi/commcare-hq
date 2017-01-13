@@ -10,6 +10,7 @@ from django.template.defaultfilters import filesizeformat
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 
+from corehq.toggles import DO_NOT_PROCESS_OLD_BUILDS
 from corehq.apps.export.export import get_export_download, get_export_size
 from corehq.apps.export.models.new import DatePeriod
 from corehq.apps.locations.models import SQLLocation
@@ -25,6 +26,7 @@ from django.utils.decorators import method_decorator
 import json
 import re
 from django.utils.safestring import mark_safe
+from django.views.generic import View
 
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 import pytz
@@ -40,6 +42,7 @@ from corehq.apps.export.utils import (
     revert_new_exports,
 )
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
+from corehq.apps.export.tasks import generate_schema_for_all_builds
 from corehq.apps.export.exceptions import (
     ExportNotFound,
     ExportAppException,
@@ -110,6 +113,7 @@ from dimagi.utils.couch.undo import DELETED_SUFFIX
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import get_download_context
+from soil.progress import get_task_status
 
 
 def _get_timezone(domain, couch_user):
@@ -1843,6 +1847,7 @@ class CreateNewCustomFormExportView(BaseModifyNewCustomView):
             self.domain,
             app_id,
             xmlns,
+            only_process_current_builds=DO_NOT_PROCESS_OLD_BUILDS.enabled(self.domain),
         )
         self.export_instance = self.create_new_export_instance(schema)
 
@@ -1866,6 +1871,7 @@ class CreateNewCustomCaseExportView(BaseModifyNewCustomView):
             self.domain,
             app_id,
             case_type,
+            only_process_current_builds=DO_NOT_PROCESS_OLD_BUILDS.enabled(self.domain),
         )
         self.export_instance = self.create_new_export_instance(schema)
 
@@ -2045,6 +2051,7 @@ class EditNewCustomFormExportView(BaseEditNewCustomExportView):
             self.domain,
             export_instance.app_id,
             export_instance.xmlns,
+            only_process_current_builds=DO_NOT_PROCESS_OLD_BUILDS.enabled(self.domain),
         )
 
 
@@ -2058,6 +2065,7 @@ class EditNewCustomCaseExportView(BaseEditNewCustomExportView):
             self.domain,
             self.request.GET.get('app_id'),
             export_instance.case_type,
+            only_process_current_builds=DO_NOT_PROCESS_OLD_BUILDS.enabled(self.domain),
         )
 
 
@@ -2273,6 +2281,45 @@ class DownloadNewCaseExportView(GenericDownloadNewExportMixin, DownloadCaseExpor
             mobile_user_and_group_slugs, self.request.can_access_all_locations, accessible_location_ids
         )
         return form_filters
+
+
+class GenerateSchemaFromAllBuildsView(View):
+    urlname = 'build_full_schema'
+
+    def export_cls(self, type_):
+        return CaseExportDataSchema if type_ == CASE_EXPORT else FormExportDataSchema
+
+    def get(self, request, *args, **kwargs):
+        download_id = request.GET.get('download_id')
+        download = DownloadBase.get(download_id)
+        if download is None:
+            return json_response({
+                'download_id': download_id,
+                'progress': None,
+            })
+
+        status = get_task_status(download.task)
+        return json_response({
+            'download_id': download_id,
+            'success': status.success(),
+            'failed': status.failed(),
+            'missing': status.missing(),
+            'not_started': status.not_started(),
+            'progress': status.progress._asdict(),
+        })
+
+    def post(self, request, *args, **kwargs):
+        download = DownloadBase()
+        download.set_task(generate_schema_for_all_builds.delay(
+            self.export_cls(kwargs.get('type')),
+            request.domain,
+            request.POST.get('app_id'),
+            request.POST.get('identifier'),
+        ))
+        download.save()
+        return json_response({
+            'download_id': download.download_id
+        })
 
 
 @location_safe
