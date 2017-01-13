@@ -599,7 +599,23 @@ hqDefine('export/js/models.js', function () {
      * @returns {Boolean} - True if the column is visible false otherwise.
      */
     ExportColumn.prototype.isVisible = function(table) {
-        return table.showAdvanced() || (!this.is_advanced() || this.selected());
+        if (this.selected()) {
+            return true;
+        }
+
+        if (!this.is_advanced() && !this.is_deleted()) {
+            return true;
+        }
+
+        if (table.showAdvanced() && this.is_advanced()) {
+            return true;
+        }
+
+        if (table.showDeleted() && this.is_deleted()) {
+            return true;
+        }
+
+        return false;
     };
 
     /**
@@ -626,6 +642,7 @@ hqDefine('export/js/models.js', function () {
             'item',
             'label',
             'is_advanced',
+            'is_deleted',
             'selected',
             'tags',
             'deid_transform',

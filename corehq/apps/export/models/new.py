@@ -185,6 +185,7 @@ class ExportColumn(DocumentSchema):
     label = StringProperty()
     # Determines whether or not to show the column in the UI Config without clicking advanced
     is_advanced = BooleanProperty(default=False)
+    is_deleted = BooleanProperty(default=False)
     selected = BooleanProperty(default=False)
     tags = ListProperty()
     help_text = StringProperty()
@@ -305,15 +306,15 @@ class ExportColumn(DocumentSchema):
         :param app_ids_and_versions: A dictionary of app ids that map to latest build version
         most recent state of the app(s) in the domain
         """
-        is_deleted = self._is_deleted(app_ids_and_versions)
+        self.is_deleted = self._is_deleted(app_ids_and_versions)
 
         tags = []
-        if is_deleted:
+        if self.is_deleted:
             tags.append(PROPERTY_TAG_DELETED)
 
         if self.item.tag:
             tags.append(self.item.tag)
-        self.is_advanced = is_deleted or self.is_advanced
+        self.is_advanced = self.is_advanced
         self.tags = tags
 
     @property
