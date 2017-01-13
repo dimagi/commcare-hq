@@ -100,14 +100,11 @@ $(document).on("ajaxStart", function () {
     tfLoadingComplete();
 });
 
-FormplayerFrontend.on('showError', function (errorMessage, isHTML, removeStep) {
+FormplayerFrontend.on('showError', function (errorMessage, isHTML) {
     if (isHTML) {
         showHTMLError(errorMessage, $("#cloudcare-notifications"));
     } else {
         showError(errorMessage, $("#cloudcare-notifications"));
-    }
-    if (removeStep) {
-        FormplayerFrontend.trigger('navigation:back');
     }
 });
 

@@ -26,9 +26,9 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                         FormplayerFrontend.trigger(
                             'showError',
                             response.exception,
-                            response.type === 'html',
-                            true
+                            response.type === 'html'
                         );
+                        FormplayerFrontend.trigger('navigation:back');
                     } else {
                         FormplayerFrontend.trigger('clearProgress');
                         defer.resolve(parsedMenus);
