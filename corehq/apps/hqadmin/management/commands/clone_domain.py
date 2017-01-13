@@ -134,7 +134,7 @@ class Command(BaseCommand):
         # TODO: FixtureOwnership - requires copying users & groups
 
         existing_fixture_config = CalendarFixtureSettings.for_domain(self.existing_domain)
-        self.save_sql_copy(existing_fixture_config, self.new_domain, domain_is_pk=True)
+        self.save_sql_copy(existing_fixture_config, self.new_domain)
 
     def copy_locations(self):
         from corehq.apps.locations.models import LocationType, SQLLocation
@@ -159,7 +159,7 @@ class Command(BaseCommand):
             new_loc_ids_by_code[loc.site_code] = new_id
 
         existing_fixture_config = LocationFixtureConfiguration.for_domain(self.existing_domain)
-        self.save_sql_copy(existing_fixture_config, self.new_domain, domain_is_pk=True)
+        self.save_sql_copy(existing_fixture_config, self.new_domain)
 
     def copy_products(self):
         from corehq.apps.products.models import Product
@@ -325,21 +325,19 @@ class Command(BaseCommand):
         self.log_copy(doc.doc_type, old_id, new_id)
         return old_id, new_id
 
-    def save_sql_copy(self, model, new_domain, domain_is_pk=False):
-        old_id = model.domain if domain_is_pk else model.id
+    def save_sql_copy(self, model, new_domain):
+        old_pk = model.pk
+        model.pk = None
         model.domain = new_domain
-        if not domain_is_pk:
-            model.id = None
 
         if self.no_commmit:
-            if not domain_is_pk:
-                model.id = 'new-{}'.format(old_id)
+            model.pk = 'new-{}'.format(old_pk)
         else:
             model.save()
 
-        new_id = model.domain if domain_is_pk else model.id
-        self.log_copy(model.__class__.__name__, old_id, new_id)
-        return old_id, new_id
+        new_pk = model.pk
+        self.log_copy(model.__class__.__name__, old_pk, new_pk)
+        return old_pk, new_pk
 
     def log_copy(self, name, old_id, new_id):
         self.stdout.write("{name}(id={old_id}) -> {name}(id={new_id})".format(
