@@ -26,7 +26,8 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                         FormplayerFrontend.trigger(
                             'showError',
                             response.exception,
-                            response.type === 'html'
+                            response.type === 'html',
+                            true
                         );
                     } else {
                         FormplayerFrontend.trigger('clearProgress');
