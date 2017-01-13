@@ -3,6 +3,7 @@ from optparse import make_option
 from django.core.management.base import BaseCommand, CommandError
 
 from corehq.apps.app_manager.models import Application
+from corehq.apps.locations.models import LocationFixtureConfiguration
 from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain, get_datasources_for_domain
 from corehq.blobs.mixin import BlobMixin
 from corehq.apps.userreports.models import (
@@ -152,6 +153,9 @@ class Command(BaseCommand):
             loc.parent_id = new_loc_ids_by_code[loc.parent.site_code] if loc.parent_id else None
             _, new_id = self.save_sql_copy(loc, self.new_domain)
             new_loc_ids_by_code[loc.site_code] = new_id
+
+        existing_fixture_config = LocationFixtureConfiguration.for_domain(self.existing_domain)
+        self.save_sql_copy(existing_fixture_config, self.new_domain, domain_is_pk=True)
 
     def copy_products(self):
         from corehq.apps.products.models import Product
@@ -317,15 +321,19 @@ class Command(BaseCommand):
         self.log_copy(doc.doc_type, old_id, new_id)
         return old_id, new_id
 
-    def save_sql_copy(self, model, new_domain):
-        old_id = model.id
+    def save_sql_copy(self, model, new_domain, domain_is_pk=False):
+        old_id = model.domain if domain_is_pk else model.id
         model.domain = new_domain
-        model.id = None
+        if not domain_is_pk:
+            model.id = None
+
         if self.no_commmit:
-            model.id = 'new-{}'.format(old_id)
+            if not domain_is_pk:
+                model.id = 'new-{}'.format(old_id)
         else:
             model.save()
-        new_id = model.id
+
+        new_id = model.domain if domain_is_pk else model.id
         self.log_copy(model.__class__.__name__, old_id, new_id)
         return old_id, new_id
 
