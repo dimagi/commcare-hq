@@ -119,7 +119,9 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
         submitted_user_ids = set(get_all_user_ids_submitted(domain))
         registered_users_by_id = dict([(user.user_id, user) for user in CommCareUser.by_domain(domain)])
         if include_inactive:
-            registered_users_by_id.update(dict([(u.user_id, u) for u in CommCareUser.by_domain(domain, is_active=False)]))
+            registered_users_by_id.update(dict(
+                [(u.user_id, u) for u in CommCareUser.by_domain(domain, is_active=False)]
+            ))
         for user_id in submitted_user_ids:
             if user_id in registered_users_by_id and user_filter[HQUserType.REGISTERED].show:
                 user = registered_users_by_id[user_id]
