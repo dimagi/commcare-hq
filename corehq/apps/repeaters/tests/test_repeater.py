@@ -253,7 +253,7 @@ class FormPayloadGeneratorTest(BaseRepeaterTest, TestXmlMixin):
             url="form-repeater-url",
         )
         cls.repeatergenerator = FormRepeaterXMLPayloadGenerator(
-            repeater= cls.repeater
+            repeater=cls.repeater
         )
         cls.repeater.save()
 
