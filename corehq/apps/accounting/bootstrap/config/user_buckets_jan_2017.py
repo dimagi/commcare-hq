@@ -7,7 +7,7 @@ from corehq.apps.accounting.models import (
 
 BOOTSTRAP_CONFIG = {
     (SoftwarePlanEdition.COMMUNITY, False): {
-        'role': 'community_plan_v0',
+        'role': 'community_plan_v1',
         'product_rate': dict(),
         'feature_rates': {
             FeatureType.USER: dict(monthly_limit=10, per_excess_fee=Decimal('2.00')),
