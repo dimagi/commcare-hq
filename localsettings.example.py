@@ -87,7 +87,7 @@ ENABLE_PRELOGIN_SITE = False
 
 ####### # Email setup ########
 # email settings: these ones are the custom hq ones
-EMAIL_LOGIN = "notifications@yourdomain.com"
+EMAIL_LOGIN = "notifications@example.com"
 EMAIL_PASSWORD = "******"
 EMAIL_SMTP_HOST = "smtp.gmail.com"
 EMAIL_SMTP_PORT = 587
@@ -95,14 +95,14 @@ EMAIL_SMTP_PORT = 587
 # Print emails to console so there is no danger of spamming, but you can still get registration URLs
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-ADMINS = (('HQ Dev Team', 'commcarehq-dev+www-notifications@yourdomain.com'),)
-BUG_REPORT_RECIPIENTS = ['commcarehq-support@yourdomain.com']
-NEW_DOMAIN_RECIPIENTS = ['commcarehq-dev+newdomain@yourdomain.com']
-EXCHANGE_NOTIFICATION_RECIPIENTS = ['commcarehq-dev+exchange@yourdomain.com']
+ADMINS = (('HQ Dev Team', 'commcarehq-dev+www-notifications@example.com'),)
+BUG_REPORT_RECIPIENTS = ['commcarehq-support@example.com']
+NEW_DOMAIN_RECIPIENTS = ['commcarehq-dev+newdomain@example.com']
+EXCHANGE_NOTIFICATION_RECIPIENTS = ['commcarehq-dev+exchange@example.com']
 
-SERVER_EMAIL = 'commcarehq-noreply@yourdomain.com'  # the physical server emailing - differentiate if needed
-DEFAULT_FROM_EMAIL = 'commcarehq-noreply@yourdomain.com'
-SUPPORT_EMAIL = "commcarehq-support@yourdomain.com"
+SERVER_EMAIL = 'commcarehq-noreply@example.com'  # the physical server emailing - differentiate if needed
+DEFAULT_FROM_EMAIL = 'commcarehq-noreply@example.com'
+SUPPORT_EMAIL = "commcarehq-support@example.com"
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 SERVER_ENVIRONMENT = 'changeme' #Modify this value if you are deploying multiple environments of HQ to the same machine. Identify the target type of this running environment
 
