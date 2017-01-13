@@ -48,6 +48,13 @@
                 "slug": "episode_type_patient",
                 "datatype": "integer",
                 "pre_value": 1
+            },
+            {
+                "type": "pre",
+                "field": "closed",
+                "slug": "closed",
+                "datatype": "integer",
+                "pre_value": 0
             }
         ],
         "columns": [
