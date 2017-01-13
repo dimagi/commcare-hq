@@ -1,0 +1,38 @@
+@media screen and (max-width: @screen-xs-max) {
+  .row-offcanvas {
+    position: relative;
+    -webkit-transition: all .25s ease-out;
+         -o-transition: all .25s ease-out;
+            transition: all .25s ease-out;
+  }
+
+  .sidebar-offcanvas {
+    width: 33.3%;  // col-xs-4
+    display: none;
+  }
+
+  .row-offcanvas-left {
+    left: 0;
+  }
+
+  .row-offcanvas-left.active {
+    .sidebar-offcanvas {
+      display: block;
+      border-right: 1px solid #dbdbdb;
+    }
+  }
+
+  .row-offcanvas-left.active {
+    #hq-content {
+      width: 66.6%  // col-xs-8
+    }
+
+    #sidebar-menu {
+      display: none !important;
+    }
+  }
+
+  .row-offcanvas-left.active {
+
+  }
+}
