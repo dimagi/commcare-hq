@@ -1,3 +1,4 @@
+/* global hqImport, standardHQReport, HQReportDataTables */
 $(function () {
     var data = hqImport('hqwebapp/js/initial_page_data.js').get;
     if (data('renderReportTables')) {
@@ -31,7 +32,7 @@ $(function () {
     $(function() {
         $('.header-popover').popover({
             trigger: 'hover',
-            placement: 'bottom'
+            placement: 'bottom',
         });
     });
 });
