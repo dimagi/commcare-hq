@@ -145,9 +145,9 @@ class ConfigurableReportEsDataSource(ConfigurableReportDataSourceMixin, ReportDa
             key = []
             for col in self.group_by:
                 if col in row['past_bucket_values']:
-                    key += row['past_bucket_values'][col]
+                    key.append(row['past_bucket_values'][col])
                 else:
-                    key += row[col]
+                    key.append(row[col])
 
             ret[tuple(key)] = r_
 
