@@ -29,6 +29,7 @@ describe('Render a case list', function () {
     describe('#getMenus', function() {
         var server,
             clock,
+            user,
             requests;
 
         beforeEach(function() {
@@ -48,12 +49,66 @@ describe('Render a case list', function () {
             server.onCreate = function (xhr) {
                 requests.push(xhr);
             };
+            user = FormplayerFrontend.request('currentUser');
+            user.domain = 'test-domain';
+            user.username = 'test-username';
+            user.formplayer_url = 'url';
 
         });
 
         afterEach(function() {
             server.restore();
             clock.restore();
+        });
+
+        it('Should execute an async restore using sync db', function() {
+            FormplayerFrontend.trigger('sync');
+
+            // Should have fired off a request for a restore
+            assert.equal(requests.length, 1);
+
+            // Send back an async response
+            requests[0].respond(
+                202,
+                { "Content-Type": "application/json" },
+                JSON.stringify({
+                    "exception":"Asynchronous restore under way for asdf",
+                    "done": 9,
+                    "total": 30,
+                    "retryAfter": 30,
+                    "status": "retry",
+                    "url": "http://dummy/sync-db",
+                    "type": null,
+                })
+            );
+
+            // We should show loading bar
+            assert.isTrue(FormplayerFrontend.regions.loadingProgress.show.called);
+
+            // Fast forward the retry interval of 30 seconds
+            clock.tick(30 * 1000);
+
+            // We should have fired off a new request to get the restore again
+            assert.equal(requests.length, 2);
+            assert.deepEqual(
+                JSON.parse(requests[1].requestBody),
+                {
+                    domain: user.domain,
+                    username: user.username,
+                    preserveCache: true,
+                }
+            );
+            assert.equal(requests[1].url, user.formplayer_url + '/sync-db');
+            requests[1].respond(
+                200,
+                { "Content-Type": "application/json" },
+                JSON.stringify(fixtures.menuList)
+            );
+
+            clock.tick(1); // click 1 forward to ensure that we've fired off the empty progress
+
+            // We should have emptied the progress bar
+            assert.isTrue(FormplayerFrontend.regions.loadingProgress.empty.called);
         });
 
         it('Should execute an async restore', function() {
