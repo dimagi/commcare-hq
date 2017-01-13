@@ -751,6 +751,7 @@ class ConfigureNewReportBase(forms.Form):
 
     def _get_data_source_configuration_kwargs(self):
         if self._is_multiselect_chart_report:
+            # TODO: Handle this aggregation field...
             base_item_expression = self.ds_builder.base_item_expression(True, self.aggregation_field)
         else:
             base_item_expression = self.ds_builder.base_item_expression(False)
@@ -1079,7 +1080,7 @@ class ConfigureNewReportBase(forms.Form):
 
 
 class ConfigureBarChartReportForm(ConfigureNewReportBase):
-    group_by = forms.ChoiceField(label=_("Bar Chart Categories"))
+    group_by = forms.MultipleChoiceField(label=_("Bar Chart Categories"))
     report_type = 'chart'
 
     def __init__(self, report_name, app_id, source_type, report_source_id, existing_report=None, *args, **kwargs):
@@ -1116,18 +1117,14 @@ class ConfigureBarChartReportForm(ConfigureNewReportBase):
         )
 
     @property
-    def aggregation_field(self):
-        return self.cleaned_data["group_by"]
-
-    @property
     def _report_aggregation_cols(self):
         return [
-            self.data_source_properties[self.aggregation_field].column_id
+            self.data_source_properties[field].column_id for field in self.clean_data['group_by']
         ]
 
     @property
     def _report_charts(self):
-        agg_col = self.data_source_properties[self.aggregation_field].column_id
+        agg_col = self.data_source_properties[self.cleaned_data['group_by'][0]].column_id
         return [{
             "type": "multibar",
             "x_axis_column": agg_col,
@@ -1136,16 +1133,8 @@ class ConfigureBarChartReportForm(ConfigureNewReportBase):
 
     @property
     def _report_columns(self):
-        agg_col_id = self.data_source_properties[self.aggregation_field].column_id
-        agg_disp = self.data_source_properties[self.aggregation_field].text
-        return [
-            {
-                "format": "default",
-                "aggregation": "simple",
-                "field": agg_col_id,
-                "type": "field",
-                "display": agg_disp
-            },
+        columns = ConfigureTableReportForm._report_columns()
+        return columns + [
             {
                 "format": "default",
                 "aggregation": "sum",
@@ -1171,7 +1160,7 @@ class ConfigureBarChartReportForm(ConfigureNewReportBase):
 
 
 class ConfigurePieChartReportForm(ConfigureBarChartReportForm):
-    group_by = forms.ChoiceField(label=_("Pie Chart Segments"))
+    group_by = forms.MultipleChoiceField(label=_("Pie Chart Segments"))
 
     @property
     def container_fieldset(self):
@@ -1193,7 +1182,7 @@ class ConfigurePieChartReportForm(ConfigureBarChartReportForm):
 
     @property
     def _report_charts(self):
-        agg = self.data_source_properties[self.aggregation_field].column_id
+        agg = self.data_source_properties[self.cleaned_data['group_by'][0]].column_id
         return [{
             "type": "pie",
             "aggregation_column": agg,
@@ -1307,7 +1296,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
 class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportForm):
     report_type = 'table'
     column_legend_fine_print = ugettext_noop('Add columns for this report to aggregate. Each property you add will create a column for every value of that property.  For example, if you add a column for a yes or no question, the report will show a column for "yes" and a column for "no."')
-    group_by = forms.ChoiceField(label=_("Show one row for each"))
+    group_by = forms.MultipleChoiceField(label=_("Show one row for each"))
 
     @property
     def container_fieldset(self):
@@ -1344,8 +1333,8 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
 
     @property
     def _report_columns(self):
-        agg_field_id = self.data_source_properties[self.aggregation_field].column_id
-        agg_field_text = self.data_source_properties[self.aggregation_field].text
+        agg_fields = self.cleaned_data['group_by']
+        agg_field_ids = set(self.data_source_properties[agg_field].column_id for agg_field in agg_fields)
 
         columns = []
         for i, conf in enumerate(self.cleaned_data['columns']):
@@ -1354,23 +1343,26 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
                     i,
                     conf['display_text'],
                     conf['calculation'],
-                    is_aggregated_on=conf["property"] == self.aggregation_field
+                    is_aggregated_on=conf["property"] in agg_fields
                 )
             )
 
         # Add the aggregation indicator to the columns if it's not already present.
-        displaying_agg_column = any(
-            c for c in self.cleaned_data['columns'] if c['property'] == self.aggregation_field
-        )
-        if not displaying_agg_column:
-            columns = self._get_column_option_by_indicator_id(agg_field_id).to_column_dicts(
-                "agg", agg_field_text, 'simple', is_aggregated_on=True
-            ) + columns
-        else:
-            # Don't expand the aggregation column
-            for c in columns:
-                if c['field'] == agg_field_id:
-                    c['aggregation'] = "simple"
+        extra_cols = []
+        existing_columns = set(c['property'] for c in self.cleaned_data['columns'])
+        for agg_field in agg_fields:
+            if agg_field not in existing_columns:
+                agg_field_id = self.data_source_properties[agg_field].column_id
+                agg_field_text = self.data_source_properties[agg_field].text
+                extra_cols = self._get_column_option_by_indicator_id(agg_field_id).to_column_dicts(
+                    "agg", agg_field_text, 'simple', is_aggregated_on=True
+                ) + extra_cols
+        columns = extra_cols + columns
+
+        # Don't expand the aggregation columns
+        for c in columns:
+            if c['field'] in agg_field_ids:
+                c['aggregation'] = "simple"
         return columns
 
     @property
@@ -1395,7 +1387,7 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
     def _report_aggregation_cols(self):
         # we want the bar chart behavior, which is reproduced here:
         return [
-            self.data_source_properties[self.aggregation_field].column_id
+            self.data_source_properties[f].column_id for f in self.cleaned_data["group_by"]
         ]
 
 
