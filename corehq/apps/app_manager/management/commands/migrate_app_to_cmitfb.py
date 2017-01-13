@@ -29,10 +29,13 @@ class Command(BaseCommand):
                  "with --usercase option.")
         parser.add_argument('--usercase', action='store_true',
             help='Migrate user properties.')
+        parser.add_argument('--force', action='store_true',
+            help='Migrate even if app.vellum_case_management is already true.')
 
     def handle(self, *args, **options):
         domains = []
         app_ids = []
+        self.force = options["force"]
         self.migrate_usercase = options["usercase"]
         for ident in options["app_id_or_domain"]:
             if not self.migrate_usercase:
@@ -63,7 +66,7 @@ class Command(BaseCommand):
     def migrate_app(self, app_id):
         app = Application.get(app_id)
         migrate_usercase = should_migrate_usercase(app, self.migrate_usercase)
-        if app.vellum_case_management and not migrate_usercase:
+        if app.vellum_case_management and not migrate_usercase and not self.force:
             logger.info('already migrated app {}'.format(app_id))
             return
 
