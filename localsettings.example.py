@@ -100,7 +100,7 @@ BUG_REPORT_RECIPIENTS = ['commcarehq-support@yourdomain.com']
 NEW_DOMAIN_RECIPIENTS = ['commcarehq-dev+newdomain@yourdomain.com']
 EXCHANGE_NOTIFICATION_RECIPIENTS = ['commcarehq-dev+exchange@yourdomain.com']
 
-SERVER_EMAIL = 'commcarehq-noreply@yourdomain.com' #the physical server emailing - differentiate if needed
+SERVER_EMAIL = 'commcarehq-noreply@yourdomain.com'  # the physical server emailing - differentiate if needed
 DEFAULT_FROM_EMAIL = 'commcarehq-noreply@yourdomain.com'
 SUPPORT_EMAIL = "commcarehq-support@yourdomain.com"
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
