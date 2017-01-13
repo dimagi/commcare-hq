@@ -12,6 +12,7 @@ from corehq.apps.es.es_query import HQESQuery
 from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.sqlreport import DataFormatter, DictDataFormat
 from corehq.apps.userreports.decorators import catch_and_raise_exceptions
+from corehq.apps.userreports.es.columns import safe_es_column
 from corehq.apps.userreports.exceptions import UserReportsError
 from corehq.apps.userreports.mixins import ConfigurableReportDataSourceMixin
 from corehq.apps.userreports.reports.sorting import ASCENDING, DESCENDING
@@ -219,11 +220,20 @@ class ConfigurableReportEsDataSource(ConfigurableReportDataSourceMixin, ReportDa
 
     @method_decorator(catch_and_raise_exceptions)
     def get_total_row(self):
-        total_results = self._get_total_aggregated_results()
+        def _clean_total_row(aggregations, aggregation_name):
+            agg = getattr(aggregations, aggregation_name)
+            if hasattr(agg, 'value'):
+                return agg.value
+            elif hasattr(agg, 'doc_count'):
+                return agg.doc_count
+            else:
+                return ''
 
         def _get_relevant_column_ids(col):
             col_id_to_expanded_col = get_expanded_columns(self.top_level_columns, self.config)
             return col_id_to_expanded_col.get(col.column_id, [col.column_id])
+
+        aggregations = self._get_total_aggregated_results()
 
         total_row = []
         for col in self.top_level_columns:
@@ -232,16 +242,11 @@ class ConfigurableReportEsDataSource(ConfigurableReportDataSourceMixin, ReportDa
                     total_row.append('')
                     continue
                 elif getattr(col, 'aggregation', '') == 'simple':
+                    # could have this append '', but doing this for
+                    # compatibility with SQL
                     raise UserReportsError(ugettext("You cannot calculate the total of a simple column"))
 
-                real_col_id = col_id.replace('-', '_dash_')
-                agg = getattr(total_results, real_col_id)
-                if hasattr(agg, 'value'):
-                    total_row.append(agg.value)
-                elif hasattr(agg, 'doc_count'):
-                    total_row.append(agg.doc_count)
-                else:
-                    total_row.append('')
+                total_row.append(_clean_total_row(aggregations, safe_es_column(col_id)))
 
         if total_row and total_row[0] is '':
             total_row[0] = ugettext('Total')
