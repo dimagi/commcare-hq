@@ -2,7 +2,6 @@ from collections import namedtuple
 from datetime import datetime, timedelta
 from mock import patch
 
-
 from casexml.apps.case.mock import CaseBlock, CaseFactory
 
 from django.test import TestCase
@@ -268,6 +267,7 @@ class FormPayloadGeneratorTest(BaseRepeaterTest, TestXmlMixin):
         FormProcessorTestUtils.delete_all_cases(self.domain_name)
         delete_all_repeat_records()
         super(FormPayloadGeneratorTest, self).tearDown()
+
     @run_with_all_backends
     def test_get_payload(self):
         self.post_xml(self.xform_xml, self.domain_name)
