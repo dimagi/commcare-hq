@@ -36,17 +36,6 @@ def default_dashboard_url(request, domain):
     if domain in settings.CUSTOM_DASHBOARD_PAGE_URL_NAMES:
         return reverse(settings.CUSTOM_DASHBOARD_PAGE_URL_NAMES[domain], args=[domain])
 
-    # Send mobile users without a role to CloudCare
-    if (
-        couch_user and couch_user.is_commcare_user()
-        and couch_user.get_role(domain) is None
-    ):
-        if toggles.USE_FORMPLAYER_FRONTEND.enabled(domain):
-            formplayer_view = FormplayerMain.urlname
-        else:
-            formplayer_view = "corehq.apps.cloudcare.views.default"
-        return reverse(formplayer_view, args=[domain])
-
     if couch_user and user_has_custom_top_menu(domain, couch_user):
         return reverse('saved_reports', args=[domain])
 
