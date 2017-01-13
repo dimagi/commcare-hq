@@ -138,7 +138,7 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
 
         if user_filter[HQUserType.REGISTERED].show:
             # now add all the registered users who never submitted anything
-            users.extend(user for id, user in registered_users_by_id.items()if id not in submitted_user_ids)
+            users.extend(user for id, user in registered_users_by_id.items() if id not in submitted_user_ids)
 
     if simplified:
         return [_report_user_dict(user) for user in users]
