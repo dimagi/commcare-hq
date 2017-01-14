@@ -28,6 +28,11 @@ function initializeViz(o) {
         },
     };
     viz = new tableau.Viz(placeholderDiv, url, options);
+
+    $("#resetFilters").click(function () {
+        currentSheet = history.state.sheetName;
+        switchVisualization(currentSheet, workbook, initialParams);
+    });
 }
 
 function setUpWorkbook(viz) {
@@ -43,6 +48,7 @@ function setUpInitialTableauParams() {
         'block': tableauOptions.blockCode,
     };
     params[locationKey] = tableauOptions.userLocation;
+    initialParams = params;
     applyParams(workbook, params);
 
     var historyObject = {
@@ -197,7 +203,6 @@ function switchVisualization(sheetName, workbook, params) {
                 alert(err);
             });
 
-    enableResetFiltersButton();
 }
 
 function applyParams(workbook, params, lastWorksheet) {
@@ -213,19 +218,6 @@ function clearDebugInfo() {
     // TODO: Disabling the button doesn't work
     $("#inspectButton").prop('disabled', true);
 }
-
-function enableResetFiltersButton() {
-    $("#resetFilters").prop('disabled', false).click(function () {
-        // TODO: Only bind to this button once
-        viz.revertAllAsync();
-        disableResetFiltersButton();
-    });
-}
-
-function disableResetFiltersButton() {
-    $("#resetFilters").prop('disabled', true).unbind('click');
-}
-
 
 window.onpopstate = function (event) {
     if(!event.state.sheetName) {
