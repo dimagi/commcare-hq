@@ -2,6 +2,7 @@ from django.core.management import BaseCommand, CommandError
 
 from corehq.apps.app_manager.models import Application
 
+
 class Command(BaseCommand):
     """
     Creates a master and linked app pair for two existing apps
