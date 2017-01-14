@@ -1125,6 +1125,9 @@ BEGIN
 		'usage_num_pse = ut.usage_num_pse, ' ||
 		'usage_num_gmp = ut.usage_num_gmp, ' ||
 		'usage_num_thr = ut.usage_num_thr, ' ||
+		'usage_num_hh_reg = ut.usage_num_hh_reg, ' ||
+		'usage_num_add_person = ut.usage_num_add_person, ' ||
+		'usage_num_add_pregnancy = ut.usage_num_add_pregnancy, ' ||
 		'usage_num_home_visit = ut.usage_num_home_visit, ' ||
 		'usage_num_bp_tri1 = ut.usage_num_bp_tri1, ' ||
 		'usage_num_bp_tri2 = ut.usage_num_bp_tri2, ' ||
@@ -1150,6 +1153,9 @@ BEGIN
 		'sum(pse) AS usage_num_pse, ' ||
 		'sum(gmp) AS usage_num_gmp, ' ||
 		'sum(thr) AS usage_num_thr, ' ||
+		'sum(add_household) AS usage_num_hh_reg, ' ||
+		'sum(add_person) AS usage_num_add_person, ' ||
+		'sum(add_pregnancy) AS usage_num_add_pregnancy, ' ||
 		'sum(home_visit) AS usage_num_home_visit, ' ||
 		'sum(bp_tri1) AS usage_num_bp_tri1, ' ||
 		'sum(bp_tri2) AS usage_num_bp_tri2, ' ||
@@ -1364,7 +1370,10 @@ BEGIN
 		'sum(infra_flat_weighing_scale), ' ||
 		'sum(infra_cooking_utensils), ' ||
 		'sum(infra_medicine_kits), ' ||
-		'sum(infra_adequate_space_pse) ' ||
+		'sum(infra_adequate_space_pse), ' ||
+		'sum(usage_num_add_person), ' ||
+		'sum(usage_num_add_pregnancy), ' ||
+		'sum(usage_num_home_visit) ' ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, supervisor_id, month)';
 
@@ -1463,7 +1472,10 @@ BEGIN
 		'sum(infra_flat_weighing_scale), ' ||
 		'sum(infra_cooking_utensils), ' ||
 		'sum(infra_medicine_kits), ' ||
-		'sum(infra_adequate_space_pse) ' ||
+		'sum(infra_adequate_space_pse), ' ||
+		'sum(usage_num_add_person), ' ||
+		'sum(usage_num_add_pregnancy), ' ||
+		'sum(usage_num_home_visit) ' ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'WHERE awc_id = ' || quote_literal(_all_text) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, month)';
@@ -1563,7 +1575,10 @@ BEGIN
 		'sum(infra_flat_weighing_scale), ' ||
 		'sum(infra_cooking_utensils), ' ||
 		'sum(infra_medicine_kits), ' ||
-		'sum(infra_adequate_space_pse) ' ||
+		'sum(infra_adequate_space_pse), ' ||
+		'sum(usage_num_add_person), ' ||
+		'sum(usage_num_add_pregnancy), ' ||
+		'sum(usage_num_home_visit) ' ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'WHERE supervisor_id = ' || quote_literal(_all_text) || ' ' ||
 		'GROUP BY state_id, district_id, month)';
@@ -1663,7 +1678,10 @@ BEGIN
 		'sum(infra_flat_weighing_scale), ' ||
 		'sum(infra_cooking_utensils), ' ||
 		'sum(infra_medicine_kits), ' ||
-		'sum(infra_adequate_space_pse) ' ||
+		'sum(infra_adequate_space_pse), ' ||
+		'sum(usage_num_add_person), ' ||
+		'sum(usage_num_add_pregnancy), ' ||
+		'sum(usage_num_home_visit) ' ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'WHERE block_id = ' || quote_literal(_all_text) || ' ' ||
 		'GROUP BY state_id, month)';
