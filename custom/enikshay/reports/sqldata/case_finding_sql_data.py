@@ -64,7 +64,7 @@ def generate_for_all_ranges(slug, filters):
             CountColumn(
                 'doc_id',
                 filters=filters + [
-                    RawFilter('age > %d' % (AGE_RANGES[-1][0] * DAYS_IN_YEARS)), type_filter
+                    RawFilter('age > %d' % AGE_RANGES[-1][0]), type_filter
                 ],
                 alias='%s_age_%d' % (slug, AGE_RANGES[-1][0])
             )

@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-from sqlagg.filters import IN, AND, GTE, LT
+from sqlagg.filters import IN, AND, GTE, LT, RawFilter
 
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.generic import GenericReportView
@@ -55,7 +55,7 @@ class EnikshayReport(DatespanMixin, CustomProjectReport, SqlTabularReport):
             domain=self.domain,
             locations_id=EnikshayLocationFilter.get_value(self.request, self.domain),
             start_date=self.datespan.startdate,
-            end_date=self.datespan.enddate
+            end_date=self.datespan.end_of_end_day
         )
 
 
@@ -87,6 +87,7 @@ class EnikshaySqlData(SqlData):
     def filters(self):
         filters = [
             AND([GTE('opened_on', 'start_date'), LT('opened_on', 'end_date')]),
+            RawFilter('closed = 0')
         ]
 
         locations_id = filter(lambda x: bool(x), self.config.locations_id)
