@@ -934,7 +934,7 @@ BEGIN
 		'supervisor_id, ' ||
 		'awc_id,' ||
 		'month, ' ||
-		quote_literal(_all_text) || ', ' ||
+		'beneficiary_type, ' ||
 		quote_literal(_all_text) || ', ' ||
 		quote_literal(_all_text) || ', ' ||
 		quote_literal(_all_text) || ', ' ||
@@ -942,7 +942,7 @@ BEGIN
 		'sum(thr_eligible), ' ||
 		'sum(rations_21_plus_distributed) ' ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
-		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month)';
+		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, beneficiary_type)';
 
 
 END;
