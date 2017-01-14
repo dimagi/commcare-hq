@@ -1301,7 +1301,7 @@ BEGIN
 		'sum(awc_not_open_department_work), ' ||
 		'sum(awc_not_open_other), ' ||
 		'sum(awc_num_open), ' ||
-		'sum(awc_not_open_no_data), ' ||
+		'sum(COALESCE(awc_not_open_no_data, 25)), ' ||
 		'sum(wer_weighed), ' ||
 		'sum(wer_eligible), ' ||
 		'avg(wer_score), ' ||
