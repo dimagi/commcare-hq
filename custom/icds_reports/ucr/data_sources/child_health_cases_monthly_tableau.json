@@ -2777,6 +2777,14 @@
             "expression": {
               "type": "icds_child_age_in_months_month_start"
             }
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "eq",
+            "property_value": "yes",
+            "expression": {
+              "type": "icds_child_valid_in_month"
+            }
           }
         ]
       },
