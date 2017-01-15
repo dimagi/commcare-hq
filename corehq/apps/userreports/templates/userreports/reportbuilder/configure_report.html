@@ -70,9 +70,9 @@
                  data-bind="checked: reportType, checkedValue: 'list'">
           <i class="fa fa-bars"></i> <span data-bind="text: reportTypeListLabel"></span>
         </label>
-        <label class="btn btn-default" data-bind="css: {'active': reportType() === 'agg'}">
+        <label class="btn btn-default" data-bind="css: {'active': reportType() === 'table'}">
           <input type="radio" name="reportTypes" id="reportTypeAgg" style="display: none;"
-                 data-bind="checked: reportType, checkedValue: 'agg'">
+                 data-bind="checked: reportType, checkedValue: 'table'">
           <i class="fa fa-filter"></i> <span data-bind="text: reportTypeAggLabel"></span>
         </label>
         <label class="btn btn-default" data-bind="css: {'active': reportType() === 'map'}">
@@ -89,7 +89,7 @@
       <legend>Configure Report</legend>
 
       <div id="columns">
-        <h3 data-bind="text: reportType() === 'agg' ?  '{% trans 'Indicators' %}' : '{% trans 'Columns' %}'">
+        <h3 data-bind="text: reportType() === 'table' ?  '{% trans 'Indicators' %}' : '{% trans 'Columns' %}'">
             {% trans 'Columns' %}
         </h3>
         <table class="table">

@@ -663,7 +663,7 @@ class ConfigureReport(ReportBuilderView):
         if self.existing_report:
             type_ = "list"
             if self.existing_report.aggregation_columns != ["doc_id"]:
-                type_ = "agg"
+                type_ = "table"
             return type_
 
     def _get_property_id_by_indicator_id(self, indicator_column_id):

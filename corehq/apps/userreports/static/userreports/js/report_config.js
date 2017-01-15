@@ -126,8 +126,8 @@ var reportBuilder = function () {
         self.reportType = ko.observable(config['existingReportType'] || 'list');
         self.reportType.subscribe(function (newValue) {
             var wasAggregationEnabled = self.isAggregationEnabled();
-            self.isAggregationEnabled(newValue === "agg");
-            self.previewChart(newValue === "agg" && self.selectedChart() !== "none");
+            self.isAggregationEnabled(newValue === "table");
+            self.previewChart(newValue === "table" && self.selectedChart() !== "none");
             if (self.isAggregationEnabled() && !wasAggregationEnabled) {
                 // Group by the first report column by default
                 if (self.selectedColumns().length > 0) {
@@ -138,7 +138,7 @@ var reportBuilder = function () {
             self.saveButton.fire('change');
         });
 
-        self.isAggregationEnabled = ko.observable(self.reportType() === "agg");
+        self.isAggregationEnabled = ko.observable(self.reportType() === "table");
 
         self.newColumnName = ko.observable('');
 
