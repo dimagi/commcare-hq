@@ -12,6 +12,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
+from corehq.apps.users.landing_pages import ALLOWED_LANDING_PAGES
 from corehq.apps.users.permissions import EXPORT_PERMISSIONS
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
@@ -202,6 +203,9 @@ class UserRolePresets(object):
 class UserRole(QuickCachedDocumentMixin, Document):
     domain = StringProperty()
     name = StringProperty()
+    default_landing_page = StringProperty(
+        choices=[page.id for page in ALLOWED_LANDING_PAGES],
+    )
     permissions = SchemaProperty(Permissions)
     is_archived = BooleanProperty(default=False)
 
