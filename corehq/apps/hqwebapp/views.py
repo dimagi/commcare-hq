@@ -37,6 +37,7 @@ from couchdbkit import ResourceNotFound
 from two_factor.views import LoginView
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
+from corehq.apps.users.landing_pages import get_redirect_url
 
 from corehq.form_processor.utils.general import should_use_sql_backend
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
@@ -151,12 +152,11 @@ def redirect_to_default(req, domain=None):
                 couch_user = req.couch_user
                 from corehq.apps.users.models import DomainMembershipError
                 try:
-                    if (couch_user.is_commcare_user() and
-                            couch_user.can_view_some_reports(domain)):
-                        if toggles.USE_FORMPLAYER_FRONTEND.enabled(domain):
-                            url = reverse(FormplayerMain.urlname, args=[domain])
-                        else:
-                            url = reverse("cloudcare_main", args=[domain, ""])
+                    role = couch_user.get_role(domain)
+                    if role and role.default_landing_page:
+                        url = get_redirect_url(role.default_landing_page, domain)
+                    elif couch_user.is_commcare_user():
+                        url = reverse("cloudcare_default", args=[domain])
                     else:
                         from corehq.apps.dashboard.views import dashboard_default
                         return dashboard_default(req, domain)
