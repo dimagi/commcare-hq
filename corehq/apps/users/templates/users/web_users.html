@@ -97,6 +97,7 @@
             reportOptions: {{ report_list|JSON }},
             allowEdit: {{ can_edit_roles|BOOL }},
             canRestrictAccessByLocation: {{ can_restrict_access_by_location|BOOL }},
+            landingPageChoices: {{ landing_page_choices|JSON }},
         });
         $userRolesTable.show();
 
@@ -637,10 +638,12 @@
                                             {% trans "Default Landing Page" %}
                                         </label>
                                         <div class="col-sm-8 controls">
-                                            <input data-bind="value: default_landing_page"
-                                                   type="text"
-                                                   id="landing-page"
-                                                   class="form-control" />
+                                            <select class="form-control" id="landing-page" data-bind="
+                                                options: $root.landingPageChoices,
+                                                optionsText: 'name',
+                                                optionsValue: 'id',
+                                                value: default_landing_page
+                                            "></select>
                                         </div>
                                     </div>
                                     <div class="form-group">
