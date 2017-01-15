@@ -1445,7 +1445,7 @@ class ConfigureWorkerReportForm(ConfigureTableReportForm):
 
 class ConfigureMapReportForm(ConfigureListReportForm):
     report_type = 'map'
-    location = forms.ChoiceField(label="Location field")
+    location = forms.ChoiceField(label="Location field", required=False)
 
     def __init__(self, report_name, app_id, source_type, report_source_id, existing_report=None, *args, **kwargs):
         super(ConfigureMapReportForm, self).__init__(
@@ -1502,19 +1502,26 @@ class ConfigureMapReportForm(ConfigureListReportForm):
 
     @property
     def _report_columns(self):
-        loc_field_id = self.data_source_properties[self.location_field].column_id
-        loc_field_text = self.data_source_properties[self.location_field].text
-
         columns = super(ConfigureMapReportForm, self)._report_columns
 
-        # Add the location indicator to the columns if it's not already present.
-        displaying_loc_column = bool([c for c in columns if c['field'] == loc_field_id])
-        if not displaying_loc_column:
-            columns = columns + [{
-                "column_id": loc_field_id,
-                "type": "location",
-                'field': loc_field_id,
-                'display': loc_field_text
-            }]
+        if self.location_field:
+            loc_field_id = self.data_source_properties[self.location_field].column_id
+            loc_field_text = self.data_source_properties[self.location_field].text
+
+            displaying_loc_column = False
+            for c in columns:
+                if c['field'] == loc_field_id:
+                    c['type'] = "location"
+                    displaying_loc_column = True
+                    break
+
+            # Add the location indicator to the columns if it's not already present.
+            if not displaying_loc_column:
+                columns = columns + [{
+                    "column_id": loc_field_id,
+                    "type": "location",
+                    'field': loc_field_id,
+                    'display': loc_field_text
+                }]
 
         return columns

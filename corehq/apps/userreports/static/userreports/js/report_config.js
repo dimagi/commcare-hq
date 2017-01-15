@@ -394,7 +394,7 @@ var reportBuilder = function () {
                 "aggregate": self.isAggregationEnabled(),
                 "chart": self.selectedChart(),
                 "columns": _.map(self.selectedColumns(), function (c) { return c.serialize(self.isAggregationEnabled()); }),
-                "location_field": self.location_field(),  
+                "location": self.location_field(),
                 "default_filters": JSON.parse(self.defaultFilterList.serializedProperties()),
                 "user_filters": JSON.parse(self.filterList.serializedProperties()),
             };
