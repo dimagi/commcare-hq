@@ -354,6 +354,7 @@ class CaseSharingGroupsExpressionSpec(JsonObject):
             return []
 
         case_sharing_groups = user.get_case_sharing_groups()
+        case_sharing_groups = [g.to_json() for g in case_sharing_groups]
         context.set_cache_value(cache_key, case_sharing_groups)
         return case_sharing_groups
 
