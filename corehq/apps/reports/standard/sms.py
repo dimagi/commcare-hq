@@ -1097,3 +1097,10 @@ class SMSOptOutReport(ProjectReport, ProjectReportParametersMixin, GenericTabula
     @property
     def export_rows(self):
         return self._get_rows(paginate=False)
+
+
+class PhoneNumberReport(BaseCommConnectLogReport):
+    name = ugettext_noop("Phone Number Report")
+    slug = 'phone_number_report'
+    ajax_pagination = True
+    fields = []
