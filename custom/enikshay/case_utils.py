@@ -111,6 +111,10 @@ def get_open_episode_case_from_person(domain, person_case_id):
 def get_adherence_cases_between_dates(domain, person_case_id, start_date, end_date):
     case_accessor = CaseAccessors(domain)
     episode = get_open_episode_case_from_person(domain, person_case_id)
+    return get_adherence_cases_between_dates_from_episode(domain, episode, start_date, end_date)
+
+
+def get_adherence_cases_between_dates_from_episode(domain, episode, start_date, end_date)
     indexed_cases = case_accessor.get_reverse_indexed_cases([episode.case_id])
     open_pertinent_adherence_cases = [
         case for case in indexed_cases
