@@ -311,15 +311,19 @@ class UserRole(QuickCachedDocumentMixin, Document):
 
     @classmethod
     def role_choices(cls, domain):
-        return [(role.get_qualified_id(), role.name or '(No Name)') for role in
+        return [cls._role_to_choice(role) for role in
                 [AdminUserRole(domain=domain)] + list(cls.by_domain(domain))]
 
     @classmethod
     def commcareuser_role_choices(cls, domain):
         return [('none','(none)')] + [
-            (role.get_qualified_id(), role.name or '(No Name)')
+            cls._role_to_choice(role)
             for role in list(cls.by_domain(domain))
         ]
+
+    @staticmethod
+    def _role_to_choice(role):
+        return (role.get_qualified_id(), role.name or '(No Name)')
 
     @property
     def ids_of_assigned_users(self):
