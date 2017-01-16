@@ -1087,13 +1087,13 @@ class TestGetCaseSharingGroupsExpression(TestCase):
         super(TestGetCaseSharingGroupsExpression, self).tearDown()
 
     @run_with_all_backends
-    def test_no_subcases(self):
+    def test_no_groups(self):
         user = CommCareUser.create(domain=self.domain, username='test_no_group', password='123')
         case_sharing_groups = self.expression({'user_id': user._id}, self.context)
         self.assertEqual(len(case_sharing_groups), 0)
 
     @run_with_all_backends
-    def test_single_child(self):
+    def test_single_group(self):
         user = CommCareUser.create(domain=self.domain, username='test_single', password='123')
         group = Group(domain=self.domain, name='group_single', users=[user._id], case_sharing=True)
         group.save()
