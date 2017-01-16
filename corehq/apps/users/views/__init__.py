@@ -193,7 +193,15 @@ class BaseEditUserView(BaseUserSettingsView):
 
     @property
     def can_change_user_roles(self):
-        return bool(self.editable_role_choices) and self.request.couch_user.user_id != self.editable_user_id
+        return (
+            bool(self.editable_role_choices) and
+            self.request.couch_user.user_id != self.editable_user_id and
+            (
+                self.request.couch_user.is_domain_admin(self.domain) or
+                not self.existing_role or
+                self.existing_role in [choice[0] for choice in self.editable_role_choices]
+            )
+        )
 
     @property
     @memoized
