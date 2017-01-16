@@ -641,6 +641,12 @@ class ConfigureReport(ReportBuilderView):
         title = self._get_report_name()
         return _(self.report_title).format(title)
 
+    @property
+    def report_description(self):
+        if self.existing_report:
+            return self.existing_report.description or None
+        return None
+
     def _get_report_name(self, request=None):
         if self.existing_report:
             return self.existing_report.title
@@ -690,6 +696,7 @@ class ConfigureReport(ReportBuilderView):
         )
         return {
             'existing_report': self.existing_report,
+            'report_description': self.report_description,
             'report_title': self.page_name,
             'existing_report_type': self._get_existing_report_type(),
 

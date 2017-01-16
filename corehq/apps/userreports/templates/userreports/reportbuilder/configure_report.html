@@ -50,7 +50,7 @@
       </div>
       <div>
         <inline-edit params="
-          value: {% if existing_report %}'{{ existing_report.description|escapejs }}'{% else %}null{% endif %},
+          value: {% if report_description %}'{{ report_description|escapejs }}'{% else %}null{% endif %},
           id: 'report-description',
           placeholder: '{% trans "Enter report description here"|escapejs %}',
           readOnlyClass: 'app-comment',
