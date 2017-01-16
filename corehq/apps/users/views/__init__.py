@@ -186,6 +186,14 @@ class BaseEditUserView(BaseUserSettingsView):
 
     @property
     @memoized
+    def editable_role_choices(self):
+        roles = UserRole.by_domain(self.domain)
+        if not self.request.couch_user.is_domain_admin(self.domain):
+            roles = filter(lambda role: role.is_non_admin_editable, roles)
+        return [UserRole.role_to_choice(role) for role in roles]
+
+    @property
+    @memoized
     def form_user_update(self):
         if self.user_update_form_class is None:
             raise NotImplementedError("You must specify a form to update the user!")
