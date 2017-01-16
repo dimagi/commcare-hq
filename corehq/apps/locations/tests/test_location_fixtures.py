@@ -34,7 +34,7 @@ class FixtureHasLocationsMixin(TestXmlMixin):
     root = os.path.dirname(__file__)
     file_path = ['data']
 
-    def _assert_fixture_has_locations(self, xml_name, desired_locations, flat=False):
+    def _assemble_expected_fixture(self, xml_name, desired_locations):
         ids = {
             "{}_id".format(desired_location.lower().replace(" ", "_")): (
                 self.locations[desired_location].location_id
@@ -42,12 +42,15 @@ class FixtureHasLocationsMixin(TestXmlMixin):
             for desired_location in desired_locations
         }  # eg: {"massachusetts_id" = self.locations["Massachusetts"].location_id}
 
-        generator = flat_location_fixture_generator if flat else location_fixture_generator
-        fixture = ElementTree.tostring(generator(self.user, V2)[0])
-        desired_fixture = self.get_xml(xml_name).format(
+        return self.get_xml(xml_name).format(
             user_id=self.user.user_id,
             **ids
         )
+
+    def _assert_fixture_has_locations(self, xml_name, desired_locations, flat=False):
+        generator = flat_location_fixture_generator if flat else location_fixture_generator
+        fixture = ElementTree.tostring(generator(self.user, V2)[-1])
+        desired_fixture = self._assemble_expected_fixture(xml_name, desired_locations)
         self.assertXmlEqual(desired_fixture, fixture)
 
 
@@ -230,7 +233,7 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
         )  # (New York City is of type "county")
 
 
-@mock.patch.object(Domain, 'uses_locations', lambda:True)  # removes dependency on accounting
+@mock.patch.object(Domain, 'uses_locations', lambda: True)  # removes dependency on accounting
 class WebUserLocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
 
     location_type_names = ['state', 'county', 'city']
