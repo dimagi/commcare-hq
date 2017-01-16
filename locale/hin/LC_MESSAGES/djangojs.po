@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-12-13 21:53+0000\n"
+"POT-Creation-Date: 2017-01-10 21:02+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,13 +16,6 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-
-#: bower_components/bower_components/underscore-legacy/test/utility.js:67
-#: bower_components/underscore-legacy/test/utility.js:67
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/test_underscore/utility.js:51
-#: node_modules/grunt/node_modules/underscore.string/test/test_underscore/utility.js:41
-msgid "champ"
-msgstr ""
 
 #: bower_components/jquery-ui/jquery-ui.min.js:8
 msgid "'"
@@ -32,8 +25,32 @@ msgstr ""
 msgid "Please enter a valid email."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:78
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:99
 msgid "You have unsaved changes"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:294
+msgid "Add"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/case-config-ui-2.js:43
+msgid "You have unchanged case settings"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/case-config-ui-2.js:76
+msgid "You have unchanged user case settings"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/case-config-ui-2.js:655
+msgid "Property updated by two questions"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/case-config-ui-2.js:659
+msgid "Inside the wrong repeat!"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/case-config-ui-2.js:685
+msgid "Two properties load to the same question"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/commcaresettings.js:153
@@ -54,13 +71,174 @@ msgstr ""
 msgid "Select One"
 msgstr ""
 
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1060
+msgid "There are errors in your property names"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1065
+msgid "There are errors in your tabs"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1073
+msgid "All properties must be below a tab"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1348
+msgid "Property"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1349
+msgid "Display Text"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1350
+msgid "Format"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1352
+#: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:12
+msgid "Plain"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1353
+#: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:11
+msgid "Date"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1354
+msgid "Time Since or Until Date"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1355
+msgid " Measuring "
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1357
+msgid "Years since date"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1358
+msgid "Months since date"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1359
+msgid "Weeks since date"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1360
+msgid "Days since date"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1361
+msgid "Days until date"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1362
+msgid "Weeks until date"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1363
+msgid "Months until date"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1365
+msgid "Phone Number"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1366
+msgid "ID Mapping"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1367
+msgid "Icon"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1368
+msgid "Mapping: "
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1369
+msgid "Late Flag"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1370
+msgid " Days late "
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1372
+msgid "Search Only"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1373
+msgid "Address"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1374
+msgid "Picture"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1375
+msgid "Audio"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1376
+msgid "Calculate"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1378
+msgid "Distance from current location"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1380
+msgid "Add to list"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1381
+msgid "Duplicate"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1382
+#: corehq/apps/style/static/style/js/main.js:251
+#: corehq/apps/style/static/style/js/ui-element.js:358
+msgid "Delete"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1384
+msgid "You have unsaved detail screen configurations."
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1415
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1421
+msgid " (Preview!)"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1425
+msgid ""
+"Must begin with a letter and contain only letters, numbers, '-', and '_'"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/download_async_modal.js:6
+msgid ""
+"Sorry, something went wrong with the download. If you see this repeatedly "
+"please report an issue."
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/form_workflow.js:53
+msgid "This form either no longer exists or has a different case type"
+msgstr ""
+
 #: corehq/apps/app_manager/static/app_manager/js/language-profiles.js:14
 msgid "You have unsaved changes to your application profiles"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/language-profiles.js:33
-#: corehq/apps/style/static/style/js/main.js:232
+#: corehq/apps/app_manager/static/app_manager/js/linked_whitelist.js:14
+#: corehq/apps/style/static/style/js/main.js:247
 msgid "There was an error saving"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/linked_whitelist.js:7
+msgid "You have unsaved changes to your whitelist"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/password_setter.jquery.js:8
@@ -69,6 +247,50 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/releases.js:28
 msgid "(Default)"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/releases.js:336
+msgid "Sorry, that didn't go through. Please reload your page and try again"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/releases.js:371
+msgid "The versions list has changed since you loaded the page."
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/releases.js:376
+msgid "No new changes to deploy!"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/supported-languages.js:16
+msgid "Warning: unrecognized language"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/supported-languages.js:49
+msgid "You have unsaved changes in your supported languages"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/supported-languages.js:58
+msgid "There are errors in your configuration"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/supported-languages.js:136
+msgid "You must have at least one language"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/supported-languages.js:148
+msgid "Please enter language"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/supported-languages.js:150
+msgid "Invalid language code"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/supported-languages.js:158
+msgid "Language appears twice"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/supported-languages.js:160
+msgid "This conflicts with a current language"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/global-deps.js:3
@@ -101,20 +323,20 @@ msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:380
 #: corehq/apps/export/static/export/js/models.js:95
-#: corehq/apps/style/static/style/js/main.js:228
+#: corehq/apps/style/static/style/js/main.js:243
 msgid "Save"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:139
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:141
 msgid "Form successfully saved"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:308
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:25
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:310
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:24
 msgid "Waiting for server progress"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:340
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:342
 msgid "Please wait..."
 msgstr ""
 
@@ -122,7 +344,7 @@ msgstr ""
 msgid "Completed: "
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:40
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:39
 msgid ""
 "Unable to connect to form playing service. Please report an issue if you "
 "continue to see this message."
@@ -183,12 +405,10 @@ msgstr ""
 msgid "User Data successfully synced."
 msgstr ""
 
-#: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:11
-msgid "Date"
-msgstr ""
-
-#: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:12
-msgid "Plain"
+#: corehq/apps/commtrack/static/commtrack/js/products_and_programs.async.js:27
+msgid ""
+"Sorry, there was an problem contacting the server to fetch the data. Please, "
+"try again in a little bit."
 msgstr ""
 
 #: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:13
@@ -283,6 +503,15 @@ msgstr ""
 msgid "Add Key, Value Mapping"
 msgstr ""
 
+#: corehq/apps/hqwebapp/static/hqwebapp/js/select2_handler.js:72
+msgid ""
+"There was an issue communicating with the server. Please try back later."
+msgstr ""
+
+#: corehq/apps/locations/static/locations/js/location.js:40
+msgid "Error saving user"
+msgstr ""
+
 #: corehq/apps/registration/static/registration/js/new_user.ko.js:82
 msgid "Please enter your name."
 msgstr ""
@@ -326,6 +555,101 @@ msgstr ""
 msgid "year"
 msgstr ""
 
+#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:17
+msgid "Loading"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:24
+msgid "No data available to display. Please try changing your filters."
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:26
+#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:29
+msgid "Sorry!"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:27
+msgid ""
+"There was an error with your query, it has been logged, please try another "
+"query."
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:30
+msgid ""
+"Your search query is invalid, please adjust the formatting and try again."
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/export.manager.js:83
+msgid ""
+"Oh no! Your download was unable to be completed. We have been notified and "
+"are already hard at work solving this issue."
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/export.manager.js:193
+#: corehq/apps/reports/static/reports/js/export.manager.js:216
+msgid ""
+"Sorry, something unexpected went wrong and your download could not be "
+"completed. Please try again and report an issue if the problem persists."
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/export.manager.js:324
+msgid ""
+"No valid sheets were available for Custom Bulk Export. Please check for "
+"duplicate sheet names."
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/language_field.js:3
+msgid "Select a language..."
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/reports.async.js:18
+msgid "Please check your Internet connection!"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/reports.async.js:19
+msgid "Report Not Found."
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/reports.async.js:20
+msgid ""
+"Request timed out when rendering this report. This might be an issue with "
+"our servers or with your Internet connection. We encourage you to report an "
+"issue to CommCare HQ Support so we can look into any possible issues."
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/reports.async.js:23
+msgid ""
+"Problem Rendering Report. Our error monitoring tools have noticed this and "
+"we are working quickly to resolve this issue as soon as possible. We "
+"encourage you to contact CommCare HQ Support if this issue persists for more "
+"than a few minutes. We appreciate any additional information you can give us "
+"about this problem so we can fix it immediately."
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/reports.async.js:27
+msgid "Bad Gateway. Please contact CommCare HQ Support."
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/reports.async.js:28
+msgid ""
+"CommCare HQ is experiencing server difficulties. We're working quickly to "
+"resolve it. Thank you for your patience. We are extremely sorry."
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/reports.async.js:30
+msgid "Gateway Timeout. Please contact CommCare HQ Support."
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/reports.async.js:176
+msgid "We were unsuccessful loading the report:"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/reports.config.js:60
+msgid ""
+"Your requested excel report will be sent to the email address defined in "
+"your account settings."
+msgstr ""
+
 #: corehq/apps/reports_core/static/reports_core/js/maps.js:29
 msgid "Streets"
 msgstr ""
@@ -338,86 +662,125 @@ msgstr ""
 msgid "Show All Dates"
 msgstr ""
 
-#: corehq/apps/style/static/style/js/components/multiselect_utils.js:58
-msgid "Add All"
+#: corehq/apps/smsbillables/static/smsbillables/js/smsbillables.rate_calc.js:59
+#: corehq/apps/smsbillables/static/smsbillables/js/smsbillables.rate_calc.js:106
+msgid "There was an error fetching the SMS rate."
 msgstr ""
 
-#: corehq/apps/style/static/style/js/components/multiselect_utils.js:63
-msgid "Remove All"
-msgstr ""
-
-#: corehq/apps/style/static/style/js/main.js:229
-msgid "Saving..."
-msgstr ""
-
-#: corehq/apps/style/static/style/js/main.js:230
-msgid "Saved"
-msgstr ""
-
-#: corehq/apps/style/static/style/js/main.js:231
-#: corehq/apps/style/static/style/js/main.js:239
-msgid "Try Again"
-msgstr ""
-
-#: corehq/apps/style/static/style/js/main.js:236
-#: corehq/apps/style/static/style/js/ui-element.js:355
-msgid "Delete"
-msgstr ""
-
-#: corehq/apps/style/static/style/js/main.js:237
-msgid "Deleting..."
-msgstr ""
-
-#: corehq/apps/style/static/style/js/main.js:238
-msgid "Deleted"
-msgstr ""
-
-#: corehq/apps/style/static/style/js/main.js:240
-msgid "There was an error deleting"
-msgstr ""
-
-#: corehq/apps/style/static/style/js/ui-element.js:229
-msgid "Edit"
-msgstr ""
-
-#: corehq/apps/style/static/style/js/ui-element.js:237
-msgid "Edit Mapping for "
-msgstr ""
-
-#: corehq/apps/style/static/style/js/ui-element.js:242
-msgid "Add Key &rarr; Value Mapping"
-msgstr ""
-
-#: corehq/apps/style/static/style/js/ui-element.js:246
-msgid "Done"
-msgstr ""
-
-#: corehq/apps/style/static/style/js/ui-element.js:287
-msgid "Click <strong>Edit</strong> below to add mappings"
-msgstr ""
-
-#: corehq/apps/style/static/style/js/ui-element.js:342
-msgid "key"
-msgstr ""
-
-#: corehq/apps/style/static/style/js/ui-element.js:343
-msgid "value"
-msgstr ""
-
-#: corehq/apps/style/static/style/ko/components/inline_edit.js:56
+#: corehq/apps/style/static/style/js/components/inline_edit.js:56
+#: corehq/apps/style/static/style/js/components/inline_edit_v2.js:58
 msgid "Error saving, please try again."
 msgstr ""
 
-#: corehq/apps/style/static/style/ko/components/inline_edit.js:69
+#: corehq/apps/style/static/style/js/components/inline_edit.js:69
+#: corehq/apps/style/static/style/js/components/inline_edit_v2.js:71
 msgid "You have unsaved changes."
 msgstr ""
 
-#: corehq/apps/style/static/style/ko/password_validators.ko.js:12
+#: corehq/apps/style/static/style/js/main.js:244
+msgid "Saving..."
+msgstr ""
+
+#: corehq/apps/style/static/style/js/main.js:245
+msgid "Saved"
+msgstr ""
+
+#: corehq/apps/style/static/style/js/main.js:246
+#: corehq/apps/style/static/style/js/main.js:254
+msgid "Try Again"
+msgstr ""
+
+#: corehq/apps/style/static/style/js/main.js:252
+msgid "Deleting..."
+msgstr ""
+
+#: corehq/apps/style/static/style/js/main.js:253
+msgid "Deleted"
+msgstr ""
+
+#: corehq/apps/style/static/style/js/main.js:255
+msgid "There was an error deleting"
+msgstr ""
+
+#: corehq/apps/style/static/style/js/multiselect_utils.js:58
+msgid "Add All"
+msgstr ""
+
+#: corehq/apps/style/static/style/js/multiselect_utils.js:63
+msgid "Remove All"
+msgstr ""
+
+#: corehq/apps/style/static/style/js/password_validators.ko.js:12
 msgid "Your password is too weak! Try adding numbers or symbols."
 msgstr ""
 
-#: corehq/apps/style/static/style/ko/validators.ko.js:10
+#: corehq/apps/style/static/style/js/ui-element.js:232
+msgid "Edit"
+msgstr ""
+
+#: corehq/apps/style/static/style/js/ui-element.js:240
+msgid "Edit Mapping for "
+msgstr ""
+
+#: corehq/apps/style/static/style/js/ui-element.js:245
+msgid "Add Key &rarr; Value Mapping"
+msgstr ""
+
+#: corehq/apps/style/static/style/js/ui-element.js:249
+msgid "Done"
+msgstr ""
+
+#: corehq/apps/style/static/style/js/ui-element.js:290
+msgid "Click <strong>Edit</strong> below to add mappings"
+msgstr ""
+
+#: corehq/apps/style/static/style/js/ui-element.js:345
+msgid "key"
+msgstr ""
+
+#: corehq/apps/style/static/style/js/ui-element.js:346
+msgid "value"
+msgstr ""
+
+#: corehq/apps/style/static/style/js/validators.ko.js:10
 msgid "Not a valid email"
+msgstr ""
+
+#: corehq/apps/translations/static/translations/js/translations.js:25
+msgid "Delete Translation"
+msgstr ""
+
+#: corehq/apps/translations/static/translations/js/translations.js:38
+#: corehq/apps/translations/static/translations/js/translations.js:109
+msgid "Add Translation"
+msgstr ""
+
+#: corehq/apps/translations/static/translations/js/translations.js:121
+msgid "Auto fill translations"
+msgstr ""
+
+#: corehq/apps/translations/static/translations/js/translations.js:143
+msgid "Auto Fill translations"
+msgstr ""
+
+#: corehq/apps/translations/static/translations/js/translations.js:144
+msgid ""
+"This will pick the most common translations for your selected language. You "
+"can then edit them as needed."
+msgstr ""
+
+#: corehq/apps/translations/static/translations/js/translations.js:155
+msgid "You have unsaved user interface translations."
+msgstr ""
+
+#: corehq/apps/translations/static/translations/js/translations.js:173
+msgid "Parameters formatting problem!"
+msgstr ""
+
+#: corehq/apps/translations/static/translations/js/translations.js:255
+msgid ""
+"Autofill is not available in English (en). Please change your language using "
+"the dropdown in the top left."
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:360
@@ -460,844 +823,33 @@ msgid ""
 "It will not be shown again."
 msgstr ""
 
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:244
+msgid "Username is available."
+msgstr ""
+
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:272
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:315
+msgid "Sorry, there was an issue communicating with the server."
+msgstr ""
+
 #: corehq/apps/users/static/users/js/mobile_workers.ng.js:365
 msgid ""
 "Password Requirements: 1 special character, 1 number, 1 capital letter, "
 "minimum length of 8 characters."
 msgstr ""
 
-#: docs/_build/html/_static/doctools.js:166
-msgid "Permalink to this headline"
+#: corehq/apps/users/static/users/js/roles.js:95
+msgid "New Role"
 msgstr ""
 
-#: docs/_build/html/_static/doctools.js:172
-msgid "Permalink to this definition"
+#: corehq/apps/users/static/users/js/roles.js:95
+msgid "Edit Role: "
 msgstr ""
 
-#: docs/_build/html/_static/doctools.js:205
-msgid "Hide Search Matches"
+#: corehq/apps/users/static/users/js/roles.js:106
+msgid "Delete Role: "
 msgstr ""
 
-#: docs/_build/html/_static/searchtools.js:299
-msgid "Searching"
-msgstr ""
-
-#: docs/_build/html/_static/searchtools.js:304
-msgid "Preparing search..."
-msgstr ""
-
-#: docs/_build/html/_static/searchtools.js:461
-msgid "Search Results"
-msgstr ""
-
-#: docs/_build/html/_static/searchtools.js:463
-msgid ""
-"Your search did not match any documents. Please make sure that all words are "
-"spelled correctly and that you've selected enough categories."
-msgstr ""
-
-#: docs/_build/html/_static/searchtools.js:465
-#, javascript-format
-msgid "Search finished, found %s page(s) matching the search query."
-msgstr ""
-
-#: docs/_build/html/_static/searchtools.js:517
-msgid ", in "
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:22
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:12
-msgid "  foobar  "
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:46
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:189
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:190
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:191
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:36
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:140
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:141
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:142
-msgid "whitespace"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:50
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:40
-msgid "Hello worls"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:54
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:215
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:216
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:44
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:161
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:162
-msgid "Hello "
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:58
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:224
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:48
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:167
-msgid "https://edtsech@bitbucket.org/edtsech/underscore.strings"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:73
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:237
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:63
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:180
-msgid "the titleize string method"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:77
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:81
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:203
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:204
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:205
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:327
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:328
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:342
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:67
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:71
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:152
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:153
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:154
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:244
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:245
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:256
-msgid "Hello world"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:89
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:79
-msgid "<div>Blah blah blah</div>"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:93
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:83
-msgid "&lt;div&gt;Blah blah blah&lt;/div&gt;"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:97
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:428
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:436
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:87
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:316
-msgid "Hello World"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:101
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:105
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:109
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:113
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:117
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:450
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:451
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:452
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:472
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:473
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:483
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:484
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:485
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings_standalone.js:6
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:91
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:95
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:99
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:103
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:107
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:327
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:328
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:329
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:343
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:344
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:351
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:352
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:353
-#: node_modules/grunt/node_modules/underscore.string/test/strings_standalone.js:6
-msgid "foo"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:121
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:111
-msgid "10.232323"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:125
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:129
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:133
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:137
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:115
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:119
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:123
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:127
-msgid "aaa_bbb_ccc"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:141
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:131
-msgid "separator"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:145
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:607
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:135
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:424
-msgid "Un éléphant à l'orée du bois"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:16
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:56
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:75
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:10
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:31
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:48
-msgid " foo"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:17
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:58
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:76
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:11
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:33
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:49
-msgid "foo "
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:18
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:59
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:79
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:12
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:34
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:52
-msgid " foo "
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:19
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:20
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:13
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:14
-msgid "    foo     "
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:21
-msgid "\t    foo \t  "
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:23
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:64
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:81
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:16
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:37
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:54
-msgid "ffoo"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:24
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:65
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:82
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:17
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:38
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:55
-msgid "ooff"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:25
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:66
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:83
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:18
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:39
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:56
-msgid "ffooff"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:28
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:68
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:85
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:21
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:41
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:58
-msgid "_-foobar-_"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:30
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:74
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:23
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:47
-msgid "http://foo/"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:31
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:24
-msgid "c:\\"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:57
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:32
-msgid "    foo"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:77
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:50
-msgid "foo     "
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:78
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:51
-msgid "foo  bar     "
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:93
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:64
-msgid "fabio"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:110
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:359
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:76
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:269
-msgid " "
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:126
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:89
-msgid " foo    bar   "
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:137
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:148
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:97
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:108
-#, javascript-format
-msgid "Hello %s"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:138
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:149
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:98
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:109
-#, javascript-format
-msgid "hello %s"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:157
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:167
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:117
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:124
-msgid "foobar"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:158
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:118
-msgid "oobar"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:170
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:127
-msgid "fooba"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:206
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:155
-msgid "x.xx....x.x"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:230
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:361
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:173
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:271
-msgid "a"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:231
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:174
-msgid "A"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:232
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:175
-msgid "+"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:238
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:181
-msgid "the titleize string  method"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:242
-msgid "let's have some fun"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:243
-msgid "a-dash-separated-string"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:244
-msgid "A-DASH-SEPARATED-STRING"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:249
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:186
-msgid "the_camelize_string_method"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:250
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:187
-msgid "-the-camelize-string-method"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:251
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:188
-msgid "the camelize string method"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:252
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:189
-msgid " the camelize  string method"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:253
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:190
-msgid "the camelize   string method"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:261
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:195
-msgid "the-underscored-string-method"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:262
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:196
-msgid "theUnderscoredStringMethod"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:263
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:197
-msgid "TheUnderscoredStringMethod"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:264
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:198
-msgid " the underscored  string method"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:272
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:203
-msgid "the_dasherize_string_method"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:273
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:204
-msgid "TheDasherizeStringMethod"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:274
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:205
-msgid "thisIsATest"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:275
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:206
-msgid "this Is A Test"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:276
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:207
-msgid "thisIsATest123"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:277
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:208
-msgid "123thisIsATest"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:278
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:209
-msgid "the dasherize string method"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:279
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:210
-msgid "the  dasherize string method  "
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:280
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:211
-msgid "téléphone"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:281
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:212
-msgid "foo$bar"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:296
-msgid "_som eWeird---name-"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:308
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:230
-msgid "some_class_name"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:309
-msgid "my wonderfull class_name"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:310
-msgid "my wonderfull.class.name"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:314
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:234
-msgid "the_humanize_string_method"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:315
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:235
-msgid "ThehumanizeStringMethod"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:316
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:236
-msgid "the humanize string method"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:317
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:237
-msgid "the humanize_id string method_id"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:318
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:238
-msgid "the  humanize string method  "
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:319
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:239
-msgid "   capitalize dash-CamelCase_underscore trim  "
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:329
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:419
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:246
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:310
-msgid "Hello"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:337
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:341
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:251
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:255
-msgid "Hello, cruel world"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:338
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:339
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:340
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:252
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:253
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:254
-msgid "Hello, world"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:343
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:347
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:257
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:261
-msgid "Привет, жестокий мир"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:344
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:345
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:346
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:348
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:258
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:259
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:260
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:262
-msgid "Привет, мир"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:349
-msgid "alksjd!!!!!!...."
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:360
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:270
-msgid "\n"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:362
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:494
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:272
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:359
-msgid "0"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:375
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:277
-msgid "<div>Blah & \"blah\" & 'blah'</div>"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:377
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:279
-msgid "&lt;"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:385
-msgid ""
-"&lt;div&gt;Blah &amp; &quot;blah&quot; &amp; &apos;blah&#39;&lt;/div&gt;"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:387
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:287
-msgid "&amp;lt;"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:388
-msgid "&apos;"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:389
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:288
-msgid "&#39;"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:390
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:289
-msgid "&#0039;"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:391
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:290
-msgid "&#x4a;"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:392
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:291
-msgid "&#x04A;"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:393
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:292
-msgid "&#X4A;"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:394
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:293
-msgid "&_#39;"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:395
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:294
-msgid "&#39_;"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:396
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:295
-msgid "&amp;#38;"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:397
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:296
-msgid "&#38;amp;"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:406
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:302
-msgid "I love you!"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:407
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:303
-msgid " I    love   you!  "
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:408
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:304
-msgid "I_love_you!"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:409
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:305
-msgid "I-love-you!"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:413
-msgid "   "
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:427
-msgid "AaBbCcDdEe"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:435
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:315
-msgid ""
-"Hello\n"
-"World"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:444
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:446
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:447
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:448
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:449
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:459
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:461
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:462
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:469
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:471
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:480
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:482
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:321
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:323
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:324
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:325
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:326
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:333
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:335
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:336
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:340
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:342
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:348
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:350
-msgid "1"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:492
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:357
-msgid "not a number"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:495
-msgid "0.0"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:496
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:497
-msgid "0.1"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:498
-msgid "  0.1 "
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:499
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:360
-msgid "0000"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:500
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:501
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:502
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:361
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:362
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:363
-msgid "2.345"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:503
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:364
-msgid "2.344"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:504
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:365
-msgid "2"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:507
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:368
-msgid "-2"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:533
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:534
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:535
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:536
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:537
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:538
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:546
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:547
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:548
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:549
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:550
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:558
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:559
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:560
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:561
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:562
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:570
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:571
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:572
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:573
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:574
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:372
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:373
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:374
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:375
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:376
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:381
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:382
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:383
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:384
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:385
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:390
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:391
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:392
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:393
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:394
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:399
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:400
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:401
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:402
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:403
-msgid "This_is_a_test_string"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:582
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:408
-msgid "a <a href=\"#\">link</a>"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:583
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:409
-msgid "a <a href=\"#\">link</a><script>alert(\"hello world!\")</script>"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:584
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:410
-msgid "<html><body>hello world</body></html>"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:606
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:423
-msgid "Jack & Jill like numbers 1,2,3 and 4 and silly characters ?%.$!/"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:608
-msgid "I know latin characters: á í ó ú ç ã õ ñ ü ă ș ț"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:609
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:426
-msgid "I am a word too, even though I am but a single letter: i!"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:660
-msgid "false"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:667
-msgid "true"
-msgstr ""
-
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:285
-msgid ""
-"&lt;div&gt;Blah &amp; &quot;blah&quot; &amp; &apos;blah&apos;&lt;/div&gt;"
-msgstr ""
-
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:425
-msgid "I know latin characters: á í ó ú ç ã õ ñ ü"
+#: corehq/apps/users/static/users/js/roles.js:107
+msgid "Are you sure you want to delete this role?"
 msgstr ""

@@ -120,6 +120,22 @@ class PatientDetail(models.Model):
         }[self.dcpulmunory]
 
     @property
+    def site_choice(self):
+        return {
+            '0': 'other',
+            '1': 'lymph_node',
+            '2': 'pleural_effusion',
+            '3': 'abdominal',
+            '4': 'other',
+            '5': 'brain',
+            '6': 'spine',
+            '7': 'other',
+            '8': 'other',
+            '9': 'other',
+            '10': 'other',
+        }.get(self.dcexpulmunory.strip(), '')
+
+    @property
     def patient_type_choice(self):
         return {
             '1': 'new',
@@ -210,7 +226,7 @@ class PatientDetail(models.Model):
 
     @property
     def initial_home_visit_status(self):
-        return 'completed' if self.ihv_date else 'unknown_from_migration'
+        return 'completed' if self.ihv_date else 'pending'
 
 
 class Outcome(models.Model):
@@ -272,21 +288,6 @@ class Outcome(models.Model):
             'Neg': 'non_reactive',
             'Unknown': 'unknown',
         }[self.HIVStatus]
-
-class Followup(models.Model):
-    id = models.AutoField(primary_key=True)
-    PatientID = models.ForeignKey(PatientDetail)
-    IntervalId = models.CharField(max_length=255)
-    TestDate = models.CharField(max_length=255, null=True)
-    DMC = models.CharField(max_length=255)
-    LabNo = models.CharField(max_length=255, null=True)
-    SmearResult = models.CharField(max_length=255)
-    PatientWeight = models.CharField(max_length=255)
-    DmcStoCode = models.CharField(max_length=255)
-    DmcDtoCode = models.CharField(max_length=255)
-    DmcTbuCode = models.CharField(max_length=255)
-    RegBy = models.CharField(max_length=255)
-    regdate = models.CharField(max_length=255)
 
 
 # class Household(models.Model):

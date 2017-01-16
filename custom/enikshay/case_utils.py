@@ -1,6 +1,8 @@
 import pytz
 from django.utils.dateparse import parse_datetime
 
+from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.util import post_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 from corehq.form_processor.exceptions import CaseNotFound
@@ -53,6 +55,13 @@ def get_person_case_from_occurrence(domain, occurrence_case_id):
     Gets the first open person case for an occurrence
     """
     return get_parent_of_case(domain, occurrence_case_id, CASE_TYPE_PERSON)
+
+
+def get_person_case_from_episode(domain, episode_case_id):
+    return get_person_case_from_occurrence(
+        domain,
+        get_occurrence_case_from_episode(domain, episode_case_id).case_id
+    )
 
 
 def get_open_occurrence_case_from_person(domain, person_case_id):
@@ -121,3 +130,17 @@ def get_adherence_cases_between_dates(domain, person_case_id, start_date, end_da
     ]
 
     return open_pertinent_adherence_cases
+
+
+def update_case(domain, case_id, updated_properties, external_id=None):
+    kwargs = {
+        'case_id': case_id,
+        'update': updated_properties,
+    }
+    if external_id is not None:
+        kwargs.update({'external_id': external_id})
+
+    post_case_blocks(
+        [CaseBlock(**kwargs).as_xml()],
+        {'domain': domain}
+    )

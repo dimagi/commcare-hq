@@ -22,6 +22,7 @@ from django_otp.plugins.otp_static.models import StaticToken
 from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
 
 from couchdbkit.exceptions import ResourceNotFound
+from corehq.apps.users.landing_pages import ALLOWED_LANDING_PAGES
 from corehq.util.view_utils import json_error
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.decorators.memoized import memoized
@@ -44,6 +45,7 @@ from corehq.apps.es import AppES
 from corehq.apps.es.queries import search_string_query
 from corehq.apps.hqwebapp.utils import send_confirmation_email
 from corehq.apps.hqwebapp.views import BasePageView, logout
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.registration.forms import AdminInvitesUserForm, WebUserInvitationForm
 from corehq.apps.registration.utils import activate_new_user
 from corehq.apps.reports.util import get_possible_reports
@@ -117,6 +119,7 @@ class BaseUserSettingsView(BaseDomainView):
         return context
 
 
+@location_safe
 class DefaultProjectUserSettingsView(BaseUserSettingsView):
     urlname = "users_default"
 
@@ -471,6 +474,15 @@ class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
         return invitations
 
     @property
+    def landing_page_choices(self):
+        return [
+            {'id': None, 'name': _('Use Default')}
+        ] + [
+            {'id': page.id, 'name': _(page.name)}
+            for page in ALLOWED_LANDING_PAGES
+        ]
+
+    @property
     def page_context(self):
         if (not self.can_restrict_access_by_location
             and any(not role.permissions.access_all_locations
@@ -493,6 +505,7 @@ class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
             'domain_object': self.domain_object,
             'uses_locations': self.domain_object.uses_locations,
             'can_restrict_access_by_location': self.can_restrict_access_by_location,
+            'landing_page_choices': self.landing_page_choices,
         }
 
 

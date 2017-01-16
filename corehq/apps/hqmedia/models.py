@@ -358,7 +358,7 @@ class CommCareImage(CommCareMultimedia):
     @classmethod
     def get_invalid_image_data(cls):
         import os
-        invalid_image_path = os.path.join(os.path.dirname(__file__), 'static/hqmedia/img/invalid_image.png')
+        invalid_image_path = os.path.join(os.path.dirname(__file__), 'static/hqmedia/images/invalid_image.png')
         return Image.open(open(invalid_image_path))
 
     @classmethod

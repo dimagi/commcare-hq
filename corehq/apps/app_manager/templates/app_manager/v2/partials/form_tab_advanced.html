@@ -2,7 +2,30 @@
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 <div class="tab-pane" id="advanced">
+    {% if allow_form_copy%}
+        <div class="panel panel-appmanager">
+            <form class="form-inline" method='POST' action='{% url "copy_form" domain app.id module.id form.id %}'>
+                <div class="panel-heading">
+                    <h4 class="panel-title panel-title-nolink">
+                        {% trans "Copy Form" %}
+                    </h4>
+                </div>
+                <div class="panel-body">
+                    <select name='to_module_id' class='form-control' style="min-width: 150px;">{% for mod in app.get_modules %}
+                        <option value={{ mod.id }}>{{ mod.name|html_trans:langs }}</option>
+                        {% endfor %}</select>
+                    <button class='btn btn-default' type="submit">
+                        <i class="fa fa-copy"></i>
+                        {% trans "Copy" %}
+                    </button>
+                </div>
+            </form>
+        </div>
+        {% csrf_token %}
+        <fieldset>
 
+        </fieldset>
+    {% endif %}
     <div class="panel panel-appmanager">
         <div class="panel-heading">
             <h4 class="panel-title panel-title-nolink">
@@ -35,28 +58,4 @@
             </ul>
         </div>
     </div>
-    {% if allow_form_copy%}
-        <div class="panel panel-appmanager">
-            <form class="form-inline" method='POST' action='{% url "copy_form" domain app.id module.id form.id %}'>
-                <div class="panel-heading">
-                    <h4 class="panel-title panel-title-nolink">
-                        {% trans "Copy Form" %}
-                    </h4>
-                </div>
-                <div class="panel-body">
-                    <select name='to_module_id' class='form-control' style="min-width: 150px;">{% for mod in app.get_modules %}
-                        <option value={{ mod.id }}>{{ mod.name|html_trans:langs }}</option>
-                        {% endfor %}</select>
-                    <button class='btn btn-default' type="submit">
-                        <i class="fa fa-copy"></i>
-                        {% trans "Copy" %}
-                    </button>
-                </div>
-            </form>
-        </div>
-        {% csrf_token %}
-        <fieldset>
-
-        </fieldset>
-    {% endif %}
 </div>

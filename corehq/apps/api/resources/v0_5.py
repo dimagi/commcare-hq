@@ -682,16 +682,13 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
         :param domain: The domain of the ReportConfiguration
         :return: A ReportConfiguration
         """
-        if report_config_id_is_static(id_):
-            report_config = StaticReportConfiguration.by_id(id_)
-            if report_config.domain != domain:
-                raise NotFound
-        else:
-            try:
-                report_config = get_document_or_not_found(ReportConfiguration, domain, id_)
-            except DocumentNotFound:
-                raise NotFound
-        return report_config
+        try:
+            if report_config_id_is_static(id_):
+                return StaticReportConfiguration.by_id(id_, domain=domain)
+            else:
+                return get_document_or_not_found(ReportConfiguration, domain, id_)
+        except DocumentNotFound:
+            raise NotFound
 
     def detail_uri_kwargs(self, bundle_or_obj):
         return {

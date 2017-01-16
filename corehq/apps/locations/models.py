@@ -379,13 +379,13 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
     _migration_couch_id_name = "location_id"  # Used for SyncSQLToCouchMixin
     location_type = models.ForeignKey(LocationType, on_delete=models.CASCADE)
     site_code = models.CharField(max_length=255)
-    external_id = models.CharField(max_length=255, null=True)
-    metadata = jsonfield.JSONField(default=dict)
+    external_id = models.CharField(max_length=255, null=True, blank=True)
+    metadata = jsonfield.JSONField(default=dict, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(auto_now=True)
     is_archived = models.BooleanField(default=False)
-    latitude = models.DecimalField(max_digits=20, decimal_places=10, null=True)
-    longitude = models.DecimalField(max_digits=20, decimal_places=10, null=True)
+    latitude = models.DecimalField(max_digits=20, decimal_places=10, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=20, decimal_places=10, null=True, blank=True)
     parent = TreeForeignKey('self', null=True, blank=True, related_name='children', on_delete=models.CASCADE)
 
     # Use getter and setter below to access this value
@@ -395,7 +395,7 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
     _products = models.ManyToManyField(SQLProduct)
     stocks_all_products = models.BooleanField(default=True)
 
-    supply_point_id = models.CharField(max_length=255, db_index=True, unique=True, null=True)
+    supply_point_id = models.CharField(max_length=255, db_index=True, unique=True, null=True, blank=True)
 
     objects = _tree_manager = LocationManager()
     # This should really be the default location manager
@@ -403,7 +403,7 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
 
     @classmethod
     def _migration_get_fields(cls):
-        return ["domain", "name", "lineage", "site_code", "external_id",
+        return ["domain", "name", "site_code", "external_id",
                 "metadata", "is_archived"]
 
     @classmethod
@@ -761,14 +761,11 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
     latitude = FloatProperty()
     longitude = FloatProperty()
 
-    # a list of doc ids, referring to the parent location, then the
-    # grand-parent, and so on up to the root location in the hierarchy
-    lineage = StringListProperty()
-
     @classmethod
     def wrap(cls, data):
         last_modified = data.get('last_modified')
         data.pop('location_type', None)  # Only store location type in SQL
+        data.pop('lineage', None)  # Don't try to store lineage
         # if it's missing a Z because of the Aug. 2014 migration
         # that added this in iso_format() without Z, then add a Z
         # (See also Group class)
@@ -778,18 +775,19 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
         return super(Location, cls).wrap(data)
 
     def __init__(self, *args, **kwargs):
-        from corehq.apps.locations.util import get_lineage_from_location, get_lineage_from_location_id
         if 'parent' in kwargs:
+            # if parent is in the kwargs, this was set from a constructor
+            # if parent isn't in kwargs, this was probably pulled from the db
+            # and we should look to SQL as source of truth
             parent = kwargs['parent']
             if parent:
                 if isinstance(parent, Document):
-                    lineage = get_lineage_from_location(parent)
+                    self._sql_parent = parent.sql_location
                 else:
                     # 'parent' is a doc id
-                    lineage = get_lineage_from_location_id(parent)
+                    self._sql_parent = SQLLocation.objects.get(location_id=parent)
             else:
-                lineage = []
-            kwargs['lineage'] = lineage
+                self._sql_parent = None
             del kwargs['parent']
 
         location_type = kwargs.pop('location_type', None)
@@ -865,8 +863,8 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
         location_type = self._sql_location_type or sql_location.location_type
         sql_location.location_type = location_type
         # sync parent connection
-        sql_location.parent = (SQLLocation.objects.get(location_id=self.parent_location_id)
-                               if self.parent_location_id else None)
+        if hasattr(self, '_sql_parent'):
+            sql_location.parent = self._sql_parent
 
         self._migration_sync_to_sql(sql_location)
 
@@ -941,9 +939,7 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
 
     @property
     def parent_location_id(self):
-        if self.lineage:
-            return self.lineage[0]
-        return None
+        return self.parent.location_id if self.parent else None
 
     @property
     def parent_id(self):
@@ -957,14 +953,18 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
 
     @property
     def parent(self):
-        parent_id = self.parent_location_id
-        return Location.get(parent_id) if parent_id else None
+        if hasattr(self, '_sql_parent'):
+            return self._sql_parent.couch_location if self._sql_parent else None
+        else:
+            return self.sql_location.parent.couch_location if self.sql_location.parent else None
+
+    @property
+    def lineage(self):
+        return self.sql_location.lineage
 
     @property
     def path(self):
-        _path = list(reversed(self.lineage))
-        _path.append(self._id)
-        return _path
+        return self.sql_location.path
 
     @property
     def descendants(self):

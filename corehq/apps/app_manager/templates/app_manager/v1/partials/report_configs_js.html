@@ -7,6 +7,7 @@
         var initNavMenuMedia = hqImport('app_manager/js/app_manager_media.js').initNavMenuMedia;
         var select2Separator = hqImport('app_manager/js/report-module.js').select2Separator;
         var ReportModule = hqImport('app_manager/js/report-module.js').ReportModule;
+        var StaticFilterData = hqImport('app_manager/js/report-module.js').StaticFilterData;
         var navMenuMedia = initNavMenuMedia(
                 "",
                 {{ multimedia.menu.menu_refs.image|JSON }},
@@ -15,7 +16,13 @@
                 {{ multimedia.menu.default_file_name|JSON }}
         );
         var saveURL = "{% url "edit_report_module" domain app.id module.id %}";
+        var staticData = new StaticFilterData({
+            filterChoices: {{ filter_choices|JSON }},
+            dateRangeOptions: {{ daterange_choices|JSON }},
+            autoFilterChoices: {{ auto_filter_choices|JSON }},
+        });
         var reportModule = new ReportModule({
+            staticFilterData: staticData,
             moduleName: {{ module.name|JSON }},
             moduleFilter: "{{ module.module_filter|escapejs }}",
             availableReports: {{ all_reports|JSON }}, // structure for all reports
