@@ -722,8 +722,7 @@ class ConfigureNewReportBase(forms.Form):
 
     def _get_data_source_configuration_kwargs(self):
         if self._is_multiselect_chart_report:
-            # TODO: Handle this aggregation field...
-            base_item_expression = self.ds_builder.base_item_expression(True, self.aggregation_field)
+            base_item_expression = self.ds_builder.base_item_expression(True, self.cleaned_data['group_by'][0])
         else:
             base_item_expression = self.ds_builder.base_item_expression(False)
         return dict(
@@ -1050,117 +1049,6 @@ class ConfigureNewReportBase(forms.Form):
         return []
 
 
-class ConfigureBarChartReportForm(ConfigureNewReportBase):
-    group_by = forms.MultipleChoiceField(label=_("Bar Chart Categories"))
-    report_type = 'chart'
-
-    def __init__(self, report_name, app_id, source_type, report_source_id, existing_report=None, *args, **kwargs):
-        super(ConfigureBarChartReportForm, self).__init__(
-            report_name, app_id, source_type, report_source_id, existing_report, *args, **kwargs
-        )
-        if self.source_type == "form":
-            self.fields['group_by'].widget = QuestionSelect(attrs={'class': 'input-large'})
-        else:
-            self.fields['group_by'].widget = Select2(attrs={'class': 'input-large'})
-        self.fields['group_by'].choices = self._group_by_choices
-
-        # Set initial value of group_by
-        if self.existing_report:
-            existing_agg_cols = existing_report.aggregation_columns
-            assert len(existing_agg_cols) < 2
-            if existing_agg_cols:
-                self.fields['group_by'].initial = self._get_property_id_by_indicator_id(existing_agg_cols[0])
-
-    @property
-    def container_fieldset(self):
-        return crispy.Fieldset(
-            _('Chart'),
-            FieldWithHelpBubble(
-                'group_by',
-                help_bubble_text=_(
-                    "The values of the selected property will be aggregated "
-                    "and shown as bars in the chart."
-                ),
-                placeholder=_("Select Property..."),
-            ),
-            self.user_filter_fieldset,
-            self.default_filter_fieldset
-        )
-
-    @property
-    def _report_aggregation_cols(self):
-        return [
-            self.data_source_properties[field].column_id for field in self.clean_data['group_by']
-        ]
-
-    @property
-    def _report_charts(self):
-        agg_col = self.data_source_properties[self.cleaned_data['group_by'][0]].column_id
-        return [{
-            "type": "multibar",
-            "x_axis_column": agg_col,
-            "y_axis_columns": ["count"],
-        }]
-
-    @property
-    def _report_columns(self):
-        columns = ConfigureTableReportForm._report_columns()
-        return columns + [
-            {
-                "format": "default",
-                "aggregation": "sum",
-                "field": "count",
-                "type": "field",
-                "display": "Count"
-            }
-        ]
-
-    @property
-    def _group_by_choices(self):
-        return [(p.id, p.text) for p in self.data_source_properties.values()]
-
-    @property
-    @memoized
-    def _is_multiselect_chart_report(self):
-        """
-        Return True if this is a chart report aggregated by a multiselect question.
-        The data sources for these sorts of reports are handled differently than other reports.
-        """
-        agg_property = self.data_source_properties[self.aggregation_field]
-        return agg_property.type == "question" and agg_property.source['type'] == "MSelect"
-
-
-class ConfigurePieChartReportForm(ConfigureBarChartReportForm):
-    group_by = forms.MultipleChoiceField(label=_("Pie Chart Segments"))
-
-    @property
-    def container_fieldset(self):
-        return crispy.Fieldset(
-            _('Chart Properties'),
-            FieldWithHelpBubble(
-                'group_by',
-                help_bubble_text=_(
-                    "The values of the selected property will be aggregated "
-                    "and shows as the sections of the pie chart."
-                ),
-                placeholder=_(
-                    "Select Property..."
-                ),
-            ),
-            self.user_filter_fieldset,
-            self.default_filter_fieldset
-        )
-
-    @property
-    def _report_charts(self):
-        agg = self.data_source_properties[self.cleaned_data['group_by'][0]].column_id
-        return [{
-            "type": "pie",
-            "aggregation_column": agg,
-            "value_column": "count",
-        }]
-
-
 class ConfigureListReportForm(ConfigureNewReportBase):
     report_type = 'list'
     columns = JsonField(
@@ -1322,10 +1210,28 @@ class ConfigureListReportForm(ConfigureNewReportBase):
         return ['doc_id']
 
 
-class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportForm):
+class ConfigureTableReportForm(ConfigureListReportForm):
     report_type = 'table'
     column_legend_fine_print = ugettext_noop('Add columns for this report to aggregate. Each property you add will create a column for every value of that property.  For example, if you add a column for a yes or no question, the report will show a column for "yes" and a column for "no."')
     group_by = forms.MultipleChoiceField(label=_("Show one row for each"))
+    chart = forms.CharField(widget=forms.HiddenInput)
+
+    def __init__(self, report_name, app_id, source_type, report_source_id, existing_report=None, *args, **kwargs):
+        super(ConfigureTableReportForm, self).__init__(
+            report_name, app_id, source_type, report_source_id, existing_report, *args, **kwargs
+        )
+        if self.source_type == "form":
+            self.fields['group_by'].widget = QuestionSelect(attrs={'class': 'input-large'})
+        else:
+            self.fields['group_by'].widget = Select2(attrs={'class': 'input-large'})
+        self.fields['group_by'].choices = self._group_by_choices
+
+        # Set initial value of group_by
+        if self.existing_report:
+            existing_agg_cols = existing_report.aggregation_columns
+            assert len(existing_agg_cols) < 2
+            if existing_agg_cols:
+                self.fields['group_by'].initial = self._get_property_id_by_indicator_id(existing_agg_cols[0])
 
     @property
     def container_fieldset(self):
@@ -1345,11 +1251,29 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
 
     @property
     def _report_charts(self):
-        # Override the behavior inherited from ConfigureBarChartReportForm
+        if self.cleaned_data['chart'] == "bar":
+            return [{
+                "type": "multibar",
+                "x_axis_column": "column_agg_0",
+                "y_axis_columns": ["count"],
+            }]
+        elif self.cleaned_data['chart'] == "pie":
+            return [{
+                "type": "pie",
+                "aggregation_column": "column_agg_0",
+                "value_column": "count",
+            }]
         return []
 
     @property
     def _is_multiselect_chart_report(self):
+        """
+        Return True if this is a chart report aggregated by a multiselect question.
+        The data sources for these sorts of reports are handled differently than other reports.
+        """
+        if self.cleaned_data['chart'] in ("pie", "bar"):
+            agg_property = self.data_source_properties[self.cleaned_data['group_by'][0]]
+            return agg_property.type == "question" and agg_property.source['type'] == "MSelect"
         return False
 
     @property
@@ -1392,6 +1316,17 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
         for c in columns:
             if c['field'] in agg_field_ids:
                 c['aggregation'] = "simple"
+
+        # Add a count column if report has a chart
+        if self.cleaned_data['chart'] in ("bar", "pie"):
+            columns.append({
+                "format": "default",
+                "aggregation": "sum",
+                "field": "count",
+                "type": "field",
+                "display": "Count"
+            })
+
         return columns
 
     @property
@@ -1414,11 +1349,13 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
     @property
     @memoized
     def _report_aggregation_cols(self):
-        # we want the bar chart behavior, which is reproduced here:
         return [
             self.data_source_properties[f].column_id for f in self.cleaned_data["group_by"]
         ]
 
+    @property
+    def _group_by_choices(self):
+        return [(p.id, p.text) for p in self.data_source_properties.values()]
 
 class ConfigureWorkerReportForm(ConfigureTableReportForm):
     # This is a ConfigureTableReportForm, but with a predetermined aggregation
