@@ -37,7 +37,7 @@ from couchdbkit import ResourceNotFound
 from two_factor.views import LoginView
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
-from corehq.apps.users.landing_pages import get_redirect_url
+from corehq.apps.users.landing_pages import get_redirect_url, get_cloudcare_urlname
 
 from corehq.form_processor.utils.general import should_use_sql_backend
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
@@ -64,7 +64,6 @@ from corehq.apps.hqwebapp.doc_info import get_doc_info, get_object_info
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
 from corehq.apps.locations.permissions import location_safe
-from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
@@ -165,7 +164,7 @@ def redirect_to_default(req, domain=None):
                     if role and role.default_landing_page:
                         url = get_redirect_url(role.default_landing_page, domain)
                     elif couch_user.is_commcare_user():
-                        url = reverse("cloudcare_default", args=[domain])
+                        url = reverse(get_cloudcare_urlname(domain), args=[domain])
                     else:
                         return dashboard_default(req, domain)
             else:

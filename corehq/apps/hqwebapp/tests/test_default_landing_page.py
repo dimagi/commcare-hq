@@ -1,12 +1,13 @@
 from django.core.urlresolvers import reverse
 from django.test import TestCase, Client
 from corehq.apps.app_manager.models import Application
+from corehq.apps.cloudcare.views import FormplayerMain
 from corehq.apps.dashboard.views import DomainDashboardView
 from corehq.apps.domain.models import Domain
 from corehq.apps.reports.views import MySavedReportsView
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import UserRole, WebUser, Permissions, CommCareUser
-from corehq.util.test_utils import generate_cases
+from corehq.util.test_utils import generate_cases, flag_enabled
 
 
 DOMAIN = 'temerant'
@@ -69,6 +70,20 @@ class TestDefaultLandingPages(TestCase):
         self.client.login(username=user.username, password=self.global_password)
         response = self.client.get(reverse("domain_homepage", args=[self.domain]), follow=True)
         self.assertEqual(response.status_code, 404)
+
+    @flag_enabled('USE_FORMPLAYER_FRONTEND')
+    def test_formplayer_default_override(self):
+        web_user = self._make_web_user('elodin@theuniversity.com', role=self.webapps_role)
+        self.addCleanup(web_user.delete)
+        mobile_worker = self._make_commcare_user('kvothe')
+        self.addCleanup(mobile_worker.delete)
+        for user in [web_user, mobile_worker]:
+            self.client.login(username=user.username, password=self.global_password)
+
+            response = self.client.get(reverse("domain_homepage", args=[self.domain]), follow=True)
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(reverse(FormplayerMain.urlname, args=[self.domain]),
+                             response.request['PATH_INFO'])
 
 
 @generate_cases([
