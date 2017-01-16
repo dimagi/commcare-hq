@@ -1741,8 +1741,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         from corehq.apps.locations.models import SQLLocation
         old_primary_location_id = self.location_id
         if old_primary_location_id:
-            self.assigned_location_ids.remove(old_primary_location_id)
-            self.get_domain_membership(self.domain).assigned_location_ids.remove(old_primary_location_id)
+            self._remove_location_from_user(old_primary_location_id)
 
         if self.assigned_location_ids:
             self.user_data['commcare_location_ids'] = user_location_data(self.assigned_location_ids)
@@ -1773,14 +1772,29 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             # check if primary location
             self.unset_location(fall_back_to_next)
         else:
-            self.assigned_location_ids.remove(location_id)
-            self.get_domain_membership(self.domain).assigned_location_ids.remove(location_id)
+            self._remove_location_from_user(location_id)
 
             if self.assigned_location_ids:
                 self.user_data['commcare_location_ids'] = user_location_data(self.assigned_location_ids)
             else:
                 self.user_data.pop('commcare_location_ids')
             self.save()
+
+    def _remove_location_from_user(self, location_id):
+        try:
+            self.assigned_location_ids.remove(location_id)
+        except ValueError:
+            notify_exception(None, "Location missing from user", {
+                'user_id': self._id,
+                'location_id': location_id
+            })
+        try:
+            self.get_domain_membership(self.domain).assigned_location_ids.remove(location_id)
+        except ValueError:
+            notify_exception(None, "Location missing from domain membership", {
+                'user_id': self._id,
+                'location_id': location_id
+            })
 
     def reset_locations(self, location_ids):
         """
