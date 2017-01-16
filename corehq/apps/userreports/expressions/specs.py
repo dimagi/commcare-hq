@@ -345,7 +345,7 @@ class CaseSharingGroupsExpressionSpec(JsonObject):
 
     def _get_case_sharing_groups(self, user_id, context):
         domain = context.root_doc['domain']
-        cache_key = (self.__class__.__name__, user_id)
+        cache_key = (self.__class__.__name__, domain, user_id)
         if context.get_cache_value(cache_key) is not None:
             return context.get_cache_value(cache_key)
 
