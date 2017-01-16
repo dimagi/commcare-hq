@@ -1059,9 +1059,8 @@ class ConfigureListReportForm(ConfigureNewReportBase):
     columns = JsonField(
         expected_type=list,
         null_values=([],),
-        required=True,
+        required=False,
         widget=forms.HiddenInput,
-        error_messages={"required": ugettext_lazy("At least one column is required")},
     )
     column_legend_fine_print = ugettext_noop("Add columns to your report to display information from cases or form submissions. You may rearrange the order of the columns by dragging the arrows next to the column.")
 
