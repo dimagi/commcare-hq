@@ -8,7 +8,8 @@ from corehq.apps.userreports.expressions.specs import PropertyNameGetterSpec, Pr
     ConditionalExpressionSpec, ConstantGetterSpec, RootDocExpressionSpec, RelatedDocExpressionSpec, \
     IdentityExpressionSpec, IteratorExpressionSpec, SwitchExpressionSpec, ArrayIndexExpressionSpec, \
     NestedExpressionSpec, DictExpressionSpec, NamedExpressionSpec, EvalExpressionSpec, FormsExpressionSpec, \
-    IterationNumberExpressionSpec, SubcasesExpressionSpec, SplitStringExpressionSpec
+    IterationNumberExpressionSpec, SubcasesExpressionSpec, SplitStringExpressionSpec, \
+    CaseSharingGroupsExpressionSpec
 from corehq.apps.userreports.expressions.date_specs import AddDaysExpressionSpec, AddMonthsExpressionSpec, \
     MonthStartDateExpressionSpec, MonthEndDateExpressionSpec, DiffDaysExpressionSpec
 from corehq.apps.userreports.expressions.list_specs import FilterItemsExpressionSpec, \
@@ -177,6 +178,14 @@ def _get_subcases_expression(spec, context):
     wrapped.configure(
         case_id_expression=ExpressionFactory.from_spec(wrapped.case_id_expression, context)
     )
+    return
+
+
+def _get_case_sharing_groups_expression(spec, context):
+    wrapped = CaseSharingGroupsExpressionSpec.wrap(spec)
+    wrapped.configure(
+        user_id_expression=ExpressionFactory.from_spec(wrapped.user_id_expression, context)
+    )
     return wrapped
 
 
@@ -256,6 +265,7 @@ class ExpressionFactory(object):
         'evaluator': _evaluator_expression,
         'get_case_forms': _get_forms_expression,
         'get_subcases': _get_subcases_expression,
+        'get_case_sharing_groups': _get_case_sharing_groups_expression,
         'filter_items': _filter_items_expression,
         'map_items': _map_items_expression,
         'reduce_items': _reduce_items_expression,
