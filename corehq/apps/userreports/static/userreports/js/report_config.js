@@ -235,7 +235,7 @@ var reportBuilder = function () {
         self.defaultFilterList.serializedProperties.subscribe(function () {
             self.saveButton.fire("change");
         });
-
+        self.previewError = ko.observable(false);
         self._suspendPreviewRefresh = false;
         self.refreshPreview = function (serializedColumns) {
         if (!self._suspendPreviewRefresh) {
@@ -258,6 +258,9 @@ var reportBuilder = function () {
                 )),
                 dataType: 'json',
                 success: self.renderReportPreview,
+                error: function () {
+                    self.previewError(true);
+                },
             });
             }
         };
@@ -267,6 +270,7 @@ var reportBuilder = function () {
         self.displayMapPreview = ko.observable(false);
 
         self.renderReportPreview = function (data) {
+            self.previewError(false);
             self._renderTablePreview(data['table']);
             self._renderChartPreview(data['table']);
             self._renderMapPreview(data['map_config'], data["map_data"]);
