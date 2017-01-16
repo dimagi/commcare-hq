@@ -13,6 +13,9 @@ from corehq.apps.app_manager.xpath import (
 from corehq.apps.hqmedia.models import CommCareMultimedia
 import re
 
+from corehq.apps.locations.fixtures import should_sync_hierarchical_fixture
+from corehq.apps.domain.models import Domain
+
 CASE_PROPERTY_MAP = {
     # IMPORTANT: if you edit this you probably want to also edit
     # the corresponding map in cloudcare
@@ -611,7 +614,11 @@ class LocationXpathGenerator(BaseXpathGenerator):
     def xpath(self):
         from corehq.apps.locations.util import parent_child
         hierarchy = parent_child(self.app.domain)
-        return LocationXpath('commtrack:locations').location(self.column.field_property, hierarchy)
+        project = Domain.get_by_name(self.app.domain)
+        if should_sync_hierarchical_fixture(project):
+            return LocationXpath('commtrack:locations').location(self.column.field_property, hierarchy)
+        else:
+            return LocationXpath('locations').location(self.column.field_property, hierarchy)
 
 
 @register_type_processor(const.FIELD_TYPE_LEDGER)
