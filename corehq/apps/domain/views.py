@@ -665,12 +665,8 @@ class DomainSubscriptionView(DomainAccountingSettings):
                     })
 
         if subscription:
-            credit_lines = CreditLine.get_credits_by_subscription_and_features(subscription)
-            has_credits_in_non_general_credit_line = any(
-                [(line.balance > 0 and
-                 (line.product_type in SoftwareProductType.CHOICES or line.feature_type in FeatureType.CHOICES))
-                 for line in credit_lines]
-            )
+            credit_lines = CreditLine.get_non_general_credits_by_subscription(subscription)
+            has_credits_in_non_general_credit_line = len(credit_lines) > 0
         else:
             has_credits_in_non_general_credit_line = False
 
