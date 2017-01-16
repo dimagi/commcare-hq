@@ -99,7 +99,6 @@ class BaseUserSettingsView(BaseDomainView):
     @property
     @memoized
     def section_url(self):
-        from corehq.apps.users.views import DefaultProjectUserSettingsView
         return reverse(DefaultProjectUserSettingsView.urlname, args=[self.domain])
 
     @property
