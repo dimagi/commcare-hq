@@ -580,6 +580,8 @@ ColumnViewModel = namedtuple("ColumnViewModel", _shared_properties + ['calculati
 class ConfigureNewReportBase(forms.Form):
     user_filters = FilterField(required=False)
     default_filters = FilterField(required=False)
+    report_title = forms.CharField(widget=forms.HiddenInput, required=False)
+    report_description = forms.CharField(widget=forms.HiddenInput, required=False)
     button_text = ugettext_noop('Done')
 
     def __init__(self, report_name, app_id, source_type, report_source_id, existing_report=None, *args, **kwargs):
@@ -773,6 +775,8 @@ class ConfigureNewReportBase(forms.Form):
         self.existing_report.columns = self._report_columns
         self.existing_report.filters = self._report_filters
         self.existing_report.configured_charts = self._report_charts
+        self.existing_report.title = self.cleaned_data['report_title'] or _("Report Builder Report")
+        self.existing_report.description = self.cleaned_data['report_description']
         self.existing_report.validate()
         self.existing_report.save()
         return self.existing_report
@@ -787,11 +791,12 @@ class ConfigureNewReportBase(forms.Form):
         report = ReportConfiguration(
             domain=self.domain,
             config_id=data_source_config_id,
-            title=self.report_name,
+            title=self.cleaned_data['report_title'] or self.report_name,
             aggregation_columns=self._report_aggregation_cols,
             columns=self._report_columns,
             filters=self._report_filters,
             configured_charts=self._report_charts,
+            description=self.cleaned_data['report_description'],
             report_meta=ReportMeta(
                 created_by_builder=True,
                 builder_report_type=self.report_type
