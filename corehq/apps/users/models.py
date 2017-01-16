@@ -207,6 +207,7 @@ class UserRole(QuickCachedDocumentMixin, Document):
         choices=[page.id for page in ALLOWED_LANDING_PAGES],
     )
     permissions = SchemaProperty(Permissions)
+    is_non_admin_editable = BooleanProperty(default=False)
     is_archived = BooleanProperty(default=False)
 
     def get_qualified_id(self):
