@@ -38,7 +38,7 @@ class Command(BaseCommand):
             # For domains with flat fixture enabled and have configuration defined to use hierarchical fixture
             # Notify them to make their state clear
             location_conf_for_domain = LocationFixtureConfiguration.for_domain(domain)
-            if location_conf_for_domain._state.adding and location_conf_for_domain.sync_hierarchical_fixture:
+            if not location_conf_for_domain._state.adding and location_conf_for_domain.sync_hierarchical_fixture:
                 # Can use the following to update them
                 # location_conf_for_domain.sync_flat_fixture = True
                 # location_conf_for_domain.sync_hierarchical_fixture = False
