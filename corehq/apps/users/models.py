@@ -310,10 +310,6 @@ class UserRole(QuickCachedDocumentMixin, Document):
     def get_default(cls, domain=None):
         return cls(permissions=Permissions(), domain=domain, name=None)
 
-    @staticmethod
-    def role_to_choice(role):
-        return (role.get_qualified_id(), role.name or _('(No Name)'))
-
     @property
     def ids_of_assigned_users(self):
         from corehq.apps.api.es import UserES

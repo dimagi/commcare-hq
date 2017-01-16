@@ -1075,9 +1075,12 @@ def register_fcm_device_token(request, domain, couch_user_id, device_token):
 
 
 def _get_editable_role_choices(domain, couch_user, allow_admin_role):
+    def role_to_choice(role):
+        return (role.get_qualified_id(), role.name or _('(No Name)'))
+
     roles = UserRole.by_domain(domain)
     if not couch_user.is_domain_admin(domain):
         roles = filter(lambda role: role.is_non_admin_editable, roles)
     elif allow_admin_role:
         roles = [AdminUserRole(domain=domain)] + roles
-    return [UserRole.role_to_choice(role) for role in roles]
+    return [role_to_choice(role) for role in roles]
