@@ -740,14 +740,12 @@ class ConfigureReport(ReportBuilderView):
 
     def _get_bound_form(self, report_data):
         form_class = _get_form_type(report_data['report_type'])
-        # url_args = ['report_name', 'application', 'source_type', 'source']
         return form_class(
             self._get_report_name(),
             self.app._id,
             self.source_type,
             self.source_id,
             self.existing_report,
-            # TODO: report_data is surely not in the appropriate formate for the forms right now. We will need to either builder it differently on the frontend, or munge it here.
             report_data
         )
 
@@ -766,10 +764,8 @@ class ConfigureReport(ReportBuilderView):
             if self.existing_report:
                 report_configuration = bound_form.update_report()
             else:
-                # TODO: This report limit check might be redundant with the form
                 self._confirm_report_limit()
                 try:
-                    # TODO: Incorporate the new data source building logic into the form (self._build_data_source(report_data['columns']))
                     report_configuration = bound_form.create_report()
                 except BadSpecError as err:
                     messages.error(self.request, str(err))
@@ -855,7 +851,6 @@ class ReportPreview(BaseDomainView):
             report_data['source_type'],
             report_data['source_id'],
             None,
-            # TODO: report_data is surely not in the appropriate formate for the forms right now. We will need to either builder it differently on the frontend, or munge it here.
             report_data
         )
         if bound_form.is_valid():

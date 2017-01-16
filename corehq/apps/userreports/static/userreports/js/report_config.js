@@ -191,9 +191,7 @@ var reportBuilder = function () {
             hasCalculationCol: self.isAggregationEnabled,
             initialCols: config['initialColumns'],
             reportType: self.reportType(),
-            // TODO: Confirm that this is the right thing to display,
-            propertyOptions: self.columnOptions
-            // TODO: Confirm that this is the right thing to display
+            propertyOptions: self.columnOptions,
             selectablePropertyOptions: self.selectableReportColumnOptions,
         });
         window.columnList = self.columnList;

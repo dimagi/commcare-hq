@@ -576,7 +576,6 @@ DefaultFilterViewModel = namedtuple("DefaultFilterViewModel",
 ColumnViewModel = namedtuple("ColumnViewModel", _shared_properties + ['calculation'])
 
 
-# TODO: Kill this and subclasses
 class ConfigureNewReportBase(forms.Form):
     user_filters = FilterField(required=False)
     default_filters = FilterField(required=False)
@@ -807,7 +806,6 @@ class ConfigureNewReportBase(forms.Form):
         return report
 
     def create_temp_report(self, data_source_id):
-        # TODO: Maybe replace this by just allowing a data source to be passed to create_report()?
         """
         Creates and saves a report config.
 
