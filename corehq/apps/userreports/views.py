@@ -6,11 +6,9 @@ import json
 import os
 import tempfile
 import uuid
-from itertools import chain
 
 from django.conf import settings
 from django.contrib import messages
-from django.core.exceptions import ValidationError
 from django.http import HttpResponseRedirect, HttpResponse
 from django.http.response import Http404
 from django.shortcuts import redirect
@@ -30,9 +28,6 @@ from corehq.apps.analytics.tasks import update_hubspot_properties
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
-from corehq.apps.userreports.reports.builder import get_filter_format_from_question_type
-from corehq.apps.userreports.reports.builder.columns import ColumnOption, MultiselectQuestionColumnOption, \
-    QuestionColumnOption
 from corehq.util import reverse
 from corehq.util.quickcache import quickcache
 from couchexport.export import export_from_tables
@@ -83,21 +78,21 @@ from corehq.apps.userreports.models import (
     id_is_static,
     DataSourceMeta,
     DataSourceBuildInformation,
-    ReportMeta,
 )
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.apps.userreports.reports.builder.forms import (
     DataSourceForm,
     ConfigureMapReportForm,
     DataSourceBuilder,
-    REPORT_BUILDER_FILTER_TYPE_MAP, DefaultFilterViewModel, UserFilterViewModel, ColumnViewModel,
-    ConfigureBarChartReportForm, ConfigurePieChartReportForm, ConfigureListReportForm, ConfigureTableReportForm)
+    ConfigureListReportForm,
+    ConfigureTableReportForm,
+)
 from corehq.apps.userreports.reports.filters.choice_providers import (
     ChoiceQueryContext,
 )
 from corehq.apps.userreports.reports.view import ConfigurableReport
 from corehq.apps.userreports.specs import EvaluationContext
-from corehq.apps.userreports.sql import IndicatorSqlAdapter, get_column_name
+from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.userreports.tasks import (
     rebuild_indicators,
     resume_building_indicators,
@@ -744,7 +739,7 @@ class ConfigureReport(ReportBuilderView):
             raise
 
     def _get_bound_form(self, report_data):
-        form_class = _get_form_type(report_data['report_type'], report_data['chart'])
+        form_class = _get_form_type(report_data['report_type'])
         # url_args = ['report_name', 'application', 'source_type', 'source']
         return form_class(
             self._get_report_name(),
@@ -805,20 +800,14 @@ class ConfigureReport(ReportBuilderView):
             raise Http404()
 
 
-def _get_form_type(report_type, chart_type):
+def _get_form_type(report_type):
     assert report_type in ("list", "table", "chart", "map")
-    assert chart_type in ("bar", "pie", "none")
     if report_type == "list":
         return ConfigureListReportForm
     if report_type == "table":
-        return ConfigureTableReportForm
+            return ConfigureTableReportForm
     if report_type == "map":
         return ConfigureMapReportForm
-    if report_type == "chart":
-        if chart_type == "bar":
-            return ConfigureBarChartReportForm
-        if chart_type == "pie":
-            return ConfigurePieChartReportForm
 
 
 def _munge_report_data(report_data):
@@ -852,7 +841,7 @@ class ReportPreview(BaseDomainView):
 
     def post(self, request, domain, data_source):
         report_data = json.loads(urllib.unquote(request.body))
-        form_class = _get_form_type(report_data['report_type'], report_data['chart'])
+        form_class = _get_form_type(report_data['report_type'])
 
         # ignore filters
         report_data['user_filters'] = []
