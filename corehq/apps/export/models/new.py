@@ -11,6 +11,9 @@ from django.core.urlresolvers import reverse
 from soil.progress import set_task_progress
 
 from corehq.apps.export.esaccessors import get_ledger_section_entry_combinations
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.reports.daterange import get_daterange_start_end_dates
+from corehq.util.timezones.utils import get_timezone_for_domain
 from dimagi.utils.decorators.memoized import memoized
 from couchdbkit import SchemaListProperty, SchemaProperty, BooleanProperty, DictProperty
 
@@ -43,6 +46,7 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
     DateTimeProperty,
     SetProperty,
+    DateProperty,
 )
 from corehq.apps.export.const import (
     PROPERTY_TAG_UPDATE,
@@ -496,6 +500,54 @@ class TableConfiguration(DocumentSchema):
         return TableConfiguration._get_sub_documents_helper(path[1:], new_docs)
 
 
+class DatePeriod(DocumentSchema):
+    period_type = StringProperty(required=True)
+    days = IntegerProperty()
+    begin = DateProperty()
+    end = DateProperty()
+
+    @property
+    def startdate(self):
+        startdate, _ = get_daterange_start_end_dates(self.period_type, self.begin, self.end, self.days)
+        return startdate
+
+    @property
+    def enddate(self):
+        _, enddate = get_daterange_start_end_dates(self.period_type, self.begin, self.end, self.days)
+        return enddate
+
+
+class ExportInstanceFilters(DocumentSchema):
+    """
+    A class represented a saved set of filters for an export
+    These are used for Daily Saved Exports, and Dashboard Feeds (which are a type of Daily Saved Export)
+    """
+    date_period = SchemaProperty(DatePeriod, default=None)
+    users = ListProperty(StringProperty)
+    reporting_groups = ListProperty(StringProperty)
+    sharing_groups = ListProperty(StringProperty)
+    locations = ListProperty(StringProperty)
+    user_types = ListProperty(IntegerProperty)
+    can_access_all_locations = BooleanProperty(default=True)
+    accessible_location_ids = ListProperty(StringProperty)
+    show_all_data = BooleanProperty()
+    show_project_data = BooleanProperty()
+
+    def is_location_safe_for_user(self, request):
+        """
+        Return True if the couch_user of the given request has permission to export data with this filter.
+        """
+        if self.can_access_all_locations and not request.can_access_all_locations:
+            return False
+        elif not self.can_access_all_locations:
+            users_accessible_locations = SQLLocation.active_objects.accessible_location_ids(
+                request.domain, request.couch_user
+            )
+            if not set(self.accessible_location_ids).issubset(users_accessible_locations):
+                return False
+        return True
+
+
 class ExportInstance(BlobMixin, Document):
     """
     This is an instance of an export. It contains the tables to export and
@@ -524,6 +576,10 @@ class ExportInstance(BlobMixin, Document):
     last_updated = DateTimeProperty()
     last_accessed = DateTimeProperty()
 
+    # static filters to limit the data in this export
+    # filters are only used in daily saved and HTML (dashboard feed) exports
+    filters = SchemaProperty(ExportInstanceFilters)
+
     class Meta:
         app_label = 'export'
 
@@ -535,6 +591,12 @@ class ExportInstance(BlobMixin, Document):
     @property
     def defaults(self):
         return FormExportInstanceDefaults if self.type == FORM_EXPORT else CaseExportInstanceDefaults
+
+    def get_filters(self):
+        """
+        Return a list of export.filters.ExportFilter objects
+        """
+        raise NotImplementedError
 
     @property
     @memoized
@@ -748,12 +810,44 @@ class CaseExportInstance(ExportInstance):
     case_type = StringProperty()
     type = CASE_EXPORT
 
+    def __init__(self, *args, **kwargs):
+        super(CaseExportInstance, self).__init__(*args, **kwargs)
+        # Conditional default values for self.filters
+        created_default_filters = "filters" not in kwargs and (len(args) == 0 or "filters" not in args[0])
+        if created_default_filters:
+            self.filters.show_all_data = True
+
+    @classmethod
+    def wrap(cls, data):
+        if "filters" not in data:
+            data['filters'] = {'show_all_data': True}
+        return super(CaseExportInstance, cls).wrap(data)
+
     @classmethod
     def _new_from_schema(cls, schema):
         return cls(
             domain=schema.domain,
             case_type=schema.case_type,
         )
+
+    def get_filters(self):
+        if self.filters:
+            from corehq.apps.export.forms import CaseExportFilterBuilder
+            filter_builder = CaseExportFilterBuilder(
+                Domain.get_by_name(self.domain), get_timezone_for_domain(self.domain)
+            )
+            return filter_builder.get_filter(
+                self.filters.can_access_all_locations,
+                self.filters.accessible_location_ids,
+                self.filters.show_all_data,
+                self.filters.show_project_data,
+                self.filters.user_types,
+                self.filters.date_period,
+                self.filters.sharing_groups + self.filters.reporting_groups,
+                self.filters.locations,
+                self.filters.users,
+            )
+        return []
 
 
 class FormExportInstance(ExportInstance):
@@ -763,6 +857,19 @@ class FormExportInstance(ExportInstance):
 
     # Whether to include duplicates and other error'd forms in export
     include_errors = BooleanProperty(default=False)
+
+    def __init__(self, *args, **kwargs):
+        super(FormExportInstance, self).__init__(*args, **kwargs)
+        # Conditional default values for self.filters
+        created_default_filters = "filters" not in kwargs and (len(args) == 0 or "filters" not in args[0])
+        if created_default_filters:
+            self.filters.user_types = [0]
+
+    @classmethod
+    def wrap(cls, data):
+        if "filters" not in data:
+            data['filters'] = {"user_types": [0]}
+        return super(FormExportInstance, cls).wrap(data)
 
     @property
     def formname(self):
@@ -775,6 +882,23 @@ class FormExportInstance(ExportInstance):
             xmlns=schema.xmlns,
             app_id=schema.app_id,
         )
+
+    def get_filters(self):
+        if self.filters:
+            from corehq.apps.export.forms import FormExportFilterBuilder
+            filter_builder = FormExportFilterBuilder(
+                Domain.get_by_name(self.domain), get_timezone_for_domain(self.domain)
+            )
+            return filter_builder.get_filter(
+                self.filters.can_access_all_locations,
+                self.filters.accessible_location_ids,
+                self.filters.sharing_groups + self.filters.reporting_groups,
+                self.filters.user_types,
+                self.filters.users,
+                self.filters.locations,
+                self.filters.date_period,
+            )
+        return []
 
 
 class ExportInstanceDefaults(object):

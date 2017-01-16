@@ -5,8 +5,10 @@ from django.utils.translation import ugettext as _
 from corehq.apps.es import users as user_es, filters
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
+from corehq.apps.locations.models import Location
 from corehq.apps.reports.util import namedtupledict
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.cases import get_wrapped_owner
+from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.es.users import user_ids_at_locations_and_descendants
 from corehq.util import remove_dups, flatten_list
 from dimagi.utils.decorators.memoized import memoized
@@ -152,6 +154,25 @@ class EmwfUtils(object):
 
         return static_options
 
+    def _group_to_choice_tuple(self, group):
+        return self.reporting_group_tuple(group)
+
+    def id_to_choice_tuple(self, id_):
+        for static_id, text in self.static_options:
+            if (id_ == static_id[3:] and static_id[:3] == "t__") or id_ == static_id:
+                return (static_id, text)
+
+        owner = get_wrapped_owner(id_)
+        if isinstance(owner, Group):
+            return self._group_to_choice_tuple(owner)
+        elif isinstance(owner, Location):
+            return self.location_tuple(owner.sql_location)
+        elif isinstance(owner, (CommCareUser, WebUser)):
+            return self.user_tuple(owner)
+        elif owner is None:
+            return None
+        else:
+            raise Exception("Unexpcted id")
 
 _UserData = namedtupledict('_UserData', (
     'users',
@@ -392,6 +413,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
 
 
 class LocationRestrictedMobileWorkerFilter(ExpandedMobileWorkerFilter):
+    slug = 'location_restricted_mobile_worker'
     options_url = 'new_emwf_options'
 
     def get_default_selections(self):
