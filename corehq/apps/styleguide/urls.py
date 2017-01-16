@@ -3,6 +3,7 @@ from django.conf.urls import include, url
 from corehq.apps.styleguide.views import (
     ClassBasedViewStyleGuideView,
     ColorsStyleGuide,
+    CSSStyleGuideView,
     FormsStyleGuideView,
     IconsStyleGuideView,
     MainStyleGuideView,
@@ -25,6 +26,8 @@ urlpatterns = [
         name=IconsStyleGuideView.urlname),
     url(r'^colors/$', ColorsStyleGuide.as_view(),
         name=ColorsStyleGuide.urlname),
+    url(r'^css/$', CSSStyleGuideView.as_view(),
+        name=CSSStyleGuideView.urlname),
     url(r'^views/$', ClassBasedViewStyleGuideView.as_view(),
         name=ClassBasedViewStyleGuideView.urlname),
     url(r'^docs/', include(doc_urlpatterns)),
