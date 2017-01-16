@@ -160,9 +160,9 @@ BASE_ADDRESS = 'localhost:8000'
 
 # Set your analytics IDs here for GA and pingdom RUM
 ANALYTICS_IDS = {
-    'GOOGLE_ANALYTICS_API_ID': '*******',
-    'KISSMETRICS_KEY': '*****',
-    'HUBSPOT_API_KEY': '*****',
+    'GOOGLE_ANALYTICS_API_ID': '',
+    'KISSMETRICS_KEY': '',
+    'HUBSPOT_API_KEY': '',
 }
 
 ANALYTICS_CONFIG = {

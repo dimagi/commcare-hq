@@ -243,8 +243,10 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         context.update({
             'domain_names': domain_names,
         })
+    linked_apps_enabled = toggles.LINKED_APPS.enabled(domain)
     context.update({
         'copy_app_form': copy_app_form,
+        'linked_apps_enabled': linked_apps_enabled,
     })
 
     context['latest_commcare_version'] = get_commcare_versions(request.user)[-1]

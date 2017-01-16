@@ -6,13 +6,13 @@
 {% block js %}{{ block.super }}
     <script src="{% static 'accounting/js/credits-tab.js' %}"></script>
     <script src="{% static 'accounting/js/stay-on-tab.js' %}"></script>
-    <script src="{% static 'accounting/ko/accounting.billing_account_form.ko.js' %}"></script>
+    <script src="{% static 'accounting/js/accounting.billing_account_form.ko.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
     <script>
         $(function () {
-            var BillingAccountForm = hqImport('accounting/ko/accounting.billing_account_form.ko.js').BillingAccountForm;
+            var BillingAccountForm = hqImport('accounting/js/accounting.billing_account_form.ko.js').BillingAccountForm;
             var baForm = new BillingAccountForm({{ basic_form.is_active.value|BOOL }});
             $('#account-form').koApplyBindings(baForm);
         });

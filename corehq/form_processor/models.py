@@ -19,6 +19,7 @@ from jsonobject.properties import BooleanProperty
 from lxml import etree
 from corehq.apps.sms.mixin import MessagingCaseContactMixin
 from corehq.blobs import get_blob_db
+from corehq.blobs.mixin import get_short_identifier
 from corehq.blobs.exceptions import NotFound, BadName
 from corehq.form_processor import signals
 from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
@@ -423,7 +424,7 @@ class AbstractAttachment(DisabledDbMixin, models.Model, SaveStateMixin):
 
         db = get_blob_db()
         bucket = self.blobdb_bucket()
-        info = db.put(content, bucket=bucket)
+        info = db.put(content, get_short_identifier(), bucket=bucket)
         self.md5 = info.md5_hash
         self.content_length = info.length
         self.blob_id = info.identifier
@@ -557,13 +558,12 @@ class SupplyPointCaseMixin(object):
     @property
     @memoized
     def location(self):
-        from corehq.apps.locations.models import Location
-        from couchdbkit.exceptions import ResourceNotFound
+        from corehq.apps.locations.models import SQLLocation
         if self.location_id is None:
             return None
         try:
-            return Location.get(self.location_id)
-        except ResourceNotFound:
+            return self.sql_location
+        except SQLLocation.DoesNotExist:
             return None
 
     @property

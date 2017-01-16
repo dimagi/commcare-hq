@@ -127,7 +127,7 @@
         <tbody data-bind="visible: buildState, css: {hide: false}" class="hide">
             <tr data-bind="visible: buildState() == 'pending', css: {hide: false}" class="hide">
                 <td colspan="9">
-                    <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}"/>
+                    <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}"/>
                     <span class="label label-success">
                         {% trans "Please wait while your CommCare Application builds" %}
                     </span>
@@ -159,7 +159,7 @@
                         <i class="fa fa-remove"></i>
                     </a>
                     <div class="pending hide" data-bind="visible: _deleteState() == 'pending', css: {hide: false}">
-                        <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
+                        <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator" />
                     </div>
 
                     <i class="fa fa-exclamation-circle" class="hide" data-bind="
@@ -257,7 +257,7 @@
             <tr>
                 <td colspan="9">
                     <div data-bind="visible: fetchState() === 'pending', css: {hide: false}" class="hide">
-                        <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}"/>
+                        <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}"/>
                     </div>
                     <div data-bind="visible: fetchState() === 'error', css: {hide: false}" class="hide">
                         <div class="alert alert-danger">

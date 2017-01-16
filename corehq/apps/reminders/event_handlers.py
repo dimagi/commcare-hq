@@ -5,7 +5,7 @@ from corehq.apps.reminders.models import (Message, METHOD_SMS,
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.ivr.models import Call
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reminders.util import get_unverified_number_for_recipient
 from corehq.apps.smsforms.app import submit_unfinished_form
 from corehq.apps.smsforms.models import get_session_by_session_id, SQLXFormsSession
@@ -126,7 +126,7 @@ def _get_obj_template_info(obj):
         return _get_mobile_user_template_info(obj)
     elif isinstance(obj, Group):
         return _get_group_template_info(obj)
-    elif isinstance(obj, Location):
+    elif isinstance(obj, SQLLocation):
         return _get_location_template_info(obj)
 
     return {}

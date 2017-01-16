@@ -3,6 +3,8 @@ from optparse import make_option
 from django.core.management.base import BaseCommand, CommandError
 
 from corehq.apps.app_manager.models import Application
+from corehq.apps.calendar_fixture.models import CalendarFixtureSettings
+from corehq.apps.locations.models import LocationFixtureConfiguration
 from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain, get_datasources_for_domain
 from corehq.blobs.mixin import BlobMixin
 from corehq.apps.userreports.models import (
@@ -131,9 +133,11 @@ class Command(BaseCommand):
 
         # TODO: FixtureOwnership - requires copying users & groups
 
+        existing_fixture_config = CalendarFixtureSettings.for_domain(self.existing_domain)
+        self.save_sql_copy(existing_fixture_config, self.new_domain)
+
     def copy_locations(self):
-        from corehq.apps.locations.models import LocationType
-        from corehq.apps.locations.models import Location
+        from corehq.apps.locations.models import LocationType, SQLLocation
         from corehq.apps.locations.views import LocationFieldsView
 
         self._copy_custom_data(LocationFieldsView.field_type)
@@ -146,30 +150,16 @@ class Command(BaseCommand):
             old_id, new_id = self.save_sql_copy(location_type, self.new_domain)
             location_types_map[old_id] = new_id
 
-        def copy_location_hierarchy(location, id_map):
-            new_lineage = []
-            for ancestor in location.lineage:
-                try:
-                    new_lineage.append(id_map[ancestor])
-                except KeyError:
-                    self.stderr.write("Ancestor {} for location {} missing".format(location._id, ancestor))
-            location.lineage = new_lineage
+        # MPTT sorts this queryset so we can just save in the same order
+        new_loc_ids_by_code = {}
+        for loc in SQLLocation.active_objects.filter(domain=self.existing_domain):
+            loc.location_id = ''
+            loc.parent_id = new_loc_ids_by_code[loc.parent.site_code] if loc.parent_id else None
+            _, new_id = self.save_sql_copy(loc, self.new_domain)
+            new_loc_ids_by_code[loc.site_code] = new_id
 
-            old_type_name = location.location_type_name
-            if not self.no_commmit:
-                location._sql_location_type = LocationType.objects.get(
-                    domain=self.new_domain,
-                    name=old_type_name,
-                )
-            children = location.get_children()
-            old_id, new_id = self.save_couch_copy(location, self.new_domain)
-            id_map[old_id] = new_id
-            for child in children:
-                copy_location_hierarchy(child, id_map)
-
-        locations = Location.root_locations(self.existing_domain)
-        for location in locations:
-            copy_location_hierarchy(location, {})
+        existing_fixture_config = LocationFixtureConfiguration.for_domain(self.existing_domain)
+        self.save_sql_copy(existing_fixture_config, self.new_domain)
 
     def copy_products(self):
         from corehq.apps.products.models import Product
@@ -336,16 +326,18 @@ class Command(BaseCommand):
         return old_id, new_id
 
     def save_sql_copy(self, model, new_domain):
-        old_id = model.id
+        old_pk = model.pk
+        model.pk = None
         model.domain = new_domain
-        model.id = None
+
         if self.no_commmit:
-            model.id = 'new-{}'.format(old_id)
+            model.pk = 'new-{}'.format(old_pk)
         else:
             model.save()
-        new_id = model.id
-        self.log_copy(model.__class__.__name__, old_id, new_id)
-        return old_id, new_id
+
+        new_pk = model.pk
+        self.log_copy(model.__class__.__name__, old_pk, new_pk)
+        return old_pk, new_pk
 
     def log_copy(self, name, old_id, new_id):
         self.stdout.write("{name}(id={old_id}) -> {name}(id={new_id})".format(

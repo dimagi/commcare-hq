@@ -74,7 +74,7 @@ class BulkArchiveForms(TestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['bulk_upload']['download_url'],
-                         '/static/data_interfaces/files/forms_bulk_example.xlsx')
+                         '/static/data_interfaces/xlsx/forms_bulk_example.xlsx')
 
         grant = Grant.objects.get(
             from_role=self.user_role.role,

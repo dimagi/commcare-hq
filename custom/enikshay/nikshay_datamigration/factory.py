@@ -9,13 +9,12 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.enikshay.case_utils import get_open_occurrence_case_from_person, get_open_episode_case_from_occurrence
 from custom.enikshay.exceptions import ENikshayCaseNotFound
-from custom.enikshay.nikshay_datamigration.models import Outcome, Followup
+from custom.enikshay.nikshay_datamigration.models import Outcome
 
 
 PERSON_CASE_TYPE = 'person'
 OCCURRENCE_CASE_TYPE = 'occurrence'
 EPISODE_CASE_TYPE = 'episode'
-TEST_CASE_TYPE = 'test'
 
 MockLocation = namedtuple('MockLocation', 'name location_id location_type')
 MockLocationType = namedtuple('MockLocationType', 'name code')
@@ -94,10 +93,7 @@ class EnikshayCaseFactory(object):
         person_structure = self.get_person_case_structure()
         ocurrence_structure = self.get_occurrence_case_structure(person_structure)
         episode_structure = self.get_episode_case_structure(ocurrence_structure)
-        test_structures = [
-            self.get_test_case_structure(followup, ocurrence_structure) for followup in self._followups
-        ]
-        return [episode_structure] + test_structures
+        return [episode_structure]
 
     def get_person_case_structure(self):
         kwargs = {
@@ -109,14 +105,12 @@ class EnikshayCaseFactory(object):
                     'age_entered': self.patient_detail.page,
                     'contact_phone_number': validate_phone_number(self.patient_detail.pmob),
                     'current_address': self.patient_detail.paddress,
-                    'current_address_district_choice': self.district.location_id,
-                    'current_address_state_choice': self.state.location_id,
                     'dob': date(date.today().year - self.patient_detail.page, 7, 1),
                     'dob_known': 'no',
                     'first_name': self.patient_detail.first_name,
                     'last_name': self.patient_detail.last_name,
                     'name': self.patient_detail.pname,
-                    'person_id': 'FROM_NIKSHAY_' + self.nikshay_id,
+                    'person_id': 'N-' + self.nikshay_id,
                     'secondary_contact_name_address': (
                         (self.patient_detail.cname or '')
                         + ', '
@@ -124,7 +118,6 @@ class EnikshayCaseFactory(object):
                     ),
                     'secondary_contact_phone_number': validate_phone_number(self.patient_detail.cmob),
                     'sex': self.patient_detail.sex,
-                    'tu_choice': self.tu.name,
 
                     'migration_created_case': 'true',
                 },
@@ -135,6 +128,9 @@ class EnikshayCaseFactory(object):
             if self.phi.location_type.code == 'phi':
                 kwargs['attrs']['owner_id'] = self.phi.location_id
                 kwargs['attrs']['update']['phi'] = self.phi.name
+                kwargs['attrs']['update']['tu_choice'] = self.tu.name
+                kwargs['attrs']['update']['current_address_district_choice'] = self.district.location_id
+                kwargs['attrs']['update']['current_address_state_choice'] = self.state.location_id
             else:
                 kwargs['attrs']['owner_id'] = ARCHIVED_CASE_OWNER_ID
                 kwargs['attrs']['update']['archive_reason'] = 'migration_not_phi_location'
@@ -204,6 +200,8 @@ class EnikshayCaseFactory(object):
                 'date_opened': self.patient_detail.pregdate1,
                 'owner_id': '-',
                 'update': {
+                    'adherence_schedule_date_start': self.patient_detail.treatment_initiation_date,
+                    'date_of_diagnosis': self.patient_detail.pregdate1,
                     'date_of_mo_signature': self.patient_detail.date_of_mo_signature,
                     'disease_classification': self.patient_detail.disease_classification,
                     'dots_99_enabled': 'false',
@@ -231,53 +229,14 @@ class EnikshayCaseFactory(object):
             )],
         }
 
+        if self.patient_detail.disease_classification == 'extra_pulmonary':
+            kwargs['attrs']['update']['site_choice'] = self.patient_detail.site_choice
+
         if self.existing_episode_case:
             kwargs['case_id'] = self.existing_episode_case.case_id
             kwargs['attrs']['create'] = False
         else:
             kwargs['attrs']['create'] = True
-
-        return CaseStructure(**kwargs)
-
-    def get_test_case_structure(self, followup, occurrence_structure):
-        kwargs = {
-            'attrs': {
-                'create': True,
-                'case_type': TEST_CASE_TYPE,
-                'owner_id': '-',
-                'update': {
-                    'date_tested': followup.TestDate,
-
-                    'migration_created_case': 'true',
-                    'migration_followup_id': followup.id,
-                },
-            },
-            'indices': [CaseIndex(
-                occurrence_structure,
-                identifier='host',
-                relationship=CASE_INDEX_EXTENSION,
-                related_type=occurrence_structure.attrs['case_type'],
-            )],
-            # this prevents creating duplicate occurrence data on creation of the test cases
-            'walk_related': False,
-        }
-
-        if self.existing_occurrence_case:
-            matching_test_case = next((
-                extension_case for extension_case in self.case_accessor.get_cases([
-                    index.referenced_id for index in
-                    self.existing_occurrence_case.reverse_indices
-                ])
-                if (
-                    extension_case.type == TEST_CASE_TYPE
-                    and followup.id == int(extension_case.dynamic_case_properties().get('migration_followup_id', -1))
-                )
-            ), None)
-            if matching_test_case:
-                kwargs['case_id'] = matching_test_case.case_id
-                kwargs['attrs']['create'] = False
-            else:
-                kwargs['attrs']['create'] = True
 
         return CaseStructure(**kwargs)
 
@@ -289,11 +248,6 @@ class EnikshayCaseFactory(object):
             return zero_or_one_outcomes[0]
         else:
             return None
-
-    @property
-    @memoized
-    def _followups(self):
-        return Followup.objects.filter(PatientID=self.patient_detail)
 
     @property
     def state(self):
@@ -326,8 +280,42 @@ class EnikshayCaseFactory(object):
 
 
 def get_nikshay_codes_to_location(domain):
+    """
+    Assuming that if a phi has a nikshay-code, its TU, DTO, and STO do too
+    """
     return {
-        location.metadata.get('nikshay_code'): location
-        for location in SQLLocation.objects.filter(domain=domain)
-        if 'nikshay_code' in location.metadata
+        nikshay_code: location
+        for phi in SQLLocation.objects.filter(domain=domain).filter(location_type__code='phi')
+        for nikshay_code, location in _get_all_nikshay_codes(phi)
+        if 'nikshay_code' in phi.metadata
     }
+
+
+def _get_all_nikshay_codes(phi):
+    tu = phi.parent
+    dto = tu.parent
+    sto = dto.parent.parent
+
+    phi_code = phi.metadata.get('nikshay_code')
+    tu_code = tu.metadata.get('nikshay_code')
+    dto_code = dto.metadata.get('nikshay_code')
+    sto_code = sto.metadata.get('nikshay_code')
+
+    return [
+        (
+            "%s-%s-%s-%s" % (sto_code, dto_code, tu_code, phi_code),
+            phi
+        ),
+        (
+            "%s-%s-%s" % (sto_code, dto_code, tu_code),
+            tu
+        ),
+        (
+            "%s-%s" % (sto_code, dto_code),
+            dto
+        ),
+        (
+            "%s" % sto_code,
+            sto
+        ),
+    ]

@@ -89,7 +89,6 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface):
                    for user in active_users],
             groups=[dict(ownerid=group.get_id, name=group.name, type="group")
                     for group in self.all_case_sharing_groups],
-            user_ids=self.user_ids,
         )
         return context
 

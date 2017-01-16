@@ -7,21 +7,25 @@ describe('HQ.Events', function() {
             origin = 'myorigin',
             triggerSpy,
             requestSpy,
+            warnSpy,
             dummyEvent;
         beforeEach(function() {
             triggerSpy = sinon.spy();
             requestSpy = sinon.spy();
+            warnSpy = sinon.spy();
             dummyEvent = {
                 origin: origin,
                 data: {},
             };
             sinon.stub(FormplayerFrontend, 'trigger', triggerSpy);
             sinon.stub(FormplayerFrontend, 'request', requestSpy);
+            sinon.stub(window.console, 'warn', warnSpy);
         });
 
         afterEach(function() {
             FormplayerFrontend.trigger.restore();
             FormplayerFrontend.request.restore();
+            window.console.warn.restore();
         });
 
         it('should allow the back action', function() {
@@ -44,18 +48,21 @@ describe('HQ.Events', function() {
         it('should not allow the wrong origin', function() {
             var receiver = new Receiver('wrong-origin');
             dummyEvent.data.action = Actions.BACK;
-            assert.throws(function() { receiver(dummyEvent); }, /Disallowed origin/);
+            receiver(dummyEvent);
+            assert.isTrue(warnSpy.called);
         });
 
         it('should not allow no action', function() {
             var receiver = new Receiver(origin);
-            assert.throws(function() { receiver(dummyEvent); }, /must have action/);
+            receiver(dummyEvent);
+            assert.isTrue(warnSpy.called);
         });
 
         it('should not allow unknown action', function() {
             var receiver = new Receiver(origin);
             dummyEvent.data.action = 'unknown';
-            assert.throws(function() { receiver(dummyEvent); }, /Invalid action/);
+            receiver(dummyEvent);
+            assert.isTrue(warnSpy.called);
         });
     });
 });

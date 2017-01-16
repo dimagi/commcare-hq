@@ -27,7 +27,7 @@
                 "display": "Case Open Date",
                 "field": "opened_on",
                 "slug": "date",
-                "type": "quarter"
+                "type": "date"
             },
             {
                 "compare_as_string": false,
@@ -40,6 +40,13 @@
                     "type": "location"
                 },
                 "display": "Location"
+            },
+            {
+                "type": "pre",
+                "field": "closed",
+                "slug": "closed",
+                "datatype": "integer",
+                "pre_value": 0
             }
         ],
         "columns": [

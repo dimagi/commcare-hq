@@ -1,2 +1,0 @@
-<p>Deactivate a user if they are no longer active, and they will stop appearing in reports to reduce clutter.
-Deactivating is completely reversible, so you can always reactivate them later.</p>

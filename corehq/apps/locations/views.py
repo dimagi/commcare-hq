@@ -51,7 +51,7 @@ from .permissions import (
     user_can_edit_any_location,
     can_edit_any_location,
 )
-from .models import Location, LocationType, SQLLocation, filter_for_archived
+from .models import LocationType, SQLLocation, filter_for_archived
 from .forms import LocationForm, UsersAtLocationForm
 from .tree_utils import assert_no_cycles
 from .util import load_locs_json, location_hierarchy_config, dump_locations
@@ -573,7 +573,7 @@ def unarchive_location(request, domain, loc_id):
         loc = SQLLocation.objects.get(domain=domain, location_id=loc_id)
     except SQLLocation.DoesNotExist:
         raise Http404()
-    loc.couch_location.unarchive()
+    loc.unarchive()
     return json_response({
         'success': True,
         'message': _("Location '{location_name}' has successfully been {action}.").format(
@@ -889,7 +889,7 @@ def location_export(request, domain):
         return HttpResponseRedirect(reverse(LocationsListView.urlname, args=[domain]))
     include_consumption = request.GET.get('include_consumption') == 'true'
     response = HttpResponse(content_type=Format.from_format('xlsx').mimetype)
-    response['Content-Disposition'] = 'attachment; filename="locations.xlsx"'
+    response['Content-Disposition'] = 'attachment; filename="{}_locations.xlsx"'.format(domain)
     dump_locations(response, domain, include_consumption=include_consumption)
     return response
 

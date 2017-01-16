@@ -38,6 +38,13 @@
                 "slug": "episode_type",
                 "datatype": "string",
                 "pre_value": "confirmed_tb"
+            },
+            {
+                "type": "pre",
+                "field": "closed",
+                "slug": "closed",
+                "datatype": "integer",
+                "pre_value": 0
             }
         ],
         "columns": [

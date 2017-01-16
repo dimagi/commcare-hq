@@ -63,9 +63,9 @@ def simple_post_with_cached_timeout(data, url, expiry=60 * 60, force_send=False,
         raise RequestConnectionError(e.message)
 
     if not 200 <= resp.status_code < 300:
-        message = u'Status Code {}: {}'.format(resp.status_code, resp.reason)
+        message = u'Status Code {}: {}. {}'.format(resp.status_code, resp.reason, getattr(resp, 'content', None))
         cache.set(key, message, expiry)
-        raise RequestConnectionError(message)
+
     return resp
 
 
@@ -297,13 +297,19 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         """handle a successful post
         """
         generator = self.get_payload_generator(self.format_or_default_format())
-        return generator.handle_success(response, self.payload_doc(repeat_record))
+        return generator.handle_success(response, self.payload_doc(repeat_record), repeat_record)
 
     def handle_failure(self, response, repeat_record):
         """handle a failed post
         """
         generator = self.get_payload_generator(self.format_or_default_format())
-        return generator.handle_failure(response, self.payload_doc(repeat_record))
+        return generator.handle_failure(response, self.payload_doc(repeat_record), repeat_record)
+
+    def handle_exception(self, exception, repeat_record):
+        """handle an exception during a post
+        """
+        generator = self.get_payload_generator(self.format_or_default_format())
+        return generator.handle_exception(exception, repeat_record)
 
 
 class FormRepeater(Repeater):
@@ -582,6 +588,7 @@ class RepeatRecord(Document):
         """handle internal exceptions
         """
         self._fail(unicode(exception), None)
+        self.repeater.handle_exception(exception, self)
 
     def _fail(self, reason, response):
         if self.repeater.allow_retries(response):

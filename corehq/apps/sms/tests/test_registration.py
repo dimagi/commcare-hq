@@ -60,6 +60,8 @@ class RegistrationTestCase(BaseSMSTest):
 
         self.app_id = 'app_id'
 
+        self.default_user_data = {'commcare_project': self.domain}
+
     def tearDown(self):
         delete_domain_phone_numbers(self.domain)
         SelfRegistrationInvitation.objects.filter(domain=self.domain).delete()
@@ -166,7 +168,7 @@ class RegistrationTestCase(BaseSMSTest):
         incoming('+999123', 'JOIN {} WORKER test'.format(self.domain), self.backend.hq_api_id)
         user = CommCareUser.get_by_username(format_username('test', self.domain))
         self.assertIsNotNone(user)
-        self.assertEqual(user.user_data, user_data)
+        self.assertEqual(user.user_data, dict(self.default_user_data, **user_data))
         self.assertEqual(PhoneNumber.by_phone('999123').owner_id, user.get_id)
 
         self.assertLastOutgoingSMS('+999123', [_MESSAGES[MSG_REGISTRATION_WELCOME_MOBILE_WORKER]])
@@ -235,7 +237,7 @@ class RegistrationTestCase(BaseSMSTest):
 
         user = CommCareUser.get_by_username(format_username('new_user', self.domain))
         self.assertIsNotNone(user)
-        self.assertEqual(user.user_data, user_data)
+        self.assertEqual(user.user_data, dict(self.default_user_data, **user_data))
         self.assertEqual(user.email, 'new_user@dimagi.com')
         self.assertEqual(PhoneNumber.by_phone('999123').owner_id, user.get_id)
 
@@ -287,7 +289,7 @@ class RegistrationTestCase(BaseSMSTest):
 
         user = CommCareUser.get_by_username(format_username('new_user', self.domain))
         self.assertIsNotNone(user)
-        self.assertEqual(user.user_data, {})
+        self.assertEqual(user.user_data, self.default_user_data)
         self.assertEqual(user.email, 'new_user@dimagi.com')
         self.assertEqual(PhoneNumber.by_phone('999123').owner_id, user.get_id)
 

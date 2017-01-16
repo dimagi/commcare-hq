@@ -768,6 +768,26 @@ class XForm(WrappedNode):
                 if key.startswith(vellum_ns):
                     del node.attrib[key]
 
+    def add_missing_instances(self):
+        from corehq.apps.app_manager.suite_xml.post_process.instances import get_all_instances_referenced_in_xpaths
+        instance_declarations = self.get_instance_ids()
+        missing_unknown_instances = set()
+        instances, unknown_instance_ids = get_all_instances_referenced_in_xpaths('', [self.render()])
+        for instance_id in unknown_instance_ids:
+            if instance_id not in instance_declarations:
+                missing_unknown_instances.add(instance_id)
+
+        if missing_unknown_instances:
+            instance_ids = "', '".join(missing_unknown_instances)
+            raise XFormValidationError(_(
+                "The form is missing some instance declarations "
+                "that can't be automatically added: '%(instance_ids)s'"
+            ) % {'instance_ids': instance_ids})
+
+        for instance in instances:
+            if instance.id not in instance_declarations:
+                self.add_instance(instance.id, instance.src)
+
     @requires_itext()
     def rename_language(self, old_code, new_code):
         trans_node = self.translations().get(old_code)
@@ -2151,36 +2171,3 @@ def infer_vellum_type(control, bind):
         })
         return None
     return result['name']
-
-
-def find_missing_instances(wrapped_xform):
-    from corehq.apps.app_manager.suite_xml.post_process.instances import get_all_instances_referenced_in_xpaths
-    instance_declarations = wrapped_xform.get_instance_ids()
-    missing_instances = set()
-    missing_unknown_instance = set()
-    instances, unknown_instance_ids = get_all_instances_referenced_in_xpaths('', [wrapped_xform.render()])
-    for instance in instances:
-        if instance.id not in instance_declarations:
-            missing_instances.add(instance.id)
-    for instance_id in unknown_instance_ids:
-        if instance_id not in instance_declarations:
-            missing_unknown_instance.add(instance_id)
-
-    return missing_instances, missing_unknown_instance
-
-
-def check_for_missing_instances(wrapped_xform):
-    missing_instances, missing_unknown_instances = find_missing_instances(wrapped_xform)
-    message_parts = []
-    if missing_instances:
-        instance_ids = "','".join(missing_instances)
-        message_parts.append(_("Known instances: '{}'").format(instance_ids))
-    if missing_unknown_instances:
-        instance_ids = "','".join(missing_unknown_instances)
-        message_parts.append(_("Unknown instances: '{}'").format(instance_ids))
-
-    if message_parts:
-        raise XFormValidationError(
-            'The form is missing some instance declarations: {}'.format(', '.join(message_parts)),
-            validation_problems=[]
-        )

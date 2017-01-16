@@ -99,6 +99,10 @@ class AllTBPatientsReport(EnikshayReport):
                 data
             ),
             generate_for_all_outcomes(
+                _('Other previously treated, Clinically diagnosed'), 'other_previously_treated_patients',
+                data
+            ),
+            generate_for_all_outcomes(
                 _('HIV - reactive all'), 'hiv_reactive_patients',
                 data
             ),

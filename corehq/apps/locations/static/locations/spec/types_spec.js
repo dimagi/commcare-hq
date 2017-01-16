@@ -3,8 +3,8 @@
 
 describe('Location Types', function() {
 
-    var LocationSettingsViewModel = hqImport('locations/ko/location_types.js').LocationSettingsViewModel,
-        LocationTypeModel = hqImport('locations/ko/location_types.js').LocationTypeModel;
+    var LocationSettingsViewModel = hqImport('locations/js/location_types.js').LocationSettingsViewModel,
+        LocationTypeModel = hqImport('locations/js/location_types.js').LocationTypeModel;
 
     var extract_name = function(loc_type){
         return loc_type.name();
@@ -77,22 +77,12 @@ describe('Location Types', function() {
         });
 
         describe('include_without_expanding_options', function(){
-            it('Provides all levels above itself if no expand from is set', function(){
+            it('Provides all levels above itself', function(){
                 var returned_loc_types = _.map(
                     this.block_model.include_without_expanding_options(),
                     extract_name
                 ),
-                    desired_loc_types_returned = _.map([this.state_model, this.district_model], extract_name);
-                assert.sameMembers(desired_loc_types_returned, returned_loc_types);
-            });
-
-            it('Provides everything above the expand from level', function(){
-                this.block_model.expand_from(this.district_model.pk);
-                var returned_loc_types = _.map(
-                    this.block_model.include_without_expanding_options(),
-                    extract_name
-                ),
-                    desired_loc_types_returned = _.map([this.state_model], extract_name);
+                    desired_loc_types_returned = _.map([this.state_model, this.district_model, this.block_model], extract_name);
                 assert.sameMembers(desired_loc_types_returned, returned_loc_types);
             });
 

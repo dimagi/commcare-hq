@@ -246,7 +246,7 @@ class OnDiskExportWriter(ExportWriter):
 
     def _init(self):
         self.tables = OrderedDict()
-        self.table_names = {}
+        self.table_names = OrderedDict()
 
     def _init_table(self, table_index, table_title):
         writer = self.writer_class()

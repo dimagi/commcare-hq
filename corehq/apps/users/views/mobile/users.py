@@ -671,6 +671,9 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
         # backend pages start at 0
         users_query = self._user_query(query, page - 1, limit)
+
+        # run with a blank query to fetch total records with same scope as in search
+        total_records = self._user_query('', 0, 0).count()
         if in_data.get('showDeactivatedUsers', False):
             users_query = users_query.show_only_inactive()
         users_data = users_query.run()
@@ -680,6 +683,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 'total': users_data.total,
                 'page': page,
                 'query': query,
+                'total_records': total_records
             },
             'success': True,
         }
@@ -877,7 +881,7 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
             if 'location_id' in request.GET:
                 try:
                     loc = SQLLocation.objects.get(domain=self.domain,
-                                                  location_id=request['location_id'])
+                                                  location_id=request.GET['location_id'])
                 except SQLLocation.DoesNotExist:
                     raise Http404()
                 user.set_location(loc)
