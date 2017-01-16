@@ -105,7 +105,8 @@ class FlatLocationSerializer(object):
         )
         location_type_attrs = ['{}_id'.format(t) for t in all_types if t is not None]
 
-        return [self._get_fixture_node(fixture_id, restore_user, all_locations, location_type_attrs)]
+        return [self._get_schema_node(fixture_id, location_type_attrs),
+                self._get_fixture_node(fixture_id, restore_user, all_locations, location_type_attrs)]
 
     def _get_fixture_node(self, fixture_id, restore_user, all_locations, location_type_attrs):
         root_node = Element('fixture', {'id': fixture_id, 'user_id': restore_user.user_id, 'indexed': 'true'})
@@ -128,6 +129,16 @@ class FlatLocationSerializer(object):
             outer_node.append(location_node)
 
         return root_node
+
+    def _get_schema_node(self, fixture_id, location_type_attrs):
+        indices_node = Element('indices')
+        for index_attr in location_type_attrs + ['id', 'type']:
+            element = Element('index')
+            element.text = '@{}'.format(index_attr)
+            indices_node.append(element)
+        node = Element('schema', {'id': fixture_id})
+        node.append(indices_node)
+        return node
 
 
 def should_sync_hierarchical_fixture(project):
