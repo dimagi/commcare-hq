@@ -186,10 +186,7 @@ class BaseEditUserView(BaseUserSettingsView):
     @property
     @memoized
     def editable_role_choices(self):
-        roles = UserRole.by_domain(self.domain)
-        if not self.request.couch_user.is_domain_admin(self.domain):
-            roles = filter(lambda role: role.is_non_admin_editable, roles)
-        return [UserRole.role_to_choice(role) for role in roles]
+        return _get_editable_role_choices(self.domain, self.request.couch_user, allow_admin_role=False)
 
     @property
     def can_change_user_roles(self):
@@ -297,12 +294,7 @@ class EditWebUserView(BaseEditUserView):
 
     @property
     def user_role_choices(self):
-        editable_choices = self.editable_role_choices
-        if not self.request.couch_user.is_domain_admin(self.domain):
-            return editable_choices
-        else:
-            # domain admins can also grant admin to others
-            return [UserRole.role_to_choice(AdminUserRole(domain=self.domain))] + editable_choices
+        return _get_editable_role_choices(self.domain, self.request.couch_user, allow_admin_role=True)
 
     @property
     def form_user_update_permissions(self):
@@ -1080,3 +1072,12 @@ def register_fcm_device_token(request, domain, couch_user_id, device_token):
     user.fcm_device_token = device_token
     user.save()
     return HttpResponse()
+
+
+def _get_editable_role_choices(domain, couch_user, allow_admin_role):
+    roles = UserRole.by_domain(domain)
+    if not couch_user.is_domain_admin(domain):
+        roles = filter(lambda role: role.is_non_admin_editable, roles)
+    elif allow_admin_role:
+        roles = [AdminUserRole(domain=domain)] + roles
+    return [UserRole.role_to_choice(role) for role in roles]
