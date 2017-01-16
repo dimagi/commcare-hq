@@ -14,7 +14,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.tests.util import bootstrap_domain
 from corehq.apps.users.models import CommCareUser
 
-from corehq.apps.app_manager.tests.util import TestXmlMixin
+from corehq.apps.app_manager.tests.util import TestXmlMixin, extract_xml_partial
 from casexml.apps.case.xml import V2
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 
@@ -231,6 +231,19 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
             'include_without_expanding_same_level',
             ['Massachusetts', 'New York', 'Middlesex', 'Suffolk', 'New York City', 'Boston', 'Revere']
         )  # (New York City is of type "county")
+
+    @flag_enabled('FLAT_LOCATION_FIXTURE')
+    def test_index_location_fixtures(self):
+        self.user._couch_user.set_location(self.locations['Massachusetts'])
+        expected_result = self._assemble_expected_fixture(
+            'index_location_fixtures',
+            ['Massachusetts', 'Suffolk', 'Boston', 'Revere', 'Middlesex', 'Cambridge', 'Somerville'],
+        )
+        expected_fixture = extract_xml_partial(expected_result, './fixture')
+        fixture_nodes = flat_location_fixture_generator(self.user, V2)
+        self.assertEqual(len(fixture_nodes), 1)
+        fixture = extract_xml_partial(ElementTree.tostring(fixture_nodes[0]), '.')
+        self.assertXmlEqual(expected_fixture, fixture)
 
 
 @mock.patch.object(Domain, 'uses_locations', lambda: True)  # removes dependency on accounting
