@@ -245,7 +245,10 @@ class EditCommCareUserView(BaseEditUserView):
 
     @property
     def user_role_choices(self):
-        return UserRole.commcareuser_role_choices(self.domain)
+        return [('none', _('(none)'))] + [
+            UserRole.role_to_choice(role)
+            for role in list(UserRole.by_domain(self.domain))
+        ]
 
     @property
     def can_change_user_roles(self):

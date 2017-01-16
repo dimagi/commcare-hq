@@ -315,13 +315,6 @@ class UserRole(QuickCachedDocumentMixin, Document):
         return [cls.role_to_choice(role) for role in
                 [AdminUserRole(domain=domain)] + list(cls.by_domain(domain))]
 
-    @classmethod
-    def commcareuser_role_choices(cls, domain):
-        return [('none', _('(none)'))] + [
-            cls.role_to_choice(role)
-            for role in list(cls.by_domain(domain))
-        ]
-
     @staticmethod
     def role_to_choice(role):
         return (role.get_qualified_id(), role.name or _('(No Name)'))
