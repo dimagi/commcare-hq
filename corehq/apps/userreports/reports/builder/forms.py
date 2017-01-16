@@ -1242,13 +1242,71 @@ class ConfigureListReportForm(ConfigureNewReportBase):
                     )
                 )
             return cols
-        return [ColumnViewModel(
-                    display_text='',
+        else:
+            return self._get_default_columns()
+
+    def _get_default_columns(self):
+        if self.source_type == "case":
+            return self._get_default_case_report_columns()
+        else:
+            return self._get_default_form_report_columns()
+
+    def _get_default_case_report_columns(self):
+        cols = []
+        cols.append(ColumnViewModel(
+            display_text="Name",
+            exists_in_current_version=True,
+            property="name",
+            data_source_field=self.data_source_properties['name'].column_id,
+            calculation="Count per Choice"
+        ))
+        cols.append(ColumnViewModel(
+            display_text="Owner",
+            exists_in_current_version=True,
+            property="computed/owner_name",
+            data_source_field=self.data_source_properties['computed/owner_name'].column_id,
+            calculation="Count per Choice"
+        ))
+        case_props_found = 0
+        for prop in self.data_source_properties.values():
+            if prop.type == "case_property":
+                case_props_found += 1
+                cols.append(ColumnViewModel(
+                    display_text=prop.text,
                     exists_in_current_version=True,
-                    property=None,
-                    data_source_field=None,
-                    calculation=_('Count per Choice')
-                )]
+                    property=prop.id,
+                    data_source_field=prop.column_id,  #
+                    calculation="Count per Choice",
+                ))
+                if case_props_found == 3:
+                    break
+        return cols
+
+    def _get_default_form_report_columns(self):
+        cols = []
+        prop = self.data_source_properties['username']
+        cols.append(ColumnViewModel(
+            display_text=prop.text,
+            exists_in_current_version=True,
+            property=prop.id,
+            data_source_field=prop.column_id,
+            calculation="Count per Choice"
+        ))
+        for prop in self.data_source_properties.values():
+            questions_found = 0
+            if prop.type == "question":
+                questions_found += 1
+                cols.append(ColumnViewModel(
+                    display_text=prop.text,
+                    exists_in_current_version=True,
+                    property=prop.id,
+                    data_source_field=prop.column_id,
+                    calculation="Count per Choice",
+                ))
+                if questions_found == 4:
+                    break
+        return cols
+
 
     @property
     def _report_columns(self):
