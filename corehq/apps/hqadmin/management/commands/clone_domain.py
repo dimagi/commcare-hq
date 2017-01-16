@@ -24,6 +24,7 @@ types = [
     'user_fields',
     'user_roles',
     'auto_case_updates',
+    'repeaters',
 ]
 
 help_text = """Clone a domain and it's data:
@@ -36,6 +37,7 @@ help_text = """Clone a domain and it's data:
   * custom user fields
   * custom user roles
   * auto case update rules
+  * repeaters
 """
 
 
@@ -90,6 +92,9 @@ class Command(BaseCommand):
 
         if self._clone_type(options, 'auto_case_updates'):
             self.copy_auto_case_update_rules()
+
+        if self._clone_type(options, 'repeaters'):
+            self.copy_repeaters()
 
     def clone_domain_and_settings(self):
         from corehq.apps.domain.models import Domain
@@ -292,6 +297,17 @@ class Command(BaseCommand):
             for action in actions:
                 action.rule = rule
                 self.save_sql_copy(action, self.new_domain)
+
+    def copy_repeaters(self):
+        from corehq.apps.repeaters.models import Repeater
+        from corehq.apps.repeaters.utils import get_all_repeater_types
+        from corehq.apps.repeaters.dbaccessors import get_repeaters_by_domain
+        for repeater in get_repeaters_by_domain(self.existing_domain):
+            self.save_couch_copy(repeater, self.new_domain)
+
+        Repeater.by_domain.clear(Repeater, self.new_domain)
+        for repeater_type in get_all_repeater_types().values():
+            Repeater.by_domain.clear(repeater_type, self.new_domain)
 
     def _copy_custom_data(self, type_):
         from corehq.apps.custom_data_fields.dbaccessors import get_by_domain_and_type
