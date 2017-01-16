@@ -509,6 +509,10 @@ class ExportInstance(BlobMixin, Document):
     export_format = StringProperty(default='csv')
     app_id = StringProperty()
 
+    # The id of the schema that was used to generate the instance.
+    # Used for information and debugging purposes
+    schema_id = StringProperty()
+
     # Whether to split multiselects into multiple columns
     split_multiselects = BooleanProperty(default=False)
 
@@ -571,6 +575,7 @@ class ExportInstance(BlobMixin, Document):
 
         instance.name = instance.name or instance.defaults.get_default_instance_name(schema)
         instance.app_id = schema.app_id
+        instance.schema_id = schema._id
 
         latest_app_ids_and_versions = get_latest_app_ids_and_versions(
             schema.domain,
