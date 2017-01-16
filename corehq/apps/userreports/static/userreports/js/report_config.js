@@ -31,13 +31,15 @@ var reportBuilder = function () {
         );
     };
     ColumnList.prototype.buttonHandler = function () {
-        var item = this._createListItem();
-        item.property(this.newProperty());
-        item.calculation(item.getDefaultCalculation());
-        this.newProperty(null);
-        this.suspendReorderColumns = true;
-        this.columns.push(item);
-        this.suspendReorderColumns = false;
+        if (this.newProperty()) {
+            var item = this._createListItem();
+            item.property(this.newProperty());
+            item.calculation(item.getDefaultCalculation());
+            this.newProperty(null);
+            this.suspendReorderColumns = true;
+            this.columns.push(item);
+            this.suspendReorderColumns = false;
+        }
     };
     ColumnList.prototype.reorderColumns = function () {
         var items = {};
