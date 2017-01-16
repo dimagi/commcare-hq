@@ -326,6 +326,7 @@ class EditWebUserView(BaseEditUserView):
     def page_context(self):
         ctx = {
             'form_uneditable': BaseUserInfoForm(),
+            'can_edit_role': self.can_change_user_roles,
         }
         if (self.request.project.commtrack_enabled or
                 self.request.project.uses_locations):
