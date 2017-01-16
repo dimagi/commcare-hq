@@ -2096,11 +2096,17 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     def validate_detail_columns(self, columns):
         from corehq.apps.app_manager.suite_xml.const import FIELD_TYPE_LOCATION
         from corehq.apps.locations.util import parent_child
+        from corehq.apps.locations.fixtures import should_sync_hierarchical_fixture
+
         hierarchy = None
         for column in columns:
             if column.field_type == FIELD_TYPE_LOCATION:
-                hierarchy = hierarchy or parent_child(self.get_app().domain)
+                domain = self.get_app().domain
+                project = Domain.get_by_name(domain)
                 try:
+                    if not should_sync_hierarchical_fixture(project):
+                        raise LocationXpathValidationError(_('Location references not supported in Case List.'))
+                    hierarchy = hierarchy or parent_child(domain)
                     LocationXpath('').validate(column.field_property, hierarchy)
                 except LocationXpathValidationError, e:
                     yield {
