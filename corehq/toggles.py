@@ -722,11 +722,22 @@ HSPH_HACK = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-USE_FORMPLAYER_FRONTEND = StaticToggle(
+USE_FORMPLAYER_FRONTEND = PredictablyRandomToggle(
     'use_formplayer_frontend',
     'Use New CloudCare',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
+    randomness=0.3,
+    always_disabled=[
+        'hsph-betterbirth',
+        'figo-ppiud-srilanka',
+        'broadreach-sa',
+        'goal-global',
+        'ipm-senegal',
+        'madla-malaria',
+        'myrice',
+        'pact',
+    ]
 )
 
 FIXTURE_CASE_SELECTION = StaticToggle(
