@@ -86,7 +86,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             var self = this;
             var detailObjects = model.models;
             // If we have no details, just select the entity
-            if (detailObjects === null || detailObjects === undefined || detailObjects.length == 0) {
+            if (detailObjects === null || detailObjects === undefined || detailObjects.length === 0) {
                 FormplayerFrontend.trigger("menu:select", caseId);
                 return;
             }
