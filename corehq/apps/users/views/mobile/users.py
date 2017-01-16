@@ -248,10 +248,6 @@ class EditCommCareUserView(BaseEditUserView):
         return [('none', _('(none)'))] + self.editable_role_choices
 
     @property
-    def can_change_user_roles(self):
-        return bool(self.editable_role_choices) and self.request.couch_user.user_id != self.editable_user_id
-
-    @property
     def existing_role(self):
         role = self.editable_user.get_role(self.domain)
         if role is None:

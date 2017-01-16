@@ -193,6 +193,10 @@ class BaseEditUserView(BaseUserSettingsView):
         return [UserRole.role_to_choice(role) for role in roles]
 
     @property
+    def can_change_user_roles(self):
+        return bool(self.editable_role_choices) and self.request.couch_user.user_id != self.editable_user_id
+
+    @property
     @memoized
     def form_user_update(self):
         if self.user_update_form_class is None:
