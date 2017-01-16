@@ -245,15 +245,19 @@ class EditCommCareUserView(BaseEditUserView):
 
     @property
     def user_role_choices(self):
-        return [('none', _('(none)'))] + [
-            UserRole.role_to_choice(role)
-            for role in list(UserRole.by_domain(self.domain))
-        ]
+        return [('none', _('(none)'))] + self.editable_role_choices
+
+    @property
+    @memoized
+    def editable_role_choices(self):
+        roles = UserRole.by_domain(self.domain)
+        if not self.request.couch_user.is_domain_admin(self.domain):
+            roles = filter(lambda role: role.is_non_admin_editable, roles)
+        return [UserRole.role_to_choice(role) for role in roles]
 
     @property
     def can_change_user_roles(self):
-        return ((self.request.user.is_superuser or self.request.couch_user.can_edit_web_users(domain=self.domain))
-                and self.request.couch_user.user_id != self.editable_user_id)
+        return bool(self.editable_role_choices) and self.request.couch_user.user_id != self.editable_user_id
 
     @property
     def existing_role(self):
