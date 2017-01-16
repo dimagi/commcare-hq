@@ -285,7 +285,12 @@ class EditWebUserView(BaseEditUserView):
 
     @property
     def user_role_choices(self):
-        return UserRole.role_choices(self.domain)
+        editable_choices = self.editable_role_choices
+        if not self.request.couch_user.is_domain_admin(self.domain):
+            return editable_choices
+        else:
+            # domain admins can also grant admin to others
+            return [UserRole.role_to_choice(AdminUserRole(domain=self.domain))] + editable_choices
 
     @property
     @memoized
