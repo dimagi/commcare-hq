@@ -80,19 +80,30 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         // The format of the filter. This field is not used if the
         // PropertyListItem is representing columns
         this.format = ko.observable("");
-        // The aggregation type for this column. This field is not used if
-        // the PropertyListItem represents columns in a non-aggregated report
-        // or a filter
-        this.calculation = ko.observable(
-            hqImport('userreports/js/constants.js').DEFAULT_CALCULATION_OPTIONS[0]
-        );
+
+        var constants = hqImport('userreports/js/constants.js');
+
         this.calculationOptions = ko.pureComputed(function() {
             var propObject = self.getPropertyObject(self.property());
             if (propObject) {
                 return propObject.aggregation_options;
             }
-            return hqImport('userreports/js/constants.js').DEFAULT_CALCULATION_OPTIONS;
+            return constants.DEFAULT_CALCULATION_OPTIONS;
         });
+
+        this.getDefaultCalculation = function () {
+            if (_.contains(self.calculationOptions(), constants.SUM)) {
+                return constants.SUM;
+            } else {
+                return constants.COUNT_PER_CHOICE;
+            }
+        };
+
+        // The aggregation type for this column. This field is not used if
+        // the PropertyListItem represents columns in a non-aggregated report
+        // or a filter
+        this.calculation = ko.observable(this.getDefaultCalculation());
+
         // for default filters, the value to filter by
         this.filterValue = ko.observable("");
         // for default filters, the dynamic date operator to filter by
@@ -143,11 +154,7 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         options = options || {};
 
         var wrapListItem = function (item) {
-            var i = new PropertyListItem(
-                self.getDefaultDisplayText.bind(self),
-                self.getPropertyObject.bind(self),
-                self.hasDisplayCol
-            );
+            var i = self._createListItem();
             i.existsInCurrentVersion(item.exists_in_current_version);
             i.property(getOrDefault(item, 'property', ""));
             i.dataSourceField(getOrDefault(item, 'data_source_field', null));
@@ -198,6 +205,13 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         });
         this.showWarnings = ko.observable(false);
     };
+    PropertyList.prototype._createListItem = function() {
+        return new PropertyListItem(
+            this.getDefaultDisplayText.bind(this),
+            this.getPropertyObject.bind(this),
+            this.hasDisplayCol
+        );
+    };
     PropertyList.prototype.validate = function () {
         this.showWarnings(true);
         var columnsValid = !_.contains(
@@ -214,10 +228,7 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         return columnsValid && columnLengthValid;
     };
     PropertyList.prototype.buttonHandler = function () {
-        this.columns.push(new PropertyListItem(
-            this.getDefaultDisplayText.bind(this),
-            this.getPropertyObject.bind(this)
-        ));
+        this.columns.push(this._createListItem());
         if (!_.isEmpty(this.analyticsAction) && !_.isEmpty(this.analyticsLabel)){
             window.analytics.usage("Report Builder", this.analyticsAction, this.analyticsLabel);
             window.analytics.workflow("Clicked " + this.analyticsAction + " in Report Builder");

@@ -14,8 +14,8 @@
     <script src="{% static 'style/js/main.js' %}"></script>
     <script src="{% static 'app_manager/js/case-knockout-bindings.js' %}"></script>
     <script src="{% static 'userreports/js/constants.js' %}"></script>
-    <script src="{% static 'userreports/js/report_config.js' %}"></script>
     <script src="{% static 'userreports/js/builder_view_models.js' %}"></script>
+    <script src="{% static 'userreports/js/report_config.js' %}"></script>
     <script src="{% static 'userreports/js/utils.js' %}"></script>
     <script src="{% static 'style/js/hq.helpers.js' %}"></script>
 {% endblock %}
@@ -59,8 +59,6 @@
       </div>
     </div>
 
-    <!-- TODO: <div>Enter a description here</div> -->
-
     <div>
       <h3>{% trans 'Type of Report' %}</h3>
       <div class="btn-group">
@@ -92,60 +90,9 @@
         <h3 data-bind="text: reportType() === 'table' ?  '{% trans 'Indicators' %}' : '{% trans 'Columns' %}'">
             {% trans 'Columns' %}
         </h3>
-        <table class="table">
-          <thead data-bind="fadeVisible: isAggregationEnabled">
-            <tr>
-              <th>&nbsp;</th>
-              <th>{% trans 'Indicator' %}</th>
-              <th>{% trans 'Format' %}</th>
-              <th>&nbsp;</th>
-            </tr>
-          </thead>
-          <tbody data-bind="sortable: {
-                    data: selectedColumns,
-                    afterAdd: function (elem) { $(elem).hide().fadeIn() },
-                    beforeRemove: function (elem) { $(elem).fadeOut() }
-                 }
-            ">
-            <tr data-bind="attr: {'data-order': _sortableOrder}">
-              <td>
-                <i class="grip sortable-handle" style="cursor: move;"
-                   data-bind="css: COMMCAREHQ.icons.GRIP + ' hq-icon-full'">
-                </i>
-              </td>
-              <td data-bind="text: label"></td>
-              <td>
-                <select data-bind="fadeVisible: $parent.isAggregationEnabled,
-                                   value: groupByOrAggregation">
-                  <option value="groupBy">{% trans 'Group By' %}</option>
-                  <option value="expand">{% trans 'Count per Choice' %}</option>
-                  <!-- ko if: !isNonNumeric -->
-                  <option value="sum">{% trans 'Sum' %}</option>
-                  <option value="avg">{% trans 'Average' %}</option>
-                  <!-- /ko -->
-                </select>
-              </td>
-              <td>
-                <button class="btn btn-danger"
-                        data-bind="click: $parent.removeColumn"><i class="fa fa-remove"></i></button>
-              </td>
-            </tr>
-          </tbody>
-          <tbody>
-            <tr>
-              <td>&nbsp;</td>
-              <td>
-                <select data-bind="options: columnOptions,
-                                   optionsText: 'label',
-                                   optionsValue: 'name',
-                                   value: newColumnName">
-                </select>
-              </td>
-              <td></td>
-              <td><button class="btn btn-primary" data-bind="click: addColumn"><i class="fa fa-plus"></i></button></td>
-            </tr>
-          </tbody>
-        </table>
+        <div data-bind="with: columnList">
+          {% include "userreports/partials/column_list_configuration.html" %}
+        </div>
       </div>
 
       <div data-bind="with: filterList">

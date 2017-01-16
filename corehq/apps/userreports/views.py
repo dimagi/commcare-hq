@@ -820,20 +820,19 @@ def _munge_report_data(report_data):
     :param report_data:
     :return:
     """
-    app = report_data['app']
-    source_type = report_data['source_type']
-    source_id = report_data['source_id']
-
-    clean_columns = []
     agg_columns = []
-    for col in report_data['columns']:
-        if col['calculation'] == "Group By":
-            agg_columns.append(col)
-        else:
-            clean_columns.append(col)
-    agg_columns = [x['property'] for x in agg_columns]
+    if report_data['report_type'] == "table":
+        clean_columns = []
 
-    report_data['columns'] = clean_columns
+        for col in report_data['columns']:
+            if col['calculation'] == "Group By":
+                agg_columns.append(col)
+            else:
+                clean_columns.append(col)
+        agg_columns = [x['property'] for x in agg_columns]
+
+        report_data['columns'] = clean_columns
+
     report_data['group_by'] = agg_columns or None
 
     report_data['columns'] = json.dumps(report_data['columns'])

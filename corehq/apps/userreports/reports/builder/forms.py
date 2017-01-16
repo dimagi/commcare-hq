@@ -626,35 +626,6 @@ class ConfigureNewReportBase(forms.Form):
             )
         ]
         # Add a back button if we aren't editing an existing report
-        if not self.existing_report:
-            buttons.insert(
-                0,
-                crispy.HTML(
-                    '<a class="btn btn-default" href="{}" style="margin-right: 4px">{}</a>'.format(
-                        reverse(
-                            'report_builder_select_source',
-                            args=(self.domain, self.report_type),
-                        ),
-                        _('Back')
-                    )
-                ),
-            )
-        # Add a "delete report" button if we are editing an existing report
-        else:
-            buttons.insert(
-                0,
-                crispy.HTML(
-                    '<a id="delete-report-button" class="btn btn-danger pull-right" href="{}">{}</a>'.format(
-                        reverse(
-                            'delete_configurable_report',
-                            args=(self.domain, self.existing_report._id),
-                        ) + "?{}".format(urlencode(
-                            {'redirect': reverse('reports_home', args=[self.domain])}
-                        )),
-                        _('Delete Report')
-                    )
-                )
-            )
         self.helper.layout = crispy.Layout(
             self.container_fieldset,
             hqcrispy.FormActions(crispy.ButtonHolder(*buttons)),
@@ -1350,13 +1321,13 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
         # Add the aggregation indicator to the columns if it's not already present.
         extra_cols = []
         existing_columns = set(c['property'] for c in self.cleaned_data['columns'])
-        for agg_field in agg_fields:
+        for index, agg_field in enumerate(agg_fields):
             if agg_field not in existing_columns:
                 agg_field_id = self.data_source_properties[agg_field].column_id
                 agg_field_text = self.data_source_properties[agg_field].text
-                extra_cols = self._get_column_option_by_indicator_id(agg_field_id).to_column_dicts(
-                    "agg", agg_field_text, 'simple', is_aggregated_on=True
-                ) + extra_cols
+                extra_cols += self._get_column_option_by_indicator_id(agg_field_id).to_column_dicts(
+                    "agg_{}".format(index), agg_field_text, 'simple', is_aggregated_on=True
+                )
         columns = extra_cols + columns
 
         # Don't expand the aggregation columns

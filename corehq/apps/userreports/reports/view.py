@@ -102,7 +102,7 @@ def query_dict_to_dict(query_dict, domain):
 
 
 @contextmanager
-def tmp_report_config(domain, report_config):
+def tmp_report_config(report_config):
     yield report_config
     report_config.delete()
 
