@@ -815,7 +815,7 @@ class InviteWebUserView(BaseManageWebUserView):
     @property
     @memoized
     def invite_web_user_form(self):
-        role_choices = UserRole.role_choices(self.domain)
+        role_choices = _get_editable_role_choices(self.domain, self.request.couch_user, allow_admin_role=True)
         loc = None
         domain_request = DomainRequest.objects.get(id=self.request_id) if self.request_id else None
         initial = {
