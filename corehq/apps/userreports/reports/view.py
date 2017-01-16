@@ -274,7 +274,11 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             raise Http403()
 
     def has_permissions(self, domain, user):
-        return True
+        if domain is None:
+            return False
+        if not user.is_active:
+            return False
+        return user.can_view_report(domain, 'corehq.reports.DynamicReport{}'.format(self.report_config_id))
 
     def add_warnings(self, request):
         for warning in self.data_source.column_warnings:
