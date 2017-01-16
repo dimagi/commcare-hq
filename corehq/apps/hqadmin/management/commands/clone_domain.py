@@ -26,10 +26,22 @@ types = [
     'auto_case_updates',
 ]
 
+help_text = """Clone a domain and it's data:
+  * settings (domain settings, feature flags etc.)
+  * fixtures
+  * locations
+  * products
+  * UCR
+  * apps
+  * custom user fields
+  * custom user roles
+  * auto case update rules
+"""
+
 
 class Command(BaseCommand):
     args = "<existing_domain> <new_domain>"
-    help = """Clone a domain and it's data (settings, fixtures, locations, products, UCR, apps)"""
+    help = help_text
 
     option_list = (
         make_option("-i", "--include", dest="include", action="append", choices=types),
