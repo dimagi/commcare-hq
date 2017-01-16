@@ -1101,6 +1101,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
     def initial_columns(self):
         if self.existing_report:
             reverse_agg_map = {
+                'simple': 'Group By',
                 'avg': 'Average',
                 'sum': 'Sum',
                 'expand': 'Count per Choice'
