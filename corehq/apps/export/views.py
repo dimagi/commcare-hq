@@ -1501,9 +1501,9 @@ class BaseModifyNewCustomView(BaseNewExportView):
         return super(BaseModifyNewCustomView, self).dispatch(request, *args, **kwargs)
 
     @memoized
-    def get_export_schema(self, app_id, identifier):
+    def get_export_schema(self, domain, app_id, identifier):
         return self.export_schema_cls.generate_schema_from_builds(
-            self.domain,
+            domain,
             app_id,
             identifier,
             only_process_current_builds=DO_NOT_PROCESS_OLD_BUILDS.enabled(self.domain),
@@ -1513,6 +1513,7 @@ class BaseModifyNewCustomView(BaseNewExportView):
     def page_context(self):
         result = super(BaseModifyNewCustomView, self).page_context
         schema = self.get_export_schema(
+            self.domain,
             self.request.GET.get('app_id') or getattr(self.export_instance, 'app_id'),
             self.export_instance.identifier,
         )
@@ -1625,6 +1626,7 @@ class BaseEditNewCustomExportView(BaseModifyNewCustomView):
                 return HttpResponseRedirect(self.export_home_url)
 
         schema = self.get_export_schema(
+            self.domain,
             self.request.GET.get('app_id') or getattr(export_instance, 'app_id'),
             export_instance.identifier
         )
