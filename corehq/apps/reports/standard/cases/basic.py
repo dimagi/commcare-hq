@@ -136,16 +136,18 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
             also finds the sharing groups which has any user from the above reporting group
         selected sharing group ids
         selected user ids
-            also finds the sharing groups which has any user from the above reporting group
-        ids and descendants ids of selected locations and assigned locations of users selected
-        assigned users at selected locations
+            also finds the sharing groups which has any user from the above selected users
+            ids and descendants ids of assigned locations to these users
+        ids and descendants ids of selected locations
+            assigned users at selected locations and their descendants
 
         For restricted user
         :return:
         selected user ids
-            finds the sharing groups which has any user from the above reporting group
-        ids and descendants ids of selected locations and assigned locations of users selected
-        assigned users at selected locations
+            also finds the sharing groups which has any user from the above selected users
+            ids and descendants ids of assigned locations to these users
+        ids and descendants ids of selected locations
+            assigned users at selected locations and their descendants
         """
         # Get user ids for each user that match the demo_user, admin,
         # Unknown Users, or All Mobile Workers filters
