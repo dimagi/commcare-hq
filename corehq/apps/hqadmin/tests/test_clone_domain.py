@@ -43,10 +43,10 @@ class TestCloneDomain(TestCase):
             ]
         )
 
-    def make_clone(self):
+    def make_clone(self, include=None):
         options = {'settings': None, 'pythonpath': None, 'verbosity': 1,
                    'traceback': None, 'no_color': False, 'exclude': None,
-                   'include': None, 'nocommit': False}
+                   'include': include, 'nocommit': False}
         with patch('corehq.apps.callcenter.data_source.get_call_center_domains', lambda: []):
             CloneCommand().handle(self.old_domain, self.new_domain, **options)
             return Domain.get_by_name(self.new_domain)
@@ -74,7 +74,7 @@ class TestCloneDomain(TestCase):
                 for loc in SQLLocation.active_objects.filter(domain=domain)
             ]
 
-        self.make_clone()
+        self.make_clone(include=['locations'])
 
         self.assertItemsEqual(
             location_types_snapshot(self.old_domain),
@@ -114,7 +114,7 @@ class TestCloneDomain(TestCase):
         custom_repeater.save()
         self.addCleanup(custom_repeater.delete)
 
-        self.make_clone()
+        self.make_clone(include=['repeaters'])
 
         cloned_repeaters = Repeater.by_domain(self.new_domain)
         self.assertEqual(3, len(cloned_repeaters))
