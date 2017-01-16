@@ -239,11 +239,18 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
             'index_location_fixtures',
             ['Massachusetts', 'Suffolk', 'Boston', 'Revere', 'Middlesex', 'Cambridge', 'Somerville'],
         )
-        expected_fixture = extract_xml_partial(expected_result, './fixture')
         fixture_nodes = flat_location_fixture_generator(self.user, V2)
-        self.assertEqual(len(fixture_nodes), 1)
-        fixture = extract_xml_partial(ElementTree.tostring(fixture_nodes[0]), '.')
+        self.assertEqual(len(fixture_nodes), 2)  # fixture schema, then fixture
+
+        # check the fixture like usual
+        fixture = extract_xml_partial(ElementTree.tostring(fixture_nodes[1]), '.')
+        expected_fixture = extract_xml_partial(expected_result, './fixture')
         self.assertXmlEqual(expected_fixture, fixture)
+
+        # check the schema
+        schema = extract_xml_partial(ElementTree.tostring(fixture_nodes[0]), '.')
+        expected_schema = extract_xml_partial(expected_result, './schema')
+        self.assertXmlEqual(expected_schema, schema)
 
 
 @mock.patch.object(Domain, 'uses_locations', lambda: True)  # removes dependency on accounting
