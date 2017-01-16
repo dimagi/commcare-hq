@@ -1113,6 +1113,16 @@ class TestGetCaseSharingGroupsExpression(TestCase):
         case_sharing_groups = self.expression({'user_id': user._id}, self.context)
         self.assertEqual(len(case_sharing_groups), 2)
 
+    @run_with_all_backends
+    def test_wrong_domain(self):
+        new_domain = uuid.uuid4().hex
+        user = CommCareUser.create(domain=new_domain, username='test_single', password='123')
+        group = Group(domain=new_domain, name='group_single', users=[user._id], case_sharing=True)
+        group.save()
+
+        case_sharing_groups = self.expression({'user_id': user._id}, self.context)
+        self.assertEqual(len(case_sharing_groups), 0)
+
 
 class TestIterationNumberExpression(SimpleTestCase):
 
