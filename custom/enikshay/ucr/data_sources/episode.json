@@ -1416,6 +1416,40 @@
                 }
             },
             {
+                "column_id": "result_of_bacteriological_test",
+                "display_name": "result_of_bacteriological_test",
+                "type": "expression",
+                "datatype": "string",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "bacteriological_examination_test_case"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "result"
+                    }
+                }
+            },
+            {
+                "column_id": "bacteriological_test_episode_type",
+                "display_name": "bacteriological_test_episode_type",
+                "type": "expression",
+                "datatype": "string",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "bacteriological_examination_test_case"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "episode_type_at_request"
+                    }
+                }
+            },
+            {
                 "display_name": "ip_initiation_date",
                 "datatype": "string",
                 "type": "expression",
