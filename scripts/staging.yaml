@@ -54,6 +54,7 @@ branches:
   - mk-243862-locations-submit-history # MK 1/9
   - mk-243862-reassign-cases-manage-forms # MK 1/9
   - mk-243262-new-location-fixture # MK 1/16
+  - es/index-fixtures  # ES 1/16
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
