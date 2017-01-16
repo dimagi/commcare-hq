@@ -100,12 +100,15 @@ class FlatLocationSerializer(object):
     def get_xml_nodes(self, fixture_id, restore_user, all_locations):
         if not should_sync_flat_fixture(restore_user.domain):
             return []
-
         all_types = LocationType.objects.filter(domain=restore_user.domain).values_list(
             'code', flat=True
         )
-        base_attrs = {'{}_id'.format(t): '' for t in all_types if t is not None}
-        root_node = Element('fixture', {'id': fixture_id, 'user_id': restore_user.user_id})
+        location_type_attrs = ['{}_id'.format(t) for t in all_types if t is not None]
+
+        return [self._get_fixture_node(fixture_id, restore_user, all_locations, location_type_attrs)]
+
+    def _get_fixture_node(self, fixture_id, restore_user, all_locations, location_type_attrs):
+        root_node = Element('fixture', {'id': fixture_id, 'user_id': restore_user.user_id, 'indexed': 'true'})
         outer_node = Element('locations')
         root_node.append(outer_node)
         for location in sorted(all_locations.by_id.values(), key=lambda l: l.site_code):
@@ -113,7 +116,7 @@ class FlatLocationSerializer(object):
                 'type': location.location_type.code,
                 'id': location.location_id,
             }
-            attrs.update(base_attrs)
+            attrs.update({attr: '' for attr in location_type_attrs})
             attrs['{}_id'.format(location.location_type.code)] = location.location_id
             tmp_location = location
             while tmp_location.parent:
@@ -124,7 +127,7 @@ class FlatLocationSerializer(object):
             _fill_in_location_element(location_node, location)
             outer_node.append(location_node)
 
-        return [root_node]
+        return root_node
 
 
 def should_sync_hierarchical_fixture(project):
