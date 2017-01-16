@@ -433,6 +433,9 @@ var reportBuilder = function () {
             }
         });
 
+        if (!self.existingReportId) {
+            self.saveButton.fire('change');
+        }
         self.refreshPreview();
         return self;
     };
