@@ -261,10 +261,6 @@ class EditCommCareUserView(BaseEditUserView):
     def form_user_update(self):
         form = super(EditCommCareUserView, self).form_user_update
         form.load_language(language_choices=get_domain_languages(self.domain))
-        if self.can_change_user_roles:
-            form.load_roles(current_role=self.existing_role, role_choices=self.user_role_choices)
-        else:
-            del form.fields['role']
         return form
 
     @property

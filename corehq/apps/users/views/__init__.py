@@ -214,6 +214,10 @@ class BaseEditUserView(BaseUserSettingsView):
 
         form = self.user_update_form_class()
         form.initialize_form(domain=self.request.domain, existing_user=self.editable_user)
+        if self.can_change_user_roles:
+            form.load_roles(current_role=self.existing_role, role_choices=self.user_role_choices)
+        else:
+            del form.fields['role']
         return form
 
     @property
@@ -299,13 +303,6 @@ class EditWebUserView(BaseEditUserView):
         else:
             # domain admins can also grant admin to others
             return [UserRole.role_to_choice(AdminUserRole(domain=self.domain))] + editable_choices
-
-    @property
-    @memoized
-    def form_user_update(self):
-        form = super(EditWebUserView, self).form_user_update
-        form.load_roles(current_role=self.existing_role, role_choices=self.user_role_choices)
-        return form
 
     @property
     def form_user_update_permissions(self):
