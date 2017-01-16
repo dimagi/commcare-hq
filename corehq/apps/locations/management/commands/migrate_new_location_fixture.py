@@ -18,18 +18,24 @@ class Command(BaseCommand):
             SQLLocation.objects.order_by('domain').distinct('domain')
             .values_list('domain', flat=True)
         )
+        print "Domain having locations(%s): %s" % (len(domains_having_locations), domains_having_locations)
         # 2. Find domains on flat fixture
         domain_with_flat_fixture_enabled = find_domains_with_flat_fixture_enabled()
+        print "Domain with flat fixture enabled(%s): %s" % (len(domain_with_flat_fixture_enabled),
+                                                            domain_with_flat_fixture_enabled)
 
         # 3. Find domains to stay on legacy fixture
         domains_to_stay_on_hierarchical_fixture = (set(domains_having_locations) -
                                                    set(domain_with_flat_fixture_enabled))
+        print "Domain to stay on hierarchical fixture(%s): %s" % (len(domains_to_stay_on_hierarchical_fixture),
+                                                                  domains_to_stay_on_hierarchical_fixture)
 
         # 4. Update domains that need to stay on hierarchical with enabled legacy toggle to be able to access conf
         # and update their location configuration to use hierarchical fixture for now
-        toggle = Toggle.get(HIERARCHICAL_LOCATION_FIXTURE.slug)
         for domain in domains_to_stay_on_hierarchical_fixture:
-            toggle.set(domain, True, NAMESPACE_DOMAIN)
+            print "Setting HIERARCHICAL_LOCATION_FIXTURE toggle for domain: %s" % domain
+            HIERARCHICAL_LOCATION_FIXTURE.set(domain, True, NAMESPACE_DOMAIN)
+            print "Enabling legacy fixture for domain: %s" % domain
             enable_legacy_fixture_for_domain(domain)
 
         # 5. Domains that need to stay on flat fixture need not worry about any change since they would
