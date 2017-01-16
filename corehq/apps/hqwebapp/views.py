@@ -151,8 +151,7 @@ def redirect_to_default(req, domain=None):
                 couch_user = req.couch_user
                 from corehq.apps.users.models import DomainMembershipError
                 try:
-                    if (couch_user.is_commcare_user() and
-                            couch_user.can_view_some_reports(domain)):
+                    if (couch_user.is_commcare_user() and not couch_user.get_role(domain)):
                         if toggles.USE_FORMPLAYER_FRONTEND.enabled(domain):
                             url = reverse(FormplayerMain.urlname, args=[domain])
                         else:

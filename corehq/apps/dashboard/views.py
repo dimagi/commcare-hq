@@ -36,15 +36,6 @@ def default_dashboard_url(request, domain):
     if domain in settings.CUSTOM_DASHBOARD_PAGE_URL_NAMES:
         return reverse(settings.CUSTOM_DASHBOARD_PAGE_URL_NAMES[domain], args=[domain])
 
-    if (couch_user
-            and not couch_user.has_permission(domain, 'access_all_locations')
-            and couch_user.is_commcare_user()):
-        if toggles.USE_FORMPLAYER_FRONTEND.enabled(domain):
-            formplayer_view = FormplayerMain.urlname
-        else:
-            formplayer_view = "corehq.apps.cloudcare.views.default"
-        return reverse(formplayer_view, args=[domain])
-
     if couch_user and user_has_custom_top_menu(domain, couch_user):
         return reverse('saved_reports', args=[domain])
 
