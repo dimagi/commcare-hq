@@ -665,11 +665,12 @@ class ConfigureReport(ReportBuilderView):
             return request.GET['data_source']
 
     def _get_existing_report_type(self):
-        # TODO: Handle map reports
         if self.existing_report:
             type_ = "list"
             if self.existing_report.aggregation_columns != ["doc_id"]:
                 type_ = "table"
+            if self.existing_report.map_config:
+                type_ = "map"
             return type_
 
     def _get_property_id_by_indicator_id(self, indicator_column_id):
@@ -684,9 +685,12 @@ class ConfigureReport(ReportBuilderView):
         if data_source_property:
             return data_source_property.id
 
-    def _get_initial_location(self):
+    def _get_initial_location(self, report_form):
         if self.existing_report:
-            return self._get_property_id_by_indicator_id(self.existing_report.location_column_id)
+            cols = [col for col in self.existing_report.report_columns if col.type == 'location']
+            if cols:
+                indicator_id = cols[0].field
+                return report_form._get_property_id_by_indicator_id(indicator_id)
 
     @property
     def page_context(self):
@@ -706,7 +710,7 @@ class ConfigureReport(ReportBuilderView):
             'initial_user_filters': [f._asdict() for f in report_form.initial_user_filters],
             'initial_default_filters': [f._asdict() for f in report_form.initial_default_filters],
             'initial_columns': [c._asdict() for c in report_form.initial_columns],
-            'initial_location': self._get_initial_location(),
+            'initial_location': self._get_initial_location(report_form),
             'source_type': self.source_type,
             'source_id': self.source_id,
             'application': self.app_id,
