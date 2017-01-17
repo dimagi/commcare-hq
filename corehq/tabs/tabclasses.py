@@ -657,7 +657,7 @@ class ProjectDataTab(UITab):
                         'url': reverse(DashboardFeedListView.urlname, args=(self.domain,)),
                         'show_in_dropdown': True,
                         'subpages': subpages
-                })
+                    })
             else:
                 export_data_views.append({
                     'title': DashboardFeedListView.page_title,
