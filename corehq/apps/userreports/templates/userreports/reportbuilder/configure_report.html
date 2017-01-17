@@ -8,6 +8,7 @@
             height: 500px;
         }
     </style>
+    {% include 'analytics/fullstory.html' %}
 {% endblock %}
 
 {% block js %}{{ block.super }}
@@ -162,7 +163,7 @@
             </select>
         </div>
 
-        <div id="chart"></div>
+        <div id="chart" class="fs-hide"></div>
       </div>
 
       <div class="well" id="map-preview" data-bind="fadeVisible: reportType() === 'map'">
@@ -180,13 +181,13 @@
           <!-- /ko -->
         </div>
         <br/>
-        <div id="map-preview-container" data-bind="css: {'map-preview': displayMapPreview}"></div>
-        <div id="zoomtofit" class="leaflet-control-layers" style="display: none;">
+        <div id="map-preview-container" class="fs-hide" data-bind="css: {'map-preview': displayMapPreview}"></div>
+        <div id="zoomtofit" class="leaflet-control-layers fs-hide" style="display: none;">
             <div id="zoomtofit-target" class="zoomtofit leaflet-control-layers-toggle" title="{% trans "Fit all data into view" %}"></div>
         </div>
       </div>
 
-      <div class="well">
+      <div class="well fs-hide">
         <h3 data-bind="visible: !previewError()">{% trans 'Data Table' %}</h3>
         <p data-bind="visible: previewError">
           {% blocktrans %}
