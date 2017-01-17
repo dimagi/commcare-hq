@@ -7,7 +7,7 @@ from django.utils.decorators import method_decorator
 
 from corehq.apps.domain.decorators import require_superuser
 from custom.rch.forms import BeneficiariesFilterForm
-from custom.rch.models import RCHMother, AreaMapping, RCHChild
+from custom.rch.models import RCHMother, RCHChild
 
 
 class BeneficariesList(TemplateView):

@@ -3,7 +3,7 @@ from django import forms
 from django.utils.translation import ugettext_lazy
 
 from crispy_forms import layout as crispy
-from crispy_forms.layout import Layout, Fieldset, ButtonHolder, Submit
+from crispy_forms.layout import Layout, ButtonHolder, Submit
 
 from custom.rch.models import AreaMapping
 

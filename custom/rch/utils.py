@@ -2,7 +2,7 @@ from zeep.client import Client
 
 
 def etree_to_dict(t):
-    return {t.tag : map(etree_to_dict, t.iterchildren()) or t.text}
+    return {t.tag: map(etree_to_dict, t.iterchildren()) or t.text}
 
 
 PROJECTID = ''  # From some secure place
