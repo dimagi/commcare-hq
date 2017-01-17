@@ -822,6 +822,7 @@ class MessageEventDetailReport(BaseMessagingEventReport):
     exportable = False
     hide_filters = True
     report_template_path = "reports/messaging/event_detail.html"
+    parent_report_class = MessagingEventsReport
 
     @classmethod
     def show_in_navigation(cls, *args, **kwargs):
@@ -962,6 +963,7 @@ class SurveyDetailReport(BaseMessagingEventReport):
     exportable = False
     hide_filters = True
     report_template_path = "reports/messaging/survey_detail.html"
+    parent_report_class = MessagingEventsReport
 
     @classmethod
     def show_in_navigation(cls, *args, **kwargs):

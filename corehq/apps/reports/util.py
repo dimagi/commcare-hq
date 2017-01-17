@@ -370,7 +370,12 @@ def get_possible_reports(domain_name):
     domain = Domain.get_by_name(domain_name)
     for heading, models in report_map:
         for model in models:
-            if model.show_in_navigation(domain=domain_name, project=domain):
+            if getattr(model, 'parent_report_class', None):
+                report_to_check_if_viewable = model.parent_report_class
+            else:
+                report_to_check_if_viewable = model
+
+            if report_to_check_if_viewable.show_in_navigation(domain=domain_name, project=domain):
                 reports.append({
                     'path': model.__module__ + '.' + model.__name__,
                     'name': model.name
