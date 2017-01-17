@@ -133,7 +133,7 @@ class FlatLocationSerializer(object):
 
     def _get_schema_node(self, fixture_id, attrs_to_index):
         indices_node = Element('indices')
-        for index_attr in attrs_to_index:
+        for index_attr in sorted(attrs_to_index):  # sorted only for tests
             element = Element('index')
             element.text = '@{}'.format(index_attr)
             indices_node.append(element)

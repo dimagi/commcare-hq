@@ -3,8 +3,8 @@
     <indices>
       <index>@city_id</index>
       <index>@county_id</index>
-      <index>@state_id</index>
       <index>@id</index>
+      <index>@state_id</index>
       <index>@type</index>
     </indices>
   </schema>
