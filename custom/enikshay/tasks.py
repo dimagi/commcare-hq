@@ -1,7 +1,9 @@
 import datetime
+from collections import defaultdict
 from django.utils.dateparse import parse_datetime, parse_date
 
 from .case_utils import get_adherence_cases_between_dates_from_episode
+from corehq.apps.fixtures.models import FixtureDataItem
 
 
 DOMAIN = 'enikshay'
@@ -10,23 +12,29 @@ DOSE_TAKEN_INDICATORS = [
     'unobserved_dose',
     'self_administered_dos',
 ]
-DOESES_BY_SCHEDULE_BY_ID = {
-    i.schedule_id: i.doses_per_day
-    for i in get_lookup_table_items('adherence_schedules')
-}
 DAILY_SCHEDULE_ID = 'schedule_daily'
+CASE_TYPE_PERSON = 'person'
+
+
+def get_doses_data():
+    # return 'doses_per_week' by 'schedule_id' from the Fixture data
+    fixtures = FixtureDataItem.get_indexed_items(DOMAIN, DAILY_SCHEDULE_ID, 'schedule_id')
+    return dict((k, int(fixture['doses_per_week'])) for k, fixture in fixtures.items())
 
 
 def get_open_episode_cases():
     """
     get list of all open 'episode' type cases
     """
-    return []
+    case_accessor = CaseAccessors(DOMAIN)
+    case_ids = get_open_case_ids_in_domain_by_type(CASE_TYPE_PERSON)
+    return case_accessor.iter_cases(case_ids)
 
 
 def get_latest_adherence_case_for_episode(episode):
     """
-    return open case of type 'adherence' with latest 'adherence_date' property for episode case
+    return open case of type 'adherence' reversed-indexed to episode and
+        with latest 'adherence_date' property
     """
     case_accessor = CaseAccessors(DOMAIN)
     indexed_cases = case_accessor.get_reverse_indexed_cases([episode.case_id])
@@ -43,23 +51,34 @@ def get_latest_adherence_case_for_episode(episode):
 
 
 def index_by_adherence_date(adherence_cases):
-    return {
-        case.adherence_date: parse_date(case.dynamic_case_properties().get('adherence_date'))
-        for case in adherence_cases
-    }
+    """
+    inde
+    """
+    by_date = defaultdict(list)
+    for case in adherence_cases:
+        adherance_date = parse_date(case.dynamic_case_properties().get('adherence_date'))
+        by_date[adherance_date].append(case)
+    return by_date
+
+def get_adherence_schedule_date_start(episode_case):
+    return parse_datetime(case.dynamic_case_properties().get('adherence_schedule_date_start'))
 
 
 def update_adherence_properties():
-    PURGE_DATE = datetime.today() - 60
+    # edge cases around datetime
+    PURGE_DATE = datetime.datetime.today() - datetime.timedelta(days=60)
 
     for episode in get_open_episode_cases():
-        if episode.adherence_schedule_date_start > PURGE_DATE:
-            episode.aggregate_date = episode.adherence_schedule_date_start - 1
+        adherence_schedule_date_start = get_adherence_schedule_date_start(episode)
+        # Todo: What if adherence_schedule_date_start is None
+        if adherence_schedule_date_start > PURGE_DATE:
+            episode.aggregate_date = adherence_schedule_date_start - 1
             episode.expected = 0
             episode.taken = 0
         else:
             adherence_case = get_latest_adherence_case_for_episode(episode)
-            adherence_date = adherence_case.adherence_date
+            # ToDo: what if adherence_case doesn't exist?
+            adherence_date = parse_datetime(adherence_case.dynamic_case_properties().get('adherence_date'))
             if adherence_date < PURGE_DATE:
                 episode.aggregated_score_date_calculated = adherence_date
             else:
@@ -69,10 +88,10 @@ def update_adherence_properties():
             adherence_cases = get_adherence_cases_between_dates_from_episode(
                 DOMAIN
                 episode,
-                episode.adherence_schedule_date_start,
+                adherence_schedule_date_start,
                 episode.aggregated_score_date_calculated
             )
-            adherence_cases_by_date = index_by_date(adherence_cases)
+            adherence_cases_by_date = index_by_adherence_date(adherence_cases)
             is_dose_taken_by_date = {}
             for date, cases in adherence_cases_by_date.iteritems():
                 is_dose_taken_by_date[date] = any([
@@ -83,6 +102,8 @@ def update_adherence_properties():
             episode.aggregated_score_count_taken = total_taken_count
 
             # calculate 'expected' score
+            dose_data = get_doses_data()
             adherence_schedule_id = episode.adherence_schedule_id or DAILY_SCHEDULE_ID
-            doses_per_week = DOESES_BY_SCHEDULE_BY_ID[adherence_schedule_id]
+            # Todo: what if 'adherence_schedule_id' doesn't exist in fixtures
+            doses_per_week = dose_data.get(adherence_schedule_id)
             episode.expected = ((aggregated_score_date_calculated - adherence_schedule_date_start) / 7) * doses_per_week
