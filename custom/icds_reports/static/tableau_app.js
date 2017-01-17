@@ -11,6 +11,8 @@ var viz = {},
 
 var tableauOptions = {};
 
+var initialLocationParams = [];
+
 function initializeViz(o) {
     tableauOptions = o;
 
@@ -30,7 +32,7 @@ function initializeViz(o) {
     viz = new tableau.Viz(placeholderDiv, url, options);
 
     $("#resetFilters").click(function () {
-        currentSheet = history.state.sheetName;
+        var currentSheet = history.state.sheetName;
         switchVisualization(currentSheet, workbook, initialLocationParams);
     });
 }
@@ -49,8 +51,8 @@ function setUpInitialTableauParams() {
     };
     params[locationKey] = tableauOptions.userLocation;
     initialLocationParams = params;
-    today = new Date();
-    lastMonth = new Date(today.getFullYear(), today.getMonth() - 1 , 1);
+    var today = new Date();
+    var lastMonth = new Date(today.getFullYear(), today.getMonth() - 1 , 1);
     params['Month'] = lastMonth.getFullYear() + "-" + (lastMonth.getMonth() + 1) + "-01";
     applyParams(workbook, params);
 
