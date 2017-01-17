@@ -28,7 +28,10 @@
         "http://openrosa.org/formdesigner/D4A7ABD2-A7B8-431B-A88B-38245173B0AE",
         "http://openrosa.org/formdesigner/89097FB1-6C08-48BA-95B2-67BCF0C5091D",
         "http://openrosa.org/formdesigner/792DAF2B-E117-424A-A673-34E1513ABD88",
-        "http://openrosa.org/formdesigner/619B942A-362E-43DE-8650-ED37026D9AC4"
+        "http://openrosa.org/formdesigner/619B942A-362E-43DE-8650-ED37026D9AC4",
+        "http://openrosa.org/formdesigner/1D568275-1D19-46DB-8C54-2C9765DF6335",
+        "http://openrosa.org/formdesigner/362f76b242d0cfdcec66776f9586dc3620e9cce5",
+        "http://openrosa.org/formdesigner/756ec44475658f3f463f8012632def2bc9fbe731"
       ]
     },
     "configured_indicators": [
@@ -144,6 +147,45 @@
             "property_name": "xmlns"
           },
           "property_value": "http://openrosa.org/formdesigner/F1B73934-8B70-4CEE-B462-3E4C81F80E4A"
+        }
+      },
+      {
+        "type": "boolean",
+        "column_id": "add_household",
+        "filter": {
+          "operator": "eq",
+          "type": "boolean_expression",
+          "expression": {
+            "type": "property_name",
+            "property_name": "xmlns"
+          },
+          "property_value": "http://openrosa.org/formdesigner/1D568275-1D19-46DB-8C54-2C9765DF6335"
+        }
+      },
+      {
+        "type": "boolean",
+        "column_id": "add_person",
+        "filter": {
+          "operator": "eq",
+          "type": "boolean_expression",
+          "expression": {
+            "type": "property_name",
+            "property_name": "xmlns"
+          },
+          "property_value": "http://openrosa.org/formdesigner/756ec44475658f3f463f8012632def2bc9fbe731"
+        }
+      },
+      {
+        "type": "boolean",
+        "column_id": "add_pregnancy",
+        "filter": {
+          "operator": "eq",
+          "type": "boolean_expression",
+          "expression": {
+            "type": "property_name",
+            "property_name": "xmlns"
+          },
+          "property_value": "http://openrosa.org/formdesigner/362f76b242d0cfdcec66776f9586dc3620e9cce5"
         }
       },
       {

@@ -124,7 +124,9 @@ class CaseFindingSqlData(EnikshaySqlData):
                     '',
                     CountColumn(
                         'doc_id',
-                        filters=self.filters + test_type_filter + [RawFilter("episode_type = 'presumptive_tb'")],
+                        filters=self.filters + test_type_filter + [
+                            RawFilter("bacteriological_test_episode_type = 'presumptive_tb'")
+                        ],
                         alias='patients_with_presumptive_tb'
                     )
                 ),
@@ -134,8 +136,8 @@ class CaseFindingSqlData(EnikshaySqlData):
                         'doc_id',
                         filters=(
                             self.filters + test_type_filter + [
-                                RawFilter("result_of_test = 'tb_detected'"),
-                                RawFilter("episode_type = 'presumptive_tb'")
+                                RawFilter("result_of_bacteriological_test = 'tb_detected'"),
+                                RawFilter("bacteriological_test_episode_type = 'presumptive_tb'")
                             ]
                         ),
                         alias='patients_with_positive_tb'
