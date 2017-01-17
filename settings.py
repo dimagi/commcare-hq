@@ -371,10 +371,6 @@ ENIKSHAY_APPS = (
     'custom.enikshay.nikshay_datamigration',
 )
 
-RCH_APPS = (
-    'custom.rch',
-)
-
 # DEPRECATED use LOCAL_APPS instead; can be removed with testrunner.py
 TEST_APPS = ()
 
@@ -412,7 +408,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'dimagi.utils',
 )
 
-INSTALLED_APPS = DEFAULT_APPS + HQ_APPS + ENIKSHAY_APPS + RCH_APPS
+INSTALLED_APPS = DEFAULT_APPS + HQ_APPS + ENIKSHAY_APPS
 
 
 # after login, django redirects to this URL
