@@ -426,7 +426,7 @@ var reportBuilder = function () {
                 $.ajax({
                     url: window.location.href,
                     type: "POST",
-                    data: JSON.stringify(self.serialize()),
+                    data: JSON.stringify(Object.assign(self.serialize(), {'delete_temp_data_source': true})),
                     success: function (data) {
                         // Redirect to the newly-saved report
                         self.saveButton.setState('saved');

@@ -548,10 +548,14 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
         """
         # Reload using the ID instead of just passing in the object to avoid ResourceConflicts
         data_source_config = DataSourceConfiguration.get(data_source_config_id)
-        data_source_config.configured_filter.update({
-            'type': 'constant',
-            'constant': False
-        })
+        data_source_config.configured_filter = {
+            # An expression that is always false:
+            "type": "boolean_expression",
+            "operator": "eq",
+            "expression": 1,
+            "property_value": 2,
+        }
+        data_source_config.validate()
         data_source_config.save()
 
     def post(self, request, *args, **kwargs):
@@ -779,10 +783,15 @@ class ConfigureReport(ReportBuilderView):
                         'default_filters': getattr(bound_form, 'default_filters', 'Not set'),
                     })
                     return self.get(*args, **kwargs)
+            self._delete_temp_data_source(report_data)
             return json_response({
                 'report_url': reverse(ConfigurableReport.slug, args=[self.domain, report_configuration._id]),
                 'report_id': report_configuration._id,
             })
+
+    def _delete_temp_data_source(self, report_data):
+        if report_data.get("delete_temp_data_source", False):
+            delete_data_source_shared(self.domain, self.request.GET['data_source'])
 
     def _confirm_report_limit(self):
         """
