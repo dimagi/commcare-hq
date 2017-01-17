@@ -808,31 +808,24 @@ class SoftwarePlanVersion(models.Model):
     @property
     def user_facing_description(self):
         from corehq.apps.accounting.user_text import DESC_BY_EDITION, FEATURE_TYPE_TO_NAME
+
+        def _default_description(plan, monthly_limit):
+            if plan.edition != SoftwarePlanEdition.ENTERPRISE:
+                return DESC_BY_EDITION[plan.edition]['description'] % monthly_limit
+            else:
+                return DESC_BY_EDITION[plan.edition]['description']
+
         desc = {
             'name': self.plan.name,
-            'description': self.plan.description,
         }
-        try:
-            if (
-                self.plan.visibility == SoftwarePlanVisibility.PUBLIC
-                or self.plan.visibility == SoftwarePlanVisibility.TRIAL
-            ):
-                desc['description'] = (
-                    DESC_BY_EDITION[self.plan.edition]['description'] % self.user_feature.monthly_limit
-                    if self.plan.edition != SoftwarePlanEdition.ENTERPRISE
-                    else DESC_BY_EDITION[self.plan.edition]['description']
-                )
-            else:
-                for desc_key in desc:
-                    if not desc[desc_key]:
-                        if desc_key == 'description' and self.plan.edition != SoftwarePlanEdition.ENTERPRISE:
-                            desc[desc_key] = (
-                                DESC_BY_EDITION[self.plan.edition]['description'] % self.user_feature.monthly_limit
-                            )
-                        else:
-                            desc[desc_key] = DESC_BY_EDITION[self.plan.edition][desc_key]
-        except KeyError:
-            pass
+        if (
+            self.plan.visibility == SoftwarePlanVisibility.PUBLIC
+            or self.plan.visibility == SoftwarePlanVisibility.TRIAL
+        ) or not self.plan.description:
+            desc['description'] = _default_description(self.plan, self.user_feature.monthly_limit)
+        else:
+            desc['description'] = self.plan.description
+
         desc.update({
             'monthly_fee': 'USD %s' % self.product_rate.monthly_fee,
             'rates': [{'name': FEATURE_TYPE_TO_NAME[r.feature.feature_type],
