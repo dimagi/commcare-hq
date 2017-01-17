@@ -104,8 +104,9 @@ class FlatLocationSerializer(object):
             'code', flat=True
         )
         location_type_attrs = ['{}_id'.format(t) for t in all_types if t is not None]
+        attrs_to_index = location_type_attrs + ['id', 'type']
 
-        return [self._get_schema_node(fixture_id, location_type_attrs),
+        return [self._get_schema_node(fixture_id, attrs_to_index),
                 self._get_fixture_node(fixture_id, restore_user, all_locations, location_type_attrs)]
 
     def _get_fixture_node(self, fixture_id, restore_user, all_locations, location_type_attrs):
@@ -130,9 +131,9 @@ class FlatLocationSerializer(object):
 
         return root_node
 
-    def _get_schema_node(self, fixture_id, location_type_attrs):
+    def _get_schema_node(self, fixture_id, attrs_to_index):
         indices_node = Element('indices')
-        for index_attr in location_type_attrs + ['id', 'type']:
+        for index_attr in attrs_to_index:
             element = Element('index')
             element.text = '@{}'.format(index_attr)
             indices_node.append(element)
