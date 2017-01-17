@@ -32,9 +32,6 @@ class SubscribeView(View):
 
     def post(self, request, domain, *args, **kwargs):
         data = json.loads(request.body)
-        application = Application.get(docid=data['application'])
-        if not application or not application.get_form_by_xmlns(data['form']):
-            return HttpResponse(status=400)
 
         subscription = get_subscription_by_url(domain, data['target_url'])
         if subscription:
@@ -43,14 +40,27 @@ class SubscribeView(View):
             # Return a 409 status code if this criteria isn't met (IE: there is a uniqueness conflict).
             return HttpResponse(status=409)
 
-        ZapierSubscription.objects.create(
-            domain=domain,
-            user_id=str(request.couch_user.get_id),
-            event_name=data['event'],
-            url=data['target_url'],
-            application_id=data['application'],
-            form_xmlns=data['form']
-        )
+        if data['event'] == "new_form":
+            application = Application.get(docid=data['application'])
+            if not application or not application.get_form_by_xmlns(data['form']):
+                return HttpResponse(status=400)
+            ZapierSubscription.objects.create(
+                domain=domain,
+                user_id=str(request.couch_user.get_id),
+                event_name=data['event'],
+                url=data['target_url'],
+                application_id=data['application'],
+                form_xmlns=data['form'],
+            )
+        elif data['event'] == "new_case":
+            ZapierSubscription.objects.create(
+                domain=domain,
+                user_id=str(request.couch_user.get_id),
+                event_name=data['event'],
+                url=data['target_url'],
+                case_type=data['case'],
+            )
+
         return HttpResponse('OK')
 
 

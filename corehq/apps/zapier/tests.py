@@ -8,7 +8,8 @@ from tastypie.models import ApiKey
 from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, SoftwarePlanEdition, Subscription
 from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.domain.models import Domain
-from corehq.apps.repeaters.models import FormRepeater
+from corehq.apps.repeaters.models import FormRepeater, CaseRepeater
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import WebUser
 from corehq.apps.zapier import consts
 from corehq.apps.zapier.models import ZapierSubscription
@@ -58,6 +59,7 @@ XFORM = """
 """
 
 FORM_XMLNS = "https://www.commcarehq.org/test/zapier/"
+CASE_TYPE = "https://www.commcarehq.org/test_case/zapier/"
 XFORM_XML_TEMPLATE = """<?xml version='1.0' ?>
 <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="%s">
     <woman_name>Alpha</woman_name>
@@ -109,12 +111,14 @@ class TestZapierIntegration(TestCase):
         cls.domain_object.delete()
         for repeater in FormRepeater.by_domain(cls.domain):
             repeater.delete()
+        for repeater in CaseRepeater.by_domain(cls.domain):
+            repeater.delete()
         super(TestZapierIntegration, cls).tearDownClass()
 
     def tearDown(self):
         ZapierSubscription.objects.all().delete()
 
-    def test_subscribe(self):
+    def test_subscribe_form(self):
         data = {
             "subscription_url": ZAPIER_URL,
             "target_url": ZAPIER_URL,
@@ -138,7 +142,31 @@ class TestZapierIntegration(TestCase):
         self.assertIsNotNone(subscription.repeater_id)
         self.assertNotEqual(subscription.repeater_id, '')
 
-    def test_unsubscribe(self):
+    def test_subscribe_case(self):
+
+        data = {
+            "subscription_url": ZAPIER_URL,
+            "target_url": ZAPIER_URL,
+            "event": consts.EventTypes.NEW_CASE,
+            "case": CASE_TYPE
+        }
+        response = self.client.post(reverse('zapier_subscribe', kwargs={'domain': self.domain}),
+                                    data=json.dumps(data),
+                                    content_type='application/json; charset=utf-8',
+                                    HTTP_AUTHORIZATION='ApiKey test:{}'.format(self.api_key))
+        self.assertEqual(response.status_code, 200)
+
+        subscription = ZapierSubscription.objects.get(
+            url=ZAPIER_URL
+        )
+        self.assertListEqual(
+            [subscription.url, subscription.user_id, subscription.domain, subscription.case_type],
+            [ZAPIER_URL, self.web_user.get_id, TEST_DOMAIN, CASE_TYPE]
+        )
+        self.assertIsNotNone(subscription.repeater_id)
+        self.assertNotEqual(subscription.repeater_id, '')
+
+    def test_unsubscribe_form(self):
         ZapierSubscription.objects.create(
             url=ZAPIER_URL,
             user_id=self.web_user.get_id,
@@ -158,6 +186,27 @@ class TestZapierIntegration(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(ZapierSubscription.objects.all().count(), 0)
         self.assertEqual(len(FormRepeater.by_domain(TEST_DOMAIN)), 0)
+
+    def test_unsubscribe_case(self):
+        ZapierSubscription.objects.create(
+            url=ZAPIER_URL,
+            user_id=self.web_user.get_id,
+            domain=TEST_DOMAIN,
+            event_name=consts.EventTypes.NEW_CASE,
+            application_id=self.application.get_id,
+            case_type=CASE_TYPE,
+        )
+        data = {
+            "subscription_url": ZAPIER_URL,
+            "target_url": ZAPIER_URL
+        }
+        response = self.client.post(reverse('zapier_unsubscribe', kwargs={'domain': self.domain}),
+                                    data=json.dumps(data),
+                                    content_type='application/json; charset=utf-8',
+                                    HTTP_AUTHORIZATION='ApiKey test:{}'.format(self.api_key))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(ZapierSubscription.objects.all().count(), 0)
+        self.assertEqual(len(CaseRepeater.by_domain(TEST_DOMAIN)), 0)
 
     def test_urls_conflict(self):
         data = {
