@@ -2356,7 +2356,7 @@
               ]
             },
             "items_expression": {
-              "type": "icds_get_child_cases",
+              "type": "get_subcases",
               "case_id_expression": {
                 "type": "root_doc",
                 "expression": {
