@@ -17,6 +17,16 @@ FEATURE_TYPES = [
 
 
 def ensure_plans(config, dry_run, verbose, apps):
+
+    def set_default_plan(default_product_plan_, software_plan_, is_trial_):
+        default_product_plan_.plan = software_plan_
+        default_product_plan_.save()
+        if verbose:
+            log_accounting_info(
+                "Setting plan as default for edition '%s' with is_trial='%s'."
+                % (default_product_plan_.edition, is_trial_)
+            )
+
     DefaultProductPlan = apps.get_model('accounting', 'DefaultProductPlan')
     SoftwarePlan = apps.get_model('accounting', 'SoftwarePlan')
     SoftwarePlanVersion = apps.get_model('accounting', 'SoftwarePlanVersion')
@@ -103,13 +113,11 @@ def ensure_plans(config, dry_run, verbose, apps):
                         % (default_product_plan.edition, is_trial)
                     )
             except DefaultProductPlan.DoesNotExist:
-                default_product_plan.plan = software_plan
-                default_product_plan.save()
-                if verbose:
-                    log_accounting_info(
-                        "Setting plan as default for edition '%s' with is_trial='%s'."
-                        % (default_product_plan.edition, is_trial)
-                    )
+                set_default_plan(default_product_plan, software_plan, is_trial)
+            except DefaultProductPlan.MultipleObjectsReturned:
+                # Multiple defaults? Delete them, and set only the one we want.
+                DefaultProductPlan.objects.filter(edition=edition, is_trial=is_trial).delete()
+                set_default_plan(default_product_plan, software_plan, is_trial)
 
 
 def _ensure_role(role_slug, apps):
