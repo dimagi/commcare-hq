@@ -854,11 +854,12 @@ class DomainForms(Resource):
         return results
 
 
-Case = namedtuple('Case', 'case_type')
+Case = namedtuple('Case', 'case_name case_type')
 Case.__new__.__defaults__ = ('', '') #even though no second item, still works fine.
 
 
 class DomainCases(Resource):
+    case_name = fields.CharField(attribute='case_name')
     case_type = fields.CharField(attribute='case_type')
 
     class Meta:
@@ -878,5 +879,5 @@ class DomainCases(Resource):
         case_types = CaseAccessors(domain).get_case_types()
         results = []
         for case_type in case_types:
-            results.append(Case(case_type=case_type))
+            results.append(Case(case_type = case_type, case_name=case_type))
         return results
