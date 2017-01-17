@@ -207,14 +207,16 @@ class BaseEditUserView(BaseUserSettingsView):
             raise NotImplementedError("You must specify a form to update the user!")
 
         if self.request.method == "POST" and self.request.POST['form_type'] == "update-user":
-            return self.user_update_form_class(data=self.request.POST)
+            form = self.user_update_form_class(data=self.request.POST)
+        else:
+            form = self.user_update_form_class()
+            form.initialize_form(domain=self.request.domain, existing_user=self.editable_user)
 
-        form = self.user_update_form_class()
-        form.initialize_form(domain=self.request.domain, existing_user=self.editable_user)
         if self.can_change_user_roles:
             form.load_roles(current_role=self.existing_role, role_choices=self.user_role_choices)
         else:
             del form.fields['role']
+
         return form
 
     @property
