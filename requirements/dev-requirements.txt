@@ -17,5 +17,6 @@ psutil  # for memory profiling
 django-extensions
 ipython==4.2.1
 ipdb==0.9.4
+wheel==0.29.0
 
 --requirement=test-requirements.txt
