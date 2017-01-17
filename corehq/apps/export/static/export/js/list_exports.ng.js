@@ -1,3 +1,4 @@
+/* globals Clipboard */
 (function (angular, undefined) {
     'use strict';
     // module: hq.list_exports
@@ -19,7 +20,7 @@
 
     var exportsControllers = {};
     exportsControllers.ListExportsController = function (
-        $scope, djangoRMI, bulk_download_url, legacy_bulk_download_url
+        $scope, djangoRMI, bulk_download_url, legacy_bulk_download_url, $rootScope
     ) {
         /**
          * This controller fetches a list of saved exports from
@@ -85,6 +86,16 @@
             $btn.addClass('disabled');
             $btn.text(gettext('Download Requested'));
         };
+        $scope.copyLinkRequested = function($event, export_) {
+            export_.showLink = true;
+            var clipboard = new Clipboard($event.target, {
+                target: function (trigger) {
+                    return trigger.nextElementSibling;
+                },
+            });
+            clipboard.onClick($event);
+            clipboard.destroy();
+        };
         $scope.selectAll = function () {
             _.each($scope.exports, function (exp) {
                 exp.addedToBulk = true;
@@ -101,7 +112,7 @@
             analytics.workflow("Clicked Export button");
         };
         $scope.updateEmailedExportData = function (component, exp) {
-            $('#modalRefreshExportConfirm-' + exp.id + '-' + component.groupId).modal('hide');
+            $('#modalRefreshExportConfirm-' + exp.id + '-' + (component.groupId ? component.groupId : '')).modal('hide');
             component.updatingData = true;
             djangoRMI.update_emailed_export_data({
                 'component': component,
@@ -115,6 +126,99 @@
                         component.updatedDataTriggered = true;
                     }
                 });
+        };
+        $scope.setFilterModalExport = function (export_) {
+            // The filterModalExport is used as context for the FeedFilterFormController
+            $rootScope.filterModalExport = export_;
+        };
+        $scope.isLocationSafeForUser = function(export_) {
+            return (!export_.emailedExport) || export_.emailedExport.isLocationSafeForUser;
+        };
+    };
+    exportsControllers.FeedFilterFormController = function (
+        $scope, $rootScope, djangoRMI, filterFormElements, filterFormModalElement
+    ) {
+        var self = {};
+        $scope._ = _;   // make underscore.js available
+        $scope.formData = {};
+        $scope.modelType = null;  // "form" or "case" - corresponding to the type of export selected.
+        // A list a location names. The export will be restricted to these locations.
+        $scope.locationRestrictions = [];
+        $scope.isSubmittingForm = false;
+        $scope.hasFormSubmitError = false;
+        $scope.formSubmitErrorMessage = null;
+        $scope.dateRegex = '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]';
+        self.nonPristineExportFilters = {};
+        $scope.formElement = filterFormElements;
+
+
+        $rootScope.$watch("filterModalExport", function (newSelectedExport) {
+            if (newSelectedExport) {
+                if (!(newSelectedExport.id in self.nonPristineExportFilters)) {
+                    // Mark the form as pristine if we are editing filters of a different export than before
+                    self.nonPristineExportFilters[newSelectedExport.id] = true;
+                    $scope.feedFiltersForm.$setPristine();
+
+                }
+
+                $scope.formData = newSelectedExport.emailedExport.filters;
+                $scope.locationRestrictions = newSelectedExport.emailedExport.locationRestrictions;
+                $scope.modelType = newSelectedExport.exportType;
+                // select2s require programmatic update
+                $scope.formElement.emwf_case_filter().select2("data", newSelectedExport.emailedExport.filters.emwf_case_filter);
+                $scope.formElement.emwf_form_filter().select2("data", newSelectedExport.emailedExport.filters.emwf_form_filter);
+            }
+        });
+
+        $scope.$watch("formData.date_range", function(newDateRange) {
+            if (!newDateRange) {
+                $scope.formData.date_range = "last7";
+            } else {
+                self._clearSubmitError();
+            }
+        });
+
+        $scope.commitFilters = function () {
+            var export_ = $rootScope.filterModalExport;
+            $scope.isSubmittingForm = true;
+
+            // Put the data from the select2 into the formData object
+            if ($scope.modelType === 'form') {
+                $scope.formData.emwf_form_filter = $scope.formElement.emwf_form_filter().select2("data");
+                $scope.formData.emwf_case_filter = null;
+            }
+            if ($scope.modelType === 'case') {
+                $scope.formData.emwf_case_filter = $scope.formElement.emwf_case_filter().select2("data");
+                $scope.formData.emwf_form_filter = null;
+            }
+            debugger;
+            djangoRMI.commit_filters({
+                export: export_,
+                form_data: $scope.formData,
+            }).success(function (data) {
+                $scope.isSubmittingForm = false;
+                if (data.success) {
+                    self._clearSubmitError();
+                    export_.emailedExport.filters = $scope.formData;
+                    export_.emailedExport.updatingData = false;
+                    export_.emailedExport.updatedDataTriggered = true;
+                    filterFormModalElement().modal('hide');
+                } else {
+                    self._handleSubmitError(data);
+                }
+            }).error(function (data) {
+                $scope.isSubmittingForm = false;
+                self._handleSubmitError(data);
+            });
+        };
+
+        self._handleSubmitError = function(data) {
+            $scope.hasFormSubmitError = true;
+            $scope.formSubmitErrorMessage = data.error;
+        };
+        self._clearSubmitError = function() {
+            $scope.hasFormSubmitError = false;
+            $scope.formSubmitErrorMessage = null;
         };
     };
 
