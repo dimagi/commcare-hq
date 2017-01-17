@@ -137,7 +137,7 @@ class BaseStripePaymentHandler(object):
             return generic_error
 
         try:
-            self.send_email(payment_record)
+            self.send_email(payment_record, billing_account)
         except Exception:
             log_accounting_error(
                 "Failed to send out an email receipt for "
@@ -158,12 +158,12 @@ class BaseStripePaymentHandler(object):
             'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
         }
 
-    def send_email(self, payment_record):
+    def send_email(self, payment_record, billing_account):
         additional_context = self.get_email_context()
         from corehq.apps.accounting.tasks import send_purchase_receipt
         send_purchase_receipt.delay(
             payment_record, self.domain, self.receipt_email_template,
-            self.receipt_email_template_plaintext, additional_context
+            self.receipt_email_template_plaintext, additional_context, billing_account
         )
 
 
@@ -447,9 +447,9 @@ class AutoPayInvoicePaymentHandler(object):
         else:
             payment_record.transaction_id = transaction_id
             payment_record.save()
-            self._send_payment_receipt(invoice, payment_record)
+            self._send_payment_receipt(invoice, payment_record, invoice.subscription.account)
 
-    def _send_payment_receipt(self, invoice, payment_record):
+    def _send_payment_receipt(self, invoice, payment_record, billing_account):
         from corehq.apps.accounting.tasks import send_purchase_receipt
         receipt_email_template = 'accounting/invoice_receipt_email.html'
         receipt_email_template_plaintext = 'accounting/invoice_receipt_email_plaintext.txt'
@@ -463,7 +463,8 @@ class AutoPayInvoicePaymentHandler(object):
                 'invoice_num': invoice.invoice_number,
             }
             send_purchase_receipt.delay(
-                payment_record, domain, receipt_email_template, receipt_email_template_plaintext, context,
+                payment_record, domain, receipt_email_template,
+                receipt_email_template_plaintext, context, billing_account
             )
         except:
             self._handle_email_failure(payment_record)

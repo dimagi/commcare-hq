@@ -1,4 +1,5 @@
 import os
+import datetime
 
 from django.conf import settings
 
@@ -96,7 +97,7 @@ def midpoint(x1, x2):
     return (x1 + x2) * 0.5
 
 
-class InvoiceTemplate(object):
+class PdfTemplate(object):
 
     def __init__(self, filename, logo_filename=LOGO_FILENAME,
                  from_address=Address(**settings.INVOICE_FROM_ADDRESS),
@@ -112,7 +113,7 @@ class InvoiceTemplate(object):
                  swift_code=settings.BANK_SWIFT_CODE,
                  applied_credit=None,
                  subtotal=None, tax_rate=None, applied_tax=None, total=None,
-                 is_wire=False, is_prepayment=False):
+                 is_wire=False, is_prepayment=False, is_paid=False, date_paid=None):
         self.canvas = Canvas(filename)
         self.canvas.setFontSize(DEFAULT_FONT_SIZE)
         self.logo_filename = os.path.join(os.getcwd(), logo_filename)
@@ -138,6 +139,8 @@ class InvoiceTemplate(object):
         self.total = total
         self.is_wire = is_wire
         self.is_prepayment = is_prepayment
+        self.is_paid = is_paid
+        self.date_paid = date_paid
 
         self.items = []
 
@@ -146,20 +149,7 @@ class InvoiceTemplate(object):
                                       subtotal, credits, total))
 
     def get_pdf(self):
-        self.draw_logo()
-        self.draw_from_address()
-        self.draw_to_address()
-        self.draw_project_name()
-        if not self.is_prepayment:
-            self.draw_statement_period()
-        self.draw_invoice_label()
-        self.draw_details()
-        if not self.is_wire or self.is_prepayment:
-            self.draw_table()
-        self.draw_footer()
-
-        self.canvas.showPage()
-        self.canvas.save()
+        raise NotImplementedError()
 
     def draw_logo(self):
         self.canvas.drawImage(self.logo_filename, inches(0.5), inches(2.5),
@@ -240,62 +230,10 @@ class InvoiceTemplate(object):
 
         self.canvas.translate(-origin_x, -origin_y)
 
-    def draw_invoice_label(self):
+    def draw_label(self, label):
         self.canvas.setFontSize(size=24)
-        self.canvas.drawString(inches(6.5), inches(10.8), "Invoice")
+        self.canvas.drawString(inches(6.5), inches(10.8), label)
         self.canvas.setFontSize(DEFAULT_FONT_SIZE)
-
-    def draw_details(self):
-        origin_x = inches(5.75)
-        origin_y = inches(9.5)
-        self.canvas.translate(origin_x, origin_y)
-
-        left = inches(0)
-        right = inches(2)
-        bottom = inches(0)
-        top = inches(1.25)
-        label_height = (top - bottom) / 6.0
-        label_offset = label_height * 0.8
-        content_offset = 1.5 * label_offset
-        middle_x = midpoint(left, right)
-        middle_y = midpoint(bottom, top)
-
-        self.canvas.setFillColorRGB(*LIGHT_GRAY)
-        self.canvas.rect(left, middle_y - label_height,
-                         right - left, label_height, fill=1)
-        self.canvas.rect(left, top - label_height, right - left, label_height,
-                         fill=1)
-        self.canvas.setFillColorRGB(*BLACK)
-
-        self.canvas.rect(left, bottom, right - left, top - bottom)
-        self.canvas.rect(left, bottom, 0.5 * (right - left), top - bottom)
-        self.canvas.rect(left, bottom, right - left, 0.5 * (top - bottom))
-
-        self.canvas.drawCentredString(midpoint(left, middle_x),
-                                      top - label_offset, "Date")
-        self.canvas.drawCentredString(midpoint(left, middle_x),
-                                      top - label_height - content_offset,
-                                      str(self.invoice_date))
-
-        self.canvas.drawCentredString(midpoint(middle_x, right),
-                                      top - label_offset, "Invoice #")
-        self.canvas.drawCentredString(midpoint(middle_x, right),
-                                      top - label_height - content_offset,
-                                      self.invoice_number)
-
-        self.canvas.drawCentredString(midpoint(left, middle_x),
-                                      middle_y - label_offset, "Terms")
-        self.canvas.drawCentredString(midpoint(left, middle_x),
-                                      middle_y - label_height - content_offset,
-                                      self.terms)
-
-        self.canvas.drawCentredString(midpoint(middle_x, right),
-                                      middle_y - label_offset, "Due Date")
-        self.canvas.drawCentredString(midpoint(middle_x, right),
-                                      middle_y - label_height - content_offset,
-                                      str(self.due_date))
-
-        self.canvas.translate(-origin_x, -origin_y)
 
     def draw_table(self):
         origin_x = inches(0.5)
@@ -385,14 +323,90 @@ class InvoiceTemplate(object):
 
         self.canvas.translate(-origin_x, -origin_y)
 
-    def draw_footer(self):
-        from corehq.apps.domain.views import DomainBillingStatementsView
-
+    def draw_shared_footer(self):
         self.canvas.setFillColorRGB(*LIGHT_GRAY)
         self.canvas.rect(inches(5), inches(1.65), inches(3), inches(0.5),
                          fill=1)
         self.canvas.setFillColorRGB(*BLACK)
 
+
+
+
+class InvoiceTemplate(PdfTemplate):
+
+    def get_pdf(self):
+        self.draw_logo()
+        self.draw_from_address()
+        self.draw_to_address()
+        self.draw_project_name()
+        if not self.is_prepayment:
+            self.draw_statement_period()
+        self.draw_label('Invoice')
+        self.draw_details()
+        if not self.is_wire or self.is_prepayment:
+            self.draw_table()
+        self.draw_footer()
+
+        self.canvas.showPage()
+        self.canvas.save()
+
+    def draw_details(self):
+        origin_x = inches(5.75)
+        origin_y = inches(9.5)
+        self.canvas.translate(origin_x, origin_y)
+
+        left = inches(0)
+        right = inches(2)
+        bottom = inches(0)
+        top = inches(1.25)
+        label_height = (top - bottom) / 6.0
+        label_offset = label_height * 0.8
+        content_offset = 1.5 * label_offset
+        middle_x = midpoint(left, right)
+        middle_y = midpoint(bottom, top)
+
+        self.canvas.setFillColorRGB(*LIGHT_GRAY)
+        self.canvas.rect(left, middle_y - label_height,
+                         right - left, label_height, fill=1)
+        self.canvas.rect(left, top - label_height, right - left, label_height,
+                         fill=1)
+        self.canvas.setFillColorRGB(*BLACK)
+
+        self.canvas.rect(left, bottom, right - left, top - bottom)
+        self.canvas.rect(left, bottom, 0.5 * (right - left), top - bottom)
+        self.canvas.rect(left, bottom, right - left, 0.5 * (top - bottom))
+
+
+        self.canvas.drawCentredString(midpoint(left, middle_x),
+                                      top - label_offset, "Date")
+        self.canvas.drawCentredString(midpoint(left, middle_x),
+                                      top - label_height - content_offset,
+                                      str(self.invoice_date))
+
+        self.canvas.drawCentredString(midpoint(middle_x, right),
+                                      top - label_offset, "Invoice #")
+        self.canvas.drawCentredString(midpoint(middle_x, right),
+                                      top - label_height - content_offset,
+                                      self.invoice_number)
+
+        self.canvas.drawCentredString(midpoint(left, middle_x),
+                                      middle_y - label_offset, "Terms")
+        self.canvas.drawCentredString(midpoint(left, middle_x),
+                                      middle_y - label_height - content_offset,
+                                      self.terms)
+
+        self.canvas.drawCentredString(midpoint(middle_x, right),
+                                      middle_y - label_offset, "Due Date")
+        self.canvas.drawCentredString(midpoint(middle_x, right),
+                                      middle_y - label_height - content_offset,
+                                      str(self.due_date))
+
+        self.canvas.translate(-origin_x, -origin_y)
+
+    def draw_footer(self):
+        from corehq.apps.domain.views import DomainBillingStatementsView
+
+        self.draw_shared_footer()
         self.canvas.drawString(inches(5.6), inches(3.05), "Subtotal:")
         self.canvas.drawString(inches(5.6), inches(2.75),
                                "Tax (%0.2f%%):" % self.tax_rate)
@@ -413,53 +427,148 @@ class InvoiceTemplate(object):
 
         self.canvas.drawString(inches(5), inches(1.4),
                                "Thank you for using CommCare HQ.")
-
         payment_description = (
-            "Payment Options:<br />"
-            "<strong>Credit card payments</strong> are preferred and can be made online here: "
-            "<link href='%(payment_page)s' color='blue'>%(payment_page)s</link><br />"
-            "<br />"
-            "<strong>ACH or Wire:</strong> If you make payment via ACH or Wire, please make sure to email "
-            "<font color='blue'>%(invoicing_contact_email)s</font> "
-            "so that we can match your payment to the correct invoice.  Please include: "
-            "Invoice #, Project Space, and payment date in the email. <br />"
-        ) % {
-            'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
-            'payment_page': absolute_reverse(DomainBillingStatementsView.urlname, args=[self.project_name]),
-        }
+                                  "Payment Options:<br />"
+                                  "<strong>Credit card payments</strong> are preferred and can be made online here: "
+                                  "<link href='%(payment_page)s' color='blue'>%(payment_page)s</link><br />"
+                                  "<br />"
+                                  "<strong>ACH or Wire:</strong> If you make payment via ACH or Wire, please make sure to email "
+                                  "<font color='blue'>%(invoicing_contact_email)s</font> "
+                                  "so that we can match your payment to the correct invoice.  Please include: "
+                                  "Invoice #, Project Space, and payment date in the email. <br />"
+                              ) % {
+                                  'invoicing_contact_email': settings.INVOICING_CONTACT_EMAIL,
+                                  'payment_page': absolute_reverse(DomainBillingStatementsView.urlname,
+                                                                   args=[self.project_name]),
+                              }
         payment_info = Paragraph(payment_description, ParagraphStyle(''))
         payment_info.wrapOn(self.canvas, inches(4.25), inches(0.9))
         payment_info.drawOn(self.canvas, inches(0.5), inches(1.8))
 
         ach_payment_text = (
-            "<strong>ACH payment</strong> (preferred over wire payment for transfer in the US):<br />"
-            "Bank: %(bank_name)s "
-            "Bank Address: %(bank_address)s "
-            "Account Number: %(account_number)s "
-            "Routing Number or ABA: %(routing_number_ach)s<br />"
-        ) % {
-            'bank_name': self.bank_name,
-            'bank_address': self.bank_address,
-            'account_number': self.account_number,
-            'routing_number_ach': self.routing_number_ach,
-        }
+                               "<strong>ACH payment</strong> (preferred over wire payment for transfer in the US):<br />"
+                               "Bank: %(bank_name)s "
+                               "Bank Address: %(bank_address)s "
+                               "Account Number: %(account_number)s "
+                               "Routing Number or ABA: %(routing_number_ach)s<br />"
+                           ) % {
+                               'bank_name': self.bank_name,
+                               'bank_address': self.bank_address,
+                               'account_number': self.account_number,
+                               'routing_number_ach': self.routing_number_ach,
+                           }
         wire_payment_text = (
-            "<strong>Wire payment</strong>:<br />"
-            "Bank: %(bank_name)s "
-            "Bank Address: %(bank_address)s "
-            "Account Number: %(account_number)s "
-            "Routing Number or ABA: %(routing_number_wire)s "
-            "Swift Code: %(swift_code)s<br/>"
-        ) % {
-            'bank_name': self.bank_name,
-            'bank_address': self.bank_address,
-            'account_number': self.account_number,
-            'routing_number_wire': self.routing_number_wire,
-            'swift_code': self.swift_code,
-        }
+                                "<strong>Wire payment</strong>:<br />"
+                                "Bank: %(bank_name)s "
+                                "Bank Address: %(bank_address)s "
+                                "Account Number: %(account_number)s "
+                                "Routing Number or ABA: %(routing_number_wire)s "
+                                "Swift Code: %(swift_code)s<br/>"
+                            ) % {
+                                'bank_name': self.bank_name,
+                                'bank_address': self.bank_address,
+                                'account_number': self.account_number,
+                                'routing_number_wire': self.routing_number_wire,
+                                'swift_code': self.swift_code,
+                            }
         payment_info2 = Paragraph('\n'.join([
             ach_payment_text,
             wire_payment_text,
         ]), ParagraphStyle(''))
         payment_info2.wrapOn(self.canvas, inches(4.25), inches(0.9))
         payment_info2.drawOn(self.canvas, inches(0.7), inches(0.4))
+
+
+class ReceiptTemplate(PdfTemplate):
+
+    def get_pdf(self):
+        self.draw_logo()
+        self.draw_from_address()
+        self.draw_to_address()
+        self.draw_project_name()
+        if self.is_paid:
+            self.draw_paid_date()
+        elif self.is_prepayment:
+            self.draw_prepayment_message()
+        self.draw_label('Receipt')
+        self.draw_details()
+        if not self.is_wire or self.is_prepayment:
+            self.draw_table()
+        self.draw_footer()
+
+        self.canvas.showPage()
+        self.canvas.save()
+
+    def draw_details(self):
+        origin_x = inches(5.75)
+        origin_y = inches(9.5)
+        self.canvas.translate(origin_x, origin_y)
+
+        left = inches(0)
+        right = inches(2.25)
+        bottom = inches(0)
+        top = inches(1.25)
+        label_height = (top - bottom) / 6.0
+        label_offset = label_height * 0.8
+        content_offset = 1.5 * label_offset
+        middle_x = midpoint(left, right)
+        middle_y = midpoint(bottom, top)
+
+        self.canvas.setFillColorRGB(*LIGHT_GRAY)
+        self.canvas.rect(left, middle_y - label_height,
+                         right - left, label_height, fill=1)
+        self.canvas.rect(left, top - label_height, right - left, label_height,
+                         fill=1)
+        self.canvas.setFillColorRGB(*BLACK)
+
+        self.canvas.rect(left, bottom, right - left, top - bottom)
+        self.canvas.rect(left, bottom, 0.5 * (right - left), top - bottom)
+        self.canvas.rect(left, bottom, right - left, 0.5 * (top - bottom))
+
+        self.canvas.drawCentredString(midpoint(left, middle_x),
+                                      top - label_offset, "Date")
+        self.canvas.drawCentredString(midpoint(left, middle_x),
+                                      top - label_height - content_offset,
+                                      str(self.invoice_date))
+
+        self.canvas.drawCentredString(midpoint(middle_x, right),
+                                      top - label_offset, "Transaction #")
+        self.canvas.drawCentredString(midpoint(middle_x, right),
+                                      top - label_height - content_offset,
+                                      self.invoice_number)
+
+        self.canvas.translate(-origin_x, -origin_y)
+
+    def draw_paid_date(self):
+        origin_x = inches(1)
+        origin_y = inches(6.75)
+        self.canvas.translate(origin_x, origin_y)
+
+        self.canvas.drawString(
+            0, 0, "Invoices are now marked paid as of %s" %
+                  (self.date_paid)
+        )
+
+        self.canvas.translate(-origin_x, -origin_y)
+
+    def draw_prepayment_message(self):
+        origin_x = inches(1)
+        origin_y = inches(6.75)
+        self.canvas.translate(origin_x, origin_y)
+
+        self.canvas.drawString(
+            0, 0, "Thank you for your prepayment of %s" %
+                  (get_money_str(self.total))
+        )
+
+        self.canvas.translate(-origin_x, -origin_y)
+
+    def draw_footer(self):
+        self.draw_shared_footer()
+        self.canvas.drawString(inches(5.6), inches(3.05), "Total:")
+        self.canvas.drawCentredString(midpoint(inches(7.0), inches(8.0)),
+                                      inches(3.05),
+                                      get_money_str(self.total))
+
+        self.canvas.drawString(inches(5), inches(1.4),
+                               "Thank you for using CommCare HQ.")

@@ -150,6 +150,8 @@ def has_subscription_already_ended(subscription):
 
 
 def get_money_str(amount):
+    if isinstance(amount, basestring):
+        return amount
     if amount is not None:
         if amount < 0:
             fmt = "-$%0.2f"
@@ -161,11 +163,15 @@ def get_money_str(amount):
 
 
 def get_address_from_invoice(invoice):
+    get_address_from_billing_account(invoice.subscription.account)
+
+
+def get_address_from_billing_account(account):
     from corehq.apps.accounting.invoice_pdf import Address
     from corehq.apps.accounting.models import BillingContactInfo
     try:
         contact_info = BillingContactInfo.objects.get(
-            account=invoice.account,
+            account=account,
         )
         return Address(
             name=(

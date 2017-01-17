@@ -2,6 +2,8 @@ import datetime
 import json
 import urllib2
 from StringIO import StringIO
+from decimal import Decimal
+from tempfile import NamedTemporaryFile
 from urllib import urlencode
 
 from django.conf import settings
@@ -24,6 +26,7 @@ from corehq.apps.accounting.exceptions import (
     CreditLineError,
     InvoiceError,
 )
+from corehq.apps.accounting.invoice_pdf import ReceiptTemplate
 from corehq.apps.accounting.invoicing import DomainInvoiceFactory
 from corehq.apps.accounting.models import (
     BillingAccount,
@@ -39,7 +42,7 @@ from corehq.apps.accounting.models import (
     SubscriptionType,
     WirePrepaymentBillingRecord,
     WirePrepaymentInvoice,
-)
+    Invoice, LineItem)
 from corehq.apps.accounting.payment_handlers import AutoPayInvoicePaymentHandler
 from corehq.apps.accounting.utils import (
     fmt_dollar_amount,
@@ -47,7 +50,7 @@ from corehq.apps.accounting.utils import (
     get_dimagi_from_email,
     log_accounting_error,
     log_accounting_info,
-)
+    get_address_from_billing_account)
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import FakeUser, WebUser
 from corehq.const import USER_DATE_FORMAT, USER_MONTH_FORMAT
@@ -384,7 +387,7 @@ def create_wire_credits_invoice(domain_name,
 @task(ignore_result=True, acks_late=True)
 def send_purchase_receipt(payment_record, domain,
                           template_html, template_plaintext,
-                          additional_context):
+                          additional_context, account):
     username = payment_record.payment_method.web_user
 
     try:
@@ -411,12 +414,80 @@ def send_purchase_receipt(payment_record, domain,
     email_html = render_to_string(template_html, context)
     email_plaintext = render_to_string(template_plaintext, context)
 
+    pdf_receipt = _generate_pdf_receipt(context, domain, account, payment_record)
+    attachment_dict = {
+        'title': 'receipt.pdf',
+        'file_obj': StringIO(pdf_receipt.read()),
+        'mimetype': 'application/pdf'
+    }
+
     send_HTML_email(
         ugettext("Payment Received - Thank You!"), email, email_html,
         text_content=email_plaintext,
         email_from=get_dimagi_from_email(),
+        file_attachments= [attachment_dict]
     )
 
+def _generate_pdf_receipt(context, domain, account, payment_record):
+    import ipdb; ipdb.set_trace()
+    pdf_data = NamedTemporaryFile()
+    line_items = context.get('items')
+    invoice_number = context.get('invoice_num')
+    template = ReceiptTemplate(
+        pdf_data.name,
+        invoice_number=context['transaction_id'],
+        to_address=get_address_from_billing_account(account),
+        project_name=domain,
+        invoice_date=payment_record.date_created.date(),
+        total=payment_record.amount,
+        is_prepayment=bool(line_items),
+        is_paid=context.get('is_paid'),
+        date_paid=context.get('date_paid')
+    )
+
+    # credit prepayment
+    if line_items:
+        unit_cost = 1
+        applied_credit = 0
+        for item in line_items:
+            amount = item['amount'].replace('USD ', '$')
+            template.add_item(
+                item['type'],
+                amount,
+                unit_cost,
+                amount,
+                applied_credit,
+                amount
+            )
+    # invoice payments and autopay
+    elif invoice_number:
+        invoice = Invoice.get(invoice_number=invoice_number)
+        for line_item in LineItem.objects.filter(invoice=invoice):
+            is_unit = line_item.unit_description is not None
+            description = line_item.base_description or line_item.unit_description
+            if line_item.quantity > 0:
+                template.add_item(
+                    description,
+                    line_item.quantity if is_unit else 1,
+                    line_item.unit_cost if is_unit else line_item.subtotal,
+                    line_item.subtotal,
+                    line_item.applied_credit,
+                    line_item.total
+                )
+    # bulk payment
+    else:
+        quantity = 1
+        applied_credit = 0
+        template.add_item(
+            ugettext('Bulk Payment'),
+            quantity,
+            payment_record.amount,
+            payment_record.amount,
+            applied_credit,
+            payment_record.amount,
+        )
+    template.get_pdf()
+    return pdf_data
 
 @task(queue='background_queue', ignore_result=True, acks_late=True)
 def send_autopay_failed(invoice, payment_method):
