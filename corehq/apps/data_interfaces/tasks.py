@@ -43,39 +43,14 @@ def bulk_archive_forms(domain, couch_user, uploaded_data):
 
 
 @task
-def bulk_form_management_async(archive_or_restore, domain, couch_user, form_ids_or_query_string):
-    # form_ids_or_query_string - can either be list of formids or a BulkFormMangementInterface query url
-    def get_ids_from_url(query_string, domain, couch_user):
-        from django.http import HttpRequest, QueryDict
-
-        _request = HttpRequest()
-        _request.couch_user = couch_user
-        _request.user = couch_user.get_django_user()
-        _request.domain = domain
-        _request.couch_user.current_domain = domain
-
-        _request.GET = QueryDict(query_string)
-        dispatcher = EditDataInterfaceDispatcher()
-        return dispatcher.dispatch(
-            _request,
-            render_as='form_ids',
-            domain=domain,
-            report_slug=BulkFormManagementInterface.slug,
-            skip_permissions_check=True,
-        )
-
+def bulk_form_management_async(archive_or_restore, domain, couch_user, form_ids):
     task = bulk_form_management_async
     mode = FormManagementMode(archive_or_restore, validate=True)
 
-    if type(form_ids_or_query_string) == list:
-        xform_ids = form_ids_or_query_string
-    elif isinstance(form_ids_or_query_string, basestring):
-        xform_ids = get_ids_from_url(form_ids_or_query_string, domain, couch_user)
-
-    if not xform_ids:
+    if not form_ids:
         return {'messages': {'errors': [_('No Forms are supplied')]}}
 
-    response = archive_or_restore_forms(domain, couch_user.user_id, couch_user.username, xform_ids, mode, task)
+    response = archive_or_restore_forms(domain, couch_user.user_id, couch_user.username, form_ids, mode, task)
     return response
 
 
