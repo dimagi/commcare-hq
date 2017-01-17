@@ -1,7 +1,6 @@
 import datetime
 from django.db import models
-from custom.rch.utils import fetch_mother_beneficiaries_records, fetch_child_beneficiaries_records
-
+from custom.rch.utils import fetch_beneficiaries_records, MOTHER_DATA_TYPE, CHILD_DATA_TYPE
 
 STATE_DISTRICT_MAPPING = {
     '28': [
@@ -36,6 +35,18 @@ class RCHRecord(models.Model):
 
     class Meta:
         abstract = True
+
+    @classmethod
+    def update_beneficiaries(cls, beneficiary_type):
+        date_str = str(datetime.date.fromordinal(datetime.date.today().toordinal() - 1))
+        for state_id in STATE_DISTRICT_MAPPING:
+            for district_id in STATE_DISTRICT_MAPPING[state_id]:
+                records = fetch_beneficiaries_records(date_str, date_str, state_id, beneficiary_type, district_id)
+                for record in records:
+                    rch_beneficiary = cls()
+                    for prop in record:
+                        setattr(rch_beneficiary, prop.keys()[0], prop.values()[0])
+                    rch_beneficiary.save()
 
 
 class RCHMother(RCHRecord):
@@ -135,16 +146,8 @@ class RCHMother(RCHRecord):
         super(RCHMother, self).save(*args, **kwargs)
 
     @classmethod
-    def update_beneficiaries(cls):
-        date_str = str(datetime.date.fromordinal(datetime.date.today().toordinal()-1))
-        for state_id in STATE_DISTRICT_MAPPING:
-            for district_id in STATE_DISTRICT_MAPPING[state_id]:
-                records = fetch_mother_beneficiaries_records(date_str, date_str, state_id, district_id)
-                for record in records:
-                    rch_mother = cls()
-                    for prop in record:
-                        rch_mother.__setattr__(prop.keys()[0], prop.values()[0])
-                    rch_mother.save()
+    def update_beneficiaries(cls, beneficiary_type=MOTHER_DATA_TYPE):
+        super(RCHMother, cls).update_beneficiaries(beneficiary_type)
 
 
 class RCHChild(RCHRecord):
@@ -183,16 +186,8 @@ class RCHChild(RCHRecord):
     Weight = models.FloatField(null=True)
 
     @classmethod
-    def update_beneficiaries(cls):
-        date_str = str(datetime.date.fromordinal(datetime.date.today().toordinal()-1))
-        for state_id in STATE_DISTRICT_MAPPING:
-            for district_id in STATE_DISTRICT_MAPPING[state_id]:
-                records = fetch_child_beneficiaries_records(date_str, date_str, state_id, district_id)
-                for record in records:
-                    rch_child = cls()
-                    for prop in record:
-                        rch_child.__setattr__(prop.keys()[0], prop.values()[0])
-                    rch_child.save()
+    def update_beneficiaries(cls, beneficiary_type=CHILD_DATA_TYPE):
+        super(RCHChild, cls).update_beneficiaries(beneficiary_type)
 
 
 class AreaMapping(models.Model):

@@ -33,14 +33,6 @@ def _fetch_beneficiaries(from_date, to_date, state_id, beneficiary_type, distric
     return etree_to_dict(data)['NewDataSet']
 
 
-def _fetch_beneficiaries_records(from_date, to_date, state_id, beneficiary_type, district_id):
+def fetch_beneficiaries_records(from_date, to_date, state_id, beneficiary_type, district_id):
     records = _fetch_beneficiaries(from_date, to_date, state_id, beneficiary_type, district_id)
     return [record_data["Records"] for record_data in records]
-
-
-def fetch_mother_beneficiaries_records(from_date, to_date, state_id, district_id):
-    return _fetch_beneficiaries_records(from_date, to_date, state_id, MOTHER_DATA_TYPE, district_id)
-
-
-def fetch_child_beneficiaries_records(from_date, to_date, state_id, district_id):
-    return _fetch_beneficiaries_records(from_date, to_date, state_id, CHILD_DATA_TYPE, district_id)
