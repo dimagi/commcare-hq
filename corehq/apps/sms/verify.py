@@ -5,6 +5,7 @@ from corehq.apps.sms.api import (send_sms, send_sms_to_verified_number,
     MessageMetadata)
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.sms import messages
+from corehq.apps.sms.mixin import apply_leniency
 from corehq.apps.sms.models import MessagingEvent, SQLMobileBackend, PhoneNumber
 
 
@@ -18,10 +19,17 @@ def initiate_sms_verification_workflow(contact, phone_number):
     # For now this is only applicable to mobile workers
     assert isinstance(contact, CommCareUser)
 
+    phone_number = apply_leniency(phone_number)
+
     logged_event = MessagingEvent.get_current_verification_event(
         contact.domain, contact.get_id, phone_number)
 
-    with CriticalSection(['verifying-phone-number-%s' % phone_number]):
+    lock_keys = [
+        'verifying-phone-number-%s' % phone_number,
+        'sync-user-phone-numbers-for-%s' % contact.get_id,
+    ]
+
+    with CriticalSection(lock_keys):
         p = PhoneNumber.get_reserved_number(phone_number)
         if p:
             if p.owner_id != contact.get_id:

@@ -39,9 +39,15 @@ def update_user_in_es(sender, couch_user, **kwargs):
                           delete=couch_user.to_be_deleted())
 
 
+def sync_user_phone_numbers(sender, couch_user, **kwargs):
+    from corehq.apps.sms.tasks import sync_user_phone_numbers as sms_sync_user_phone_numbers
+    sms_sync_user_phone_numbers.delay(couch_user)
+
+
 # This gets called by UsersAppConfig when the module is set up
 def connect_user_signals():
     from django.contrib.auth.models import User
     post_save.connect(django_user_post_save_signal, User,
                       dispatch_uid="django_user_post_save_signal")
     couch_user_post_save.connect(update_user_in_es, dispatch_uid="update_user_in_es")
+    couch_user_post_save.connect(sync_user_phone_numbers, dispatch_uid="sync_user_phone_numbers")

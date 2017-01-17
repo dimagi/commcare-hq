@@ -2,7 +2,8 @@ import math
 from datetime import datetime, timedelta
 from celery.task import task
 from corehq.apps.sms.mixin import (InvalidFormatException,
-    PhoneNumberInUseException, PhoneNumberException)
+    PhoneNumberInUseException, PhoneNumberException, CommCareMobileContactMixin,
+    apply_leniency)
 from corehq.apps.sms.models import (OUTGOING, INCOMING, SMS,
     PhoneLoadBalancingMixin, QueuedSMS, PhoneNumber)
 from corehq.apps.sms.api import (send_message_via_backend, process_incoming,
@@ -16,6 +17,7 @@ from corehq.apps.smsbillables.exceptions import RetryBillableTaskException
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.sms.change_publishers import publish_sms_saved
 from corehq.apps.sms.util import is_contact_active
+from corehq.apps.users.models import CouchUser
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch import release_lock, CriticalSection
@@ -341,6 +343,36 @@ def _sync_case_phone_number(contact_case):
             phone_number.pending_verification = False
 
         phone_number.save()
+
+
+@task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, ignore_result=True, acks_late=True,
+      default_retry_delay=5 * 60, max_retries=10, bind=True)
+def sync_user_phone_numbers(self, couch_user):
+    try:
+        _sync_user_phone_numbers(couch_user)
+    except Exception as e:
+        self.retry(exc=e)
+
+
+def _sync_user_phone_numbers(couch_user):
+    lock_keys = ['sync-user-phone-numbers-for-%s' % couch_user.get_id]
+
+    if not isinstance(couch_user, CommCareMobileContactMixin):
+        couch_user = CouchUser.wrap_correctly(couch_user.to_json())
+
+    with CriticalSection(lock_keys, timeout=5 * 60):
+        phone_entries = couch_user.get_phone_entries()
+        numbers_that_should_exist = [apply_leniency(phone_number) for phone_number in couch_user.phone_numbers]
+
+        # Delete entries that should not exist
+        for phone_number in phone_entries.keys():
+            if phone_number not in numbers_that_should_exist:
+                phone_entries[phone_number].delete()
+
+        # Create entries that should exist but do not exist
+        for phone_number in numbers_that_should_exist:
+            if phone_number not in phone_entries:
+                couch_user._create_phone_entry(phone_number)
 
 
 @task(queue='background_queue', ignore_result=True, acks_late=True,
