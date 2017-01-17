@@ -245,12 +245,7 @@ class EditCommCareUserView(BaseEditUserView):
 
     @property
     def user_role_choices(self):
-        return UserRole.commcareuser_role_choices(self.domain)
-
-    @property
-    def can_change_user_roles(self):
-        return ((self.request.user.is_superuser or self.request.couch_user.can_edit_web_users(domain=self.domain))
-                and self.request.couch_user.user_id != self.editable_user_id)
+        return [('none', _('(none)'))] + self.editable_role_choices
 
     @property
     def existing_role(self):
@@ -266,10 +261,6 @@ class EditCommCareUserView(BaseEditUserView):
     def form_user_update(self):
         form = super(EditCommCareUserView, self).form_user_update
         form.load_language(language_choices=get_domain_languages(self.domain))
-        if self.can_change_user_roles:
-            form.load_roles(current_role=self.existing_role, role_choices=self.user_role_choices)
-        else:
-            del form.fields['role']
         return form
 
     @property

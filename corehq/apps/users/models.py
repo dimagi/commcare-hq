@@ -207,6 +207,7 @@ class UserRole(QuickCachedDocumentMixin, Document):
         choices=[page.id for page in ALLOWED_LANDING_PAGES],
     )
     permissions = SchemaProperty(Permissions)
+    is_non_admin_editable = BooleanProperty(default=False)
     is_archived = BooleanProperty(default=False)
 
     def get_qualified_id(self):
@@ -308,18 +309,6 @@ class UserRole(QuickCachedDocumentMixin, Document):
     @classmethod
     def get_default(cls, domain=None):
         return cls(permissions=Permissions(), domain=domain, name=None)
-
-    @classmethod
-    def role_choices(cls, domain):
-        return [(role.get_qualified_id(), role.name or '(No Name)') for role in
-                [AdminUserRole(domain=domain)] + list(cls.by_domain(domain))]
-
-    @classmethod
-    def commcareuser_role_choices(cls, domain):
-        return [('none','(none)')] + [
-            (role.get_qualified_id(), role.name or '(No Name)')
-            for role in list(cls.by_domain(domain))
-        ]
 
     @property
     def ids_of_assigned_users(self):
