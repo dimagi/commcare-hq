@@ -1413,7 +1413,6 @@ class DailySavedExportListView(BaseExportListView):
         form_data = in_data['form_data']
         try:
             export = get_properly_wrapped_export_instance(export_id)
-
             if not export.filters.is_location_safe_for_user(self.request):
                 return location_restricted_response(self.request)
 
@@ -1421,7 +1420,7 @@ class DailySavedExportListView(BaseExportListView):
             if filter_form.is_valid():
                 old_can_access_all_locations = export.filters.can_access_all_locations
                 old_accessible_location_ids = export.filters.accessible_location_ids
-
+                import ipdb; ipdb.set_trace()
                 filters = filter_form.to_export_instance_filters(
                     # using existing location restrictions prevents a less restricted user from modifying
                     # restrictions on an export that a more restricted user created (which would mean the more
@@ -1429,7 +1428,9 @@ class DailySavedExportListView(BaseExportListView):
                     old_can_access_all_locations,
                     old_accessible_location_ids
                 )
+                import ipdb; ipdb.set_trace()
                 if export.filters != filters:
+                    import ipdb; ipdb.set_trace()
                     export.filters = filters
                     export.save()
                     from corehq.apps.export.tasks import rebuild_export_task
@@ -1438,6 +1439,7 @@ class DailySavedExportListView(BaseExportListView):
             else:
                 return format_angular_error("Problem saving dashboard feed filters: Invalid form")
         except Exception as e:
+            raise
             msg = "Problem saving dashboard feed filters: {} {}"
             notify_exception(self.request, message=msg.format(e.__class__, e))
             return format_angular_error(_(msg).format(e.__class__, e))

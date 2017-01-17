@@ -191,7 +191,7 @@
                 $scope.formData.emwf_case_filter = $scope.formElement.emwf_case_filter().select2("data");
                 $scope.formData.emwf_form_filter = null;
             }
-
+            debugger;
             djangoRMI.commit_filters({
                 export: export_,
                 form_data: $scope.formData,

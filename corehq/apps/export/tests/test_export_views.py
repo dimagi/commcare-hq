@@ -193,14 +193,16 @@ class ExportViewTest(TestCase):
             reverse(DailySavedExportListView.urlname, args=[self.domain.name]),
             json.dumps({
                 "export": {"id": export._id},
-                "form_data": filter_form_data
+                "form_data": filter_form_data,
             }),
             content_type="application/json",
             HTTP_X_REQUESTED_WITH="XMLHttpRequest",
             HTTP_DJNG_REMOTE_METHOD='commit_filters',
         )
         self.assertEqual(resp.status_code, 200)
+        self.assertTrue("error" not in json.loads(resp.content))
         export = CaseExportInstance.get(export._id)
+        # TODO: hmmm, it has not date period. Why!?
         self.assertEqual(export.filters.date_period.period_type, 'range')
 
     def test_wrong_domain_save(self):
