@@ -54,8 +54,8 @@ class BeneficariesList(TemplateView):
         #     village_ids = village_ids + AreaMapping.fetch_village_ids_for_awcid(awcid)
         #
         # if village_ids:
-        #     mother_beneficiaries = mother_beneficiaries.filter(Village_ID__in=village_ids)
-        #     child_beneficiaries = child_beneficiaries.filter(Village_ID__in=village_ids)
+        #     mother_beneficiaries = mother_beneficiaries.filter(MDDS_VillageID__in=village_ids)
+        #     child_beneficiaries = child_beneficiaries.filter(MDDS_VillageID__in=village_ids)
 
         village_name = request.POST.get('village_name')
         if village_name:
