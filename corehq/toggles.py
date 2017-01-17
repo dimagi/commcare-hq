@@ -3,6 +3,8 @@ from functools import wraps
 import hashlib
 from django.http import Http404
 import math
+
+from django.conf import settings
 from corehq.util.quickcache import quickcache
 from toggle.shortcuts import toggle_enabled, set_toggle
 
@@ -137,7 +139,9 @@ class PredictablyRandomToggle(StaticToggle):
         return '{}:{}:{}'.format(self.namespaces, self.slug, item)
 
     def enabled(self, item, **kwargs):
-        if item in self.always_disabled:
+        if settings.UNIT_TESTING:
+            return False
+        elif item in self.always_disabled:
             return False
         return (
             (item and deterministic_random(self._get_identifier(item)) < self.randomness)
