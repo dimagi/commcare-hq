@@ -183,6 +183,7 @@ class TestReportAggregation(ConfigurableReportTestMixin, TestCase):
             ]]
         )
 
+    @run_with_all_ucr_backends
     def test_aggregation_by_indicator_in_percent_column(self):
         report_config = self._create_report(
             aggregation_columns=['indicator_col_id_number'],
