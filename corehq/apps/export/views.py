@@ -1727,8 +1727,8 @@ class GenericDownloadNewExportMixin(object):
             count += get_export_size(instance, filters)
         if count > MAX_EXPORTABLE_ROWS:
             raise ExportAsyncException(
-                _("This export contains " + count + " rows. Please change the " +
-                "filters to be less than " + MAX_EXPORTABLE_ROWS + "rows.")
+                _("This export contains {count} rows. Please change the filters to be less than {max} "
+                  "rows.".format(count=count, max=MAX_EXPORTABLE_ROWS))
             )
 
     @property
