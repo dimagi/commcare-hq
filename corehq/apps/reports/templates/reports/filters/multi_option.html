@@ -28,7 +28,9 @@
         });
     });
     {% if not endpoint %}
-        $('#{{ css_id }}').select2();
+        _.delay(function() {
+            $('#{{ css_id }}').select2();
+        });
     {% else %}
         {% comment %}
         This is a select2 widget using a remote endpoint for paginated,
