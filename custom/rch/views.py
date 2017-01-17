@@ -32,18 +32,18 @@ class BeneficariesList(TemplateView):
         context = self.get_context_data()
         mother_beneficiaries = RCHMother.objects
         child_beneficiaries = RCHChild.objects
-        state = request.POST['state']
+        state = request.POST.get('state')
         if state:
             mother_beneficiaries = mother_beneficiaries.filter(State_Name=state)
             child_beneficiaries = child_beneficiaries.filter(State_Name=state)
-        district = request.POST['district']
+        district = request.POST.get('district')
         if district:
             mother_beneficiaries = mother_beneficiaries.filter(District_Name=district)
             child_beneficiaries = child_beneficiaries.filter(District_Name=district)
 
         # To be included once mapping is available
-        # awcid = request.POST['awcid']
-        # village_id = request.POST['village_id']
+        # awcid = request.POST.get('awcid')
+        # village_id = request.POST.get('village_id')
         # village_ids = [village_id]
         # if awcid:
         #     village_ids = village_ids + AreaMapping.fetch_village_ids_for_awcid(awcid)
@@ -52,7 +52,7 @@ class BeneficariesList(TemplateView):
         #     mother_beneficiaries = mother_beneficiaries.filter(Village_ID__in=village_ids)
         #     child_beneficiaries = child_beneficiaries.filter(Village_ID__in=village_ids)
 
-        village_name = request.POST['village_name']
+        village_name = request.POST.get('village_name')
         if village_name:
             mother_beneficiaries = mother_beneficiaries.filter(Village_Name__contains=village_name)
             child_beneficiaries = child_beneficiaries.filter(VILLAGE_Name__contains=village_name)
@@ -73,8 +73,8 @@ class MotherBeneficiaryView(BeneficiaryView):
 
     def get_context_data(self, **kwargs):
         context = super(BeneficiaryView, self).get_context_data(**kwargs)
-        beneficiary = serializers.serialize('json', [RCHMother.objects.get(pk=kwargs['beneficiary_id'])])
-        context['beneficiary_details'] = json.loads(beneficiary)[0]['fields']
+        beneficiary = serializers.serialize('json', [RCHMother.objects.get(pk=kwargs.get('beneficiary_id'))])
+        context['beneficiary_details'] = json.loads(beneficiary)[0].get('fields')
         return context
 
 
@@ -83,6 +83,6 @@ class ChildBeneficiaryView(BeneficiaryView):
 
     def get_context_data(self, **kwargs):
         context = super(BeneficiaryView, self).get_context_data(**kwargs)
-        beneficiary = serializers.serialize('json', [RCHChild.objects.get(pk=kwargs['beneficiary_id'])])
-        context['beneficiary_details'] = json.loads(beneficiary)[0]['fields']
+        beneficiary = serializers.serialize('json', [RCHChild.objects.get(pk=kwargs.get('beneficiary_id'))])
+        context['beneficiary_details'] = json.loads(beneficiary)[0].get('fields')
         return context
