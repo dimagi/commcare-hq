@@ -218,7 +218,7 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
             ['Massachusetts', 'Suffolk', 'Boston', 'Revere', 'New York']
         )
 
-    def test_include_without_expanding_same_level(self, uses_locations):
+    def test_include_without_expanding_same_level(self):
         # I want a list of all the counties, but only the cities in my county
         self.user._couch_user.set_location(self.locations['Boston'].couch_location)
         location_type = self.locations['Boston'].location_type
