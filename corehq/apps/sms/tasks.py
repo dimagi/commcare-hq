@@ -267,7 +267,7 @@ def store_billable(self, msg):
         except DataError:
             from corehq.util.soft_assert import soft_assert
             _soft_assert = soft_assert(to='{}@{}'.format('jemord', 'dimagi.com'))
-            _soft_assert(msg.domain < 25, "Domain name too long: " + msg.domain)
+            _soft_assert(len(msg.domain) < 25, "Domain name too long: " + msg.domain)
             raise
 
 
