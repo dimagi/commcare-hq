@@ -466,3 +466,66 @@ class SQLPhoneNumberTestCase(TestCase):
             self.assertEqual(PhoneNumber.by_owner_id(case1.case_id).count(), 1)
             self.assertEqual(PhoneNumber.by_owner_id(case2.case_id).count(), 0)
             self.assertEqual(PhoneNumber.by_owner_id(case3.case_id).count(), 0)
+
+
+class TestUserPhoneNumberSync(TestCase):
+
+    def setUp(self):
+        self.domain = 'user-phone-number-test'
+        self.domain_obj = Domain(name=self.domain)
+        self.domain_obj.save()
+        self.mobile_worker = CommCareUser.create(self.domain, 'mobile', 'mobile')
+        self.web_user = WebUser.create(self.domain, 'web', 'web')
+
+    def tearDown(self):
+        delete_domain_phone_numbers(self.domain)
+        self.domain_obj.delete()
+
+    def assertPhoneEntries(self, user, phone_numbers):
+        entries = user.get_phone_entries()
+        self.assertEqual(len(entries), len(phone_numbers))
+        self.assertEqual(set(entries.keys()), set(phone_numbers))
+
+    def _testSync(self, user):
+        self.assertEqual(PhoneNumber.by_domain(self.domain).count(), 0)
+
+        user.phone_numbers = ['9990001']
+        user.save()
+        self.assertEqual(PhoneNumber.by_domain(self.domain).count(), 1)
+        self.assertPhoneEntries(user, ['9990001'])
+
+        before = user.get_phone_entries()['9990001']
+
+        user.phone_numbers = ['9990001', '9990002']
+        user.save()
+        self.assertEqual(PhoneNumber.by_domain(self.domain).count(), 2)
+        self.assertPhoneEntries(user, ['9990001', '9990002'])
+
+        after = user.get_phone_entries()['9990001']
+        self.assertEqual(before.pk, after.pk)
+
+        user.phone_numbers = ['9990002']
+        user.save()
+        self.assertEqual(PhoneNumber.by_domain(self.domain).count(), 1)
+        self.assertPhoneEntries(user, ['9990002'])
+
+    def testMobileWorkerSync(self):
+        self._testSync(self.mobile_worker)
+
+    def testWebUserSync(self):
+        self._testSync(self.web_user)
+
+    def testRetire(self):
+        self.mobile_worker.phone_numbers = ['9990001']
+        self.mobile_worker.save()
+        self.assertEqual(PhoneNumber.by_domain(self.domain).count(), 1)
+        self.assertPhoneEntries(self.mobile_worker, ['9990001'])
+
+        self.web_user.phone_numbers = ['9990002']
+        self.web_user.save()
+        self.assertEqual(PhoneNumber.by_domain(self.domain).count(), 2)
+        self.assertPhoneEntries(self.web_user, ['9990002'])
+
+        self.mobile_worker.retire()
+        self.assertEqual(PhoneNumber.by_domain(self.domain).count(), 1)
+        self.assertPhoneEntries(self.web_user, ['9990002'])

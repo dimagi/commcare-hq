@@ -362,6 +362,12 @@ def _sync_user_phone_numbers(couch_user):
 
     with CriticalSection(lock_keys, timeout=5 * 60):
         phone_entries = couch_user.get_phone_entries()
+
+        if couch_user.is_deleted():
+            for phone_number in phone_entries.values():
+                phone_number.delete()
+            return
+
         numbers_that_should_exist = [apply_leniency(phone_number) for phone_number in couch_user.phone_numbers]
 
         # Delete entries that should not exist

@@ -1555,9 +1555,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 self.user_id, self.domain, form_id_list, deletion_id, deletion_date, deleted_cases=deleted_cases
             )
 
-        for phone_number in self.get_phone_entries().values():
-            phone_number.delete()
-
         try:
             django_user = self.get_django_user()
         except User.DoesNotExist:
