@@ -97,3 +97,20 @@ class ConfigurableReportDataSourceMixin(object):
     @property
     def has_total_row(self):
         return any(column_config.calculate_total for column_config in self.top_level_db_columns)
+
+    @property
+    def group_by(self):
+        # ask each column for its group_by contribution and combine to a single list
+        return [
+            group_by for col_id in self.aggregation_columns
+            for group_by in self.get_db_column_ids(col_id)
+        ]
+
+    def get_db_column_ids(self, column_id):
+        # for columns that end up being complex queries (e.g. aggregate dates)
+        # there could be more than one column ID and they may specify aliases
+        if column_id in self._column_configs:
+            return self._column_configs[column_id].get_query_column_ids()
+        else:
+            # if the column isn't found just treat it as a normal field
+            return [column_id]

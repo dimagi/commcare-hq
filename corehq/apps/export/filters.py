@@ -9,7 +9,7 @@ from corehq.apps.es.cases import (
     opened_by,
     owner_type)
 from corehq.apps.es.forms import app, submitted, user_id, user_type
-from corehq.apps.export.esaccessors import get_group_user_ids
+from corehq.apps.export.esaccessors import get_groups_user_ids
 from corehq.pillows.utils import USER_TYPES
 
 
@@ -41,6 +41,13 @@ class OR(ExportFilter):
     def to_es_filter(self):
         return esfilters.OR(*[f.to_es_filter() for f in self.operand_filters])
 
+
+class NOT(ExportFilter):
+    def __init__(self, _filter):
+        self.operand_filter = _filter
+
+    def to_es_filter(self):
+        return esfilters.NOT(self.operand_filter.to_es_filter())
 
 class AppFilter(ExportFilter):
     """
@@ -154,11 +161,14 @@ class ClosedByFilter(ExportFilter):
 class GroupFilter(ExportFilter):  # Abstract base class
     base_filter = None
 
-    def __init__(self, group_id):
-        self.group_id = group_id
+    def __init__(self, group_ids):
+        if not isinstance(group_ids, list):
+            group_ids = [group_ids]
+
+        self.group_ids = group_ids
 
     def to_es_filter(self):
-        user_ids = get_group_user_ids(self.group_id)
+        user_ids = get_groups_user_ids(self.group_ids)
         return self.base_filter(user_ids).to_es_filter()
 
 

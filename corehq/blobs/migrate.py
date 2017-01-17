@@ -91,8 +91,6 @@ from corehq.util.doc_processor.interface import (
     BaseDocProcessor, DOCS_SKIPPED_WARNING,
     DocumentProcessorController
 )
-from corehq.util.doc_processor.sql import SqlDocumentProvider
-from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor
 from couchdbkit import ResourceConflict
 
 # models to be migrated
@@ -371,7 +369,7 @@ class DemoUserRestoreExporter(SqlObjectExporter):
         db = get_blob_db()
         try:
             content = db.get(blob_id)
-        except NotFound as e:
+        except NotFound:
             self.not_found += 1
         else:
             with content:

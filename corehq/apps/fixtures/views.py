@@ -369,7 +369,7 @@ class FixtureUploadStatusView(FixtureViewMixIn, BaseDomainView):
 @require_can_edit_fixtures
 def fixture_upload_job_poll(request, domain, download_id, template="fixtures/partials/fixture_upload_status.html"):
     try:
-        context = get_download_context(download_id, check_state=True, require_result=True)
+        context = get_download_context(download_id, require_result=True)
     except TaskFailedError:
         return HttpResponseServerError()
 

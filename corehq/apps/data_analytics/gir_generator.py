@@ -99,6 +99,7 @@ class GIRTableGenerator(object):
         for device, number in device_dict.items():
             if number > max_number:
                 max_device = device
+                max_number = number
         return max_device
 
     @staticmethod

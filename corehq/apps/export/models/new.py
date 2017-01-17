@@ -7,6 +7,8 @@ from collections import defaultdict, OrderedDict, namedtuple
 from couchdbkit import ResourceConflict
 from couchdbkit.ext.django.schema import IntegerProperty
 from django.utils.translation import ugettext as _
+from django.core.urlresolvers import reverse
+from soil.progress import set_task_progress
 
 from corehq.apps.export.esaccessors import get_ledger_section_entry_combinations
 from dimagi.utils.decorators.memoized import memoized
@@ -21,7 +23,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_app_ids_and_versions,
     get_app_ids_in_domain,
 )
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models import Application, AdvancedFormActions
 from corehq.apps.app_manager.util import get_case_properties, ParentCasePropertyBuilder
 from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import Product
@@ -33,6 +35,7 @@ from corehq.util.view_utils import absolute_reverse
 from couchexport.models import Format
 from couchexport.transforms import couch_to_excel_datetime
 from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.web import get_url_base
 from dimagi.ext.couchdbkit import (
     Document,
     DocumentSchema,
@@ -51,10 +54,13 @@ from corehq.apps.export.const import (
     PROPERTY_TAG_CASE,
     USER_DEFINED_SPLIT_TYPES,
     PLAIN_USER_DEFINED_SPLIT_TYPE,
-    DATA_SCHEMA_VERSION,
+    CASE_DATA_SCHEMA_VERSION,
+    FORM_DATA_SCHEMA_VERSION,
     MISSING_VALUE,
     EMPTY_VALUE,
     KNOWN_CASE_PROPERTIES,
+    CASE_ATTRIBUTES,
+    CASE_CREATE_ELEMENTS,
     UNKNOWN_INFERRED_FROM,
 )
 from corehq.apps.export.exceptions import BadExportConfiguration
@@ -131,6 +137,8 @@ class ExportItem(DocumentSchema):
                 return super(ExportItem, cls).wrap(data)
             elif doc_type == 'ScalarItem':
                 return ScalarItem.wrap(data)
+            elif doc_type == 'LabelItem':
+                return LabelItem.wrap(data)
             elif doc_type == 'MultipleChoiceItem':
                 return MultipleChoiceItem.wrap(data)
             elif doc_type == 'GeopointItem':
@@ -156,7 +164,7 @@ class ExportItem(DocumentSchema):
 
     @classmethod
     def merge(cls, one, two):
-        item = cls(one.to_json())
+        item = one
         item.last_occurrences = _merge_dicts(one.last_occurrences, two.last_occurrences, max)
         item.inferred = one.inferred or two.inferred
         item.inferred_from |= two.inferred_from
@@ -238,22 +246,24 @@ class ExportColumn(DocumentSchema):
         return value
 
     @staticmethod
-    def create_default_from_export_item(table_path, item, app_ids_and_versions):
+    def create_default_from_export_item(table_path, item, app_ids_and_versions, auto_select=True):
         """Creates a default ExportColumn given an item
 
         :param table_path: The path of the table_path that the item belongs to
         :param item: An ExportItem instance
         :param app_ids_and_versions: A dictionary of app ids that map to latest build version
+        :param auto_select: Automatically select the column
         :returns: An ExportColumn instance
         """
         is_case_update = item.tag == PROPERTY_TAG_CASE and not isinstance(item, CaseIndexItem)
         is_case_history_update = item.tag == PROPERTY_TAG_UPDATE
+        is_label_question = isinstance(item, LabelItem)
 
         is_main_table = table_path == MAIN_TABLE
         constructor_args = {
             "item": item,
             "label": item.readable_path if not is_case_history_update else item.label,
-            "is_advanced": is_case_update or False,
+            "is_advanced": is_case_update or is_label_question,
         }
 
         if isinstance(item, GeopointItem):
@@ -275,8 +285,10 @@ class ExportColumn(DocumentSchema):
             column = ExportColumn(**constructor_args)
         column.update_properties_from_app_ids_and_versions(app_ids_and_versions)
         column.selected = (
+            auto_select and
             not column._is_deleted(app_ids_and_versions) and
             not is_case_update and
+            not is_label_question and
             is_main_table
         )
         return column
@@ -548,7 +560,7 @@ class ExportInstance(BlobMixin, Document):
         raise NotImplementedError()
 
     @classmethod
-    def generate_instance_from_schema(cls, schema, saved_export=None):
+    def generate_instance_from_schema(cls, schema, saved_export=None, auto_select=True):
         """Given an ExportDataSchema, this will generate an ExportInstance"""
         if saved_export:
             instance = saved_export
@@ -584,6 +596,7 @@ class ExportInstance(BlobMixin, Document):
                         table.path,
                         item,
                         latest_app_ids_and_versions,
+                        auto_select
                     )
                     if prev_index:
                         # if it's a new column, insert it right after the previous column
@@ -788,8 +801,8 @@ class FormExportInstanceDefaults(ExportInstanceDefaults):
 
     @staticmethod
     def get_default_instance_name(schema):
-        return u'{}: {}'.format(
-            xmlns_to_name(schema.domain, schema.xmlns, schema.app_id),
+        return u'{} ({})'.format(
+            xmlns_to_name(schema.domain, schema.xmlns, schema.app_id, separator=" - "),
             datetime.now().strftime('%Y-%m-%d')
         )
 
@@ -835,6 +848,12 @@ class ExportRow(object):
 class ScalarItem(ExportItem):
     """
     A text, numeric, date, etc. question or case property
+    """
+
+
+class LabelItem(ExportItem):
+    """
+    An item that refers to a label question
     """
 
 
@@ -917,7 +936,6 @@ class MultipleChoiceItem(ExportItem):
                     value=option1.value,
                     last_occurrences=_merge_dicts(option1.last_occurrences, option2.last_occurrences, max)
                 ),
-            copyfn=lambda option: Option(option.to_json())
         )
 
         item.options = options
@@ -1029,34 +1047,39 @@ class ExportDataSchema(Document):
         app_label = 'export'
 
     @classmethod
-    def generate_schema_from_builds(cls, domain, app_id, identifier, force_rebuild=False):
+    def generate_schema_from_builds(cls, domain, app_id, identifier, force_rebuild=False,
+            only_process_current_builds=False, task=None):
         """Builds a schema from Application builds for a given identifier
 
         :param domain: The domain that the export belongs to
         :param app_id: The app_id that the export belongs to (or None if export is not associated with an app.
         :param identifier: The unique identifier of the schema being exported.
             case_type for Case Exports and xmlns for Form Exports
-        :returns: Returns a FormExportDataSchema instance
+        :param only_process_current_builds: Only process the current apps, not any builds. This
+            means that deleted items may not be present in the schema since past builds have not been
+            processed.
+        :param task: A celery task to update the progress of the build
+        :returns: Returns a ExportDataSchema instance
         """
 
         original_id, original_rev = None, None
+        apps_processed = 0
         current_schema = cls.get_latest_export_schema(domain, app_id, identifier)
         if (current_schema
                 and not force_rebuild
-                and current_schema.version == DATA_SCHEMA_VERSION):
+                and current_schema.version == cls.schema_version()):
             original_id, original_rev = current_schema._id, current_schema._rev
         else:
             current_schema = cls()
 
-        app_build_ids = cls._get_app_build_ids_to_process(
-            domain,
-            app_id,
-            current_schema.last_app_versions,
-        )
-        if app_id:
-            app_build_ids.append(app_id)
-        else:
-            app_build_ids.extend(cls._get_current_app_ids_for_domain(domain))
+        app_build_ids = []
+        if not only_process_current_builds:
+            app_build_ids = cls._get_app_build_ids_to_process(
+                domain,
+                app_id,
+                current_schema.last_app_versions,
+            )
+        app_build_ids.extend(cls._get_current_app_ids_for_domain(domain, app_id))
 
         for app_doc in iter_docs(Application.get_db(), app_build_ids, chunksize=10):
             if (not app_doc.get('has_submissions', False) and
@@ -1070,7 +1093,14 @@ class ExportDataSchema(Document):
                 identifier,
             )
 
-            current_schema.record_update(app.copy_of or app._id, app.version)
+            # Only record the version of builds on the schema. We don't care about
+            # whether or not the schema has seen the current build because that always
+            # gets processed.
+            if app.copy_of:
+                current_schema.record_update(app.copy_of, app.version)
+
+            apps_processed += 1
+            set_task_progress(task, apps_processed, len(app_build_ids))
 
         inferred_schema = cls._get_inferred_schema(domain, identifier)
         if inferred_schema:
@@ -1078,7 +1108,7 @@ class ExportDataSchema(Document):
 
         current_schema.domain = domain
         current_schema.app_id = app_id
-        current_schema.version = DATA_SCHEMA_VERSION
+        current_schema.version = cls.schema_version()
         current_schema._set_identifier(identifier)
 
         current_schema = cls._save_export_schema(
@@ -1108,24 +1138,20 @@ class ExportDataSchema(Document):
                     export_item.transform,
                 )
 
-            group_schema = ExportGroupSchema(
-                path=group_schema1.path,
-                last_occurrences=_merge_dicts(
-                    group_schema1.last_occurrences,
-                    group_schema2.last_occurrences,
-                    max
-                ),
-                inferred=group_schema1.inferred or group_schema2.inferred
+            group_schema1.last_occurrences = _merge_dicts(
+                group_schema1.last_occurrences,
+                group_schema2.last_occurrences,
+                max
             )
+            group_schema1.inferred = group_schema1.inferred or group_schema2.inferred
             items = _merge_lists(
                 group_schema1.items,
                 group_schema2.items,
                 keyfn=keyfn,
                 resolvefn=lambda item1, item2: item1.__class__.merge(item1, item2),
-                copyfn=lambda item: item.__class__(item.to_json()),
             )
-            group_schema.items = items
-            return group_schema
+            group_schema1.items = items
+            return group_schema1
 
         previous_group_schemas = schemas[0].group_schemas
         last_app_versions = schemas[0].last_app_versions
@@ -1135,7 +1161,6 @@ class ExportDataSchema(Document):
                 current_schema.group_schemas,
                 keyfn=lambda group_schema: _path_nodes_to_string(group_schema.path),
                 resolvefn=resolvefn,
-                copyfn=lambda group_schema: ExportGroupSchema(group_schema.to_json())
             )
             previous_group_schemas = group_schemas
             last_app_versions = _merge_dicts(
@@ -1186,11 +1211,16 @@ class FormExportDataSchema(ExportDataSchema):
         'Image': MultiMediaItem,
         'Audio': MultiMediaItem,
         'Video': MultiMediaItem,
+        'Trigger': LabelItem,
     })
 
     @property
     def type(self):
         return FORM_EXPORT
+
+    @classmethod
+    def schema_version(cls):
+        return FORM_DATA_SCHEMA_VERSION
 
     @classmethod
     def _get_inferred_schema(cls, domain, xmlns):
@@ -1200,8 +1230,8 @@ class FormExportDataSchema(ExportDataSchema):
         self.xmlns = form_xmlns
 
     @classmethod
-    def _get_current_app_ids_for_domain(cls, domain):
-        raise BadExportConfiguration('Form exports should only use one app_id and this should not be called')
+    def _get_current_app_ids_for_domain(cls, domain, app_id):
+        return [app_id]
 
     @staticmethod
     def _get_app_build_ids_to_process(domain, app_id, last_app_versions):
@@ -1215,30 +1245,111 @@ class FormExportDataSchema(ExportDataSchema):
     def get_latest_export_schema(domain, app_id, form_xmlns):
         return get_latest_form_export_schema(domain, app_id, form_xmlns)
 
-    @staticmethod
-    def _process_app_build(current_schema, app, form_xmlns):
-        xform = app.get_form_by_xmlns(form_xmlns, log_missing=False)
-        if not xform:
+    @classmethod
+    def _process_app_build(cls, current_schema, app, form_xmlns):
+        form = app.get_form_by_xmlns(form_xmlns, log_missing=False)
+        if not form:
             return current_schema
-        case_updates = xform.get_case_updates(xform.get_module().case_type)
-        xform = xform.wrapped_xform()
-        xform_schema = FormExportDataSchema._generate_schema_from_xform(
+
+        case_updates = form.get_case_updates(form.get_module().case_type)
+        xform = form.wrapped_xform()
+        if isinstance(form.actions, AdvancedFormActions):
+            open_case_actions = form.actions.open_cases
+        else:
+            open_case_actions = form.actions.subcases
+
+        repeats_with_subcases = {
+            open_case_action for open_case_action in open_case_actions
+            if open_case_action.repeat_context
+        }
+        xform_schema = cls._generate_schema_from_xform(
             xform,
             case_updates,
             app.langs,
             app.copy_of or app._id,  # If it's not a copy, must be current
             app.version,
         )
-        return FormExportDataSchema._merge_schemas(current_schema, xform_schema)
+        schemas = [current_schema, xform_schema]
+        if repeats_with_subcases:
+            repeat_case_schema = cls._generate_schema_from_repeat_subcases(
+                xform,
+                repeats_with_subcases,
+                app.langs,
+                app.copy_of or app._id,  # If it's not a copy, must be current
+                app.version,
+            )
+            schemas.append(repeat_case_schema)
+
+        return cls._merge_schemas(*schemas)
+
+    @classmethod
+    def _generate_schema_from_repeat_subcases(cls, xform, repeats_with_subcases, langs, app_id, app_version):
+        """
+        This generates a FormExportDataSchema for repeat groups that generate subcases.
+
+        :param xform: An XForm instance
+        :param repeats_with_subcases: A list of OpenSubCaseAction classes that have a
+            repeat_context.
+        :param langs: An array of application languages
+        :param app_id: The app_id of the corresponding app
+        :param app_version: The build number of the app
+        :returns: An instance of a FormExportDataSchema
+        """
+
+        repeats = cls._get_repeat_paths(xform, langs)
+        schema = cls()
+
+        def _add_to_group_schema(group_schema, path, label):
+            group_schema.items.append(ExportItem(
+                path=_question_path_to_path_nodes(path, repeats),
+                label=label,
+                last_occurrences={app_id: app_version},
+            ))
+
+        for subcase_action in repeats_with_subcases:
+            group_schema = ExportGroupSchema(
+                path=_question_path_to_path_nodes(subcase_action.repeat_context, repeats),
+                last_occurrences={app_id: app_version},
+            )
+            # Add case attributes
+            for case_attribute in CASE_ATTRIBUTES:
+                path = u'{}/case/{}'.format(subcase_action.repeat_context, case_attribute)
+                _add_to_group_schema(group_schema, path, u'case.{}'.format(case_attribute))
+
+            # Add case updates
+            for case_property, case_path in subcase_action.case_properties.iteritems():
+                # This removes the repeat part of the path. For example, if inside
+                # a repeat group that has the following path:
+                #
+                # /data/repeat/other_group/question
+                #
+                # We want to create a path that looks like:
+                #
+                # /data/repeat/case/update/other_group/question
+                path_suffix = case_path[len(subcase_action.repeat_context):]
+                path = u'{}/case/update{}'.format(subcase_action.repeat_context, path_suffix)
+                _add_to_group_schema(group_schema, path, u'case.update.{}'.format(case_property))
+
+            # Add case create properties
+            for case_create_element in CASE_CREATE_ELEMENTS:
+                path = u'{}/case/create/{}'.format(subcase_action.repeat_context, case_create_element)
+                _add_to_group_schema(group_schema, path, u'case.create.{}'.format(case_create_element))
+
+            schema.group_schemas.append(group_schema)
+        return schema
 
     @staticmethod
-    def _generate_schema_from_xform(xform, case_updates, langs, app_id, app_version):
-        questions = xform.get_questions(langs)
-        repeats = [
-            r['value']
-            for r in xform.get_questions(langs, include_groups=True) if r['tag'] == 'repeat'
+    def _get_repeat_paths(xform, langs):
+        return [
+            question['value']
+            for question in xform.get_questions(langs, include_groups=True) if question['tag'] == 'repeat'
         ]
-        schema = FormExportDataSchema()
+
+    @classmethod
+    def _generate_schema_from_xform(cls, xform, case_updates, langs, app_id, app_version):
+        questions = xform.get_questions(langs, include_triggers=True)
+        repeats = cls._get_repeat_paths(xform, langs)
+        schema = cls()
         question_keyfn = lambda q: q['repeat']
 
         question_groups = [(x, list(y)) for x, y in groupby(
@@ -1259,7 +1370,7 @@ class FormExportDataSchema(ExportDataSchema):
             for question in group_questions:
                 # Create ExportItem based on the question type
                 if 'stock_type_attributes' in question:
-                    items = FormExportDataSchema._get_stock_items_from_question(
+                    items = cls._get_stock_items_from_question(
                         question,
                         app_id,
                         app_version,
@@ -1267,7 +1378,7 @@ class FormExportDataSchema(ExportDataSchema):
                     )
                     group_schema.items.extend(items)
                 else:
-                    item = FormExportDataSchema.datatype_mapping[question['type']].create_from_question(
+                    item = cls.datatype_mapping[question['type']].create_from_question(
                         question,
                         app_id,
                         app_version,
@@ -1342,11 +1453,15 @@ class CaseExportDataSchema(ExportDataSchema):
         self.case_type = case_type
 
     @classmethod
+    def schema_version(cls):
+        return CASE_DATA_SCHEMA_VERSION
+
+    @classmethod
     def _get_inferred_schema(cls, domain, case_type):
         return get_inferred_schema(domain, case_type)
 
     @classmethod
-    def _get_current_app_ids_for_domain(cls, domain):
+    def _get_current_app_ids_for_domain(cls, domain, app_id):
         return get_app_ids_in_domain(domain)
 
     @staticmethod
@@ -1365,8 +1480,8 @@ class CaseExportDataSchema(ExportDataSchema):
     def get_latest_export_schema(domain, app_id, case_type):
         return get_latest_case_export_schema(domain, case_type)
 
-    @staticmethod
-    def _process_app_build(current_schema, app, case_type):
+    @classmethod
+    def _process_app_build(cls, current_schema, app, case_type):
         case_property_mapping = get_case_properties(
             app,
             [case_type],
@@ -1377,35 +1492,35 @@ class CaseExportDataSchema(ExportDataSchema):
             .get_parent_types_and_contributed_properties(case_type)
         )
         case_schemas = []
-        case_schemas.append(CaseExportDataSchema._generate_schema_from_case_property_mapping(
+        case_schemas.append(cls._generate_schema_from_case_property_mapping(
             case_property_mapping,
             parent_types,
             app.copy_of or app._id,  # If not copy, must be current app
             app.version,
         ))
         if any(map(lambda relationship_tuple: relationship_tuple[1] == 'parent', parent_types)):
-            case_schemas.append(CaseExportDataSchema._generate_schema_for_parent_case(
+            case_schemas.append(cls._generate_schema_for_parent_case(
                 app.copy_of or app._id,
                 app.version,
             ))
 
-        case_schemas.append(CaseExportDataSchema._generate_schema_for_case_history(
+        case_schemas.append(cls._generate_schema_for_case_history(
             case_property_mapping,
             app.copy_of or app._id,
             app.version,
         ))
         case_schemas.append(current_schema)
 
-        return CaseExportDataSchema._merge_schemas(*case_schemas)
+        return cls._merge_schemas(*case_schemas)
 
-    @staticmethod
-    def _generate_schema_from_case_property_mapping(case_property_mapping, parent_types, app_id, app_version):
+    @classmethod
+    def _generate_schema_from_case_property_mapping(cls, case_property_mapping, parent_types, app_id, app_version):
         """
         Generates the schema for the main Case tab on the export page
         Includes system export properties for the case.
         """
         assert len(case_property_mapping.keys()) == 1
-        schema = CaseExportDataSchema()
+        schema = cls()
 
         group_schema = ExportGroupSchema(
             path=MAIN_TABLE,
@@ -1432,20 +1547,20 @@ class CaseExportDataSchema(ExportDataSchema):
         schema.group_schemas.append(group_schema)
         return schema
 
-    @staticmethod
-    def _generate_schema_for_parent_case(app_id, app_version):
-        schema = CaseExportDataSchema()
+    @classmethod
+    def _generate_schema_for_parent_case(cls, app_id, app_version):
+        schema = cls()
         schema.group_schemas.append(ExportGroupSchema(
             path=PARENT_CASE_TABLE,
             last_occurrences={app_id: app_version},
         ))
         return schema
 
-    @staticmethod
-    def _generate_schema_for_case_history(case_property_mapping, app_id, app_version):
+    @classmethod
+    def _generate_schema_for_case_history(cls, case_property_mapping, app_id, app_version):
         """Generates the schema for the Case History tab on the export page"""
         assert len(case_property_mapping.keys()) == 1
-        schema = CaseExportDataSchema()
+        schema = cls()
 
         group_schema = ExportGroupSchema(
             path=CASE_HISTORY_TABLE,
@@ -1508,11 +1623,12 @@ def _path_nodes_to_string(path, separator=' '):
     return separator.join(["{}.{}".format(node.name, node.is_repeat) for node in path])
 
 
-def _merge_lists(one, two, keyfn, resolvefn, copyfn):
+def _merge_lists(one, two, keyfn, resolvefn):
     """Merges two lists. The algorithm is to first iterate over the first list. If the item in the first list
     does not exist in the second list, add that item to the merged list. If the item does exist in the second
     list, resolve the conflict using the resolvefn. After the first list has been iterated over, simply append
-    any items in the second list that have not already been added.
+    any items in the second list that have not already been added. If the items in the list are objects,
+    then the objects will be mutated directly and not copied.
 
     :param one: The first list to be merged.
     :param two: The second list to be merged.
@@ -1520,33 +1636,29 @@ def _merge_lists(one, two, keyfn, resolvefn, copyfn):
         identifier for that item.
     :param resolvefn: A function that takes two elements that resolve to the same key and returns a single
         element that has resolved the conflict between the two elements.
-    :param copyfn: A function that takes an element as its argument and returns a copy of it.
     :returns: A list of the merged elements
     """
 
     merged = []
-    two_keys = set(map(lambda obj: keyfn(obj), two))
+
+    two_keys = {keyfn(obj): obj for obj in two}
 
     for obj in one:
+        obj_key = keyfn(obj)
 
-        if keyfn(obj) in two_keys:
+        if obj_key in two_keys:
             # If obj exists in both list, must merge
-            two_keys.remove(keyfn(obj))
             new_obj = resolvefn(
                 obj,
-                filter(lambda other: keyfn(other) == keyfn(obj), two)[0],
+                two_keys.pop(obj_key),
             )
         else:
-            new_obj = copyfn(obj)
+            new_obj = obj
 
         merged.append(new_obj)
 
-    # Filter any objects we've already added by merging
-    filtered = filter(lambda obj: keyfn(obj) in two_keys, two)
-    merged.extend(
-        # Map objects to new object
-        map(lambda obj: copyfn(obj), filtered)
-    )
+    # Get the rest of the objects in the second list
+    merged.extend(two_keys.values())
     return merged
 
 
@@ -1947,13 +2059,18 @@ class ConversionMeta(DocumentSchema):
         print '---' * 15
         print '{:<20}| {}'.format('Original Path', self.path)
         print '{:<20}| {}'.format('Failure Reason', self.failure_reason)
-        print '{:<20}| {}'.format('Info', self.info)
+        for idx, line in enumerate(self.info):
+            prefix = 'Info' if idx == 0 else ''
+            print '{:<20}| {}'.format(prefix, line)
 
 
 class ExportMigrationMeta(Document):
     saved_export_id = StringProperty()
     domain = StringProperty()
     export_type = StringProperty(choices=[FORM_EXPORT, CASE_EXPORT])
+
+    # The schema of the new export
+    generated_schema_id = StringProperty()
 
     skipped_tables = SchemaListProperty(ConversionMeta)
     skipped_columns = SchemaListProperty(ConversionMeta)
@@ -1967,6 +2084,19 @@ class ExportMigrationMeta(Document):
 
     class Meta:
         app_label = 'export'
+
+    @property
+    def old_export_url(self):
+        from corehq.apps.export.views import EditCustomCaseExportView, EditCustomFormExportView
+        if self.export_type == FORM_EXPORT:
+            view_cls = EditCustomFormExportView
+        else:
+            view_cls = EditCustomCaseExportView
+
+        return '{}{}'.format(get_url_base(), reverse(
+            view_cls.urlname,
+            args=[self.domain, self.saved_export_id],
+        ))
 
 
 # These must match the constants in corehq/apps/export/static/export/js/const.js

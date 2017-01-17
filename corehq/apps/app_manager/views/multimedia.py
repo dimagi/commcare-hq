@@ -4,7 +4,8 @@ from django.shortcuts import render
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.decorators import require_deploy_apps, \
     require_can_edit_apps
-from corehq.apps.app_manager.xform import XForm
+from corehq.apps.app_manager.xform import XForm, validate_xform
+from corehq.apps.app_manager.util import get_app_manager_template
 from corehq.util.view_utils import set_file_download
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.subprocess_timeout import ProcessTimedOut
@@ -19,8 +20,8 @@ def multimedia_list_download(request, domain, app_id):
     filelist = []
     for m in app.get_modules():
         for f in m.get_forms():
+            validate_xform(domain, f.source)
             parsed = XForm(f.source)
-            parsed.validate()
             if include_images:
                 filelist.extend(parsed.image_references)
             if include_audio:
@@ -35,7 +36,14 @@ def multimedia_list_download(request, domain, app_id):
 
 
 @require_deploy_apps
-def multimedia_ajax(request, domain, app_id, template='app_manager/v1/partials/multimedia_ajax.html'):
+def multimedia_ajax(request, domain, app_id):
+
+    template = get_app_manager_template(
+        domain,
+        'app_manager/v1/partials/multimedia_ajax.html',
+        'app_manager/v2/partials/multimedia_ajax.html',
+    )
+
     app = get_app(domain, app_id)
     if app.get_doc_type() == 'Application':
         try:

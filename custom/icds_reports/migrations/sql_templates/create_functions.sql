@@ -934,7 +934,7 @@ BEGIN
 		'supervisor_id, ' ||
 		'awc_id,' ||
 		'month, ' ||
-		quote_literal(_all_text) || ', ' ||
+		'beneficiary_type, ' ||
 		quote_literal(_all_text) || ', ' ||
 		quote_literal(_all_text) || ', ' ||
 		quote_literal(_all_text) || ', ' ||
@@ -942,7 +942,7 @@ BEGIN
 		'sum(thr_eligible), ' ||
 		'sum(rations_21_plus_distributed) ' ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
-		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month)';
+		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, beneficiary_type)';
 
 
 END;
@@ -1072,13 +1072,14 @@ BEGIN
 		'sum(valid_in_month) AS cases_child_health, ' ||
 		'sum(nutrition_status_weighed) AS wer_weighed, ' ||
 		'sum(wer_eligible) AS wer_eligible, ' ||
-		'CASE WHEN (sum(nutrition_status_weighed)::numeric / sum(wer_eligible)) >= 0.8 THEN 20 ' ||
+		'CASE WHEN sum(wer_eligible) = 0 THEN 1 ' ||
+			'WHEN (sum(nutrition_status_weighed)::numeric / sum(wer_eligible)) >= 0.8 THEN 20 ' ||
 			'WHEN (sum(nutrition_status_weighed)::numeric / sum(wer_eligible)) >= 0.6 THEN 10 ' ||
 			'ELSE 1 END AS wer_score, ' ||
 		'sum(thr_eligible) AS thr_eligible_child, ' ||
 		'sum(rations_21_plus_distributed) AS thr_rations_21_plus_distributed_child '
 		'FROM ' || quote_ident(_child_health_tablename) || ' ' ||
-		'WHERE month = ' || quote_literal(_start_date) || ' GROUP BY awc_id, month) ut ' ||
+		'WHERE month = ' || quote_literal(_start_date) || ' AND caste != ' || quote_literal(_all_text) || ' GROUP BY awc_id, month) ut ' ||
 	'WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id';
 
 	-- Aggregate monthly ccs record table
@@ -1095,7 +1096,7 @@ BEGIN
 		'sum(thr_eligible) AS thr_eligible_ccs, ' ||
 		'sum(rations_21_plus_distributed) AS thr_rations_21_plus_distributed_ccs '
 		'FROM ' || quote_ident(_ccs_record_tablename) || ' ' ||
-		'WHERE month = ' || quote_literal(_start_date) || ' GROUP BY awc_id, month) ut ' ||
+		'WHERE month = ' || quote_literal(_start_date) || ' AND caste != ' || quote_literal(_all_text) || ' GROUP BY awc_id, month) ut ' ||
 	'WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id';
 
 	-- Pass to combine THR information from ccs record and child health table
@@ -1124,6 +1125,9 @@ BEGIN
 		'usage_num_pse = ut.usage_num_pse, ' ||
 		'usage_num_gmp = ut.usage_num_gmp, ' ||
 		'usage_num_thr = ut.usage_num_thr, ' ||
+		'usage_num_hh_reg = ut.usage_num_hh_reg, ' ||
+		'usage_num_add_person = ut.usage_num_add_person, ' ||
+		'usage_num_add_pregnancy = ut.usage_num_add_pregnancy, ' ||
 		'usage_num_home_visit = ut.usage_num_home_visit, ' ||
 		'usage_num_bp_tri1 = ut.usage_num_bp_tri1, ' ||
 		'usage_num_bp_tri2 = ut.usage_num_bp_tri2, ' ||
@@ -1149,6 +1153,9 @@ BEGIN
 		'sum(pse) AS usage_num_pse, ' ||
 		'sum(gmp) AS usage_num_gmp, ' ||
 		'sum(thr) AS usage_num_thr, ' ||
+		'sum(add_household) AS usage_num_hh_reg, ' ||
+		'sum(add_person) AS usage_num_add_person, ' ||
+		'sum(add_pregnancy) AS usage_num_add_pregnancy, ' ||
 		'sum(home_visit) AS usage_num_home_visit, ' ||
 		'sum(bp_tri1) AS usage_num_bp_tri1, ' ||
 		'sum(bp_tri2) AS usage_num_bp_tri2, ' ||
@@ -1294,7 +1301,7 @@ BEGIN
 		'sum(awc_not_open_department_work), ' ||
 		'sum(awc_not_open_other), ' ||
 		'sum(awc_num_open), ' ||
-		'sum(awc_not_open_no_data), ' ||
+		'sum(COALESCE(awc_not_open_no_data, 25)), ' ||
 		'sum(wer_weighed), ' ||
 		'sum(wer_eligible), ' ||
 		'avg(wer_score), ' ||
@@ -1363,7 +1370,10 @@ BEGIN
 		'sum(infra_flat_weighing_scale), ' ||
 		'sum(infra_cooking_utensils), ' ||
 		'sum(infra_medicine_kits), ' ||
-		'sum(infra_adequate_space_pse) ' ||
+		'sum(infra_adequate_space_pse), ' ||
+		'sum(usage_num_add_person), ' ||
+		'sum(usage_num_add_pregnancy), ' ||
+		'sum(usage_num_home_visit) ' ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, supervisor_id, month)';
 
@@ -1462,7 +1472,10 @@ BEGIN
 		'sum(infra_flat_weighing_scale), ' ||
 		'sum(infra_cooking_utensils), ' ||
 		'sum(infra_medicine_kits), ' ||
-		'sum(infra_adequate_space_pse) ' ||
+		'sum(infra_adequate_space_pse), ' ||
+		'sum(usage_num_add_person), ' ||
+		'sum(usage_num_add_pregnancy), ' ||
+		'sum(usage_num_home_visit) ' ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'WHERE awc_id = ' || quote_literal(_all_text) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, month)';
@@ -1562,7 +1575,10 @@ BEGIN
 		'sum(infra_flat_weighing_scale), ' ||
 		'sum(infra_cooking_utensils), ' ||
 		'sum(infra_medicine_kits), ' ||
-		'sum(infra_adequate_space_pse) ' ||
+		'sum(infra_adequate_space_pse), ' ||
+		'sum(usage_num_add_person), ' ||
+		'sum(usage_num_add_pregnancy), ' ||
+		'sum(usage_num_home_visit) ' ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'WHERE supervisor_id = ' || quote_literal(_all_text) || ' ' ||
 		'GROUP BY state_id, district_id, month)';
@@ -1662,7 +1678,10 @@ BEGIN
 		'sum(infra_flat_weighing_scale), ' ||
 		'sum(infra_cooking_utensils), ' ||
 		'sum(infra_medicine_kits), ' ||
-		'sum(infra_adequate_space_pse) ' ||
+		'sum(infra_adequate_space_pse), ' ||
+		'sum(usage_num_add_person), ' ||
+		'sum(usage_num_add_pregnancy), ' ||
+		'sum(usage_num_home_visit) ' ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'WHERE block_id = ' || quote_literal(_all_text) || ' ' ||
 		'GROUP BY state_id, month)';
@@ -1670,6 +1689,7 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql;
+
 
 --Aggregate Location TABLE
 CREATE OR REPLACE FUNCTION aggregate_location_table() RETURNS VOID AS

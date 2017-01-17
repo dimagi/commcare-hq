@@ -1,6 +1,8 @@
+from collections import OrderedDict
 import copy
 
 from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -8,10 +10,13 @@ from corehq.apps.es.aggregations import MinAggregation, SumAggregation, TermsAgg
 from corehq.apps.es.es_query import HQESQuery
 
 from corehq.apps.reports.api import ReportDataSource
-from corehq.apps.userreports.columns import get_expanded_column_config
+from corehq.apps.reports.sqlreport import DataFormatter, DictDataFormat
 from corehq.apps.userreports.decorators import catch_and_raise_exceptions
+from corehq.apps.userreports.es.columns import safe_es_column
+from corehq.apps.userreports.exceptions import UserReportsError
 from corehq.apps.userreports.mixins import ConfigurableReportDataSourceMixin
 from corehq.apps.userreports.reports.sorting import ASCENDING, DESCENDING
+from corehq.apps.userreports.reports.util import get_expanded_columns
 
 
 class ConfigurableReportEsDataSource(ConfigurableReportDataSourceMixin, ReportDataSource):
@@ -55,25 +60,28 @@ class ConfigurableReportEsDataSource(ConfigurableReportDataSourceMixin, ReportDa
         else:
             ret = self._get_query_results(start, limit)
 
+        formatter = DataFormatter(DictDataFormat(self.columns, no_value=None))
+        formatted_data = formatter.format(ret, group_by=self.group_by).values()
+
         for report_column in self.top_level_db_columns:
-            report_column.format_data(ret)
+            report_column.format_data(formatted_data)
 
         for computed_column in self.top_level_computed_columns:
-            for row in ret:
+            for row in formatted_data:
                 row[computed_column.column_id] = computed_column.wrapped_expression(row)
 
-        return ret
+        return formatted_data
 
     @memoized
     def _get_query_results(self, start, limit):
         hits = self._get_query(start, limit).hits
-        ret = []
+        ret = OrderedDict()
 
         for row in hits:
             r = {}
             for report_column in self.top_level_db_columns:
                 r.update(report_column.get_es_data(row, self.config, self.lang, from_aggregation=False))
-            ret.append(r)
+            ret[row['doc_id']] = r
 
         return ret
 
@@ -124,16 +132,24 @@ class ConfigurableReportEsDataSource(ConfigurableReportDataSourceMixin, ReportDa
         top_buckets = aggs[self.aggregation_columns[0]]['buckets']
         hits = _parse_buckets(top_buckets, self.aggregation_columns[1:], self.aggregation_columns[0])
 
-        ret = []
+        ret = OrderedDict()
         start = start or 0
         end = start + (limit or len(hits))
         relevant_hits = hits[start:end]
 
         for row in relevant_hits:
-            r = {}
+            r_ = {}
             for report_column in self.top_level_columns:
-                r.update(report_column.get_es_data(row, self.config, self.lang))
-            ret.append(r)
+                r_.update(report_column.get_es_data(row, self.config, self.lang))
+
+            key = []
+            for col in self.group_by:
+                if col in row['past_bucket_values']:
+                    key.append(row['past_bucket_values'][col])
+                else:
+                    key.append(row[col])
+
+            ret[tuple(key)] = r_
 
         return ret
 
@@ -186,7 +202,52 @@ class ConfigurableReportEsDataSource(ConfigurableReportDataSourceMixin, ReportDa
         ret = [c.field for c in self.top_level_db_columns]
         return ret + [c for c in self.aggregation_columns]
 
+    def _get_total_aggregated_results(self):
+        query = HQESQuery(self.table_name).size(0)
+        for filter in self.filters:
+            query = query.filter(filter)
+
+        columns = [col for col in self.top_level_columns if col.calculate_total]
+        totals_aggregations = []
+
+        for col in columns:
+            for agg in col.aggregations(self.config, self.lang):
+                totals_aggregations.append(agg)
+
+        query = query.aggregations(totals_aggregations)
+
+        return query.run().aggregations
+
     @method_decorator(catch_and_raise_exceptions)
     def get_total_row(self):
-        # todo calculate total row
-        return []
+        def _clean_total_row(aggregations, aggregation_name):
+            agg = getattr(aggregations, aggregation_name)
+            if hasattr(agg, 'value'):
+                return agg.value
+            elif hasattr(agg, 'doc_count'):
+                return agg.doc_count
+            else:
+                return ''
+
+        def _get_relevant_column_ids(col):
+            col_id_to_expanded_col = get_expanded_columns(self.top_level_columns, self.config)
+            return col_id_to_expanded_col.get(col.column_id, [col.column_id])
+
+        aggregations = self._get_total_aggregated_results()
+
+        total_row = []
+        for col in self.top_level_columns:
+            for col_id in _get_relevant_column_ids(col):
+                if not col.calculate_total:
+                    total_row.append('')
+                    continue
+                elif getattr(col, 'aggregation', '') == 'simple':
+                    # could have this append '', but doing this for
+                    # compatibility with SQL
+                    raise UserReportsError(ugettext("You cannot calculate the total of a simple column"))
+
+                total_row.append(_clean_total_row(aggregations, safe_es_column(col_id)))
+
+        if total_row and total_row[0] is '':
+            total_row[0] = ugettext('Total')
+        return total_row

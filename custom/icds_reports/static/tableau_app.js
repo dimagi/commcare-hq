@@ -11,6 +11,8 @@ var viz = {},
 
 var tableauOptions = {};
 
+var initialLocationParams = [];
+
 function initializeViz(o) {
     tableauOptions = o;
 
@@ -28,6 +30,11 @@ function initializeViz(o) {
         },
     };
     viz = new tableau.Viz(placeholderDiv, url, options);
+
+    $("#resetFilters").click(function () {
+        var currentSheet = history.state.sheetName;
+        switchVisualization(currentSheet, workbook, initialLocationParams);
+    });
 }
 
 function setUpWorkbook(viz) {
@@ -43,6 +50,10 @@ function setUpInitialTableauParams() {
         'block': tableauOptions.blockCode,
     };
     params[locationKey] = tableauOptions.userLocation;
+    initialLocationParams = params;
+    var today = new Date();
+    var lastMonth = new Date(today.getFullYear(), today.getMonth() - 1 , 1);
+    params['Month'] = lastMonth.getFullYear() + "-" + (lastMonth.getMonth() + 1) + "-01";
     applyParams(workbook, params);
 
     var historyObject = {
@@ -54,6 +65,11 @@ function setUpInitialTableauParams() {
 
 function setUpNav(viz) {
     var sheets = workbook.getPublishedSheetsInfo();
+
+    // Filter out the sheets for a single AWC. These are accessed via drilldown
+    sheets = _.filter(sheets, function(sheet) {
+        return (sheet.getName() !== "Demographics" && sheet.getName() !== 'AWC-Info');
+    });
     _.each(sheets, function(sheet) {
         addNavigationLink(sheet.getName(), sheet.getIsActive());
     });
@@ -192,7 +208,6 @@ function switchVisualization(sheetName, workbook, params) {
                 alert(err);
             });
 
-    enableResetFiltersButton();
 }
 
 function applyParams(workbook, params, lastWorksheet) {
@@ -208,19 +223,6 @@ function clearDebugInfo() {
     // TODO: Disabling the button doesn't work
     $("#inspectButton").prop('disabled', true);
 }
-
-function enableResetFiltersButton() {
-    $("#resetFilters").prop('disabled', false).click(function () {
-        // TODO: Only bind to this button once
-        viz.revertAllAsync();
-        disableResetFiltersButton();
-    });
-}
-
-function disableResetFiltersButton() {
-    $("#resetFilters").prop('disabled', true).unbind('click');
-}
-
 
 window.onpopstate = function (event) {
     if(!event.state.sheetName) {

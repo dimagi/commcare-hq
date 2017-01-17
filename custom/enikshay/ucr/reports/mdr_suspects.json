@@ -1,7 +1,14 @@
 {
     "domains": [
         "enikshay-test",
-        "enikshay-test-test"
+        "enikshay-test-test",
+        "enikshay",
+        "enikshay-test-2",
+        "enikshay-test-3",
+        "enikshay-nikshay-migration-test",
+        "enikshay-domain-copy-test",
+        "enikshay-aks-audit",
+        "np-migration-3"
     ],
     "data_source_table": "episode",
     "report_id": "mdr_suspects",
@@ -9,7 +16,7 @@
         "description": "",
         "title": "MDR Suspects",
         "sort_expression": [],
-        "visible": false,
+        "visible": true,
         "configured_charts": [],
         "aggregation_columns": ["doc_id"],
         "filters": [
@@ -40,6 +47,13 @@
                 "slug": "mdr_suspect",
                 "datatype": "integer",
                 "pre_value": 1
+            },
+            {
+                "type": "pre",
+                "field": "closed",
+                "slug": "closed",
+                "datatype": "integer",
+                "pre_value": 0
             }
         ],
         "columns": [

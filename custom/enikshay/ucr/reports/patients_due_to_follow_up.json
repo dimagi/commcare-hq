@@ -1,7 +1,14 @@
 {
     "domains": [
         "enikshay-test",
-        "enikshay-test-test"
+        "enikshay-test-test",
+        "enikshay",
+        "enikshay-test-2",
+        "enikshay-test-3",
+        "enikshay-nikshay-migration-test",
+        "enikshay-domain-copy-test",
+        "enikshay-aks-audit",
+        "np-migration-3"
     ],
     "data_source_table": "episode",
     "report_id": "patients_due_to_follow_up",
@@ -9,7 +16,7 @@
         "description": "",
         "title": "Patients Due for Follow-Up",
         "sort_expression": [],
-        "visible": false,
+        "visible": true,
         "configured_charts": [],
         "aggregation_columns": ["doc_id"],
         "filters": [
@@ -33,6 +40,13 @@
                     "type": "location"
                 },
                 "display": "Location"
+            },
+            {
+                "type": "pre",
+                "field": "closed",
+                "slug": "closed",
+                "datatype": "integer",
+                "pre_value": 0
             }
         ],
         "columns": [

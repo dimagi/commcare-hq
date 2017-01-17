@@ -86,7 +86,7 @@ from corehq.apps.users.views import BaseUserSettingsView, BaseEditUserView, get_
 from corehq.const import USER_DATE_FORMAT, GOOGLE_PLAY_STORE_COMMCARE_URL
 from corehq.toggles import SUPPORT
 from corehq.util.couch import get_document_or_404
-from corehq.util.spreadsheets_v1.excel import JSONReaderError, HeaderValueError, \
+from corehq.util.workbook_json.excel import JSONReaderError, HeaderValueError, \
     WorksheetNotFound, WorkbookJSONReader, enforce_string_type, StringTypeRequiredError, \
     InvalidExcelFileException
 from soil import DownloadBase
@@ -492,7 +492,7 @@ class DemoRestoreStatusView(BaseManageCommCareUserView):
 def demo_restore_job_poll(request, domain, download_id, template="users/mobile/partials/demo_restore_status.html"):
 
     try:
-        context = get_download_context(download_id, check_state=True)
+        context = get_download_context(download_id)
     except TaskFailedError:
         return HttpResponseServerError()
 
@@ -671,6 +671,9 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
         # backend pages start at 0
         users_query = self._user_query(query, page - 1, limit)
+
+        # run with a blank query to fetch total records with same scope as in search
+        total_records = self._user_query('', 0, 0).count()
         if in_data.get('showDeactivatedUsers', False):
             users_query = users_query.show_only_inactive()
         users_data = users_query.run()
@@ -680,6 +683,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 'total': users_data.total,
                 'page': page,
                 'query': query,
+                'total_records': total_records
             },
             'success': True,
         }
@@ -877,7 +881,7 @@ class CreateCommCareUserModal(JsonRequestResponseMixin, DomainViewMixin, View):
             if 'location_id' in request.GET:
                 try:
                     loc = SQLLocation.objects.get(domain=self.domain,
-                                                  location_id=request['location_id'])
+                                                  location_id=request.GET['location_id'])
                 except SQLLocation.DoesNotExist:
                     raise Http404()
                 user.set_location(loc)
@@ -958,15 +962,6 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
         except WorksheetNotFound:
             self.group_specs = []
 
-        self.location_specs = []
-        if Domain.get_by_name(self.domain).commtrack_enabled:
-            try:
-                self.location_specs = self.workbook.get_worksheet(title='locations')
-            except WorksheetNotFound:
-                # if there is no sheet for locations (since this was added
-                # later and is optional) we don't error
-                pass
-
         try:
             check_headers(self.user_specs)
         except UserUploadError as e:
@@ -1005,7 +1000,6 @@ class UploadCommCareUsers(BaseManageCommCareUserView):
             self.domain,
             self.user_specs,
             list(self.group_specs),
-            list(self.location_specs)
         )
         task_ref.set_task(task)
         return HttpResponseRedirect(
@@ -1041,7 +1035,7 @@ class UserUploadStatusView(BaseManageCommCareUserView):
 @require_can_edit_commcare_users
 def user_upload_job_poll(request, domain, download_id, template="users/mobile/partials/user_upload_status.html"):
     try:
-        context = get_download_context(download_id, check_state=True)
+        context = get_download_context(download_id)
     except TaskFailedError:
         return HttpResponseServerError()
 
@@ -1054,7 +1048,7 @@ def user_upload_job_poll(request, domain, download_id, template="users/mobile/pa
     class _BulkUploadResponseWrapper(object):
 
         def __init__(self, context):
-            results = context.get('result', defaultdict(lambda: []))
+            results = context.get('result') or defaultdict(lambda: [])
             self.response_rows = results['rows']
             self.response_errors = results['errors']
             self.problem_rows = [r for r in self.response_rows if r['flag'] not in ('updated', 'created')]

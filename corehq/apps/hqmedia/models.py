@@ -326,6 +326,19 @@ class CommCareImage(CommCareMultimedia):
         return super(CommCareImage, self).attach_data(data, original_filename=original_filename, username=username,
                                                       attachment_id=attachment_id, media_meta=media_meta)
 
+    def get_media_info(self, path, is_updated=False, original_path=None):
+        info = super(CommCareImage, self).get_media_info(path, is_updated=is_updated, original_path=original_path)
+        info['image_size'] = self.image_size_display()
+        return info
+
+    def image_size_display(self):
+        for aux_media in self.aux_media:
+            image_size = aux_media.media_meta.get('size', {})
+            width = image_size.get('width')
+            height = image_size.get('height')
+            if width is not None and height is not None:
+                return "{} X {} Pixels".format(width, height)
+
     @classmethod
     def get_image_object(cls, data):
         return Image.open(StringIO(data))
@@ -345,7 +358,7 @@ class CommCareImage(CommCareMultimedia):
     @classmethod
     def get_invalid_image_data(cls):
         import os
-        invalid_image_path = os.path.join(os.path.dirname(__file__), 'static/hqmedia/img/invalid_image.png')
+        invalid_image_path = os.path.join(os.path.dirname(__file__), 'static/hqmedia/images/invalid_image.png')
         return Image.open(open(invalid_image_path))
 
     @classmethod

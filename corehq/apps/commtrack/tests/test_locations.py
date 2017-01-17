@@ -1,12 +1,20 @@
 from mock import patch
 
-from corehq.apps.locations.models import Location, SQLLocation
+from corehq.apps.locations.models import SQLLocation
 from casexml.apps.case.tests.util import check_user_has_case
 from casexml.apps.case.mock import CaseBlock
 from corehq.apps.commtrack.tests.util import CommTrackTest, make_loc, FIXED_USER
 from corehq.toggles import MULTIPLE_LOCATIONS_PER_USER, NAMESPACE_DOMAIN
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.tests.utils import run_with_all_backends
+
+
+def _count_locations(domain):
+    return SQLLocation.active_objects.filter(domain=domain).count()
+
+
+def _count_root_locations(domain):
+    return SQLLocation.active_objects.root_nodes().filter(domain=domain).count()
 
 
 class LocationsTest(CommTrackTest):
@@ -50,18 +58,19 @@ class LocationsTest(CommTrackTest):
         )
         test_state.save()
 
-        original_count = len(list(Location.by_domain(self.domain.name)))
+        original_count = _count_locations(self.domain.name)
+
 
         loc = self.user.sql_location
         loc.archive()
 
         # it should also archive children
         self.assertEqual(
-            len(list(Location.by_domain(self.domain.name))),
+            _count_locations(self.domain.name),
             original_count - 2
         )
         self.assertEqual(
-            len(Location.root_locations(self.domain.name)),
+            _count_root_locations(self.domain.name),
             0
         )
 
@@ -69,11 +78,11 @@ class LocationsTest(CommTrackTest):
 
         # and unarchive children
         self.assertEqual(
-            len(list(Location.by_domain(self.domain.name))),
+            _count_locations(self.domain.name),
             original_count
         )
         self.assertEqual(
-            len(Location.root_locations(self.domain.name)),
+            _count_root_locations(self.domain.name),
             1
         )
 
@@ -100,18 +109,18 @@ class LocationsTest(CommTrackTest):
         )
         test_loc.save()
 
-        original_count = len(list(Location.by_domain(self.domain.name)))
+        original_count = _count_locations(self.domain.name)
 
         loc = self.user.sql_location
         loc.full_delete()
 
         # it should also delete children
         self.assertEqual(
-            len(list(Location.by_domain(self.domain.name))),
+            _count_locations(self.domain.name),
             original_count - 2
         )
         self.assertEqual(
-            len(Location.root_locations(self.domain.name)),
+            _count_root_locations(self.domain.name),
             0
         )
         # permanently gone from sql db

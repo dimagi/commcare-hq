@@ -8,6 +8,7 @@ https://docs.google.com/document/d/1gZFPP8yXjPazaJDP9EmFORi88R-jSytH6TTgMxTGQSk/
 import copy
 from collections import Counter, defaultdict
 
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils.translation import ugettext as _
 
@@ -133,14 +134,14 @@ class LocationStub(object):
                  do_delete, external_id, latitude, longitude, custom_data, uncategorized_data,
                  index):
         self.name = name
-        self.site_code = site_code
+        self.site_code = str(site_code) if isinstance(site_code, int) else site_code
         self.location_type = location_type
         self.location_id = location_id
-        self.parent_code = parent_code or ROOT_LOCATION_TYPE
+        self.parent_code = str(parent_code) if isinstance(parent_code, int) else parent_code or ROOT_LOCATION_TYPE
         self.latitude = latitude or None
         self.longitude = longitude or None
         self.do_delete = do_delete
-        self.external_id = external_id
+        self.external_id = str(external_id) if isinstance(external_id, int) else external_id
         self.index = index
         self.custom_data = custom_data or {}
         self.uncategorized_data = uncategorized_data or {}
@@ -518,6 +519,10 @@ class LocationTreeValidator(object):
 
         # Location names must be unique among siblings
         errors.extend(self._check_location_names())
+
+        # Model field validation must pass
+        errors.extend(self._check_model_validation())
+
         return errors
 
     @memoized
@@ -713,6 +718,27 @@ class LocationTreeValidator(object):
                         (_(u"There are {} locations with the name '{}' under the parent '{}'")
                          .format(count, name, parent))
                     )
+        return errors
+
+    @memoized
+    def _check_model_validation(self):
+        errors = []
+        for location in self.locations:
+            location.lookup_old_collection_data(self.old_collection)  # This method sets location.db_object
+            exclude_fields = ["location_type"]  # Skip foreign key validation
+            if not location.db_object.location_id:
+                # Don't validate location_id if its blank because SQLLocation.save() will add it
+                exclude_fields.append("location_id")
+            try:
+                location.db_object.full_clean(exclude=exclude_fields)
+            except ValidationError as e:
+                for field, issues in e.message_dict.iteritems():
+                    for issue in issues:
+                        errors.append(_(
+                            u"Error with location in sheet '{}', at row {}. {}: {}").format(
+                                location.location_type, location.index, field, issue
+                        ))
+
         return errors
 
 

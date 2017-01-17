@@ -52,6 +52,7 @@ from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator, MediaSuiteGenerator
 from corehq.apps.app_manager.xpath_validator import validate_xpath
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
+from corehq.apps.users.dbaccessors.couch_users import get_display_name_for_user_id
 from corehq.util.timezones.utils import get_timezone_for_domain
 from dimagi.ext.couchdbkit import *
 from django.conf import settings
@@ -114,7 +115,9 @@ from corehq.apps.app_manager.util import (
     app_callout_templates,
     xpath_references_case,
     xpath_references_user_case,
-    module_case_hierarchy_has_circular_reference)
+    module_case_hierarchy_has_circular_reference,
+    get_correct_app_class
+)
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
@@ -136,7 +139,7 @@ from .exceptions import (
     ScheduleError,
     CaseXPathValidationError,
     UserCaseXPathValidationError,
-)
+    XFormValidationFailed)
 from corehq.apps.reports.daterange import get_daterange_start_end_dates, get_simple_dateranges
 from jsonpath_rw import jsonpath, parse
 
@@ -667,10 +670,10 @@ class FormSource(object):
             app.lazy_put_attachment(old_contents, filename)
             del form['contents']
 
-        try:
-            source = app.lazy_fetch_attachment(filename)
-        except ResourceNotFound:
+        if not app.has_attachment(filename):
             source = ''
+        else:
+            source = app.lazy_fetch_attachment(filename)
 
         return source
 
@@ -876,7 +879,7 @@ class FormBase(DocumentSchema):
             form.strip_vellum_ns_attributes()
             try:
                 if form.xml is not None:
-                    validate_xform(etree.tostring(form.xml))
+                    validate_xform(self.get_app().domain, etree.tostring(form.xml))
             except XFormValidationError as e:
                 validation_dict = {
                     "fatal_error": e.fatal_error,
@@ -931,6 +934,8 @@ class FormBase(DocumentSchema):
                     error = {'type': 'validation error', 'validation_message': unicode(e)}
                     error.update(meta)
                     errors.append(error)
+                except XFormValidationFailed:
+                    pass  # ignore this here as it gets picked up in other places
 
         if self.post_form_workflow == WORKFLOW_FORM:
             if not self.form_links:
@@ -987,6 +992,7 @@ class FormBase(DocumentSchema):
         xform.normalize_itext()
         xform.strip_vellum_ns_attributes()
         xform.set_version(self.get_version())
+        xform.add_missing_instances()
 
     def render_xform(self, build_profile_id=None):
         xform = XForm(self.source)
@@ -1317,6 +1323,13 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
     actions = SchemaProperty(FormActions)
     case_references_data = DictProperty()
 
+    @classmethod
+    def wrap(cls, data):
+        # rare schema bug: http://manage.dimagi.com/default.asp?239236
+        if data.get('case_references') == []:
+            del data['case_references']
+        return super(Form, cls).wrap(data)
+
     def add_stuff_to_xform(self, xform, build_profile_id=None):
         super(Form, self).add_stuff_to_xform(xform, build_profile_id)
         xform.add_case_and_meta(self)
@@ -1619,12 +1632,25 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
                                 questions,
                                 question_path
                             )
+
+        def parse_case_type(name, types={"#case": module_case_type,
+                                         "#user": USERCASE_TYPE}):
+            if name.startswith("#") and "/" in name:
+                full_name = name
+                hashtag, name = name.split("/", 1)
+                if hashtag not in types:
+                    hashtag, name = "#case", full_name
+            else:
+                hashtag = "#case"
+            return types[hashtag], name
+
         case_loads = self.case_references.get("load", {})
         for question_path, case_properties in case_loads.iteritems():
             for name in case_properties:
+                case_type, name = parse_case_type(name)
                 self.add_property_load(
                     app_case_meta,
-                    module_case_type,
+                    case_type,
                     name,
                     questions,
                     question_path
@@ -1657,7 +1683,7 @@ class MappingItem(DocumentSchema):
         The prepended characters prevent the variable name from starting with a
         numeral, which is illegal.
         """
-        if ' ' in self.key or self.treat_as_expression:
+        if re.search(r'\W', self.key) or self.treat_as_expression:
             return 'h{hash}'.format(hash=hashlib.md5(self.key).hexdigest()[:8])
         else:
             return 'k{key}'.format(key=self.key)
@@ -3525,30 +3551,43 @@ class ReportAppFilter(DocumentSchema):
     @classmethod
     def wrap(cls, data):
         if cls is ReportAppFilter:
-            doc_type = data['doc_type']
-            doc_type_to_filter_class = {
-                'AutoFilter': AutoFilter,
-                'CustomDataAutoFilter': CustomDataAutoFilter,
-                'StaticChoiceFilter': StaticChoiceFilter,
-                'StaticChoiceListFilter': StaticChoiceListFilter,
-                'StaticDatespanFilter': StaticDatespanFilter,
-                'CustomDatespanFilter': CustomDatespanFilter,
-                'CustomMonthFilter': CustomMonthFilter,
-                'MobileSelectFilter': MobileSelectFilter,
-                'AncestorLocationTypeFilter': AncestorLocationTypeFilter,
-                'NumericFilter': NumericFilter,
-            }
-            try:
-                klass = doc_type_to_filter_class[doc_type]
-            except KeyError:
-                raise ValueError('Unexpected doc_type for ReportAppFilter', doc_type)
-            else:
-                return klass.wrap(data)
+            return get_report_filter_class_for_doc_type(data['doc_type']).wrap(data)
         else:
             return super(ReportAppFilter, cls).wrap(data)
 
     def get_filter_value(self, user, ui_filter):
         raise NotImplementedError
+
+
+MobileFilterConfig = namedtuple('MobileFilterConfig', ['doc_type', 'filter_class', 'short_description'])
+
+
+def get_all_mobile_filter_configs():
+    return [
+        MobileFilterConfig('AutoFilter', AutoFilter, _('Value equal to a standard user property')),
+        MobileFilterConfig('CustomDataAutoFilter', CustomDataAutoFilter,
+                           _('Value equal to a custom user property')),
+        MobileFilterConfig('StaticChoiceFilter', StaticChoiceFilter, _('An exact match of a constant value')),
+        MobileFilterConfig('StaticChoiceListFilter', StaticChoiceListFilter,
+                           _('An exact match of a dynamic property')),
+        MobileFilterConfig('StaticDatespanFilter', StaticDatespanFilter, _('A standard date range')),
+        MobileFilterConfig('CustomDatespanFilter', CustomDatespanFilter, _('A custom range relative to today')),
+        MobileFilterConfig('CustomMonthFilter', CustomMonthFilter,
+                           _("Custom Month Filter (you probably don't want this")),
+        MobileFilterConfig('MobileSelectFilter', MobileSelectFilter, _('Show choices on mobile device')),
+        MobileFilterConfig('AncestorLocationTypeFilter', AncestorLocationTypeFilter,
+                           _("Ancestor location of the user's assigned location of a particular type")),
+        MobileFilterConfig('NumericFilter', NumericFilter, _('A numeric expression')),
+    ]
+
+
+def get_report_filter_class_for_doc_type(doc_type):
+    matched_configs = [config for config in get_all_mobile_filter_configs() if config.doc_type == doc_type]
+    if not matched_configs:
+        raise ValueError('Unexpected doc_type for ReportAppFilter', doc_type)
+    else:
+        assert len(matched_configs) == 1
+        return matched_configs[0].filter_class
 
 
 def _filter_by_case_sharing_group_id(user, ui_filter):
@@ -3579,20 +3618,35 @@ def _filter_by_parent_location_id(user, ui_filter):
     return ui_filter.value(**{ui_filter.name: location_parent})
 
 
-_filter_type_to_func = {
-    'case_sharing_group': _filter_by_case_sharing_group_id,
-    'location_id': _filter_by_location_id,
-    'parent_location_id': _filter_by_parent_location_id,
-    'username': _filter_by_username,
-    'user_id': _filter_by_user_id,
-}
+AutoFilterConfig = namedtuple('AutoFilterConfig', ['slug', 'filter_function', 'short_description'])
+
+
+def get_auto_filter_configurations():
+    return [
+        AutoFilterConfig('case_sharing_group', _filter_by_case_sharing_group_id,
+                         _("The user's case sharing group")),
+        AutoFilterConfig('location_id', _filter_by_location_id, _("The user's assigned location")),
+        AutoFilterConfig('parent_location_id', _filter_by_parent_location_id,
+                         _("The parent location of the user's assigned location")),
+        AutoFilterConfig('username', _filter_by_username, _("The user's username")),
+        AutoFilterConfig('user_id', _filter_by_user_id, _("The user's ID")),
+    ]
+
+
+def _get_auto_filter_function(slug):
+    matched_configs = [config for config in get_auto_filter_configurations() if config.slug == slug]
+    if not matched_configs:
+        raise ValueError('Unexpected ID for AutoFilter', slug)
+    else:
+        assert len(matched_configs) == 1
+        return matched_configs[0].filter_function
 
 
 class AutoFilter(ReportAppFilter):
-    filter_type = StringProperty(choices=_filter_type_to_func.keys())
+    filter_type = StringProperty(choices=[f.slug for f in get_auto_filter_configurations()])
 
     def get_filter_value(self, user, ui_filter):
-        return _filter_type_to_func[self.filter_type](user, ui_filter)
+        return _get_auto_filter_function(self.filter_type)(user, ui_filter)
 
 
 class CustomDataAutoFilter(ReportAppFilter):
@@ -4107,6 +4161,9 @@ class LazyBlobDoc(BlobMixin):
         self._LAZY_ATTACHMENTS_CACHE.pop(name, None)
         return super(LazyBlobDoc, self).put_attachment(content, name, *args, **kw)
 
+    def has_attachment(self, name):
+        return name in self.lazy_list_attachments()
+
     def lazy_put_attachment(self, content, name=None, content_type=None,
                             content_length=None):
         """
@@ -4428,6 +4485,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     # Whether or not the Application has had any forms submitted against it
     has_submissions = BooleanProperty(default=False)
+
+    # domains that are allowed to have linked apps with this master
+    linked_whitelist = StringListProperty()
 
     @classmethod
     def wrap(cls, data):
@@ -4760,7 +4820,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             })
         except UserCaseXPathValidationError as ucve:
             errors.append({
-                'type': 'invalid user case xpath reference',
+                'type': 'invalid user property xpath reference',
                 'module': ucve.module,
                 'form': ucve.form,
             })
@@ -4999,12 +5059,8 @@ class SavedAppBuild(ApplicationBase):
         })
         comment_from = data['comment_from']
         if comment_from:
-            try:
-                comment_user = CouchUser.get(comment_from)
-            except ResourceNotFound:
-                data['comment_user_name'] = comment_from
-            else:
-                data['comment_user_name'] = comment_user.full_name
+            data['comment_user_name'] = get_display_name_for_user_id(
+                self.domain, comment_from, default=comment_from)
 
         return data
 
@@ -5325,6 +5381,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             form = form_stuff['form']
             try:
                 files[filename] = self.fetch_xform(form=form, build_profile_id=build_profile_id)
+            except XFormValidationFailed:
+                raise XFormException(_('Unable to validate the forms due to a server error. '
+                                       'Please try again later.'))
             except XFormException as e:
                 raise XFormException(_('Error in form "{}": {}').format(trans(form.name), unicode(e)))
         return files
@@ -5588,9 +5647,14 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if app_uses_usercase(self) and not domain_has_privilege(self.domain, privileges.USER_CASE):
             errors.append({
                 'type': 'subscription',
-                'message': _('Your application is using User Case functionality. You can remove User Case '
+                'message': _('Your application is using User Properties. You can remove User Properties '
+                             'functionality by opening the User Properties tab in a form that uses it, and '
+                             'clicking "Remove User Properties".')
+                           if toggles.USER_PROPERTY_EASY_REFS.enabled(self.domain) else
+                           # old message, to be removed with USER_PROPERTY_EASY_REFS toggle
+                           _('Your application is using User Case functionality. You can remove User Case '
                              'functionality by opening the User Case Management tab in a form that uses it, and '
-                             'clicking "Remove User Case Properties".')
+                             'clicking "Remove User Case Properties".'),
             })
         return errors
 
@@ -5898,12 +5962,12 @@ class RemoteApp(ApplicationBase):
         return questions
 
 
-str_to_cls = {
-    "Application": Application,
-    "Application-Deleted": Application,
-    "RemoteApp": RemoteApp,
-    "RemoteApp-Deleted": RemoteApp,
-}
+class LinkedApplication(Application):
+    """
+    An app that can pull changes from an app in a different domain.
+    """
+    # This is the id of the master application
+    master = StringProperty()
 
 
 def import_app(app_id_or_source, domain, source_properties=None, validate_source_domain=None):
@@ -5913,10 +5977,9 @@ def import_app(app_id_or_source, domain, source_properties=None, validate_source
         src_dom = source['domain']
         if validate_source_domain:
             validate_source_domain(src_dom)
-        source = source.export_json()
-        source = json.loads(source)
+        source = source.export_json(dump_json=False)
     else:
-        cls = str_to_cls[app_id_or_source['doc_type']]
+        cls = get_correct_app_class(app_id_or_source)
         # Don't modify original app source
         app = cls.wrap(deepcopy(app_id_or_source))
         source = app.export_json(dump_json=False)
@@ -5929,7 +5992,7 @@ def import_app(app_id_or_source, domain, source_properties=None, validate_source
     if source_properties is not None:
         for key, value in source_properties.iteritems():
             source[key] = value
-    cls = str_to_cls[source['doc_type']]
+    cls = get_correct_app_class(source)
     # Allow the wrapper to update to the current default build_spec
     if 'build_spec' in source:
         del source['build_spec']

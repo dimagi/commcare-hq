@@ -1,20 +1,27 @@
 from collections import defaultdict, OrderedDict
 from functools import wraps
 import logging
+
+import itertools
 from django.utils.translation import ugettext_lazy as _
+
+import formtranslate.api
 from casexml.apps.case.xml import V2_NAMESPACE
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
+from corehq.apps import nimbus_api
 from corehq.apps.app_manager.const import (
     SCHEDULE_PHASE, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE,
     CASE_ID, USERCASE_ID, SCHEDULE_UNSCHEDULED_VISIT, SCHEDULE_CURRENT_VISIT_NUMBER,
     SCHEDULE_GLOBAL_NEXT_VISIT_DATE, SCHEDULE_NEXT_DUE, APP_V2)
 from lxml import etree as ET
+
+from corehq.apps.nimbus_api.exceptions import NimbusAPIException
+from corehq.toggles import NIMBUS_FORM_VALIDATION
 from corehq.util.view_utils import get_request
 from dimagi.utils.decorators.memoized import memoized
 from .xpath import CaseIDXPath, session_var, CaseTypeXpath, QualifiedScheduleFormXPath
-from .exceptions import XFormException, CaseError, XFormValidationError, BindNotFound
+from .exceptions import XFormException, CaseError, XFormValidationError, BindNotFound, XFormValidationFailed
 import collections
-import formtranslate.api
 import re
 
 
@@ -538,12 +545,19 @@ def autoset_owner_id_for_advanced_action(action):
     return False
 
 
-def validate_xform(source):
+def validate_xform(domain, source):
     if isinstance(source, unicode):
         source = source.encode("utf-8")
     # normalize and strip comments
     source = ET.tostring(parse_xml(source))
-    validation_results = formtranslate.api.validate(source)
+    if NIMBUS_FORM_VALIDATION.enabled(domain):
+        try:
+            validation_results = nimbus_api.validate_form(source)
+        except NimbusAPIException:
+            raise XFormValidationFailed("Unable to validate form")
+    else:
+        validation_results = formtranslate.api.validate(source)
+
     if not validation_results.success:
         raise XFormValidationError(
             fatal_error=validation_results.fatal_error,
@@ -572,10 +586,6 @@ class XForm(WrappedNode):
 
     def __str__(self):
         return ET.tostring(self.xml) if self.xml is not None else ''
-
-    def validate(self):
-        validate_xform(ET.tostring(self.xml) if self.xml is not None else '')
-        return self
 
     @property
     @raise_if_none("Can't find <model>")
@@ -644,6 +654,19 @@ class XForm(WrappedNode):
         audio = self.media_references_by_lang(lang=lang, form="audio")
         inline_video = self.media_references_by_lang(lang=lang, form="video-inline")
         return images + video + audio + inline_video
+
+    def get_instance_ids(self):
+        def _get_instances():
+            return itertools.chain(
+                self.model_node.findall('{f}instance'),
+                self.model_node.findall('instance')
+            )
+
+        return [
+            instance.attrib['id']
+            for instance in _get_instances()
+            if 'id' in instance.attrib
+        ]
 
     def set_name(self, new_name):
         title = self.find('{h}head/{h}title')
@@ -744,6 +767,26 @@ class XForm(WrappedNode):
             for key in node.xml.attrib:
                 if key.startswith(vellum_ns):
                     del node.attrib[key]
+
+    def add_missing_instances(self):
+        from corehq.apps.app_manager.suite_xml.post_process.instances import get_all_instances_referenced_in_xpaths
+        instance_declarations = self.get_instance_ids()
+        missing_unknown_instances = set()
+        instances, unknown_instance_ids = get_all_instances_referenced_in_xpaths('', [self.render()])
+        for instance_id in unknown_instance_ids:
+            if instance_id not in instance_declarations:
+                missing_unknown_instances.add(instance_id)
+
+        if missing_unknown_instances:
+            instance_ids = "', '".join(missing_unknown_instances)
+            raise XFormValidationError(_(
+                "The form is missing some instance declarations "
+                "that can't be automatically added: '%(instance_ids)s'"
+            ) % {'instance_ids': instance_ids})
+
+        for instance in instances:
+            if instance.id not in instance_declarations:
+                self.add_instance(instance.id, instance.src)
 
     @requires_itext()
     def rename_language(self, old_code, new_code):
@@ -877,6 +920,9 @@ class XForm(WrappedNode):
 
         if the xform is bad, it will raise an XFormException
 
+        :param include_triggers: When set to True will return label questions as well as regular questions
+        :param include_groups: When set will return repeats and group questions
+        :param include_translations: When set to True will return all the translations for the question
         """
 
         if not self.exists():
@@ -888,9 +934,6 @@ class XForm(WrappedNode):
 
         control_nodes = self.get_control_nodes()
         leaf_data_nodes = self.get_leaf_data_nodes()
-        use_hashtags = False
-        if form:
-            use_hashtags = form.get_app().vellum_case_management
 
         for node, path, repeat, group, items, is_leaf, data_type, relevant, required in control_nodes:
             excluded_paths.add(path)
@@ -913,10 +956,8 @@ class XForm(WrappedNode):
                 "relevant": relevant,
                 "required": required == "true()",
                 "comment": self._get_comment(leaf_data_nodes, path),
+                "hashtagValue": self.hashtag_path(path),
             }
-            if use_hashtags:
-                question.update({"hashtagValue": self.hashtag_path(path)})
-
             if include_translations:
                 question["translations"] = self.get_label_translations(node, langs)
 
@@ -972,16 +1013,12 @@ class XForm(WrappedNode):
                                 "stock_type_attributes": dict(parent.attrib),
                             })
 
-                if use_hashtags:
-                    hashtag_path = self.hashtag_path(path)
-                    question.update({
-                        "label": hashtag_path,
-                        "hashtagValue": hashtag_path,
-                    })
-                else:
-                    question.update({
-                        "label": path,
-                    })
+                hashtag_path = self.hashtag_path(path)
+                question.update({
+                    "label": hashtag_path,
+                    "hashtagValue": hashtag_path,
+                })
+
                 if include_translations:
                     question["translations"] = {}
 
@@ -1088,10 +1125,11 @@ class XForm(WrappedNode):
         data_nodes = {}
 
         def for_each_data_node(parent, path_context=""):
-            for child in parent.findall('*'):
+            children = parent.findall('*')
+            for child in children:
                 path = self.resolve_path(child.tag_name, path_context)
                 for_each_data_node(child, path_context=path)
-            if not parent.findall('*'):
+            if not children and path_context:
                 data_nodes[path_context] = parent
 
         for_each_data_node(self.data_node)
@@ -1259,8 +1297,12 @@ class XForm(WrappedNode):
         If the id already exists, DOES NOT overwrite.
 
         """
-        conflicting = self.model_node.find('{f}instance[@id="%s"]' % id)
-        if not conflicting.exists():
+        instance_xpath = 'instance[@id="%s"]' % id
+        conflicting = (
+            self.model_node.find('{f}%s' % instance_xpath).exists() or
+            self.model_node.find(instance_xpath).exists()
+        )
+        if not conflicting:
             # insert right after the main <instance> block
             first_instance = self.model_node.find('{f}instance')
             first_instance.addnext(_make_elem('instance', {'id': id, 'src': src}))

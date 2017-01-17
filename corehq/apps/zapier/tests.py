@@ -2,7 +2,7 @@ import json
 from collections import namedtuple
 
 from django.core.urlresolvers import reverse
-from django.test.testcases import TestCase
+from django.test.testcases import TestCase, SimpleTestCase
 from tastypie.models import ApiKey
 
 from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, SoftwarePlanEdition, Subscription
@@ -14,6 +14,7 @@ from corehq.apps.zapier import consts
 from corehq.apps.zapier.models import ZapierSubscription
 
 from corehq.apps.accounting.tests import generator
+from corehq.apps.zapier.util import remove_advanced_fields
 
 XFORM = """
     <h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms"
@@ -177,3 +178,106 @@ class TestZapierIntegration(TestCase):
                                     HTTP_AUTHORIZATION='ApiKey test:{}'.format(self.api_key))
 
         self.assertEqual(response.status_code, 409)
+
+
+class TestRemoveAdvancedFields(SimpleTestCase):
+
+    def test_form(self):
+        form = {
+            "build_id": "de9553b384b1ff3acaceaed4a217f277",
+            "domain": "test",
+            "form": {
+                "#type": "data",
+                "@name": "Test",
+                "@uiVersion": "1",
+                "@version": "6",
+                "@xmlns": "http://openrosa.org/formdesigner/test",
+                "age": "3.052703627652293",
+                "case": {
+                    "@case_id": "67dfe2a9-9413-4811-b5f5-a7c841085e9e",
+                    "@date_modified": "2016-12-20T12:13:23.870000Z",
+                    "@user_id": "cff3d2fb45eafd1abbc595ae89f736a6",
+                    "@xmlns": "http://commcarehq.org/case/transaction/v2",
+                    "update": {
+                        "test": ""
+                    }
+                },
+                "dob": "2013-12-01",
+                "dose_counter": "0",
+                "follow_up_test_date": "",
+                "follow_up_test_type": "",
+                "grp_archive_person": {
+                    "archive_person": {
+                        "case": {
+                            "@case_id": "d2fcfa48-5286-4623-a209-6a9c30781b3d",
+                            "@date_modified": "2016-12-20T12:13:23.870000Z",
+                            "@user_id": "cff3d2fb45eafd1abbc595ae89f736a6",
+                            "@xmlns": "http://commcarehq.org/case/transaction/v2",
+                            "update": {
+                                "archive_reason": "not_evaluated",
+                                "owner_id": "_archive_"
+                            }
+                        }
+                    },
+                    "close_episode": {
+                        "case": {
+                            "@case_id": "67dfe2a9-9413-4811-b5f5-a7c841085e9e",
+                            "@date_modified": "2016-12-20T12:13:23.870000Z",
+                            "@user_id": "cff3d2fb45eafd1abbc595ae89f736a6",
+                            "@xmlns": "http://commcarehq.org/case/transaction/v2",
+                            "close": ""
+                        }
+                    },
+                    "close_occurrence": {
+                        "case": {
+                            "@case_id": "912d0ec6-709f-4d82-81d8-6a5aa163e2fb",
+                            "@date_modified": "2016-12-20T12:13:23.870000Z",
+                            "@user_id": "cff3d2fb45eafd1abbc595ae89f736a6",
+                            "@xmlns": "http://commcarehq.org/case/transaction/v2",
+                            "close": ""
+                        }
+                    },
+                    "close_referrals": {
+                        "@count": "0",
+                        "@current_index": "0",
+                        "@ids": ""
+                    }
+                },
+                "lbl_form_end": "OK",
+                "length_of_cp": "",
+                "length_of_ip": "",
+                "meta": {
+                    "@xmlns": "http://openrosa.org/jr/xforms",
+                    "appVersion": "CommCare Android, version \"2.31.0\"(423345). "
+                                  "App v59. CommCare Version 2.31. Build 423345, built on: 2016-11-02",
+                    "app_build_version": 59,
+                    "commcare_version": "2.31.0",
+                    "deviceID": "359872069029881",
+                    "geo_point": None,
+                    "instanceID": "2d0e138e-c9b0-4998-a7fb-06b7109e0bf7",
+                    "location": {
+                        "#text": "54.4930116 18.5387613 0.0 21.56",
+                        "@xmlns": "http://commcarehq.org/xforms"
+                    },
+                    "timeEnd": "2016-12-20T12:13:23.870000Z",
+                    "timeStart": "2016-12-20T12:13:08.346000Z",
+                    "userID": "cff3d2fb45eafd1abbc595ae89f736a6",
+                    "username": "test"
+                },
+            }
+        }
+        remove_advanced_fields(form_dict=form)
+        self.assertIsNone(form['form']['meta'].get('userID'))
+        self.assertIsNone(form.get('xmlns'))
+        self.assertIsNone(form['form'].get('@name'))
+        self.assertIsNone(form['form']['meta'].get('appVersion'))
+        self.assertIsNone(form['form']['meta'].get('deviceID'))
+        self.assertIsNone(form['form']['meta'].get('location'))
+        self.assertIsNone(form.get('app_id'))
+        self.assertIsNone(form.get('build_id'))
+        self.assertIsNone(form['form'].get('@version'))
+        self.assertIsNone(form.get('doc_type'))
+        self.assertIsNone(form.get('last_sync_token'))
+        self.assertIsNone(form.get('partial_submission'))
+
+        self.assertIsNotNone(form['domain'])

@@ -14,7 +14,7 @@ from corehq.apps.app_manager.exceptions import (
 from corehq.apps.app_manager.models import ReportModule
 from corehq.apps.app_manager.util import save_xform
 from corehq.apps.app_manager.xform import namespaces, WrappedNode, ItextValue, ItextOutput
-from corehq.util.spreadsheets_v1.excel import HeaderValueError, WorkbookJSONReader, JSONReaderError, \
+from corehq.util.workbook_json.excel import HeaderValueError, WorkbookJSONReader, JSONReaderError, \
     InvalidExcelFileException
 
 from django.contrib import messages
@@ -616,8 +616,8 @@ def update_form_translations(sheet, rows, missing_cols, app):
             if not text_node.exists():
                 msgs.append((
                     messages.warning,
-                    "Unrecognized translation label {0} in sheet {1}. That row"
-                    " has been skipped". format(label_id, sheet.worksheet.title)
+                    u"Unrecognized translation label {0} in sheet {1}. That row"
+                    u" has been skipped". format(label_id, sheet.worksheet.title)
                 ))
                 continue
 

@@ -115,6 +115,7 @@ DATADOG_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.datadog.log")
 UCR_TIMING_FILE = "%s/%s" % (FILEPATH, "ucr.timing.log")
 UCR_DIFF_FILE = "%s/%s" % (FILEPATH, "ucr.diff.log")
 UCR_EXCEPTION_FILE = "%s/%s" % (FILEPATH, "ucr.exception.log")
+NIKSHAY_DATAMIGRATION = "%s/%s" % (FILEPATH, "nikshay_datamigration.log")
 
 LOCAL_LOGGING_HANDLERS = {}
 LOCAL_LOGGING_LOGGERS = {}
@@ -226,6 +227,7 @@ HQ_APPS = (
     'corehq.apps.data_analytics',
     'corehq.apps.domain',
     'corehq.apps.domainsync',
+    'corehq.apps.domain_migration_flags',
     'corehq.apps.dump_reload',
     'corehq.apps.hqadmin',
     'corehq.apps.hqcase',
@@ -259,7 +261,7 @@ HQ_APPS = (
     'corehq.apps.es',
     'corehq.apps.fixtures',
     'corehq.apps.calendar_fixture',
-    'corehq.apps.case_importer_v1',
+    'corehq.apps.case_importer',
     'corehq.apps.reminders',
     'corehq.apps.translations',
     'corehq.apps.tour',
@@ -288,6 +290,7 @@ HQ_APPS = (
     'corehq.apps.performance_sms',
     'corehq.apps.registration',
     'corehq.messaging.smsbackends.unicel',
+    'corehq.messaging.smsbackends.icds_nic',
     'corehq.apps.reports',
     'corehq.apps.reports_core',
     'corehq.apps.userreports',
@@ -359,10 +362,13 @@ HQ_APPS = (
     'custom.icds',
     'custom.icds_reports',
     'custom.pnlppgi',
+)
 
-    # eNikshay / UATBC
+ENIKSHAY_APPS = (
     'custom.enikshay',
     'custom.enikshay.integrations.ninetyninedots',
+    'custom.enikshay.nikshay_datamigration',
+    'custom.enikshay.integrations.nikshay'
 )
 
 # DEPRECATED use LOCAL_APPS instead; can be removed with testrunner.py
@@ -402,7 +408,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'dimagi.utils',
 )
 
-INSTALLED_APPS = DEFAULT_APPS + HQ_APPS
+INSTALLED_APPS = DEFAULT_APPS + HQ_APPS + ENIKSHAY_APPS
 
 
 # after login, django redirects to this URL
@@ -474,7 +480,6 @@ SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
 PROBONO_SUPPORT_EMAIL = 'pro-bono@dimagi.com'
 CCHQ_BUG_REPORT_EMAIL = 'commcarehq-bug-reports@dimagi.com'
 ACCOUNTS_EMAIL = 'accounts@dimagi.com'
-FINANCE_EMAIL = 'finance@dimagi.com'
 DATA_EMAIL = 'datatree@dimagi.com'
 SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange@dimagi.com'
 INTERNAL_SUBSCRIPTION_CHANGE_EMAIL = 'accounts+subchange+internal@dimagi.com'
@@ -866,6 +871,10 @@ CUSTOM_LANDING_PAGE = False
 
 TABLEAU_URL_ROOT = "https://icds.commcarehq.org/"
 
+ONBOARDING_DOMAIN_TEST_DATE = ()
+
+HQ_INSTANCE = 'development'
+
 try:
     # try to see if there's an environmental variable set for local_settings
     custom_settings = os.environ.get('CUSTOMSETTINGS', None)
@@ -1045,6 +1054,14 @@ LOGGING = {
         'null': {
             'class': 'logging.NullHandler',
         },
+        'nikshay_datamigration': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'verbose',
+            'filename': NIKSHAY_DATAMIGRATION,
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 20  # Backup 200 MB of logs
+        },
     },
     'loggers': {
         '': {
@@ -1104,33 +1121,38 @@ LOGGING = {
         'datadog-metrics': {
             'handlers': ['datadog'],
             'level': 'INFO',
-            'propogate': False,
+            'propagate': False,
         },
         'ucr_timing': {
             'handlers': ['ucr_timing'],
             'level': 'INFO',
-            'propogate': True,
+            'propagate': True,
         },
         'ucr_diff': {
             'handlers': ['ucr_diff'],
             'level': 'INFO',
-            'propogate': True,
+            'propagate': True,
         },
         'ucr_exception': {
             'handlers': ['ucr_exception'],
             'level': 'INFO',
-            'propogate': True,
+            'propagate': True,
         },
         'boto3': {
             'handlers': ['console'],
             'level': 'WARNING',
-            'propogate': True
+            'propagate': True
         },
         'botocore': {
             'handlers': ['console'],
             'level': 'WARNING',
-            'propogate': True
-        }
+            'propagate': True
+        },
+        'nikshay_datamigration': {
+            'handlers': ['nikshay_datamigration', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
     }
 }
 
@@ -1236,7 +1258,7 @@ COUCHDB_APPS = [
     'hqcase',
     'hqmedia',
     'hope',
-    'case_importer_v1',
+    'case_importer',
     'indicators',
     'locations',
     'mobile_auth',
@@ -1391,7 +1413,7 @@ SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.apposit.models.SQLAppositBackend',
     'corehq.messaging.smsbackends.grapevine.models.SQLGrapevineBackend',
     'corehq.messaging.smsbackends.http.models.SQLHttpBackend',
-    'corehq.messaging.smsbackends.icds.models.SQLICDSBackend',
+    'corehq.messaging.smsbackends.icds_nic.models.SQLICDSBackend',
     'corehq.messaging.smsbackends.mach.models.SQLMachBackend',
     'corehq.messaging.smsbackends.megamobile.models.SQLMegamobileBackend',
     'corehq.messaging.smsbackends.push.models.PushBackend',
@@ -1425,6 +1447,7 @@ ALLOWED_CUSTOM_CONTENT_HANDLERS = {
     "FRI_SMS_CATCHUP_CONTENT": "custom.fri.api.catchup_custom_content_handler",
     "FRI_SMS_SHIFT": "custom.fri.api.shift_custom_content_handler",
     "FRI_SMS_OFF_DAY": "custom.fri.api.off_day_custom_content_handler",
+    "UCLA_MESSAGE_BANK": "custom.ucla.api.ucla_message_bank_content",
 }
 
 # These are custom templates which can wrap default the sms/chat.html template
@@ -1610,6 +1633,7 @@ BASE_REPEATERS = (
 CUSTOM_REPEATERS = (
     'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsRegisterPatientRepeater',
     'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsUpdatePatientRepeater',
+    'custom.enikshay.integrations.nikshay.repeaters.NikshayRegisterPatientRepeater'
 )
 
 REPEATERS = BASE_REPEATERS + LOCAL_REPEATERS + CUSTOM_REPEATERS
@@ -1847,7 +1871,15 @@ DOMAIN_MODULE_MAP = {
     'icds-cas': 'custom.icds_reports',
     'testing-ipm-senegal': 'custom.intrahealth',
     'up-nrhm': 'custom.up_nrhm',
+
     'enikshay-test': 'custom.enikshay',
+    'enikshay': 'custom.enikshay',
+    'enikshay-test-2': 'custom.enikshay',
+    'enikshay-test-3': 'custom.enikshay',
+    'enikshay-nikshay-migration-test': 'custom.enikshay',
+    'enikshay-domain-copy-test': 'custom.enikshay',
+    'enikshay-aks-audit': 'custom.enikshay',
+    'np-migration-3': 'custom.enikshay',
 
     'crs-remind': 'custom.apps.crs_reports',
 
@@ -1864,23 +1896,6 @@ DOMAIN_MODULE_MAP = {
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True
-
-# arbitrarily split up tests into two chunks
-# that have approximately equal run times,
-# the group shown here, plus a second group consisting of everything else
-TRAVIS_TEST_GROUPS = (
-    (
-        'accounting', 'api', 'app_manager', 'appstore',
-        'auditcare', 'bihar', 'builds', 'cachehq', 'callcenter',
-        'case', 'casegroups', 'cleanup', 'cloudcare', 'commtrack', 'consumption',
-        'couchapps', 'crud', 'django_digest',
-        'domain', 'domainsync', 'export',
-        'facilities', 'fixtures', 'fluff_filter', 'formplayer',
-        'formtranslate', 'fri', 'grapevine', 'groups', 'gsid', 'hope',
-        'hqadmin', 'hqcase', 'hqmedia',
-        'care_pathways', 'common', 'compressor', 'smsbillables', 'ilsgateway'
-    ),
-)
 
 #### Django Compressor Stuff after localsettings overrides ####
 

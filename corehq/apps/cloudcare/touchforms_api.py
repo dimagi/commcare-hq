@@ -62,8 +62,6 @@ class BaseSessionDataHelper(object):
         session_data["additional_filters"] = {"footprint": True}
         session_data.update(session_extras)
         xform_url = reverse("xform_player_proxy")
-        if session_data.get('domain') and toggles.USE_FORMPLAYER.enabled(session_data.get('domain')):
-            xform_url = settings.FORMPLAYER_URL
         ret = {
             "session_data": session_data,
             "xform_url": xform_url,

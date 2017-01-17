@@ -12,6 +12,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
+from corehq.apps.users.landing_pages import ALLOWED_LANDING_PAGES
 from corehq.apps.users.permissions import EXPORT_PERMISSIONS
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
@@ -202,6 +203,9 @@ class UserRolePresets(object):
 class UserRole(QuickCachedDocumentMixin, Document):
     domain = StringProperty()
     name = StringProperty()
+    default_landing_page = StringProperty(
+        choices=[page.id for page in ALLOWED_LANDING_PAGES],
+    )
     permissions = SchemaProperty(Permissions)
     is_archived = BooleanProperty(default=False)
 
@@ -1247,7 +1251,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         else:
             couch_user.created_on = datetime.utcnow()
 
-        user_data = kwargs.get('user_data', {})
+        user_data = {'commcare_project': domain}
+        user_data.update(kwargs.get('user_data', {}))
         couch_user.user_data = user_data
         couch_user.sync_from_django_user(django_user)
         return couch_user
@@ -1398,6 +1403,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         if data.has_key('role_id'):
             role_id = data["role_id"]
             del data['role_id']
+            should_save = True
+        if not data.get('user_data', {}).get('commcare_project'):
+            data['user_data'] = dict(data['user_data'], **{'commcare_project': data['domain']})
             should_save = True
         # Todo; remove after migration
         from corehq.apps.users.management.commands import add_multi_location_property
@@ -1777,6 +1785,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def reset_locations(self, location_ids):
         """
         Reset user's assigned_locations to given location_ids and update user data.
+            This should be called after updating primary location via set_location/unset_location
             If primary-location is not set, then next available location from
             assigned_location_ids is set as the primary-location
         """
@@ -2146,6 +2155,10 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             self.save()
 
     def reset_locations(self, domain, location_ids):
+        """
+        reset locations to given list of location_ids. Before calling this, primary location
+            should be explicitly set/unset via set_location/unset_location
+        """
         membership = self.get_domain_membership(domain)
         membership.assigned_location_ids = location_ids
         if not membership.location_id and location_ids:
@@ -2162,6 +2175,18 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         if loc_id:
             return SQLLocation.objects.get_or_None(domain=domain, location_id=loc_id)
 
+    def get_location_ids(self, domain):
+        return getattr(self.get_domain_membership(domain), 'assigned_location_ids', None)
+
+    @memoized
+    def get_sql_locations(self, domain=None):
+        from corehq.apps.locations.models import SQLLocation
+        loc_ids = self.get_location_ids(domain)
+        if loc_ids:
+            return SQLLocation.objects.get_locations(loc_ids)
+        else:
+            return SQLLocation.objects.none()
+
     @memoized
     def get_location(self, domain):
         from corehq.apps.locations.models import Location
@@ -2172,13 +2197,6 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             except ResourceNotFound:
                 pass
         return None
-
-    def get_location_ids(self, domain):
-        return self.get_domain_membership(domain).assigned_location_ids
-
-    def get_sql_locations(self, domain):
-        from corehq.apps.locations.models import SQLLocation
-        return SQLLocation.objects.filter(location_id__in=self.get_location_ids(domain))
 
     def is_locked_out(self):
         return self.login_attempts >= MAX_LOGIN_ATTEMPTS

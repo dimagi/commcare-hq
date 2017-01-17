@@ -172,6 +172,14 @@
 "></inline-edit>
 
 <div class="tab-pane" id="commcare-settings">
+    {% if app.get_doc_type == 'LinkedApplication' %}
+        <p> Your app is at version {{ app.version }}. The master app is at version {{ master_version }}. </p>
+        <a class="btn btn-primary"
+            href="{% url 'pull_master_app' domain app.id %}">
+            {% trans 'Update from Master App' %}
+        </a>
+
+    {% else %}
     <br />
     <form class="form-horizontal">
         <div class="clearfix">
@@ -262,5 +270,5 @@
         </fieldset>
         {% endif %}
     </form>
+    {% endif %}
 </div>
-

@@ -205,7 +205,7 @@ class TermsAggregation(Aggregation):
     type = "terms"
     result_class = BucketResult
 
-    def __init__(self, name, field, size=None, sort_field=None, order="desc"):
+    def __init__(self, name, field, size=None):
         assert re.match(r'\w+$', name), \
             "Names must be valid python variable names, was {}".format(name)
         self.name = name
@@ -213,12 +213,18 @@ class TermsAggregation(Aggregation):
             "field": field,
             "size": size if size is not None else SIZE_LIMIT,
         }
-        if sort_field:
-            self.order(sort_field, order)
 
-    def order(self, field, order="desc"):
+    def order(self, field, order="asc", reset=True):
         query = deepcopy(self)
-        query.body['order'] = {field: order}
+        order_field = {field: order}
+
+        if reset:
+            query.body['order'] = [order_field]
+        else:
+            if not query.body.get('order'):
+                query.body['order'] = []
+            query.body['order'].append(order_field)
+
         return query
 
     def size(self, size):

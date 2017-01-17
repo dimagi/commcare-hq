@@ -3,6 +3,7 @@ from functools import wraps
 import hashlib
 from django.http import Http404
 import math
+from corehq.util.quickcache import quickcache
 from toggle.shortcuts import toggle_enabled, set_toggle
 
 Tag = namedtuple('Tag', 'name css_class description')
@@ -170,6 +171,7 @@ def any_toggle_enabled(*toggles):
     return decorator
 
 
+@quickcache([])
 def all_toggles():
     """
     Loads all toggles
@@ -236,7 +238,7 @@ APP_BUILDER_SHADOW_MODULES = StaticToggle(
     'Shadow Modules',
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Shadow+Modules',
+    help_link='https://confluence.dimagi.com/display/internal/Shadow+Modules',
 )
 
 CASE_LIST_CUSTOM_XML = StaticToggle(
@@ -293,7 +295,7 @@ DETAIL_LIST_TAB_NODESETS = StaticToggle(
     'Associate a nodeset with a case detail tab',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Case+Detail+Nodesets',
+    help_link='https://confluence.dimagi.com/display/internal/Case+Detail+Nodesets',
 )
 
 GRAPH_CREATION = StaticToggle(
@@ -448,9 +450,10 @@ MOBILE_PRIVILEGES_FLAG = StaticToggle(
 
 MULTIPLE_LOCATIONS_PER_USER = StaticToggle(
     'multiple_locations',
-    "Enable multiple locations per user on domain.",
+    "(Deprecated) Enable multiple locations per user on domain.",
     TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    description="Don't enable this flag."
 )
 
 PRODUCTS_PER_LOCATION = StaticToggle(
@@ -546,7 +549,7 @@ ENABLE_LOADTEST_USERS = StaticToggle(
     'Enable creating loadtest users on HQ',
     TAG_EXPERIMENTAL,
     namespaces=[NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Loadtest+Users',
+    help_link='https://confluence.dimagi.com/display/internal/Loadtest+Users',
 )
 
 MOBILE_UCR = StaticToggle(
@@ -559,9 +562,10 @@ MOBILE_UCR = StaticToggle(
 
 RESTRICT_WEB_USERS_BY_LOCATION = StaticToggle(
     'restrict_web_users_by_location',
-    "Allow project to restrict web user permissions by location (deprecated)",
+    "(Deprecated) Allow project to restrict web user permissions by location",
     TAG_ONE_OFF,
     namespaces=[NAMESPACE_DOMAIN],
+    description="Don't enable this flag."
 )
 
 API_THROTTLE_WHITELIST = StaticToggle(
@@ -683,6 +687,13 @@ NINETYNINE_DOTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+NIKSHAY_INTEGRATION = StaticToggle(
+    'nikshay_integration',
+    'Enable patient registration in Nikshay',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
 MULTIPLE_CHOICE_CUSTOM_FIELD = StaticToggle(
     'multiple_choice_custom_field',
     'Allow project to use multiple choice field in custom fields',
@@ -692,9 +703,10 @@ MULTIPLE_CHOICE_CUSTOM_FIELD = StaticToggle(
 
 RESTRICT_FORM_EDIT_BY_LOCATION = StaticToggle(
     'restrict_form_edit_by_location',
-    "Restrict ability to edit/archive forms by the web user's location",
+    "(Deprecated) Restrict ability to edit/archive forms by the web user's location",
     TAG_ONE_OFF,
     namespaces=[NAMESPACE_DOMAIN],
+    description="Don't enable this flag."
 )
 
 SUPPORT = StaticToggle(
@@ -717,18 +729,22 @@ HSPH_HACK = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-USE_FORMPLAYER_FRONTEND = StaticToggle(
+USE_FORMPLAYER_FRONTEND = PredictablyRandomToggle(
     'use_formplayer_frontend',
     'Use New CloudCare',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
-)
-
-USE_FORMPLAYER = StaticToggle(
-    'use_formplayer',
-    'Use the new formplayer server',
-    TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN],
+    randomness=0.3,
+    always_disabled=[
+        'hsph-betterbirth',
+        'figo-ppiud-srilanka',
+        'broadreach-sa',
+        'goal-global',
+        'ipm-senegal',
+        'madla-malaria',
+        'myrice',
+        'pact',
+    ]
 )
 
 FIXTURE_CASE_SELECTION = StaticToggle(
@@ -800,6 +816,7 @@ SMS_PERFORMANCE_FEEDBACK = StaticToggle(
     'Enable SMS-based performance feedback',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
+    help_link='https://docs.google.com/document/d/1YvbYLV4auuf8gVdYZ6jFZTsOLfJdxm49XhvWkska4GE/edit#',
 )
 
 LEGACY_SYNC_SUPPORT = StaticToggle(
@@ -835,7 +852,7 @@ GRID_MENUS = StaticToggle(
     'Allow using grid menus on Android',
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/ccinternal/Grid+Views',
+    help_link='https://confluence.dimagi.com/display/internal/Grid+Views',
 )
 
 OLD_EXPORTS = StaticToggle(
@@ -945,6 +962,20 @@ CLOUDCARE_LATEST_BUILD = StaticToggle(
 APP_MANAGER_V2 = StaticToggle(
     'app_manager_v2',
     'Prototype for case management onboarding (App Manager V2)',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
+SHOW_PREVIEW_APP_SETTINGS = StaticToggle(
+    'preview_app_settings',
+    'Show preview app settings button',
+    TAG_PRODUCT_CORE,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+)
+
+USER_TESTING_SIMPLIFY = StaticToggle(
+    'user_testing_simplify',
+    'Simplify the UI for user testing experiments',
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN]
 )
@@ -956,9 +987,57 @@ DATA_MIGRATION = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+EMWF_WORKER_ACTIVITY_REPORT = StaticToggle(
+    'emwf_worker_activity_report',
+    'Make the Worker Activity Report use the Groups or Users (EMWF) filter',
+    TAG_ONE_OFF,
+    namespaces=[NAMESPACE_DOMAIN],
+    description=(
+        "This flag allows you filter the users to display in the same way as the "
+        "other reports - by individual user, group, or location.  Note that this "
+        "will also force the report to always display by user."
+    ),
+)
+
 DATA_DICTIONARY = StaticToggle(
     'data_dictionary',
     'Domain level data dictionary of cases',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
+)
+
+LINKED_APPS = StaticToggle(
+    'linked_apps',
+    'Allows master and linked apps',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
+NIMBUS_FORM_VALIDATION = PredictablyRandomToggle(
+    'nimbus_form_validation',
+    'Use Nimbus to validate XForms',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+    randomness=1.0
+)
+
+USER_PROPERTY_EASY_REFS = StaticToggle(
+    'user_property_easy_refs',
+    'Easy-reference user properties in the form builder.',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
+COPY_CASE_CONFIGS = StaticToggle(
+    'copy_case_configs',
+    'Allow copying case list / details screens in basic modules.',
+    TAG_PRODUCT_CORE,
+    [NAMESPACE_DOMAIN]
+)
+
+DO_NOT_PROCESS_OLD_BUILDS = StaticToggle(
+    'do_not_process_old_builds',
+    'Do not process old build for export generation',
+    TAG_PRODUCT_CORE,
+    [NAMESPACE_DOMAIN],
 )

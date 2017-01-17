@@ -1,3 +1,4 @@
+import json
 import logging
 import traceback
 
@@ -46,8 +47,8 @@ class UCRExperiment(laboratory.Experiment):
                 'domain': self.context['domain'],
                 'report_config_id': self.context['report_config_id'],
                 'filter_values': self.context['filter_values'],
-                'control': control_value,
-                'diff': diff
+                'control': json.dumps(control_value),
+                'diff': json.dumps(diff)
             })
 
     def log_timing(self, control, candidate):

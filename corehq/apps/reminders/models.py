@@ -27,7 +27,7 @@ from dimagi.utils.logging import notify_exception
 from random import randint
 from django.conf import settings
 from dimagi.utils.couch.database import iter_docs
-from django.db import models
+from django.db import models, transaction
 from string import Formatter
 
 
@@ -1885,26 +1885,10 @@ class SurveyKeyword(Document):
 
     def is_structured_sms(self):
         return METHOD_STRUCTURED_SMS in [a.action for a in self.actions]
-
-    def deleted(self):
-        return self.doc_type != 'SurveyKeyword'
-
-    def retire(self):
-        self.doc_type += "-Deleted"
-        self.save()
     
     @property
     def get_id(self):
         return self._id
-    
-    @classmethod
-    def get_all(cls, domain):
-        return cls.view("reminders/survey_keywords",
-            startkey=[domain],
-            endkey=[domain, {}],
-            include_docs=True,
-            reduce=False,
-        ).all()
     
     @classmethod
     def get_keyword(cls, domain, keyword):
@@ -1915,7 +1899,7 @@ class SurveyKeyword(Document):
         ).one()
 
     @classmethod
-    def get_by_domain(cls, domain, limit=None, skip=None, include_docs=True):
+    def get_by_domain(cls, domain, limit=None, skip=None):
         extra_kwargs = {}
         if limit is not None:
             extra_kwargs['limit'] = limit
@@ -1925,7 +1909,7 @@ class SurveyKeyword(Document):
             'reminders/survey_keywords',
             startkey=[domain],
             endkey=[domain, {}],
-            include_docs=include_docs,
+            include_docs=True,
             reduce=False,
             **extra_kwargs
         ).all()
@@ -1933,6 +1917,10 @@ class SurveyKeyword(Document):
     def save(self, *args, **kwargs):
         self.clear_caches()
         return super(SurveyKeyword, self).save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        self.clear_caches()
+        return super(SurveyKeyword, self).delete(*args, **kwargs)
 
     def clear_caches(self):
         self.domain_has_keywords.clear(SurveyKeyword, self.domain)

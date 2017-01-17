@@ -4,7 +4,7 @@ hqDefine('app_manager/js/case-config-ui-2.js', function () {
     "use strict";
     var caseConfigUtils = hqImport('app_manager/js/case-config-utils.js');
     var action_names = ["open_case", "update_case", "close_case", "case_preload",
-        // Usercase actions are managed in the User Case Management tab.
+        // Usercase actions are managed in the User Properties tab.
         "usercase_update", "usercase_preload"];
 
     var CaseConfig = function (params) {
@@ -28,7 +28,6 @@ hqDefine('app_manager/js/case-config-ui-2.js', function () {
         self.reserved_words = params.reserved_words;
         self.moduleCaseTypes = params.moduleCaseTypes;
         self.allowUsercase = params.allowUsercase;
-        self.vellumCaseManagement = params.vellumCaseManagement;
 
         self.setPropertiesMap = function (propertiesMap) {
             self.propertiesMap = ko.mapping.fromJS(propertiesMap);
@@ -41,7 +40,7 @@ hqDefine('app_manager/js/case-config-ui-2.js', function () {
         self.setUsercasePropertiesMap(params.usercasePropertiesMap);
 
         self.saveButton = COMMCAREHQ.SaveButton.init({
-            unsavedMessage: "You have unchanged case settings",
+            unsavedMessage: gettext("You have unchanged case settings"),
             save: function () {
                 var requires = self.caseConfigViewModel.actionType() === 'update' ? 'case' : 'none';
                 var subcases;
@@ -74,7 +73,9 @@ hqDefine('app_manager/js/case-config-ui-2.js', function () {
         });
 
         self.saveUsercaseButton = COMMCAREHQ.SaveButton.init({
-            unsavedMessage: "You have unchanged user case settings",
+            unsavedMessage: COMMCAREHQ.toggleEnabled('USER_PROPERTY_EASY_REFS') ?
+                gettext("You have unchanged user properties settings") :
+                gettext("You have unchanged user case settings"),
             save: function () {
                 var actions = JSON.stringify(_(self.actions).extend(
                     HQFormActions.from_usercase_transaction(self.caseConfigViewModel.usercase_transaction)
@@ -653,11 +654,11 @@ hqDefine('app_manager/js/case-config-ui-2.js', function () {
             self.validate = ko.computed(function () {
                 if (self.path() || self.key()) {
                     if (case_transaction.propertyCounts()[self.key()] > 1) {
-                        return "Property updated by two questions";
+                        return gettext("Property updated by two questions");
                     } else if (case_transaction.caseConfig.reserved_words.indexOf(self.key()) !== -1) {
                         return '<strong>' + self.key() + '</strong> is a reserved word';
                     } else if (self.repeat_context() && self.repeat_context() !== case_transaction.repeat_context()) {
-                        return 'Inside the wrong repeat!';
+                        return gettext('Inside the wrong repeat!');
                     }
                 }
                 return null;
@@ -683,7 +684,7 @@ hqDefine('app_manager/js/case-config-ui-2.js', function () {
             self.validateQuestion = ko.computed(function () {
                 if (self.path()) {
                     if (case_transaction.preloadCounts()[self.path()] > 1) {
-                        return "Two properties load to the same question";
+                        return gettext("Two properties load to the same question");
                     }
                 }
                 return null;
@@ -779,9 +780,6 @@ hqDefine('app_manager/js/case-config-ui-2.js', function () {
                     }),
                     case_preload: ko.computed(function () {
                         return caseConfig.caseConfigViewModel.actionType() === 'update';
-                    }),
-                    vellum_case_management: ko.computed(function () {
-                        return caseConfig.caseConfigViewModel.actionType() === 'update' && caseConfig.vellumCaseManagement;
                     }),
                     repeats: function () {
                         return false;

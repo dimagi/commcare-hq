@@ -1,6 +1,6 @@
 # coding=utf-8
 from corehq.apps.app_manager.const import CAREPLAN_GOAL, CAREPLAN_TASK
-from corehq.apps.app_manager.exceptions import XFormException
+from corehq.apps.app_manager.exceptions import XFormException, XFormValidationError
 from corehq.apps.app_manager.models import (
     AdvancedForm,
     AdvancedModule,
@@ -100,6 +100,14 @@ class FormPreparationV2Test(SimpleTestCase, TestXmlMixin):
         self.app.langs = ['fra']  # lang that's not in the form
         with self.assertRaises(XFormException):
             self.form.render_xform()
+
+    def test_instance_check(self):
+        xml = self.get_xml('missing_instances')
+        with self.assertRaises(XFormValidationError) as cm:
+            XForm(xml).add_missing_instances()
+        exception_message = str(cm.exception)
+        self.assertIn('casebd', exception_message)
+        self.assertIn('custom2', exception_message)
 
 
 class SubcaseRepeatTest(SimpleTestCase, TestXmlMixin):

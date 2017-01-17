@@ -25,7 +25,7 @@
     <script src="{% static 'syntaxhighlighter/scripts/shCore.js' %}"></script>
     <script src="{% static 'syntaxhighlighter/scripts/shBrushXml.js' %}"></script>
     {% endcompress %}
-    <script src="{% static 'style/ko/knockout_subscribables.ko.js' %}"></script>
+    <script src="{% static 'style/js/knockout_subscribables.ko.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -272,48 +272,64 @@
     </script>
 {% endblock %}
 
-{% block form-view %}
-    <div id="build_errors"></div>
+{% block pre_page_content %}
+  <div class="appmanager-page-actions">
+      <a class="btn btn-purple js-preview-toggle" style="display: none;" href="#">
+        <span class="js-preview-action-show hide"><i class="fa fa-play-circle"></i> {% trans "Preview App" %}</span>
+        <span class="js-preview-action-hide hide"><i class="fa fa-pause-circle"></i> {% trans "Preview App" %}</span>
+      </a>
+  </div>
 
-        <div class="pull-right">
-            <a class="btn btn-default js-preview-toggle" style="display: none;" href="#">
-              <span class="js-preview-action-show hide"><i class="fa fa-play-circle"></i> {% trans "Preview Changes" %}</span>
-              <span class="js-preview-action-hide hide"><i class="fa fa-pause-circle"></i> {% trans "Hide Preview" %}</span>
-            </a>
-        </div>
+  <div class="appmanager-edit-title">
+    {% if form.get_action_type == 'open' %}
+      {% inline_edit_trans_v2 form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-createform' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
+    {% elif form.requires_case %}
+      {% inline_edit_trans_v2 form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-updateform' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
+    {% else %}
+      {% inline_edit_trans_v2 form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-file-o' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
+    {% endif %}
+  </div>
 
-        {% if form.get_action_type == 'open' %}
-        <h3 style="display: inline-block; margin-right: -5px;"><i class="fcc fcc-app-createform appmanager-icon-type"></i></h3>
-        {% elif form.requires_case %}
-        <h3 style="display: inline-block; margin-right: -5px;"><i class="fcc fcc-app-updateform appmanager-icon-type"></i></h3>
-        {% endif %}
-
-    {% inline_edit_trans form.name langs edit_name_url saveValueName='name' readOnlyClass='h3' postSave="function(data) { document.title = data.update['.variable-form_name'] + ' - CommCare HQ'; return hqImport('app_manager/js/app_manager.js').updateDOM(data.update);}" %}
-
-    <br />
-    <inline-edit params="
+  <div class="appmanager-edit-description">
+    <inline-edit-v2 params="
         name: 'comment',
         id:'comment-id',
-        readOnlyClass: 'app-comment',
+        containerClass: 'app-comment',
         value: '{{ form.comment|escapejs }}',
         placeholder: '{% trans "Enter form description here"|escapejs %}',
         url: '{% url "edit_form_attr" domain app.id form.unique_id 'comment' %}',
         saveValueName: 'comment',
         cols: 50,
-    "></inline-edit>
+    "></inline-edit-v2>
+  </div>
 
-    <div class="spacer"></div>
+  <div id="build_errors"></div>
+{% endblock %}
 
-    <div class="tabbable">
+{% block form-view %}
+    <div class="tabbable appmanager-tabs-container">
         <ul class="nav nav-tabs">
+
+            {% if form.requires_case or form.get_action_type == 'open' %}
             <li class="active">
+                <a id="case-configuration-tab" href="#case-configuration" data-toggle="tab">
+                    {% trans "Case Management" %}
+                </a>
+            </li>
+            {% endif %}
+
+            <li {% if not form.requires_case and not form.get_action_type == 'open' %}class="active"{% endif %}>
                 <a href="#form-settings" id="tour-form-settings-tab" data-toggle="tab">{% trans "Settings" %}</a>
             </li>
 
             {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
             <li>
                 <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
+                  {% if request|toggle_enabled:"USER_PROPERTY_EASY_REFS" %}
+                    {% trans "User Properties" %}
+                  {% else %}
                     {% trans "User Case Management" %}
+                  {% endif %}
                 </a>
             </li>
             {% endif %}{% endif %}
@@ -330,37 +346,41 @@
                 <a href="#advanced" data-toggle="tab">{% trans "Actions" %}</a>
             </li>
         </ul>
-        <br>
-        <div class="tab-content">
+
+        <div class="tab-content appmanager-tab-content">
+
+            {% if form.requires_case or form.get_action_type == 'open' %}
+              <div class="tab-pane active" id="case-configuration">
+                  {% if xform_validation_missing %}
+                      <p class="alert alert-warning">
+                          {% trans "We were unable to validate your form due an error on the server. Proceed with caution." %}
+                      </p>
+                  {% endif %}
+                  {% if form_errors or xform_validation_errored %}
+                      <p class="alert alert-warning">
+                          {% trans "There are errors in your form. Fix your form in order to view and edit Case Management." %}
+                      </p>
+                  {% elif form.source %}
+                      <div class="casexml" id="casexml_home">
+                          {% block case_management_content %}
+                              {% include 'app_manager/v2/partials/case_config.html' %}
+                          {% endblock %}
+                      </div>
+                  {% else %}
+                      <p class="alert alert-warning">
+                          {% trans "Add questions to your form to make use of case management." %}
+                      </p>
+                  {% endif %}
+              </div>
+            {% endif %}
+
+
             {% if nav_form %}
                 {% include "app_manager/v2/partials/form_tab_settings.html" %}
             {% endif %}
 
-            {% if form.requires_case or form.get_action_type == 'open' %}
-            <div class="tab-pane" id="case-configuration">
-                {% if form_errors or xform_validation_errored %}
-                    <p class="alert alert-warning">
-                        {% trans "There are errors in your form. Fix your form in order to view and edit Case Management." %}
-                    </p>
-                    <div class="help-block">
-                        {% blocktrans %}
-                            Cases give you a way to track patients, farms, etc. over time. You can choose to save
-                            data from a form to the case, which will store the data locally on the phone to use later.
-                        {% endblocktrans %}
-                    </div>
-                    <div class="casexml" id="casexml_home">
-                        {% block case_management_content %}
-                            {% include 'app_manager/v2/partials/case_config.html' %}
-                        {% endblock %}
-                    </div>
-                {% else %}
-                    <p class="alert alert-warning">
-                        {% trans "You have not created a form yet. Create a form in order to view and edit Case Management." %}
-                    </p>
-                {% endif %}
-            </div>
-            {% endif %}
 
+            {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
             <div class="tab-pane" id="usercase-configuration">
                 {% if form_errors or xform_validation_errored %}
                     <p class="alert alert-warning">
@@ -368,16 +388,39 @@
                     </p>
                 {% elif form.source %}
                     <header class="clearfix">
+                      {% if request|toggle_enabled:"USER_PROPERTY_EASY_REFS" %}
+                        <h4 class="pull-left">{% trans "User Properties" %}</h4>
+                        <span class="hq-help-template"
+                            data-title="{% trans "User Properties" %}"
+                            data-content="{% trans "User properties allow you to store data about the user and use that data in forms." %}"
+                        ></span>
+                      {% else %}
                         <h4 class="pull-left">{% trans "User Case Management" %}</h4>
                         <span class="hq-help-template"
                             data-title="{% trans "User Case Management" %}"
                             data-content="{% trans "The user case allows you to store data about the user in a case and use that data in forms." %}"
                         ></span>
+                      {% endif %}
                     </header>
                     <div class="casexml" id="usercasexml_home">
                         {% block usercase_management_content %}
                             {%  if form.uses_usercase and not allow_usercase %}
                                 <div class="container-fluid col-sm-6">
+                              {% if request|toggle_enabled:"USER_PROPERTY_EASY_REFS" %}
+                                <p>{% blocktrans %}
+                                    The User Properties feature is no longer available because of the change in your
+                                    CommCare subscription. Although currently-deployed applications will still
+                                    function properly, it will not be possible to update or redeploy them unless
+                                    the User Properties functionality is removed, or you upgrade your CommCare
+                                    subscription.
+                                {% endblocktrans %}</p>
+
+                                <p class="alert alert-danger">{% blocktrans %}
+                                    WARNING: By clicking "Remove User Properties" you will lose User Properties
+                                    functionality if you redeploy your application. However, you will still be
+                                    able to see all previously collected data.
+                                {% endblocktrans %}</p>
+                              {% else %}
                                 <p>{% blocktrans %}
                                     The User Case feature is no longer available because of the change in your
                                     CommCare subscription. Although currently-deployed applications will still
@@ -391,13 +434,18 @@
                                     functionality if you redeploy your application. However, you will still be
                                     able to see all previously collected data.
                                 {% endblocktrans %}</p>
+                              {% endif %}
 
                                 <p>
                                     <a href="{% url 'domain_select_plan' domain %}" class="btn btn-primary">
                                         {% trans "Change your subscription" %}
                                     </a>
                                     <a href="{% url 'drop_user_case' domain app.id %}" class="btn btn-danger">
+                                      {% if request|toggle_enabled:"USER_PROPERTY_EASY_REFS" %}
+                                        {% trans "Remove User Properties" %}
+                                      {% else %}
                                         {% trans "Remove User Case Properties" %}
+                                      {% endif %}
                                     </a>
                                 </p>
                                 </div>
@@ -407,14 +455,20 @@
                     </div>
                 {% else %}
                     <p class="alert alert-warning">
+                      {% if request|toggle_enabled:"USER_PROPERTY_EASY_REFS" %}
+                        {% trans "You have not created a form yet. Create a form in order to view and edit User Properties." %}
+                      {% else %}
                         {% trans "You have not created a form yet. Create a form in order to view and edit User Case Management." %}
+                      {% endif %}
                     </p>
                 {% endif %}
             </div>
+            {% endif %}{% endif %}
 
             {% if form.form_type == 'advanced_form' and module.has_schedule %}
                 {% include "app_manager/v2/partials/form_tab_visit_scheduler.html" %}
             {% endif %}
+
             {% include "app_manager/v2/partials/form_tab_advanced.html" %}
         </div>
     </div>

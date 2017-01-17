@@ -1,13 +1,9 @@
 {% load hq_shared_tags %}
 
 {# touchforms includes #}
-<link rel="stylesheet" href="{% static 'jquery-ui/themes/base/jquery-ui.min.css' %}">
 <link rel="stylesheet" href="{% static 'nprogress/nprogress.css' %}">
 <link rel="stylesheet" href="{% static 'cloudcare/css/webforms.css' %}">
 <link rel="stylesheet" href="{% static 'datetimepicker/build/jquery.datetimepicker.min.css' %}">
-{% if not exclude_jquery_ui_import %}
-<script src="{% static 'jquery-ui/jquery-ui.min.js' %}"></script>
-{% endif %}
 <script src="{% static 'nprogress/nprogress.js' %}"></script>
 <script src="{% static 'moment/moment.js' %}"></script>
 <script src="{% static 'datetimepicker/build/jquery.datetimepicker.full.js' %}"></script>

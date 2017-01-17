@@ -82,7 +82,7 @@ FormplayerFrontend.reqres.setHandler('currentUser', function () {
 
 FormplayerFrontend.on('clearForm', function () {
     $('#webforms').html("");
-    $('#menu-container').removeClass('hide');
+    $('.menu-scrollable-container').removeClass('hide');
     $('#webforms-nav').html("");
     $('#cloudcare-debugger').html("");
     $('.atwho-container').remove();
@@ -122,9 +122,8 @@ FormplayerFrontend.reqres.setHandler('handleNotification', function(notification
 
 FormplayerFrontend.on('startForm', function (data) {
     FormplayerFrontend.request("clearMenu");
-    var urlObject = Util.currentUrlToObject();
-    urlObject.setSessionId(data.session_id);
-    Util.setUrlToObject(urlObject);
+    FormplayerFrontend.Menus.Util.showBreadcrumbs(data.breadcrumbs);
+
     data.onLoading = tfLoading;
     data.onLoadingComplete = tfLoadingComplete;
     var user = FormplayerFrontend.request('currentUser');
@@ -135,7 +134,7 @@ FormplayerFrontend.on('startForm', function (data) {
     data.formplayerEnabled = true;
     data.displayOptions = $.extend(true, {}, user.displayOptions);
     data.onerror = function (resp) {
-        showError(resp.human_readable_message || resp.message, $("#cloudcare-notifications"));
+        showError(resp.exception, $("#cloudcare-notifications"));
     };
     data.onsubmit = function (resp) {
         if (resp.status === "success") {
@@ -165,7 +164,7 @@ FormplayerFrontend.on('startForm', function (data) {
     };
     var sess = new WebFormSession(data);
     sess.renderFormXml(data, $('#webforms'));
-    $('#menu-container').addClass('hide');
+    $('.menu-scrollable-container').addClass('hide');
 });
 
 FormplayerFrontend.on("start", function (options) {
@@ -178,6 +177,7 @@ FormplayerFrontend.on("start", function (options) {
     user.domain = options.domain;
     user.formplayer_url = options.formplayer_url;
     user.debuggerEnabled = options.debuggerEnabled;
+    user.environment = options.environment;
     user.restoreAs = FormplayerFrontend.request('restoreAsUser', user.domain, user.username);
 
     savedDisplayOptions = _.pick(
@@ -225,10 +225,6 @@ FormplayerFrontend.on("start", function (options) {
             false
         );
     }
-});
-
-FormplayerFrontend.reqres.setHandler('getCurrentSessionId', function() {
-    return Util.currentUrlToObject().sessionId;
 });
 
 FormplayerFrontend.reqres.setHandler('getCurrentAppId', function() {
@@ -305,11 +301,18 @@ FormplayerFrontend.on("sync", function () {
         domain = user.domain,
         formplayer_url = user.formplayer_url,
         complete,
+        data = {
+            "username": username,
+            "domain": domain,
+            "restoreAs": user.restoreAs,
+        },
         options;
 
     complete = function(response) {
         if (response.responseJSON.status === 'retry') {
             FormplayerFrontend.trigger('retry', response.responseJSON, function() {
+                // Ensure that when we hit the sync db route we don't use the overwrite_cache param
+                options.data = JSON.stringify($.extend(true, { preserveCache: true }, data));
                 $.ajax(options);
             }, gettext('Waiting for server progress'));
         } else {
@@ -319,11 +322,7 @@ FormplayerFrontend.on("sync", function () {
     };
     options = {
         url: formplayer_url + "/sync-db",
-        data: JSON.stringify({
-            "username": username,
-            "domain": domain,
-            "restoreAs": user.restoreAs,
-        }),
+        data: JSON.stringify(data),
         complete: complete,
     };
     Util.setCrossDomainAjaxOptions(options);
@@ -385,7 +384,11 @@ FormplayerFrontend.on('clearProgress', function() {
 
 
 FormplayerFrontend.on('setVersionInfo', function(versionInfo) {
+    var user = FormplayerFrontend.request('currentUser');
     $("#version-info").text(versionInfo || '');
+    if (versionInfo) {
+        user.set('versionInfo',  versionInfo);
+    }
 });
 
 /**
@@ -401,19 +404,16 @@ FormplayerFrontend.on('refreshApplication', function(appId) {
     if (!appId) {
         throw new Error('Attempt to refresh application for null appId');
     }
-    var sessionId = FormplayerFrontend.request('getCurrentSessionId');
     var user = FormplayerFrontend.request('currentUser'),
         formplayer_url = user.formplayer_url,
         resp,
         options = {
-            url: formplayer_url + "/update",
+            url: formplayer_url + "/delete_application_dbs",
             data: JSON.stringify({
                 app_id: appId,
                 domain: user.domain,
                 username: user.username,
                 restoreAs: user.restoreAs,
-                sessionId: sessionId,
-                updateMode: "save",
             }),
         };
     Util.setCrossDomainAjaxOptions(options);
@@ -423,12 +423,8 @@ FormplayerFrontend.on('refreshApplication', function(appId) {
         tfLoadingComplete(true);
     }).done(function() {
         tfLoadingComplete();
-        if (!_.isUndefined(resp.responseJSON.tree)) {
-            FormplayerFrontend.trigger('startForm', resp.responseJSON);
-        } else {
-            FormplayerFrontend.trigger('navigateHome');
-        }
-
+        $("#cloudcare-notifications").empty();
+        FormplayerFrontend.trigger('navigateHome');
     });
 });
 

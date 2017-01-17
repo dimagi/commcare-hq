@@ -46,7 +46,7 @@ def generate_for_all_ranges(slug, filters):
     columns = []
     for lower_bound, upper_bound in AGE_RANGES[:-1]:
         age_filter = RawFilter(
-            'age BETWEEN %d AND %d' % (lower_bound, upper_bound)
+            'age >= %d AND age <= %d' % (lower_bound, upper_bound)
         )
         columns.append(
             DatabaseColumn(
@@ -64,7 +64,7 @@ def generate_for_all_ranges(slug, filters):
             CountColumn(
                 'doc_id',
                 filters=filters + [
-                    RawFilter('age_in_days > %d' % (AGE_RANGES[-1][0] * DAYS_IN_YEARS)), type_filter
+                    RawFilter('age > %d' % AGE_RANGES[-1][0]), type_filter
                 ],
                 alias='%s_age_%d' % (slug, AGE_RANGES[-1][0])
             )
@@ -124,7 +124,9 @@ class CaseFindingSqlData(EnikshaySqlData):
                     '',
                     CountColumn(
                         'doc_id',
-                        filters=self.filters + test_type_filter + [RawFilter("episode_type = 'presumptive_tb'")],
+                        filters=self.filters + test_type_filter + [
+                            RawFilter("bacteriological_test_episode_type = 'presumptive_tb'")
+                        ],
                         alias='patients_with_presumptive_tb'
                     )
                 ),
@@ -134,8 +136,8 @@ class CaseFindingSqlData(EnikshaySqlData):
                         'doc_id',
                         filters=(
                             self.filters + test_type_filter + [
-                                RawFilter("result_of_test = 'tb_detected'"),
-                                RawFilter("episode_type = 'presumptive_tb'")
+                                RawFilter("result_of_bacteriological_test = 'tb_detected'"),
+                                RawFilter("bacteriological_test_episode_type = 'presumptive_tb'")
                             ]
                         ),
                         alias='patients_with_positive_tb'

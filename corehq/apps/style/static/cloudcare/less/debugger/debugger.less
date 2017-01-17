@@ -2,6 +2,7 @@
   width: 800px;
   position: fixed;
   bottom: 0;
+  left: 0;
   z-index: @zindex-dropdown + 5;
   background-color: white;
   overflow: hidden;
@@ -15,6 +16,12 @@
   margin-top: 12px;
   padding: 10px;
   padding-bottom: 0;
+}
+
+.debugger-updating {
+  #debugger-form-data, #debugger-xml-instance {
+    opacity: 0.5;
+  }
 }
 
 
@@ -52,15 +59,19 @@
     text-transform: uppercase;
     font-size: 11px;
   }
-  a {
-    color: #9d9d9d;
-    cursor: pointer;
-  }
-  a:hover {
-    color: white;
-    text-decoration: none;
+
+  &:hover {
+    background-color: darken(@cc-brand-low, 5);
   }
 
   -webkit-transition: background-color 0.5s;
   transition: background-color 0.5s;
+}
+
+.debugger .query-container:hover {
+  cursor: pointer;
+}
+
+#evaluate-result {
+  min-height: 20px;
 }

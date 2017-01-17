@@ -14,7 +14,7 @@ from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.users.permissions import can_view_form_exports, can_view_case_exports
-from corehq.util.spreadsheets_v1.excel import JSONReaderError, WorkbookJSONReader, \
+from corehq.util.workbook_json.excel import JSONReaderError, WorkbookJSONReader, \
     InvalidExcelFileException
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
@@ -35,6 +35,7 @@ from corehq.apps.data_interfaces.dispatcher import (
     EditDataInterfaceDispatcher,
     require_can_edit_data,
 )
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.style.decorators import use_typeahead, use_angular_js
 from corehq.const import SERVER_DATETIME_FORMAT
 from .dispatcher import require_form_management_privilege
@@ -51,6 +52,7 @@ from soil.util import expose_cached_download, get_download_context
 
 
 @login_and_domain_required
+@location_safe
 def default(request, domain):
     if not request.project or request.project.is_snapshot:
         raise Http404()
@@ -207,7 +209,7 @@ class ArchiveFormView(DataInterfaceSection):
         context.update({
             'bulk_upload': {
                 "download_url": static(
-                    'data_interfaces/files/forms_bulk_example.xlsx'),
+                    'data_interfaces/xlsx/forms_bulk_example.xlsx'),
                 "adjective": _("example"),
                 "verb": _("archive"),
                 "plural_noun": _("forms"),
@@ -306,7 +308,7 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
         context.update({
             'bulk_upload': {
                 "download_url": static(
-                    'data_interfaces/files/cases_bulk_example.xlsx'),
+                    'data_interfaces/xlsx/cases_bulk_example.xlsx'),
                 "adjective": _("case"),
                 "plural_noun": _("cases"),
             },
@@ -420,7 +422,7 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
             'detailsUrl': reverse('case_details', args=[self.domain, case.case_id]),
             'name': case.name,
             'externalId': case.external_id if case.external_id else '--',
-            'phoneNumber': getattr(case, 'contact_phone_number', '--'),
+            'phoneNumber': case.get_case_property('contact_phone_number') or '--',
         }
 
     def get_create_form(self, is_blank=False):
@@ -544,7 +546,7 @@ def xform_management_job_poll(request, domain, download_id,
                               template="data_interfaces/partials/xform_management_status.html"):
     mode = FormManagementMode(request.GET.get('mode'), validate=True)
     try:
-        context = get_download_context(download_id, check_state=True)
+        context = get_download_context(download_id)
     except TaskFailedError:
         return HttpResponseServerError()
 

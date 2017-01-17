@@ -74,6 +74,7 @@ class DateFilterSpec(FilterSpec):
 
 class QuarterFilterSpec(FilterSpec):
     type = TypeProperty('quarter')
+    show_all = BooleanProperty(default=False)
 
 
 class ChoiceListFilterSpec(FilterSpec):

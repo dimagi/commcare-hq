@@ -1,7 +1,14 @@
 {
     "domains": [
         "enikshay-test",
-        "enikshay-test-test"
+        "enikshay-test-test",
+        "enikshay",
+        "enikshay-test-2",
+        "enikshay-test-3",
+        "enikshay-nikshay-migration-test",
+        "enikshay-domain-copy-test",
+        "enikshay-aks-audit",
+        "np-migration-3"
     ],
     "data_source_table": "episode",
     "report_id": "sputum_conversion",
@@ -9,7 +16,7 @@
         "description": "",
         "title": "Sputum Conversion",
         "sort_expression": [],
-        "visible": false,
+        "visible": true,
         "configured_charts": [],
         "aggregation_columns": [],
         "filters": [
@@ -20,7 +27,7 @@
                 "display": "Case Open Date",
                 "field": "opened_on",
                 "slug": "date",
-                "type": "quarter"
+                "type": "date"
             },
             {
                 "compare_as_string": false,
@@ -33,6 +40,13 @@
                     "type": "location"
                 },
                 "display": "Location"
+            },
+            {
+                "type": "pre",
+                "field": "closed",
+                "slug": "closed",
+                "datatype": "integer",
+                "pre_value": 0
             }
         ],
         "columns": [

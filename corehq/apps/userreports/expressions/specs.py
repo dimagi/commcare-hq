@@ -1,5 +1,6 @@
 import json
 from simpleeval import InvalidExpression
+from corehq.apps.locations.document_store import LOCATION_DOC_TYPE
 from corehq.apps.userreports.document_stores import get_document_store
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -180,26 +181,31 @@ class RelatedDocExpressionSpec(JsonObject):
     value_expression = DictProperty(required=True)
 
     def configure(self, doc_id_expression, value_expression):
-        if get_db_by_doc_type(self.related_doc_type) is None:
+        non_couch_doc_types = (LOCATION_DOC_TYPE,)
+        if (self.related_doc_type not in non_couch_doc_types
+                and get_db_by_doc_type(self.related_doc_type) is None):
             raise BadSpecError(u'Cannot determine database for document type {}!'.format(self.related_doc_type))
 
         self._doc_id_expression = doc_id_expression
         self._value_expression = value_expression
-        # used in caching
-        self._vary_on = json.dumps(self.value_expression, sort_keys=True)
 
     def __call__(self, item, context=None):
         doc_id = self._doc_id_expression(item, context)
         if doc_id:
             return self.get_value(doc_id, context)
 
-    @quickcache(['self._vary_on', 'doc_id'])
-    def get_value(self, doc_id, context):
+    def _context_cache_key(self, doc_id):
+        return '{}-{}'.format(self.related_doc_type, doc_id)
 
+    def get_value(self, doc_id, context):
         try:
             assert context.root_doc['domain']
             document_store = get_document_store(context.root_doc['domain'], self.related_doc_type)
-            doc = document_store.get_document(doc_id)
+
+            doc = context.get_cache_value(self._context_cache_key(doc_id))
+            if not doc:
+                doc = document_store.get_document(doc_id)
+                context.set_cache_value(self._context_cache_key(doc_id), doc)
             # ensure no cross-domain lookups of different documents
             if context.root_doc['domain'] != doc.get('domain'):
                 return None

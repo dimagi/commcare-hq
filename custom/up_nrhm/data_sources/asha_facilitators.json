@@ -5,14 +5,28 @@
         "engine_id": "default",
         "table_id": "asha_facilitators",
         "display_name": "ASHA Facilitators",
-        "configured_filter":  {
-            "type": "boolean_expression",
-            "operator": "eq",
-            "expression": {
-                "type": "property_name",
-                "property_name": "xmlns"
-            },
-            "property_value": "http://openrosa.org/formdesigner/8364a6d4357501413a1d9a8996d33245220a3505"
+        "configured_filter": {
+            "type": "or",
+            "filters": [
+                {
+                    "type": "boolean_expression",
+                    "operator": "eq",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "xmlns"
+                    },
+                    "property_value": "http://openrosa.org/formdesigner/8364a6d4357501413a1d9a8996d33245220a3505"
+                },
+                {
+                    "type": "boolean_expression",
+                    "operator": "eq",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "xmlns"
+                    },
+                    "property_value": "http://openrosa.org/formdesigner/6FF66DEB-0882-4DFD-B5F6-DD2E6D32FA96"
+                }
+            ]
         },
         "configured_indicators": [
             {
@@ -23,6 +37,32 @@
                     "property_path": ["received_on"]
                 },
                 "datatype": "datetime"
+            },
+            {
+                "column_id": "is_checklist",
+                "type": "expression",
+                "datatype": "integer",
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "operator": "eq",
+                        "expression": {
+                            "type": "property_name",
+                            "property_name": "xmlns",
+                            "datatype": "string"
+                        },
+                        "type": "boolean_expression",
+                        "property_value": "http://openrosa.org/formdesigner/8364a6d4357501413a1d9a8996d33245220a3505"
+                    },
+                    "expression_if_true": {
+                        "type": "constant",
+                        "constant": 1
+                    },
+                    "expression_if_false": {
+                        "type": "constant",
+                        "constant": 0
+                    }
+                }
             },
             {
                 "column_id": "completed_on",

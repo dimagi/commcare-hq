@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.utils.translation import ugettext_noop, ugettext as _
@@ -15,13 +16,11 @@ from corehq.apps.domain.views import DomainViewMixin, LoginAndDomainMixin, \
     DefaultProjectSettingsView
 from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
-from corehq.apps.locations.views import LocationsListView
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.users.views import DefaultProjectUserSettingsView
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.style.decorators import use_angular_js
 from django_prbac.utils import has_privilege
-from django.conf import settings
 
 
 @login_and_domain_required
@@ -35,9 +34,6 @@ def default_dashboard_url(request, domain):
 
     if domain in settings.CUSTOM_DASHBOARD_PAGE_URL_NAMES:
         return reverse(settings.CUSTOM_DASHBOARD_PAGE_URL_NAMES[domain], args=[domain])
-
-    if couch_user and not couch_user.has_permission(domain, 'access_all_locations'):
-        return reverse(LocationsListView.urlname, args=[domain])
 
     if couch_user and user_has_custom_top_menu(domain, couch_user):
         return reverse('saved_reports', args=[domain])
@@ -115,6 +111,7 @@ class NewUserDashboardView(BaseDashboardView):
         return templates
 
 
+@location_safe
 class DomainDashboardView(JSONResponseMixin, BaseDashboardView):
     urlname = 'dashboard_domain'
     page_title = ugettext_noop("HQ Dashboard")
@@ -139,6 +136,7 @@ class DomainDashboardView(JSONResponseMixin, BaseDashboardView):
                 'slug': d.slug,
                 'ng_directive': d.ng_directive,
             } for d in self.tile_configs],
+            'is_icds': settings.HQ_INSTANCE == 'icds',
         }
 
     def make_tile(self, slug, in_data):

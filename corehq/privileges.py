@@ -117,7 +117,7 @@ class Titles(object):
             ACTIVE_DATA_MANAGEMENT: _("Active Data Management"),
             CUSTOM_BRANDING: _("Custom Branding"),
             ROLE_BASED_ACCESS: _("Advanced Role-Based Access"),
-            RESTRICT_ACCESS_BY_LOCATION: _("Organization-based user management restrictions"),
+            RESTRICT_ACCESS_BY_LOCATION: _("Organization-based data export and user management restrictions"),
             OUTBOUND_SMS: _("Outgoing Messaging"),
             INBOUND_SMS: _("Incoming Messaging"),
             REMINDERS_FRAMEWORK: _("Reminders Framework"),

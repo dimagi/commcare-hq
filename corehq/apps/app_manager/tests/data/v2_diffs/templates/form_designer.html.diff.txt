@@ -36,21 +36,57 @@
  
                  $('#formdesigner').vellum(VELLUM_OPTIONS);
  
-@@ -149,7 +157,21 @@
+@@ -148,8 +156,57 @@
+             });
          });
          analytics.workflow('Entered the Form Builder');
- 
 +        $(function () {
 +            var previewApp = hqImport('app_manager/js/preview_app.js');
-+            previewApp.prependToggleTo('.fd-form-actions', $('#js-fd-app-preview-btn-template').html());
++
++            {% if form.requires_case or form.get_action_type == 'open' %}
++            // todo make this a more broadly used util, perhaps? actually add buttons to formplayer?
++            var _prependTemplateToSelector = function (selector, layout, attempts, callback) {
++                attempts = attempts || 0;
++                if ($(selector).length) {
++                    var $toggleParent = $(selector);
++                    $toggleParent.prepend(layout);
++                    callback();
++                } else if (attempts <= 30) {
++                    // give up appending element after waiting 30 seconds to load
++                    setTimeout(function () {
++                        _prependTemplateToSelector(selector, layout, attempts++, callback);
++                    }, 1000);
++                }
++            };
++            _prependTemplateToSelector(
++                '.fd-form-actions',
++                $('#js-fd-manage-case').html(),
++                0,
++                function () {
++                    previewApp.prependToggleTo('.fd-form-actions', $('#js-fd-app-preview-btn-template').html());
++                }
++            );
++            {% else %}
++                previewApp.prependToggleTo('.fd-form-actions', $('#js-fd-app-preview-btn-template').html());
++            {% endif %}
++
 +        });
+ 
      </script>
 +
 +    <script type="text/html" id="js-fd-app-preview-btn-template">
++      <div class="btn-group js-preview-toggle-container">
++        <a class="btn btn-purple js-preview-toggle" href="#">
++          <span class="js-preview-action-show hide"><i class="fa fa-play-circle"></i> {% trans "Preview App" %}</span>
++          <span class="js-preview-action-hide hide"><i class="fa fa-pause-circle"></i> {% trans "Preview App" %}</span>
++        </a>
++      </div>
++    </script>
++
++    <script type="text/html" id="js-fd-manage-case">
 +      <div class="btn-group">
-+        <a class="btn btn-default js-preview-toggle" href="#">
-+          <span class="js-preview-action-show hide"><i class="fa fa-play-circle"></i> {% trans "Preview Changes" %}</span>
-+          <span class="js-preview-action-hide hide"><i class="fa fa-pause-circle"></i> {% trans "Hide Preview" %}</span>
++        <a class="btn btn-info" href="{% url "view_form" domain app.id module.id form.id %}">
++          <i class="fa fa-bars"></i> {% trans 'Manage Case' %}
 +        </a>
 +      </div>
 +    </script>
@@ -58,7 +94,7 @@
  {% endblock %}
  
  {% block title %}{{ form.name|clean_trans:langs }}{% endblock %}
-@@ -159,3 +181,5 @@
+@@ -159,3 +216,5 @@
  {% endblock %}
  
  {% block column_style %}hq-flush-content{% endblock %}

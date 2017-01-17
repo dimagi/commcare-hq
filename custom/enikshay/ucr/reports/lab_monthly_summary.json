@@ -1,7 +1,14 @@
 {
     "domains": [
         "enikshay-test",
-        "enikshay-test-test"
+        "enikshay-test-test",
+        "enikshay",
+        "enikshay-test-2",
+        "enikshay-test-3",
+        "enikshay-nikshay-migration-test",
+        "enikshay-domain-copy-test",
+        "enikshay-aks-audit",
+        "np-migration-3"
     ],
     "data_source_table": "test",
     "report_id": "lab_monthly_summary",
@@ -9,7 +16,7 @@
         "description": "",
         "title": "Lab Monthly Summary",
         "sort_expression": [],
-        "visible": false,
+        "visible": true,
         "configured_charts": [],
         "aggregation_columns": [],
         "filters": [
@@ -27,7 +34,7 @@
                 "datatype": "string",
                 "type": "dynamic_choice_list",
                 "slug": "village",
-                "field": "person_owner_id",
+                "field": "referring_facility_id",
                 "choice_provider": {
                     "include_descendants": true,
                     "type": "location"
@@ -37,7 +44,7 @@
         ],
         "columns": [
             {
-                "display": "TB Suspects Examined for Diagnosis",
+                "display": "TB Presumptives Examined for Diagnosis",
                 "type": "field",
                 "field": "suspect_examined_for_diagnosis",
                 "aggregation": "sum",
@@ -49,34 +56,9 @@
                 "calculate_total": false
             },
             {
-                "display": "TB Suspects found positive",
+                "display": "TB Presumptives found positive",
                 "type": "field",
                 "field": "suspect_examined_for_diagnosis_positive",
-                "aggregation": "sum",
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {
-                },
-                "calculate_total": false
-            },
-            {
-                "display": "TB suspects undergoing Repeat Sputum Examination",
-                "column_id": "tb_suspects_undergoing",
-                "type": "field",
-                "field": "suspect_repeat_for_diagnosis",
-                "aggregation": "sum",
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {
-                },
-                "calculate_total": false
-            },
-            {
-                "display": "TB Suspects found positive on Repeat Sputum Examination",
-                "type": "field",
-                "field": "suspect_repeat_for_diagnosis_positive",
                 "aggregation": "sum",
                 "sortable": false,
                 "description": null,

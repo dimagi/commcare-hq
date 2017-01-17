@@ -15,7 +15,7 @@ from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.messaging.smsbackends.apposit.models import SQLAppositBackend
 from corehq.messaging.smsbackends.grapevine.models import SQLGrapevineBackend
 from corehq.messaging.smsbackends.http.models import SQLHttpBackend
-from corehq.messaging.smsbackends.icds.models import SQLICDSBackend
+from corehq.messaging.smsbackends.icds_nic.models import SQLICDSBackend
 from corehq.messaging.smsbackends.mach.models import SQLMachBackend
 from corehq.messaging.smsbackends.megamobile.models import SQLMegamobileBackend
 from corehq.messaging.smsbackends.push.models import PushBackend
@@ -241,7 +241,7 @@ class AllBackendTest(BaseSMSTest):
     @patch('corehq.messaging.smsbackends.sislog.models.SQLSislogBackend.send')
     @patch('corehq.messaging.smsbackends.yo.models.SQLYoBackend.send')
     @patch('corehq.messaging.smsbackends.push.models.PushBackend.send')
-    @patch('corehq.messaging.smsbackends.icds.models.SQLICDSBackend.send')
+    @patch('corehq.messaging.smsbackends.icds_nic.models.SQLICDSBackend.send')
     def test_outbound_sms(
             self,
             icds_send,

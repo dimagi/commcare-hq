@@ -330,7 +330,7 @@ def system_ajax(request):
 @require_superuser_or_developer
 def check_services(request):
 
-    def run_test(test):
+    def run_test(service_name, test):
         try:
             result = test()
         except Exception as e:
@@ -339,9 +339,10 @@ def check_services(request):
         else:
             status = "SUCCESS" if result.success else "FAILURE"
             msg = result.msg
-        return "{} {}: {}<br/>".format(status, test.__name__, msg)
+        return "{} {}: {}<br/>".format(status, service_name, msg)
 
-    return HttpResponse("<pre>" + "".join(map(run_test, service_checks.checks)) + "</pre>")
+    results = [run_test(service_name, test) for service_name, test in service_checks.CHECKS.items()]
+    return HttpResponse("<pre>" + "".join(results) + "</pre>")
 
 
 class SystemInfoView(BaseAdminSectionView):

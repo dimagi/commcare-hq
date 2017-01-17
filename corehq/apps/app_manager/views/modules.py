@@ -14,6 +14,7 @@ from django.contrib import messages
 from corehq.apps.app_manager.views.media_utils import process_media_attribute, \
     handle_media_edits
 from corehq.apps.case_search.models import case_search_enabled_for_domain
+from corehq.apps.reports.daterange import get_simple_dateranges
 
 from dimagi.utils.logging import notify_exception
 
@@ -35,7 +36,7 @@ from corehq.apps.app_manager.util import (
     prefix_usercase_properties,
     commtrack_ledger_sections,
     module_offers_search,
-    module_case_hierarchy_has_circular_reference)
+    module_case_hierarchy_has_circular_reference, get_app_manager_template)
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.userreports.models import ReportConfiguration, \
     StaticReportConfiguration
@@ -60,22 +61,38 @@ from corehq.apps.app_manager.models import (
     ReportAppConfig,
     UpdateCaseAction,
     FixtureSelect,
-    DefaultCaseSearchProperty)
+    DefaultCaseSearchProperty, get_all_mobile_filter_configs, get_auto_filter_configurations)
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
 
 logger = logging.getLogger(__name__)
 
 
-def get_module_template(module):
+def get_module_template(domain, module):
     if isinstance(module, CareplanModule):
-        return "app_manager/v1/module_view_careplan.html"
+        return get_app_manager_template(
+            domain,
+            "app_manager/v1/module_view_careplan.html",
+            "app_manager/v2/module_view_careplan.html",
+        )
     elif isinstance(module, AdvancedModule):
-        return "app_manager/v1/module_view_advanced.html"
+        return get_app_manager_template(
+            domain,
+            "app_manager/v1/module_view_advanced.html",
+            "app_manager/v2/module_view_advanced.html",
+        )
     elif isinstance(module, ReportModule):
-        return 'app_manager/v1/module_view_report.html'
+        return get_app_manager_template(
+            domain,
+            'app_manager/v1/module_view_report.html',
+            'app_manager/v2/module_view_report.html',
+        )
     else:
-        return "app_manager/v1/module_view.html"
+        return get_app_manager_template(
+            domain,
+            "app_manager/v1/module_view.html",
+            "app_manager/v2/module_view.html",
+        )
 
 
 def get_module_view_context(app, module, lang=None):
@@ -237,10 +254,20 @@ def _get_report_module_context(app, module):
                          'deleted. These will be removed on save.')
         )
 
+    filter_choices = [
+        {'slug': f.doc_type, 'description': f.short_description} for f in get_all_mobile_filter_configs()
+    ]
+    auto_filter_choices = [
+        {'slug': f.slug, 'description': f.short_description} for f in get_auto_filter_configurations()
+
+    ]
     return {
         'all_reports': [_report_to_config(r) for r in all_reports],
         'current_reports': [r.to_json() for r in module.report_configs],
         'warnings': warnings,
+        'filter_choices': filter_choices,
+        'auto_filter_choices': auto_filter_choices,
+        'daterange_choices': [choice._asdict() for choice in get_simple_dateranges()],
     }
 
 
@@ -252,7 +279,7 @@ def _get_fixture_columns_by_type(domain):
 
 
 def _setup_case_property_builder(app):
-    defaults = ('name', 'date-opened', 'status')
+    defaults = ('name', 'date-opened', 'status', 'last_modified')
     if app.case_sharing:
         defaults += ('#owner_name',)
     per_type_defaults = None
@@ -356,7 +383,7 @@ class AllowWithReason(namedtuple('AllowWithReason', 'allow reason')):
         if self.reason == self.ALL_FORMS_REQUIRE_CASE:
             return gettext_lazy('Not all forms in the case list update a case.')
         elif self.reason == self.MODULE_IN_ROOT:
-            return gettext_lazy("'Menu Mode' is not configured as 'Display and then forms'")
+            return gettext_lazy("'Menu Mode' is not configured as 'Display menu and then forms'")
         elif self.reason == self.PARENT_SELECT_ACTIVE:
             return gettext_lazy("'Parent Selection' is configured.")
 
@@ -456,9 +483,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
     if should_edit("auto_select_case"):
         module["auto_select_case"] = request.POST.get("auto_select_case") == 'true'
 
-    if (feature_previews.MODULE_FILTER.enabled(app.domain) and
-            app.enable_module_filtering and
-            should_edit('module_filter')):
+    if app.enable_module_filtering and should_edit('module_filter'):
         module['module_filter'] = request.POST.get('module_filter')
 
     if should_edit('case_list_form_id'):
@@ -597,6 +622,33 @@ def undo_delete_module(request, domain, record_id):
     record.undo()
     messages.success(request, 'Module successfully restored.')
     return back_to_main(request, domain, app_id=record.app_id, module_id=record.module_id)
+
+
+@no_conflict_require_POST
+@require_can_edit_apps
+def overwrite_module_case_list(request, domain, app_id, module_id):
+    app = get_app(domain, app_id)
+    source_module_id = int(request.POST['source_module_id'])
+    detail_type = request.POST['detail_type']
+    assert detail_type in ['short', 'long']
+    source_module = app.get_module(source_module_id)
+    dest_module = app.get_module(module_id)
+    if not hasattr(source_module, 'case_details'):
+        messages.error(
+            request,
+            _("Sorry, couldn't find case list configuration for module {}. "
+              "Please report an issue if you believe this is a mistake.").format(source_module.default_name()))
+    elif source_module.case_type != dest_module.case_type:
+        messages.error(
+            request,
+            _("Please choose a module with the same case type as the current one ({}).").format(
+                dest_module.case_type)
+        )
+    else:
+        setattr(dest_module.case_details, detail_type, getattr(source_module.case_details, detail_type))
+        app.save()
+        messages.success(request, _('Case list updated form module {}.').format(source_module.default_name()))
+    return back_to_main(request, domain, app_id=app_id, module_id=module_id)
 
 
 def _update_search_properties(module, search_properties, lang='en'):
@@ -792,8 +844,7 @@ def edit_report_module(request, domain, app_id, module_id):
         )
         return HttpResponseBadRequest(_("There was a problem processing your request."))
 
-    if (feature_previews.MODULE_FILTER.enabled(domain) and
-            app.enable_module_filtering):
+    if app.enable_module_filtering:
         module['module_filter'] = request.POST.get('module_filter')
     module.media_image.update(params['multimedia']['mediaImage'])
     module.media_audio.update(params['multimedia']['mediaAudio'])
@@ -820,7 +871,11 @@ def validate_module_for_build(request, domain, app_id, module_id, ajax=True):
     errors = module.validate_for_build()
     lang, langs = get_langs(request, app)
 
-    response_html = render_to_string('app_manager/v1/partials/build_errors.html', {
+    response_html = render_to_string(get_app_manager_template(
+            domain,
+            'app_manager/v1/partials/build_errors.html',
+            'app_manager/v2/partials/build_errors.html',
+        ), {
         'request': request,
         'app': app,
         'build_errors': errors,

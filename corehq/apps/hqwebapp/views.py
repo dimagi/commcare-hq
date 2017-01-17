@@ -37,6 +37,7 @@ from couchdbkit import ResourceNotFound
 from two_factor.views import LoginView
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
+from corehq.apps.users.landing_pages import get_redirect_url, get_cloudcare_urlname
 
 from corehq.form_processor.utils.general import should_use_sql_backend
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
@@ -63,7 +64,6 @@ from corehq.apps.hqwebapp.doc_info import get_doc_info, get_object_info
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
 from corehq.apps.locations.permissions import location_safe
-from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import format_username
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
@@ -140,22 +140,35 @@ def redirect_to_default(req, domain=None):
             domains = [Domain.get_by_name(domain)]
         else:
             domains = Domain.active_for_user(req.user)
+
         if 0 == len(domains) and not req.user.is_superuser:
             return redirect('registration_domain')
         elif 1 == len(domains):
+            from corehq.apps.dashboard.views import dashboard_default
+            from corehq.apps.users.models import DomainMembershipError
             if domains[0]:
                 domain = domains[0].name
                 couch_user = req.couch_user
-
-                if (couch_user.is_commcare_user() and
-                        couch_user.can_view_some_reports(domain)):
-                    url = reverse("cloudcare_main", args=[domain, ""])
+                try:
+                    role = couch_user.get_role(domain)
+                except DomainMembershipError:
+                    # commcare users without roles should always be denied access
+                    if couch_user.is_commcare_user():
+                        raise Http404()
+                    else:
+                        # web users without roles are redirected to the dashboard default
+                        # view since some domains allow web users to request access if they
+                        # don't have it
+                        return dashboard_default(req, domain)
                 else:
-                    from corehq.apps.dashboard.views import dashboard_default
-                    return dashboard_default(req, domain)
-
+                    if role and role.default_landing_page:
+                        url = get_redirect_url(role.default_landing_page, domain)
+                    elif couch_user.is_commcare_user():
+                        url = reverse(get_cloudcare_urlname(domain), args=[domain])
+                    else:
+                        return dashboard_default(req, domain)
             else:
-                raise Http404
+                raise Http404()
         else:
             url = settings.DOMAIN_SELECT_URL
     return HttpResponseRedirect(url)
@@ -484,15 +497,26 @@ def bug_report(req):
         '500traceback',
     )])
 
+    domain_object = Domain.get_by_name(report['domain'])
+    current_project_description = domain_object.project_description
+    new_project_description = req.POST.get('project_description')
+    if (req.couch_user.is_domain_admin(domain=report['domain']) and
+            new_project_description and
+            current_project_description != new_project_description):
+
+        domain_object.project_description = new_project_description
+        domain_object.save()
+
     report['user_agent'] = req.META['HTTP_USER_AGENT']
     report['datetime'] = datetime.utcnow()
     report['feature_flags'] = toggles.toggles_dict(username=report['username'],
                                                    domain=report['domain']).keys()
     report['feature_previews'] = feature_previews.previews_dict(report['domain']).keys()
     report['scale_backend'] = should_use_sql_backend(report['domain']) if report['domain'] else False
+    report['project_description'] = domain_object.project_description
 
     try:
-        couch_user = CouchUser.get_by_username(report['username'])
+        couch_user = req.couch_user
         full_name = couch_user.full_name
         if couch_user.is_commcare_user():
             email = report['email']
@@ -526,6 +550,7 @@ def bug_report(req):
         u"Feature Flags: {feature_flags}\n"
         u"Feature Previews: {feature_previews}\n"
         u"Is scale backend: {scale_backend}\n"
+        u"Project description: {project_description}\n"
         u"Message:\n\n"
         u"{message}\n"
         ).format(**report)

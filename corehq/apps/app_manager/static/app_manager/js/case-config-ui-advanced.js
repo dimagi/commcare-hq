@@ -79,7 +79,8 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                     value: 'fixture'
                 },
                 {
-                    label: 'User Case',
+                    label: COMMCAREHQ.toggleEnabled('USER_PROPERTY_EASY_REFS') ?
+                            'User Properties' : 'User Case',
                     value: 'usercase'
                 }
             ];
@@ -196,6 +197,10 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                     if ($('#case-open-accordion > .panel').length === 1) {
                         self.applyAccordion('open', 0);
                     }
+                });
+
+                $('.hq-help-template').each(function () {
+                    COMMCAREHQ.transformHelpTemplate($(this), true);
                 });
             });
         };
@@ -402,7 +407,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                         fixture_tag: '',
                         fixture_variable: '',
                         case_property: '',
-                        auto_select: false,
+                        auto_select: (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) ? '' : false,
                         arbitrary_datum_id: '',
                         arbitrary_datum_function: '',
                     };
@@ -637,7 +642,15 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                     // suggestedProperties need to be those of case type "commcare-user"
                     if (value === 'usercase') {
                         self.case_type('commcare-user');
+                    } else {
+                        self.case_type(null);
                     }
+
+                    _.defer(function () {
+                        $('.hq-help-template').each(function () {
+                            COMMCAREHQ.transformHelpTemplate($(this), true);
+                        });
+                    });
                 });
             }
 
@@ -695,6 +708,9 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                         } else if (mode === 'fixture') {
                             return 'Lookup table tag required';
                         }
+                    }
+                    if (!self.case_type()) {
+                        return 'Expected case type required';
                     }
                     return null;
                 } else {

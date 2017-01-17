@@ -123,7 +123,8 @@ from corehq.apps.users.models import (
     WebUser,
 )
 from corehq.util.couch import get_document_or_404
-from corehq.util.spreadsheets_v1.export import WorkBook
+from corehq.util.files import safe_filename_header
+from corehq.util.workbook_json.export import WorkBook
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import absolute_reverse, reverse
 
@@ -159,8 +160,7 @@ from .util import (
     get_group,
     group_filter,
     users_matching_filter,
-    safe_filename_header,
-)
+    resync_case_to_es)
 from corehq.apps.style.decorators import (
     use_jquery_ui,
     use_select2,
@@ -200,6 +200,7 @@ def can_view_attachments(request):
 
 
 @login_and_domain_required
+@location_safe
 def default(request, domain):
     if domain in WORLD_VISION_DOMAINS and get_domain_module_map().get(domain):
         from custom.world_vision.reports.mixed_report import MixedTTCReport
@@ -228,6 +229,7 @@ class BaseProjectReportSectionView(BaseDomainView):
         return reverse('reports_home', args=(self.domain, ))
 
 
+@location_safe
 class MySavedReportsView(BaseProjectReportSectionView):
     urlname = 'saved_reports'
     page_title = _("My Saved Reports")
@@ -1360,12 +1362,8 @@ def rebuild_case_view(request, domain, case_id):
 def resave_case(request, domain, case_id):
     """Re-save the case to have it re-processed by pillows
     """
-    from corehq.form_processor.change_publishers import publish_case_saved
     case = _get_case_or_404(domain, case_id)
-    if should_use_sql_backend(domain):
-        publish_case_saved(case)
-    else:
-        CommCareCase.get_db().save_doc(case._doc)  # don't just call save to avoid signals
+    resync_case_to_es(domain, case)
     messages.success(
         request,
         _(u'Case %s was successfully saved. Hopefully it will show up in all reports momentarily.' % case.name),

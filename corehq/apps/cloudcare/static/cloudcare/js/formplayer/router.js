@@ -37,7 +37,12 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             var urlObject = Util.CloudcareUrl.fromJson(
                 Util.encodedUrlToObject(sessionObject || Backbone.history.getFragment())
             );
-            FormplayerFrontend.Menus.Controller.selectMenu(urlObject);
+            if (!urlObject.appId) {
+                // We can't do any menu navigation without an appId
+                FormplayerFrontend.trigger("apps:list");
+            } else {
+                FormplayerFrontend.Menus.Controller.selectMenu(urlObject);
+            }
         },
         listUsers: function(page, query) {
             FormplayerFrontend.trigger("clearForm");
@@ -50,8 +55,8 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         listSettings: function() {
             FormplayerFrontend.Apps.Controller.listSettings();
         },
-        showDetail: function (model, detailTabIndex) {
-            FormplayerFrontend.Menus.Controller.showDetail(model, detailTabIndex);
+        showDetail: function (caseId, detailTabIndex) {
+            FormplayerFrontend.Menus.Controller.selectDetail(caseId, detailTabIndex);
         },
         listSessions: function() {
             SessionNavigate.SessionList.Controller.listSessions();
@@ -164,8 +169,8 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         API.listSettings();
     });
 
-    FormplayerFrontend.on("menu:show:detail", function (model, detailTabIndex) {
-        API.showDetail(model, detailTabIndex);
+    FormplayerFrontend.on("menu:show:detail", function (caseId, detailTabIndex) {
+        API.showDetail(caseId, detailTabIndex);
     });
 
     FormplayerFrontend.on("sessions", function () {

@@ -38,7 +38,10 @@ class EnikshayLocationFilter(BaseMultipleOptionFilter):
         if not choices:
             return self.default_options
         else:
-            return location_ids
+            return [
+                {'id': choice.value, 'text': choice.display}
+                for choice in choices
+            ]
 
     @classmethod
     def get_value(cls, request, domain):

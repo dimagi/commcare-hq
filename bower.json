@@ -22,7 +22,8 @@
     "bootstrap-tour": "0.10.2",
     "bootstrap3-typeahead": "~3.1.1",
 
-    "jquery": "2.2.4",
+    "jquery": "3.1.1",
+    "jquery-2.2.4": "jquery#2.2.4",
     "jquery-color": "2.1.2",
     "jquery.cookie": "dimagi/jquery-cookie#1.4.1",
     "jquery-form": "3.45.0",
@@ -62,7 +63,9 @@
     "requirejs": "~2.3.1",
     "DOMPurify": "0.8.3",
     "markdown-it": "7.0.1",
-    "At.js": "~1.5.2"
+    "At.js": "~1.5.2",
+    "clipboard": "1.5.15",
+    "fast-levenshtein": "^2.0.5"
   },
   "devDependencies": {
     "chai": "3.3.0",
@@ -73,7 +76,7 @@
   },
   "private": true,
   "resolutions": {
-    "jquery": "2.2.4",
+    "jquery": "3.1.1",
     "bootstrap": "3.3.7",
     "select2": "4.0.0",
     "backbone": "0.9.1"

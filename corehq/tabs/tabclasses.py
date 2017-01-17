@@ -7,7 +7,7 @@ from django.utils.safestring import mark_safe, mark_for_escaping
 from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
 from corehq import privileges, toggles
 from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
-from corehq.apps.accounting.models import BillingAccount, Invoice
+from corehq.apps.accounting.models import Invoice, Subscription
 from corehq.apps.accounting.utils import domain_has_privilege, is_accounting_admin
 from corehq.apps.app_manager.dbaccessors import domain_has_apps, get_brief_apps_in_domain
 from corehq.apps.domain.utils import user_has_custom_top_menu
@@ -225,8 +225,8 @@ class DashboardTab(UITab):
             # domain hides Dashboard tab if user is non-admin
             if not user_has_custom_top_menu(self.domain, self.couch_user):
                 if self.couch_user.is_commcare_user():
-                    # only show the dashboard tab if the user has been assigned a custom role
-                    return self.couch_user.get_domain_membership(self.domain).role is not None
+                    # never show the dashboard for mobile workers
+                    return False
                 else:
                     return domain_has_apps(self.domain)
         return False
@@ -1192,7 +1192,7 @@ class ProjectSettingsTab(UITab):
                     DomainBillingStatementsView, ConfirmSubscriptionRenewalView,
                     InternalSubscriptionManagementView,
                 )
-                billing_account = BillingAccount.get_account_by_domain(self.domain)
+                current_subscription = Subscription.get_subscribed_plan_by_domain(self.domain)[1]
                 subscription = [
                     {
                         'title': DomainSubscriptionView.page_title,
@@ -1209,15 +1209,15 @@ class ProjectSettingsTab(UITab):
                         ]
                     },
                 ]
-                if billing_account is not None:
+                if current_subscription is not None:
                     subscription.append(
                         {
-                            'title':  EditExistingBillingAccountView.page_title,
+                            'title': EditExistingBillingAccountView.page_title,
                             'url': reverse(EditExistingBillingAccountView.urlname,
                                            args=[self.domain]),
                         },
                     )
-                if (billing_account is not None
+                if (current_subscription is not None
                         and Invoice.exists_for_domain(self.domain)):
                     subscription.append(
                         {

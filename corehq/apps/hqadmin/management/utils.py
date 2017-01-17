@@ -7,12 +7,17 @@ from gevent.pool import Pool
 
 
 def get_deploy_email_message_body(environment, user, compare_url):
-    ref_comparison = compare_url.split('/')[-1]
-    last_deploy, current_deploy = ref_comparison.split('...')
-
-    pr_numbers = _get_pr_numbers(last_deploy, current_deploy)
-    pool = Pool(5)
-    pr_infos = filter(None, pool.map(_get_pr_info, pr_numbers))
+    try:
+        ref_comparison = compare_url.split('/')[-1]
+    except ValueError:
+        # Not a real compare_url
+        last_deploy = current_deploy = 'Unavailable'
+        pr_infos = []
+    else:
+        last_deploy, current_deploy = ref_comparison.split('...')
+        pr_numbers = _get_pr_numbers(last_deploy, current_deploy)
+        pool = Pool(5)
+        pr_infos = filter(None, pool.map(_get_pr_info, pr_numbers))
 
     return render_to_string('hqadmin/partials/project_snapshot.html', {
         'pr_merges': pr_infos,

@@ -12,7 +12,6 @@
 {% block head %}
     {{ block.super }}
     {% include "imports/proptable.html" %}
-    {% include "imports/fancy-code.html" %}
 
     <script src="{% static 'datatables/media/js/jquery.dataTables.min.js' %}"></script>
     <script src="{% static 'datatables/media/js/dataTables.bootstrap.min.js' %}"></script>
@@ -54,11 +53,11 @@
   <link type="text/less"
         rel="stylesheet"
         media="all"
-        href="{% static 'cloudcare/less/cloudcare.debug.less' %}" />
+        href="{% static 'cloudcare/less/formplayer-common.debug.less' %}" />
   <link type="text/less"
         rel="stylesheet"
         media="all"
-        href="{% static 'cloudcare/less/formplayer.debug.less' %}" />
+        href="{% static 'cloudcare/less/formplayer-webapp.debug.less' %}" />
   {% else %}
   {% compress css %}
       <link type="text/less"
@@ -68,11 +67,11 @@
       <link type="text/less"
             rel="stylesheet"
             media="all"
-            href="{% static 'cloudcare/less/cloudcare.less' %}"/>
+            href="{% static 'cloudcare/less/formplayer-common.less' %}"/>
       <link type="text/less"
             rel="stylesheet"
             media="all"
-            href="{% static 'cloudcare/less/formplayer.less' %}"/>
+            href="{% static 'cloudcare/less/formplayer-webapp.less' %}"/>
   {% endcompress %}
   {% endif %}
 {% endblock %}
@@ -89,10 +88,6 @@
         var username = "{{ username  }}";
         var domain = "{{ domain }}";
         var formplayer_url = "{{ formplayer_url }}";
-        var instanceViewerEnabled = false;
-        {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
-            instanceViewerEnabled = true;
-        {% endif %}
         var options = {
             apps: apps,
             language: language,
@@ -100,8 +95,11 @@
             domain: domain,
             formplayer_url: formplayer_url,
             gridPolyfillPath: "{% static 'css-grid-polyfill-binaries/css-polyfills.js' %}",
-            debuggerEnabled: instanceViewerEnabled,
+            {% if request.couch_user.can_edit_data %}
+            debuggerEnabled: true,
+            {% endif %}
             singleAppMode: {{ single_app_mode|JSON }},
+            environment: {{ environment|JSON }},
         };
         FormplayerFrontend.start(options);
         $(function () {
@@ -145,18 +143,18 @@
             <section id="formplayer-progress-container"></section>
             <div id="restore-as-region"></div>
             <div id="breadcrumb-region"></div>
-            <div id="persistent-case-tile" class="container"></div>
             <section id="cloudcare-notifications" class="container notifications-container"></section>
+            <div id="persistent-case-tile" class="container"></div>
             <div id="menu-region" class="container"></div>
+            <section id="webforms" data-bind="template: { name: 'form-fullform-ko-template' }"></section>
         </div>
-        <section id="webforms" data-bind="template: { name: 'form-fullform-ko-template' }"></section>
         <small id="version-info"></small>
-        {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
-            <section id="cloudcare-debugger" data-bind="
-            template: {
-                name: 'instance-viewer-ko-template',
-                afterRender: adjustWidth
-            }
+        {% if request.couch_user.can_edit_data %}
+        <section id="cloudcare-debugger" data-bind="
+          template: {
+              name: 'instance-viewer-ko-template',
+              afterRender: adjustWidth
+          }
         "></section>
         {% endif %}
     </div>

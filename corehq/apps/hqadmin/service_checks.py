@@ -15,12 +15,13 @@ from restkit import Resource
 from celery import Celery
 import requests
 from soil import heartbeat
-from dimagi.utils.web import get_url_base
 
+from corehq.apps.nimbus_api.utils import get_nimbus_url
 from corehq.apps.app_manager.models import Application
 from corehq.apps.change_feed.connection import get_kafka_client_or_none
 from corehq.apps.es import GroupES
 from corehq.blobs import get_blob_db
+from corehq.blobs.util import random_url_id
 from corehq.elastic import send_to_elasticsearch
 from corehq.util.decorators import change_log_level
 from corehq.apps.hqadmin.utils import parse_celery_workers, parse_celery_pings
@@ -58,17 +59,17 @@ def check_rabbitmq():
         return ServiceStatus(False, "RabbitMQ Not configured")
 
 
-def check_pillowtop():
-    return ServiceStatus(False, "Not implemented")
-
-
 @change_log_level('kafka.client', logging.WARNING)
 def check_kafka():
     client = get_kafka_client_or_none()
     if not client:
         return ServiceStatus(False, "Could not connect to Kafka")
-    # TODO elaborate?
-    return ServiceStatus(True, "Kafka's fine. Probably.")
+    elif len(client.brokers) == 0:
+        return ServiceStatus(False, "No Kafka brokers found")
+    elif len(client.topics) == 0:
+        return ServiceStatus(False, "No Kafka topics found")
+    else:
+        return ServiceStatus(True, "Kafka seems to be in order")
 
 
 def check_touchforms():
@@ -98,15 +99,11 @@ def check_elasticsearch():
     return ServiceStatus(False, "Something went wrong sending a doc to ES")
 
 
-def check_shared_dir():
-    return ServiceStatus(False, "Not implemented")
-
-
 def check_blobdb():
     """Save something to the blobdb and try reading it back."""
     db = get_blob_db()
     contents = "It takes Pluto 248 Earth years to complete one orbit!"
-    info = db.put(StringIO(contents))
+    info = db.put(StringIO(contents), random_url_id(16))
     with db.get(info.identifier) as fh:
         res = fh.read()
     db.delete(info.identifier)
@@ -174,12 +171,8 @@ def check_couch():
 
 
 def check_formplayer():
-    formplayer_url = settings.FORMPLAYER_URL
-    if not formplayer_url.startswith('http'):
-        formplayer_url = '{}{}'.format(get_url_base(), formplayer_url)
-
     try:
-        res = requests.get('{}/serverup'.format(formplayer_url), timeout=5)
+        res = requests.get('{}/serverup'.format(get_nimbus_url()), timeout=5)
     except requests.exceptions.ConnectTimeout:
         return ServiceStatus(False, "Could not establish a connection in time")
     except requests.ConnectionError:
@@ -189,17 +182,15 @@ def check_formplayer():
         return ServiceStatus(res.ok, msg)
 
 
-checks = (
-    check_pillowtop,
-    check_kafka,
-    check_redis,
-    check_postgres,
-    check_couch,
-    check_celery,
-    check_heartbeat,
-    check_touchforms,
-    check_elasticsearch,
-    check_shared_dir,
-    check_blobdb,
-    check_formplayer,
-)
+CHECKS = {
+    'kafka': check_kafka,
+    'redis': check_redis,
+    'postgres': check_postgres,
+    'couch': check_couch,
+    'celery': check_celery,
+    'heartbeat': check_heartbeat,
+    'touchforms': check_touchforms,
+    'elasticsearch': check_elasticsearch,
+    'blobdb': check_blobdb,
+    'formplayer': check_formplayer,
+}

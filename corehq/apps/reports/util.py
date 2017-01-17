@@ -2,8 +2,6 @@
 from collections import namedtuple
 from datetime import datetime, timedelta
 from importlib import import_module
-from unidecode import unidecode
-from urllib import quote
 import math
 import pytz
 import warnings
@@ -11,8 +9,10 @@ import warnings
 from django.conf import settings
 from django.http import Http404
 from django.utils import html, safestring
+from casexml.apps.case.models import CommCareCase
 from corehq.apps.users.permissions import get_extra_permissions
-from corehq.form_processor.utils import use_new_exports
+from corehq.form_processor.change_publishers import publish_case_saved
+from corehq.form_processor.utils import use_new_exports, should_use_sql_backend
 
 from couchexport.util import SerializableFunction
 from couchforms.analytics import get_first_form_submission_received
@@ -236,6 +236,17 @@ def _report_user_dict(user):
         )
 
 
+def get_simplified_users(user_es_query):
+    """
+    Accepts an instance of UserES and returns SimplifiedUserInfo dicts for the
+    matching users, sorted by username.
+    """
+    fields = ['_id', 'username', 'first_name', 'last_name', 'doc_type', 'is_active', 'email']
+    users = user_es_query.fields(fields).run().hits
+    users = map(_report_user_dict, users)
+    return sorted(users, key=lambda u: u['username_in_report'])
+
+
 def format_datatables_data(text, sort_key, raw=None):
     # todo: this is redundant with report.table_cell()
     # should remove/refactor one of them away
@@ -451,33 +462,8 @@ def get_INFilter_bindparams(base_name, values):
     return tuple(get_INFilter_element_bindparam(base_name, i) for i, val in enumerate(values))
 
 
-def safe_for_fs(filename):
-    """
-    Returns a filename with FAT32-, NTFS- and HFS+-illegal characters removed.
-
-    Unicode or bytestring datatype of filename is preserved.
-
-    >>> safe_for_fs(u'spam*?: 𐍃𐍀𐌰𐌼-&.txt')
-    u'spam 𐍃𐍀𐌰𐌼-&.txt'
-    >>> safe_for_fs('spam*?: 𐍃𐍀𐌰𐌼-&.txt')
-    'spam 𐍃𐍀𐌰𐌼-&.txt'
-    """
-    is_unicode = isinstance(filename, unicode)
-    unsafe_chars = u':*?"<>|/\\\r\n' if is_unicode else ':*?"<>|/\\\r\n'
-    empty = u'' if is_unicode else ''
-    for c in unsafe_chars:
-        filename = filename.replace(c, empty)
-    return filename
-
-
-def safe_filename_header(filename):
-    # Removes illegal characters from filename and formats for 'Content-Disposition' HTTP header
-    #
-    # See IETF advice https://tools.ietf.org/html/rfc6266#appendix-D
-    # and http://greenbytes.de/tech/tc2231/#attfnboth as a solution to disastrous browser compatibility
-
-    filename = filename if isinstance(filename, unicode) else filename.decode('utf8')
-    safe_filename = safe_for_fs(filename)
-    ascii_filename = unidecode(safe_filename)
-    return 'attachment; filename="{}"; filename*=UTF-8\'\'{}'.format(
-        ascii_filename, quote(safe_filename.encode('utf8')))
+def resync_case_to_es(domain, case):
+    if should_use_sql_backend(domain):
+        publish_case_saved(case)
+    else:
+        CommCareCase.get_db().save_doc(case._doc)  # don't just call save to avoid signals

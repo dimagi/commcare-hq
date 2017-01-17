@@ -21,9 +21,11 @@ from corehq.apps.app_manager.const import (
     SCHEDULE_GLOBAL_NEXT_VISIT_DATE,
 )
 from corehq.apps.app_manager.util import (
+    get_app_manager_template,
     get_casedb_schema,
     get_session_schema,
     app_callout_templates,
+    is_usercase_in_use,
 )
 from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
 from corehq.apps.app_manager.dbaccessors import get_app
@@ -35,6 +37,8 @@ from corehq.apps.app_manager.decorators import require_can_edit_apps
 from corehq.apps.analytics.tasks import track_entered_form_builder_on_hubspot
 from corehq.apps.analytics.utils import get_meta
 from corehq.apps.tour import tours
+from corehq.apps.analytics import ab_tests
+from corehq.apps.domain.models import Domain
 
 
 logger = logging.getLogger(__name__)
@@ -85,7 +89,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         vellum_plugins.append("commtrack")
     if toggles.VELLUM_SAVE_TO_CASE.enabled(domain):
         vellum_plugins.append("saveToCase")
-    if (app.vellum_case_management and _form_uses_case(module, form) and _form_is_basic(form)):
+    if (_form_uses_case(module, form) and _form_is_basic(form)):
         vellum_plugins.append("databrowser")
 
     vellum_features = toggles.toggles_dict(username=request.user.username,
@@ -99,7 +103,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         'lookup_tables': domain_has_privilege(domain, privileges.LOOKUP_TABLES),
         'templated_intents': domain_has_privilege(domain, privileges.TEMPLATED_INTENTS),
         'custom_intents': domain_has_privilege(domain, privileges.CUSTOM_INTENTS),
-        'rich_text': app.vellum_case_management,
+        'rich_text': True,
     })
 
     has_schedule = (
@@ -120,8 +124,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
             if getattr(f, 'schedule', False) and f.schedule.enabled
         ])
 
-    if tours.VELLUM_CASE_MANAGEMENT.is_enabled(request.user) \
-        and app.vellum_case_management and form.requires_case():
+    if tours.VELLUM_CASE_MANAGEMENT.is_enabled(request.user) and form.requires_case():
         request.guided_tour = tours.VELLUM_CASE_MANAGEMENT.get_tour_data()
 
     context = get_apps_base_context(request, domain, app)
@@ -141,7 +144,29 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         'notify_facility': get_facility_for_form(domain, app_id, form.unique_id),
     })
     notify_form_opened(domain, request.couch_user, app_id, form.unique_id)
-    return render(request, 'app_manager/v1/form_designer.html', context)
+
+    live_preview_ab = ab_tests.ABTest(ab_tests.LIVE_PREVIEW, request)
+    domain_obj = Domain.get_by_name(domain)
+    context.update({
+        'live_preview_ab': live_preview_ab.context,
+        'is_onboarding_domain': domain_obj.is_onboarding_domain,
+        'show_live_preview': (
+            toggles.PREVIEW_APP.enabled(domain)
+            or toggles.PREVIEW_APP.enabled(request.couch_user.username)
+            or (domain_obj.is_onboarding_domain
+                and live_preview_ab.version == ab_tests.LIVE_PREVIEW_ENABLED)
+        )
+    })
+
+    template = get_app_manager_template(
+        domain,
+        'app_manager/v1/form_designer.html',
+        'app_manager/v2/form_designer.html',
+    )
+
+    response = render(request, template, context)
+    live_preview_ab.update_response(response)
+    return response
 
 
 @require_GET
@@ -153,49 +178,8 @@ def get_form_data_schema(request, domain, form_unique_id):
     if `form_unique_id` is provided.
 
     :returns: A list of data source schema definitions. A data source schema
-    definition is a dictionary with the following format:
-    ```
-    {
-        "id": string (default instance id)
-        "uri": string (instance src)
-        "path": string (path of root nodeset, not including `instance(...)`)
-        "name": string (human readable name)
-        "structure": {
-            element: {
-                "name": string (optional human readable name)
-                "structure": {
-                    nested-element: { ... }
-                },
-            },
-            ref-element: {
-                "reference": {
-                    "source": string (optional data source id, defaults to this data source)
-                    "subset": string (optional subset id)
-                    "key": string (referenced property)
-                }
-            },
-            @attribute: { },
-            ...
-        },
-        "subsets": [
-            {
-                "id": string (unique identifier for this subset)
-                "key": string (unique identifier property name)
-                "name": string (optional human readable name)
-                "structure": { ... }
-                "related": {
-                    string (relationship): string (related subset name),
-                    ...
-                }
-            },
-            ...
-        ]
-    }
-    ```
-    A structure may contain nested structure elements. A nested element
-    may contain one of "structure" (a concrete structure definition) or
-    "reference" (a link to some other structure definition). Any
-    structure item may have a human readable "name".
+    definition is a dictionary. For details on the content of the dictionary,
+    see https://github.com/dimagi/Vellum/blob/master/src/datasources.js
     """
     data = []
 
@@ -209,10 +193,11 @@ def get_form_data_schema(request, domain, form_unique_id):
 
     try:
         data.append(get_session_schema(form))
-        if form and form.requires_case():
+        if form.requires_case() or is_usercase_in_use(domain):
             data.append(get_casedb_schema(form))
-    except Exception as e:
-        return HttpResponseBadRequest(e)
+    except Exception:
+        logger.exception("schema error")
+        return HttpResponseBadRequest("schema error, see log for details")
 
     data.extend(
         sorted(item_lists_by_domain(domain), key=lambda x: x['name'].lower())

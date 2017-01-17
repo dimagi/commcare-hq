@@ -37,7 +37,7 @@
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
-                  href="{% static 'cloudcare/less/cloudcare.debug.less' %}" />
+                  href="{% static 'cloudcare/less/formplayer-common.debug.less' %}" />
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
@@ -71,7 +71,7 @@
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
-                  href="{% static 'cloudcare/less/cloudcare.less' %}"/>
+                  href="{% static 'cloudcare/less/formplayer-common.less' %}"/>
             <link type="text/less"
                   rel="stylesheet"
                   media="all"
@@ -158,22 +158,22 @@
             <section id="cloudcare-notifications" class="notifications-container"></section>
             <div id="restore-as-region"></div>
             <div id="breadcrumb-region"></div>
-            <div class="scrollable-container dragscroll">
+            <div class="scrollable-container dragscroll menu-scrollable-container">
               <div id="menu-region" class="content menu-content"></div>
               <small id="version-info"></small>
             </div>
-        </div>
-        <div class="scrollable-container dragscroll form-scrollable-container">
-          <section id="webforms" class="webforms" data-bind="template: { name: 'form-fullform-ko-template' }"></section>
-          {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
+            <div class="scrollable-container dragscroll form-scrollable-container">
+              <section id="webforms" class="webforms" data-bind="template: { name: 'form-fullform-ko-template' }"></section>
+              {% if request.couch_user.can_edit_data %}
               <section id="cloudcare-debugger" data-bind="
-              template: {
-                  name: 'instance-viewer-ko-template',
-                  afterRender: adjustWidth
-              }
-          "></section>
+                  template: {
+                      name: 'instance-viewer-ko-template',
+                      afterRender: adjustWidth
+                  }
+              "></section>
+              {% endif %}
+            </div>
         </div>
-        {% endif %}
 
         <script>
         $(function () {
@@ -186,9 +186,10 @@
                 formplayer_url: "{{ formplayer_url }}",
                 singleAppMode: true,
                 phoneMode: true,
-                oneQuestionPerScreen: true,
+                oneQuestionPerScreen: !{{ request.couch_user.is_dimagi|JSON }},
                 allowedHost: "{{ request.get_host }}",
-                {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
+                environment: {{ environment|JSON }},
+                {% if request.couch_user.can_edit_data %}
                 debuggerEnabled: true,
                 {% endif %}
             });
@@ -214,6 +215,8 @@
         {% include 'formplayer/progress.html' %}
         {% include 'formplayer/dependencies.html' %}
         {% include "style/includes/ko.html" %}
+        {% include 'style/includes/analytics_all.html' %}
         <script src="{% static 'cloudcare/js/preview_app/preview_app.js' %}"></script>
+        {% block js-inline %}{% endblock %}
     </body>
 </html>

@@ -32,20 +32,11 @@ from corehq.apps.app_manager.xpath import (
 )
 from corehq.apps.hqmedia.models import HQMediaMapItem
 from corehq.apps.userreports.models import ReportConfiguration
-from corehq.toggles import NAMESPACE_DOMAIN
-from corehq.feature_previews import MODULE_FILTER
-from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
 import commcare_translations
 
 
 class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     file_path = ('data', 'suite')
-
-    def setUp(self):
-        update_toggle_cache(MODULE_FILTER.slug, 'domain', True, NAMESPACE_DOMAIN)
-
-    def tearDown(self):
-        clear_toggle_cache(MODULE_FILTER.slug, 'domain', NAMESPACE_DOMAIN)
 
     def test_normal_suite(self):
         self._test_generic_suite('app', 'normal-suite')
@@ -367,20 +358,25 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 enum=[
                     MappingItem(key='10', value={'en': 'jr://icons/10-year-old.png'}),
                     MappingItem(key='age > 50', value={'en': 'jr://icons/old-icon.png'}),
+                    MappingItem(key='15%', value={'en': 'jr://icons/percent-icon.png'}),
                 ],
             ),
         ]
 
         key1_varname = '10'
         key2_varname = hashlib.md5('age > 50').hexdigest()[:8]
+        key3_varname = hashlib.md5('15%').hexdigest()[:8]
 
         icon_mapping_spec = """
             <partial>
               <template form="image" width="13%">
                 <text>
-                  <xpath function="if(age = '10', $k{key1_varname}, if(age > 50, $h{key2_varname}, ''))">
+                  <xpath function="if(age = '10', $k{key1_varname}, if(age > 50, $h{key2_varname}, if(age = '15%', $h{key3_varname}, '')))">
                     <variable name="h{key2_varname}">
                       <locale id="m0.case_short.case_age_1.enum.h{key2_varname}"/>
+                    </variable>
+                    <variable name="h{key3_varname}">
+                      <locale id="m0.case_short.case_age_1.enum.h{key3_varname}"/>
                     </variable>
                     <variable name="k{key1_varname}">
                       <locale id="m0.case_short.case_age_1.enum.k{key1_varname}"/>
@@ -392,6 +388,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         """.format(
             key1_varname=key1_varname,
             key2_varname=key2_varname,
+            key3_varname=key3_varname,
         )
         # check correct suite is generated
         self.assertXmlPartialEqual(
@@ -401,6 +398,10 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         )
         # check icons map correctly
         app_strings = commcare_translations.loads(app.create_app_strings('en'))
+        self.assertEqual(
+            app_strings['m0.case_short.case_age_1.enum.h{key3_varname}'.format(key3_varname=key3_varname,)],
+            'jr://icons/percent-icon.png'
+        )
         self.assertEqual(
             app_strings['m0.case_short.case_age_1.enum.h{key2_varname}'.format(key2_varname=key2_varname,)],
             'jr://icons/old-icon.png'
@@ -740,26 +741,42 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             "./detail[@id='reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.summary']",
         )
 
-        report_app_config._report.columns[0]['transform'] = {
-            'type': 'translation',
-            'translations': {
-                u'एक': [
-                    ['en', 'one'],
-                    ['es', 'uno'],
-                ],
-                '2': [
-                    ['en', 'two'],
-                    ['es', 'dos\''],
-                    ['hin', u'दो'],
-                ],
+        # Tuple mapping translation formats to the expected output of each
+        translation_formats = [
+            ({
+                u'एक': {
+                    'en': 'one',
+                    'es': 'uno',
+                },
+                '2': {
+                    'en': 'two',
+                    'es': 'dos\'',
+                    'hin': u'दो',
+                },
+            }, 'reports_module_data_detail-translated'),
+            ({
+                u'एक': 'one',
+                '2': 'two',
+            }, 'reports_module_data_detail-translated-simple'),
+            ({
+                u'एक': {
+                    'en': 'one',
+                    'es': 'uno',
+                },
+                '2': 'two',
+            }, 'reports_module_data_detail-translated-mixed'),
+        ]
+        for translation_format, expected_output in translation_formats:
+            report_app_config._report.columns[0]['transform'] = {
+                'type': 'translation',
+                'translations': translation_format,
             }
-        }
-        report_app_config._report = ReportConfiguration.wrap(report_app_config._report._doc)
-        self.assertXmlPartialEqual(
-            self.get_xml('reports_module_data_detail-translated'),
-            app.create_suite(),
-            "./detail/detail[@id='reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.data']",
-        )
+            report_app_config._report = ReportConfiguration.wrap(report_app_config._report._doc)
+            self.assertXmlPartialEqual(
+                self.get_xml(expected_output),
+                app.create_suite(),
+                "./detail/detail[@id='reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.data']",
+            )
 
     def test_circular_parent_case_ref(self):
         factory = AppFactory()

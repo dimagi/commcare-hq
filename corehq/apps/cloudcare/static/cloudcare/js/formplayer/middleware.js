@@ -26,15 +26,20 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
     };
     var setScrollableMaxHeight = function() {
         var maxHeight,
-            maxHeightForm;
+            user = FormplayerFrontend.request('currentUser'),
+            restoreAsBannerHeight = 0;
+
+        if (user.restoreAs) {
+            restoreAsBannerHeight = FormplayerFrontend.regions.restoreAsBanner.$el.height();
+        }
         maxHeight = ($(window).height() -
-            FormplayerFrontend.regions.breadcrumb.$el.height());
-        maxHeightForm = $(window).height();
+            FormplayerFrontend.regions.breadcrumb.$el.height() -
+            restoreAsBannerHeight);
 
         $('.scrollable-container').css('max-height', maxHeight + 'px');
         $('.form-scrollable-container').css({
-            'min-height': maxHeightForm + 'px',
-            'max-height': maxHeightForm + 'px',
+            'min-height': maxHeight + 'px',
+            'max-height': maxHeight + 'px',
         });
     };
 
