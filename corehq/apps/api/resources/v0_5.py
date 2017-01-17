@@ -37,6 +37,7 @@ from corehq.apps.userreports.reports.view import query_dict_to_dict, \
     get_filter_values
 from corehq.apps.userreports.columns import UCRExpandDatabaseSubcolumn
 from corehq.apps.users.models import CommCareUser, WebUser, Permissions, CouchUser, UserRole
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util import get_document_or_404
 from corehq.util.couch import get_document_or_not_found, DocumentNotFound
 
@@ -850,4 +851,32 @@ class DomainForms(Resource):
             module = form_object['module']
             form_name = '{} > {} > {}'.format(application.name, module.name['en'], form.name['en'])
             results.append(Form(form_xmlns=form.xmlns, form_name=form_name))
+        return results
+
+
+Case = namedtuple('Case', 'case_type')
+Case.__new__.__defaults__ = ('', '') #even though no second item, still works fine.
+
+
+class DomainCases(Resource):
+    case_type = fields.CharField(attribute='case_type')
+
+    class Meta:
+        resource_name = 'domain_cases'
+        authentication = ApiKeyAuthentication()
+        object_class = Case
+        include_resource_uri = False
+
+    def obj_get_list(self, bundle, **kwargs):
+        domain = kwargs['domain']
+        couch_user = CouchUser.from_django_user(bundle.request.user)
+        if not domain_has_privilege(domain, privileges.ZAPIER_INTEGRATION) or not couch_user.is_member_of(domain):
+            raise ImmediateHttpResponse(
+                HttpForbidden('You are not allowed to get list of cases for this domain')
+            )
+
+        case_types = CaseAccessors(domain).get_case_types()
+        results = []
+        for case_type in case_types:
+            results.append(Case(case_type=case_type))
         return results
