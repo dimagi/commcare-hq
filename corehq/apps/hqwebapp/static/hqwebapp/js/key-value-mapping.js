@@ -16,7 +16,7 @@ var MapItem = function(item, index, mappingContext){
     this.editing = ko.observable(false);
 
     this.cssId = ko.computed(function(){
-        return makeSafeForCSS(this.key());
+        return makeSafeForCSS(this.key()) || '_blank_';
     }, this);
 
 
