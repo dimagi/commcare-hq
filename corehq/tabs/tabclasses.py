@@ -632,28 +632,31 @@ class ProjectDataTab(UITab):
                 })
             if self.can_view_dashboard_feeds:
                 if self.use_new_daily_saved_exports_ui:
+                    subpages = []
+                    if self.can_edit_commcare_data:
+                        subpages = [
+                            {
+                                'title': CreateNewFormFeedView.page_title,
+                                'urlname': CreateNewFormFeedView.urlname,
+                            },
+                            {
+                                'title': CreateNewCaseFeedView.page_title,
+                                'urlname': CreateNewCaseFeedView.urlname,
+                            },
+                            {
+                                'title': EditFormFeedView.page_title,
+                                'urlname': EditFormFeedView.urlname,
+                            },
+                            {
+                                'title': EditCaseFeedView.page_title,
+                                'urlname': EditCaseFeedView.urlname,
+                            },
+                        ]
                     export_data_views.append({
-                    'title': DashboardFeedListView.page_title,
-                    'url': reverse(DashboardFeedListView.urlname, args=(self.domain,)),
-                    'show_in_dropdown': True,
-                    'subpages': filter(None, [
-                        {
-                            'title': CreateNewFormFeedView.page_title,
-                            'urlname': CreateNewFormFeedView.urlname,
-                        } if self.can_edit_commcare_data else None,
-                        {
-                            'title': CreateNewCaseFeedView.page_title,
-                            'urlname': CreateNewCaseFeedView.urlname,
-                        } if self.can_edit_commcare_data else None,
-                        {
-                            'title': EditFormFeedView.page_title,
-                            'urlname': EditFormFeedView.urlname,
-                        } if self.can_edit_commcare_data else None,
-                        {
-                            'title': EditCaseFeedView.page_title,
-                            'urlname': EditCaseFeedView.urlname,
-                        } if self.can_edit_commcare_data else None,
-                    ])
+                        'title': DashboardFeedListView.page_title,
+                        'url': reverse(DashboardFeedListView.urlname, args=(self.domain,)),
+                        'show_in_dropdown': True,
+                        'subpages': subpages
                 })
             else:
                 export_data_views.append({

@@ -5,7 +5,6 @@ from django.utils.translation import ugettext as _
 from corehq.apps.es import users as user_es, filters
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
-from corehq.apps.locations.models import Location
 from corehq.apps.reports.util import namedtupledict
 from corehq.apps.users.cases import get_wrapped_owner
 from corehq.apps.users.models import CommCareUser, WebUser
