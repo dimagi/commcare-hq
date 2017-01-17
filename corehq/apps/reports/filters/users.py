@@ -165,14 +165,14 @@ class EmwfUtils(object):
         owner = get_wrapped_owner(id_)
         if isinstance(owner, Group):
             return self._group_to_choice_tuple(owner)
-        elif isinstance(owner, Location):
-            return self.location_tuple(owner.sql_location)
+        elif isinstance(owner, SQLLocation):
+            return self.location_tuple(owner)
         elif isinstance(owner, (CommCareUser, WebUser)):
             return self.user_tuple(owner)
         elif owner is None:
             return None
         else:
-            raise Exception("Unexpcted id")
+            raise Exception("Unexpcted id: {}".format(id_))
 
 _UserData = namedtupledict('_UserData', (
     'users',
