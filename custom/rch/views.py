@@ -1,7 +1,11 @@
+import json
+
 from django.utils.translation import ugettext_noop
 from django.views.generic import TemplateView
 from django.core import serializers
-import json
+from django.utils.decorators import method_decorator
+
+from corehq.apps.domain.decorators import require_superuser
 from custom.rch.forms import BeneficiariesFilterForm
 from custom.rch.models import RCHMother, AreaMapping, RCHChild
 
@@ -13,6 +17,7 @@ class BeneficariesList(TemplateView):
     page_title = ugettext_noop("RCH-CAS Beneficiary list")
     template_name = 'rch/beneficiaries_list.html'
 
+    @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
         return super(BeneficariesList, self).dispatch(request, *args, **kwargs)
 
@@ -66,6 +71,10 @@ class BeneficiaryView(TemplateView):
 
     page_title = ugettext_noop("RCH-CAS Beneficiary Details")
     template_name = 'rch/beneficiary.html'
+
+    @method_decorator(require_superuser)
+    def dispatch(self, request, *args, **kwargs):
+        return super(BeneficiaryView, self).dispatch(request, *args, **kwargs)
 
 
 class MotherBeneficiaryView(BeneficiaryView):
