@@ -3,7 +3,7 @@ from corehq.apps.api.domain_metadata import DomainMetadataResource
 from corehq.apps.api.object_fetch_api import CaseAttachmentAPI, FormAttachmentAPI
 from corehq.apps.api.domainapi import DomainAPI
 from corehq.apps.api.resources import v0_1, v0_3, v0_4, v0_5
-from corehq.apps.api.resources.v0_5 import UserDomainsResource, DomainForms
+from corehq.apps.api.resources.v0_5 import UserDomainsResource, DomainForms, DomainCases
 from corehq.apps.commtrack.resources.v0_1 import ProductResource
 from corehq.apps.fixtures.resources.v0_1 import FixtureResource, InternalFixtureResource
 from corehq.apps.locations import resources as locations
@@ -52,6 +52,7 @@ API_LIST = (
         v0_5.SimpleReportConfigurationResource,
         v0_5.ConfigurableReportDataResource,
         DomainForms,
+        DomainCases,
         sms_v0_5.UserSelfRegistrationResource,
         sms_v0_5.UserSelfRegistrationReinstallResource,
         locations.v0_1.InternalLocationResource,
