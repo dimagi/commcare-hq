@@ -821,8 +821,8 @@ class ConfigureReport(ReportBuilderView):
 
 
 def _get_form_type(report_type):
-    assert report_type in ("list", "table", "chart", "map")
-    if report_type == "list":
+    assert report_type in (None, "list", "table", "chart", "map")
+    if report_type == "list" or report_type is None:
         return ConfigureListReportForm
     if report_type == "table":
             return ConfigureTableReportForm
