@@ -1261,20 +1261,21 @@ class ConfigureTableReportForm(ConfigureListReportForm):
     @property
     def _report_charts(self):
 
-        def get_non_agged_column_ids():
-            return [c['column_id'] for c in self._report_columns if c['aggregation'] != "simple"]
-        if get_non_agged_column_ids():
+        def get_non_agged_columns():
+            return [c for c in self._report_columns if c['aggregation'] != "simple"]
+        if get_non_agged_columns():
             if self.cleaned_data['chart'] == "bar":
                 return [{
                     "type": "multibar",
                     "x_axis_column": "column_agg_0",
-                    "y_axis_columns": [get_non_agged_column_ids()[0]],
+                    # TODO: Possibly use more columns?
+                    "y_axis_columns": [{"column_id": c["column_id"], "display": c["display"]} for c in get_non_agged_columns()],
                 }]
             elif self.cleaned_data['chart'] == "pie":
                 return [{
                     "type": "pie",
                     "aggregation_column": "column_agg_0",
-                    "value_column": get_non_agged_column_ids()[0],
+                    "value_column": get_non_agged_columns()[0]['column_id'],
                 }]
         return []
 
