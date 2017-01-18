@@ -75,10 +75,10 @@ class BeneficiariesFilterForm(forms.Form):
                 'village_name'
             ),
             ButtonHolder(
-                Submit('submit', 'Submit', css_class='button white')
+                Submit('submit', 'Submit', css_class='button white pull-left')
             ),
             ButtonHolder(
-                HTML('<a href="{}" class="button white">{}</a>'.format(
+                HTML('<a href="{}" class="btn btn-primary">{}</a>'.format(
                     reverse(BeneficariesList.urlname, args=[domain]),
                     _('Clear')))
             ),
