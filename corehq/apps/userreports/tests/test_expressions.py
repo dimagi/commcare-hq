@@ -18,6 +18,7 @@ from corehq.apps.userreports.expressions.specs import (
 from corehq.apps.userreports.expressions.specs import eval_statements
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.groups.models import Group
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.util.test_utils import generate_cases, create_and_save_a_form, create_and_save_a_case
@@ -1062,6 +1063,67 @@ class TestGetSubcasesExpression(TestCase):
         subcases = self.expression(host.to_json(), self.context)
         self.assertEqual(len(subcases), 1)
         self.assertEqual(extension.case_id, subcases[0]['_id'])
+
+
+class TestGetCaseSharingGroupsExpression(TestCase):
+
+    def setUp(self):
+        super(TestGetCaseSharingGroupsExpression, self).setUp()
+        self.domain = uuid.uuid4().hex
+        self.second_domain = uuid.uuid4().hex
+        self.expression = ExpressionFactory.from_spec({
+            "type": "get_case_sharing_groups",
+            "user_id_expression": {
+                "type": "property_name",
+                "property_name": "user_id"
+            },
+        })
+        self.context = EvaluationContext({"domain": self.domain})
+
+    def tearDown(self):
+        for group in Group.by_domain(self.domain):
+            group.delete()
+        for group in Group.by_domain(self.second_domain):
+            group.delete()
+        for user in CommCareUser.all():
+            user.delete()
+        super(TestGetCaseSharingGroupsExpression, self).tearDown()
+
+    @run_with_all_backends
+    def test_no_groups(self):
+        user = CommCareUser.create(domain=self.domain, username='test_no_group', password='123')
+        case_sharing_groups = self.expression({'user_id': user._id}, self.context)
+        self.assertEqual(len(case_sharing_groups), 0)
+
+    @run_with_all_backends
+    def test_single_group(self):
+        user = CommCareUser.create(domain=self.domain, username='test_single', password='123')
+        group = Group(domain=self.domain, name='group_single', users=[user._id], case_sharing=True)
+        group.save()
+
+        case_sharing_groups = self.expression({'user_id': user._id}, self.context)
+        self.assertEqual(len(case_sharing_groups), 1)
+        self.assertEqual(group._id, case_sharing_groups[0]['_id'])
+
+    @run_with_all_backends
+    def test_multiple_groups(self):
+        user = CommCareUser.create(domain=self.domain, username='test_multiple', password='123')
+        group1 = Group(domain=self.domain, name='group1', users=[user._id], case_sharing=True)
+        group1.save()
+        group2 = Group(domain=self.domain, name='group2', users=[user._id], case_sharing=True)
+        group2.save()
+
+        case_sharing_groups = self.expression({'user_id': user._id}, self.context)
+        self.assertEqual(len(case_sharing_groups), 2)
+
+    @run_with_all_backends
+    def test_wrong_domain(self):
+        user = CommCareUser.create(domain=self.second_domain, username='test_wrong_domain', password='123')
+        group = Group(domain=self.second_domain, name='group_wrong_domain', users=[user._id], case_sharing=True)
+        group.save()
+
+        case_sharing_groups = self.expression({'user_id': user._id}, self.context)
+        self.assertEqual(len(case_sharing_groups), 0)
 
 
 class TestIterationNumberExpression(SimpleTestCase):
