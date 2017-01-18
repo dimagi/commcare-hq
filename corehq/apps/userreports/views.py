@@ -692,10 +692,19 @@ class ConfigureReport(ReportBuilderView):
                 indicator_id = cols[0].field
                 return report_form._get_property_id_by_indicator_id(indicator_id)
 
+    def _get_initial_chart_type(self):
+        if self.existing_report:
+            if self.existing_report.configured_charts:
+                type_ = self.existing_report.configured_charts[0]['type']
+                if type_ == "multibar":
+                    return "bar"
+                if type_ == "pie":
+                    return "pie"
+
     @property
     def page_context(self):
-
-        report_form = ConfigureListReportForm(
+        form_type = _get_form_type(self._get_existing_report_type())
+        report_form = form_type(
             self.page_name, self.app_id, self.source_type, self.source_id, self.existing_report
         )
         return {
@@ -711,6 +720,7 @@ class ConfigureReport(ReportBuilderView):
             'initial_default_filters': [f._asdict() for f in report_form.initial_default_filters],
             'initial_columns': [c._asdict() for c in report_form.initial_columns],
             'initial_location': self._get_initial_location(report_form),
+            'initial_chart_type': self._get_initial_chart_type(),
             'source_type': self.source_type,
             'source_id': self.source_id,
             'application': self.app_id,

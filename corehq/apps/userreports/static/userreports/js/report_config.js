@@ -441,6 +441,9 @@ var reportBuilder = function () {
             self.saveButton.fire('change');
         }
         self.refreshPreview();
+        if (config['initialChartType']) {
+            self.selectedChart(config['initialChartType']);
+        }
         return self;
     };
 
