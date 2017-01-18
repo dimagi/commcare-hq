@@ -7,8 +7,18 @@ var reportBuilder = function () {
 
     var ColumnProperty = function (getDefaultDisplayText, getPropertyObject, reorderColumns, hasDisplayText) {
         PropertyListItem.call(this, getDefaultDisplayText, getPropertyObject, hasDisplayText);
-        this.calculation.subscribe(function () {
-            reorderColumns();
+        var self = this;
+        this.inputBoundCalculation = ko.computed({
+            read: function () {
+                return self.calculation();
+            },
+            write: function (value) {
+                self.calculation(value);
+                if (window._bindingsApplied){
+                    //reorderColumns();
+                };
+            },
+            owner: this
         });
     };
     ColumnProperty.prototype = Object.create(PropertyListItem.prototype);
@@ -18,7 +28,6 @@ var reportBuilder = function () {
     var ColumnList = function(options) {
         PropertyList.call(this, options);
         this.newProperty = ko.observable(null);
-        this.suspendReorderColumns = false;
     };
     ColumnList.prototype = Object.create(PropertyList.prototype);
     ColumnList.prototype.constructor = ColumnList;
@@ -36,9 +45,7 @@ var reportBuilder = function () {
             item.property(this.newProperty());
             item.calculation(item.getDefaultCalculation());
             this.newProperty(null);
-            this.suspendReorderColumns = true;
             this.columns.push(item);
-            this.suspendReorderColumns = false;
         }
     };
     ColumnList.prototype.reorderColumns = function () {
@@ -46,7 +53,7 @@ var reportBuilder = function () {
 
         // In the initialization of this.columns, reorderColumns gets called (because we set the calculation of
         // each ColumnProperty), but we don't want this function to run until the this.columns exists.
-        if (this.columns && ! this.suspendReorderColumns) {
+        if (this.columns) {
             this.columns().forEach(function (v, i) {
                 items[[v.property(), v.calculation(), v.displayText()]] = i;
             });
@@ -93,7 +100,6 @@ var reportBuilder = function () {
         self.reportTypeAggLabel = (config['sourceType'] === "case") ? "Case Summary" : "Form Summary";
         self.reportType = ko.observable(config['existingReportType'] || 'list');
         self.reportType.subscribe(function (newValue) {
-            self.columnList.suspendReorderColumns = true;
             var wasAggregationEnabled = self.isAggregationEnabled();
             self.isAggregationEnabled(newValue === "table");
             self.previewChart(newValue === "table" && self.selectedChart() !== "none");
@@ -113,7 +119,6 @@ var reportBuilder = function () {
                 });
                 self._suspendPreviewRefresh = false;
             }
-            self.columnList.suspendReorderColumns = false;
             self.refreshPreview();
             self.saveButton.fire('change');
         });

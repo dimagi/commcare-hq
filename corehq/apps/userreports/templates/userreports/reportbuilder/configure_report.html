@@ -234,6 +234,7 @@
             "mapboxAccessToken": {{ MAPBOX_ACCESS_TOKEN|JSON }},
         });
         $("#reportConfig").koApplyBindings(reportConfig)
+        window._bindingsApplied = true;
     });
 
 </script>

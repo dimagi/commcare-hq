@@ -104,6 +104,19 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         // or a filter
         this.calculation = ko.observable(this.getDefaultCalculation());
 
+        // A proxy for calculation that will let us know when calculation has been modified by the user.
+        // This is useful because sometimes the calculation is changed programatically.
+        // This implementation is a simple mirror of calculation, but subclasses may alter it.
+        this.inputBoundCalculation = ko.computed({
+            read: function () {
+                return self.calculation();
+            },
+            write: function (value) {
+                self.calculation(value);
+            },
+            owner: this
+        });
+
         // for default filters, the value to filter by
         this.filterValue = ko.observable("");
         // for default filters, the dynamic date operator to filter by
