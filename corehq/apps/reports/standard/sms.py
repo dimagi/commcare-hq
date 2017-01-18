@@ -1,3 +1,4 @@
+from collections import namedtuple
 import cgi
 from django.db.models import Q, Count
 from django.core.urlresolvers import reverse
@@ -13,7 +14,10 @@ from corehq.apps.reports.filters.fixtures import OptionalAsyncLocationFilter
 from corehq.apps.reports.standard import DatespanMixin, ProjectReport, ProjectReportParametersMixin
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DTSortType
-from corehq.apps.sms.filters import MessageTypeFilter, EventTypeFilter, PhoneNumberFilter, EventStatusFilter
+from corehq.apps.sms.filters import (
+    MessageTypeFilter, EventTypeFilter, PhoneNumberFilter, EventStatusFilter,
+    PhoneNumberReportFilter
+)
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.view_utils import absolute_reverse
@@ -27,6 +31,7 @@ from datetime import datetime
 from django.conf import settings
 from corehq.apps.hqwebapp.doc_info import (get_doc_info, get_doc_info_by_id,
     get_object_info, DomainMismatchException)
+from corehq.apps.sms.mixin import apply_leniency
 from corehq.apps.sms.models import (
     WORKFLOW_REMINDER,
     WORKFLOW_KEYWORD,
@@ -42,6 +47,7 @@ from corehq.apps.sms.models import (
     SMS,
     PhoneBlacklist,
     Keyword,
+    PhoneNumber,
 )
 from corehq.apps.sms.util import get_backend_name
 from corehq.apps.smsforms.models import SQLXFormsSession
@@ -1103,4 +1109,177 @@ class PhoneNumberReport(BaseCommConnectLogReport):
     name = ugettext_noop("Phone Number Report")
     slug = 'phone_number_report'
     ajax_pagination = True
-    fields = []
+    fields = [
+        PhoneNumberReportFilter
+    ]
+
+    @property
+    def headers(self):
+        header = DataTablesHeader(
+            DataTablesColumn(_("Contact"), sortable=False),
+            DataTablesColumn(_("Phone Number"), sortable=False),
+            DataTablesColumn(_("Status"), sortable=False),
+            DataTablesColumn(_("Is Two-Way"), sortable=False),
+        )
+        return header
+
+    @property
+    @memoized
+    def _filter(self):
+        return PhoneNumberReportFilter.get_value(self.request, self.domain)
+
+    @property
+    def filter_type(self):
+        return self._filter['filter_type']
+
+    @property
+    @memoized
+    def phone_number_filter(self):
+        value = self._filter['phone_number_filter']
+        if isinstance(value, basestring):
+            return apply_leniency(value.strip())
+
+        return None
+
+    @property
+    def contact_type(self):
+        return self._filter['contact_type']
+
+    @property
+    def selected_group(self):
+        return self._filter['selected_group']
+
+    @property
+    @memoized
+    def user_ids_in_selected_group(self):
+        return Group.get(self.selected_group).users
+
+    @property
+    def has_phone_number(self):
+        return self._filter['has_phone_number']
+
+    @property
+    def verification_status(self):
+        return self._filter['verification_status']
+
+    @property
+    def _show_users_without_phone_numbers(self):
+        return (
+            self.filter_type == 'contact' and
+            self.contact_type == 'users' and
+            self.has_phone_number != 'has_phone_number'
+        )
+
+    @property
+    def _show_cases(self):
+        return self.contact_type == 'cases'
+
+    def _fmt_owner(self, owner_doc_type, owner_id, owner_cache):
+        doc_info = self.get_recipient_info(owner_doc_type, owner_id, owner_cache)
+        table_cell = self._fmt_contact_link(owner_id, doc_info)['html']
+        return table_cell
+
+    def _fmt_status(self, number):
+        if number.verified:
+            return "Verified"
+        elif number.pending_verification:
+            return "Verification Pending"
+        elif not (number.is_two_way or number.pending_verification) and PhoneNumber.get_reserved_number(number):
+            return "Already in use"
+        return "Not Verified"
+
+    def _fmt_row(self, number, owner_cache):
+        if isinstance(number, PhoneNumber):
+            return [
+                self._fmt_owner(number.owner_doc_type, number.owner_id, owner_cache),
+                number.phone_number,
+                self._fmt_status(number),
+                "Yes" if number.is_two_way else "No",
+            ]
+
+        return [
+            self._fmt_owner(number.owner_doc_type, number.owner_id, owner_cache),
+            '---',
+            '---',
+            '---',
+        ]
+
+    def _get_rows(self, paginate=True):
+        owner_cache = {}
+        if self._show_users_without_phone_numbers:
+            data = self._get_users_without_phone_numbers()
+        else:
+            data = self._get_queryset()
+
+        if paginate and self.pagination:
+            data = data[self.pagination.start:self.pagination.start + self.pagination.count]
+
+        for number in data:
+            yield self._fmt_row(number, owner_cache)
+
+    def _get_queryset(self):
+        query = PhoneNumber.objects.filter(domain=self.domain)
+
+        if self.filter_type == 'phone_number':
+            if self.phone_number_filter:
+                query = query.filter(phone_number__contains=self.phone_number_filter)
+        elif self.filter_type == 'contact':
+            if self._show_cases:
+                query = query.filter(owner_doc_type='CommCareCase', phone_number__isnull=False)
+            else:
+                query = query.filter(owner_doc_type__in=['CommCareUser', 'WebUser'])
+                if self.selected_group:
+                    query = query.filter(owner_id__in=self.user_ids_in_selected_group)
+
+                if self.has_phone_number == 'has_phone_number':
+                    query = query.filter(phone_number__isnull=False)
+
+            if self.verification_status == 'not_verified':
+                query = query.filter(pending_verification=False, verified=False)
+            elif self.verification_status == 'verification_pending':
+                query = query.filter(pending_verification=True)
+            elif self.verification_status == 'verified':
+                query = query.filter(verified=True)
+
+        return query.order_by('phone_number', 'couch_id')
+
+    def _get_users_without_phone_numbers(self):
+        query = (
+            PhoneNumber.objects.filter(domain=self.domain).filter(owner_doc_type__in=['CommCareUser', 'WebUser'])
+        )
+        users_with_phone_numbers = {x[0]: x for x in query.values_list('owner_id', 'owner_doc_type').distinct()}
+
+        if self.selected_group:
+            users_by_id = {
+                id: {'_id': id, 'doc_type': 'CommCareUser'}
+                for id in self.user_ids_in_selected_group
+            }
+        else:
+            users_by_id = {u.get_id: u for u in CouchUser.by_domain(self.domain)}
+
+        user_ids = set(users_by_id.keys()) - set(users_with_phone_numbers.keys())
+        user_types_with_id = {(id, users_by_id[id]['doc_type']) for id in user_ids}
+
+        FakePhoneNumber = namedtuple('FakePhoneNumber', ['owner_id', 'owner_doc_type'])
+        return sorted([FakePhoneNumber(id, type) for id, type in user_types_with_id])
+
+    @property
+    def shared_pagination_GET_params(self):
+        return [
+            {'name': 'filter_type', 'value': self.filter_type},
+            {'name': 'phone_number_filter', 'value': self.phone_number_filter},
+            {'name': 'contact_type', 'value': self.contact_type},
+            {'name': 'selected_group', 'value': self.selected_group},
+            {'name': 'has_phone_number', 'value': self.has_phone_number},
+            {'name': 'verification_status', 'value': self.verification_status},
+        ]
+
+    @property
+    def rows(self):
+        return self._get_rows()
+
+    @property
+    def total_records(self):
+        if self._show_users_without_phone_numbers:
+            return len(self._get_users_without_phone_numbers())
+        return self._get_queryset().count()
