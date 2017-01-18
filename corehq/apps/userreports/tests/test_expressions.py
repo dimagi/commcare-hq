@@ -1070,6 +1070,7 @@ class TestGetCaseSharingGroupsExpression(TestCase):
     def setUp(self):
         super(TestGetCaseSharingGroupsExpression, self).setUp()
         self.domain = uuid.uuid4().hex
+        self.second_domain = uuid.uuid4().hex
         self.expression = ExpressionFactory.from_spec({
             "type": "get_case_sharing_groups",
             "user_id_expression": {
@@ -1081,6 +1082,8 @@ class TestGetCaseSharingGroupsExpression(TestCase):
 
     def tearDown(self):
         for group in Group.by_domain(self.domain):
+            group.delete()
+        for group in Group.by_domain(self.second_domain):
             group.delete()
         for user in CommCareUser.all():
             user.delete()
@@ -1115,9 +1118,8 @@ class TestGetCaseSharingGroupsExpression(TestCase):
 
     @run_with_all_backends
     def test_wrong_domain(self):
-        new_domain = uuid.uuid4().hex
-        user = CommCareUser.create(domain=new_domain, username='test_single', password='123')
-        group = Group(domain=new_domain, name='group_single', users=[user._id], case_sharing=True)
+        user = CommCareUser.create(domain=self.second_domain, username='test_wrong_domain', password='123')
+        group = Group(domain=self.second_domain, name='group_wrong_domain', users=[user._id], case_sharing=True)
         group.save()
 
         case_sharing_groups = self.expression({'user_id': user._id}, self.context)
