@@ -1,7 +1,8 @@
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.resources.v0_4 import XFormInstanceResource
 from corehq.apps.api.resources.v0_5 import DoesNothingPaginator
-from corehq.apps.export.system_properties import MAIN_FORM_TABLE_PROPERTIES
+from corehq.apps.case_importer.util import get_case_properties_for_case_type
+from corehq.apps.export.system_properties import MAIN_FORM_TABLE_PROPERTIES, MAIN_CASE_TABLE_PROPERTIES
 from corehq.apps.zapier.util import remove_advanced_fields
 from corehq.apps.app_manager.models import Application
 
@@ -26,6 +27,18 @@ class CustomField(object):
         self.label = initial.get('label', '')
         self.help_text = initial.get('help_text', '')
 
+class CustomActionField(object):
+
+    def __init__(self, initial = None):
+        initial = initial or {}
+        self.type = initial.get('type', '')
+        self.key = initial.get('key', '')
+        self.label = initial.get('label', '')
+        self.help_text = initial.get('help_text', '')
+        self.required = initial.get('required', '')
+
+
+
 
 class ZapierCustomFieldResource(Resource):
     type = fields.CharField(attribute='type')
@@ -38,6 +51,18 @@ class ZapierCustomFieldResource(Resource):
 
     def _has_default_label(self, question):
         return question['label'] == question['hashtagValue']
+
+    def obj_get_list(self, bundle, **kwargs):
+        raise NotImplementedError
+
+    class Meta(CustomResourceMeta):
+        object_class = CustomField
+        resource_name = 'custom_fields_base'
+        include_resource_uri = False
+        paginator_class = DoesNothingPaginator
+
+
+class ZapierCustomTriggerFieldFormResource(ZapierCustomFieldResource):
 
     def obj_get_list(self, bundle, **kwargs):
         """
@@ -60,6 +85,7 @@ class ZapierCustomFieldResource(Resource):
         app = Application.get(application_id)
         form = app.get_form_by_xmlns(xmlns)
         custom_fields = []
+
         for idx, question in enumerate(form.get_questions(app.langs)):
             if self._has_default_label(question):
                 label = question['label'].split('/')[-1]
@@ -87,8 +113,75 @@ class ZapierCustomFieldResource(Resource):
             ))
         return custom_fields
 
-    class Meta(CustomResourceMeta):
-        object_class = CustomField
-        resource_name = 'custom_fields'
-        include_resource_uri = False
-        paginator_class = DoesNothingPaginator
+    class Meta(ZapierCustomFieldResource.Meta):
+        resource_name = 'custom_fields_form'
+
+
+class ZapierCustomActionFieldFormResource(ZapierCustomFieldResource):
+    required = fields.CharField(attribute='required', default='', null=True, blank=True)
+
+    def obj_get_list(self, bundle, **kwargs):
+        application_id = bundle.request.GET.get('application_id')
+        xmlns = bundle.request.GET.get('xmlns')
+        if not application_id or not xmlns:
+            return []
+
+        app = Application.get(application_id)
+        form = app.get_form_by_xmlns(xmlns)
+        custom_fields = []
+
+        for idx, question in enumerate(form.get_questions(app.langs)):
+            if self._has_default_label(question):
+                label = question['label'].split('/')[-1]
+            else:
+                label = question['label']
+
+            custom_fields.append(CustomActionField(
+                dict(
+                    type='unicode',
+                    key=self._build_key(question['hashtagValue']),
+                    label=label,
+                    required=question['required']
+                )
+            ))
+
+        return custom_fields
+
+    class Meta(ZapierCustomFieldResource.Meta):
+        resource_name = 'custom_action_fields_form'
+
+
+
+class ZapierCustomFieldCaseResource(ZapierCustomFieldResource):
+
+    def obj_get_list(self, bundle, **kwargs):
+        custom_fields = []
+        domain = bundle.request.GET.get('domain')
+        case_type = bundle.request.GET.get('case_type')
+
+        for prop in get_case_properties_for_case_type(domain, case_type):
+            label = prop['name']
+
+            custom_fields.append(CustomField(
+                dict(
+                    type='unicode',
+                    key=self._build_key(prop['hashtagValue']),
+                    label=label
+                )
+            ))
+
+        for case_property in MAIN_CASE_TABLE_PROPERTIES:
+            if case_property.is_advanced:
+                continue
+            custom_fields.append(CustomField(
+                dict(
+                    type='unicode',
+                    key='__'.join([node.name for node in case_property.item.path]),
+                    label=case_property.label,
+                    help_text=case_property.help_text
+                )
+            ))
+        return custom_fields
+
+    class Meta(ZapierCustomFieldResource.Meta):
+        resource_name = 'custom_fields_case'
