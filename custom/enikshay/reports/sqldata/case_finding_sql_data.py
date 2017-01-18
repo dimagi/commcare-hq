@@ -94,6 +94,12 @@ def diagnosis_filter(diagnosis, classification):
 class CaseFindingSqlData(EnikshaySqlData):
 
     @property
+    def filters(self):
+        filters = super(CaseFindingSqlData, self).filters
+        filters.append(RawFilter('closed = 0'))
+        return filters
+
+    @property
     def columns(self):
         test_type_filter = [
             RawFilter("bacteriological_examination = 1")

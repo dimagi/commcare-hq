@@ -86,8 +86,7 @@ class EnikshaySqlData(SqlData):
     @property
     def filters(self):
         filters = [
-            AND([GTE('opened_on', 'start_date'), LT('opened_on', 'end_date')]),
-            RawFilter('closed = 0')
+            AND([GTE('opened_on', 'start_date'), LT('opened_on', 'end_date')])
         ]
 
         locations_id = filter(lambda x: bool(x), self.config.locations_id)

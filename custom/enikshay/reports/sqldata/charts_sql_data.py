@@ -1,4 +1,5 @@
 from sqlagg.columns import CountColumn
+from sqlagg.filters import RawFilter
 
 from corehq.apps.reports.sqlreport import DatabaseColumn
 from custom.enikshay.reports.generic import EnikshaySqlData
@@ -6,6 +7,12 @@ from custom.enikshay.reports.utils import convert_to_raw_filters_list
 
 
 class ChartsSqlData(EnikshaySqlData):
+
+    @property
+    def filters(self):
+        filters = super(ChartsSqlData, self).filters
+        filters.append(RawFilter('closed = 0'))
+        return filters
 
     @property
     def columns(self):

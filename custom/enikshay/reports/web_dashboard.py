@@ -24,6 +24,8 @@ class WebDashboardReport(EnikshayReport):
     report_template_path = 'enikshay/web_dashboard.html'
     fields = (DatespanFilter, EnikshayLocationFilter)
 
+    emailable = False
+
     @use_nvd3
     def decorator_dispatcher(self, request, *args, **kwargs):
         return super(WebDashboardReport, self).decorator_dispatcher(request, *args, **kwargs)
