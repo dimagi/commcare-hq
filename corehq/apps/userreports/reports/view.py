@@ -52,7 +52,7 @@ from corehq.apps.userreports.util import (
     default_language,
     has_report_builder_trial,
     can_edit_report,
-)
+    get_ucr_class_name)
 from corehq.util.couch import get_document_or_404, get_document_or_not_found, \
     DocumentNotFound
 from couchexport.export import export_from_tables
@@ -278,7 +278,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             return False
         if not user.is_active:
             return False
-        return user.can_view_report(domain, 'corehq.reports.DynamicReport{}'.format(self.report_config_id))
+        return user.can_view_report(domain, get_ucr_class_name(self.report_config_id))
 
     def add_warnings(self, request):
         for warning in self.data_source.column_warnings:
