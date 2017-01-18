@@ -17,7 +17,7 @@ from corehq.apps.smsbillables.exceptions import RetryBillableTaskException
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.sms.change_publishers import publish_sms_saved
 from corehq.apps.sms.util import is_contact_active
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch import release_lock, CriticalSection
@@ -359,6 +359,12 @@ def _sync_user_phone_numbers(couch_user):
 
     if not isinstance(couch_user, CommCareMobileContactMixin):
         couch_user = CouchUser.wrap_correctly(couch_user.to_json())
+
+    if not isinstance(couch_user, CommCareUser):
+        # It isn't necessary to sync WebUser's phone numbers right now
+        # and we need to think through how to support entries when a user
+        # can belong to multiple domains
+        return
 
     with CriticalSection(lock_keys, timeout=5 * 60):
         phone_entries = couch_user.get_phone_entries()

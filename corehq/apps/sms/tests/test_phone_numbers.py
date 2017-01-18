@@ -474,8 +474,8 @@ class TestUserPhoneNumberSync(TestCase):
         self.domain = 'user-phone-number-test'
         self.domain_obj = Domain(name=self.domain)
         self.domain_obj.save()
-        self.mobile_worker = CommCareUser.create(self.domain, 'mobile', 'mobile')
-        self.web_user = WebUser.create(self.domain, 'web', 'web')
+        self.mobile_worker1 = CommCareUser.create(self.domain, 'mobile1', 'mobile1')
+        self.mobile_worker2 = CommCareUser.create(self.domain, 'mobile2', 'mobile2')
 
     def tearDown(self):
         delete_domain_phone_numbers(self.domain)
@@ -486,7 +486,8 @@ class TestUserPhoneNumberSync(TestCase):
         self.assertEqual(len(entries), len(phone_numbers))
         self.assertEqual(set(entries.keys()), set(phone_numbers))
 
-    def _testSync(self, user):
+    def testSync(self):
+        user = self.mobile_worker1
         self.assertEqual(PhoneNumber.by_domain(self.domain).count(), 0)
 
         user.phone_numbers = ['9990001']
@@ -509,23 +510,17 @@ class TestUserPhoneNumberSync(TestCase):
         self.assertEqual(PhoneNumber.by_domain(self.domain).count(), 1)
         self.assertPhoneEntries(user, ['9990002'])
 
-    def testMobileWorkerSync(self):
-        self._testSync(self.mobile_worker)
-
-    def testWebUserSync(self):
-        self._testSync(self.web_user)
-
     def testRetire(self):
-        self.mobile_worker.phone_numbers = ['9990001']
-        self.mobile_worker.save()
+        self.mobile_worker1.phone_numbers = ['9990001']
+        self.mobile_worker1.save()
         self.assertEqual(PhoneNumber.by_domain(self.domain).count(), 1)
-        self.assertPhoneEntries(self.mobile_worker, ['9990001'])
+        self.assertPhoneEntries(self.mobile_worker1, ['9990001'])
 
-        self.web_user.phone_numbers = ['9990002']
-        self.web_user.save()
+        self.mobile_worker2.phone_numbers = ['9990002']
+        self.mobile_worker2.save()
         self.assertEqual(PhoneNumber.by_domain(self.domain).count(), 2)
-        self.assertPhoneEntries(self.web_user, ['9990002'])
+        self.assertPhoneEntries(self.mobile_worker2, ['9990002'])
 
-        self.mobile_worker.retire()
+        self.mobile_worker1.retire()
         self.assertEqual(PhoneNumber.by_domain(self.domain).count(), 1)
-        self.assertPhoneEntries(self.web_user, ['9990002'])
+        self.assertPhoneEntries(self.mobile_worker2, ['9990002'])
