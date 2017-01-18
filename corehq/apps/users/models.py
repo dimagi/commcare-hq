@@ -1386,27 +1386,21 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def wrap(cls, data):
         # migrations from using role_id to using the domain_memberships
         role_id = None
-        should_save = False
-        if not data.has_key('domain_membership') or not data['domain_membership'].get('domain', None):
-            should_save = True
-        if data.has_key('role_id'):
+        if 'role_id' in data:
             role_id = data["role_id"]
             del data['role_id']
-            should_save = True
+        if not data.get('domain_membership', {}).get('domain', None):
+            data['domain_membership'] = DomainMembership(
+                domain=data.get('domain', ""), role_id=role_id
+            ).to_json()
         if not data.get('user_data', {}).get('commcare_project'):
             data['user_data'] = dict(data['user_data'], **{'commcare_project': data['domain']})
-            should_save = True
+
         # Todo; remove after migration
         from corehq.apps.users.management.commands import add_multi_location_property
         add_multi_location_property.Command().migrate_user(data)
 
-        self = super(CommCareUser, cls).wrap(data)
-        if should_save:
-            self.domain_membership = DomainMembership(domain=data.get('domain', ""))
-            if role_id:
-                self.domain_membership.role_id = role_id
-
-        return self
+        return super(CommCareUser, cls).wrap(data)
 
     def clear_quickcache_for_user(self):
         self.get_usercase_id.clear(self)
