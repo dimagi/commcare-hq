@@ -178,7 +178,7 @@ def _get_subcases_expression(spec, context):
     wrapped.configure(
         case_id_expression=ExpressionFactory.from_spec(wrapped.case_id_expression, context)
     )
-    return
+    return wrapped
 
 
 def _get_case_sharing_groups_expression(spec, context):
