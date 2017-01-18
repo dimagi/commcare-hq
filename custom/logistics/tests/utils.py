@@ -13,7 +13,6 @@ def bootstrap_user(loc, username=TEST_USER, domain=TEST_DOMAIN,
         domain,
         username,
         password,
-        phone_numbers=[phone_number],
         user_data=user_data,
         first_name=first_name,
         last_name=last_name
@@ -27,6 +26,7 @@ def bootstrap_user(loc, username=TEST_USER, domain=TEST_DOMAIN,
 
         user.set_location(loc)
 
+    user.phone_numbers = [phone_number]
     user.save()
 
     entry = user.get_or_create_phone_entry(phone_number)

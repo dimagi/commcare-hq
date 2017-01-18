@@ -178,11 +178,11 @@ def bootstrap_user(username=TEST_USER, domain=TEST_DOMAIN,
         domain,
         username,
         password,
-        phone_numbers=[phone_number],
         user_data=user_data,
         first_name=first_name,
         last_name=last_name
     )
+    user.phone_numbers = [phone_number]
     if home_loc:
         user.set_location(home_loc)
     dm = user.get_domain_membership(domain)
