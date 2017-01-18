@@ -741,6 +741,7 @@ USE_FORMPLAYER_FRONTEND = PredictablyRandomToggle(
         'madla-malaria',
         'myrice',
         'pact',
+        'icrc-almanach',
     ]
 )
 
