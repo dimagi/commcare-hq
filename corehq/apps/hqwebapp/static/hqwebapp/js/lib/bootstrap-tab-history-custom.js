@@ -25,6 +25,7 @@ $(function () {
                 State.data.tab = '';
             }
         }
+        console.log("State.data.tab = " + State.data.tab);
 
         var link;
         if (State.data.tab) {
@@ -50,6 +51,11 @@ $(function () {
                     tab: link.attr('href').split('#')[1]
                 }, null, State.url);
             }
+        }
+        if (link.length) {
+            console.log(link.get(0).outerHTML);
+        } else {
+            console.log("No link found");
         }
         link.parent().removeClass('active');    // force tab to load
         link.tab('show');
