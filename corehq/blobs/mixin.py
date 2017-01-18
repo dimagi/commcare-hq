@@ -359,12 +359,16 @@ class DeferredBlobMixin(BlobMixin):
         value = super(DeferredBlobMixin, self).blobs
         if self._deferred_blobs:
             value = dict(value)
-            value.update((name, BlobMeta(
-                id=None,
-                content_type=info.get("content_type", None),
-                content_length=info.get("content_length", None),
-                digest=None,
-            )) for name, info in self._deferred_blobs.iteritems())
+            for name, info in self._deferred_blobs.iteritems():
+                if info is not None:
+                    value[name] = BlobMeta(
+                        id=None,
+                        content_type=info.get("content_type", None),
+                        content_length=info.get("content_length", None),
+                        digest=None,
+                    )
+                else:
+                    value.pop(name, None)
         return value
 
     @property
@@ -385,6 +389,13 @@ class DeferredBlobMixin(BlobMixin):
 
     def fetch_attachment(self, name, stream=False):
         if self._deferred_blobs and name in self._deferred_blobs:
+            if self._deferred_blobs[name] is None:
+                raise ResourceNotFound(
+                    u"{model} {model_id} attachment: {name!r}".format(
+                        model=type(self).__name__,
+                        model_id=self._id,
+                        name=name,
+                    ))
             body = self._deferred_blobs[name]["content"]
             if stream:
                 return ClosingContextProxy(StringIO(body))
@@ -432,13 +443,25 @@ class DeferredBlobMixin(BlobMixin):
             "content_length": length,
         }
 
+    def deferred_delete_attachment(self, name):
+        """Mark attachment to be deleted on save"""
+        if self._deferred_blobs is None:
+            self._deferred_blobs = {}
+        self._deferred_blobs[name] = None
+
     def save(self):
         if self._deferred_blobs:
+            delete_names = []
             with self.atomic_blobs(super(DeferredBlobMixin, self).save):
                 # list deferred blobs to avoid modification during iteration
                 for name, info in list(self._deferred_blobs.iteritems()):
-                    self.put_attachment(name=name, **info)
-                assert not self._deferred_blobs, self._deferred_blobs
+                    if info is not None:
+                        self.put_attachment(name=name, **info)
+                    else:
+                        delete_names.append(name)
+            for name in delete_names:
+                self.delete_attachment(name)
+            assert not self._deferred_blobs, self._deferred_blobs
         else:
             super(DeferredBlobMixin, self).save()
 
@@ -484,12 +507,22 @@ def bulk_atomic_blobs(docs):
     save = lambda: None
     contexts = [d.atomic_blobs(save) for d in docs if hasattr(d, "atomic_blobs")]
     with nested(*contexts):
+        delete_blobs = []
         for doc in docs:
             if isinstance(doc, DeferredBlobMixin) and doc._deferred_blobs:
                 for name, info in list(doc._deferred_blobs.iteritems()):
-                    doc.put_attachment(name=name, **info)
+                    if info is not None:
+                        doc.put_attachment(name=name, **info)
+                    else:
+                        meta = doc.external_blobs.pop(name, None)
+                        if meta is not None:
+                            delete_blobs.append((meta, doc._blobdb_bucket()))
+                        doc._deferred_blobs.pop(name)
                 assert not doc._deferred_blobs, doc._deferred_blobs
         yield
+        db = get_blob_db()
+        for meta, bucket in delete_blobs:
+            db.delete(meta.id, bucket)
 
 
 @memoized

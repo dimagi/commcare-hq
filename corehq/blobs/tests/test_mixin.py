@@ -155,6 +155,32 @@ class TestBlobMixin(BaseTestCase):
         with self.assertRaises(mod.ResourceNotFound):
             self.obj.fetch_attachment(name)
 
+    def test_deferred_delete_attachment(self):
+        obj = self.make_doc(DeferredPutBlobDocument)
+        name = "test.1"
+        obj.put_attachment(b"new", name, content_type="text/plain")
+        self.assertTrue(obj.blobs[name].id)
+        obj.deferred_delete_attachment(name)
+        self.assertNotIn(name, obj.blobs)
+        self.assertNotIn(name, obj.persistent_blobs)
+        self.assertIn(name, obj.external_blobs)
+        obj.save()
+        self.assertNotIn(name, obj.blobs)
+        self.assertNotIn(name, obj.persistent_blobs)
+        self.assertNotIn(name, obj.external_blobs)
+
+    def test_fetch_attachment_after_deferred_delete_attachment(self):
+        obj = self.make_doc(DeferredPutBlobDocument)
+        name = "test.1"
+        obj.put_attachment(b"new", name, content_type="text/plain")
+        obj.deferred_delete_attachment(name)
+        with self.assertRaises(mod.ResourceNotFound):
+            obj.fetch_attachment(name)
+        obj.save()
+        self.assertFalse(obj._deferred_blobs)
+        with self.assertRaises(mod.ResourceNotFound):
+            obj.fetch_attachment(name)
+
     def test_persistent_blobs(self):
         content = b"<xml />"
         couch_digest = "md5-" + b64encode(md5(content).digest())
@@ -763,6 +789,20 @@ class TestBulkAtomicBlobs(BaseTestCase):
         self.assertFalse(obj.saved)
         with self.get_blob(ident, obj._blobdb_bucket()).open() as fh:
             self.assertEqual(fh.read(), "data")
+
+    def test_bulk_atomic_blobs_with_deferred_deleted_blobs(self):
+        obj = self.make_doc(DeferredPutBlobDocument)
+        self.assertNotIn("will_delete", obj.blobs)
+        obj.put_attachment("data", "will_delete")
+        obj.deferred_delete_attachment("will_delete")
+        docs = [obj]
+        meta = obj.external_blobs["will_delete"]
+        with mod.bulk_atomic_blobs(docs):
+            self.assertNotIn("will_delete", obj.external_blobs)
+            self.assertTrue(self.db.exists(meta.id, obj._blobdb_bucket()))
+        self.assertFalse(obj._deferred_blobs)
+        self.assertFalse(self.db.exists(meta.id, obj._blobdb_bucket()))
+        self.assertNotIn("will_delete", obj.external_blobs)
 
     def test_bulk_atomic_blobs_with_non_blob_docs(self):
         noblobs = self.make_doc(BaseFakeDocument)
