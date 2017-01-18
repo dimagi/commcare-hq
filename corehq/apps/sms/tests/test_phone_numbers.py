@@ -382,7 +382,7 @@ class SQLPhoneNumberTestCase(TestCase):
             is_two_way=True
         )
 
-        number2 = PhoneNumber.objects.create(
+        PhoneNumber.objects.create(
             domain=self.domain,
             owner_doc_type='X',
             owner_id='X',
@@ -427,7 +427,7 @@ class SQLPhoneNumberTestCase(TestCase):
             is_two_way=False
         )
 
-        number2 = PhoneNumber.objects.create(
+        PhoneNumber.objects.create(
             domain=self.domain,
             owner_doc_type='X',
             owner_id='X',
@@ -754,7 +754,7 @@ class TestGenericContactMethods(TestCase):
     def testGetPhoneEntries(self):
         number1 = self.mobile_worker1.get_or_create_phone_entry('999123')
         number2 = self.mobile_worker1.get_or_create_phone_entry('999124')
-        number3 = self.mobile_worker1.get_or_create_phone_entry('999125')
+        self.mobile_worker1.get_or_create_phone_entry('999125')
         number4 = self.mobile_worker2.get_or_create_phone_entry('999126')
 
         number1.set_two_way()
@@ -769,10 +769,10 @@ class TestGenericContactMethods(TestCase):
         self.assertEqual(set(entries.keys()), set(['999123']))
 
     def testDelete(self):
-        number1 = self.mobile_worker1.get_or_create_phone_entry('999123')
-        number2 = self.mobile_worker1.get_or_create_phone_entry('999124')
-        number3 = self.mobile_worker1.get_or_create_phone_entry('999125')
-        number4 = self.mobile_worker2.get_or_create_phone_entry('999126')
+        self.mobile_worker1.get_or_create_phone_entry('999123')
+        self.mobile_worker1.get_or_create_phone_entry('999124')
+        self.mobile_worker1.get_or_create_phone_entry('999125')
+        self.mobile_worker2.get_or_create_phone_entry('999126')
         self.assertEqual(PhoneNumber.by_domain(self.domain).count(), 4)
 
         self.mobile_worker1.delete_phone_entry('999124')
