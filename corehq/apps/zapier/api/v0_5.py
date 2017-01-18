@@ -27,6 +27,18 @@ class CustomField(object):
         self.label = initial.get('label', '')
         self.help_text = initial.get('help_text', '')
 
+class CustomActionField(object):
+
+    def __init__(self, initial = None):
+        initial = initial or {}
+        self.type = initial.get('type', '')
+        self.key = initial.get('key', '')
+        self.label = initial.get('label', '')
+        self.help_text = initial.get('help_text', '')
+        self.required = initial.get('required', '')
+
+
+
 
 class ZapierCustomFieldResource(Resource):
     type = fields.CharField(attribute='type')
@@ -42,6 +54,12 @@ class ZapierCustomFieldResource(Resource):
 
     def obj_get_list(self, bundle, **kwargs):
         raise NotImplementedError
+
+    class Meta(CustomResourceMeta):
+        object_class = CustomField
+        resource_name = 'custom_fields_base'
+        include_resource_uri = False
+        paginator_class = DoesNothingPaginator
 
 
 class ZapierCustomTriggerFieldFormResource(ZapierCustomFieldResource):
@@ -95,14 +113,12 @@ class ZapierCustomTriggerFieldFormResource(ZapierCustomFieldResource):
             ))
         return custom_fields
 
-    class Meta(CustomResourceMeta):
-        object_class = CustomField
+    class Meta(ZapierCustomFieldResource.Meta):
         resource_name = 'custom_fields_form'
-        include_resource_uri = False
-        paginator_class = DoesNothingPaginator
 
 
 class ZapierCustomActionFieldFormResource(ZapierCustomFieldResource):
+    required = fields.CharField(attribute='required', default='', null=True, blank=True)
 
     def obj_get_list(self, bundle, **kwargs):
         application_id = bundle.request.GET.get('application_id')
@@ -120,7 +136,7 @@ class ZapierCustomActionFieldFormResource(ZapierCustomFieldResource):
             else:
                 label = question['label']
 
-            custom_fields.append(CustomField(
+            custom_fields.append(CustomActionField(
                 dict(
                     type='unicode',
                     key=self._build_key(question['hashtagValue']),
@@ -131,11 +147,8 @@ class ZapierCustomActionFieldFormResource(ZapierCustomFieldResource):
 
         return custom_fields
 
-    class Meta(CustomResourceMeta):
-        object_class = CustomField
+    class Meta(ZapierCustomFieldResource.Meta):
         resource_name = 'custom_action_fields_form'
-        include_resource_uri = False
-        paginator_class = DoesNothingPaginator
 
 
 
@@ -170,8 +183,5 @@ class ZapierCustomFieldCaseResource(ZapierCustomFieldResource):
             ))
         return custom_fields
 
-    class Meta(CustomResourceMeta):
-        object_class = CustomField
+    class Meta(ZapierCustomFieldResource.Meta):
         resource_name = 'custom_fields_case'
-        include_resource_uri = False
-        paginator_class = DoesNothingPaginator
