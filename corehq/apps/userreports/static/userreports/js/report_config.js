@@ -238,30 +238,30 @@ var reportBuilder = function () {
         self.previewError = ko.observable(false);
         self._suspendPreviewRefresh = false;
         self.refreshPreview = function (serializedColumns) {
-        if (!self._suspendPreviewRefresh) {
-            serializedColumns = typeof serializedColumns !== "undefined" ? serializedColumns : self.columnList.serializedProperties();
-            $('#preview').hide();
-            if (serializedColumns === "[]") {
-                return;  // Nothing to do.
-            }
-            $.ajax({
-                url: self.reportPreviewUrl,
-                type: 'post',
-                contentType: 'application/json; charset=utf-8',
-                data: JSON.stringify(Object.assign(
-                    self.serialize(),
-                    {
-                        'app': self._app,
-                        'source_type': self._sourceType,
-                        'source_id': self._sourceId,
-                    }
-                )),
-                dataType: 'json',
-                success: self.renderReportPreview,
-                error: function () {
-                    self.previewError(true);
-                },
-            });
+            if (!self._suspendPreviewRefresh) {
+                serializedColumns = typeof serializedColumns !== "undefined" ? serializedColumns : self.columnList.serializedProperties();
+                $('#preview').hide();
+                if (serializedColumns === "[]") {
+                    return;  // Nothing to do.
+                }
+                $.ajax({
+                    url: self.reportPreviewUrl,
+                    type: 'post',
+                    contentType: 'application/json; charset=utf-8',
+                    data: JSON.stringify(Object.assign(
+                        self.serialize(),
+                        {
+                            'app': self._app,
+                            'source_type': self._sourceType,
+                            'source_id': self._sourceId,
+                        }
+                    )),
+                    dataType: 'json',
+                    success: self.renderReportPreview,
+                    error: function () {
+                        self.previewError(true);
+                    },
+                });
             }
         };
 
