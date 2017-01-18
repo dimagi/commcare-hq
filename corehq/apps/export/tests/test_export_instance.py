@@ -21,6 +21,7 @@ from corehq.apps.export.models import (
     FormExportInstanceDefaults,
     MultiMediaExportColumn,
 )
+from corehq.apps.export.models.new import ExportInstanceFilters
 from corehq.apps.export.system_properties import MAIN_FORM_TABLE_PROPERTIES, \
     TOP_MAIN_FORM_TABLE_PROPERTIES
 
@@ -311,6 +312,31 @@ class TestExportInstanceGenerationMultipleApps(SimpleTestCase):
         selected_system_props = len([x for x in MAIN_FORM_TABLE_PROPERTIES if x.selected])
         self.assertEqual(len(selected), 0 + selected_system_props)
         self.assertEqual(len(shown), 0 + selected_system_props)
+
+
+class TestExportInstanceDefaultFilters(SimpleTestCase):
+
+    def test_default_form_values(self):
+        # Confirm that FormExportInstances set the default user_types filter correctly
+        form_export = FormExportInstance()
+        form_export_wrapped = FormExportInstance.wrap({})
+        for e in [form_export, form_export_wrapped]:
+            self.assertListEqual(e.filters.user_types, [0])
+
+    def test_default_case_values(self):
+        # Confirm that CaseExportInstances set the default show_all_data flag correctly
+        case_export = CaseExportInstance()
+        case_export_wrapped = CaseExportInstance.wrap({})
+        for e in [case_export, case_export_wrapped]:
+            self.assertTrue(e.filters.show_all_data)
+
+    def test_explicit_values(self):
+        # Confirm that FormExportInstances do not override export instance filters passed explicitly
+        e1 = FormExportInstance(filters=ExportInstanceFilters())
+        e2 = FormExportInstance({'filters': {}})
+        e3 = FormExportInstance.wrap({'filters': {}})
+        for e in [e1, e2, e3]:
+            self.assertListEqual(e.filters.user_types, [])
 
 
 class TestExportInstance(SimpleTestCase):
