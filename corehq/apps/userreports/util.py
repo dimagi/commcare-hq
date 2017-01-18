@@ -173,6 +173,7 @@ def get_backend_id(config, can_handle_laboratory=False):
         return settings.OVERRIDE_UCR_BACKEND
     return config.backend_id
 
+
 def get_ucr_class_name(id):
     """
     This returns the module and class name for a ucr from its id as used in report permissions.
