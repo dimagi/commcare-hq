@@ -38,8 +38,6 @@ class CustomActionField(object):
         self.required = initial.get('required', '')
 
 
-
-
 class ZapierCustomFieldResource(Resource):
     type = fields.CharField(attribute='type')
     key = fields.CharField(attribute='key')
@@ -114,7 +112,7 @@ class ZapierCustomTriggerFieldFormResource(ZapierCustomFieldResource):
         return custom_fields
 
     class Meta(ZapierCustomFieldResource.Meta):
-        resource_name = 'custom_fields_form'
+        resource_name = 'custom_fields'
 
 
 class ZapierCustomActionFieldFormResource(ZapierCustomFieldResource):
@@ -149,7 +147,6 @@ class ZapierCustomActionFieldFormResource(ZapierCustomFieldResource):
 
     class Meta(ZapierCustomFieldResource.Meta):
         resource_name = 'custom_action_fields_form'
-
 
 
 class ZapierCustomFieldCaseResource(ZapierCustomFieldResource):
