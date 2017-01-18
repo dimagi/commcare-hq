@@ -300,10 +300,19 @@ def _sync_case_phone_number(contact_case):
 
     with CriticalSection([contact_case.phone_sync_key], timeout=5 * 60):
         phone_numbers = contact_case.get_phone_entries()
-        if len(phone_numbers) > 1:
-            raise PhoneNumberException("Expected zero or one phone entry for case %s" % contact_case.case_id)
 
-        phone_number = phone_numbers.values()[0] if phone_numbers else None
+        if len(phone_numbers) == 0:
+            phone_number = None
+        elif len(phone_numbers) == 1:
+            phone_number = phone_numbers.values()[0]
+        else:
+            # We use locks to make sure this scenario doesn't happen, but if it
+            # does, just clear the phone number entries and the right one will
+            # be recreated below.
+            for p in phone_numbers.values():
+                p.delete()
+            phone_number = None
+
         if (
             phone_number and
             phone_number.contact_last_modified and

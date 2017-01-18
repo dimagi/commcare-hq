@@ -3,7 +3,7 @@ from corehq.apps.hqcase.utils import update_case
 from corehq.apps.sms.mixin import PhoneNumberInUseException
 from corehq.apps.sms.models import (SQLMobileBackend, SQLMobileBackendMapping,
     PhoneNumber)
-from corehq.apps.sms.tasks import delete_phone_numbers_for_owners
+from corehq.apps.sms.tasks import delete_phone_numbers_for_owners, sync_case_phone_number
 from corehq.apps.sms.tests.util import delete_domain_phone_numbers
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.tasks import tag_cases_as_deleted_and_remove_indices
@@ -301,6 +301,35 @@ class CaseContactPhoneNumberTestCase(TestCase):
 
             self.assertPhoneNumberDetails(case1, '99987658765', None, None, True, False, True)
             self.assertPhoneNumberDetails(case2, '99987658765', None, None, False, False, False)
+
+    @run_with_all_backends
+    def test_multiple_entries(self):
+        extra_number = PhoneNumber.objects.create(
+            domain=self.domain,
+            owner_doc_type='X',
+            owner_id='X',
+            phone_number='999124',
+            verified=False,
+            pending_verification=False,
+            is_two_way=False
+        )
+
+        with create_test_case(self.domain, 'participant', 'test1', drop_signals=False) as case:
+            case = self.set_case_property(case, 'contact_phone_number', '999124')
+            case = self.set_case_property(case, 'contact_phone_number_is_verified', '1')
+            case.create_phone_entry('999125')
+            self.assertEqual(PhoneNumber.objects.count(), 3)
+
+            sync_case_phone_number(case)
+            self.assertEqual(PhoneNumber.objects.count(), 2)
+
+            number1 = PhoneNumber.objects.get(pk=extra_number.pk)
+            self.assertEqual(number1.owner_id, 'X')
+
+            number2 = PhoneNumber.objects.get(owner_id=case.case_id)
+            self.assertTrue(number2.verified)
+            self.assertTrue(number2.is_two_way)
+            self.assertFalse(number2.pending_verification)
 
 
 class SQLPhoneNumberTestCase(TestCase):
