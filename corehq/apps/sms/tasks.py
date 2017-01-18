@@ -298,11 +298,7 @@ def sync_case_phone_number(self, case):
 def _sync_case_phone_number(contact_case):
     phone_info = contact_case.get_phone_info()
 
-    lock_keys = ['sync-case-phone-number-for-%s' % contact_case.case_id]
-    if phone_info.phone_number:
-        lock_keys.append('verifying-phone-number-%s' % phone_info.phone_number)
-
-    with CriticalSection(lock_keys, timeout=5 * 60):
+    with CriticalSection([contact_case.phone_sync_key], timeout=5 * 60):
         phone_numbers = contact_case.get_phone_entries()
         if len(phone_numbers) > 1:
             raise PhoneNumberException("Expected zero or one phone entry for case %s" % contact_case.case_id)
@@ -355,8 +351,6 @@ def sync_user_phone_numbers(self, couch_user):
 
 
 def _sync_user_phone_numbers(couch_user):
-    lock_keys = ['sync-user-phone-numbers-for-%s' % couch_user.get_id]
-
     if not isinstance(couch_user, CommCareMobileContactMixin):
         couch_user = CouchUser.wrap_correctly(couch_user.to_json())
 
@@ -366,7 +360,7 @@ def _sync_user_phone_numbers(couch_user):
         # can belong to multiple domains
         return
 
-    with CriticalSection(lock_keys, timeout=5 * 60):
+    with CriticalSection([couch_user.phone_sync_key], timeout=5 * 60):
         phone_entries = couch_user.get_phone_entries()
 
         if couch_user.is_deleted():

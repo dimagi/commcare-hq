@@ -702,19 +702,19 @@ class PhoneNumber(UUIDGeneratorMixin, models.Model):
             raise PhoneNumberInUseException()
 
     def set_two_way(self):
-        with CriticalSection(['set-two-way-number-%s' % self.phone_number]):
-            if self.is_two_way:
-                return
+        if self.is_two_way:
+            return
 
+        with CriticalSection(['reserve-phone-number-%s' % self.phone_number]):
             self.verify_uniqueness()
             self.is_two_way = True
             self.save()
 
     def set_pending_verification(self):
-        with CriticalSection(['set-pending-verification-number-%s' % self.phone_number]):
-            if self.verified or self.pending_verification:
-                return
+        if self.verified or self.pending_verification:
+            return
 
+        with CriticalSection(['reserve-phone-number-%s' % self.phone_number]):
             self.verify_uniqueness()
             self.pending_verification = True
             self.save()

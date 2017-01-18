@@ -1,6 +1,7 @@
 from dimagi.ext.couchdbkit import *
 import re
 from decimal import Decimal
+from dimagi.utils.couch import CriticalSection
 from collections import namedtuple
 
 
@@ -76,6 +77,10 @@ class CommCareMobileContactMixin(object):
     a class which is a Couch Document.
     """
 
+    @property
+    def phone_sync_key(self):
+        return 'sync-contact-phone-numbers-for-%s' % self.get_id
+
     def get_time_zone(self):
         """
         This method should be implemented by all subclasses of CommCareMobileContactMixin,
@@ -141,6 +146,10 @@ class CommCareMobileContactMixin(object):
         return self._create_phone_entry(phone_number)
 
     def get_or_create_phone_entry(self, phone_number):
+        with CriticalSection([self.phone_sync_key]):
+            return self._get_or_create_phone_entry(phone_number)
+
+    def _get_or_create_phone_entry(self, phone_number):
         phone_number = apply_leniency(phone_number)
         self.validate_number_format(phone_number)
 
