@@ -19,7 +19,7 @@ BOOTSTRAP_CONFIG = {
         'product_rate': dict(monthly_fee=Decimal('100.00')),
         'feature_rates': {
             FeatureType.USER: dict(monthly_limit=50, per_excess_fee=Decimal('2.00')),
-            FeatureType.SMS: dict(monthly_limit=100),
+            FeatureType.SMS: dict(monthly_limit=50),
         }
     },
     (SoftwarePlanEdition.PRO, False): {
@@ -27,7 +27,7 @@ BOOTSTRAP_CONFIG = {
         'product_rate': dict(monthly_fee=Decimal('500.00')),
         'feature_rates': {
             FeatureType.USER: dict(monthly_limit=250, per_excess_fee=Decimal('2.00')),
-            FeatureType.SMS: dict(monthly_limit=500),
+            FeatureType.SMS: dict(monthly_limit=50),
         }
     },
     (SoftwarePlanEdition.ADVANCED, False): {
@@ -35,7 +35,7 @@ BOOTSTRAP_CONFIG = {
         'product_rate': dict(monthly_fee=Decimal('1000.00')),
         'feature_rates': {
             FeatureType.USER: dict(monthly_limit=500, per_excess_fee=Decimal('2.00')),
-            FeatureType.SMS: dict(monthly_limit=1000),
+            FeatureType.SMS: dict(monthly_limit=50),
         }
     },
     (SoftwarePlanEdition.ADVANCED, True): {
