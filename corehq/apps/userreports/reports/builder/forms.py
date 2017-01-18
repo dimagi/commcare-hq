@@ -666,6 +666,12 @@ class ConfigureNewReportBase(forms.Form):
                 # meta properties
                 option = ColumnOption(id_, prop.text, prop.column_id, prop.is_non_numeric)
             options[id_] = option
+
+        # NOTE: Count columns aren't useful for table reports. But we need it in the column options because
+        # the options are currently static, after loading the report builder a user can switch to an agged report.
+        count_col = CountColumn("Number of Cases" if self.source_type == "case" else "Number of Forms")
+        options[count_col.id] = count_col
+
         return options
 
     @property
@@ -1254,18 +1260,22 @@ class ConfigureTableReportForm(ConfigureListReportForm):
 
     @property
     def _report_charts(self):
-        if self.cleaned_data['chart'] == "bar":
-            return [{
-                "type": "multibar",
-                "x_axis_column": "column_agg_0",
-                "y_axis_columns": ["count"],
-            }]
-        elif self.cleaned_data['chart'] == "pie":
-            return [{
-                "type": "pie",
-                "aggregation_column": "column_agg_0",
-                "value_column": "count",
-            }]
+
+        def get_non_agged_column_ids():
+            return [c['column_id'] for c in self._report_columns if c['aggregation'] != "simple"]
+        if get_non_agged_column_ids():
+            if self.cleaned_data['chart'] == "bar":
+                return [{
+                    "type": "multibar",
+                    "x_axis_column": "column_agg_0",
+                    "y_axis_columns": [get_non_agged_column_ids()[0]],
+                }]
+            elif self.cleaned_data['chart'] == "pie":
+                return [{
+                    "type": "pie",
+                    "aggregation_column": "column_agg_0",
+                    "value_column": get_non_agged_column_ids()[0],
+                }]
         return []
 
     @property
@@ -1278,14 +1288,6 @@ class ConfigureTableReportForm(ConfigureListReportForm):
             agg_property = self.data_source_properties[self.cleaned_data['group_by'][0]]
             return agg_property.type == "question" and agg_property.source['type'] == "MSelect"
         return False
-
-    @property
-    @memoized
-    def report_column_options(self):
-        options = super(ConfigureTableReportForm, self).report_column_options
-        count_col = CountColumn("Number of Cases" if self.source_type == "case" else "Number of Forms")
-        options[count_col.id] = count_col
-        return options
 
     @property
     def _report_columns(self):
@@ -1320,33 +1322,6 @@ class ConfigureTableReportForm(ConfigureListReportForm):
             if c['field'] in agg_field_ids:
                 c['aggregation'] = "simple"
 
-        # Add a count column if report has a chart
-        if self.cleaned_data['chart'] in ("bar", "pie"):
-            columns.append({
-                "format": "default",
-                "aggregation": "sum",
-                "field": "count",
-                "type": "field",
-                "display": "Count"
-            })
-
-        return columns
-
-    @property
-    @memoized
-    def initial_columns(self):
-        # columns are ColumnViewModels (not ColumnOptions)
-        columns = super(ConfigureTableReportForm, self).initial_columns
-
-        # Remove the aggregation indicator from the columns.
-        # It gets removed because we want it to be a column in the report,
-        # but we don't want it to appear in the builder.
-        if self.existing_report:
-            agg_properties = [
-                self._get_property_id_by_indicator_id(c)
-                for c in self.existing_report.aggregation_columns
-            ]
-            return [c for c in columns if c.property not in agg_properties]
         return columns
 
     @property

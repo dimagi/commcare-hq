@@ -272,72 +272,30 @@ var reportBuilder = function () {
         self.renderReportPreview = function (data) {
             self.previewError(false);
             self._renderTablePreview(data['table']);
-            self._renderChartPreview(data['table']);
-            self._renderMapPreview(data['map_config'], data["map_data"]);
+            self._renderChartPreview(data['chart_configs'], data['aaData']);
+            self._renderMapPreview(data['map_config'], data["aaData"]);
         };
 
-        self._renderMapPreview = function (mapSpec, mapData) {
+        self._renderMapPreview = function (mapSpec, aaData) {
             if (self.reportType() === "map" && mapSpec) {
                 self.displayMapPreview(true);
                 mapSpec.mapboxAccessToken = self._mapboxAccessToken;
                 var render = hqImport('reports_core/js/maps.js').render;
-                render(mapSpec, mapData.aaData, $("#map-preview-container"));
+                render(mapSpec, aaData, $("#map-preview-container"));
             } else {
                 self.displayMapPreview(false);
             }
         };
 
-        self._renderChartPreview = function (data) {
+        self._renderChartPreview = function (chartSpecs, aaData) {
             var charts = hqImport('reports_core/js/charts.js');
-            if (self.selectedChart() !== "none") {
-                if (data) {
-                    // data looks like headers, followed by rows of values
-                    // aaData needs to be a list of dictionaries
-                    var columnNames = _.map(self.columnList.columns(), function (c) { return c.property(); });
-                    // ^^^ That's not going to work with multiple "Count Per Choice" values, which expand
-                    // TODO: Resolve selectedColumns vs. data[0]
-                    var aaData = _.map(
-                        data.slice(1), // skip the headers, iterate the rows of values
-                        function (row) { return _.object(_.zip(columnNames, row)); }
-                    );
+            if (chartSpecs !== null && chartSpecs.length > 0) {
+                if (aaData.length > 25) {
+                    $("#chart-warning").removeClass("hide");
+                    charts.clear($("#chart-container"))
                 } else {
-                    var aaData = [];
-                }
-                var aggColumns = _.filter(self.columnList.columns(), function (c) {
-                    return c.calculation() !== "Group By";
-                });
-                var groupByNames = _.map(
-                    _.filter(self.columnList.columns(), function (c) {
-                        return c.calculation() === "Group By";
-                    }),
-                    function (c) { return c.property(); }
-                );
-                if (aggColumns.length > 0 && groupByNames.length > 0) {
-                    var chartSpecs;
-                    if (self.selectedChart() === "bar") {
-                        var aggColumnsSpec = _.map(aggColumns, function (c) {
-                            return {"display": c.displayText(), "column_id": c.property()};
-                        });
-                        chartSpecs = [{
-                            "type": "multibar",
-                            "chart_id": "5221328456932991781",
-                            "title": null,  // Using the report title looks dumb in the UI; just leave it out.
-                            "y_axis_columns": aggColumnsSpec,
-                            "x_axis_column": groupByNames[0],
-                            "is_stacked": false,
-                            "aggregation_column": null,
-                        }];
-                    } else {
-                        // pie
-                        chartSpecs = [{
-                            "type": "pie",
-                            "chart_id": "-6021326752156782988",
-                            "title": null,
-                            "value_column": aggColumns[0].property(),
-                            "aggregation_column": groupByNames[0],
-                        }];
-                    }
-                    charts.render(chartSpecs, aaData, $('#chart'));
+                    $("#chart-warning").addClass("hide");
+                    charts.render(chartSpecs, aaData, $("#chart"));
                 }
             }
         };

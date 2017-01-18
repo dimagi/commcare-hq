@@ -566,7 +566,8 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
                 return {
                     "table": export_table[0][1],
                     "map_config": view.spec.map_config,
-                    "map_data": datatables_data,
+                    "chart_configs": view.spec.charts,
+                    "aaData": datatables_data['aaData'],
                 }
 
 
