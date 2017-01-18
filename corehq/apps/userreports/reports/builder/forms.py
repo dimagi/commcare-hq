@@ -1284,10 +1284,12 @@ class ConfigureTableReportForm(ConfigureListReportForm):
         Return True if this is a chart report aggregated by a multiselect question.
         The data sources for these sorts of reports are handled differently than other reports.
         """
-        if self.cleaned_data['chart'] in ("pie", "bar"):
-            agg_property = self.data_source_properties[self.cleaned_data['group_by'][0]]
-            return agg_property.type == "question" and agg_property.source['type'] == "MSelect"
+        # Disabling this feature for now
         return False
+        # if self.cleaned_data['chart'] in ("pie", "bar"):
+        #     agg_property = self.data_source_properties[self.cleaned_data['group_by'][0]]
+        #     return agg_property.type == "question" and agg_property.source['type'] == "MSelect"
+        # return False
 
     @property
     def _report_columns(self):
