@@ -664,10 +664,7 @@ class PhoneNumber(UUIDGeneratorMixin, models.Model):
         """
         Returns all phone numbers belonging to the given contact.
         """
-        # Inserting a temporary comment here to change the quickcache hash.
-        # This can be removed once https://github.com/dimagi/commcare-hq/pull/14506
-        # is released everywhere.
-        return cls.objects.filter(owner_id=owner_id)
+        return list(cls.objects.filter(owner_id=owner_id))
 
     @classmethod
     def _clear_quickcaches(cls, owner_id, phone_number, old_owner_id=None, old_phone_number=None):

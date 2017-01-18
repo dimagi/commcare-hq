@@ -112,9 +112,9 @@ class CommCareMobileContactMixin(object):
 
     def get_two_way_numbers(self):
         from corehq.apps.sms.models import PhoneNumber
+        two_way_entries = [p for p in PhoneNumber.by_owner_id(self.get_id) if p.is_two_way]
         return {
-            p.phone_number: p
-            for p in PhoneNumber.by_owner_id(self.get_id).filter(is_two_way=True)
+            p.phone_number: p for p in two_way_entries
         }
 
     @classmethod

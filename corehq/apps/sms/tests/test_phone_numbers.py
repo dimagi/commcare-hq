@@ -22,7 +22,7 @@ class PhoneNumberCacheClearTestCase(TestCase):
     def assertNoMatch(self, phone_search, suffix_search, owner_id_search):
         self.assertIsNone(PhoneNumber.get_two_way_number(phone_search))
         self.assertIsNone(PhoneNumber.get_two_way_number_by_suffix(suffix_search))
-        self.assertEqual(PhoneNumber.by_owner_id(owner_id_search).count(), 0)
+        self.assertEqual(PhoneNumber.by_owner_id(owner_id_search), [])
 
     def assertPhoneNumbersEqual(self, phone1, phone2):
         for field in phone1._meta.fields:
@@ -614,7 +614,7 @@ class SQLPhoneNumberTestCase(TestCase):
         # test cache clear
         number.owner_id = 'owner2'
         number.save()
-        self.assertEqual(PhoneNumber.by_owner_id('owner1').count(), 0)
+        self.assertEqual(PhoneNumber.by_owner_id('owner1'), [])
         [lookup] = PhoneNumber.by_owner_id('owner2')
         self.assertEqual(lookup, number)
 
@@ -643,15 +643,15 @@ class SQLPhoneNumberTestCase(TestCase):
                 self.create_case_contact('9990002') as case2, \
                 self.create_case_contact('9990003') as case3:
 
-            self.assertEqual(PhoneNumber.by_owner_id(case1.case_id).count(), 1)
-            self.assertEqual(PhoneNumber.by_owner_id(case2.case_id).count(), 1)
-            self.assertEqual(PhoneNumber.by_owner_id(case3.case_id).count(), 1)
-            self.assertEqual(PhoneNumber.count_by_domain(self.domain), 3)
+            self.assertEqual(len(PhoneNumber.by_owner_id(case1.case_id)), 1)
+            self.assertEqual(len(PhoneNumber.by_owner_id(case2.case_id)), 1)
+            self.assertEqual(len(PhoneNumber.by_owner_id(case3.case_id)), 1)
+            self.assertEqual(len(PhoneNumber.count_by_domain(self.domain), 3)
 
             delete_phone_numbers_for_owners([case2.case_id, case3.case_id])
-            self.assertEqual(PhoneNumber.by_owner_id(case1.case_id).count(), 1)
-            self.assertEqual(PhoneNumber.by_owner_id(case2.case_id).count(), 0)
-            self.assertEqual(PhoneNumber.by_owner_id(case3.case_id).count(), 0)
+            self.assertEqual(len(PhoneNumber.by_owner_id(case1.case_id)), 1)
+            self.assertEqual(len(PhoneNumber.by_owner_id(case2.case_id)), 0)
+            self.assertEqual(len(PhoneNumber.by_owner_id(case3.case_id)), 0)
             self.assertEqual(PhoneNumber.count_by_domain(self.domain), 1)
 
     def test_verify_uniqueness(self):
