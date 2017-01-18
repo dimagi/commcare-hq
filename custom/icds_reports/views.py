@@ -102,7 +102,8 @@ def get_tableau_access_token(tableau_user, client_ip):
     """
     r = requests.post(
         const.TABLEAU_TICKET_URL,
-        data={'username': tableau_user, 'client_ip': client_ip}
+        data={'username': tableau_user, 'client_ip': client_ip},
+        verify=False
     )
 
     if r.status_code == 200:
