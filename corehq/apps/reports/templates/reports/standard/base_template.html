@@ -119,15 +119,15 @@
 {% endblock %}
 
 {% block page_navigation %}
-    <button type="button" class="pull-right btn btn-default visible-xs" data-toggle="offcanvas" aria-expanded="false" aria-controls="navbar">
-        <i class="fa fa-navicon"></i>
+    <button type="button" class="pull-right btn btn-invisible visible-xs" data-toggle="offcanvas" aria-expanded="false" aria-controls="navbar">
+        <i class="fa fa-ellipsis-v"></i>
     </button>
 {{ block.super }}
 {% endblock %}
 
 {% block pre_page_content %}{{ block.super }}
-    <button id="sidebar-menu" type="button" class="pull-left btn btn-default visible-xs" data-toggle="offcanvas" aria-expanded="false" aria-controls="navbar">
-        <i class="fa fa-navicon"></i>
+    <button id="sidebar-menu" type="button" class="pull-left btn btn-invisible visible-xs" data-toggle="offcanvas" aria-expanded="false" aria-controls="navbar">
+        <i class="fa fa-ellipsis-v"></i>
     </button>
 {% endblock %}
 
