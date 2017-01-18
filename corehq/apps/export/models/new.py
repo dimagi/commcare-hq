@@ -19,6 +19,7 @@ from corehq.apps.userreports.expressions.getters import NestedDictGetter
 from corehq.apps.app_manager.const import STOCK_QUESTION_TAG_NAMES
 from corehq.apps.app_manager.dbaccessors import (
     get_built_app_ids_with_submissions_for_app_id,
+    get_built_app_ids_with_submissions_for_app_ids_and_versions,
     get_all_built_app_ids_and_versions,
     get_latest_app_ids_and_versions,
     get_app_ids_in_domain,
@@ -1490,15 +1491,10 @@ class CaseExportDataSchema(ExportDataSchema):
 
     @staticmethod
     def _get_app_build_ids_to_process(domain, app_id, last_app_versions):
-        app_build_verions = get_all_built_app_ids_and_versions(domain)
-        # Filter by current app id
-        app_build_verions = filter(
-            lambda app_build_version:
-                last_app_versions.get(app_build_version.app_id, -1) < app_build_version.version,
-            app_build_verions
+        return get_built_app_ids_with_submissions_for_app_ids_and_versions(
+            domain,
+            last_app_versions
         )
-        # Map to all build ids
-        return map(lambda app_build_version: app_build_version.build_id, app_build_verions)
 
     @staticmethod
     def get_latest_export_schema(domain, app_id, case_type):
