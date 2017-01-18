@@ -2,85 +2,82 @@
 var reportBuilder = function () {
     var self = this;
 
-    self.ReportColumn = function (column, parent) {
+    var PropertyList = hqImport('userreports/js/builder_view_models.js').PropertyList;
+    var PropertyListItem = hqImport('userreports/js/builder_view_models.js').PropertyListItem;
+
+    var ColumnProperty = function (getDefaultDisplayText, getPropertyObject, reorderColumns, hasDisplayText) {
+        PropertyListItem.call(this, getDefaultDisplayText, getPropertyObject, hasDisplayText);
         var self = this;
-
-        self._defaultAggregation = function () {
-            return column["groupByOrAggregation"] || (self.isNonNumeric ? 'expand' : 'sum');
-        };
-
-        self.columnId = column["column_id"];
-        self.name = column["name"];
-        self.label = column["label"];
-        self.isNonNumeric = column["is_non_numeric"];
-
-        self.groupByOrAggregation = ko.observable(self._defaultAggregation());
-        self.groupByOrAggregation.subscribe(function (newValue) {
-            self._reorderSelectedColumns(newValue);
-            parent.refreshPreview();
+        this.inputBoundCalculation = ko.computed({
+            read: function () {
+                return self.calculation();
+            },
+            write: function (value) {
+                self.calculation(value);
+                if (window._bindingsApplied){
+                    //reorderColumns();
+                };
+            },
+            owner: this
         });
-
-        self.isGroupByColumn = ko.pureComputed(function () {
-            return self.groupByOrAggregation() === "groupBy"
-        });
-        self._previousGroupBy = null;
-        self.groupByOrAggregation.subscribe(function (oldValue) {
-            self._previousGroupBy = oldValue;
-        }, null, "beforeChange");
-
-
-        self.aggregation = ko.pureComputed(function () {
-            if (self.groupByOrAggregation() === 'groupBy') {
-                return null;
-            }
-            return self.groupByOrAggregation();
-        });
-
-        self._reorderSelectedColumns = function (newValue) {
-            var index = parent.selectedColumns.indexOf(self);
-            var lookAhead = index;
-            var oldValueWasGroupBy = self._previousGroupBy === "groupBy";
-
-            if (newValue === "groupBy") {
-                if (oldValueWasGroupBy === false) {
-                    // Move group-by column before aggregated columns
-                    while (lookAhead > 0 && !parent.selectedColumns()[lookAhead - 1].isGroupByColumn()) {
-                        lookAhead--;
-                    }
-                }
-            } else {
-                if (oldValueWasGroupBy === true) {
-                    // Move aggregated column after group-by columns
-                    var end = parent.selectedColumns().length - 1;
-                    while (lookAhead < end && parent.selectedColumns()[lookAhead + 1].isGroupByColumn()) {
-                        lookAhead++;
-                    }
-                }
-            }
-
-            if (lookAhead !== index) {
-                parent.selectedColumns.splice(index, 1);  // Remove self
-                parent.selectedColumns.splice(lookAhead, 0, self);  // Insert self
-            }
-        };
-
-        self.notifyButton = function () {
-            parent.saveButton.fire('change');
-        };
-
-        self.serialize = function (reportAggEnabled) {
-            return {
-                "column_id": self.columnId,
-                "name": self.name,
-                "label": self.label,
-                "is_non_numeric": self.isNonNumeric,
-                "is_group_by_column": reportAggEnabled ? self.isGroupByColumn() : false,
-                "aggregation": reportAggEnabled ? self.aggregation() : null,
-            };
-        };
-
-        return self;
     };
+    ColumnProperty.prototype = Object.create(PropertyListItem.prototype);
+    ColumnProperty.prototype.constructor = ColumnProperty;
+
+
+    var ColumnList = function(options) {
+        PropertyList.call(this, options);
+        this.newProperty = ko.observable(null);
+    };
+    ColumnList.prototype = Object.create(PropertyList.prototype);
+    ColumnList.prototype.constructor = ColumnList;
+    ColumnList.prototype._createListItem = function () {
+        return new ColumnProperty(
+            this.getDefaultDisplayText.bind(this),
+            this.getPropertyObject.bind(this),
+            this.reorderColumns.bind(this),
+            this.hasDisplayCol
+        );
+    };
+    ColumnList.prototype.buttonHandler = function () {
+        if (this.newProperty()) {
+            var item = this._createListItem();
+            item.property(this.newProperty());
+            item.calculation(item.getDefaultCalculation());
+            this.newProperty(null);
+            this.columns.push(item);
+        }
+    };
+    ColumnList.prototype.reorderColumns = function () {
+        var items = {};
+
+        // In the initialization of this.columns, reorderColumns gets called (because we set the calculation of
+        // each ColumnProperty), but we don't want this function to run until the this.columns exists.
+        if (this.columns) {
+            this.columns().forEach(function (v, i) {
+                items[[v.property(), v.calculation(), v.displayText()]] = i;
+            });
+
+            var isGroupBy = function (column) {
+                return column.calculation() === "Group By";
+            };
+            var index = function (column) {
+                return items[[column.property(), column.calculation(), column.displayText()]];
+            };
+            var compare = function (first, second) {
+                // return negative if first is smaller than second
+                if (isGroupBy(first) !== isGroupBy(second)) {
+                    return isGroupBy(first) ? -1 : 1;
+                }
+                if (index(first) !== index(second)) {
+                    return index(first) < index(second) ? -1 : 1;
+                }
+                return 0
+            };
+            this.columns.sort(compare);
+        }
+    };
+
 
     /**
      * ReportConfig is a view model for managing report configuration
@@ -88,19 +85,7 @@ var reportBuilder = function () {
     self.ReportConfig = function (config) {
         var self = this;
 
-        /**
-         * Populate self.selectedColumns
-         */
-        self._initializeSelectedColumns = function() {
-            // Start with just 5 indicators as an example if we aren't editing an existing report with columns
-            var _selected_columns = config['initialColumns'] || self.columnOptions.slice(0, 5);
-            self.selectedColumns(_.map(
-                _selected_columns,
-                function (column) {
-                    return new reportBuilder.ReportColumn(column, self);
-                }
-            ));
-        };
+        self._mapboxAccessToken = config['mapboxAccessToken'];
 
         self._app = config['app'];
         self._sourceType = config['sourceType'];
@@ -109,36 +94,36 @@ var reportBuilder = function () {
         self.existingReportId = config['existingReport'];
 
         self.columnOptions = config["columnOptions"];  // Columns that could be added to the report
-        self.dataSourceUrl = config["dataSourceUrl"];  // Fetch the preview data asynchronously.
-
-
-        self.selectedColumns = ko.observableArray();
-        self._initializeSelectedColumns();
-        self.selectedColumns.subscribe(function (newValue) {
-            self.refreshPreview(newValue);
-            self.saveButton.fire('change');
-        });
+        self.reportPreviewUrl = config["reportPreviewUrl"];  // Fetch the preview data asynchronously.
 
         self.reportTypeListLabel = (config['sourceType'] === "case") ? "Case List" : "Form List";
         self.reportTypeAggLabel = (config['sourceType'] === "case") ? "Case Summary" : "Form Summary";
         self.reportType = ko.observable(config['existingReportType'] || 'list');
         self.reportType.subscribe(function (newValue) {
             var wasAggregationEnabled = self.isAggregationEnabled();
-            self.isAggregationEnabled(newValue === "agg");
-            self.previewChart(newValue === "agg" && self.selectedChart() !== "none");
+            self.isAggregationEnabled(newValue === "table");
+            self.previewChart(newValue === "table" && self.selectedChart() !== "none");
             if (self.isAggregationEnabled() && !wasAggregationEnabled) {
-                // Group by the first report column by default
-                if (self.selectedColumns().length > 0) {
-                    self.selectedColumns()[0].groupByOrAggregation("groupBy");
-                }
+                self._suspendPreviewRefresh = true;
+
+                self.columnList.columns().forEach(function(val, index) {
+                    if (index === 0) {
+                        val.calculation("Group By");
+                    } else {
+                        if (val.property() === "deviceID") {
+                            console.log(val.property());
+                            console.log(val.getDefaultCalculation());
+                        }
+                        val.calculation(val.getDefaultCalculation());
+                    }
+                });
+                self._suspendPreviewRefresh = false;
             }
             self.refreshPreview();
             self.saveButton.fire('change');
         });
 
-        self.isAggregationEnabled = ko.observable(self.reportType() === "agg");
-
-        self.newColumnName = ko.observable('');
+        self.isAggregationEnabled = ko.observable(self.reportType() === "table");
 
         self.selectedChart = ko.observable('none');
         self.selectedChart.subscribe(function (newValue) {
@@ -172,6 +157,19 @@ var reportBuilder = function () {
             }
         };
 
+        var _getSelectableReportColumnOptions = function(reportColumnOptions, dataSourceIndicators) {
+            var utils = hqImport('userreports/js/utils.js');
+            if (self._optionsContainQuestions(dataSourceIndicators)) {
+                return _.compact(_.map(
+                    reportColumnOptions, utils.convertReportColumnOptionToQuestionsSelectFormat
+                ));
+            } else {
+                return _.compact(_.map(
+                    reportColumnOptions, utils.convertReportColumnOptionToSelect2Format
+                ));
+            }
+        };
+
         /**
          * Return true if the given data source indicators contain question indicators (as opposed to just meta
          * properties or case properties)
@@ -184,9 +182,30 @@ var reportBuilder = function () {
             });
         };
 
-        self.optionsContainQuestions = self._optionsContainQuestions(config['dataSourceProperties']);
+        self.location_field = ko.observable(config['initialLocation']);
+        self.location_field.subscribe(function () {
+            self.refreshPreview();
+        });
 
-        var PropertyList = hqImport('userreports/js/builder_view_models.js').PropertyList;
+        self.optionsContainQuestions = self._optionsContainQuestions(config['dataSourceProperties']);
+        self.selectablePropertyOptions = _getSelectableProperties(config['dataSourceProperties']);
+        self.selectableReportColumnOptions = _getSelectableReportColumnOptions(self.columnOptions, config['dataSourceProperties']);
+
+        self.columnList = new ColumnList({
+            hasFormatCol: false,
+            hasCalculationCol: self.isAggregationEnabled,
+            initialCols: config['initialColumns'],
+            reportType: self.reportType(),
+            propertyOptions: self.columnOptions,
+            selectablePropertyOptions: self.selectableReportColumnOptions,
+        });
+        window.columnList = self.columnList;
+
+        self.columnList.serializedProperties.subscribe(function (newValue) {
+            self.refreshPreview(newValue);
+            self.saveButton.fire('change');
+        });
+
         self.filterList = new PropertyList({
             hasFormatCol: self._sourceType === "case",
             hasCalculationCol: false,
@@ -198,7 +217,7 @@ var reportBuilder = function () {
             formatHelpText: django.gettext('What type of property is this filter?<br/><br/><strong>Date</strong>: Select this if the property is a date.<br/><strong>Choice</strong>: Select this if the property is text or multiple choice.'),
             reportType: self.reportType(),
             propertyOptions: config['dataSourceProperties'],
-            selectablePropertyOptions: _getSelectableProperties(config['dataSourceProperties']),
+            selectablePropertyOptions: self.selectablePropertyOptions,
         });
         self.filterList.serializedProperties.subscribe(function () {
             self.saveButton.fire("change");
@@ -216,37 +235,77 @@ var reportBuilder = function () {
             filterValueHelpText: django.gettext('What value or date range must the property be equal to?'),
             reportType: self.reportType(),
             propertyOptions: config['dataSourceProperties'],
-            selectablePropertyOptions: _getSelectableProperties(config['dataSourceProperties']),
+            selectablePropertyOptions: self.selectablePropertyOptions,
         });
         self.defaultFilterList.serializedProperties.subscribe(function () {
             self.saveButton.fire("change");
         });
-
-        self.refreshPreview = function (columns) {
-            columns = typeof columns !== "undefined" ? columns : self.selectedColumns();
-            $('#preview').hide();
-            if (columns.length === 0) {
-                return;  // Nothing to do.
+        self.previewError = ko.observable(false);
+        self._suspendPreviewRefresh = false;
+        self.refreshPreview = function (serializedColumns) {
+            if (!self._suspendPreviewRefresh) {
+                serializedColumns = typeof serializedColumns !== "undefined" ? serializedColumns : self.columnList.serializedProperties();
+                $('#preview').hide();
+                if (serializedColumns === "[]") {
+                    return;  // Nothing to do.
+                }
+                $.ajax({
+                    url: self.reportPreviewUrl,
+                    type: 'post',
+                    contentType: 'application/json; charset=utf-8',
+                    data: JSON.stringify(Object.assign(
+                        self.serialize(),
+                        {
+                            'app': self._app,
+                            'source_type': self._sourceType,
+                            'source_id': self._sourceId,
+                        }
+                    )),
+                    dataType: 'json',
+                    success: self.renderReportPreview,
+                    error: function () {
+                        self.previewError(true);
+                    },
+                });
             }
-            $.ajax({
-                url: self.dataSourceUrl,
-                type: 'post',
-                contentType: 'application/json; charset=utf-8',
-                data: JSON.stringify({
-                    'columns': _.map(columns, function (c) { return c.serialize(self.isAggregationEnabled()); }),
-                    'aggregate': self.isAggregationEnabled(),
-                    'app': self._app,
-                    'source_type': self._sourceType,
-                    'source_id': self._sourceId,
-                }),
-                dataType: 'json',
-                success: self.renderReportPreview,
-            });
         };
 
-        self.renderReportPreview = function (data) {
-            var charts = hqImport('reports_core/js/charts.js');
+        // true if a map is being displayed. This is different than reportType === "map", because this is
+        // only true if the preview function returned a mapSpec.
+        self.displayMapPreview = ko.observable(false);
 
+        self.renderReportPreview = function (data) {
+            self.previewError(false);
+            self._renderTablePreview(data['table']);
+            self._renderChartPreview(data['chart_configs'], data['aaData']);
+            self._renderMapPreview(data['map_config'], data["aaData"]);
+        };
+
+        self._renderMapPreview = function (mapSpec, aaData) {
+            if (self.reportType() === "map" && mapSpec) {
+                self.displayMapPreview(true);
+                mapSpec.mapboxAccessToken = self._mapboxAccessToken;
+                var render = hqImport('reports_core/js/maps.js').render;
+                render(mapSpec, aaData, $("#map-preview-container"));
+            } else {
+                self.displayMapPreview(false);
+            }
+        };
+
+        self._renderChartPreview = function (chartSpecs, aaData) {
+            var charts = hqImport('reports_core/js/charts.js');
+            if (chartSpecs !== null && chartSpecs.length > 0) {
+                if (aaData.length > 25) {
+                    $("#chart-warning").removeClass("hide");
+                    charts.clear($("#chart-container"))
+                } else {
+                    $("#chart-warning").addClass("hide");
+                    charts.render(chartSpecs, aaData, $("#chart"));
+                }
+            }
+        };
+
+        self._renderTablePreview = function (data) {
             if (self.dataTable) {
                 self.dataTable.destroy();
             }
@@ -260,83 +319,7 @@ var reportBuilder = function () {
                 "data": data.slice(1),
             });
             $('#preview').show();
-
-            if (self.selectedChart() !== "none") {
-                if (data) {
-                    // data looks like headers, followed by rows of values
-                    // aaData needs to be a list of dictionaries
-                    var columnNames = _.map(self.selectedColumns(), function (c) { return c.name; });
-                    // ^^^ That's not going to work with multiple "Count Per Choice" values, which expand
-                    // TODO: Resolve selectedColumns vs. data[0]
-                    var aaData = _.map(
-                        data.slice(1), // skip the headers, iterate the rows of values
-                        function (row) { return _.object(_.zip(columnNames, row)); }
-                    );
-                } else {
-                    var aaData = [];
-                }
-
-                var aggColumns = _.filter(self.selectedColumns(), function (c) {
-                    return self.isAggregationEnabled && !c.isGroupByColumn();
-                });
-                var groupByNames = _.map(
-                    _.filter(self.selectedColumns(), function (c) {
-                        return c.isGroupByColumn() === true;
-                    }),
-                    function (c) { return c.name; }
-                );
-                if (aggColumns.length > 0 && groupByNames.length > 0) {
-                    var chartSpecs;
-                    if (self.selectedChart() === "bar") {
-                        var aggColumnsSpec = _.map(aggColumns, function (c) {
-                            return {"display": c.label, "column_id": c.name};
-                        });
-                        chartSpecs = [{
-                            "type": "multibar",
-                            "chart_id": "5221328456932991781",
-                            "title": null,  // Using the report title looks dumb in the UI; just leave it out.
-                            "y_axis_columns": aggColumnsSpec,
-                            "x_axis_column": groupByNames[0],
-                            "is_stacked": false,
-                            "aggregation_column": null,
-                        }];
-                    } else {
-                        // pie
-                        chartSpecs = [{
-                            "type": "pie",
-                            "chart_id": "-6021326752156782988",
-                            "title": null,
-                            "value_column": aggColumns[0].name,
-                            "aggregation_column": groupByNames[0],
-                        }];
-                    }
-                    charts.render(chartSpecs, aaData, $('#chart'));
-                }
-            }
         };
-
-        self.removeColumn = function (column) {
-            self.selectedColumns.remove(column);
-        };
-
-        self.addColumn = function () {
-            var column = _.find(self.columnOptions, function (c) {
-                return c["name"] === self.newColumnName();
-            });
-            self.selectedColumns.push(new reportBuilder.ReportColumn(column, self));
-            self.newColumnName('');
-        };
-
-        self.otherColumns = ko.computed(function () {
-            var names = _.map(self.selectedColumns(), function (c) { return c.name; });
-            return _.filter(self.columnOptions, function (c) {
-                return !_.contains(names, c["name"]);
-            });
-        });
-
-        self.moreColumns = ko.computed(function () {
-            return self.otherColumns().length > 0;
-        });
 
         self.validate = function () {
             var isValid = true;
@@ -362,7 +345,8 @@ var reportBuilder = function () {
                 "report_type": self.reportType(),
                 "aggregate": self.isAggregationEnabled(),
                 "chart": self.selectedChart(),
-                "columns": _.map(self.selectedColumns(), function (c) { return c.serialize(self.isAggregationEnabled()); }),
+                "columns": JSON.parse(self.columnList.serializedProperties()),
+                "location": self.location_field(),
                 "default_filters": JSON.parse(self.defaultFilterList.serializedProperties()),
                 "user_filters": JSON.parse(self.filterList.serializedProperties()),
             };
@@ -405,7 +389,7 @@ var reportBuilder = function () {
                 $.ajax({
                     url: window.location.href,
                     type: "POST",
-                    data: JSON.stringify(self.serialize()),
+                    data: JSON.stringify(Object.assign(self.serialize(), {'delete_temp_data_source': true})),
                     success: function (data) {
                         // Redirect to the newly-saved report
                         self.saveButton.setState('saved');
@@ -416,7 +400,13 @@ var reportBuilder = function () {
             }
         });
 
-        self.refreshPreview(self.selectedColumns());
+        if (!self.existingReportId) {
+            self.saveButton.fire('change');
+        }
+        self.refreshPreview();
+        if (config['initialChartType']) {
+            self.selectedChart(config['initialChartType']);
+        }
         return self;
     };
 

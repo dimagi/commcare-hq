@@ -2,12 +2,21 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
+{% block head %}{{ block.super }}
+    <style>
+        .map-preview {
+            height: 500px;
+        }
+    </style>
+    {% include 'analytics/fullstory.html' %}
+{% endblock %}
+
 {% block js %}{{ block.super }}
     <script src="{% static 'style/js/main.js' %}"></script>
     <script src="{% static 'app_manager/js/case-knockout-bindings.js' %}"></script>
     <script src="{% static 'userreports/js/constants.js' %}"></script>
-    <script src="{% static 'userreports/js/report_config.js' %}"></script>
     <script src="{% static 'userreports/js/builder_view_models.js' %}"></script>
+    <script src="{% static 'userreports/js/report_config.js' %}"></script>
     <script src="{% static 'userreports/js/utils.js' %}"></script>
     <script src="{% static 'style/js/hq.helpers.js' %}"></script>
 {% endblock %}
@@ -42,7 +51,7 @@
       </div>
       <div>
         <inline-edit params="
-          value: {% if existing_report %}'{{ existing_report.description|escapejs }}'{% else %}null{% endif %},
+          value: {% if report_description %}'{{ report_description|escapejs }}'{% else %}null{% endif %},
           id: 'report-description',
           placeholder: '{% trans "Enter report description here"|escapejs %}',
           readOnlyClass: 'app-comment',
@@ -50,8 +59,6 @@
         "></inline-edit>
       </div>
     </div>
-
-    <!-- TODO: <div>Enter a description here</div> -->
 
     <div>
       <h3>{% trans 'Type of Report' %}</h3>
@@ -62,9 +69,9 @@
                  data-bind="checked: reportType, checkedValue: 'list'">
           <i class="fa fa-bars"></i> <span data-bind="text: reportTypeListLabel"></span>
         </label>
-        <label class="btn btn-default" data-bind="css: {'active': reportType() === 'agg'}">
+        <label class="btn btn-default" data-bind="css: {'active': reportType() === 'table'}">
           <input type="radio" name="reportTypes" id="reportTypeAgg" style="display: none;"
-                 data-bind="checked: reportType, checkedValue: 'agg'">
+                 data-bind="checked: reportType, checkedValue: 'table'">
           <i class="fa fa-filter"></i> <span data-bind="text: reportTypeAggLabel"></span>
         </label>
         <label class="btn btn-default" data-bind="css: {'active': reportType() === 'map'}">
@@ -81,63 +88,12 @@
       <legend>Configure Report</legend>
 
       <div id="columns">
-        <h3 data-bind="text: reportType() === 'agg' ?  '{% trans 'Indicators' %}' : '{% trans 'Columns' %}'">
+        <h3 data-bind="text: reportType() === 'table' ?  '{% trans 'Indicators' %}' : '{% trans 'Columns' %}'">
             {% trans 'Columns' %}
         </h3>
-        <table class="table">
-          <thead data-bind="fadeVisible: isAggregationEnabled">
-            <tr>
-              <th>&nbsp;</th>
-              <th>{% trans 'Indicator' %}</th>
-              <th>{% trans 'Format' %}</th>
-              <th>&nbsp;</th>
-            </tr>
-          </thead>
-          <tbody data-bind="sortable: {
-                    data: selectedColumns,
-                    afterAdd: function (elem) { $(elem).hide().fadeIn() },
-                    beforeRemove: function (elem) { $(elem).fadeOut() }
-                 }
-            ">
-            <tr data-bind="attr: {'data-order': _sortableOrder}">
-              <td>
-                <i class="grip sortable-handle" style="cursor: move;"
-                   data-bind="css: COMMCAREHQ.icons.GRIP + ' hq-icon-full'">
-                </i>
-              </td>
-              <td data-bind="text: label"></td>
-              <td>
-                <select data-bind="fadeVisible: $parent.isAggregationEnabled,
-                                   value: groupByOrAggregation">
-                  <option value="groupBy">{% trans 'Group By' %}</option>
-                  <option value="expand">{% trans 'Count per Choice' %}</option>
-                  <!-- ko if: !isNonNumeric -->
-                  <option value="sum">{% trans 'Sum' %}</option>
-                  <option value="avg">{% trans 'Average' %}</option>
-                  <!-- /ko -->
-                </select>
-              </td>
-              <td>
-                <button class="btn btn-danger"
-                        data-bind="click: $parent.removeColumn"><i class="fa fa-remove"></i></button>
-              </td>
-            </tr>
-          </tbody>
-          <tbody>
-            <tr>
-              <td>&nbsp;</td>
-              <td>
-                <select data-bind="options: columnOptions,
-                                   optionsText: 'label',
-                                   optionsValue: 'name',
-                                   value: newColumnName">
-                </select>
-              </td>
-              <td></td>
-              <td><button class="btn btn-primary" data-bind="click: addColumn"><i class="fa fa-plus"></i></button></td>
-            </tr>
-          </tbody>
-        </table>
+        <div data-bind="with: columnList">
+          {% include "userreports/partials/column_list_configuration.html" %}
+        </div>
       </div>
 
       <div data-bind="with: filterList">
@@ -206,11 +162,44 @@
                 <option value="pie">{% trans 'Pie' %}</option>
             </select>
         </div>
-
-        <div id="chart"></div>
+        <div id="chart-warning" class="alert alert-warning hide">
+          {% blocktrans %}
+            Charts cannot be displayed with more than 25 categories.
+            Once you Save and View report, you will be able to filter the data to limit the number of rows.
+          {% endblocktrans %}
+        </div>
+        <div id="chart" class="fs-hide"></div>
       </div>
-      <div class="well">
-        <h3>{% trans 'Data Table' %}</h3>
+
+      <div class="well" id="map-preview" data-bind="fadeVisible: reportType() === 'map'">
+        <h3 style="display: inline-block">{% trans 'Map Preview' %}</h3>
+        <div>
+          Location field:
+          <!-- ko ifnot: optionsContainQuestions -->
+          <input type="text" class="form-control" data-bind="select2: selectablePropertyOptions, value: location_field">
+          <!-- /ko -->
+          <!-- ko if: optionsContainQuestions -->
+          <input class="form-control" type="hidden" data-bind="
+            questionsSelect: selectablePropertyOptions,
+            value: location_field,
+          "/>
+          <!-- /ko -->
+        </div>
+        <br/>
+        <div id="map-preview-container" class="fs-hide" data-bind="css: {'map-preview': displayMapPreview}"></div>
+        <div id="zoomtofit" class="leaflet-control-layers fs-hide" style="display: none;">
+            <div id="zoomtofit-target" class="zoomtofit leaflet-control-layers-toggle" title="{% trans "Fit all data into view" %}"></div>
+        </div>
+      </div>
+
+      <div class="well fs-hide">
+        <h3 data-bind="visible: !previewError()">{% trans 'Data Table' %}</h3>
+        <p data-bind="visible: previewError">
+          {% blocktrans %}
+            There was an error rendering your report preview. Please adjust your configuration to try again.
+            If the issue persists, please report an issue.
+          {% endblocktrans %}
+        </p>
         <table id="preview" class="table"></table>
       </div>
     </div>
@@ -234,14 +223,18 @@
             "app": {{ application|JSON }},
             "sourceId": {{ source_id|JSON }},
             "sourceType": "{{ source_type }}",
-            "dataSourceUrl": "{{ data_source_url }}",
+            "reportPreviewUrl": "{{ report_preview_url }}",
             "existingReport": {% if existing_report %}{{ existing_report.get_id|JSON }}{% else %}null{% endif %},
             "existingReportType": {{ existing_report_type|JSON }},
             "dataSourceProperties": {{ data_source_properties|JSON }},
             "initialDefaultFilters": {{ initial_default_filters|JSON }},
             "initialUserFilters": {{ initial_user_filters|JSON }},
+            "initialLocation": {{ initial_location|JSON }},
+            "initialChartType": {{ initial_chart_type|JSON }},
+            "mapboxAccessToken": {{ MAPBOX_ACCESS_TOKEN|JSON }},
         });
         $("#reportConfig").koApplyBindings(reportConfig)
+        window._bindingsApplied = true;
     });
 
 </script>

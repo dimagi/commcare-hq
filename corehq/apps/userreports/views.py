@@ -6,11 +6,9 @@ import json
 import os
 import tempfile
 import uuid
-from itertools import chain
 
 from django.conf import settings
 from django.contrib import messages
-from django.core.exceptions import ValidationError
 from django.http import HttpResponseRedirect, HttpResponse
 from django.http.response import Http404
 from django.shortcuts import redirect
@@ -30,9 +28,6 @@ from corehq.apps.analytics.tasks import update_hubspot_properties
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
-from corehq.apps.userreports.reports.builder import get_filter_format_from_question_type
-from corehq.apps.userreports.reports.builder.columns import ColumnOption, MultiselectQuestionColumnOption, \
-    QuestionColumnOption
 from corehq.apps.userreports.specs import FactoryContext
 from corehq.util import reverse
 from corehq.util.quickcache import quickcache
@@ -84,20 +79,21 @@ from corehq.apps.userreports.models import (
     id_is_static,
     DataSourceMeta,
     DataSourceBuildInformation,
-    ReportMeta,
 )
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.apps.userreports.reports.builder.forms import (
     DataSourceForm,
     ConfigureMapReportForm,
     DataSourceBuilder,
-    REPORT_BUILDER_FILTER_TYPE_MAP, DefaultFilterViewModel, UserFilterViewModel)
+    ConfigureListReportForm,
+    ConfigureTableReportForm,
+)
 from corehq.apps.userreports.reports.filters.choice_providers import (
     ChoiceQueryContext,
 )
 from corehq.apps.userreports.reports.view import ConfigurableReport
 from corehq.apps.userreports.specs import EvaluationContext
-from corehq.apps.userreports.sql import IndicatorSqlAdapter, get_column_name
+from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.userreports.tasks import (
     rebuild_indicators,
     resume_building_indicators,
@@ -552,10 +548,14 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
         """
         # Reload using the ID instead of just passing in the object to avoid ResourceConflicts
         data_source_config = DataSourceConfiguration.get(data_source_config_id)
-        data_source_config.configured_filter.update({
-            'type': 'constant',
-            'constant': False
-        })
+        data_source_config.configured_filter = {
+            # An expression that is always false:
+            "type": "boolean_expression",
+            "operator": "eq",
+            "expression": 1,
+            "property_value": 2,
+        }
+        data_source_config.validate()
         data_source_config.save()
 
     def post(self, request, *args, **kwargs):
@@ -604,58 +604,10 @@ class EditReportInBuilder(View):
         raise Http404("Report was not created by the report builder")
 
 
-def to_report_columns(column, index, column_options):
-    """
-    column is the JSON that we get when saving or previewing a report. Return a column spec we can use to create a
-    ReportConfiguration.
-    """
-    # Example value of column:
-    #     {
-    #         u'column_id': u'modified_on_6457b79c',
-    #         u'name': u'modified_on'
-    #         u'label': u'modified on',
-    #         u'is_non_numeric': True,
-    #         u'is_group_by_column': False,
-    #         u'aggregation': None,
-    #     }
-
-    # Some wrangling in order to reused ColumnOption
-    reverse_map = {v: k for k, v in ColumnOption.aggregation_map.items()}
-    aggregation = reverse_map[column.get('aggregation') or 'simple']
-    return column_options[column['column_id']].to_column_dicts(index, column['label'], aggregation)
-
-
-def _get_aggregation_columns(aggregate, columns, column_options):
-    if aggregate:
-        aggregated_report_columns = [c['column_id'] for c in columns if c['is_group_by_column']]
-        aggregation_columns = [column_options[c].indicator_id for c in aggregated_report_columns]
-    else:
-        aggregation_columns = ["doc_id"]
-    return aggregation_columns
-
-
-def _report_column_options(domain, application, source_type, source):
-    builder = DataSourceBuilder(domain, application, source_type, source)
-    options = OrderedDict()
-    for id_, prop in builder.data_source_properties.iteritems():
-        if prop.type == "question":
-            if prop.source['type'] == "MSelect":
-                option = MultiselectQuestionColumnOption(id_, prop.text, prop.column_id, prop.source)
-            else:
-                option = QuestionColumnOption(id_, prop.text, prop.column_id, prop.is_non_numeric,
-                                              prop.source)
-        else:
-            # meta properties
-            option = ColumnOption(id_, prop.text, prop.column_id, prop.is_non_numeric)
-        options[id_] = option
-    return options
-
-
 class ConfigureReport(ReportBuilderView):
     urlname = 'configure_report'
     page_title = ugettext_lazy("Configure Report")
     template_name = "userreports/reportbuilder/configure_report.html"
-    url_args = ['report_name', 'application', 'source_type', 'source']
     report_title = '{}'
     existing_report = None
 
@@ -689,6 +641,12 @@ class ConfigureReport(ReportBuilderView):
         title = self._get_report_name()
         return _(self.report_title).format(title)
 
+    @property
+    def report_description(self):
+        if self.existing_report:
+            return self.existing_report.description or None
+        return None
+
     def _get_report_name(self, request=None):
         if self.existing_report:
             return self.existing_report.title
@@ -706,58 +664,14 @@ class ConfigureReport(ReportBuilderView):
             request = request or self.request
             return request.GET['data_source']
 
-    @property
-    @memoized
-    def report_column_options(self):
-        return _report_column_options(
-            self.domain,
-            self.app,
-            self.source_type,
-            self.source_id,
-        )
-
-    def get_column_option_dicts(self):
-        columns = self.report_column_options
-        # TODO: All the fields are called different things. Let's change it on the front end eventually,
-        #       but re-map for now to see if its working
-
-        def remap_fields(column):
-            return {
-                'column_id': column.id,
-                'name': column.id,
-                'label': column.display,
-                'is_non_numeric': column._is_non_numeric
-            }
-        return map(remap_fields, columns.values())
-
     def _get_existing_report_type(self):
-        # TODO: Handle map reports
         if self.existing_report:
             type_ = "list"
             if self.existing_report.aggregation_columns != ["doc_id"]:
-                type_ = "agg"
+                type_ = "table"
+            if self.existing_report.map_config:
+                type_ = "map"
             return type_
-
-    def _column_exists(self, column_id):
-        """
-        Return True if this column corresponds to a question/case property in
-        the current version of this form/case configuration.
-
-        This could be true if a user makes a report, modifies the app, then
-        edits the report.
-
-        column_id is a string like "data_date_q_d1b3693e"
-        """
-        return column_id in [c.indicator_id for c in self.report_column_options.values()]
-
-    def _data_source_prop_exists(self, indicator_id):
-        """
-        Return True if there exists a DataSourceProperty corresponding to the
-        given data source indicator id.
-        :param indicator_id:
-        :return:
-        """
-        return indicator_id in self._properties_by_column
 
     def _get_property_id_by_indicator_id(self, indicator_column_id):
         """
@@ -771,77 +685,49 @@ class ConfigureReport(ReportBuilderView):
         if data_source_property:
             return data_source_property.id
 
-    def _get_column_option_by_indicator_id(self, indicator_column_id):
-        """
-        Return the ColumnOption corresponding to the given indicator id.
-        NOTE: This currently assumes that there is a one-to-one mapping between
-        ColumnOptions and data source indicators, but we may want to remove
-        this assumption as we add functionality to the report builder.
-        :param indicator_column_id: The column_id field of a data source
-            indicator configuration.
-        :return: The corresponding ColumnOption
-        """
-        for column_option in self.report_column_options.values():
-            if column_option.indicator_id == indicator_column_id:
-                return column_option
-
-    def _get_initial_columns(self):
-        """
-        Return a list of columns in the existing report.
-        If there is no existing report, return None
-        """
-        # TODO: Do something different for aggregated reports etc. (search for initial_columns functions to see what I mean)
-        # TODO: It would be nice to break this into smaller functions
-
+    def _get_initial_location(self, report_form):
         if self.existing_report:
-            added_multiselect_columns = set()
-            cols = []
-            for c in self.existing_report.columns:
-                mselect_indicator_id = _get_multiselect_indicator_id(
-                    c['field'], self.existing_report.config.configured_indicators
-                )
-                indicator_id = mselect_indicator_id or c['field']
-                display = c['display']
-                exists = self._column_exists(indicator_id)
+            cols = [col for col in self.existing_report.report_columns if col.type == 'location']
+            if cols:
+                indicator_id = cols[0].field
+                return report_form._get_property_id_by_indicator_id(indicator_id)
 
-                if mselect_indicator_id:
-                    if mselect_indicator_id not in added_multiselect_columns:
-                        added_multiselect_columns.add(mselect_indicator_id)
-                        display = MultiselectQuestionColumnOption.LABEL_DIVIDER.join(
-                            display.split(MultiselectQuestionColumnOption.LABEL_DIVIDER)[:-1]
-                        )
-                    else:
-                        continue
-                cols.append({
-                    "label": display,
-                    "column_id": self._get_column_option_by_indicator_id(indicator_id).id if exists else None,
-                    "name": self._get_column_option_by_indicator_id(indicator_id).id if exists else None,
-                    "is_non_numeric": self._get_column_option_by_indicator_id(indicator_id)._is_non_numeric if exists else None,
-                    "groupByOrAggregation": c.get('aggregation'),
-                    # TODO: This should be one of sum, avg, simple, groupBy
-                })
-            return cols
-        return None
+    def _get_initial_chart_type(self):
+        if self.existing_report:
+            if self.existing_report.configured_charts:
+                type_ = self.existing_report.configured_charts[0]['type']
+                if type_ == "multibar":
+                    return "bar"
+                if type_ == "pie":
+                    return "pie"
 
     @property
     def page_context(self):
+        form_type = _get_form_type(self._get_existing_report_type())
+        report_form = form_type(
+            self.page_name, self.app_id, self.source_type, self.source_id, self.existing_report
+        )
         return {
             'existing_report': self.existing_report,
+            'report_description': self.report_description,
             'report_title': self.page_name,
             'existing_report_type': self._get_existing_report_type(),
 
+            'column_options': [p.to_dict() for p in report_form.report_column_options.values()],
             # TODO: Consider renaming this because it's more like "possible" data source props
-            'data_source_properties': [p._asdict() for p in self.data_source_builder.data_source_properties.values()],
-            'initial_user_filters': [f._asdict() for f in self.get_initial_user_filters()],
-            'initial_default_filters': [f._asdict() for f in self.get_initial_default_filters()],
-            'column_options': self.get_column_option_dicts(),
-            'initial_columns': self._get_initial_columns(),
+            'data_source_properties': [p._asdict() for p in report_form.data_source_properties.values()],
+            'initial_user_filters': [f._asdict() for f in report_form.initial_user_filters],
+            'initial_default_filters': [f._asdict() for f in report_form.initial_default_filters],
+            'initial_columns': [c._asdict() for c in report_form.initial_columns],
+            'initial_location': self._get_initial_location(report_form),
+            'initial_chart_type': self._get_initial_chart_type(),
             'source_type': self.source_type,
             'source_id': self.source_id,
             'application': self.app_id,
-            'data_source_url': reverse(ReportPreview.urlname,
+            'report_preview_url': reverse(ReportPreview.urlname,
                                        args=[self.domain, self._get_data_source()]),
-            'report_builder_events': self.request.session.pop(REPORT_BUILDER_EVENTS_KEY, [])
+            'report_builder_events': self.request.session.pop(REPORT_BUILDER_EVENTS_KEY, []),
+            'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
         }
 
     def _handle_exception(self, response, exception):
@@ -871,307 +757,55 @@ class ConfigureReport(ReportBuilderView):
         else:
             raise
 
-    def _get_aggregation_columns(self, report_data):
-        return _get_aggregation_columns(
-            report_data['aggregate'], report_data['columns'], self.report_column_options
+    def _get_bound_form(self, report_data):
+        form_class = _get_form_type(report_data['report_type'])
+        return form_class(
+            self._get_report_name(),
+            self.app._id,
+            self.source_type,
+            self.source_id,
+            self.existing_report,
+            report_data
         )
-
-    @memoized
-    def get_initial_default_filters(self):
-        return [self._get_filter_view_model(f) for f in self.existing_report.prefilters] if self.existing_report else []
-
-    @memoized
-    def get_initial_user_filters(self):
-        if self.existing_report:
-            return [self._get_filter_view_model(f) for f in self.existing_report.filters_without_prefilters]
-        if self.source_type == 'case':
-            return self._default_case_report_filters
-        else:
-            # self.source_type == 'form'
-            return self._default_form_report_filters
-
-    def _get_filter_view_model(self, filter):
-        """
-        Given a ReportFilter, return a FilterViewModel representing
-        the knockout view model representing this filter in the report builder.
-
-        """
-        exists = self._data_source_prop_exists(filter['field'])
-        if filter['type'] == 'pre':
-            return DefaultFilterViewModel(
-                exists_in_current_version=exists,
-                display_text='',
-                format='Value' if filter['pre_value'] else 'Date',
-                property=self._get_property_id_by_indicator_id(filter['field']) if exists else None,
-                data_source_field=filter['field'] if not exists else None,
-                pre_value=filter['pre_value'],
-                pre_operator=filter['pre_operator'],
-            )
-        else:
-            filter_type_map = {
-                'dynamic_choice_list': 'Choice',
-                # This exists to handle the `closed` filter that might exist
-                'choice_list': 'Choice',
-                'date': 'Date',
-                'numeric': 'Numeric'
-            }
-            return UserFilterViewModel(
-                exists_in_current_version=exists,
-                display_text=filter['display'],
-                format=filter_type_map[filter['type']],
-                property=self._get_property_id_by_indicator_id(filter['field']) if exists else None,
-                data_source_field=filter['field'] if not exists else None
-            )
-
-    @property
-    @memoized
-    def _default_case_report_filters(self):
-        return [
-            UserFilterViewModel(
-                exists_in_current_version=True,
-                property='closed',
-                data_source_field=None,
-                display_text=_('Closed'),
-                format='Choice',
-            ),
-            UserFilterViewModel(
-                exists_in_current_version=True,
-                property='computed/owner_name',
-                data_source_field=None,
-                display_text=_('Case Owner'),
-                format='Choice',
-            ),
-        ]
-
-    @property
-    @memoized
-    def _default_form_report_filters(self):
-        return [
-            UserFilterViewModel(
-                exists_in_current_version=True,
-                property='timeEnd',
-                data_source_field=None,
-                display_text='Form completion time',
-                format='Date',
-            ),
-        ]
-
-    def _get_filters(self, report_data):
-        """
-        Return the dict filter configurations to be used by the
-        ReportConfiguration that this form produces.
-        """
-
-        def _make_report_filter(conf, index):
-            property = self.data_source_builder.data_source_properties[conf["property"]]
-            col_id = property.column_id
-
-            selected_filter_type = conf['format']
-            if not selected_filter_type or self.source_type == 'form':
-                if property.type == 'question':
-                    filter_format = get_filter_format_from_question_type(
-                        property.source['type']
-                    )
-                else:
-                    assert property.type == 'meta'
-                    filter_format = get_filter_format_from_question_type(
-                        property.source[1]
-                    )
-            else:
-                filter_format = REPORT_BUILDER_FILTER_TYPE_MAP[selected_filter_type]
-
-            ret = {
-                "field": col_id,
-                "slug": "{}_{}".format(col_id, index),
-                "display": conf["display_text"],
-                "type": filter_format
-            }
-            if conf['format'] == 'Date':
-                ret.update({'compare_as_string': True})
-            if conf.get('pre_value') or conf.get('pre_operator'):
-                ret.update({
-                    'type': 'pre',  # type could have been "date"
-                    'pre_operator': conf.get('pre_operator', None),
-                    'pre_value': conf.get('pre_value', []),
-                })
-            return ret
-
-        user_filter_configs = report_data['user_filters']
-        default_filter_configs = report_data['default_filters']
-        filters = [_make_report_filter(f, i) for i, f in enumerate(user_filter_configs + default_filter_configs)]
-        if self.source_type == 'case':
-            # The UI doesn't support specifying "choice_list" filters, only "dynamic_choice_list" filters.
-            # But, we want to make the open/closed filter a cleaner "choice_list" filter, so we do that here.
-            self._convert_closed_filter_to_choice_list(filters)
-        return filters
-
-    @classmethod
-    def _convert_closed_filter_to_choice_list(cls, filters):
-        for f in filters:
-            if f['field'] == get_column_name('closed') and f['type'] == 'dynamic_choice_list':
-                f['type'] = 'choice_list'
-                f['choices'] = [
-                    {'value': 'True'},
-                    {'value': 'False'}
-                ]
-
-    def _get_columns(self, report_data):
-        return list(chain.from_iterable(
-            to_report_columns(c, i, self.report_column_options)
-            for i, c in enumerate(report_data['columns'])
-        ))
-
-    def _get_report_charts(self, report_data_):
-        report_type_funcs = {
-            'bar': lambda cols: [{
-                'type': 'multibar',
-                'x_axis_column': [c['column_id'] for c in cols if c['is_group_by_column']][0],  # 1st group by
-                'y_axis_columns': [c['column_id'] for c in cols if not c['is_group_by_column']],
-            }],
-            'pie': lambda cols: [{
-                "type": "pie",
-                "aggregation_column": [c['column_id'] for c in cols if c['is_group_by_column']][0],
-                "value_column": [c['column_id'] for c in cols if not c['is_group_by_column']][0],
-            }],
-            'none': lambda cols: [],
-        }
-        func = report_type_funcs[report_data_['chart']]
-        return func(report_data_['columns'])
-
-    def _update_data_source(self, report_data):
-        data_source = DataSourceConfiguration.get(self.existing_report.config_id)
-        if data_source.get_report_count() > 1:
-            # If another report is pointing at this data source, create a new
-            # data source for this report so that we can change the indicators
-            # without worrying about breaking another report.
-            data_source_config_id = self._build_data_source(report_data['columns'])
-            self.existing_report.config_id = data_source_config_id
-        else:
-            number_columns = [c['column_id'] for c in report_data['columns'] if c.get("aggregation" in ['avg', 'sum'])]
-            indicators = self.ds_builder.indicators(number_columns)
-            if data_source.configured_indicators != indicators:
-                for property_name, value in self._get_data_source_configuration_kwargs(
-                    report_data['columns']
-                ).iteritems():
-                    setattr(data_source, property_name, value)
-                data_source.save()
-                rebuild_indicators.delay(data_source._id)
-
-    def _update_report(self, report_data):
-        self._update_data_source(report_data)
-        self.existing_report.title = report_data['report_title'] or self.existing_report.title
-        self.existing_report.description = report_data['report_description'] or self.existing_report.description
-        self.existing_report.aggregation_columns = self._get_aggregation_columns(report_data)
-        self.existing_report.columns = self._get_columns(report_data)
-        self.existing_report.filters = self._get_filters(report_data)
-        self.existing_report.configured_charts = self._get_report_charts(report_data)
-
-        self.existing_report.validate()
-        self.existing_report.save()
-
-    def _get_data_source_configuration_kwargs(self, columns, is_multiselect_chart_report=False):
-        aggregation_fields = [c['column_id'] for c in columns if c['is_group_by_column']]
-        if is_multiselect_chart_report:
-            base_item_expression = self.ds_builder.base_item_expression(True, aggregation_fields[0])
-        else:
-            base_item_expression = self.ds_builder.base_item_expression(False)
-        number_columns = [c['column_id'] for c in columns if c.get("aggregation" in ['avg', 'sum'])]
-        return dict(
-            display_name=self.ds_builder.data_source_name,
-            referenced_doc_type=self.ds_builder.source_doc_type,
-            configured_filter=self.ds_builder.filter,
-            configured_indicators=self.ds_builder.indicators(
-                number_columns, is_multiselect_chart_report
-            ),
-            base_item_expression=base_item_expression,
-            meta=DataSourceMeta(build=DataSourceBuildInformation(
-                source_id=self.source_id,
-                app_id=self.app._id,
-                app_version=self.app.version,
-            ))
-        )
-
-    @property
-    @memoized
-    def ds_builder(self):
-        return DataSourceBuilder(self.domain, self.app, self.source_type, self.source_id)
-
-    def _build_data_source(self, columns):
-
-        def build_data_source(domain_, ds_config_kwargs_):
-            data_source_config = DataSourceConfiguration(
-                domain=domain_,
-                # The uuid gets truncated, so it's not really universally unique.
-                table_id=_clean_table_name(domain_, str(uuid.uuid4().hex)),
-                **ds_config_kwargs_
-            )
-            data_source_config.validate()
-            data_source_config.save()
-            rebuild_indicators.delay(data_source_config._id)
-            return data_source_config._id
-
-        ds_config_kwargs = self._get_data_source_configuration_kwargs(columns)
-        # TODO: Don't build new data source if there is an existing one
-        return build_data_source(self.domain, ds_config_kwargs)
 
     def post(self, request, domain, *args, **kwargs):
-
-        def get_builder_report_type(report_data_):
-            # builder_report_type = StringProperty(choices=['chart', 'list', 'table', 'worker', 'map'])
-            assert report_data_['report_type'] in ('list', 'agg', 'map')
-            if report_data_['report_type'] in ('list', 'map'):
-                return report_data_['report_type']
-            elif report_data_['report_type'] == 'agg':
-                return 'table' if report_data_['chart'] == 'none' else 'chart'
-
         report_data = json.loads(request.body)
         if report_data['existing_report'] and not self.existing_report:
             # This is the case if the user has clicked "Save" for a second time from the new report page
             # i.e. the user created a report with the first click, but didn't navigate to the report view page
             self.existing_report = ReportConfiguration.get(report_data['existing_report'])
 
-        try:
+        _munge_report_data(report_data)
+
+        bound_form = self._get_bound_form(report_data)
+        
+        if bound_form.is_valid():
             if self.existing_report:
-                self._update_report(report_data)
-                report_configuration = self.existing_report
+                report_configuration = bound_form.update_report()
             else:
                 self._confirm_report_limit()
-                # TODO: Don't build new data source if there is an existing one
-                data_source_config_id = self._build_data_source(report_data['columns'])
-                self._confirm_report_limit()
-
-                report_configuration = ReportConfiguration(
-                    domain=self.domain,
-                    config_id=data_source_config_id,
-                    title=report_data['report_title'],
-                    description=report_data['report_description'],
-                    aggregation_columns=self._get_aggregation_columns(report_data),
-                    columns=self._get_columns(report_data),
-                    filters=self._get_filters(report_data),
-                    configured_charts=self._get_report_charts(report_data),
-                    report_meta=ReportMeta(
-                        created_by_builder=True,
-                        builder_report_type=get_builder_report_type(report_data),
-                    )
-                )
-                report_configuration.validate()
-                report_configuration.save()
-        except BadSpecError as err:
-            messages.error(request, str(err))
-            notify_exception(request, str(err), details={
-                'domain': domain,
-                'report_type': report_data['report_type'],
-                # 'group_by': getattr(self.report_form, 'group_by', 'Not set'),
-                # 'user_filters': getattr(self.report_form, 'user_filters', 'Not set'),
-                # 'default_filters': getattr(self.report_form, 'default_filters', 'Not set'),
-            })
-            return self.get(request, domain)
-        return json_response(
-            {
+                try:
+                    report_configuration = bound_form.create_report()
+                except BadSpecError as err:
+                    messages.error(self.request, str(err))
+                    notify_exception(self.request, str(err), details={
+                        'domain': self.domain,
+                        'report_form_class': bound_form.__class__.__name__,
+                        'report_type': bound_form.report_type,
+                        'group_by': getattr(bound_form, 'group_by', 'Not set'),
+                        'user_filters': getattr(bound_form, 'user_filters', 'Not set'),
+                        'default_filters': getattr(bound_form, 'default_filters', 'Not set'),
+                    })
+                    return self.get(*args, **kwargs)
+            self._delete_temp_data_source(report_data)
+            return json_response({
                 'report_url': reverse(ConfigurableReport.slug, args=[self.domain, report_configuration._id]),
                 'report_id': report_configuration._id,
-            }
-        )
+            })
+
+    def _delete_temp_data_source(self, report_data):
+        if report_data.get("delete_temp_data_source", False) and "data_source" in self.request.GET:
+            delete_data_source_shared(self.domain, self.request.GET['data_source'])
 
     def _confirm_report_limit(self):
         """
@@ -1186,19 +820,40 @@ class ConfigureReport(ReportBuilderView):
             raise Http404()
 
 
-def _get_multiselect_indicator_id(column_field, indicators):
+def _get_form_type(report_type):
+    assert report_type in ("list", "table", "chart", "map")
+    if report_type == "list":
+        return ConfigureListReportForm
+    if report_type == "table":
+            return ConfigureTableReportForm
+    if report_type == "map":
+        return ConfigureMapReportForm
+
+
+def _munge_report_data(report_data):
     """
-    If this column_field corresponds to a multiselect data source indicator, then return the id of the
-    indicator. Otherwise return None.
-    :param column_field: The "field" property of a report column
-    :return: a data source indicator id
+    Split aggregation columns out of report_data and into
+    :param report_data:
+    :return:
     """
-    # TODO: Remove this from the form where I coppied it
-    indicator_id = "_".join(column_field.split("_")[:-1])
-    for indicator in indicators:
-        if indicator['column_id'] == indicator_id and indicator['type'] == 'choice_list':
-            return indicator_id
-    return None
+    agg_columns = []
+    if report_data['report_type'] == "table":
+        clean_columns = []
+
+        for col in report_data['columns']:
+            if col['calculation'] == "Group By":
+                agg_columns.append(col)
+            else:
+                clean_columns.append(col)
+        agg_columns = [x['property'] for x in agg_columns]
+
+        report_data['columns'] = clean_columns
+
+    report_data['group_by'] = agg_columns or None
+
+    report_data['columns'] = json.dumps(report_data['columns'])
+    report_data['user_filters'] = json.dumps(report_data['user_filters'])
+    report_data['default_filters'] = json.dumps(report_data['default_filters'])
 
 
 class ReportPreview(BaseDomainView):
@@ -1206,27 +861,28 @@ class ReportPreview(BaseDomainView):
 
     def post(self, request, domain, data_source):
         report_data = json.loads(urllib.unquote(request.body))
-        column_options = _report_column_options(
-            self.domain, Application.get(report_data['app']), report_data['source_type'], report_data['source_id']
-        )
+        form_class = _get_form_type(report_data['report_type'])
 
-        table = ConfigurableReport.report_config_table(
-            domain=domain,
-            config_id=data_source,
-            title='{}_{}_{}'.format(TEMP_REPORT_PREFIX, domain, data_source),
-            description='',
-            aggregation_columns=_get_aggregation_columns(
-                report_data['aggregate'], report_data['columns'], column_options
-            ),
-            columns=list(chain.from_iterable(
-                to_report_columns(c, i, column_options) for i, c in enumerate(report_data['columns'])
-            )),
-            report_meta=ReportMeta(created_by_builder=True),
-        )  # is None if report configuration doesn't make sense or data source has expired
-        if table:
-            return json_response(table[0][1])
-        else:
-            return json_response({'status': 'error', 'message': 'Invalid report configuration'}, status_code=400)
+        # ignore filters
+        report_data['user_filters'] = []
+        report_data['default_filters'] = []
+
+        _munge_report_data(report_data)
+
+        bound_form = form_class(
+            '{}_{}_{}'.format(TEMP_REPORT_PREFIX, self.domain, data_source),
+            report_data['app'],
+            report_data['source_type'],
+            report_data['source_id'],
+            None,
+            report_data
+        )
+        if bound_form.is_valid():
+            temp_report = bound_form.create_temp_report(data_source)
+            response_data = ConfigurableReport.report_preview_data(self.domain, temp_report)
+            if response_data:
+                return json_response(response_data)
+        return json_response({'status': 'error', 'message': 'Invalid report configuration'}, status_code=400)
 
 
 class ConfigureMapReport(ConfigureReport):
