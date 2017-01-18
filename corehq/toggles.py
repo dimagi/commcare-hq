@@ -731,7 +731,7 @@ USE_FORMPLAYER_FRONTEND = PredictablyRandomToggle(
     'Use New CloudCare',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
-    randomness=0.7,
+    randomness=1.0,
     always_disabled=[
         'hsph-betterbirth',
         'figo-ppiud-srilanka',
