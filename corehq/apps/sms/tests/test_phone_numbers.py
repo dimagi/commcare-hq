@@ -783,3 +783,20 @@ class TestGenericContactMethods(TestCase):
 
         entries = self.mobile_worker2.get_phone_entries()
         self.assertEqual(set(entries.keys()), set(['999126']))
+
+    def testUserSyncNoChange(self):
+        before = self.mobile_worker1.get_or_create_phone_entry('999123')
+        before.set_two_way()
+        before.set_verified()
+        before.save()
+        self.assertEqual(PhoneNumber.by_domain(self.domain).count(), 1)
+
+        self.mobile_worker1.phone_numbers = ['999123']
+        self.mobile_worker1.save()
+        self.assertEqual(PhoneNumber.by_domain(self.domain).count(), 1)
+
+        after = self.mobile_worker1.get_phone_entries()['999123']
+        self.assertEqual(before.pk, after.pk)
+        self.assertTrue(after.is_two_way)
+        self.assertTrue(after.verified)
+        self.assertFalse(after.pending_verification)
