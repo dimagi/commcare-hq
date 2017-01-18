@@ -804,7 +804,7 @@ class ConfigureReport(ReportBuilderView):
             })
 
     def _delete_temp_data_source(self, report_data):
-        if report_data.get("delete_temp_data_source", False):
+        if report_data.get("delete_temp_data_source", False) and "data_source" in self.request.GET:
             delete_data_source_shared(self.domain, self.request.GET['data_source'])
 
     def _confirm_report_limit(self):
