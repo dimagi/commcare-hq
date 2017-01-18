@@ -147,7 +147,7 @@ def get_doc_revisions(db, doc_id):
     res = db.get(doc_id, revs=True)
     start = res['_revisions']['start']
     ids = res['_revisions']['ids']
-    return ["{}-{}".format(start-i, rev) for i, rev in enumerate(ids)]
+    return ["{}-{}".format(start - i, rev) for i, rev in enumerate(ids)]
 
 
 def get_doc_rev(db, doc_id, rev):
@@ -214,11 +214,11 @@ class FindFirstMatch(object):
         min_index = self.min + 1  # since we've already checked min
         max_index = self.max - 1  # since we've already checked max
         while max_index >= min_index:
-            midpoint = (min_index + max_index)//2
+            midpoint = (min_index + max_index) // 2
             if self._match_at_index(midpoint):
-                max_index = midpoint-1  # search down
+                max_index = midpoint - 1  # search down
             else:
-                min_index = midpoint+1  # search up
+                min_index = midpoint + 1  # search up
 
         return self._min_matching_index
 
