@@ -23,25 +23,17 @@ class BeneficariesList(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super(BeneficariesList, self).get_context_data(**kwargs)
-        context['filter_form'] = BeneficiariesFilterForm()
+
+        context['filter_form'] = BeneficiariesFilterForm(data=self.request.GET, domain=self.request.domain)
 
         mother_beneficiaries = RCHMother.objects
         child_beneficiaries = RCHChild.objects
 
-        context['mother_beneficiaries'] = mother_beneficiaries.all()
-        context['child_beneficiaries'] = child_beneficiaries.all()
-
-        return context
-
-    def post(self, request, *args, **kwargs):
-        context = self.get_context_data()
-        mother_beneficiaries = RCHMother.objects
-        child_beneficiaries = RCHChild.objects
-        state = request.POST.get('state')
+        state = self.request.GET.get('state')
         if state:
             mother_beneficiaries = mother_beneficiaries.filter(State_Name=state)
             child_beneficiaries = child_beneficiaries.filter(State_Name=state)
-        district = request.POST.get('district')
+        district = self.request.GET.get('district')
         if district:
             mother_beneficiaries = mother_beneficiaries.filter(District_Name=district)
             child_beneficiaries = child_beneficiaries.filter(District_Name=district)
@@ -57,13 +49,17 @@ class BeneficariesList(TemplateView):
         #     mother_beneficiaries = mother_beneficiaries.filter(MDDS_VillageID__in=village_ids)
         #     child_beneficiaries = child_beneficiaries.filter(MDDS_VillageID__in=village_ids)
 
-        village_name = request.POST.get('village_name')
+        village_name = self.request.GET.get('village_name')
         if village_name:
             mother_beneficiaries = mother_beneficiaries.filter(Village_Name__contains=village_name)
             child_beneficiaries = child_beneficiaries.filter(VILLAGE_Name__contains=village_name)
-        context['mother_beneficiaries'] = mother_beneficiaries.all()
-        context['child_beneficiaries'] = child_beneficiaries.all()
-        return super(TemplateView, self).render_to_response(context)
+
+        context['mother_beneficiaries_total'] = mother_beneficiaries.count()
+        context['child_beneficiaries_total'] = child_beneficiaries.count()
+        context['mother_beneficiaries'] = mother_beneficiaries.order_by()[:20]
+        context['child_beneficiaries'] = child_beneficiaries.order_by()[:20]
+
+        return context
 
 
 class BeneficiaryView(TemplateView):

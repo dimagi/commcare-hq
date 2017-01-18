@@ -20,31 +20,31 @@ def get_choices_for(field_name):
 class BeneficiariesFilterForm(forms.Form):
     state = forms.ChoiceField(
         label=_("State"),
-        required=True,
+        required=False,
         choices=get_choices_for('stname')
     )
 
     district = forms.ChoiceField(
         label=_("District"),
-        required=True,
+        required=False,
         choices=get_choices_for('dtname')
     )
 
     awcid = forms.ChoiceField(
         label=_("AWC-ID"),
-        required=True,
+        required=False,
         choices=get_choices_for('awcid')
     )
 
     village_id = forms.ChoiceField(
         label=_("Village-ID"),
-        required=True,
+        required=False,
         choices=get_choices_for('villcode')
     )
 
     village_name = forms.ChoiceField(
         label=_("Village Name"),
-        required=True,
+        required=False,
         choices=get_choices_for('Village_name')
     )
 
@@ -57,6 +57,7 @@ class BeneficiariesFilterForm(forms.Form):
         self.form_name = 'Filter:'
         self.helper.label_class = 'col-sm-2 col-md-1'
         self.helper.field_class = 'col-sm-4 col-md-3'
+        self.helper.form_method = 'GET'
         self.helper.layout = Layout(
             crispy.Field(
                 'state',
