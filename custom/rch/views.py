@@ -39,8 +39,8 @@ class BeneficariesList(TemplateView):
             child_beneficiaries = child_beneficiaries.filter(District_Name=district)
 
         # To be included once mapping is available
-        # awcid = request.POST.get('awcid')
-        # village_id = request.POST.get('village_id')
+        # awcid = self.request.GET.get('awcid')
+        # village_id = self.request.GET.get('village_id')
         # village_ids = [village_id]
         # if awcid:
         #     village_ids = village_ids + AreaMapping.fetch_village_ids_for_awcid(awcid)
