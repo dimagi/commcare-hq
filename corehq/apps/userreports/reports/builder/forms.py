@@ -66,6 +66,14 @@ REPORT_BUILDER_FILTER_TYPE_MAP = {
     'Value': 'pre',
 }
 
+STATIC_CASE_PROPS = [
+    "closed",
+    "modified_on",
+    "name",
+    "opened_on",
+    "owner_id",
+    "user_id",
+]
 
 class FilterField(JsonField):
     """
@@ -370,14 +378,6 @@ class DataSourceBuilder(object):
             'owner_name': _('Case Owner'),
             'mobile worker': _('Mobile Worker Last Updating Case'),
         }
-        static_case_props = [
-            "closed",
-            "modified_on",
-            "name",
-            "opened_on",
-            "owner_id",
-            "user_id",
-        ]
 
         properties = OrderedDict()
         for property in case_properties:
@@ -387,7 +387,7 @@ class DataSourceBuilder(object):
                 column_id=get_column_name(property),
                 text=property_map.get(property, property.replace('_', ' ')),
                 source=property,
-                is_non_numeric=property in static_case_props,
+                is_non_numeric=property in STATIC_CASE_PROPS,
             )
         properties['computed/owner_name'] = cls._get_owner_name_pseudo_property()
         properties['computed/user_name'] = cls._get_user_name_pseudo_property()
@@ -1165,8 +1165,10 @@ class ConfigureListReportForm(ConfigureNewReportBase):
             calculation="Count per Choice"
         ))
         case_props_found = 0
+
+        skip_list = set(["computed/owner_name", "computed/user_name"] + STATIC_CASE_PROPS)
         for prop in self.data_source_properties.values():
-            if prop.type == "case_property":
+            if prop.type == "case_property" and prop.id not in skip_list:
                 case_props_found += 1
                 cols.append(ColumnViewModel(
                     display_text=prop.text,
@@ -1235,13 +1237,6 @@ class ConfigureTableReportForm(ConfigureListReportForm):
             self.fields['group_by'].widget = Select2(attrs={'class': 'input-large'})
         self.fields['group_by'].choices = self._group_by_choices
 
-        # Set initial value of group_by
-        if self.existing_report:
-            existing_agg_cols = existing_report.aggregation_columns
-            assert len(existing_agg_cols) < 2
-            if existing_agg_cols:
-                self.fields['group_by'].initial = self._get_property_id_by_indicator_id(existing_agg_cols[0])
-
     @property
     def container_fieldset(self):
         return crispy.Fieldset(
@@ -1261,20 +1256,21 @@ class ConfigureTableReportForm(ConfigureListReportForm):
     @property
     def _report_charts(self):
 
-        def get_non_agged_column_ids():
-            return [c['column_id'] for c in self._report_columns if c['aggregation'] != "simple"]
-        if get_non_agged_column_ids():
+        def get_non_agged_columns():
+            return [c for c in self._report_columns if c['aggregation'] != "simple"]
+        if get_non_agged_columns():
             if self.cleaned_data['chart'] == "bar":
                 return [{
                     "type": "multibar",
                     "x_axis_column": "column_agg_0",
-                    "y_axis_columns": [get_non_agged_column_ids()[0]],
+                    # TODO: Possibly use more columns?
+                    "y_axis_columns": [{"column_id": c["column_id"], "display": c["display"]} for c in get_non_agged_columns()],
                 }]
             elif self.cleaned_data['chart'] == "pie":
                 return [{
                     "type": "pie",
                     "aggregation_column": "column_agg_0",
-                    "value_column": get_non_agged_column_ids()[0],
+                    "value_column": get_non_agged_columns()[0]['column_id'],
                 }]
         return []
 
@@ -1284,10 +1280,12 @@ class ConfigureTableReportForm(ConfigureListReportForm):
         Return True if this is a chart report aggregated by a multiselect question.
         The data sources for these sorts of reports are handled differently than other reports.
         """
-        if self.cleaned_data['chart'] in ("pie", "bar"):
-            agg_property = self.data_source_properties[self.cleaned_data['group_by'][0]]
-            return agg_property.type == "question" and agg_property.source['type'] == "MSelect"
+        # Disabling this feature for now
         return False
+        # if self.cleaned_data['chart'] in ("pie", "bar"):
+        #     agg_property = self.data_source_properties[self.cleaned_data['group_by'][0]]
+        #     return agg_property.type == "question" and agg_property.source['type'] == "MSelect"
+        # return False
 
     @property
     def _report_columns(self):

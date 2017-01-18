@@ -100,12 +100,11 @@ var reportBuilder = function () {
         self.reportTypeAggLabel = (config['sourceType'] === "case") ? "Case Summary" : "Form Summary";
         self.reportType = ko.observable(config['existingReportType'] || 'list');
         self.reportType.subscribe(function (newValue) {
+            self._suspendPreviewRefresh = true;
             var wasAggregationEnabled = self.isAggregationEnabled();
             self.isAggregationEnabled(newValue === "table");
             self.previewChart(newValue === "table" && self.selectedChart() !== "none");
             if (self.isAggregationEnabled() && !wasAggregationEnabled) {
-                self._suspendPreviewRefresh = true;
-
                 self.columnList.columns().forEach(function(val, index) {
                     if (index === 0) {
                         val.calculation("Group By");
@@ -117,8 +116,8 @@ var reportBuilder = function () {
                         val.calculation(val.getDefaultCalculation());
                     }
                 });
-                self._suspendPreviewRefresh = false;
             }
+            self._suspendPreviewRefresh = false;
             self.refreshPreview();
             self.saveButton.fire('change');
         });
