@@ -1,12 +1,15 @@
 from django.conf.urls import url, include
 
 from corehq.apps.api.urls import CommCareHqApi
-from corehq.apps.zapier.api.v0_5 import ZapierXFormInstanceResource, ZapierCustomFieldFormResource, ZapierCustomFieldCaseResource
+from corehq.apps.zapier.api.v0_5 import ZapierXFormInstanceResource, ZapierCustomFieldResource, ZapierCustomFieldCaseResource
+from corehq.apps.zapier.api.v0_5 import ZapierCustomActionFieldFormResource, ZapierCustomTriggerFieldFormResource
 from corehq.apps.zapier.views import SubscribeView, UnsubscribeView
 
 hq_api = CommCareHqApi(api_name='v0.5')
 hq_api.register(ZapierXFormInstanceResource())
-hq_api.register(ZapierCustomFieldFormResource())
+hq_api.register(ZapierCustomFieldResource())
+hq_api.register(ZapierCustomActionFieldFormResource())
+hq_api.register(ZapierCustomTriggerFieldFormResource())
 hq_api.register(ZapierCustomFieldCaseResource())
 
 urlpatterns = [
