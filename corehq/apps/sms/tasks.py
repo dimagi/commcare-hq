@@ -384,7 +384,7 @@ def _sync_user_phone_numbers(couch_user):
         # Create entries that should exist but do not exist
         for phone_number in numbers_that_should_exist:
             if phone_number not in phone_entries:
-                couch_user._create_phone_entry(phone_number)
+                couch_user.create_phone_entry(phone_number)
 
 
 @task(queue='background_queue', ignore_result=True, acks_late=True,
