@@ -33,7 +33,7 @@ class StaticChoiceProviderTest(SimpleTestCase):
 
     def test_get_choices_for_values(self):
         self.assertEqual(
-            set(self.choice_provider.get_choices_for_values(['2', '4', '6'])),
+            set(self.choice_provider.get_choices_for_values(['2', '4', '6'], None)),
             {Choice('2', 'Two'), Choice('4', '4'), Choice('6', '6')}
         )
 
@@ -67,8 +67,8 @@ class ChoiceProviderTestMixin(object):
 
     def _test_get_choices_for_values(self, values):
         self.assertEqual(
-            self.choice_provider.get_choices_for_values(values),
-            self.static_choice_provider.get_choices_for_values(values),
+            self.choice_provider.get_choices_for_values(values, user),
+            self.static_choice_provider.get_choices_for_values(values, user),
         )
 
     def test_query_no_search_all(self):
