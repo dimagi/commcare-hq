@@ -66,6 +66,14 @@ REPORT_BUILDER_FILTER_TYPE_MAP = {
     'Value': 'pre',
 }
 
+STATIC_CASE_PROPS = [
+    "closed",
+    "modified_on",
+    "name",
+    "opened_on",
+    "owner_id",
+    "user_id",
+]
 
 class FilterField(JsonField):
     """
@@ -370,14 +378,6 @@ class DataSourceBuilder(object):
             'owner_name': _('Case Owner'),
             'mobile worker': _('Mobile Worker Last Updating Case'),
         }
-        static_case_props = [
-            "closed",
-            "modified_on",
-            "name",
-            "opened_on",
-            "owner_id",
-            "user_id",
-        ]
 
         properties = OrderedDict()
         for property in case_properties:
@@ -387,7 +387,7 @@ class DataSourceBuilder(object):
                 column_id=get_column_name(property),
                 text=property_map.get(property, property.replace('_', ' ')),
                 source=property,
-                is_non_numeric=property in static_case_props,
+                is_non_numeric=property in STATIC_CASE_PROPS,
             )
         properties['computed/owner_name'] = cls._get_owner_name_pseudo_property()
         properties['computed/user_name'] = cls._get_user_name_pseudo_property()
@@ -1165,8 +1165,10 @@ class ConfigureListReportForm(ConfigureNewReportBase):
             calculation="Count per Choice"
         ))
         case_props_found = 0
+
+        skip_list = set(["computed/owner_name", "computed/user_name"] + STATIC_CASE_PROPS)
         for prop in self.data_source_properties.values():
-            if prop.type == "case_property":
+            if prop.type == "case_property" and prop.id not in skip_list:
                 case_props_found += 1
                 cols.append(ColumnViewModel(
                     display_text=prop.text,
