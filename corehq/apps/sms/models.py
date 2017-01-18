@@ -605,7 +605,11 @@ class PhoneNumber(UUIDGeneratorMixin, models.Model):
 
     @classmethod
     def get_number_pending_verification(cls, phone_number):
-        phone_number = apply_leniency(phone_number)
+        return cls._get_number_pending_verification(apply_leniency(phone_number))
+
+    @classmethod
+    @quickcache(['phone_number'], timeout=60 * 60)
+    def _get_number_pending_verification(cls, phone_number):
         try:
             return cls.objects.get(
                 phone_number=phone_number,
@@ -669,8 +673,10 @@ class PhoneNumber(UUIDGeneratorMixin, models.Model):
             cls.by_owner_id.clear(cls, old_owner_id)
 
         cls._get_two_way_number.clear(cls, phone_number)
+        cls._get_number_pending_verification.clear(cls, phone_number)
         if old_phone_number and old_phone_number != phone_number:
             cls._get_two_way_number.clear(cls, old_phone_number)
+            cls._get_number_pending_verification.clear(cls, old_phone_number)
 
     def _clear_caches(self):
         self._clear_quickcaches(
