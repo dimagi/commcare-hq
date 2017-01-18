@@ -1,9 +1,10 @@
-from crispy_forms.helper import FormHelper
+from django.core.urlresolvers import reverse
 from django import forms
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import ugettext_lazy as _
 
 from crispy_forms import layout as crispy
-from crispy_forms.layout import Layout, ButtonHolder, Submit
+from crispy_forms.layout import Layout, ButtonHolder, Submit, HTML
+from crispy_forms.helper import FormHelper
 
 from custom.rch.models import AreaMapping
 
@@ -18,36 +19,37 @@ def get_choices_for(field_name):
 
 class BeneficiariesFilterForm(forms.Form):
     state = forms.ChoiceField(
-        label=ugettext_lazy("State"),
+        label=_("State"),
         required=True,
         choices=get_choices_for('stname')
     )
 
     district = forms.ChoiceField(
-        label=ugettext_lazy("District"),
+        label=_("District"),
         required=True,
         choices=get_choices_for('dtname')
     )
 
     awcid = forms.ChoiceField(
-        label=ugettext_lazy("AWC-ID"),
+        label=_("AWC-ID"),
         required=True,
         choices=get_choices_for('awcid')
     )
 
     village_id = forms.ChoiceField(
-        label=ugettext_lazy("Village-ID"),
+        label=_("Village-ID"),
         required=True,
         choices=get_choices_for('villcode')
     )
 
     village_name = forms.ChoiceField(
-        label=ugettext_lazy("Village Name"),
+        label=_("Village Name"),
         required=True,
         choices=get_choices_for('Village_name')
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, domain, *args, **kwargs):
+        from custom.rch.views import BeneficariesList
         super(BeneficiariesFilterForm, self).__init__(*args, **kwargs)
 
         self.helper = FormHelper()
@@ -73,5 +75,10 @@ class BeneficiariesFilterForm(forms.Form):
             ),
             ButtonHolder(
                 Submit('submit', 'Submit', css_class='button white')
-            )
+            ),
+            ButtonHolder(
+                HTML('<a href="{}" class="button white">{}</a>'.format(
+                    reverse(BeneficariesList.urlname, args=[domain]),
+                    _('Clear')))
+            ),
         )
