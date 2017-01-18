@@ -1857,9 +1857,11 @@ class GenerateSchemaFromAllBuildsView(View):
         })
 
     def post(self, request, *args, **kwargs):
+        type_ = request.POST.get('type')
+        assert type_ in [CASE_EXPORT, FORM_EXPORT], 'Unrecogized export type {}'.format(type_)
         download = DownloadBase()
         download.set_task(generate_schema_for_all_builds.delay(
-            self.export_cls(kwargs.get('type')),
+            self.export_cls(type_),
             request.domain,
             request.POST.get('app_id'),
             request.POST.get('identifier'),
