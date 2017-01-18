@@ -8,13 +8,15 @@
     <thead>
         <tr>
             <th>Property</th>
-            <th>Value</th>
+            <th>RCH Value</th>
+            <th>CAS Value</th>
         </tr>
     </thead>
     {% for property_name, property_value in beneficiary_details.items %}
     <tr>
         <td>{{ property_name }}</td>
         <td>{{ property_value }}</td>
+        <td>N/A</td>
     </tr>
 {% endfor %}
 </table>
