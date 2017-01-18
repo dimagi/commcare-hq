@@ -1235,13 +1235,6 @@ class ConfigureTableReportForm(ConfigureListReportForm):
             self.fields['group_by'].widget = Select2(attrs={'class': 'input-large'})
         self.fields['group_by'].choices = self._group_by_choices
 
-        # Set initial value of group_by
-        if self.existing_report:
-            existing_agg_cols = existing_report.aggregation_columns
-            assert len(existing_agg_cols) < 2
-            if existing_agg_cols:
-                self.fields['group_by'].initial = self._get_property_id_by_indicator_id(existing_agg_cols[0])
-
     @property
     def container_fieldset(self):
         return crispy.Fieldset(
