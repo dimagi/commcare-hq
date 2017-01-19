@@ -212,7 +212,8 @@ BEGIN
 		'attended_children_percent, ' ||
 		'form_location, ' ||
 		'form_location_lat, ' ||
-		'form_location_long ' ||
+		'form_location_long, ' ||
+		'image_name ' ||
 		'FROM ' || quote_ident(_daily_attendance_tablename) || ' WHERE month = ' || quote_literal(_start_date) || ')';
 
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(awc_id)';
@@ -230,12 +231,14 @@ DECLARE
 	_end_date date;
 	_all_text text;
 	_null_value text;
+	_blank_value text;
 BEGIN
 	_start_date = date_trunc('MONTH', $1)::DATE;
 	_tablename := 'agg_child_health' || '_' || _start_date;
 	EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('child_health_monthly') INTO _ucr_child_monthly_table;
 	_all_text = 'All';
 	_null_value = NULL;
+	_blank_value = '';
 
 	EXECUTE 'DELETE FROM ' || quote_ident(_tablename);
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
@@ -282,7 +285,7 @@ BEGIN
 		'sum(fully_immunized_eligible), ' ||
 		'sum(fully_immunized_on_time), ' ||
 		'sum(fully_immunized_late) ' ||
-		'FROM ' || quote_ident(_ucr_child_monthly_table) || ' WHERE state_id != '' AND month = ' || quote_literal(_start_date) || ' ' ||
+		'FROM ' || quote_ident(_ucr_child_monthly_table) || ' WHERE state_id != ' || quote_literal(_blank_value) ||  ' AND month = ' || quote_literal(_start_date) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, sex, age_tranche, caste, disabled, minority, resident)';
 
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(state_id, district_id, block_id, supervisor_id, awc_id)';
@@ -547,11 +550,13 @@ DECLARE
 	_end_date date;
 	_all_text text;
 	_null_value text;
+	_blank_value text;
 BEGIN
 	_start_date = date_trunc('MONTH', $1)::DATE;
 	_tablename := 'agg_ccs_record' || '_' || _start_date;
 	_all_text = 'All';
 	_null_value = NULL;
+	_blank_value = '';
 	EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('ccs_record_monthly') INTO _ucr_ccs_record_table;
 
 	EXECUTE 'DELETE FROM ' || quote_ident(_tablename);
@@ -601,7 +606,7 @@ BEGIN
 		'sum(counsel_fp_vid), ' ||
 		'sum(counsel_immediate_conception), ' ||
 		'sum(counsel_accessible_postpartum_fp) ' ||
-		'FROM ' || quote_ident(_ucr_ccs_record_table) || ' WHERE state_id != '' AND month = ' || quote_literal(_start_date) || ' ' ||
+		'FROM ' || quote_ident(_ucr_ccs_record_table) || ' WHERE state_id != ' || quote_literal(_blank_value) ||  ' AND month = ' || quote_literal(_start_date) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, ccs_status, trimester, caste, disabled, minority, resident)';
 
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(state_id, district_id, block_id, supervisor_id, awc_id)';
