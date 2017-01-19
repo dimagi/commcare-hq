@@ -50,7 +50,7 @@ def add_inferred_export_properties(sender, domain, case_type, properties):
 
 @quickcache(['sender', 'domain', 'case_type', 'properties'], timeout=60 * 60)
 def _cached_add_inferred_export_properties(sender, domain, case_type, properties):
-    from corehq.apps.export.models import MAIN_TABLE, PathNode, InferredSchema, ScalarItem
+    from corehq.apps.export.models import MAIN_TABLE, PathNode, CaseInferredSchema, ScalarItem
     """
     Adds inferred properties to the inferred schema for a case type.
 
@@ -65,7 +65,7 @@ def _cached_add_inferred_export_properties(sender, domain, case_type, properties
     assert all(map(lambda prop: '.' not in prop, properties)), 'Properties should not have periods'
     inferred_schema = get_case_inferred_schema(domain, case_type)
     if not inferred_schema:
-        inferred_schema = InferredSchema(
+        inferred_schema = CaseInferredSchema(
             domain=domain,
             case_type=case_type,
         )

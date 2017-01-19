@@ -25,6 +25,7 @@ from corehq.apps.export.models import (
     PathNode,
     CASE_HISTORY_TABLE,
     SplitGPSExportColumn,
+    ExportColumn,
 )
 from corehq.apps.reports.models import HQGroupExportConfiguration
 from corehq.apps.app_manager.models import Domain, Application, RemoteApp, Module
@@ -483,6 +484,8 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestConvertBase):
         super(TestConvertSavedExportSchemaToFormExportInstance, cls).setUpClass()
         cls.schema = FormExportDataSchema(
             domain=cls.domain,
+            xmlns='xmlns',
+            app_id='123',
             group_schemas=[
                 ExportGroupSchema(
                     path=MAIN_TABLE,
@@ -681,10 +684,9 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestConvertBase):
         table = instance.get_table(MAIN_TABLE)
 
         index, column = table.get_column(
-            [PathNode(name='initial_processing_complete')], None, None
+            [PathNode(name='initial_processing_complete')], 'ScalarItem', None
         )
         self.assertIsInstance(column, ExportColumn)
-        self.assertFalse(column.is_editable)
         self.assertEqual(column.item.path, [PathNode(name='initial_processing_complete')])
         self.assertEqual(column.item.inferred, True)
 
@@ -725,7 +727,7 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestConvertBase):
                 PathNode(name='custom_repeat', is_repeat=True),
                 PathNode(name='DOB'),
             ],
-            None,
+            'ScalarItem',
             None,
         )
         self.assertIsNotNone(column)
