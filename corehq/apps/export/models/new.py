@@ -8,6 +8,8 @@ from couchdbkit import ResourceConflict
 from couchdbkit.ext.django.schema import IntegerProperty
 from django.utils.translation import ugettext as _
 from django.core.urlresolvers import reverse
+
+from corehq.apps.reports.models import HQUserType
 from soil.progress import set_task_progress
 
 from corehq.apps.export.esaccessors import get_ledger_section_entry_combinations
@@ -525,13 +527,10 @@ class ExportInstanceFilters(DocumentSchema):
     date_period = SchemaProperty(DatePeriod, default=None)
     users = ListProperty(StringProperty)
     reporting_groups = ListProperty(StringProperty)
-    sharing_groups = ListProperty(StringProperty)
     locations = ListProperty(StringProperty)
     user_types = ListProperty(IntegerProperty)
     can_access_all_locations = BooleanProperty(default=True)
     accessible_location_ids = ListProperty(StringProperty)
-    show_all_data = BooleanProperty()
-    show_project_data = BooleanProperty()
 
     def is_location_safe_for_user(self, request):
         """
@@ -546,6 +545,16 @@ class ExportInstanceFilters(DocumentSchema):
             if not set(self.accessible_location_ids).issubset(users_accessible_locations):
                 return False
         return True
+
+
+class CaseExportInstanceFilters(ExportInstanceFilters):
+    sharing_groups = ListProperty(StringProperty)
+    show_all_data = BooleanProperty(default=True)
+    show_project_data = BooleanProperty()
+
+
+class FormExportInstanceFilters(ExportInstanceFilters):
+    user_types = ListProperty(IntegerProperty, default=[HQUserType.REGISTERED])
 
 
 class ExportInstance(BlobMixin, Document):
@@ -575,10 +584,6 @@ class ExportInstance(BlobMixin, Document):
     # daily saved export fields:
     last_updated = DateTimeProperty()
     last_accessed = DateTimeProperty()
-
-    # static filters to limit the data in this export
-    # filters are only used in daily saved and HTML (dashboard feed) exports
-    filters = SchemaProperty(ExportInstanceFilters)
 
     class Meta:
         app_label = 'export'
@@ -810,18 +815,9 @@ class CaseExportInstance(ExportInstance):
     case_type = StringProperty()
     type = CASE_EXPORT
 
-    def __init__(self, *args, **kwargs):
-        super(CaseExportInstance, self).__init__(*args, **kwargs)
-        # Conditional default values for self.filters
-        created_default_filters = "filters" not in kwargs and (len(args) == 0 or "filters" not in args[0])
-        if created_default_filters:
-            self.filters.show_all_data = True
-
-    @classmethod
-    def wrap(cls, data):
-        if "filters" not in data:
-            data['filters'] = {'show_all_data': True}
-        return super(CaseExportInstance, cls).wrap(data)
+    # static filters to limit the data in this export
+    # filters are only used in daily saved and HTML (dashboard feed) exports
+    filters = SchemaProperty(CaseExportInstanceFilters)
 
     @classmethod
     def _new_from_schema(cls, schema):
@@ -858,18 +854,9 @@ class FormExportInstance(ExportInstance):
     # Whether to include duplicates and other error'd forms in export
     include_errors = BooleanProperty(default=False)
 
-    def __init__(self, *args, **kwargs):
-        super(FormExportInstance, self).__init__(*args, **kwargs)
-        # Conditional default values for self.filters
-        created_default_filters = "filters" not in kwargs and (len(args) == 0 or "filters" not in args[0])
-        if created_default_filters:
-            self.filters.user_types = [0]
-
-    @classmethod
-    def wrap(cls, data):
-        if "filters" not in data:
-            data['filters'] = {"user_types": [0]}
-        return super(FormExportInstance, cls).wrap(data)
+    # static filters to limit the data in this export
+    # filters are only used in daily saved and HTML (dashboard feed) exports
+    filters = SchemaProperty(FormExportInstanceFilters)
 
     @property
     def formname(self):
@@ -892,7 +879,7 @@ class FormExportInstance(ExportInstance):
             return filter_builder.get_filter(
                 self.filters.can_access_all_locations,
                 self.filters.accessible_location_ids,
-                self.filters.sharing_groups + self.filters.reporting_groups,
+                self.filters.reporting_groups,
                 self.filters.user_types,
                 self.filters.users,
                 self.filters.locations,
