@@ -399,8 +399,12 @@ def process_sms_registration(msg):
                         password = random_password()
                         new_user = CommCareUser.create(domain.name, username, password, user_data=user_data)
                         new_user.add_phone_number(cleaned_phone_number)
-                        new_user.save_verified_number(domain.name, cleaned_phone_number, True, None)
                         new_user.save()
+
+                        entry = new_user.get_or_create_phone_entry(cleaned_phone_number)
+                        entry.set_two_way()
+                        entry.set_verified()
+                        entry.save()
                         registration_processed = True
 
                         if domain.enable_registration_welcome_sms_for_mobile_worker:
@@ -507,7 +511,7 @@ def load_and_call(sms_handler_names, phone_number, text, sms):
 
 
 def process_incoming(msg):
-    v = PhoneNumber.by_phone(msg.phone_number, include_pending=True)
+    v = PhoneNumber.get_reserved_number(msg.phone_number)
 
     if v:
         msg.couch_recipient_doc_type = v.owner_doc_type
@@ -540,21 +544,21 @@ def process_incoming(msg):
                 send_sms(msg.domain, None, msg.phone_number, text)
     else:
         handled = False
-        is_verified = v is not None and v.verified
+        is_two_way = v is not None and v.is_two_way
 
         if msg.domain and domain_has_privilege(msg.domain, privileges.INBOUND_SMS):
             handled = load_and_call(settings.CUSTOM_SMS_HANDLERS, v, msg.text, msg)
 
-            if not handled and is_verified and is_contact_active(v.domain, v.owner_doc_type, v.owner_id):
+            if not handled and is_two_way and is_contact_active(v.domain, v.owner_doc_type, v.owner_id):
                 handled = load_and_call(settings.SMS_HANDLERS, v, msg.text, msg)
 
-        if not handled and not is_verified:
+        if not handled and not is_two_way:
             handled = process_pre_registration(msg)
 
             if not handled:
                 handled = process_sms_registration(msg)
 
-            if not handled:
+            if not handled and v and v.pending_verification:
                 import verify
                 verify.process_verification(v, msg)
 

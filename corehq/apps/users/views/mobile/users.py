@@ -1169,7 +1169,10 @@ class CommCareUserSelfRegistrationView(TemplateView, DomainViewMixin):
             )
             # Since the user is being created by following the link and token
             # we sent to their phone by SMS, we can verify their phone number
-            user.save_verified_number(self.domain, self.invitation.phone_number, True)
+            entry = user.get_or_create_phone_entry(self.invitation.phone_number)
+            entry.set_two_way()
+            entry.set_verified()
+            entry.save()
 
             self.invitation.registered_date = datetime.utcnow()
             self.invitation.save()

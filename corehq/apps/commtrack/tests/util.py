@@ -83,7 +83,11 @@ def bootstrap_user(setup, username=TEST_USER, domain=TEST_DOMAIN,
     if home_loc == setup.loc.site_code:
         user.set_location(setup.loc)
 
-    user.save_verified_number(domain, phone_number, verified=True, backend_id=backend)
+    entry = user.get_or_create_phone_entry(phone_number)
+    entry.set_two_way()
+    entry.set_verified()
+    entry.backend_id = backend
+    entry.save()
     return CommCareUser.wrap(user.to_json())
 
 
