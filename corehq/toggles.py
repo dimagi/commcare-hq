@@ -1016,7 +1016,10 @@ NIMBUS_FORM_VALIDATION = PredictablyRandomToggle(
     'Use Nimbus to validate XForms',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
-    randomness=1.0
+    randomness=1.0,
+    always_disabled=[
+        'icrc-almanach'
+    ]
 )
 
 USER_PROPERTY_EASY_REFS = StaticToggle(
