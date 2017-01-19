@@ -153,21 +153,22 @@
 
 
         $rootScope.$watch("filterModalExport", function (newSelectedExport) {
-            if (newSelectedExport) {
-                if (!(newSelectedExport.id in self.nonPristineExportFilters)) {
-                    // Mark the form as pristine if we are editing filters of a different export than before
-                    self.nonPristineExportFilters[newSelectedExport.id] = true;
-                    $scope.feedFiltersForm.$setPristine();
-
-                }
-
-                $scope.formData = newSelectedExport.emailedExport.filters;
-                $scope.locationRestrictions = newSelectedExport.emailedExport.locationRestrictions;
-                $scope.modelType = newSelectedExport.exportType;
-                // select2s require programmatic update
-                $scope.formElement.emwf_case_filter().select2("data", newSelectedExport.emailedExport.filters.emwf_case_filter);
-                $scope.formElement.emwf_form_filter().select2("data", newSelectedExport.emailedExport.filters.emwf_form_filter);
+            if (!newSelectedExport) {
+                return;
             }
+            if (!(newSelectedExport.id in self.nonPristineExportFilters)) {
+                // Mark the form as pristine if we are editing filters of a different export than before
+                self.nonPristineExportFilters[newSelectedExport.id] = true;
+                $scope.feedFiltersForm.$setPristine();
+
+            }
+
+            $scope.formData = newSelectedExport.emailedExport.filters;
+            $scope.locationRestrictions = newSelectedExport.emailedExport.locationRestrictions;
+            $scope.modelType = newSelectedExport.exportType;
+            // select2s require programmatic update
+            $scope.formElement.emwf_case_filter().select2("data", newSelectedExport.emailedExport.filters.emwf_case_filter);
+            $scope.formElement.emwf_form_filter().select2("data", newSelectedExport.emailedExport.filters.emwf_form_filter);
         });
 
         $scope.$watch("formData.date_range", function(newDateRange) {
