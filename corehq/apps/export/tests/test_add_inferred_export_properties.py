@@ -3,7 +3,7 @@ from django.core.cache import caches
 
 from corehq.apps.data_dictionary.models import CaseType, CaseProperty
 from corehq.apps.export.tasks import add_inferred_export_properties
-from corehq.apps.export.dbaccessors import get_inferred_schema, delete_all_inferred_schemas
+from corehq.apps.export.dbaccessors import get_case_inferred_schema, delete_all_inferred_schemas
 from corehq.apps.export.models import ScalarItem, ExportItem
 
 
@@ -36,7 +36,7 @@ class InferredSchemaSignalTest(TestCase):
     def test_add_inferred_export_properties(self):
         props = set(['one', 'two'])
         self._add_props(props)
-        schema = get_inferred_schema(self.domain, self.case_type)
+        schema = get_case_inferred_schema(self.domain, self.case_type)
         group_schema = schema.group_schemas[0]
         self.assertEqual(set(map(lambda item: item.path[0].name, group_schema.items)), props)
         self._check_sql_props(props)
@@ -48,7 +48,7 @@ class InferredSchemaSignalTest(TestCase):
         self._add_props(props)
         self._add_props(props_two)
 
-        schema = get_inferred_schema(self.domain, self.case_type)
+        schema = get_case_inferred_schema(self.domain, self.case_type)
         group_schema = schema.group_schemas[0]
         self.assertEqual(
             set(map(lambda item: item.path[0].name, group_schema.items)),
@@ -65,7 +65,7 @@ class InferredSchemaSignalTest(TestCase):
         """
         props = set(['closed'])
         self._add_props(props)
-        schema = get_inferred_schema(self.domain, self.case_type)
+        schema = get_case_inferred_schema(self.domain, self.case_type)
         group_schema = schema.group_schemas[0]
         self.assertEqual(len(group_schema.items), 1)
         self.assertEqual(group_schema.items[0].__class__, ExportItem)

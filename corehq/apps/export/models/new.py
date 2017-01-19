@@ -73,7 +73,7 @@ from corehq.apps.export.exceptions import BadExportConfiguration
 from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
     get_latest_form_export_schema,
-    get_inferred_schema,
+    get_case_inferred_schema,
 )
 from corehq.apps.export.utils import is_occurrence_deleted
 
@@ -1126,7 +1126,6 @@ class InferredSchema(Document):
     domain = StringProperty(required=True)
     created_on = DateTimeProperty(default=datetime.utcnow)
     group_schemas = SchemaListProperty(InferredExportGroupSchema)
-    case_type = StringProperty(required=True)
     version = IntegerProperty(default=1)
 
     # This normally contains a mapping of app_id to the version number. For
@@ -1157,6 +1156,26 @@ class InferredSchema(Document):
             if group_schema.path == path:
                 return group_schema
         return None
+
+    @property
+    def identifier(self):
+        raise NotImplementedError()
+
+
+class CaseInferredSchema(InferredSchema):
+    case_type = StringProperty(required=True)
+
+    @property
+    def identifier(self):
+        return self.case_type
+
+
+class FormInferredSchema(InferredSchema):
+    xmlns = StringProperty(required=True)
+
+    @property
+    def identifier(self):
+        return self.xmlns
 
 
 class ExportDataSchema(Document):
@@ -1597,7 +1616,7 @@ class CaseExportDataSchema(ExportDataSchema):
 
     @classmethod
     def _get_inferred_schema(cls, domain, case_type):
-        return get_inferred_schema(domain, case_type)
+        return get_case_inferred_schema(domain, case_type)
 
     @classmethod
     def _get_current_app_ids_for_domain(cls, domain, app_id):

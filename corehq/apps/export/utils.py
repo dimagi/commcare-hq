@@ -24,7 +24,7 @@ from corehq.apps.app_manager.dbaccessors import (
 from .dbaccessors import (
     get_form_export_instances,
     get_case_export_instances,
-    get_inferred_schema,
+    get_case_inferred_schema,
 )
 from .exceptions import SkipConversion
 from .const import (
@@ -230,25 +230,23 @@ def convert_saved_export_to_export_instance(
             except SkipConversion, e:
                 if is_remote_app_migration or force_convert_columns or column.index in SKIPPABLE_PROPERTIES:
                     # In the event that we skip a column and it's a remote application,
-                    # just add a user defined column
-                    if export_type == CASE_EXPORT:
-                        inferred_schema = get_inferred_schema(domain, instance.case_type)
-                        if not inferred_schema:
-                            inferred_schema = InferredSchema(
-                                domain=domain,
-                                case_type=instance.case_type,
-                            )
-                        new_column = _create_column_from_inferred_schema(
-                            inferred_schema,
-                            new_table,
-                            column,
-                            column_path,
-                            transform,
+                    # add it to the inferred schema
+                    inferred_schema = get_case_inferred_schema(domain, instance.identifier)
+                    if not inferred_schema:
+                        inferred_schema = InferredSchema(
+                            domain=domain,
+                            case_type=instance.case_type,
                         )
-                        if not dryrun:
-                            inferred_schema.save()
-                    else:
-                        new_column = _create_user_defined_column(column, column_path, transform)
+                    new_column = _create_column_from_inferred_schema(
+                        inferred_schema,
+                        new_table,
+                        column,
+                        column_path,
+                        transform,
+                    )
+                    if not dryrun:
+                        inferred_schema.save()
+
                     new_table.columns.append(new_column)
                     ordering.append(new_column)
                 else:

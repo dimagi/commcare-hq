@@ -15,7 +15,7 @@ from corehq.apps.export.dbaccessors import (
     get_case_export_instances,
     get_all_daily_saved_export_instances,
     get_properly_wrapped_export_instance,
-    get_inferred_schema,
+    get_case_inferred_schema,
 )
 
 
@@ -199,10 +199,10 @@ class TestInferredSchemasDBAccessors(TestCase):
             schema.delete()
 
     def test_get_inferred_schema(self):
-        result = get_inferred_schema(self.domain, self.case_type)
+        result = get_case_inferred_schema(self.domain, self.case_type)
         self.assertIsNotNone(result)
         self.assertEqual(result._id, self.inferred_schema._id)
 
     def test_get_inferred_schema_missing(self):
-        result = get_inferred_schema(self.domain, 'not-here')
+        result = get_case_inferred_schema(self.domain, 'not-here')
         self.assertIsNone(result)
