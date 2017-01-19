@@ -430,18 +430,32 @@ class ProjectDataTab(UITab):
 
     @property
     @memoized
-    def can_view_daily_saved_exports(self):
-        return (
-            use_new_exports(self.domain) and
-            (self.can_view_case_exports or self.can_view_form_exports) and
-            domain_has_privilege(self.domain, DAILY_SAVED_EXPORT)
-        )
+    def can_view_form_or_case_exports (self):
+        return self.can_view_case_exports or self.can_view_form_exports
 
     @property
     @memoized
     def use_new_daily_saved_exports_ui(self):
         from corehq.apps.export.views import use_new_daily_saved_exports_ui
         return use_new_daily_saved_exports_ui(self.domain)
+
+    @property
+    @memoized
+    def should_see_daily_saved_export_list_view(self):
+        return (
+            self.can_view_form_or_case_exports
+            and self.use_new_daily_saved_exports_ui
+            and domain_has_privilege(self.domain, DAILY_SAVED_EXPORT)
+        )
+
+    @property
+    @memoized
+    def should_see_daily_saved_export_paywall(self):
+        return (
+            self.can_view_form_or_case_exports
+            and self.use_new_daily_saved_exports_ui
+            and not domain_has_privilege(self.domain, DAILY_SAVED_EXPORT)
+        )
 
     @property
     @memoized
@@ -598,32 +612,32 @@ class ProjectDataTab(UITab):
                             } if self.can_edit_commcare_data else None,
                         ])
                     })
-            if self.can_view_daily_saved_exports:
-                if self.use_new_daily_saved_exports_ui:
-                    export_data_views.append({
-                        "title": DailySavedExportListView.page_title,
-                        "url": reverse(DailySavedExportListView.urlname, args=(self.domain,)),
-                        "show_in_dropdown": True,
-                        "subpages": filter(None, [
-                            {
-                                'title': CreateNewDailySavedFormExport.page_title,
-                                'urlname': CreateNewDailySavedFormExport.urlname,
-                            } if self.can_edit_commcare_data else None,
-                            {
-                                'title': CreateNewDailySavedCaseExport.page_title,
-                                'urlname': CreateNewDailySavedCaseExport.urlname,
-                            } if self.can_edit_commcare_data else None,
-                            {
-                                'title': EditFormDailySavedExportView.page_title,
-                                'urlname': EditFormDailySavedExportView.urlname,
-                            } if self.can_edit_commcare_data else None,
-                            {
-                                'title': EditCaseDailySavedExportView.page_title,
-                                'urlname': EditCaseDailySavedExportView.urlname,
-                            } if self.can_edit_commcare_data else None,
-                        ])
-                    })
-            else:
+
+            if self.should_see_daily_saved_export_list_view:
+                export_data_views.append({
+                    "title": DailySavedExportListView.page_title,
+                    "url": reverse(DailySavedExportListView.urlname, args=(self.domain,)),
+                    "show_in_dropdown": True,
+                    "subpages": filter(None, [
+                        {
+                            'title': CreateNewDailySavedFormExport.page_title,
+                            'urlname': CreateNewDailySavedFormExport.urlname,
+                        } if self.can_edit_commcare_data else None,
+                        {
+                            'title': CreateNewDailySavedCaseExport.page_title,
+                            'urlname': CreateNewDailySavedCaseExport.urlname,
+                        } if self.can_edit_commcare_data else None,
+                        {
+                            'title': EditFormDailySavedExportView.page_title,
+                            'urlname': EditFormDailySavedExportView.urlname,
+                        } if self.can_edit_commcare_data else None,
+                        {
+                            'title': EditCaseDailySavedExportView.page_title,
+                            'urlname': EditCaseDailySavedExportView.urlname,
+                        } if self.can_edit_commcare_data else None,
+                    ])
+                })
+            if self.should_see_daily_saved_export_paywall:
                 export_data_views.append({
                     'title': DailySavedExportListView.page_title,
                     'url': reverse(DailySavedExportPaywall.urlname, args=(self.domain,)),
@@ -725,10 +739,11 @@ class ProjectDataTab(UITab):
                 CaseExportListView.page_title,
                 url=reverse(CaseExportListView.urlname, args=(self.domain,))
             ))
-        if self.use_new_daily_saved_exports_ui:
+        if self.should_see_daily_saved_export_list_view or self.should_see_daily_saved_export_paywall:
+            url = daily_saved_list_url if self.should_see_daily_saved_export_list_view else daily_saved_paywall_url
             items.append(dropdown_dict(
                 DailySavedExportListView.page_title,
-                url=daily_saved_list_url if self.can_view_daily_saved_exports else daily_saved_paywall_url
+                url=url
             ))
         if self.use_new_daily_saved_exports_ui:
             items.append(dropdown_dict(

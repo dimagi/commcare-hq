@@ -531,6 +531,7 @@ class ExportInstanceFilters(DocumentSchema):
     accessible_location_ids = ListProperty(StringProperty)
     locations = ListProperty(StringProperty)
     date_period = SchemaProperty(DatePeriod, default=None)
+    # TODO: Rename user_ids
     users = ListProperty(StringProperty)
     reporting_groups = ListProperty(StringProperty)
     user_types = ListProperty(IntegerProperty)
@@ -837,6 +838,7 @@ class CaseExportInstance(ExportInstance):
                 Domain.get_by_name(self.domain), get_timezone_for_domain(self.domain)
             )
             return filter_builder.get_filter(
+                # TODO: Something about plural vs not plural?
                 self.filters.can_access_all_locations,
                 self.filters.accessible_location_ids,
                 self.filters.show_all_data,
