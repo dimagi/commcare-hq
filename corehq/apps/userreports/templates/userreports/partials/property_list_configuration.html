@@ -29,7 +29,7 @@ TODO:
                     </th>
                     <!--ko if: $data.hasDisplayCol -->
                     <th>
-                        {% trans "Display Text" %}
+                        {% trans "Label" %}
                         <!--ko if: $data.displayHelpText -->
                         <span class="hq-help-template" data-bind="
                             attr: {'data-content': displayHelpText}
@@ -90,6 +90,7 @@ TODO:
 
                 <td class="form-group" data-bind="css:{'has-error': $parent.showWarnings() && !isValid()}">
 
+                    {% block property_name_display %}
                     <!-- ko ifnot: $root.optionsContainQuestions -->
                     <input type="text"
                            class="form-control"
@@ -104,6 +105,7 @@ TODO:
                         attr: {disabled: !existsInCurrentVersion()}
                     "/>
                     <!-- /ko -->
+                    {% endblock %}
                     <label class="help-block" data-bind="if: $parent.showWarnings() && !property()">
                         {% trans "Please select a property." %}</label>
                     <label class="help-block" data-bind="if: !existsInCurrentVersion()">
@@ -149,7 +151,7 @@ TODO:
                 <td>
                     <select class="form-control" data-bind="
                         options: calculationOptions,
-                        value: calculation,
+                        myValue: inputBoundCalculation,
                         attr: {disabled: !existsInCurrentVersion()}
                     "></select>
                 </td>
@@ -176,25 +178,29 @@ TODO:
                 <!--/ko-->
 
                 <td class="span1">
-                    <i style="cursor: pointer;" title="Delete" data-bind="
-                        click: function(){$parent.columns.remove($data)},
-                        css: COMMCAREHQ.icons.DELETE + ' hq-icon-full'
-                    "></i>
+                  <button
+                      class="btn btn-danger"
+                      data-bind="click: function(){$parent.columns.remove($data)}"
+                  >
+                    <i class="fa fa-remove"></i>
+                  </button>
                 </td>
             {# there must be no whitespace between <tbody> and <tr> #}
             {# the .hide().fadeIn() will fail badly on FireFox #}
             </tr></tbody>
             <tbody data-bind="visible: columns().length < 40" class="add-prop">
                 <tr>
-                    <td></td>
-                    <td colspan="4">
-                        <button class="btn btn-default" data-bind="
-                            click: buttonHandler
-                        ">
-                            <i class="fa fa-plus"></i>&nbsp;
-                            <span data-bind="text: buttonText"></span>
-                        </button>
-                    </td>
+                    {% block add_property_row %}
+                      <td></td>
+                      <td colspan="4">
+                          <button class="btn btn-default" data-bind="
+                              click: buttonHandler
+                          ">
+                              <i class="fa fa-plus"></i>&nbsp;
+                              <span data-bind="text: buttonText"></span>
+                          </button>
+                      </td>
+                    {% endblock %}
                 </tr>
             </tbody>
         </table>
