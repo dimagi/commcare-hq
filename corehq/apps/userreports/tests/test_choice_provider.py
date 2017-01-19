@@ -65,7 +65,7 @@ class ChoiceProviderTestMixin(object):
             self.choice_provider.query(query_context),
             self.static_choice_provider.query(query_context))
 
-    def _test_get_choices_for_values(self, values):
+    def _test_get_choices_for_values(self, values, user):
         self.assertEqual(
             self.choice_provider.get_choices_for_values(values, user),
             self.static_choice_provider.get_choices_for_values(values, user),
@@ -96,7 +96,9 @@ class ChoiceProviderTestMixin(object):
         Suggested implementation:
 
             self._test_get_choices_for_values(
-                [irrelevant_value, relevant_value, relevant_value])
+                [irrelevant_value, relevant_value, relevant_value],
+                web_user,
+            )
         """
         pass
 
@@ -153,7 +155,9 @@ class LocationChoiceProviderTest(ChoiceProviderTestMixin, LocationHierarchyTestC
 
     def test_get_choices_for_values(self):
         self._test_get_choices_for_values(
-            ['made-up', self.locations['Cambridge'].location_id, self.locations['Middlesex'].location_id])
+            ['made-up', self.locations['Cambridge'].location_id, self.locations['Middlesex'].location_id],
+            self.web_user,
+        )
 
     def test_scoped_to_location_search(self):
         self.web_user.set_location(self.domain, self.locations['Middlesex'])
@@ -215,9 +219,10 @@ class UserChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
     def setUpClass(cls):
         report = ReportConfiguration(domain=cls.domain)
 
+        cls.web_user = cls.make_web_user('candice@example.com'),
         cls.users = [
             cls.make_mobile_worker('bernice'),
-            cls.make_web_user('candice@example.com'),
+            cls.web_user,
             cls.make_mobile_worker('dennis'),
             cls.make_mobile_worker('elizabeth'),
             cls.make_mobile_worker('albert'),
@@ -243,7 +248,9 @@ class UserChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
 
     def test_get_choices_for_values(self):
         self._test_get_choices_for_values(
-            ['unknown-user'] + [user._id for user in self.users])
+            ['unknown-user'] + [user._id for user in self.users],
+            self.web_user,
+        )
 
 
 @mock.patch('corehq.apps.userreports.reports.filters.choice_providers.GroupES', GroupESFake)
@@ -274,6 +281,7 @@ class GroupChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
         choices.sort(key=lambda choice: choice.display)
         cls.choice_provider = GroupChoiceProvider(report, None)
         cls.static_choice_provider = StaticChoiceProvider(choices)
+        cls.web_user = UserChoiceProviderTest.make_web_user('web-user@example.com', domain=cls.domain)
 
     @classmethod
     def tearDownClass(cls):
@@ -284,7 +292,9 @@ class GroupChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
 
     def test_get_choices_for_values(self):
         self._test_get_choices_for_values(
-            ['unknown-group'] + [group.get_id for group in self.groups])
+            ['unknown-group'] + [group.get_id for group in self.groups],
+            self.web_user,
+        )
 
 
 @mock.patch('corehq.apps.users.analytics.UserES', UserESFake)
@@ -333,4 +343,6 @@ class OwnerChoiceProviderTest(LocationHierarchyTestCase, ChoiceProviderTestMixin
     def test_get_choices_for_values(self):
         self._test_get_choices_for_values(
             ['unknown', self.group._id, self.web_user._id, self.location.location_id,
-             self.mobile_worker._id])
+             self.mobile_worker._id],
+            self.web_user,
+        )
