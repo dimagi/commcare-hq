@@ -51,7 +51,6 @@ class CaseFindingAllTBPatientsReport(EnikshayReport):
             DataTablesColumn(''),
             DataTablesColumn(_('New')),
             DataTablesColumn(_('Recurrent')),
-            DataTablesColumn(_('Transfer-in')),
             DataTablesColumn(_('After Treatment Failure')),
             DataTablesColumn(_('Treatment After Lost to follow up')),
             DataTablesColumn(_('Other previously treated')),
