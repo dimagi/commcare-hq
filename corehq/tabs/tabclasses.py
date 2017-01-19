@@ -421,27 +421,50 @@ class ProjectDataTab(UITab):
 
     @property
     @memoized
-    def can_view_dashboard_feeds(self):
-        return (
-            use_new_exports(self.domain) and
-            (self.can_view_case_exports or self.can_view_form_exports) and
-            domain_has_privilege(self.domain, EXCEL_DASHBOARD)
-        )
-
-    @property
-    @memoized
-    def can_view_daily_saved_exports(self):
-        return (
-            use_new_exports(self.domain) and
-            (self.can_view_case_exports or self.can_view_form_exports) and
-            domain_has_privilege(self.domain, DAILY_SAVED_EXPORT)
-        )
+    def can_view_form_or_case_exports (self):
+        return self.can_view_case_exports or self.can_view_form_exports
 
     @property
     @memoized
     def use_new_daily_saved_exports_ui(self):
         from corehq.apps.export.views import use_new_daily_saved_exports_ui
         return use_new_daily_saved_exports_ui(self.domain)
+
+    @property
+    @memoized
+    def should_see_daily_saved_export_list_view(self):
+        return (
+            self.can_view_form_or_case_exports
+            and self.use_new_daily_saved_exports_ui
+            and domain_has_privilege(self.domain, DAILY_SAVED_EXPORT)
+        )
+
+    @property
+    @memoized
+    def should_see_daily_saved_export_paywall(self):
+        return (
+            self.can_view_form_or_case_exports
+            and self.use_new_daily_saved_exports_ui
+            and not domain_has_privilege(self.domain, DAILY_SAVED_EXPORT)
+        )
+
+    @property
+    @memoized
+    def should_see_dashboard_feed_list_view(self):
+        return (
+            self.can_view_form_or_case_exports
+            and self.use_new_daily_saved_exports_ui  # dashboard feeds are a special kind of daily saved export
+            and domain_has_privilege(self.domain, EXCEL_DASHBOARD)
+        )
+
+    @property
+    @memoized
+    def should_see_dashboard_feed_paywall(self):
+        return (
+            self.can_view_form_or_case_exports
+            and self.use_new_daily_saved_exports_ui  # dashboard feeds are a special kind of daily saved export
+            and not domain_has_privilege(self.domain, EXCEL_DASHBOARD)
+        )
 
     @property
     @memoized
@@ -598,67 +621,66 @@ class ProjectDataTab(UITab):
                             } if self.can_edit_commcare_data else None,
                         ])
                     })
-            if self.can_view_daily_saved_exports:
-                if self.use_new_daily_saved_exports_ui:
-                    export_data_views.append({
-                        "title": DailySavedExportListView.page_title,
-                        "url": reverse(DailySavedExportListView.urlname, args=(self.domain,)),
-                        "show_in_dropdown": True,
-                        "subpages": filter(None, [
-                            {
-                                'title': CreateNewDailySavedFormExport.page_title,
-                                'urlname': CreateNewDailySavedFormExport.urlname,
-                            } if self.can_edit_commcare_data else None,
-                            {
-                                'title': CreateNewDailySavedCaseExport.page_title,
-                                'urlname': CreateNewDailySavedCaseExport.urlname,
-                            } if self.can_edit_commcare_data else None,
-                            {
-                                'title': EditFormDailySavedExportView.page_title,
-                                'urlname': EditFormDailySavedExportView.urlname,
-                            } if self.can_edit_commcare_data else None,
-                            {
-                                'title': EditCaseDailySavedExportView.page_title,
-                                'urlname': EditCaseDailySavedExportView.urlname,
-                            } if self.can_edit_commcare_data else None,
-                        ])
-                    })
-            else:
+
+            if self.should_see_daily_saved_export_list_view:
+                export_data_views.append({
+                    "title": DailySavedExportListView.page_title,
+                    "url": reverse(DailySavedExportListView.urlname, args=(self.domain,)),
+                    "show_in_dropdown": True,
+                    "subpages": filter(None, [
+                        {
+                            'title': CreateNewDailySavedFormExport.page_title,
+                            'urlname': CreateNewDailySavedFormExport.urlname,
+                        } if self.can_edit_commcare_data else None,
+                        {
+                            'title': CreateNewDailySavedCaseExport.page_title,
+                            'urlname': CreateNewDailySavedCaseExport.urlname,
+                        } if self.can_edit_commcare_data else None,
+                        {
+                            'title': EditFormDailySavedExportView.page_title,
+                            'urlname': EditFormDailySavedExportView.urlname,
+                        } if self.can_edit_commcare_data else None,
+                        {
+                            'title': EditCaseDailySavedExportView.page_title,
+                            'urlname': EditCaseDailySavedExportView.urlname,
+                        } if self.can_edit_commcare_data else None,
+                    ])
+                })
+            elif self.should_see_daily_saved_export_paywall:
                 export_data_views.append({
                     'title': DailySavedExportListView.page_title,
                     'url': reverse(DailySavedExportPaywall.urlname, args=(self.domain,)),
                     'show_in_dropdown': True,
                     'subpages': []
                 })
-            if self.can_view_dashboard_feeds:
-                if self.use_new_daily_saved_exports_ui:
-                    subpages = []
-                    if self.can_edit_commcare_data:
-                        subpages = [
-                            {
-                                'title': CreateNewFormFeedView.page_title,
-                                'urlname': CreateNewFormFeedView.urlname,
-                            },
-                            {
-                                'title': CreateNewCaseFeedView.page_title,
-                                'urlname': CreateNewCaseFeedView.urlname,
-                            },
-                            {
-                                'title': EditFormFeedView.page_title,
-                                'urlname': EditFormFeedView.urlname,
-                            },
-                            {
-                                'title': EditCaseFeedView.page_title,
-                                'urlname': EditCaseFeedView.urlname,
-                            },
-                        ]
-                    export_data_views.append({
-                        'title': DashboardFeedListView.page_title,
-                        'url': reverse(DashboardFeedListView.urlname, args=(self.domain,)),
-                        'show_in_dropdown': True,
-                        'subpages': subpages
-                    })
-            else:
+            if self.should_see_dashboard_feed_list_view:
+                subpages = []
+                if self.can_edit_commcare_data:
+                    subpages = [
+                        {
+                            'title': CreateNewFormFeedView.page_title,
+                            'urlname': CreateNewFormFeedView.urlname,
+                        },
+                        {
+                            'title': CreateNewCaseFeedView.page_title,
+                            'urlname': CreateNewCaseFeedView.urlname,
+                        },
+                        {
+                            'title': EditFormFeedView.page_title,
+                            'urlname': EditFormFeedView.urlname,
+                        },
+                        {
+                            'title': EditCaseFeedView.page_title,
+                            'urlname': EditCaseFeedView.urlname,
+                        },
+                    ]
+                export_data_views.append({
+                    'title': DashboardFeedListView.page_title,
+                    'url': reverse(DashboardFeedListView.urlname, args=(self.domain,)),
+                    'show_in_dropdown': True,
+                    'subpages': subpages
+                })
+            elif self.should_see_dashboard_feed_paywall:
                 export_data_views.append({
                     'title': DashboardFeedListView.page_title,
                     'url': reverse(DashboardFeedPaywall.urlname, args=(self.domain,)),
@@ -725,15 +747,17 @@ class ProjectDataTab(UITab):
                 CaseExportListView.page_title,
                 url=reverse(CaseExportListView.urlname, args=(self.domain,))
             ))
-        if self.use_new_daily_saved_exports_ui:
+        if self.should_see_daily_saved_export_list_view or self.should_see_daily_saved_export_paywall:
+            url = daily_saved_list_url if self.should_see_daily_saved_export_list_view else daily_saved_paywall_url
             items.append(dropdown_dict(
                 DailySavedExportListView.page_title,
-                url=daily_saved_list_url if self.can_view_daily_saved_exports else daily_saved_paywall_url
+                url=url
             ))
-        if self.use_new_daily_saved_exports_ui:
+        if self.should_see_dashboard_feed_list_view or self.should_see_dashboard_feed_paywall:
+            url = feed_list_url if self.should_see_dashboard_feed_list_view else feed_paywall_url
             items.append(dropdown_dict(
                 DashboardFeedListView.page_title,
-                url=feed_list_url if self.can_view_dashboard_feeds else feed_paywall_url
+                url=url,
             ))
         items += [
             dropdown_dict(None, is_divider=True),
