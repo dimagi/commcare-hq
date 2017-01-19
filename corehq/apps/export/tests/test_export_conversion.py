@@ -15,7 +15,6 @@ from corehq.apps.export.models import (
     FormExportDataSchema,
     CaseExportDataSchema,
     ExportGroupSchema,
-    UserDefinedExportColumn,
     ExportItem,
     StockItem,
     LabelItem,
@@ -188,11 +187,86 @@ class TestConvertBase(TestCase, TestFileMixin):
     'corehq.apps.export.models.new.get_request',
     return_value=MockRequest(domain='my-domain'),
 )
-class TestForceConvertExport(TestConvertBase):
+@mock.patch(
+    'corehq.apps.export.utils._is_remote_app_conversion',
+    return_value=False,
+)
+class TestForceConvertFormExport(TestConvertBase):
 
     @classmethod
     def setUpClass(cls):
-        super(TestForceConvertExport, cls).setUpClass()
+        super(TestForceConvertFormExport, cls).setUpClass()
+        cls.project = create_domain(cls.domain)
+        cls.project.commtrack_enabled = True
+        cls.project.save()
+        cls.schema = FormExportDataSchema(
+            domain=cls.domain,
+            xmlns='myxmlns',
+            group_schemas=[
+                ExportGroupSchema(
+                    path=MAIN_TABLE,
+                    items=[],
+                ),
+            ],
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.project.delete()
+        super(TestForceConvertFormExport, cls).tearDownClass()
+
+    def test_force_column_convert_form_export(self, _, __):
+        instance, _ = self._convert_form_export('basic')
+        table = instance.get_table(MAIN_TABLE)
+
+        index, column = table.get_column(
+            [PathNode(name='form'), PathNode(name='question1')], 'ScalarItem', None
+        )
+        self.assertIsNone(column)
+
+        instance, _ = self._convert_form_export('basic', force=True)
+        table = instance.get_table(MAIN_TABLE)
+
+        index, column = table.get_column(
+            [PathNode(name='form'), PathNode(name='question1')], 'ScalarItem', None
+        )
+        self.assertIsNotNone(column)
+        self.assertTrue(column.item.inferred)
+        self.assertTrue(column.selected)
+
+    def test_force_column_convert_form_export_with_repeats(self, _, __):
+        instance, _ = self._convert_form_export('repeat')
+        table = instance.get_table(MAIN_TABLE)
+
+        index, column = table.get_column(
+            [PathNode(name='form'), PathNode(name='repeat', is_repeat=True), PathNode(name='question2')],
+            'ScalarItem',
+            None
+        )
+        self.assertIsNone(column)
+
+        instance, _ = self._convert_form_export('repeat', force=True)
+        table = instance.get_table(MAIN_TABLE)
+
+        index, column = table.get_column(
+            [PathNode(name='form'), PathNode(name='repeat', is_repeat=True), PathNode(name='question2')],
+            'ScalarItem',
+            None
+        )
+        self.assertIsNotNone(column)
+        self.assertTrue(column.item.inferred)
+        self.assertTrue(column.selected)
+
+
+@mock.patch(
+    'corehq.apps.export.models.new.get_request',
+    return_value=MockRequest(domain='my-domain'),
+)
+class TestForceConvertCaseExport(TestConvertBase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestForceConvertCaseExport, cls).setUpClass()
         cls.project = create_domain(cls.domain)
         cls.project.commtrack_enabled = True
         cls.project.save()
@@ -217,7 +291,7 @@ class TestForceConvertExport(TestConvertBase):
     @classmethod
     def tearDownClass(cls):
         cls.project.delete()
-        super(TestForceConvertExport, cls).tearDownClass()
+        super(TestForceConvertCaseExport, cls).tearDownClass()
 
     def test_force_column_convert(self, _):
         instance, _ = self._convert_case_export('case')
@@ -243,6 +317,7 @@ class TestForceConvertExport(TestConvertBase):
 
         # Ensure that the ordering remains correct with forced column conversion
         self.assertTrue(index > index_dob)
+
 
 
 @mock.patch(
@@ -608,9 +683,10 @@ class TestConvertSavedExportSchemaToFormExportInstance(TestConvertBase):
         index, column = table.get_column(
             [PathNode(name='initial_processing_complete')], None, None
         )
-        self.assertIsInstance(column, UserDefinedExportColumn)
+        self.assertIsInstance(column, ExportColumn)
         self.assertFalse(column.is_editable)
-        self.assertEqual(column.custom_path, [PathNode(name='initial_processing_complete')])
+        self.assertEqual(column.item.path, [PathNode(name='initial_processing_complete')])
+        self.assertEqual(column.item.inferred, True)
 
     def test_system_property_conversion(self, _, __):
         instance, _ = self._convert_form_export('system_properties')

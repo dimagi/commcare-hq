@@ -122,7 +122,7 @@ def convert_saved_export_to_export_instance(
         table_path = _convert_index_to_path_nodes(old_table.index)
         new_table = instance.get_table(_convert_index_to_path_nodes(old_table.index))
         if not new_table:
-            if not is_remote_app_migration:
+            if not is_remote_app_migration and not force_convert_columns:
                 if old_table.index != '#.history.#':
                     migration_meta.skipped_tables.append(ConversionMeta(
                         path=old_table.index,
