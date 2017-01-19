@@ -2,6 +2,7 @@ from django.utils.translation import ugettext as _
 
 from dimagi.utils.decorators.memoized import memoized
 
+from corehq.apps.locations.permissions import location_safe
 from .users import ExpandedMobileWorkerFilter, EmwfUtils
 
 
@@ -22,6 +23,7 @@ class CaseListFilterUtils(EmwfUtils):
         ] + options[1:]
 
 
+@location_safe
 class CaseListFilter(ExpandedMobileWorkerFilter):
     options_url = 'case_list_options'
     default_selections = [('project_data', _("[Project Data]"))]
