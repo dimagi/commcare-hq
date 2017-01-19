@@ -7,6 +7,9 @@ from corehq.apps.zapier.models import ZapierSubscription
 
 @receiver(pre_save, sender=ZapierSubscription)
 def zapier_subscription_pre_save(sender, instance, *args, **kwargs):
+    """
+    Creates a repeater object corresponding to the type of trigger (form or case)
+    """
     if instance.pk:
         return
 
@@ -33,6 +36,9 @@ def zapier_subscription_pre_save(sender, instance, *args, **kwargs):
 
 @receiver(post_delete, sender=ZapierSubscription)
 def zapier_subscription_post_delete(sender, instance, *args, **kwargs):
+    """
+    Deletes the repeater object when the corresponding zap is turned off
+    """
     if instance.event_name == "new_form":
         repeater = FormRepeater.get(instance.repeater_id)
     elif instance.event_name == "new_case":

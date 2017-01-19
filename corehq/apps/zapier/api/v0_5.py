@@ -40,6 +40,9 @@ class CustomActionField(object):
 """
 
 class ZapierCustomFieldResource(Resource):
+    """
+    Base class for custom field resources in Zapier
+    """
     type = fields.CharField(attribute='type')
     key = fields.CharField(attribute='key')
     label = fields.CharField(attribute='label', null=True, blank=True)
@@ -62,6 +65,9 @@ class ZapierCustomFieldResource(Resource):
 
 
 class ZapierCustomTriggerFieldFormResource(ZapierCustomFieldResource):
+    """
+    Generates custom trigger field labels for forms
+    """
 
     def obj_get_list(self, bundle, **kwargs):
         """
@@ -149,19 +155,26 @@ class ZapierCustomActionFieldFormResource(ZapierCustomFieldResource):
         resource_name = 'custom_action_fields_form'
 """
 
+#Map between keys and labels for general case properties (properties that every case has)
 CASE_PROPERTIES = {
                       "date_closed": "Date closed",
                       "date_modified": "Date modified",
                       "case_id": "Case ID",
                       "resource_uri": "Resource URI",
                       "user_id": "User ID",
+                      "xform_ids": "XForm IDs",
                       "properties__case_name": "Case name",
                       "properties__case_type": "Case type",
-                      "properties__owner_id": "Owner ID"
+                      "properties__owner_id": "Owner ID",
+                      "properties__date_opened": "Date opened",
+                      "properties__external_id": "External ID",
 }
 
 
 class ZapierCustomFieldCaseResource(ZapierCustomFieldResource):
+    """
+    Generates custom trigger field labels for cases
+    """
 
     def obj_get_list(self, bundle, **kwargs):
         custom_fields = []

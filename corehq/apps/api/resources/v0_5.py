@@ -820,6 +820,9 @@ Form.__new__.__defaults__ = ('', '')
 
 
 class DomainForms(Resource):
+    """
+    Returns: list of forms for a given domain with form name formatted for display in Zapier
+    """
     form_xmlns = fields.CharField(attribute='form_xmlns')
     form_name = fields.CharField(attribute='form_name')
 
@@ -846,6 +849,7 @@ class DomainForms(Resource):
         if not application:
             return []
         forms_objects = application.get_forms(bare=False)
+
         for form_object in forms_objects:
             form = form_object['form']
             module = form_object['module']
@@ -859,6 +863,11 @@ Case.__new__.__defaults__ = ('', '')
 
 
 class DomainCases(Resource):
+    """
+    Returns: list of case types for a domain
+
+    Note: only returns case types for which at least one case has been made
+    """
     placeholder = fields.CharField(attribute='placeholder')
     case_type = fields.CharField(attribute='case_type')
 
@@ -879,5 +888,5 @@ class DomainCases(Resource):
         case_types = CaseAccessors(domain).get_case_types()
         results = []
         for case_type in case_types:
-            results.append(Case(case_type = case_type))
+            results.append(Case(case_type=case_type))
         return results
