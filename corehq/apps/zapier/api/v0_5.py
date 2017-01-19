@@ -27,6 +27,7 @@ class CustomField(object):
         self.label = initial.get('label', '')
         self.help_text = initial.get('help_text', '')
 
+"""
 class CustomActionField(object):
 
     def __init__(self, initial = None):
@@ -36,9 +37,7 @@ class CustomActionField(object):
         self.label = initial.get('label', '')
         self.help_text = initial.get('help_text', '')
         self.required = initial.get('required', '')
-
-
-
+"""
 
 class ZapierCustomFieldResource(Resource):
     type = fields.CharField(attribute='type')
@@ -114,9 +113,9 @@ class ZapierCustomTriggerFieldFormResource(ZapierCustomFieldResource):
         return custom_fields
 
     class Meta(ZapierCustomFieldResource.Meta):
-        resource_name = 'custom_fields_form'
+        resource_name = 'custom_fields'
 
-
+"""
 class ZapierCustomActionFieldFormResource(ZapierCustomFieldResource):
     required = fields.CharField(attribute='required', default='', null=True, blank=True)
 
@@ -135,13 +134,12 @@ class ZapierCustomActionFieldFormResource(ZapierCustomFieldResource):
                 label = question['label'].split('/')[-1]
             else:
                 label = question['label']
-
             custom_fields.append(CustomActionField(
                 dict(
                     type='unicode',
                     key=self._build_key(question['hashtagValue']),
                     label=label,
-                    required=question['required']
+                    required=json.dumps(question['required'])
                 )
             ))
 
@@ -149,7 +147,7 @@ class ZapierCustomActionFieldFormResource(ZapierCustomFieldResource):
 
     class Meta(ZapierCustomFieldResource.Meta):
         resource_name = 'custom_action_fields_form'
-
+"""
 
 
 class ZapierCustomFieldCaseResource(ZapierCustomFieldResource):
@@ -160,13 +158,11 @@ class ZapierCustomFieldCaseResource(ZapierCustomFieldResource):
         case_type = bundle.request.GET.get('case_type')
 
         for prop in get_case_properties_for_case_type(domain, case_type):
-            label = prop['name']
-
             custom_fields.append(CustomField(
                 dict(
                     type='unicode',
-                    key=self._build_key(prop['hashtagValue']),
-                    label=label
+                    key=prop,
+                    label=prop
                 )
             ))
 
