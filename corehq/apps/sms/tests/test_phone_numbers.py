@@ -646,7 +646,7 @@ class SQLPhoneNumberTestCase(TestCase):
             self.assertEqual(len(PhoneNumber.by_owner_id(case1.case_id)), 1)
             self.assertEqual(len(PhoneNumber.by_owner_id(case2.case_id)), 1)
             self.assertEqual(len(PhoneNumber.by_owner_id(case3.case_id)), 1)
-            self.assertEqual(len(PhoneNumber.count_by_domain(self.domain), 3)
+            self.assertEqual(PhoneNumber.count_by_domain(self.domain), 3)
 
             delete_phone_numbers_for_owners([case2.case_id, case3.case_id])
             self.assertEqual(len(PhoneNumber.by_owner_id(case1.case_id)), 1)
