@@ -164,8 +164,6 @@
                             <label class="control-label col-sm-2">
                             {% if plan.has_credits_in_non_general_credit_line %}
                                 {% trans 'Plan Credit' %}
-                            {% else %}
-                                {% trans 'Credits Remaining' %}
                             {% endif %}
                             </label>
                             <div class="col-sm-10">
@@ -173,16 +171,16 @@
                             </div>
                         </div>
                     </div>
-                    {% if plan.general_credit and plan.general_credit.is_visible %}
+                    {% if not plan.has_credits_in_non_general_credit_line %}
                     <div class="form-group">
                         <label class="control-label col-sm-2">
-                            {% trans 'General Credit' %}
+                            {% trans 'Credits Remaining' %}
                             <div class="hq-help">
                                 <a href="#"
                                    data-content="This is credit that can be applied to either your software
                                     plan or the features below. It's likely that someone from Dimagi added
                                     these credits for you."
-                                   data-title="General Credit"
+                                   data-title="Credits Remaining"
                                    data-original-title=""
                                    title="">
                                     <i class="fa fa-question-circle"></i>
@@ -232,8 +230,6 @@
                             <label class="control-label col-sm-2">
                                 {% if plan.has_credits_in_non_general_credit_line %}
                                     {% trans 'Plan Credit' %}
-                                {% else %}
-                                    {% trans 'Credits Remaining' %}
                                 {% endif %}
                                 <div class="hq-help">
                                     <a href="#"
@@ -251,16 +247,16 @@
                             </div>
                         </div>
                     </div>
-                    {% if plan.account_general_credit and plan.account_general_credit.is_visible %}
+                    {% if not plan.has_credits_in_non_general_credit_line %}
                     <div class="form-group">
                         <label class="control-label col-sm-2">
-                            {% trans 'General Credit' %}
+                            {% trans 'Credits Remaining' %}
                             <div class="hq-help">
                                 <a href="#"
                                    data-content="This is credit that can be applied to either your software
                                     plan or the features below. It's likely that someone from Dimagi added
                                     these credits for you."
-                                   data-title="Account General Credit"
+                                   data-title="Account Credits Remaining"
                                    data-original-title=""
                                    title="">
                                     <i class="fa fa-question-circle"></i>
