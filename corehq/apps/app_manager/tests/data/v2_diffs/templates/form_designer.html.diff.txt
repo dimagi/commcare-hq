@@ -63,11 +63,11 @@
 +                $('#js-fd-manage-case').html(),
 +                0,
 +                function () {
-+                    previewApp.prependToggleTo('.fd-form-actions', $('#js-fd-app-preview-btn-template').html());
++                    previewApp.appendToggleTo('.fd-form-actions', $('#js-fd-app-preview-btn-template').html());
 +                }
 +            );
 +            {% else %}
-+                previewApp.prependToggleTo('.fd-form-actions', $('#js-fd-app-preview-btn-template').html());
++                previewApp.appendToggleTo('.fd-form-actions', $('#js-fd-app-preview-btn-template').html());
 +            {% endif %}
 +
 +        });
