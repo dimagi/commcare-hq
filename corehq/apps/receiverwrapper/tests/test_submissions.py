@@ -67,8 +67,7 @@ class SubmissionTest(TestCase):
             n_times_saved = int(foo['_rev'].split('-')[0])
             self.assertEqual(n_times_saved, 1)
 
-        for key in ['form', 'external_blobs', '_rev', 'received_on', 'user_id',
-                    'migrating_blobs_from_couch']:
+        for key in ['form', 'external_blobs', '_rev', 'received_on', 'user_id']:
             if key in foo:
                 del foo[key]
 

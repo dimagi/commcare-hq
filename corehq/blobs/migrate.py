@@ -24,7 +24,7 @@ models' attachments to the blob database:
    to be migrated to the blob database. For each new `BlobMixin` model:
 
    a. The mixin must come before `Document` in the list of base classes.
-   b. Add `migrating_blobs_from_couch = True` to the class.
+   b. Add `_migrating_blobs_from_couch = True` to the class.
    c. Adapt any uses of the `_attachments` property to use `blobs`
       instead (this is more than a simple find and replace; see
       `corehq.blobs.mixin` for details).
@@ -40,7 +40,7 @@ models' attachments to the blob database:
 4. Run the management command to migrate attachments out of couch:
    `./manage.py run_blob_migration <your_slug>`
 
-5. Remove `migrating_blobs_from_couch = True` from each of your
+5. Remove `_migrating_blobs_from_couch = True` from each of your
    `BlobMixin` models.
 
 6. Create a new django migration with the `makemigrations` management

@@ -45,7 +45,7 @@ class BlobMixin(Document):
     # found in blobdb. Set this to True on subclasses that are in the
     # process of being migrated. When this is false (the default) the
     # methods on this mixin will not touch couchdb.
-    migrating_blobs_from_couch = False
+    _migrating_blobs_from_couch = False
 
     _atomic_blobs = None
 
@@ -59,10 +59,10 @@ class BlobMixin(Document):
     def blobs(self):
         """Get a dictionary of BlobMeta objects keyed by attachment name
 
-        Includes CouchDB attachments if `migrating_blobs_from_couch` is true.
+        Includes CouchDB attachments if `_migrating_blobs_from_couch` is true.
         The returned value should not be mutated.
         """
-        if not self.migrating_blobs_from_couch or not self._attachments:
+        if not self._migrating_blobs_from_couch or not self._attachments:
             return self.external_blobs
         value = {name: BlobMeta(
             id=None,
@@ -104,7 +104,7 @@ class BlobMixin(Document):
             content_length=info.length,
             digest=info.digest,
         )
-        if self.migrating_blobs_from_couch and self._attachments:
+        if self._migrating_blobs_from_couch and self._attachments:
             self._attachments.pop(name, None)
         if self._atomic_blobs is None:
             self.save()
@@ -127,7 +127,7 @@ class BlobMixin(Document):
             try:
                 meta = self.external_blobs[name]
             except KeyError:
-                if self.migrating_blobs_from_couch:
+                if self._migrating_blobs_from_couch:
                     return super(BlobMixin, self) \
                         .fetch_attachment(name, stream=stream)
                 raise NotFound
@@ -156,7 +156,7 @@ class BlobMixin(Document):
         return name in self.blobs
 
     def delete_attachment(self, name):
-        if self.migrating_blobs_from_couch and self._attachments:
+        if self._migrating_blobs_from_couch and self._attachments:
             deleted = bool(self._attachments.pop(name, None))
         else:
             deleted = False
@@ -192,7 +192,7 @@ class BlobMixin(Document):
             if self._id is None:
                 self._id = self.get_db().server.next_uuid()
             old_external_blobs = dict(self.external_blobs)
-            if self.migrating_blobs_from_couch:
+            if self._migrating_blobs_from_couch:
                 if self._attachments:
                     old_attachments = dict(self._attachments)
                 else:
@@ -214,7 +214,7 @@ class BlobMixin(Document):
                     if old_meta is None or meta.id != old_meta.id:
                         db.delete(meta.id, bucket)
                 self.external_blobs = old_external_blobs
-                if self.migrating_blobs_from_couch:
+                if self._migrating_blobs_from_couch:
                     self._attachments = old_attachments
                 raise typ, exc, tb
             finally:
@@ -241,7 +241,7 @@ class BlobHelper(object):
     using the normal attachments API if this is used to copy a document
     having "_attachments" but not "external_blobs" to a database in
     which the "doc_type" uses external blob storage and is not in
-    `migrating_blobs_from_couch` mode. To work around this limitation,
+    `_migrating_blobs_from_couch` mode. To work around this limitation,
     put `"external_blobs": {}` in documents having a "doc_type" that
     uses external blob storage. The same is true when copying a document
     with "external_blobs" to a database that is not using an external
@@ -260,7 +260,7 @@ class BlobHelper(object):
         self.doc = doc
         self.database = database
         self.couch_only = "external_blobs" not in doc
-        self.migrating_blobs_from_couch = bool(doc.get("_attachments")) \
+        self._migrating_blobs_from_couch = bool(doc.get("_attachments")) \
             and not self.couch_only
         self._attachments = doc.get("_attachments")
         blobs = doc.get("external_blobs", {})

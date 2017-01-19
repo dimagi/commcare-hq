@@ -31,8 +31,8 @@ class BaseMigrationTest(TestCase):
         self.docs_to_delete = []
 
         for model in doc_type_tuples_to_dict(mod.MIGRATIONS[self.slug].doc_types).values():
-            self._old_flags[model] = model.migrating_blobs_from_couch
-            model.migrating_blobs_from_couch = True
+            self._old_flags[model] = model._migrating_blobs_from_couch
+            model._migrating_blobs_from_couch = True
 
     def tearDown(self):
         self.discard_migration_state(self.slug)
@@ -40,9 +40,9 @@ class BaseMigrationTest(TestCase):
             doc.get_db().delete_doc(doc._id)
         for model, flag in self._old_flags.items():
             if flag is NOT_SET:
-                del model.migrating_blobs_from_couch
+                del model._migrating_blobs_from_couch
             else:
-                model.migrating_blobs_from_couch = flag
+                model._migrating_blobs_from_couch = flag
         super(BaseMigrationTest, self).tearDown()
 
     @staticmethod
