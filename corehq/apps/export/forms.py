@@ -631,7 +631,7 @@ class DashboardFeedFilterForm(forms.Form):
                 export_instance_filters.reporting_groups +
                 export_instance_filters.sharing_groups +
                 export_instance_filters.locations +
-                export_instance_filters.user_types +
+                export_instance_filters.user_types
             ]
             if isinstance(export_instance_filters, CaseExportInstanceFilters):
                 selected_items += (
