@@ -13,12 +13,12 @@ def get_current_state(sql_location):
         stock_state.sql_product.code: stock_state.get_monthly_consumption()
         for stock_state in StockState.objects.filter(
             case_id=sql_location.supply_point_id
-        ).select_related('sql_product__code').order_by('sql_product__code')
+        ).select_related('sql_product').order_by('sql_product')
     }
 
     stock_transactions = StockTransaction.objects.filter(
         case_id=sql_location.supply_point_id, report__date__gte=ten_days_ago, type__in=['stockonhand', 'stockout']
-    ).select_related('sql_product__code').distinct('sql_product__code')\
+    ).select_related('sql_product').distinct('sql_product__code')\
         .order_by('sql_product__code', '-report__date')
 
     current_state = OrderedDict()
