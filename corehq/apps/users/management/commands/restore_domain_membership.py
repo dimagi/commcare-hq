@@ -36,7 +36,7 @@ class Command(BaseCommand):
     @change_log_level('kafka', 'ERROR')
     def handle(self, *args, **options):
         if options['print_kafka_offsets']:
-            end, start = self.get_min_max_offssets()
+            start, end = self.get_min_max_offsets()
             print "\n\nKakfa topic offset range: {} - {}".format(start, end)
             return
 
@@ -92,6 +92,9 @@ class Command(BaseCommand):
 
             restore_domain_membership(user, check=check)
 
+            if change.sequence_id % 100 == 0:
+                print "Processed up to offset: {}".format(change.sequence_id)
+
     def get_min_max_offsets(self):
         end = get_multi_topic_offset([COMMCARE_USER])[COMMCARE_USER]
         start = get_multi_topic_first_available_offsets([COMMCARE_USER])[COMMCARE_USER]
@@ -125,6 +128,12 @@ def restore_domain_membership(user, check=False):
             continue
         prev_user = CommCareUser.wrap(doc)
         if user_looks_ok(prev_user):
+            if user.location_id != prev_user.domain_membership.locatoin_id:
+                continue
+
+            if user.assigned_location_ids != prev_user.domain_membership.assigned_location_ids:
+                continue
+
             if check:
                 print 'Ready to patch user: {} ({})'.format(user.domain, doc_id)
                 old = json.dumps(user.domain_membership.to_json(), indent=2)
