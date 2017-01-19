@@ -10,15 +10,16 @@ DOMAIN = 'enikshay'
 DOSE_TAKEN_INDICATORS = [
     'directly_observed_dose',
     'unobserved_dose',
-    'self_administered_dos',
+    'self_administered_dose',
 ]
-DAILY_SCHEDULE_ID = 'schedule_daily'
-CASE_TYPE_PERSON = 'person'
+DAILY_SCHEDULE_FIXTURE_NAME = 'adherence_schedules'
+SCHEDULE_ID_FIXTURE = 'id'
+CASE_TYPE_EPISODE = 'episode'
 
 
 def get_doses_data():
     # return 'doses_per_week' by 'schedule_id' from the Fixture data
-    fixtures = FixtureDataItem.get_indexed_items(DOMAIN, DAILY_SCHEDULE_ID, 'schedule_id')
+    fixtures = FixtureDataItem.get_indexed_items(DOMAIN, DAILY_SCHEDULE_FIXTURE_NAME, SCHEDULE_ID_FIXTURE)
     return dict((k, int(fixture['doses_per_week'])) for k, fixture in fixtures.items())
 
 
@@ -27,7 +28,7 @@ def get_open_episode_cases():
     get list of all open 'episode' type cases
     """
     case_accessor = CaseAccessors(DOMAIN)
-    case_ids = get_open_case_ids_in_domain_by_type(CASE_TYPE_PERSON)
+    case_ids = get_open_case_ids_in_domain_by_type(CASE_TYPE_EPISODE)
     return case_accessor.iter_cases(case_ids)
 
 
@@ -60,6 +61,7 @@ def index_by_adherence_date(adherence_cases):
         by_date[adherance_date].append(case)
     return by_date
 
+
 def get_adherence_schedule_date_start(episode_case):
     return parse_datetime(case.dynamic_case_properties().get('adherence_schedule_date_start'))
 
@@ -72,9 +74,9 @@ def update_adherence_properties():
         adherence_schedule_date_start = get_adherence_schedule_date_start(episode)
         # Todo: What if adherence_schedule_date_start is None
         if adherence_schedule_date_start > PURGE_DATE:
-            episode.aggregate_date = adherence_schedule_date_start - 1
+            episode.aggregated_score_date_calculated = adherence_schedule_date_start - 1
             episode.expected = 0
-            episode.taken = 0
+            episode.aggregated_score_count_taken = 0
         else:
             adherence_case = get_latest_adherence_case_for_episode(episode)
             # ToDo: what if adherence_case doesn't exist?
