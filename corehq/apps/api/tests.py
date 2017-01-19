@@ -114,6 +114,8 @@ class APIResourceTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(APIResourceTest, cls).setUpClass()
+
         Role.get_cache().clear()
         generator.instantiate_accounting()
         cls.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
@@ -148,6 +150,8 @@ class APIResourceTest(TestCase):
 
         for domain in Domain.get_all():
             domain.delete()
+
+        super(APIResourceTest, cls).tearDownClass()
 
     def single_endpoint(self, id):
         return reverse('api_dispatch_detail', kwargs=dict(domain=self.domain.name,
