@@ -13,7 +13,8 @@ from corehq.apps.export.filters import (
 )
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.es.users import user_ids_at_locations_and_descendants, user_ids_at_locations
-from corehq.apps.export.models.new import DatePeriod, CaseExportInstance
+from corehq.apps.export.models.new import DatePeriod, CaseExportInstance, FormExportInstanceFilters, \
+    CaseExportInstanceFilters
 from corehq.apps.export.models.new import ExportInstanceFilters
 from corehq.apps.reports.filters.case_list import CaseListFilter, CaseListFilterUtils
 from corehq.apps.reports.filters.users import LocationRestrictedMobileWorkerFilter, EmwfUtils
@@ -563,44 +564,55 @@ class DashboardFeedFilterForm(forms.Form):
         """
         Serialize the bound form as an ExportInstanceFilters object.
         """
-
-        # Only one of these fields should have any data in it.
-        if self.cleaned_data['emwf_form_filter'] is not None:
-            emwf_field = 'emwf_form_filter'
-        else:
-            emwf_field = 'emwf_case_filter'
-        emwf_selections = [x['id'] for x in self.cleaned_data[emwf_field]]
+        # Confirm that either form filter data or case filter data but not both has been submitted.
+        assert bool(self.cleaned_data['emwf_form_filter']) != bool(self.cleaned_data['emwf_case_filter'])
 
         if self.cleaned_data['emwf_form_filter']:
-            # its a from export
-            emwf_class = LocationRestrictedMobileWorkerFilter
-            sharing_groups = []
-            show_all_data = None
-            show_project_data = None
+            # It's a form export
+            return self._to_form_export_instance_filters(can_access_all_locations, accessible_location_ids)
         else:
-            # its a case export
-            emwf_class = CaseListFilter
-            sharing_groups = emwf_class.selected_sharing_group_ids(emwf_selections)
-            show_all_data = emwf_class.show_all_data(emwf_selections)
-            show_project_data = emwf_class.show_project_data(emwf_selections)
+            # it's a case export
+            return self._to_case_export_instance_filters(can_access_all_locations, accessible_location_ids)
 
-        return ExportInstanceFilters(
+    def _to_case_export_instance_filters(self, can_access_all_locations, accessible_location_ids):
+        emwf_selections = [x['id'] for x in self.cleaned_data["emwf_case_filter"]]
+
+        return CaseExportInstanceFilters(
             date_period=DatePeriod(
                 period_type=self.cleaned_data['date_range'],
                 days=self.cleaned_data['days'],
                 begin=self.cleaned_data['start_date'],
                 end=self.cleaned_data['end_date'],
             ),
-            users=emwf_class.selected_user_ids(emwf_selections),
-            reporting_groups=emwf_class.selected_reporting_group_ids(emwf_selections),
-            sharing_groups=sharing_groups,
-            locations=emwf_class.selected_location_ids(emwf_selections),
-            user_types=emwf_class.selected_user_types(emwf_selections),
+            users=CaseListFilter.selected_user_ids(emwf_selections),
+            reporting_groups=CaseListFilter.selected_reporting_group_ids(emwf_selections),
+            locations=CaseListFilter.selected_location_ids(emwf_selections),
+            user_types=CaseListFilter.selected_user_types(emwf_selections),
             can_access_all_locations=can_access_all_locations,
             accessible_location_ids=accessible_location_ids,
-            show_all_data=show_all_data,
-            show_project_data=show_project_data,
+            sharing_groups=CaseListFilter.selected_sharing_group_ids(emwf_selections),
+            show_all_data=CaseListFilter.show_all_data(emwf_selections),
+            show_project_data=CaseListFilter.show_project_data(emwf_selections),
         )
+
+    def _to_form_export_instance_filters(self, can_access_all_locations, accessible_location_ids):
+        emwf_selections = [x['id'] for x in self.cleaned_data["emwf_form_filter"]]
+    
+        return FormExportInstanceFilters(
+            date_period=DatePeriod(
+                period_type=self.cleaned_data['date_range'],
+                days=self.cleaned_data['days'],
+                begin=self.cleaned_data['start_date'],
+                end=self.cleaned_data['end_date'],
+            ),
+            users=LocationRestrictedMobileWorkerFilter.selected_user_ids(emwf_selections),
+            reporting_groups=LocationRestrictedMobileWorkerFilter.selected_reporting_group_ids(emwf_selections),
+            locations=LocationRestrictedMobileWorkerFilter.selected_location_ids(emwf_selections),
+            user_types=LocationRestrictedMobileWorkerFilter.selected_user_types(emwf_selections),
+            can_access_all_locations=can_access_all_locations,
+            accessible_location_ids=accessible_location_ids,
+        )
+
 
     @classmethod
     def get_form_data_from_export_instance_filters(cls, export_instance_filters, domain, export_type):
@@ -613,12 +625,14 @@ class DashboardFeedFilterForm(forms.Form):
         if export_instance_filters:
             date_period = export_instance_filters.date_period
 
+            # TODO: Account for types here
             selected_items = (
                 export_instance_filters.users +
                 export_instance_filters.reporting_groups +
                 export_instance_filters.sharing_groups +
                 export_instance_filters.locations +
                 export_instance_filters.user_types +
+                # e.g. this will error if form export
                 (["all_data"] if export_instance_filters.show_all_data else []) +
                 (["project_data"] if export_instance_filters.show_project_data else [])
             )

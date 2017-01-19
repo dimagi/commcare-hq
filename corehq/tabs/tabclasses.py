@@ -598,6 +598,7 @@ class ProjectDataTab(UITab):
                             } if self.can_edit_commcare_data else None,
                         ])
                     })
+            # Ok...
             if self.can_view_daily_saved_exports:
                 if self.use_new_daily_saved_exports_ui:
                     export_data_views.append({
