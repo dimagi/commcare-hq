@@ -149,7 +149,6 @@ class ZapierCustomActionFieldFormResource(ZapierCustomFieldResource):
         resource_name = 'custom_action_fields_form'
 """
 
-
 class ZapierCustomFieldCaseResource(ZapierCustomFieldResource):
 
     def obj_get_list(self, bundle, **kwargs):

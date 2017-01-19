@@ -853,7 +853,7 @@ class DomainForms(Resource):
             results.append(Form(form_xmlns=form.xmlns, form_name=form_name))
         return results
 
-#Zapier requires id and name; case_type has no obvious id, placeholder inserted instead.
+#Zapier requires id and name; case_type has no obvious id, placeholder inserted instead.s
 Case = namedtuple('Case', 'case_type placeholder')
 Case.__new__.__defaults__ = ('', '')
 
