@@ -375,6 +375,61 @@ class TestXFormInstanceMigrations(BaseMigrationTest):
             self.assertEqual(exp.fetch_attachment("other.xml"), old_form)
 
 
+class TestCommCareCaseMigrations(BaseMigrationTest):
+
+    slug = "cases"
+    doc_type_map = {
+        'CommCareCase': mod.cases.CommCareCase,
+        'CommCareCase-deleted': mod.cases.CommCareCase,
+        'CommCareCase-Deleted': mod.cases.CommCareCase,
+        'CommCareCase-Deleted-Deleted': mod.cases.CommCareCase,
+    }
+
+    def test_migrate_happy_path(self):
+        items = {}
+        name = "photo.jpg"
+        data = b'binary data not valid utf-8 \xe4\x94'
+        for doc_type, model_class in self.doc_type_map.items():
+            item = model_class()
+            item.save()
+            super(BlobMixin, item).put_attachment(data, name)
+            item.doc_type = doc_type
+            item.save()
+            items[doc_type] = item
+
+        self.do_migration(items.values(), num_attachments=1)
+
+        for item in items.values():
+            exp = type(item).get(item._id)
+            self.assertEqual(exp.fetch_attachment(name), data)
+
+    def test_migrate_with_concurrent_modification(self):
+        items = {}
+        name = "photo.jpg"
+        new_data = 'something new'
+        old_data = 'something old'
+        for doc_type, model_class in self.doc_type_map.items():
+            item = model_class()
+            item.save()
+            super(BlobMixin, item).put_attachment(old_data, name)
+            super(BlobMixin, item).put_attachment(old_data, "other.png")
+            item.doc_type = doc_type
+            item.save()
+            self.assertEqual(len(item._attachments), 2)
+            items[item] = (1, 1)
+
+        def modify(item):
+            # put_attachment() calls .save()
+            type(item).get(item._id).put_attachment(new_data, name)
+
+        self.do_failed_migration(items, modify)
+
+        for item in items:
+            exp = type(item).get(item._id)
+            self.assertEqual(exp.fetch_attachment(name), new_data)
+            self.assertEqual(exp.fetch_attachment("other.png"), old_data)
+
+
 class TestMigrateBackend(TestCase):
 
     slug = "migrate_backend"

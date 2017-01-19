@@ -96,6 +96,7 @@ from couchdbkit import ResourceConflict
 # models to be migrated
 import corehq.apps.hqmedia.models as hqmedia
 import couchforms.models as xform
+import casexml.apps.case.models as cases
 from corehq.apps.app_manager.models import Application, RemoteApp
 from couchexport.models import SavedBasicExport
 import corehq.form_processor.models as sql_xform
@@ -498,6 +499,12 @@ MIGRATIONS = {m.slug: m for m in [
         xform.XFormError,
         xform.SubmissionErrorLog,
         ("HQSubmission", xform.XFormInstance),
+    ], CouchAttachmentMigrator),
+    Migrator("cases", [
+        cases.CommCareCase,
+        ('CommCareCase-deleted', cases.CommCareCase),
+        ('CommCareCase-Deleted', cases.CommCareCase),
+        ('CommCareCase-Deleted-Deleted', cases.CommCareCase),
     ], CouchAttachmentMigrator),
 ]}
 
