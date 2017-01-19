@@ -2,7 +2,7 @@ from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.resources.v0_4 import XFormInstanceResource
 from corehq.apps.api.resources.v0_5 import DoesNothingPaginator
 from corehq.apps.case_importer.util import get_case_properties_for_case_type
-from corehq.apps.export.system_properties import MAIN_FORM_TABLE_PROPERTIES, MAIN_CASE_TABLE_PROPERTIES
+from corehq.apps.export.system_properties import MAIN_FORM_TABLE_PROPERTIES
 from corehq.apps.zapier.util import remove_advanced_fields
 from corehq.apps.app_manager.models import Application
 
@@ -149,6 +149,18 @@ class ZapierCustomActionFieldFormResource(ZapierCustomFieldResource):
         resource_name = 'custom_action_fields_form'
 """
 
+CASE_PROPERTIES = {
+                      "date_closed": "Date closed",
+                      "date_modified": "Date modified",
+                      "case_id": "Case ID",
+                      "resource_uri": "Resource URI",
+                      "user_id": "User ID",
+                      "properties__case_name": "Case name",
+                      "properties__case_type": "Case type",
+                      "properties__owner_id": "Owner ID"
+}
+
+
 class ZapierCustomFieldCaseResource(ZapierCustomFieldResource):
 
     def obj_get_list(self, bundle, **kwargs):
@@ -160,22 +172,20 @@ class ZapierCustomFieldCaseResource(ZapierCustomFieldResource):
             custom_fields.append(CustomField(
                 dict(
                     type='unicode',
-                    key=prop,
+                    key="properties__" + prop,
                     label=prop
                 )
             ))
 
-        for case_property in MAIN_CASE_TABLE_PROPERTIES:
-            if case_property.is_advanced:
-                continue
+        for case_property in CASE_PROPERTIES:
             custom_fields.append(CustomField(
                 dict(
                     type='unicode',
-                    key='__'.join([node.name for node in case_property.item.path]),
-                    label=case_property.label,
-                    help_text=case_property.help_text
+                    key=case_property,
+                    label=CASE_PROPERTIES[case_property]
                 )
             ))
+
         return custom_fields
 
     class Meta(ZapierCustomFieldResource.Meta):
