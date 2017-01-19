@@ -44,38 +44,47 @@ REINDEX_FNS = {
 
 
 class Command(BaseCommand):
-    args = 'index'
     help = 'Reindex a pillowtop index'
 
-    option_list = (
-        make_option('--cleanup',
-                    action='store_true',
-                    dest='cleanup',
-                    default=False,
-                    help='Clean index (delete data) before reindexing.'),
-        make_option('--noinput',
-                    action='store_true',
-                    dest='noinput',
-                    default=False,
-                    help='Skip important confirmation warnings.'),
+    def add_arguments(self, parser):
+        parser.add_argument('index')
+        parser.add_argument(
+            '--cleanup',
+            action='store_true',
+            dest='cleanup',
+            default=False,
+            help='Clean index (delete data) before reindexing.'
+        )
+        parser.add_argument(
+            '--noinput',
+            action='store_true',
+            dest='noinput',
+            default=False,
+            help='Skip important confirmation warnings.'
+        )
 
         # for resumable reindexers
-        make_option('--reset',
-                    action='store_true',
-                    dest='reset',
-                    help='Reset a resumable reindex'),
-        make_option('--chunksize',
-                    type="int",
-                    action='store',
-                    dest='chunksize',
-                    help='Number of docs to process at a time'),
+        parser.add_argument(
+            '--reset',
+            action='store_true',
+            dest='reset',
+            help='Reset a resumable reindex'
+        )
+        parser.add_argument(
+            '--chunksize',
+            type=int,
+            action='store',
+            dest='chunksize',
+            help='Number of docs to process at a time'
+        )
 
         # for ES reindexers
-        make_option('--in-place',
-                    action='store_true',
-                    dest='in-place',
-                    help='Run the reindex in place - assuming it is against a live index.'),
-    )
+        parser.add_argument(
+            '--in-place',
+            action='store_true',
+            dest='in-place',
+            help='Run the reindex in place - assuming it is against a live index.'
+        )
 
     def handle(self, index, *args, **options):
         cleanup = options.pop('cleanup')
@@ -89,14 +98,9 @@ class Command(BaseCommand):
         reindexer = REINDEX_FNS[index]()
         reindexer_options = {
             key: value for key, value in options.items()
-            if value is not None and key in [option.dest for option in self.option_list]
+            if value is not None
         }
-        unconsumed = reindexer.consume_options(reindexer_options)
-        if unconsumed:
-            raise CommandError(
-                """The following options don't apply to the reindexer you're calling: {}
-                """.format(unconsumed.keys())
-            )
+        reindexer.consume_options(reindexer_options)
 
         if cleanup and (noinput or confirm()):
             reindexer.clean()
