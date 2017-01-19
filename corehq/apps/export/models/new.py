@@ -524,13 +524,17 @@ class ExportInstanceFilters(DocumentSchema):
     A class represented a saved set of filters for an export
     These are used for Daily Saved Exports, and Dashboard Feeds (which are a type of Daily Saved Export)
     """
+    # accessible_location_ids is a list of ids that the creator of the report (and thereby creator of the filters
+    # as well) has access to. locations is a list of ids that the user has selected in the filter UI. The user
+    # can't change accessible_location_ids, and they will always be used to filter the export, but locations are
+    # user configurable
+    accessible_location_ids = ListProperty(StringProperty)
+    locations = ListProperty(StringProperty)
     date_period = SchemaProperty(DatePeriod, default=None)
     users = ListProperty(StringProperty)
     reporting_groups = ListProperty(StringProperty)
-    locations = ListProperty(StringProperty)
     user_types = ListProperty(IntegerProperty)
     can_access_all_locations = BooleanProperty(default=True)
-    accessible_location_ids = ListProperty(StringProperty)
 
     def is_location_safe_for_user(self, request):
         """
