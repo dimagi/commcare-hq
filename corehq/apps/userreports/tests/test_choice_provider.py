@@ -185,6 +185,23 @@ class LocationChoiceProviderTest(ChoiceProviderTestMixin, LocationHierarchyTestC
         # When a user searches for something they can't access, it isn't returned
         self._test_query(self.choice_query_context('Boston', page=0))
 
+    def test_cant_circumvent_restrictions(self):
+        # Boston should be inaccessible to this user, if they edit the URL to
+        # search for it anyways, it shouldn't be returned
+        self.web_user.set_location(self.domain, self.locations['Middlesex'])
+        self.restrict_user_to_assigned_locations(self.web_user)
+        loc_ids_by_name = {name: loc.location_id for name, loc in self.locations.items()}
+        choices = self.choice_provider.get_choices_for_known_values([
+            loc_ids_by_name['Cambridge'], loc_ids_by_name['Somerville'], loc_ids_by_name['Bostone'],
+        ], self.web_user)
+        self.assertItemsEqual(
+            [choice.value for choice in choices],
+            [loc_ids_by_name["Cambridge"], loc_ids_by_name["Somerville"]]
+        )
+        self.web_user.set_role(self.domain, 'none')
+        self.web_user.unset_location(self.domain)
+        self.web_user.reset_locations(self.domain, [])
+
 
 @mock.patch('corehq.apps.users.analytics.UserES', UserESFake)
 @mock.patch('corehq.apps.userreports.reports.filters.choice_providers.UserES', UserESFake)
@@ -219,7 +236,7 @@ class UserChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
     def setUpClass(cls):
         report = ReportConfiguration(domain=cls.domain)
 
-        cls.web_user = cls.make_web_user('candice@example.com'),
+        cls.web_user = cls.make_web_user('candice@example.com')
         cls.users = [
             cls.make_mobile_worker('bernice'),
             cls.web_user,
