@@ -34,7 +34,7 @@ def get_case_inferred_schema(domain, case_type):
 
     key = [domain, 'CaseInferredSchema', case_type]
     result = CaseInferredSchema.get_db().view(
-        'inferred_schemas_by_case_type_or_xmlns/view',
+        'schemas_by_xmlns_or_case_type/view',
         startkey=key + [{}],
         endkey=key,
         include_docs=True,
@@ -45,10 +45,10 @@ def get_case_inferred_schema(domain, case_type):
     return CaseInferredSchema.wrap(result['doc']) if result else None
 
 
-def get_form_inferred_schema(domain, xmlns):
+def get_form_inferred_schema(domain, app_id, xmlns):
     from .models import FormInferredSchema
 
-    key = [domain, 'FormInferredSchema', xmlns]
+    key = [domain, 'FormInferredSchema', app_id, xmlns]
     result = FormInferredSchema.get_db().view(
         'inferred_schemas_by_case_type_or_xmlns/view',
         startkey=key + [{}],

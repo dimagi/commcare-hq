@@ -1177,6 +1177,7 @@ class CaseInferredSchema(InferredSchema):
 
 class FormInferredSchema(InferredSchema):
     xmlns = StringProperty(required=True)
+    app_id = StringProperty(required=True)
 
     @property
     def identifier(self):
@@ -1263,7 +1264,7 @@ class ExportDataSchema(Document):
             apps_processed += 1
             set_task_progress(task, apps_processed, len(app_build_ids))
 
-        inferred_schema = cls._get_inferred_schema(domain, identifier)
+        inferred_schema = cls._get_inferred_schema(domain, app_id, identifier)
         if inferred_schema:
             current_schema = cls._merge_schemas(current_schema, inferred_schema)
 
@@ -1384,8 +1385,8 @@ class FormExportDataSchema(ExportDataSchema):
         return FORM_DATA_SCHEMA_VERSION
 
     @classmethod
-    def _get_inferred_schema(cls, domain, xmlns):
-        return get_form_inferred_schema(domain, xmlns)
+    def _get_inferred_schema(cls, domain, app_id, xmlns):
+        return get_form_inferred_schema(domain, app_id, xmlns)
 
     def _set_identifier(self, form_xmlns):
         self.xmlns = form_xmlns
@@ -1620,7 +1621,7 @@ class CaseExportDataSchema(ExportDataSchema):
         return CASE_DATA_SCHEMA_VERSION
 
     @classmethod
-    def _get_inferred_schema(cls, domain, case_type):
+    def _get_inferred_schema(cls, domain, app_id, case_type):
         return get_case_inferred_schema(domain, case_type)
 
     @classmethod

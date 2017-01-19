@@ -242,9 +242,14 @@ def convert_saved_export_to_export_instance(
                         inferred_schema_cls = CaseInferredSchema
                         schema_kwargs['case_type'] = instance.identifier
                     elif instance.type == FORM_EXPORT:
-                        inferred_schema = get_form_inferred_schema(domain, instance.identifier)
+                        inferred_schema = get_form_inferred_schema(
+                            domain,
+                            instance.app_id,
+                            instance.identifier
+                        )
                         inferred_schema_cls = FormInferredSchema
                         schema_kwargs['xmlns'] = instance.identifier
+                        schema_kwargs['app_id'] = instance.app_id
 
                     if not inferred_schema:
                         inferred_schema = inferred_schema_cls(**schema_kwargs)
