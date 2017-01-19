@@ -50,7 +50,7 @@ def get_form_inferred_schema(domain, app_id, xmlns):
 
     key = [domain, 'FormInferredSchema', app_id, xmlns]
     result = FormInferredSchema.get_db().view(
-        'inferred_schemas_by_case_type_or_xmlns/view',
+        'schemas_by_xmlns_or_case_type/view',
         startkey=key + [{}],
         endkey=key,
         include_docs=True,
