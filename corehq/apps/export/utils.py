@@ -25,6 +25,7 @@ from .dbaccessors import (
     get_form_export_instances,
     get_case_export_instances,
     get_case_inferred_schema,
+    get_form_inferred_schema,
 )
 from .exceptions import SkipConversion
 from .const import (
@@ -58,7 +59,8 @@ def convert_saved_export_to_export_instance(
         ExportMigrationMeta,
         ConversionMeta,
         TableConfiguration,
-        InferredSchema,
+        CaseInferredSchema,
+        FormInferredSchema,
     )
 
     schema = None
@@ -231,12 +233,21 @@ def convert_saved_export_to_export_instance(
                 if is_remote_app_migration or force_convert_columns or column.index in SKIPPABLE_PROPERTIES:
                     # In the event that we skip a column and it's a remote application,
                     # add it to the inferred schema
-                    inferred_schema = get_case_inferred_schema(domain, instance.identifier)
+
+                    schema_kwargs = {
+                        'domain': domain
+                    }
+                    if instance.type == CASE_EXPORT:
+                        inferred_schema = get_case_inferred_schema(domain, instance.identifier)
+                        inferred_schema_cls = CaseInferredSchema
+                        schema_kwargs['case_type'] = instance.identifier
+                    elif instance.type == FORM_EXPORT:
+                        inferred_schema = get_form_inferred_schema(domain, instance.identifier)
+                        inferred_schema_cls = FormInferredSchema
+                        schema_kwargs['xmlns'] = instance.identifier
+
                     if not inferred_schema:
-                        inferred_schema = InferredSchema(
-                            domain=domain,
-                            case_type=instance.case_type,
-                        )
+                        inferred_schema = inferred_schema_cls(**schema_kwargs)
                     new_column = _create_column_from_inferred_schema(
                         inferred_schema,
                         new_table,
