@@ -225,7 +225,7 @@ class UserChoiceProviderTest(SimpleTestCase, ChoiceProviderTestMixin):
         domain = domain or cls.domain
         domains = [domain]
         user = WebUser(username=email, domains=domains)
-        user.domain_memberships = [DomainMembership(domain=cls.domain)]
+        user.domain_memberships = [DomainMembership(domain=domain)]
         doc = user._doc
         doc['username.exact'] = doc['username']
         doc['base_username'] = email
