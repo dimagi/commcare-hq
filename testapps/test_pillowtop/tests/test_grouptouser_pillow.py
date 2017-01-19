@@ -201,6 +201,6 @@ class GroupsToUserReindexerTest(TestCase):
         group = Group(domain=domain, name='g1', users=[user_id])
         group.save()
 
-        call_command('ptop_reindexer_v2', **{'index': 'groups-to-user', 'noinput': True})
+        call_command('ptop_reindexer_v2', 'groups-to-user', noinput=True)
         self.es.indices.refresh(USER_INDEX)
         _assert_es_user_and_groups(self, self.es, user_id, [group._id], [group.name])
