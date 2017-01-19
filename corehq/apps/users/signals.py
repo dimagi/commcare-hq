@@ -41,7 +41,7 @@ def update_user_in_es(sender, couch_user, **kwargs):
 
 def sync_user_phone_numbers(sender, couch_user, **kwargs):
     from corehq.apps.sms.tasks import sync_user_phone_numbers as sms_sync_user_phone_numbers
-    sms_sync_user_phone_numbers.delay(couch_user)
+    sms_sync_user_phone_numbers.delay(couch_user.get_id)
 
 
 # This gets called by UsersAppConfig when the module is set up

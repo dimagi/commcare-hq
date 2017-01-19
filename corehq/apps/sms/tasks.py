@@ -352,16 +352,15 @@ def _sync_case_phone_number(contact_case):
 
 @task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, ignore_result=True, acks_late=True,
       default_retry_delay=5 * 60, max_retries=10, bind=True)
-def sync_user_phone_numbers(self, couch_user):
+def sync_user_phone_numbers(self, couch_user_id):
     try:
-        _sync_user_phone_numbers(couch_user)
+        _sync_user_phone_numbers(couch_user_id)
     except Exception as e:
         self.retry(exc=e)
 
 
-def _sync_user_phone_numbers(couch_user):
-    if not isinstance(couch_user, CommCareMobileContactMixin):
-        couch_user = CouchUser.wrap_correctly(couch_user.to_json())
+def _sync_user_phone_numbers(couch_user_id):
+    couch_user = CouchUser.get_by_user_id(couch_user_id)
 
     if not isinstance(couch_user, CommCareUser):
         # It isn't necessary to sync WebUser's phone numbers right now
