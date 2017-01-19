@@ -605,7 +605,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 'hq.pagination.limit.mobile_workers_list.%s' % self.domain),
             'can_edit_billing_info': self.request.couch_user.is_domain_admin(self.domain),
             'strong_mobile_passwords': self.request.project.strong_mobile_passwords,
-            'location_url': reverse('corehq.apps.locations.views.child_locations_for_select2', args=[self.domain]),
+            'location_url': reverse('child_locations_for_select2', args=[self.domain]),
         }
 
     @property
