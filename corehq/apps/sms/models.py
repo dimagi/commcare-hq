@@ -598,10 +598,11 @@ class PhoneNumber(UUIDGeneratorMixin, models.Model):
     @classmethod
     @quickcache(['phone_number'], timeout=60 * 60)
     def _get_two_way_number(cls, phone_number):
-        try:
-            return cls.objects.get(phone_number=phone_number, is_two_way=True)
-        except cls.DoesNotExist:
-            return None
+        with CriticalSection(['PhoneNumber-CacheAccessor-get_two_way_number-%s' % phone_number]):
+            try:
+                return cls.objects.get(phone_number=phone_number, is_two_way=True)
+            except cls.DoesNotExist:
+                return None
 
     @classmethod
     def get_number_pending_verification(cls, phone_number):
@@ -610,14 +611,15 @@ class PhoneNumber(UUIDGeneratorMixin, models.Model):
     @classmethod
     @quickcache(['phone_number'], timeout=60 * 60)
     def _get_number_pending_verification(cls, phone_number):
-        try:
-            return cls.objects.get(
-                phone_number=phone_number,
-                verified=False,
-                pending_verification=True
-            )
-        except cls.DoesNotExist:
-            return None
+        with CriticalSection(['PhoneNumber-CacheAccessor-get_number_pending_verification-%s' % phone_number]):
+            try:
+                return cls.objects.get(
+                    phone_number=phone_number,
+                    verified=False,
+                    pending_verification=True
+                )
+            except cls.DoesNotExist:
+                return None
 
     @classmethod
     def get_reserved_number(cls, phone_number):
@@ -664,7 +666,8 @@ class PhoneNumber(UUIDGeneratorMixin, models.Model):
         """
         Returns all phone numbers belonging to the given contact.
         """
-        return list(cls.objects.filter(owner_id=owner_id))
+        with CriticalSection(['PhoneNumber-CacheAccessor-by_owner_id-%s' % owner_id]):
+            return list(cls.objects.filter(owner_id=owner_id))
 
     @classmethod
     def _clear_quickcaches(cls, owner_id, phone_number, old_owner_id=None, old_phone_number=None):
@@ -686,15 +689,42 @@ class PhoneNumber(UUIDGeneratorMixin, models.Model):
             old_phone_number=self._old_phone_number
         )
 
+    @property
+    def cache_accessor_lock_keys(self):
+        keys = [
+            'PhoneNumber-CacheAccessor-by_owner_id-%s' % self.owner_id,
+            'PhoneNumber-CacheAccessor-get_two_way_number-%s' % self.phone_number,
+            'PhoneNumber-CacheAccessor-get_number_pending_verification-%s' % self.phone_number,
+        ]
+
+        if self._old_owner_id and self._old_owner_id != self.owner_id:
+            keys.extend([
+                'PhoneNumber-CacheAccessor-by_owner_id-%s' % self._old_owner_id,
+            ])
+
+        if self._old_phone_number and self._old_phone_number != self.phone_number:
+            keys.extend([
+                'PhoneNumber-CacheAccessor-get_two_way_number-%s' % self._old_phone_number,
+                'PhoneNumber-CacheAccessor-get_number_pending_verification-%s' % self._old_phone_number,
+            ])
+
+        return keys
+
     def save(self, *args, **kwargs):
-        self._clear_caches()
-        self._old_phone_number = self.phone_number
-        self._old_owner_id = self.owner_id
-        return super(PhoneNumber, self).save(*args, **kwargs)
+        with CriticalSection(self.cache_accessor_lock_keys):
+            # Clearing the cache and updating the DB needs to be an atomic operation
+            # otherwise we end up with race conditions where a different method with
+            # a cached result is building a queryset with missing data and ends up
+            # writing it to the cache.
+            self._clear_caches()
+            self._old_phone_number = self.phone_number
+            self._old_owner_id = self.owner_id
+            return super(PhoneNumber, self).save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
-        self._clear_caches()
-        return super(PhoneNumber, self).delete(*args, **kwargs)
+        with CriticalSection(self.cache_accessor_lock_keys):
+            self._clear_caches()
+            return super(PhoneNumber, self).delete(*args, **kwargs)
 
     def verify_uniqueness(self):
         entry = self.get_reserved_number(self.phone_number)
