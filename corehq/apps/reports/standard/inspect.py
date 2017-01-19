@@ -5,7 +5,7 @@ from django.utils.translation import ugettext_noop, get_language
 from corehq.apps.es import forms as form_es, filters as es_filters
 from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS
 from corehq.apps.reports import util
-from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
+from corehq.apps.reports.filters.users import LocationRestrictedMobileWorkerFilter as EMWF
 
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
