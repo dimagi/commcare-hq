@@ -20,7 +20,6 @@ from corehq.apps.app_manager.const import STOCK_QUESTION_TAG_NAMES
 from corehq.apps.app_manager.dbaccessors import (
     get_built_app_ids_with_submissions_for_app_id,
     get_built_app_ids_with_submissions_for_app_ids_and_versions,
-    get_all_built_app_ids_and_versions,
     get_latest_app_ids_and_versions,
     get_app_ids_in_domain,
 )

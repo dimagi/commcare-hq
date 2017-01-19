@@ -249,7 +249,7 @@ def get_built_app_ids_with_submissions_for_app_ids_and_versions(domain, app_ids_
         results.extend(
             get_built_app_ids_with_submissions_for_app_id(domain, app_id, app_ids_and_versions.get(app_id))
         )
-    return [result['id'] for result in results]
+    return results
 
 
 def get_latest_app_ids_and_versions(domain, app_id=None):
