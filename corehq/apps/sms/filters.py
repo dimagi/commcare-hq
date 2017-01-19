@@ -1,10 +1,8 @@
-from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext_noop, ugettext_lazy
 from corehq import toggles
 from corehq.apps.es.groups import GroupES
 from corehq.apps.reports.filters.base import BaseMultipleOptionFilter, BaseSingleOptionFilter, BaseReportFilter
 from corehq.apps.reports.filters.search import SearchFilter
-from corehq.apps.locations.util import load_locs_json, location_hierarchy_config
 from corehq.apps.sms.models import (
     WORKFLOW_REMINDER,
     WORKFLOW_KEYWORD,
