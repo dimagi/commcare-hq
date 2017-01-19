@@ -74,6 +74,7 @@ from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
     get_latest_form_export_schema,
     get_case_inferred_schema,
+    get_form_inferred_schema,
 )
 from corehq.apps.export.utils import is_occurrence_deleted
 
@@ -1380,7 +1381,7 @@ class FormExportDataSchema(ExportDataSchema):
 
     @classmethod
     def _get_inferred_schema(cls, domain, xmlns):
-        return None
+        return get_form_inferred_schema(domain, xmlns)
 
     def _set_identifier(self, form_xmlns):
         self.xmlns = form_xmlns
