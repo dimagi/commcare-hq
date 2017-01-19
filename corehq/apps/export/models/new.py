@@ -879,6 +879,10 @@ class FormExportInstance(ExportInstance):
         return self.xmlns
 
     @property
+    def identifier(self):
+        return self.xmlns
+
+    @property
     def formname(self):
         return xmlns_to_name(self.domain, self.xmlns, self.app_id)
 
