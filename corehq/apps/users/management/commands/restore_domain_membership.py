@@ -128,7 +128,7 @@ def restore_domain_membership(user, check=False):
             continue
         prev_user = CommCareUser.wrap(doc)
         if user_looks_ok(prev_user):
-            if user.location_id != prev_user.domain_membership.locatoin_id:
+            if user.location_id != prev_user.domain_membership.location_id:
                 continue
 
             if user.assigned_location_ids != prev_user.domain_membership.assigned_location_ids:

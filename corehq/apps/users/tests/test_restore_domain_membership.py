@@ -67,6 +67,8 @@ class TestRestoreDomainMembership(TestCase):
         self.assertEqual('123', restored_user.domain_membership.role_id)
 
     def test_restore_location(self):
+        self.commcare_user.location_id = '123'
+        self.commcare_user.assigned_location_ids = ['123']
         self.commcare_user.domain_membership.location_id = '123'
         self.commcare_user.domain_membership.assigned_location_ids = ['123']
         self.commcare_user.save()
