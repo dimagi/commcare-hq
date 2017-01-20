@@ -5,7 +5,7 @@ from corehq.apps.sms.mixin import (InvalidFormatException,
     PhoneNumberInUseException, PhoneNumberException, CommCareMobileContactMixin,
     apply_leniency)
 from corehq.apps.sms.models import (OUTGOING, INCOMING, SMS,
-    PhoneLoadBalancingMixin, QueuedSMS, PhoneNumber)
+    PhoneLoadBalancingMixin, QueuedSMS, PhoneNumber, MigrationStatus)
 from corehq.apps.sms.api import (send_message_via_backend, process_incoming,
     log_sms_exception, create_billable_for_sms, get_utcnow)
 from django.db import transaction, DataError
@@ -410,3 +410,5 @@ def sync_phone_numbers_for_domain(domain):
     case_ids = CaseAccessors(domain).get_case_ids_in_domain()
     for case in CaseAccessors(domain).iter_cases(case_ids):
         _sync_case_phone_number(case)
+
+    MigrationStatus.set_migration_completed('phone_sync_domain_%s' % domain)
