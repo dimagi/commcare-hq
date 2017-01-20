@@ -27,6 +27,9 @@ class CustomField(object):
         self.label = initial.get('label', '')
         self.help_text = initial.get('help_text', '')
 
+    def get_content(self):
+        return {"type": self.type, "key": self.key, "label": self.label, "help_text": self.help_text}
+
 
 class BaseZapierCustomFieldResource(Resource):
     type = fields.CharField(attribute='type')
@@ -133,11 +136,13 @@ class ZapierCustomFieldCaseResource(BaseZapierCustomFieldResource):
     """
 
     def obj_get_list(self, bundle, **kwargs):
+
         custom_fields = []
         domain = bundle.request.GET.get('domain')
         case_type = bundle.request.GET.get('case_type')
 
         for prop in get_case_properties_for_case_type(domain, case_type):
+            print "custom property", prop
             custom_fields.append(CustomField(
                 dict(
                     type='unicode',
