@@ -3,7 +3,12 @@ from collections import namedtuple
 
 from django.core.urlresolvers import reverse
 from django.test.testcases import TestCase, SimpleTestCase
+from django.test.client import Client
+
 from tastypie.models import ApiKey
+from tastypie.resources import Resource
+
+from casexml.apps.case.mock import CaseFactory
 
 from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, SoftwarePlanEdition, Subscription
 from corehq.apps.app_manager.models import Application, Module
@@ -11,6 +16,8 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.repeaters.models import FormRepeater, CaseRepeater
 from corehq.apps.users.models import WebUser
 from corehq.apps.zapier import consts
+from corehq.apps.zapier.views import SubscribeView, UnsubscribeView
+from corehq.apps.zapier.api.v0_5 import ZapierCustomFieldCaseResource
 from corehq.apps.zapier.models import ZapierSubscription
 
 from corehq.apps.accounting.tests import generator
@@ -58,7 +65,7 @@ XFORM = """
 """
 
 FORM_XMLNS = "https://www.commcarehq.org/test/zapier/"
-CASE_TYPE = "https://www.commcarehq.org/test_case/zapier/"
+CASE_TYPE = "lemon meringue pie"
 XFORM_XML_TEMPLATE = """<?xml version='1.0' ?>
 <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="%s">
     <woman_name>Alpha</woman_name>
@@ -74,6 +81,7 @@ XFORM_XML_TEMPLATE = """<?xml version='1.0' ?>
 </data>
 """ % FORM_XMLNS
 ZAPIER_URL = "https://zapier.com/hooks/standard/1387607/5ccf35a5a1944fc9bfdd2c94c28c9885/"
+TEST_URL = "http://commcarehq.org/?domain=johto&case_type=teddiursa"
 TEST_DOMAIN = 'test-domain'
 MockResponse = namedtuple('MockResponse', 'status_code reason')
 
@@ -125,7 +133,7 @@ class TestZapierIntegration(TestCase):
             "application": self.application.get_id,
             "form": FORM_XMLNS
         }
-        response = self.client.post(reverse('zapier_subscribe', kwargs={'domain': self.domain}),
+        response = self.client.post(reverse(SubscribeView.urlname, kwargs={'domain': self.domain}),
                                     data=json.dumps(data),
                                     content_type='application/json; charset=utf-8',
                                     HTTP_AUTHORIZATION='ApiKey test:{}'.format(self.api_key))
@@ -178,7 +186,7 @@ class TestZapierIntegration(TestCase):
             "subscription_url": ZAPIER_URL,
             "target_url": ZAPIER_URL
         }
-        response = self.client.post(reverse('zapier_unsubscribe', kwargs={'domain': self.domain}),
+        response = self.client.post(reverse(UnsubscribeView.urlname, kwargs={'domain': self.domain}),
                                     data=json.dumps(data),
                                     content_type='application/json; charset=utf-8',
                                     HTTP_AUTHORIZATION='ApiKey test:{}'.format(self.api_key))
@@ -199,7 +207,7 @@ class TestZapierIntegration(TestCase):
             "subscription_url": ZAPIER_URL,
             "target_url": ZAPIER_URL
         }
-        response = self.client.post(reverse('zapier_unsubscribe', kwargs={'domain': self.domain}),
+        response = self.client.post(reverse(UnsubscribeView.urlname, kwargs={'domain': self.domain}),
                                     data=json.dumps(data),
                                     content_type='application/json; charset=utf-8',
                                     HTTP_AUTHORIZATION='ApiKey test:{}'.format(self.api_key))
@@ -215,12 +223,12 @@ class TestZapierIntegration(TestCase):
             "application": self.application.get_id,
             "form": FORM_XMLNS
         }
-        response = self.client.post(reverse('zapier_subscribe', kwargs={'domain': self.domain}),
+        response = self.client.post(reverse(SubscribeView.urlname, kwargs={'domain': self.domain}),
                                     data=json.dumps(data),
                                     content_type='application/json; charset=utf-8',
                                     HTTP_AUTHORIZATION='ApiKey test:{}'.format(self.api_key))
         self.assertEqual(response.status_code, 200)
-        response = self.client.post(reverse('zapier_subscribe', kwargs={'domain': self.domain}),
+        response = self.client.post(reverse(SubscribeView.urlname, kwargs={'domain': self.domain}),
                                     data=json.dumps(data),
                                     content_type='application/json; charset=utf-8',
                                     HTTP_AUTHORIZATION='ApiKey test:{}'.format(self.api_key))
@@ -329,3 +337,47 @@ class TestRemoveAdvancedFields(SimpleTestCase):
         self.assertIsNone(form.get('partial_submission'))
 
         self.assertIsNotNone(form['domain'])
+
+
+class TestZapierCustomFields(TestCase):
+
+    def test_case_fields(self):
+
+        expected_fields = [
+            {"help_text": "", "key": "properties__level", "label": "level", "type": "unicode"},
+            {"help_text": "", "key": "properties__mood", "label": "mood", "type": "unicode"},
+            {"help_text": "", "key": "properties__move", "label": "move", "type": "unicode"},
+            {"help_text": "", "key": "properties__name", "label": "name", "type": "unicode"},
+            {"help_text": "", "key": "properties__opened_on", "label": "opened_on", "type": "unicode"},
+            {"help_text": "", "key": "properties__owner_id", "label": "owner_id", "type": "unicode"},
+            {"help_text": "", "key": "properties__prop1", "label": "prop1", "type": "unicode"},
+            {"help_text": "", "key": "properties__type", "label": "type", "type": "unicode"},
+            {"help_text": "", "key": "date_closed", "label": "Date closed", "type": "unicode"},
+            {"help_text": "", "key": "xform_ids", "label": "XForm IDs", "type": "unicode"},
+            {"help_text": "", "key": "properties__date_opened", "label": "Date opened", "type": "unicode"},
+            {"help_text": "", "key": "properties__external_id", "label": "External ID", "type": "unicode"},
+            {"help_text": "", "key": "properties__case_name", "label": "Case name", "type": "unicode"},
+            {"help_text": "", "key": "properties__case_type", "label": "Case type", "type": "unicode"},
+            {"help_text": "", "key": "user_id", "label": "User ID", "type": "unicode"},
+            {"help_text": "", "key": "date_modified", "label": "Date modified", "type": "unicode"},
+            {"help_text": "", "key": "case_id", "label": "Case ID", "type": "unicode"},
+            {"help_text": "", "key": "properties__owner_id", "label": "Owner ID", "type": "unicode"},
+            {"help_text": "", "key": "resource_uri", "label": "Resource URI", "type": "unicode"}
+        ]
+
+        request = Client().get("http://commcarehq.org/?domain=pokemon&case_type=teddiursa").wsgi_request
+        bundle = Resource().build_bundle(data={}, request=request)
+
+        factory = CaseFactory(domain="johto")
+        factory.create_case(
+            case_type='teddiursa',
+            owner_id='owner1',
+            case_name='dre',
+            update={'prop1': 'blah', 'move': 'scratch', 'mood': 'happy', 'level': '100'}
+        )
+
+        actual_fields = ZapierCustomFieldCaseResource().obj_get_list(bundle)
+        for i in range(len(actual_fields)):
+            print actual_fields[i].get_content()
+            self.assertEqual(expected_fields[i], actual_fields[i].get_content())
+
