@@ -22,7 +22,6 @@ FormplayerFrontend.module("Sessions", function (Sessions, FormplayerFrontend, Ba
                 }),
                 url: formplayerUrl + '/get_sessions',
                 success: function (parsed, response) {
-                    debugger;
                     if (response.exception){
                         FormplayerFrontend.trigger(
                             'showError',
