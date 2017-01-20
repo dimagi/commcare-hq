@@ -25,6 +25,7 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.util import format_datatables_data
+from corehq.apps.users.dbaccessors import get_user_id_and_doc_type_by_domain
 from corehq.apps.users.models import CouchUser
 from casexml.apps.case.models import CommCareCase
 from datetime import datetime
@@ -1256,7 +1257,7 @@ class PhoneNumberReport(BaseCommConnectLogReport):
             }
             query.filter(owner_id__in=users_by_id.keys())
         else:
-            users_by_id = {u.get_id: u for u in CouchUser.by_domain(self.domain)}
+            users_by_id = {u['id']: u for u in get_user_id_and_doc_type_by_domain(self.domain)}
 
         user_ids_with_phone_numbers = {x[0] for x in query.values_list('owner_id').distinct()}
         user_ids = set(users_by_id.keys()) - user_ids_with_phone_numbers
