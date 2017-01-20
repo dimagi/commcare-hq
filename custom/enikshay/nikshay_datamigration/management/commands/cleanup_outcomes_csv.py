@@ -22,8 +22,8 @@ class Command(BaseCleanupCommand):
         'InitiatedOnART',
         'InitiatedDate',
         'userName',
-        'loginDate',
-        'OutcomeDate1',
+        # 'loginDate',
+        # 'OutcomeDate1',
     ]
 
     @staticmethod
@@ -31,7 +31,7 @@ class Command(BaseCleanupCommand):
         new_rows = []
         cur_row = ['']
 
-        new_rows.append(Command.headers)
+        # new_rows.append(Command.headers)
 
         for i, row in enumerate(rows):
             if row:
