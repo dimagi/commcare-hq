@@ -831,6 +831,7 @@ class DomainForms(Resource):
         authentication = ApiKeyAuthentication()
         object_class = Form
         include_resource_uri = False
+        allowed_methods = ['get']
 
     def obj_get_list(self, bundle, **kwargs):
         application_id = bundle.request.GET.get('application_id')
@@ -857,9 +858,9 @@ class DomainForms(Resource):
             results.append(Form(form_xmlns=form.xmlns, form_name=form_name))
         return results
 
-#Zapier requires id and name; case_type has no obvious id, placeholder inserted instead.s
-Case = namedtuple('Case', 'case_type placeholder')
-Case.__new__.__defaults__ = ('', '')
+# Zapier requires id and name; case_type has no obvious id, placeholder inserted instead.
+CaseType = namedtuple('Case_Type', 'case_type placeholder')
+CaseType.__new__.__defaults__ = ('', '')
 
 
 class DomainCases(Resource):
@@ -874,19 +875,18 @@ class DomainCases(Resource):
     class Meta:
         resource_name = 'domain_cases'
         authentication = ApiKeyAuthentication()
-        object_class = Case
+        object_class = CaseType
         include_resource_uri = False
+        allowed_methods = ['get']
 
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
         couch_user = CouchUser.from_django_user(bundle.request.user)
         if not domain_has_privilege(domain, privileges.ZAPIER_INTEGRATION) or not couch_user.is_member_of(domain):
             raise ImmediateHttpResponse(
-                HttpForbidden('You are not allowed to get list of cases for this domain')
+                HttpForbidden('You are not allowed to get list of case types for this domain')
             )
 
         case_types = CaseAccessors(domain).get_case_types()
-        results = []
-        for case_type in case_types:
-            results.append(Case(case_type=case_type))
+        results = [CaseType(case_type=case_type) for case_type in case_types]
         return results

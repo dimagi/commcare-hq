@@ -6,12 +6,15 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 
 from django.views.generic import View
+from tastypie.exceptions import ImmediateHttpResponse
+from tastypie.http import HttpBadRequest
 
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.decorators import login_or_api_key
 from corehq.apps.zapier.queries import get_subscription_by_url
 from corehq.apps.zapier.services import delete_subscription_with_url
+from corehq.apps.zapier import consts
 from corehq import privileges
 
 from .models import ZapierSubscription
@@ -40,8 +43,8 @@ class SubscribeView(View):
             # Return a 409 status code if this criteria isn't met (IE: there is a uniqueness conflict).
             return HttpResponse(status=409)
 
-        if data['event'] == "new_form":
-            application = Application.get(docid=data['application'])
+        if data['event'] == consts.EventTypes.NEW_FORM:
+            application = Application.get(data['application'])
             if not application or not application.get_form_by_xmlns(data['form']):
                 return HttpResponse(status=400)
             ZapierSubscription.objects.create(
@@ -52,14 +55,19 @@ class SubscribeView(View):
                 application_id=data['application'],
                 form_xmlns=data['form'],
             )
-        elif data['event'] == "new_case":
+        elif data['event'] == consts.EventTypes.NEW_CASE:
             ZapierSubscription.objects.create(
                 domain=domain,
                 user_id=str(request.couch_user.get_id),
                 event_name=data['event'],
                 url=data['target_url'],
-                case_type=data['case'],
+                case_type=data['case_type'],
             )
+        else:
+            raise ImmediateHttpResponse(
+                HttpBadRequest('The passed event type is not valid.')
+            )
+
 
         return HttpResponse('OK')
 
