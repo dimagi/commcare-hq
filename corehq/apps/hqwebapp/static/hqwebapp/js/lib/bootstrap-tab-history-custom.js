@@ -1,5 +1,7 @@
 // copied and modified from https://gist.github.com/dsully/1938283
+console.log("Loading bootstrap-tab-history-custom.js");
 $(function () {
+    console.log("Document ready handler in bootstrap-tab-history-custom.js");
 
     function loadPage(url) {
         window.location.href = url;
@@ -25,7 +27,6 @@ $(function () {
                 State.data.tab = '';
             }
         }
-        console.log("State.data.tab = " + State.data.tab);
 
         var link;
         if (State.data.tab) {
@@ -52,15 +53,13 @@ $(function () {
                 }, null, State.url);
             }
         }
-        if (link.length) {
-            console.log(link.get(0).outerHTML);
-        } else {
-            console.log("No link found");
-        }
         link.parent().removeClass('active');    // force tab to load
         link.tab('show');
     };
-    $(window).on('load', statechange);
+    $(window).on('load', function() {
+        console.log("Window ready handler in bootstrap-tab-history-custom.js");
+        statechange();
+    });
     History.Adapter.bind(window, 'statechange', statechange);
     History.Adapter.bind(window, 'statechange', function () {
         var State = History.getState();
