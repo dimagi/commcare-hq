@@ -378,6 +378,5 @@ class TestZapierCustomFields(TestCase):
 
         actual_fields = ZapierCustomFieldCaseResource().obj_get_list(bundle)
         for i in range(len(actual_fields)):
-            print actual_fields[i].get_content()
             self.assertEqual(expected_fields[i], actual_fields[i].get_content())
 
