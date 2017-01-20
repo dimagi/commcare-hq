@@ -166,23 +166,28 @@
 </script>
 
 <div class="tabbable">
-    {% if app.get_doc_type != 'LinkedApplication' %}
-        <ul class="nav nav-tabs">
-            <li class="active"><a href="#languages" data-toggle="tab">{% trans "Languages" %}</a></li>
-            {% if app.get_doc_type == 'Application' %}
-                <li><a href="#multimedia-tab" data-toggle="tab">{% trans "Multimedia" %}</a></li>
-            {% endif %}
-            <li><a href="#actions" data-toggle="tab">{% trans "Actions" %}</a></li>
-            <li><a href="#commcare-settings" data-toggle="tab">{% trans "Advanced Settings" %}</a></li>
-        </ul>
+    <ul class="nav nav-tabs">
+    {% if app.get_doc_type == 'LinkedApplication' %}
+        <li class="active"><a href="#linked-app" data-toggle="tab">{% trans "Linked Application" %}</a></li>
+        <li><a href="#actions" data-toggle="tab">{% trans "Actions" %}</a></li>
+    {% else %}
+        <li class="active"><a href="#languages" data-toggle="tab">{% trans "Languages" %}</a></li>
+        {% if app.get_doc_type == 'Application' %}
+            <li><a href="#multimedia-tab" data-toggle="tab">{% trans "Multimedia" %}</a></li>
+        {% endif %}
+        <li><a href="#actions" data-toggle="tab">{% trans "Actions" %}</a></li>
+        <li><a href="#commcare-settings" data-toggle="tab">{% trans "Advanced Settings" %}</a></li>
     {% endif %}
+    </ul>
     <div class="tab-content appmanager-tab-content">
         {% if app.get_doc_type == 'LinkedApplication' %}
+        <div class="tab-pane active" id="linked-app">
             <p> Your app is at version {{ app.version }}. The master app is at version {{ master_version }}. </p>
             <a class="btn btn-primary"
                href="{% url 'pull_master_app' domain app.id %}">
                 {% trans 'Update from Master App' %}
             </a>
+        </div>
         {% endif %}
         <div class="tab-pane" id="commcare-settings">
             {% include 'app_manager/v2/partials/commcare_settings.html' %}
