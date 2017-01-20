@@ -93,7 +93,7 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
             def query(self, query_context):
                 pass
 
-            def get_choices_for_known_values(self, values, user):
+            def get_choices_for_known_values(self, values):
                 _map = {'cory': 'Cory Zue', 'ctsims': 'Clayton Sims', 'daniel': 'Daniel Roberts'}
                 return [Choice(value, _map.get(value, value)) for value in values]
 
