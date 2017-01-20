@@ -116,17 +116,17 @@ class ZapierCustomTriggerFieldFormResource(BaseZapierCustomFieldResource):
 
 # Map between keys and labels for general case properties (properties that every case has)
 CASE_PROPERTIES = {
-      "date_closed": "Date closed",
-      "date_modified": "Date modified",
-      "case_id": "Case ID",
-      "resource_uri": "Resource URI",
-      "user_id": "User ID",
-      "xform_ids": "XForm IDs",
-      "properties__case_name": "Case name",
-      "properties__case_type": "Case type",
-      "properties__owner_id": "Owner ID",
-      "properties__date_opened": "Date opened",
-      "properties__external_id": "External ID",
+    "date_closed": "Date closed",
+    "date_modified": "Date modified",
+    "case_id": "Case ID",
+    "resource_uri": "Resource URI",
+    "user_id": "User ID",
+    "xform_ids": "XForm IDs",
+    "properties__case_name": "Case name",
+    "properties__case_type": "Case type",
+    "properties__owner_id": "Owner ID",
+    "properties__date_opened": "Date opened",
+    "properties__external_id": "External ID",
 }
 
 
