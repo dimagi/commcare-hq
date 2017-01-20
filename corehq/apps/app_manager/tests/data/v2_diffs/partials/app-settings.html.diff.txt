@@ -124,7 +124,7 @@
          <input type="number" class="col-sm-3 form-control" data-bind="
              value: visibleValue,
              valueUpdate: 'textchange',
-@@ -110,165 +111,168 @@
+@@ -110,165 +111,170 @@
  </script>
  
  <script type="text/html" id="CommcareSettings.widgets.textarea">
@@ -205,14 +205,16 @@
 +</script>
 +
 +<div class="tabbable">
-+    <ul class="nav nav-tabs">
-+        <li class="active"><a href="#languages" data-toggle="tab">{% trans "Languages" %}</a></li>
-+        {% if app.get_doc_type == 'Application' %}
-+            <li><a href="#multimedia-tab" data-toggle="tab">{% trans "Multimedia" %}</a></li>
-+        {% endif %}
-+        <li><a href="#actions" data-toggle="tab">{% trans "Actions" %}</a></li>
-+        <li><a href="#commcare-settings" data-toggle="tab">{% trans "Advanced Settings" %}</a></li>
-+    </ul>
++    {% if app.get_doc_type != 'LinkedApplication' %}
++        <ul class="nav nav-tabs">
++            <li class="active"><a href="#languages" data-toggle="tab">{% trans "Languages" %}</a></li>
++            {% if app.get_doc_type == 'Application' %}
++                <li><a href="#multimedia-tab" data-toggle="tab">{% trans "Multimedia" %}</a></li>
++            {% endif %}
++            <li><a href="#actions" data-toggle="tab">{% trans "Actions" %}</a></li>
++            <li><a href="#commcare-settings" data-toggle="tab">{% trans "Advanced Settings" %}</a></li>
++        </ul>
++    {% endif %}
 +    <div class="tab-content appmanager-tab-content">
 +        {% if app.get_doc_type == 'LinkedApplication' %}
 +            <p> Your app is at version {{ app.version }}. The master app is at version {{ master_version }}. </p>
@@ -221,7 +223,7 @@
 +                {% trans 'Update from Master App' %}
 +            </a>
 +        {% endif %}
-+        <div class="tab-pane active" id="commcare-settings">
++        <div class="tab-pane" id="commcare-settings">
 +            {% include 'app_manager/v2/partials/commcare_settings.html' %}
 +        </div>
 +        {% if app.get_doc_type == 'Application' %}
