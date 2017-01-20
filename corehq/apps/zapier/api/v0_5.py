@@ -27,22 +27,8 @@ class CustomField(object):
         self.label = initial.get('label', '')
         self.help_text = initial.get('help_text', '')
 
-"""
-class CustomActionField(object):
 
-    def __init__(self, initial = None):
-        initial = initial or {}
-        self.type = initial.get('type', '')
-        self.key = initial.get('key', '')
-        self.label = initial.get('label', '')
-        self.help_text = initial.get('help_text', '')
-        self.required = initial.get('required', '')
-"""
-
-class ZapierCustomFieldResource(Resource):
-    """
-    Base class for custom field resources in Zapier
-    """
+class BaseZapierCustomFieldResource(Resource):
     type = fields.CharField(attribute='type')
     key = fields.CharField(attribute='key')
     label = fields.CharField(attribute='label', null=True, blank=True)
@@ -50,6 +36,9 @@ class ZapierCustomFieldResource(Resource):
 
     def _build_key(self, hashtag_value):
         return hashtag_value.lstrip('#').replace('/', '__')
+
+    def _build_label(self, label):
+        return label.replace('_', ' ').replace('-', ' ').lstrip().rstrip().capitalize()
 
     def _has_default_label(self, question):
         return question['label'] == question['hashtagValue']
@@ -59,12 +48,12 @@ class ZapierCustomFieldResource(Resource):
 
     class Meta(CustomResourceMeta):
         object_class = CustomField
-        resource_name = 'custom_fields_base'
         include_resource_uri = False
         paginator_class = DoesNothingPaginator
+        allowed_methods = ['get']
 
 
-class ZapierCustomTriggerFieldFormResource(ZapierCustomFieldResource):
+class ZapierCustomTriggerFieldFormResource(BaseZapierCustomFieldResource):
     """
     Generates custom trigger field labels for forms
     """
@@ -118,44 +107,11 @@ class ZapierCustomTriggerFieldFormResource(ZapierCustomFieldResource):
             ))
         return custom_fields
 
-    class Meta(ZapierCustomFieldResource.Meta):
+    class Meta(BaseZapierCustomFieldResource.Meta):
         resource_name = 'custom_fields'
 
-"""
-class ZapierCustomActionFieldFormResource(ZapierCustomFieldResource):
-    required = fields.CharField(attribute='required', default='', null=True, blank=True)
 
-    def obj_get_list(self, bundle, **kwargs):
-        application_id = bundle.request.GET.get('application_id')
-        xmlns = bundle.request.GET.get('xmlns')
-        if not application_id or not xmlns:
-            return []
-
-        app = Application.get(application_id)
-        form = app.get_form_by_xmlns(xmlns)
-        custom_fields = []
-
-        for idx, question in enumerate(form.get_questions(app.langs)):
-            if self._has_default_label(question):
-                label = question['label'].split('/')[-1]
-            else:
-                label = question['label']
-            custom_fields.append(CustomActionField(
-                dict(
-                    type='unicode',
-                    key=self._build_key(question['hashtagValue']),
-                    label=label,
-                    required=json.dumps(question['required'])
-                )
-            ))
-
-        return custom_fields
-
-    class Meta(ZapierCustomFieldResource.Meta):
-        resource_name = 'custom_action_fields_form'
-"""
-
-#Map between keys and labels for general case properties (properties that every case has)
+# Map between keys and labels for general case properties (properties that every case has)
 CASE_PROPERTIES = {
       "date_closed": "Date closed",
       "date_modified": "Date modified",
@@ -171,7 +127,7 @@ CASE_PROPERTIES = {
 }
 
 
-class ZapierCustomFieldCaseResource(ZapierCustomFieldResource):
+class ZapierCustomFieldCaseResource(BaseZapierCustomFieldResource):
     """
     Generates custom trigger field labels for cases
     """
@@ -186,20 +142,19 @@ class ZapierCustomFieldCaseResource(ZapierCustomFieldResource):
                 dict(
                     type='unicode',
                     key="properties__" + prop,
-                    label=prop
+                    label=self._build_label(prop)
                 )
             ))
-
-        for case_property in CASE_PROPERTIES:
+        for case_prop, case_prop_zapier_name in CASE_PROPERTIES.iteritems():
             custom_fields.append(CustomField(
                 dict(
                     type='unicode',
-                    key=case_property,
-                    label=CASE_PROPERTIES[case_property]
+                    key=case_prop,
+                    label=case_prop_zapier_name
                 )
             ))
 
         return custom_fields
 
-    class Meta(ZapierCustomFieldResource.Meta):
+    class Meta(BaseZapierCustomFieldResource.Meta):
         resource_name = 'custom_fields_case'
