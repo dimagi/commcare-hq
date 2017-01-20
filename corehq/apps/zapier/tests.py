@@ -344,14 +344,14 @@ class TestZapierCustomFields(TestCase):
     def test_case_fields(self):
 
         expected_fields = [
-            {"help_text": "", "key": "properties__level", "label": "level", "type": "unicode"},
-            {"help_text": "", "key": "properties__mood", "label": "mood", "type": "unicode"},
-            {"help_text": "", "key": "properties__move", "label": "move", "type": "unicode"},
-            {"help_text": "", "key": "properties__name", "label": "name", "type": "unicode"},
-            {"help_text": "", "key": "properties__opened_on", "label": "opened_on", "type": "unicode"},
-            {"help_text": "", "key": "properties__owner_id", "label": "owner_id", "type": "unicode"},
-            {"help_text": "", "key": "properties__prop1", "label": "prop1", "type": "unicode"},
-            {"help_text": "", "key": "properties__type", "label": "type", "type": "unicode"},
+            {"help_text": "", "key": "properties__level", "label": "Level", "type": "unicode"},
+            {"help_text": "", "key": "properties__mood", "label": "Mood", "type": "unicode"},
+            {"help_text": "", "key": "properties__move", "label": "Move", "type": "unicode"},
+            {"help_text": "", "key": "properties__name", "label": "Name", "type": "unicode"},
+            {"help_text": "", "key": "properties__opened_on", "label": "Opened on", "type": "unicode"},
+            {"help_text": "", "key": "properties__owner_id", "label": "Owner id", "type": "unicode"},
+            {"help_text": "", "key": "properties__prop1", "label": "Prop1", "type": "unicode"},
+            {"help_text": "", "key": "properties__type", "label": "Type", "type": "unicode"},
             {"help_text": "", "key": "date_closed", "label": "Date closed", "type": "unicode"},
             {"help_text": "", "key": "xform_ids", "label": "XForm IDs", "type": "unicode"},
             {"help_text": "", "key": "properties__date_opened", "label": "Date opened", "type": "unicode"},
@@ -365,7 +365,7 @@ class TestZapierCustomFields(TestCase):
             {"help_text": "", "key": "resource_uri", "label": "Resource URI", "type": "unicode"}
         ]
 
-        request = Client().get("http://commcarehq.org/?domain=pokemon&case_type=teddiursa").wsgi_request
+        request = Client().get(TEST_URL).wsgi_request
         bundle = Resource().build_bundle(data={}, request=request)
 
         factory = CaseFactory(domain="johto")

@@ -142,7 +142,6 @@ class ZapierCustomFieldCaseResource(BaseZapierCustomFieldResource):
         case_type = bundle.request.GET.get('case_type')
 
         for prop in get_case_properties_for_case_type(domain, case_type):
-            print "custom property", prop
             custom_fields.append(CustomField(
                 dict(
                     type='unicode',
