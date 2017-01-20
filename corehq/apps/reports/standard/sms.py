@@ -1262,7 +1262,7 @@ class PhoneNumberReport(BaseCommConnectLogReport):
         else:
             users_by_id = {u['id']: u for u in get_user_id_and_doc_type_by_domain(self.domain)}
 
-        user_ids_with_phone_numbers = {x[0] for x in query.values_list('owner_id').distinct()}
+        user_ids_with_phone_numbers = set(query.values_list('owner_id', flat=True).distinct())
         user_ids = set(users_by_id.keys()) - user_ids_with_phone_numbers
         user_types_with_id = {(id, users_by_id[id]['doc_type']) for id in user_ids}
 
