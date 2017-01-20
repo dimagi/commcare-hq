@@ -91,6 +91,7 @@ class PhoneNumberReportTestCase(TestCase):
         self.add_web_user_phone_number()
         pn = PhoneNumber.objects.create(
             domain=self.domain_name,
+            couch_id='zzzzzzz',  # for deterministic sorting
             owner_id='other_id',
             owner_doc_type='other_doc_type',
             phone_number='5555555',

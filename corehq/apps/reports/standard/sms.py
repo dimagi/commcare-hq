@@ -1228,14 +1228,11 @@ class PhoneNumberReport(BaseCommConnectLogReport):
                 query = query.filter(phone_number=self.phone_number_filter)
         elif self.filter_type == 'contact':
             if self._show_cases:
-                query = query.filter(owner_doc_type='CommCareCase', phone_number__isnull=False)
+                query = query.filter(owner_doc_type='CommCareCase')
             else:
                 query = query.filter(owner_doc_type__in=['CommCareUser', 'WebUser'])
                 if self.selected_group:
                     query = query.filter(owner_id__in=self.user_ids_in_selected_group)
-
-                if self.has_phone_number == 'has_phone_number':
-                    query = query.filter(phone_number__isnull=False)
 
             if self.verification_status == 'not_verified':
                 query = query.filter(pending_verification=False, verified=False)
