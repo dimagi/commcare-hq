@@ -1243,21 +1243,23 @@ class PhoneNumberReport(BaseCommConnectLogReport):
 
         return query.order_by('phone_number', 'couch_id')
 
+    @memoized
     def _get_users_without_phone_numbers(self):
         query = (
             PhoneNumber.objects.filter(domain=self.domain).filter(owner_doc_type__in=['CommCareUser', 'WebUser'])
         )
-        users_with_phone_numbers = {x[0]: x for x in query.values_list('owner_id', 'owner_doc_type').distinct()}
 
         if self.selected_group:
             users_by_id = {
                 id: {'_id': id, 'doc_type': 'CommCareUser'}
                 for id in self.user_ids_in_selected_group
             }
+            query.filter(owner_id__in=users_by_id.keys())
         else:
             users_by_id = {u.get_id: u for u in CouchUser.by_domain(self.domain)}
 
-        user_ids = set(users_by_id.keys()) - set(users_with_phone_numbers.keys())
+        user_ids_with_phone_numbers = {x[0] for x in query.values_list('owner_id').distinct()}
+        user_ids = set(users_by_id.keys()) - user_ids_with_phone_numbers
         user_types_with_id = {(id, users_by_id[id]['doc_type']) for id in user_ids}
 
         FakePhoneNumber = namedtuple('FakePhoneNumber', ['owner_id', 'owner_doc_type'])
