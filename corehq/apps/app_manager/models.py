@@ -3593,7 +3593,8 @@ def _filter_by_case_sharing_group_id(user, ui_filter):
 
 
 def _filter_by_location_id(user, ui_filter):
-    return ui_filter.value(**{ui_filter.name: user.location_id})
+    return ui_filter.value(**{ui_filter.name: user.location_id,
+                              'request_user': user})
 
 
 def _filter_by_username(user, ui_filter):
@@ -3609,7 +3610,8 @@ def _filter_by_user_id(user, ui_filter):
 def _filter_by_parent_location_id(user, ui_filter):
     location = user.sql_location
     location_parent = location.parent.location_id if location and location.parent else None
-    return ui_filter.value(**{ui_filter.name: location_parent})
+    return ui_filter.value(**{ui_filter.name: location_parent,
+                              'request_user': user})
 
 
 AutoFilterConfig = namedtuple('AutoFilterConfig', ['slug', 'filter_function', 'short_description'])
