@@ -16,6 +16,9 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
 from corehq.apps.reports.generic import ElasticTabularReport, GenericTabularReport
 from corehq.apps.reports.standard.domains import DomainStatsReport, es_domain_query
+from corehq.apps.reports.standard.sms import PhoneNumberReport
+from corehq.apps.sms.filters import RequiredPhoneNumberFilter
+from corehq.apps.sms.models import PhoneNumber
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from corehq.elastic import es_query, parse_args_for_es, fill_mapping_with_facets
 from corehq.apps.app_manager.commcare_settings import get_custom_commcare_settings
@@ -1287,3 +1290,46 @@ class CommCareVersionReport(AdminFacetedReport):
                 row[version_index + 1] = data.doc_count
 
         return rows.values()
+
+
+class AdminPhoneNumberReport(PhoneNumberReport):
+    name = ugettext_lazy("Admin Phone Number Report")
+    slug = 'phone_number_report'
+    fields = [
+        RequiredPhoneNumberFilter,
+    ]
+
+    dispatcher = AdminReportDispatcher
+    default_report_url = '#'
+    is_admin_report = True
+
+    @property
+    def shared_pagination_GET_params(self):
+        return [
+            {
+                'name': RequiredPhoneNumberFilter.slug,
+                'value': RequiredPhoneNumberFilter.get_value(self.request, domain=None)
+            },
+        ]
+
+    @property
+    @memoized
+    def phone_number_filter(self):
+        value = RequiredPhoneNumberFilter.get_value(self.request, domain=None)
+        if isinstance(value, basestring):
+            return value.strip()
+
+        return None
+
+    def _get_rows(self, paginate=True, link_user=True):
+        owner_cache = {}
+        if self.phone_number_filter:
+            data = PhoneNumber.objects.filter(phone_number=self.phone_number_filter)
+        else:
+            return
+
+        if paginate and self.pagination:
+            data = data[self.pagination.start:self.pagination.start + self.pagination.count]
+
+        for number in data:
+            yield self._fmt_row(number, owner_cache, link_user)
