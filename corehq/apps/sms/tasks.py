@@ -18,6 +18,7 @@ from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.sms.change_publishers import publish_sms_saved
 from corehq.apps.sms.util import is_contact_active
 from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch import release_lock, CriticalSection
