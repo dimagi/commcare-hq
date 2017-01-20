@@ -488,16 +488,6 @@ class XFormManagementView(DataInterfaceSection):
     urlname = 'xform_management'
     page_title = ugettext_noop('Form Management')
 
-    def get_form_ids_or_query_string(self, request):
-        if 'select_all' in self.request.POST:
-            # Altough evaluating form_ids and sending to task would be cleaner,
-            # heavier calls should be in in an async task instead
-            import urllib
-            form_query_string = urllib.unquote(self.request.POST.get('select_all'))
-            return form_query_string
-        else:
-            return self.request.POST.getlist('xform_ids')
-
     def post(self, request, *args, **kwargs):
         form_ids = self.get_xform_ids(request)
         if not self.request.can_access_all_locations:
@@ -531,10 +521,11 @@ class XFormManagementView(DataInterfaceSection):
         return xforms_user_ids - accessible_user_ids
 
     def get_xform_ids(self, request):
-        form_ids_or_query_string = self.get_form_ids_or_query_string(request)
-        if type(form_ids_or_query_string) == list:
-            xform_ids = form_ids_or_query_string
-        elif isinstance(form_ids_or_query_string, basestring):
+        if 'select_all' in self.request.POST:
+            # Altough evaluating form_ids and sending to task would be cleaner,
+            # heavier calls should be in an async task instead
+            import urllib
+            form_query_string = urllib.unquote(self.request.POST.get('select_all'))
             from django.http import HttpRequest, QueryDict
 
             _request = HttpRequest()
@@ -545,7 +536,7 @@ class XFormManagementView(DataInterfaceSection):
             _request.can_access_all_locations = request.couch_user.has_permission(self.domain,
                                                                                   'access_all_locations')
 
-            _request.GET = QueryDict(form_ids_or_query_string)
+            _request.GET = QueryDict(form_query_string)
             dispatcher = EditDataInterfaceDispatcher()
             xform_ids = dispatcher.dispatch(
                 _request,
@@ -554,6 +545,9 @@ class XFormManagementView(DataInterfaceSection):
                 report_slug=BulkFormManagementInterface.slug,
                 skip_permissions_check=True,
             )
+        else:
+            xform_ids = self.request.POST.getlist('xform_ids')
+
         return xform_ids
 
     @method_decorator(require_form_management_privilege)
