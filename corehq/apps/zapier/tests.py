@@ -358,10 +358,6 @@ class TestZapierCustomFields(TestCase):
         super(TestZapierCustomFields, cls).setUpClass()
         cls.test_url = "http://commcarehq.org/?domain=joto&case_type=teddiursa"
 
-    @classmethod
-    def tearDownClass(cls):
-        super(TestZapierCustomFields, cls).tearDownClass()
-
     def test_case_fields(self):
 
         expected_fields = [
