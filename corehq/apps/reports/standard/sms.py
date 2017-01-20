@@ -1264,10 +1264,10 @@ class PhoneNumberReport(BaseCommConnectLogReport):
 
         user_ids_with_phone_numbers = set(query.values_list('owner_id', flat=True).distinct())
         user_ids = set(users_by_id.keys()) - user_ids_with_phone_numbers
-        user_types_with_id = {(id, users_by_id[id]['doc_type']) for id in user_ids}
+        user_types_with_id = sorted([(id, users_by_id[id]['doc_type']) for id in user_ids])
 
         FakePhoneNumber = namedtuple('FakePhoneNumber', ['owner_id', 'owner_doc_type'])
-        return sorted([FakePhoneNumber(id, type) for id, type in user_types_with_id])
+        return [FakePhoneNumber(id, type) for id, type in user_types_with_id]
 
     @property
     def shared_pagination_GET_params(self):
