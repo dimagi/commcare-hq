@@ -21,8 +21,18 @@ FormplayerFrontend.module("Sessions", function (Sessions, FormplayerFrontend, Ba
                     "restoreAs": user.restoreAs,
                 }),
                 url: formplayerUrl + '/get_sessions',
-                success: function (request) {
-                    defer.resolve(request);
+                success: function (parsed, response) {
+                    debugger;
+                    if (response.exception){
+                        FormplayerFrontend.trigger(
+                            'showError',
+                            response.exception,
+                            response.type === 'html'
+                        );
+                        FormplayerFrontend.trigger('navigation:back');
+                    } else {
+                        defer.resolve(parsed);
+                    }
                 },
             };
 
