@@ -6,8 +6,6 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 
 from django.views.generic import View
-from tastypie.exceptions import ImmediateHttpResponse
-from tastypie.http import HttpBadRequest
 
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.models import Application
@@ -64,10 +62,7 @@ class SubscribeView(View):
                 case_type=data['case_type'],
             )
         else:
-            raise ImmediateHttpResponse(
-                HttpBadRequest('The passed event type is not valid.')
-            )
-
+            return HttpResponse(status=400)
 
         return HttpResponse('OK')
 

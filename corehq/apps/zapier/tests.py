@@ -83,6 +83,7 @@ XFORM_XML_TEMPLATE = """<?xml version='1.0' ?>
 ZAPIER_URL = "https://zapier.com/hooks/standard/1387607/5ccf35a5a1944fc9bfdd2c94c28c9885/"
 TEST_URL = "http://commcarehq.org/?domain=johto&case_type=teddiursa"
 TEST_DOMAIN = 'test-domain'
+BAD_EVENT_NAME = 'lemon_meringue_pie'
 MockResponse = namedtuple('MockResponse', 'status_code reason')
 
 
@@ -171,6 +172,19 @@ class TestZapierIntegration(TestCase):
         )
         self.assertIsNotNone(subscription.repeater_id)
         self.assertNotEqual(subscription.repeater_id, '')
+
+    def test_subscribe_error(self):
+        data = {
+            "subscription_url": ZAPIER_URL,
+            "target_url": ZAPIER_URL,
+            "event": BAD_EVENT_NAME,
+            "case_type": CASE_TYPE
+        }
+        response = self.client.post(reverse(SubscribeView.urlname, kwargs={'domain': self.domain}),
+                                    data=json.dumps(data),
+                                    content_type='application/json; charset=utf-8',
+                                    HTTP_AUTHORIZATION='ApiKey test:{}'.format(self.api_key))
+        self.assertEqual(response.status_code, 400)
 
     def test_unsubscribe_form(self):
         ZapierSubscription.objects.create(
