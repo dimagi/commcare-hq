@@ -1205,7 +1205,7 @@ class PhoneNumberReport(BaseCommConnectLogReport):
             ]
 
         return [
-            self._fmt_owner(number.owner_doc_type, number.owner_id, owner_cache),
+            self._fmt_owner(number.owner_doc_type, number.owner_id, owner_cache, link_user),
             '---',
             '---',
             '---',
