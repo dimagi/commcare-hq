@@ -11,12 +11,15 @@ from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.util import raw_username
+from corehq.util.soft_assert import soft_assert
 from corehq.util.workbook_json.excel import alphanumeric_sort_key
 
 DATA_SOURCE_COLUMN = 'data_source_column'
 LOCATION = 'location'
 USER = 'user'
 OWNER = 'owner'
+
+assert_user_passed_in = soft_assert(to="@".join(["esoergel", "dimagi.com"]), fail_if_debug=True)
 
 
 class ChoiceQueryContext(object):
@@ -218,8 +221,12 @@ class LocationChoiceProvider(ChainableChoiceProvider):
         return self._locations_query(query, user).count()
 
     def get_choices_for_known_values(self, values, user):
-        selected_locations = (SQLLocation.active_objects.filter(location_id__in=values)
-                              .accessible_to_user(self.domain, user))
+        if user is not None:
+            selected_locations = (SQLLocation.active_objects.filter(location_id__in=values)
+                                  .accessible_to_user(self.domain, user))
+        else:
+            assert_user_passed_in(False, "get_choices_for_known_values was called without a user")
+            selected_locations = SQLLocation.active_objects.filter(location_id__in=values)
         if self.include_descendants:
             selected_locations = SQLLocation.objects.get_queryset_descendants(
                 selected_locations, include_self=True
