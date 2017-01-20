@@ -1836,9 +1836,11 @@ class SortElement(IndexedSchema):
     type = StringProperty()
     direction = StringProperty()
     display = DictProperty()
+    sort_calculation = StringProperty(default="")
 
     def has_display_values(self):
         return any(s.strip() != '' for s in self.display.values())
+
 
 class CaseListLookupMixin(DocumentSchema):
     """

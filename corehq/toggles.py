@@ -1002,3 +1002,10 @@ COPY_CASE_CONFIGS = StaticToggle(
     TAG_PRODUCT_CORE,
     [NAMESPACE_DOMAIN]
 )
+
+SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
+    'sort_calculation_in_case_list',
+    'Configure a custom xpath calculation for Sort Property in Case Lists',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)

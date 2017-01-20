@@ -92,6 +92,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
 
         self.textField = uiElement.input().val(typeof params.field !== 'undefined' ? params.field : "");
         module.CC_DETAIL_SCREEN.setUpAutocomplete(this.textField, params.properties);
+        self.sortCalculation = ko.observable(typeof params.sortCalculation !== 'undefined' ? params.sortCalculation : "");
 
         self.showWarning = ko.observable(false);
         self.hasValidPropertyName = function(){
@@ -118,6 +119,9 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         });
         self.direction = ko.observable(typeof params.direction !== 'undefined' ? params.direction : "");
         self.direction.subscribe(function () {
+            self.notifyButton();
+        });
+        self.sortCalculation.subscribe(function () {
             self.notifyButton();
         });
 
@@ -164,14 +168,15 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         var self = this;
         self.sortRows = ko.observableArray([]);
 
-        self.addSortRow = function (field, type, direction, display, notify) {
+        self.addSortRow = function (field, type, direction, display, notify, sortCalculation) {
             self.sortRows.push(new SortRow({
                 field: field,
                 type: type,
                 direction: direction,
                 display: display,
                 saveButton: saveButton,
-                properties: properties
+                properties: properties,
+                sortCalculation: sortCalculation
             }));
             if (notify) {
                 saveButton.fire('change');
@@ -1169,6 +1174,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                                 type: row.type(),
                                 direction: row.direction(),
                                 display: row.display(),
+                                sort_calculation: row.sortCalculation()
                             };
                         }));
                     }
@@ -1306,7 +1312,8 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                                 spec.sortRows[j].type,
                                 spec.sortRows[j].direction,
                                 spec.sortRows[j].display[this.lang],
-                                false
+                                false,
+                                spec.sortRows[j].sort_calculation
                             );
                         }
                     }
