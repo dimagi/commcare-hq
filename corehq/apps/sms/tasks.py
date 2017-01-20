@@ -5,7 +5,7 @@ from corehq.apps.sms.mixin import (InvalidFormatException,
     PhoneNumberInUseException, PhoneNumberException, CommCareMobileContactMixin,
     apply_leniency)
 from corehq.apps.sms.models import (OUTGOING, INCOMING, SMS,
-    PhoneLoadBalancingMixin, QueuedSMS, PhoneNumber)
+    PhoneLoadBalancingMixin, QueuedSMS, PhoneNumber, MigrationStatus)
 from corehq.apps.sms.api import (send_message_via_backend, process_incoming,
     log_sms_exception, create_billable_for_sms, get_utcnow)
 from django.db import transaction, DataError
@@ -18,6 +18,7 @@ from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.sms.change_publishers import publish_sms_saved
 from corehq.apps.sms.util import is_contact_active
 from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch import release_lock, CriticalSection
@@ -396,3 +397,18 @@ def publish_sms_change(self, sms):
         publish_sms_saved(sms)
     except Exception as e:
         self.retry(exc=e)
+
+
+@task(queue='background_queue')
+def sync_phone_numbers_for_domain(domain):
+    for user_id in CouchUser.ids_by_domain(domain, is_active=True):
+        _sync_user_phone_numbers(user_id)
+
+    for user_id in CouchUser.ids_by_domain(domain, is_active=False):
+        _sync_user_phone_numbers(user_id)
+
+    case_ids = CaseAccessors(domain).get_case_ids_in_domain()
+    for case in CaseAccessors(domain).iter_cases(case_ids):
+        _sync_case_phone_number(case)
+
+    MigrationStatus.set_migration_completed('phone_sync_domain_%s' % domain)
