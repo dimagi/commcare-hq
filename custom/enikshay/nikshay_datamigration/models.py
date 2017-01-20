@@ -27,7 +27,7 @@ class PatientDetail(models.Model):
     page = models.IntegerField()
     poccupation = models.CharField(max_length=255)
     paadharno = models.BigIntegerField(null=True)
-    paddress = models.CharField(max_length=255)
+    paddress = models.CharField(max_length=255, null=True)
     pmob = models.CharField(max_length=255, null=True)  # validate numerical in factory
     plandline = models.CharField(max_length=255, null=True)
     ptbyr = models.CharField(max_length=255, null=True)  # dates, but not clean
@@ -55,7 +55,7 @@ class PatientDetail(models.Model):
     dotcenter = models.CharField(max_length=255, null=True)
     PHI = models.IntegerField()
     dotmoname = models.CharField(max_length=255, null=True)
-    dotmosdone = models.CharField(max_length=255)
+    dotmosdone = models.CharField(max_length=255, null=True)
     atbtreatment = models.CharField(
         max_length=255,
         choices=(
@@ -276,8 +276,8 @@ class Outcome(models.Model):
     )
     InitiatedDate = models.CharField(max_length=255, null=True)  # dates, None, and NULL
     userName = models.CharField(max_length=255)
-    loginDate = models.DateTimeField()
-    OutcomeDate1 = models.CharField(max_length=255)  # datetimes and NULL
+    # loginDate = models.DateTimeField()
+    # OutcomeDate1 = models.CharField(max_length=255)  # datetimes and NULL
 
     @property
     def hiv_status(self):
