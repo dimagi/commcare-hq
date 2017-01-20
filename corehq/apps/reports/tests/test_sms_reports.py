@@ -82,7 +82,7 @@ class PhoneNumberReportTestCase(TestCase):
         self.add_web_user_phone_number()
         request = self.request(filter_type='phone_number')
         self.assertEqual(len(list(PhoneNumberReport(request, domain=self.domain_name).rows)), 1)
-        request = self.request(filter_type='phone_number', phone_number_filter='555')
+        request = self.request(filter_type='phone_number', phone_number_filter='5555555')
         self.assertEqual(len(list(PhoneNumberReport(request, domain=self.domain_name).rows)), 1)
         request = self.request(filter_type='phone_number', phone_number_filter='123')
         self.assertEqual(len(list(PhoneNumberReport(request, domain=self.domain_name).rows)), 0)

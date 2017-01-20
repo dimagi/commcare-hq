@@ -1225,7 +1225,7 @@ class PhoneNumberReport(BaseCommConnectLogReport):
 
         if self.filter_type == 'phone_number':
             if self.phone_number_filter:
-                query = query.filter(phone_number__contains=self.phone_number_filter)
+                query = query.filter(phone_number=self.phone_number_filter)
         elif self.filter_type == 'contact':
             if self._show_cases:
                 query = query.filter(owner_doc_type='CommCareCase', phone_number__isnull=False)
