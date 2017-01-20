@@ -396,3 +396,16 @@ def publish_sms_change(self, sms):
         publish_sms_saved(sms)
     except Exception as e:
         self.retry(exc=e)
+
+
+@task(queue='background_queue')
+def sync_phone_numbers_for_domain(domain):
+    for user_id in CouchUser.ids_by_domain(domain, is_active=True):
+        _sync_user_phone_numbers(user_id)
+
+    for user_id in CouchUser.ids_by_domain(domain, is_active=False):
+        _sync_user_phone_numbers(user_id)
+
+    case_ids = CaseAccessors(domain).get_case_ids_in_domain()
+    for case in CaseAccessors(domain).iter_cases(case_ids):
+        _sync_case_phone_number(case)
