@@ -5,7 +5,7 @@ from tastypie.http import HttpBadRequest
 
 from corehq.apps.repeaters.models import FormRepeater, CaseRepeater
 from corehq.apps.zapier.models import ZapierSubscription
-from corehq.apps.zapier import consts
+from corehq.apps.zapier.consts import EventTypes
 
 
 @receiver(pre_save, sender=ZapierSubscription)
@@ -16,7 +16,7 @@ def zapier_subscription_pre_save(sender, instance, *args, **kwargs):
     if instance.pk:
         return
 
-    if instance.event_name == consts.EventTypes.NEW_FORM:
+    if instance.event_name == EventTypes.NEW_FORM:
         repeater = FormRepeater(
             domain=instance.domain,
             url=instance.url,
@@ -25,7 +25,7 @@ def zapier_subscription_pre_save(sender, instance, *args, **kwargs):
             white_listed_form_xmlns=[instance.form_xmlns]
         )
 
-    elif instance.event_name == consts.EventTypes.NEW_CASE:
+    elif instance.event_name == EventTypes.NEW_CASE:
         repeater = CaseRepeater(
             domain=instance.domain,
             url=instance.url,
@@ -46,9 +46,9 @@ def zapier_subscription_post_delete(sender, instance, *args, **kwargs):
     """
     Deletes the repeater object when the corresponding zap is turned off
     """
-    if instance.event_name == consts.EventTypes.NEW_FORM:
+    if instance.event_name == EventTypes.NEW_FORM:
         repeater = FormRepeater.get(instance.repeater_id)
-    elif instance.event_name == consts.EventTypes.NEW_CASE:
+    elif instance.event_name == EventTypes.NEW_CASE:
         repeater = CaseRepeater.get(instance.repeater_id)
     else:
         raise ImmediateHttpResponse(

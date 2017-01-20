@@ -15,7 +15,7 @@ from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.domain.models import Domain
 from corehq.apps.repeaters.models import FormRepeater, CaseRepeater
 from corehq.apps.users.models import WebUser
-from corehq.apps.zapier import consts
+from corehq.apps.zapier.consts import EventTypes
 from corehq.apps.zapier.views import SubscribeView, UnsubscribeView
 from corehq.apps.zapier.api.v0_5 import ZapierCustomFieldCaseResource
 from corehq.apps.zapier.models import ZapierSubscription
@@ -65,7 +65,7 @@ XFORM = """
 """
 
 FORM_XMLNS = "https://www.commcarehq.org/test/zapier/"
-CASE_TYPE = "lemon meringue pie"
+CASE_TYPE = "lemon-meringue-pie"
 XFORM_XML_TEMPLATE = """<?xml version='1.0' ?>
 <data xmlns:jrm="http://dev.commcarehq.org/jr/xforms" xmlns="%s">
     <woman_name>Alpha</woman_name>
@@ -81,7 +81,6 @@ XFORM_XML_TEMPLATE = """<?xml version='1.0' ?>
 </data>
 """ % FORM_XMLNS
 ZAPIER_URL = "https://zapier.com/hooks/standard/1387607/5ccf35a5a1944fc9bfdd2c94c28c9885/"
-TEST_URL = "http://commcarehq.org/?domain=johto&case_type=teddiursa"
 TEST_DOMAIN = 'test-domain'
 BAD_EVENT_NAME = 'lemon_meringue_pie'
 MockResponse = namedtuple('MockResponse', 'status_code reason')
@@ -130,7 +129,7 @@ class TestZapierIntegration(TestCase):
         data = {
             "subscription_url": ZAPIER_URL,
             "target_url": ZAPIER_URL,
-            "event": consts.EventTypes.NEW_FORM,
+            "event": EventTypes.NEW_FORM,
             "application": self.application.get_id,
             "form": FORM_XMLNS
         }
@@ -154,7 +153,7 @@ class TestZapierIntegration(TestCase):
         data = {
             "subscription_url": ZAPIER_URL,
             "target_url": ZAPIER_URL,
-            "event": consts.EventTypes.NEW_CASE,
+            "event": EventTypes.NEW_CASE,
             "case_type": CASE_TYPE
         }
         response = self.client.post(reverse(SubscribeView.urlname, kwargs={'domain': self.domain}),
@@ -191,7 +190,7 @@ class TestZapierIntegration(TestCase):
             url=ZAPIER_URL,
             user_id=self.web_user.get_id,
             domain=TEST_DOMAIN,
-            event_name=consts.EventTypes.NEW_FORM,
+            event_name=EventTypes.NEW_FORM,
             application_id=self.application.get_id,
             form_xmlns=FORM_XMLNS
         )
@@ -212,7 +211,7 @@ class TestZapierIntegration(TestCase):
             url=ZAPIER_URL,
             user_id=self.web_user.get_id,
             domain=TEST_DOMAIN,
-            event_name=consts.EventTypes.NEW_CASE,
+            event_name=EventTypes.NEW_CASE,
             application_id=self.application.get_id,
             case_type=CASE_TYPE,
         )
@@ -232,7 +231,7 @@ class TestZapierIntegration(TestCase):
         data = {
             "subscription_url": ZAPIER_URL,
             "target_url": ZAPIER_URL,
-            "event": consts.EventTypes.NEW_FORM,
+            "event": EventTypes.NEW_FORM,
             "application": self.application.get_id,
             "form": FORM_XMLNS
         }
@@ -354,12 +353,21 @@ class TestRemoveAdvancedFields(SimpleTestCase):
 
 class TestZapierCustomFields(TestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        super(TestZapierCustomFields, cls).setUpClass()
+        cls.test_url = "http://commcarehq.org/?domain=joto&case_type=teddiursa"
+
+    @classmethod
+    def tearDownClass(cls):
+        super(TestZapierCustomFields, cls).tearDownClass()
+
     def test_case_fields(self):
 
         expected_fields = [
             {"help_text": "", "key": "properties__level", "label": "Level", "type": "unicode"},
             {"help_text": "", "key": "properties__mood", "label": "Mood", "type": "unicode"},
-            {"help_text": "", "key": "properties__move", "label": "Move", "type": "unicode"},
+            {"help_text": "", "key": "properties__move_type", "label": "Move type", "type": "unicode"},
             {"help_text": "", "key": "properties__name", "label": "Name", "type": "unicode"},
             {"help_text": "", "key": "properties__opened_on", "label": "Opened on", "type": "unicode"},
             {"help_text": "", "key": "properties__owner_id", "label": "Owner id", "type": "unicode"},
@@ -378,18 +386,17 @@ class TestZapierCustomFields(TestCase):
             {"help_text": "", "key": "resource_uri", "label": "Resource URI", "type": "unicode"}
         ]
 
-        request = Client().get(TEST_URL).wsgi_request
+        request = Client().get(self.test_url).wsgi_request
         bundle = Resource().build_bundle(data={}, request=request)
 
-        factory = CaseFactory(domain="johto")
+        factory = CaseFactory(domain="joto")
         factory.create_case(
             case_type='teddiursa',
             owner_id='owner1',
             case_name='dre',
-            update={'prop1': 'blah', 'move': 'scratch', 'mood': 'happy', 'level': '100'}
+            update={'prop1': 'blah', 'move_type': 'scratch', 'mood': 'happy', 'level': '100'}
         )
 
         actual_fields = ZapierCustomFieldCaseResource().obj_get_list(bundle)
         for i in range(len(actual_fields)):
             self.assertEqual(expected_fields[i], actual_fields[i].get_content())
-

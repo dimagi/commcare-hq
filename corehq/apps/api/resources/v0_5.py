@@ -859,7 +859,7 @@ class DomainForms(Resource):
         return results
 
 # Zapier requires id and name; case_type has no obvious id, placeholder inserted instead.
-CaseType = namedtuple('Case_Type', 'case_type placeholder')
+CaseType = namedtuple('CaseType', 'case_type placeholder')
 CaseType.__new__.__defaults__ = ('', '')
 
 
