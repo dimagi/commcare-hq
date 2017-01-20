@@ -70,12 +70,12 @@ class ChoiceProvider(object):
     def query(self, query_context):
         pass
 
-    def get_sorted_choices_for_values(self, values, user):
-        return sorted(self.get_choices_for_values(values, user),
+    def get_sorted_choices_for_values(self, values):
+        return sorted(self.get_choices_for_values(values),
                       key=lambda choice: alphanumeric_sort_key(choice.display))
 
-    def get_choices_for_values(self, values, user):
-        choices = set(self.get_choices_for_known_values(values, user))
+    def get_choices_for_values(self, values):
+        choices = set(self.get_choices_for_known_values(values))
         used_values = {value for value, _ in choices}
         for value in values:
             if value not in used_values:
@@ -84,7 +84,7 @@ class ChoiceProvider(object):
         return choices
 
     @abstractmethod
-    def get_choices_for_known_values(self, values, user):
+    def get_choices_for_known_values(self, values):
         pass
 
 
@@ -118,7 +118,7 @@ class StaticChoiceProvider(ChoiceProvider):
                         if any(query_context.query in text for text in choice.searchable_text)]
         return filtered_set[query_context.offset:query_context.offset + query_context.limit]
 
-    def get_choices_for_known_values(self, values, user):
+    def get_choices_for_known_values(self, values):
         return {choice for choice in self.choices
                 if choice.value in values}
 
@@ -131,7 +131,7 @@ class ChainableChoiceProvider(ChoiceProvider):
         pass
 
     @abstractmethod
-    def get_choices_for_known_values(self, values, user):
+    def get_choices_for_known_values(self, values):
         pass
 
     @abstractmethod
@@ -179,7 +179,7 @@ class DataSourceColumnChoiceProvider(ChoiceProvider):
         except ProgrammingError:
             return []
 
-    def get_choices_for_known_values(self, values, user):
+    def get_choices_for_known_values(self, values):
         return []
 
 
@@ -217,9 +217,8 @@ class LocationChoiceProvider(ChainableChoiceProvider):
     def query_count(self, query, user):
         return self._locations_query(query, user).count()
 
-    def get_choices_for_known_values(self, values, user):
-        selected_locations = (SQLLocation.active_objects.filter(location_id__in=values)
-                              .accessible_to_user(self.domain, user))
+    def get_choices_for_known_values(self, values):
+        selected_locations = SQLLocation.active_objects.filter(location_id__in=values)
         if self.include_descendants:
             selected_locations = SQLLocation.objects.get_queryset_descendants(
                 selected_locations, include_self=True
@@ -255,7 +254,7 @@ class UserChoiceProvider(ChainableChoiceProvider):
         user_es = get_search_users_in_domain_es_query(self.domain, query, limit=0, offset=0)
         return user_es.run().total
 
-    def get_choices_for_known_values(self, values, user):
+    def get_choices_for_known_values(self, values):
         user_es = UserES().domain(self.domain).doc_id(values)
         return self.get_choices_from_es_query(user_es)
 
@@ -285,7 +284,7 @@ class GroupChoiceProvider(ChainableChoiceProvider):
         )
         return group_es.size(0).run().total
 
-    def get_choices_for_known_values(self, values, user):
+    def get_choices_for_known_values(self, values):
         group_es = GroupES().domain(self.domain).is_case_sharing().doc_id(values)
         return self.get_choices_from_es_query(group_es)
 
@@ -331,13 +330,13 @@ class AbstractMultiProvider(ChoiceProvider):
                 offset -= choice_provider.query_count(query, user=user)
         return choices
 
-    def get_choices_for_known_values(self, values, user):
+    def get_choices_for_known_values(self, values):
         remaining_values = set(values)
         choices = []
         for choice_provider in self.choice_providers:
             if len(remaining_values) <= 0:
                 break
-            new_choices = choice_provider.get_choices_for_known_values(list(remaining_values), user)
+            new_choices = choice_provider.get_choices_for_known_values(list(remaining_values))
             remaining_values -= {value for value, _ in new_choices}
             choices.extend(new_choices)
         return choices

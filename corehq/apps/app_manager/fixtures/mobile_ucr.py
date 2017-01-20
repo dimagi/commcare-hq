@@ -93,8 +93,7 @@ class ReportFixturesProvider(object):
             {ui_filter.field for ui_filter in defer_filters.values()},
             filter_options_by_field
         )
-        filters_elem = ReportFixturesProvider._get_filters_elem(
-            defer_filters, filter_options_by_field, restore_user._couch_user)
+        filters_elem = ReportFixturesProvider._get_filters_elem(defer_filters, filter_options_by_field)
 
         report_elem = E.report(id=report_config.uuid, report_id=report_config.report_id)
         report_elem.append(filters_elem)
@@ -108,14 +107,14 @@ class ReportFixturesProvider(object):
         return report, data_source
 
     @staticmethod
-    def _get_filters_elem(defer_filters, filter_options_by_field, couch_user):
+    def _get_filters_elem(defer_filters, filter_options_by_field):
         filters_elem = E.filters()
         for filter_slug, ui_filter in defer_filters.items():
             # @field is maybe a bad name for this attribute,
             # since it's actually the filter slug
             filter_elem = E.filter(field=filter_slug)
             option_values = filter_options_by_field[ui_filter.field]
-            choices = ui_filter.choice_provider.get_sorted_choices_for_values(option_values, couch_user)
+            choices = ui_filter.choice_provider.get_sorted_choices_for_values(option_values)
             for choice in choices:
                 # add the correct text from ui_filter.choice_provider
                 option_elem = E.option(choice.display, value=choice.value)

@@ -34,7 +34,7 @@ class EnikshayLocationFilter(BaseMultipleOptionFilter):
         choice_provider = LocationChoiceProvider(StubReport(domain=self.domain), None)
         # We don't include descendants here because they will show up in select box
         choice_provider.configure({'include_descendants': False})
-        choices = choice_provider.get_choices_for_known_values(location_ids, self.request.couch_user)
+        choices = choice_provider.get_choices_for_known_values(location_ids)
         if not choices:
             return self.default_options
         else:
@@ -50,7 +50,7 @@ class EnikshayLocationFilter(BaseMultipleOptionFilter):
         choice_provider.configure({'include_descendants': True})
         return [
             choice.value
-            for choice in choice_provider.get_choices_for_known_values(selected, request.couch_user)
+            for choice in choice_provider.get_choices_for_known_values(selected)
         ]
 
     @property

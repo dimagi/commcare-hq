@@ -348,12 +348,11 @@ class DynamicChoiceListFilter(BaseFilter):
 
     def value(self, **kwargs):
         selection = unicode(kwargs.get(self.name, ""))
-        user = kwargs.get("request_user", None)
         if selection:
             choices = selection.split(CHOICE_DELIMITER)
             typed_choices = [transform_from_datatype(self.datatype)(c) for c in choices]
-            return self.choice_provider.get_sorted_choices_for_values(typed_choices, user)
-        return self.default_value(user)
+            return self.choice_provider.get_sorted_choices_for_values(typed_choices)
+        return self.default_value(kwargs.get("request_user", None))
 
     def default_value(self, request_user=None):
         if hasattr(self.choice_provider, 'default_value'):
