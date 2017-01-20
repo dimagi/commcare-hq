@@ -883,6 +883,14 @@ PROJECT_HEALTH_DASHBOARD = StaticToggle(
 )
 
 
+PHONE_NUMBERS_REPORT = StaticToggle(
+    'phone_numbers_report',
+    "Shows information related to the phone numbers owned by a project's contacts",
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
+
 UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
     'unlimited_report_builder_reports',
     'Allow unlimited reports created in report builder',

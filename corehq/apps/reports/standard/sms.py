@@ -1178,6 +1178,10 @@ class PhoneNumberReport(BaseCommConnectLogReport):
     def _show_cases(self):
         return self.contact_type == 'cases'
 
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return domain and toggles.PHONE_NUMBERS_REPORT.enabled(domain)
+
     def _fmt_owner(self, owner_doc_type, owner_id, owner_cache, link_user=True):
         doc_info = self.get_recipient_info(owner_doc_type, owner_id, owner_cache)
         table_cell = self._fmt_contact_link(owner_id, doc_info)
