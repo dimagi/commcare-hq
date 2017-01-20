@@ -12,7 +12,7 @@
             <itext>
                 <translation lang="en" default="">
                     <text id="name-label">
-                        <value>What is your name?</value>
+                        <value>Ask your first question here, for example, "What is your name?"</value>
                     </text>
                 </translation>
             </itext>
