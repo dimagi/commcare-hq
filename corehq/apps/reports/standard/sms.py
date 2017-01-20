@@ -138,6 +138,7 @@ def _sms_count(user, startdate, enddate):
 
 
 class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
+    contact_index_in_result = 1
 
     def _fmt(self, val):
         if val is None:
@@ -244,8 +245,8 @@ class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, Gene
         table[0].insert(0, _("Contact Id"))
         table[0].insert(0, _("Contact Type"))
         for row in table[1:]:
-            contact_info = row[1].split("|||")
-            row[1] = contact_info[0]
+            contact_info = row[self.contact_index_in_result].split("|||")
+            row[self.contact_index_in_result] = contact_info[0]
             row.insert(0, contact_info[2])
             row.insert(0, contact_info[1])
         return result
@@ -1110,9 +1111,11 @@ class PhoneNumberReport(BaseCommConnectLogReport):
     name = ugettext_noop("Phone Number Report")
     slug = 'phone_number_report'
     ajax_pagination = True
+    exportable = True
     fields = [
         PhoneNumberReportFilter
     ]
+    contact_index_in_result = 0
 
     @property
     def headers(self):
@@ -1175,10 +1178,10 @@ class PhoneNumberReport(BaseCommConnectLogReport):
     def _show_cases(self):
         return self.contact_type == 'cases'
 
-    def _fmt_owner(self, owner_doc_type, owner_id, owner_cache):
+    def _fmt_owner(self, owner_doc_type, owner_id, owner_cache, link_user=True):
         doc_info = self.get_recipient_info(owner_doc_type, owner_id, owner_cache)
-        table_cell = self._fmt_contact_link(owner_id, doc_info)['html']
-        return table_cell
+        table_cell = self._fmt_contact_link(owner_id, doc_info)
+        return table_cell['html'] if link_user else table_cell['raw']
 
     def _fmt_status(self, number):
         if number.verified:
@@ -1192,10 +1195,10 @@ class PhoneNumberReport(BaseCommConnectLogReport):
             return "Already In Use"
         return "Not Verified"
 
-    def _fmt_row(self, number, owner_cache):
+    def _fmt_row(self, number, owner_cache, link_user):
         if isinstance(number, PhoneNumber):
             return [
-                self._fmt_owner(number.owner_doc_type, number.owner_id, owner_cache),
+                self._fmt_owner(number.owner_doc_type, number.owner_id, owner_cache, link_user),
                 number.phone_number,
                 self._fmt_status(number),
                 "Yes" if number.is_two_way else "No",
@@ -1208,7 +1211,7 @@ class PhoneNumberReport(BaseCommConnectLogReport):
             '---',
         ]
 
-    def _get_rows(self, paginate=True):
+    def _get_rows(self, paginate=True, link_user=True):
         owner_cache = {}
         if self._show_users_without_phone_numbers:
             data = self._get_users_without_phone_numbers()
@@ -1219,7 +1222,7 @@ class PhoneNumberReport(BaseCommConnectLogReport):
             data = data[self.pagination.start:self.pagination.start + self.pagination.count]
 
         for number in data:
-            yield self._fmt_row(number, owner_cache)
+            yield self._fmt_row(number, owner_cache, link_user)
 
     def _get_queryset(self):
         query = PhoneNumber.objects.filter(domain=self.domain)
@@ -1286,3 +1289,7 @@ class PhoneNumberReport(BaseCommConnectLogReport):
         if self._show_users_without_phone_numbers:
             return len(self._get_users_without_phone_numbers())
         return self._get_queryset().count()
+
+    @property
+    def export_rows(self):
+        return self._get_rows(paginate=False, link_user=False)
