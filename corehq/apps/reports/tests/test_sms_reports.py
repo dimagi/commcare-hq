@@ -86,3 +86,22 @@ class PhoneNumberReportTestCase(TestCase):
         self.assertEqual(len(list(PhoneNumberReport(request, domain=self.domain_name).rows)), 1)
         request = self.request(filter_type='phone_number', phone_number_filter='123')
         self.assertEqual(len(list(PhoneNumberReport(request, domain=self.domain_name).rows)), 0)
+
+    def test_number_already_in_use(self):
+        self.add_web_user_phone_number()
+        pn = PhoneNumber.objects.create(
+            domain=self.domain_name,
+            owner_id='other_id',
+            owner_doc_type='other_doc_type',
+            phone_number='5555555',
+            is_two_way=True,
+            pending_verification=False,
+            verified=True,
+        )
+        self.addCleanup(pn.delete)
+
+        request = self.request(filter_type='phone_number')
+        rows = list(PhoneNumberReport(request, domain=self.domain_name).rows)
+
+        self.assertEqual(rows[0][2], 'Already In Use')
+        self.assertEqual(rows[1][2], 'Verified')

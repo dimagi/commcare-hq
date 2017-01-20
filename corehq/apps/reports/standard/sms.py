@@ -1184,8 +1184,11 @@ class PhoneNumberReport(BaseCommConnectLogReport):
             return "Verified"
         elif number.pending_verification:
             return "Verification Pending"
-        elif not (number.is_two_way or number.pending_verification) and PhoneNumber.get_reserved_number(number):
-            return "Already in use"
+        elif (
+                not (number.is_two_way or number.pending_verification) and
+                PhoneNumber.get_reserved_number(number.phone_number)
+             ):
+            return "Already In Use"
         return "Not Verified"
 
     def _fmt_row(self, number, owner_cache):
