@@ -203,11 +203,11 @@ hqDefine('app_manager/js/preview_app.js', function() {
 
     };
 
-    module.prependToggleTo = function (selector, layout, attempts) {
+    module.appendToggleTo = function (selector, layout, attempts) {
         attempts = attempts || 0;
         if ($(selector).length) {
             var $toggleParent = $(selector);
-            $toggleParent.prepend(layout);
+            $toggleParent.append(layout);
             $toggleParent.find(module.SELECTORS.BTN_TOGGLE_PREVIEW).click(_private.toggleAppPreview);
             if (localStorage.getItem(module.DATA.OPEN)) {
                 _private.showAppPreview();
@@ -217,7 +217,7 @@ hqDefine('app_manager/js/preview_app.js', function() {
         } else if (attempts <= 30) {
             // give up appending element after waiting 30 seconds to load
             setTimeout(function () {
-                module.prependToggleTo(selector, layout, attempts++);
+                module.appendToggleTo(selector, layout, attempts++);
             }, 1000);
         }
     };

@@ -4,6 +4,7 @@ from django.utils.translation import ugettext as _
 
 from corehq.apps.es import users as user_es, filters
 from corehq.apps.domain.models import Domain
+from corehq.apps.es.users import user_ids_at_locations_and_descendants
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.util import namedtupledict
 from corehq.apps.users.models import CommCareUser

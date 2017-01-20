@@ -145,7 +145,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
                 'type': 'and',
                 'filters': built_in_filters + extras,
             },
-            context=self._get_factory_context(),
+            context=self.get_factory_context(),
         )
 
     def _get_domain_filter_spec(self):
@@ -187,7 +187,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         return {name: FilterFactory.from_spec(filter, FactoryContext(self.named_expression_objects, {}))
                 for name, filter in self.named_filters.items()}
 
-    def _get_factory_context(self):
+    def get_factory_context(self):
         return FactoryContext(self.named_expression_objects, self.named_filter_objects)
 
     @property
@@ -207,16 +207,16 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
                     "property_name": "_id"
                 }
             }
-        }, self._get_factory_context())]
+        }, self.get_factory_context())]
 
         default_indicators.append(IndicatorFactory.from_spec({
             "type": "inserted_at",
-        }, self._get_factory_context()))
+        }, self.get_factory_context()))
 
         if self.base_item_expression:
             default_indicators.append(IndicatorFactory.from_spec({
                 "type": "repeat_iteration",
-            }, self._get_factory_context()))
+            }, self.get_factory_context()))
 
         return default_indicators
 
@@ -227,7 +227,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         return CompoundIndicator(
             self.display_name,
             self.default_indicators + [
-                IndicatorFactory.from_spec(indicator, self._get_factory_context())
+                IndicatorFactory.from_spec(indicator, self.get_factory_context())
                 for indicator in self.configured_indicators
             ]
         )
@@ -236,7 +236,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     @memoized
     def parsed_expression(self):
         if self.base_item_expression:
-            return ExpressionFactory.from_spec(self.base_item_expression, context=self._get_factory_context())
+            return ExpressionFactory.from_spec(self.base_item_expression, context=self.get_factory_context())
         return None
 
     def get_columns(self):
@@ -607,9 +607,12 @@ class StaticReportConfiguration(JsonObject):
         return [ds for ds in cls.all() if ds.domain == domain]
 
     @classmethod
-    def by_id(cls, config_id):
+    def by_id(cls, config_id, domain=None):
         """
         Returns a ReportConfiguration object, NOT StaticReportConfigurations.
+
+        :param domain: Optionally specify domain name to validate access.
+                       Raises ``DocumentNotFound`` if domains don't match.
         """
         mapping = cls.by_id_mapping()
         if config_id not in mapping:
@@ -620,7 +623,14 @@ class StaticReportConfiguration(JsonObject):
             raise BadSpecError(_('The report configuration referenced by this report could '
                                  'not be found.'))
 
-        return cls._get_from_metadata(metadata)
+        config = cls._get_from_metadata(metadata)
+        if domain and config.domain != domain:
+            raise DocumentNotFound("Document {} of class {} not in domain {}!".format(
+                config_id,
+                config.__class__.__name__,
+                domain,
+            ))
+        return config
 
     @classmethod
     def by_ids(cls, config_ids):

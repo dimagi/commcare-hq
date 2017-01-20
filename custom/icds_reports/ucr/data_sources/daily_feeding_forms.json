@@ -655,7 +655,7 @@
           },
           "index_expression": {
             "type": "constant",
-            "constant": 0
+            "constant": 1
           }
         },
         "is_primary_key": false,
@@ -908,6 +908,22 @@
             }
           ]
         }
+      },
+      {
+        "display_name": null,
+        "transform": {},
+        "datatype": "string",
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "photo_children_present"
+          ]
+        },
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "image_name",
+        "type": "expression"
       }
     ],
     "named_expressions": {

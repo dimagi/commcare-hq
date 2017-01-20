@@ -41,6 +41,13 @@
                     "type": "location"
                 },
                 "display": "Location"
+            },
+            {
+                "type": "pre",
+                "field": "closed",
+                "slug": "closed",
+                "datatype": "integer",
+                "pre_value": 0
             }
         ],
         "columns": [
@@ -69,9 +76,33 @@
                 "calculate_total": false
             },
             {
+                "display": "Suspects with positive test results",
+                "type": "field",
+                "field": "positive_microscopy_tests",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
                 "display": "Number of diagnostic tests",
                 "type": "field",
                 "field": "diagnostic_tests",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Number of repeat sputum examinations",
+                "type": "field",
+                "field": "repeat_sputum_examinations",
                 "aggregation": "sum",
                 "sortable": false,
                 "description": null,
@@ -177,6 +208,18 @@
                 "calculate_total": false
             },
             {
+                "display": "Number of New Transgender Cases",
+                "type": "field",
+                "field": "new_transgender",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
                 "display": "Number of New Pulmonary Cases",
                 "type": "field",
                 "field": "new_pulmonary",
@@ -192,18 +235,6 @@
                 "display": "Number of New Extrapulmonary Cases",
                 "type": "field",
                 "field": "new_extra_pulmonary",
-                "aggregation": "sum",
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {
-                },
-                "calculate_total": false
-            },
-            {
-                "display": "Number of New Transgender Cases",
-                "type": "field",
-                "field": "new_transgender",
                 "aggregation": "sum",
                 "sortable": false,
                 "description": null,
@@ -324,6 +355,54 @@
                 "display": "Number of Retreatment Extrapulmonary Cases",
                 "type": "field",
                 "field": "retreatment_extra_pulmonary",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Patients test for HIV",
+                "type": "field",
+                "field": "hiv_test_done",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "HIV Reactive patients",
+                "type": "field",
+                "field": "hiv_positive",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "HIV reactive patients put on CPT",
+                "type": "field",
+                "field": "hiv_positive_cpt",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "HIV Reactive patients put on ART",
+                "type": "field",
+                "field": "hiv_positive_art",
                 "aggregation": "sum",
                 "sortable": false,
                 "description": null,

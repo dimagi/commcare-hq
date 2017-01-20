@@ -211,6 +211,16 @@
     </div>
 </script>
 
+<script type="text/html" id="auto-select:case-type">
+    {% trans "Expected Case Type" %}
+    <input type="text" class="form-control" data-bind="value: $parent.case_type" />
+    <span class="hq-help-template"
+              data-title="{% trans "Expected Case Type" %}"
+              data-content="{% blocktrans %}This is used for case property suggestions and when creating case indexes but
+              it does not get validated against the loaded case.{% endblocktrans %}"
+        ></span>
+</script>
+
 <script type="text/html" id="auto-select:undefined">
 </script>
 
@@ -218,12 +228,14 @@
     &nbsp;
     {% trans "XPath function" %}
     <input type="text" class="form-control" data-bind="value: value_key" />
+    <!-- ko template: {name: 'auto-select:case-type'} --><!-- /ko -->
 </script>
 
 <script type="text/html" id="auto-select:user">
     &nbsp;
     {% trans "User data key:" %}
     <input type="text" class="form-control" data-bind="value: value_key" />
+    <!-- ko template: {name: 'auto-select:case-type'} --><!-- /ko -->
 </script>
 
 <script type="text/html" id="auto-select:case">
@@ -234,6 +246,7 @@
     </select>
     {% trans "Index name:" %}
     <input type="text" class="input-medium" data-bind="value: value_key" />
+    <!-- ko template: {name: 'auto-select:case-type'} --><!-- /ko -->
 </script>
 
 <script type="text/html" id="auto-select:fixture">
@@ -242,6 +255,7 @@
     <input type="text" class="input-large" data-bind="value: value_source" />
     {% trans "Table Field:" %}
     <input type="text" class="input-large" data-bind="value: value_key" />
+    <!-- ko template: {name: 'auto-select:case-type'} --><!-- /ko -->
 </script>
 
 <script type="text/html" id="auto-select:usercase">

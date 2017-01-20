@@ -1,5 +1,6 @@
 # coding=utf-8
 
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from custom.enikshay.reports.const import AGE_RANGES, PATIENT_TYPES
 from custom.enikshay.reports.generic import EnikshayReport, EnikshayMultiReport
@@ -51,7 +52,6 @@ class CaseFindingAllTBPatientsReport(EnikshayReport):
             DataTablesColumn(''),
             DataTablesColumn(_('New')),
             DataTablesColumn(_('Recurrent')),
-            DataTablesColumn(_('Transfer-in')),
             DataTablesColumn(_('After Treatment Failure')),
             DataTablesColumn(_('Treatment After Lost to follow up')),
             DataTablesColumn(_('Other previously treated')),
@@ -153,6 +153,7 @@ class TBHIVCollaboration(EnikshayReport):
         ]
 
 
+@location_safe
 class CaseFindingReport(EnikshayMultiReport):
 
     name = ugettext_lazy('Case Finding')

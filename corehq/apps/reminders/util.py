@@ -199,16 +199,17 @@ def can_use_survey_reminders(request):
     return has_privilege(request, privileges.INBOUND_SMS)
 
 
-def get_verified_number_for_recipient(recipient):
-    if hasattr(recipient, "get_verified_numbers"):
-        contact_verified_numbers = recipient.get_verified_numbers(False)
-        if len(contact_verified_numbers) == 1:
-            return contact_verified_numbers.items()[0][1]
-        elif len(contact_verified_numbers) > 1:
-            if hasattr(recipient, 'phone_numbers'):
+def get_two_way_number_for_recipient(recipient):
+    if isinstance(recipient, CommCareMobileContactMixin):
+        two_way_numbers = recipient.get_two_way_numbers()
+        if len(two_way_numbers) == 1:
+            return two_way_numbers.values()[0]
+        elif len(two_way_numbers) > 1:
+            # Retrieve the two-way number that's highest up in the list
+            if isinstance(recipient, CouchUser):
                 for phone in recipient.phone_numbers:
-                    if phone in contact_verified_numbers:
-                        return contact_verified_numbers[phone]
+                    if phone in two_way_numbers:
+                        return two_way_numbers[phone]
                 raise Exception("Phone number list and PhoneNumber entries are out "
                     "of sync for user %s" % recipient.get_id)
             else:
@@ -216,27 +217,23 @@ def get_verified_number_for_recipient(recipient):
     return None
 
 
-def get_unverified_number_for_recipient(recipient):
+def get_one_way_number_for_recipient(recipient):
     if isinstance(recipient, CouchUser):
-        try:
-            return recipient.phone_number
-        except Exception:
-            # todo: catch more specific error
-            return None
+        return recipient.phone_number
     elif is_commcarecase(recipient):
-        unverified_number = recipient.get_case_property("contact_phone_number")
-        unverified_number = apply_leniency(unverified_number)
-        if unverified_number:
+        one_way_number = recipient.get_case_property('contact_phone_number')
+        one_way_number = apply_leniency(one_way_number)
+        if one_way_number:
             try:
-                CommCareMobileContactMixin.validate_number_format(unverified_number)
-                return unverified_number
+                CommCareMobileContactMixin.validate_number_format(one_way_number)
+                return one_way_number
             except InvalidFormatException:
                 return None
     return None
 
 
 def get_preferred_phone_number_for_recipient(recipient):
-    return get_verified_number_for_recipient(recipient) or get_unverified_number_for_recipient(recipient)
+    return get_two_way_number_for_recipient(recipient) or get_one_way_number_for_recipient(recipient)
 
 
 @quickcache(['reminder_id'], timeout=60 * 60 * 24 * 7 * 5)

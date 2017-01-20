@@ -245,12 +245,7 @@ class EditCommCareUserView(BaseEditUserView):
 
     @property
     def user_role_choices(self):
-        return UserRole.commcareuser_role_choices(self.domain)
-
-    @property
-    def can_change_user_roles(self):
-        return ((self.request.user.is_superuser or self.request.couch_user.can_edit_web_users(domain=self.domain))
-                and self.request.couch_user.user_id != self.editable_user_id)
+        return [('none', _('(none)'))] + self.editable_role_choices
 
     @property
     def existing_role(self):
@@ -266,10 +261,6 @@ class EditCommCareUserView(BaseEditUserView):
     def form_user_update(self):
         form = super(EditCommCareUserView, self).form_user_update
         form.load_language(language_choices=get_domain_languages(self.domain))
-        if self.can_change_user_roles:
-            form.load_roles(current_role=self.existing_role, role_choices=self.user_role_choices)
-        else:
-            del form.fields['role']
         return form
 
     @property
@@ -671,6 +662,9 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
         # backend pages start at 0
         users_query = self._user_query(query, page - 1, limit)
+
+        # run with a blank query to fetch total records with same scope as in search
+        total_records = self._user_query('', 0, 0).count()
         if in_data.get('showDeactivatedUsers', False):
             users_query = users_query.show_only_inactive()
         users_data = users_query.run()
@@ -680,6 +674,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 'total': users_data.total,
                 'page': page,
                 'query': query,
+                'total_records': total_records
             },
             'success': True,
         }
@@ -1174,7 +1169,10 @@ class CommCareUserSelfRegistrationView(TemplateView, DomainViewMixin):
             )
             # Since the user is being created by following the link and token
             # we sent to their phone by SMS, we can verify their phone number
-            user.save_verified_number(self.domain, self.invitation.phone_number, True)
+            entry = user.get_or_create_phone_entry(self.invitation.phone_number)
+            entry.set_two_way()
+            entry.set_verified()
+            entry.save()
 
             self.invitation.registered_date = datetime.utcnow()
             self.invitation.save()

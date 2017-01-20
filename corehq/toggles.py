@@ -3,6 +3,8 @@ from functools import wraps
 import hashlib
 from django.http import Http404
 import math
+
+from django.conf import settings
 from corehq.util.quickcache import quickcache
 from toggle.shortcuts import toggle_enabled, set_toggle
 
@@ -137,7 +139,9 @@ class PredictablyRandomToggle(StaticToggle):
         return '{}:{}:{}'.format(self.namespaces, self.slug, item)
 
     def enabled(self, item, **kwargs):
-        if item in self.always_disabled:
+        if settings.UNIT_TESTING:
+            return False
+        elif item in self.always_disabled:
             return False
         return (
             (item and deterministic_random(self._get_identifier(item)) < self.randomness)
@@ -680,6 +684,13 @@ NINETYNINE_DOTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+NIKSHAY_INTEGRATION = StaticToggle(
+    'nikshay_integration',
+    'Enable patient registration in Nikshay',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
 MULTIPLE_CHOICE_CUSTOM_FIELD = StaticToggle(
     'multiple_choice_custom_field',
     'Allow project to use multiple choice field in custom fields',
@@ -715,11 +726,23 @@ HSPH_HACK = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-USE_FORMPLAYER_FRONTEND = StaticToggle(
+USE_FORMPLAYER_FRONTEND = PredictablyRandomToggle(
     'use_formplayer_frontend',
     'Use New CloudCare',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
+    randomness=1.0,
+    always_disabled=[
+        'hsph-betterbirth',
+        'figo-ppiud-srilanka',
+        'broadreach-sa',
+        'goal-global',
+        'ipm-senegal',
+        'madla-malaria',
+        'myrice',
+        'pact',
+        'icrc-almanach',
+    ]
 )
 
 FIXTURE_CASE_SELECTION = StaticToggle(
@@ -993,7 +1016,17 @@ NIMBUS_FORM_VALIDATION = PredictablyRandomToggle(
     'Use Nimbus to validate XForms',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
-    randomness=0.4
+    randomness=1.0,
+    always_disabled=[
+        'icrc-almanach'
+    ]
+)
+
+USER_PROPERTY_EASY_REFS = StaticToggle(
+    'user_property_easy_refs',
+    'Easy-reference user properties in the form builder.',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
 )
 
 COPY_CASE_CONFIGS = StaticToggle(
@@ -1008,4 +1041,11 @@ SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
     'Configure a custom xpath calculation for Sort Property in Case Lists',
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
+)
+
+DO_NOT_PROCESS_OLD_BUILDS = StaticToggle(
+    'do_not_process_old_builds',
+    'Do not process old build for export generation',
+    TAG_PRODUCT_CORE,
+    [NAMESPACE_DOMAIN],
 )

@@ -95,7 +95,7 @@ LOCATION_ACCESS_DENIED = mark_safe(ugettext_lazy(
     "This project has restricted data access rules. Please contact your "
     "project administrator to be assigned access to data in this project. "
     'More information is available <a href="{link}">here</a>.'
-).format(link="https://wiki.commcarehq.org/display/commcarepublic/Data+Access+Restrictions"))
+).format(link="https://wiki.commcarehq.org/display/commcarepublic/Data+Access+and+User+Editing+Restrictions"))
 
 LOCATION_SAFE_TASTYPIE_RESOURCES = set()
 

@@ -3,6 +3,7 @@ from simpleeval import InvalidExpression
 from corehq.apps.locations.document_store import LOCATION_DOC_TYPE
 from corehq.apps.userreports.document_stores import get_document_store
 from corehq.apps.userreports.exceptions import BadSpecError
+from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.couch import get_db_by_doc_type
 from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, DictProperty
@@ -194,20 +195,18 @@ class RelatedDocExpressionSpec(JsonObject):
         if doc_id:
             return self.get_value(doc_id, context)
 
-    def _vary_on(self, doc_id, context):
-        # For caching. Gets called with the same params as get_value.
-        return [
-            context.root_doc['domain'],
-            doc_id,
-            json.dumps(self.value_expression, sort_keys=True)
-        ]
+    def _context_cache_key(self, doc_id):
+        return '{}-{}'.format(self.related_doc_type, doc_id)
 
-    @quickcache(_vary_on)
     def get_value(self, doc_id, context):
         try:
             assert context.root_doc['domain']
             document_store = get_document_store(context.root_doc['domain'], self.related_doc_type)
-            doc = document_store.get_document(doc_id)
+
+            doc = context.get_cache_value(self._context_cache_key(doc_id))
+            if not doc:
+                doc = document_store.get_document(doc_id)
+                context.set_cache_value(self._context_cache_key(doc_id), doc)
             # ensure no cross-domain lookups of different documents
             if context.root_doc['domain'] != doc.get('domain'):
                 return None
@@ -327,6 +326,37 @@ class SubcasesExpressionSpec(JsonObject):
         subcases = [c.to_json() for c in CaseAccessors(domain).get_reverse_indexed_cases([case_id])]
         context.set_cache_value(cache_key, subcases)
         return subcases
+
+
+class CaseSharingGroupsExpressionSpec(JsonObject):
+    type = TypeProperty('get_case_sharing_groups')
+    user_id_expression = DictProperty(required=True)
+
+    def configure(self, user_id_expression):
+        self._user_id_expression = user_id_expression
+
+    def __call__(self, item, context=None):
+        user_id = self._user_id_expression(item, context)
+        if not user_id:
+            return []
+
+        assert context.root_doc['domain']
+        return self._get_case_sharing_groups(user_id, context)
+
+    def _get_case_sharing_groups(self, user_id, context):
+        domain = context.root_doc['domain']
+        cache_key = (self.__class__.__name__, domain, user_id)
+        if context.get_cache_value(cache_key) is not None:
+            return context.get_cache_value(cache_key)
+
+        user = CommCareUser.get_by_user_id(user_id, domain)
+        if not user:
+            return []
+
+        case_sharing_groups = user.get_case_sharing_groups()
+        case_sharing_groups = [g.to_json() for g in case_sharing_groups]
+        context.set_cache_value(cache_key, case_sharing_groups)
+        return case_sharing_groups
 
 
 class SplitStringExpressionSpec(JsonObject):

@@ -94,7 +94,10 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
         user = CommCareUser.create(self.domain, username, password,
             phone_number=phone_number)
         if save_vn:
-            user.save_verified_number(self.domain, phone_number, True, None)
+            entry = user.get_or_create_phone_entry(phone_number)
+            entry.set_two_way()
+            entry.set_verified()
+            entry.save()
         self.users.append(user)
         return user
 
@@ -293,7 +296,6 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
     def tearDown(self):
         delete_domain_phone_numbers(self.domain)
         for user in self.users:
-            user.delete_verified_number()
             user.delete()
         for app in self.apps:
             app.delete()

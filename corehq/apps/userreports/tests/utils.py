@@ -33,6 +33,14 @@ def get_sample_data_source():
         return DataSourceConfiguration.wrap(structure)
 
 
+def get_data_source_with_related_doc_type():
+    folder = os.path.join(os.path.dirname(__file__), 'data', 'configs')
+    sample_file = os.path.join(folder, 'parent_child_data_source.json')
+    with open(sample_file) as f:
+        structure = json.loads(f.read())
+        return DataSourceConfiguration.wrap(structure)
+
+
 def get_sample_doc_and_indicators(fake_time_now=None):
     if fake_time_now is None:
         fake_time_now = datetime.utcnow()

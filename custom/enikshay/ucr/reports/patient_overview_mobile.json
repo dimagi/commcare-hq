@@ -48,6 +48,13 @@
                 "slug": "episode_type_patient",
                 "datatype": "integer",
                 "pre_value": 1
+            },
+            {
+                "type": "pre",
+                "field": "closed",
+                "slug": "closed",
+                "datatype": "integer",
+                "pre_value": 0
             }
         ],
         "columns": [
@@ -88,42 +95,6 @@
                 "calculate_total": false
             },
             {
-                "display": "Number male patients",
-                "type": "field",
-                "field": "male",
-                "aggregation": "sum",
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {
-                },
-                "calculate_total": false
-            },
-            {
-                "display": "Number female patients",
-                "type": "field",
-                "field": "female",
-                "aggregation": "sum",
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {
-                },
-                "calculate_total": false
-            },
-            {
-                "display": "Number transgender patients",
-                "type": "field",
-                "field": "transgender",
-                "aggregation": "sum",
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {
-                },
-                "calculate_total": false
-            },
-            {
                 "display": "Number pediatric patients (14 and under)",
                 "type": "field",
                 "field": "under_15",
@@ -136,7 +107,7 @@
                 "calculate_total": false
             },
             {
-                "display": "Number of adult patients (15+)",
+                "display": "Number of non-pediatric patients (15+)",
                 "type": "field",
                 "field": "over_15",
                 "aggregation": "sum",
