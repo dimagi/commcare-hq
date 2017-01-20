@@ -150,14 +150,13 @@ class TestZapierIntegration(TestCase):
         self.assertNotEqual(subscription.repeater_id, '')
 
     def test_subscribe_case(self):
-
         data = {
             "subscription_url": ZAPIER_URL,
             "target_url": ZAPIER_URL,
             "event": consts.EventTypes.NEW_CASE,
-            "case": CASE_TYPE
+            "case_type": CASE_TYPE
         }
-        response = self.client.post(reverse('zapier_subscribe', kwargs={'domain': self.domain}),
+        response = self.client.post(reverse(SubscribeView.urlname, kwargs={'domain': self.domain}),
                                     data=json.dumps(data),
                                     content_type='application/json; charset=utf-8',
                                     HTTP_AUTHORIZATION='ApiKey test:{}'.format(self.api_key))
