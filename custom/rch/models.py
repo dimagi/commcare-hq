@@ -10,6 +10,8 @@ STATE_DISTRICT_MAPPING = {
 
 
 class RCHRecord(models.Model):
+    RCH_Primary_Key = None
+
     Caste = models.CharField(null=True, max_length=255)
     Created_On = models.DateTimeField(null=True)
     District_ID = models.PositiveSmallIntegerField(null=True)
@@ -44,13 +46,21 @@ class RCHRecord(models.Model):
             for district_id in STATE_DISTRICT_MAPPING[state_id]:
                 records = fetch_beneficiaries_records(date_str, date_str, state_id, beneficiary_type, district_id)
                 for record in records:
-                    rch_beneficiary = cls()
+                    record_pk = [prop.values()[0] for prop in record if prop.keys()[0] == cls.RCH_Primary_Key][0]
+                    results = cls.objects.filter(**{cls.RCH_Primary_Key: record_pk})
+
+                    if results:
+                        rch_beneficiary = results[0]
+                    else:
+                        rch_beneficiary = cls()
                     for prop in record:
                         setattr(rch_beneficiary, prop.keys()[0], prop.values()[0])
                     rch_beneficiary.save()
 
 
 class RCHMother(RCHRecord):
+    RCH_Primary_Key = 'Registration_no'
+
     Registration_no = models.BigIntegerField(null=True)
     Case_no = models.IntegerField(null=True)
     EC_Register_srno = models.IntegerField(null=True)
@@ -152,6 +162,8 @@ class RCHMother(RCHRecord):
 
 
 class RCHChild(RCHRecord):
+    RCH_Primary_Key = 'Child_RCH_ID_No'
+
     ANM_Name = models.CharField(null=True, max_length=255)
     ANM_Phone_No = models.BigIntegerField(null=True)
     ASHA_Name = models.CharField(null=True, max_length=255)
