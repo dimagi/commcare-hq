@@ -20,6 +20,7 @@
                     saveUrl: {{ request.get_full_path|safe|JSON }},
                     hasExcelDashboardAccess: {{ has_excel_dashboard_access|JSON }},
                     hasDailySavedAccess: {{ has_daily_saved_export_access|JSON }},
+                    formatOptions: {{ format_options|JSON }},
                     numberOfAppsToProcess: {{ number_of_apps_to_process }},
                 }
             );
@@ -77,7 +78,10 @@
                     <input type="text" class="form-control" id="export-name" data-bind="value: name" />
                 </div>
             </div>
-            <div class="form-group" data-bind="css: {'has-error': hasDisallowedHtmlFormat}">
+            <div class="form-group" data-bind="
+                css: {'has-error': hasDisallowedHtmlFormat},
+                visible: formatOptions.length > 1
+            ">
                 <label
                     for="format-select"
                     class="col-sm-3 col-md-2 control-label">
@@ -108,6 +112,7 @@
                             {% trans "Automatically convert dates and links for Excel" %}
                         </label>
                     </div>
+
                     <div class="checkbox">
                         <label>
                             <input
@@ -129,6 +134,7 @@
                             ></span>
                         {% endif %}
                     </div>
+
                 {% if export_instance.type == 'form' %}
                     <div class="checkbox">
                         <label>
