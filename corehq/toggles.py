@@ -891,6 +891,15 @@ PHONE_NUMBERS_REPORT = StaticToggle(
 )
 
 
+INBOUND_SMS_LENIENCY = StaticToggle(
+    'inbound_sms_leniency',
+    "Inbound SMS leniency on domain-owned gateways. "
+    "WARNING: This wil be rolled out slowly; do not enable on your own.",
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
+
 UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
     'unlimited_report_builder_reports',
     'Allow unlimited reports created in report builder',
