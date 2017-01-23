@@ -804,7 +804,7 @@ def update_case_list_translations(sheet, rows, app):
                     row, 'default', app.langs
             ))
         if ok_to_delete_translations:
-            _update_translation_dict('default', language_dict, row, app.langs)
+            _update_translation_dict('default_', language_dict, row, app.langs)
         else:
             msgs.append((
                 messages.error,
