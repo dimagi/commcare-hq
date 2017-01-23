@@ -515,9 +515,10 @@ def get_inbound_phone_entry(msg):
     if msg.backend_id:
         backend = SQLMobileBackend.load(msg.backend_id, is_couch_id=True)
         if not backend.is_global and toggles.INBOUND_SMS_LENIENCY.enabled(backend.domain):
+            p = PhoneNumber.get_two_way_number_with_domain_scope(msg.phone_number, backend.domains_with_access)
             return (
-                PhoneNumber.get_two_way_number_with_domain_scope(msg.phone_number, backend.domains_with_access),
-                True
+                p,
+                p is not None
             )
 
     return (
@@ -565,6 +566,11 @@ def process_incoming(msg):
         if msg.domain and domain_has_privilege(msg.domain, privileges.INBOUND_SMS):
             handled = load_and_call(settings.CUSTOM_SMS_HANDLERS, v, msg.text, msg)
 
+            if not handled and v and v.pending_verification:
+                import verify
+                handled = verify.process_verification(v, msg,
+                    create_subevent_for_inbound=not has_domain_two_way_scope)
+
             if (
                 not handled
                 and (is_two_way or has_domain_two_way_scope)
@@ -577,10 +583,6 @@ def process_incoming(msg):
 
             if not handled:
                 handled = process_sms_registration(msg)
-
-            if not handled and v and v.pending_verification:
-                import verify
-                verify.process_verification(v, msg)
 
     # If the sms queue is enabled, then the billable gets created in remove_from_queue()
     if (

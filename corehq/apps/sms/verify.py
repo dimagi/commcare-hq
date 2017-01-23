@@ -87,7 +87,7 @@ def send_verification(domain, user, phone_number, logged_event):
     subevent.completed()
 
 
-def process_verification(v, msg, verification_keywords=None):
+def process_verification(v, msg, verification_keywords=None, create_subevent_for_inbound=True):
     verification_keywords = verification_keywords or ['123']
 
     logged_event = MessagingEvent.get_current_verification_event(
@@ -96,16 +96,18 @@ def process_verification(v, msg, verification_keywords=None):
     if not logged_event:
         logged_event = MessagingEvent.create_verification_event(v.domain, v.owner)
 
-    subevent = logged_event.create_subevent_for_single_sms(
-        v.owner_doc_type,
-        v.owner_id
-    )
-    subevent.completed()
-
     msg.domain = v.domain
     msg.couch_recipient_doc_type = v.owner_doc_type
     msg.couch_recipient = v.owner_id
-    msg.messaging_subevent_id = subevent.pk
+
+    if create_subevent_for_inbound:
+        subevent = logged_event.create_subevent_for_single_sms(
+            v.owner_doc_type,
+            v.owner_id
+        )
+        subevent.completed()
+        msg.messaging_subevent_id = subevent.pk
+
     msg.save()
 
     if (

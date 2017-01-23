@@ -1728,7 +1728,7 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
         if self.is_global:
             raise self.ExpectedDomainLevelBackend()
 
-        return [self.domain] + self.get_authorized_domain_list()
+        return [self.domain] + list(self.get_authorized_domain_list())
 
     def domain_is_authorized(self, domain):
         """
