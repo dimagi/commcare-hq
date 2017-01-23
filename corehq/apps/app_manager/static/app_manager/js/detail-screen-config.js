@@ -176,7 +176,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                 display: display,
                 saveButton: saveButton,
                 properties: properties,
-                sortCalculation: sortCalculation
+                sortCalculation: sortCalculation,
             }));
             if (notify) {
                 saveButton.fire('change');
@@ -1174,7 +1174,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                                 type: row.type(),
                                 direction: row.direction(),
                                 display: row.display(),
-                                sort_calculation: row.sortCalculation()
+                                sort_calculation: row.sortCalculation(),
                             };
                         }));
                     }
