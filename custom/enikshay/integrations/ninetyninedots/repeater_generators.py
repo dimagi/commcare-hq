@@ -3,7 +3,6 @@ import json
 import phonenumbers
 import jsonobject
 from corehq.apps.repeaters.repeater_generators import BasePayloadGenerator, RegisterGenerator
-from custom.enikshay.case_utils import update_case
 from custom.enikshay.integrations.ninetyninedots.repeaters import (
     NinetyNineDotsRegisterPatientRepeater,
     NinetyNineDotsUpdatePatientRepeater,
@@ -11,8 +10,11 @@ from custom.enikshay.integrations.ninetyninedots.repeaters import (
 from custom.enikshay.case_utils import (
     get_occurrence_case_from_episode,
     get_person_case_from_occurrence,
+    get_open_episode_case_from_person,
+    update_case,
 )
 from custom.enikshay.const import PRIMARY_PHONE_NUMBER, BACKUP_PHONE_NUMBER
+from custom.enikshay.exceptions import ENikshayCaseNotFound
 
 
 class PatientPayload(jsonobject.JsonObject):
@@ -34,9 +36,9 @@ class RegisterPatientPayloadGenerator(BasePayloadGenerator):
             merm_id=uuid.uuid4().hex,
         ).to_json())
 
-    def get_payload(self, repeat_record, payload_doc):
-        occurence_case = get_occurrence_case_from_episode(payload_doc.domain, payload_doc.case_id)
-        person_case = get_person_case_from_occurrence(payload_doc.domain, occurence_case)
+    def get_payload(self, repeat_record, episode_case):
+        occurence_case = get_occurrence_case_from_episode(episode_case.domain, episode_case.case_id)
+        person_case = get_person_case_from_occurrence(episode_case.domain, occurence_case)
         person_case_properties = person_case.dynamic_case_properties()
         data = PatientPayload(
             beneficiary_id=person_case.case_id,
@@ -83,28 +85,40 @@ class UpdatePatientPayloadGenerator(BasePayloadGenerator):
             phone_numbers=_format_number(_parse_number("0123456789"))
         ).to_json())
 
-    def get_payload(self, repeat_record, payload_doc):
+    def get_payload(self, repeat_record, person_case):
+        person_case_properties = person_case.dynamic_case_properties()
         data = PatientPayload(
-            beneficiary_id=payload_doc,
-            phone_numbers=_get_phone_numbers(payload_doc)
+            beneficiary_id=person_case.case_id,
+            phone_numbers=_get_phone_numbers(person_case_properties),
+            merm_id=person_case_properties.get('merm_id', None),
         )
         return json.dumps(data.to_json())
 
-    def handle_success(self, response, payload_doc, repeat_record):
+    def handle_success(self, response, person_case, repeat_record):
+        try:
+            episode_case = get_open_episode_case_from_person(person_case.domain, person_case.case_id)
+        except ENikshayCaseNotFound as e:
+            self.handle_exception(e, repeat_record)
+
         if response.status_code == 200:
             update_case(
-                payload_doc.domain,
-                payload_doc.case_id,
+                episode_case.domain,
+                episode_case.case_id,
                 {
                     "dots_99_error": ""
                 }
             )
 
-    def handle_failure(self, response, payload_doc, repeat_record):
+    def handle_failure(self, response, person_case, repeat_record):
+        try:
+            episode_case = get_open_episode_case_from_person(person_case.domain, person_case.case_id)
+        except ENikshayCaseNotFound as e:
+            self.handle_exception(e, repeat_record)
+
         if 400 <= response.status_code <= 500:
             update_case(
-                payload_doc.domain,
-                payload_doc.case_id,
+                episode_case.domain,
+                episode_case.case_id,
                 {
                     "dots_99_error": "{}: {}".format(
                         response.status_code,
