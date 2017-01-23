@@ -18,6 +18,7 @@ from corehq.apps.reports.generic import ElasticTabularReport, GenericTabularRepo
 from corehq.apps.reports.standard.domains import DomainStatsReport, es_domain_query
 from corehq.apps.reports.standard.sms import PhoneNumberReport
 from corehq.apps.sms.filters import RequiredPhoneNumberFilter
+from corehq.apps.sms.mixin import apply_leniency
 from corehq.apps.sms.models import PhoneNumber
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from corehq.elastic import es_query, parse_args_for_es, fill_mapping_with_facets
@@ -1317,14 +1318,14 @@ class AdminPhoneNumberReport(PhoneNumberReport):
     def phone_number_filter(self):
         value = RequiredPhoneNumberFilter.get_value(self.request, domain=None)
         if isinstance(value, basestring):
-            return value.strip()
+            return apply_leniency(value.strip())
 
         return None
 
     def _get_rows(self, paginate=True, link_user=True):
         owner_cache = {}
         if self.phone_number_filter:
-            data = PhoneNumber.objects.filter(phone_number=self.phone_number_filter)
+            data = PhoneNumber.objects.filter(phone_number__contains=self.phone_number_filter)
         else:
             return
 
