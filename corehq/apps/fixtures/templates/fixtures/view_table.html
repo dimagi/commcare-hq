@@ -23,26 +23,8 @@
 
 {% block page_content %}
     {% initial_page_data 'renderReportTables' 1 %}
-    {% initial_page_data 'slug' report.slug %}
-    {% initial_page_data 'defaultRows' report_table.default_rows|default:10 %}
-    {% initial_page_data 'startAtRowNum' report_table.start_at_row|default:0 %}
-    {% initial_page_data 'showAllRowsOption' report_table.show_all_rows %}
-    {% initial_page_data 'autoWidth' report_table.headers.auto_width %}
-    {% if report_table.headers.render_aoColumns %}
-        {% initial_page_data 'aoColumns' report_table.headers.render_aoColumns %}
-    {% endif %}
-    {% if report_table.headers.custom_sort %}
-        {% initial_page_data 'customSort' report_table.headers.custom_sort %}
-    {% endif %}
-    {% if report_table.pagination.is_on %}
-        {% initial_page_data 'ajaxSource' report_table.pagination.source %}
-        {% initial_page_data 'ajaxParams' report_table.pagination.params %}
-    {% endif %}
-    {% if report_table.left_col.is_fixed %}
-        {% initial_page_data 'fixColumns' True %}
-        {% initial_page_data 'fixColsNumLeft' report_table.left_col.fixed.num %}
-        {% initial_page_data 'fixColsWidth' report_table.left_col.fixed.width %}
-    {% endif %}
+    {% initial_page_data 'dataTablesOptions' data_tables_options %}
+
 {% block reportcontent %}
 {% block reporttable %}
 
