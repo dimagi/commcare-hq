@@ -55,13 +55,18 @@ from corehq.apps.export.const import (
     PROPERTY_TAG_DELETED,
     FORM_EXPORT,
     CASE_EXPORT,
+    SMS_EXPORT,
     TRANSFORM_FUNCTIONS,
+    DOC_TYPE_TRANSFORM,
+    OWNER_ID_TRANSFORM,
+    WORKFLOW_TRANSFORM,
     DEID_TRANSFORM_FUNCTIONS,
     PROPERTY_TAG_CASE,
     USER_DEFINED_SPLIT_TYPES,
     PLAIN_USER_DEFINED_SPLIT_TYPE,
     CASE_DATA_SCHEMA_VERSION,
     FORM_DATA_SCHEMA_VERSION,
+    SMS_DATA_SCHEMA_VERSION,
     MISSING_VALUE,
     EMPTY_VALUE,
     KNOWN_CASE_PROPERTIES,
@@ -606,7 +611,12 @@ class ExportInstance(BlobMixin, Document):
 
     @property
     def defaults(self):
-        return FormExportInstanceDefaults if self.type == FORM_EXPORT else CaseExportInstanceDefaults
+        if self.type == FORM_EXPORT:
+            return FormExportInstanceDefaults
+        elif self.type == SMS_EXPORT:
+            return SMSExportInstanceDefaults
+        else:
+            return CaseExportInstanceDefaults
 
     def get_filters(self):
         """
@@ -762,6 +772,9 @@ class ExportInstance(BlobMixin, Document):
             elif table.path == PARENT_CASE_TABLE:
                 cls.__insert_system_properties(table, PARENT_CASE_TABLE_PROPERTIES,
                         **column_initialization_data)
+        elif export_type == SMS_EXPORT:
+            if table.path == MAIN_TABLE:
+                cls.__insert_system_properties(table, [ROW_NUMBER_COLUMN], **column_initialization_data)
 
     @classmethod
     def __insert_system_properties(cls, table, properties, top=True, **column_initialization_data):
@@ -920,6 +933,87 @@ class FormExportInstance(ExportInstance):
         return []
 
 
+class SMSExportInstance(ExportInstance):
+    type = SMS_EXPORT
+    identifier = None
+
+    @classmethod
+    def _new_from_schema(cls, schema):
+        instance = cls(
+            domain=schema.domain,
+            tables=[
+                TableConfiguration(
+                    label="Messages",
+                    columns=[
+                        ExportColumn(
+                            label="Contact Type",
+                            item=ExportItem(
+                                path=[PathNode(name='couch_recipient_doc_type')],
+                                transform=DOC_TYPE_TRANSFORM,
+                            ),
+                            selected=True,
+                        ),
+                        ExportColumn(
+                            label="Contact ID",
+                            item=ExportItem(
+                                path=[PathNode(name='couch_recipient')]
+                            ),
+                            selected=True,
+                        ),
+                        ExportColumn(
+                            label="Timestamp",
+                            item=ExportItem(
+                                path=[PathNode(name='date')]
+                            ),
+                            selected=True,
+                        ),
+                        ExportColumn(
+                            label="Owner Name",
+                            item=ExportItem(
+                                path=[PathNode(name='couch_recipient')],
+                                transform=OWNER_ID_TRANSFORM,
+                            ),
+                            selected=True,
+                        ),
+                        ExportColumn(
+                            label="Phone Number",
+                            item=ExportItem(
+                                path=[PathNode(name='phone_number')]
+                            ),
+                            selected=True,
+                        ),
+                        ExportColumn(
+                            label="Direction",
+                            item=ExportItem(
+                                path=[PathNode(name='direction')]
+                            ),
+                            selected=True,
+                        ),
+                        ExportColumn(
+                            label="Message",
+                            item=ExportItem(
+                                path=[PathNode(name='text')]
+                            ),
+                            selected=True,
+                        ),
+                        ExportColumn(
+                            label="Type",
+                            item=ExportItem(
+                                path=[PathNode(name='workflow')],
+                                transform=WORKFLOW_TRANSFORM,
+                            ),
+                            selected=True,
+                        ),
+                    ],
+                    path=MAIN_TABLE,
+                    selected=True,
+                )
+            ],
+        )
+        cls._insert_system_properties(instance.domain, schema.type, instance.tables[0])
+        return instance
+
+
 class ExportInstanceDefaults(object):
     """
     This class is responsible for generating defaults for various aspects of the export instance
@@ -980,6 +1074,19 @@ class CaseExportInstanceDefaults(ExportInstanceDefaults):
     @staticmethod
     def get_default_instance_name(schema):
         return u'{}: {}'.format(schema.case_type, datetime.now().strftime('%Y-%m-%d'))
+
+
+class SMSExportInstanceDefaults(ExportInstanceDefaults):
+    @staticmethod
+    def get_default_table_name(table_path):
+        if table_path == MAIN_TABLE:
+            return _('Messages')
+        else:
+            return _('Unknown')
+
+    @staticmethod
+    def get_default_instance_name(schema):
+        return u'Messages: {}'.format(datetime.now().strftime('%Y-%m-%d'))
 
 
 class ExportRow(object):
@@ -1753,6 +1860,25 @@ class CaseExportDataSchema(ExportDataSchema):
 
         schema.group_schemas.append(group_schema)
         return schema
+
+
+class SMSExportDataSchema(ExportDataSchema):
+    @property
+    def type(self):
+        return SMS_EXPORT
+
+    @classmethod
+    def generate_schema_from_builds(cls, domain, app_id, identifier, force_rebuild=False,
+            only_process_current_builds=False, task=None):
+        return cls(domain=domain)
+
+    @classmethod
+    def schema_version(cls):
+        return SMS_DATA_SCHEMA_VERSION
+
+    @staticmethod
+    def get_latest_export_schema(domain, app_id, identifier):
+        return SMSExportDataSchema(domain=domain)
 
 
 def _string_path_to_list(path):

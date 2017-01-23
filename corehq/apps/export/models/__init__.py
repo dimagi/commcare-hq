@@ -18,6 +18,7 @@ from .new import (
     FormExportInstanceDefaults,
     CaseExportInstance,
     CaseExportInstanceDefaults,
+    SMSExportInstance,
     ExportDataSchema,
     FormExportDataSchema,
     CaseExportDataSchema,
