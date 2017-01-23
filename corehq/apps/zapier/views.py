@@ -7,9 +7,12 @@ from django.views.decorators.csrf import csrf_exempt
 
 from django.views.generic import View
 
+from casexml.apps.case.mock import CaseFactory
+
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.decorators import login_or_api_key
+from corehq.apps.users.models import CouchUser
 from corehq.apps.zapier.queries import get_subscription_by_url
 from corehq.apps.zapier.services import delete_subscription_with_url
 from corehq.apps.zapier.consts import EventTypes
@@ -85,4 +88,34 @@ class UnsubscribeView(View):
         if not url:
             return HttpResponse(status=400)
         delete_subscription_with_url(url)
+        return HttpResponse('OK')
+
+
+class ZapierCreateCase(View):
+
+    urlname = 'zapier_create_case'
+
+    # Zapier recommends not requiring authentication for unsubscribe endpoint
+    @method_decorator(csrf_exempt)
+    def dispatch(self, *args, **kwargs):
+        return super(ZapierCreateCase, self).dispatch(*args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        domain = request.GET.get('domain')
+        case_type = request.GET.get('case_type')
+        properties = json.loads(request.body)['properties']
+        case_name = properties['case_name']
+
+        couch_user = CouchUser.from_django_user(request.user)
+
+        del properties['case_name']
+
+        factory = CaseFactory(domain=domain)
+        factory.create_case(
+            case_type=case_type,
+            owner_id="",
+            case_name=case_name,
+            update=properties
+        )
+
         return HttpResponse('OK')
