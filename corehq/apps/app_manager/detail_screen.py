@@ -151,8 +151,14 @@ class FormattedDetailColumn(object):
                     'distance': 'double'
                 }.get(self.sort_element.type, self.sort_element.type)
 
+                sort_calculation = self.sort_element.sort_calculation
+                if sort_calculation:
+                    sort_xpath = sort_calculation
+                else:
+                    sort_xpath = self.xpath_function
+
                 sort = sx.Sort(
-                    text=sx.Text(xpath_function=self.xpath_function),
+                    text=sx.Text(xpath_function=sort_xpath),
                     type=sort_type,
                 )
 

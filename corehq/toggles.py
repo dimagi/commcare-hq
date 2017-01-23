@@ -1044,6 +1044,13 @@ COPY_CASE_CONFIGS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
+    'sort_calculation_in_case_list',
+    'Configure a custom xpath calculation for Sort Property in Case Lists',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
 DO_NOT_PROCESS_OLD_BUILDS = StaticToggle(
     'do_not_process_old_builds',
     'Do not process old build for export generation',

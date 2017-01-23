@@ -786,6 +786,10 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
             item.type = sort_element['type']
             item.direction = sort_element['direction']
             item.display[lang] = sort_element['display']
+            if toggles.SORT_CALCULATION_IN_CASE_LIST.enabled(domain):
+                item.sort_calculation = sort_element['sort_calculation']
+            else:
+                item.sort_calculation = ""
             detail.short.sort_elements.append(item)
     if parent_select is not None:
         module.parent_select = ParentSelect.wrap(parent_select)
