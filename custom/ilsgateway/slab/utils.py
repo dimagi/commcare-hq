@@ -13,7 +13,7 @@ def get_current_state(sql_location):
         stock_state.sql_product.code: stock_state.get_monthly_consumption()
         for stock_state in StockState.objects.filter(
             case_id=sql_location.supply_point_id
-        ).select_related('sql_product').order_by('sql_product')
+        ).select_related('sql_product').order_by('sql_product__code')
     }
 
     stock_transactions = StockTransaction.objects.filter(
