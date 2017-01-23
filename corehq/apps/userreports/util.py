@@ -172,3 +172,14 @@ def get_backend_id(config, can_handle_laboratory=False):
     if settings.OVERRIDE_UCR_BACKEND:
         return settings.OVERRIDE_UCR_BACKEND
     return config.backend_id
+
+
+def get_ucr_class_name(id):
+    """
+    This returns the module and class name for a ucr from its id as used in report permissions.
+    It takes an id and returns the string that needed for `user.can_view_report(string)`.
+    The class name comes from corehq.reports._make_report_class, if something breaks, look there first.
+    :param id: the id of the ucr report config
+    :return: string class name
+    """
+    return 'corehq.reports.DynamicReport{}'.format(id)

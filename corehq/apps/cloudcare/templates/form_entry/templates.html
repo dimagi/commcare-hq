@@ -96,7 +96,8 @@
         <div id="instance-xml-home" class="debugger" data-bind="
             css: {
                 'debugger-minimized': isMinimized,
-                'debugger-maximized': !isMinimized()
+                'debugger-maximized': !isMinimized(),
+                'debugger-updating': updating
             }
             ">
             <!-- Tab title -->
@@ -158,16 +159,6 @@
                                 {% trans "Evaluate XPath" %}
                             </a>
                         </li>
-                        <li role="presentation">
-                            <a
-                                href="#debugger-settings"
-                                aria-controls="debugger-settings"
-                                role="tab"
-                                data-bind="click: collapseNavbar"
-                                data-toggle="tab">
-                                {% trans "Settings" %}
-                            </a>
-                        </li>
                       </ul>
                     </div><!-- /.navbar-collapse -->
                   </div><!-- /.container-fluid -->
@@ -186,22 +177,6 @@
                             name: 'debugger-eval-ko-template',
                             data: evalXPath }">
                         </div>
-                    </div>
-                    <div role="tabpanel" class="tab-pane" id="debugger-settings">
-                        <form class="form-horizontal debug-controls">
-                            <div class="form-group">
-                                <div class="controls" data-bind="css: Formplayer.Const.CONTROL_WIDTH">
-                                    <label class="checkbox">
-                                        <input id="auto-sync-control" type="checkbox" checked="checked">{% trans "Auto Sync" %}
-                                        <span class="help-block">
-                                        {% blocktrans %}
-                                            When this is checked, the Data Preview tool will auto sync your XML after every question answered. On slow connetions, uncheck this.
-                                        {% endblocktrans %}
-                                        </span>
-                                    </label>
-                                </div>
-                            </div>
-                        </form>
                     </div>
                 </div>
             </div>

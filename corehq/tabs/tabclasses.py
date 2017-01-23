@@ -226,8 +226,8 @@ class DashboardTab(UITab):
             # domain hides Dashboard tab if user is non-admin
             if not user_has_custom_top_menu(self.domain, self.couch_user):
                 if self.couch_user.is_commcare_user():
-                    # only show the dashboard tab if the user has been assigned a custom role
-                    return self.couch_user.get_domain_membership(self.domain).role is not None
+                    # never show the dashboard for mobile workers
+                    return False
                 else:
                     return domain_has_apps(self.domain)
         return False

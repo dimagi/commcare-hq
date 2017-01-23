@@ -1,3 +1,4 @@
+# coding=utf-8
 from collections import namedtuple
 import re
 from couchdbkit import ResourceNotFound
@@ -113,9 +114,13 @@ def get_commcare_version_from_appversion_text(appversion_text):
     ...     'CommCare Version 2.4. Build 10083, built on: March-12-2013'
     ... )
     '2.4.1'
+    >>> get_commcare_version_from_appversion_text(u'संस्करण "2.27.8" (414593)')
+    '2.27.8'
     """
     patterns = [
         r'version "([\d.]+)"',
+        r'"([\d.]+)"\s+\(\d+\)',
+        r'"([\d.]+)"',
     ]
     return _first_group_match(appversion_text, patterns)
 

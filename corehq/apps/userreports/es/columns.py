@@ -39,8 +39,8 @@ class UCRExpandEsDatabaseSubcolumn(UCRExpandDatabaseSubcolumn):
 def expand_column(report_column, distinct_values, lang):
     columns = []
     for index, val in enumerate(distinct_values):
-        es_alias = u"{}_dash_{}".format(report_column.column_id, index)
         ui_alias = u"{}-{}".format(report_column.column_id, index)
+        es_alias = safe_es_column(ui_alias)
         columns.append(UCRExpandEsDatabaseSubcolumn(
             u"{}-{}".format(report_column.get_header(lang), val),
             ui_alias=ui_alias,
@@ -53,3 +53,7 @@ def expand_column(report_column, distinct_values, lang):
             help_text=report_column.description
         ))
     return columns
+
+
+def safe_es_column(column_name):
+    return column_name.replace('-', '_dash_')

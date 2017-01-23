@@ -9,6 +9,7 @@ class TestCSRF(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestCSRF, cls).setUpClass()
         cls.domain = Domain(name="delhi", is_active=True)
         cls.domain.save()
 
@@ -21,6 +22,7 @@ class TestCSRF(TestCase):
     def tearDownClass(cls):
         cls.user.delete()
         cls.domain.delete()
+        super(TestCSRF, cls).tearDownClass()
 
     def test_csrf_ON(self):
         csrf_sent, csrf_missing = self._form_post_with_and_without_csrf()

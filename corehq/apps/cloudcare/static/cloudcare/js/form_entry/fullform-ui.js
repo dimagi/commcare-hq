@@ -446,26 +446,41 @@ Formplayer.ViewModels.CloudCareDebugger = function() {
     self.isMinimized = ko.observable(true);
     self.instanceXml = ko.observable('');
     self.formattedQuestionsHtml = ko.observable('');
+
+    // Whether or not the debugger is in the middle of updating from an ajax request
+    self.updating = ko.observable(false);
+
     self.toggleState = function() {
         self.isMinimized(!self.isMinimized());
         // Wait to set the content heigh until after the CSS animation has completed.
         // In order to support multiple heights, we set the height with javascript since
         // a div inside a fixed position element cannot scroll unless a height is explicitly set.
         setTimeout(self.setContentHeight, 1001);
+
+        if (!self.isMinimized()) {
+            self.updating(true);
+            $.publish('formplayer.' + Formplayer.Const.FORMATTED_QUESTIONS, self.updateDebugger);
+        }
         window.analytics.workflow('[app-preview] User toggled CloudCare debugger');
     };
     self.collapseNavbar = function() {
         $('.navbar-collapse').collapse('hide');
     };
 
+    self.updateDebugger = function(resp) {
+        self.updating(false);
+        self.formattedQuestionsHtml(resp.formattedQuestions);
+        self.instanceXml(resp.instanceXml);
+        self.evalXPath.autocomplete(resp.questionList);
+        self.evalXPath.recentXPathQueries(resp.recentXPathQueries || []);
+    };
+
     $.unsubscribe('debugger.update');
     $.subscribe('debugger.update', function(e) {
-        $.publish('formplayer.' + Formplayer.Const.FORMATTED_QUESTIONS, function(resp) {
-            self.formattedQuestionsHtml(resp.formattedQuestions);
-            self.instanceXml(resp.instanceXml);
-            self.evalXPath.autocomplete(resp.questionList);
-            self.evalXPath.recentXPathQueries(resp.recentXPathQueries || []);
-        });
+        if (!self.isMinimized()) {
+            self.updating(true);
+            $.publish('formplayer.' + Formplayer.Const.FORMATTED_QUESTIONS, self.updateDebugger);
+        }
     });
 
     self.setContentHeight = function() {

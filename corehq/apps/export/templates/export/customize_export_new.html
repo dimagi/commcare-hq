@@ -21,6 +21,7 @@
                     hasExcelDashboardAccess: {{ has_excel_dashboard_access|JSON }},
                     hasDailySavedAccess: {{ has_daily_saved_export_access|JSON }},
                     formatOptions: {{ format_options|JSON }},
+                    numberOfAppsToProcess: {{ number_of_apps_to_process }},
                 }
             );
             hqImport('hqwebapp/js/urllib.js').registerUrl(
@@ -168,7 +169,7 @@
         {% endif %}
 
         <fieldset>
-            <legend>{% trans "Settings" %}</legend>
+            <legend>{% trans "Privacy Settings" %}</legend>
             {% if allow_deid %}
             <div class="form-group">
                 <label for="is_safe" class="col-sm-3 col-md-2 control-label"></label>
@@ -190,30 +191,6 @@
                     ">
                         {% trans "Allow me to mark sensitive data" %}
                     </button>
-                </div>
-            </div>
-            {% endif %}
-            {% if request|toggle_enabled:"DO_NOT_PROCESS_OLD_BUILDS" %}
-            <div class="form-group" data-bind="css: { 'has-error': errorOnBuildSchema }">
-                <label class="col-sm-3 col-md-2 control-label">
-                    {% trans "Process all applications for deleted questions" %}
-                </label>
-                <div class="col-sm-9 col-md-8 col-lg-6">
-                    <button class="btn btn-default" data-bind="
-                        click: onBeginSchemaBuild,
-                        text: schemaProgressText
-                    "></button>
-                    <div class="help-block" data-bind="visible: errorOnBuildSchema">
-                        {% trans "Unable to process applications. Please report an issue if this persists" %}
-                    </div>
-                    <div class="spacer"></div>
-                    <div class="progress " data-bind="visible: showBuildSchemaProgressBar">
-                      <div class="progress-bar" role="progressbar" data-bind="
-                          style: {
-                              width: buildSchemaProgress() + '%'
-                          }
-                      "></div>
-                    </div>
                 </div>
             </div>
             {% endif %}
@@ -252,6 +229,7 @@
                     {% trans "There are errors with your configuration. Please fix them before creating the export." %}
                 </div>
             </div>
+            {% include "export/dialogs/process_deleted_questions.html" %}
         </div>
     </form>
 </div>

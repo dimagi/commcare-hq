@@ -7,7 +7,7 @@ from django.conf import settings
 from django.db import connections
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0, day_of_week=6), acks_late=True)
+@periodic_task(run_every=crontab(minute=0, hour=0), acks_late=True)
 def move_ucr_data_into_aggregation_tables():
 
     if hasattr(settings, "ICDS_UCR_DATABASE_ALIAS") and settings.ICDS_UCR_DATABASE_ALIAS:

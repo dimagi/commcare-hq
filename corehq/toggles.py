@@ -3,6 +3,8 @@ from functools import wraps
 import hashlib
 from django.http import Http404
 import math
+
+from django.conf import settings
 from corehq.util.quickcache import quickcache
 from toggle.shortcuts import toggle_enabled, set_toggle
 
@@ -137,7 +139,9 @@ class PredictablyRandomToggle(StaticToggle):
         return '{}:{}:{}'.format(self.namespaces, self.slug, item)
 
     def enabled(self, item, **kwargs):
-        if item in self.always_disabled:
+        if settings.UNIT_TESTING:
+            return False
+        elif item in self.always_disabled:
             return False
         return (
             (item and deterministic_random(self._get_identifier(item)) < self.randomness)
@@ -722,11 +726,23 @@ HSPH_HACK = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-USE_FORMPLAYER_FRONTEND = StaticToggle(
+USE_FORMPLAYER_FRONTEND = PredictablyRandomToggle(
     'use_formplayer_frontend',
     'Use New CloudCare',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
+    randomness=1.0,
+    always_disabled=[
+        'hsph-betterbirth',
+        'figo-ppiud-srilanka',
+        'broadreach-sa',
+        'goal-global',
+        'ipm-senegal',
+        'madla-malaria',
+        'myrice',
+        'pact',
+        'icrc-almanach',
+    ]
 )
 
 FIXTURE_CASE_SELECTION = StaticToggle(
@@ -867,6 +883,23 @@ PROJECT_HEALTH_DASHBOARD = StaticToggle(
 )
 
 
+PHONE_NUMBERS_REPORT = StaticToggle(
+    'phone_numbers_report',
+    "Shows information related to the phone numbers owned by a project's contacts",
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
+
+INBOUND_SMS_LENIENCY = StaticToggle(
+    'inbound_sms_leniency',
+    "Inbound SMS leniency on domain-owned gateways. "
+    "WARNING: This wil be rolled out slowly; do not enable on your own.",
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
+
 UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
     'unlimited_report_builder_reports',
     'Allow unlimited reports created in report builder',
@@ -1000,7 +1033,10 @@ NIMBUS_FORM_VALIDATION = PredictablyRandomToggle(
     'Use Nimbus to validate XForms',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
-    randomness=1.0
+    randomness=1.0,
+    always_disabled=[
+        'icrc-almanach'
+    ]
 )
 
 USER_PROPERTY_EASY_REFS = StaticToggle(
@@ -1014,6 +1050,13 @@ COPY_CASE_CONFIGS = StaticToggle(
     'copy_case_configs',
     'Allow copying case list / details screens in basic modules.',
     TAG_PRODUCT_CORE,
+    [NAMESPACE_DOMAIN]
+)
+
+SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
+    'sort_calculation_in_case_list',
+    'Configure a custom xpath calculation for Sort Property in Case Lists',
+    TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )
 

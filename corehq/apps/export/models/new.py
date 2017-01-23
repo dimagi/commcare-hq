@@ -24,7 +24,7 @@ from corehq.apps.userreports.expressions.getters import NestedDictGetter
 from corehq.apps.app_manager.const import STOCK_QUESTION_TAG_NAMES
 from corehq.apps.app_manager.dbaccessors import (
     get_built_app_ids_with_submissions_for_app_id,
-    get_all_built_app_ids_and_versions,
+    get_built_app_ids_with_submissions_for_app_ids_and_versions,
     get_latest_app_ids_and_versions,
     get_app_ids_in_domain,
 )
@@ -191,6 +191,7 @@ class ExportColumn(DocumentSchema):
     label = StringProperty()
     # Determines whether or not to show the column in the UI Config without clicking advanced
     is_advanced = BooleanProperty(default=False)
+    is_deleted = BooleanProperty(default=False)
     selected = BooleanProperty(default=False)
     tags = ListProperty()
     help_text = StringProperty()
@@ -311,15 +312,15 @@ class ExportColumn(DocumentSchema):
         :param app_ids_and_versions: A dictionary of app ids that map to latest build version
         most recent state of the app(s) in the domain
         """
-        is_deleted = self._is_deleted(app_ids_and_versions)
+        self.is_deleted = self._is_deleted(app_ids_and_versions)
 
         tags = []
-        if is_deleted:
+        if self.is_deleted:
             tags.append(PROPERTY_TAG_DELETED)
 
         if self.item.tag:
             tags.append(self.item.tag)
-        self.is_advanced = is_deleted or self.is_advanced
+        self.is_advanced = self.is_advanced
         self.tags = tags
 
     @property
@@ -571,6 +572,11 @@ class ExportInstance(BlobMixin, Document):
     domain = StringProperty()
     tables = ListProperty(TableConfiguration)
     export_format = StringProperty(default='csv')
+    app_id = StringProperty()
+
+    # The id of the schema that was used to generate the instance.
+    # Used for information and debugging purposes
+    schema_id = StringProperty()
 
     # Whether to split multiselects into multiple columns
     split_multiselects = BooleanProperty(default=False)
@@ -639,6 +645,8 @@ class ExportInstance(BlobMixin, Document):
             instance = cls._new_from_schema(schema)
 
         instance.name = instance.name or instance.defaults.get_default_instance_name(schema)
+        instance.app_id = schema.app_id
+        instance.schema_id = schema._id
 
         latest_app_ids_and_versions = get_latest_app_ids_and_versions(
             schema.domain,
@@ -823,6 +831,10 @@ class CaseExportInstance(ExportInstance):
     # filters are only used in daily saved and HTML (dashboard feed) exports
     filters = SchemaProperty(CaseExportInstanceFilters)
 
+    @property
+    def identifier(self):
+        return self.case_type
+
     @classmethod
     def _new_from_schema(cls, schema):
         return cls(
@@ -852,7 +864,6 @@ class CaseExportInstance(ExportInstance):
 
 class FormExportInstance(ExportInstance):
     xmlns = StringProperty()
-    app_id = StringProperty()
     type = FORM_EXPORT
 
     # Whether to include duplicates and other error'd forms in export
@@ -861,6 +872,10 @@ class FormExportInstance(ExportInstance):
     # static filters to limit the data in this export
     # filters are only used in daily saved and HTML (dashboard feed) exports
     filters = SchemaProperty(FormExportInstanceFilters)
+
+    @property
+    def identifier(self):
+        return self.xmlns
 
     @property
     def formname(self):
@@ -1161,6 +1176,13 @@ class ExportDataSchema(Document):
     class Meta:
         app_label = 'export'
 
+    def get_number_of_apps_to_process(self):
+        return len(self._get_app_build_ids_to_process(
+            self.domain,
+            self.app_id,
+            self.last_app_versions,
+        ))
+
     @classmethod
     def generate_schema_from_builds(cls, domain, app_id, identifier, force_rebuild=False,
             only_process_current_builds=False, task=None):
@@ -1346,6 +1368,8 @@ class FormExportDataSchema(ExportDataSchema):
 
     @classmethod
     def _get_current_app_ids_for_domain(cls, domain, app_id):
+        if not app_id:
+            raise BadExportConfiguration('Must include app id for form data schemas')
         return [app_id]
 
     @staticmethod
@@ -1581,15 +1605,10 @@ class CaseExportDataSchema(ExportDataSchema):
 
     @staticmethod
     def _get_app_build_ids_to_process(domain, app_id, last_app_versions):
-        app_build_verions = get_all_built_app_ids_and_versions(domain)
-        # Filter by current app id
-        app_build_verions = filter(
-            lambda app_build_version:
-                last_app_versions.get(app_build_version.app_id, -1) < app_build_version.version,
-            app_build_verions
+        return get_built_app_ids_with_submissions_for_app_ids_and_versions(
+            domain,
+            last_app_versions
         )
-        # Map to all build ids
-        return map(lambda app_build_version: app_build_version.build_id, app_build_verions)
 
     @staticmethod
     def get_latest_export_schema(domain, app_id, case_type):

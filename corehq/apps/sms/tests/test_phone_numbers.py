@@ -1,8 +1,9 @@
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.utils import update_case
+from corehq.apps.sms.mixin import PhoneNumberInUseException
 from corehq.apps.sms.models import (SQLMobileBackend, SQLMobileBackendMapping,
     PhoneNumber)
-from corehq.apps.sms.tasks import delete_phone_numbers_for_owners
+from corehq.apps.sms.tasks import delete_phone_numbers_for_owners, sync_case_phone_number
 from corehq.apps.sms.tests.util import delete_domain_phone_numbers
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.tasks import tag_cases_as_deleted_and_remove_indices
@@ -19,19 +20,19 @@ from mock import patch
 class PhoneNumberCacheClearTestCase(TestCase):
 
     def assertNoMatch(self, phone_search, suffix_search, owner_id_search):
-        self.assertIsNone(PhoneNumber.by_phone(phone_search))
-        self.assertIsNone(PhoneNumber.by_suffix(suffix_search))
-        self.assertEqual(PhoneNumber.by_owner_id(owner_id_search).count(), 0)
+        self.assertIsNone(PhoneNumber.get_two_way_number(phone_search))
+        self.assertIsNone(PhoneNumber.get_two_way_number_by_suffix(suffix_search))
+        self.assertEqual(PhoneNumber.by_owner_id(owner_id_search), [])
 
     def assertPhoneNumbersEqual(self, phone1, phone2):
         for field in phone1._meta.fields:
             self.assertEqual(getattr(phone1, field.name), getattr(phone2, field.name))
 
     def assertMatch(self, match, phone_search, suffix_search, owner_id_search):
-        lookedup = PhoneNumber.by_phone(phone_search)
+        lookedup = PhoneNumber.get_two_way_number(phone_search)
         self.assertPhoneNumbersEqual(match, lookedup)
 
-        lookedup = PhoneNumber.by_suffix(suffix_search)
+        lookedup = PhoneNumber.get_two_way_number_by_suffix(suffix_search)
         self.assertPhoneNumbersEqual(match, lookedup)
 
         [lookedup] = PhoneNumber.by_owner_id(owner_id_search)
@@ -53,6 +54,8 @@ class PhoneNumberCacheClearTestCase(TestCase):
             backend_id=None,
             ivr_backend_id=None,
             verified=True,
+            pending_verification=False,
+            is_two_way=True,
             contact_last_modified=datetime.utcnow()
         )
         created.save()
@@ -97,18 +100,21 @@ class CaseContactPhoneNumberTestCase(TestCase):
         update_case(self.domain, case.case_id, case_properties={property_name: value})
         return CaseAccessors(self.domain).get_case(case.case_id)
 
-    def get_case_verified_number(self, case):
-        return case.get_verified_number()
+    def get_case_phone_number(self, case):
+        return case.get_phone_number()
 
-    def assertPhoneNumberDetails(self, case, phone_number, sms_backend_id, ivr_backend_id, pk=None):
-        v = self.get_case_verified_number(case)
+    def assertPhoneNumberDetails(self, case, phone_number, sms_backend_id, ivr_backend_id,
+            verified, pending_verification, is_two_way, pk=None):
+        v = self.get_case_phone_number(case)
         self.assertEqual(v.domain, case.domain)
         self.assertEqual(v.owner_doc_type, case.doc_type)
         self.assertEqual(v.owner_id, case.case_id)
         self.assertEqual(v.phone_number, phone_number)
         self.assertEqual(v.backend_id, sms_backend_id)
         self.assertEqual(v.ivr_backend_id, ivr_backend_id)
-        self.assertEqual(v.verified, True)
+        self.assertEqual(v.verified, verified)
+        self.assertEqual(v.pending_verification, pending_verification)
+        self.assertEqual(v.is_two_way, is_two_way)
         self.assertEqual(v.contact_last_modified, case.server_modified_on)
 
         if pk:
@@ -116,81 +122,165 @@ class CaseContactPhoneNumberTestCase(TestCase):
 
     @run_with_all_backends
     def test_case_phone_number_updates(self):
+        extra_number = PhoneNumber.objects.create(
+            domain=self.domain,
+            owner_doc_type='X',
+            owner_id='X',
+            phone_number='999123',
+            verified=True,
+            pending_verification=False,
+            is_two_way=True
+        )
+        self.assertEqual(PhoneNumber.count_by_domain(self.domain), 1)
+
         with create_test_case(self.domain, 'participant', 'test1', drop_signals=False) as case:
-            self.assertIsNone(self.get_case_verified_number(case))
+            self.assertIsNone(self.get_case_phone_number(case))
 
             case = self.set_case_property(case, 'contact_phone_number', '99987658765')
-            self.assertIsNone(self.get_case_verified_number(case))
+            self.assertPhoneNumberDetails(case, '99987658765', None, None, False, False, False)
+            pk = self.get_case_phone_number(case).pk
+            self.assertEqual(PhoneNumber.count_by_domain(self.domain), 2)
 
             case = self.set_case_property(case, 'contact_phone_number_is_verified', '1')
-            self.assertPhoneNumberDetails(case, '99987658765', None, None)
-            pk = self.get_case_verified_number(case).pk
+            self.assertPhoneNumberDetails(case, '99987658765', None, None, True, False, True, pk=pk)
+            self.assertEqual(PhoneNumber.count_by_domain(self.domain), 2)
 
             case = self.set_case_property(case, 'contact_phone_number', '99987698769')
-            self.assertPhoneNumberDetails(case, '99987698769', None, None, pk=pk)
+            self.assertPhoneNumberDetails(case, '99987698769', None, None, True, False, True)
+            pk = self.get_case_phone_number(case).pk
+            self.assertEqual(PhoneNumber.count_by_domain(self.domain), 2)
 
             case = self.set_case_property(case, 'contact_backend_id', 'sms-backend')
-            self.assertPhoneNumberDetails(case, '99987698769', 'sms-backend', None, pk=pk)
+            self.assertPhoneNumberDetails(case, '99987698769', 'sms-backend', None, True, False, True, pk=pk)
+            self.assertEqual(PhoneNumber.count_by_domain(self.domain), 2)
 
             case = self.set_case_property(case, 'contact_ivr_backend_id', 'ivr-backend')
-            self.assertPhoneNumberDetails(case, '99987698769', 'sms-backend', 'ivr-backend', pk=pk)
+            self.assertPhoneNumberDetails(case, '99987698769', 'sms-backend', 'ivr-backend', True, False, True,
+                pk=pk)
+            self.assertEqual(PhoneNumber.count_by_domain(self.domain), 2)
 
             # If nothing changes, the phone entry should not be saved
             with patch('corehq.apps.sms.models.PhoneNumber.save') as mock_save:
                 case = self.set_case_property(case, 'abc', 'def')
+                self.assertEqual(PhoneNumber.count_by_domain(self.domain), 2)
                 mock_save.assert_not_called()
 
             # If phone entry is ahead of the case in terms of contact_last_modified, no update should happen
-            v = self.get_case_verified_number(case)
+            v = self.get_case_phone_number(case)
             v.contact_last_modified += timedelta(days=1)
             v.save()
 
             with patch('corehq.apps.sms.models.PhoneNumber.save') as mock_save:
                 case = self.set_case_property(case, 'contact_phone_number', '99912341234')
+                self.assertEqual(PhoneNumber.count_by_domain(self.domain), 2)
                 mock_save.assert_not_called()
+
+        self.assertEqual(PhoneNumber.get_two_way_number('999123'), extra_number)
 
     @run_with_all_backends
     def test_close_case(self):
+        extra_number = PhoneNumber.objects.create(
+            domain=self.domain,
+            owner_doc_type='X',
+            owner_id='X',
+            phone_number='999123',
+            verified=True,
+            pending_verification=False,
+            is_two_way=True
+        )
+        self.assertEqual(PhoneNumber.count_by_domain(self.domain), 1)
+
         with create_test_case(self.domain, 'participant', 'test1', drop_signals=False) as case:
             case = self.set_case_property(case, 'contact_phone_number', '99987658765')
             case = self.set_case_property(case, 'contact_phone_number_is_verified', '1')
-            self.assertIsNotNone(self.get_case_verified_number(case))
+            self.assertIsNotNone(self.get_case_phone_number(case))
+            self.assertEqual(PhoneNumber.count_by_domain(self.domain), 2)
 
             update_case(self.domain, case.case_id, close=True)
-            self.assertIsNone(self.get_case_verified_number(case))
+            self.assertIsNone(self.get_case_phone_number(case))
+            self.assertEqual(PhoneNumber.count_by_domain(self.domain), 1)
+
+        self.assertEqual(PhoneNumber.get_two_way_number('999123'), extra_number)
 
     @run_with_all_backends
     def test_case_soft_delete(self):
+        extra_number = PhoneNumber.objects.create(
+            domain=self.domain,
+            owner_doc_type='X',
+            owner_id='X',
+            phone_number='999123',
+            verified=True,
+            pending_verification=False,
+            is_two_way=True
+        )
+        self.assertEqual(PhoneNumber.count_by_domain(self.domain), 1)
+
         with create_test_case(self.domain, 'participant', 'test1', drop_signals=False) as case:
             case = self.set_case_property(case, 'contact_phone_number', '99987658765')
             case = self.set_case_property(case, 'contact_phone_number_is_verified', '1')
-            self.assertIsNotNone(self.get_case_verified_number(case))
+            self.assertIsNotNone(self.get_case_phone_number(case))
+            self.assertEqual(PhoneNumber.count_by_domain(self.domain), 2)
 
             tag_cases_as_deleted_and_remove_indices(self.domain, [case.case_id], '123', datetime.utcnow())
-            self.assertIsNone(self.get_case_verified_number(case))
+            self.assertIsNone(self.get_case_phone_number(case))
+            self.assertEqual(PhoneNumber.count_by_domain(self.domain), 1)
+
+        self.assertEqual(PhoneNumber.get_two_way_number('999123'), extra_number)
 
     @run_with_all_backends
     def test_case_zero_phone_number(self):
+        extra_number = PhoneNumber.objects.create(
+            domain=self.domain,
+            owner_doc_type='X',
+            owner_id='X',
+            phone_number='999123',
+            verified=True,
+            pending_verification=False,
+            is_two_way=True
+        )
+        self.assertEqual(PhoneNumber.count_by_domain(self.domain), 1)
+
         with create_test_case(self.domain, 'participant', 'test1', drop_signals=False) as case:
             case = self.set_case_property(case, 'contact_phone_number', '99987658765')
             case = self.set_case_property(case, 'contact_phone_number_is_verified', '1')
-            self.assertIsNotNone(self.get_case_verified_number(case))
+            self.assertIsNotNone(self.get_case_phone_number(case))
+            self.assertEqual(PhoneNumber.count_by_domain(self.domain), 2)
 
             case = self.set_case_property(case, 'contact_phone_number', '0')
-            self.assertIsNone(self.get_case_verified_number(case))
+            self.assertIsNone(self.get_case_phone_number(case))
+            self.assertEqual(PhoneNumber.count_by_domain(self.domain), 1)
+
+        self.assertEqual(PhoneNumber.get_two_way_number('999123'), extra_number)
 
     @run_with_all_backends
     def test_invalid_phone_format(self):
+        extra_number = PhoneNumber.objects.create(
+            domain=self.domain,
+            owner_doc_type='X',
+            owner_id='X',
+            phone_number='999123',
+            verified=True,
+            pending_verification=False,
+            is_two_way=True
+        )
+        self.assertEqual(PhoneNumber.count_by_domain(self.domain), 1)
+
         with create_test_case(self.domain, 'participant', 'test1', drop_signals=False) as case:
             case = self.set_case_property(case, 'contact_phone_number', '99987658765')
             case = self.set_case_property(case, 'contact_phone_number_is_verified', '1')
-            self.assertIsNotNone(self.get_case_verified_number(case))
+            self.assertIsNotNone(self.get_case_phone_number(case))
+            self.assertEqual(PhoneNumber.count_by_domain(self.domain), 2)
 
             case = self.set_case_property(case, 'contact_phone_number', 'xyz')
-            self.assertIsNone(self.get_case_verified_number(case))
+            self.assertIsNone(self.get_case_phone_number(case))
+            self.assertEqual(PhoneNumber.count_by_domain(self.domain), 1)
+
+        self.assertEqual(PhoneNumber.get_two_way_number('999123'), extra_number)
 
     @run_with_all_backends
     def test_phone_number_already_in_use(self):
+        self.assertEqual(PhoneNumber.count_by_domain(self.domain), 0)
+
         with create_test_case(self.domain, 'participant', 'test1', drop_signals=False) as case1, \
                 create_test_case(self.domain, 'participant', 'test2', drop_signals=False) as case2:
             case1 = self.set_case_property(case1, 'contact_phone_number', '99987658765')
@@ -199,26 +289,47 @@ class CaseContactPhoneNumberTestCase(TestCase):
             case2 = self.set_case_property(case2, 'contact_phone_number', '99987698769')
             case2 = self.set_case_property(case2, 'contact_phone_number_is_verified', '1')
 
-            self.assertIsNotNone(self.get_case_verified_number(case1))
-            self.assertIsNotNone(self.get_case_verified_number(case2))
+            self.assertIsNotNone(self.get_case_phone_number(case1))
+            self.assertIsNotNone(self.get_case_phone_number(case2))
+            self.assertEqual(PhoneNumber.count_by_domain(self.domain), 2)
 
             case2 = self.set_case_property(case2, 'contact_phone_number', '99987658765')
 
-            self.assertIsNotNone(self.get_case_verified_number(case1))
-            self.assertIsNone(self.get_case_verified_number(case2))
+            self.assertIsNotNone(self.get_case_phone_number(case1))
+            self.assertIsNotNone(self.get_case_phone_number(case2))
+            self.assertEqual(PhoneNumber.count_by_domain(self.domain), 2)
 
-    def test_filter_pending(self):
-        v1 = PhoneNumber(verified=True)
-        v2 = PhoneNumber(verified=False)
+            self.assertPhoneNumberDetails(case1, '99987658765', None, None, True, False, True)
+            self.assertPhoneNumberDetails(case2, '99987658765', None, None, False, False, False)
 
-        self.assertIsNone(PhoneNumber._filter_pending(None, include_pending=True))
-        self.assertIsNone(PhoneNumber._filter_pending(None, include_pending=False))
+    @run_with_all_backends
+    def test_multiple_entries(self):
+        extra_number = PhoneNumber.objects.create(
+            domain=self.domain,
+            owner_doc_type='X',
+            owner_id='X',
+            phone_number='999124',
+            verified=False,
+            pending_verification=False,
+            is_two_way=False
+        )
 
-        self.assertEqual(v1, PhoneNumber._filter_pending(v1, include_pending=False))
-        self.assertIsNone(PhoneNumber._filter_pending(v2, include_pending=False))
+        with create_test_case(self.domain, 'participant', 'test1', drop_signals=False) as case:
+            case = self.set_case_property(case, 'contact_phone_number', '999124')
+            case = self.set_case_property(case, 'contact_phone_number_is_verified', '1')
+            case.create_phone_entry('999125')
+            self.assertEqual(PhoneNumber.objects.count(), 3)
 
-        self.assertEqual(v1, PhoneNumber._filter_pending(v1, include_pending=True))
-        self.assertEqual(v2, PhoneNumber._filter_pending(v2, include_pending=True))
+            sync_case_phone_number(case)
+            self.assertEqual(PhoneNumber.objects.count(), 2)
+
+            number1 = PhoneNumber.objects.get(pk=extra_number.pk)
+            self.assertEqual(number1.owner_id, 'X')
+
+            number2 = PhoneNumber.objects.get(owner_id=case.case_id)
+            self.assertTrue(number2.verified)
+            self.assertTrue(number2.is_two_way)
+            self.assertFalse(number2.pending_verification)
 
 
 class SQLPhoneNumberTestCase(TestCase):
@@ -289,30 +400,105 @@ class SQLPhoneNumberTestCase(TestCase):
         number = PhoneNumber(owner_doc_type='X')
         self.assertIsNone(number.owner)
 
-    def test_phone_lookup(self):
-        number = PhoneNumber.objects.create(
+    def test_get_two_way_number(self):
+        number1 = PhoneNumber.objects.create(
             domain=self.domain,
             owner_doc_type='X',
             owner_id='X',
             phone_number='999123',
-            verified=True
+            verified=True,
+            pending_verification=False,
+            is_two_way=True
         )
 
-        self.assertEqual(PhoneNumber.by_phone('999123'), number)
-        self.assertEqual(PhoneNumber.by_phone('+999 123'), number)
-        self.assertIsNone(PhoneNumber.by_phone('999124'))
+        PhoneNumber.objects.create(
+            domain=self.domain,
+            owner_doc_type='X',
+            owner_id='X',
+            phone_number='999123',
+            verified=False,
+            pending_verification=False,
+            is_two_way=False
+        )
+
+        self.assertEqual(PhoneNumber.get_two_way_number('999123'), number1)
+        self.assertEqual(PhoneNumber.get_two_way_number('+999 123'), number1)
+        self.assertIsNone(PhoneNumber.get_two_way_number('999124'))
+        self.assertIsNone(PhoneNumber.get_number_pending_verification('999123'))
+        self.assertIsNone(PhoneNumber.get_number_pending_verification('999124'))
+        self.assertEqual(PhoneNumber.count_by_domain(self.domain), 2)
 
         # test cache clear on save
-        number.phone_number = '999124'
-        number.save()
-        self.assertIsNone(PhoneNumber.by_phone('999123'))
-        self.assertEqual(PhoneNumber.by_phone('999124'), number)
+        number1.phone_number = '999124'
+        number1.save()
+        self.assertIsNone(PhoneNumber.get_two_way_number('999123'))
+        self.assertEqual(PhoneNumber.get_two_way_number('999124'), number1)
+        self.assertIsNone(PhoneNumber.get_number_pending_verification('999123'))
+        self.assertIsNone(PhoneNumber.get_number_pending_verification('999124'))
+        self.assertEqual(PhoneNumber.count_by_domain(self.domain), 2)
 
-        # test pending
-        number.verified = False
-        number.save()
-        self.assertIsNone(PhoneNumber.by_phone('999124'))
-        self.assertEqual(PhoneNumber.by_phone('999124', include_pending=True), number)
+        # test cache clear on delete
+        number1.delete()
+        self.assertIsNone(PhoneNumber.get_two_way_number('999123'))
+        self.assertIsNone(PhoneNumber.get_two_way_number('999124'))
+        self.assertIsNone(PhoneNumber.get_number_pending_verification('999123'))
+        self.assertIsNone(PhoneNumber.get_number_pending_verification('999124'))
+        self.assertEqual(PhoneNumber.count_by_domain(self.domain), 1)
+
+    def test_get_number_pending_verification(self):
+        number1 = PhoneNumber.objects.create(
+            domain=self.domain,
+            owner_doc_type='X',
+            owner_id='X',
+            phone_number='999123',
+            verified=False,
+            pending_verification=True,
+            is_two_way=False
+        )
+
+        PhoneNumber.objects.create(
+            domain=self.domain,
+            owner_doc_type='X',
+            owner_id='X',
+            phone_number='999123',
+            verified=False,
+            pending_verification=False,
+            is_two_way=False
+        )
+
+        self.assertIsNone(PhoneNumber.get_two_way_number('999123'))
+        self.assertIsNone(PhoneNumber.get_two_way_number('999124'))
+        self.assertEqual(PhoneNumber.get_number_pending_verification('999123'), number1)
+        self.assertEqual(PhoneNumber.get_number_pending_verification('+999 123'), number1)
+        self.assertIsNone(PhoneNumber.get_number_pending_verification('999124'))
+        self.assertEqual(PhoneNumber.count_by_domain(self.domain), 2)
+
+        # test cache clear on save
+        number1.phone_number = '999124'
+        number1.save()
+        self.assertIsNone(PhoneNumber.get_two_way_number('999123'))
+        self.assertIsNone(PhoneNumber.get_two_way_number('999124'))
+        self.assertIsNone(PhoneNumber.get_number_pending_verification('999123'))
+        self.assertEqual(PhoneNumber.get_number_pending_verification('999124'), number1)
+        self.assertEqual(PhoneNumber.count_by_domain(self.domain), 2)
+
+        # test promotion to two-way
+        number1.set_two_way()
+        number1.set_verified()
+        number1.save()
+        self.assertIsNone(PhoneNumber.get_two_way_number('999123'))
+        self.assertEqual(PhoneNumber.get_two_way_number('999124'), number1)
+        self.assertIsNone(PhoneNumber.get_number_pending_verification('999123'))
+        self.assertIsNone(PhoneNumber.get_number_pending_verification('999124'))
+        self.assertEqual(PhoneNumber.count_by_domain(self.domain), 2)
+
+        # test cache clear on delete
+        number1.delete()
+        self.assertIsNone(PhoneNumber.get_two_way_number('999123'))
+        self.assertIsNone(PhoneNumber.get_two_way_number('999124'))
+        self.assertIsNone(PhoneNumber.get_number_pending_verification('999123'))
+        self.assertIsNone(PhoneNumber.get_number_pending_verification('999124'))
+        self.assertEqual(PhoneNumber.count_by_domain(self.domain), 1)
 
     def test_suffix_lookup(self):
         number1 = PhoneNumber.objects.create(
@@ -320,7 +506,9 @@ class SQLPhoneNumberTestCase(TestCase):
             owner_doc_type='X',
             owner_id='X',
             phone_number='999123',
-            verified=True
+            verified=True,
+            pending_verification=False,
+            is_two_way=True
         )
 
         number2 = PhoneNumber.objects.create(
@@ -328,32 +516,24 @@ class SQLPhoneNumberTestCase(TestCase):
             owner_doc_type='X',
             owner_id='X',
             phone_number='999223',
-            verified=True
+            verified=True,
+            pending_verification=False,
+            is_two_way=True
         )
 
-        self.assertEqual(PhoneNumber.by_suffix('1 23'), number1)
-        self.assertEqual(PhoneNumber.by_suffix('2 23'), number2)
-        self.assertIsNone(PhoneNumber.by_suffix('23'))
+        self.assertEqual(PhoneNumber.get_two_way_number_by_suffix('1 23'), number1)
+        self.assertEqual(PhoneNumber.get_two_way_number_by_suffix('2 23'), number2)
+        self.assertIsNone(PhoneNumber.get_two_way_number_by_suffix('23'))
 
         # test update
         number1.phone_number = '999124'
         number1.save()
         number2.phone_number = '999224'
         number2.save()
-        self.assertIsNone(PhoneNumber.by_suffix('1 23'))
-        self.assertIsNone(PhoneNumber.by_suffix('2 23'))
-        self.assertEqual(PhoneNumber.by_suffix('124'), number1)
-        self.assertEqual(PhoneNumber.by_suffix('224'), number2)
-
-        # test pending
-        number1.verified = False
-        number1.save()
-        number2.verified = False
-        number2.save()
-        self.assertIsNone(PhoneNumber.by_suffix('124'))
-        self.assertIsNone(PhoneNumber.by_suffix('224'))
-        self.assertEqual(PhoneNumber.by_suffix('124', include_pending=True), number1)
-        self.assertEqual(PhoneNumber.by_suffix('224', include_pending=True), number2)
+        self.assertIsNone(PhoneNumber.get_two_way_number_by_suffix('1 23'))
+        self.assertIsNone(PhoneNumber.get_two_way_number_by_suffix('2 23'))
+        self.assertEqual(PhoneNumber.get_two_way_number_by_suffix('124'), number1)
+        self.assertEqual(PhoneNumber.get_two_way_number_by_suffix('224'), number2)
 
     def test_extensive_search(self):
         number = PhoneNumber.objects.create(
@@ -361,7 +541,9 @@ class SQLPhoneNumberTestCase(TestCase):
             owner_doc_type='X',
             owner_id='X',
             phone_number='999123',
-            verified=True
+            verified=True,
+            pending_verification=False,
+            is_two_way=True
         )
 
         self.assertEqual(PhoneNumber.by_extensive_search('999123'), number)
@@ -369,7 +551,7 @@ class SQLPhoneNumberTestCase(TestCase):
         self.assertEqual(PhoneNumber.by_extensive_search('00999123'), number)
         self.assertEqual(PhoneNumber.by_extensive_search('000999123'), number)
         self.assertEqual(PhoneNumber.by_extensive_search('123'), number)
-        self.assertIsNone(PhoneNumber.by_extensive_search('999124'), number)
+        self.assertIsNone(PhoneNumber.by_extensive_search('999124'))
 
     def test_by_domain(self):
         number1 = PhoneNumber.objects.create(
@@ -377,7 +559,9 @@ class SQLPhoneNumberTestCase(TestCase):
             owner_doc_type='X',
             owner_id='X',
             phone_number='999123',
-            verified=True
+            verified=True,
+            pending_verification=False,
+            is_two_way=True
         )
 
         number2 = PhoneNumber.objects.create(
@@ -385,7 +569,9 @@ class SQLPhoneNumberTestCase(TestCase):
             owner_doc_type='X',
             owner_id='X',
             phone_number='999124',
-            verified=False
+            verified=False,
+            pending_verification=False,
+            is_two_way=False
         )
 
         number3 = PhoneNumber.objects.create(
@@ -393,7 +579,9 @@ class SQLPhoneNumberTestCase(TestCase):
             owner_doc_type='X',
             owner_id='X',
             phone_number='999124',
-            verified=True
+            verified=True,
+            pending_verification=False,
+            is_two_way=True
         )
         self.addCleanup(number3.delete)
 
@@ -415,7 +603,9 @@ class SQLPhoneNumberTestCase(TestCase):
             owner_doc_type='X',
             owner_id='owner1',
             phone_number='999123',
-            verified=True
+            verified=True,
+            pending_verification=False,
+            is_two_way=True
         )
 
         [lookup] = PhoneNumber.by_owner_id('owner1')
@@ -424,14 +614,16 @@ class SQLPhoneNumberTestCase(TestCase):
         # test cache clear
         number.owner_id = 'owner2'
         number.save()
-        self.assertEqual(PhoneNumber.by_owner_id('owner1').count(), 0)
+        self.assertEqual(PhoneNumber.by_owner_id('owner1'), [])
         [lookup] = PhoneNumber.by_owner_id('owner2')
         self.assertEqual(lookup, number)
 
         number.verified = False
+        number.is_two_way = False
         number.save()
         [lookup] = PhoneNumber.by_owner_id('owner2')
         self.assertFalse(lookup.verified)
+        self.assertFalse(lookup.is_two_way)
 
     def create_case_contact(self, phone_number):
         return create_test_case(
@@ -451,11 +643,189 @@ class SQLPhoneNumberTestCase(TestCase):
                 self.create_case_contact('9990002') as case2, \
                 self.create_case_contact('9990003') as case3:
 
-            self.assertEqual(PhoneNumber.by_owner_id(case1.case_id).count(), 1)
-            self.assertEqual(PhoneNumber.by_owner_id(case2.case_id).count(), 1)
-            self.assertEqual(PhoneNumber.by_owner_id(case3.case_id).count(), 1)
+            self.assertEqual(len(PhoneNumber.by_owner_id(case1.case_id)), 1)
+            self.assertEqual(len(PhoneNumber.by_owner_id(case2.case_id)), 1)
+            self.assertEqual(len(PhoneNumber.by_owner_id(case3.case_id)), 1)
+            self.assertEqual(PhoneNumber.count_by_domain(self.domain), 3)
 
             delete_phone_numbers_for_owners([case2.case_id, case3.case_id])
-            self.assertEqual(PhoneNumber.by_owner_id(case1.case_id).count(), 1)
-            self.assertEqual(PhoneNumber.by_owner_id(case2.case_id).count(), 0)
-            self.assertEqual(PhoneNumber.by_owner_id(case3.case_id).count(), 0)
+            self.assertEqual(len(PhoneNumber.by_owner_id(case1.case_id)), 1)
+            self.assertEqual(len(PhoneNumber.by_owner_id(case2.case_id)), 0)
+            self.assertEqual(len(PhoneNumber.by_owner_id(case3.case_id)), 0)
+            self.assertEqual(PhoneNumber.count_by_domain(self.domain), 1)
+
+    def test_verify_uniqueness(self):
+        number1 = PhoneNumber.objects.create(
+            domain=self.domain,
+            owner_doc_type='X',
+            owner_id='X',
+            phone_number='999123',
+            verified=True,
+            pending_verification=False,
+            is_two_way=True
+        )
+
+        number2 = PhoneNumber.objects.create(
+            domain=self.domain,
+            owner_doc_type='X',
+            owner_id='X',
+            phone_number='999123',
+            verified=False,
+            pending_verification=False,
+            is_two_way=False
+        )
+
+        # Raises no exception
+        number1.verify_uniqueness()
+
+        # Raises PhoneNumberInUseException
+        with self.assertRaises(PhoneNumberInUseException):
+            number2.verify_uniqueness()
+
+
+class TestUserPhoneNumberSync(TestCase):
+
+    def setUp(self):
+        self.domain = 'user-phone-number-test'
+        self.domain_obj = Domain(name=self.domain)
+        self.domain_obj.save()
+        self.mobile_worker1 = CommCareUser.create(self.domain, 'mobile1', 'mobile1')
+        self.mobile_worker2 = CommCareUser.create(self.domain, 'mobile2', 'mobile2')
+
+    def tearDown(self):
+        delete_domain_phone_numbers(self.domain)
+        self.domain_obj.delete()
+
+    def assertPhoneEntries(self, user, phone_numbers):
+        entries = user.get_phone_entries()
+        self.assertEqual(len(entries), len(phone_numbers))
+        self.assertEqual(set(entries.keys()), set(phone_numbers))
+
+    def testSync(self):
+        extra_number = PhoneNumber.objects.create(
+            domain=self.domain,
+            owner_doc_type='X',
+            owner_id='owner1',
+            phone_number='999123',
+            verified=True,
+            pending_verification=False,
+            is_two_way=True
+        )
+
+        user = self.mobile_worker1
+        self.assertEqual(PhoneNumber.by_domain(self.domain).count(), 1)
+
+        user.phone_numbers = ['9990001']
+        user.save()
+        self.assertEqual(PhoneNumber.by_domain(self.domain).count(), 2)
+        self.assertPhoneEntries(user, ['9990001'])
+
+        before = user.get_phone_entries()['9990001']
+
+        user.phone_numbers = ['9990001', '9990002']
+        user.save()
+        self.assertEqual(PhoneNumber.by_domain(self.domain).count(), 3)
+        self.assertPhoneEntries(user, ['9990001', '9990002'])
+
+        after = user.get_phone_entries()['9990001']
+        self.assertEqual(before.pk, after.pk)
+
+        user.phone_numbers = ['9990002']
+        user.save()
+        self.assertEqual(PhoneNumber.by_domain(self.domain).count(), 2)
+        self.assertPhoneEntries(user, ['9990002'])
+
+        self.assertEqual(PhoneNumber.get_two_way_number('999123'), extra_number)
+
+    def testRetire(self):
+        self.mobile_worker1.phone_numbers = ['9990001']
+        self.mobile_worker1.save()
+        self.assertEqual(PhoneNumber.by_domain(self.domain).count(), 1)
+        self.assertPhoneEntries(self.mobile_worker1, ['9990001'])
+
+        self.mobile_worker2.phone_numbers = ['9990002']
+        self.mobile_worker2.save()
+        self.assertEqual(PhoneNumber.by_domain(self.domain).count(), 2)
+        self.assertPhoneEntries(self.mobile_worker2, ['9990002'])
+
+        self.mobile_worker1.retire()
+        self.assertEqual(PhoneNumber.by_domain(self.domain).count(), 1)
+        self.assertPhoneEntries(self.mobile_worker2, ['9990002'])
+
+
+class TestGenericContactMethods(TestCase):
+
+    def setUp(self):
+        self.domain = 'contact-phone-number-test'
+        self.domain_obj = Domain(name=self.domain)
+        self.domain_obj.save()
+        self.mobile_worker1 = CommCareUser.create(self.domain, 'mobile1', 'mobile1')
+        self.mobile_worker2 = CommCareUser.create(self.domain, 'mobile2', 'mobile2')
+
+    def tearDown(self):
+        delete_domain_phone_numbers(self.domain)
+        self.domain_obj.delete()
+
+    def testGetOrCreate(self):
+        before = self.mobile_worker1.get_or_create_phone_entry('999123')
+        self.assertEqual(before.owner_doc_type, 'CommCareUser')
+        self.assertEqual(before.owner_id, self.mobile_worker1.get_id)
+        self.assertEqual(before.phone_number, '999123')
+        self.assertEqual(PhoneNumber.by_domain(self.domain).count(), 1)
+
+        after = self.mobile_worker1.get_or_create_phone_entry('999123')
+        self.assertEqual(before.pk, after.pk)
+        self.assertEqual(after.owner_doc_type, 'CommCareUser')
+        self.assertEqual(after.owner_id, self.mobile_worker1.get_id)
+        self.assertEqual(after.phone_number, '999123')
+        self.assertEqual(PhoneNumber.by_domain(self.domain).count(), 1)
+
+    def testGetPhoneEntries(self):
+        number1 = self.mobile_worker1.get_or_create_phone_entry('999123')
+        number2 = self.mobile_worker1.get_or_create_phone_entry('999124')
+        self.mobile_worker1.get_or_create_phone_entry('999125')
+        number4 = self.mobile_worker2.get_or_create_phone_entry('999126')
+
+        number1.set_two_way()
+        number2.set_pending_verification()
+        number4.set_two_way()
+
+        self.assertEqual(PhoneNumber.by_domain(self.domain).count(), 4)
+        entries = self.mobile_worker1.get_phone_entries()
+        self.assertEqual(set(entries.keys()), set(['999123', '999124', '999125']))
+
+        entries = self.mobile_worker1.get_two_way_numbers()
+        self.assertEqual(set(entries.keys()), set(['999123']))
+
+    def testDelete(self):
+        self.mobile_worker1.get_or_create_phone_entry('999123')
+        self.mobile_worker1.get_or_create_phone_entry('999124')
+        self.mobile_worker1.get_or_create_phone_entry('999125')
+        self.mobile_worker2.get_or_create_phone_entry('999126')
+        self.assertEqual(PhoneNumber.by_domain(self.domain).count(), 4)
+
+        self.mobile_worker1.delete_phone_entry('999124')
+        self.assertEqual(PhoneNumber.by_domain(self.domain).count(), 3)
+
+        entries = self.mobile_worker1.get_phone_entries()
+        self.assertEqual(set(entries.keys()), set(['999123', '999125']))
+
+        entries = self.mobile_worker2.get_phone_entries()
+        self.assertEqual(set(entries.keys()), set(['999126']))
+
+    def testUserSyncNoChange(self):
+        before = self.mobile_worker1.get_or_create_phone_entry('999123')
+        before.set_two_way()
+        before.set_verified()
+        before.save()
+        self.assertEqual(PhoneNumber.by_domain(self.domain).count(), 1)
+
+        self.mobile_worker1.phone_numbers = ['999123']
+        self.mobile_worker1.save()
+        self.assertEqual(PhoneNumber.by_domain(self.domain).count(), 1)
+
+        after = self.mobile_worker1.get_phone_entries()['999123']
+        self.assertEqual(before.pk, after.pk)
+        self.assertTrue(after.is_two_way)
+        self.assertTrue(after.verified)
+        self.assertFalse(after.pending_verification)
