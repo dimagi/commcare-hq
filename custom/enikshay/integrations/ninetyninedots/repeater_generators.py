@@ -47,24 +47,28 @@ class RegisterPatientPayloadGenerator(BasePayloadGenerator):
         )
         return json.dumps(data.to_json())
 
-    def handle_success(self, response, payload_doc, repeat_record):
+    def handle_success(self, response, episode_case, repeat_record):
         if response.status_code == 201:
             update_case(
-                payload_doc.domain,
-                payload_doc.case_id,
+                episode_case.domain,
+                episode_case.case_id,
                 {
                     "dots_99_registered": "true",
                     "dots_99_error": ""
                 }
             )
 
-    def handle_failure(self, response, payload_doc, repeat_record):
+    def handle_failure(self, response, episode_case, repeat_record):
         if 400 <= response.status_code <= 500:
             update_case(
-                payload_doc.domain,
-                payload_doc.case_id,
+                episode_case.domain,
+                episode_case.case_id,
                 {
-                    "dots_99_registered": "false",
+                    "dots_99_registered": (
+                        "false"
+                        if episode_case.dynamic_case_properties().get('dots_99_registered') != 'true'
+                        else 'true'
+                    ),
                     "dots_99_error": "{}: {}".format(
                         response.status_code,
                         response.json().get('error')
