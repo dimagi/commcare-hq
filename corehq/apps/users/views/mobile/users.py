@@ -605,7 +605,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 'hq.pagination.limit.mobile_workers_list.%s' % self.domain),
             'can_edit_billing_info': self.request.couch_user.is_domain_admin(self.domain),
             'strong_mobile_passwords': self.request.project.strong_mobile_passwords,
-            'location_url': reverse('corehq.apps.locations.views.child_locations_for_select2', args=[self.domain]),
+            'location_url': reverse('child_locations_for_select2', args=[self.domain]),
         }
 
     @property
@@ -1169,7 +1169,10 @@ class CommCareUserSelfRegistrationView(TemplateView, DomainViewMixin):
             )
             # Since the user is being created by following the link and token
             # we sent to their phone by SMS, we can verify their phone number
-            user.save_verified_number(self.domain, self.invitation.phone_number, True)
+            entry = user.get_or_create_phone_entry(self.invitation.phone_number)
+            entry.set_two_way()
+            entry.set_verified()
+            entry.save()
 
             self.invitation.registered_date = datetime.utcnow()
             self.invitation.save()

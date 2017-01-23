@@ -11,10 +11,10 @@
         "np-migration-3"
     ],
     "data_source_table": "episode",
-    "report_id": "new_patient_summary",
+    "report_id": "new_patient_summary_dmc",
     "config": {
         "description": "",
-        "title": "New Patient Summary",
+        "title": "New Patient Summary (DMC)",
         "sort_expression": [],
         "visible": true,
         "configured_charts": [],
@@ -34,7 +34,7 @@
                 "datatype": "string",
                 "type": "dynamic_choice_list",
                 "slug": "village",
-                "field": "person_owner_id",
+                "field": "referring_facility_id",
                 "choice_provider": {
                     "include_descendants": true,
                     "type": "location"
@@ -150,54 +150,6 @@
                 "display": "No. of cases diagnosed with TB but neither put on treatment nor referred out, as on date",
                 "type": "field",
                 "field": "positive_suspect_all_tested_for_diagnosis",
-                "aggregation": "sum",
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {
-                },
-                "calculate_total": false
-            },
-            {
-                "display": "Number of patients on IP",
-                "type": "field",
-                "field": "patient_on_ip",
-                "aggregation": "sum",
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {
-                },
-                "calculate_total": false
-            },
-            {
-                "display": "Number of patients on CP",
-                "type": "field",
-                "field": "patient_on_cp",
-                "aggregation": "sum",
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {
-                },
-                "calculate_total": false
-            },
-            {
-                "display": "Total number of patients undergoing treatment",
-                "type": "field",
-                "field": "patient_on_ip_or_cp",
-                "aggregation": "sum",
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {
-                },
-                "calculate_total": false
-            },
-            {
-                "display": "No. of cases where Treatment outcome has been updated ",
-                "type": "field",
-                "field": "treatment_outcome_updated",
                 "aggregation": "sum",
                 "sortable": false,
                 "description": null,

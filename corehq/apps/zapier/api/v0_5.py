@@ -1,3 +1,6 @@
+from couchdbkit.exceptions import ResourceNotFound
+from tastypie.exceptions import NotFound
+
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.resources.v0_4 import XFormInstanceResource
 from corehq.apps.api.resources.v0_5 import DoesNothingPaginator
@@ -57,7 +60,11 @@ class ZapierCustomFieldResource(Resource):
         if not application_id or not xmlns:
             return []
 
-        app = Application.get(application_id)
+        try:
+            app = Application.get(application_id)
+        except ResourceNotFound:
+            raise NotFound
+
         form = app.get_form_by_xmlns(xmlns)
         custom_fields = []
         for idx, question in enumerate(form.get_questions(app.langs)):

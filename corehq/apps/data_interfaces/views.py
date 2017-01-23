@@ -5,15 +5,20 @@ import uuid
 from couchdbkit import ResourceNotFound
 from django.contrib import messages
 from django.core.cache import cache
+from django.http import HttpResponseBadRequest
+
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.app_manager.util import all_case_properties_by_domain
 from corehq.apps.casegroups.dbaccessors import get_case_groups_in_domain, \
     get_number_of_case_groups_in_domain
 from corehq.apps.casegroups.models import CommCareCaseGroup
+from corehq.apps.es.users import user_ids_at_accessible_locations
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.users.permissions import can_view_form_exports, can_view_case_exports
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.workbook_json.excel import JSONReaderError, WorkbookJSONReader, \
     InvalidExcelFileException
 from corehq.util.timezones.conversions import ServerTime
@@ -478,29 +483,27 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
         return self.paginate_crud_response
 
 
+@location_safe
 class XFormManagementView(DataInterfaceSection):
     urlname = 'xform_management'
     page_title = ugettext_noop('Form Management')
 
-    def get_form_ids_or_query_string(self, request):
-        if 'select_all' in self.request.POST:
-            # Altough evaluating form_ids and sending to task would be cleaner,
-            # heavier calls should be in in an async task instead
-            import urllib
-            form_query_string = urllib.unquote(self.request.POST.get('select_all'))
-            return form_query_string
-        else:
-            return self.request.POST.getlist('xform_ids')
-
     def post(self, request, *args, **kwargs):
-        form_ids_or_query_string = self.get_form_ids_or_query_string(request)
+        form_ids = self.get_xform_ids(request)
+        if not self.request.can_access_all_locations:
+            inaccessible_forms_accessed = self.inaccessible_forms_accessed(
+                form_ids, self.domain, request.couch_user)
+            if inaccessible_forms_accessed:
+                return HttpResponseBadRequest(
+                    "Inaccessible forms accessed. Id(s): %s " % ','.join(inaccessible_forms_accessed))
+
         mode = self.request.POST.get('mode')
         task_ref = expose_cached_download(payload=None, expiry=1*60*60, file_extension=None)
         task = bulk_form_management_async.delay(
             mode,
             self.domain,
             self.request.couch_user,
-            form_ids_or_query_string
+            form_ids
         )
         task_ref.set_task(task)
 
@@ -511,11 +514,48 @@ class XFormManagementView(DataInterfaceSection):
             )
         )
 
+    def inaccessible_forms_accessed(self, xform_ids, domain, couch_user):
+        xforms = FormAccessors(domain).get_forms(xform_ids)
+        xforms_user_ids = set([xform.user_id for xform in xforms])
+        accessible_user_ids = set(user_ids_at_accessible_locations(domain, couch_user))
+        return xforms_user_ids - accessible_user_ids
+
+    def get_xform_ids(self, request):
+        if 'select_all' in self.request.POST:
+            # Altough evaluating form_ids and sending to task would be cleaner,
+            # heavier calls should be in an async task instead
+            import urllib
+            form_query_string = urllib.unquote(self.request.POST.get('select_all'))
+            from django.http import HttpRequest, QueryDict
+
+            _request = HttpRequest()
+            _request.couch_user = request.couch_user
+            _request.user = request.couch_user.get_django_user()
+            _request.domain = self.domain
+            _request.couch_user.current_domain = self.domain
+            _request.can_access_all_locations = request.couch_user.has_permission(self.domain,
+                                                                                  'access_all_locations')
+
+            _request.GET = QueryDict(form_query_string)
+            dispatcher = EditDataInterfaceDispatcher()
+            xform_ids = dispatcher.dispatch(
+                _request,
+                render_as='form_ids',
+                domain=self.domain,
+                report_slug=BulkFormManagementInterface.slug,
+                skip_permissions_check=True,
+            )
+        else:
+            xform_ids = self.request.POST.getlist('xform_ids')
+
+        return xform_ids
+
     @method_decorator(require_form_management_privilege)
     def dispatch(self, request, *args, **kwargs):
         return super(XFormManagementView, self).dispatch(request, *args, **kwargs)
 
 
+@location_safe
 class XFormManagementStatusView(DataInterfaceSection):
 
     urlname = 'xform_management_status'
@@ -540,6 +580,7 @@ class XFormManagementStatusView(DataInterfaceSection):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
 
 
+@location_safe
 @require_can_edit_data
 @require_form_management_privilege
 def xform_management_job_poll(request, domain, download_id,

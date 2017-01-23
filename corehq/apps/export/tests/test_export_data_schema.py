@@ -8,6 +8,7 @@ from corehq.apps.export.models.new import MAIN_TABLE, \
 
 from corehq.util.context_managers import drop_connected_signals
 from corehq.apps.app_manager.tests.util import TestXmlMixin
+from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.models import (
     XForm,
     Application,
@@ -311,26 +312,6 @@ class TestCaseExportDataSchema(SimpleTestCase, TestXmlMixin):
 
         update_items = filter(lambda item: item.tag == PROPERTY_TAG_UPDATE, group_schema.items)
         self.assertEqual(len(update_items), 2 + len(KNOWN_CASE_PROPERTIES))
-
-    def test_get_app_build_ids_to_process(self):
-        from corehq.apps.app_manager.dbaccessors import AppBuildVersion
-        results = [
-            AppBuildVersion(app_id='1', build_id='2', version=3),
-            AppBuildVersion(app_id='1', build_id='4', version=5),
-            AppBuildVersion(app_id='2', build_id='2', version=3),
-        ]
-        last_app_versions = {
-            '1': 3
-        }
-        with patch(
-                'corehq.apps.export.models.new.get_all_built_app_ids_and_versions',
-                return_value=results):
-            build_ids = CaseExportDataSchema._get_app_build_ids_to_process(
-                'dummy',
-                'dummy-app-id',
-                last_app_versions
-            )
-        self.assertEqual(sorted(build_ids), ['2', '4'])
 
 
 class TestMergingFormExportDataSchema(SimpleTestCase, TestXmlMixin):
@@ -789,6 +770,76 @@ class TestDelayedSchema(TestCase, TestXmlMixin):
         self.assertEqual(len(group_schema.items), 3)
 
 
+class TestCaseDelayedSchema(TestCase, TestXmlMixin):
+    domain = 'delayed-schemas'
+    file_path = ['data']
+    root = os.path.dirname(__file__)
+    case_type = 'person'
+
+    @classmethod
+    def setUpClass(cls):
+        factory = AppFactory(domain=cls.domain)
+        module1, form1 = factory.new_basic_module('update_case', cls.case_type)
+        factory.form_requires_case(form1, cls.case_type, update={
+            'age': '/data/age',
+            'height': '/data/height',
+        })
+        cls.current_app = factory.app
+        cls.current_app._id = '1234'
+
+        factory = AppFactory(domain=cls.domain)
+        module1, form1 = factory.new_basic_module('update_case', cls.case_type)
+        factory.form_requires_case(form1, cls.case_type, update={
+            'age': '/data/age',
+            'height': '/data/height',
+            'weight': '/data/weight',
+        })
+        cls.build = factory.app
+        cls.build.copy_of = cls.current_app._id
+        cls.build.version = 5
+        cls.build.has_submissions = True
+
+        cls.apps = [
+            cls.current_app,
+            cls.build,
+        ]
+        with drop_connected_signals(app_post_save):
+            for app in cls.apps:
+                app.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        for app in cls.apps:
+            app.delete()
+
+    def tearDown(self):
+        delete_all_export_data_schemas()
+        delete_all_inferred_schemas()
+
+    def test_basic_delayed_schema(self):
+        schema = CaseExportDataSchema.generate_schema_from_builds(
+            self.domain,
+            self.current_app._id,
+            self.case_type,
+            only_process_current_builds=True
+        )
+
+        self.assertIsNone(schema.last_app_versions.get(self.current_app._id))
+        group_schema = schema.group_schemas[0]
+        self.assertEqual(len(group_schema.items), 2)
+
+        schema = CaseExportDataSchema.generate_schema_from_builds(
+            self.domain,
+            self.current_app._id,
+            self.case_type,
+            only_process_current_builds=False
+        )
+
+        self.assertEqual(schema.last_app_versions[self.current_app._id], self.build.version)
+        group_schema = schema.group_schemas[0]
+        self.assertEqual(len(group_schema.items), 3)
+
+
 class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
     file_path = ['data']
     root = os.path.dirname(__file__)
@@ -910,6 +961,8 @@ class TestBuildingCaseSchemaFromMultipleApplications(TestCase, TestXmlMixin):
     @classmethod
     def setUpClass(cls):
         cls.current_app = Application.wrap(cls.get_json('basic_case_application'))
+        cls.other_current_app = Application.wrap(cls.get_json('basic_case_application'))
+        cls.other_current_app._id = 'other-app-id'
 
         cls.first_build = Application.wrap(cls.get_json('basic_case_application'))
         cls.first_build._id = '123'
@@ -918,12 +971,13 @@ class TestBuildingCaseSchemaFromMultipleApplications(TestCase, TestXmlMixin):
 
         cls.other_build = Application.wrap(cls.get_json('basic_case_application'))
         cls.other_build._id = '456'
-        cls.other_build.copy_of = 'other-app-id'
+        cls.other_build.copy_of = cls.other_current_app._id
         cls.other_build.version = 4
         cls.other_build.has_submissions = True
 
         cls.apps = [
             cls.current_app,
+            cls.other_current_app,
             cls.first_build,
             cls.other_build,
         ]

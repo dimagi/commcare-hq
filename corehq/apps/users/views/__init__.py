@@ -760,6 +760,7 @@ class UserInvitationView(object):
                              location_id=invitation.supply_point, program_id=invitation.program)
 
 
+@location_safe
 @sensitive_post_parameters('password')
 def accept_invitation(request, domain, invitation_id):
     return UserInvitationView()(request, invitation_id, domain=domain)

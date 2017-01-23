@@ -883,6 +883,23 @@ PROJECT_HEALTH_DASHBOARD = StaticToggle(
 )
 
 
+PHONE_NUMBERS_REPORT = StaticToggle(
+    'phone_numbers_report',
+    "Shows information related to the phone numbers owned by a project's contacts",
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
+
+INBOUND_SMS_LENIENCY = StaticToggle(
+    'inbound_sms_leniency',
+    "Inbound SMS leniency on domain-owned gateways. "
+    "WARNING: This wil be rolled out slowly; do not enable on your own.",
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
+
 UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
     'unlimited_report_builder_reports',
     'Allow unlimited reports created in report builder',
@@ -1016,7 +1033,10 @@ NIMBUS_FORM_VALIDATION = PredictablyRandomToggle(
     'Use Nimbus to validate XForms',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
-    randomness=1.0
+    randomness=1.0,
+    always_disabled=[
+        'icrc-almanach'
+    ]
 )
 
 USER_PROPERTY_EASY_REFS = StaticToggle(
@@ -1030,6 +1050,13 @@ COPY_CASE_CONFIGS = StaticToggle(
     'copy_case_configs',
     'Allow copying case list / details screens in basic modules.',
     TAG_PRODUCT_CORE,
+    [NAMESPACE_DOMAIN]
+)
+
+SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
+    'sort_calculation_in_case_list',
+    'Configure a custom xpath calculation for Sort Property in Case Lists',
+    TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )
 

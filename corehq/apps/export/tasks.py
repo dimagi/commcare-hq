@@ -75,7 +75,7 @@ def _cached_add_inferred_export_properties(sender, domain, case_type, properties
     for case_property in properties:
         path = [PathNode(name=case_property)]
         system_property_column = filter(
-            lambda column: column.item.path == path,
+            lambda column: column.item.path == path and column.item.transform is None,
             MAIN_CASE_TABLE_PROPERTIES,
         )
 
