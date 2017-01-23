@@ -12,6 +12,7 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.decorators import login_or_api_key
 from corehq.apps.zapier.queries import get_subscription_by_url
 from corehq.apps.zapier.services import delete_subscription_with_url
+from corehq.apps.zapier.consts import EventTypes
 from corehq import privileges
 
 from .models import ZapierSubscription
@@ -32,9 +33,6 @@ class SubscribeView(View):
 
     def post(self, request, domain, *args, **kwargs):
         data = json.loads(request.body)
-        application = Application.get(docid=data['application'])
-        if not application or not application.get_form_by_xmlns(data['form']):
-            return HttpResponse(status=400)
 
         subscription = get_subscription_by_url(domain, data['target_url'])
         if subscription:
@@ -43,14 +41,29 @@ class SubscribeView(View):
             # Return a 409 status code if this criteria isn't met (IE: there is a uniqueness conflict).
             return HttpResponse(status=409)
 
-        ZapierSubscription.objects.create(
-            domain=domain,
-            user_id=str(request.couch_user.get_id),
-            event_name=data['event'],
-            url=data['target_url'],
-            application_id=data['application'],
-            form_xmlns=data['form']
-        )
+        if data['event'] == EventTypes.NEW_FORM:
+            application = Application.get(data['application'])
+            if not application or not application.get_form_by_xmlns(data['form']):
+                return HttpResponse(status=400)
+            ZapierSubscription.objects.create(
+                domain=domain,
+                user_id=str(request.couch_user.get_id),
+                event_name=data['event'],
+                url=data['target_url'],
+                application_id=data['application'],
+                form_xmlns=data['form'],
+            )
+        elif data['event'] == EventTypes.NEW_CASE:
+            ZapierSubscription.objects.create(
+                domain=domain,
+                user_id=str(request.couch_user.get_id),
+                event_name=data['event'],
+                url=data['target_url'],
+                case_type=data['case_type'],
+            )
+        else:
+            return HttpResponse(status=400)
+
         return HttpResponse('OK')
 
 
