@@ -961,6 +961,8 @@ class TestBuildingCaseSchemaFromMultipleApplications(TestCase, TestXmlMixin):
     @classmethod
     def setUpClass(cls):
         cls.current_app = Application.wrap(cls.get_json('basic_case_application'))
+        cls.other_current_app = Application.wrap(cls.get_json('basic_case_application'))
+        cls.other_current_app._id = 'other-app-id'
 
         cls.first_build = Application.wrap(cls.get_json('basic_case_application'))
         cls.first_build._id = '123'
@@ -969,12 +971,13 @@ class TestBuildingCaseSchemaFromMultipleApplications(TestCase, TestXmlMixin):
 
         cls.other_build = Application.wrap(cls.get_json('basic_case_application'))
         cls.other_build._id = '456'
-        cls.other_build.copy_of = 'other-app-id'
+        cls.other_build.copy_of = cls.other_current_app._id
         cls.other_build.version = 4
         cls.other_build.has_submissions = True
 
         cls.apps = [
             cls.current_app,
+            cls.other_current_app,
             cls.first_build,
             cls.other_build,
         ]
