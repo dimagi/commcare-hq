@@ -46,7 +46,7 @@ from corehq.apps.export.const import (
 )
 from corehq.apps.export.dbaccessors import (
     delete_all_export_instances,
-    delete_all_inferred_schemas,
+    delete_all_export_data_schemas,
 )
 
 MockRequest = namedtuple('MockRequest', 'domain')
@@ -152,7 +152,7 @@ class TestConvertBase(TestCase, TestFileMixin):
         delete_all_export_instances()
 
     def tearDown(self):
-        delete_all_inferred_schemas()
+        delete_all_export_data_schemas()
 
     def _convert_form_export(self, export_file_name, force=False):
         return self._convert_export(

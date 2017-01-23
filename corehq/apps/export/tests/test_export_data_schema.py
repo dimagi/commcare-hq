@@ -18,7 +18,7 @@ from corehq.apps.app_manager.models import (
     AdvancedOpenCaseAction,
 )
 from corehq.apps.app_manager.signals import app_post_save
-from corehq.apps.export.dbaccessors import delete_all_export_data_schemas, delete_all_inferred_schemas
+from corehq.apps.export.dbaccessors import delete_all_export_data_schemas
 from corehq.apps.export.tasks import add_inferred_export_properties
 from corehq.apps.export.models import (
     FormExportDataSchema,
@@ -744,7 +744,6 @@ class TestDelayedSchema(TestCase, TestXmlMixin):
 
     def tearDown(self):
         delete_all_export_data_schemas()
-        delete_all_inferred_schemas()
 
     def test_basic_delayed_schema(self):
         schema = FormExportDataSchema.generate_schema_from_builds(
@@ -871,7 +870,6 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
 
     def tearDown(self):
         delete_all_export_data_schemas()
-        delete_all_inferred_schemas()
 
     def test_basic_application_schema(self):
         schema = CaseExportDataSchema.generate_schema_from_builds(

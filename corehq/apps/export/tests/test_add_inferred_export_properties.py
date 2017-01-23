@@ -3,7 +3,7 @@ from django.core.cache import caches
 
 from corehq.apps.data_dictionary.models import CaseType, CaseProperty
 from corehq.apps.export.tasks import add_inferred_export_properties
-from corehq.apps.export.dbaccessors import get_case_inferred_schema, delete_all_inferred_schemas
+from corehq.apps.export.dbaccessors import get_case_inferred_schema, delete_all_export_data_schemas
 from corehq.apps.export.models import ScalarItem, ExportItem
 
 
@@ -12,7 +12,7 @@ class InferredSchemaSignalTest(TestCase):
     case_type = 'inferred'
 
     def tearDown(self):
-        delete_all_inferred_schemas()
+        delete_all_export_data_schemas()
         CaseType.objects.filter(domain=self.domain, name=self.case_type).delete()
         caches['locmem'].clear()
         caches['default'].clear()
