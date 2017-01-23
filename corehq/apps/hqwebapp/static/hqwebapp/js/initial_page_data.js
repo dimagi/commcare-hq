@@ -21,7 +21,7 @@ hqDefine('hqwebapp/js/initial_page_data.js', function () {
      *  Find any unregistered data. Error on any duplicates.
      */
     var gather = function() {
-        _.each($(".initial-page-data"), function(div) {
+        _.each($("#initial-page-data").children(), function(div) {
             var $div = $(div),
                 data = $div.data();
             if (COMMCAREHQ_INITIAL_PAGE_DATA[data.name] !== undefined) {

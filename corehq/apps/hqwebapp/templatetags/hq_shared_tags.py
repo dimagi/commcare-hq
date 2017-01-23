@@ -622,7 +622,7 @@ def initial_page_data(parser, token):
                 resolved = json.dumps(resolved)[1:-1]
             else:
                 resolved = json.dumps(resolved)
-            return ("<div class='initial-page-data hide' data-name=\"{}\" data-value=\"{}\"></div>"
+            return ("<div data-name=\"{}\" data-value=\"{}\"></div>"
                     .format(name, escape(resolved)))
 
     nodelist = NodeList([FakeNode()])
