@@ -16,6 +16,7 @@ from corehq.apps.export.transforms import (
 # bump the version number.
 FORM_DATA_SCHEMA_VERSION = 9
 CASE_DATA_SCHEMA_VERSION = 8
+SMS_DATA_SCHEMA_VERSION = 1
 
 DEID_ID_TRANSFORM = "deid_id"
 DEID_DATE_TRANSFORM = "deid_date"
@@ -67,6 +68,7 @@ CASE_CREATE_ELEMENTS = ['case_name', 'owner_id', 'case_type']
 
 FORM_EXPORT = 'form'
 CASE_EXPORT = 'case'
+SMS_EXPORT = 'sms'
 MAX_EXPORTABLE_ROWS = 100000
 CASE_SCROLL_SIZE = 10000
 
