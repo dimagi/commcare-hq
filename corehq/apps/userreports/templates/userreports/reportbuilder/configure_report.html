@@ -2,61 +2,240 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
+{% block head %}{{ block.super }}
+    <style>
+        .map-preview {
+            height: 350px;
+        }
+    </style>
+    {% include 'analytics/fullstory.html' %}
+{% endblock %}
+
 {% block js %}{{ block.super }}
     <script src="{% static 'style/js/main.js' %}"></script>
     <script src="{% static 'app_manager/js/case-knockout-bindings.js' %}"></script>
     <script src="{% static 'userreports/js/constants.js' %}"></script>
     <script src="{% static 'userreports/js/builder_view_models.js' %}"></script>
+    <script src="{% static 'userreports/js/report_config.js' %}"></script>
+    <script src="{% static 'userreports/js/utils.js' %}"></script>
+    <script src="{% static 'style/js/hq.helpers.js' %}"></script>
 {% endblock %}
 
-{% block page_title %}
-    {% if not editing_existing_report %}
-    {% trans "Step 2 of 2" %} -
-    {% endif %}
-    {% trans "Configure Report Settings" %}
-{% endblock page_title %}
+{% block pre_page_content %}{% endblock %}{# Avoid the spacer #}
+
+{% block page_content %}
+  <div id="reportConfig" class="ko-template">
+    <div class="pull-right page-actions-toolbar">
+      {% if existing_report %}
+        <a
+            id="deleteReport"
+            class="btn btn-danger"
+            href="{% url 'delete_configurable_report' domain  existing_report.get_id %}?redirect={% url 'reports_home' domain %}"
+        >
+          Delete Report
+        </a>&nbsp;
+      {% endif %}
+      <button id="btnSaveView" class="btn btn-info">Save &amp; View</button>
+      &nbsp;<span id="saveButtonHolder"></span>
+    </div>
+
+    {# See `style/two_column.html` #}
+    <div class="page-header" style="margin-top: 0;">
+      <div class="h1">
+        <inline-edit params="
+          value: '{{ report_title|escapejs }}',
+          id: 'report-title',
+          placeholder: '{% trans "Enter report name here"|escapejs %}',
+          cols: 50,
+        "></inline-edit>
+      </div>
+      <div>
+        <inline-edit params="
+          value: {% if report_description %}'{{ report_description|escapejs }}'{% else %}null{% endif %},
+          id: 'report-description',
+          placeholder: '{% trans "Enter report description here"|escapejs %}',
+          readOnlyClass: 'app-comment',
+          cols: 50,
+        "></inline-edit>
+      </div>
+    </div>
+
+    <div>
+      <h3>{% trans 'Type of Report' %}</h3>
+      <div class="btn-group">
+        <label class="btn btn-default" data-bind="css: {'active': reportType() === 'list'}">
+          <!-- TODO: Don't style here -->
+          <input type="radio" name="reportTypes" id="reportTypeList" style="display: none;"
+                 data-bind="checked: reportType, checkedValue: 'list'">
+          <i class="fa fa-bars"></i> <span data-bind="text: reportTypeListLabel"></span>
+        </label>
+        <label class="btn btn-default" data-bind="css: {'active': reportType() === 'table'}">
+          <input type="radio" name="reportTypes" id="reportTypeAgg" style="display: none;"
+                 data-bind="checked: reportType, checkedValue: 'table'">
+          <i class="fa fa-filter"></i> <span data-bind="text: reportTypeAggLabel"></span>
+        </label>
+        <label class="btn btn-default" data-bind="css: {'active': reportType() === 'map'}">
+          <input type="radio" name="reportTypes" id="reportTypeMap" style="display: none;"
+                 data-bind="checked: reportType, checkedValue: 'map'">
+          <i class="fa fa-map-marker"></i> Map
+        </label>
+      </div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <div class="col-md-5">
+      <legend>Configure Report</legend>
+
+      <div id="columns">
+        <h3 data-bind="text: reportType() === 'table' ?  '{% trans 'Indicators' %}' : '{% trans 'Columns' %}'">
+            {% trans 'Columns' %}
+        </h3>
+        <div data-bind="with: columnList">
+          {% include "userreports/partials/column_list_configuration.html" %}
+        </div>
+      </div>
+
+      <div data-bind="with: filterList">
+        <h3>
+          <a data-toggle="collapse" href="#userFilterAccordion" class="collapsed">
+            <i class="fa fa-angle-double-down"></i>
+            {% trans 'User Filters'%}
+          </a>
+        </h3>
+        <div id="userFilterAccordion" class="collapse">
+          <h3>
+            <div class="subtext">
+              <small>
+                {% blocktrans %}
+                  Add filters to your report to allow viewers to select which data the report will display.
+                  These filters will be displayed at the top of your report.
+                {% endblocktrans %}
+              </small>
+            </div>
+          </h3>
+          {% include 'userreports/partials/property_list_configuration.html' %}
+        </div>
+      </div>
+      <div data-bind="with: defaultFilterList">
+        <h3>
+          <a data-toggle="collapse" href="#defaultFilterAccordion" class="collapsed">
+            <i class="fa fa-angle-double-down"></i>
+            {% trans 'Default Filters'%}
+          </a>
+        </h3>
+        <div id="defaultFilterAccordion" class="collapse">
+          <h3>
+            <div class="subtext">
+              <small>
+                {% blocktrans %}
+                  These filters are not displayed to report viewers and are always applied to the data.
+                {% endblocktrans %}
+              </small>
+            </div>
+          </h3>
+          {% include 'userreports/partials/property_list_configuration.html' %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-7">
+        <legend>{% trans 'Preview Report' %}</legend>
+
+        <!-- ko if: selectedChart() === 'none' -->
+        <div data-bind="fadeVisible: isAggregationEnabled">
+            <div class="btn btn-primary" data-bind="click: function(){selectedChart('bar');}">{% trans 'Add Chart' %}</div>
+            <div class="spacer"></div>
+        </div>
+        <!-- /ko -->
+
+      <div class="well" data-bind="fadeVisible: previewChart">
+
+        <h3 style="display: inline-block">{% trans 'Chart Preview' %}</h3>
+        <div class="pull-right">
+          <div class="btn btn-danger" data-bind="click: function(){selectedChart('none');}"><i class="fa fa-remove"></i></div>
+        </div>
+        <div data-bind="if: selectedChart() !== 'none'">
+            Type:
+            <select data-bind="value: selectedChart">
+                <option value="bar">{% trans 'Bar' %}</option>
+                <option value="pie">{% trans 'Pie' %}</option>
+            </select>
+        </div>
+        <div id="chart-warning" class="alert alert-warning hide">
+          {% blocktrans %}
+            Charts cannot be displayed with more than 25 categories.
+            Once you Save and View report, you will be able to filter the data to limit the number of rows.
+          {% endblocktrans %}
+        </div>
+        <div id="chart" class="fs-hide"></div>
+      </div>
+
+      <div class="well" id="map-preview" data-bind="fadeVisible: reportType() === 'map'">
+        <h3 style="display: inline-block">{% trans 'Map Preview' %}</h3>
+        <div>
+          Location field:
+          <!-- ko ifnot: optionsContainQuestions -->
+          <input type="text" class="form-control" data-bind="select2: selectablePropertyOptions, value: location_field">
+          <!-- /ko -->
+          <!-- ko if: optionsContainQuestions -->
+          <input class="form-control" type="hidden" data-bind="
+            questionsSelect: selectablePropertyOptions,
+            value: location_field,
+          "/>
+          <!-- /ko -->
+        </div>
+        <br/>
+        <div id="map-preview-container" class="fs-hide" data-bind="css: {'map-preview': displayMapPreview}"></div>
+        <div id="zoomtofit" class="leaflet-control-layers fs-hide" style="display: none;">
+            <div id="zoomtofit-target" class="zoomtofit leaflet-control-layers-toggle" title="{% trans "Fit all data into view" %}"></div>
+        </div>
+      </div>
+
+      <div class="well fs-hide">
+        <h3 data-bind="visible: !previewError()">{% trans 'Data Table' %}</h3>
+        <p data-bind="visible: previewError">
+          {% blocktrans %}
+            There was an error rendering your report preview. Please adjust your configuration to try again.
+            If the issue persists, please report an issue.
+          {% endblocktrans %}
+        </p>
+        <table id="preview" class="table"></table>
+      </div>
+    </div>
+
+
+
+  </div>
+{% endblock %}
+
 {% block js-inline %}{{ block.super }}
 <script>
 
     var ReportBuilder = {
-        Constants: hqImport('userreports/js/constants.js')
+      Constants: hqImport("userreports/js/constants.js"),
     };
 
-    (function () {
-
-        var reportType = {{ report_type|JSON }};
-        var initialUserFilters = {{ initial_user_filters|JSON }};
-        var initialDefaultFilters = {{ initial_default_filters|JSON }};
-        var initialColumns = {{ initial_columns|JSON }};
-        var sourceType = {{ form.source_type|JSON }};
-        var dataSourceIndicators = {{ data_source_indicators|JSON }};
-        var reportColumnOptions = {{ report_column_options|JSON }};
-        var dateRangeOptions = {{ date_range_options|JSON }};
-
-        var ConfigForm = hqImport('userreports/js/builder_view_models.js').ConfigForm;
-        $("#report-config-form").koApplyBindings(
-            new ConfigForm(
-                reportType,
-                sourceType,
-                initialColumns,
-                initialUserFilters,
-                initialDefaultFilters,
-                dataSourceIndicators,
-                reportColumnOptions,
-                dateRangeOptions
-            )
-        );
-
-
-        $(function () {
-            {% for event in report_builder_events %}
-                {# Track a usage events that were produced on the server #}
-                window.analytics.usage.apply(this, {{event|JSON}});
-            {% endfor %}
-            window.analytics.trackUsageLink(
-                "#delete-report-button", "Report Builder", "Delete a Repot", reportType
-            );
+    $(document).ready(function() {
+        var reportConfig = new reportBuilder.ReportConfig({
+            "columnOptions": {{ column_options|JSON }},
+            "initialColumns": {{ initial_columns|JSON }},
+            "app": {{ application|JSON }},
+            "sourceId": {{ source_id|JSON }},
+            "sourceType": "{{ source_type }}",
+            "reportPreviewUrl": "{{ report_preview_url }}",
+            "existingReport": {% if existing_report %}{{ existing_report.get_id|JSON }}{% else %}null{% endif %},
+            "existingReportType": {{ existing_report_type|JSON }},
+            "dataSourceProperties": {{ data_source_properties|JSON }},
+            "initialDefaultFilters": {{ initial_default_filters|JSON }},
+            "initialUserFilters": {{ initial_user_filters|JSON }},
+            "initialLocation": {{ initial_location|JSON }},
+            "initialChartType": {{ initial_chart_type|JSON }},
+            "mapboxAccessToken": {{ MAPBOX_ACCESS_TOKEN|JSON }},
         });
-    })();
+        $("#reportConfig").koApplyBindings(reportConfig)
+        window._bindingsApplied = true;
+    });
+
 </script>
 {% endblock %}
