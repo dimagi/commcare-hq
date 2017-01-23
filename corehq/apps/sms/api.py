@@ -25,6 +25,7 @@ from corehq.apps.domain.models import Domain
 from datetime import datetime
 
 from corehq.apps.sms.util import register_sms_contact, strip_plus
+from corehq import toggles
 
 # A list of all keywords which allow registration via sms.
 # Meant to allow support for multiple languages.
@@ -510,8 +511,23 @@ def load_and_call(sms_handler_names, phone_number, text, sms):
     return handled
 
 
+def get_inbound_phone_entry(msg):
+    if msg.backend_id:
+        backend = SQLMobileBackend.load(msg.backend_id, is_couch_id=True)
+        if not backend.is_global and toggles.INBOUND_SMS_LENIENCY.enabled(backend.domain):
+            return (
+                PhoneNumber.get_two_way_number_with_domain_scope(msg.phone_number, backend.domains_with_access),
+                True
+            )
+
+    return (
+        PhoneNumber.get_reserved_number(msg.phone_number),
+        False
+    )
+
+
 def process_incoming(msg):
-    v = PhoneNumber.get_reserved_number(msg.phone_number)
+    v, has_domain_two_way_scope = get_inbound_phone_entry(msg)
 
     if v:
         msg.couch_recipient_doc_type = v.owner_doc_type
@@ -549,7 +565,11 @@ def process_incoming(msg):
         if msg.domain and domain_has_privilege(msg.domain, privileges.INBOUND_SMS):
             handled = load_and_call(settings.CUSTOM_SMS_HANDLERS, v, msg.text, msg)
 
-            if not handled and is_two_way and is_contact_active(v.domain, v.owner_doc_type, v.owner_id):
+            if (
+                not handled
+                and (is_two_way or has_domain_two_way_scope)
+                and is_contact_active(v.domain, v.owner_doc_type, v.owner_id)
+            ):
                 handled = load_and_call(settings.SMS_HANDLERS, v, msg.text, msg)
 
         if not handled and not is_two_way:
