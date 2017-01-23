@@ -891,7 +891,7 @@ class FormExportFilterBuilder(AbstractExportFilterBuilder):
             form_filters.append(FormSubmittedByFilter(user_ids))
             return form_filters
 
-    def get_filter(self, can_access_all_locations, accessible_location_ids, group_ids, user_types, user_ids,
+    def get_filters(self, can_access_all_locations, accessible_location_ids, group_ids, user_types, user_ids,
                    location_ids, date_range):
         """
         Return a list of `ExportFilter`s for the given ids.
@@ -943,7 +943,7 @@ class CaseExportFilterBuilder(AbstractExportFilterBuilder):
     export_user_filter = OwnerFilter
     date_filter_class = ModifiedOnRangeFilter
 
-    def get_filter(self, can_access_all_locations, accessible_location_ids, show_all_data, show_project_data,
+    def get_filters(self, can_access_all_locations, accessible_location_ids, show_all_data, show_project_data,
                    selected_user_types, datespan, group_ids, location_ids, user_ids):
         """
         Return a list of `ExportFilter`s for the given ids.
@@ -1093,7 +1093,7 @@ class EmwfFilterFormExport(EmwfFilterExportMixin, GenericFilterFormExportDownloa
             datespan filter
         """
         filter_builder = FormExportFilterBuilder(self.domain_object, self.timezone)
-        return filter_builder.get_filter(
+        return filter_builder.get_filters(
             can_access_all_locations,
             accessible_location_ids,
             self._get_group_ids(mobile_user_and_group_slugs),
@@ -1198,7 +1198,7 @@ class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, GenericFilterCaseExp
         :return: set of filters
         """
         filter_builder = CaseExportFilterBuilder(self.domain_object, self.timezone)
-        return filter_builder.get_filter(
+        return filter_builder.get_filters(
             can_access_all_locations,
             accessible_location_ids,
             self.dynamic_filter_class.show_all_data(mobile_user_and_group_slugs),

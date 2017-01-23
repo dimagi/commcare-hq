@@ -836,7 +836,7 @@ class CaseExportInstance(ExportInstance):
             filter_builder = CaseExportFilterBuilder(
                 Domain.get_by_name(self.domain), get_timezone_for_domain(self.domain)
             )
-            return filter_builder.get_filter(
+            return filter_builder.get_filters(
                 self.filters.can_access_all_locations,
                 self.filters.accessible_location_ids,
                 self.filters.show_all_data,
@@ -880,7 +880,7 @@ class FormExportInstance(ExportInstance):
             filter_builder = FormExportFilterBuilder(
                 Domain.get_by_name(self.domain), get_timezone_for_domain(self.domain)
             )
-            return filter_builder.get_filter(
+            return filter_builder.get_filters(
                 self.filters.can_access_all_locations,
                 self.filters.accessible_location_ids,
                 self.filters.reporting_groups,
