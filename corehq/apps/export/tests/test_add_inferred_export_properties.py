@@ -71,6 +71,18 @@ class InferredSchemaSignalTest(TestCase):
         self.assertEqual(group_schema.items[0].__class__, ExportItem)
         self._check_sql_props(props)
 
+    def test_add_inferred_export_properties_system_with_transform(self):
+        """
+        Ensures that when we add a system property, it uses the system's item type
+        """
+        props = set(['user_id'])  # user_id maps to two system properties
+        self._add_props(props)
+        schema = get_inferred_schema(self.domain, self.case_type)
+        group_schema = schema.group_schemas[0]
+        self.assertEqual(len(group_schema.items), 1)
+        self.assertEqual(group_schema.items[0].__class__, ExportItem)
+        self._check_sql_props(props)
+
     def test_cache_add_inferred_export_properties(self):
         props = set(['one', 'two'])
         self._add_props(props)
