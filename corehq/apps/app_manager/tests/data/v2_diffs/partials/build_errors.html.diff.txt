@@ -2,7 +2,7 @@
 +++ 
 @@ -16,62 +16,56 @@
                              {% if not error.message %}
-                                 Blank form
+                                 Try adding questions to the form
                              {% endif %}
 -                            {% include "app_manager/v1/partials/form_error_message.html" %}
 +                            {% include "app_manager/v2/partials/form_error_message.html" %}

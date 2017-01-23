@@ -14,7 +14,7 @@
                     <span>
                         {% case error.type "blank form" %}
                             {% if not error.message %}
-                                Blank form
+                                Try adding questions to the form
                             {% endif %}
                             {% include "app_manager/v1/partials/form_error_message.html" %}
                         {% case "invalid xml" %}
