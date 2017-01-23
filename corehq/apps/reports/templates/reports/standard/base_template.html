@@ -3,7 +3,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block page_sidebar_classes %}sidebar-offcanvas col-xs-4 col-sm-3 col-lg-2{% endblock %}
+{% block page_sidebar_classes %}sidebar-offcanvas col-xs-12 col-sm-3 col-lg-2{% endblock %}
 
 {% block page_row_classes %}row-offcanvas row-offcanvas-left{% endblock %}
 
@@ -101,6 +101,7 @@
 {% block title %}{{ report.title|default:"Project Reports"|safe }}{% endblock %}
 
 {% block page_breadcrumbs %}
+    <a href="#" class="btn btn-link btn-invisible visible-xs btn-report-menu" data-toggle="offcanvas"><i class="fa fa-bars"></i> Reports Menu</a>
     <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
         <li>
             <a href="{{ report.default_url }}"><strong>{% trans report.section_name|default:"Reports" %}</strong></a>
@@ -116,19 +117,6 @@
             <a href="{{ report.url }}" id="report-title">{% trans report.title|default:"Untitled Report"|safe %}</a>
         </li>
     </ol>
-{% endblock %}
-
-{% block page_navigation %}
-    <button type="button" class="pull-right btn btn-invisible visible-xs" data-toggle="offcanvas" aria-expanded="false" aria-controls="navbar">
-        <i class="fa fa-ellipsis-v"></i>
-    </button>
-{{ block.super }}
-{% endblock %}
-
-{% block pre_page_content %}{{ block.super }}
-    <button id="sidebar-menu" type="button" class="pull-left btn btn-invisible visible-xs" data-toggle="offcanvas" aria-expanded="false" aria-controls="navbar">
-        <i class="fa fa-ellipsis-v"></i>
-    </button>
 {% endblock %}
 
 {% block page_content %}
