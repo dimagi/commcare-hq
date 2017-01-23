@@ -202,6 +202,7 @@ class TestForceConvertFormExport(TestConvertBase):
         cls.project.save()
         cls.schema = FormExportDataSchema(
             domain=cls.domain,
+            app_id='123',
             xmlns='myxmlns',
             group_schemas=[
                 ExportGroupSchema(
