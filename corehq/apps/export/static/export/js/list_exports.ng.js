@@ -147,6 +147,7 @@
         $scope.isSubmittingForm = false;
         $scope.hasFormSubmitError = false;
         $scope.formSubmitErrorMessage = null;
+        // TODO: This regex is non-standard
         $scope.dateRegex = '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]';
         self.nonPristineExportFilters = {};
         $scope.formElement = filterFormElements;
