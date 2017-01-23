@@ -421,7 +421,7 @@ class ProjectDataTab(UITab):
 
     @property
     @memoized
-    def can_view_form_or_case_exports (self):
+    def can_view_form_or_case_exports(self):
         return self.can_view_case_exports or self.can_view_form_exports
 
     @property

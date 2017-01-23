@@ -600,7 +600,7 @@ class DashboardFeedFilterForm(forms.Form):
 
     def _to_form_export_instance_filters(self, can_access_all_locations, accessible_location_ids):
         emwf_selections = [x['id'] for x in self.cleaned_data["emwf_form_filter"]]
-    
+
         return FormExportInstanceFilters(
             date_period=DatePeriod(
                 period_type=self.cleaned_data['date_range'],
