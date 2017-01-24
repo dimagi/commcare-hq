@@ -269,7 +269,7 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
         def new_bulk_save(docs, *args, **kwargs):
             for doc in docs:
                 if doc['_id'] == TEST_CASE_ID:
-                    bulk_save_attachments.append(doc['_attachments'])
+                    bulk_save_attachments.append(doc._deferred_blobs)
             bulk_save(docs, *args, **kwargs)
 
         self._doSubmitUpdateWithMultimedia(
@@ -282,11 +282,8 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
                 date=datetime.utcnow() - timedelta(minutes=2))
 
         # make sure there's exactly one bulk save recorded
-        self.assertEqual(len(bulk_save_attachments), 1)
-        # make sure none of the attachments were re-saved in rebuild
-        self.assertEqual(
-            [key for key, value in bulk_save_attachments[0].items()
-             if value.get('data')], [])
+        # and none of the attachments were re-saved in rebuild
+        self.assertEqual(bulk_save_attachments, [{}])
 
     @run_with_all_backends
     def test_sync_log_invalidation_bug(self):
