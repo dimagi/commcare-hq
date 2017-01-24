@@ -20,7 +20,7 @@ class ZapierXFormInstanceResource(XFormInstanceResource):
         remove_advanced_fields(bundle.data)
         return bundle
 
-
+# Custom field object used for triggers in Zapier.
 class CustomField(object):
 
     def __init__(self, initial=None):
@@ -32,6 +32,18 @@ class CustomField(object):
 
     def get_content(self):
         return {"type": self.type, "key": self.key, "label": self.label, "help_text": self.help_text}
+
+
+# Custom field object used for actions in Zapier.
+class CustomActionField(object):
+
+    def __init__(self, initial = None):
+        initial = initial or {}
+        self.type = initial.get('type', '')
+        self.key = initial.get('key', '')
+        self.label = initial.get('label', '')
+        self.help_text = initial.get('help_text', '')
+        self.required = initial.get('required', '')
 
 
 class BaseZapierCustomFieldResource(Resource):
@@ -169,3 +181,57 @@ class ZapierCustomFieldCaseResource(BaseZapierCustomFieldResource):
 
     class Meta(BaseZapierCustomFieldResource.Meta):
         resource_name = 'custom_fields_case'
+
+
+class ZapierCustomActionFieldCaseResource(BaseZapierCustomFieldResource):
+    required = fields.CharField(attribute='required', default='', null=True, blank=True)
+
+    def obj_get_list(self, bundle, **kwargs):
+        custom_fields = []
+        domain = bundle.request.GET.get('domain')
+        case_type = bundle.request.GET.get('case_type')
+        create = bundle.request.GET.get('create')
+
+        if create == "True":
+            custom_fields.append(CustomActionField(
+                dict(
+                    type='unicode',
+                    key='name',
+                    label='Case name',
+                    required='true'
+                )
+            ))
+        else:
+            custom_fields.append(CustomActionField(
+                dict(
+                    type='unicode',
+                    key='case_id',
+                    label='Case ID',
+                    required='true'
+                )
+            ))
+            custom_fields.append(CustomActionField(
+                dict(
+                    type='unicode',
+                    key='name',
+                    label='Case name',
+                    required='false'
+                )
+            ))
+
+        for prop in get_case_properties_for_case_type(domain, case_type):
+            custom_fields.append(CustomActionField(
+                dict(
+                    type='unicode',
+                    key=prop,
+                    label=self._build_label(prop),
+                    required='false'
+                )
+            ))
+
+        return custom_fields
+
+    class Meta(BaseZapierCustomFieldResource.Meta):
+        object_class = CustomActionField
+        resource_name = 'custom_action_fields_case'
+
