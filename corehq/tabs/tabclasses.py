@@ -1508,7 +1508,7 @@ def _get_feature_flag_items(domain):
             'title': _('Calendar Fixture'),
             'url': reverse(CalendarFixtureConfigView.urlname, args=[domain])
         })
-    if toggles.FLAT_LOCATION_FIXTURE.enabled(domain):
+    if toggles.HIERARCHICAL_LOCATION_FIXTURE.enabled(domain):
         feature_flag_items.append({
             'title': _('Location Fixture'),
             'url': reverse(LocationFixtureConfigView.urlname, args=[domain])
