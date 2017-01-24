@@ -25,7 +25,7 @@
 
 {% block js-inline %}{{ block.super }}
     <script>
-        $(document).ready(function () {
+        $(function () {
           $('[data-toggle="offcanvas"]').click(function () {
             $('.row-offcanvas').toggleClass('active')
           });
