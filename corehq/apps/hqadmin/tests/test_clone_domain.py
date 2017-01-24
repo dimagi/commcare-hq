@@ -96,7 +96,7 @@ class TestCloneDomain(TestCase):
         for domain in (self.old_domain, self.new_domain):
             locs_in_domain = SQLLocation.objects.filter(domain=domain)
             related_locs = (SQLLocation.objects.get_queryset_descendants(locs_in_domain, include_self=True)
-                            | SQLLocation.objects.get_queryset_descendants(locs_in_domain, include_self=True))
+                            | SQLLocation.objects.get_queryset_ancestors(locs_in_domain, include_self=True))
             self.assertItemsEqual(
                 related_locs.order_by('domain').distinct('domain').values_list('domain', flat=True),
                 [domain]
