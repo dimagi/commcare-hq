@@ -14,7 +14,10 @@ import corehq.apps.sms.messages as messages
 def create_mobile_worker(domain, username, password, phone_number, save_vn=True):
     user = CommCareUser.create(domain, username, password, phone_number=phone_number)
     if save_vn:
-        user.save_verified_number(domain, phone_number, True, None)
+        entry = user.get_or_create_phone_entry(phone_number)
+        entry.set_two_way()
+        entry.set_verified()
+        entry.save()
     return user
 
 

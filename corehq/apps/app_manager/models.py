@@ -1849,9 +1849,11 @@ class SortElement(IndexedSchema):
     type = StringProperty()
     direction = StringProperty()
     display = DictProperty()
+    sort_calculation = StringProperty(default="")
 
     def has_display_values(self):
         return any(s.strip() != '' for s in self.display.values())
+
 
 class CaseListLookupMixin(DocumentSchema):
     """
@@ -4112,7 +4114,7 @@ class LazyBlobDoc(BlobMixin):
         if "_attachments" in data:
             data = data.copy()
             attachments = data.pop("_attachments").copy()
-            if cls.migrating_blobs_from_couch:
+            if cls._migrating_blobs_from_couch:
                 # preserve stubs so couch attachments don't get deleted on save
                 stubs = {}
                 for name, value in list(attachments.items()):

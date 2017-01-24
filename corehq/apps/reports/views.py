@@ -652,6 +652,7 @@ def touch_saved_reports_views(user, domain):
     ReportNotification.by_domain_and_owner(domain, user._id, limit=1, stale=False)
 
 
+@location_safe
 class AddSavedReportConfigView(View):
     name = 'add_report_config'
 

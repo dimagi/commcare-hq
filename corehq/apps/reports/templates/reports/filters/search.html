@@ -8,6 +8,7 @@
             <input id="{{ css_id }}"
                    name="{{ slug }}"
                    type="text"
+                   {% if required %}required{% endif %}
                    class="form-control {% block input_css_class %}{% endblock %}" value="{{ search_query }}">
             {% if search_help_inline %}
             <p class="help-block">

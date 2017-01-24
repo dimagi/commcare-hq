@@ -24,12 +24,26 @@ types = [
     'user_fields',
     'user_roles',
     'auto_case_updates',
+    'repeaters',
 ]
+
+help_text = """Clone a domain and it's data:
+  * settings (domain settings, feature flags etc.)
+  * fixtures
+  * locations
+  * products
+  * UCR
+  * apps
+  * custom user fields
+  * custom user roles
+  * auto case update rules
+  * repeaters
+"""
 
 
 class Command(BaseCommand):
     args = "<existing_domain> <new_domain>"
-    help = """Clone a domain and it's data (settings, fixtures, locations, products, UCR, apps)"""
+    help = help_text
 
     option_list = (
         make_option("-i", "--include", dest="include", action="append", choices=types),
@@ -78,6 +92,9 @@ class Command(BaseCommand):
 
         if self._clone_type(options, 'auto_case_updates'):
             self.copy_auto_case_update_rules()
+
+        if self._clone_type(options, 'repeaters'):
+            self.copy_repeaters()
 
     def clone_domain_and_settings(self):
         from corehq.apps.domain.models import Domain
@@ -151,12 +168,18 @@ class Command(BaseCommand):
             location_types_map[old_id] = new_id
 
         # MPTT sorts this queryset so we can just save in the same order
-        new_loc_ids_by_code = {}
+        new_loc_pks_by_code = {}
         for loc in SQLLocation.active_objects.filter(domain=self.existing_domain):
-            loc.location_id = ''
-            loc.parent_id = new_loc_ids_by_code[loc.parent.site_code] if loc.parent_id else None
-            _, new_id = self.save_sql_copy(loc, self.new_domain)
-            new_loc_ids_by_code[loc.site_code] = new_id
+            # start with a new location so we don't inadvertently copy over a bunch of foreign keys
+            new_loc = SQLLocation()
+            for field in ["name", "site_code", "external_id", "metadata",
+                          "is_archived", "latitude", "longitude"]:
+                setattr(new_loc, field, getattr(loc, field, None))
+            new_loc.domain = self.new_domain
+            new_loc.parent_id = new_loc_pks_by_code[loc.parent.site_code] if loc.parent_id else None
+            new_loc.location_type_id = location_types_map[loc.location_type_id]
+            _, new_pk = self.save_sql_copy(new_loc, self.new_domain)
+            new_loc_pks_by_code[new_loc.site_code] = new_pk
 
         existing_fixture_config = LocationFixtureConfiguration.for_domain(self.existing_domain)
         self.save_sql_copy(existing_fixture_config, self.new_domain)
@@ -280,6 +303,17 @@ class Command(BaseCommand):
             for action in actions:
                 action.rule = rule
                 self.save_sql_copy(action, self.new_domain)
+
+    def copy_repeaters(self):
+        from corehq.apps.repeaters.models import Repeater
+        from corehq.apps.repeaters.utils import get_all_repeater_types
+        from corehq.apps.repeaters.dbaccessors import get_repeaters_by_domain
+        for repeater in get_repeaters_by_domain(self.existing_domain):
+            self.save_couch_copy(repeater, self.new_domain)
+
+        Repeater.by_domain.clear(Repeater, self.new_domain)
+        for repeater_type in get_all_repeater_types().values():
+            Repeater.by_domain.clear(repeater_type, self.new_domain)
 
     def _copy_custom_data(self, type_):
         from corehq.apps.custom_data_fields.dbaccessors import get_by_domain_and_type

@@ -98,6 +98,9 @@ from corehq.apps.userreports.tasks import (
     rebuild_indicators,
     resume_building_indicators,
     delete_data_source_task,
+    rebuild_indicators,
+    resume_building_indicators,
+    rebuild_indicators_in_place,
 )
 from corehq.apps.userreports.ui.forms import (
     ConfigurableReportEditForm,
@@ -1221,6 +1224,27 @@ def resume_building_data_source(request, domain, config_id):
             _(u'Resuming rebuilding table "{}".').format(config.display_name)
         )
         resume_building_indicators.delay(config_id, request.user.username)
+    return HttpResponseRedirect(reverse(
+        EditDataSourceView.urlname, args=[domain, config._id]
+    ))
+
+
+@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
+@require_POST
+def build_data_source_in_place(request, domain, config_id):
+    config, is_static = get_datasource_config_or_404(config_id, domain)
+    if config.is_deactivated:
+        config.is_deactivated = False
+        config.save()
+
+    messages.success(
+        request,
+        _('Table "{}" is now being rebuilt. Data should start showing up soon').format(
+            config.display_name
+        )
+    )
+
+    rebuild_indicators_in_place.delay(config_id, request.user.username)
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
     ))

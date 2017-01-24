@@ -8,12 +8,14 @@ from corehq.apps.hqadmin.reports import (
     AdminDomainMapReport,
     AdminDomainMapInternal,
     AdminAppReport,
+    AdminPhoneNumberReport,
     AdminUserReport,
     RealProjectSpacesReport,
     CommConnectProjectSpacesReport,
     CommTrackProjectSpacesReport,
     DeviceLogSoftAssertReport,
-    CommCareVersionReport)
+    CommCareVersionReport,
+)
 from corehq.apps.hqpillow_retry.views import PillowErrorsReport
 from corehq.apps.reports.standard import (monitoring, inspect, export,
     deployments, sms, ivr)
@@ -131,6 +133,7 @@ def REPORTS(project):
         sms.SMSOptOutReport,
         ivr.CallReport,
         ivr.ExpectedCallbackReport,
+        sms.PhoneNumberReport,
     ])
 
     messaging_reports += getattr(Domain.get_module_by_name(project.name), 'MESSAGING_REPORTS', ())
@@ -354,6 +357,7 @@ ADMIN_REPORTS = (
         CommTrackProjectSpacesReport,
         DeviceLogSoftAssertReport,
         CommCareVersionReport,
+        AdminPhoneNumberReport,
     )),
 )
 

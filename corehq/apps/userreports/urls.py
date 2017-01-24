@@ -15,10 +15,13 @@ from corehq.apps.userreports.views import (
     delete_data_source,
     rebuild_data_source,
     resume_building_data_source,
+    build_data_source_in_place,
     export_data_source,
     data_source_status,
     choice_list_api,
-    ExpressionDebuggerView, evaluate_expression)
+    ExpressionDebuggerView,
+    evaluate_expression
+)
 
 urlpatterns = [
     url(r'^$', UserConfigReportsHomeView.as_view(),
@@ -44,6 +47,8 @@ urlpatterns = [
         name='rebuild_configurable_data_source'),
     url(r'^data_sources/resume/(?P<config_id>[\w-]+)/$', resume_building_data_source,
         name='resume_build'),
+    url(r'^data_sources/build_in_place/(?P<config_id>[\w-]+)/$', build_data_source_in_place,
+        name='build_in_place'),
     url(r'^data_sources/preview/(?P<config_id>[\w-]+)/$',
         PreviewDataSourceView.as_view(),
         name=PreviewDataSourceView.urlname),

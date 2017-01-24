@@ -88,10 +88,6 @@
         var username = "{{ username  }}";
         var domain = "{{ domain }}";
         var formplayer_url = "{{ formplayer_url }}";
-        var instanceViewerEnabled = false;
-        {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
-            instanceViewerEnabled = true;
-        {% endif %}
         var options = {
             apps: apps,
             language: language,
@@ -99,7 +95,9 @@
             domain: domain,
             formplayer_url: formplayer_url,
             gridPolyfillPath: "{% static 'css-grid-polyfill-binaries/css-polyfills.js' %}",
-            debuggerEnabled: instanceViewerEnabled,
+            {% if request.couch_user.can_edit_data %}
+            debuggerEnabled: true,
+            {% endif %}
             singleAppMode: {{ single_app_mode|JSON }},
             environment: {{ environment|JSON }},
         };
@@ -151,12 +149,12 @@
             <section id="webforms" data-bind="template: { name: 'form-fullform-ko-template' }"></section>
         </div>
         <small id="version-info"></small>
-        {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
-            <section id="cloudcare-debugger" data-bind="
-            template: {
-                name: 'instance-viewer-ko-template',
-                afterRender: adjustWidth
-            }
+        {% if request.couch_user.can_edit_data %}
+        <section id="cloudcare-debugger" data-bind="
+          template: {
+              name: 'instance-viewer-ko-template',
+              afterRender: adjustWidth
+          }
         "></section>
         {% endif %}
     </div>

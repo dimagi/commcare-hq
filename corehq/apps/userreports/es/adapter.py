@@ -1,5 +1,5 @@
 import datetime
-from elasticsearch import NotFoundError
+from elasticsearch import NotFoundError, RequestError
 from corehq.apps.userreports.util import get_table_name
 from corehq.apps.userreports.adapter import IndicatorAdapter
 from corehq.apps.es.es_query import HQESQuery
@@ -123,7 +123,14 @@ class IndicatorESAdapter(IndicatorAdapter):
 
     def rebuild_table(self):
         self.drop_table()
-        self.es.indices.create(index=self.table_name, body=UCR_INDEX_SETTINGS)
+        self.build_table()
+
+    def build_table(self):
+        try:
+            self.es.indices.create(index=self.table_name, body=UCR_INDEX_SETTINGS)
+        except RequestError:
+            # table already exists
+            pass
 
     def drop_table(self):
         try:
