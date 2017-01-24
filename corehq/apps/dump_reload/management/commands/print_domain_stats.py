@@ -104,19 +104,6 @@ def _get_couchdb_counts(domain):
     return couch_db_counts
 
 
-def _get_doc_counts_for_couch_db(couch_db, domain):
-    doc_types = couch_db.view(
-        "by_domain_doc_type_date/view",
-        startkey=[domain],
-        endkey=[domain, {}],
-        reduce=True,
-        group=True,
-        group_level=2
-    )
-
-    return Counter({row['key'][1]: row['value'] for row in doc_types})
-
-
 @allow_form_processing_queries()
 def _get_sql_counts(domain):
     counter = Counter()
