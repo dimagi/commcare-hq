@@ -49,7 +49,7 @@ with values from Django template variables.
 In this case, as much as possible of the JavaScript should
 still live in its own module;
 what little is in the template should be there only to pass the baton
-from Django templates to your JavaScript modules.
+from Django templates to your JavaScript modules. See [Server Integration Patterns](./integration-patterns.md) for more detail on best practices for accessing server data in JavaScript.
 
 ## Module patterns
 
