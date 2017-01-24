@@ -168,12 +168,18 @@ class Command(BaseCommand):
             location_types_map[old_id] = new_id
 
         # MPTT sorts this queryset so we can just save in the same order
-        new_loc_ids_by_code = {}
+        new_loc_pks_by_code = {}
         for loc in SQLLocation.active_objects.filter(domain=self.existing_domain):
-            loc.location_id = ''
-            loc.parent_id = new_loc_ids_by_code[loc.parent.site_code] if loc.parent_id else None
-            _, new_id = self.save_sql_copy(loc, self.new_domain)
-            new_loc_ids_by_code[loc.site_code] = new_id
+            # start with a new location so we don't inadvertently copy over a bunch of foreign keys
+            new_loc = SQLLocation()
+            for field in ["name", "site_code", "external_id", "metadata",
+                          "is_archived", "latitude", "longitude"]:
+                setattr(new_loc, field, getattr(loc, field, None))
+            new_loc.domain = self.new_domain
+            new_loc.parent_id = new_loc_pks_by_code[loc.parent.site_code] if loc.parent_id else None
+            new_loc.location_type_id = location_types_map[loc.location_type_id]
+            _, new_pk = self.save_sql_copy(new_loc, self.new_domain)
+            new_loc_pks_by_code[new_loc.site_code] = new_pk
 
         existing_fixture_config = LocationFixtureConfiguration.for_domain(self.existing_domain)
         self.save_sql_copy(existing_fixture_config, self.new_domain)
