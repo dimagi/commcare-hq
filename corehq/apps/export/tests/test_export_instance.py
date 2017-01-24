@@ -21,7 +21,7 @@ from corehq.apps.export.models import (
     FormExportInstanceDefaults,
     MultiMediaExportColumn,
 )
-from corehq.apps.export.models.new import ExportInstanceFilters
+from corehq.apps.export.models.new import FormExportInstanceFilters
 from corehq.apps.export.system_properties import MAIN_FORM_TABLE_PROPERTIES, \
     TOP_MAIN_FORM_TABLE_PROPERTIES
 
@@ -329,14 +329,6 @@ class TestExportInstanceDefaultFilters(SimpleTestCase):
         case_export_wrapped = CaseExportInstance.wrap({})
         for e in [case_export, case_export_wrapped]:
             self.assertTrue(e.filters.show_all_data)
-
-    def test_explicit_values(self):
-        # Confirm that FormExportInstances do not override export instance filters passed explicitly
-        e1 = FormExportInstance(filters=ExportInstanceFilters())
-        e2 = FormExportInstance({'filters': {}})
-        e3 = FormExportInstance.wrap({'filters': {}})
-        for e in [e1, e2, e3]:
-            self.assertListEqual(e.filters.user_types, [])
 
 
 class TestExportInstance(SimpleTestCase):

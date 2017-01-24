@@ -145,7 +145,8 @@ class ExportViewTest(TestCase):
         self.assertEqual(resp.status_code, 200)
 
     @patch('corehq.apps.export.views.domain_has_privilege', lambda x, y: True)
-    def test_edit_daily_saved_export_filters(self):
+    @patch("corehq.apps.export.tasks.rebuild_export")
+    def test_edit_daily_saved_export_filters(self, _):
         # Create an export
         # Update the filters
         # confirm that the filters on the export have been updated appropriately
@@ -200,6 +201,8 @@ class ExportViewTest(TestCase):
             HTTP_DJNG_REMOTE_METHOD='commit_filters',
         )
         self.assertEqual(resp.status_code, 200)
+        response_content = json.loads(resp.content)
+        self.assertFalse("error" in response_content, response_content.get("error"))
         export = CaseExportInstance.get(export._id)
         self.assertEqual(export.filters.date_period.period_type, 'range')
 

@@ -301,8 +301,9 @@ class TestEmwfFilterFormExportFormFilters(TestCase):
         users_patch.assert_called_once_with([])
         locations_patch.assert_called_once_with([])
 
-    def test_get_form_filter_for_restricted_locations_access(self, locations_patch, users_patch,
-                                                             user_type_patch, group_patch):
+    @patch("corehq.apps.export.forms.user_ids_at_locations")
+    def test_get_form_filter_for_restricted_locations_access(self, user_ids_at_locations_patch, locations_patch,
+                                                             users_patch, user_type_patch, group_patch):
         domain = Domain(name="testapp", is_active=True)
         group_ids_slug = ['g__e80c5e54ab552245457d2546d0cdbb03', 'g__e80c5e54ab552245457d2546d0cdbb04']
         data = {'date_range': '1992-01-30 to 2016-11-28'}
@@ -382,7 +383,9 @@ class TestFilterCaseESExportDownloadForm(TestCase):
         static_user_ids_for_group_patch.assert_called_once_with(self.group_ids)
 
     @patch.object(filter_builder, '_get_group_independent_filters', lambda x, y, z, a, b: [])
-    def test_get_filters_from_slugs_for_restricted_locations_access(self, static_user_ids_for_group_patch,
+    @patch("corehq.apps.export.forms.user_ids_at_locations")
+    def test_get_filters_from_slugs_for_restricted_locations_access(self, user_ids_at_locations_patch,
+                                                                    static_user_ids_for_group_patch,
                                                                     group_ids_patch):
         data = {'date_range': '1992-01-30 to 2016-11-28'}
         self.export_filter = self.subject(self.domain, pytz.utc, data=data)
@@ -408,7 +411,7 @@ class TestFilterCaseESExportDownloadForm(TestCase):
         get_users_filter.assert_called_once_with(list(get_user_ids.return_value))
         get_user_ids.assert_called_once_with(self.group_ids_slug)
 
-
+    @patch("corehq.apps.export.forms.user_ids_at_locations")
     @patch.object(filter, 'selected_user_types')
     @patch.object(filter_builder, '_get_locations_filter')
     @patch.object(filter_builder, '_get_selected_locations_and_descendants_ids')
