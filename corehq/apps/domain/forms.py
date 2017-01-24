@@ -923,9 +923,94 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             "The default value is 20."
         )
     )
+    partner_technical_competency = IntegerField(
+        label=ugettext_noop("Partner Technical Competency"),
+        required=False,
+        min_value=1,
+        max_value=5,
+        help_text=ugettext_lazy(
+            "Please rate the technical competency of the partner on a scale from "
+            "1 to 5. 1 means low-competency, and we should expect LOTS of basic "
+            "hand-holding. 5 means high-competency, so if they report a bug it's "
+            "probably a real issue with CommCareHQ or a really good idea."
+        ),
+    )
+    support_prioritization = IntegerField(
+        label=ugettext_noop("Support Prioritization"),
+        required=False,
+        min_value=1,
+        max_value=3,
+        help_text=ugettext_lazy(
+            "Based on the impact of this project and how good this partner was "
+            "to work with, how much would you prioritize support for this "
+            'partner? 1 means "Low. Take your time." You might rate a partner '
+            '"1" because they\'ve been absolutely terrible to you and low impact. '
+            '3 means "High priority. Be nice". You might rate a partner "3" '
+            "because even though they can't afford a PRO plan, you know they "
+            "are changing the world. Or they are an unusually high priority "
+            "strategic partner."
+        ),
+    )
+    gs_continued_involvement = ChoiceField(
+        label=ugettext_noop("GS Continued Involvement"),
+        choices=[(AMPLIFIES_NOT_SET, '* Not Set'), (AMPLIFIES_YES, 'Yes'), (AMPLIFIES_NO, 'No')],
+        required=False,
+        help_text=ugettext_lazy(
+            "Do you want to continue to be involved in this project? No, please "
+            "only reach out if absolutely necessary. Yes. I want to see what "
+            "happens and be kept in the loop."
+        ),
+    )
+    technical_complexity = ChoiceField(
+        label=ugettext_noop("Technical Complexity"),
+        choices=[(AMPLIFIES_NOT_SET, '* Not Set'), (AMPLIFIES_YES, 'Yes'), (AMPLIFIES_NO, 'No')],
+        required=False,
+        help_text=ugettext_lazy(
+            "Is this an innovation project involving unusual technology which"
+            "we expect will require different support than a typical deployment?"
+        ),
+    )
+    app_design_comments = CharField(
+        label=ugettext_noop("App Design Comments"),
+        widget=forms.Textarea,
+        required=False,
+        help_text=ugettext_lazy(
+            "Unusual workflows or design decisions for others to watch out for."
+        ),
+    )
+    training_materials = CharField(
+        label=ugettext_noop("Training materials"),
+        required=False,
+        help_text=ugettext_lazy(
+            "Where to find training materials or other relevant resources."
+        ),
+    )
+    partner_comments = CharField(
+        label=ugettext_noop("Partner Comments"),
+        widget=forms.Textarea,
+        required=False,
+        help_text=ugettext_lazy(
+            "past or anticipated problems with this partner."
+        ),
+    )
+    partner_contact = CharField(
+        label=ugettext_noop("Partner contact"),
+        required=False,
+        help_text=ugettext_lazy(
+            "Primary partner point of contact going forward (type email of existing web user)."
+        ),
+    )
+    dimagi_contact = CharField(
+        label=ugettext_noop("Dimagi contact"),
+        required=False,
+        help_text=ugettext_lazy(
+            "Primary Dimagi point of contact going forward (type email of existing web user)."
+        ),
+    )
 
-    def __init__(self, can_edit_eula, *args, **kwargs):
+    def __init__(self, domain, can_edit_eula, *args, **kwargs):
         super(DomainInternalForm, self).__init__(*args, **kwargs)
+        self.domain = domain
         self.can_edit_eula = can_edit_eula
         additional_fields = []
         if self.can_edit_eula:
@@ -970,6 +1055,18 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                 crispy.Div(*additional_fields),
             ),
             crispy.Fieldset(
+                _("Support Hand-off information"),
+                'partner_technical_competency',
+                'support_prioritization',
+                'gs_continued_involvement',
+                'technical_complexity',
+                'app_design_comments',
+                'training_materials',
+                'partner_comments',
+                'partner_contact',
+                'dimagi_contact',
+            ),
+            crispy.Fieldset(
                 _("Salesforce Details"),
                 'sf_contract_id',
                 'sf_account_id',
@@ -982,6 +1079,27 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                 ),
             ),
         )
+
+    def _assert_is_web_user_in_domain(self, username):
+        user = WebUser.get_by_username(username)
+        if not user:
+            msg = "Web user with username '{username}' does not exist"
+            raise forms.ValidationError(msg.format(username=username))
+        if not user.is_member_of(self.domain):
+            msg = ugettext_lazy("'{username}' is not the username of a web user in '{domain}'")
+            raise forms.ValidationError(msg.format(username=username, domain=self.domain))
+
+    def clean_partner_contact(self):
+        username = self.cleaned_data['partner_contact']
+        if username:
+            self._assert_is_web_user_in_domain(username)
+        return username
+
+    def clean_dimagi_contact(self):
+        username = self.cleaned_data['dimagi_contact']
+        if username:
+            self._assert_is_web_user_in_domain(username)
+        return username
 
     def save(self, domain):
         kwargs = {"workshop_region": self.cleaned_data["workshop_region"]} if self.cleaned_data["workshop_region"] else {}
@@ -1010,6 +1128,15 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             amplifies_project=self.cleaned_data['amplifies_project'],
             business_unit=self.cleaned_data['business_unit'],
             data_access_threshold=self.cleaned_data['data_access_threshold'],
+            partner_technical_competency=self.cleaned_data['partner_technical_competency'],
+            support_prioritization=self.cleaned_data['support_prioritization'],
+            gs_continued_involvement=self.cleaned_data['gs_continued_involvement'],
+            technical_complexity=self.cleaned_data['technical_complexity'],
+            app_design_comments=self.cleaned_data['app_design_comments'],
+            training_materials=self.cleaned_data['training_materials'],
+            partner_comments=self.cleaned_data['partner_comments'],
+            partner_contact=self.cleaned_data['partner_contact'],
+            dimagi_contact=self.cleaned_data['dimagi_contact'],
             **kwargs
         )
 

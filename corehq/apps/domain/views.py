@@ -2483,7 +2483,7 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
     def internal_settings_form(self):
         can_edit_eula = CAN_EDIT_EULA.enabled(self.request.couch_user.username)
         if self.request.method == 'POST':
-            return DomainInternalForm(can_edit_eula, self.request.POST)
+            return DomainInternalForm(self.request.domain, can_edit_eula, self.request.POST)
         initial = {
             'countries': self.domain_object.deployment.countries,
             'is_test': self.domain_object.is_test,
@@ -2506,6 +2506,15 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             'data_access_threshold',
             'business_unit',
             'workshop_region',
+            'partner_technical_competency',
+            'support_prioritization',
+            'gs_continued_involvement',
+            'technical_complexity',
+            'app_design_comments',
+            'training_materials',
+            'partner_comments',
+            'partner_contact',
+            'dimagi_contact',
         ]
         if can_edit_eula:
             internal_attrs += [
@@ -2517,7 +2526,7 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             if isinstance(val, bool):
                 val = 'true' if val else 'false'
             initial[attr] = val
-        return DomainInternalForm(can_edit_eula, initial=initial)
+        return DomainInternalForm(self.request.domain, can_edit_eula, initial=initial)
 
     @property
     def page_context(self):
