@@ -1580,7 +1580,9 @@ class AdminTab(UITab):
                 {'title': _('Download Global Impact Report'),
                  'url': reverse('download_gir')},
                 {'title': _('CommCare Version'),
-                 'url': reverse('admin_report_dispatcher', args=('commcare_version', ))}
+                 'url': reverse('admin_report_dispatcher', args=('commcare_version', ))},
+                {'title': _('Admin Phone Number Report'),
+                 'url': reverse('admin_report_dispatcher', args=('phone_number_report',))},
             ]),
             (_('Administrative Operations'), admin_operations),
             (_('CommCare Reports'), [

@@ -53,11 +53,6 @@ from corehq.apps.sms.models import (
 from corehq.apps.sms.util import get_backend_name
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.reminders.models import CaseReminderHandler
-from corehq.apps.reminders.views import (
-    EditStructuredKeywordView,
-    EditNormalKeywordView,
-    EditScheduledReminderView
-)
 
 
 class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
@@ -574,6 +569,10 @@ class BaseMessagingEventReport(BaseCommConnectLogReport):
                 return _('Unknown')
 
     def get_keyword_display(self, keyword_id, content_cache):
+        from corehq.apps.reminders.views import (
+            EditStructuredKeywordView,
+            EditNormalKeywordView,
+        )
         if keyword_id in content_cache:
             return content_cache[keyword_id]
 
@@ -593,6 +592,9 @@ class BaseMessagingEventReport(BaseCommConnectLogReport):
         return display
 
     def get_reminder_display(self, handler_id, content_cache):
+        from corehq.apps.reminders.views import (
+            EditScheduledReminderView
+        )
         if handler_id in content_cache:
             return content_cache[handler_id]
         try:

@@ -76,6 +76,14 @@ class PhoneNumberFilter(SearchFilter):
     search_help_inline = ugettext_lazy("Enter a full or partial phone number to filter results")
 
 
+class RequiredPhoneNumberFilter(PhoneNumberFilter):
+    @property
+    def filter_context(self):
+        context = super(RequiredPhoneNumberFilter, self).filter_context
+        context['required'] = True
+        return context
+
+
 class PhoneNumberReportFilter(BaseReportFilter):
     label = ugettext_noop("Phone Number")
     slug = "phone_number_filter"
