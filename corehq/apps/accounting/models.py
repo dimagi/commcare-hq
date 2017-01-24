@@ -746,18 +746,21 @@ class DefaultProductPlan(models.Model):
     )
     plan = models.ForeignKey(SoftwarePlan, on_delete=models.PROTECT)
     is_trial = models.BooleanField(default=False)
+    is_report_builder_enabled = models.BooleanField(default=False)
     last_modified = models.DateTimeField(auto_now=True)
 
     class Meta:
         app_label = 'accounting'
-        unique_together = ('edition', 'is_trial')
+        unique_together = ('edition', 'is_trial', 'is_report_builder_enabled')
 
     @classmethod
-    def get_default_plan_version(cls, edition=None, is_trial=False):
+    def get_default_plan_version(cls, edition=None, is_trial=False,
+                                 is_report_builder_enabled=False):
         edition = edition or SoftwarePlanEdition.COMMUNITY
         try:
             default_product_plan = DefaultProductPlan.objects.select_related('plan').get(
-                edition=edition, is_trial=is_trial
+                edition=edition, is_trial=is_trial,
+                is_report_builder_enabled=is_report_builder_enabled
             )
             return default_product_plan.plan.get_version()
         except DefaultProductPlan.DoesNotExist:
