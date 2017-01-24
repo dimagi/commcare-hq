@@ -189,7 +189,7 @@ class ZapierCustomActionFieldCaseResource(BaseZapierCustomFieldResource):
             custom_fields.append(CustomActionField(
                 dict(
                     type='unicode',
-                    key='name',
+                    key='case_name',
                     label='Case name',
                     required='true'
                 )
