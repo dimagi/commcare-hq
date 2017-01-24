@@ -35,7 +35,6 @@ PARTIAL_DIFFS = {
         {'path': ('id',)},  # SQL only
         {'path': ('@xmlns',)},  # legacy
         {'path': ('_attachments',)},  # couch only
-        {'path': ('external_blobs',)},  # couch only
         {'path': ('#export_tag',)},  # couch only
         {'path': ('computed_',)},  # couch only
         {'path': ('version',)},  # couch only

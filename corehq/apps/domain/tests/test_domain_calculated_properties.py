@@ -24,7 +24,7 @@ class DomainCalculatedPropertiesTest(TestCase):
         } for i in [CASE_INDEX_INFO, SMS_INDEX_INFO, XFORM_INDEX_INFO]]
 
     def setUp(self):
-        self.domain = Domain(name='test-b9289e19d819')
+        self.domain = Domain(name='test')
         self.domain.save()
         for es in self.es:
             ensure_index_deleted(es['info'].index)
