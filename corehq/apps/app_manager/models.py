@@ -2131,6 +2131,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
                 project = Domain.get_by_name(domain)
                 try:
                     if not should_sync_hierarchical_fixture(project):
+                        # discontinued feature on moving to flat fixture format
                         raise LocationXpathValidationError(
                             _('That format is no longer supported. To reference the location hierarchy you need to'
                               ' use the "Custom Calculations in Case List" feature preview. For more information '
