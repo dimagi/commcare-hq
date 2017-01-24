@@ -1093,7 +1093,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
                 'is_staff',
                 'is_superuser',
             ]:
-                attr_val = bool(attr_val)
+                attr_val = attr_val if attr_val is True else False
             elif not attr_val and attr != 'last_login':
                 attr_val = ''
             # truncate names when saving to django
