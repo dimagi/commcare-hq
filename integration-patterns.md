@@ -12,18 +12,60 @@ for making particularly common things really easy.
 
 ## JavaScript in Django Templates
 
-We've talked about JavaScript in Django templates before,
-but it's worth mentioning again that the most common integration
-pattern you'll see for initializing your JavaScript function and
-models with data from the server is to dump them
-in your template into little bits of JavaScript that initialize
-the rest of your code. If you're separating this step
-from the rest of the code, then you're following our current best
-practice.
+The `initial_page_data` template tag and `initial_page_data.js` library are for passing generic data from python to JavaScript.
 
-However, having to pass everything you need through this boilerplate
-can be pretty messy, so for some very common state, we have better
-systems that you should use instead.
+In a Django template, use `initial_page_data` to register a variable. The data can be a template variable or a constant.
+
+```
+{% initial_page_data 'renderReportTables' True %}
+{% initial_page_data 'defaultRows' report_table.default_rows|default:10 %}
+{% initial_page_data 'tableOptions' table_options %}
+```
+
+Your JavaScript can then include `<script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>` and access this data using the same names as in the Django template:
+
+```
+var get = hqImport('hqwebapp/js/initial_page_data.js').get,
+    renderReportTables = get('renderReportTables'),
+    defaultRows = get('defaultRows'),
+    tableOptions = get('tableOptions');
+```
+
+When your JavaScript data is a complex object, it's generally cleaner to build it in your view than to pass a lot of variables through the Django template and then build it in JavaScript. So instead of a template with
+
+```
+{% initial_page_data 'width' 50 %}
+{% initial_page_data 'height' 100 %}
+{% initial_page_data 'thingType' type %}
+{% if type == 'a' %}
+    {% initial_page_data 'aProperty' 'yes' %}
+{% else %}
+    {% initial_page_data 'bProperty' 'yes' %}
+{% endif %}
+```
+
+that then builds an object in JavaScript, when building your view context
+
+```
+options = {
+    'width': 50,
+    'height': 100,
+    'thingType': type,
+})
+if type == 'a':
+    options.update({'aProperty': 'yes'})
+else:
+    options.update({'bProperty': 'yes'})
+context.update({'options': options})
+```
+
+and then use a single `{% initial_page_data 'thingOptions' %}` in your Django template.
+
+It's common to see little bits of inline JavaScript initializing variables and calling constructor functions. This isn't ideal because it makes it harder to reason about when code is executed, particularly in JavaScript-heavy areas.
+
+Note that the `initial_page_data` approach uses a global namespace (as does the inline JavaScript approach). That is a problem for another day. An error will be thrown if you accidentally register two variables with the same name with `initial_page_data`.
+
+For a couple of use cases, we have specific systems to give you access to certain data.
 
 ## I18n
 Just like Django lets you use `ugettext('...')` in python
