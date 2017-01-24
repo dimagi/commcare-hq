@@ -85,7 +85,6 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
         delete_all_users()
         self.user = create_restore_user(self.domain, 'user', '123')
 
-
     @flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
     def test_no_user_locations_returns_empty(self):
         empty_fixture = "<fixture id='commtrack:locations' user_id='{}' />".format(self.user.user_id)
