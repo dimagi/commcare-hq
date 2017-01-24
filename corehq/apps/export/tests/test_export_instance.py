@@ -21,7 +21,6 @@ from corehq.apps.export.models import (
     FormExportInstanceDefaults,
     MultiMediaExportColumn,
 )
-from corehq.apps.export.models.new import FormExportInstanceFilters
 from corehq.apps.export.system_properties import MAIN_FORM_TABLE_PROPERTIES, \
     TOP_MAIN_FORM_TABLE_PROPERTIES
 
