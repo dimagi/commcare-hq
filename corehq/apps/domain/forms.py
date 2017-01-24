@@ -1982,24 +1982,10 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
 
     @transaction.atomic
     def process_subscription_management(self):
-        new_plan_version = None
-        edition = self.cleaned_data['software_plan_edition']
-        for plan_version in SoftwarePlanVersion.objects.filter(plan__edition=edition).order_by('-date_created'):
-            privileges = get_privileges(plan_version)
-            if (
-                REPORT_BUILDER_5 in privileges
-                and not (REPORT_BUILDER_ADD_ON_PRIVS - {REPORT_BUILDER_5, REPORT_BUILDER_TRIAL}) & privileges
-            ):
-                new_plan_version = plan_version
-                break
-        if not new_plan_version:
-            log_accounting_error(
-                "CommCare %s edition with privilege REPORT_BUILDER_5 was not found! Requires manual setup."
-                % edition
-            )
-            new_plan_version = DefaultProductPlan.get_default_plan_version(
-                edition=self.cleaned_data['software_plan_edition'],
-            )
+        new_plan_version = DefaultProductPlan.get_default_plan_version(
+            edition=self.cleaned_data['software_plan_edition'],
+            is_report_builder_enabled=True,
+        )
 
         if (
             self.current_subscription
