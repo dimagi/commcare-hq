@@ -183,15 +183,35 @@ class ZapierCustomActionFieldCaseResource(BaseZapierCustomFieldResource):
         custom_fields = []
         domain = bundle.request.GET.get('domain')
         case_type = bundle.request.GET.get('case_type')
+        create = bundle.request.GET.get('create')
 
-        custom_fields.append(CustomActionField(
-            dict(
-                type='unicode',
-                key='name',
-                label='Case name',
-                required='true'
-            )
-        ))
+        if create == "True":
+            custom_fields.append(CustomActionField(
+                dict(
+                    type='unicode',
+                    key='name',
+                    label='Case name',
+                    required='true'
+                )
+            ))
+        else:
+            custom_fields.append(CustomActionField(
+                dict(
+                    type='unicode',
+                    key='case_id',
+                    label='Case ID',
+                    required='true'
+                )
+            ))
+            custom_fields.append(CustomActionField(
+                dict(
+                    type='unicode',
+                    key='name',
+                    label='Case name',
+                    required='false'
+                )
+            ))
+
         for prop in get_case_properties_for_case_type(domain, case_type):
             custom_fields.append(CustomActionField(
                 dict(

@@ -12,11 +12,11 @@ from casexml.apps.case.mock import CaseFactory
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.decorators import login_or_api_key
-from corehq.apps.users.models import CouchUser
 from corehq.apps.zapier.queries import get_subscription_by_url
 from corehq.apps.zapier.services import delete_subscription_with_url
 from corehq.apps.zapier.consts import EventTypes
 from corehq import privileges
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 from .models import ZapierSubscription
 
@@ -95,7 +95,6 @@ class ZapierCreateCase(View):
 
     urlname = 'zapier_create_case'
 
-    # Zapier recommends not requiring authentication for unsubscribe endpoint
     @method_decorator(csrf_exempt)
     def dispatch(self, *args, **kwargs):
         return super(ZapierCreateCase, self).dispatch(*args, **kwargs)
@@ -103,18 +102,42 @@ class ZapierCreateCase(View):
     def post(self, request, *args, **kwargs):
         domain = request.GET.get('domain')
         case_type = request.GET.get('case_type')
+        owner_id = request.GET.get('user_id')
         properties = json.loads(request.body)['properties']
         case_name = properties['case_name']
 
-        couch_user = CouchUser.from_django_user(request.user)
-
         del properties['case_name']
+        del properties['case_type']
 
         factory = CaseFactory(domain=domain)
         factory.create_case(
             case_type=case_type,
-            owner_id="",
+            owner_id=owner_id,
             case_name=case_name,
+            update=properties
+        )
+
+        return HttpResponse('OK')
+
+
+class ZapierUpdateCase(View):
+
+    urlname = 'zapier_update_case'
+
+    @method_decorator(csrf_exempt)
+    def dispatch(self, *args, **kwargs):
+        return super(ZapierUpdateCase, self).dispatch(*args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        domain = request.GET.get('domain')
+        properties = json.loads(request.body)['properties']
+        case_id = properties['case_id']
+
+        del properties['case_id']
+
+        factory = CaseFactory(domain=domain)
+        factory.update_case(
+            case_id=case_id,
             update=properties
         )
 

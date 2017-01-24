@@ -7,7 +7,12 @@ from corehq.apps.zapier.api.v0_5 import (
     ZapierCustomTriggerFieldFormResource,
     ZapierCustomActionFieldCaseResource
 )
-from corehq.apps.zapier.views import SubscribeView, UnsubscribeView, ZapierCreateCase
+from corehq.apps.zapier.views import (
+    SubscribeView,
+    UnsubscribeView,
+    ZapierCreateCase,
+    ZapierUpdateCase
+)
 
 hq_api = CommCareHqApi(api_name='v0.5')
 hq_api.register(ZapierXFormInstanceResource())
@@ -19,5 +24,6 @@ urlpatterns = [
     url(r'^subscribe/$', SubscribeView.as_view(), name=SubscribeView.urlname),
     url(r'^unsubscribe/$', UnsubscribeView.as_view(), name=UnsubscribeView.urlname),
     url(r'^create_case/$', ZapierCreateCase.as_view(), name=ZapierCreateCase.urlname),
+    url(r'^update_case/$', ZapierUpdateCase.as_view(), name=ZapierUpdateCase.urlname),
     url(r'^api/', include(hq_api.urls)),
 ]
