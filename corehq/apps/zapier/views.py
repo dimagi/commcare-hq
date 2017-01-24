@@ -103,7 +103,7 @@ class ZapierCreateCase(View):
         domain = request.GET.get('domain')
         case_type = request.GET.get('case_type')
         owner_id = request.GET.get('user_id')
-        properties = json.loads(request.body)['properties']
+        properties = json.loads(request.body)
         case_name = properties['case_name']
 
         del properties['case_name']
@@ -130,7 +130,7 @@ class ZapierUpdateCase(View):
 
     def post(self, request, *args, **kwargs):
         domain = request.GET.get('domain')
-        properties = json.loads(request.body)['properties']
+        properties = json.loads(request.body)
         case_id = properties['case_id']
 
         del properties['case_id']
