@@ -24,7 +24,7 @@ models' attachments to the blob database:
    to be migrated to the blob database. For each new `BlobMixin` model:
 
    a. The mixin must come before `Document` in the list of base classes.
-   b. Add `_migrating_blobs_from_couch = True` to the class.
+   b. Add `migrating_blobs_from_couch = True` to the class.
    c. Adapt any uses of the `_attachments` property to use `blobs`
       instead (this is more than a simple find and replace; see
       `corehq.blobs.mixin` for details).
@@ -40,7 +40,7 @@ models' attachments to the blob database:
 4. Run the management command to migrate attachments out of couch:
    `./manage.py run_blob_migration <your_slug>`
 
-5. Remove `_migrating_blobs_from_couch = True` from each of your
+5. Remove `migrating_blobs_from_couch = True` from each of your
    `BlobMixin` models.
 
 6. Create a new django migration with the `makemigrations` management
@@ -96,7 +96,6 @@ from couchdbkit import ResourceConflict
 # models to be migrated
 import corehq.apps.hqmedia.models as hqmedia
 import couchforms.models as xform
-import casexml.apps.case.models as cases
 from corehq.apps.app_manager.models import Application, RemoteApp
 from couchexport.models import SavedBasicExport
 import corehq.form_processor.models as sql_xform
@@ -499,12 +498,6 @@ MIGRATIONS = {m.slug: m for m in [
         xform.XFormError,
         xform.SubmissionErrorLog,
         ("HQSubmission", xform.XFormInstance),
-    ], CouchAttachmentMigrator),
-    Migrator("cases", [
-        cases.CommCareCase,
-        ('CommCareCase-deleted', cases.CommCareCase),
-        ('CommCareCase-Deleted', cases.CommCareCase),
-        ('CommCareCase-Deleted-Deleted', cases.CommCareCase),
     ], CouchAttachmentMigrator),
 ]}
 

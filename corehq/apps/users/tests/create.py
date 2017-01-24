@@ -22,7 +22,6 @@ class CreateTestCase(TestCase):
         domain_obj = create_domain(domain)
         self.addCleanup(domain_obj.delete)
         couch_user = WebUser.create(domain, username, password, email)
-        self.addCleanup(couch_user.delete)
 
         self.assertEqual(couch_user.domains, [domain])
         self.assertEqual(couch_user.email, email)
@@ -45,7 +44,6 @@ class CreateTestCase(TestCase):
         self.addCleanup(domain2.delete)
         self.addCleanup(domain1.delete)
         couch_user = WebUser.create(None, username, password, email)
-        self.addCleanup(couch_user.delete)
         self.assertEqual(couch_user.username, username)
         self.assertEqual(couch_user.email, email)
         couch_user.add_domain_membership('domain1')
