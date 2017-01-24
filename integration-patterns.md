@@ -76,7 +76,7 @@ in js
 ```
 var urllib = hqImport('hqwebapp/js/urllib.js');
 var widgetId = 'xxxx';
-$.get(urllib.reverse('more_widget_info'), widgetId).done(function () {...});
+$.get(urllib.reverse('more_widget_info', widgetId)).done(function () {...});
 ```
 
 
