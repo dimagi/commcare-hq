@@ -1923,3 +1923,4 @@ else:
 REST_FRAMEWORK = {
     'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S.%fZ'
 }
+RCH_CREDENTIALS = {}

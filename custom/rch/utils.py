@@ -1,6 +1,7 @@
 from zeep.client import Client
 from requests.exceptions import HTTPError
 
+from django.conf import settings
 from .emails import (
     notify_error_in_service,
     notify_insecure_access_response,
@@ -12,9 +13,9 @@ def etree_to_dict(t):
     return {t.tag: map(etree_to_dict, t.iterchildren()) or t.text}
 
 
-PROJECTID = ''  # From some secure place
-ID = ''  # From some secure place
-PASSWORD = ''  # From some secure place
+PROJECTID = settings.RCH_CREDENTIALS.get('project_id')
+ID = settings.RCH_CREDENTIALS.get('id')
+PASSWORD = settings.RCH_CREDENTIALS.get('password')
 MOTHER_DATA_TYPE = '1'
 CHILD_DATA_TYPE = '2'
 
@@ -23,6 +24,8 @@ RCH_WSDL_URL = 'http://rchrpt.nhm.gov.in/RCH_WS/rchwebservices.svc?wsdl'
 
 def send_request_for_beneficiaries(from_date, to_date, state_id, beneficiary_type, district_id):
     service_obj = _get_service()
+    if not PROJECTID or not ID or not PASSWORD:
+        raise NotImplementedError("You must set credentials for RCH API request")
     return service_obj(PROJECTID, ID, PASSWORD, from_date, to_date, state_id, beneficiary_type, district_id)
 
 
