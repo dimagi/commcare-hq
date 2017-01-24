@@ -3,11 +3,17 @@
 {% load compress %}
 {% load i18n %}
 
+{% block js %}{{ block.super }}
+    {% compress js %}
+        <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
+    {% endcompress %}
+{% endblock %}
 
 {% block js-inline %}{{ block.super }}
     <script>
-        var doc = {{ doc|JSON }};
-        var pretty_doc = JSON.stringify(doc, undefined, 2)
+    var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get,
+        doc = initial_page_data('doc'),
+        pretty_doc = JSON.stringify(doc, undefined, 2);
 
         function Version(version, label, superuser_only, j2me_enabled) {
             var self = this;
@@ -28,8 +34,8 @@
         function Menu() {
             var self = this;
 
-            self.available_versions = ['{{ all_versions|join:"', '" }}'];
-            self.j2me_enabled_versions = ['{{ j2me_enabled_versions|join:"', '" }}'];
+            self.available_versions = initial_page_data('available_versions');
+            self.j2me_enabled_versions = initial_page_data('j2me_enabled_versions');
             self.versions = ko.observableArray([])
             self.available_ones = [];
             self.available_twos = [];
@@ -95,8 +101,7 @@
         $("#menu-form").koApplyBindings(buildsMenu);
 
         function postGo(url, params) {
-            var $form = $("<form>")
-                .attr("method", "post")
+            var $form = $("#submit-menu-form")
                 .attr("action", url);
             $.each(params, function (name, value) {
                 $("<input type='hidden'>")
@@ -104,13 +109,10 @@
                     .attr("value", value)
                     .appendTo($form);
             });
-            $("{% csrf_token %}").appendTo($form);
-            $form.appendTo("body");
             $form.submit();
         }
 
-        $('#submit-menu-form').click(function(e) {
-            e.preventDefault();
+        $('#menu-form .btn-primary').click(function(e) {
             var response = postGo(
                 $('#menu-form')[0].action,
                 {'doc': JSON.stringify(outputJSON(buildsMenu))}
@@ -138,6 +140,9 @@
 {% endblock %}
 
 {% block page_content %}
+    {% initial_page_data 'doc' doc %}
+    {% initial_page_data 'available_versions' all_versions %}
+    {% initial_page_data 'j2me_enabled_versions' j2me_enabled_versions %}
     {% if success %}
         <div class="alert alert-success">Your changes have been saved</div>
     {% endif %}
@@ -225,10 +230,13 @@
                     </div>
                     <div class="form-actions">
                         <div class="col-sm-offset-3">
-                            <button id="submit-menu-form" class="btn btn-primary" type="submit">Update Menu Options</button>
+                            <button class="btn btn-primary" type="button">Update Menu Options</button>
                         </div>
                     </div>
                 </fieldset>
+            </form>
+            <form id="submit-menu-form" method="POST">
+                {% csrf_token %}
             </form>
         </div>
     </div>
