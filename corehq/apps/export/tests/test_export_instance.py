@@ -313,6 +313,23 @@ class TestExportInstanceGenerationMultipleApps(SimpleTestCase):
         self.assertEqual(len(shown), 0 + selected_system_props)
 
 
+class TestExportInstanceDefaultFilters(SimpleTestCase):
+
+    def test_default_form_values(self):
+        # Confirm that FormExportInstances set the default user_types filter correctly
+        form_export = FormExportInstance()
+        form_export_wrapped = FormExportInstance.wrap({})
+        for e in [form_export, form_export_wrapped]:
+            self.assertListEqual(e.filters.user_types, [0])
+
+    def test_default_case_values(self):
+        # Confirm that CaseExportInstances set the default show_all_data flag correctly
+        case_export = CaseExportInstance()
+        case_export_wrapped = CaseExportInstance.wrap({})
+        for e in [case_export, case_export_wrapped]:
+            self.assertTrue(e.filters.show_all_data)
+
+
 class TestExportInstance(SimpleTestCase):
 
     def setUp(self):

@@ -7,7 +7,7 @@ from corehq.apps.es.users import user_ids_at_accessible_locations
 from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports import util
-from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
+from corehq.apps.reports.filters.users import LocationRestrictedMobileWorkerFilter as EMWF
 
 from corehq.apps.reports.models import HQUserType
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
