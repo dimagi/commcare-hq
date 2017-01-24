@@ -57,6 +57,7 @@ branches:
   - mk-243262-new-location-fixture # MK 1/16
   - zapier_mods        # FR 1/17
   - np/phonenumbers # NP 1/18
+  - np/billing/report-builder-plans # NP 1/24
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
