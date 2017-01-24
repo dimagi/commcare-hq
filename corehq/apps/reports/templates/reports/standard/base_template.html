@@ -101,7 +101,7 @@
 {% block title %}{{ report.title|default:"Project Reports"|safe }}{% endblock %}
 
 {% block page_breadcrumbs %}
-    <a href="#" class="btn btn-link btn-invisible visible-xs btn-report-menu" data-toggle="offcanvas"><i class="fa fa-bars"></i> Reports Menu</a>
+    <a href="#" class="btn btn-link btn-invisible visible-xs btn-report-menu" data-toggle="offcanvas"><i class="fa fa-bars"></i> {% trans "Reports Menu" %}</a>
     <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
         <li>
             <a href="{{ report.default_url }}"><strong>{% trans report.section_name|default:"Reports" %}</strong></a>
