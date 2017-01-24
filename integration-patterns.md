@@ -39,6 +39,47 @@ and its methods.
 
 For more on Django JS I18n, check out https://docs.djangoproject.com/en/1.7/topics/i18n/translation/.
 
+## Django URLs
+
+Just like you might use the `{% url %}` tag to resolve a URL in a template
+
+```
+<a href="{% url 'all_widget_info' domain %}">Widget Info</a>
+```
+
+You can use `{% registerurl %}` to make a URL available in javascript, through the urllib.reverse utility (modeled after Django's python `reverse` function).
+
+in template
+```
+{% registerurl 'all_widget_info' domain %}
+```
+
+in js
+
+```
+var urllib = hqImport('hqwebapp/js/urllib.js');
+
+$.get(urllib.reverse('all_widget_info')).done(function () {...});
+```
+
+As in this example, prefer inlining the call to `urllib.reverse` over assigning its return value to a variable if there's no specific motivation for doing so.
+
+In addition, you may keep positional arguments of the url unfilled by passing the special string `'---'` to `{% registerurl %}` and passing the argument value to `urllib.reverse` instead.
+
+in template
+```
+{% registerurl 'more_widget_info' domain '---' %}
+```
+
+in js
+
+```
+var urllib = hqImport('hqwebapp/js/urllib.js');
+var widgetId = 'xxxx';
+$.get(urllib.reverse('more_widget_info'), widgetId).done(function () {...});
+```
+
+
 ## Toggles and Feature Previews
 In python you generally have the ability to check
 at any point whether a toggle or feature preview is enabled
