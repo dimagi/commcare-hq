@@ -1560,6 +1560,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         groups += [group for group in Group.by_user(self) if group.case_sharing]
         return groups
 
+    def get_reporting_groups(self):
+        from corehq.apps.groups.models import Group
+        return [group for group in Group.by_user(self) if group.reporting]
+
     @classmethod
     def cannot_share(cls, domain, limit=None, skip=0):
         users_checked = list(cls.by_domain(domain, limit=limit, skip=skip))

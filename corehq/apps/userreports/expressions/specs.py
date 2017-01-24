@@ -328,8 +328,7 @@ class SubcasesExpressionSpec(JsonObject):
         return subcases
 
 
-class CaseSharingGroupsExpressionSpec(JsonObject):
-    type = TypeProperty('get_case_sharing_groups')
+class _GroupsExpressionSpec(JsonObject):
     user_id_expression = DictProperty(required=True)
 
     def configure(self, user_id_expression):
@@ -341,9 +340,9 @@ class CaseSharingGroupsExpressionSpec(JsonObject):
             return []
 
         assert context.root_doc['domain']
-        return self._get_case_sharing_groups(user_id, context)
+        return self._get_groups(user_id, context)
 
-    def _get_case_sharing_groups(self, user_id, context):
+    def _get_groups(self, user_id, context):
         domain = context.root_doc['domain']
         cache_key = (self.__class__.__name__, domain, user_id)
         if context.get_cache_value(cache_key) is not None:
@@ -353,10 +352,27 @@ class CaseSharingGroupsExpressionSpec(JsonObject):
         if not user:
             return []
 
-        case_sharing_groups = user.get_case_sharing_groups()
-        case_sharing_groups = [g.to_json() for g in case_sharing_groups]
-        context.set_cache_value(cache_key, case_sharing_groups)
-        return case_sharing_groups
+        groups = self._get_groups_from_user(user)
+        groups = [g.to_json() for g in groups]
+        context.set_cache_value(cache_key, groups)
+        return groups
+
+    def _get_groups_from_user(self, user):
+        raise NotImplementedError
+
+
+class CaseSharingGroupsExpressionSpec(_GroupsExpressionSpec):
+    type = TypeProperty('get_case_sharing_groups')
+
+    def _get_groups_from_user(self, user):
+        return user.get_case_sharing_groups()
+
+
+class ReportingGroupsExpressionSpec(_GroupsExpressionSpec):
+    type = TypeProperty('get_reporting_groups')
+
+    def _get_groups_from_user(self, user):
+        return user.get_reporting_groups()
 
 
 class SplitStringExpressionSpec(JsonObject):
