@@ -82,7 +82,7 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False,
                 # if we couldn't find this location the view just break out of the loop.
                 # there are some instances in viewing archived locations where we don't actually
                 # support drilling all the way down.
-                pass
+                break
             this_loc['children'] = [
                 loc_to_json(loc, project) for loc in children
                 if user is None or user_can_view_location(user, loc, project)

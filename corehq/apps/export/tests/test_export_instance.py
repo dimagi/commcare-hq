@@ -504,5 +504,5 @@ class TestExportInstanceFromSavedInstance(TestCase):
         self.assertEqual(len(instance.tables[0].columns), 2 + len(MAIN_FORM_TABLE_PROPERTIES))
         self.assertEqual(
             len(filter(lambda c: c.is_advanced, instance.tables[0].columns)),
-            2 + len([x for x in MAIN_FORM_TABLE_PROPERTIES if x.is_advanced])
+            len([x for x in MAIN_FORM_TABLE_PROPERTIES if x.is_advanced])
         )

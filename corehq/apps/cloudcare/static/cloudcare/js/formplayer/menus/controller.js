@@ -94,7 +94,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             var menuListView = Menus.Controller.getDetailList(detailObject);
 
             var tabModels = _.map(detailObjects, function (detail, index) {
-                return {title: detail.title, id: index};
+                return {title: detail.get('title'), id: index};
             });
             var tabCollection = new Backbone.Collection();
             tabCollection.reset(tabModels);

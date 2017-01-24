@@ -14,7 +14,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.tests.util import bootstrap_domain
 from corehq.apps.users.models import CommCareUser
 
-from corehq.apps.app_manager.tests.util import TestXmlMixin
+from corehq.apps.app_manager.tests.util import TestXmlMixin, extract_xml_partial
 from casexml.apps.case.xml import V2
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 
@@ -34,10 +34,7 @@ class FixtureHasLocationsMixin(TestXmlMixin):
     root = os.path.dirname(__file__)
     file_path = ['data']
 
-    # Adding this feature flag allows rendering of hierarchical fixture where requested
-    # and wont interfere with flat fixture generation
-    @flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
-    def _assert_fixture_has_locations(self, xml_name, desired_locations, flat=False):
+    def _assemble_expected_fixture(self, xml_name, desired_locations):
         ids = {
             "{}_id".format(desired_location.lower().replace(" ", "_")): (
                 self.locations[desired_location].location_id
@@ -45,12 +42,18 @@ class FixtureHasLocationsMixin(TestXmlMixin):
             for desired_location in desired_locations
         }  # eg: {"massachusetts_id" = self.locations["Massachusetts"].location_id}
 
-        generator = flat_location_fixture_generator if flat else location_fixture_generator
-        fixture = ElementTree.tostring(generator(self.user, V2)[0])
-        desired_fixture = self.get_xml(xml_name).format(
+        return self.get_xml(xml_name).format(
             user_id=self.user.user_id,
             **ids
         )
+
+    # Adding this feature flag allows rendering of hierarchical fixture where requested
+    # and wont interfere with flat fixture generation
+    @flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
+    def _assert_fixture_has_locations(self, xml_name, desired_locations, flat=False):
+        generator = flat_location_fixture_generator if flat else location_fixture_generator
+        fixture = ElementTree.tostring(generator(self.user, V2)[-1])
+        desired_fixture = self._assemble_expected_fixture(xml_name, desired_locations)
         self.assertXmlEqual(desired_fixture, fixture)
 
 
@@ -81,6 +84,7 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
         super(LocationFixturesTest, self).setUp()
         delete_all_users()
         self.user = create_restore_user(self.domain, 'user', '123')
+
 
     @flag_enabled('HIERARCHICAL_LOCATION_FIXTURE')
     def test_no_user_locations_returns_empty(self):
@@ -232,6 +236,26 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
             'include_without_expanding_same_level',
             ['Massachusetts', 'New York', 'Middlesex', 'Suffolk', 'New York City', 'Boston', 'Revere']
         )  # (New York City is of type "county")
+
+    @flag_enabled('FLAT_LOCATION_FIXTURE')
+    def test_index_location_fixtures(self):
+        self.user._couch_user.set_location(self.locations['Massachusetts'])
+        expected_result = self._assemble_expected_fixture(
+            'index_location_fixtures',
+            ['Massachusetts', 'Suffolk', 'Boston', 'Revere', 'Middlesex', 'Cambridge', 'Somerville'],
+        )
+        fixture_nodes = flat_location_fixture_generator(self.user, V2)
+        self.assertEqual(len(fixture_nodes), 2)  # fixture schema, then fixture
+
+        # check the fixture like usual
+        fixture = extract_xml_partial(ElementTree.tostring(fixture_nodes[1]), '.')
+        expected_fixture = extract_xml_partial(expected_result, './fixture')
+        self.assertXmlEqual(expected_fixture, fixture)
+
+        # check the schema
+        schema = extract_xml_partial(ElementTree.tostring(fixture_nodes[0]), '.')
+        expected_schema = extract_xml_partial(expected_result, './schema')
+        self.assertXmlEqual(expected_schema, schema)
 
 
 @mock.patch.object(Domain, 'uses_locations', lambda: True)  # removes dependency on accounting

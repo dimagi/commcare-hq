@@ -96,7 +96,13 @@ def ensure_plans(config, dry_run, verbose, apps):
             )
         else:
             try:
-                default_product_plan = DefaultProductPlan.objects.get(edition=edition, is_trial=is_trial)
+                if not hasattr(default_product_plan, 'product_type'):
+                    default_product_plan = DefaultProductPlan.objects.get(edition=edition, is_trial=is_trial)
+                else:
+                    # TODO - squash migrations and remove this
+                    default_product_plan = DefaultProductPlan.objects.get(
+                        edition=edition, is_trial=is_trial, product_type=SoftwareProductType.COMMCARE
+                    )
                 if verbose:
                     log_accounting_info(
                         "Default for edition '%s' with is_trial='%s' already exists."

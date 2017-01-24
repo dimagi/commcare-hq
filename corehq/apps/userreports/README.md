@@ -558,6 +558,17 @@ The `date_expression` can be any valid expression, or simply constant
     },
 }
 ```
+#### 'Get Case Sharing Groups' expression
+'get_case_sharing_groups' will return an array of the case sharing groups that are assigned to a provided user ID.  The array will contain one document per case sharing group.
+```json
+{
+    "type": "get_case_sharing_groups",
+    "user_id_expression": {
+        "type": "property_path",
+        "property_path": ["form", "meta", "userID"]
+    }
+}
+```
 
 
 #### Filter, Sort, Map and Reduce Expressions
@@ -678,7 +689,6 @@ This returns number of family members
     "items_expression": {},
 }
 ```
-
 
 #### Named Expressions
 

@@ -130,6 +130,7 @@ def REPORTS(project):
         sms.SMSOptOutReport,
         ivr.CallReport,
         ivr.ExpectedCallbackReport,
+        sms.PhoneNumberReport,
     ])
 
     messaging_reports += getattr(Domain.get_module_by_name(project.name), 'MESSAGING_REPORTS', ())

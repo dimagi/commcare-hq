@@ -12,7 +12,7 @@ from django.utils.translation import ugettext as _
 from django.http import QueryDict
 from django import template
 from django.core.urlresolvers import reverse
-from django.utils.html import format_html
+from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 from dimagi.utils.decorators.memoized import memoized
 from django_prbac.utils import has_privilege
@@ -605,3 +605,26 @@ def registerurl(parser, token):
     nodelist = NodeList([FakeNode()])
 
     return AddToBlockNode(nodelist, 'js-inline')
+
+
+@register.tag
+def initial_page_data(parser, token):
+    split_contents = token.split_contents()
+    tag = split_contents[0]
+    name = parse_literal(split_contents[1], parser, tag)
+    value = parser.compile_filter(split_contents[2])
+
+    class FakeNode(template.Node):
+
+        def render(self, context):
+            resolved = value.resolve(context)
+            if isinstance(resolved, basestring):
+                resolved = json.dumps(resolved)[1:-1]
+            else:
+                resolved = json.dumps(resolved)
+            return ("<div data-name=\"{}\" data-value=\"{}\"></div>"
+                    .format(name, escape(resolved)))
+
+    nodelist = NodeList([FakeNode()])
+
+    return AddToBlockNode(nodelist, 'initial_page_data')

@@ -37,7 +37,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             var urlObject = Util.CloudcareUrl.fromJson(
                 Util.encodedUrlToObject(sessionObject || Backbone.history.getFragment())
             );
-            if (!urlObject.appId) {
+            if (!urlObject.appId && !urlObject.installReference) {
                 // We can't do any menu navigation without an appId
                 FormplayerFrontend.trigger("apps:list");
             } else {

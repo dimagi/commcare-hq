@@ -235,6 +235,23 @@ def get_built_app_ids_with_submissions_for_app_id(domain, app_id, version=None):
     return [result['id'] for result in results]
 
 
+def get_built_app_ids_with_submissions_for_app_ids_and_versions(domain, app_ids_and_versions=None):
+    """
+    Returns all the built app_ids for a domain that has submissions.
+    If version is specified returns all apps after that version.
+    :domain:
+    :app_ids_and_versions: A dictionary mapping an app_id to build version
+    """
+    app_ids_and_versions = app_ids_and_versions or {}
+    app_ids = get_app_ids_in_domain(domain)
+    results = []
+    for app_id in app_ids:
+        results.extend(
+            get_built_app_ids_with_submissions_for_app_id(domain, app_id, app_ids_and_versions.get(app_id))
+        )
+    return results
+
+
 def get_latest_app_ids_and_versions(domain, app_id=None):
     """
     Returns all the latest app_ids and versions in a dictionary.

@@ -70,6 +70,32 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             "./detail[@id='m0_case_short']"
         )
 
+    def test_sort_calculation(self):
+        app = Application.wrap(self.get_json('suite-advanced'))
+        detail = app.modules[0].case_details.short
+        detail.sort_elements.append(
+            SortElement(
+                field=detail.columns[0].field,
+                type='string',
+                direction='descending',
+                sort_calculation='random()'
+            )
+        )
+        sort_node = """
+        <partial>
+            <sort direction="descending" order="1" type="string">
+              <text>
+                <xpath function="random()"/>
+              </text>
+            </sort>
+        </partial>
+        """
+        self.assertXmlPartialEqual(
+            sort_node,
+            app.create_suite(),
+            "./detail[@id='m0_case_short']/field/sort"
+        )
+
     def test_callcenter_suite(self):
         self._test_generic_suite('call-center')
 

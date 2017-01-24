@@ -38,8 +38,11 @@ class ConfigurableReportEsDataSource(ConfigurableReportDataSourceMixin, ReportDa
                 for col in [self._column_configs[sort_column_id]]
             ]
         elif self.top_level_columns:
-            col = self.top_level_columns[0]
-            return [(col.field, ASCENDING)]
+            # can only sort by columns that come from the DB
+            col = filter(lambda col: hasattr(col, 'field'), self.top_level_columns)
+            if col:
+                col = col[0]
+                return [(col.field, ASCENDING)]
         return []
 
     @property
@@ -199,7 +202,8 @@ class ConfigurableReportEsDataSource(ConfigurableReportDataSourceMixin, ReportDa
 
     @property
     def required_fields(self):
-        ret = [c.field for c in self.top_level_db_columns]
+        ret = [field for c in self.top_level_db_columns
+               for field in c.get_fields(self.config, self.lang)]
         return ret + [c for c in self.aggregation_columns]
 
     def _get_total_aggregated_results(self):

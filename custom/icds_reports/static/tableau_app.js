@@ -50,7 +50,7 @@ function setUpInitialTableauParams() {
         'block': tableauOptions.blockCode,
     };
     params[locationKey] = tableauOptions.userLocation;
-    initialLocationParams = params;
+    initialLocationParams = _.clone(params);
     var today = new Date();
     var lastMonth = new Date(today.getFullYear(), today.getMonth() - 1 , 1);
     params['Month'] = lastMonth.getFullYear() + "-" + (lastMonth.getMonth() + 1) + "-01";

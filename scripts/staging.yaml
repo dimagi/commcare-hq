@@ -53,9 +53,10 @@ branches:
   - nc/exports-with-conflict-res-branch  # Noah 12/11
   - mk-243862-locations-submit-history # MK 1/9
   - mk-243862-reassign-cases-manage-forms # MK 1/9
-  - index-fixtures+new-location-fixture
+  - es/index-fixtures+mk-243262-new-location-fixture
   - mk-243262-new-location-fixture # MK 1/16
-  - es/index-fixtures  # ES 1/16
+  - zapier_mods        # FR 1/17
+  - np/phonenumbers # NP 1/18
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

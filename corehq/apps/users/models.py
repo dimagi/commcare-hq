@@ -45,11 +45,7 @@ from corehq.apps.users.util import (
 from corehq.apps.users.tasks import tag_forms_as_deleted_rebuild_associated_cases, \
     tag_cases_as_deleted_and_remove_indices
 from corehq.apps.users.exceptions import InvalidLocationConfig
-from corehq.apps.sms.mixin import (
-    CommCareMobileContactMixin,
-    InvalidFormatException,
-    PhoneNumberInUseException,
-)
+from corehq.apps.sms.mixin import CommCareMobileContactMixin, apply_leniency
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from dimagi.utils.mixins import UnicodeMixIn
@@ -207,6 +203,7 @@ class UserRole(QuickCachedDocumentMixin, Document):
         choices=[page.id for page in ALLOWED_LANDING_PAGES],
     )
     permissions = SchemaProperty(Permissions)
+    is_non_admin_editable = BooleanProperty(default=False)
     is_archived = BooleanProperty(default=False)
 
     def get_qualified_id(self):
@@ -308,18 +305,6 @@ class UserRole(QuickCachedDocumentMixin, Document):
     @classmethod
     def get_default(cls, domain=None):
         return cls(permissions=Permissions(), domain=domain, name=None)
-
-    @classmethod
-    def role_choices(cls, domain):
-        return [(role.get_qualified_id(), role.name or '(No Name)') for role in
-                [AdminUserRole(domain=domain)] + list(cls.by_domain(domain))]
-
-    @classmethod
-    def commcareuser_role_choices(cls, domain):
-        return [('none','(none)')] + [
-            (role.get_qualified_id(), role.name or '(No Name)')
-            for role in list(cls.by_domain(domain))
-        ]
 
     @property
     def ids_of_assigned_users(self):
@@ -958,7 +943,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
                 del self.phone_numbers[i]
                 break
         self.save()
-        self.delete_verified_number(phone_number)
+        self.delete_phone_entry(phone_number)
 
     def get_django_user(self):
         return User.objects.get(username__iexact=self.username)
@@ -986,26 +971,25 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         from corehq.apps.sms.models import PhoneNumber
         from corehq.apps.hqwebapp.doc_info import get_object_url
 
-        phone_entries = self.get_verified_numbers(True)
+        phone_entries = self.get_phone_entries()
 
         def get_phone_info(phone):
             info = {}
-            phone_entry = phone_entries.get(phone)
+            phone_entry = phone_entries.get(apply_leniency(phone))
 
-            if phone_entry:
-                status = 'verified' if phone_entry.verified else 'pending'
+            if phone_entry and phone_entry.verified:
+                status = 'verified'
+            elif phone_entry and phone_entry.pending_verification:
+                status = 'pending'
             else:
-                try:
-                    self.verify_unique_number(phone)
-                    status = 'unverified'
-                except PhoneNumberInUseException:
+                duplicate = PhoneNumber.get_reserved_number(phone)
+                if duplicate:
                     status = 'duplicate'
-                    duplicate = PhoneNumber.by_phone(phone, include_pending=True)
                     if requesting_user.is_member_of(duplicate.domain):
                         info['dup_url'] = get_object_url(duplicate.domain,
                             duplicate.owner_doc_type, duplicate.owner_id)
-                except InvalidFormatException:
-                    status = 'invalid'
+                else:
+                    status = 'unverified'
 
             info.update({'number': phone, 'status': status})
             return info
@@ -1397,27 +1381,21 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def wrap(cls, data):
         # migrations from using role_id to using the domain_memberships
         role_id = None
-        should_save = False
-        if not data.has_key('domain_membership') or not data['domain_membership'].get('domain', None):
-            should_save = True
-        if data.has_key('role_id'):
+        if 'role_id' in data:
             role_id = data["role_id"]
             del data['role_id']
-            should_save = True
+        if not data.get('domain_membership', {}).get('domain', None):
+            data['domain_membership'] = DomainMembership(
+                domain=data.get('domain', ""), role_id=role_id
+            ).to_json()
         if not data.get('user_data', {}).get('commcare_project'):
             data['user_data'] = dict(data['user_data'], **{'commcare_project': data['domain']})
-            should_save = True
+
         # Todo; remove after migration
         from corehq.apps.users.management.commands import add_multi_location_property
         add_multi_location_property.Command().migrate_user(data)
 
-        self = super(CommCareUser, cls).wrap(data)
-        if should_save:
-            self.domain_membership = DomainMembership(domain=data.get('domain', ""))
-            if role_id:
-                self.domain_membership.role_id = role_id
-
-        return self
+        return super(CommCareUser, cls).wrap(data)
 
     def clear_quickcache_for_user(self):
         self.get_usercase_id.clear(self)
@@ -1563,9 +1541,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             tag_forms_as_deleted_rebuild_associated_cases.delay(
                 self.user_id, self.domain, form_id_list, deletion_id, deletion_date, deleted_cases=deleted_cases
             )
-
-        for phone_number in self.get_verified_numbers(True).values():
-            phone_number.delete()
 
         try:
             django_user = self.get_django_user()
@@ -1741,8 +1716,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         from corehq.apps.locations.models import SQLLocation
         old_primary_location_id = self.location_id
         if old_primary_location_id:
-            self.assigned_location_ids.remove(old_primary_location_id)
-            self.get_domain_membership(self.domain).assigned_location_ids.remove(old_primary_location_id)
+            self._remove_location_from_user(old_primary_location_id)
 
         if self.assigned_location_ids:
             self.user_data['commcare_location_ids'] = user_location_data(self.assigned_location_ids)
@@ -1773,14 +1747,29 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             # check if primary location
             self.unset_location(fall_back_to_next)
         else:
-            self.assigned_location_ids.remove(location_id)
-            self.get_domain_membership(self.domain).assigned_location_ids.remove(location_id)
+            self._remove_location_from_user(location_id)
 
             if self.assigned_location_ids:
                 self.user_data['commcare_location_ids'] = user_location_data(self.assigned_location_ids)
             else:
                 self.user_data.pop('commcare_location_ids')
             self.save()
+
+    def _remove_location_from_user(self, location_id):
+        try:
+            self.assigned_location_ids.remove(location_id)
+        except ValueError:
+            notify_exception(None, "Location missing from user", {
+                'user_id': self._id,
+                'location_id': location_id
+            })
+        try:
+            self.get_domain_membership(self.domain).assigned_location_ids.remove(location_id)
+        except ValueError:
+            notify_exception(None, "Location missing from domain membership", {
+                'user_id': self._id,
+                'location_id': location_id
+            })
 
     def reset_locations(self, location_ids):
         """

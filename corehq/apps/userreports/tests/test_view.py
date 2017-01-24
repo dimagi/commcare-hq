@@ -10,6 +10,8 @@ from casexml.apps.case.signals import case_post_save
 from corehq.apps.userreports import tasks
 from corehq.apps.userreports.dbaccessors import delete_all_report_configs
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
+from corehq.apps.userreports.util import get_indicator_adapter
+from corehq.apps.userreports.tests.utils import run_with_all_ucr_backends
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
@@ -103,6 +105,8 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
         data_source_config.validate()
         data_source_config.save()
         tasks.rebuild_indicators(data_source_config._id)
+        adapter = get_indicator_adapter(data_source_config)
+        adapter.refresh_table()
 
         report_config = ReportConfiguration(
             domain=cls.domain,
@@ -157,6 +161,7 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
         super(ConfigurableReportViewTest, self).setUp()
         self._delete_everything()
 
+    @run_with_all_ucr_backends
     def test_export_table(self):
         """
         Test the output of ConfigurableReport.export_table()
@@ -174,12 +179,14 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
         ]
         self.assertEqual(view.export_table, expected)
 
+    @run_with_all_ucr_backends
     def test_export_to_excel_size_under_limit(self):
         report, view = self._build_report_and_view()
 
         response = json.loads(view.export_size_check_response.content)
         self.assertEqual(response['export_allowed'], True)
 
+    @run_with_all_ucr_backends
     def test_export_to_excel_size_over_limit(self):
         report, view = self._build_report_and_view()
 
@@ -192,6 +199,7 @@ class ConfigurableReportViewTest(ConfigurableReportTestMixin, TestCase):
 
         self.assertEqual(view.export_response.status_code, 400)
 
+    @run_with_all_ucr_backends
     def test_paginated_build_table(self):
         """
         Simulate building a report where chunking occurs
