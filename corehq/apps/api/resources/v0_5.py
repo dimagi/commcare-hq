@@ -36,6 +36,8 @@ from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.reports.view import query_dict_to_dict, \
     get_filter_values
 from corehq.apps.userreports.columns import UCRExpandDatabaseSubcolumn
+from corehq.apps.users.dbaccessors.all_commcare_users import get_all_user_ids_by_domain
+from corehq.apps.users.util import user_id_to_username
 from corehq.apps.users.models import CommCareUser, WebUser, Permissions, CouchUser, UserRole
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util import get_document_or_404
@@ -887,3 +889,33 @@ class DomainCases(Resource):
         case_types = CaseAccessors(domain).get_case_types()
         results = [CaseType(case_type=case_type) for case_type in case_types]
         return results
+
+
+User = namedtuple('User', 'user_id user_name')
+User.__new__.__defaults__ = ('', '')
+class DomainUsernames(Resource):
+    """
+    Returns: list of usernames for a domain
+    """
+    user_id = fields.CharField(attribute='user_id')
+    user_name = fields.CharField(attribute='user_name')
+
+    class Meta:
+        resource_name = 'domain_usernames'
+        authentication = ApiKeyAuthentication()
+        object_class = User
+        include_resource_uri = False
+        allowed_methods = ['get']
+
+    def obj_get_list(self, bundle, **kwargs):
+        domain = kwargs['domain']
+        couch_user = CouchUser.from_django_user(bundle.request.user)
+        if not domain_has_privilege(domain, privileges.ZAPIER_INTEGRATION) or not couch_user.is_member_of(domain):
+            raise ImmediateHttpResponse(
+                HttpForbidden('You are not allowed to get list of usernames for this domain')
+            )
+        user_ids = get_all_user_ids_by_domain(domain)
+
+        results = [User(user_id=user_id, user_name = user_id_to_username(user_id)) for user_id in user_ids]
+        return results
+
