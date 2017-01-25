@@ -7,7 +7,7 @@ from corehq.apps.accounting.models import (
 )
 
 BOOTSTRAP_CONFIG = {
-    (SoftwarePlanEdition.COMMUNITY, False): {
+    (SoftwarePlanEdition.COMMUNITY, False, False): {
         'role': 'community_plan_v0',
         'product_rate': dict(),
         'feature_rates': {
@@ -15,7 +15,7 @@ BOOTSTRAP_CONFIG = {
             FeatureType.SMS: dict(monthly_limit=0),
         }
     },
-    (SoftwarePlanEdition.STANDARD, False): {
+    (SoftwarePlanEdition.STANDARD, False, False): {
         'role': 'standard_plan_v0',
         'product_rate': dict(monthly_fee=Decimal('100.00')),
         'feature_rates': {
@@ -23,7 +23,7 @@ BOOTSTRAP_CONFIG = {
             FeatureType.SMS: dict(monthly_limit=100),
         }
     },
-    (SoftwarePlanEdition.PRO, False): {
+    (SoftwarePlanEdition.PRO, False, False): {
         'role': 'pro_plan_v0',
         'product_rate': dict(monthly_fee=Decimal('500.00')),
         'feature_rates': {
@@ -31,7 +31,7 @@ BOOTSTRAP_CONFIG = {
             FeatureType.SMS: dict(monthly_limit=500),
         }
     },
-    (SoftwarePlanEdition.ADVANCED, False): {
+    (SoftwarePlanEdition.ADVANCED, False, False): {
         'role': 'advanced_plan_v0',
         'product_rate': dict(monthly_fee=Decimal('1000.00')),
         'feature_rates': {
@@ -39,7 +39,7 @@ BOOTSTRAP_CONFIG = {
             FeatureType.SMS: dict(monthly_limit=1000),
         }
     },
-    (SoftwarePlanEdition.ADVANCED, True): {
+    (SoftwarePlanEdition.ADVANCED, True, False): {
         'role': 'advanced_plan_v0',
         'product_rate': dict(),
         'feature_rates': {
@@ -47,7 +47,7 @@ BOOTSTRAP_CONFIG = {
             FeatureType.SMS: dict(monthly_limit=0),
         }
     },
-    (SoftwarePlanEdition.ENTERPRISE, False): {
+    (SoftwarePlanEdition.ENTERPRISE, False, False): {
         'role': 'enterprise_plan_v0',
         'product_rate': dict(monthly_fee=Decimal('0.00')),
         'feature_rates': {
@@ -58,7 +58,7 @@ BOOTSTRAP_CONFIG = {
 }
 
 BOOTSTRAP_CONFIG_TESTING = {
-    (SoftwarePlanEdition.COMMUNITY, False): {
+    (SoftwarePlanEdition.COMMUNITY, False, False): {
         'role': 'community_plan_v0',
         'product_rate': dict(),
         'feature_rates': {
@@ -66,7 +66,7 @@ BOOTSTRAP_CONFIG_TESTING = {
             FeatureType.SMS: dict(monthly_limit=0),
         }
     },
-    (SoftwarePlanEdition.STANDARD, False): {
+    (SoftwarePlanEdition.STANDARD, False, False): {
         'role': 'standard_plan_v0',
         'product_rate': dict(monthly_fee=Decimal('100.00')),
         'feature_rates': {
@@ -74,7 +74,7 @@ BOOTSTRAP_CONFIG_TESTING = {
             FeatureType.SMS: dict(monthly_limit=3),
         }
     },
-    (SoftwarePlanEdition.PRO, False): {
+    (SoftwarePlanEdition.PRO, False, False): {
         'role': 'pro_plan_v0',
         'product_rate': dict(monthly_fee=Decimal('500.00')),
         'feature_rates': {
@@ -82,7 +82,7 @@ BOOTSTRAP_CONFIG_TESTING = {
             FeatureType.SMS: dict(monthly_limit=5),
         }
     },
-    (SoftwarePlanEdition.ADVANCED, False): {
+    (SoftwarePlanEdition.ADVANCED, False, False): {
         'role': 'advanced_plan_v0',
         'product_rate': dict(monthly_fee=Decimal('1000.00')),
         'feature_rates': {
@@ -90,7 +90,7 @@ BOOTSTRAP_CONFIG_TESTING = {
             FeatureType.SMS: dict(monthly_limit=7),
         }
     },
-    (SoftwarePlanEdition.ADVANCED, True): {
+    (SoftwarePlanEdition.ADVANCED, True, False): {
         'role': 'advanced_plan_v0',
         'product_rate': dict(),
         'feature_rates': {
@@ -98,7 +98,7 @@ BOOTSTRAP_CONFIG_TESTING = {
             FeatureType.SMS: dict(monthly_limit=0),
         }
     },
-    (SoftwarePlanEdition.ENTERPRISE, False): {
+    (SoftwarePlanEdition.ENTERPRISE, False, False): {
         'role': 'enterprise_plan_v0',
         'product_rate': dict(monthly_fee=Decimal('0.00')),
         'feature_rates': {
