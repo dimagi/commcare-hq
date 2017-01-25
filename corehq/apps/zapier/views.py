@@ -12,6 +12,7 @@ from casexml.apps.case.mock import CaseFactory
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.decorators import login_or_api_key
+from corehq.apps.users.models import CouchUser
 from corehq.apps.zapier.queries import get_subscription_by_url
 from corehq.apps.zapier.services import delete_subscription_with_url
 from corehq.apps.zapier.consts import EventTypes
@@ -106,6 +107,11 @@ class ZapierCreateCase(View):
         properties = json.loads(request.body)
         case_name = properties['case_name']
 
+        couch_user = CouchUser.from_django_user(request.user)
+        if not domain_has_privilege(domain, privileges.ZAPIER_INTEGRATION)\
+                or not couch_user.is_member_of(domain):
+            return HttpResponseForbidden("User does not have access to this domain")
+
         del properties['case_name']
 
         factory = CaseFactory(domain=domain)
@@ -129,10 +135,19 @@ class ZapierUpdateCase(View):
 
     def post(self, request, *args, **kwargs):
         domain = request.GET.get('domain')
+        case_type = request.GET.get('case_type')
         properties = json.loads(request.body)
         case_id = properties['case_id']
 
         del properties['case_id']
+
+        couch_user = CouchUser.from_django_user(request.user)
+        if not domain_has_privilege(domain, privileges.ZAPIER_INTEGRATION)\
+                or not couch_user.is_member_of(domain):
+            return HttpResponseForbidden("User does not have access to this domain")
+
+        if case_id not in CaseAccessors(domain).get_case_ids_in_domain(case_type):
+            return HttpResponseForbidden("Could not find case in domain")
 
         factory = CaseFactory(domain=domain)
         factory.update_case(
