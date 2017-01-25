@@ -314,9 +314,6 @@ function DropdownEntry(question, options) {
 DropdownEntry.prototype = Object.create(EntrySingleAnswer.prototype);
 DropdownEntry.prototype.constructor = EntrySingleAnswer;
 DropdownEntry.prototype.onPreProcess = function(newValue) {
-    if (newValue === undefined) {
-        return;
-    }
     if (newValue === Formplayer.Const.NO_ANSWER) {
         this.answer(newValue);
     } else {
