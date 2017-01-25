@@ -263,10 +263,10 @@
                 on: $root.forceRequiredVisible,
             }
         ">
-        <label class="caption control-label" data-bind="
-            html: ko.utils.unwrapObservable($data.caption_markdown) || caption(),
-            css: Formplayer.Const.LABEL_WIDTH
-            "></label>
+        <label class="caption control-label" data-bind="css: Formplayer.Const.LABEL_WIDTH">
+            <div data-bind="html: ko.utils.unwrapObservable($data.caption_markdown) || caption()"></div>
+            <i class="hint-text" data-bind="text: ko.utils.unwrapObservable($data.hint)"></i>
+        </label>
         <div class="widget-container controls" data-bind="css: Formplayer.Const.CONTROL_WIDTH">
             <div class="loading">
                 <i class="fa fa-check text-success" data-bind="visible: clean "></i>
