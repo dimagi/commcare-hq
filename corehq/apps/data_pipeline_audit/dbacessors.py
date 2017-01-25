@@ -2,7 +2,7 @@ from collections import Counter
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps import es
-from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_type
+from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_type, get_doc_ids_in_domain_by_type
 from corehq.apps.dump_reload.sql.dump import allow_form_processing_queries
 from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
@@ -44,11 +44,25 @@ def get_primary_db_form_counts(domain):
         return _get_couch_forms_by_doc_type(domain)
 
 
+def get_primary_db_form_ids(domain, doc_type):
+    if should_use_sql_backend(domain):
+        return get_sql_form_ids(domain, doc_type)
+    else:
+        return get_doc_ids_in_domain_by_type(domain, doc_type, CommCareCase.get_db())
+
+
 def get_primary_db_case_counts(domain):
     if should_use_sql_backend(domain):
         return _get_sql_cases_by_doc_type(domain)
     else:
         return _get_couch_cases_by_doc_type(domain)
+
+
+def get_primary_db_case_ids(domain, doc_type):
+    if should_use_sql_backend(domain):
+        return get_sql_case_ids(domain, doc_type)
+    else:
+        return get_doc_ids_in_domain_by_type(domain, doc_type, CommCareCase.get_db())
 
 
 def _get_couch_forms_by_doc_type(domain):
@@ -90,3 +104,54 @@ def _get_sql_cases_by_doc_type(domain):
         counter['CommCareCase-Deleted'] += queryset.filter(deleted=True).count()
 
     return counter
+
+
+@allow_form_processing_queries()
+def get_sql_case_ids(domain, doc_type):
+    sql_ids = set()
+    deleted = doc_type == 'CommCareCase-Deleted'
+    for db_alias in get_sql_db_aliases_in_use():
+        queryset = CommCareCaseSQL.objects.using(db_alias) \
+            .filter(domain=domain, deleted=deleted).values_list('case_id', flat=True)
+        sql_ids.update(list(queryset))
+    return sql_ids
+
+
+@allow_form_processing_queries()
+def get_sql_form_ids(domain, doc_type):
+    sql_ids = set()
+    state = doc_type_to_state[doc_type]
+    for db_alias in get_sql_db_aliases_in_use():
+        queryset = XFormInstanceSQL.objects.using(db_alias) \
+            .filter(domain=domain, state=state).values_list('form_id', flat=True)
+        sql_ids.update(list(queryset))
+    return sql_ids
+
+
+def get_es_case_ids(domain, doc_type):
+    return _get_es_doc_ids(es.CaseES, domain, doc_type)
+
+
+def get_es_form_ids(domain, doc_type):
+    return _get_es_doc_ids(es.FormES, domain, doc_type)
+
+
+def _get_es_doc_ids(es_query_class, domain, doc_type):
+    return set(
+        es_query_class()
+        .remove_default_filters()
+        .filter(es.filters.domain(domain))
+        .filter(es.filters.OR(
+            es.filters.doc_type(doc_type),
+            es.filters.doc_type(doc_type.lower()),
+        )).get_ids()
+    )
+
+
+def get_es_user_ids(domain):
+    return set(
+        es.UserES()
+        .remove_default_filter('active')
+        .filter(es.filters.term('domain', domain))
+        .get_ids()
+    )
