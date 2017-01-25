@@ -271,14 +271,9 @@ class LedgerAccessorCouch(AbstractLedgerAccessor):
 
 def _get_attachment_content(doc_class, doc_id, attachment_id):
     try:
-        if issubclass(doc_class, BlobMixin):
-            doc = doc_class.get(doc_id)
-            resp = doc.fetch_attachment(attachment_id, stream=True)
-            content_type = doc.blobs[attachment_id].content_type
-        else:
-            resp = doc_class.get_db().fetch_attachment(doc_id, attachment_id, stream=True)
-            headers = resp.resp.headers
-            content_type = headers.get('Content-Type', None)
+        doc = doc_class.get(doc_id)
+        resp = doc.fetch_attachment(attachment_id, stream=True)
+        content_type = doc.blobs[attachment_id].content_type
     except ResourceNotFound:
         raise AttachmentNotFound(attachment_id)
 
