@@ -455,6 +455,17 @@
     </div>
     {% endif %}
 </script>
+<script type="text/html" id="dropdown-entry-ko-template">
+    <select class="form-control" data-bind="
+        options: options,
+        optionsValue: 'idx',
+        optionsText: 'text',
+        value: rawAnswer,
+        valueAllowUnset: true,
+        optionsCaption: gettext('Choose...')
+        ">
+    </select>
+</script>
 <script type="text/html" id="date-entry-ko-template">
     <div class="input-group">
         <input type="text" class="form-control" data-bind="attr: { id: entryId } "/>

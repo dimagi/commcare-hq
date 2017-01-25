@@ -675,6 +675,10 @@ Formplayer.Const = {
     INFO: 'info',
     BARCODE: 'barcode',
 
+    // Appearance attributes
+    NUMERIC: 'numeric',
+    MINIMAL: 'minimal',
+
     // Note it's important to differentiate these two
     NO_PENDING_ANSWER: undefined,
     NO_ANSWER: null,
