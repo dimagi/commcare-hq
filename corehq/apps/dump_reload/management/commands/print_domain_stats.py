@@ -3,9 +3,9 @@ from collections import Counter
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
 
-from corehq.apps.data_pipeline_tools.dbacessors import get_primary_db_case_counts, get_primary_db_form_counts, \
+from corehq.apps.data_pipeline_audit.dbacessors import get_primary_db_case_counts, get_primary_db_form_counts, \
     get_es_counts_by_doc_type
-from corehq.apps.data_pipeline_tools.utils import map_counter_doc_types
+from corehq.apps.data_pipeline_audit.utils import map_counter_doc_types
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
 from corehq.apps.dump_reload.couch.dump import DOC_PROVIDERS
 from corehq.apps.dump_reload.couch.id_providers import DocTypeIDProvider
@@ -16,7 +16,7 @@ from corehq.apps.users.dbaccessors.all_commcare_users import get_web_user_count,
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
 from corehq.util.couch import get_document_class_by_doc_type
-from corehq.util.markup import CSVRowFormatter, TableRowFormatter, ConsoleTableWriter
+from corehq.util.markup import CSVRowFormatter, TableRowFormatter, SimpleTableWriter
 
 
 class Command(BaseCommand):
@@ -50,7 +50,9 @@ class Command(BaseCommand):
                 _get_row_color
             )
 
-        ConsoleTableWriter(['Doc Type', 'Couch', 'SQL', 'ES'], row_formatter).write(output_rows, self.stdout)
+        SimpleTableWriter(self.stdout, row_formatter).write_table(
+            ['Doc Type', 'Couch', 'SQL', 'ES'], output_rows
+        )
 
 
 def _get_row_color(row):

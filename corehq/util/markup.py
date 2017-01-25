@@ -46,19 +46,23 @@ shell_red = _shell_color_template('31')
 shell_green = _shell_color_template('32')
 
 
-class ConsoleTableWriter(object):
+class SimpleTableWriter(object):
     """Helper class for writing tables to the console
     """
-    def __init__(self, headers, row_formatter=None):
-        self.headers = headers
-        self.num_columns = len(headers)
+    def __init__(self, output=None, row_formatter=None):
+        self.output = output or sys.stdout
         self.row_formatter = row_formatter or CSVRowFormatter()
 
-    def write(self, rows, output=None):
-        output = output or sys.stdout
-        output.write(self.row_formatter.format_headers(self.headers))
+    def write_table(self, headers, rows):
+        self.write_headers(headers)
+        self.write_rows(rows)
+
+    def write_headers(self, headers):
+        self.output.write(self.row_formatter.format_headers(headers))
+
+    def write_rows(self, rows):
         for row in rows:
-            output.write(self.row_formatter.format_row(row))
+            self.output.write(self.row_formatter.format_row(row))
 
 
 class RowFormatter(six.with_metaclass(ABCMeta)):
