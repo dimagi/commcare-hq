@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-01-25 11:54+0000\n"
+"POT-Creation-Date: 2017-01-25 12:36+0000\n"
 "PO-Revision-Date: 2017-01-25 03:45+0000\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>\n"
 "Language-Team: Spanish (http://www.transifex.com/dimagi/commcare-hq/language/"
@@ -33028,7 +33028,9 @@ msgstr ""
 #: corehq/apps/users/bulkupload.py:73
 #, python-brace-format
 msgid "The following are {label} column headers: {headers}."
-msgstr "Los siguientes son {label} encabezados de columnas: {headers}."
+msgstr ""
+"A continuación se presentan los encabezados de las columnas para {label}: "
+"{headers}."
 
 #: corehq/apps/users/bulkupload.py:90
 msgid "The following usernames have duplicate entries in your file: , "
