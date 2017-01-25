@@ -1438,6 +1438,7 @@ class DailySavedExportListView(BaseExportListView):
             else:
                 return format_angular_error("Problem saving dashboard feed filters: Invalid form")
         except Exception as e:
+            raise
             msg = "Problem saving dashboard feed filters: {} {}"
             notify_exception(self.request, message=msg.format(e.__class__, e))
             return format_angular_error(_(msg).format(e.__class__, e))

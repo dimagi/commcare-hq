@@ -581,7 +581,6 @@ class DashboardFeedFilterForm(forms.Form):
 
     def _to_case_export_instance_filters(self, can_access_all_locations, accessible_location_ids):
         emwf_selections = [x['id'] for x in self.cleaned_data["emwf_case_filter"]]
-
         return CaseExportInstanceFilters(
             date_period=DatePeriod(
                 period_type=self.cleaned_data['date_range'],
@@ -855,6 +854,7 @@ class AbstractExportFilterBuilder(object):
                 # Some date_intervals (e.g. DatePeriod instances) don't have a set_timezone() or is_valid()
                 # methods.
                 pass
+            # TODO: Ok so it looks the only actually restrictions is that
             return self.date_filter_class(gte=datespan.startdate, lt=datespan.enddate + timedelta(days=1))
 
     def _get_locations_filter(self, location_ids):
@@ -1192,6 +1192,7 @@ class FilterCaseESExportDownloadForm(EmwfFilterExportMixin, GenericFilterCaseExp
                        args=(self.domain_object.name, export.get_id))
 
     def get_case_filter(self, mobile_user_and_group_slugs, can_access_all_locations, accessible_location_ids):
+        # TODO: Rename this to filters
         """
         Taking reference from CaseListMixin allow filters depending on locations access
         :param mobile_user_and_group_slugs: ['g__e80c5e54ab552245457d2546d0cdbb03', 't__0', 't__1']
