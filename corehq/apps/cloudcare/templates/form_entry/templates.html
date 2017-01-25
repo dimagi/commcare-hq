@@ -61,7 +61,9 @@
       <div class="webforms-nav"
            data-bind="template: { name: 'form-navigation-ko-template' }"></div>
     </div>
-    <div class="container form-container" data-bind="css: { 'form-single-question': showInFormNavigation }">
+    <div class="container form-container js-form-container" data-bind="
+          css: { 'form-single-question': showInFormNavigation },
+      ">
 
       <div class="page-header">
         <h1 class="title" data-bind="text: title, visible: !showInFormNavigation()"></h1>
@@ -264,7 +266,21 @@
             }
         ">
         <label class="caption control-label" data-bind="css: Formplayer.Const.LABEL_WIDTH">
-            <div data-bind="html: ko.utils.unwrapObservable($data.caption_markdown) || caption()"></div>
+            <div>
+                <!-- ko if: help() -->
+                <a
+                    class="help-popover"
+                    tabindex="0"
+                    role="button"
+                    data-trigger="focus"
+                    data-placement="top"
+                    data-toggle="popover"
+                    data-bind="attr: { 'data-content': help }">
+                    <i class="fa fa-info-circle"></i>
+                </a>
+                <!-- /ko -->
+                <span data-bind="html: ko.utils.unwrapObservable($data.caption_markdown) || caption()"></span>
+            </div>
             <i class="hint-text" data-bind="text: ko.utils.unwrapObservable($data.hint)"></i>
         </label>
         <div class="widget-container controls" data-bind="css: Formplayer.Const.CONTROL_WIDTH">
