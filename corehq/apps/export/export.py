@@ -197,6 +197,7 @@ def _get_base_query(export_instance):
             export_instance.include_errors
         )
     if isinstance(export_instance, CaseExportInstance):
+        # Would need to change this to take in multiple case_types
         return get_case_export_base_query(
             export_instance.domain, export_instance.case_type
         )

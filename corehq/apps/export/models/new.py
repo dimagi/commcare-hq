@@ -419,6 +419,8 @@ class TableConfiguration(DocumentSchema):
 
             row_data = []
             for col in self.selected_columns:
+                # We'd have to pass the schema_identifier into this so we would know whether or not to skip
+                # getting the value for the document
                 val = col.get_value(
                     domain,
                     document_id,
@@ -560,7 +562,7 @@ class ExportInstance(BlobMixin, Document):
         raise NotImplementedError()
 
     @classmethod
-    def generate_instance_from_schema(cls, schema, saved_export=None, auto_select=True):
+    def generate_instance_from_schema(cls, schema, additional_schemas, saved_export=None, auto_select=True):
         """Given an ExportDataSchema, this will generate an ExportInstance"""
         if saved_export:
             instance = saved_export
@@ -573,6 +575,16 @@ class ExportInstance(BlobMixin, Document):
             schema.domain,
             getattr(schema, 'app_id', None),
         )
+        # Instead of doing this for just the one schema, we would loop over each schema
+        # to create an instance
+        #
+        # for schema in schemas:
+        #   make_instance
+        #
+        # We would also need to mark which columns belong to which schema so we can
+        # later process this correctly. Something simple would be to add a property
+        # like `schema_identifer` which would be the schema identifier (right now it would
+        # be either a case_type or an xmlns`)
         group_schemas = schema.group_schemas
 
         for group_schema in group_schemas:
@@ -750,6 +762,8 @@ class CaseExportInstance(ExportInstance):
 
     @classmethod
     def _new_from_schema(cls, schema):
+        # The case export instance would have to be able to have multiple case_types.
+        # Might be a pretty big change
         return cls(
             domain=schema.domain,
             case_type=schema.case_type,

@@ -1531,6 +1531,12 @@ class CreateNewCustomCaseExportView(BaseModifyNewCustomView):
             case_type,
             only_process_current_builds=DO_NOT_PROCESS_OLD_BUILDS.enabled(self.domain),
         )
+        # Would need to grab schemas from other case types
+        # schemas = []
+        # for case_type in parent_case_types:
+        #     schema.append(generate_schema(case_type))
+
+        # generate_instance_from_schema would need to be able to handle multiple schemas
         self.export_instance = self.export_instance_cls.generate_instance_from_schema(schema)
 
         return super(CreateNewCustomCaseExportView, self).get(request, *args, **kwargs)
