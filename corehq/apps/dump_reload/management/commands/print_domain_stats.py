@@ -4,6 +4,8 @@ from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
 
 from corehq.apps import es
+from corehq.apps.data_pipeline_tools.dbacessors import get_primary_db_case_counts, get_primary_db_form_counts, \
+    get_index_counts_by_domain_doc_type
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
 from corehq.apps.dump_reload.couch.dump import DOC_PROVIDERS
 from corehq.apps.dump_reload.couch.id_providers import DocTypeIDProvider
@@ -112,29 +114,17 @@ def _get_sql_counts(domain):
             continue  # User is very slow, others we want to break out
         counter[get_model_label(model_class)] += queryset.count()
 
-    counter += _get_sql_forms_by_doc_type(domain)
-    counter += _get_sql_cases_by_doc_type(domain)
+    counter += get_primary_db_form_counts(domain)
+    counter += get_primary_db_case_counts(domain)
     return counter
 
 
 def _get_es_counts(domain):
     counter = Counter()
     for es_query in (es.CaseES, es.FormES, es.UserES, es.AppES, es.LedgerES, es.GroupES):
-        counter += _get_index_counts(es_query(), domain)
+        counter += get_index_counts_by_domain_doc_type(es_query, domain)
 
     return counter
-
-
-def _get_index_counts(es_query, domain):
-    return Counter(
-        es_query
-        .remove_default_filters()
-        .filter(es.filters.term('domain', domain))
-        .terms_aggregation('doc_type', 'doc_type')
-        .size(0)
-        .run()
-        .aggregations.doc_type.counts_by_bucket()
-    )
 
 
 def _map_doc_types(counter):
@@ -142,26 +132,3 @@ def _map_doc_types(counter):
         DOC_TYPE_MAPPING.get(doc_type, doc_type): count
         for doc_type, count in counter.items()
     })
-
-
-def _get_sql_forms_by_doc_type(domain):
-    counter = Counter()
-    for db_alias in get_sql_db_aliases_in_use():
-        queryset = XFormInstanceSQL.objects.using(db_alias).filter(domain=domain)
-        for doc_type, state in doc_type_to_state.items():
-            counter[doc_type] += queryset.filter(state=state).count()
-
-        where_clause = 'state & {0} = {0}'.format(XFormInstanceSQL.DELETED)
-        counter['XFormInstance-Deleted'] += queryset.extra(where=[where_clause]).count()
-
-    return counter
-
-
-def _get_sql_cases_by_doc_type(domain):
-    counter = Counter()
-    for db_alias in get_sql_db_aliases_in_use():
-        queryset = CommCareCaseSQL.objects.using(db_alias).filter(domain=domain)
-        counter['CommCareCase'] += queryset.filter(deleted=False).count()
-        counter['CommCareCase-Deleted'] += queryset.filter(deleted=True).count()
-
-    return counter
