@@ -29,7 +29,7 @@ def get_index_counts_by_domain_doc_type(es_query_class, domain):
     return Counter(
         es_query_class()
         .remove_default_filters()
-        .filter(es.filters.term('domain', domain))
+        .filter(es.users.domain(domain))
         .terms_aggregation('doc_type', 'doc_type')
         .size(0)
         .run()
@@ -148,10 +148,11 @@ def _get_es_doc_ids(es_query_class, domain, doc_type):
     )
 
 
-def get_es_user_ids(domain):
+def get_es_user_ids(domain, doc_type):
     return set(
         es.UserES()
-        .remove_default_filter('active')
-        .filter(es.filters.term('domain', domain))
+        .remove_default_filters()
+        .filter(es.users.domain(domain))
+        .filter(es.filters.doc_type(doc_type))
         .get_ids()
     )

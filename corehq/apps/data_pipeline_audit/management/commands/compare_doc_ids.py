@@ -23,7 +23,8 @@ class Command(BaseCommand):
         handlers = {
             'CommCareCase': _compare_cases,
             'CommCareCase-Deleted': _compare_cases,
-            'CommCareUsesr': _compare_mobile_users,
+            'CommCareUser': _compare_mobile_users,
+            'WebUser': _compare_web_users,
         }
         handlers.update({doc_type: _compare_xforms for doc_type in doc_types()})
         try:
@@ -57,5 +58,11 @@ def _compare_xforms(domain, doc_type):
 
 def _compare_mobile_users(domain, doc_type):
     primary_ids = set(get_all_user_ids_by_domain(domain, include_web_users=False))
-    es_ids = get_es_user_ids(domain)
+    es_ids = get_es_user_ids(domain, doc_type)
+    return primary_ids - es_ids, es_ids - primary_ids
+
+
+def _compare_web_users(domain, doc_type):
+    primary_ids = set(get_all_user_ids_by_domain(domain, include_mobile_users=False))
+    es_ids = get_es_user_ids(domain, doc_type)
     return primary_ids - es_ids, es_ids - primary_ids
