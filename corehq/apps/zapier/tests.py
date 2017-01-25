@@ -405,7 +405,7 @@ class TestZapierCreateCaseAction(TestCase):
     @classmethod
     def setUpClass(cls):
         super(TestZapierCreateCaseAction, cls).setUpClass()
-        cls.test_url = "http://commcarehq.org/?domain=fruit&case_type=watermelon&user_id=test_user"
+        cls.test_url = "http://commcarehq.org/?domain=fruit&case_type=watermelon&user_id=test_user&user=test"
         cls.data = {'case_name': 'test1', 'price': '11'}
         cls.accessor = CaseAccessors('fruit')
         cls.domain_object = Domain.get_or_create_with_name('fruit', is_active=True)
@@ -416,13 +416,13 @@ class TestZapierCreateCaseAction(TestCase):
     def tearDownClass(cls):
         cls.user.delete()
         cls.domain_object.delete()
+        super(TestZapierCreateCaseAction, cls).tearDownClass()
 
     def test_create_case(self):
         factory = RequestFactory()
         request = factory.post(self.test_url,
                               data=json.dumps(self.data),
                               content_type='application/json')
-        request.user = self.user
 
         status = ZapierCreateCase().post(request)
         self.assertEqual(status.status_code, 200)
@@ -452,7 +452,6 @@ class TestZapierCreateCaseAction(TestCase):
         request = factory.post(self.test_url,
                                data=json.dumps(data),
                                content_type='application/json')
-        request.user = self.user
 
         status = ZapierUpdateCase().post(request)
         self.assertEqual(status.status_code, 200)
@@ -467,7 +466,6 @@ class TestZapierCreateCaseAction(TestCase):
         request = factory.post(self.test_url,
                                data=json.dumps(data),
                                content_type='application/json')
-        request.user = self.user
 
         status = ZapierUpdateCase().post(request)
         self.assertEqual(status.status_code, 403)
@@ -477,15 +475,13 @@ class TestZapierCreateCaseAction(TestCase):
         request = factory.post(self.test_url,
                                data=json.dumps(self.data),
                                content_type='application/json')
-        request.user = self.user
         ZapierCreateCase().post(request)
 
         factory = RequestFactory()
         data = {'case_name': 'test1', 'price': '15', 'case_id': 'fake_id'}
-        request = factory.post("http://commcarehq.org/?domain=spoof&case_type=watermelon&user_id=test_user",
+        request = factory.post("http://commcarehq.org/?domain=spoof&case_type=watermelon&user_id=test_user&user=test",
                                data=json.dumps(data),
                                content_type='application/json')
-        request.user = self.user
 
         status = ZapierUpdateCase().post(request)
         self.assertEqual(status.status_code, 403)
@@ -497,15 +493,13 @@ class TestZapierCreateCaseAction(TestCase):
         request = factory.post(self.test_url,
                                data=json.dumps(self.data),
                                content_type='application/json')
-        request.user = self.user
         ZapierCreateCase().post(request)
 
         factory = RequestFactory()
         data = {'case_name': 'test1', 'price': '15', 'case_id': 'fake_id'}
-        request = factory.post("http://commcarehq.org/?domain=fruit&case_type=banana&user_id=test_user",
+        request = factory.post("http://commcarehq.org/?domain=fruit&case_type=banana&user_id=test_user&user=test",
                                data=json.dumps(data),
                                content_type='application/json')
-        request.user = self.user
 
         status = ZapierUpdateCase().post(request)
         self.assertEqual(status.status_code, 403)
@@ -514,13 +508,11 @@ class TestZapierCreateCaseAction(TestCase):
 
     def test_user_does_not_have_access(self):
         factory = RequestFactory()
-        request = factory.post(self.test_url,
+        request = factory.post("http://commcarehq.org/?domain=fruit&case_type=banana&user_id=test_user&user=faker2",
                                data=json.dumps(self.data),
                                content_type='application/json')
-
         fake_domain = Domain.get_or_create_with_name('fake', is_active=True)
-        fake_user = WebUser.create('fake', 'faker', '******')
-        request.user = fake_user
+        fake_user = WebUser.create('fake', 'faker2', '******')
         status = ZapierCreateCase().post(request)
         self.assertEqual(status.status_code, 403)
         fake_domain.delete()

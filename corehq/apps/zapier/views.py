@@ -12,7 +12,7 @@ from casexml.apps.case.mock import CaseFactory
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.decorators import login_or_api_key
-from corehq.apps.users.models import CouchUser
+from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.apps.zapier.queries import get_subscription_by_url
 from corehq.apps.zapier.services import delete_subscription_with_url
 from corehq.apps.zapier.consts import EventTypes
@@ -106,10 +106,12 @@ class ZapierCreateCase(View):
         owner_id = request.GET.get('user_id')
         properties = json.loads(request.body)
         case_name = properties['case_name']
+        user_name = request.GET.get('user')
 
-        couch_user = CouchUser.from_django_user(request.user)
+        user = CommCareUser.get_by_username(user_name, domain)
+        couch_user = CouchUser.from_django_user(user)
         if not couch_user.is_member_of(domain):
-            return HttpResponseForbidden("User does not have access to this domain")
+            return HttpResponseForbidden("This user does not have access to this domain.")
 
         del properties['case_name']
 
@@ -135,14 +137,16 @@ class ZapierUpdateCase(View):
     def post(self, request, *args, **kwargs):
         domain = request.GET.get('domain')
         case_type = request.GET.get('case_type')
+        user_name = request.GET.get('user')
         properties = json.loads(request.body)
         case_id = properties['case_id']
 
         del properties['case_id']
 
-        couch_user = CouchUser.from_django_user(request.user)
+        user = CommCareUser.get_by_username(user_name, domain)
+        couch_user = CouchUser.from_django_user(user)
         if not couch_user.is_member_of(domain):
-            return HttpResponseForbidden("User does not have access to this domain")
+            return HttpResponseForbidden("This user does not have access to this domain.")
 
         if case_id not in CaseAccessors(domain).get_case_ids_in_domain(case_type):
             return HttpResponseForbidden("Could not find case in domain")
