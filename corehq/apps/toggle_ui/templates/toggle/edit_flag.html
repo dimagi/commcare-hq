@@ -7,6 +7,8 @@
 
 {% block js %}{{ block.super }}
     <script src="{% static 'style/js/main.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/urllib.js' %}"></script>
 {% endblock %}
 
 {% block stylesheets %}
@@ -89,7 +91,7 @@
                     });
                     self.saveButton.ajax({
                         type: 'post',
-                        url: "{% url "edit_toggle" toggle.slug %}" + location.search,
+                        url: hqImport('hqwebapp/js/urllib.js').reverse('edit_toggle') + location.search,
                         data: {
                             item_list: JSON.stringify(items)
                         },
@@ -101,7 +103,7 @@
                 }
             });
 
-            var projectInfoUrl = '<a href="{% url 'domain_internal_settings' '___' %}">domain</a>';
+            var projectInfoUrl = '<a href="' + hqImport('hqwebapp/js/urllib.js').reverse('domain_internal_settings') + '">domain</a>';
             self.getNamespaceHtml = function(namespace, value) {
                 if (namespace === 'domain') {
                     return projectInfoUrl.replace('___', value);
@@ -113,11 +115,12 @@
         }
 
         var $home = $('#toggle_editing_ko');
-        var view = new ToggleView();
+        var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get,
+            view = new ToggleView();
         view.init({
-            items: {{ toggle.enabled_users|JSON }},
-            namespaces: {{ namespaces|JSON }},
-            last_used: {{ last_used|JSON }}
+            items: initial_page_data('items'),
+            namespaces: initial_page_data('namespaces'),
+            last_used: initial_page_data('last_used'),
         });
         $home.koApplyBindings(view);
         $home.on('change', 'input', view.change);
@@ -125,6 +128,11 @@
 </script>
 {% endblock %}
 {% block page_content %}
+    {% registerurl 'edit_toggle' toggle.slug %}
+    {% registerurl 'domain_internal_settings' '___' %}
+    {% initial_page_data 'items' toggle.enabled_users %}
+    {% initial_page_data 'namespaces' namespaces %}
+    {% initial_page_data 'last_used' last_used %}
     <div class="row" style="margin-bottom: 50px;">
         <div class="col-sm-12">
             {% if not usage_info %}
