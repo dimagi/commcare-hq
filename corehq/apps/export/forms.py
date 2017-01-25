@@ -631,7 +631,6 @@ class DashboardFeedFilterForm(forms.Form):
             selected_items = (
                 export_instance_filters.users +
                 export_instance_filters.reporting_groups +
-                export_instance_filters.sharing_groups +
                 export_instance_filters.locations +
                 export_instance_filters.user_types
             )
