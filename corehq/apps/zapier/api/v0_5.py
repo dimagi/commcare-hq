@@ -20,7 +20,7 @@ class ZapierXFormInstanceResource(XFormInstanceResource):
         remove_advanced_fields(bundle.data)
         return bundle
 
-
+# Custom field object used for triggers and actions in Zapier.
 class CustomField(object):
 
     def __init__(self, initial=None):
@@ -169,3 +169,55 @@ class ZapierCustomFieldCaseResource(BaseZapierCustomFieldResource):
 
     class Meta(BaseZapierCustomFieldResource.Meta):
         resource_name = 'custom_fields_case'
+
+
+class ZapierCustomActionFieldCaseResource(BaseZapierCustomFieldResource):
+    """
+        Generates custom action fields for updating or creating a case.  When creating a case, users must provide
+        a new case name, as well as optionally providing values for the case properties.  When updating a case, users
+        must provide a case id, as well as optionally providing new values for the case properties.
+    """
+    def obj_get_list(self, bundle, **kwargs):
+        custom_fields = []
+        domain = bundle.request.GET.get('domain')
+        case_type = bundle.request.GET.get('case_type')
+        create = bundle.request.GET.get('create')
+
+        if create == "True":
+            custom_fields.append(CustomField(
+                dict(
+                    type='unicode',
+                    key='case_name',
+                    label='Case name'
+                )
+            ))
+        else:
+            custom_fields.append(CustomField(
+                dict(
+                    type='unicode',
+                    key='case_id',
+                    label='Case ID'
+                )
+            ))
+            custom_fields.append(CustomField(
+                dict(
+                    type='unicode',
+                    key='case_name',
+                    label='Case name'
+                )
+            ))
+
+        for prop in get_case_properties_for_case_type(domain, case_type):
+            custom_fields.append(CustomField(
+                dict(
+                    type='unicode',
+                    key=prop,
+                    label=self._build_label(prop)
+                )
+            ))
+
+        return custom_fields
+
+    class Meta(BaseZapierCustomFieldResource.Meta):
+        resource_name = 'custom_action_fields_case'
+

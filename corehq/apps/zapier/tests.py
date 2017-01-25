@@ -3,7 +3,8 @@ from collections import namedtuple
 
 from django.core.urlresolvers import reverse
 from django.test.testcases import TestCase, SimpleTestCase
-from django.test.client import Client
+from django.test.client import Client, RequestFactory
+from django.contrib.auth.models import User
 
 from tastypie.models import ApiKey
 from tastypie.resources import Resource
@@ -16,12 +17,13 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.repeaters.models import FormRepeater, CaseRepeater
 from corehq.apps.users.models import WebUser
 from corehq.apps.zapier.consts import EventTypes
-from corehq.apps.zapier.views import SubscribeView, UnsubscribeView
+from corehq.apps.zapier.views import SubscribeView, UnsubscribeView, ZapierCreateCase, ZapierUpdateCase
 from corehq.apps.zapier.api.v0_5 import ZapierCustomFieldCaseResource
 from corehq.apps.zapier.models import ZapierSubscription
 
 from corehq.apps.accounting.tests import generator
 from corehq.apps.zapier.util import remove_advanced_fields
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 XFORM = """
     <h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms"
@@ -396,3 +398,136 @@ class TestZapierCustomFields(TestCase):
         actual_fields = ZapierCustomFieldCaseResource().obj_get_list(bundle)
         for i in range(len(actual_fields)):
             self.assertEqual(expected_fields[i], actual_fields[i].get_content())
+
+
+class TestZapierCreateCaseAction(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestZapierCreateCaseAction, cls).setUpClass()
+        cls.test_url = "http://commcarehq.org/?domain=fruit&case_type=watermelon&user_id=test_user"
+        cls.data = {'case_name': 'test1', 'price': '11'}
+        cls.accessor = CaseAccessors('fruit')
+        cls.domain_object = Domain.get_or_create_with_name('fruit', is_active=True)
+        cls.domain = cls.domain_object.name
+        cls.user = WebUser.create(cls.domain, 'test', '******')
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.user.delete()
+        cls.domain_object.delete()
+
+    def test_create_case(self):
+        factory = RequestFactory()
+        request = factory.post(self.test_url,
+                              data=json.dumps(self.data),
+                              content_type='application/json')
+        request.user = self.user
+
+        status = ZapierCreateCase().post(request)
+        self.assertEqual(status.status_code, 200)
+
+        case_id = self.accessor.get_case_ids_in_domain()
+        case = self.accessor.get_case(case_id[0])
+        self.assertEqual('test1', case.get_case_property('name'))
+        self.assertEqual('11', case.get_case_property('price'))
+        self.assertEqual('watermelon', case.get_case_property('type'))
+        self.assertEqual('test_user', case.get_case_property('owner_id'))
+        self.accessor.soft_delete_cases(case_id)
+
+    def test_update_case(self):
+        factory = RequestFactory()
+        request = factory.post(self.test_url,
+                              data=json.dumps(self.data),
+                              content_type='application/json')
+        request.user = self.user
+
+        status = ZapierCreateCase().post(request)
+        self.assertEqual(status.status_code, 200)
+        case_id = self.accessor.get_case_ids_in_domain()
+        case = self.accessor.get_case(case_id[0])
+        self.assertEqual('11', case.get_case_property('price'))
+
+        data = {'case_name': 'test1', 'price': '15', 'case_id': case_id[0]}
+        request = factory.post(self.test_url,
+                               data=json.dumps(data),
+                               content_type='application/json')
+        request.user = self.user
+
+        status = ZapierUpdateCase().post(request)
+        self.assertEqual(status.status_code, 200)
+        case = self.accessor.get_case(case_id[0])
+        self.assertEqual('15', case.get_case_property('price'))
+
+        self.accessor.soft_delete_cases(case_id)
+
+    def test_update_case_does_not_exist(self):
+        factory = RequestFactory()
+        data = {'case_name': 'test1', 'price': '15', 'case_id': 'fake_id'}
+        request = factory.post(self.test_url,
+                               data=json.dumps(data),
+                               content_type='application/json')
+        request.user = self.user
+
+        status = ZapierUpdateCase().post(request)
+        self.assertEqual(status.status_code, 403)
+
+    def test_update_case_wrong_domain(self):
+        factory = RequestFactory()
+        request = factory.post(self.test_url,
+                               data=json.dumps(self.data),
+                               content_type='application/json')
+        request.user = self.user
+        ZapierCreateCase().post(request)
+
+        factory = RequestFactory()
+        data = {'case_name': 'test1', 'price': '15', 'case_id': 'fake_id'}
+        request = factory.post("http://commcarehq.org/?domain=spoof&case_type=watermelon&user_id=test_user",
+                               data=json.dumps(data),
+                               content_type='application/json')
+        request.user = self.user
+
+        status = ZapierUpdateCase().post(request)
+        self.assertEqual(status.status_code, 403)
+        case_id = self.accessor.get_case_ids_in_domain()
+        self.accessor.soft_delete_cases(case_id)
+
+    def test_update_case_wrong_type(self):
+        factory = RequestFactory()
+        request = factory.post(self.test_url,
+                               data=json.dumps(self.data),
+                               content_type='application/json')
+        request.user = self.user
+        ZapierCreateCase().post(request)
+
+        factory = RequestFactory()
+        data = {'case_name': 'test1', 'price': '15', 'case_id': 'fake_id'}
+        request = factory.post("http://commcarehq.org/?domain=fruit&case_type=banana&user_id=test_user",
+                               data=json.dumps(data),
+                               content_type='application/json')
+        request.user = self.user
+
+        status = ZapierUpdateCase().post(request)
+        self.assertEqual(status.status_code, 403)
+        case_id = self.accessor.get_case_ids_in_domain()
+        self.accessor.soft_delete_cases(case_id)
+
+    def test_user_does_not_have_access(self):
+        factory = RequestFactory()
+        request = factory.post(self.test_url,
+                               data=json.dumps(self.data),
+                               content_type='application/json')
+
+        fake_domain = Domain.get_or_create_with_name('fake', is_active=True)
+        fake_user = WebUser.create('fake', 'faker', '******')
+        request.user = fake_user
+        status = ZapierCreateCase().post(request)
+        self.assertEqual(status.status_code, 403)
+        fake_domain.delete()
+        fake_user.delete()
+
+
+
+
+
+
