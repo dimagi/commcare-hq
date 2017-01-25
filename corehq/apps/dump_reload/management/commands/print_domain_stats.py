@@ -3,9 +3,9 @@ from collections import Counter
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
 
-from corehq.apps import es
 from corehq.apps.data_pipeline_tools.dbacessors import get_primary_db_case_counts, get_primary_db_form_counts, \
-    get_index_counts_by_domain_doc_type
+    get_es_counts_by_doc_type
+from corehq.apps.data_pipeline_tools.utils import map_counter_doc_types
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
 from corehq.apps.dump_reload.couch.dump import DOC_PROVIDERS
 from corehq.apps.dump_reload.couch.id_providers import DocTypeIDProvider
@@ -17,14 +17,6 @@ from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
 from corehq.util.couch import get_document_class_by_doc_type
 from corehq.util.markup import CSVRowFormatter, TableRowFormatter, ConsoleTableWriter
-
-DOC_TYPE_MAPPING = {
-    'xforminstance': 'XFormInstance',
-    'submissionerrorlog': 'SubmissionErrorLog',
-    'xformduplicate': 'XFormDuplicate',
-    'xformerror': 'XFormError',
-    'xformarchived': 'XFormArchived',
-}
 
 
 class Command(BaseCommand):
@@ -38,9 +30,9 @@ class Command(BaseCommand):
     def handle(self, domain, **options):
         csv = options.get('csv')
 
-        couch_counts = _map_doc_types(_get_couchdb_counts(domain))
-        sql_counts = _map_doc_types(_get_sql_counts(domain))
-        es_counts = _map_doc_types(_get_es_counts(domain))
+        couch_counts = map_counter_doc_types(_get_couchdb_counts(domain))
+        sql_counts = map_counter_doc_types(_get_sql_counts(domain))
+        es_counts = map_counter_doc_types(get_es_counts_by_doc_type(domain))
         all_doc_types = set(couch_counts) | set(sql_counts) | set(es_counts)
 
         output_rows = []
@@ -55,17 +47,18 @@ class Command(BaseCommand):
         else:
             row_formatter = TableRowFormatter(
                 [50, 20, 20, 20],
-                self.get_row_color
+                _get_row_color
             )
 
         ConsoleTableWriter(['Doc Type', 'Couch', 'SQL', 'ES'], row_formatter).write(output_rows, self.stdout)
 
-    def get_row_color(self, row):
-        doc_type, couch_count, sql_count, es_count = row
-        couch_dff = couch_count and couch_count != es_count
-        sql_diff = sql_count and sql_count != es_count
-        if es_count and (couch_dff or sql_diff):
-            return 'red'
+
+def _get_row_color(row):
+    doc_type, couch_count, sql_count, es_count = row
+    couch_dff = couch_count and couch_count != es_count
+    sql_diff = sql_count and sql_count != es_count
+    if es_count and (couch_dff or sql_diff):
+        return 'red'
 
 
 def _get_couchdb_counts(domain):
@@ -107,18 +100,3 @@ def _get_sql_counts(domain):
     counter += get_primary_db_form_counts(domain)
     counter += get_primary_db_case_counts(domain)
     return counter
-
-
-def _get_es_counts(domain):
-    counter = Counter()
-    for es_query in (es.CaseES, es.FormES, es.UserES, es.AppES, es.LedgerES, es.GroupES):
-        counter += get_index_counts_by_domain_doc_type(es_query, domain)
-
-    return counter
-
-
-def _map_doc_types(counter):
-    return Counter({
-        DOC_TYPE_MAPPING.get(doc_type, doc_type): count
-        for doc_type, count in counter.items()
-    })

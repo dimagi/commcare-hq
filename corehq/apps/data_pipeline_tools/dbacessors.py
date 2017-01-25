@@ -11,12 +11,13 @@ from corehq.sql_db.config import get_sql_db_aliases_in_use
 from couchforms.models import all_known_formlike_doc_types
 
 
-def get_es_form_counts(domain):
-    return get_index_counts_by_domain_doc_type(es.FormES, domain)
+def get_es_counts_by_doc_type(domain, es_indices=None):
+    es_indices = es_indices or (es.CaseES, es.FormES, es.UserES, es.AppES, es.LedgerES, es.GroupES)
+    counter = Counter()
+    for es_query in es_indices:
+        counter += get_index_counts_by_domain_doc_type(es_query, domain)
 
-
-def get_es_case_counts(domain):
-    return get_index_counts_by_domain_doc_type(es.CaseES, domain)
+    return counter
 
 
 def get_index_counts_by_domain_doc_type(es_query_class, domain):
