@@ -666,14 +666,14 @@ class CloudcareTab(UITab):
     @property
     def view(self):
         from corehq.apps.cloudcare.views import FormplayerMain
-        if toggles.USE_FORMPLAYER_FRONTEND.enabled(self.domain):
+        if not toggles.USE_OLD_CLOUDCARE.enabled(self.domain):
             return FormplayerMain.urlname
         else:
             return "corehq.apps.cloudcare.views.default"
 
     @property
     def title(self):
-        if toggles.USE_FORMPLAYER_FRONTEND.enabled(self.domain):
+        if not toggles.USE_OLD_CLOUDCARE.enabled(self.domain):
             return _("Web Apps")
         else:
             return _("CloudCare")
@@ -1021,7 +1021,7 @@ class ProjectUsersTab(UITab):
             ]
 
             if self.can_view_cloudcare:
-                if toggles.USE_FORMPLAYER_FRONTEND.enabled(self.domain):
+                if not toggles.USE_OLD_CLOUDCARE.enabled(self.domain):
                     title = _("Web Apps Permissions")
                 else:
                     title = _("CloudCare Permissions")

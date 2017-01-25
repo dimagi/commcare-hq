@@ -123,7 +123,6 @@ def request_new_domain(request, form, is_new_user=True):
                                        request.user.get_full_name())
     send_new_request_update_email(request.user, get_ip(request), new_domain.name, is_new_user=is_new_user)
 
-    set_toggle(toggles.USE_FORMPLAYER_FRONTEND.slug, new_domain.name, True, namespace=toggles.NAMESPACE_DOMAIN)
     meta = get_meta(request)
     track_created_new_project_space_on_hubspot.delay(current_user, request.COOKIES, meta)
     return new_domain.name

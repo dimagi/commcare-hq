@@ -71,7 +71,6 @@ class TestDefaultLandingPages(TestCase):
         response = self.client.get(reverse("domain_homepage", args=[self.domain]), follow=True)
         self.assertEqual(response.status_code, 404)
 
-    @flag_enabled('USE_FORMPLAYER_FRONTEND')
     def test_formplayer_default_override(self):
         web_user = self._make_web_user('elodin@theuniversity.com', role=self.webapps_role)
         self.addCleanup(web_user.delete)
