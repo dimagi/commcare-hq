@@ -936,11 +936,12 @@ CUSTOM_CALENDAR_FIXTURE = StaticToggle(
 )
 
 
-PREVIEW_APP = StaticToggle(
+PREVIEW_APP = PredictablyRandomToggle(
     'preview_app',
     'Preview an application in the app builder',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
+    randomness=0.2,
 )
 
 DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
