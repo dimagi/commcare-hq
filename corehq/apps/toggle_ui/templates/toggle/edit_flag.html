@@ -26,16 +26,6 @@
 
 {% block js-inline %}{{ block.super }}
 <script>
-    $(function () {
-        $('.hq-help-template').each(function () {
-            COMMCAREHQ.makeHqHelp({
-                content: $(this).data('content'),
-                title: $(this).data('title')
-            }, false).insertAfter(this);
-            $(this).remove();
-        });
-        $('.hq-help').hqHelp();
-    });
     $(function(){
         var PAD_CHAR = '&nbsp;';
         function ToggleView() {
