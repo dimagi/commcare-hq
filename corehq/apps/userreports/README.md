@@ -569,17 +569,17 @@ The `date_expression` can be any valid expression, or simply constant
     }
 }
 ```
-+#### 'Get Reporting Groups' expression
- +'get_reporting_groups' will return an array of the reporting groups that are assigned to a provided user ID.  The array will contain one document per reporting group.
- +```json
- +{
- +    "type": "get_reporting_groups",
- +    "user_id_expression": {
- +        "type": "property_path",
- +        "property_path": ["form", "meta", "userID"]
- +    }
- +}
-
+#### 'Get Reporting Groups' expression
+'get_reporting_groups' will return an array of the reporting groups that are assigned to a provided user ID.  The array will contain one document per reporting group.
+```json
+{
+    "type": "get_reporting_groups",
+    "user_id_expression": {
+        "type": "property_path",
+        "property_path": ["form", "meta", "userID"]
+    }
+}
+```
 
 #### Filter, Sort, Map and Reduce Expressions
 
