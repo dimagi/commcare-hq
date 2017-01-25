@@ -758,7 +758,7 @@ def format_contact_data(domain, data):
 
 
 @require_permission(Permissions.edit_data)
-@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
+@requires_privilege_with_fallback(privileges.INBOUND_SMS)
 def chat_contact_list(request, domain):
     sEcho = request.GET.get('sEcho')
     iDisplayStart = int(request.GET.get('iDisplayStart'))
