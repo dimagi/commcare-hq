@@ -108,8 +108,7 @@ class ZapierCreateCase(View):
         case_name = properties['case_name']
 
         couch_user = CouchUser.from_django_user(request.user)
-        if not domain_has_privilege(domain, privileges.ZAPIER_INTEGRATION)\
-                or not couch_user.is_member_of(domain):
+        if not couch_user.is_member_of(domain):
             return HttpResponseForbidden("User does not have access to this domain")
 
         del properties['case_name']
@@ -142,8 +141,7 @@ class ZapierUpdateCase(View):
         del properties['case_id']
 
         couch_user = CouchUser.from_django_user(request.user)
-        if not domain_has_privilege(domain, privileges.ZAPIER_INTEGRATION)\
-                or not couch_user.is_member_of(domain):
+        if not couch_user.is_member_of(domain):
             return HttpResponseForbidden("User does not have access to this domain")
 
         if case_id not in CaseAccessors(domain).get_case_ids_in_domain(case_type):
