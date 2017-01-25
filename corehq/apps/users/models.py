@@ -1088,13 +1088,19 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             django_user = User(username=self.username)
         for attr in DjangoUserMixin.ATTRS:
             attr_val = getattr(self, attr)
-            if not attr_val and attr != 'last_login':
+            if attr in [
+                'is_active',
+                'is_staff',
+                'is_superuser',
+            ]:
+                attr_val = attr_val if attr_val is True else False
+            elif not attr_val and attr != 'last_login':
                 attr_val = ''
             # truncate names when saving to django
             if attr == 'first_name' or attr == 'last_name':
                 attr_val = attr_val[:30]
             setattr(django_user, attr, attr_val)
-        django_user.DO_NOT_SAVE_COUCH_USER= True
+        django_user.DO_NOT_SAVE_COUCH_USER = True
         return django_user
 
     def sync_from_old_couch_user(self, old_couch_user):
