@@ -27,6 +27,7 @@ from corehq.apps.app_manager.util import (
     app_callout_templates,
     is_usercase_in_use,
 )
+from corehq.apps.cloudcare.utils import should_show_preview_app
 from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import (
@@ -150,11 +151,10 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
     context.update({
         'live_preview_ab': live_preview_ab.context,
         'is_onboarding_domain': domain_obj.is_onboarding_domain,
-        'show_live_preview': (
-            toggles.PREVIEW_APP.enabled(domain)
-            or toggles.PREVIEW_APP.enabled(request.couch_user.username)
-            or (domain_obj.is_onboarding_domain
-                and live_preview_ab.version == ab_tests.LIVE_PREVIEW_ENABLED)
+        'show_live_preview': should_show_preview_app(
+            request,
+            domain_obj,
+            request.couch_user.username,
         )
     })
 
