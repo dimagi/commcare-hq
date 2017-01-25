@@ -621,7 +621,7 @@ def initial_page_data(parser, token):
             if isinstance(resolved, basestring):
                 resolved = json.dumps(resolved)[1:-1]
             else:
-                resolved = json.dumps(resolved)
+                resolved = JSON(resolved)
             return ("<div data-name=\"{}\" data-value=\"{}\"></div>"
                     .format(name, escape(resolved)))
 
