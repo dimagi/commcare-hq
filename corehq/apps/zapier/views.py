@@ -107,7 +107,6 @@ class ZapierCreateCase(View):
         case_name = properties['case_name']
 
         del properties['case_name']
-        del properties['case_type']
 
         factory = CaseFactory(domain=domain)
         factory.create_case(
