@@ -14,11 +14,9 @@ from corehq.apps.dump_reload.util import get_model_label
 from corehq.apps.hqmedia.models import CommCareMultimedia
 from corehq.apps.users.dbaccessors.all_commcare_users import get_web_user_count, get_mobile_user_count
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
-from corehq.sql_db.config import get_sql_db_aliases_in_use
 from corehq.util.couch import get_document_class_by_doc_type
-from corehq.util.markup import shell_red
+from corehq.util.markup import CSVRowFormatter, TableRowFormatter, ConsoleTableWriter
 
 DOC_TYPE_MAPPING = {
     'xforminstance': 'XFormInstance',
@@ -53,29 +51,21 @@ class Command(BaseCommand):
             output_rows.append((doc_type, couch, sql, es))
 
         if csv:
-            self.output_csv(output_rows)
+            row_formatter = CSVRowFormatter()
         else:
-            self.output_table(output_rows)
+            row_formatter = TableRowFormatter(
+                [50, 20, 20, 20],
+                self.get_row_color
+            )
 
-    def output_table(self, output_rows):
-        template = "{:<50} | {:<20} | {:<20} | {:<20}"
-        self._write_output(template, output_rows)
+        ConsoleTableWriter(['Doc Type', 'Couch', 'SQL', 'ES'], row_formatter).write(output_rows, self.stdout)
 
-    def output_csv(self, output_rows):
-        template = "{},{},{},{}\n"
-        self._write_output(template, output_rows, with_header_divider=False)
-
-    def _write_output(self, template, output_rows, with_header_divider=True, with_color=True):
-        self.stdout.write(template.format('Doc Type', 'Couch', 'SQL', 'ES'))
-        if with_header_divider:
-            self.stdout.write(template.format('-' * 50, *['-' * 20] * 3))
-        for doc_type, couch_count, sql_count, es_count in output_rows:
-            row_template = template
-            couch_dff = couch_count and couch_count != es_count
-            sql_diff = sql_count and sql_count != es_count
-            if with_color and es_count and (couch_dff or sql_diff):
-                row_template = shell_red(template)
-            self.stdout.write(row_template.format(doc_type, couch_count, sql_count, es_count))
+    def get_row_color(self, row):
+        doc_type, couch_count, sql_count, es_count = row
+        couch_dff = couch_count and couch_count != es_count
+        sql_diff = sql_count and sql_count != es_count
+        if es_count and (couch_dff or sql_diff):
+            return 'red'
 
 
 def _get_couchdb_counts(domain):
