@@ -2854,7 +2854,14 @@ class StripePaymentMethod(PaymentMethod):
 
     @property
     def all_cards(self):
-        return filter(lambda card: card is not None, self.customer.cards.data)
+        try:
+            return filter(lambda card: card is not None, self.customer.cards.data)
+        except stripe.error.AuthenticationError:
+            if not settings.STRIPE_PRIVATE_KEY:
+                log_accounting_info("Private key is not defined in settings")
+                return []
+            else:
+                raise
 
     def all_cards_serialized(self, billing_account):
         return [{
