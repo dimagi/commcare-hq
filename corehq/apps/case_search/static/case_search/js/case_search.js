@@ -6,6 +6,7 @@ hqDefine('case_search/js/case_search.js', function(){
         var self = this;
         self.codeMirror = null;
         self.type = ko.observable();
+        self.customQueryAddition = ko.observable();
         self.results = ko.observableArray();
         self.case_data_url = case_data_url;
         self.parameters = ko.observableArray([{
@@ -31,7 +32,11 @@ hqDefine('case_search/js/case_search.js', function(){
             self.results([]);
             $.post({
                 url: window.location.href,
-                data: {q: JSON.stringify({type: self.type(), parameters: self.parameters()})},
+                data: {q: JSON.stringify({
+                    type: self.type(),
+                    parameters: self.parameters(),
+                    customQueryAddition: self.customQueryAddition()}
+                )},
                 success: function(data){
                     self.results(data.values);
                     var values = JSON.stringify(data.values, null, '    ');
