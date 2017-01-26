@@ -692,11 +692,19 @@ class ExportInstance(BlobMixin, Document):
                 prev_index = index
 
             cls._insert_system_properties(instance.domain, schema.type, table)
+            table.columns = cls._move_selected_columns_to_top(table.columns)
 
             if not instance.get_table(group_schema.path):
                 instance.tables.append(table)
 
         return instance
+
+    @classmethod
+    def _move_selected_columns_to_top(cls, columns):
+        ordered_columns = []
+        ordered_columns.extend([column for column in columns if column.selected])
+        ordered_columns.extend([column for column in columns if not column.selected])
+        return ordered_columns
 
     @classmethod
     def _insert_system_properties(cls, domain, export_type, table):
