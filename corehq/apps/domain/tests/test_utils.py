@@ -17,13 +17,17 @@ class UtilsTests(TestCase):
     def setUp(self):
         domain = Domain(name=self.domain_name)
         domain.save()
-        for i, lang in enumerate(['en', 'fr', 'fr']):
-            app = Application.new_app(domain=self.domain_name, name='app{}'.format(i + 1), lang=lang)
-            app.save()
 
     def tearDown(self):
         Domain.get_by_name(self.domain_name).delete()
 
     def test_guess_domain_language(self):
+        for i, lang in enumerate(['en', 'fra', 'fra']):
+            app = Application.new_app(domain=self.domain_name, name='app{}'.format(i + 1), lang=lang)
+            app.save()
         lang = guess_domain_language(self.domain_name)
-        self.assertEqual('fr', lang)
+        self.assertEqual('fra', lang)
+
+    def test_guess_domain_language_no_apps(self):
+        lang = guess_domain_language(self.domain_name)
+        self.assertEqual('en', lang)

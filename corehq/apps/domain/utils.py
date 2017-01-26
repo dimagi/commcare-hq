@@ -110,4 +110,4 @@ def guess_domain_language(domain_name):
     """
     domain = Domain.get_by_name(domain_name)
     counter = Counter([app.default_language for app in domain.applications()])
-    return counter.most_common(1)[0][0]
+    return counter.most_common(1)[0][0] if counter else 'en'
