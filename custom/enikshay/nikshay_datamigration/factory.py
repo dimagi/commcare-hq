@@ -103,7 +103,6 @@ class EnikshayCaseFactory(object):
                 'update': {
                     'age': self.patient_detail.page,
                     'age_entered': self.patient_detail.page,
-                    'contact_phone_number': validate_phone_number(self.patient_detail.pmob),
                     'current_address': self.patient_detail.paddress,
                     'dob': date(date.today().year - self.patient_detail.page, 7, 1),
                     'dob_known': 'no',
@@ -111,6 +110,7 @@ class EnikshayCaseFactory(object):
                     'last_name': self.patient_detail.last_name,
                     'name': self.patient_detail.pname,
                     'person_id': self.patient_detail.person_id,
+                    'phone_number': validate_phone_number(self.patient_detail.pmob),
                     'secondary_contact_name_address': (
                         (self.patient_detail.cname or '')
                         + ', '
