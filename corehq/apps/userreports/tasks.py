@@ -58,6 +58,25 @@ def rebuild_indicators(indicator_config_id, initiated_by=None):
         _iteratively_build_table(config)
 
 
+@task(queue=UCR_CELERY_QUEUE, ignore_result=True)
+def rebuild_indicators_in_place(indicator_config_id, initiated_by=None):
+    config = _get_config_by_id(indicator_config_id)
+    success = _('Your UCR table {} has finished rebuilding').format(config.table_id)
+    failure = _('There was an error rebuilding Your UCR table {}.').format(config.table_id)
+    send = toggles.SEND_UCR_REBUILD_INFO.enabled(initiated_by)
+    with notify_someone(initiated_by, success_message=success, error_message=failure, send=send):
+        adapter = get_indicator_adapter(config, can_handle_laboratory=True)
+        if not id_is_static(indicator_config_id):
+            # Save the start time now in case anything goes wrong. This way we'll be
+            # able to see if the rebuild started a long time ago without finishing.
+            config.meta.build.initiated = datetime.datetime.utcnow()
+            config.meta.build.finished = False
+            config.save()
+
+        adapter.build_table()
+        _iteratively_build_table(config)
+
+
 @task(queue=UCR_CELERY_QUEUE, ignore_result=True, acks_late=True)
 def resume_building_indicators(indicator_config_id, initiated_by=None):
     config = _get_config_by_id(indicator_config_id)

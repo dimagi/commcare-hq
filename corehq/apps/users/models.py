@@ -837,6 +837,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         else:
             return self.username
 
+    @property
+    def username_in_report(self):
+        return user_display_string(self.username, self.first_name, self.last_name)
+
     def html_username(self):
         username = self.raw_username
         if '@' in username:
@@ -1088,13 +1092,19 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             django_user = User(username=self.username)
         for attr in DjangoUserMixin.ATTRS:
             attr_val = getattr(self, attr)
-            if not attr_val and attr != 'last_login':
+            if attr in [
+                'is_active',
+                'is_staff',
+                'is_superuser',
+            ]:
+                attr_val = attr_val if attr_val is True else False
+            elif not attr_val and attr != 'last_login':
                 attr_val = ''
             # truncate names when saving to django
             if attr == 'first_name' or attr == 'last_name':
                 attr_val = attr_val[:30]
             setattr(django_user, attr, attr_val)
-        django_user.DO_NOT_SAVE_COUCH_USER= True
+        django_user.DO_NOT_SAVE_COUCH_USER = True
         return django_user
 
     def sync_from_old_couch_user(self, old_couch_user):
@@ -1470,10 +1480,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def project(self):
         return Domain.get_by_name(self.domain)
 
-    @property
-    def username_in_report(self):
-        return user_display_string(self.username, self.first_name, self.last_name)
-
     def is_commcare_user(self):
         return True
 
@@ -1559,6 +1565,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         groups += [group for group in Group.by_user(self) if group.case_sharing]
         return groups
+
+    def get_reporting_groups(self):
+        from corehq.apps.groups.models import Group
+        return [group for group in Group.by_user(self) if group.reporting]
 
     @classmethod
     def cannot_share(cls, domain, limit=None, skip=0):
