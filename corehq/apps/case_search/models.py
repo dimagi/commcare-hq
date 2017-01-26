@@ -1,3 +1,5 @@
+import copy
+
 from dimagi.ext import jsonobject
 from django.db import models
 from jsonfield.fields import JSONField
@@ -5,6 +7,7 @@ from jsonfield.fields import JSONField
 
 CLAIM_CASE_TYPE = 'commcare-case-claim'
 FUZZY_PROPERTIES = "fuzzy_properties"
+SEARCH_QUERY_ADDITION_KEY = 'commcare_custom_search_query'
 
 
 class FuzzyProperties(jsonobject.JsonObject):
@@ -100,6 +103,42 @@ class CaseSearchQueryAddition(models.Model):
     )
     name = models.CharField(max_length=256, null=False, blank=False)
     query_addition = JSONField(default=dict)
+
+
+class QueryMergeException(Exception):
+    pass
+
+
+def merge_queries(base_query, query_addition):
+    """
+    Merge query_addition into a copy of base_query.
+    :param base_query: An elasticsearch query (dictionary)
+    :param query_addition: A dictionary
+    :return: The new merged query
+    """
+
+    def merge(a, b, path=None):
+        """Merge b into a"""
+
+        if path is None:
+            path = []
+        for key in b:
+            if key in a:
+                if isinstance(a[key], dict) and isinstance(b[key], dict):
+                    merge(a[key], b[key], path + [str(key)])
+                elif a[key] == b[key]:
+                    pass  # same leaf value
+                elif type(a[key]) == list and type(b[key]) == list:
+                    a[key] += b[key]
+                else:
+                    raise QueryMergeException('Conflict at %s' % '.'.join(path + [str(key)]))
+            else:
+                a[key] = b[key]
+        return a
+
+    new_query = copy.deepcopy(base_query)
+    merge(new_query, query_addition)
+    return new_query
 
 
 def case_search_enabled_for_domain(domain):

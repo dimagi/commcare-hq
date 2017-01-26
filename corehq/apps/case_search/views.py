@@ -5,7 +5,7 @@ from corehq.apps.domain.views import DomainViewMixin
 from django.http import Http404
 from dimagi.utils.web import json_response
 from django.views.generic import TemplateView
-from corehq.apps.case_search.models import case_search_enabled_for_domain
+from corehq.apps.case_search.models import case_search_enabled_for_domain, CaseSearchQueryAddition, merge_queries
 from corehq.util.view_utils import json_error, BadRequest
 
 

@@ -5,6 +5,8 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+
+from dimagi.utils.logging import notify_exception
 from django_prbac.utils import has_privilege
 from casexml.apps.case.cleanup import claim_case, get_first_claim
 from casexml.apps.case.fixtures import CaseDBFixture
@@ -14,7 +16,8 @@ from corehq import toggles, privileges
 from corehq.const import OPENROSA_VERSION_MAP, OPENROSA_DEFAULT_VERSION
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.case_search.models import CaseSearchConfig
+from corehq.apps.case_search.models import CaseSearchConfig, merge_queries, CaseSearchQueryAddition, \
+    SEARCH_QUERY_ADDITION_KEY, QueryMergeException
 from corehq.apps.domain.decorators import (
     domain_admin_required, login_or_digest_or_basic_or_apikey, check_domain_migration
 )
@@ -92,14 +95,43 @@ def search(request, domain):
         _soft_assert(False, "Someone in domain: {} tried accessing case search without a config".format(domain), e)
         config = CaseSearchConfig(domain=domain)
 
+    query_addition_id = criteria.pop(SEARCH_QUERY_ADDITION_KEY, None)
+
     fuzzies = config.config.get_fuzzy_properties_for_case_type(case_type)
     for key, value in criteria.items():
         search_es = search_es.case_property_query(key, value, fuzzy=(key in fuzzies))
-    results = search_es.values()
+
+    query_addition_debug_details = {}
+    _add_case_search_addition(request, search_es, query_addition_id, query_addition_debug_details)
+
+    try:
+        results = search_es.values()
+    except Exception as e:
+        notify_exception(request, e.message, details=dict(
+            exception_type=type(e),
+            **query_addition_debug_details
+        ))
+        raise
     # Even if it's a SQL domain, we just need to render the results as cases, so CommCareCase.wrap will be fine
     cases = [CommCareCase.wrap(flatten_result(result)) for result in results]
     fixtures = CaseDBFixture(cases).fixture
     return HttpResponse(fixtures, content_type="text/xml")
+
+def _add_case_search_addition(request, search_es, query_addition_id, query_addition_debug_details):
+    if query_addition_id:
+        query_addition = CaseSearchQueryAddition.objects.get(id=query_addition_id)
+        query_addition_debug_details['original_query'] = search_es.raw_query
+        query_addition_debug_details['query_adition'] = query_addition.query_addition
+        try:
+            new_query = merge_queries(search_es.raw_query, query_addition.query_addition)
+            query_addition_debug_details['new_query'] = new_query
+            search_es.es_query = new_query
+        except QueryMergeException as e:
+            notify_exception(request, e.message, details={
+                'original_query': search_es.raw_query,
+                'query_addition': query_addition.query_addition,
+            })
+            raise
 
 
 @location_safe
