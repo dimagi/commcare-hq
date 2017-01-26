@@ -9,7 +9,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, override as override_language
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.users.landing_pages import ALLOWED_LANDING_PAGES
@@ -36,7 +36,7 @@ from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 from casexml.apps.phone.models import OTARestoreWebUser, OTARestoreCommCareUser
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.domain.shortcuts import create_user
-from corehq.apps.domain.utils import normalize_domain_name, domain_restricts_superusers
+from corehq.apps.domain.utils import normalize_domain_name, domain_restricts_superusers, guess_domain_language
 from corehq.apps.domain.models import Domain, LicenseAgreement
 from corehq.apps.users.util import (
     user_display_string,
@@ -2299,14 +2299,16 @@ class Invitation(QuickCachedDocumentMixin, Document):
                   "inviter": self.get_inviter().formatted_name}
 
         domain_request = DomainRequest.by_email(self.domain, self.email, is_approved=True)
-        if domain_request is None:
-            text_content = render_to_string("domain/email/domain_invite.txt", params)
-            html_content = render_to_string("domain/email/domain_invite.html", params)
-            subject = _('Invitation from %s to join CommCareHQ') % self.get_inviter().formatted_name
-        else:
-            text_content = render_to_string("domain/email/domain_request_approval.txt", params)
-            html_content = render_to_string("domain/email/domain_request_approval.html", params)
-            subject = _('Request to join CommCareHQ approved')
+        lang = guess_domain_language(self.domain)
+        with override_language(lang):
+            if domain_request is None:
+                text_content = render_to_string("domain/email/domain_invite.txt", params)
+                html_content = render_to_string("domain/email/domain_invite.html", params)
+                subject = _('Invitation from %s to join CommCareHQ') % self.get_inviter().formatted_name
+            else:
+                text_content = render_to_string("domain/email/domain_request_approval.txt", params)
+                html_content = render_to_string("domain/email/domain_request_approval.html", params)
+                subject = _('Request to join CommCareHQ approved')
         send_html_email_async.delay(subject, self.email, html_content,
                                     text_content=text_content,
                                     cc=[self.get_inviter().get_email()],

@@ -1,3 +1,4 @@
+from collections import defaultdict
 import os
 import re
 
@@ -100,3 +101,20 @@ def get_domain_url_slug(hr_name, max_length=25, separator='-'):
             text += separator + word
 
     return text[:max_length]
+
+
+def guess_domain_language(domain_name):
+    """
+    A domain does not have a default language, but its apps do. Return
+    the language code of the most common default language across apps.
+    """
+    domain = Domain.get_by_name(domain_name)
+    language_count = defaultdict(lambda: 0)
+    lang = 'en'
+    last_max = 0
+    for app in domain.applications():
+        language_count[app.default_language] += 1
+        if language_count[app.default_language] > last_max:
+            lang = app.default_language
+            last_max = language_count[app.default_language]
+    return lang
