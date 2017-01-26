@@ -2,10 +2,13 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load timezone_tags %}
+{% load compress %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'reports/js/config.dataTables.bootstrap.js' %}"></script>
-    <script src="{% static 'toggle_ui/js/flags.js' %}"></script>
+    {% compress js %}
+        <script src="{% static 'reports/js/config.dataTables.bootstrap.js' %}"></script>
+        <script src="{% static 'toggle_ui/js/flags.js' %}"></script>
+    {% endcompress %}
 {% endblock %}
 
 

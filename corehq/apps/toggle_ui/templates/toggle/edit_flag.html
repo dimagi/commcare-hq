@@ -2,14 +2,17 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load timezone_tags %}
+{% load compress %}
 
 {% block title %}{% trans "Edit Feature Flag: " %}{{ toggle_meta.label }}{% endblock %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'style/js/main.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/urllib.js' %}"></script>
-    <script src="{% static 'toggle_ui/js/edit-flag.js' %}"></script>
+    {% compress js %}
+        <script src="{% static 'style/js/main.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/urllib.js' %}"></script>
+        <script src="{% static 'toggle_ui/js/edit-flag.js' %}"></script>
+    {% endcompress %}
 {% endblock %}
 
 {% block stylesheets %}
