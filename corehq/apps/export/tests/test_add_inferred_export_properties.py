@@ -77,7 +77,7 @@ class InferredSchemaSignalTest(TestCase):
         """
         props = set(['user_id'])  # user_id maps to two system properties
         self._add_props(props)
-        schema = get_inferred_schema(self.domain, self.case_type)
+        schema = get_case_inferred_schema(self.domain, self.case_type)
         group_schema = schema.group_schemas[0]
         self.assertEqual(len(group_schema.items), 1)
 

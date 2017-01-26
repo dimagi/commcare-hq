@@ -238,17 +238,11 @@ class TestForceConvertFormExport(TestConvertBase):
 
     def test_force_column_convert_form_export_with_repeats(self, _, __):
         instance, _ = self._convert_form_export('repeat')
-        table = instance.get_table(MAIN_TABLE)
-
-        index, column = table.get_column(
-            [PathNode(name='form'), PathNode(name='repeat', is_repeat=True), PathNode(name='question2')],
-            'ScalarItem',
-            None
-        )
-        self.assertIsNone(column)
+        table = instance.get_table([PathNode(name='form'), PathNode(name='repeat', is_repeat=True)])
+        self.assertIsNone(table)
 
         instance, _ = self._convert_form_export('repeat', force=True)
-        table = instance.get_table(MAIN_TABLE)
+        table = instance.get_table([PathNode(name='form'), PathNode(name='repeat', is_repeat=True)])
 
         index, column = table.get_column(
             [PathNode(name='form'), PathNode(name='repeat', is_repeat=True), PathNode(name='question2')],

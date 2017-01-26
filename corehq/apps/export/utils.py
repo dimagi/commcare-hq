@@ -135,6 +135,7 @@ def convert_saved_export_to_export_instance(
                 is_user_defined=True,
                 path=_convert_index_to_path_nodes(old_table.index),
             )
+            instance._insert_system_properties(domain, instance.type, new_table)
             instance.tables.append(new_table)
 
         new_table.label = old_table.display
@@ -529,6 +530,7 @@ def _get_normal_column(new_table, column_path, transform):
         'LabelItem',
         'ExportItem',
     ]
+
     # Since old exports had no concept of item type, we just guess all
     # the types and see if there are any matches.
     for guess_type in guess_types:
