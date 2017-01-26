@@ -35,7 +35,5 @@ script:
 after_success:
   # create symlink so coverage report can find source files
   - sudo ln -s $(pwd) /mnt/commcare-hq-ro
-  - coverage report
-  - coveralls
 services:
   - docker
