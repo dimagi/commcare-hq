@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import Counter
 import os
 import re
 
@@ -109,12 +109,5 @@ def guess_domain_language(domain_name):
     the language code of the most common default language across apps.
     """
     domain = Domain.get_by_name(domain_name)
-    language_count = defaultdict(lambda: 0)
-    lang = 'en'
-    last_max = 0
-    for app in domain.applications():
-        language_count[app.default_language] += 1
-        if language_count[app.default_language] > last_max:
-            lang = app.default_language
-            last_max = language_count[app.default_language]
-    return lang
+    counter = Counter([app.default_language for app in domain.applications()])
+    return counter.most_common(1)[0][0]
