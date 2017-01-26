@@ -211,6 +211,7 @@ class EnikshayCaseFactory(object):
                     'nikshay_id': self.nikshay_id,
                     'occupation': self.patient_detail.occupation,
                     'patient_type_choice': self.patient_detail.patient_type_choice,
+                    'person_id': self.patient_detail.person_id,
                     'treatment_initiated': 'yes_phi',
                     'treatment_initiation_date': self.patient_detail.treatment_initiation_date,
                     'treatment_supporter_designation': self.patient_detail.treatment_supporter_designation,
