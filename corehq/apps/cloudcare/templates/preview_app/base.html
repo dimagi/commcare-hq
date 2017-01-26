@@ -163,7 +163,12 @@
               <small id="version-info"></small>
             </div>
             <div class="scrollable-container dragscroll form-scrollable-container">
-              <section id="webforms" class="webforms" data-bind="template: { name: 'form-fullform-ko-template' }"></section>
+              <section id="webforms" data-bind="
+                  template: {
+                      name: 'form-fullform-ko-template',
+                      afterRender: afterRender
+                  }">
+              </section>
               {% if request.couch_user.can_edit_data %}
               <section id="cloudcare-debugger" data-bind="
                   template: {

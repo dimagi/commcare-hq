@@ -303,6 +303,24 @@ SingleSelectEntry.prototype.onPreProcess = function(newValue) {
     }
 };
 
+function DropdownEntry(question, options) {
+    var self = this;
+    EntrySingleAnswer.call(this, question, options);
+    self.templateType = 'dropdown';
+    self.options = _.map(question.choices(), function(choice, idx) {
+        return { text: choice, idx: idx + 1 };
+    });
+}
+DropdownEntry.prototype = Object.create(EntrySingleAnswer.prototype);
+DropdownEntry.prototype.constructor = EntrySingleAnswer;
+DropdownEntry.prototype.onPreProcess = function(newValue) {
+    if (newValue === Formplayer.Const.NO_ANSWER) {
+        this.answer(newValue);
+    } else {
+        this.answer(+newValue);
+    }
+};
+
 $.datetimepicker.setDateFormatter({
     parseDate: function (date, format) {
         var d = moment(date, format);
@@ -525,7 +543,8 @@ GeoPointEntry.prototype.constructor = EntryArrayAnswer;
 function getEntry(question) {
     var entry = null;
     var options = {};
-    var rawStyle;
+    var isNumeric = false;
+    var isMinimal = false;
 
     var displayOptions = _getDisplayOptions(question);
     var isPhoneMode = ko.utils.unwrapObservable(displayOptions.phoneMode);
@@ -534,8 +553,10 @@ function getEntry(question) {
     case Formplayer.Const.STRING:
     // Barcode uses text box for CloudCare so it's possible to still enter a barcode field
     case Formplayer.Const.BARCODE:
-        rawStyle = question.style ? ko.utils.unwrapObservable(question.style.raw) === 'numeric' : false;
-        if (rawStyle) {
+        if (question.style) {
+            isNumeric = ko.utils.unwrapObservable(question.style.raw) === Formplayer.Const.NUMERIC;
+        }
+        if (isNumeric) {
             entry = new PhoneEntry(question, { enableAutoUpdate: isPhoneMode });
         } else {
             entry = new FreeTextEntry(question, { enableAutoUpdate: isPhoneMode });
@@ -551,7 +572,14 @@ function getEntry(question) {
         entry = new FloatEntry(question, { enableAutoUpdate: isPhoneMode });
         break;
     case Formplayer.Const.SELECT:
-        entry = new SingleSelectEntry(question, {});
+        if (question.style) {
+            isMinimal = ko.utils.unwrapObservable(question.style.raw) === Formplayer.Const.MINIMAL;
+        }
+        if (isMinimal) {
+            entry = new DropdownEntry(question, {});
+        } else {
+            entry = new SingleSelectEntry(question, {});
+        }
         break;
     case Formplayer.Const.MULTI_SELECT:
         entry = new MultiSelectEntry(question, {});
