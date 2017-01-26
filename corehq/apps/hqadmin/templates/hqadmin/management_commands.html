@@ -1,5 +1,13 @@
 {% extends "hqadmin/hqadmin_base_report.html" %}
 {% load i18n %}
+{% load compress %}
+{% load hq_shared_tags %}
+
+{% block js %}{{ block.super }}
+    {% compress js %}
+        <script src="{% static 'hqwebapp/js/urllib.js' %}"></script>
+    {% endcompress %}
+{% endblock %}
 
 {% block js-inline %}
     <script>
@@ -23,7 +31,7 @@
 
             $("#cmd-btn").click(function(){
                 var data = {"command": $command_select.val()};
-                $.post("{% url "run_management_command" %}", data, function(resp) {
+                $.post(hqImport('hqwebapp/js/urllib.js').reverse('run_management_command'), data, function(resp) {
                     var alert_cls = resp.success ? "alert-success" : "alert-danger";
                     $("#cmd-resp")
                         .removeClass("alert-success alert-danger")
@@ -39,6 +47,7 @@
 {% block report-title %}{% trans "Management Commands" %}{% endblock %}
 
 {% block reportcontent %}
+    {% registerurl "run_management_command" %}
     <div class="spacer"></div>
     <h2>Run a Management Command:</h2>
     <div class="form-inline well">
