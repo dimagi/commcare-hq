@@ -2584,10 +2584,11 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
                                       % self.domain)
             if self.internal_settings_form.cleaned_data['send_handoff_email']:
                 self.send_handoff_email()
+            return redirect(self.urlname, self.domain)
         else:
             messages.error(request, _(
                 "Your settings are not valid, see below for errors. Correct them and try again!"))
-        return self.get(request, *args, **kwargs)
+            return self.get(request, *args, **kwargs)
 
 
 class EditInternalCalculationsView(BaseInternalDomainSettingsView):
