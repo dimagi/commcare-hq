@@ -4,6 +4,7 @@ import hashlib
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
+from corehq.apps.users.models import Permissions
 from corehq.util.soft_assert import soft_assert
 from corehq import privileges, toggles
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
@@ -67,6 +68,11 @@ def has_report_builder_trial(request):
 
 
 def can_edit_report(request, report):
+    edit_data_perm = Permissions.edit_data.name
+    user_can_edit = request.couch_user.has_permission(request.domain, edit_data_perm)
+    if not user_can_edit:
+        return False
+
     ucr_toggle = toggle_enabled(request, toggles.USER_CONFIGURABLE_REPORTS)
     report_builder_toggle = toggle_enabled(request, toggles.REPORT_BUILDER)
     report_builder_beta_toggle = toggle_enabled(request, toggles.REPORT_BUILDER_BETA_GROUP)
