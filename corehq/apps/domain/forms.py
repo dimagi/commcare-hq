@@ -1007,6 +1007,13 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             "Primary Dimagi point of contact going forward (type email of existing web user)."
         ),
     )
+    send_handoff_email = forms.BooleanField(
+        label=ugettext_noop("Send Hand-off Email"),
+        required=False,
+        help_text=ugettext_lazy(
+            "Check this box to trigger a hand-off email to the partner when this form is submitted."
+        ),
+    )
 
     def __init__(self, domain, can_edit_eula, *args, **kwargs):
         super(DomainInternalForm, self).__init__(*args, **kwargs)
@@ -1064,6 +1071,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                 'training_materials',
                 'partner_comments',
                 'partner_contact',
+                'send_handoff_email',
                 'dimagi_contact',
             ),
             crispy.Fieldset(
@@ -1080,26 +1088,36 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
             ),
         )
 
-    def _assert_is_web_user_in_domain(self, username):
+    def _get_user_or_fail(self, field):
+        username = self.cleaned_data[field]
+        if not username:
+            return None
         user = WebUser.get_by_username(username)
         if not user:
             msg = "Web user with username '{username}' does not exist"
-            raise forms.ValidationError(msg.format(username=username))
-        if not user.is_member_of(self.domain):
-            msg = ugettext_lazy("'{username}' is not the username of a web user in '{domain}'")
-            raise forms.ValidationError(msg.format(username=username, domain=self.domain))
+            self.add_error(field, msg.format(username=username))
+        elif not user.is_member_of(self.domain):
+            msg = "'{username}' is not the username of a web user in '{domain}'"
+            self.add_error(field, msg.format(username=username, domain=self.domain))
+        return user
 
-    def clean_partner_contact(self):
-        username = self.cleaned_data['partner_contact']
-        if username:
-            self._assert_is_web_user_in_domain(username)
-        return username
+    def clean(self):
+        send_handoff_email = self.cleaned_data['send_handoff_email']
 
-    def clean_dimagi_contact(self):
-        username = self.cleaned_data['dimagi_contact']
-        if username:
-            self._assert_is_web_user_in_domain(username)
-        return username
+        partner_user = self._get_user_or_fail('partner_contact')
+        if not partner_user and send_handoff_email:
+            msg = "You can't send a hand-off email without specifying a partner contact."
+            self.add_error('partner_contact', msg)
+
+        dimagi_user = self._get_user_or_fail('dimagi_contact')
+        if send_handoff_email and not dimagi_user:
+            msg = "You can't send a hand-off email without specifying a contact at dimagi."
+            self.add_error('dimagi_contact', msg)
+        elif send_handoff_email and not dimagi_user.full_name:
+            msg = ("The dimagi user '{}' does not have a name configured, please"
+                   "go to your account settings and add a name before attempting "
+                   "to send an email to the partner.").format(dimagi_user.username)
+            self.add_error('dimagi_contact', msg)
 
     def save(self, domain):
         kwargs = {"workshop_region": self.cleaned_data["workshop_region"]} if self.cleaned_data["workshop_region"] else {}

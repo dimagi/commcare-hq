@@ -2536,6 +2536,23 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             'areas': dict([(a["name"], a["sub_areas"]) for a in settings.INTERNAL_DATA["area"]]),
         }
 
+    def send_handoff_email(self):
+        partner_contact = self.internal_settings_form.cleaned_data['partner_contact']
+        dimagi_contact = self.internal_settings_form.cleaned_data['dimagi_contact']
+        recipients = filter(None, [partner_contact, dimagi_contact])
+        params = {'contact_name': CouchUser.get_by_username(dimagi_contact).human_friendly_name}
+        send_html_email_async.delay(
+            subject="Project Support Transition",
+            recipient=recipients,
+            html_content=render_to_string(
+                "domain/email/support_handoff.html", params),
+            text_content=render_to_string(
+                "domain/email/support_handoff.txt", params),
+            email_from=settings.SUPPORT_EMAIL,
+        )
+        messages.success(self.request,
+                         _("Sent hand-off email to {}.").format(" and ".join(recipients)))
+
     def post(self, request, *args, **kwargs):
         if self.internal_settings_form.is_valid():
             old_attrs = copy.copy(self.domain_object.internal)
@@ -2565,6 +2582,8 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
 
             messages.success(request, _("The internal information for project %s was successfully updated!")
                                       % self.domain)
+            if self.internal_settings_form.cleaned_data['send_handoff_email']:
+                self.send_handoff_email()
         else:
             messages.error(request, _(
                 "Your settings are not valid, see below for errors. Correct them and try again!"))
