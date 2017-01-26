@@ -822,82 +822,82 @@ class PrivacySecurityForm(forms.Form):
 
 
 class DomainInternalForm(forms.Form, SubAreaMixin):
-    sf_contract_id = CharField(label=ugettext_noop("Salesforce Contract ID"), required=False)
-    sf_account_id = CharField(label=ugettext_noop("Salesforce Account ID"), required=False)
-    initiative = forms.MultipleChoiceField(label=ugettext_noop("Initiative"),
+    sf_contract_id = CharField(label="Salesforce Contract ID", required=False)
+    sf_account_id = CharField(label="Salesforce Account ID", required=False)
+    initiative = forms.MultipleChoiceField(label="Initiative",
                                            widget=forms.CheckboxSelectMultiple(),
                                            choices=tuple_of_copies(DATA_DICT["initiatives"], blank=False),
                                            required=False)
     workshop_region = CharField(
-        label=ugettext_noop("Workshop Region"),
+        label="Workshop Region",
         required=False,
-        help_text=ugettext_noop("e.g. US, LAC, SA, Sub-Saharan Africa, Southeast Asia, etc."))
+        help_text="e.g. US, LAC, SA, Sub-Saharan Africa, Southeast Asia, etc.")
     self_started = ChoiceField(
-        label=ugettext_noop("Self Started?"),
+        label="Self Started?",
         choices=tf_choices('Yes', 'No'),
         required=False,
-        help_text=ugettext_noop(
+        help_text=(
             "The organization built and deployed their app themselves. Dimagi may have provided indirect support"
         ))
     is_test = ChoiceField(
-        label=ugettext_lazy("Real Project"),
-        choices=(('none', ugettext_lazy('Unknown')),
-                 ('true', ugettext_lazy('Test')),
-                 ('false', ugettext_lazy('Real')),)
+        label="Real Project",
+        choices=(('none', 'Unknown'),
+                 ('true', 'Test'),
+                 ('false', 'Real'),)
     )
     area = ChoiceField(
-        label=ugettext_noop("Sector*"),
+        label="Sector*",
         required=False,
         choices=tuple_of_copies(AREA_CHOICES))
     sub_area = ChoiceField(
-        label=ugettext_noop("Sub-Sector*"),
+        label="Sub-Sector*",
         required=False,
         choices=tuple_of_copies(SUB_AREA_CHOICES))
     organization_name = CharField(
-        label=ugettext_noop("Organization Name*"),
+        label="Organization Name*",
         required=False,
-        help_text=ugettext_lazy("Quick 1-2 sentence summary of the project."),
+        help_text="Quick 1-2 sentence summary of the project.",
     )
-    notes = CharField(label=ugettext_noop("Notes*"), required=False, widget=forms.Textarea)
+    notes = CharField(label="Notes*", required=False, widget=forms.Textarea)
     phone_model = CharField(
-        label=ugettext_noop("Device Model"),
-        help_text=ugettext_lazy("Add CloudCare, if this project is using CloudCare as well"),
+        label="Device Model",
+        help_text="Add CloudCare, if this project is using CloudCare as well",
         required=False,
     )
     business_unit = forms.ChoiceField(
-        label=ugettext_noop('Business Unit'),
+        label='Business Unit',
         choices=tuple_of_copies(BUSINESS_UNITS),
         required=False,
     )
     countries = forms.MultipleChoiceField(
-        label=ugettext_noop("Countries"),
+        label="Countries",
         choices=sorted(COUNTRIES.items(), key=lambda x: x[0]),
         required=False,
     )
     commtrack_domain = ChoiceField(
-        label=ugettext_noop("CommCare Supply Project"),
+        label="CommCare Supply Project",
         choices=tf_choices('Yes', 'No'),
         required=False,
-        help_text=ugettext_lazy("This app aims to improve the supply of goods and materials")
+        help_text="This app aims to improve the supply of goods and materials"
     )
     performance_threshold = IntegerField(
-        label=ugettext_noop("Performance Threshold"),
+        label="Performance Threshold",
         required=False,
-        help_text=ugettext_lazy(
+        help_text=(
             'The number of forms submitted per month for a user to count as "performing well". '
             'The default value is 15.'
         )
     )
     experienced_threshold = IntegerField(
-        label=ugettext_noop("Experienced Threshold"),
+        label="Experienced Threshold",
         required=False,
-        help_text=ugettext_lazy(
+        help_text=(
             "The number of different months in which a worker must submit forms to count as experienced. "
             "The default value is 3."
         )
     )
     amplifies_workers = ChoiceField(
-        label=ugettext_noop("Service Delivery App"),
+        label="Service Delivery App",
         choices=[(AMPLIFIES_NOT_SET, '* Not Set'), (AMPLIFIES_YES, 'Yes'), (AMPLIFIES_NO, 'No')],
         required=False,
         help_text=("This application is used for service delivery. Examples: An "
@@ -907,7 +907,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                    )
     )
     amplifies_project = ChoiceField(
-        label=ugettext_noop("Amplifies Project"),
+        label="Amplifies Project",
         choices=[(AMPLIFIES_NOT_SET, '* Not Set'), (AMPLIFIES_YES, 'Yes'), (AMPLIFIES_NO, 'No')],
         required=False,
         help_text=("Amplifies the impact of a Frontline Program (FLP). "
@@ -916,19 +916,19 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
                    )
     )
     data_access_threshold = IntegerField(
-        label=ugettext_noop("Minimum Monthly Data Accesses"),
+        label="Minimum Monthly Data Accesses",
         required=False,
-        help_text=ugettext_lazy(
+        help_text=(
             "Minimum number of times project staff are expected to access CommCare data each month. "
             "The default value is 20."
         )
     )
     partner_technical_competency = IntegerField(
-        label=ugettext_noop("Partner Technical Competency"),
+        label="Partner Technical Competency",
         required=False,
         min_value=1,
         max_value=5,
-        help_text=ugettext_lazy(
+        help_text=(
             "Please rate the technical competency of the partner on a scale from "
             "1 to 5. 1 means low-competency, and we should expect LOTS of basic "
             "hand-holding. 5 means high-competency, so if they report a bug it's "
@@ -936,11 +936,11 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         ),
     )
     support_prioritization = IntegerField(
-        label=ugettext_noop("Support Prioritization"),
+        label="Support Prioritization",
         required=False,
         min_value=1,
         max_value=3,
-        help_text=ugettext_lazy(
+        help_text=(
             "Based on the impact of this project and how good this partner was "
             "to work with, how much would you prioritize support for this "
             'partner? 1 means "Low. Take your time." You might rate a partner '
@@ -952,65 +952,65 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         ),
     )
     gs_continued_involvement = ChoiceField(
-        label=ugettext_noop("GS Continued Involvement"),
+        label="GS Continued Involvement",
         choices=[(AMPLIFIES_NOT_SET, '* Not Set'), (AMPLIFIES_YES, 'Yes'), (AMPLIFIES_NO, 'No')],
         required=False,
-        help_text=ugettext_lazy(
+        help_text=(
             "Do you want to continue to be involved in this project? No, please "
             "only reach out if absolutely necessary. Yes. I want to see what "
             "happens and be kept in the loop."
         ),
     )
     technical_complexity = ChoiceField(
-        label=ugettext_noop("Technical Complexity"),
+        label="Technical Complexity",
         choices=[(AMPLIFIES_NOT_SET, '* Not Set'), (AMPLIFIES_YES, 'Yes'), (AMPLIFIES_NO, 'No')],
         required=False,
-        help_text=ugettext_lazy(
+        help_text=(
             "Is this an innovation project involving unusual technology which"
             "we expect will require different support than a typical deployment?"
         ),
     )
     app_design_comments = CharField(
-        label=ugettext_noop("App Design Comments"),
+        label="App Design Comments",
         widget=forms.Textarea,
         required=False,
-        help_text=ugettext_lazy(
+        help_text=(
             "Unusual workflows or design decisions for others to watch out for."
         ),
     )
     training_materials = CharField(
-        label=ugettext_noop("Training materials"),
+        label="Training materials",
         required=False,
-        help_text=ugettext_lazy(
+        help_text=(
             "Where to find training materials or other relevant resources."
         ),
     )
     partner_comments = CharField(
-        label=ugettext_noop("Partner Comments"),
+        label="Partner Comments",
         widget=forms.Textarea,
         required=False,
-        help_text=ugettext_lazy(
+        help_text=(
             "past or anticipated problems with this partner."
         ),
     )
     partner_contact = CharField(
-        label=ugettext_noop("Partner contact"),
+        label="Partner contact",
         required=False,
-        help_text=ugettext_lazy(
+        help_text=(
             "Primary partner point of contact going forward (type email of existing web user)."
         ),
     )
     dimagi_contact = CharField(
-        label=ugettext_noop("Dimagi contact"),
+        label="Dimagi contact",
         required=False,
-        help_text=ugettext_lazy(
+        help_text=(
             "Primary Dimagi point of contact going forward (type email of existing web user)."
         ),
     )
     send_handoff_email = forms.BooleanField(
-        label=ugettext_noop("Send Hand-off Email"),
+        label="Send Hand-off Email",
         required=False,
-        help_text=ugettext_lazy(
+        help_text=(
             "Check this box to trigger a hand-off email to the partner when this form is submitted."
         ),
     )
@@ -1023,13 +1023,13 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         if self.can_edit_eula:
             additional_fields = ['custom_eula', 'can_use_data']
             self.fields['custom_eula'] = ChoiceField(
-                label=ugettext_noop("Custom Eula?"),
+                label="Custom Eula?",
                 choices=tf_choices(_('Yes'), _('No')),
                 required=False,
                 help_text='Set to "yes" if this project has a customized EULA as per their contract.'
             )
             self.fields['can_use_data'] = ChoiceField(
-                label=ugettext_noop("Can use project data?"),
+                label="Can use project data?",
                 choices=tf_choices('Yes', 'No'),
                 required=False,
                 help_text='Set to "no" if this project opts out of data usage. Defaults to "yes".'
