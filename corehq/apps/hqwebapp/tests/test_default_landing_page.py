@@ -88,7 +88,7 @@ class TestDefaultLandingPages(TestCase):
 @generate_cases([
     (None, DomainDashboardView.urlname),
     ('reports_role', MySavedReportsView.urlname),
-    ('webapps_role', 'cloudcare_main', ['']),
+    ('webapps_role', FormplayerMain.urlname),
 ], TestDefaultLandingPages)
 def test_web_user_landing_page(self, role, expected_urlname, extra_url_args=None):
     if role is not None:
@@ -105,9 +105,9 @@ def test_web_user_landing_page(self, role, expected_urlname, extra_url_args=None
 
 
 @generate_cases([
-    (None, 'cloudcare_main', ['']),
+    (None, FormplayerMain.urlname),
     ('reports_role', MySavedReportsView.urlname),
-    ('webapps_role', 'cloudcare_main', ['']),
+    ('webapps_role', FormplayerMain.urlname),
 ], TestDefaultLandingPages)
 def test_mobile_worker_landing_page(self, role, expected_urlname, extra_url_args=None):
     if role is not None:
