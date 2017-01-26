@@ -110,7 +110,7 @@ class EnikshayCaseFactory(object):
                     'first_name': self.patient_detail.first_name,
                     'last_name': self.patient_detail.last_name,
                     'name': self.patient_detail.pname,
-                    'person_id': 'N-' + self.nikshay_id,
+                    'person_id': self.patient_detail.person_id,
                     'secondary_contact_name_address': (
                         (self.patient_detail.cname or '')
                         + ', '

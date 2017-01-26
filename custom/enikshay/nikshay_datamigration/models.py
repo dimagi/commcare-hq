@@ -228,6 +228,10 @@ class PatientDetail(models.Model):
     def initial_home_visit_status(self):
         return 'completed' if self.ihv_date else 'pending'
 
+    @property
+    def person_id(self):
+        return 'NIK-' + self.nikshay_id
+
 
 class Outcome(models.Model):
     PatientId = models.OneToOneField(PatientDetail, primary_key=True)
