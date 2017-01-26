@@ -1,3 +1,4 @@
+import base64
 import copy
 import datetime
 import re
@@ -552,6 +553,8 @@ def test_repeater(request, domain):
     repeater_type = request.POST['repeater_type']
     format = request.POST.get('format', None)
     repeater_class = get_all_repeater_types()[repeater_type]
+    use_basic_auth = request.POST.get('use_basic_auth')
+
     form = GenericRepeaterForm(
         {"url": url, "format": format},
         domain=domain,
@@ -564,6 +567,12 @@ def test_repeater(request, domain):
         generator = generator_class(repeater_class())
         fake_post = generator.get_test_payload(domain)
         headers = generator.get_headers()
+
+        if use_basic_auth == 'true':
+            username = request.POST.get('username')
+            password = request.POST.get('password')
+            user_pass = base64.encodestring(':'.join((username, password))).replace('\n', '')
+            headers.update({'Authorization': 'Basic ' + user_pass})
 
         try:
             resp = simple_post(fake_post, url, headers=headers)

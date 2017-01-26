@@ -269,7 +269,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
             self['base_doc'] += DELETED
         self.save()
 
-    def get_url(self, repeate_record):
+    def get_url(self, repeat_record):
         # to be overridden
         return self.url
 
