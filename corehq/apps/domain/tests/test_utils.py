@@ -22,10 +22,7 @@ class UtilsTests(TestCase):
             app.save()
 
     def tearDown(self):
-        domain = Domain.get_by_name(self.domain_name)
-        for app in domain.applications():
-            app.delete()
-        domain.delete()
+        Domain.get_by_name(self.domain_name).delete()
 
     def test_guess_domain_language(self):
         lang = guess_domain_language(self.domain_name)
