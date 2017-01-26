@@ -507,7 +507,7 @@ class TestZapierCreateCaseAction(TestCase):
 
     def test_user_does_not_have_access(self):
         factory = RequestFactory()
-        request = factory.post("http://commcarehq.org/?domain=fruit&case_type=banana&user_id=test_user&user=faker2",
+        request = factory.post("http://commcarehq.org/?domain=fruit&case_type=fake&user_id=test_user&user=faker2",
                                data=json.dumps(self.data),
                                content_type='application/json')
         fake_domain = Domain.get_or_create_with_name('fake', is_active=True)
@@ -516,9 +516,3 @@ class TestZapierCreateCaseAction(TestCase):
         self.assertEqual(status.status_code, 403)
         fake_domain.delete()
         fake_user.delete()
-
-
-
-
-
-
