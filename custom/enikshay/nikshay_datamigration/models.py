@@ -286,8 +286,8 @@ class Outcome(models.Model):
     @property
     def hiv_status(self):
         return {
-            None: None,
-            'NULL': None,
+            None: 'unknown',
+            'NULL': 'unknown',
             'Pos': 'reactive',
             'Neg': 'non_reactive',
             'Unknown': 'unknown',
