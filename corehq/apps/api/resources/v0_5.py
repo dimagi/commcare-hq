@@ -894,11 +894,13 @@ class DomainCases(Resource):
         return results
 
 
-User = namedtuple('User', 'user_id user_name')
-User.__new__.__defaults__ = ('', '')
+UserInfo = namedtuple('UserInfo', 'user_id user_name')
+UserInfo.__new__.__defaults__ = ('', '')
+
+
 class DomainUsernames(Resource):
     """
-    Returns: list of usernames for a domain
+    Returns: list of usernames for a domain.
     """
     user_id = fields.CharField(attribute='user_id')
     user_name = fields.CharField(attribute='user_name')
@@ -912,6 +914,7 @@ class DomainUsernames(Resource):
 
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
+
         couch_user = CouchUser.from_django_user(bundle.request.user)
         if not domain_has_privilege(domain, privileges.ZAPIER_INTEGRATION) or not couch_user.is_member_of(domain):
             raise ImmediateHttpResponse(
@@ -919,6 +922,5 @@ class DomainUsernames(Resource):
             )
         user_ids = get_all_user_ids_by_domain(domain)
 
-        results = [User(user_id=user_id, user_name = user_id_to_username(user_id)) for user_id in user_ids]
+        results = [UserInfo(user_id=user_id, user_name=user_id_to_username(user_id)) for user_id in user_ids]
         return results
-

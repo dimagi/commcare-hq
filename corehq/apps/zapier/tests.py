@@ -4,7 +4,6 @@ from collections import namedtuple
 from django.core.urlresolvers import reverse
 from django.test.testcases import TestCase, SimpleTestCase
 from django.test.client import Client, RequestFactory
-from django.contrib.auth.models import User
 
 from tastypie.models import ApiKey
 from tastypie.resources import Resource
@@ -479,7 +478,7 @@ class TestZapierCreateCaseAction(TestCase):
 
         factory = RequestFactory()
         data = {'case_name': 'test1', 'price': '15', 'case_id': 'fake_id'}
-        request = factory.post("http://commcarehq.org/?domain=spoof&case_type=watermelon&user_id=test_user&user=test",
+        request = factory.post("http://commcarehq.org/?domain=me&case_type=watermelon&user_id=test_user&user=test",
                                data=json.dumps(data),
                                content_type='application/json')
 
@@ -497,7 +496,7 @@ class TestZapierCreateCaseAction(TestCase):
 
         factory = RequestFactory()
         data = {'case_name': 'test1', 'price': '15', 'case_id': 'fake_id'}
-        request = factory.post("http://commcarehq.org/?domain=fruit&case_type=banana&user_id=test_user&user=test",
+        request = factory.post("http://commcarehq.org/?domain=fruit&case_type=fake&user_id=test_user&user=test",
                                data=json.dumps(data),
                                content_type='application/json')
 

@@ -167,8 +167,8 @@ class ZapierCustomFieldCaseResource(BaseZapierCustomFieldResource):
 class ZapierCustomActionFieldCaseResource(BaseZapierCustomFieldResource):
     """
         Generates custom action fields for updating or creating a case.  When creating a case, users must provide
-        a new case name, as well as optionally providing values for the case properties.  When updating a case, users
-        must provide a case id, as well as optionally providing new values for the case properties.
+        a new case name, as well as optionally providing values for the case properties.  When updating a case,
+        users must provide a case id, as well as optionally providing new values for the case properties.
     """
     def obj_get_list(self, bundle, **kwargs):
         custom_fields = []
@@ -213,4 +213,3 @@ class ZapierCustomActionFieldCaseResource(BaseZapierCustomFieldResource):
 
     class Meta(BaseZapierCustomFieldResource.Meta):
         resource_name = 'custom_action_fields_case'
-
