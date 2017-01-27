@@ -13,6 +13,7 @@ import dateutil
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.core.validators import validate_email
+from django.http import HttpResponseForbidden
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET
 from django.views.generic import View
@@ -125,7 +126,7 @@ from corehq.apps.domain.forms import ProjectSettingsForm
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_ip, json_response, get_site_domain
 from corehq.apps.users.decorators import require_can_edit_web_users, require_permission
-from corehq.apps.repeaters.forms import GenericRepeaterForm, FormRepeaterForm
+from corehq.apps.repeaters.forms import GenericRepeaterForm, FormRepeaterForm, GenericEditRepeaterForm
 from corehq.apps.repeaters.models import Repeater, RepeatRecord
 from corehq.apps.repeaters.dbaccessors import (
     get_paged_repeat_records,
@@ -2423,6 +2424,51 @@ class AddRepeaterView(BaseAdminProjectSettingsView):
             messages.success(request, _("Forwarding set up to %s" % repeater.url))
             return HttpResponseRedirect(reverse(DomainForwardingOptionsView.urlname, args=[self.domain]))
         return self.get(request, *args, **kwargs)
+
+
+class EditRepeaterView(AddRepeaterView):
+    urlname = "edit_repeater"
+    repeater_form_class = GenericEditRepeaterForm
+
+    def page_url(self):
+        return
+
+    @property
+    @memoized
+    def add_repeater_form(self):
+        repeater_id = self.request.GET.get('repeater')
+        repeater = Repeater.get(repeater_id)
+        repeater.clear_caches()
+        repeater = Repeater.get(repeater_id)
+        print "making form url", repeater.url
+        if self.request.method == 'POST':
+            return self.repeater_form_class(
+                self.request.POST,
+                domain=self.domain,
+                repeater_class=self.repeater_class
+            )
+        return self.repeater_form_class(
+            domain=self.domain,
+            repeater_class=self.repeater_class,
+            initial={'url': repeater.url,
+                     'format': repeater.format,
+                     'use_basic_auth': repeater.use_basic_auth,
+                     'username': repeater.username,
+                     'password': repeater.password
+                     }
+        )
+
+    def post(self, request, *args, **kwargs):
+        if self.add_repeater_form.is_valid():
+            repeater = Repeater.get(request.GET.get('repeater'))
+            repeater.clear_caches()
+            repeater = Repeater.get(request.GET.get('repeater'))
+            repeater.url = self.add_repeater_form.cleaned_data['url']
+            repeater.save()
+            repeater.clear_caches()
+            return HttpResponseRedirect(reverse(DomainForwardingOptionsView.urlname, args=[self.domain]))
+        else:
+            return HttpResponseForbidden('Please enter valid values')
 
 
 class AddFormRepeaterView(AddRepeaterView):

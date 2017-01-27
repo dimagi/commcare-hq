@@ -184,3 +184,28 @@ class CaseRepeaterForm(GenericRepeaterForm):
         if not set(black_listed_users).issubset([t[0] for t in self.user_choices]):
             raise ValidationError(_('Unknown user'))
         return cleaned_data
+
+
+class GenericEditRepeaterForm(GenericRepeaterForm):
+
+    def _initialize_crispy_layout(self):
+        self.helper = FormHelper(self)
+        self.helper.form_class = 'form-horizontal'
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.offset_class = 'col-sm-offset-3 col-md-offset-2'
+
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                'Edit Forwarding Settings',
+                *self.get_ordered_crispy_form_fields()
+            ),
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    _("Save Changes"),
+                    type="submit",
+                    css_class='btn-primary',
+                )
+            )
+        )
+

@@ -1,16 +1,24 @@
 import json
 
 from django.core.urlresolvers import reverse
+from django.http import Http404
+from django.http import HttpResponse
+from django.http import HttpResponseRedirect
+from django.utils.decorators import method_decorator
 from django.views.generic import View
 
 from dimagi.utils.web import json_response
+from dimagi.utils.decorators.memoized import memoized
+from corehq.apps.domain.decorators import domain_admin_required
 
+from corehq.apps.repeaters.utils import get_all_repeater_types
 from corehq.form_processor.exceptions import XFormNotFound
-from corehq.apps.domain.views import AddRepeaterView
+from corehq.apps.domain.views import AddRepeaterView, BaseAdminProjectSettingsView, DomainForwardingOptionsView, \
+    BaseProjectSettingsView
 from corehq.apps.style.decorators import use_select2
-from corehq.apps.repeaters.models import RepeatRecord
+from corehq.apps.repeaters.models import RepeatRecord, Repeater
 from corehq.util.xml_utils import indent_xml
-from .forms import CaseRepeaterForm
+from .forms import CaseRepeaterForm, GenericRepeaterForm, GenericEditRepeaterForm
 
 
 class AddCaseRepeaterView(AddRepeaterView):
@@ -69,3 +77,14 @@ class RepeatRecordView(View):
             'success': record.succeeded,
             'failure_reason': record.failure_reason,
         })
+
+
+
+
+
+
+
+
+
+
+

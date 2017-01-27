@@ -8,6 +8,13 @@
         <a
             class="btn btn-default"
             href="
+            {% url 'domain_report_dispatcher' domain 'edit_repeater' %}?repeater={{ repeater.get_id }}"
+            >
+            {% trans "Edit" %}
+        </a>
+        <a
+            class="btn btn-default"
+            href="
             {% url 'domain_report_dispatcher' domain 'repeat_record_report' %}?repeater={{ repeater.get_id }}"
             >
             {% trans "View forwarded records" %}

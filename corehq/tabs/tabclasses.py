@@ -1307,11 +1307,15 @@ def _get_administration_section(domain):
                  'title': forward_name,
                  'urlname': 'add_form_repeater',
              },
+             {
+                 'title': forward_name,
+                 'urlname': 'edit_repeater',
+             },
         ]},
         {
             'title': _('Data Forwarding Records'),
             'url': reverse('domain_report_dispatcher', args=[domain, 'repeat_record_report'])
-        }
+        },
     ])
 
     administration.append({
