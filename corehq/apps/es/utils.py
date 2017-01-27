@@ -1,3 +1,6 @@
+from copy import deepcopy
+
+
 def values_list(hits, *fields, **kwargs):
     """modeled after django's QuerySet.values_list"""
     flat = kwargs.pop('flat', False)
@@ -32,3 +35,61 @@ def flatten_field_dict(results, fields_property='fields'):
             new_val = val[0]
         field_dict[key] = new_val
     return field_dict
+
+
+def chunk_query(query, term, chunk_size=1000):
+    query = deepcopy(query)
+
+    path_to_term = _chunk_query([], None, query.es_query, term)
+    chunked_queries = []
+
+    # No path to term could be found, return just the query
+    if path_to_term is None:
+        return [query]
+
+    term_list = _dict_lookup(path_to_term, query.es_query)
+
+    # Cannot chunk term that is not a list
+    if not isinstance(term_list, list):
+        return [query]
+
+    for index in xrange(0, len(term_list), chunk_size):
+        terms = term_list[index:index + chunk_size]
+        chunked_query = deepcopy(query)
+
+        # Set query to the chunk
+        _dict_lookup(path_to_term[:-1], chunked_query.es_query)[term] = terms
+
+        chunked_queries.append(chunked_query)
+
+    return chunked_queries
+
+
+def _dict_lookup(path, dict_):
+    partial = dict_
+    for part in path:
+        try:
+            partial = partial[part]
+        except IndexError:
+            return None
+    return partial
+
+
+def _chunk_query(path_to_term, key, es_query, term):
+    if key is not None:
+        path_to_term.append(key)
+    if key == term:
+        return path_to_term
+
+    if isinstance(es_query, dict):
+        for key, partial_query in es_query.iteritems():
+            result = _chunk_query(list(path_to_term), key, partial_query, term)
+            if result:
+                return result
+    elif isinstance(es_query, list):
+        for index, partial_query in enumerate(es_query):
+            result = _chunk_query(list(path_to_term), index, partial_query, term)
+            if result:
+                return result
+
+    return None
