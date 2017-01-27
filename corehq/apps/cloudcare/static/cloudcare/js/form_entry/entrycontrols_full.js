@@ -321,10 +321,18 @@ DropdownEntry.prototype.onPreProcess = function(newValue) {
     }
 };
 
+/**
+ * The ComboboxEntry is an advanced android formatting entry. It is enabled
+ * when the user specifies combobox in the appearance attributes for a
+ * single select question.
+ *
+ * Docs: https://confluence.dimagi.com/display/commcarepublic/Advanced+CommCare+Android+Formatting#AdvancedCommCareAndroidFormatting-SingleSelect"ComboBox"
+ */
 function ComboboxEntry(question, options) {
     var self = this;
     EntrySingleAnswer.call(this, question, options);
 
+    // Specifies the type of matching we will do when a user types a query
     self.matchType = options.matchType;
     self.templateType = 'combobox';
     self.helpText = function() { return 'Combobox'; };
