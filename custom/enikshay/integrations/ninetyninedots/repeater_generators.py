@@ -46,27 +46,12 @@ class PatientPayload(jsonobject.JsonObject):
     treatment_supporter_name = jsonobject.StringProperty(required=False)
     treatment_supporter_phone_number = jsonobject.StringProperty(required=False)
 
-
-@RegisterGenerator(NinetyNineDotsRegisterPatientRepeater, 'case_json', 'JSON', is_default=True)
-class RegisterPatientPayloadGenerator(BasePayloadGenerator):
-    @property
-    def content_type(self):
-        return 'application/json'
-
-    def get_test_payload(self, domain):
-        return json.dumps(PatientPayload(
-            beneficiary_id=uuid.uuid4().hex,
-            phone_numbers=_format_number(_parse_number("0123456789")),
-            merm_id=uuid.uuid4().hex,
-        ).to_json())
-
-    def get_payload(self, repeat_record, episode_case):
-        occurence_case = get_occurrence_case_from_episode(episode_case.domain, episode_case.case_id)
-        person_case = get_person_case_from_occurrence(episode_case.domain, occurence_case)
+    @classmethod
+    def create(cls, person_case, episode_case):
         person_case_properties = person_case.dynamic_case_properties()
         episode_case_properties = episode_case.dynamic_case_properties()
         person_locations = get_person_locations(person_case)
-        data = PatientPayload(
+        return cls(
             beneficiary_id=person_case.case_id,
             first_name=person_case_properties.get(PERSON_FIRST_NAME, None),
             last_name=person_case_properties.get(PERSON_LAST_NAME, None),
@@ -87,7 +72,25 @@ class RegisterPatientPayloadGenerator(BasePayloadGenerator):
                 )
             )
         )
-        return json.dumps(data.to_json())
+
+
+@RegisterGenerator(NinetyNineDotsRegisterPatientRepeater, 'case_json', 'JSON', is_default=True)
+class RegisterPatientPayloadGenerator(BasePayloadGenerator):
+    @property
+    def content_type(self):
+        return 'application/json'
+
+    def get_test_payload(self, domain):
+        return json.dumps(PatientPayload(
+            beneficiary_id=uuid.uuid4().hex,
+            phone_numbers=_format_number(_parse_number("0123456789")),
+            merm_id=uuid.uuid4().hex,
+        ).to_json())
+
+    def get_payload(self, repeat_record, episode_case):
+        occurence_case = get_occurrence_case_from_episode(episode_case.domain, episode_case.case_id)
+        person_case = get_person_case_from_occurrence(episode_case.domain, occurence_case)
+        return json.dumps(PatientPayload.create(person_case, episode_case).to_json())
 
     def handle_success(self, response, episode_case, repeat_record):
         if response.status_code == 201:
@@ -132,13 +135,8 @@ class UpdatePatientPayloadGenerator(BasePayloadGenerator):
         ).to_json())
 
     def get_payload(self, repeat_record, person_case):
-        person_case_properties = person_case.dynamic_case_properties()
-        data = PatientPayload(
-            beneficiary_id=person_case.case_id,
-            phone_numbers=_get_phone_numbers(person_case_properties),
-            merm_id=person_case_properties.get('merm_id', None),
-        )
-        return json.dumps(data.to_json())
+        episode_case = get_open_episode_case_from_person(person_case.domain, person_case.case_id)
+        return json.dumps(PatientPayload.create(person_case, episode_case).to_json())
 
     def handle_success(self, response, person_case, repeat_record):
         try:

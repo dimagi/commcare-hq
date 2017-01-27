@@ -282,25 +282,20 @@ class TestRegisterPatientPayloadGenerator(TestPayloadGeneratorBase):
         )
 
 
-class TestUpdatePatientPayloadGenerator(ENikshayCaseStructureMixin, TestCase):
-    def tearDown(self):
-        super(TestUpdatePatientPayloadGenerator, self).tearDown()
-        delete_all_cases()
+class TestUpdatePatientPayloadGenerator(TestPayloadGeneratorBase):
+
+    def _get_actual_payload(self, casedb):
+        return UpdatePatientPayloadGenerator(None).get_payload(None, casedb[self.person_id])
 
     @run_with_all_backends
     def test_get_payload(self):
         cases = self.create_case_structure()
+        cases[self.person_id] = self.assign_person_to_location(self.phi.location_id)
         expected_numbers = u"+91{}, +91{}".format(
             self.primary_phone_number.replace("0", ""),
             self.secondary_phone_number.replace("0", "")
         )
-        expected_payload = json.dumps({
-            'beneficiary_id': self.person_id,
-            'phone_numbers': expected_numbers,
-            'merm_id': cases[self.person_id].dynamic_case_properties().get(MERM_ID)
-        })
-        actual_payload = UpdatePatientPayloadGenerator(None).get_payload(None, cases[self.person_id])
-        self.assertEqual(expected_payload, actual_payload)
+        self._assert_payload_equal(cases, expected_numbers)
 
     @run_with_all_backends
     def test_handle_success(self):
