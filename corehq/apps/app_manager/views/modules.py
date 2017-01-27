@@ -452,6 +452,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
             old_case_type = module["case_type"]
             module["case_type"] = case_type
 
+            # rename other reference to the old case type
             other_careplan_modules = []
             all_advanced_modules = []
             modules_with_old_case_type_exist = False
