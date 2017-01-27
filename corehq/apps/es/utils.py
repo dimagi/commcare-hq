@@ -38,6 +38,20 @@ def flatten_field_dict(results, fields_property='fields'):
 
 
 def chunk_query(query, term, chunk_size=1000):
+    '''
+    This takes a ESQuery and a term and then chunks the query into identical queries
+    except having chunked the term. For example, if you have a query that has 100,000
+    queries and the chunk_size is 1000, it will return 100 queries.
+
+    :param query: An ESQuery
+    :param term: A term that you wish to be chunked, such as 'form.meta.userID'
+    :param chunk_size: The chunk size
+
+    :return: If it cannot find anything to chunk or the chunked term is not an array,
+        it will just return the same query wrapped in an array. Otherwise, it will return
+        an array of ESQuerys with the chunked term.
+
+    '''
     query = deepcopy(query)
 
     path_to_term = _chunk_query([], None, query.es_query, term)
