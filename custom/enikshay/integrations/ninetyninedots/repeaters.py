@@ -20,7 +20,7 @@ class NinetyNineDotsRegisterPatientRepeater(CaseRepeater):
     class Meta(object):
         app_label = 'repeaters'
 
-    friendly_name = _("99DOTS Patient Registration")
+    friendly_name = _("99DOTS Patient Registration (episode case type)")
 
     @classmethod
     def available_for_domain(cls, domain):
@@ -49,7 +49,7 @@ class NinetyNineDotsRegisterPatientRepeater(CaseRepeater):
 
 
 class NinetyNineDotsUpdatePatientRepeater(NinetyNineDotsRegisterPatientRepeater):
-    friendly_name = _("99DOTS Patient Update")
+    friendly_name = _("99DOTS Patient Update (person case type)")
 
     @classmethod
     def get_custom_url(cls, domain):
