@@ -230,7 +230,7 @@ class PatientDetail(models.Model):
 
     @property
     def person_id(self):
-        return 'NIK-' + self.nikshay_id
+        return 'NIK-' + self.PregId
 
 
 class Outcome(models.Model):
