@@ -12,6 +12,7 @@ from couchexport.export import FormattedRow, get_writer
 from couchexport.files import Temp
 from couchexport.models import Format
 from corehq.util.files import safe_filename
+from corehq.apps.es.utils import chunk_query
 from corehq.apps.export.esaccessors import (
     get_form_export_base_query,
     get_case_export_base_query,
@@ -20,6 +21,7 @@ from corehq.apps.export.models.new import (
     CaseExportInstance,
     FormExportInstance,
 )
+from corehq.apps.export.const import CASE_EXPORT, FORM_EXPORT, USER_ID_CHUNK_SIZE
 
 
 class ExportFile(object):
@@ -136,22 +138,35 @@ def get_export_file(export_instances, filters, progress_tracker=None):
     with writer.open(export_instances):
         for export_instance in export_instances:
             # TODO: Don't get the docs multiple times if you don't have to
-            docs = _get_export_documents(export_instance, filters)
-            _write_export_instance(writer, export_instance, docs, progress_tracker)
+            for docs in _iter_export_documents(export_instance, filters):
+                _write_export_instance(writer, export_instance, docs, progress_tracker)
 
     return ExportFile(writer.path, writer.format)
 
 
-def _get_export_documents(export_instance, filters):
+def _iter_export_documents(export_instance, filters):
     query = _get_base_query(export_instance)
     for filter in filters:
         query = query.filter(filter.to_es_filter())
+
+    if export_instance.type == CASE_EXPORT:
+        user_id_term = 'user_id'
+    elif export_instance.type == FORM_EXPORT:
+        user_id_term = 'form.meta.userID'
+    else:
+        user_id_term = None
+
     # size here limits each scroll request, not the total number of results
-    return query.size(1000).scroll()
+    for chunked_query in chunk_query(query, user_id_term, chunk_size=USER_ID_CHUNK_SIZE):
+        yield chunked_query.size(1000).scroll()
 
 
 def get_export_size(export_instance, filters):
-    return _get_export_documents(export_instance, filters).count
+    return reduce(
+        lambda count, query: count + query.count,
+        _iter_export_documents(export_instance, filters),
+        0
+    )
 
 
 def _write_export_instance(writer, export_instance, documents, progress_tracker=None):
