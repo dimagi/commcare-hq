@@ -6,58 +6,49 @@ from corehq.apps.es.forms import FormES
 
 
 QUERY = {
-  'sort': [
-    {
-      'received_on': {
-        'order': 'asc'
-      }
-    }
-  ],
-  'query': {
-    'filtered': {
-      'filter': {
-        'and': [
-          {
-            'term': {
-              'domain.exact': u'aspace'
-            }
-          },
-          {
-            'term': {
-              'app_id': u'09fe257a198ad1ae109ed627ed847ee9'
-            }
-          },
-          {
-            'term': {
-              'xmlns.exact': u'http://openrosa.org/formdesigner/11FAC65A-F2CD-427F-A870-CF126336AAB5'
-            }
-          },
-          {
-            'or': {
-              'terms': {
-                'form.meta.userID': [
-                  u'51cd680c0bd1c21bb5e63dab99748248',
-                  u'38b858717522c898e37f6239eda0ba5a'
-                ]
-              }
-            },
-          },
-          {
-            'range': {
-              'received_on': {
-                'lt': '2017-01-28T00:00:00+07:00',
-                'gte': '2015-01-27T00:00:00+07:00'
-              }
-            }
-          }
-        ]
-      },
-      'query': {
-            'match_all': {
+    'sort': [{
+        'received_on': {
+            'order': 'asc'
         }
-      }
+    }],
+    'query': {
+        'filtered': {
+            'filter': {
+                'and': [{
+                    'term': {
+                        'domain.exact': 'aspace'
+                    }
+                }, {
+                    'term': {
+                        'app_id': '09fe257a198ad1ae109ed627ed847ee9'
+                    }
+                }, {
+                    'term': {
+                        'xmlns.exact': 'http://openrosa.org/formdesigner/11FAC65A-F2CD-427F-A870-CF126336AAB5'
+                    }
+                }, {
+                    'or': {
+                        'terms': {
+                            'form.meta.userID': [
+                                '51cd680c0bd1c21bb5e63dab99748248',
+                                '38b858717522c898e37f6239eda0ba5a'
+                            ]
+                        }
+                    },
+                }, {
+                    'range': {
+                        'received_on': {
+                            'lt': '2017-01-28T00:00:00+07:00',
+                            'gte': '2015-01-27T00:00:00+07:00'
+                        }
+                    }
+                }]
+            },
+            'query': {
+                'match_all': {}
+            }
+        }
     }
-  }
 }
 
 
