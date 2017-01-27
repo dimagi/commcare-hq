@@ -447,22 +447,35 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         if not case_type or is_valid_case_type(case_type, module):
             old_case_type = module["case_type"]
             module["case_type"] = case_type
-            for cp_mod in (mod for mod in app.modules if isinstance(mod, CareplanModule)):
-                if cp_mod.unique_id != module.unique_id and cp_mod.parent_select.module_id == module.unique_id:
+
+            other_careplan_modules = []
+            all_advanced_modules = []
+            modules_with_old_case_type_exist = False
+            for mod in app.modules:
+                if mod.unique_id != module_id:
+                    if isinstance(mod, CareplanModule):
+                        other_careplan_modules.append(mod)
+
+                if isinstance(mod, AdvancedModule):
+                    all_advanced_modules.append(mod)
+
+                modules_with_old_case_type_exist |= mod.case_type == old_case_type
+
+            for cp_mod in other_careplan_modules:
+                if cp_mod.parent_select.module_id == module_id:
                     cp_mod.case_type = case_type
 
-            def rename_action_case_type(mod):
+            for mod in all_advanced_modules:
                 for form in mod.forms:
-                    for action in form.actions.get_all_actions():
-                        if action.case_type == old_case_type:
+                    for action in form.actions.get_load_update_actions():
+                        if action.case_type == old_case_type and action.details_module == module_id:
                             action.case_type = case_type
 
-            if isinstance(module, AdvancedModule):
-                rename_action_case_type(module)
-            for ad_mod in (mod for mod in app.modules if isinstance(mod, AdvancedModule)):
-                if ad_mod.unique_id != module.unique_id and ad_mod.case_type != old_case_type:
-                    # only apply change if the module's case_type does not reference the old value
-                    rename_action_case_type(ad_mod)
+                    if mod.unique_id == module_id or not modules_with_old_case_type_exist:
+                        for action in form.actions.get_open_actions():
+                            if action.case_type == old_case_type:
+                                action.case_type = case_type
+
         elif case_type == USERCASE_TYPE and not isinstance(module, AdvancedModule):
             return HttpResponseBadRequest('"{}" is a reserved case type'.format(USERCASE_TYPE))
         else:
