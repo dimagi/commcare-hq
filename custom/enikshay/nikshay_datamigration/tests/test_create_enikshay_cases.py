@@ -150,6 +150,7 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
                 ('person_id', 'NIK-MH-ABD-05-16-0001'),
                 ('site_choice', 'abdominal'),
                 ('transfer_in', ''),
+                ('treatment_card_completed_date', '2016-12-13'),
                 ('treatment_initiated', 'yes_phi'),
                 ('treatment_initiation_date', '2016-12-22'),
                 ('treatment_supporter_designation', 'health_worker'),
