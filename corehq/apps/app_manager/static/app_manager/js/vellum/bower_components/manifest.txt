@@ -15,7 +15,7 @@
 ├── jsdiff#3.2.0
 ├─┬ jstree#3.3.3
 │ └── jquery#3.1.1
-├── jstree-actions#0.1.1 extraneous
+├── jstree-actions#1e778b87b0
 ├── langcodes#d790b7718a
 ├── markdown-it#7.0.1 (latest is 8.2.2)
 ├── require-css#0.1.8
