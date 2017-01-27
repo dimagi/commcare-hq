@@ -137,14 +137,19 @@ class PatientDetail(models.Model):
 
     @property
     def patient_type_choice(self):
+        category_to_status = {
+            '1': 'new',
+            '2': 'recurrent',
+        }
+
         return {
             '1': 'new',
             '2': 'recurrent',
             '3': 'treatment_after_failure',
             '4': 'treatment_after_lfu',
-            '5': 'transfer_in',
-            '6': 'transfer_in',
-            '7': 'transfer_in',
+            '5': category_to_status[self.pcategory],
+            '6': category_to_status[self.pcategory],
+            '7': category_to_status[self.pcategory],
         }[self.Ptype]
 
     @property

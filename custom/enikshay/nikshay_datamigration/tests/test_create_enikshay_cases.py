@@ -40,7 +40,7 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
             PHI=2,
             atbtreatment='',
             Ptype=4,
-            pcategory=4,
+            pcategory=1,
             cvisitedDate1='2016-12-25 00:00:00.000',
             InitiationDate1='2016-12-22 16:06:47.726',
             dotmosignDate1='2016-12-23 00:00:00.000',
