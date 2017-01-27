@@ -129,8 +129,6 @@ class EnikshayCaseFactory(object):
                 kwargs['attrs']['owner_id'] = self.phi.location_id
                 kwargs['attrs']['update']['phi'] = self.phi.name
                 kwargs['attrs']['update']['tu_choice'] = self.tu.name
-                kwargs['attrs']['update']['current_address_district_choice'] = self.district.location_id
-                kwargs['attrs']['update']['current_address_state_choice'] = self.state.location_id
             else:
                 kwargs['attrs']['owner_id'] = ARCHIVED_CASE_OWNER_ID
                 kwargs['attrs']['update']['archive_reason'] = 'migration_not_phi_location'
@@ -250,19 +248,6 @@ class EnikshayCaseFactory(object):
             return zero_or_one_outcomes[0]
         else:
             return None
-
-    @property
-    def state(self):
-        if self.test_phi is not None:
-            return MockLocation('FAKESTATE', 'fake_state_id', MockLocationType('state', 'state'))
-        return self.nikshay_codes_to_location.get(self.patient_detail.PregId.split('-')[0])
-
-    @property
-    def district(self):
-        if self.test_phi is not None:
-            return MockLocation('FAKEDISTRICT', 'fake_district_id', MockLocationType('district', 'district'))
-
-        return self.nikshay_codes_to_location.get('-'.join(self.patient_detail.PregId.split('-')[:2]))
 
     @property
     def tu(self):
