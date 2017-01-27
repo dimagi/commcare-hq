@@ -29,6 +29,12 @@ class UpdatePatientRepeaterView(AddCaseRepeaterView):
     page_name = "Update 99DOTS Patients"
 
 
+class UpdateAdherenceRepeaterView(AddCaseRepeaterView):
+    urlname = 'update_99dots_adherence'
+    page_title = "Update 99DOTS Adherence"
+    page_name = "Update 99DOTS Adherence"
+
+
 @toggles.NINETYNINE_DOTS.required_decorator()
 @login_or_digest_or_basic_or_apikey()
 @require_POST
