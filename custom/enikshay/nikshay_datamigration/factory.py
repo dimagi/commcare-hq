@@ -205,7 +205,11 @@ class EnikshayCaseFactory(object):
                     ),
                     'adherence_schedule_id': 'schedule_mwf',
                     'date_of_diagnosis': self.patient_detail.pregdate1,
-                    'date_of_mo_signature': self.patient_detail.date_of_mo_signature,
+                    'date_of_mo_signature': (
+                        self.patient_detail.date_of_mo_signature
+                        if self.patient_detail.date_of_mo_signature
+                        else self.patient_detail.pregdate1
+                    ),
                     'disease_classification': self.patient_detail.disease_classification,
                     'dots_99_enabled': 'false',
                     'episode_pending_registration': 'no',
