@@ -558,13 +558,12 @@ class SupplyPointCaseMixin(object):
     @property
     @memoized
     def location(self):
-        from corehq.apps.locations.models import Location
-        from couchdbkit.exceptions import ResourceNotFound
+        from corehq.apps.locations.models import SQLLocation
         if self.location_id is None:
             return None
         try:
-            return Location.get(self.location_id)
-        except ResourceNotFound:
+            return self.sql_location
+        except SQLLocation.DoesNotExist:
             return None
 
     @property

@@ -132,14 +132,14 @@ def get_display_data(data, prop_def, processors=None, timezone=pytz.utc):
     processors = processors or {}
     processors.update(default_processors)
 
+    expr_name = _get_expr_name(prop_def)
     expr = prop_def.pop('expr')
-    name = prop_def.pop('name', _format_slug_string_for_display(expr))
+    name = prop_def.pop('name', None) or _format_slug_string_for_display(expr)
     format = prop_def.pop('format', None)
     process = prop_def.pop('process', None)
     timeago = prop_def.get('timeago', False)
 
-    # todo: nested attributes, jsonpath, indexing into related documents
-    val = data.get(expr, None)
+    val = eval_expr(expr, data)
 
     if prop_def.pop('parse_date', None):
         val = _parse_date_or_datetime(val)
@@ -162,10 +162,29 @@ def get_display_data(data, prop_def, processors=None, timezone=pytz.utc):
         val = mark_safe(format.format(val))
 
     return {
-        "expr": expr,
+        "expr": expr_name,
         "name": name,
         "value": val
     }
+
+
+def _get_expr_name(prop_def):
+    if callable(prop_def['expr']):
+        return prop_def['name']
+    else:
+        return prop_def['expr']
+
+
+def eval_expr(expr, dict_data):
+    """
+    If expr is a string, will do a dict lookup using that string as a key.
+
+    If expr is a callable, will call it on the dict.
+    """
+    if callable(expr):
+        return expr(dict_data)
+    else:
+        return dict_data.get(expr, None)
 
 
 def get_tables_as_rows(data, definition, processors=None, timezone=pytz.utc):
@@ -179,9 +198,10 @@ def get_tables_as_rows(data, definition, processors=None, timezone=pytz.utc):
     sections = []
 
     for section in definition:
-        rows = [[get_display_data(data, prop, timezone=timezone, processors=processors)
-                 for prop in row] 
-                for row in section['layout']]
+        rows = [
+            [get_display_data(data, prop, timezone=timezone, processors=processors) for prop in row]
+            for row in section['layout']
+        ]
 
         max_row_len = max(map(len, rows)) if rows else 0
         for row in rows:

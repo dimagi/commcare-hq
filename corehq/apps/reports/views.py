@@ -200,6 +200,7 @@ def can_view_attachments(request):
 
 
 @login_and_domain_required
+@location_safe
 def default(request, domain):
     if domain in WORLD_VISION_DOMAINS and get_domain_module_map().get(domain):
         from custom.world_vision.reports.mixed_report import MixedTTCReport
@@ -228,6 +229,7 @@ class BaseProjectReportSectionView(BaseDomainView):
         return reverse('reports_home', args=(self.domain, ))
 
 
+@location_safe
 class MySavedReportsView(BaseProjectReportSectionView):
     urlname = 'saved_reports'
     page_title = _("My Saved Reports")
@@ -650,6 +652,7 @@ def touch_saved_reports_views(user, domain):
     ReportNotification.by_domain_and_owner(domain, user._id, limit=1, stale=False)
 
 
+@location_safe
 class AddSavedReportConfigView(View):
     name = 'add_report_config'
 

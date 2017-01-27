@@ -1,3 +1,4 @@
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesColumnGroup, DataTablesHeader
 from custom.enikshay.reports.generic import EnikshayReport, EnikshayMultiReport
 from custom.enikshay.reports.const import TREATMENT_OUTCOMES
@@ -147,6 +148,7 @@ class CPTAndARTReport(EnikshayReport):
         ]
 
 
+@location_safe
 class TreatmentOutcomeReport(EnikshayMultiReport):
 
     name = ugettext_lazy('Treatment Outcome')

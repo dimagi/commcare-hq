@@ -9,9 +9,10 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, override as override_language
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
+from corehq.apps.users.landing_pages import ALLOWED_LANDING_PAGES
 from corehq.apps.users.permissions import EXPORT_PERMISSIONS
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
@@ -35,7 +36,7 @@ from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 from casexml.apps.phone.models import OTARestoreWebUser, OTARestoreCommCareUser
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.domain.shortcuts import create_user
-from corehq.apps.domain.utils import normalize_domain_name, domain_restricts_superusers
+from corehq.apps.domain.utils import normalize_domain_name, domain_restricts_superusers, guess_domain_language
 from corehq.apps.domain.models import Domain, LicenseAgreement
 from corehq.apps.users.util import (
     user_display_string,
@@ -44,11 +45,7 @@ from corehq.apps.users.util import (
 from corehq.apps.users.tasks import tag_forms_as_deleted_rebuild_associated_cases, \
     tag_cases_as_deleted_and_remove_indices
 from corehq.apps.users.exceptions import InvalidLocationConfig
-from corehq.apps.sms.mixin import (
-    CommCareMobileContactMixin,
-    InvalidFormatException,
-    PhoneNumberInUseException,
-)
+from corehq.apps.sms.mixin import CommCareMobileContactMixin, apply_leniency
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from dimagi.utils.mixins import UnicodeMixIn
@@ -202,7 +199,11 @@ class UserRolePresets(object):
 class UserRole(QuickCachedDocumentMixin, Document):
     domain = StringProperty()
     name = StringProperty()
+    default_landing_page = StringProperty(
+        choices=[page.id for page in ALLOWED_LANDING_PAGES],
+    )
     permissions = SchemaProperty(Permissions)
+    is_non_admin_editable = BooleanProperty(default=False)
     is_archived = BooleanProperty(default=False)
 
     def get_qualified_id(self):
@@ -304,18 +305,6 @@ class UserRole(QuickCachedDocumentMixin, Document):
     @classmethod
     def get_default(cls, domain=None):
         return cls(permissions=Permissions(), domain=domain, name=None)
-
-    @classmethod
-    def role_choices(cls, domain):
-        return [(role.get_qualified_id(), role.name or '(No Name)') for role in
-                [AdminUserRole(domain=domain)] + list(cls.by_domain(domain))]
-
-    @classmethod
-    def commcareuser_role_choices(cls, domain):
-        return [('none','(none)')] + [
-            (role.get_qualified_id(), role.name or '(No Name)')
-            for role in list(cls.by_domain(domain))
-        ]
 
     @property
     def ids_of_assigned_users(self):
@@ -848,6 +837,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         else:
             return self.username
 
+    @property
+    def username_in_report(self):
+        return user_display_string(self.username, self.first_name, self.last_name)
+
     def html_username(self):
         username = self.raw_username
         if '@' in username:
@@ -954,7 +947,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
                 del self.phone_numbers[i]
                 break
         self.save()
-        self.delete_verified_number(phone_number)
+        self.delete_phone_entry(phone_number)
 
     def get_django_user(self):
         return User.objects.get(username__iexact=self.username)
@@ -982,26 +975,25 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         from corehq.apps.sms.models import PhoneNumber
         from corehq.apps.hqwebapp.doc_info import get_object_url
 
-        phone_entries = self.get_verified_numbers(True)
+        phone_entries = self.get_phone_entries()
 
         def get_phone_info(phone):
             info = {}
-            phone_entry = phone_entries.get(phone)
+            phone_entry = phone_entries.get(apply_leniency(phone))
 
-            if phone_entry:
-                status = 'verified' if phone_entry.verified else 'pending'
+            if phone_entry and phone_entry.verified:
+                status = 'verified'
+            elif phone_entry and phone_entry.pending_verification:
+                status = 'pending'
             else:
-                try:
-                    self.verify_unique_number(phone)
-                    status = 'unverified'
-                except PhoneNumberInUseException:
+                duplicate = PhoneNumber.get_reserved_number(phone)
+                if duplicate:
                     status = 'duplicate'
-                    duplicate = PhoneNumber.by_phone(phone, include_pending=True)
                     if requesting_user.is_member_of(duplicate.domain):
                         info['dup_url'] = get_object_url(duplicate.domain,
                             duplicate.owner_doc_type, duplicate.owner_id)
-                except InvalidFormatException:
-                    status = 'invalid'
+                else:
+                    status = 'unverified'
 
             info.update({'number': phone, 'status': status})
             return info
@@ -1100,13 +1092,19 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             django_user = User(username=self.username)
         for attr in DjangoUserMixin.ATTRS:
             attr_val = getattr(self, attr)
-            if not attr_val and attr != 'last_login':
+            if attr in [
+                'is_active',
+                'is_staff',
+                'is_superuser',
+            ]:
+                attr_val = attr_val if attr_val is True else False
+            elif not attr_val and attr != 'last_login':
                 attr_val = ''
             # truncate names when saving to django
             if attr == 'first_name' or attr == 'last_name':
                 attr_val = attr_val[:30]
             setattr(django_user, attr, attr_val)
-        django_user.DO_NOT_SAVE_COUCH_USER= True
+        django_user.DO_NOT_SAVE_COUCH_USER = True
         return django_user
 
     def sync_from_old_couch_user(self, old_couch_user):
@@ -1393,27 +1391,21 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def wrap(cls, data):
         # migrations from using role_id to using the domain_memberships
         role_id = None
-        should_save = False
-        if not data.has_key('domain_membership') or not data['domain_membership'].get('domain', None):
-            should_save = True
-        if data.has_key('role_id'):
+        if 'role_id' in data:
             role_id = data["role_id"]
             del data['role_id']
-            should_save = True
+        if not data.get('domain_membership', {}).get('domain', None):
+            data['domain_membership'] = DomainMembership(
+                domain=data.get('domain', ""), role_id=role_id
+            ).to_json()
         if not data.get('user_data', {}).get('commcare_project'):
             data['user_data'] = dict(data['user_data'], **{'commcare_project': data['domain']})
-            should_save = True
+
         # Todo; remove after migration
         from corehq.apps.users.management.commands import add_multi_location_property
         add_multi_location_property.Command().migrate_user(data)
 
-        self = super(CommCareUser, cls).wrap(data)
-        if should_save:
-            self.domain_membership = DomainMembership(domain=data.get('domain', ""))
-            if role_id:
-                self.domain_membership.role_id = role_id
-
-        return self
+        return super(CommCareUser, cls).wrap(data)
 
     def clear_quickcache_for_user(self):
         self.get_usercase_id.clear(self)
@@ -1488,10 +1480,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def project(self):
         return Domain.get_by_name(self.domain)
 
-    @property
-    def username_in_report(self):
-        return user_display_string(self.username, self.first_name, self.last_name)
-
     def is_commcare_user(self):
         return True
 
@@ -1560,9 +1548,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 self.user_id, self.domain, form_id_list, deletion_id, deletion_date, deleted_cases=deleted_cases
             )
 
-        for phone_number in self.get_verified_numbers(True).values():
-            phone_number.delete()
-
         try:
             django_user = self.get_django_user()
         except User.DoesNotExist:
@@ -1580,6 +1565,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         groups += [group for group in Group.by_user(self) if group.case_sharing]
         return groups
+
+    def get_reporting_groups(self):
+        from corehq.apps.groups.models import Group
+        return [group for group in Group.by_user(self) if group.reporting]
 
     @classmethod
     def cannot_share(cls, domain, limit=None, skip=0):
@@ -1737,8 +1726,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         from corehq.apps.locations.models import SQLLocation
         old_primary_location_id = self.location_id
         if old_primary_location_id:
-            self.assigned_location_ids.remove(old_primary_location_id)
-            self.get_domain_membership(self.domain).assigned_location_ids.remove(old_primary_location_id)
+            self._remove_location_from_user(old_primary_location_id)
 
         if self.assigned_location_ids:
             self.user_data['commcare_location_ids'] = user_location_data(self.assigned_location_ids)
@@ -1769,14 +1757,29 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             # check if primary location
             self.unset_location(fall_back_to_next)
         else:
-            self.assigned_location_ids.remove(location_id)
-            self.get_domain_membership(self.domain).assigned_location_ids.remove(location_id)
+            self._remove_location_from_user(location_id)
 
             if self.assigned_location_ids:
                 self.user_data['commcare_location_ids'] = user_location_data(self.assigned_location_ids)
             else:
                 self.user_data.pop('commcare_location_ids')
             self.save()
+
+    def _remove_location_from_user(self, location_id):
+        try:
+            self.assigned_location_ids.remove(location_id)
+        except ValueError:
+            notify_exception(None, "Location missing from user", {
+                'user_id': self._id,
+                'location_id': location_id
+            })
+        try:
+            self.get_domain_membership(self.domain).assigned_location_ids.remove(location_id)
+        except ValueError:
+            notify_exception(None, "Location missing from domain membership", {
+                'user_id': self._id,
+                'location_id': location_id
+            })
 
     def reset_locations(self, location_ids):
         """
@@ -2302,14 +2305,16 @@ class Invitation(QuickCachedDocumentMixin, Document):
                   "inviter": self.get_inviter().formatted_name}
 
         domain_request = DomainRequest.by_email(self.domain, self.email, is_approved=True)
-        if domain_request is None:
-            text_content = render_to_string("domain/email/domain_invite.txt", params)
-            html_content = render_to_string("domain/email/domain_invite.html", params)
-            subject = _('Invitation from %s to join CommCareHQ') % self.get_inviter().formatted_name
-        else:
-            text_content = render_to_string("domain/email/domain_request_approval.txt", params)
-            html_content = render_to_string("domain/email/domain_request_approval.html", params)
-            subject = _('Request to join CommCareHQ approved')
+        lang = guess_domain_language(self.domain)
+        with override_language(lang):
+            if domain_request is None:
+                text_content = render_to_string("domain/email/domain_invite.txt", params)
+                html_content = render_to_string("domain/email/domain_invite.html", params)
+                subject = _('Invitation from %s to join CommCareHQ') % self.get_inviter().formatted_name
+            else:
+                text_content = render_to_string("domain/email/domain_request_approval.txt", params)
+                html_content = render_to_string("domain/email/domain_request_approval.html", params)
+                subject = _('Request to join CommCareHQ approved')
         send_html_email_async.delay(subject, self.email, html_content,
                                     text_content=text_content,
                                     cc=[self.get_inviter().get_email()],

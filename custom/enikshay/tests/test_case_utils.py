@@ -2,6 +2,8 @@ from datetime import datetime
 import pytz
 
 from django.test import TestCase
+
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.enikshay.tests.utils import ENikshayCaseStructureMixin
 from corehq.form_processor.tests.utils import run_with_all_backends, FormProcessorTestUtils
 
@@ -10,6 +12,8 @@ from custom.enikshay.case_utils import (
     get_adherence_cases_between_dates,
     get_occurrence_case_from_episode,
     get_person_case_from_occurrence,
+    get_person_case_from_episode,
+    update_case,
     get_open_occurrence_case_from_person,
     get_open_episode_case_from_occurrence,
 )
@@ -88,6 +92,24 @@ class ENikshayCaseUtilsTests(ENikshayCaseStructureMixin, TestCase):
             get_person_case_from_occurrence(self.domain, self.occurrence_id).case_id,
             self.person_id
         )
+
+    @run_with_all_backends
+    def test_get_person_case_from_episode(self):
+        self.assertEqual(
+            get_person_case_from_episode(self.domain, self.episode_id).case_id,
+            self.person_id
+        )
+
+    @run_with_all_backends
+    def test_update_case(self):
+        update_properties = {'age': 99}
+        self.factory.create_or_update_cases([self.person])
+        case_accessors = CaseAccessors(self.domain)
+        person_case = case_accessors.get_case(self.person_id)
+        self.assertEqual(person_case.dynamic_case_properties().get('age', None), '20')
+        update_case(self.domain, self.person_id, update_properties)
+        person_case = case_accessors.get_case(self.person_id)
+        self.assertEqual(person_case.dynamic_case_properties()['age'], '99')
 
     @run_with_all_backends
     def test_get_open_occurrence_case_from_person(self):

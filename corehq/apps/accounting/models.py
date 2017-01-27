@@ -739,7 +739,6 @@ class DefaultProductPlan(models.Model):
     The latest SoftwarePlanVersion that's linked to this plan will be the one used to create a new subscription if
     nothing is found for that domain.
     """
-    product_type = models.CharField(max_length=25, choices=SoftwareProductType.CHOICES)
     edition = models.CharField(
         default=SoftwarePlanEdition.COMMUNITY,
         choices=SoftwarePlanEdition.CHOICES,
@@ -747,17 +746,21 @@ class DefaultProductPlan(models.Model):
     )
     plan = models.ForeignKey(SoftwarePlan, on_delete=models.PROTECT)
     is_trial = models.BooleanField(default=False)
+    is_report_builder_enabled = models.BooleanField(default=False)
     last_modified = models.DateTimeField(auto_now=True)
 
     class Meta:
         app_label = 'accounting'
+        unique_together = ('edition', 'is_trial', 'is_report_builder_enabled')
 
     @classmethod
-    def get_default_plan_version(cls, edition=None, is_trial=False):
+    def get_default_plan_version(cls, edition=None, is_trial=False,
+                                 is_report_builder_enabled=False):
         edition = edition or SoftwarePlanEdition.COMMUNITY
         try:
             default_product_plan = DefaultProductPlan.objects.select_related('plan').get(
-                product_type=SoftwareProductType.COMMCARE, edition=edition, is_trial=is_trial
+                edition=edition, is_trial=is_trial,
+                is_report_builder_enabled=is_report_builder_enabled
             )
             return default_product_plan.plan.get_version()
         except DefaultProductPlan.DoesNotExist:
@@ -808,31 +811,24 @@ class SoftwarePlanVersion(models.Model):
     @property
     def user_facing_description(self):
         from corehq.apps.accounting.user_text import DESC_BY_EDITION, FEATURE_TYPE_TO_NAME
+
+        def _default_description(plan, monthly_limit):
+            if plan.edition != SoftwarePlanEdition.ENTERPRISE:
+                return DESC_BY_EDITION[plan.edition]['description'] % monthly_limit
+            else:
+                return DESC_BY_EDITION[plan.edition]['description']
+
         desc = {
             'name': self.plan.name,
-            'description': self.plan.description,
         }
-        try:
-            if (
-                self.plan.visibility == SoftwarePlanVisibility.PUBLIC
-                or self.plan.visibility == SoftwarePlanVisibility.TRIAL
-            ):
-                desc['description'] = (
-                    DESC_BY_EDITION[self.plan.edition]['description'] % self.user_feature.monthly_limit
-                    if self.plan.edition != SoftwarePlanEdition.ENTERPRISE
-                    else DESC_BY_EDITION[self.plan.edition]['description']
-                )
-            else:
-                for desc_key in desc:
-                    if not desc[desc_key]:
-                        if desc_key == 'description' and self.plan.edition != SoftwarePlanEdition.ENTERPRISE:
-                            desc[desc_key] = (
-                                DESC_BY_EDITION[self.plan.edition]['description'] % self.user_feature.monthly_limit
-                            )
-                        else:
-                            desc[desc_key] = DESC_BY_EDITION[self.plan.edition][desc_key]
-        except KeyError:
-            pass
+        if (
+            self.plan.visibility == SoftwarePlanVisibility.PUBLIC
+            or self.plan.visibility == SoftwarePlanVisibility.TRIAL
+        ) or not self.plan.description:
+            desc['description'] = _default_description(self.plan, self.user_feature.monthly_limit)
+        else:
+            desc['description'] = self.plan.description
+
         desc.update({
             'monthly_fee': 'USD %s' % self.product_rate.monthly_fee,
             'rates': [{'name': FEATURE_TYPE_TO_NAME[r.feature.feature_type],
@@ -2861,7 +2857,14 @@ class StripePaymentMethod(PaymentMethod):
 
     @property
     def all_cards(self):
-        return filter(lambda card: card is not None, self.customer.cards.data)
+        try:
+            return filter(lambda card: card is not None, self.customer.cards.data)
+        except stripe.error.AuthenticationError:
+            if not settings.STRIPE_PRIVATE_KEY:
+                log_accounting_info("Private key is not defined in settings")
+                return []
+            else:
+                raise
 
     def all_cards_serialized(self, billing_account):
         return [{

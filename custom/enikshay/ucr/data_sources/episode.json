@@ -19,30 +19,14 @@
         "table_id": "episode",
         "display_name": "episode",
         "configured_filter": {
-            "type": "and",
-            "filters": [
-                {
-                    "operator": "eq",
-                    "expression": {
-                        "datatype": null,
-                        "type": "property_name",
-                        "property_name": "type"
-                    },
-                    "type": "boolean_expression",
-                    "property_value": "episode"
-                },
-                {
-                    "operator": "eq",
-                    "expression": {
-                        "datatype": null,
-                        "type": "property_name",
-                        "property_name": "closed"
-                    },
-                    "type": "boolean_expression",
-                    "property_value": false
-                }
-            ]
-
+            "operator": "eq",
+            "expression": {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "type"
+            },
+            "type": "boolean_expression",
+            "property_value": "episode"
         },
         "configured_indicators": [
             {
@@ -76,6 +60,17 @@
                 }
             },
             {
+                "display_name": "closed",
+                "datatype": "integer",
+                "type": "expression",
+                "column_id": "closed",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "closed"
+                }
+            },
+            {
                 "display_name": "owner_id",
                 "transform": {
                 },
@@ -100,9 +95,24 @@
                 "is_nullable": true,
                 "expression": {
                     "value_expression": {
-                        "datatype": "string",
-                        "type": "property_name",
-                        "property_name": "owner_id"
+                        "type": "conditional",
+                        "test": {
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "owner_id"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "_archive_"
+                        },
+                        "expression_if_true": {
+                            "type": "property_name",
+                            "property_name": "last_owner"
+                        },
+                        "expression_if_false": {
+                            "type": "property_name",
+                            "property_name": "owner_id"
+                        }
                     },
                     "type": "related_doc",
                     "related_doc_type": "CommCareCase",
@@ -725,7 +735,7 @@
                 "datatype": "date",
                 "type": "expression",
                 "expression": {
-                   "type": "nested",
+                    "type": "nested",
                     "argument_expression": {
                         "type": "named",
                         "name": "latest_diagnostic_test_case"
@@ -910,7 +920,7 @@
                 "datatype": "date",
                 "type": "expression",
                 "expression": {
-                   "type": "nested",
+                    "type": "nested",
                     "argument_expression": {
                         "type": "named",
                         "name": "latest_microbiological_test_case"
@@ -1033,7 +1043,7 @@
                 "datatype": "date",
                 "type": "expression",
                 "expression": {
-                   "type": "nested",
+                    "type": "nested",
                     "argument_expression": {
                         "type": "named",
                         "name": "latest_endofip_test_case"
@@ -1078,13 +1088,13 @@
                     }
                 }
             },
-                        {
+            {
                 "display_name": "endofcp_test_requested_date",
                 "column_id": "endofcp_test_requested_date",
                 "datatype": "date",
                 "type": "expression",
                 "expression": {
-                   "type": "nested",
+                    "type": "nested",
                     "argument_expression": {
                         "type": "named",
                         "name": "latest_endofcp_test_case"
@@ -1402,6 +1412,40 @@
                     "value_expression": {
                         "type": "property_name",
                         "property_name": "result"
+                    }
+                }
+            },
+            {
+                "column_id": "result_of_bacteriological_test",
+                "display_name": "result_of_bacteriological_test",
+                "type": "expression",
+                "datatype": "string",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "bacteriological_examination_test_case"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "result"
+                    }
+                }
+            },
+            {
+                "column_id": "bacteriological_test_episode_type",
+                "display_name": "bacteriological_test_episode_type",
+                "type": "expression",
+                "datatype": "string",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "bacteriological_examination_test_case"
+                    },
+                    "value_expression": {
+                        "type": "property_name",
+                        "property_name": "episode_type_at_request"
                     }
                 }
             },
@@ -1923,21 +1967,16 @@
                 "column_id": "hiv_test_done",
                 "display_name": null,
                 "filter": {
-                    "filters": [
-                        {
-                            "operator": "in",
-                            "type": "boolean_expression",
-                            "expression": {
-                                "type": "named",
-                                "name": "hiv_status"
-                            },
-                            "property_value": [
-                                "reactive",
-                                "non_reactive"
-                            ]
-                        }
-                    ],
-                    "type": "and"
+                    "operator": "in",
+                    "type": "boolean_expression",
+                    "expression": {
+                        "type": "named",
+                        "name": "hiv_status"
+                    },
+                    "property_value": [
+                        "reactive",
+                        "non_reactive"
+                    ]
                 },
                 "type": "boolean"
             },
@@ -2619,6 +2658,26 @@
                 }
             },
             {
+                "type": "expression",
+                "datatype": "string",
+                "column_id": "referring_facility_id",
+                "expression": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "latest_microscopy_test_request_form"
+                    },
+                    "value_expression": {
+                        "type": "property_path",
+                        "property_path": [
+                            "form",
+                            "rpt_referral_details",
+                            "lab_referral_owner_id"
+                        ]
+                    }
+                }
+            },
+            {
                 "type": "boolean",
                 "column_id": "bacteriological_examination",
                 "filter": {
@@ -2664,183 +2723,123 @@
                 "type": "boolean",
                 "column_id": "suspect_tested_at_dmc",
                 "filter": {
-                    "type": "and",
-                    "filters": [
-                        {
-                            "type": "not",
-                            "filter": {
-                                "operator": "in",
-                                "type": "boolean_expression",
-                                "expression": {
-                                    "type": "nested",
-                                    "argument_expression": {
-                                        "type": "named",
-                                        "name": "latest_microscopy_test_case"
-                                    },
-                                    "value_expression": {
-                                        "type": "property_name",
-                                        "property_name": "result"
-                                    }
-                                },
-                                "property_value": ["", null]
-                            }
-                        },
-                        {
+                    "operator": "in",
+                    "type": "boolean_expression",
+                    "expression": {
+                        "type": "nested",
+                        "argument_expression": {
                             "type": "named",
-                            "name": "current_episode_type_suspect"
+                            "name": "latest_suspect_microscopy_test_case"
+                        },
+                        "value_expression": {
+                            "type": "property_name",
+                            "property_name": "result"
                         }
-                    ]
+                    },
+                    "property_value": ["", null]
                 }
             },
             {
                 "type": "boolean",
                 "column_id": "positive_suspect_tested_at_dmc",
                 "filter": {
-                    "type": "and",
-                    "filters": [
-                        {
-                            "operator": "eq",
-                            "type": "boolean_expression",
-                            "expression": {
-                                "type": "nested",
-                                "argument_expression": {
-                                    "type": "named",
-                                    "name": "latest_microscopy_test_case"
-                                },
-                                "value_expression": {
-                                    "type": "property_name",
-                                    "property_name": "result"
-                                }
-                            },
-                            "property_value": "tb_detected"
-                        },
-                        {
+                    "operator": "eq",
+                    "type": "boolean_expression",
+                    "expression": {
+                        "type": "nested",
+                        "argument_expression": {
                             "type": "named",
-                            "name": "current_episode_type_suspect"
+                            "name": "latest_suspect_microscopy_test_case"
+                        },
+                        "value_expression": {
+                            "type": "property_name",
+                            "property_name": "result"
                         }
-                    ]
+                    },
+                    "property_value": "tb_detected"
                 }
             },
             {
                 "type": "boolean",
                 "column_id": "suspect_tested_for_diagnosis",
                 "filter": {
-                    "type": "and",
-                    "filters": [
-                        {
-                            "type": "not",
-                            "filter": {
-                                "operator": "in",
-                                "type": "boolean_expression",
-                                "expression": {
-                                    "type": "nested",
-                                    "argument_expression": {
-                                        "type": "named",
-                                        "name": "latest_diagnostic_microscopy_test_case"
-                                    },
-                                    "value_expression": {
-                                        "type": "property_name",
-                                        "property_name": "result"
-                                    }
-                                },
-                                "property_value": ["", null]
+                    "type": "not",
+                    "filter": {
+                        "operator": "in",
+                        "type": "boolean_expression",
+                        "expression": {
+                            "type": "nested",
+                            "argument_expression": {
+                                "type": "named",
+                                "name": "latest_suspect_microscopy_test_case"
+                            },
+                            "value_expression": {
+                                "type": "property_name",
+                                "property_name": "result"
                             }
                         },
-                        {
-                            "type": "named",
-                            "name": "current_episode_type_suspect"
-                        }
-                    ]
+                        "property_value": ["", null]
+                    }
                 }
             },
             {
                 "type": "boolean",
                 "column_id": "positive_suspect_tested_for_diagnosis",
                 "filter": {
-                    "type": "and",
-                    "filters": [
-                        {
-                            "operator": "eq",
-                            "type": "boolean_expression",
-                            "expression": {
-                                "type": "nested",
-                                "argument_expression": {
-                                    "type": "named",
-                                    "name": "latest_diagnostic_microscopy_test_case"
-                                },
-                                "value_expression": {
-                                    "type": "property_name",
-                                    "property_name": "result"
-                                }
-                            },
-                            "property_value": "tb_detected"
-                        },
-                        {
+                    "operator": "eq",
+                    "type": "boolean_expression",
+                    "expression": {
+                        "type": "nested",
+                        "argument_expression": {
                             "type": "named",
-                            "name": "current_episode_type_suspect"
+                            "name": "latest_suspect_diagnostic_microscopy_test_case"
+                        },
+                        "value_expression": {
+                            "type": "property_name",
+                            "property_name": "result"
                         }
-                    ]
+                    },
+                    "property_value": "tb_detected"
                 }
             },
             {
                 "type": "boolean",
                 "column_id": "suspect_tested_for_follow_up",
                 "filter": {
-                    "type": "and",
-                    "filters": [
-                        {
-                            "type": "not",
-                            "filter": {
-                                "operator": "in",
-                                "type": "boolean_expression",
-                                "expression": {
-                                    "type": "nested",
-                                    "argument_expression": {
-                                        "type": "named",
-                                        "name": "latest_follow_up_microscopy_test_case"
-                                    },
-                                    "value_expression": {
-                                        "type": "property_name",
-                                        "property_name": "result"
-                                    }
-                                },
-                                "property_value": ["", null]
-                            }
-                        },
-                        {
+                    "operator": "in",
+                    "type": "boolean_expression",
+                    "expression": {
+                        "type": "nested",
+                        "argument_expression": {
                             "type": "named",
-                            "name": "current_episode_type_suspect"
+                            "name": "latest_suspect_follow_up_microscopy_test_case"
+                        },
+                        "value_expression": {
+                            "type": "property_name",
+                            "property_name": "result"
                         }
-                    ]
+                    },
+                    "property_value": ["", null]
                 }
             },
             {
                 "type": "boolean",
                 "column_id": "positive_suspect_tested_for_follow_up",
                 "filter": {
-                    "type": "and",
-                    "filters": [
-                        {
-                            "operator": "eq",
-                            "type": "boolean_expression",
-                            "expression": {
-                                "type": "nested",
-                                "argument_expression": {
-                                    "type": "named",
-                                    "name": "latest_follow_up_microscopy_test_case"
-                                },
-                                "value_expression": {
-                                    "type": "property_name",
-                                    "property_name": "result"
-                                }
-                            },
-                            "property_value": "tb_detected"
-                        },
-                        {
+                    "operator": "eq",
+                    "type": "boolean_expression",
+                    "expression": {
+                        "type": "nested",
+                        "argument_expression": {
                             "type": "named",
-                            "name": "current_episode_type_suspect"
+                            "name": "latest_suspect_follow_up_microscopy_test_case"
+                        },
+                        "value_expression": {
+                            "type": "property_name",
+                            "property_name": "result"
                         }
-                    ]
+                    },
+                    "property_value": "tb_detected"
                 }
             },
             {
@@ -2856,7 +2855,7 @@
                                 "type": "nested",
                                 "argument_expression": {
                                     "type": "named",
-                                    "name": "latest_diagnostic_microscopy_test_case"
+                                    "name": "latest_suspect_diagnostic_microscopy_test_case"
                                 },
                                 "value_expression": {
                                     "type": "property_name",
@@ -2913,7 +2912,7 @@
                                 "type": "nested",
                                 "argument_expression": {
                                     "type": "named",
-                                    "name": "latest_diagnostic_microscopy_test_case"
+                                    "name": "latest_suspect_diagnostic_microscopy_test_case"
                                 },
                                 "value_expression": {
                                     "type": "property_name",
@@ -2950,7 +2949,7 @@
                                 "type": "nested",
                                 "argument_expression": {
                                     "type": "named",
-                                    "name": "latest_diagnostic_microscopy_test_case"
+                                    "name": "latest_suspect_diagnostic_microscopy_test_case"
                                 },
                                 "value_expression": {
                                     "type": "property_name",
@@ -4273,6 +4272,151 @@
                                         "property_name": "purpose_of_testing"
                                     },
                                     "property_value": "diagnostic"
+                                }
+                            ]
+
+                        }
+                    },
+                    "aggregation_fn": "count"
+                }
+            },
+            {
+                "type": "expression",
+                "datatype": "integer",
+                "column_id": "positive_microscopy_tests",
+                "expression": {
+                    "type": "reduce_items",
+                    "items_expression": {
+                        "type": "filter_items",
+                        "items_expression": {
+                            "type": "get_subcases",
+                            "case_id_expression": {
+                                "value_expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "referenced_id"
+                                },
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "array_index",
+                                    "array_expression": {
+                                        "datatype": null,
+                                        "type": "property_name",
+                                        "property_name": "indices"
+                                    },
+                                    "index_expression": {
+                                        "type": "constant",
+                                        "constant": 0
+                                    }
+                                }
+                            }
+                        },
+                        "filter_expression": {
+                            "type": "and",
+                            "filters": [
+                                {
+                                    "type": "boolean_expression",
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "type"
+                                    },
+                                    "property_value": "test"
+                                },
+                                {
+                                    "type": "boolean_expression",
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "purpose_of_testing"
+                                    },
+                                    "property_value": "diagnostic"
+                                },
+                                {
+                                    "operator": "eq",
+                                    "type": "boolean_expression",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "result"
+                                    },
+                                    "property_value": "tb_detected"
+                                },
+                                {
+                                    "type": "boolean_expression",
+                                    "operator": "in",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "test_type_value"
+                                    },
+                                    "property_value": ["microscopy-zn", "microscopy-fluorescent"]
+                                }
+                            ]
+
+                        }
+                    },
+                    "aggregation_fn": "count"
+                }
+            },
+            {
+                "type": "expression",
+                "datatype": "integer",
+                "column_id": "repeat_sputum_examinations",
+                "expression": {
+                    "type": "reduce_items",
+                    "items_expression": {
+                        "type": "filter_items",
+                        "items_expression": {
+                            "type": "get_subcases",
+                            "case_id_expression": {
+                                "value_expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "referenced_id"
+                                },
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "array_index",
+                                    "array_expression": {
+                                        "datatype": null,
+                                        "type": "property_name",
+                                        "property_name": "indices"
+                                    },
+                                    "index_expression": {
+                                        "type": "constant",
+                                        "constant": 0
+                                    }
+                                }
+                            }
+                        },
+                        "filter_expression": {
+                            "type": "and",
+                            "filters": [
+                                {
+                                    "type": "boolean_expression",
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "type"
+                                    },
+                                    "property_value": "test"
+                                },
+                                {
+                                    "type": "boolean_expression",
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "diagnostic_test_reason"
+                                    },
+                                    "property_value": "repeat_exam_for_diagnosis"
+                                },
+                                {
+                                    "type": "boolean_expression",
+                                    "operator": "in",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "test_type_value"
+                                    },
+                                    "property_value": ["microscopy-zn", "microscopy-fluorescent"]
                                 }
                             ]
 
@@ -5891,74 +6035,74 @@
         "named_expressions": {
             "test_result": {
                 "type": "conditional",
-                    "test": {
-                        "operator": "eq",
-                        "expression": {
-                            "type": "property_name",
-                            "property_name": "test_type_value"
-                        },
-                        "type": "boolean_expression",
-                        "property_value": "cbnaat"
+                "test": {
+                    "operator": "eq",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "test_type_value"
                     },
-                    "expression_if_true": {
-                        "type": "nested",
-                        "argument_expression": {
-                            "type": "reduce_items",
+                    "type": "boolean_expression",
+                    "property_value": "cbnaat"
+                },
+                "expression_if_true": {
+                    "type": "nested",
+                    "argument_expression": {
+                        "type": "reduce_items",
+                        "items_expression": {
+                            "type": "sort_items",
                             "items_expression": {
-                                "type": "sort_items",
+                                "type": "filter_items",
                                 "items_expression": {
-                                    "type": "filter_items",
-                                    "items_expression": {
-                                        "type": "get_case_forms",
-                                        "case_id_expression": {
-                                            "type": "property_name",
-                                            "property_name": "_id"
-                                        }
-                                    },
-                                    "filter_expression": {
-                                        "type": "boolean_expression",
-                                        "operator": "eq",
-                                        "expression": {
-                                            "type": "property_name",
-                                            "property_name": "xmlns"
-                                        },
-                                        "property_value": "http://openrosa.org/formdesigner/0598A2DE-3E33-48BF-96AC-226C25C70CB3"
+                                    "type": "get_case_forms",
+                                    "case_id_expression": {
+                                        "type": "property_name",
+                                        "property_name": "_id"
                                     }
                                 },
-                                "sort_expression": {
-                                    "type": "property_name",
-                                    "property_name": "received_on"
+                                "filter_expression": {
+                                    "type": "boolean_expression",
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "xmlns"
+                                    },
+                                    "property_value": "http://openrosa.org/formdesigner/0598A2DE-3E33-48BF-96AC-226C25C70CB3"
                                 }
                             },
-                            "aggregation_fn": "last_item"
+                            "sort_expression": {
+                                "type": "property_name",
+                                "property_name": "received_on"
+                            }
                         },
-                        "value_expression": {
-                            "type":"concatenate_strings",
-                            "expressions": [
-                                {
-                                    "type": "property_path",
-                                    "property_path": [
-                                        "form",
-                                        "cbnaat",
-                                        "mtb_result"
-                                    ]
-                                },
-                                {
-                                    "type": "property_path",
-                                    "property_path": [
-                                        "form",
-                                        "cbnaat",
-                                        "rif_resistance_result"
-                                    ]
-                                }
-                            ],
-                            "separator": " "
-                        }
+                        "aggregation_fn": "last_item"
                     },
-                    "expression_if_false": {
-                        "type": "property_name",
-                        "property_name": "result_grade"
+                    "value_expression": {
+                        "type":"concatenate_strings",
+                        "expressions": [
+                            {
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "cbnaat",
+                                    "mtb_result"
+                                ]
+                            },
+                            {
+                                "type": "property_path",
+                                "property_path": [
+                                    "form",
+                                    "cbnaat",
+                                    "rif_resistance_result"
+                                ]
+                            }
+                        ],
+                        "separator": " "
                     }
+                },
+                "expression_if_false": {
+                    "type": "property_name",
+                    "property_name": "result_grade"
+                }
             },
             "age": {
                 "value_expression": {
@@ -6445,6 +6589,84 @@
                 },
                 "aggregation_fn": "last_item"
             },
+            "latest_suspect_diagnostic_microscopy_test_case": {
+                "type": "reduce_items",
+                "items_expression": {
+                    "type": "sort_items",
+                    "items_expression": {
+                        "type": "filter_items",
+                        "items_expression": {
+                            "type": "get_subcases",
+                            "case_id_expression": {
+                                "value_expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "referenced_id"
+                                },
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "array_index",
+                                    "array_expression": {
+                                        "datatype": null,
+                                        "type": "property_name",
+                                        "property_name": "indices"
+                                    },
+                                    "index_expression": {
+                                        "type": "constant",
+                                        "constant": 0
+                                    }
+                                }
+                            }
+                        },
+                        "filter_expression": {
+                            "type": "and",
+                            "filters": [
+                                {
+                                    "type": "boolean_expression",
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "type"
+                                    },
+                                    "property_value": "test"
+                                },
+                                {
+                                    "type": "boolean_expression",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "purpose_of_testing"
+                                    },
+                                    "operator": "eq",
+                                    "property_value": "diagnostic"
+                                },
+                                {
+                                    "type": "boolean_expression",
+                                    "operator": "in",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "test_type_value"
+                                    },
+                                    "property_value": ["microscopy-zn", "microscopy-fluorescent"]
+                                },
+                                {
+                                    "type": "boolean_expression",
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "episode_type_at_request"
+                                    },
+                                    "property_value": "presumptive_tb"
+                                }
+                            ]
+                        }
+                    },
+                    "sort_expression": {
+                        "type": "property_name",
+                        "property_name": "opened_on"
+                    }
+                },
+                "aggregation_fn": "last_item"
+            },
             "latest_follow_up_microscopy_test_case": {
                 "type": "reduce_items",
                 "items_expression": {
@@ -6514,6 +6736,84 @@
                 },
                 "aggregation_fn": "last_item"
             },
+            "latest_suspect_follow_up_microscopy_test_case": {
+                "type": "reduce_items",
+                "items_expression": {
+                    "type": "sort_items",
+                    "items_expression": {
+                        "type": "filter_items",
+                        "items_expression": {
+                            "type": "get_subcases",
+                            "case_id_expression": {
+                                "value_expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "referenced_id"
+                                },
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "array_index",
+                                    "array_expression": {
+                                        "datatype": null,
+                                        "type": "property_name",
+                                        "property_name": "indices"
+                                    },
+                                    "index_expression": {
+                                        "type": "constant",
+                                        "constant": 0
+                                    }
+                                }
+                            }
+                        },
+                        "filter_expression": {
+                            "type": "and",
+                            "filters": [
+                                {
+                                    "type": "boolean_expression",
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "type"
+                                    },
+                                    "property_value": "test"
+                                },
+                                {
+                                    "type": "boolean_expression",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "purpose_of_testing"
+                                    },
+                                    "operator": "eq",
+                                    "property_value": "follow_up"
+                                },
+                                {
+                                    "type": "boolean_expression",
+                                    "operator": "in",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "test_type_value"
+                                    },
+                                    "property_value": ["microscopy-zn", "microscopy-fluorescent"]
+                                },
+                                {
+                                    "type": "boolean_expression",
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "episode_type_at_request"
+                                    },
+                                    "property_value": "presumptive_tb"
+                                }
+                            ]
+                        }
+                    },
+                    "sort_expression": {
+                        "type": "property_name",
+                        "property_name": "opened_on"
+                    }
+                },
+                "aggregation_fn": "last_item"
+            },
             "latest_microscopy_test_case": {
                 "type": "reduce_items",
                 "items_expression": {
@@ -6570,6 +6870,112 @@
                     "sort_expression": {
                         "type": "property_name",
                         "property_name": "opened_on"
+                    }
+                },
+                "aggregation_fn": "last_item"
+            },
+            "latest_suspect_microscopy_test_case": {
+                "type": "reduce_items",
+                "items_expression": {
+                    "type": "sort_items",
+                    "items_expression": {
+                        "type": "filter_items",
+                        "items_expression": {
+                            "type": "get_subcases",
+                            "case_id_expression": {
+                                "value_expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "referenced_id"
+                                },
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "array_index",
+                                    "array_expression": {
+                                        "datatype": null,
+                                        "type": "property_name",
+                                        "property_name": "indices"
+                                    },
+                                    "index_expression": {
+                                        "type": "constant",
+                                        "constant": 0
+                                    }
+                                }
+                            }
+                        },
+                        "filter_expression": {
+                            "type": "and",
+                            "filters": [
+                                {
+                                    "type": "boolean_expression",
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "type"
+                                    },
+                                    "property_value": "test"
+                                },
+                                {
+                                    "type": "boolean_expression",
+                                    "operator": "in",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "test_type_value"
+                                    },
+                                    "property_value": ["microscopy-zn", "microscopy-fluorescent"]
+                                },
+                                {
+                                    "type": "boolean_expression",
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "episode_type_at_request"
+                                    },
+                                    "property_value": "presumptive_tb"
+                                }
+                            ]
+                        }
+                    },
+                    "sort_expression": {
+                        "type": "property_name",
+                        "property_name": "opened_on"
+                    }
+                },
+                "aggregation_fn": "last_item"
+            },
+            "latest_microscopy_test_request_form": {
+                "type": "reduce_items",
+                "items_expression": {
+                    "type": "sort_items",
+                    "items_expression": {
+                        "type": "filter_items",
+                        "items_expression": {
+                            "type": "get_case_forms",
+                            "case_id_expression": {
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "named",
+                                    "name": "latest_microscopy_test_case"
+                                },
+                                "value_expression": {
+                                    "type": "property_name",
+                                    "property_name": "_id"
+                                }
+                            }
+                        },
+                        "filter_expression": {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "xmlns"
+                            },
+                            "property_value": "http://openrosa.org/formdesigner/826B0458-C4ED-4A58-8AFD-F8E437C3646F"
+                        }
+                    },
+                    "sort_expression": {
+                        "type": "property_name",
+                        "property_name": "received_on"
                     }
                 },
                 "aggregation_fn": "last_item"
@@ -7510,24 +7916,8 @@
                 "type": "related_doc",
                 "related_doc_type": "CommCareCase",
                 "doc_id_expression": {
-                    "value_expression": {
-                        "datatype": null,
-                        "type": "property_name",
-                        "property_name": "referenced_id"
-                    },
-                    "type": "nested",
-                    "argument_expression": {
-                        "type": "array_index",
-                        "array_expression": {
-                            "datatype": null,
-                            "type": "property_name",
-                            "property_name": "indices"
-                        },
-                        "index_expression": {
-                            "type": "constant",
-                            "constant": 0
-                        }
-                    }
+                    "type": "named",
+                    "name": "person_id"
                 }
             },
             "key_populations": {

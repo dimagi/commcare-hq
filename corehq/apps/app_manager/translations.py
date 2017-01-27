@@ -455,29 +455,29 @@ def process_modules_and_forms_sheet(rows, app):
                 ))
                 continue
 
-        for lang in app.langs:
-            translation = row['default_%s' % lang]
-            if translation:
-                document.name[lang] = translation
-            else:
-                if lang in document.name:
-                    del document.name[lang]
+        _update_translation_dict('default_', document.name, row, app.langs)
 
         if (has_at_least_one_translation(row, 'label_for_cases', app.langs)
                 and hasattr(document, 'case_label')):
-            for lang in app.langs:
-                translation = row['label_for_cases_%s' % lang]
-                if translation:
-                    document.case_label[lang] = translation
-                else:
-                    if lang in document.case_label:
-                        del document.case_label[lang]
+            _update_translation_dict('label_for_cases_', document.case_label, row, app.langs)
 
         for lang in app.langs:
             document.set_icon(lang, row.get('icon_filepath_%s' % lang, ''))
             document.set_audio(lang, row.get('audio_filepath_%s' % lang, ''))
 
     return msgs
+
+
+def _update_translation_dict(prefix, language_dict, row, langs):
+    for lang in langs:
+        key = '%s%s' % (prefix, lang)
+        if key not in row:
+            continue
+        translation = row[key]
+        if translation:
+            language_dict[lang] = translation
+        else:
+            language_dict.pop(lang, None)
 
 
 def update_form_translations(sheet, rows, missing_cols, app):
@@ -616,8 +616,8 @@ def update_form_translations(sheet, rows, missing_cols, app):
             if not text_node.exists():
                 msgs.append((
                     messages.warning,
-                    "Unrecognized translation label {0} in sheet {1}. That row"
-                    " has been skipped". format(label_id, sheet.worksheet.title)
+                    u"Unrecognized translation label {0} in sheet {1}. That row"
+                    u" has been skipped". format(label_id, sheet.worksheet.title)
                 ))
                 continue
 
@@ -804,12 +804,7 @@ def update_case_list_translations(sheet, rows, app):
                     row, 'default', app.langs
             ))
         if ok_to_delete_translations:
-            for lang in app.langs:
-                translation = row['default_%s' % lang]
-                if translation:
-                    language_dict[lang] = translation
-                else:
-                    language_dict.pop(lang, None)
+            _update_translation_dict('default_', language_dict, row, app.langs)
         else:
             msgs.append((
                 messages.error,
@@ -884,7 +879,7 @@ def has_at_least_one_translation(row, prefix, langs):
     :param langs:
     :return:
     """
-    return bool(filter(None, [row[prefix + '_' + l] for l in langs]))
+    return bool(filter(None, [row.get(prefix + '_' + l) for l in langs]))
 
 
 def get_col_key(translation_type, language):

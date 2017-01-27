@@ -22,6 +22,7 @@ NOSE_PLUGINS = [
     'corehq.tests.noseplugins.djangomigrations.DjangoMigrationsPlugin',
 
     # The following are not enabled by default
+    'corehq.tests.noseplugins.logfile.LogFilePlugin',
     'corehq.tests.noseplugins.timing.TimingPlugin',
     'corehq.tests.noseplugins.uniformresult.UniformTestResultPlugin',
 

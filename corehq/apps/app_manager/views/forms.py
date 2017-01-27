@@ -567,6 +567,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         ),
         'is_usercase_in_use': is_usercase_in_use(request.domain),
         'is_module_filter_enabled': app.enable_module_filtering,
+        'is_case_list_form': form.is_case_list_form,
         'edit_name_url': reverse('edit_form_attr', args=[app.domain, app.id, form.unique_id, 'name']),
         'case_xpath_pattern_matches': CASE_XPATH_PATTERN_MATCHES,
         'case_xpath_substring_matches': CASE_XPATH_SUBSTRING_MATCHES,

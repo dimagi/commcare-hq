@@ -45,22 +45,29 @@
 trunk: master
 name: autostaging
 branches:
-  - xform_submissions.timings # Danny 1/3
+  - general-credits-sr # sreddy 1/10
   - vellum-staging # J$ 11/13  
   - django19
   - bmb/currentind-string # Biyeun 11/12
   - nh/new_rb  # Norman 11/22
   - nc/exports-with-conflict-res-branch  # Noah 12/11
-  - dm/vellum-user-properties
+  - mk-243862-locations-submit-history # MK 1/9
+  - mk-243862-reassign-cases-manage-forms # MK 1/9
+  - es/index-fixtures+mk-243262-new-location-fixture
+  - mk-243262-new-location-fixture # MK 1/16
+  - zapier_mods        # FR 1/17
+  - zapier_action_mods # NC 1/24
+  - np/phonenumbers # NP 1/18
+  - np/billing/report-builder-plans # NP 1/24
+  - es/scope-location-filter  # ES 1/24
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
-    branches: []
-#      - commcare-2.32-jars # Aliza 12/5
+    branches:
+      - commcare_2.32 # WSP 1/12
   submodules/formtranslate-src:
     branches: []
-#      - commcare-2.32-jars # Aliza 12/5
   submodules/django-digest-src:
     branches: []
   submodules/dimagi-utils-src:
