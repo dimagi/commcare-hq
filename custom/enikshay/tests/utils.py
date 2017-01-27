@@ -147,7 +147,7 @@ class ENikshayCaseStructureMixin(object):
                         "name": adherence_date,
                         "adherence_value": "unobserved_dose",
                         "adherence_source": "99DOTS",
-                        "adherence_date": adherence_date,
+                        "adherence_date": adherence_date.strftime('%Y-%m-%d'),
                         "person_name": "Pippin",
                         "adherence_confidence": "medium",
                         "shared_number_99_dots": False,

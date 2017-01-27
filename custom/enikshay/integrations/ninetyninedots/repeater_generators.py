@@ -2,10 +2,12 @@ import uuid
 import json
 import phonenumbers
 import jsonobject
-from corehq.apps.repeaters.repeater_generators import BasePayloadGenerator, RegisterGenerator
+
+from corehq.apps.repeaters.repeater_generators import BasePayloadGenerator, RegisterGenerator, CaseRepeaterJsonPayloadGenerator
 from custom.enikshay.integrations.ninetyninedots.repeaters import (
     NinetyNineDotsRegisterPatientRepeater,
     NinetyNineDotsUpdatePatientRepeater,
+    NinetyNineDotsAdherenceRepeater,
 )
 from custom.enikshay.case_utils import (
     get_occurrence_case_from_episode,
@@ -13,6 +15,7 @@ from custom.enikshay.case_utils import (
     get_open_episode_case_from_person,
     update_case,
     get_person_locations,
+    get_episode_case_from_adherence,
 )
 from custom.enikshay.const import (
     PRIMARY_PHONE_NUMBER,
@@ -164,6 +167,55 @@ class UpdatePatientPayloadGenerator(BasePayloadGenerator):
                 episode_case.domain,
                 episode_case.case_id,
                 {
+                    "dots_99_error": "{}: {}".format(
+                        response.status_code,
+                        response.json().get('error')
+                    ),
+                }
+            )
+
+
+@RegisterGenerator(NinetyNineDotsAdherenceRepeater, 'case_json', 'JSON', is_default=True)
+class AdherencePayloadGenerator(BasePayloadGenerator):
+
+    def get_payload(self, repeat_record, adherence_case):
+        domain = adherence_case.domain
+        person_case = get_person_case_from_occurrence(
+            domain, get_occurrence_case_from_episode(
+                domain, get_episode_case_from_adherence(domain, adherence_case.case_id).case_id
+            ).case_id
+        )
+        adherence_case_properties = adherence_case.dynamic_case_properties()
+        payload = {
+            'beneficiary_id': person_case.case_id,
+            'adherence_date': adherence_case_properties.get('adherence_date'),
+            'adherence_source': adherence_case_properties.get('adherence_source'),
+            'adherence_value': adherence_case_properties.get('adherence_value'),
+        }
+        return json.dumps(payload)
+
+    def handle_success(self, response, adherence_case, repeat_record):
+        if response.status_code == 200:
+            update_case(
+                adherence_case.domain,
+                adherence_case.case_id,
+                {
+                    "dots_99_updated": "true",
+                    "dots_99_error": ""
+                }
+            )
+
+    def handle_failure(self, response, adherence_case, repeat_record):
+        if 400 <= response.status_code <= 500:
+            update_case(
+                adherence_case.domain,
+                adherence_case.case_id,
+                {
+                    "dots_99_updated": (
+                        "false"
+                        if adherence_case.dynamic_case_properties().get('dots_99_updated') != 'true'
+                        else 'true'
+                    ),
                     "dots_99_error": "{}: {}".format(
                         response.status_code,
                         response.json().get('error')

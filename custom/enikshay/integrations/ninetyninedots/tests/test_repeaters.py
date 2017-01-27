@@ -13,6 +13,7 @@ from custom.enikshay.tests.utils import ENikshayCaseStructureMixin, ENikshayLoca
 from custom.enikshay.integrations.ninetyninedots.repeater_generators import (
     RegisterPatientPayloadGenerator,
     UpdatePatientPayloadGenerator,
+    AdherencePayloadGenerator,
 )
 from custom.enikshay.case_utils import get_person_locations
 from custom.enikshay.const import (
@@ -350,5 +351,67 @@ class TestUpdatePatientPayloadGenerator(TestPayloadGeneratorBase):
         updated_episode_case = CaseAccessors(self.domain).get_case(self.episode_id)
         self.assertEqual(
             updated_episode_case.dynamic_case_properties().get('dots_99_error'),
+            "400: {}".format(error['error'])
+        )
+
+
+class TestAdherencePayloadGenerator(TestPayloadGeneratorBase):
+    def _get_actual_payload(self, casedb):
+        return AdherencePayloadGenerator(None).get_payload(None, casedb['adherence'])
+
+    @run_with_all_backends
+    def test_get_payload(self):
+        date = datetime(2017, 02, 20)
+        cases = self.create_case_structure()
+        cases['adherence'] = self.create_adherence_cases([date])[0]
+        expected_payload = json.dumps(
+            {
+                "adherence_value": "unobserved_dose",
+                "beneficiary_id": "person",
+                "adherence_source": "99DOTS",
+                "adherence_date": "2017-02-20"
+            }
+        )
+        self.assertEqual(self._get_actual_payload(cases), expected_payload)
+
+    @run_with_all_backends
+    def test_handle_success(self):
+        date = datetime(2017, 02, 20)
+        cases = self.create_case_structure()
+        cases['adherence'] = self.create_adherence_cases([date])[0]
+        adherence_id = cases['adherence'].case_id
+        self.factory.create_or_update_case(CaseStructure(
+            case_id=adherence_id,
+            attrs={
+                'create': False,
+                'update': {'dots_99_error': 'bad things'},
+            },
+        ))
+        payload_generator = AdherencePayloadGenerator(None)
+        payload_generator.handle_success(MockResponse(200, {"success": "hooray"}), cases['adherence'], None)
+        updated_adherence_case = CaseAccessors(self.domain).get_case(adherence_id)
+        self.assertEqual(
+            updated_adherence_case.dynamic_case_properties().get('dots_99_error'),
+            ''
+        )
+        self.assertEqual(
+            updated_adherence_case.dynamic_case_properties().get('dots_99_updated'),
+            'true'
+        )
+
+    @run_with_all_backends
+    def test_handle_failure(self):
+        date = datetime(2017, 02, 20)
+        cases = self.create_case_structure()
+        cases['adherence'] = self.create_adherence_cases([date])[0]
+        adherence_id = cases['adherence'].case_id
+        payload_generator = AdherencePayloadGenerator(None)
+        error = {
+            "error": "Something went terribly wrong",
+        }
+        payload_generator.handle_failure(MockResponse(400, error), cases['adherence'], None)
+        updated_adherence_case = CaseAccessors(self.domain).get_case(adherence_id)
+        self.assertEqual(
+            updated_adherence_case.dynamic_case_properties().get('dots_99_error'),
             "400: {}".format(error['error'])
         )
