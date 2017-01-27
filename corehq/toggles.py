@@ -1061,9 +1061,10 @@ SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-DO_NOT_PROCESS_OLD_BUILDS = StaticToggle(
+DO_NOT_PROCESS_OLD_BUILDS = PredictablyRandomToggle(
     'do_not_process_old_builds',
     'Do not process old build for export generation',
     TAG_PRODUCT_CORE,
     [NAMESPACE_DOMAIN],
+    randomness=0.2,
 )
