@@ -2012,6 +2012,9 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     login_attempts = IntegerProperty(default=0)
     attempt_date = DateProperty()
     fcm_device_token = StringProperty()
+    # this property is used to mark users who signed up from internal invitations
+    # such as those going through the recruiting pipeline
+    # to better mark them in our analytics
     atypical_user = BooleanProperty(default=False)
 
     def sync_from_old_couch_user(self, old_couch_user):
