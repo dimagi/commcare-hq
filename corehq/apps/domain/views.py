@@ -135,6 +135,7 @@ from corehq.apps.repeaters.utils import get_all_repeater_types
 from corehq.apps.repeaters.const import (
     RECORD_FAILURE_STATE,
     RECORD_PENDING_STATE,
+    RECORD_CANCELLED_STATE,
     RECORD_SUCCESS_STATE,
 )
 from corehq.apps.reports.generic import GenericTabularReport
@@ -2240,6 +2241,9 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         elif record.state == RECORD_PENDING_STATE:
             label_cls = 'warning'
             label_text = _('Pending')
+        elif record.state == RECORD_CANCELLED_STATE:
+            label_cls = 'danger'
+            label_text = _('Cancelled')
         elif record.state == RECORD_FAILURE_STATE:
             label_cls = 'danger'
             label_text = _('Failed')
