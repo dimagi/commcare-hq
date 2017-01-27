@@ -321,6 +321,78 @@ DropdownEntry.prototype.onPreProcess = function(newValue) {
     }
 };
 
+function ComboboxEntry(question, options) {
+    var self = this;
+    EntrySingleAnswer.call(this, question, options);
+
+    self.matchType = options.matchType;
+    self.templateType = 'combobox';
+    self.helpText = function() { return 'Combobox'; };
+    self.options = _.map(question.choices(), function(choice, idx) {
+        return { display: choice, id: idx + 1 };
+    });
+
+    self.afterRender = function() {
+        var selector = '#' + self.entryId;
+        if (self.answer()) {
+            // The - 1 is to offset for the one-indexed select questions
+            $(selector).val(question.choices()[self.answer() - 1]);
+        }
+        $.typeahead({
+            input: selector,
+            minLength: 1,
+            hint: true,
+            cancelButton: false,
+            filter: function(item) {
+                return ComboboxEntry.filter(this.rawQuery, item, self.matchType);
+            },
+            source: {
+                data: self.options,
+            },
+            callback: {
+                onResult: function(node, query) {
+                    self.rawAnswer(query);
+                },
+            },
+        });
+    };
+}
+
+ComboboxEntry.filter = function(query, d, matchType) {
+    if (matchType === Formplayer.Const.COMBOBOX_MULTIWORD) {
+        // Multiword filter, matches the start of any word in the choice
+        var words = d.display.split(' ');
+        return _.any(words, function(word) { return word.startsWith(query); });
+    } else if (matchType === Formplayer.Const.COMBOBOX_FUZZY) {
+        // Fuzzy filter, matches if any of the query is in choice
+        return d.display.includes(query);
+    } else {
+        // Standard filter, matches only start of word
+        return d.display.startsWith(query);
+    }
+};
+
+ComboboxEntry.prototype = Object.create(EntrySingleAnswer.prototype);
+ComboboxEntry.prototype.constructor = EntrySingleAnswer;
+ComboboxEntry.prototype.onPreProcess = function(newValue) {
+    var value;
+    if (newValue === Formplayer.Const.NO_ANSWER || newValue === '') {
+        this.answer(Formplayer.Const.NO_ANSWER);
+        this.question.error(null);
+        return;
+    }
+
+    value = _.find(this.options, function(d) {
+        return d.display === newValue;
+    });
+    if (value) {
+        this.answer(value.id);
+        this.question.error(null);
+    } else {
+        this.question.error(gettext('Not a valid choice'));
+    }
+};
+
 $.datetimepicker.setDateFormatter({
     parseDate: function (date, format) {
         var d = moment(date, format);
@@ -545,6 +617,7 @@ function getEntry(question) {
     var options = {};
     var isNumeric = false;
     var isMinimal = false;
+    var isCombobox = false;
 
     var displayOptions = _getDisplayOptions(question);
     var isPhoneMode = ko.utils.unwrapObservable(displayOptions.phoneMode);
@@ -574,9 +647,24 @@ function getEntry(question) {
     case Formplayer.Const.SELECT:
         if (question.style) {
             isMinimal = ko.utils.unwrapObservable(question.style.raw) === Formplayer.Const.MINIMAL;
+            isCombobox = ko.utils.unwrapObservable(question.style.raw).startsWith(Formplayer.Const.COMBOBOX);
         }
         if (isMinimal) {
             entry = new DropdownEntry(question, {});
+        } else if (isCombobox) {
+
+            entry = new ComboboxEntry(question, {
+                /*
+                 * The appearance attribute is either:
+                 *
+                 * combobox
+                 * combobox multiword
+                 * combobox fuzzy
+                 *
+                 * The second word designates the matching type
+                 */
+                matchType: question.style.raw().split(' ')[1],
+            });
         } else {
             entry = new SingleSelectEntry(question, {});
         }

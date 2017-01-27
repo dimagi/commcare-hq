@@ -1,5 +1,5 @@
 /* eslint-env mocha */
-/* globals Question, DropdownEntry, Formplayer */
+/* globals Question, DropdownEntry, ComboboxEntry, Formplayer */
 
 describe('Entries', function() {
     var questionJSON,
@@ -97,6 +97,53 @@ describe('Entries', function() {
 
         valid = entry.isValid('mouse');
         assert.isFalse(valid);
+    });
+
+    it('Should return ComboboxEntry', function() {
+        var entry;
+        questionJSON.datatype = Formplayer.Const.SELECT;
+        questionJSON.style = { raw: Formplayer.Const.COMBOBOX };
+        questionJSON.choices = ['a', 'b'];
+
+        entry = (new Question(questionJSON)).entry;
+        assert.isTrue(entry instanceof ComboboxEntry);
+
+        entry.rawAnswer('a');
+        assert.equal(entry.answer(), 1);
+
+        entry.rawAnswer('');
+        assert.equal(entry.answer(), Formplayer.Const.NO_ANSWER);
+
+        entry.rawAnswer('abc');
+        assert.equal(entry.answer(), Formplayer.Const.NO_ANSWER);
+    });
+
+    it('Should properly filter combobox', function() {
+        // Standard filter
+        assert.isTrue(ComboboxEntry.filter('o', { display: 'one two', id: 1 }, null));
+        assert.isFalse(ComboboxEntry.filter('t', { display: 'one two', id: 1 }, null));
+
+        // Multiword filter
+        assert.isTrue(
+            ComboboxEntry.filter('o', { display: 'one two', id: 1 }, Formplayer.Const.COMBOBOX_MULTIWORD)
+        );
+        assert.isTrue(
+            ComboboxEntry.filter('t', { display: 'one two', id: 1 }, Formplayer.Const.COMBOBOX_MULTIWORD)
+        );
+        assert.isFalse(
+            ComboboxEntry.filter('w', { display: 'one two', id: 1 }, Formplayer.Const.COMBOBOX_MULTIWORD)
+        );
+
+        // Fuzzy filter
+        assert.isTrue(
+            ComboboxEntry.filter('o', { display: 'one two', id: 1 }, Formplayer.Const.COMBOBOX_FUZZY)
+        );
+        assert.isTrue(
+            ComboboxEntry.filter('t', { display: 'one two', id: 1 }, Formplayer.Const.COMBOBOX_FUZZY)
+        );
+        assert.isTrue(
+            ComboboxEntry.filter('w', { display: 'one two', id: 1 }, Formplayer.Const.COMBOBOX_FUZZY)
+        );
     });
 
     it('Should return FreeTextEntry', function() {

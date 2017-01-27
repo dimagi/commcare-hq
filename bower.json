@@ -33,6 +33,7 @@
     "jquery-tiny-pubsub": "https://github.com/cowboy/jquery-tiny-pubsub.git#~0.7.0",
     "jquery-treetable": "^3.2.0",
     "jquery-ui": "1.11.4",
+    "jquery-typeahead": "^2.7.6"
     "datetimepicker": "2.5.4",
     "multiselect": "0.9.12",
     "quicksearch": "2.2.1",
