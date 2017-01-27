@@ -125,12 +125,15 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     @use_nvd3
     @conditionally_location_safe(has_location_filter)
     def dispatch(self, request, *args, **kwargs):
-        if self.spec.report_meta.created_by_builder and not has_report_builder_access(request):
+        if self.should_redirect_to_paywall(request):
             from corehq.apps.userreports.views import paywall_home
             return HttpResponseRedirect(paywall_home(self.domain))
         else:
             original = super(ConfigurableReport, self).dispatch(request, *args, **kwargs)
             return original
+
+    def should_redirect_to_paywall(self, request):
+        return self.spec.report_meta.created_by_builder and not has_report_builder_access(request)
 
     @property
     def section_url(self):
