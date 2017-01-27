@@ -227,7 +227,11 @@ class EnikshayCaseFactory(object):
                     'transfer_in': 'yes' if self.patient_detail.patient_type_choice == 'transfer_in' else '',
                     'treatment_card_completed_date': self.patient_detail.pregdate1,
                     'treatment_initiated': 'yes_phi',
-                    'treatment_initiation_date': self.patient_detail.treatment_initiation_date,
+                    'treatment_initiation_date': (
+                        self.patient_detail.treatment_initiation_date
+                        if self.patient_detail.treatment_initiation_date
+                        else self.patient_detail.pregdate1
+                    ),
                     'treatment_supporter_designation': self.patient_detail.treatment_supporter_designation,
                     'treatment_supporter_first_name': self.patient_detail.treatment_supporter_first_name,
                     'treatment_supporter_last_name': self.patient_detail.treatment_supporter_last_name,
