@@ -13,7 +13,6 @@ from pillowtop.es_utils import (
 )
 
 
-# todo have different settings for rebuilding and indexing esp. refresh_interval
 # These settings tell ES to not tokenize strings
 UCR_INDEX_SETTINGS = {
     "mappings": {
@@ -31,6 +30,15 @@ UCR_INDEX_SETTINGS = {
             }]
         }
     }
+}
+
+DATATYPE_MAP = {
+    'date': 'date',
+    'datetime': 'date',
+    'string': 'string',
+    'integer': 'long',
+    'decimal': 'double',
+    'array': 'string',
 }
 
 
@@ -195,19 +203,11 @@ class IndicatorESAdapter(IndicatorAdapter):
 
 
 def build_es_mapping(data_source_config):
-    datatype_map = {
-        'date': 'date',
-        'datetime': 'date',
-        'string': 'string',
-        'integer': 'long',
-        'decimal': 'double',
-        'array': 'string',
-    }
     properties = {}
     for indicator in data_source_config.configured_indicators:
         datatype = indicator.get('datatype', 'string')
         properties[indicator['column_id']] = {
-            "type": datatype_map[datatype],
+            "type": DATATYPE_MAP[datatype],
         }
         if datatype == 'string':
             properties[indicator['column_id']]['index'] = 'not_analyzed'
