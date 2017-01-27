@@ -7,13 +7,15 @@ from corehq.apps.es.es_query import HQESQuery
 from corehq.apps.es.aggregations import MissingAggregation
 from corehq.elastic import get_es_new, ESError
 from dimagi.utils.decorators.memoized import memoized
-from pillowtop.es_utils import INDEX_STANDARD_SETTINGS
+from pillowtop.es_utils import (
+    set_index_reindex_settings,
+    set_index_normal_settings,
+)
 
 
 # todo have different settings for rebuilding and indexing esp. refresh_interval
 # These settings tell ES to not tokenize strings
 UCR_INDEX_SETTINGS = {
-    "settings": INDEX_STANDARD_SETTINGS,
     "mappings": {
         "indicator": {
             "dynamic": "true",
@@ -129,9 +131,13 @@ class IndicatorESAdapter(IndicatorAdapter):
     def build_table(self):
         try:
             self.es.indices.create(index=self.table_name, body=build_es_mapping(self.config))
+            set_index_reindex_settings(self.es, self.table_name)
         except RequestError:
             # table already exists
             pass
+
+    def after_table_build(self):
+        set_index_normal_settings(self.es, self.table_name)
 
     def drop_table(self):
         try:

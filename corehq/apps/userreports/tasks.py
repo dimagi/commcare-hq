@@ -122,6 +122,8 @@ def _iteratively_build_table(config, last_id=None, resume_helper=None):
             if config.meta.build.initiated == current_config.meta.build.initiated:
                 current_config.meta.build.finished = True
                 current_config.save()
+        adapter = get_indicator_adapter(config, raise_errors=True, can_handle_laboratory=True)
+        adapter.after_table_build()
 
 
 @task(queue=UCR_CELERY_QUEUE)
