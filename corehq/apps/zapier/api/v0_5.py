@@ -17,8 +17,11 @@ class ZapierXFormInstanceResource(XFormInstanceResource):
         remove_advanced_fields(bundle.data)
         return bundle
 
-# Custom field object used for triggers and actions in Zapier.
+
 class CustomField(object):
+    """
+    Custom field object used for triggers and actions in Zapier.
+    """
 
     def __init__(self, initial=None):
         initial = initial or {}
@@ -176,27 +179,20 @@ class ZapierCustomActionFieldCaseResource(BaseZapierCustomFieldResource):
         case_type = bundle.request.GET.get('case_type')
         create = bundle.request.GET.get('create')
 
-        if create == "True":
-            custom_fields.append(CustomField(
-                dict(
-                    type='unicode',
-                    key='case_name',
-                    label='Case name'
-                )
-            ))
-        else:
+        custom_fields.append(CustomField(
+            dict(
+                type='unicode',
+                key='case_name',
+                label='Case name'
+            )
+        ))
+
+        if create == "False":
             custom_fields.append(CustomField(
                 dict(
                     type='unicode',
                     key='case_id',
                     label='Case ID'
-                )
-            ))
-            custom_fields.append(CustomField(
-                dict(
-                    type='unicode',
-                    key='case_name',
-                    label='Case name'
                 )
             ))
 

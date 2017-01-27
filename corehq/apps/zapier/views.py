@@ -103,17 +103,16 @@ class ZapierCreateCase(View):
     def post(self, request, *args, **kwargs):
         domain = request.GET.get('domain')
         case_type = request.GET.get('case_type')
-        owner_id = request.GET.get('user_id')
+        owner_id = request.GET.get('owner_id')
         properties = json.loads(request.body)
         case_name = properties['case_name']
         user_name = request.GET.get('user')
 
-        user = CommCareUser.get_by_username(user_name, domain)
-        couch_user = CouchUser.from_django_user(user)
+        couch_user = CommCareUser.get_by_username(user_name, domain)
         if not couch_user.is_member_of(domain):
             return HttpResponseForbidden("This user does not have access to this domain.")
 
-        del properties['case_name']
+        properties.pop('case_name')
 
         factory = CaseFactory(domain=domain)
         factory.create_case(
@@ -141,10 +140,9 @@ class ZapierUpdateCase(View):
         properties = json.loads(request.body)
         case_id = properties['case_id']
 
-        del properties['case_id']
+        properties.pop('case_id')
 
-        user = CommCareUser.get_by_username(user_name, domain)
-        couch_user = CouchUser.from_django_user(user)
+        couch_user = CommCareUser.get_by_username(user_name, domain)
         if not couch_user.is_member_of(domain):
             return HttpResponseForbidden("This user does not have access to this domain.")
 
