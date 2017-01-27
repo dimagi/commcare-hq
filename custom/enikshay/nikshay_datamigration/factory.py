@@ -106,6 +106,7 @@ class EnikshayCaseFactory(object):
                     'current_address': self.patient_detail.paddress,
                     'dob': date(date.today().year - self.patient_detail.page, 7, 1),
                     'dob_known': 'no',
+                    'hiv_status': self._outcome.hiv_status if self._outcome else 'unknown',
                     'first_name': self.patient_detail.first_name,
                     'last_name': self.patient_detail.last_name,
                     'name': self.patient_detail.pname,
@@ -141,8 +142,6 @@ class EnikshayCaseFactory(object):
             kwargs['attrs']['update']['migration_error'] = 'location_not_found'
             kwargs['attrs']['update']['migration_error_details'] = self._nikshay_code
 
-        if self._outcome:
-            kwargs['attrs']['update']['hiv_status'] = self._outcome.hiv_status
         if self.patient_detail.paadharno is not None:
             kwargs['attrs']['update']['aadhaar_number'] = self.patient_detail.paadharno
 
