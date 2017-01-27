@@ -128,7 +128,7 @@ class EnikshayCaseFactory(object):
             if self.phi.location_type.code == 'phi':
                 kwargs['attrs']['owner_id'] = self.phi.location_id
                 kwargs['attrs']['update']['phi'] = self.phi.name
-                kwargs['attrs']['update']['tu_choice'] = self.tu.name
+                kwargs['attrs']['update']['tu_choice'] = self.tu.location_id
             else:
                 kwargs['attrs']['owner_id'] = ARCHIVED_CASE_OWNER_ID
                 kwargs['attrs']['update']['archive_reason'] = 'migration_not_phi_location'

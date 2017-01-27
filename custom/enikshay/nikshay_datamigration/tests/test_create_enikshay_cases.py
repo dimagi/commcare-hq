@@ -89,7 +89,7 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
                 ('secondary_contact_name_address', 'Secondary name, Secondary address'),
                 ('secondary_contact_phone_number', '1234567890'),
                 ('sex', 'male'),
-                ('tu_choice', 'TU'),
+                ('tu_choice', self.tu.location_id),
             ]),
             person_case.dynamic_case_properties()
         )
