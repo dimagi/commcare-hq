@@ -444,7 +444,11 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
     resp = {'update': {}, 'corrections': {}}
     if should_edit("case_type"):
         case_type = request.POST.get("case_type", None)
-        if not case_type or is_valid_case_type(case_type, module):
+        if case_type == USERCASE_TYPE and not isinstance(module, AdvancedModule):
+            return HttpResponseBadRequest('"{}" is a reserved case type'.format(USERCASE_TYPE))
+        elif case_type and not is_valid_case_type(case_type, module):
+            return HttpResponseBadRequest("case type is improperly formatted")
+        else:
             old_case_type = module["case_type"]
             module["case_type"] = case_type
 
@@ -476,10 +480,6 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
                             if action.case_type == old_case_type:
                                 action.case_type = case_type
 
-        elif case_type == USERCASE_TYPE and not isinstance(module, AdvancedModule):
-            return HttpResponseBadRequest('"{}" is a reserved case type'.format(USERCASE_TYPE))
-        else:
-            return HttpResponseBadRequest("case type is improperly formatted")
     if should_edit("put_in_root"):
         module["put_in_root"] = json.loads(request.POST.get("put_in_root"))
     if should_edit("display_style"):
