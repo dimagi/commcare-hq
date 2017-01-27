@@ -570,7 +570,7 @@ def test_repeater(request, domain):
         if use_basic_auth == 'true':
             username = request.POST.get('username')
             password = request.POST.get('password')
-            headers = get_auth_header(headers, username, password)
+            headers.update(get_auth_header(headers, username, password))
 
         try:
             resp = simple_post(fake_post, url, headers=headers)

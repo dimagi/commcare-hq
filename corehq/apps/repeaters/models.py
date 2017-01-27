@@ -288,7 +288,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         generator = self.get_payload_generator(self.format_or_default_format())
         headers = generator.get_headers()
         if self.use_basic_auth:
-            headers = get_auth_header(headers, self.username, self.password)
+            headers.update(get_auth_header(headers, self.username, self.password))
 
         return headers
 

@@ -13,5 +13,4 @@ def get_all_repeater_types():
 
 def get_auth_header(headers, username, password):
     user_pass = base64.encodestring(':'.join((username, password))).replace('\n', '')
-    headers.update({'Authorization': 'Basic ' + user_pass})
-    return headers
+    return {'Authorization': 'Basic ' + user_pass}
