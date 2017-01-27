@@ -24,11 +24,13 @@ from custom.enikshay.const import (
     TREATMENT_START_DATE,
     TREATMENT_SUPPORTER_FIRST_NAME,
     TREATMENT_SUPPORTER_LAST_NAME,
+    TREATMENT_OUTCOME,
 )
 from custom.enikshay.integrations.ninetyninedots.repeaters import (
     NinetyNineDotsRegisterPatientRepeater,
     NinetyNineDotsUpdatePatientRepeater,
     NinetyNineDotsAdherenceRepeater,
+    NinetyNineDotsTreatmentOutcomeRepeater,
 )
 
 
@@ -84,6 +86,16 @@ class ENikshayRepeaterTestBase(ENikshayCaseStructureMixin, TestCase):
         )
         self.create_case(dots_registered_case)
 
+    def _update_case(self, case_id, case_properties):
+        return self.create_case(
+            CaseStructure(
+                case_id=case_id,
+                attrs={
+                    "update": case_properties,
+                }
+            )
+        )
+
 
 class TestRegisterPatientRepeater(ENikshayRepeaterTestBase):
 
@@ -123,30 +135,19 @@ class TestUpdatePatientRepeater(ENikshayRepeaterTestBase):
         self.repeater.white_listed_case_types = ['person']
         self.repeater.save()
 
-    def _update_person(self, case_properties):
-        return self.create_case(
-            CaseStructure(
-                case_id=self.person_id,
-                attrs={
-                    "case_type": "person",
-                    "update": case_properties,
-                }
-            )
-        )
-
     @run_with_all_backends
     def test_trigger(self):
         self.create_case_structure()
-        self._update_person({PRIMARY_PHONE_NUMBER: '999999999', })
+        self._update_case(self.person_id, {PRIMARY_PHONE_NUMBER: '999999999', })
         self.assertEqual(0, len(self.repeat_records().all()))
 
         self._create_99dots_registered_case()
         self.assertEqual(0, len(self.repeat_records().all()))
 
-        self._update_person({'name': 'Elrond', })
+        self._update_case(self.person_id, {'name': 'Elrond', })
         self.assertEqual(0, len(self.repeat_records().all()))
 
-        self._update_person({PRIMARY_PHONE_NUMBER: '999999999', })
+        self._update_case(self.person_id, {PRIMARY_PHONE_NUMBER: '999999999', })
         self.assertEqual(1, len(self.repeat_records().all()))
 
     @run_with_all_backends
@@ -202,6 +203,31 @@ class TestAdherenceRepeater(ENikshayRepeaterTestBase):
 
         self.create_adherence_cases([datetime(2017, 02, 20)])
         self.assertEqual(2, len(self.repeat_records().all()))
+
+
+class TestTreatmentOutcomeRepeater(ENikshayRepeaterTestBase):
+
+    def setUp(self):
+        super(TestTreatmentOutcomeRepeater, self).setUp()
+        self.repeater = NinetyNineDotsTreatmentOutcomeRepeater(
+            domain=self.domain,
+            url='case-repeater-url',
+        )
+        self.repeater.white_listed_case_types = ['episode']
+        self.repeater.save()
+
+    @run_with_all_backends
+    def test_trigger(self):
+        self.create_case_structure()
+        self._create_99dots_registered_case()
+        self._create_99dots_enabled_case()
+        self.assertEqual(0, len(self.repeat_records().all()))
+
+        self._update_case(self.episode_id, {TREATMENT_OUTCOME: 'the_end_of_days'})
+        self.assertEqual(1, len(self.repeat_records().all()))
+
+        self._update_case(self.episode_id, {TREATMENT_SUPPORTER_FIRST_NAME: 'boo'})
+        self.assertEqual(1, len(self.repeat_records().all()))
 
 
 class TestPayloadGeneratorBase(ENikshayCaseStructureMixin, ENikshayLocationStructureMixin, TestCase):

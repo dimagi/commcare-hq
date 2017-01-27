@@ -11,3 +11,5 @@ TREATMENT_START_DATE = 'treatment_start_date'
 TREATMENT_SUPPORTER_FIRST_NAME = 'treatment_supporter_first_name'
 TREATMENT_SUPPORTER_LAST_NAME = 'treatment_supporter_last_name'
 TREATMENT_SUPPORTER_PHONE = 'treatment_supporter_mobile_number'
+
+TREATMENT_OUTCOME = 'treatment_outcome'
