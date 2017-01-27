@@ -626,6 +626,11 @@ function getEntry(question) {
     var isNumeric = false;
     var isMinimal = false;
     var isCombobox = false;
+    var style;
+
+    if (question.style) {
+        style = ko.utils.unwrapObservable(question.style.raw);
+    }
 
     var displayOptions = _getDisplayOptions(question);
     var isPhoneMode = ko.utils.unwrapObservable(displayOptions.phoneMode);
@@ -634,9 +639,7 @@ function getEntry(question) {
     case Formplayer.Const.STRING:
     // Barcode uses text box for CloudCare so it's possible to still enter a barcode field
     case Formplayer.Const.BARCODE:
-        if (question.style) {
-            isNumeric = ko.utils.unwrapObservable(question.style.raw) === Formplayer.Const.NUMERIC;
-        }
+        isNumeric = style === Formplayer.Const.NUMERIC;
         if (isNumeric) {
             entry = new PhoneEntry(question, { enableAutoUpdate: isPhoneMode });
         } else {
@@ -653,10 +656,11 @@ function getEntry(question) {
         entry = new FloatEntry(question, { enableAutoUpdate: isPhoneMode });
         break;
     case Formplayer.Const.SELECT:
-        if (question.style) {
-            isMinimal = ko.utils.unwrapObservable(question.style.raw) === Formplayer.Const.MINIMAL;
-            isCombobox = ko.utils.unwrapObservable(question.style.raw).startsWith(Formplayer.Const.COMBOBOX);
+        isMinimal =  style === Formplayer.Const.MINIMAL;
+        if (style) {
+            isCombobox = style.startsWith(Formplayer.Const.COMBOBOX);
         }
+
         if (isMinimal) {
             entry = new DropdownEntry(question, {});
         } else if (isCombobox) {
