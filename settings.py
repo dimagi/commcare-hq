@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import importlib
+import json
 from collections import defaultdict
 
 import os
@@ -1924,3 +1925,7 @@ REST_FRAMEWORK = {
     'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S.%fZ'
 }
 RCH_CREDENTIALS = {}
+RCH_PERMITTED_FIELDS = {
+    'mother': (json.load(open(os.path.join('custom', 'rch', 'all_fields', 'mother.json')))['fields']),
+    'child': (json.load(open(os.path.join('custom', 'rch', 'all_fields', 'child.json')))['fields']),
+}

@@ -1,5 +1,6 @@
 import datetime
 from django.db import models
+from django.conf import settings
 from custom.rch.utils import fetch_beneficiaries_records, MOTHER_DATA_TYPE, CHILD_DATA_TYPE
 
 STATE_DISTRICT_MAPPING = {
@@ -40,8 +41,8 @@ class RCHRecord(models.Model):
         abstract = True
 
     @classmethod
-    def update_beneficiaries(cls, beneficiary_type):
-        date_str = str(datetime.date.fromordinal(datetime.date.today().toordinal() - 1))
+    def update_beneficiaries(cls, beneficiary_type, days_before=1):
+        date_str = str(datetime.date.fromordinal(datetime.date.today().toordinal() - days_before))
         for state_id in STATE_DISTRICT_MAPPING:
             for district_id in STATE_DISTRICT_MAPPING[state_id]:
                 records = fetch_beneficiaries_records(date_str, date_str, state_id, beneficiary_type, district_id)
@@ -49,13 +50,27 @@ class RCHRecord(models.Model):
                     record_pk = [prop.values()[0] for prop in record if prop.keys()[0] == cls.RCH_Primary_Key][0]
                     results = cls.objects.filter(**{cls.RCH_Primary_Key: record_pk})
 
+                    # convert list of dicts of properties to a single dict
+                    dict_of_props = {}
+                    for prop in record:
+                        if prop.keys()[0] in cls.accepted_fields():
+                            dict_of_props[prop.keys()[0]] = prop.values()[0]
+
                     if results:
                         rch_beneficiary = results[0]
                     else:
                         rch_beneficiary = cls()
-                    for prop in record:
-                        setattr(rch_beneficiary, prop.keys()[0], prop.values()[0])
+                    for prop in dict_of_props:
+                        setattr(rch_beneficiary, prop, dict_of_props[prop])
+                    rch_beneficiary.sanitize_fields()
                     rch_beneficiary.save()
+
+    @classmethod
+    def accepted_fields(cls):
+        pass
+
+    def sanitize_fields(self):
+        pass
 
 
 class RCHMother(RCHRecord):
@@ -136,7 +151,7 @@ class RCHMother(RCHRecord):
     Subcentre_ID = models.IntegerField(null=True)
     Village_Name = models.CharField(null=True, max_length=255)
 
-    def save(self, *args, **kwargs):
+    def sanitize_fields(self):
         try:
             if self.Delivery_Time:
                 datetime.datetime.strptime(self.Delivery_Time, '%H:%M:%S')
@@ -154,11 +169,13 @@ class RCHMother(RCHRecord):
             if self.Maternal_Death == 'Y' or self.Maternal_Death == 'y':
                 self.Maternal_Death = 1
 
-        super(RCHMother, self).save(*args, **kwargs)
+    @classmethod
+    def accepted_fields(cls):
+        return settings.RCH_PERMITTED_FIELDS['mother']
 
     @classmethod
-    def update_beneficiaries(cls, beneficiary_type=MOTHER_DATA_TYPE):
-        super(RCHMother, cls).update_beneficiaries(beneficiary_type)
+    def update_beneficiaries(cls, beneficiary_type=MOTHER_DATA_TYPE, days_before=1):
+        super(RCHMother, cls).update_beneficiaries(beneficiary_type, days_before)
 
 
 class RCHChild(RCHRecord):
@@ -198,8 +215,12 @@ class RCHChild(RCHRecord):
     Weight = models.FloatField(null=True)
 
     @classmethod
-    def update_beneficiaries(cls, beneficiary_type=CHILD_DATA_TYPE):
-        super(RCHChild, cls).update_beneficiaries(beneficiary_type)
+    def accepted_fields(cls):
+        return settings.RCH_PERMITTED_FIELDS['child']
+
+    @classmethod
+    def update_beneficiaries(cls, beneficiary_type=CHILD_DATA_TYPE, days_before=1):
+        super(RCHChild, cls).update_beneficiaries(beneficiary_type, days_before)
 
 
 class AreaMapping(models.Model):

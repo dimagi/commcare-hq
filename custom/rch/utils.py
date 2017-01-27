@@ -57,6 +57,5 @@ def fetch_beneficiaries_records(from_date, to_date, state_id, beneficiary_type, 
     try:
         return [record_data["Records"] for record_data in records]
     except ValueError:
-        # notify email here
         notify_parsing_error(from_date, state_id, beneficiary_type, district_id)
         return []
