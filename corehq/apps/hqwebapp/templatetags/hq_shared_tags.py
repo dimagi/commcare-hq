@@ -222,7 +222,7 @@ def toggle_enabled(request, toggle_or_toggle_name):
 @register.filter
 def is_new_cloudcare(request):
     from corehq import toggles
-    return _toggle_enabled(toggles, request, toggles.USE_FORMPLAYER_FRONTEND)
+    return not _toggle_enabled(toggles, request, toggles.USE_OLD_CLOUDCARE)
 
 
 @register.filter

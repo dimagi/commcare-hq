@@ -447,7 +447,7 @@
             </label>
         </div>
     </div>
-    {% if not request|toggle_enabled:"USE_FORMPLAYER_FRONTEND" %}
+    {% if request|toggle_enabled:"USE_OLD_CLOUDCARE" %}
     <div class="help-block clear-container">
         <button class="btn btn-default btn-xs clear" data-bind="
             click: onClear
