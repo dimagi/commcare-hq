@@ -59,15 +59,6 @@
             });
         });
 
-        $('#cancel-record-payload-modal').on('shown.bs.modal', function(event) {
-            var recordData = $(event.relatedTarget).data(),
-                $modal = $(this);
-            var recordId = recordData.recordId
-            $('#cancel-record-payload-modal form').attr('action', "{% url 'drop_repeat_record' domain blah %}")
-        });
-
-
-
         $('#view-record-payload-modal').on('hide.bs.modal', function(event) {
             if (codeMirror) {
                 codeMirror.setValue('');
@@ -97,6 +88,32 @@
                 error: function() {
                     $btn.removeSpinnerFromButton();
                     $btn.text(gettext('Failed to send'));
+                    $btn.addClass('btn-danger');
+                },
+            });
+          });
+
+        $('#report-content').on('click', '.cancel-record-payload', function() {
+            var $btn = $(this),
+                recordId = $btn.data().recordId;
+            $btn.disableButton();
+
+            $.post({
+                url: "{% url 'cancel_repeat_record' domain %}",
+                data: { record_id: recordId },
+                success: function(data) {
+                    $btn.removeSpinnerFromButton();
+                    if (data.success) {
+                        $btn.text(gettext('Success!'));
+                        $btn.addClass('btn-success');
+                    } else {
+                        $btn.text(gettext('Failed'));
+                        $btn.addClass('btn-danger');
+                    }
+                },
+                error: function() {
+                    $btn.removeSpinnerFromButton();
+                    $btn.text(gettext('Failed to cancel'));
                     $btn.addClass('btn-danger');
                 },
             });
@@ -142,35 +159,6 @@
                   {% trans "Close" %}
                 </button>
             </div>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="cancel-record-payload-modal" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span>
-                </button>
-                <h4 class="modal-title">{% trans "Cancel Payload" %}</h4>
-            </div>
-            <form name="drop_repeat_record" action="hi"
-                          method="post">
-                        {% csrf_token %}
-                        <div class="modal-body">
-                            <p>
-                                {% blocktrans%}
-                                    Are you sure you want to cancel this payload?
-                                {% endblocktrans %}
-                            </p>
-                        </div>
-                        <div class="modal-footer">
-                            <!-- <a href="#" data-dismiss="modal" class="btn btn-default">{% trans 'Cancel' %}</a>-->
-                            <button type="submit" class="btn btn-danger"><i
-                                    class="fa fa-remove"></i> {% trans 'Cancel Payload' %}
-                            </button>
-                        </div>
-                    </form>
         </div>
     </div>
 </div>

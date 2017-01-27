@@ -598,7 +598,7 @@ class RepeatRecord(Document):
         if self.repeater.allow_retries(response) and self.overall_tries<self.max_possible_tries:
             self.set_next_try()
         else:
-            self._cancel()
+            self.cancel()
         self.failure_reason = reason
         log_counter(REPEATER_ERROR_COUNT, {
             '_id': self._id,
@@ -606,12 +606,18 @@ class RepeatRecord(Document):
             'target_url': self.url,
         })
 
-    def _cancel(self):
+    def cancel(self):
         self.next_check = None
         self.cancelled = True
 
     def requeue(self):
+        self.cancelled = False
+        self.succeeded = False
+        self.failure_reason = ''
         self.overall_tries = 0
+        self.next_check = datetime.utcnow()
+        self.set_next_try()
+
 
 # import signals
 # Do not remove this import, its required for the signals code to run even though not explicitly used in this file

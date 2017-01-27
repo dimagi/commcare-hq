@@ -536,12 +536,18 @@ class EditOpenClinicaSettingsView(BaseProjectSettingsView):
                 messages.error(request, _('An error occurred. Please try again.'))
         return self.get(request, *args, **kwargs)
 
+
 @require_POST
 @require_can_edit_web_users
-def drop_repeat_record(request, domain, repeat_record_id):
-    reprec = RepeatRecord.get(repeat_record_id)
-    reprec.delete()
-    return HttpResponseRedirect(reverse(DomainForwardingRepeatRecords.urlname, args=[domain]))
+def cancel_repeat_record(request, domain):
+    record = RepeatRecord.get(request.POST.get('record_id'))
+    record.cancel()
+    record.save()
+
+    return json_response({
+        'success': record.cancelled,
+    })
+
 
 @require_POST
 @require_can_edit_web_users
@@ -2219,11 +2225,9 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
     def _make_cancel_payload_button(self, record_id):
         return '''
                 <a
-                    class="btn btn-default"
+                    class="btn btn-default cancel-record-payload"
                     role="button"
-                    data-record-id={}
-                    data-toggle="modal"
-                    data-target="#cancel-record-payload-modal">
+                    data-record-id={}>
                     Cancel Payload
                 </a>
                 '''.format(record_id)
