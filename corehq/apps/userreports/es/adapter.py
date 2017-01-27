@@ -1,3 +1,4 @@
+from copy import deepcopy
 import datetime
 from elasticsearch import NotFoundError, RequestError
 from corehq.apps.userreports.util import get_table_name
@@ -127,7 +128,7 @@ class IndicatorESAdapter(IndicatorAdapter):
 
     def build_table(self):
         try:
-            self.es.indices.create(index=self.table_name, body=UCR_INDEX_SETTINGS)
+            self.es.indices.create(index=self.table_name, body=build_es_mapping(self.config))
         except RequestError:
             # table already exists
             pass
@@ -185,3 +186,25 @@ class IndicatorESAdapter(IndicatorAdapter):
                     index=self.table_name, body=all_values,
                     id=normalize_id(primary_key_values), doc_type="indicator"
                 )
+
+
+def build_es_mapping(data_source_config):
+    datatype_map = {
+        'date': 'date',
+        'datetime': 'date',
+        'string': 'string',
+        'integer': 'long',
+        'decimal': 'double',
+        'array': 'string',
+    }
+    properties = {}
+    for indicator in data_source_config.configured_indicators:
+        datatype = indicator.get('datatype', 'string')
+        properties[indicator['column_id']] = {
+            "type": datatype_map[datatype],
+        }
+        if datatype == 'string':
+            properties[indicator['column_id']]['index'] = 'not_analyzed'
+    mapping = deepcopy(UCR_INDEX_SETTINGS)
+    mapping['mappings']['indicator']['properties'] = properties
+    return mapping
