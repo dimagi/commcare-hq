@@ -536,6 +536,12 @@ class EditOpenClinicaSettingsView(BaseProjectSettingsView):
                 messages.error(request, _('An error occurred. Please try again.'))
         return self.get(request, *args, **kwargs)
 
+@require_POST
+@require_can_edit_web_users
+def drop_repeat_record(request, domain, repeat_record_id):
+    reprec = RepeatRecord.get(repeat_record_id)
+    reprec.delete()
+    return HttpResponseRedirect(reverse(DomainForwardingRepeatRecords.urlname, args=[domain]))
 
 @require_POST
 @require_can_edit_web_users
@@ -2210,6 +2216,18 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         'corehq.apps.reports.filters.select.RepeatRecordStateFilter',
     ]
 
+    def _make_cancel_payload_button(self, record_id):
+        return '''
+                <a
+                    class="btn btn-default"
+                    role="button"
+                    data-record-id={}
+                    data-toggle="modal"
+                    data-target="#cancel-record-payload-modal">
+                    Cancel Payload
+                </a>
+                '''.format(record_id)
+
     def _make_view_payload_button(self, record_id):
         return '''
         <a
@@ -2301,6 +2319,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
                 record.failure_reason if not record.succeeded else None,
                 self._make_view_payload_button(record.get_id),
                 self._make_resend_payload_button(record.get_id),
+                self._make_cancel_payload_button(record.get_id)
             ],
             records
         )
@@ -2315,6 +2334,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             DataTablesColumn(_('Failure Reason')),
             DataTablesColumn(_('View payload')),
             DataTablesColumn(_('Resend')),
+            DataTablesColumn(_('Cancel payload'))
         )
 
 
