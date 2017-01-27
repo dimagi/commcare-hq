@@ -386,6 +386,13 @@ FLAT_LOCATION_FIXTURE = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+HIERARCHICAL_LOCATION_FIXTURE = StaticToggle(
+    'hierarchical_location_fixture',
+    'Allow to switch to old hierarchical location fixture',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
 EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
     'extension_sync',
     'Enable extension syncing',
