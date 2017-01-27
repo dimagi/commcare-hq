@@ -12,15 +12,39 @@ from custom.enikshay.case_utils import (
     get_person_case_from_occurrence,
     get_open_episode_case_from_person,
     update_case,
+    get_person_locations,
 )
-from custom.enikshay.const import PRIMARY_PHONE_NUMBER, BACKUP_PHONE_NUMBER
+from custom.enikshay.const import (
+    PRIMARY_PHONE_NUMBER,
+    BACKUP_PHONE_NUMBER,
+    MERM_ID,
+    PERSON_FIRST_NAME,
+    PERSON_LAST_NAME,
+    TREATMENT_START_DATE,
+    TREATMENT_SUPPORTER_FIRST_NAME,
+    TREATMENT_SUPPORTER_LAST_NAME,
+    TREATMENT_SUPPORTER_PHONE,
+)
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 
 
 class PatientPayload(jsonobject.JsonObject):
     beneficiary_id = jsonobject.StringProperty(required=True)
+    first_name = jsonobject.StringProperty(required=False)
+    last_name = jsonobject.StringProperty(required=False)
+
+    sto_code = jsonobject.StringProperty(required=False)
+    dto_code = jsonobject.StringProperty(required=False)
+    tu_code = jsonobject.StringProperty(required=False)
+    phi_code = jsonobject.StringProperty(required=False)
+
     phone_numbers = jsonobject.StringProperty(required=False)
     merm_id = jsonobject.StringProperty(required=False)
+
+    treatment_start_date = jsonobject.StringProperty(required=False)
+
+    treatment_supporter_name = jsonobject.StringProperty(required=False)
+    treatment_supporter_phone_number = jsonobject.StringProperty(required=False)
 
 
 @RegisterGenerator(NinetyNineDotsRegisterPatientRepeater, 'case_json', 'JSON', is_default=True)
@@ -40,10 +64,28 @@ class RegisterPatientPayloadGenerator(BasePayloadGenerator):
         occurence_case = get_occurrence_case_from_episode(episode_case.domain, episode_case.case_id)
         person_case = get_person_case_from_occurrence(episode_case.domain, occurence_case)
         person_case_properties = person_case.dynamic_case_properties()
+        episode_case_properties = episode_case.dynamic_case_properties()
+        person_locations = get_person_locations(person_case)
         data = PatientPayload(
             beneficiary_id=person_case.case_id,
+            first_name=person_case_properties.get(PERSON_FIRST_NAME, None),
+            last_name=person_case_properties.get(PERSON_LAST_NAME, None),
+            sto_code=person_locations.sto,
+            dto_code=person_locations.dto,
+            tu_code=person_locations.tu,
+            phi_code=person_locations.phi,
             phone_numbers=_get_phone_numbers(person_case_properties),
-            merm_id=person_case_properties.get('merm_id', None),
+            merm_id=person_case_properties.get(MERM_ID, None),
+            treatment_start_date=episode_case_properties.get(TREATMENT_START_DATE, None),
+            treatment_supporter_name="{} {}".format(
+                episode_case_properties.get(TREATMENT_SUPPORTER_FIRST_NAME, ''),
+                episode_case_properties.get(TREATMENT_SUPPORTER_LAST_NAME, ''),
+            ),
+            treatment_supporter_phone_number=(
+                _format_number(
+                    _parse_number(episode_case_properties.get(TREATMENT_SUPPORTER_PHONE))
+                )
+            )
         )
         return json.dumps(data.to_json())
 
