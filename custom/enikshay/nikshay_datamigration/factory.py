@@ -25,7 +25,7 @@ def validate_phone_number(string_value):
         return ''
     else:
         phone_number = str(int(string_value))
-        assert len(phone_number) == 10
+        assert 8 <= len(phone_number) <= 10
         return phone_number
 
 
