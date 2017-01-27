@@ -2539,7 +2539,7 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
     def send_handoff_email(self):
         partner_contact = self.internal_settings_form.cleaned_data['partner_contact']
         dimagi_contact = self.internal_settings_form.cleaned_data['dimagi_contact']
-        recipients = filter(None, [partner_contact, dimagi_contact])
+        recipients = [partner_contact, dimagi_contact]
         params = {'contact_name': CouchUser.get_by_username(dimagi_contact).human_friendly_name}
         send_html_email_async.delay(
             subject="Project Support Transition",
