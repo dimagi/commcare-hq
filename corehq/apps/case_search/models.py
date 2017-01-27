@@ -102,7 +102,13 @@ class CaseSearchQueryAddition(models.Model):
         db_index=True,
     )
     name = models.CharField(max_length=256, null=False, blank=False)
-    query_addition = JSONField(default=dict)
+    query_addition = JSONField(
+        default=dict,
+        help_text="More information about how this field is used can be found <a href='https://docs.google.com/doc"
+                  "ument/d/1MKllkHZ6JlxhfqZLZKWAnfmlA3oUqCLOc7iKzxFTzdY/edit#heading=h.k5pky76mwwon'>here</a>. Thi"
+                  "s ES <a href='https://www.elastic.co/guide/en/elasticsearch/guide/1.x/bool-query.html'>document"
+                  "ation</a> may also be useful."
+    )
 
 
 class QueryMergeException(Exception):
