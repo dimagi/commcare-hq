@@ -102,7 +102,7 @@ def search(request, domain):
         search_es = search_es.case_property_query(key, value, fuzzy=(key in fuzzies))
 
     query_addition_debug_details = {}
-    _add_case_search_addition(request, search_es, query_addition_id, query_addition_debug_details)
+    _add_case_search_addition(request, domain, search_es, query_addition_id, query_addition_debug_details)
 
     try:
         results = search_es.values()
@@ -117,9 +117,9 @@ def search(request, domain):
     fixtures = CaseDBFixture(cases).fixture
     return HttpResponse(fixtures, content_type="text/xml")
 
-def _add_case_search_addition(request, search_es, query_addition_id, query_addition_debug_details):
+def _add_case_search_addition(request, domain, search_es, query_addition_id, query_addition_debug_details):
     if query_addition_id:
-        query_addition = CaseSearchQueryAddition.objects.get(id=query_addition_id)
+        query_addition = CaseSearchQueryAddition.objects.get(id=query_addition_id, domain=domain)
         query_addition_debug_details['original_query'] = search_es.raw_query
         query_addition_debug_details['query_adition'] = query_addition.query_addition
         try:

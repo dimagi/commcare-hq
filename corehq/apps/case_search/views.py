@@ -47,7 +47,7 @@ class CaseSearchView(DomainViewMixin, TemplateView):
         for param in search_params:
             search = search.case_property_query(**param)
         if query_addition:
-            addition = CaseSearchQueryAddition.objects.get(id=query_addition)
+            addition = CaseSearchQueryAddition.objects.get(id=query_addition, domain=self.domain)
             new_query = merge_queries(search.raw_query, addition.query_addition)
             search.es_query = new_query
         search_results = search.values()
