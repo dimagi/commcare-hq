@@ -18,6 +18,7 @@ from custom.enikshay.case_utils import (
     get_open_occurrence_case_from_person,
     get_open_episode_case_from_occurrence,
     get_person_locations,
+    get_episode_case_from_adherence,
 )
 
 
@@ -125,6 +126,14 @@ class ENikshayCaseUtilsTests(ENikshayCaseStructureMixin, TestCase):
         self.assertEqual(
             get_open_episode_case_from_occurrence(self.domain, self.occurrence_id).case_id,
             self.episode_id
+        )
+
+    @run_with_all_backends
+    def test_get_episode_case_from_adherence(self):
+        adherence_case = self.create_adherence_cases([datetime(2017, 02, 17)])[0]
+        self.assertEqual(
+            get_episode_case_from_adherence(self.domain, adherence_case.case_id).case_id,
+            self.episode_id,
         )
 
 

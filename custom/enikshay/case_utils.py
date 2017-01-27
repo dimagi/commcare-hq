@@ -38,8 +38,8 @@ def get_parent_of_case(domain, case_id, parent_case_type):
     ]
     parent_cases = case_accessor.get_cases(parent_case_ids)
     open_parent_cases = [
-        occurrence_case for occurrence_case in parent_cases
-        if not occurrence_case.closed
+        parent_case for parent_case in parent_cases
+        if not parent_case.closed
     ]
 
     if not open_parent_cases:
@@ -122,6 +122,15 @@ def get_open_episode_case_from_person(domain, person_case_id):
     return get_open_episode_case_from_occurrence(
         domain, get_open_occurrence_case_from_person(domain, person_case_id).case_id
     )
+
+
+def get_episode_case_from_adherence(domain, adherence_case_id):
+    """Gets the 'episode' case associated with an adherence datapoint
+
+    Assumes the following case structure:
+    Episode <--ext-- Adherence
+    """
+    return get_parent_of_case(domain, adherence_case_id, CASE_TYPE_EPISODE)
 
 
 def get_adherence_cases_between_dates(domain, person_case_id, start_date, end_date):
