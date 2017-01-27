@@ -133,7 +133,7 @@ class TestNikshayRegisterPatientPayloadGenerator(ENikshayLocationStructureMixin,
         self.assertEqual(payload['regBy'], "tbu-dmdmo01")
 
         # From Person
-        self.assertEqual(payload['pname'], "Pippin")
+        self.assertEqual(payload['pname'], "Peregrine Took")
         self.assertEqual(payload['page'], '20')
         self.assertEqual(payload['pgender'], 'M')
         self.assertEqual(payload['paddress'], 'Mr. Everest')

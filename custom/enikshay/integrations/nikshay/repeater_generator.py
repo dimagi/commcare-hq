@@ -3,7 +3,13 @@ import datetime
 
 from corehq.apps.repeaters.exceptions import RequestConnectionError
 from corehq.apps.repeaters.repeater_generators import RegisterGenerator, BasePayloadGenerator
-from custom.enikshay import const
+from custom.enikshay.const import (
+    PRIMARY_PHONE_NUMBER,
+    BACKUP_PHONE_NUMBER,
+    TREATMENT_SUPPORTER_FIRST_NAME,
+    TREATMENT_SUPPORTER_LAST_NAME,
+    TREATMENT_SUPPORTER_PHONE,
+)
 from custom.enikshay.case_utils import get_person_case_from_episode, get_person_locations
 from custom.enikshay.integrations.nikshay.repeaters import NikshayRegisterPatientRepeater
 from custom.enikshay.integrations.nikshay.exceptions import NikshayResponseException
@@ -166,10 +172,10 @@ def _get_person_case_properties(person_case, person_case_properties):
         "pgender": gender_mapping.get(person_case_properties.get('sex', ''), ''),
         "page": person_case_properties.get('age', ''),
         "paddress": person_case_properties.get('current_address', ''),
-        "pmob": person_case_properties.get(const.PRIMARY_PHONE_NUMBER, ''),
+        "pmob": person_case_properties.get(PRIMARY_PHONE_NUMBER, ''),
         "cname": person_case_properties.get('secondary_contact_name_address', ''),
         "caddress": person_case_properties.get('secondary_contact_name_address', ''),
-        "cmob": person_case_properties.get(const.BACKUP_PHONE_NUMBER, ''),
+        "cmob": person_case_properties.get(BACKUP_PHONE_NUMBER, ''),
         "pcategory": person_category
     }
     person_locations = get_person_locations(person_case)
@@ -219,10 +225,10 @@ def _get_episode_case_properties(episode_case_properties):
         "dcpulmunory": dcpulmonory.get(episode_case_properties.get('disease_classification', ''), "N"),
         "dcexpulmunory": dcexpulmonory.get(episode_case_properties.get('disease_classification', ''), "N"),
         "dotname": (' '.join(
-            [episode_case_properties.get('treatment_supporter_first_name', ''),
-             episode_case_properties.get('treatment_supporter_last_name', '')])
+            [episode_case_properties.get(TREATMENT_SUPPORTER_FIRST_NAME, ''),
+             episode_case_properties.get(TREATMENT_SUPPORTER_LAST_NAME, '')])
         ),
-        "dotmob": episode_case_properties.get('treatment_supporter_mobile_number', ''),
+        "dotmob": episode_case_properties.get(TREATMENT_SUPPORTER_PHONE, ''),
         # Can this mandatory field be made N/A if in case we don't collect this as in spec
         "dotdesignation": episode_case_properties.get('treatment_supporter_designation', ''),
         "dotpType": treatment_support_designation.get(
