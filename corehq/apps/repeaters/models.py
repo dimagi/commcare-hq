@@ -1,4 +1,3 @@
-import base64
 from collections import namedtuple
 from datetime import datetime, timedelta
 import logging
@@ -12,6 +11,7 @@ from corehq.form_processor.exceptions import XFormNotFound
 from corehq.util.datadog.metrics import REPEATER_ERROR_COUNT
 from corehq.util.datadog.utils import log_counter
 from corehq.util.quickcache import quickcache
+from utils import get_auth_header
 
 from dimagi.ext.couchdbkit import *
 from couchdbkit.exceptions import ResourceNotFound
@@ -288,8 +288,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         generator = self.get_payload_generator(self.format_or_default_format())
         headers = generator.get_headers()
         if self.use_basic_auth:
-            user_pass = base64.encodestring(':'.join((self.username, self.password))).replace('\n', '')
-            headers.update({'Authorization': 'Basic ' + user_pass})
+            headers = get_auth_header(headers, self.username, self.password)
 
         return headers
 
