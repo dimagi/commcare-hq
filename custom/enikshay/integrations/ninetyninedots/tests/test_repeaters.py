@@ -14,7 +14,7 @@ from custom.enikshay.integrations.ninetyninedots.repeater_generators import (
     RegisterPatientPayloadGenerator,
     UpdatePatientPayloadGenerator,
 )
-from custom.enikshay.const import PRIMARY_PHONE_NUMBER
+from custom.enikshay.const import PRIMARY_PHONE_NUMBER, MERM_ID
 from custom.enikshay.integrations.ninetyninedots.repeaters import (
     NinetyNineDotsRegisterPatientRepeater,
     NinetyNineDotsUpdatePatientRepeater
@@ -181,7 +181,7 @@ class TestRegisterPatientPayloadGenerator(ENikshayCaseStructureMixin, TestCase):
         expected_payload = json.dumps({
             'beneficiary_id': self.person_id,
             'phone_numbers': expected_numbers,
-            'merm_id': casedb[self.person_id].dynamic_case_properties().get('merm_id')
+            'merm_id': casedb[self.person_id].dynamic_case_properties().get(MERM_ID)
         })
         actual_payload = RegisterPatientPayloadGenerator(None).get_payload(None, casedb[self.episode_id])
         self.assertEqual(expected_payload, actual_payload)
@@ -257,7 +257,7 @@ class TestUpdatePatientPayloadGenerator(ENikshayCaseStructureMixin, TestCase):
         expected_payload = json.dumps({
             'beneficiary_id': self.person_id,
             'phone_numbers': expected_numbers,
-            'merm_id': cases[self.person_id].dynamic_case_properties().get('merm_id')
+            'merm_id': cases[self.person_id].dynamic_case_properties().get(MERM_ID)
         })
         actual_payload = UpdatePatientPayloadGenerator(None).get_payload(None, cases[self.person_id])
         self.assertEqual(expected_payload, actual_payload)

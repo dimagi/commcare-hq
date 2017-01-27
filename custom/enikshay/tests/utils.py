@@ -12,7 +12,11 @@ from corehq.apps.locations.tests.util import (
     setup_locations_with_structure,
 )
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from custom.enikshay.const import PRIMARY_PHONE_NUMBER, BACKUP_PHONE_NUMBER
+from custom.enikshay.const import(
+    PRIMARY_PHONE_NUMBER,
+    BACKUP_PHONE_NUMBER,
+    MERM_ID,
+)
 from corehq.apps.users.models import CommCareUser
 
 
@@ -51,7 +55,7 @@ class ENikshayCaseStructureMixin(object):
                     'aadhaar_number': "499118665246",
                     PRIMARY_PHONE_NUMBER: self.primary_phone_number,
                     BACKUP_PHONE_NUMBER: self.secondary_phone_number,
-                    'merm_id': "123456789",
+                    MERM_ID: "123456789",
                     'dob': "1987-08-15",
                     'age': '20',
                     'sex': 'male',
