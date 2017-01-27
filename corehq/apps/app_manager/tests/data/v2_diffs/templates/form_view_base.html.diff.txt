@@ -30,7 +30,7 @@
              {% with module_name=module.name|trans:langs %}
              labels[FormWorkflow.Values.MODULE] = "{% trans "Module:" %} {{ module_name|escapejs }}";
              {% endwith %}
-@@ -202,24 +202,12 @@
+@@ -202,28 +202,16 @@
                  workflow: '{{ form.post_form_workflow }}',
              };
  
@@ -55,6 +55,11 @@
  
          gaTrackLink($('.breadcrumb .view-form'), 'App Builder', 'View Form', 'Breadcrumb');
  
+-        {% if allow_cloudcare %}
++        {% if can_preview_form and allow_cloudcare %}
+             // tag the 'preview in cloudcare' button with the right url
+             // unfortunately, has to be done in javascript
+             var getCloudCareUrl = function(urlRoot, appId, moduleId, formId, caseId) {
 @@ -284,67 +272,56 @@
      </script>
  {% endblock %}
