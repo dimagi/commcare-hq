@@ -543,7 +543,6 @@ def cancel_repeat_record(request, domain):
     record = RepeatRecord.get(request.POST.get('record_id'))
     record.cancel()
     record.save()
-
     return json_response({
         'success': record.cancelled,
     })
