@@ -48,6 +48,18 @@ class CommCareCaseGroup(UndoableDocument):
     def create_delete_record(self, *args, **kwargs):
         return DeleteCaseGroupRecord(*args, **kwargs)
 
+    def clear_caches(self):
+        from corehq.apps.casegroups.dbaccessors import get_case_groups_in_domain
+        get_case_groups_in_domain.clear(self.domain)
+
+    def save(self, *args, **kwargs):
+        self.clear_caches()
+        super(CommCareCaseGroup, self).save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        self.clear_caches()
+        super(CommCareCaseGroup, self).delete(*args, **kwargs)
+
 
 class DeleteCaseGroupRecord(DeleteDocRecord):
 
