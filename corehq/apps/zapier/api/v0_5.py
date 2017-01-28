@@ -144,6 +144,9 @@ class ZapierCustomFieldCaseResource(BaseZapierCustomFieldResource):
         domain = bundle.request.GET.get('domain')
         case_type = bundle.request.GET.get('case_type')
 
+        if not domain or not case_type:
+            return []
+
         for prop in get_case_properties_for_case_type(domain, case_type):
             custom_fields.append(CustomField(
                 dict(
@@ -178,6 +181,9 @@ class ZapierCustomActionFieldCaseResource(BaseZapierCustomFieldResource):
         domain = bundle.request.GET.get('domain')
         case_type = bundle.request.GET.get('case_type')
         create = bundle.request.GET.get('create')
+
+        if not domain or not case_type:
+            return []
 
         custom_fields.append(CustomField(
             dict(

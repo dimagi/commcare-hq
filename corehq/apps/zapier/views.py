@@ -105,24 +105,25 @@ class ZapierCreateCase(View):
         case_type = request.GET.get('case_type')
         owner_id = request.GET.get('owner_id')
         properties = json.loads(request.body)
-        case_name = properties['case_name']
+        case_name = properties.pop('case_name')
         user_name = request.GET.get('user')
+
+        if not case_type or not owner_id or not domain or not case_name:
+            return HttpResponseForbidden('Please fill in all required fields')
 
         couch_user = CommCareUser.get_by_username(user_name, domain)
         if not couch_user.is_member_of(domain):
             return HttpResponseForbidden("This user does not have access to this domain.")
 
-        properties.pop('case_name')
-
         factory = CaseFactory(domain=domain)
-        factory.create_case(
+        new_case = factory.create_case(
             case_type=case_type,
             owner_id=owner_id,
             case_name=case_name,
             update=properties
         )
 
-        return HttpResponse('OK')
+        return HttpResponse('Created case with id '+str(new_case.case_id))
 
 
 class ZapierUpdateCase(View):
@@ -155,4 +156,4 @@ class ZapierUpdateCase(View):
             update=properties
         )
 
-        return HttpResponse('OK')
+        return HttpResponse('Case ' + case_id + " updated")

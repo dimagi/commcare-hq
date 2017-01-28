@@ -23,6 +23,7 @@ from corehq.apps.zapier.models import ZapierSubscription
 from corehq.apps.accounting.tests import generator
 from corehq.apps.zapier.util import remove_advanced_fields
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
 XFORM = """
     <h:html xmlns:h="http://www.w3.org/1999/xhtml" xmlns:orx="http://openrosa.org/jr/xforms"
@@ -404,17 +405,18 @@ class TestZapierCreateCaseAction(TestCase):
     @classmethod
     def setUpClass(cls):
         super(TestZapierCreateCaseAction, cls).setUpClass()
-        cls.test_url = "http://commcarehq.org/?domain=fruit&case_type=watermelon&user_id=test_user&user=test"
-        cls.data = {'case_name': 'test1', 'price': '11'}
-        cls.accessor = CaseAccessors('fruit')
         cls.domain_object = Domain.get_or_create_with_name('fruit', is_active=True)
         cls.domain = cls.domain_object.name
+        cls.test_url = "http://commcarehq.org/?domain=fruit&case_type=watermelon&user_id=test_user&user=test"
+        cls.data = {'case_name': 'test1', 'price': '11'}
+        cls.accessor = CaseAccessors(cls.domain)
         cls.user = WebUser.create(cls.domain, 'test', '******')
 
     @classmethod
     def tearDownClass(cls):
         cls.user.delete()
         cls.domain_object.delete()
+        FormProcessorTestUtils.delete_all_cases()
         super(TestZapierCreateCaseAction, cls).tearDownClass()
 
     def test_create_case(self):
@@ -431,8 +433,6 @@ class TestZapierCreateCaseAction(TestCase):
         self.assertEqual('test1', case.get_case_property('name'))
         self.assertEqual('11', case.get_case_property('price'))
         self.assertEqual('watermelon', case.get_case_property('type'))
-        self.assertEqual('test_user', case.get_case_property('owner_id'))
-        self.accessor.soft_delete_cases(case_id)
 
     def test_update_case(self):
         factory = RequestFactory()
@@ -457,8 +457,6 @@ class TestZapierCreateCaseAction(TestCase):
         case = self.accessor.get_case(case_id[0])
         self.assertEqual('15', case.get_case_property('price'))
 
-        self.accessor.soft_delete_cases(case_id)
-
     def test_update_case_does_not_exist(self):
         factory = RequestFactory()
         data = {'case_name': 'test1', 'price': '15', 'case_id': 'fake_id'}
@@ -475,17 +473,16 @@ class TestZapierCreateCaseAction(TestCase):
                                data=json.dumps(self.data),
                                content_type='application/json')
         ZapierCreateCase().post(request)
+        case_id = self.accessor.get_case_ids_in_domain()
 
         factory = RequestFactory()
-        data = {'case_name': 'test1', 'price': '15', 'case_id': 'fake_id'}
+        data = {'case_name': 'test1', 'price': '15', 'case_id': case_id[0]}
         request = factory.post("http://commcarehq.org/?domain=me&case_type=watermelon&user_id=test_user&user=test",
                                data=json.dumps(data),
                                content_type='application/json')
 
         status = ZapierUpdateCase().post(request)
         self.assertEqual(status.status_code, 403)
-        case_id = self.accessor.get_case_ids_in_domain()
-        self.accessor.soft_delete_cases(case_id)
 
     def test_update_case_wrong_type(self):
         factory = RequestFactory()
@@ -493,17 +490,16 @@ class TestZapierCreateCaseAction(TestCase):
                                data=json.dumps(self.data),
                                content_type='application/json')
         ZapierCreateCase().post(request)
+        case_id = self.accessor.get_case_ids_in_domain()
 
         factory = RequestFactory()
-        data = {'case_name': 'test1', 'price': '15', 'case_id': 'fake_id'}
+        data = {'case_name': 'test1', 'price': '15', 'case_id': case_id[0]}
         request = factory.post("http://commcarehq.org/?domain=fruit&case_type=fake&user_id=test_user&user=test",
                                data=json.dumps(data),
                                content_type='application/json')
 
         status = ZapierUpdateCase().post(request)
         self.assertEqual(status.status_code, 403)
-        case_id = self.accessor.get_case_ids_in_domain()
-        self.accessor.soft_delete_cases(case_id)
 
     def test_user_does_not_have_access(self):
         factory = RequestFactory()
