@@ -201,9 +201,12 @@ class TestAdherenceRepeater(ENikshayRepeaterTestBase):
         self.assertEqual(0, len(self.repeat_records().all()))
 
         self.create_adherence_cases([datetime(2017, 02, 17)])
+        self.assertEqual(0, len(self.repeat_records().all()))
+
+        self.create_adherence_cases([datetime(2017, 02, 18)], adherence_source='enikshay')
         self.assertEqual(1, len(self.repeat_records().all()))
 
-        self.create_adherence_cases([datetime(2017, 02, 20)])
+        self.create_adherence_cases([datetime(2017, 02, 20)], adherence_source='enikshay')
         self.assertEqual(2, len(self.repeat_records().all()))
 
 

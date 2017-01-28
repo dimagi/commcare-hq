@@ -136,7 +136,7 @@ class ENikshayCaseStructureMixin(object):
     def create_case_structure(self):
         return {case.case_id: case for case in self.factory.create_or_update_cases([self.episode])}
 
-    def create_adherence_cases(self, adherence_dates):
+    def create_adherence_cases(self, adherence_dates, adherence_source='99DOTS'):
         return self.factory.create_or_update_cases([
             CaseStructure(
                 case_id=adherence_date.strftime('%Y-%m-%d'),
@@ -146,7 +146,7 @@ class ENikshayCaseStructureMixin(object):
                     "update": {
                         "name": adherence_date,
                         "adherence_value": "unobserved_dose",
-                        "adherence_source": "99DOTS",
+                        "adherence_source": adherence_source,
                         "adherence_date": adherence_date.strftime('%Y-%m-%d'),
                         "person_name": "Pippin",
                         "adherence_confidence": "medium",

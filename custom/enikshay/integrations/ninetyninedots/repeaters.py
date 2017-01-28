@@ -93,11 +93,13 @@ class NinetyNineDotsAdherenceRepeater(Base99DOTSRepeater):
 
         episode_case = get_episode_case_from_adherence(adherence_case.domain, adherence_case.case_id)
         episode_case_properties = episode_case.dynamic_case_properties()
+        adherence_case_properties = adherence_case.dynamic_case_properties()
 
         enabled = episode_case_properties.get('dots_99_enabled') == 'true'
         registered = episode_case_properties.get('dots_99_registered') == 'true'
-        previously_updated = adherence_case.dynamic_case_properties().get('dots_99_updated') == 'true'
-        return enabled and registered and not previously_updated
+        from_enikshay = adherence_case_properties.get('adherence_source') == 'enikshay'
+        previously_updated = adherence_case_properties.get('dots_99_updated') == 'true'
+        return enabled and registered and from_enikshay and not previously_updated
 
 
 class NinetyNineDotsTreatmentOutcomeRepeater(Base99DOTSRepeater):
