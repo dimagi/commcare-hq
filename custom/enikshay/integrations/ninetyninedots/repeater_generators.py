@@ -3,7 +3,10 @@ import json
 import phonenumbers
 import jsonobject
 
-from corehq.apps.repeaters.repeater_generators import BasePayloadGenerator, RegisterGenerator, CaseRepeaterJsonPayloadGenerator
+from corehq.apps.repeaters.repeater_generators import (
+    BasePayloadGenerator,
+    RegisterGenerator,
+)
 from custom.enikshay.integrations.ninetyninedots.repeaters import (
     NinetyNineDotsRegisterPatientRepeater,
     NinetyNineDotsUpdatePatientRepeater,
