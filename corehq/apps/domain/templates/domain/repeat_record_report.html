@@ -118,6 +118,32 @@
                 },
             });
           });
+
+         $('#report-content').on('click', '.requeue-record-payload', function() {
+            var $btn = $(this),
+                recordId = $btn.data().recordId;
+            $btn.disableButton();
+
+            $.post({
+                url: "{% url 'requeue_repeat_record' domain %}",
+                data: { record_id: recordId },
+                success: function(data) {
+                    $btn.removeSpinnerFromButton();
+                    if (data.success) {
+                        $btn.text(gettext('Success!'));
+                        $btn.addClass('btn-success');
+                    } else {
+                        $btn.text(gettext('Failed'));
+                        $btn.addClass('btn-danger');
+                    }
+                },
+                error: function() {
+                    $btn.removeSpinnerFromButton();
+                    $btn.text(gettext('Failed to requeue'));
+                    $btn.addClass('btn-danger');
+                },
+            });
+          });
     });
 </script>
 {% endblock js-inline %} {% block modals %}{{ block.super }}

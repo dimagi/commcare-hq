@@ -550,6 +550,17 @@ def cancel_repeat_record(request, domain):
 
 @require_POST
 @require_can_edit_web_users
+def requeue_repeat_record(request, domain):
+    record = RepeatRecord.get(request.POST.get('record_id'))
+    record.requeue()
+    record.save()
+    return json_response({
+        'success': not record.cancelled,
+    })
+
+
+@require_POST
+@require_can_edit_web_users
 def drop_repeater(request, domain, repeater_id):
     rep = Repeater.get(repeater_id)
     rep.retire()
@@ -2231,6 +2242,16 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
                 </a>
                 '''.format(record_id)
 
+    def _make_requeue_payload_button(self, record_id):
+        return '''
+                <a
+                    class="btn btn-default requeue-record-payload"
+                    role="button"
+                    data-record-id={}>
+                    Requeue Payload
+                </a>
+                '''.format(record_id)
+
     def _make_view_payload_button(self, record_id):
         return '''
         <a
@@ -2322,7 +2343,9 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
                 record.failure_reason if not record.succeeded else None,
                 self._make_view_payload_button(record.get_id),
                 self._make_resend_payload_button(record.get_id),
-                self._make_cancel_payload_button(record.get_id)
+                self._make_requeue_payload_button(record.get_id) if record.cancelled and not record.succeeded
+                else self._make_cancel_payload_button(record.get_id) if not record.cancelled and not record.succeeded
+                else None
             ],
             records
         )
@@ -2337,7 +2360,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             DataTablesColumn(_('Failure Reason')),
             DataTablesColumn(_('View payload')),
             DataTablesColumn(_('Resend')),
-            DataTablesColumn(_('Cancel payload'))
+            DataTablesColumn(_('Cancel or Requeue payload'))
         )
 
 

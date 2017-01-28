@@ -33,7 +33,7 @@ from corehq.apps.domain.views import (
     CaseSearchConfigView,
     EditOpenClinicaSettingsView,
     autocomplete_fields, test_repeater, drop_repeater, set_published_snapshot, cancel_repeat_record,
-    calculated_properties,
+    calculated_properties, requeue_repeat_record,
     toggle_diff,
     select,
     CalendarFixtureConfigView, LocationFixtureConfigView)
@@ -166,6 +166,7 @@ domain_settings = [
         name=EditExistingBillingAccountView.urlname),
     url(r'^repeat_record/', RepeatRecordView.as_view(), name=RepeatRecordView.urlname),
     url(r'^repeat_record_report/cancel/', cancel_repeat_record, name='cancel_repeat_record'),
+    url(r'^repeat_record_report/requeue/', requeue_repeat_record, name='requeue_repeat_record'),
     url(r'^forwarding/$', DomainForwardingOptionsView.as_view(), name=DomainForwardingOptionsView.urlname),
     url(r'^forwarding/new/FormRepeater/$', AddFormRepeaterView.as_view(), {'repeater_type': 'FormRepeater'},
         name=AddFormRepeaterView.urlname),
