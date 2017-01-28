@@ -14,6 +14,7 @@ from custom.enikshay.integrations.ninetyninedots.repeater_generators import (
     RegisterPatientPayloadGenerator,
     UpdatePatientPayloadGenerator,
     AdherencePayloadGenerator,
+    TreatmentOutcomePayloadGenerator,
 )
 from custom.enikshay.case_utils import get_person_locations
 from custom.enikshay.const import (
@@ -25,6 +26,7 @@ from custom.enikshay.const import (
     TREATMENT_SUPPORTER_FIRST_NAME,
     TREATMENT_SUPPORTER_LAST_NAME,
     TREATMENT_OUTCOME,
+    TREATMENT_OUTCOME_DATE,
 )
 from custom.enikshay.integrations.ninetyninedots.repeaters import (
     NinetyNineDotsRegisterPatientRepeater,
@@ -441,3 +443,31 @@ class TestAdherencePayloadGenerator(TestPayloadGeneratorBase):
             updated_adherence_case.dynamic_case_properties().get('dots_99_error'),
             "400: {}".format(error['error'])
         )
+
+
+class TestTreatmentOutcomePayloadGenerator(TestPayloadGeneratorBase):
+    def _get_actual_payload(self, casedb):
+        return TreatmentOutcomePayloadGenerator(None).get_payload(None, casedb[self.episode_id])
+
+    @run_with_all_backends
+    def test_get_payload(self):
+        cases = self.create_case_structure()
+        cases[self.episode_id] = self.create_case(
+            CaseStructure(
+                case_id=self.episode_id,
+                attrs={
+                    "update": {
+                        TREATMENT_OUTCOME: 'the_end_of_days',
+                        TREATMENT_OUTCOME_DATE: '2017-01-07',
+                    },
+                }
+            )
+        )[0]
+        expected_payload = json.dumps(
+            {
+                "beneficiary_id": "person",
+                "treatment_outcome": "the_end_of_days",
+                "end_date": "2017-01-07"
+            }
+        )
+        self.assertEqual(self._get_actual_payload(cases), expected_payload)

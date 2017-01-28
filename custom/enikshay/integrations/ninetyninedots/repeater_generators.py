@@ -8,6 +8,7 @@ from custom.enikshay.integrations.ninetyninedots.repeaters import (
     NinetyNineDotsRegisterPatientRepeater,
     NinetyNineDotsUpdatePatientRepeater,
     NinetyNineDotsAdherenceRepeater,
+    NinetyNineDotsTreatmentOutcomeRepeater,
 )
 from custom.enikshay.case_utils import (
     get_occurrence_case_from_episode,
@@ -27,6 +28,8 @@ from custom.enikshay.const import (
     TREATMENT_SUPPORTER_FIRST_NAME,
     TREATMENT_SUPPORTER_LAST_NAME,
     TREATMENT_SUPPORTER_PHONE,
+    TREATMENT_OUTCOME,
+    TREATMENT_OUTCOME_DATE,
 )
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 
@@ -214,6 +217,54 @@ class AdherencePayloadGenerator(BasePayloadGenerator):
                     "dots_99_updated": (
                         "false"
                         if adherence_case.dynamic_case_properties().get('dots_99_updated') != 'true'
+                        else 'true'
+                    ),
+                    "dots_99_error": "{}: {}".format(
+                        response.status_code,
+                        response.json().get('error')
+                    ),
+                }
+            )
+
+
+@RegisterGenerator(NinetyNineDotsTreatmentOutcomeRepeater, 'case_json', 'JSON', is_default=True)
+class TreatmentOutcomePayloadGenerator(BasePayloadGenerator):
+
+    def get_payload(self, repeat_record, episode_case):
+        domain = episode_case.domain
+        person_case = get_person_case_from_occurrence(
+            domain, get_occurrence_case_from_episode(
+                domain, episode_case.case_id
+            ).case_id
+        )
+        episode_case_properties = episode_case.dynamic_case_properties()
+        payload = {
+            'beneficiary_id': person_case.case_id,
+            'end_date': episode_case_properties.get(TREATMENT_OUTCOME_DATE),
+            'treatment_outcome': episode_case_properties.get(TREATMENT_OUTCOME),
+        }
+        return json.dumps(payload)
+
+    def handle_success(self, response, episode_case, repeat_record):
+        if response.status_code == 200:
+            update_case(
+                episode_case.domain,
+                episode_case.case_id,
+                {
+                    "dots_99_treatment_outcome_updated": "true",
+                    "dots_99_error": ""
+                }
+            )
+
+    def handle_failure(self, response, episode_case, repeat_record):
+        if 400 <= response.status_code <= 500:
+            update_case(
+                episode_case.domain,
+                episode_case.case_id,
+                {
+                    "dots_99_treatment_outcome_updated": (
+                        "false"
+                        if episode_case.dynamic_case_properties().get('dots_99_updated') != 'true'
                         else 'true'
                     ),
                     "dots_99_error": "{}: {}".format(
