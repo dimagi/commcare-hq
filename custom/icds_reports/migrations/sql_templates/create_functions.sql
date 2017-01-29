@@ -232,6 +232,7 @@ DECLARE
 	_all_text text;
 	_null_value text;
 	_blank_value text;
+	_no_text text;
 BEGIN
 	_start_date = date_trunc('MONTH', $1)::DATE;
 	_tablename := 'agg_child_health' || '_' || _start_date;
@@ -239,6 +240,7 @@ BEGIN
 	_all_text = 'All';
 	_null_value = NULL;
 	_blank_value = '';
+	_no_text = 'no';
 
 	EXECUTE 'DELETE FROM ' || quote_ident(_tablename);
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
@@ -251,9 +253,9 @@ BEGIN
 		'sex, ' ||
 		'age_tranche, ' ||
 		'caste, ' ||
-		'disabled, ' ||
-		'minority, ' ||
-		'resident, ' ||
+		'COALESCE(disabled, ' || quote_nullable(_no_text) || '), ' ||
+		'COALESCE(minority, ' || quote_nullable(_no_text) || '), ' ||
+		'COALESCE(resident, ' || quote_nullable(_no_text) || '), ' ||
 		'sum(valid_in_month), ' ||
 		'sum(nutrition_status_weighed), ' ||
 		'sum(nutrition_status_unweighed), ' ||
@@ -503,12 +505,14 @@ DECLARE
 	_all_text text;
 	_null_value text;
 	_blank_value text;
+	_no_text text;
 BEGIN
 	_start_date = date_trunc('MONTH', $1)::DATE;
 	_tablename := 'agg_ccs_record' || '_' || _start_date;
 	_all_text = 'All';
 	_null_value = NULL;
 	_blank_value = '';
+	_no_text = 'no';
 	EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('ccs_record_monthly') INTO _ucr_ccs_record_table;
 
 	EXECUTE 'DELETE FROM ' || quote_ident(_tablename);
@@ -522,9 +526,9 @@ BEGIN
 		'ccs_status, ' ||
 		'trimester, ' ||
 		'caste, ' ||
-		'disabled, ' ||
-		'minority, ' ||
-		'resident, ' ||
+		'COALESCE(disabled, ' || quote_nullable(_no_text) || '), ' ||
+		'COALESCE(minority, ' || quote_nullable(_no_text) || '), ' ||
+		'COALESCE(resident, ' || quote_nullable(_no_text) || '), ' ||
 		'sum(valid_in_month), ' ||
 		'sum(lactating), ' ||
 		'sum(pregnant), ' ||
