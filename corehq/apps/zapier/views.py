@@ -12,7 +12,7 @@ from casexml.apps.case.mock import CaseFactory
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.decorators import login_or_api_key
-from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.apps.users.models import CommCareUser
 from corehq.apps.zapier.queries import get_subscription_by_url
 from corehq.apps.zapier.services import delete_subscription_with_url
 from corehq.apps.zapier.consts import EventTypes
