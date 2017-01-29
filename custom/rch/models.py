@@ -26,7 +26,6 @@ class RCHRecord(models.Model):
     PHC_Name = models.CharField(null=True, max_length=255)
     PHC_ID = models.IntegerField(null=True)
     Subcentre_Name = models.CharField(null=True, max_length=255)
-    Village_ID = models.IntegerField(null=True)
     MDDS_VillageID = models.IntegerField(null=True)
     Mobile_no = models.BigIntegerField(null=True)
     Religion = models.CharField(null=True, max_length=255)
@@ -211,8 +210,9 @@ class RCHChild(RCHRecord):
     Name_Mother = models.CharField(null=True, max_length=255)
     Received_AllVaccines = models.CharField(null=True, max_length=255)
     SubCentre_ID = models.SmallIntegerField(null=True)
-    VILLAGE_Name = models.CharField(null=True, max_length=255)
+    Village_Name = models.CharField(null=True, max_length=255)
     Weight = models.FloatField(null=True)
+    Village_ID = models.IntegerField(null=True)
 
     @classmethod
     def accepted_fields(cls):
