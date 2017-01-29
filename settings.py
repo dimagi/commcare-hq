@@ -346,7 +346,7 @@ HQ_APPS = (
     'custom.logistics',
     'custom.ilsgateway',
     'custom.zipline',
-    'custom.ewsghana',
+    # 'custom.ewsghana',
     'custom.m4change',
     'custom.succeed',
     'custom.ucla',
@@ -404,7 +404,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'two_factor',
     'custom.apps.crs_reports',
     'custom.m4change',
-    'custom.ewsghana',
     # submodules with tests that run on travis
     'dimagi.utils',
 )
