@@ -524,7 +524,7 @@ BEGIN
 		'awc_id, ' ||
 		'month, ' ||
 		'ccs_status, ' ||
-		'trimester, ' ||
+		'COALESCE(trimester::text, ' || quote_nullable(_blank_value) || '), ' ||
 		'caste, ' ||
 		'COALESCE(disabled, ' || quote_nullable(_no_text) || '), ' ||
 		'COALESCE(minority, ' || quote_nullable(_no_text) || '), ' ||
