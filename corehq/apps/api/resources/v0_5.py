@@ -37,7 +37,7 @@ from corehq.apps.userreports.reports.view import query_dict_to_dict, \
     get_filter_values
 from corehq.apps.userreports.columns import UCRExpandDatabaseSubcolumn
 from corehq.apps.users.dbaccessors.all_commcare_users import get_all_user_id_username_pairs_by_domain
-from corehq.apps.users.util import user_id_to_username, raw_username
+from corehq.apps.users.util import raw_username
 from corehq.apps.users.models import CommCareUser, WebUser, Permissions, CouchUser, UserRole
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util import get_document_or_404
@@ -922,5 +922,6 @@ class DomainUsernames(Resource):
             )
         user_ids_username_pairs = get_all_user_id_username_pairs_by_domain(domain)
 
-        results = [UserInfo(user_id=user_pair[0], user_name=raw_username(user_pair[1])) for user_pair in user_ids_username_pairs]
+        results = [UserInfo(user_id=user_pair[0], user_name=raw_username(user_pair[1]))
+                   for user_pair in user_ids_username_pairs]
         return results
