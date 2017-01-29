@@ -365,12 +365,19 @@ function ComboboxEntry(question, options) {
 
 ComboboxEntry.filter = function(query, d, matchType) {
     if (matchType === Formplayer.Const.COMBOBOX_MULTIWORD) {
-        // Multiword filter, matches the start of any word in the choice
-        var words = d.name.split(' ');
-        return _.any(words, function(word) { return word.startsWith(query); });
+        // Multiword filter, matches any choice that contains all of the words in the query
+        //
+        // Assumption is both query and choice will not be very long. Runtime is O(nm)
+        // where n is number of words in the query, and m is number of words in the choice
+        var wordsInQuery = query.split(' ');
+        var wordsInChoice = d.name.split(' ');
+
+        return _.all(wordsInQuery, function(word) {
+            return _.include(wordsInChoice, word);
+        });
     } else if (matchType === Formplayer.Const.COMBOBOX_FUZZY) {
-        // Fuzzy filter, matches if any of the query is in choice
-        return d.name.includes(query);
+        // Fuzzy filter, matches if query is "close" to answer
+        return window.Levenshtein.get(d.name.toLowerCase(), query.toLowerCase()) <= 2;
     } else {
         // Standard filter, matches only start of word
         return d.name.startsWith(query);

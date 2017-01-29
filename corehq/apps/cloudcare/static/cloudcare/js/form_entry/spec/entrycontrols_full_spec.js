@@ -120,29 +120,26 @@ describe('Entries', function() {
 
     it('Should properly filter combobox', function() {
         // Standard filter
-        assert.isTrue(ComboboxEntry.filter('o', { display: 'one two', id: 1 }, null));
-        assert.isFalse(ComboboxEntry.filter('t', { display: 'one two', id: 1 }, null));
+        assert.isTrue(ComboboxEntry.filter('o', { name: 'one two', id: 1 }, null));
+        assert.isFalse(ComboboxEntry.filter('t', { name: 'one two', id: 1 }, null));
 
         // Multiword filter
         assert.isTrue(
-            ComboboxEntry.filter('o', { display: 'one two', id: 1 }, Formplayer.Const.COMBOBOX_MULTIWORD)
-        );
-        assert.isTrue(
-            ComboboxEntry.filter('t', { display: 'one two', id: 1 }, Formplayer.Const.COMBOBOX_MULTIWORD)
+            ComboboxEntry.filter('one three', { name: 'one two three', id: 1 }, Formplayer.Const.COMBOBOX_MULTIWORD)
         );
         assert.isFalse(
-            ComboboxEntry.filter('w', { display: 'one two', id: 1 }, Formplayer.Const.COMBOBOX_MULTIWORD)
+            ComboboxEntry.filter('two three', { name: 'one two', id: 1 }, Formplayer.Const.COMBOBOX_MULTIWORD)
         );
 
         // Fuzzy filter
         assert.isTrue(
-            ComboboxEntry.filter('o', { display: 'one two', id: 1 }, Formplayer.Const.COMBOBOX_FUZZY)
+            ComboboxEntry.filter('o', { name: 'one', id: 1 }, Formplayer.Const.COMBOBOX_FUZZY)
         );
         assert.isTrue(
-            ComboboxEntry.filter('t', { display: 'one two', id: 1 }, Formplayer.Const.COMBOBOX_FUZZY)
+            ComboboxEntry.filter('O', { name: 'one', id: 1 }, Formplayer.Const.COMBOBOX_FUZZY)
         );
-        assert.isTrue(
-            ComboboxEntry.filter('w', { display: 'one two', id: 1 }, Formplayer.Const.COMBOBOX_FUZZY)
+        assert.isFalse(
+            ComboboxEntry.filter('one tt', { name: 'one', id: 1 }, Formplayer.Const.COMBOBOX_FUZZY)
         );
     });
 
