@@ -334,32 +334,29 @@ function ComboboxEntry(question, options) {
 
     // Specifies the type of matching we will do when a user types a query
     self.matchType = options.matchType;
-    self.templateType = 'combobox';
+    self.lengthLimit = Infinity;
+    self.templateType = 'str';
     self.helpText = function() { return 'Combobox'; };
     self.options = _.map(question.choices(), function(choice, idx) {
-        return { display: choice, id: idx + 1 };
+        return { name: choice, id: idx + 1 };
     });
 
     self.afterRender = function() {
-        var selector = '#' + self.entryId;
-        if (self.answer()) {
-            // The - 1 is to offset for the one-indexed select questions
-            $(selector).val(question.choices()[self.answer() - 1]);
-        }
-        $.typeahead({
-            input: selector,
-            minLength: 1,
-            hint: true,
-            cancelButton: false,
-            filter: function(item) {
-                return ComboboxEntry.filter(this.rawQuery, item, self.matchType);
-            },
-            source: {
-                data: self.options,
-            },
-            callback: {
-                onResult: function(node, query) {
-                    self.rawAnswer(query);
+        var $input = $('#' + self.entryId);
+        $input.atwho({
+            at: '',
+            data: self.options,
+            maxLen: Infinity,
+            tabSelectsMatch: false,
+            suffix: '',
+            callbacks: {
+                filter: function(query, data, searchKey) {
+                    return _.filter(data, function(item) {
+                        return ComboboxEntry.filter(query, item, self.matchType);
+                    });
+                },
+                matcher: function(flag, subtext, should_startWithSpace) {
+                    return $input.val();
                 },
             },
         });
@@ -369,14 +366,14 @@ function ComboboxEntry(question, options) {
 ComboboxEntry.filter = function(query, d, matchType) {
     if (matchType === Formplayer.Const.COMBOBOX_MULTIWORD) {
         // Multiword filter, matches the start of any word in the choice
-        var words = d.display.split(' ');
+        var words = d.name.split(' ');
         return _.any(words, function(word) { return word.startsWith(query); });
     } else if (matchType === Formplayer.Const.COMBOBOX_FUZZY) {
         // Fuzzy filter, matches if any of the query is in choice
-        return d.display.includes(query);
+        return d.name.includes(query);
     } else {
         // Standard filter, matches only start of word
-        return d.display.startsWith(query);
+        return d.name.startsWith(query);
     }
 };
 
@@ -391,7 +388,7 @@ ComboboxEntry.prototype.onPreProcess = function(newValue) {
     }
 
     value = _.find(this.options, function(d) {
-        return d.display === newValue;
+        return d.name === newValue;
     });
     if (value) {
         this.answer(value.id);

@@ -380,29 +380,13 @@
     <span class="help-block type" data-bind="text: helpText()"></span>
 </script>
 
-<script type="text/html" id="combobox-entry-ko-template">
-    <div class="typeahead__container">
-        <div class="typeahead__field">
-            <span class="typeahead__query">
-                <input class="js-typeahead form-control"
-                       name="q"
-                       type="search"
-                       autocomplete="off"
-                       data-bind="
-                          attr: {
-                              id: entryId
-                          }
-                      "/>
-            </span>
-        </div>
-    </div>
-</script>
 <script type="text/html" id="str-entry-ko-template">
     <input type="text" class="form-control" data-bind="
         value: $data.rawAnswer,
         valueUpdate: valueUpdate,
         attr: {
             maxlength: lengthLimit,
+            id: entryId,
         }
     "/>
     <span class="help-block type" data-bind="
