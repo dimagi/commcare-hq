@@ -404,7 +404,7 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'two_factor',
     'custom.apps.crs_reports',
     'custom.m4change',
-
+    'custom.ilsgateway',
     # submodules with tests that run on travis
     'dimagi.utils',
 )
