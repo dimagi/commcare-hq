@@ -298,6 +298,41 @@ class Outcome(models.Model):
             'Unknown': 'unknown',
         }[self.HIVStatus]
 
+    @property
+    def treatment_outcome(self):
+        return {
+            'NULL': None,
+            '0': None,
+            '1': 'cured',
+            '2': 'treatment_completed',
+            '3': 'died',
+            '4': 'failure',
+            '5': 'loss_to_follow_up',
+            '6': 'not_evaluated',
+            '7': 'regimen_changed',
+        }[self.Outcome]
+
+    @property
+    def is_treatment_ended(self):
+        return self.treatment_outcome in [
+            'cured',
+            'treatment_completed',
+            'died',
+            'failure',
+            'loss_to_follow_up',
+            'regimen_changed',
+        ]
+
+    @property
+    def treatment_outcome_date(self):
+        if self.OutcomeDate is None or self.OutcomeDate == 'NULL':
+            return None
+        else:
+            if '-' in self.OutcomeDate:
+                return datetime.strptime(self.OutcomeDate, '%d-%m-%Y').date()
+            else:
+                return datetime.strptime(self.OutcomeDate, '%d/%m/%Y').date()
+
 
 # class Household(models.Model):
 #     PatientID = models.ForeignKey(APatientDetail)  # have to move to end of excel CSV

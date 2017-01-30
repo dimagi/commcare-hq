@@ -149,6 +149,19 @@ class EnikshayCaseFactory(object):
             kwargs['attrs']['update']['migration_error'] = 'location_not_found'
             kwargs['attrs']['update']['migration_error_details'] = self._nikshay_code
 
+        if self._outcome:
+            if self._outcome.hiv_status:
+                kwargs['attrs']['update']['hiv_status'] = self._outcome.hiv_status
+            if self._outcome.is_treatment_ended:
+                kwargs['attrs']['owner_id'] = ARCHIVED_CASE_OWNER_ID
+                kwargs['attrs']['update']['is_active'] = 'no'
+            else:
+                kwargs['attrs']['update']['is_active'] = 'yes'
+            if self._outcome.treatment_outcome == 'died':
+                kwargs['attrs']['close'] = True
+        else:
+            kwargs['attrs']['update']['is_active'] = 'yes'
+
         if self.patient_detail.paadharno is not None:
             kwargs['attrs']['update']['aadhaar_number'] = self.patient_detail.paadharno
 
@@ -185,6 +198,10 @@ class EnikshayCaseFactory(object):
                 related_type=PERSON_CASE_TYPE,
             )],
         }
+
+        if self._outcome:
+            if self._outcome.is_treatment_ended:
+                kwargs['attrs']['close'] = True
 
         if self.existing_occurrence_case:
             kwargs['case_id'] = self.existing_occurrence_case.case_id
@@ -253,6 +270,13 @@ class EnikshayCaseFactory(object):
 
         if self.patient_detail.disease_classification == 'extra_pulmonary':
             kwargs['attrs']['update']['site_choice'] = self.patient_detail.site_choice
+        if self._outcome:
+            if self._outcome.treatment_outcome:
+                kwargs['attrs']['update']['treatment_outcome'] = self._outcome.treatment_outcome
+                assert self._outcome.treatment_outcome_date is not None
+                kwargs['attrs']['update']['treatment_outcome_date'] = self._outcome.treatment_outcome_date
+            if self._outcome.is_treatment_ended:
+                kwargs['attrs']['close'] = True
 
         if self.existing_episode_case:
             kwargs['case_id'] = self.existing_episode_case.case_id

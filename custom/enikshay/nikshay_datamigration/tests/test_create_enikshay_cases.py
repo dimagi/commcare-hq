@@ -85,6 +85,7 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
                 ('first_name', 'A B'),
                 ('has_open_tests', 'no'),
                 ('hiv_status', 'non_reactive'),
+                ('is_active', 'yes'),
                 ('last_name', 'C'),
                 ('migration_created_case', 'true'),
                 ('person_id', 'NIK-MH-ABD-05-16-0001'),
@@ -225,6 +226,58 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
         self.assertEqual(person_case.dynamic_case_properties()['archive_reason'], 'migration_location_not_found')
         self.assertEqual(person_case.dynamic_case_properties()['migration_error'], 'location_not_found')
         self.assertEqual(person_case.dynamic_case_properties()['migration_error_details'], 'MH-ABD-05-16')
+
+    @run_with_all_backends
+    def test_outcome_cured(self):
+        self.outcome.Outcome = '1'
+        self.outcome.OutcomeDate = '2/01/2017'
+        self.outcome.save()
+        call_command('create_enikshay_cases', self.domain)
+
+        person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
+        self.assertEqual(1, len(person_case_ids))
+        person_case = self.case_accessor.get_case(person_case_ids[0])
+        self.assertEqual(person_case.owner_id, ARCHIVED_CASE_OWNER_ID)
+        self.assertFalse(person_case.closed)
+        self.assertEqual(person_case.dynamic_case_properties()['is_active'], 'no')
+
+        occurrence_case_ids = self.case_accessor.get_case_ids_in_domain(type='occurrence')
+        self.assertEqual(1, len(occurrence_case_ids))
+        occurrence_case = self.case_accessor.get_case(occurrence_case_ids[0])
+        self.assertTrue(occurrence_case.closed)
+
+        episode_case_ids = self.case_accessor.get_case_ids_in_domain(type='episode')
+        self.assertEqual(1, len(episode_case_ids))
+        episode_case = self.case_accessor.get_case(episode_case_ids[0])
+        self.assertTrue(episode_case.closed)
+        self.assertEqual(episode_case.dynamic_case_properties()['treatment_outcome'], 'cured')
+        self.assertEqual(episode_case.dynamic_case_properties()['treatment_outcome_date'], '2017-01-02')
+
+    @run_with_all_backends
+    def test_outcome_died(self):
+        self.outcome.Outcome = '3'
+        self.outcome.OutcomeDate = '2-01-2017'
+        self.outcome.save()
+        call_command('create_enikshay_cases', self.domain)
+
+        person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
+        self.assertEqual(1, len(person_case_ids))
+        person_case = self.case_accessor.get_case(person_case_ids[0])
+        self.assertEqual(person_case.owner_id, ARCHIVED_CASE_OWNER_ID)
+        self.assertTrue(person_case.closed)
+        self.assertEqual(person_case.dynamic_case_properties()['is_active'], 'no')
+
+        occurrence_case_ids = self.case_accessor.get_case_ids_in_domain(type='occurrence')
+        self.assertEqual(1, len(occurrence_case_ids))
+        occurrence_case = self.case_accessor.get_case(occurrence_case_ids[0])
+        self.assertTrue(occurrence_case.closed)
+
+        episode_case_ids = self.case_accessor.get_case_ids_in_domain(type='episode')
+        self.assertEqual(1, len(episode_case_ids))
+        episode_case = self.case_accessor.get_case(episode_case_ids[0])
+        self.assertTrue(episode_case.closed)
+        self.assertEqual(episode_case.dynamic_case_properties()['treatment_outcome'], 'died')
+        self.assertEqual(episode_case.dynamic_case_properties()['treatment_outcome_date'], '2017-01-02')
 
     def _assertIndexEqual(self, index_1, index_2):
         self.assertEqual(index_1.identifier, index_2.identifier)
