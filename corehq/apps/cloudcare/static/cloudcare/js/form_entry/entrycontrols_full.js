@@ -337,15 +337,17 @@ function ComboboxEntry(question, options) {
     self.lengthLimit = Infinity;
     self.templateType = 'str';
     self.helpText = function() { return 'Combobox'; };
-    self.options = _.map(question.choices(), function(choice, idx) {
-        return { name: choice, id: idx + 1 };
+    self.options = ko.computed(function() {
+        return _.map(question.choices(), function(choice, idx) {
+            return { name: choice, id: idx + 1 };
+        });
     });
 
     self.afterRender = function() {
         var $input = $('#' + self.entryId);
         $input.atwho({
             at: '',
-            data: self.options,
+            data: self.options(),
             maxLen: Infinity,
             tabSelectsMatch: false,
             suffix: '',
@@ -394,7 +396,7 @@ ComboboxEntry.prototype.onPreProcess = function(newValue) {
         return;
     }
 
-    value = _.find(this.options, function(d) {
+    value = _.find(this.options(), function(d) {
         return d.name === newValue;
     });
     if (value) {
