@@ -147,7 +147,7 @@ class TestNikshayRegisterPatientPayloadGenerator(ENikshayLocationStructureMixin,
         self.assertEqual(payload['sitedetail'], 2)
         self.assertEqual(payload['Ptype'], '6')
         self.assertEqual(payload['poccupation'], 4)
-        self.assertEqual(payload['dotname'], 'awesome dot')
+        self.assertEqual(payload['dotname'], 'Gandalf The Grey')
         self.assertEqual(payload['dotmob'], '123456789')
         self.assertEqual(payload['disease_classification'], 'EP')
         self.assertEqual(payload['pregdate'], '2014-09-09')
