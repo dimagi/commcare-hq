@@ -1024,7 +1024,8 @@ NIMBUS_FORM_VALIDATION = PredictablyRandomToggle(
     [NAMESPACE_DOMAIN],
     randomness=1.0,
     always_disabled=[
-        'icrc-almanach'
+        'icrc-almanach',
+        'mikolo'
     ]
 )
 
