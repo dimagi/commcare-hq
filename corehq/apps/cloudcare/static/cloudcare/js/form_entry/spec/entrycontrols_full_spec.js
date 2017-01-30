@@ -118,6 +118,25 @@ describe('Entries', function() {
         assert.equal(entry.answer(), Formplayer.Const.NO_ANSWER);
     });
 
+    it('Should validate Combobox properly', function() {
+        var entry,
+            question;
+        questionJSON.datatype = Formplayer.Const.SELECT;
+        questionJSON.style = { raw: Formplayer.Const.COMBOBOX };
+        questionJSON.choices = ['a', 'b'];
+        question = new Question(questionJSON);
+
+        entry = question.entry;
+        assert.isTrue(entry instanceof ComboboxEntry);
+
+        entry.rawAnswer('a');
+        assert.equal(entry.answer(), 1);
+
+        question.choices(['c', 'd']);
+        assert.isFalse(entry.isValid(entry.rawAnswer()));
+        assert.isTrue(!!question.error());
+    });
+
     it('Should properly filter combobox', function() {
         // Standard filter
         assert.isTrue(ComboboxEntry.filter('o', { name: 'one two', id: 1 }, null));
