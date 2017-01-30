@@ -474,10 +474,12 @@ class LoadUpdateAction(AdvancedAction):
     preload:                  Value from the case to load into the form. Keys are question paths,
                               values are case properties.
     auto_select:              Configuration for auto-selecting the case
-    load_case_from_fixture:   Configureation for loading a case using fixture data
+    load_case_from_fixture:   Configuration for loading a case using fixture data
     show_product_stock:       If True list the product stock using the module's Product List
                               configuration.
     product_program:          Only show products for this CommCare Supply program.
+    case_index:               Used when a case should be created/updated as a child or extension case
+                              of another case.
     """
     details_module = StringProperty()
     preload = DictProperty()
