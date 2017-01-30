@@ -336,14 +336,21 @@ function ComboboxEntry(question, options) {
     self.matchType = options.matchType;
     self.lengthLimit = Infinity;
     self.templateType = 'str';
-    self.helpText = function() { return 'Combobox'; };
+
     self.options = ko.computed(function() {
         return _.map(question.choices(), function(choice, idx) {
             return { name: choice, id: idx + 1 };
         });
     });
+    self.options.subscribe(function () {
+        self.renderAtwho();
+        if (!self.isValid(self.rawAnswer())) {
+            self.question.error(gettext('Not a valid choice'));
+        }
+    });
+    self.helpText = function() { return 'Combobox'; };
 
-    self.afterRender = function() {
+    self.renderAtwho = function() {
         var $input = $('#' + self.entryId);
         $input.atwho({
             at: '',
@@ -362,6 +369,19 @@ function ComboboxEntry(question, options) {
                 },
             },
         });
+    };
+    self.isValid = function(value) {
+        if (!value) {
+            return true;
+        }
+        return _.include(
+            _.map(self.options(), function(option) { return option.name }),
+            value
+        );
+    };
+
+    self.afterRender = function() {
+        self.renderAtwho();
     };
 }
 
