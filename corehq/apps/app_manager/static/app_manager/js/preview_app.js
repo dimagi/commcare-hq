@@ -128,6 +128,7 @@ hqDefine('app_manager/js/preview_app.js', function() {
         var $appPreview = $(module.SELECTORS.PREVIEW_WINDOW),
             $appBody = $(module.SELECTORS.APP_MANAGER_BODY),
             $togglePreviewBtn = $(module.SELECTORS.BTN_TOGGLE_PREVIEW),
+            $iframe = $(module.SELECTORS.PREVIEW_WINDOW_IFRAME),
             $messages = $(layoutController.selector.messages);
 
         _private.isFormdesigner = $(module.SELECTORS.FORMDESIGNER).length > 0;
@@ -193,21 +194,24 @@ hqDefine('app_manager/js/preview_app.js', function() {
                 $(module.SELECTORS.BTN_REFRESH).addClass('app-out-of-date');
             }
         });
-        $(module.SELECTORS.PREVIEW_WINDOW_IFRAME).on('load', function() {
+        var onload = function() {
             if (localStorage.getItem(module.DATA.TABLET)) {
                 _private.tabletView();
             } else {
                 _private.phoneView();
             }
-        });
-
+        };
+        $iframe.on('load', onload);
+        if ($iframe[0].contentWindow.document.readyState === 'complete') {
+            onload();
+        }
     };
 
-    module.prependToggleTo = function (selector, layout, attempts) {
+    module.appendToggleTo = function (selector, layout, attempts) {
         attempts = attempts || 0;
         if ($(selector).length) {
             var $toggleParent = $(selector);
-            $toggleParent.prepend(layout);
+            $toggleParent.append(layout);
             $toggleParent.find(module.SELECTORS.BTN_TOGGLE_PREVIEW).click(_private.toggleAppPreview);
             if (localStorage.getItem(module.DATA.OPEN)) {
                 _private.showAppPreview();
@@ -217,7 +221,7 @@ hqDefine('app_manager/js/preview_app.js', function() {
         } else if (attempts <= 30) {
             // give up appending element after waiting 30 seconds to load
             setTimeout(function () {
-                module.prependToggleTo(selector, layout, attempts++);
+                module.appendToggleTo(selector, layout, attempts++);
             }, 1000);
         }
     };

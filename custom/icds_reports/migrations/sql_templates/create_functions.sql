@@ -212,7 +212,8 @@ BEGIN
 		'attended_children_percent, ' ||
 		'form_location, ' ||
 		'form_location_lat, ' ||
-		'form_location_long ' ||
+		'form_location_long, ' ||
+		'image_name ' ||
 		'FROM ' || quote_ident(_daily_attendance_tablename) || ' WHERE month = ' || quote_literal(_start_date) || ')';
 
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(awc_id)';
@@ -230,12 +231,14 @@ DECLARE
 	_end_date date;
 	_all_text text;
 	_null_value text;
+	_blank_value text;
 BEGIN
 	_start_date = date_trunc('MONTH', $1)::DATE;
 	_tablename := 'agg_child_health' || '_' || _start_date;
 	EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('child_health_monthly') INTO _ucr_child_monthly_table;
 	_all_text = 'All';
 	_null_value = NULL;
+	_blank_value = '';
 
 	EXECUTE 'DELETE FROM ' || quote_ident(_tablename);
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
@@ -282,7 +285,7 @@ BEGIN
 		'sum(fully_immunized_eligible), ' ||
 		'sum(fully_immunized_on_time), ' ||
 		'sum(fully_immunized_late) ' ||
-		'FROM ' || quote_ident(_ucr_child_monthly_table) || ' WHERE month = ' || quote_literal(_start_date) || ' ' ||
+		'FROM ' || quote_ident(_ucr_child_monthly_table) || ' WHERE state_id != ' || quote_literal(_blank_value) ||  ' AND month = ' || quote_literal(_start_date) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, sex, age_tranche, caste, disabled, minority, resident)';
 
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(state_id, district_id, block_id, supervisor_id, awc_id)';
@@ -547,11 +550,13 @@ DECLARE
 	_end_date date;
 	_all_text text;
 	_null_value text;
+	_blank_value text;
 BEGIN
 	_start_date = date_trunc('MONTH', $1)::DATE;
 	_tablename := 'agg_ccs_record' || '_' || _start_date;
 	_all_text = 'All';
 	_null_value = NULL;
+	_blank_value = '';
 	EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('ccs_record_monthly') INTO _ucr_ccs_record_table;
 
 	EXECUTE 'DELETE FROM ' || quote_ident(_tablename);
@@ -601,7 +606,7 @@ BEGIN
 		'sum(counsel_fp_vid), ' ||
 		'sum(counsel_immediate_conception), ' ||
 		'sum(counsel_accessible_postpartum_fp) ' ||
-		'FROM ' || quote_ident(_ucr_ccs_record_table) || ' WHERE month = ' || quote_literal(_start_date) || ' ' ||
+		'FROM ' || quote_ident(_ucr_ccs_record_table) || ' WHERE state_id != ' || quote_literal(_blank_value) ||  ' AND month = ' || quote_literal(_start_date) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, ccs_status, trimester, caste, disabled, minority, resident)';
 
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(state_id, district_id, block_id, supervisor_id, awc_id)';
@@ -934,7 +939,7 @@ BEGIN
 		'supervisor_id, ' ||
 		'awc_id,' ||
 		'month, ' ||
-		quote_literal(_all_text) || ', ' ||
+		'beneficiary_type, ' ||
 		quote_literal(_all_text) || ', ' ||
 		quote_literal(_all_text) || ', ' ||
 		quote_literal(_all_text) || ', ' ||
@@ -942,7 +947,7 @@ BEGIN
 		'sum(thr_eligible), ' ||
 		'sum(rations_21_plus_distributed) ' ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
-		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month)';
+		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, beneficiary_type)';
 
 
 END;
@@ -1125,6 +1130,9 @@ BEGIN
 		'usage_num_pse = ut.usage_num_pse, ' ||
 		'usage_num_gmp = ut.usage_num_gmp, ' ||
 		'usage_num_thr = ut.usage_num_thr, ' ||
+		'usage_num_hh_reg = ut.usage_num_hh_reg, ' ||
+		'usage_num_add_person = ut.usage_num_add_person, ' ||
+		'usage_num_add_pregnancy = ut.usage_num_add_pregnancy, ' ||
 		'usage_num_home_visit = ut.usage_num_home_visit, ' ||
 		'usage_num_bp_tri1 = ut.usage_num_bp_tri1, ' ||
 		'usage_num_bp_tri2 = ut.usage_num_bp_tri2, ' ||
@@ -1150,6 +1158,9 @@ BEGIN
 		'sum(pse) AS usage_num_pse, ' ||
 		'sum(gmp) AS usage_num_gmp, ' ||
 		'sum(thr) AS usage_num_thr, ' ||
+		'sum(add_household) AS usage_num_hh_reg, ' ||
+		'sum(add_person) AS usage_num_add_person, ' ||
+		'sum(add_pregnancy) AS usage_num_add_pregnancy, ' ||
 		'sum(home_visit) AS usage_num_home_visit, ' ||
 		'sum(bp_tri1) AS usage_num_bp_tri1, ' ||
 		'sum(bp_tri2) AS usage_num_bp_tri2, ' ||
@@ -1295,7 +1306,7 @@ BEGIN
 		'sum(awc_not_open_department_work), ' ||
 		'sum(awc_not_open_other), ' ||
 		'sum(awc_num_open), ' ||
-		'sum(awc_not_open_no_data), ' ||
+		'sum(COALESCE(awc_not_open_no_data, 25)), ' ||
 		'sum(wer_weighed), ' ||
 		'sum(wer_eligible), ' ||
 		'avg(wer_score), ' ||
@@ -1364,7 +1375,10 @@ BEGIN
 		'sum(infra_flat_weighing_scale), ' ||
 		'sum(infra_cooking_utensils), ' ||
 		'sum(infra_medicine_kits), ' ||
-		'sum(infra_adequate_space_pse) ' ||
+		'sum(infra_adequate_space_pse), ' ||
+		'sum(usage_num_add_person), ' ||
+		'sum(usage_num_add_pregnancy), ' ||
+		'sum(usage_num_home_visit) ' ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, supervisor_id, month)';
 
@@ -1463,7 +1477,10 @@ BEGIN
 		'sum(infra_flat_weighing_scale), ' ||
 		'sum(infra_cooking_utensils), ' ||
 		'sum(infra_medicine_kits), ' ||
-		'sum(infra_adequate_space_pse) ' ||
+		'sum(infra_adequate_space_pse), ' ||
+		'sum(usage_num_add_person), ' ||
+		'sum(usage_num_add_pregnancy), ' ||
+		'sum(usage_num_home_visit) ' ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'WHERE awc_id = ' || quote_literal(_all_text) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, month)';
@@ -1563,7 +1580,10 @@ BEGIN
 		'sum(infra_flat_weighing_scale), ' ||
 		'sum(infra_cooking_utensils), ' ||
 		'sum(infra_medicine_kits), ' ||
-		'sum(infra_adequate_space_pse) ' ||
+		'sum(infra_adequate_space_pse), ' ||
+		'sum(usage_num_add_person), ' ||
+		'sum(usage_num_add_pregnancy), ' ||
+		'sum(usage_num_home_visit) ' ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'WHERE supervisor_id = ' || quote_literal(_all_text) || ' ' ||
 		'GROUP BY state_id, district_id, month)';
@@ -1663,7 +1683,10 @@ BEGIN
 		'sum(infra_flat_weighing_scale), ' ||
 		'sum(infra_cooking_utensils), ' ||
 		'sum(infra_medicine_kits), ' ||
-		'sum(infra_adequate_space_pse) ' ||
+		'sum(infra_adequate_space_pse), ' ||
+		'sum(usage_num_add_person), ' ||
+		'sum(usage_num_add_pregnancy), ' ||
+		'sum(usage_num_home_visit) ' ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'WHERE block_id = ' || quote_literal(_all_text) || ' ' ||
 		'GROUP BY state_id, month)';

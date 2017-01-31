@@ -474,10 +474,12 @@ class LoadUpdateAction(AdvancedAction):
     preload:                  Value from the case to load into the form. Keys are question paths,
                               values are case properties.
     auto_select:              Configuration for auto-selecting the case
-    load_case_from_fixture:   Configureation for loading a case using fixture data
+    load_case_from_fixture:   Configuration for loading a case using fixture data
     show_product_stock:       If True list the product stock using the module's Product List
                               configuration.
     product_program:          Only show products for this CommCare Supply program.
+    case_index:               Used when a case should be created/updated as a child or extension case
+                              of another case.
     """
     details_module = StringProperty()
     preload = DictProperty()
@@ -1632,12 +1634,25 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
                                 questions,
                                 question_path
                             )
+
+        def parse_case_type(name, types={"#case": module_case_type,
+                                         "#user": USERCASE_TYPE}):
+            if name.startswith("#") and "/" in name:
+                full_name = name
+                hashtag, name = name.split("/", 1)
+                if hashtag not in types:
+                    hashtag, name = "#case", full_name
+            else:
+                hashtag = "#case"
+            return types[hashtag], name
+
         case_loads = self.case_references.get("load", {})
         for question_path, case_properties in case_loads.iteritems():
             for name in case_properties:
+                case_type, name = parse_case_type(name)
                 self.add_property_load(
                     app_case_meta,
-                    module_case_type,
+                    case_type,
                     name,
                     questions,
                     question_path
@@ -1671,9 +1686,9 @@ class MappingItem(DocumentSchema):
         numeral, which is illegal.
         """
         if re.search(r'\W', self.key) or self.treat_as_expression:
-            return 'h{hash}'.format(hash=hashlib.md5(self.key).hexdigest()[:8])
+            return u'h{hash}'.format(hash=hashlib.md5(self.key.encode('UTF-8')).hexdigest()[:8])
         else:
-            return 'k{key}'.format(key=self.key)
+            return u'k{key}'.format(key=self.key)
 
     def key_as_condition(self, property):
         if self.treat_as_expression:
@@ -1836,9 +1851,11 @@ class SortElement(IndexedSchema):
     type = StringProperty()
     direction = StringProperty()
     display = DictProperty()
+    sort_calculation = StringProperty(default="")
 
     def has_display_values(self):
         return any(s.strip() != '' for s in self.display.values())
+
 
 class CaseListLookupMixin(DocumentSchema):
     """
@@ -3580,7 +3597,8 @@ def _filter_by_case_sharing_group_id(user, ui_filter):
 
 
 def _filter_by_location_id(user, ui_filter):
-    return ui_filter.value(**{ui_filter.name: user.location_id})
+    return ui_filter.value(**{ui_filter.name: user.location_id,
+                              'request_user': user})
 
 
 def _filter_by_username(user, ui_filter):
@@ -3596,7 +3614,8 @@ def _filter_by_user_id(user, ui_filter):
 def _filter_by_parent_location_id(user, ui_filter):
     location = user.sql_location
     location_parent = location.parent.location_id if location and location.parent else None
-    return ui_filter.value(**{ui_filter.name: location_parent})
+    return ui_filter.value(**{ui_filter.name: location_parent,
+                              'request_user': user})
 
 
 AutoFilterConfig = namedtuple('AutoFilterConfig', ['slug', 'filter_function', 'short_description'])
@@ -3614,8 +3633,8 @@ def get_auto_filter_configurations():
     ]
 
 
-def _get_filter_function(slug):
-    matched_configs = [config for config in get_all_mobile_filter_configs() if config.slug == slug]
+def _get_auto_filter_function(slug):
+    matched_configs = [config for config in get_auto_filter_configurations() if config.slug == slug]
     if not matched_configs:
         raise ValueError('Unexpected ID for AutoFilter', slug)
     else:
@@ -3627,7 +3646,7 @@ class AutoFilter(ReportAppFilter):
     filter_type = StringProperty(choices=[f.slug for f in get_auto_filter_configurations()])
 
     def get_filter_value(self, user, ui_filter):
-        return _get_filter_function(self.filter_type)(user, ui_filter)
+        return _get_auto_filter_function(self.filter_type)(user, ui_filter)
 
 
 class CustomDataAutoFilter(ReportAppFilter):
@@ -4099,7 +4118,7 @@ class LazyBlobDoc(BlobMixin):
         if "_attachments" in data:
             data = data.copy()
             attachments = data.pop("_attachments").copy()
-            if cls.migrating_blobs_from_couch:
+            if cls._migrating_blobs_from_couch:
                 # preserve stubs so couch attachments don't get deleted on save
                 stubs = {}
                 for name, value in list(attachments.items()):
@@ -4801,7 +4820,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             })
         except UserCaseXPathValidationError as ucve:
             errors.append({
-                'type': 'invalid user case xpath reference',
+                'type': 'invalid user property xpath reference',
                 'module': ucve.module,
                 'form': ucve.form,
             })
@@ -5628,9 +5647,14 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if app_uses_usercase(self) and not domain_has_privilege(self.domain, privileges.USER_CASE):
             errors.append({
                 'type': 'subscription',
-                'message': _('Your application is using User Case functionality. You can remove User Case '
+                'message': _('Your application is using User Properties. You can remove User Properties '
+                             'functionality by opening the User Properties tab in a form that uses it, and '
+                             'clicking "Remove User Properties".')
+                           if toggles.USER_PROPERTY_EASY_REFS.enabled(self.domain) else
+                           # old message, to be removed with USER_PROPERTY_EASY_REFS toggle
+                           _('Your application is using User Case functionality. You can remove User Case '
                              'functionality by opening the User Case Management tab in a form that uses it, and '
-                             'clicking "Remove User Case Properties".')
+                             'clicking "Remove User Case Properties".'),
             })
         return errors
 

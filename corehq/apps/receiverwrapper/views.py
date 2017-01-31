@@ -9,6 +9,7 @@ from casexml.apps.case.xform import get_case_updates, is_device_report
 from corehq.apps.domain.decorators import (
     check_domain_migration, login_or_digest_ex, login_or_basic_ex
 )
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.receiverwrapper.auth import (
     AuthContext,
     WaivedAuthContext,
@@ -26,7 +27,7 @@ from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils import convert_xform_to_json, should_use_sql_backend
 from corehq.util import datadog
 from corehq.util.datadog.metrics import MULTIMEDIA_SUBMISSION_ERROR_COUNT
-from corehq.util.datadog.utils import count_by_response_code, log_counter
+from corehq.util.datadog.utils import log_counter
 from corehq.util.timer import TimingContext
 import couchforms
 from django.views.decorators.http import require_POST
@@ -39,7 +40,6 @@ from corehq.apps.ota.utils import handle_401_response
 from corehq import toggles
 
 
-@count_by_response_code('commcare.xform_submissions')
 def _process_form(request, domain, app_id, user_id, authenticated,
                   auth_cls=AuthContext):
     if should_ignore_submission(request):
@@ -92,14 +92,18 @@ def _process_form(request, domain, app_id, user_id, authenticated,
     )
     with TimingContext() as timer:
         response, instance, cases = submission_post.run()
+
+    backend_tag = ('backend:sql' if should_use_sql_backend(domain) else
+                   'backend:couch')
+    counter_name = 'commcare.xform_submissions.{}'.format(response.status_code)
+    datadog.statsd.increment(counter_name, tags=[backend_tag])
+
     if response.status_code == 400:
         logging.error(
             'Status code 400 for a form submission. '
             'Response is: \n{0}\n'
         )
     elif response.status_code == 201:
-        backend_tag = ('backend:sql' if should_use_sql_backend(domain) else
-                       'backend:couch')
 
         datadog.statsd.gauge(
             'commcare.xform_submissions.timings', timer.duration, tags=[backend_tag])
@@ -223,6 +227,7 @@ def _secure_post_basic(request, domain, app_id=None):
     )
 
 
+@location_safe
 @csrf_exempt
 @require_POST
 @check_domain_migration

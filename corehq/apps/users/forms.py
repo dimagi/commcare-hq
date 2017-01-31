@@ -746,7 +746,7 @@ class SupplyPointSelectWidget(forms.Widget):
         if query_url:
             self.query_url = query_url
         else:
-            self.query_url = reverse('corehq.apps.locations.views.child_locations_for_select2', args=[domain])
+            self.query_url = reverse('child_locations_for_select2', args=[self.domain])
 
     def render(self, name, value, attrs=None):
         location_ids = value.split(',') if value else []

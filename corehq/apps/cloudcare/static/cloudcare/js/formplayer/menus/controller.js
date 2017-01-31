@@ -86,7 +86,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             var self = this;
             var detailObjects = model.models;
             // If we have no details, just select the entity
-            if (detailObjects === null || detailObjects === undefined) {
+            if (detailObjects === null || detailObjects === undefined || detailObjects.length === 0) {
                 FormplayerFrontend.trigger("menu:select", caseId);
                 return;
             }
@@ -94,7 +94,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             var menuListView = Menus.Controller.getDetailList(detailObject);
 
             var tabModels = _.map(detailObjects, function (detail, index) {
-                return {title: detail.title, id: index};
+                return {title: detail.get('title'), id: index};
             });
             var tabCollection = new Backbone.Collection();
             tabCollection.reset(tabModels);
@@ -102,7 +102,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             var tabListView = new Menus.Views.DetailTabListView({
                 collection: tabCollection,
                 showDetail: function (detailTabIndex) {
-                    self.showDetail(model, detailTabIndex);
+                    self.showDetail(model, detailTabIndex, caseId);
                 },
             });
 

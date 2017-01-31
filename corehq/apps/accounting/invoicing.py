@@ -306,7 +306,6 @@ class DomainWireInvoiceFactory(object):
             date_end=date_end,
             date_due=date_due,
             balance=balance,
-            account=account
         )
 
         record = WireBillingRecord.generate_record(wire_invoice)

@@ -163,9 +163,14 @@
               <small id="version-info"></small>
             </div>
             <div class="scrollable-container dragscroll form-scrollable-container">
-              <section id="webforms" class="webforms" data-bind="template: { name: 'form-fullform-ko-template' }"></section>
-              {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
-                  <section id="cloudcare-debugger" data-bind="
+              <section id="webforms" data-bind="
+                  template: {
+                      name: 'form-fullform-ko-template',
+                      afterRender: afterRender
+                  }">
+              </section>
+              {% if request.couch_user.can_edit_data %}
+              <section id="cloudcare-debugger" data-bind="
                   template: {
                       name: 'instance-viewer-ko-template',
                       afterRender: adjustWidth
@@ -175,34 +180,6 @@
             </div>
         </div>
 
-        <script>
-        $(function () {
-            window.GMAPS_API_KEY = '{{ maps_api_key|safe }}'; // maps api is loaded on-demand
-            hqImport('cloudcare/js/preview_app/preview_app.js').start({
-                apps: [{{ app|JSON }}],
-                language: "{{ request.user.language|default:'en' }}",
-                username: "{{ request.user.username  }}",
-                domain: "{{ request.domain }}",
-                formplayer_url: "{{ formplayer_url }}",
-                singleAppMode: true,
-                phoneMode: true,
-                oneQuestionPerScreen: !{{ request.couch_user.is_dimagi|JSON }},
-                allowedHost: "{{ request.get_host }}",
-                environment: {{ environment|JSON }},
-                {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
-                debuggerEnabled: true,
-                {% endif %}
-            });
-            $('.dragscroll').on('scroll', function () {
-              $('.form-control').blur();
-            });
-            // Adjust for those pesky scrollbars
-            _.each($('.scrollable-container'), function (sc) {
-              var scrollWidth = $(sc).prop('offsetWidth') - $(sc).prop('clientWidth');
-              $(sc).addClass('has-scrollbar-'+scrollWidth);
-            });
-        });
-        </script>
         {% include 'form_entry/templates.html' %}
         {% include 'formplayer/grid_view.html' %}
         {% include 'formplayer/settings_view.html' %}
@@ -218,5 +195,31 @@
         {% include 'style/includes/analytics_all.html' %}
         <script src="{% static 'cloudcare/js/preview_app/preview_app.js' %}"></script>
         {% block js-inline %}{% endblock %}
+        <script>
+            window.GMAPS_API_KEY = '{{ maps_api_key|safe }}'; // maps api is loaded on-demand
+            hqImport('cloudcare/js/preview_app/preview_app.js').start({
+                apps: [{{ app|JSON }}],
+                language: "{{ request.user.language|default:'en' }}",
+                username: "{{ request.user.username  }}",
+                domain: "{{ request.domain }}",
+                formplayer_url: "{{ formplayer_url }}",
+                singleAppMode: true,
+                phoneMode: true,
+                oneQuestionPerScreen: !{{ request.couch_user.is_dimagi|JSON }},
+                allowedHost: "{{ request.get_host }}",
+                environment: {{ environment|JSON }},
+                {% if request.couch_user.can_edit_data %}
+                debuggerEnabled: true,
+                {% endif %}
+            });
+            $('.dragscroll').on('scroll', function () {
+              $('.form-control').blur();
+            });
+            // Adjust for those pesky scrollbars
+            _.each($('.scrollable-container'), function (sc) {
+              var scrollWidth = $(sc).prop('offsetWidth') - $(sc).prop('clientWidth');
+              $(sc).addClass('has-scrollbar-'+scrollWidth);
+            });
+        </script>
     </body>
 </html>

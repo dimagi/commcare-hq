@@ -126,7 +126,7 @@ class SmsGatewayFee(models.Model):
 
         if 'prefix' in [
             field.name
-            for field, _ in criteria_class._meta.get_fields_with_model()
+            for field in criteria_class._meta.get_fields()
         ]:
             prefix = prefix or ''
             criteria, _ = criteria_class.objects.get_or_create(

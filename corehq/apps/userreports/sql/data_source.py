@@ -33,27 +33,19 @@ class ConfigurableReportSqlDataSource(ConfigurableReportDataSourceMixin, SqlData
         return {k: v for fv in self._filter_values.values() for k, v in fv.to_sql_values().items()}
 
     @property
-    def group_by(self):
-        # ask each column for its group_by contribution and combine to a single list
-        return [
-            group_by for col_id in self.aggregation_columns
-            for group_by in self._get_db_column_ids(col_id)
-        ]
-
-    @property
     def order_by(self):
         # allow throwing exception if the report explicitly sorts on an unsortable column type
         if self._order_by:
             return [
                 OrderBy(order_by, is_ascending=(order == ASCENDING))
                 for sort_column_id, order in self._order_by
-                for order_by in self._get_db_column_ids(sort_column_id)
+                for order_by in self.get_db_column_ids(sort_column_id)
             ]
         elif self.top_level_columns:
             try:
                 return [
                     OrderBy(order_by, is_ascending=True)
-                    for order_by in self._get_db_column_ids(self.top_level_columns[0].column_id)
+                    for order_by in self.get_db_column_ids(self.top_level_columns[0].column_id)
                 ]
             except InvalidQueryColumn:
                 pass
@@ -133,12 +125,3 @@ class ConfigurableReportSqlDataSource(ConfigurableReportDataSourceMixin, SqlData
         if total_row and total_row[0] is '':
             total_row[0] = ugettext('Total')
         return total_row
-
-    def _get_db_column_ids(self, column_id):
-        # for columns that end up being complex queries (e.g. aggregate dates)
-        # there could be more than one column ID and they may specify aliases
-        if column_id in self._column_configs:
-            return self._column_configs[column_id].get_query_column_ids()
-        else:
-            # if the column isn't found just treat it as a normal field
-            return [column_id]

@@ -75,7 +75,7 @@ def _cached_add_inferred_export_properties(sender, domain, case_type, properties
     for case_property in properties:
         path = [PathNode(name=case_property)]
         system_property_column = filter(
-            lambda column: column.item.path == path,
+            lambda column: column.item.path == path and column.item.transform is None,
             MAIN_CASE_TABLE_PROPERTIES,
         )
 
@@ -87,3 +87,14 @@ def _cached_add_inferred_export_properties(sender, domain, case_type, properties
             group_schema.put_item(path, inferred_from=sender, item_cls=ScalarItem)
 
     inferred_schema.save()
+
+
+@task(queue='background_queue', bind=True)
+def generate_schema_for_all_builds(self, schema_cls, domain, app_id, identifier):
+    schema_cls.generate_schema_from_builds(
+        domain,
+        app_id,
+        identifier,
+        only_process_current_builds=False,
+        task=self,
+    )
