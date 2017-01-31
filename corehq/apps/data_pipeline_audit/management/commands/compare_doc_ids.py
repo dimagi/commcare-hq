@@ -24,6 +24,7 @@ class Command(BaseCommand):
             'CommCareCase': _compare_cases,
             'CommCareCase-Deleted': _compare_cases,
             'CommCareUser': _compare_users,
+            'CommCareUser-Deleted': _compare_users,
             'WebUser': _compare_users,
         }
         handlers.update({doc_type: _compare_xforms for doc_type in doc_types()})

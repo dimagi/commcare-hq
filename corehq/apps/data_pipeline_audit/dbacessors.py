@@ -4,6 +4,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps import es
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_type, get_doc_ids_in_domain_by_type
 from corehq.apps.dump_reload.sql.dump import allow_form_processing_queries
+from corehq.apps.es import aggregations
 from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
 from corehq.form_processor.utils.general import should_use_sql_backend
@@ -35,6 +36,31 @@ def get_index_counts_by_domain_doc_type(es_query_class, domain):
         .run()
         .aggregations.doc_type.counts_by_bucket()
     )
+
+
+def get_es_user_counts_by_doc_type(domain):
+    agg = aggregations.TermsAggregation('doc_type', 'doc_type').aggregation(
+        aggregations.TermsAggregation('base_doc', 'base_doc')
+    )
+    doc_type_buckets = (
+        es.UserES()
+        .remove_default_filters()
+        .filter(es.users.domain(domain))
+        .aggregation(agg)
+        .size(0)
+        .run()
+        .aggregations.doc_type.buckets_dict
+    )
+    counts = Counter()
+    for doc_type, bucket in doc_type_buckets.items():
+        for base_doc, count in bucket.base_doc.counts_by_bucket().items():
+            print doc_type, base_doc, count
+            deleted = base_doc.endswith('deleted')
+            if deleted:
+                doc_type += '-Deleted'
+            counts[doc_type] = count
+
+    return counts
 
 
 def get_primary_db_form_counts(domain):
