@@ -746,36 +746,35 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             }
         self.request.POST = form_data
 
-        if self.new_mobile_worker_form.is_valid() and self.custom_data.is_valid():
-
-            username = self.new_mobile_worker_form.cleaned_data['username']
-            password = self.new_mobile_worker_form.cleaned_data['password']
-            first_name = self.new_mobile_worker_form.cleaned_data['first_name']
-            last_name = self.new_mobile_worker_form.cleaned_data['last_name']
-            location_id = self.new_mobile_worker_form.cleaned_data['location_id']
-
-            couch_user = CommCareUser.create(
-                self.domain,
-                format_username(username, self.domain),
-                password,
-                device_id="Generated from HQ",
-                first_name=first_name,
-                last_name=last_name,
-                user_data=self.custom_data.get_data_to_save(),
-            )
-            if location_id:
-                couch_user.set_location(SQLLocation.objects.get(location_id=location_id))
-
+        if not self.new_mobile_worker_form.is_valid() or not self.custom_data.is_valid():
             return {
-                'success': True,
-                'editUrl': reverse(
-                    EditCommCareUserView.urlname,
-                    args=[self.domain, couch_user.userID]
-                )
+                'error': _("Forms did not validate"),
             }
 
+        username = self.new_mobile_worker_form.cleaned_data['username']
+        password = self.new_mobile_worker_form.cleaned_data['password']
+        first_name = self.new_mobile_worker_form.cleaned_data['first_name']
+        last_name = self.new_mobile_worker_form.cleaned_data['last_name']
+        location_id = self.new_mobile_worker_form.cleaned_data['location_id']
+
+        couch_user = CommCareUser.create(
+            self.domain,
+            format_username(username, self.domain),
+            password,
+            device_id="Generated from HQ",
+            first_name=first_name,
+            last_name=last_name,
+            user_data=self.custom_data.get_data_to_save(),
+        )
+        if location_id:
+            couch_user.set_location(SQLLocation.objects.get(location_id=location_id))
+
         return {
-            'error': _("Forms did not validate"),
+            'success': True,
+            'editUrl': reverse(
+                EditCommCareUserView.urlname,
+                args=[self.domain, couch_user.userID]
+            )
         }
 
     def _ensure_proper_request(self, in_data):
