@@ -200,13 +200,13 @@ class TestAdherenceRepeater(ENikshayRepeaterTestBase):
         self._create_99dots_enabled_case()
         self.assertEqual(0, len(self.repeat_records().all()))
 
-        self.create_adherence_cases([datetime(2017, 02, 17)])
+        self.create_adherence_cases([datetime(2017, 2, 17)])
         self.assertEqual(0, len(self.repeat_records().all()))
 
-        self.create_adherence_cases([datetime(2017, 02, 18)], adherence_source='enikshay')
+        self.create_adherence_cases([datetime(2017, 2, 18)], adherence_source='enikshay')
         self.assertEqual(1, len(self.repeat_records().all()))
 
-        self.create_adherence_cases([datetime(2017, 02, 20)], adherence_source='enikshay')
+        self.create_adherence_cases([datetime(2017, 2, 20)], adherence_source='enikshay')
         self.assertEqual(2, len(self.repeat_records().all()))
 
 
@@ -432,7 +432,7 @@ class TestAdherencePayloadGenerator(TestPayloadGeneratorBase):
 
     @run_with_all_backends
     def test_handle_failure(self):
-        date = datetime(2017, 02, 20)
+        date = datetime(2017, 2, 20)
         cases = self.create_case_structure()
         cases['adherence'] = self.create_adherence_cases([date])[0]
         adherence_id = cases['adherence'].case_id
