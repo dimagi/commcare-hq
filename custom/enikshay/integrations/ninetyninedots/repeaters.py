@@ -34,6 +34,15 @@ class Base99DOTSRepeater(CaseRepeater):
 
 
 class NinetyNineDotsRegisterPatientRepeater(Base99DOTSRepeater):
+    """Register a patient in 99DOTS
+    Case Type: Episode
+    Trigger: When episode.dots_99_enabled is true, but episode.dots_99_registered is false
+    Side Effects:
+        Success: episode.dots_99_registered = true, dots_99_error = ''
+        Error: dots_99_error = 'error message'
+    Endpoint: https://www.99dots.org/Dimagi99DOTSAPI/registerPatient
+
+    """
 
     friendly_name = _("99DOTS Patient Registration (episode case type)")
 
@@ -55,6 +64,15 @@ class NinetyNineDotsRegisterPatientRepeater(Base99DOTSRepeater):
 
 
 class NinetyNineDotsUpdatePatientRepeater(Base99DOTSRepeater):
+    """Update patient records a patient in 99DOTS
+    Case Type: Person
+    Trigger: When phone number changes
+    Side Effects:
+        Error: dots_99_error = 'error message'
+    Endpoint: https://www.99dots.org/Dimagi99DOTSAPI/updatePatient
+
+    """
+
     friendly_name = _("99DOTS Patient Update (person case type)")
 
     @classmethod
@@ -77,6 +95,15 @@ class NinetyNineDotsUpdatePatientRepeater(Base99DOTSRepeater):
 
 
 class NinetyNineDotsAdherenceRepeater(Base99DOTSRepeater):
+    """Send Adherence datapoints to 99DOTS
+    Case Type: Adherence
+    Trigger: When a new adherence datapoint is collected in eNikshay when a patient is enrolled in 99DOTS
+    Side Effects:
+        Success: adherence.dots_99_updated = true
+        Error: adherence.dots_99_updated = false, adherence.dots_99_error = 'error message'
+    Endpoint: https://www.99dots.org/Dimagi99DOTSAPI/updateAdherenceInformation
+
+    """
     friendly_name = _("99DOTS Update Adherence (adherence case type)")
 
     @classmethod
@@ -103,6 +130,15 @@ class NinetyNineDotsAdherenceRepeater(Base99DOTSRepeater):
 
 
 class NinetyNineDotsTreatmentOutcomeRepeater(Base99DOTSRepeater):
+    """Update treatment outcomes in 99DOTS
+    Case Type: Episode
+    Trigger: When a treatment outcome is collected for an episode that is registered in 99DOTS
+    Side Effects:
+        Success: episode.dots_99_treatment_outcome_updated = 'true'
+        Error: episode.dots_99_error = 'error message'
+    Endpoint: https://www.99dots.org/Dimagi99DOTSAPI/closeCase
+
+    """
     friendly_name = _("99DOTS Update Treatment Outcome (episode case type)")
 
     @classmethod
