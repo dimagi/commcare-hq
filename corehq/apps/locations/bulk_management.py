@@ -386,18 +386,19 @@ class NewLocationImporter(object):
     and saves the changes in a transaction.
     """
 
-    def __init__(self, domain, type_rows, location_rows):
+    def __init__(self, domain, type_rows, location_rows, excel_importer=None):
         self.domain = domain
         self.domain_obj = Domain.get_by_name(domain)
         self.type_rows = type_rows
         self.location_rows = location_rows
         self.result = LocationUploadResult()
         self.old_collection = LocationCollection(self.domain_obj)
+        self.excel_importer = excel_importer  # excel_importer is used for providing progress feedback
 
     @classmethod
     def from_excel_importer(cls, domain, excel_importer):
         type_rows, location_rows = LocationExcelValidator(excel_importer).validate_and_parse_stubs_from_excel()
-        return cls(domain, type_rows, location_rows)
+        return cls(domain, type_rows, location_rows, excel_importer)
 
     def run(self):
         tree_validator = LocationTreeValidator(self.type_rows, self.location_rows, self.old_collection)
@@ -419,7 +420,7 @@ class NewLocationImporter(object):
 
         with transaction.atomic():
             type_objects = save_types(type_stubs)
-            save_locations(location_stubs, type_objects)
+            save_locations(location_stubs, type_objects, self.excel_importer)
             # Since we updated LocationType objects in bulk, some of the post-save logic
             #   that occurs inside LocationType.save needs to be explicitly called here
             for lt in type_stubs:
@@ -806,12 +807,12 @@ def save_types(type_stubs):
     return all_objs_by_code
 
 
-def save_locations(location_stubs, types_by_code):
+def save_locations(location_stubs, types_by_code, excel_importer=None):
     """
-    args:
-        location_stubs (list): List of LocationStub objects with attributes like
-            'db_object', 'needs_save', 'do_delete' set
-        types_by_code (dict): Mapping of 'code' to LocationType SQL objects
+    :param location_stubs: (list) List of LocationStub objects with
+        attributes like 'db_object', 'needs_save', 'do_delete' set
+    :param types_by_code: (dict) Mapping of 'code' to LocationType SQL objects
+    :param excel_importer: Used for providing progress feedback. Disabled on None
 
     This recursively saves tree top to bottom. Note that the bulk updates are not possible
     as the mptt.Model (inherited by SQLLocation) doesn't support bulk creation
@@ -834,6 +835,8 @@ def save_locations(location_stubs, types_by_code):
         child_stubs = location_stubs_by_parent_code[parent_code]
 
         for child_stub in child_stubs:
+            if excel_importer:
+                excel_importer.add_progress()
             child = child_stub.db_object
             if child_stub.do_delete:
                 # keep track of to be deleted items to delete them in top-to-bottom order
