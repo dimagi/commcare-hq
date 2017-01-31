@@ -551,12 +551,12 @@ def validate_xform(domain, source):
     # normalize and strip comments
     source = ET.tostring(parse_xml(source))
     if FORMTRANSLATE_FORM_VALIDATION.enabled(domain):
+        validation_results = formtranslate.api.validate(source)
+    else:
         try:
             validation_results = nimbus_api.validate_form(source)
         except NimbusAPIException:
             raise XFormValidationFailed("Unable to validate form")
-    else:
-        validation_results = formtranslate.api.validate(source)
 
     if not validation_results.success:
         raise XFormValidationError(
