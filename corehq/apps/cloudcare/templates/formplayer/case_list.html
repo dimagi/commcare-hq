@@ -46,10 +46,12 @@
         </div>
       <% } %>
 
-      <% if (action) { %>
-        <div class="caselist-action-button">
-          <button type="button" class="btn btn-success btn-lg" id="double-management"><%= action.text %></button>
-        </div>
+      <% if (actions) { %>
+        <% _.each(actions, function(action, index) { %>
+            <div class="caselist-action-button">
+              <button type="button" class="btn btn-success btn-lg" id="double-management" index="<%= index %>"><%= action.text %></button>
+            </div>
+        <% }) %>
       <% } %>
 
       <% if (pageCount) { %>

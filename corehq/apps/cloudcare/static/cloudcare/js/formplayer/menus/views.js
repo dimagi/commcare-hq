@@ -208,6 +208,12 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
 
         templateHelpers: function () {
             var appId = Util.currentUrlToObject().appId;
+            var tempData = this.options.model.get('data');
+            for (var i =0; i < tempData.length; i++) {
+                if(this.options.styles[i] === "graph") {
+                    tempData[i] = tempData[i][1];
+                }
+            }
             return {
                 data: this.options.model.get('data'),
                 styles: this.options.styles,
@@ -252,8 +258,9 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
             'keypress': 'keyAction',
         },
 
-        caseListAction: function () {
-            FormplayerFrontend.trigger("menu:select", "action 0");
+        caseListAction: function (e) {
+            var index = e.currentTarget.getAttribute('index')
+            FormplayerFrontend.trigger("menu:select", "action " + index);
         },
 
         caseListSearch: function (e) {
@@ -278,7 +285,7 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
                 title: this.options.title,
                 headers: this.options.headers,
                 widthHints: this.options.widthHints,
-                action: this.options.action,
+                actions: this.options.actions,
                 currentPage: this.options.currentPage,
                 pageCount: this.options.pageCount,
                 styles: this.options.styles,
