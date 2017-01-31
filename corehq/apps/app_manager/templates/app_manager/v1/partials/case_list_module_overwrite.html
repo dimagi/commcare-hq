@@ -11,10 +11,8 @@
     {% with app|get_available_modules_for_case_list_configuration:module as available_modules %}
         {% if available_modules %}
             <label for="other_module_id">{% trans "Module" %}: </label>
-            <select name='source_module_id' class='form-control'>{% for other_mod in app.get_modules %}
-                {% if other_mod.id !=  module.id and other_mod.module_type != 'report' and other_mod.case_type == module.case_type %}
-                    <option value={{ other_mod.id }}>{{ other_mod.name|html_trans:langs }}</option>
-                {% endif %}
+            <select name='source_module_id' class='form-control'>{% for other_mod in available_modules %}
+                <option value={{ other_mod.id }}>{{ other_mod.name|html_trans:langs }}</option>
             {% endfor %}</select>
             <input name="detail_type" type="hidden" data-bind="value: columnKey" />
             <button class='btn btn-danger' type="submit">
