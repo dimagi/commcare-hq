@@ -74,7 +74,7 @@ def get_primary_db_form_ids(domain, doc_type):
     if should_use_sql_backend(domain):
         return get_sql_form_ids(domain, doc_type)
     else:
-        return get_doc_ids_in_domain_by_type(domain, doc_type, CommCareCase.get_db())
+        return set(get_doc_ids_in_domain_by_type(domain, doc_type, CommCareCase.get_db()))
 
 
 def get_primary_db_case_counts(domain):
@@ -88,7 +88,7 @@ def get_primary_db_case_ids(domain, doc_type):
     if should_use_sql_backend(domain):
         return get_sql_case_ids(domain, doc_type)
     else:
-        return get_doc_ids_in_domain_by_type(domain, doc_type, CommCareCase.get_db())
+        return set(get_doc_ids_in_domain_by_type(domain, doc_type, CommCareCase.get_db()))
 
 
 def _get_couch_forms_by_doc_type(domain):
