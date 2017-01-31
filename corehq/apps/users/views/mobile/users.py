@@ -734,29 +734,17 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
     @allow_remote_invocation
     def create_mobile_worker(self, in_data):
-        if not self.can_add_extra_users:
-            return {
-                'error': _("No Permission."),
-            }
-        try:
-            user_data = in_data['mobileWorker']
-        except KeyError:
-            return {
-                'error': _("Please provide mobile worker data."),
-            }
+        error = self._ensure_proper_request(in_data)
+        if error:
+            return error
 
         try:
-            form_data = {}
-            for k, v in user_data.get('customFields', {}).items():
-                form_data["{}-{}".format(CUSTOM_DATA_FIELD_PREFIX, k)] = v
-            for f in ['username', 'password', 'first_name', 'last_name', 'location_id']:
-                form_data[f] = user_data[f]
-            form_data['domain'] = self.domain
-            self.request.POST = form_data
+            form_data = self._construct_form_data(in_data)
         except Exception as e:
             return {
                 'error': _("Check your request: %s" % e)
             }
+        self.request.POST = form_data
 
         if self.new_mobile_worker_form.is_valid() and self.custom_data.is_valid():
 
@@ -789,6 +777,29 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         return {
             'error': _("Forms did not validate"),
         }
+
+    def _ensure_proper_request(self, in_data):
+        if not self.can_add_extra_users:
+            return {
+                'error': _("No Permission."),
+            }
+
+        if 'mobileWorker' not in in_data:
+            return {
+                'error': _("Please provide mobile worker data."),
+            }
+
+        return None
+
+    def _construct_form_data(self, in_data):
+        user_data = in_data['mobileWorker']
+        form_data = {}
+        for k, v in user_data.get('customFields', {}).items():
+            form_data[u"{}-{}".format(CUSTOM_DATA_FIELD_PREFIX, k)] = v
+        for f in ['username', 'password', 'first_name', 'last_name', 'location_id']:
+            form_data[f] = user_data[f]
+        form_data['domain'] = self.domain
+        return form_data
 
 
 class DeletedMobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
