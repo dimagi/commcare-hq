@@ -180,5 +180,17 @@ def get_es_user_ids(domain, doc_type):
         .remove_default_filters()
         .filter(es.users.domain(domain))
         .filter(es.filters.doc_type(doc_type))
+        .filter(_get_user_base_doc_filter(doc_type))
         .get_ids()
     )
+
+
+def _get_user_base_doc_filter(doc_type):
+    deleted = 'Deleted' in doc_type
+    if deleted:
+        doc_type = doc_type[:-1]
+
+    if doc_type == 'CommCareUser':
+        return {"term": {
+            "base_doc": "couchuser-deleted" if deleted else "couchuser"
+        }}
