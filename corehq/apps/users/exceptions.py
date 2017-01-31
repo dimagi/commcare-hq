@@ -7,3 +7,7 @@ class NoAccountException(Exception):
 
 class InvalidLocationConfig(Exception):
     pass
+
+
+class InvalidMobileWorkerRequest(Exception):
+    pass
