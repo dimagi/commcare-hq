@@ -491,16 +491,18 @@ class RepeatRecord(Document):
         ).one()
         return results['value'] if results else 0
 
-    def set_next_try(self, reason=None):
+    def set_next_try(self, reason=None, requeue=False):
         # we use an exponential back-off to avoid submitting to bad urls
         # too frequently.
         assert self.succeeded is False
         assert self.next_check is not None
         now = datetime.utcnow()
         window = timedelta(minutes=0)
-        if self.last_checked:
+        if self.last_checked and not requeue:
             window = self.next_check - self.last_checked
             window += (window // 2)  # window *= 1.5
+        else:
+            window = MIN_RETRY_WAIT
         if window < MIN_RETRY_WAIT:
             window = MIN_RETRY_WAIT
         elif window > MAX_RETRY_WAIT:
@@ -616,7 +618,7 @@ class RepeatRecord(Document):
         self.failure_reason = ''
         self.overall_tries = 0
         self.next_check = datetime.utcnow()
-        self.set_next_try()
+        self.set_next_try(requeue=True)
 
 
 # import signals
