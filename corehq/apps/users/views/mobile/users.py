@@ -750,6 +750,16 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 'error': _("Forms did not validate"),
             }
 
+        couch_user = self._build_commcare_user()
+        return {
+            'success': True,
+            'editUrl': reverse(
+                EditCommCareUserView.urlname,
+                args=[self.domain, couch_user.userID]
+            )
+        }
+
+    def _build_commcare_user(self):
         username = self.new_mobile_worker_form.cleaned_data['username']
         password = self.new_mobile_worker_form.cleaned_data['password']
         first_name = self.new_mobile_worker_form.cleaned_data['first_name']
@@ -767,14 +777,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         )
         if location_id:
             couch_user.set_location(SQLLocation.objects.get(location_id=location_id))
-
-        return {
-            'success': True,
-            'editUrl': reverse(
-                EditCommCareUserView.urlname,
-                args=[self.domain, couch_user.userID]
-            )
-        }
+        return couch_user
 
     def _ensure_proper_request(self, in_data):
         if not self.can_add_extra_users:
