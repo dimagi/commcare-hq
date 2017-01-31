@@ -112,6 +112,7 @@ class PillowCheckpointEventHandler(ChangeEventHandler):
         if self.should_update_checkpoint(context):
             updated_to = change['seq']
             self.checkpoint.update_to(updated_to)
+            self.last_update = datetime.utcnow()
 
 
 def get_default_django_checkpoint_for_legacy_pillow_class(pillow_class):
