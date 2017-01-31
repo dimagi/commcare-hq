@@ -1017,16 +1017,11 @@ LINKED_APPS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-NIMBUS_FORM_VALIDATION = PredictablyRandomToggle(
-    'nimbus_form_validation',
-    'Use Nimbus to validate XForms',
+FORMTRANSLATE_FORM_VALIDATION = StaticToggle(
+    'formtranslate_form_validation',
+    'Use formtranslate to validate XForms',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN],
-    randomness=1.0,
-    always_disabled=[
-        'icrc-almanach',
-        'mikolo'
-    ]
+    [NAMESPACE_DOMAIN]
 )
 
 USER_PROPERTY_EASY_REFS = StaticToggle(
