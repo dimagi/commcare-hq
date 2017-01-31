@@ -735,8 +735,16 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
     @allow_remote_invocation
     def create_mobile_worker(self, in_data):
+        fields = [
+            'username',
+            'password',
+            'first_name',
+            'last_name',
+            'location_id',
+        ]
 
         try:
+            self._ensure_proper_request(in_data, fields)
             form_data = self._construct_form_data(in_data)
         except InvalidMobileWorkerRequest as e:
             return {
@@ -788,15 +796,14 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
         return None
 
-    def _construct_form_data(self, in_data):
-        self._ensure_proper_request(in_data)
+    def _construct_form_data(self, in_data, fields):
 
         try:
             user_data = in_data['mobileWorker']
             form_data = {}
             for k, v in user_data.get('customFields', {}).items():
                 form_data[u"{}-{}".format(CUSTOM_DATA_FIELD_PREFIX, k)] = v
-            for f in ['username', 'password', 'first_name', 'last_name', 'location_id']:
+            for f in fields:
                 form_data[f] = user_data[f]
             form_data['domain'] = self.domain
             return form_data
