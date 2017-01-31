@@ -54,7 +54,6 @@ def get_es_user_counts_by_doc_type(domain):
     counts = Counter()
     for doc_type, bucket in doc_type_buckets.items():
         for base_doc, count in bucket.base_doc.counts_by_bucket().items():
-            print doc_type, base_doc, count
             deleted = base_doc.endswith('deleted')
             if deleted:
                 doc_type += '-Deleted'
