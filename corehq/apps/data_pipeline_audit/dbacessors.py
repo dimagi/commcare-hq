@@ -170,7 +170,7 @@ def _get_es_doc_ids(es_query_class, domain, doc_type):
         .filter(es.filters.OR(
             es.filters.doc_type(doc_type),
             es.filters.doc_type(doc_type.lower()),
-        )).get_ids()
+        )).exclude_source().scroll()
     )
 
 
