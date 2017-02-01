@@ -104,8 +104,48 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
                     "properties": [
                         "save_to_case_p1",
                         "save_to_case_p2"
-                    ]
+                    ],
                 }
             }
         }
         self._assert_properties(app.get_case_metadata(), {'name', 'save_to_case_p1', 'save_to_case_p2'})
+
+    def test_case_references_open_close(self):
+        app = Application.new_app('domain', 'New App')
+        app.version = 3
+        m0 = self._make_module(app, 0, 'household')
+        m0f1 = m0.new_form('save to case', 'en', attachment=self.get_xml('standard_questions'))
+        m0f1.case_references = {
+            'save': {
+                "/data/question1": {
+                    "case_type": "save_to_case",
+                }
+            }
+        }
+        meta_type = app.get_case_metadata().get_type('save_to_case')
+        self.assertEqual({}, meta_type.opened_by)
+        self.assertEqual({}, meta_type.closed_by)
+
+        m0f1.case_references = {
+            'save': {
+                "/data/question1": {
+                    "case_type": "save_to_case",
+                    "create": True
+                }
+            }
+        }
+        meta_type = app.get_case_metadata().get_type('save_to_case')
+        self.assertTrue(m0f1.unique_id in meta_type.opened_by)
+        self.assertEqual({}, meta_type.closed_by)
+
+        m0f1.case_references = {
+            'save': {
+                "/data/question1": {
+                    "case_type": "save_to_case",
+                    "close": True
+                }
+            }
+        }
+        meta_type = app.get_case_metadata().get_type('save_to_case')
+        self.assertEqual({}, meta_type.opened_by)
+        self.assertTrue(m0f1.unique_id in meta_type.closed_by)
