@@ -745,8 +745,26 @@ def form_casexml(request, domain, form_unique_id):
 
 
 def _get_case_references(data):
-    def is_valid(value):
+    def is_valid_property_list(value):
         return isinstance(value, list) and all(isinstance(v, unicode) for v in value)
+
+    def is_valid_save(save_block):
+        if save_block == {}:
+            # empty is valid
+            return True
+
+        return (
+            not (set(save_block) - {'case_type', 'properties'})  # only allowed properties
+            and is_valid_property_list(save_block.get('properties', []))  # properties must be valid
+        )
+
+    def is_valid_case_references(refs):
+        return (
+            not (set(refs) - {"load", "save"})
+            and all(is_valid_property_list(v) for v in refs["load"].values())
+            and all(is_valid_save(v) for v in refs.get('save', {}).values())
+        )
+
     if "references" in data:
         # old/deprecated format
         preload = json.loads(data['references'])["preload"]
@@ -755,6 +773,7 @@ def _get_case_references(data):
         }
     else:
         refs = json.loads(data.get('case_references', '{}'))
-    if set(refs) - {"load"} or not all(is_valid(v) for v in refs["load"].values()):
+
+    if not is_valid_case_references(refs):
         raise ValueError("bad case references data: {!r}".format(refs))
     return refs
