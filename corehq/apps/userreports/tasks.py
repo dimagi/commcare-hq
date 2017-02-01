@@ -40,7 +40,7 @@ def _build_indicators(config, document_store, relevant_ids, resume_helper):
 
 
 @task(queue=UCR_CELERY_QUEUE, ignore_result=True)
-def rebuild_indicators(indicator_config_id, initiated_by=None):
+def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1):
     config = _get_config_by_id(indicator_config_id)
     success = _('Your UCR table {} has finished rebuilding').format(config.table_id)
     failure = _('There was an error rebuilding Your UCR table {}.').format(config.table_id)
@@ -55,7 +55,7 @@ def rebuild_indicators(indicator_config_id, initiated_by=None):
             config.save()
 
         adapter.rebuild_table()
-        _iteratively_build_table(config)
+        _iteratively_build_table(config, limit=limit)
 
 
 @task(queue=UCR_CELERY_QUEUE, ignore_result=True)
@@ -94,13 +94,15 @@ def resume_building_indicators(indicator_config_id, initiated_by=None):
             _iteratively_build_table(config, last_id, resume_helper)
 
 
-def _iteratively_build_table(config, last_id=None, resume_helper=None):
+def _iteratively_build_table(config, last_id=None, resume_helper=None, limit=-1):
     resume_helper = resume_helper or DataSourceResumeHelper(config)
     indicator_config_id = config._id
 
     relevant_ids = []
     document_store = get_document_store(config.domain, config.referenced_doc_type)
-    for relevant_id in document_store.iter_document_ids(last_id):
+    for i, relevant_id in enumerate(document_store.iter_document_ids(last_id)):
+        if last_id is None and i >= limit > -1:
+            break
         relevant_ids.append(relevant_id)
         if len(relevant_ids) >= ID_CHUNK_SIZE:
             resume_helper.set_ids_to_resume_from(relevant_ids)
@@ -165,3 +167,9 @@ def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column, sort_o
 
     objects = experiment.run()
     return objects
+
+
+@task(queue=UCR_CELERY_QUEUE, ignore_result=True)
+def delete_data_source_task(domain, config_id):
+    from corehq.apps.userreports.views import delete_data_source_shared
+    delete_data_source_shared(domain, config_id)
