@@ -1,3 +1,4 @@
+import uuid
 from django.test.testcases import SimpleTestCase
 from mock import patch
 from nose.tools import nottest
@@ -38,6 +39,7 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
     @nottest
     def get_test_app(self):
         app = Application.new_app('domain', 'New App')
+        app._id = uuid.uuid4().hex
         app.version = 1
         m0 = self._make_module(app, 0, 'parent')
         m0.get_form(0).actions.subcases.append(OpenSubCaseAction(
@@ -78,9 +80,9 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
         return app, expected_hierarchy
 
     def test_case_properties(self):
-
         app = Application.new_app('domain', 'New App')
-        app.version = 2
+        app._id = uuid.uuid4().hex
+        app.version = 1
         m0 = self._make_module(app, 0, 'normal_module')
         m0f1 = m0.new_form('update case', 'en', attachment=self.get_xml('standard_questions'))
         self._assert_properties(app.get_case_metadata(), {'name'})
@@ -90,11 +92,13 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
            "p1": "/data/question1",
            "p2": "/data/question2"
         }
+        app.version = 2
         self._assert_properties(app.get_case_metadata(), {'name', 'p1', 'p2'})
 
     def test_case_references(self):
         app = Application.new_app('domain', 'New App')
-        app.version = 2
+        app._id = uuid.uuid4().hex
+        app.version = 1
         m0 = self._make_module(app, 0, 'household')
         m0f1 = m0.new_form('save to case', 'en', attachment=self.get_xml('standard_questions'))
         m0f1.case_references = {
@@ -112,7 +116,8 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
 
     def test_case_references_advanced(self):
         app = Application.new_app('domain', 'New App')
-        app.version = 2
+        app._id = uuid.uuid4().hex
+        app.version = 1
         m0 = app.add_module(AdvancedModule.new_module('Module3', lang='en'))
         m0.case_type = 'household_advanced'
         m0f1 = m0.new_form('save to case', 'en', attachment=self.get_xml('standard_questions'))
@@ -131,7 +136,8 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
 
     def test_case_references_open_close(self):
         app = Application.new_app('domain', 'New App')
-        app.version = 3
+        app._id = uuid.uuid4().hex
+        app.version = 1
         m0 = self._make_module(app, 0, 'household')
         m0f1 = m0.new_form('save to case', 'en', attachment=self.get_xml('standard_questions'))
         m0f1.case_references = {
@@ -153,6 +159,7 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
                 }
             }
         }
+        app.version = 2
         meta_type = app.get_case_metadata().get_type('save_to_case')
         self.assertTrue(m0f1.unique_id in meta_type.opened_by)
         self.assertEqual({}, meta_type.closed_by)
@@ -165,6 +172,7 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
                 }
             }
         }
+        app.version = 3
         meta_type = app.get_case_metadata().get_type('save_to_case')
         self.assertEqual({}, meta_type.opened_by)
         self.assertTrue(m0f1.unique_id in meta_type.closed_by)
