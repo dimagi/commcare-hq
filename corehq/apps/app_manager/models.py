@@ -818,6 +818,7 @@ class FormBase(DocumentSchema):
     form_links = SchemaListProperty(FormLink)
     schedule_form_id = StringProperty()
     custom_instances = SchemaListProperty(CustomInstance)
+    case_references_data = DictProperty()
 
     @classmethod
     def wrap(cls, data):
@@ -1323,7 +1324,6 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
     form_filter = StringProperty()
     requires = StringProperty(choices=["case", "referral", "none"], default="none")
     actions = SchemaProperty(FormActions)
-    case_references_data = DictProperty()
 
     @classmethod
     def wrap(cls, data):
