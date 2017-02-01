@@ -322,6 +322,7 @@ class ArrayIndexExpressionTest(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(ArrayIndexExpressionTest, cls).setUpClass()
         cls.expression_spec = {
             'type': 'array_index',
             'array_expression': {
