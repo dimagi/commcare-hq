@@ -120,11 +120,11 @@ def copy_form(request, domain, app_id, module_id, form_id):
     except BlankXFormError:
         # don't save!
         messages.error(request, _('We could not copy this form, because it is blank.'
-                              'In order to copy this form, please add some questions first.'))
+                                  'In order to copy this form, please add some questions first.'))
     except IncompatibleFormTypeException:
         # don't save!
         messages.error(request, _('This form could not be copied because it '
-                              'is not compatible with the selected module.'))
+                                  'is not compatible with the selected module.'))
     else:
         app.save()
 
@@ -336,7 +336,7 @@ def _edit_form_attr(request, domain, app_id, unique_form_id, attr):
 
     if should_edit('custom_instances'):
         instances = json.loads(request.POST.get('custom_instances'))
-        try:         # validate that custom instances can be added into the XML
+        try:  # validate that custom instances can be added into the XML
             for instance in instances:
                 etree.fromstring(
                     "<instance id='{}' src='{}' />".format(
