@@ -754,8 +754,10 @@ def _get_case_references(data):
             return True
 
         return (
-            not (set(save_block) - {'case_type', 'properties'})  # only allowed properties
+            not (set(save_block) - {'case_type', 'properties', 'create', 'close'})  # only allowed properties
             and is_valid_property_list(save_block.get('properties', []))  # properties must be valid
+            and isinstance(save_block.get('create', False), bool)  # bools must be bools
+            and isinstance(save_block.get('close', False), bool)
         )
 
     def is_valid_case_references(refs):
