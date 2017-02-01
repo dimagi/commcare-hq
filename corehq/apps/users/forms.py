@@ -644,6 +644,46 @@ class NewMobileWorkerForm(forms.Form):
         return self.cleaned_data.get('password')
 
 
+class NewAnonymousMobileWorkerForm(forms.Form):
+    location_id = forms.CharField(
+        label=ugettext_noop("Location"),
+        required=False,
+    )
+
+    def __init__(self, project, user, *args, **kwargs):
+        super(NewAnonymousMobileWorkerForm, self).__init__(*args, **kwargs)
+        self.project = project
+        self.user = user
+        self.can_access_all_locations = user.has_permission(self.project.name, 'access_all_locations')
+        if not self.can_access_all_locations:
+            self.fields['location_id'].required = True
+
+        if project.uses_locations:
+            self.fields['location_id'].widget = AngularLocationSelectWidget(
+                require=not self.can_access_all_locations)
+            location_field = crispy.Field(
+                'location_id',
+                ng_model='mobileWorker.location_id',
+            )
+        else:
+            location_field = crispy.Hidden(
+                'location_id',
+                '',
+                ng_model='mobileWorker.location_id',
+            )
+
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.label_class = 'col-sm-4'
+        self.helper.field_class = 'col-sm-8'
+        self.helper.layout = Layout(
+            Fieldset(
+                _('Basic Information'),
+                location_field,
+            )
+        )
+
+
 class MultipleSelectionForm(forms.Form):
     """
     Form for selecting groups (used by the group UI on the user page)
