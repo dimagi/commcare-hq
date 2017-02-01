@@ -23,6 +23,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import user_can_access_location_id
 from corehq.apps.users.models import CouchUser
+from corehq.apps.users.const import ANONYMOUS_USERNAME
 from corehq.apps.users.util import format_username, cc_user_domain
 from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.programs.models import Program
@@ -649,6 +650,11 @@ class NewAnonymousMobileWorkerForm(forms.Form):
         label=ugettext_noop("Location"),
         required=False,
     )
+    username = forms.CharField(
+        max_length=50,
+        label=ugettext_noop("Username"),
+        initial=ANONYMOUS_USERNAME,
+    )
 
     def __init__(self, project, user, *args, **kwargs):
         super(NewAnonymousMobileWorkerForm, self).__init__(*args, **kwargs)
@@ -679,6 +685,10 @@ class NewAnonymousMobileWorkerForm(forms.Form):
         self.helper.layout = Layout(
             Fieldset(
                 _('Basic Information'),
+                crispy.Field(
+                    'username',
+                    readonly=True,
+                ),
                 location_field,
             )
         )
