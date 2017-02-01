@@ -118,7 +118,7 @@ def requires_privilege_for_commcare_user(slug, **assignment):
         @wraps(fn)
         def wrapped(request, *args, **kwargs):
             if (hasattr(request, 'couch_user')
-                    and request.couch_user.is_web_user()):
+                    and request.couch_user.is_web_user()) or request.couch_user.is_anonymous:
                 return fn(request, *args, **kwargs)
             return requires_privilege_with_fallback(slug, **assignment)(fn)(
                 request, *args, **kwargs

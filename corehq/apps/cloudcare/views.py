@@ -291,7 +291,7 @@ class FormplayerMain(View):
             "language": language,
             "apps": apps,
             "maps_api_key": settings.GMAPS_API_KEY,
-            "username": request.user.username,
+            "username": request.couch_user.username,
             "formplayer_url": settings.FORMPLAYER_URL,
             "single_app_mode": False,
             "home_url": reverse(self.urlname, args=[domain]),
