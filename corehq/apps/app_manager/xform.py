@@ -2075,6 +2075,12 @@ VELLUM_TYPES = {
         'icon': 'icon-retweet',
         'icon_bs3': 'fa fa-retweet',
     },
+    "SaveToCase": {
+        'tag': 'save_to_case',
+        'icon': 'icon-save',
+        'icon_bs3': 'fa fa-save',
+    },
+
     "Secret": {
         'tag': 'secret',
         'type': ('xsd:string', None),
