@@ -5,6 +5,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         appRoutes: {
             "apps": "listApps", // list all apps available to this user
             "single_app/:id": "singleApp", // Show app in phone mode (SingleAppView)
+            "home/:id": "landingPageApp", // Show app in landing page mode (LandingPageAppView)
             "sessions": "listSessions", //list all this user's current sessions (incomplete forms)
             "sessions/:id": "getSession",
             "local/:path": "localInstall",
@@ -27,6 +28,10 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             FormplayerFrontend.regions.breadcrumb.empty();
             user.previewAppId = appId;
             FormplayerFrontend.Apps.Controller.singleApp(appId);
+        },
+        landingPageApp: function(appId) {
+            var user = FormplayerFrontend.request('currentUser');
+            FormplayerFrontend.Apps.Controller.landingPageApp(appId);
         },
         selectApp: function (appId) {
             FormplayerFrontend.Menus.Controller.selectMenu({
@@ -129,6 +134,11 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
     FormplayerFrontend.on('app:singleApp', function(appId) {
         FormplayerFrontend.navigate("/single_app/" + appId);
         API.singleApp(appId);
+    });
+
+    FormplayerFrontend.on('app:landingPageApp', function(appId) {
+        FormplayerFrontend.navigate("/home/" + appId);
+        API.landingPageApp(appId);
     });
 
     FormplayerFrontend.on("menu:select", function (index) {

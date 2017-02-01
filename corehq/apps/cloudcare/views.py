@@ -372,6 +372,21 @@ class PreviewAppView(TemplateView):
         })
 
 
+class SingleAppLandingPageView(TemplateView):
+    template_name = 'landing_page/base.html'
+    urlname = 'home'
+
+    @use_legacy_jquery
+    def get(self, request, *args, **kwargs):
+        app = get_app(request.domain, kwargs.pop('app_id'))
+        return self.render_to_response({
+            'app': app,
+            'formplayer_url': settings.FORMPLAYER_URL,
+            "maps_api_key": settings.GMAPS_API_KEY,
+            "environment": WEB_APPS_ENVIRONMENT,
+        })
+
+
 @login_and_domain_required
 @requires_privilege_for_commcare_user(privileges.CLOUDCARE)
 def form_context(request, domain, app_id, module_id, form_id):
