@@ -211,6 +211,20 @@
             );
         };
 
+        $scope.initializeAnonymousMobileWorker = function (mobileWoker) {
+            $scope.usernameAvailabilityStatus = USERNAME_STATUS.AVAILABLE;
+            console.log('available');
+            $scope.usernameStatusMessage = null;
+
+            $(".select2multiplechoicewidget").select2('data', null);
+            $scope.mobileWorker = new MobileWorker({
+                customFields: customFields,
+                generateStrongPasswords: false,
+            });
+            ga_track_event('Manage Mobile Workers', 'New Anonymous Mobile Worker', '');
+
+        }
+
         $scope.initializeMobileWorker = function (mobileWorker) {
             visualFormCtrl.usernameClear();
             $scope.usernameAvailabilityStatus = null;
@@ -234,6 +248,12 @@
 
         $scope.submitNewMobileWorker = function () {
             $("#newMobileWorkerModal").modal('hide');
+            $scope.workers.push($scope.mobileWorker);
+            workerCreationFactory.stageNewMobileWorker($scope.mobileWorker);
+        };
+
+        $scope.submitNewAnonymousMobileWorker = function () {
+            $("#newAnonymousMobileWorkerModal").modal('hide');
             $scope.workers.push($scope.mobileWorker);
             workerCreationFactory.stageNewMobileWorker($scope.mobileWorker);
         };
