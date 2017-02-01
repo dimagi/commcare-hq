@@ -378,7 +378,7 @@ class SingleAppLandingPageView(TemplateView):
 
     @use_legacy_jquery
     def get(self, request, *args, **kwargs):
-        app = get_app(request.domain, kwargs.pop('app_id'))
+        app = Application.wrap(get_latest_released_app_doc(request.domain, kwargs.pop('app_id')))
         return self.render_to_response({
             'app': app,
             'formplayer_url': settings.FORMPLAYER_URL,
