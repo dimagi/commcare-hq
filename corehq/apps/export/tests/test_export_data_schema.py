@@ -657,6 +657,49 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
         self.assertEqual(len(path_suffixes & set(CASE_ATTRIBUTES)), len(CASE_ATTRIBUTES))
 
 
+class TestAppCasePropertyReferences(TestCase, TestXmlMixin):
+    domain = 'case-references'
+    case_type = 'case_references_type'
+    root = os.path.join(os.path.dirname(__file__), 'data')
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestAppCasePropertyReferences, cls).setUpClass()
+        factory = AppFactory(domain=cls.domain)
+        m0 = factory.new_basic_module('save_to_case', cls.case_type, with_form=False)
+        m0f1 = m0.new_form('save to case', 'en', attachment=cls.get_xml('basic_form'))
+        m0f1.case_references = {
+            'save': {
+                "/data/question1": {
+                    "case_type": cls.case_type,
+                    "properties": [
+                        "save_to_case_p1",
+                        "save_to_case_p2"
+                    ],
+                }
+            }
+        }
+        cls.current_app = factory.app
+        cls.current_app.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.current_app.delete()
+        CaseExportDataSchema.get_latest_export_schema(cls.domain, cls.current_app._id, cls.case_type).delete()
+
+    def test(self):
+        schema = CaseExportDataSchema.generate_schema_from_builds(
+            self.domain,
+            self.current_app._id,
+            self.case_type,
+            only_process_current_builds=False
+        )
+        self.assertEqual(
+            {'save_to_case_p1', 'save_to_case_p2'},
+            {item.path[0].name for item in schema.group_schemas[0].items}
+        )
+
+
 class TestExportDataSchemaVersionControl(TestCase, TestXmlMixin):
 
     file_path = ['data']

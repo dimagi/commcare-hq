@@ -1104,6 +1104,18 @@ class FormBase(DocumentSchema):
     def is_case_list_form(self):
         return bool(self.case_list_modules)
 
+    def get_save_to_case_updates(self, case_type):
+        """
+        Get a flat list of case property names from save to case questions
+        """
+        updates = set()
+        if self.case_references_data and 'save' in self.case_references_data:
+            save_info = self.case_references_data['save'] or {}
+            for question_path, property_info in save_info.items():
+                if property_info.get('case_type', '') == case_type:
+                    updates |= set(property_info.get('properties', []))
+        return updates
+
 
 class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
 
