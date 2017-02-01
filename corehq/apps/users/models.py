@@ -1235,6 +1235,13 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         return cls.get_by_username(django_user.username)
 
     @classmethod
+    def from_django_user_include_anonymous(cls, domain, django_user):
+        if django_user.is_anonymous:
+            return cls.get_anonymous_mobile_worker(domain)
+        else:
+            return cls.get_by_username(django_user.username)
+
+    @classmethod
     def create(cls, domain, username, password, email=None, uuid='', date='',
                first_name='', last_name='', **kwargs):
         try:

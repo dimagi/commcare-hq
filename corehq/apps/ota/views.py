@@ -54,8 +54,8 @@ def restore(request, domain, app_id=None):
     We override restore because we have to supply our own
     user model (and have the domain in the url)
     """
-    user = request.user
-    couch_user = CouchUser.from_django_user(user)
+    couch_user = CouchUser.from_django_user_include_anonymous(domain, request.user)
+    assert couch_user is not None, 'No couch user to use for restore'
     response, _ = get_restore_response(domain, couch_user, app_id, **get_restore_params(request))
     return response
 
