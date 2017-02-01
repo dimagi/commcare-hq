@@ -687,7 +687,7 @@ class TestAppCasePropertyReferences(TestCase, TestXmlMixin):
         cls.current_app.delete()
         CaseExportDataSchema.get_latest_export_schema(cls.domain, cls.current_app._id, cls.case_type).delete()
 
-    def test(self):
+    def testCaseReferencesMakeItToCaseSchema(self):
         schema = CaseExportDataSchema.generate_schema_from_builds(
             self.domain,
             self.current_app._id,
