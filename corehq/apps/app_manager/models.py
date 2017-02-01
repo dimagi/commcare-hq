@@ -1132,10 +1132,16 @@ class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
                 "comment": None,
                 "hashtagValue": path,
             })
+        def _make_dummy_condition():
+            # todo: eventually would be nice to support proper relevancy conditions here but that's a ways off
+            return FormActionCondition(type='always')
+
         if self.case_references_data and 'save' in self.case_references_data:
             save_info = self.case_references_data['save'] or {}
             for question_path, property_info in save_info.items():
                 if property_info.get('case_type', ''):
+                    case_type = property_info['case_type']
+                    type_meta = app_case_meta.get_type(case_type)
                     for property_name in property_info.get('properties', []):
                         app_case_meta.add_property_save(
                             property_info['case_type'],
@@ -1144,6 +1150,10 @@ class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
                             _make_save_to_case_question(question_path),
                             None
                         )
+                    if property_info.get('create', False):
+                        type_meta.add_opener(self.unique_id, _make_dummy_condition())
+                    if property_info.get('close', False):
+                        type_meta.add_closer(self.unique_id, _make_dummy_condition())
 
     def check_case_properties(self, all_names=None, subcase_names=None, case_tag=None):
         all_names = all_names or []
