@@ -838,6 +838,14 @@ class FormBase(DocumentSchema):
         else:
             return super(FormBase, cls).wrap(data)
 
+    @property
+    def case_references(self):
+        return self.case_references_data or {}
+
+    @case_references.setter
+    def case_references(self, case_references):
+        self.case_references_data = case_references
+
     @classmethod
     def get_form(cls, form_unique_id, and_app=False):
         try:
@@ -2774,14 +2782,6 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             scheduler_updates = set()
 
         return updates.union(scheduler_updates)
-
-    @property
-    def case_references(self):
-        return {}
-
-    @case_references.setter
-    def case_references(self, refs):
-        pass
 
     @memoized
     def get_parent_types_and_contributed_properties(self, module_case_type, case_type):
