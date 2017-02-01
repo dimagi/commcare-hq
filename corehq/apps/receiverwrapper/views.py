@@ -7,7 +7,7 @@ from django.http import (
 )
 from casexml.apps.case.xform import get_case_updates, is_device_report
 from corehq.apps.domain.decorators import (
-    check_domain_migration, login_or_digest_ex, login_or_basic_ex
+    check_domain_migration, login_or_digest_ex, login_or_basic_ex, login_or_token_ex,
 )
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.receiverwrapper.auth import (
@@ -227,6 +227,19 @@ def _secure_post_basic(request, domain, app_id=None):
     )
 
 
+@handle_401_response
+@login_or_token_ex(allow_cc_users=True)
+def _secure_post_token(request, domain, app_id=None):
+    """only ever called from secure post"""
+    return _process_form(
+        request=request,
+        domain=domain,
+        app_id=app_id,
+        user_id=request.couch_user.get_id,
+        authenticated=True,
+    )
+
+
 @location_safe
 @csrf_exempt
 @require_POST
@@ -236,6 +249,7 @@ def secure_post(request, domain, app_id=None):
         'digest': _secure_post_digest,
         'basic': _secure_post_basic,
         'noauth': _noauth_post,
+        'token': _secure_post_token,
     }
 
     try:

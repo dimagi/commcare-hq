@@ -19,8 +19,8 @@ from django.utils.translation import ugettext as _
 # External imports
 from django_digest.decorators import httpdigest
 from corehq.apps.domain.auth import (
-    determine_authtype_from_request, basicauth,
-    BASIC, DIGEST, API_KEY
+    determine_authtype_from_request, basicauth, tokenauth,
+    BASIC, DIGEST, API_KEY, TOKEN
 )
 from python_digest import parse_digest_credentials
 
@@ -200,6 +200,10 @@ def login_or_basic_ex(allow_cc_users=False, allow_sessions=True):
     return _login_or_challenge(basicauth(), allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
 
 
+def login_or_token_ex(allow_cc_users=False, allow_sessions=True):
+    return _login_or_challenge(tokenauth, allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
+
+
 def login_or_digest_or_basic_or_apikey(default=BASIC):
     def decorator(fn):
         @wraps(fn)
@@ -216,14 +220,15 @@ def login_or_digest_or_basic_or_apikey(default=BASIC):
     return decorator
 
 
-def login_or_digest_or_basic_or_apikey_or_anonymous(default=BASIC):
+def login_or_digest_or_basic_or_apikey_or_token(default=BASIC):
     def decorator(fn):
         @wraps(fn)
         def _inner(request, *args, **kwargs):
             function_wrapper = {
                 BASIC: login_or_basic_ex(allow_cc_users=True),
                 DIGEST: login_or_digest_ex(allow_cc_users=True),
-                API_KEY: login_or_api_key_ex(allow_cc_users=True)
+                API_KEY: login_or_api_key_ex(allow_cc_users=True),
+                TOKEN: login_or_token_ex(allow_cc_users=True),
             }[determine_authtype_from_request(request, default=default)]
             if not function_wrapper:
                 return HttpResponseForbidden()

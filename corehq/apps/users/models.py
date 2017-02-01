@@ -5,6 +5,7 @@ import logging
 import re
 
 from restkit.errors import NoMoreData
+from rest_framework.authtoken.models import Token
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models
@@ -28,7 +29,7 @@ from dimagi.utils.couch.database import get_safe_write_kwargs, iter_docs
 from dimagi.utils.logging import notify_exception
 
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.make_uuid import random_hex, make_uuid
+from dimagi.utils.make_uuid import random_hex
 from dimagi.utils.modules import to_function
 from corehq.util.quickcache import skippable_quickcache, quickcache
 from casexml.apps.case.mock import CaseBlock
@@ -2035,11 +2036,21 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
 
 class AnonymousCommCareUser(CommCareUser):
-    anonymous_token = StringProperty(default=make_uuid)
-
     @property
     def is_anonymous(self):
         return True
+
+    @classmethod
+    def create(cls, domain, username, password, **kwargs):
+        anonymous_user = super(AnonymousCommCareUser, cls).create(
+            domain,
+            username,
+            password,
+            **kwargs
+        )
+        django_user = anonymous_user.get_django_user()
+        Token.objects.create(user=django_user)
+        return anonymous_user
 
 
 class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
