@@ -1117,17 +1117,32 @@ class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
         return self._parent.case_type
 
     def _add_save_to_case_questions(self, form_questions, app_case_meta):
+        def _make_save_to_case_question(path):
+            from corehq.apps.reports.formdetails.readable import FormQuestionResponse
+            # todo: this is a hack - just make an approximate save-to-case looking question
+            return FormQuestionResponse.wrap({
+                "label": path,
+                "tag": path,
+                "value": path,
+                "repeat": None,
+                "group": None,
+                "type": 'SaveToCase',
+                "relevant": None,
+                "required": None,
+                "comment": None,
+                "hashtagValue": path,
+            })
         if self.case_references_data and 'save' in self.case_references_data:
             save_info = self.case_references_data['save'] or {}
             for question_path, property_info in save_info.items():
                 if property_info.get('case_type', ''):
                     for property_name in property_info.get('properties', []):
-                        self.add_property_save(
-                            app_case_meta,
+                        app_case_meta.add_property_save(
                             property_info['case_type'],
                             property_name,
-                            form_questions,
-                            question_path,
+                            self.unique_id,
+                            _make_save_to_case_question(question_path),
+                            None
                         )
 
     def check_case_properties(self, all_names=None, subcase_names=None, case_tag=None):
