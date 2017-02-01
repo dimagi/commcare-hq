@@ -204,6 +204,26 @@ def login_or_digest_or_basic_or_apikey(default=BASIC):
     return decorator
 
 
+def login_or_digest_or_basic_or_apikey_or_anonymous(default=BASIC):
+    def decorator(fn):
+        @wraps(fn)
+        def _inner(request, *args, **kwargs):
+            function_wrapper = {
+                BASIC: login_or_basic_ex(allow_cc_users=True),
+                DIGEST: login_or_digest_ex(allow_cc_users=True),
+                API_KEY: login_or_api_key_ex(allow_cc_users=True)
+            }[determine_authtype_from_request(request, default=default)]
+            if not function_wrapper:
+                return HttpResponseForbidden()
+            return_value = function_wrapper(fn)(request, *args, **kwargs)
+            if return_value.status_code == 401:
+                print 'anony'
+                return login_anonymous_mobile_worker(fn)(request, *args, **kwargs)
+            return return_value
+        return _inner
+    return decorator
+
+
 def login_or_api_key_ex(allow_cc_users=False, allow_sessions=True):
     return _login_or_challenge(
         api_key(),
@@ -211,6 +231,19 @@ def login_or_api_key_ex(allow_cc_users=False, allow_sessions=True):
         api_key=True,
         allow_sessions=allow_sessions
     )
+
+
+def login_anonymous_mobile_worker(fn):
+    @wraps(fn)
+    def safe_fn(request, domain, *args, **kwargs):
+        domain_name, domain_obj = load_domain(request, domain)
+        if domain_obj:
+            if domain_obj.get_anonymous_mobile_worker() is None:
+                return HttpResponseForbidden()
+            return fn(request, domain, *args, **kwargs)
+        else:
+            return HttpResponseForbidden()
+    return safe_fn
 
 
 def login_or_digest_ex(allow_cc_users=False, allow_sessions=True):

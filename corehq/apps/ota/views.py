@@ -19,7 +19,10 @@ from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.case_search.models import CaseSearchConfig, merge_queries, CaseSearchQueryAddition, \
     SEARCH_QUERY_ADDITION_KEY, QueryMergeException
 from corehq.apps.domain.decorators import (
-    domain_admin_required, login_or_digest_or_basic_or_apikey, check_domain_migration
+    domain_admin_required,
+    login_or_digest_or_basic_or_apikey,
+    check_domain_migration,
+    login_or_digest_or_basic_or_apikey_or_anonymous,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin, EditMyProjectSettingsView
@@ -44,7 +47,7 @@ from .utils import demo_user_restore_response, get_restore_user, is_permitted_to
 @location_safe
 @json_error
 @handle_401_response
-@login_or_digest_or_basic_or_apikey()
+@login_or_digest_or_basic_or_apikey_or_anonymous()
 @check_domain_migration
 def restore(request, domain, app_id=None):
     """
