@@ -838,7 +838,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     @property
     def raw_username(self):
-        if self.doc_type == "CommCareUser":
+        if self.doc_type in ["CommCareUser", "AnonymousCommCareUser"]:
             return self.username.split("@")[0]
         else:
             return self.username

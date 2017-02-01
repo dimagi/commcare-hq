@@ -86,7 +86,10 @@ def web_users():
 
 
 def mobile_users():
-    return filters.doc_type("CommCareUser")
+    return filters.OR(
+        filters.doc_type("CommCareUser"),
+        filters.doc_type("AnonymousCommCareUser"),
+    )
 
 
 def unknown_users():

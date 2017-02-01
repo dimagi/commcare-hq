@@ -613,6 +613,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
     @property
     def page_context(self):
         return {
+            'has_anonymous_user': CouchUser.get_anonymous_mobile_worker(self.domain) is not None,
             'new_mobile_worker_form': self.new_mobile_worker_form,
             'new_anonymous_mobile_worker_form': self.new_anonymous_mobile_worker_form,
             'custom_fields_form': self.custom_data.form,
@@ -634,7 +635,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         return self.request.GET.get('query')
 
     def _format_user(self, user_json):
-        user = CommCareUser.wrap(user_json)
+        user = CouchUser.wrap_correctly(user_json)
         user_data = {}
         for field in self.custom_data.fields:
             user_data[field.slug] = user.user_data.get(field.slug, '')
@@ -652,6 +653,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             'deactivateUrl': "#",
             'actionText': _("Deactivate") if user.is_active else _("Activate"),
             'action': 'deactivate' if user.is_active else 'activate',
+            'is_anonymous': user.is_anonymous
         }
 
     def _user_query(self, search_string, page, limit):

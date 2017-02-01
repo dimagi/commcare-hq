@@ -43,7 +43,7 @@ def update_unknown_user_from_form_if_necessary(es, doc_dict):
 
 def transform_user_for_elasticsearch(doc_dict):
     doc = copy.deepcopy(doc_dict)
-    if doc['doc_type'] == 'CommCareUser' and '@' in doc['username']:
+    if doc['doc_type'] in ['CommCareUser', 'AnonymousCommCareUser'] and '@' in doc['username']:
         doc['base_username'] = doc['username'].split("@")[0]
     else:
         doc['base_username'] = doc['username']
