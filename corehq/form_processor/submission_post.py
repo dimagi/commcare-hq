@@ -139,36 +139,39 @@ class SubmissionPost(object):
 
         cases = []
         with result.get_locked_forms() as xforms:
-            instance = xforms[0]
-            if instance.xmlns == DEVICE_LOG_XMLNS:
-                try:
-                    process_device_log(self.domain, instance)
-                except Exception:
-                    notify_exception(None, "Error processing device log", details={
-                        'xml': self.instance,
-                        'domain': self.domain
-                    })
-                    raise
+            from casexml.apps.case.xform import get_and_check_xform_domain
+            domain = get_and_check_xform_domain(xforms[0])
+            with self.interface.casedb_cache(domain=domain, lock=True, deleted_ok=True, xforms=xforms) as case_db:
+                instance = xforms[0]
+                if instance.xmlns == DEVICE_LOG_XMLNS:
+                    try:
+                        process_device_log(self.domain, instance)
+                    except Exception:
+                        notify_exception(None, "Error processing device log", details={
+                            'xml': self.instance,
+                            'domain': self.domain
+                        })
+                        raise
 
-            elif instance.is_duplicate:
-                self.interface.save_processed_models([instance])
-            elif not instance.is_error:
-                try:
-                    case_stock_result = self.process_xforms_for_cases(xforms)
-                except (IllegalCaseId, UsesReferrals, MissingProductId,
-                        PhoneDateValueError, InvalidCaseIndex) as e:
-                    self._handle_known_error(e, instance, xforms)
-                except Exception as e:
-                    # handle / log the error and reraise so the phone knows to resubmit
-                    # note that in the case of edit submissions this won't flag the previous
-                    # submission as having been edited. this is intentional, since we should treat
-                    # this use case as if the edit "failed"
-                    handle_unexpected_error(self.interface, instance, e)
-                    raise
-                else:
-                    instance.initial_processing_complete = True
-                    self.save_processed_models(xforms, case_stock_result)
-                    cases = case_stock_result.case_models
+                elif instance.is_duplicate:
+                    self.interface.save_processed_models([instance])
+                elif not instance.is_error:
+                    try:
+                        case_stock_result = self.process_xforms_for_cases(xforms, case_db)
+                    except (IllegalCaseId, UsesReferrals, MissingProductId,
+                            PhoneDateValueError, InvalidCaseIndex) as e:
+                        self._handle_known_error(e, instance, xforms)
+                    except Exception as e:
+                        # handle / log the error and reraise so the phone knows to resubmit
+                        # note that in the case of edit submissions this won't flag the previous
+                        # submission as having been edited. this is intentional, since we should treat
+                        # this use case as if the edit "failed"
+                        handle_unexpected_error(self.interface, instance, e)
+                        raise
+                    else:
+                        instance.initial_processing_complete = True
+                        self.save_processed_models(xforms, case_stock_result)
+                        cases = case_stock_result.case_models
 
             errors = self.process_signals(instance)
             response = self._get_open_rosa_response(instance, errors)
@@ -220,20 +223,17 @@ class SubmissionPost(object):
 
         case_stock_result.case_result.close_extensions()
 
-    def process_xforms_for_cases(self, xforms):
-        from casexml.apps.case.xform import get_and_check_xform_domain
+    def process_xforms_for_cases(self, xforms, case_db):
         from casexml.apps.case.xform import process_cases_with_casedb
         from corehq.apps.commtrack.processing import process_stock
 
         instance = xforms[0]
 
-        domain = get_and_check_xform_domain(instance)
-        with self.interface.casedb_cache(domain=domain, lock=True, deleted_ok=True, xforms=xforms) as case_db:
-            case_result = process_cases_with_casedb(xforms, case_db)
-            stock_result = process_stock(xforms, case_db)
+        case_result = process_cases_with_casedb(xforms, case_db)
+        stock_result = process_stock(xforms, case_db)
 
-            cases = case_db.get_cases_for_saving(instance.received_on)
-            stock_result.populate_models()
+        cases = case_db.get_cases_for_saving(instance.received_on)
+        stock_result.populate_models()
 
         return CaseStockProcessingResult(
             case_result=case_result,
