@@ -780,7 +780,6 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         if form_data.get('is_anonymous'):
             couch_user = self._build_anonymous_commcare_user()
         else:
-            raise 'mama'
             couch_user = self._build_commcare_user()
 
         return {
