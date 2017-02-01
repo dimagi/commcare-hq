@@ -60,6 +60,7 @@ branches:
   - np/phonenumbers # NP 1/18
   - np/billing/report-builder-plans # NP 1/24
   - es/scope-location-filter  # ES 1/24
+  - dm/julies-billing-gid  # daniel 2/1
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
