@@ -26,6 +26,10 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
         mf.actions.open_case.condition.type = 'always'
         return m
 
+    def _assert_properties(self, meta, property_set):
+        self.assertEqual(1, len(meta.case_types))
+        self.assertEqual(set(p.name for p in meta.case_types[0].properties), property_set)
+
     def test_hierarchy(self):
         app, expected_hierarchy = self.get_test_app()
         meta = app.get_case_metadata()
@@ -74,19 +78,34 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
         return app, expected_hierarchy
 
     def test_case_properties(self):
-        def _assert_properties(meta, property_set):
-            self.assertEqual(1, len(meta.case_types))
-            self.assertEqual(set(p.name for p in meta.case_types[0].properties), property_set)
 
         app = Application.new_app('domain', 'New App')
         app.version = 2
         m0 = self._make_module(app, 0, 'normal_module')
         m0f1 = m0.new_form('update case', 'en', attachment=self.get_xml('standard_questions'))
-        _assert_properties(app.get_case_metadata(), {'name'})
+        self._assert_properties(app.get_case_metadata(), {'name'})
 
         m0f1.actions.update_case.condition.type = 'always'
         m0f1.actions.update_case.update = {
            "p1": "/data/question1",
            "p2": "/data/question2"
         }
-        _assert_properties(app.get_case_metadata(), {'name', 'p1', 'p2'})
+        self._assert_properties(app.get_case_metadata(), {'name', 'p1', 'p2'})
+
+    def test_case_references(self):
+        app = Application.new_app('domain', 'New App')
+        app.version = 2
+        m0 = self._make_module(app, 0, 'normal_module')
+        m0f1 = m0.new_form('save to case', 'en', attachment=self.get_xml('standard_questions'))
+        m0f1.case_references = {
+            'save': {
+                "/data/question1": {
+                    "case_type": "parent",
+                    "properties": [
+                        "save_to_case_p1",
+                        "save_to_case_p2"
+                    ]
+                }
+            }
+        }
+        self._assert_properties(app.get_case_metadata(), {'name', 'p1', 'p2'})
