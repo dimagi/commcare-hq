@@ -150,7 +150,7 @@ class EditCommCareUserView(BaseEditUserView):
     @memoized
     def editable_user(self):
         try:
-            user = CommCareUser.get_by_user_id(self.editable_user_id, self.domain)
+            user = CouchUser.get_by_user_id(self.editable_user_id, self.domain)
         except (ResourceNotFound, CouchUser.AccountTypeError, KeyError):
             raise Http404()
         if not user or not _can_edit_workers_location(self.couch_user, user):
