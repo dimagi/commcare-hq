@@ -1116,6 +1116,20 @@ class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
     def get_case_type(self):
         return self._parent.case_type
 
+    def _add_save_to_case_questions(self, form_questions, app_case_meta):
+        if self.case_references_data and 'save' in self.case_references_data:
+            save_info = self.case_references_data['save'] or {}
+            for question_path, property_info in save_info.items():
+                if property_info.get('case_type', ''):
+                    for property_name in property_info.get('properties', []):
+                        self.add_property_save(
+                            app_case_meta,
+                            property_info['case_type'],
+                            property_name,
+                            form_questions,
+                            question_path,
+                        )
+
     def check_case_properties(self, all_names=None, subcase_names=None, case_tag=None):
         all_names = all_names or []
         subcase_names = subcase_names or []
@@ -1587,6 +1601,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
             for q in self.get_questions(self.get_app().langs, include_triggers=True,
                 include_groups=True, include_translations=True)
         }
+        self._add_save_to_case_questions(questions, app_case_meta)
         module_case_type = self.get_module().case_type
         type_meta = app_case_meta.get_type(module_case_type)
         for type_, action in self.active_actions().items():
@@ -2468,6 +2483,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
     def grid_display_style(self):
         return self.display_style == 'grid'
 
+
 class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
     form_type = 'advanced_form'
     form_filter = StringProperty()
@@ -2752,6 +2768,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             q['value']: FormQuestionResponse(q)
             for q in self.get_questions(self.get_app().langs, include_translations=True)
         }
+        self._add_save_to_case_questions(questions, app_case_meta)
         for action in self.actions.load_update_cases:
             for name, question_path in action.case_properties.items():
                 self.add_property_save(
