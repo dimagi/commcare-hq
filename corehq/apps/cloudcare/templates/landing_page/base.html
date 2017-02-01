@@ -54,8 +54,8 @@
     window.GMAPS_API_KEY = '{{ maps_api_key|safe }}'; // maps api is loaded on-demand
     var options = {
         apps: [{{ app|JSON }}],
-        language: "{{ request.user.language|default:'en' }}",
-        username: "{{ request.user.username  }}",
+        language: "{{ request.couch_user.language|default:'en' }}",
+        username: "{{ request.couch_user.username  }}",
         domain: "{{ request.domain }}",
         formplayer_url: "{{ formplayer_url }}",
         landingPageAppMode: true,
