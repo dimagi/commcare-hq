@@ -655,6 +655,10 @@ class NewAnonymousMobileWorkerForm(forms.Form):
         label=ugettext_noop("Username"),
         initial=ANONYMOUS_USERNAME,
     )
+    password = forms.CharField(
+        required=True,
+        min_length=1,
+    )
 
     def __init__(self, project, user, *args, **kwargs):
         super(NewAnonymousMobileWorkerForm, self).__init__(*args, **kwargs)
@@ -690,6 +694,7 @@ class NewAnonymousMobileWorkerForm(forms.Form):
                     readonly=True,
                 ),
                 location_field,
+                crispy.Hidden('is_anonymous', 'yes'),
             )
         )
 

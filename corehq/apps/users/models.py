@@ -831,6 +831,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         return self.username.endswith('@dimagi.com')
 
     @property
+    def is_anonymous(self):
+        return False
+
+    @property
     def raw_username(self):
         if self.doc_type == "CommCareUser":
             return self.username.split("@")[0]
@@ -1147,6 +1151,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             'WebUser': WebUser,
             'CommCareUser': CommCareUser,
             'FakeUser': FakeUser,
+            'AnonymousCommCareUser': AnonymousCommCareUser
         }[doc_type].wrap(source)
 
     @classmethod
@@ -2013,6 +2018,13 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 device_id=device_id,
                 last_used=when
             ))
+
+
+class AnonymousCommCareUser(CommCareUser):
+
+    @property
+    def is_anonymous(self):
+        return True
 
 
 class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
