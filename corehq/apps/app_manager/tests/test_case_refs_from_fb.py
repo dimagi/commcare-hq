@@ -78,7 +78,7 @@ class AdvancedFormCaseReferenceTest(SimpleTestCase):
             })
         }
         self.form.case_references = _get_case_references(post_data)
-        self.assertEqual(self.form.case_references, {})
+        self.assertEqual(self.form.case_references, {"load": {"/data/question": ["name"]}})
         self.assertFalse(hasattr(self.form.actions, "load_from_form"))
 
     def test_two_references(self):
@@ -90,5 +90,5 @@ class AdvancedFormCaseReferenceTest(SimpleTestCase):
         }
         post_data = {"case_references": json.dumps(refs)}
         self.form.case_references = _get_case_references(post_data)
-        self.assertEqual(self.form.case_references, {})
+        self.assertEqual(self.form.case_references, refs)
         self.assertFalse(hasattr(self.form.actions, "load_from_form"))
