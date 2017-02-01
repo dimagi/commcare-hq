@@ -110,6 +110,25 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
         }
         self._assert_properties(app.get_case_metadata(), {'name', 'save_to_case_p1', 'save_to_case_p2'})
 
+    def test_case_references_advanced(self):
+        app = Application.new_app('domain', 'New App')
+        app.version = 2
+        m0 = app.add_module(AdvancedModule.new_module('Module3', lang='en'))
+        m0.case_type = 'household_advanced'
+        m0f1 = m0.new_form('save to case', 'en', attachment=self.get_xml('standard_questions'))
+        m0f1.case_references_data = {
+            'save': {
+                "/data/question1": {
+                    "case_type": "household_advanced",
+                    "properties": [
+                        "save_to_case_p1",
+                        "save_to_case_p2"
+                    ],
+                }
+            }
+        }
+        self._assert_properties(app.get_case_metadata(), {'save_to_case_p1', 'save_to_case_p2'})
+
     def test_case_references_open_close(self):
         app = Application.new_app('domain', 'New App')
         app.version = 3
