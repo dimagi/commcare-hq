@@ -14,6 +14,8 @@ from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.users.landing_pages import ALLOWED_LANDING_PAGES
 from corehq.apps.users.permissions import EXPORT_PERMISSIONS
+from corehq.apps.users.util import format_username
+from corehq.apps.users.const import ANONYMOUS_USERNAME
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.soft_assert import soft_assert
@@ -1180,6 +1182,11 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         else:
             return None
 
+    @classmethod
+    def get_anonymous_mobile_worker(cls, domain):
+        return cls.get_by_username(
+            format_username(ANONYMOUS_USERNAME, domain)
+        )
 
     def clear_quickcache_for_user(self):
         from corehq.apps.hqwebapp.templatetags.hq_shared_tags import _get_domain_list
