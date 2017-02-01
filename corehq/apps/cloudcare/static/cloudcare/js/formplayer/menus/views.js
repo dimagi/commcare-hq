@@ -208,12 +208,6 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
 
         templateHelpers: function () {
             var appId = Util.currentUrlToObject().appId;
-            var tempData = this.options.model.get('data');
-            for (var i =0; i < tempData.length; i++) {
-                if(this.options.styles[i] === "graph") {
-                    tempData[i] = tempData[i][1];
-                }
-            }
             return {
                 data: this.options.model.get('data'),
                 styles: this.options.styles,
@@ -259,7 +253,7 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
         },
 
         caseListAction: function (e) {
-            var index = e.currentTarget.getAttribute('index')
+            var index = $(e.currentTarget).data().index;
             FormplayerFrontend.trigger("menu:select", "action " + index);
         },
 
