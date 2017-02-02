@@ -3,6 +3,7 @@
 {% load hqstyle_tags %}
 {% load i18n %}
 {% load url_extras %}
+{% load compress %}
 
 {% block title %}{% trans "CommCare Exchange" %}{% endblock %}
 
@@ -168,8 +169,14 @@
     </style>
 {% endblock %}
 
+{% block js %}{{ block.super }}
+    {% compress js %}
+        <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
+        <script src="{% static 'appstore/js/facet_sidebar.js' %}"></script>
+    {% endcompress %}
+{% endblock %}
+
 {% block js-inline %}{{ block.super }}
-    <script src="{% static 'appstore/js/facet_sidebar.js' %}"></script>
     <script>
         // This assures that all the result elements are the same height
         function assure_correct_spacing() {
@@ -187,9 +194,10 @@
         $(window).resize(assure_correct_spacing);
     </script>
     <script>
-        {% for app in apps %}
-            gaTrackLink($('#view_button_{{ app.get_id }}'), 'Exchange', 'View button', '{{ app.get_id }}');
-        {% endfor %}
+        var app_ids = hqImport('hqwebapp/js/initial_page_data.js').get('app_ids');
+        _.each(app_ids, function(id) {
+            gaTrackLink($('#view_button_' + id), 'Exchange', 'View button', id);
+        });
     </script>
 {% endblock %}
 
@@ -225,6 +233,7 @@
 {% endblock %}
 
 {% block page_content %}
+{% initial_page_data 'app_ids' app_ids %}
 
 <h1>
     {% block store-header %}

@@ -2,6 +2,7 @@
 {% load hq_shared_tags %}
 {% load hqstyle_tags %}
 {% load i18n %}
+{% load compress %}
 
 {% block stylesheets %}{{ block.super }}
     <style type="text/css">
@@ -65,12 +66,13 @@
             });
         });
 
+        var project = hqImport('hqwebapp/js/initial_page_data.js').get('project');
         $('#download-new-project').click(function() {
-            ga_track_event('Exchange', 'Download As New Project', '{{ project }}');
+            ga_track_event('Exchange', 'Download As New Project', project);
         });
 
         $('#import-app-button').click(function() {
-            ga_track_event('Exchange', 'Download to Existing Project', '{{ project }}');
+            ga_track_event('Exchange', 'Download to Existing Project', project);
         });
     </script>
 {% endblock %}
@@ -83,6 +85,7 @@
 {% block page_breadcrumbs %}
     {{ block.super }}
 {% endblock page_breadcrumbs %}
+{% initial_page_data 'project' project %}
 <div class="container">
     <div class="row" style="margin-top: 20px; margin-bottom:20px;">
         <div class="col-sm-4 app-pic-container">
