@@ -686,6 +686,7 @@ class TestAppCasePropertyReferences(TestCase, TestXmlMixin):
     def tearDownClass(cls):
         cls.current_app.delete()
         CaseExportDataSchema.get_latest_export_schema(cls.domain, cls.current_app._id, cls.case_type).delete()
+        super(TestAppCasePropertyReferences, cls).tearDownClass()
 
     def testCaseReferencesMakeItToCaseSchema(self):
         schema = CaseExportDataSchema.generate_schema_from_builds(
