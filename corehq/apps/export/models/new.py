@@ -1704,28 +1704,17 @@ class SMSExportDataSchema(ExportDataSchema):
         return SMS_EXPORT
 
     @classmethod
+    def generate_schema_from_builds(cls, domain, app_id, identifier, force_rebuild=False,
+            only_process_current_builds=False, task=None):
+        return cls(domain=domain)
+
+    @classmethod
     def schema_version(cls):
         return SMS_DATA_SCHEMA_VERSION
-
-    @classmethod
-    def _get_inferred_schema(cls, domain, identifier):
-        return None
-
-    @classmethod
-    def _get_current_app_ids_for_domain(cls, domain, app_id):
-        return []
-
-    @staticmethod
-    def _get_app_build_ids_to_process(domain, app_id, last_app_versions):
-        return []
 
     @staticmethod
     def get_latest_export_schema(domain, app_id, case_type):
         return SMSExportDataSchema(domain=domain)
-
-    @classmethod
-    def _process_app_build(cls, current_schema, app, case_type):
-        return None
 
 
 def _string_path_to_list(path):
