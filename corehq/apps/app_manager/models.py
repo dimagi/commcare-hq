@@ -812,7 +812,7 @@ class CaseReferences(DocumentSchema):
     load = DictProperty()
     save = DictProperty()
 
-    def validate(self):
+    def validate(self, required=True):
         super(CaseReferences, self).validate()
         # call these methods to force validation to run on the other referenced types
         list(self.get_load_references())
@@ -855,7 +855,7 @@ class FormBase(DocumentSchema):
     form_links = SchemaListProperty(FormLink)
     schedule_form_id = StringProperty()
     custom_instances = SchemaListProperty(CustomInstance)
-    case_references_data = DictProperty()
+    case_references_data = SchemaProperty(CaseReferences)
 
     @classmethod
     def wrap(cls, data):
@@ -877,11 +877,11 @@ class FormBase(DocumentSchema):
 
     @property
     def case_references(self):
-        return self.case_references_data or {}
+        return self.case_references_data or CaseReferences()
 
     @case_references.setter
     def case_references(self, case_references):
-        self.case_references_data = case_references
+        self.case_references_data = CaseReferences.wrap(case_references)
 
     @classmethod
     def get_form(cls, form_unique_id, and_app=False):
@@ -1154,11 +1154,9 @@ class FormBase(DocumentSchema):
         Get a flat list of case property names from save to case questions
         """
         updates = set()
-        if self.case_references_data and 'save' in self.case_references_data:
-            save_info = self.case_references_data['save'] or {}
-            for question_path, property_info in save_info.items():
-                if property_info.get('case_type', '') == case_type:
-                    updates |= set(property_info.get('properties', []))
+        for save_to_case_update in self.case_references_data.get_save_references():
+            if save_to_case_update.case_type == case_type:
+                updates |= set(save_to_case_update.properties)
         return updates
 
 
@@ -1189,28 +1187,26 @@ class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
                 "comment": None,
                 "hashtagValue": path,
             })
+
         def _make_dummy_condition():
             # todo: eventually would be nice to support proper relevancy conditions here but that's a ways off
             return FormActionCondition(type='always')
 
-        if self.case_references_data and 'save' in self.case_references_data:
-            save_info = self.case_references_data['save'] or {}
-            for question_path, property_info in save_info.items():
-                if property_info.get('case_type', ''):
-                    case_type = property_info['case_type']
-                    type_meta = app_case_meta.get_type(case_type)
-                    for property_name in property_info.get('properties', []):
-                        app_case_meta.add_property_save(
-                            property_info['case_type'],
-                            property_name,
-                            self.unique_id,
-                            _make_save_to_case_question(question_path),
-                            None
-                        )
-                    if property_info.get('create', False):
-                        type_meta.add_opener(self.unique_id, _make_dummy_condition())
-                    if property_info.get('close', False):
-                        type_meta.add_closer(self.unique_id, _make_dummy_condition())
+        for property_info in self.case_references_data.get_save_references():
+            if property_info.case_type:
+                type_meta = app_case_meta.get_type(property_info.case_type)
+                for property_name in property_info.properties:
+                    app_case_meta.add_property_save(
+                        property_info.case_type,
+                        property_name,
+                        self.unique_id,
+                        _make_save_to_case_question(property_info.path),
+                        None
+                    )
+                if property_info.create:
+                    type_meta.add_opener(self.unique_id, _make_dummy_condition())
+                if property_info.close:
+                    type_meta.add_closer(self.unique_id, _make_dummy_condition())
 
     def check_case_properties(self, all_names=None, subcase_names=None, case_tag=None):
         all_names = all_names or []
@@ -1642,12 +1638,12 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
 
     @property
     def case_references(self):
-        refs = self.case_references_data or {}
-        if "load" not in refs and self.actions.load_from_form.preload:
+        refs = self.case_references_data or CaseReferences()
+        if not refs.load and self.actions.load_from_form.preload:
             # for backward compatibility
             # preload only has one reference per question path
             preload = self.actions.load_from_form.preload
-            refs["load"] = {key: [value] for key, value in preload.iteritems()}
+            refs.load = {key: [value] for key, value in preload.iteritems()}
         return refs
 
     @case_references.setter
@@ -1656,7 +1652,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
 
         format: {"load": {"/data/path": ["case_property", ...], ...}}
         """
-        self.case_references_data = refs
+        self.case_references_data = CaseReferences.wrap(refs)
         if self.actions.load_from_form.preload:
             self.actions.load_from_form = PreloadAction()
 
@@ -1743,16 +1739,15 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
                 hashtag = "#case"
             return types[hashtag], name
 
-        case_loads = self.case_references.get("load", {})
-        for question_path, case_properties in case_loads.iteritems():
-            for name in case_properties:
+        for case_load_reference in self.case_references.get_load_references():
+            for name in case_load_reference.properties:
                 case_type, name = parse_case_type(name)
                 self.add_property_load(
                     app_case_meta,
                     case_type,
                     name,
                     questions,
-                    question_path
+                    case_load_reference.path
                 )
 
 
