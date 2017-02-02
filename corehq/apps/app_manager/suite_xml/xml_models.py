@@ -410,7 +410,7 @@ class Entry(OrderedXmlObject, XmlObject):
         for instance_id in instance_ids:
             if instance_id not in covered_ids:
                 raise UnknownInstanceError(
-                    "Instance reference not recognized: {} in xpath \"{}\""
+                    u"Instance reference not recognized: {} in xpath \"{}\""
                     # to get xpath context to show in this error message
                     # make instance_id a unicode subclass with an xpath property
                     .format(instance_id, getattr(instance_id, 'xpath', "(Xpath Unknown)")))
