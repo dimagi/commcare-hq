@@ -23,7 +23,7 @@ env:
     - secure: "EsiwQK1qBPqzuU5IJgYaMAPsOECtQPVwcQxbZtI+wcVm0Gd82RYlWegtbJ2Xvn6+EZVc/p3WWkIFPd1EeWXRXZgE1yO9Bcw0zCKhLvT2tBXiX6E7wvbZViKVpU/uvQg7S7hAmFVfUt0prJ+7R34ogUt8zQAuAtCekaj8D/1UOSI="
     # ARTIFACTS_KEY
     - secure: "dGbiTJC6LxRcu68ScXrCyZ65jSAGNu3Y6mpuI3DsILUXPDdhs4FiF3oqsV+SwvgyPM0Mx7Y5Zidq/ntiLZjYuF6dADbp2U/S4FK7JTuvbR02xKRJ/DNi2SU22w9Us2i2Fkrs5xKObPnHWZ4TgV7sk0QYOpmiaQ+qWhuFSdi//sg="
-    - ARTIFACTS_BUCKET: "travis-artifacts.dimagi.com"
+    - ARTIFACTS_BUCKET=travis-artifacts.dimagi.com
 before_install:
   # get newer version of docker-compose for variable substitution in compose files
   - curl -L https://github.com/docker/compose/releases/download/1.5.2/docker-compose-`uname -s`-`uname -m` > docker-compose
@@ -38,9 +38,14 @@ script:
   # workaround for env vars
   - export TRAVIS_HQ_USERNAME=$TRAVIS_HQ_USERNAME
   - export TRAVIS_HQ_PASSWORD=$TRAVIS_HQ_PASSWORD
-  - "scripts/docker test --noinput --stop --verbosity=2 --divide-depth=1"
+  - "scripts/docker test --noinput --stop --verbosity=2 --divide-depth=1 --timing --timing-file=test_timing.csv"
 after_success:
-  # create symlink so coverage report can find source files
+  # create symlink so artifacts are available
   - sudo ln -s $(pwd) /mnt/commcare-hq-ro
 services:
   - docker
+addons:
+  artifacts:
+    paths:
+    - "./test_timing.csv"
+    debug: true
