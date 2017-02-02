@@ -16,7 +16,7 @@ from corehq.apps.app_manager.models import (
     AdvancedModule,
     Module,
     AdvancedOpenCaseAction,
-)
+    CaseReferences)
 from corehq.apps.app_manager.signals import app_post_save
 from corehq.apps.export.dbaccessors import delete_all_export_data_schemas, delete_all_inferred_schemas
 from corehq.apps.export.tasks import add_inferred_export_properties
@@ -668,7 +668,7 @@ class TestAppCasePropertyReferences(TestCase, TestXmlMixin):
         factory = AppFactory(domain=cls.domain)
         m0 = factory.new_basic_module('save_to_case', cls.case_type, with_form=False)
         m0f1 = m0.new_form('save to case', 'en', attachment=cls.get_xml('basic_form'))
-        m0f1.case_references = {
+        m0f1.case_references = CaseReferences.wrap({
             'save': {
                 "/data/question1": {
                     "case_type": cls.case_type,
@@ -678,7 +678,7 @@ class TestAppCasePropertyReferences(TestCase, TestXmlMixin):
                     ],
                 }
             }
-        }
+        })
         cls.current_app = factory.app
         cls.current_app.save()
 
