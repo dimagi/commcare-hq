@@ -38,7 +38,7 @@ script:
   # workaround for env vars
   - export TRAVIS_HQ_USERNAME=$TRAVIS_HQ_USERNAME
   - export TRAVIS_HQ_PASSWORD=$TRAVIS_HQ_PASSWORD
-  - "scripts/docker test --noinput --stop --verbosity=2 --divide-depth=1 --timing --timing-file=test_timing.csv"
+  - "scripts/docker test --noinput --stop --verbosity=2 --divide-depth=1 --with-timing --timing-file=test_timing.csv"
 after_success:
   # create symlink so artifacts are available
   - sudo ln -s $(pwd) /mnt/commcare-hq-ro
