@@ -142,6 +142,9 @@ def test_valid_args(self, case_references):
     ({'load': {}, 'save': {'data/create-non-bool': {'create': 'abc'}}},),
     ({'load': {}, 'save': {'data/close-non-bool': {'close': 0}}},),
 ])
-def test_invalid_args(self, structure):
+def test_invalid_args(self, case_references):
     with self.assertRaises(Exception):
-        _get_case_references(structure)
+        wrapped_references = {
+            'case_references': json.dumps(case_references)
+        }
+        _get_case_references(wrapped_references)
