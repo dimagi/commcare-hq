@@ -27,7 +27,6 @@ def workflow_transform(workflow, doc):
         WORKFLOW_BROADCAST,
         WORKFLOW_CALLBACK,
         WORKFLOW_DEFAULT,
-        WORKFLOW_FORWARD,
         WORKFLOW_PERFORMANCE,
     )
     from corehq.apps.sms.filters import MessageTypeFilter
