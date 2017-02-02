@@ -37,7 +37,7 @@ import datetime
 import uuid
 from collections import defaultdict, namedtuple
 from functools import wraps
-from copy import deepcopy
+from copy import deepcopy, copy
 from mimetypes import guess_type
 from urllib2 import urlopen
 from urlparse import urljoin
@@ -790,6 +790,43 @@ class CommentMixin(DocumentSchema):
         Trim comment to 500 chars (about 100 words)
         """
         return self.comment if len(self.comment) <= 500 else self.comment[:497] + '...'
+
+
+class CaseLoadReference(DocumentSchema):
+    _allow_dynamic_properties = False
+    path = StringProperty()
+    properties = ListProperty(unicode)
+
+
+class CaseSaveReference(DocumentSchema):
+    _allow_dynamic_properties = False
+    case_type = StringProperty()
+    path = StringProperty()
+    properties = ListProperty(unicode)
+    create = BooleanProperty(default=False)
+    close = BooleanProperty(default=False)
+
+
+class CaseReferences(DocumentSchema):
+    _allow_dynamic_properties = False
+    load = DictProperty()
+    save = DictProperty()
+
+    def validate(self):
+        super(CaseReferences, self).validate()
+        # call these methods to force validation to run on the other referenced types
+        list(self.get_load_references())
+        list(self.get_save_references())
+
+    def get_load_references(self):
+        for path, properties in self.load.items():
+            yield CaseLoadReference(path=path, properties=list(properties))
+
+    def get_save_references(self):
+        for path, reference in self.save.items():
+            ref_copy = json.loads(json.dumps(reference))
+            ref_copy['path'] = path
+            yield CaseSaveReference.wrap(ref_copy)
 
 
 class FormBase(DocumentSchema):

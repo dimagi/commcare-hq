@@ -95,6 +95,7 @@ class AdvancedFormCaseReferenceTest(SimpleTestCase):
 
 
 @generate_cases([
+    ({},),
     ({'load': {}},),
     ({'load': {'data/empty': []}},),
     ({'load': {'data/properties': ['p1', 'p2']}},),
@@ -134,7 +135,6 @@ def test_valid_args(self, case_references):
 
 
 @generate_cases([
-    ({},),
     ({'load': {'data/non-strings': [0, 'p2']}},),
     ({'load': {}, 'extra': 'stuff'},),
     ({'load': {}, 'save': {'data/extra': {'extra': 'stuff'}}},),
@@ -143,7 +143,7 @@ def test_valid_args(self, case_references):
     ({'load': {}, 'save': {'data/close-non-bool': {'close': 0}}},),
 ])
 def test_invalid_args(self, case_references):
-    with self.assertRaises(Exception):
+    with self.assertRaises(ValueError):
         wrapped_references = {
             'case_references': json.dumps(case_references)
         }
