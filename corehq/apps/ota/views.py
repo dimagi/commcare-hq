@@ -103,7 +103,9 @@ def search(request, domain):
 
     query_addition_debug_details = {}
     try:
-        search_es = _add_case_search_addition(request, domain, search_es, query_addition_id, query_addition_debug_details)
+        search_es = _add_case_search_addition(
+            request, domain, search_es, query_addition_id, query_addition_debug_details
+        )
     except QueryMergeException as e:
         return _handle_query_merge_exception(request, e)
     try:
