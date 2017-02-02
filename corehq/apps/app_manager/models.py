@@ -793,12 +793,28 @@ class CommentMixin(DocumentSchema):
 
 
 class CaseLoadReference(DocumentSchema):
+    """
+    This is the schema for a load reference that is used in validation and expected
+    to be worked with when using `CaseReferences`. The format is different from the
+    dict of:
+
+    {
+      'path': ['list', 'of', 'properties']
+    }
+
+    That is stored on the model and expected in Vellum, but as we add more information
+    (like case types) to the load model this format will be easier to extend.
+    """
     _allow_dynamic_properties = False
     path = StringProperty()
     properties = ListProperty(unicode)
 
 
 class CaseSaveReference(DocumentSchema):
+    """
+    This is the schema for what Vellum writes to HQ and what is expected to be stored on the
+    model (reference by a dict where the keys are paths).
+    """
     _allow_dynamic_properties = False
     case_type = StringProperty()
     properties = ListProperty(unicode)
@@ -807,10 +823,24 @@ class CaseSaveReference(DocumentSchema):
 
 
 class CaseSaveReferenceWithPath(CaseSaveReference):
+    """
+    Like CaseLoadReference, this is the model that is expected to be worked with as it
+    contains the complete information about the reference in a single place.
+    """
     path = StringProperty()
 
 
 class CaseReferences(DocumentSchema):
+    """
+    The case references associated with a form. This is dependent on Vellum's API that sends
+    case references to HQ.
+
+    load: is a dict of question paths to lists of properties (see `CaseLoadReference`),
+    save: is a dict of question paths to `CaseSaveReference` objects.
+
+    The intention is that all usage of the objects goes through the `get_load_references` and
+    `get_save_references` helper functions.
+    """
     _allow_dynamic_properties = False
     load = DictProperty()
     save = SchemaDictProperty(CaseSaveReference)
@@ -822,10 +852,16 @@ class CaseReferences(DocumentSchema):
         list(self.get_load_references())
 
     def get_load_references(self):
+        """
+        Returns a generator of `CaseLoadReference` objects containing all the load references.
+        """
         for path, properties in self.load.items():
             yield CaseLoadReference(path=path, properties=list(properties))
 
     def get_save_references(self):
+        """
+        Returns a generator of `CaseSaveReferenceWithPath` objects containing all the load references.
+        """
         for path, reference in self.save.items():
             ref_copy = deepcopy(reference.to_json())
             ref_copy['path'] = path
