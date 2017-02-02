@@ -994,7 +994,7 @@ class FormBase(DocumentSchema):
         xform.normalize_itext()
         xform.strip_vellum_ns_attributes()
         xform.set_version(self.get_version())
-        xform.add_missing_instances()
+        xform.add_missing_instances(app.domain)
 
     def render_xform(self, build_profile_id=None):
         xform = XForm(self.source)
@@ -2135,6 +2135,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
                 project = Domain.get_by_name(domain)
                 try:
                     if not should_sync_hierarchical_fixture(project):
+                        # discontinued feature on moving to flat fixture format
                         raise LocationXpathValidationError(
                             _('That format is no longer supported. To reference the location hierarchy you need to'
                               ' use the "Custom Calculations in Case List" feature preview. For more information '

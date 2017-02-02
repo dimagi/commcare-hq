@@ -1,3 +1,5 @@
+from optparse import make_option
+
 from django.core.management.base import BaseCommand
 from toggle.models import Toggle
 
@@ -8,11 +10,22 @@ from corehq.toggles import HIERARCHICAL_LOCATION_FIXTURE, NAMESPACE_DOMAIN, FLAT
 class Command(BaseCommand):
     help = """
     To migrate to new flat fixture for locations. Enable FF HIERARCHICAL_LOCATION_FIXTURE for
-    apps with locations and not enabled with Flat fixture flag
+    apps with locations and not enabled with Flat fixture flag and set their configuration to use hierarchical
+    fixture format.
     The Feature Flag FLAT_LOCATION_FIXTURE should be removed after this
     """
+    option_list = BaseCommand.option_list + (
+        make_option("--check",
+                    action="store_true",
+                    dest="check",
+                    default=False,
+                    help="Include this option to check what changes would occur and highlight domains that need "
+                         "attention"),
+    )
 
     def handle(self, *args, **options):
+        dry_run = options['check']
+
         # 1. Find domains with locations
         domains_having_locations = (
             SQLLocation.objects.order_by('domain').distinct('domain')
@@ -33,10 +46,26 @@ class Command(BaseCommand):
         # 4. Update domains that need to stay on hierarchical with enabled legacy toggle to be able to access conf
         # and update their location configuration to use hierarchical fixture for now
         for domain in domains_to_stay_on_hierarchical_fixture:
-            print "Setting HIERARCHICAL_LOCATION_FIXTURE toggle for domain: %s" % domain
-            HIERARCHICAL_LOCATION_FIXTURE.set(domain, True, NAMESPACE_DOMAIN)
-            print "Enabling legacy fixture for domain: %s" % domain
-            enable_legacy_fixture_for_domain(domain)
+            if not dry_run:
+                print "Setting HIERARCHICAL_LOCATION_FIXTURE toggle for domain: %s" % domain
+                HIERARCHICAL_LOCATION_FIXTURE.set(domain, True, NAMESPACE_DOMAIN)
+            else:
+                print "HIERARCHICAL_LOCATION_FIXTURE toggle would be set for domain: %s" % domain
+
+            if not dry_run:
+                print "Enabling legacy fixture for domain: %s" % domain
+                location_configuration = LocationFixtureConfiguration.for_domain(domain)
+                print "Current Configuration, Persisted: %s, Use Flat fixture: %s, Use Hierarchical fixture %s" % (
+                    not location_configuration._state.adding, location_configuration.sync_hierarchical_fixture,
+                    location_configuration.sync_flat_fixture)
+
+                enable_legacy_fixture_for_domain(domain)
+            else:
+                print "Legacy fixture to be enabled for domain: %s" % domain
+                location_configuration = LocationFixtureConfiguration.for_domain(domain)
+                print "Current Configuration, Persisted: %s, Use Flat fixture: %s, Use Hierarchical fixture %s" % (
+                    not location_configuration._state.adding, location_configuration.sync_hierarchical_fixture,
+                    location_configuration.sync_flat_fixture)
 
         # 5. Domains that need to stay on flat fixture need not worry about any change since they would
         # default to flat fixture but must ensure if they don't have conf set for using hierarchical fixture
