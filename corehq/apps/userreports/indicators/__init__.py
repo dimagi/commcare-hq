@@ -121,10 +121,9 @@ class LedgerBalancesIndicator(ConfigurableIndicator):
         """returns a defaultdict mapping product codes to their values"""
         ret = defaultdict(lambda: 0)
         ledgers = LedgerAccessors(domain).get_ledger_values_for_case(case_id)
-        ledgers = filter(lambda l: l.section_id == ledger_section, ledgers)
-        ledgers = filter(lambda l: l.entry_id in product_codes, ledgers)
         for ledger in ledgers:
-            ret[ledger.entry_id] = ledger.stock_on_hand
+            if ledger.section_id == ledger_section and ledger.entry_id in product_codes:
+                ret[ledger.entry_id] = ledger.stock_on_hand
 
         return ret
 

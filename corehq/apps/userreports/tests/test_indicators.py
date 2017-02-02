@@ -572,7 +572,7 @@ class TestGetValuesByProduct(TestCase):
             {"product": "surge", "section": "soh", "balance": 85},
             {"product": "fanta", "section": "soh", "balance": 11},
         ]
-        product_ids = set(map(lambda p: p['product'], cls.data))
+        product_ids = {p['product'] for p in cls.data}
 
         SQLProduct.objects.bulk_create([
             SQLProduct(domain=cls.domain_name, product_id=id, code=id)
