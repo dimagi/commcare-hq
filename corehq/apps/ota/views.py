@@ -102,36 +102,46 @@ def search(request, domain):
         search_es = search_es.case_property_query(key, value, fuzzy=(key in fuzzies))
 
     query_addition_debug_details = {}
-    _add_case_search_addition(request, domain, search_es, query_addition_id, query_addition_debug_details)
-
+    try:
+        _add_case_search_addition(request, domain, search_es, query_addition_id, query_addition_debug_details)
+    except QueryMergeException as e:
+        return _handle_query_merge_exception(request, e)
     try:
         results = search_es.values()
     except Exception as e:
-        notify_exception(request, e.message, details=dict(
-            exception_type=type(e),
-            **query_addition_debug_details
-        ))
-        raise
+        return _handle_es_exception(request, e, query_addition_debug_details)
+
     # Even if it's a SQL domain, we just need to render the results as cases, so CommCareCase.wrap will be fine
     cases = [CommCareCase.wrap(flatten_result(result)) for result in results]
     fixtures = CaseDBFixture(cases).fixture
     return HttpResponse(fixtures, content_type="text/xml")
 
+
 def _add_case_search_addition(request, domain, search_es, query_addition_id, query_addition_debug_details):
     if query_addition_id:
         query_addition = CaseSearchQueryAddition.objects.get(id=query_addition_id, domain=domain)
         query_addition_debug_details['original_query'] = search_es.raw_query
-        query_addition_debug_details['query_adition'] = query_addition.query_addition
-        try:
-            new_query = merge_queries(search_es.raw_query, query_addition.query_addition)
-            query_addition_debug_details['new_query'] = new_query
-            search_es.es_query = new_query
-        except QueryMergeException as e:
-            notify_exception(request, e.message, details={
-                'original_query': search_es.raw_query,
-                'query_addition': query_addition.query_addition,
-            })
-            raise
+        query_addition_debug_details['query_addition'] = query_addition.query_addition
+        new_query = merge_queries(search_es.raw_query, query_addition.query_addition)
+        query_addition_debug_details['new_query'] = new_query
+        search_es.es_query = new_query
+
+
+def _handle_query_merge_exception(request, exception):
+    notify_exception(request, exception.message, details=dict(
+        exception_type=type(exception),
+        original_query=getattr(exception, "original_query", None),
+        query_addition=getattr(exception, "query_addition", None)
+    ))
+    return HttpResponse(status=500)
+
+
+def _handle_es_exception(request, exception, query_addition_debug_details):
+    notify_exception(request, exception, details=dict(
+        exception_type=type(exception),
+        **query_addition_debug_details
+    ))
+    return HttpResponse(status=500)
 
 
 @location_safe

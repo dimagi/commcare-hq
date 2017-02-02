@@ -143,7 +143,12 @@ def merge_queries(base_query, query_addition):
         return a
 
     new_query = copy.deepcopy(base_query)
-    merge(new_query, query_addition)
+    try:
+        merge(new_query, query_addition)
+    except QueryMergeException as e:
+        e.original_query = base_query
+        e.query_addition = query_addition
+        raise e
     return new_query
 
 
