@@ -82,7 +82,7 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False,
                 # if we couldn't find this location the view just break out of the loop.
                 # there are some instances in viewing archived locations where we don't actually
                 # support drilling all the way down.
-                pass
+                break
             this_loc['children'] = [
                 loc_to_json(loc, project) for loc in children
                 if user is None or user_can_view_location(user, loc, project)
@@ -321,11 +321,3 @@ def get_locations_from_ids(location_ids, domain, base_queryset=None):
     if len(locations) != expected_count:
         raise SQLLocation.DoesNotExist('One or more of the locations was not found.')
     return locations
-
-
-def get_lineage_from_location_id(location_id):
-    return get_lineage_from_location(Location.get(location_id))
-
-
-def get_lineage_from_location(location):
-    return list(reversed(location.path))

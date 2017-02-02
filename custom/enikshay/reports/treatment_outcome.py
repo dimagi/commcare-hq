@@ -1,3 +1,4 @@
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesColumnGroup, DataTablesHeader
 from custom.enikshay.reports.generic import EnikshayReport, EnikshayMultiReport
 from custom.enikshay.reports.const import TREATMENT_OUTCOMES
@@ -28,7 +29,7 @@ def generate_for_all_outcomes(title, slug, data):
 class AllTBPatientsReport(EnikshayReport):
 
     name = ugettext_lazy('BLOCK - A: All TB patients registered in the quarter')
-    slug = 'treatment_outcome_report'
+    slug = 'all_tb_patients'
 
     @property
     def headers(self):
@@ -99,6 +100,10 @@ class AllTBPatientsReport(EnikshayReport):
                 data
             ),
             generate_for_all_outcomes(
+                _('Other previously treated, Clinically diagnosed'), 'other_previously_treated_patients',
+                data
+            ),
+            generate_for_all_outcomes(
                 _('HIV - reactive all'), 'hiv_reactive_patients',
                 data
             ),
@@ -143,10 +148,12 @@ class CPTAndARTReport(EnikshayReport):
         ]
 
 
+@location_safe
 class TreatmentOutcomeReport(EnikshayMultiReport):
 
     name = ugettext_lazy('Treatment Outcome')
     slug = 'treatment_outcome'
+    report_template_path = 'enikshay/treatment_outcome.html'
 
     @property
     def reports(self):

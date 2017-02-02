@@ -15,10 +15,11 @@ FormplayerFrontend.module("Menus.Collections", function (Collections, Formplayer
             'appVersion',
             'appId',
             'persistentCaseTile',
+            'tiles',
         ],
 
         entityProperties: [
-            'action',
+            'actions',
             'styles',
             'headers',
             'currentPage',
@@ -39,6 +40,8 @@ FormplayerFrontend.module("Menus.Collections", function (Collections, Formplayer
                 return response.entities;
             } else if (response.type === "query") {
                 return response.displays;
+            } else if (response.details) {
+                return response.details;
             } else if (response.tree){
                 // form entry time, doggy
                 FormplayerFrontend.trigger('startForm', response, this.app_id);

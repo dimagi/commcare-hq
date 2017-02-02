@@ -14,8 +14,8 @@ from corehq.apps.export.transforms import (
 
 # When fixing a bug that requires existing schemas to be rebuilt,
 # bump the version number.
-FORM_DATA_SCHEMA_VERSION = 8
-CASE_DATA_SCHEMA_VERSION = 7
+FORM_DATA_SCHEMA_VERSION = 9
+CASE_DATA_SCHEMA_VERSION = 8
 
 DEID_ID_TRANSFORM = "deid_id"
 DEID_DATE_TRANSFORM = "deid_date"
@@ -76,3 +76,30 @@ MISSING_VALUE = '---'
 EMPTY_VALUE = ''
 
 UNKNOWN_INFERRED_FROM = 'unknown'
+
+SKIPPABLE_PROPERTIES = frozenset([
+    'initial_processing_complete',
+    '_rev',
+    'computed_modified_on_',
+    'server_modified_on',
+    'domain',
+    'form.#type',
+    'form.@uiVersion',
+    'openrosa_headers.HTTP_X_OPENROSA_VERSION',
+    'openrosa_headers.HTTP_ACCEPT_LANGUAGE',
+    'openrosa_headers.HTTP_DATE',
+    'problem',
+    'doc_type',
+    'path',
+    'version',
+    'date_header',
+    'migrating_blobs_from_couch',
+    'orig_id',
+    'edited_on',
+    'deprecated_date',
+    'deprecated_form_id',
+    'auth_context.authenticated',
+    'auth_context.doc_type',
+    'auth_context.domain',
+    'auth_context.user_id',
+])

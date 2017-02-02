@@ -558,7 +558,28 @@ The `date_expression` can be any valid expression, or simply constant
     },
 }
 ```
-
+#### 'Get Case Sharing Groups' expression
+'get_case_sharing_groups' will return an array of the case sharing groups that are assigned to a provided user ID.  The array will contain one document per case sharing group.
+```json
+{
+    "type": "get_case_sharing_groups",
+    "user_id_expression": {
+        "type": "property_path",
+        "property_path": ["form", "meta", "userID"]
+    }
+}
+```
+#### 'Get Reporting Groups' expression
+'get_reporting_groups' will return an array of the reporting groups that are assigned to a provided user ID.  The array will contain one document per reporting group.
+```json
+{
+    "type": "get_reporting_groups",
+    "user_id_expression": {
+        "type": "property_path",
+        "property_path": ["form", "meta", "userID"]
+    }
+}
+```
 
 #### Filter, Sort, Map and Reduce Expressions
 
@@ -678,7 +699,6 @@ This returns number of family members
     "items_expression": {},
 }
 ```
-
 
 #### Named Expressions
 
@@ -942,7 +962,7 @@ Property            | Description
 --------------------|------------
 ledger_section      | The ledger section to use for this indicator, for example, "stock"
 product_codes       | A list of the products to include in the indicator.  This will be used in conjunction with the `column_id` to produce each column name.
-case_id_expression  | (optional) An expression used to get the case where each ledger is found.  If not specified, it will use the row's doc id.
+case_id_expression  | An expression used to get the case where each ledger is found.  If not specified, it will use the row's doc id.
 
 ```
 {
@@ -1183,7 +1203,10 @@ user                 | Select a user
 owner                | Select a possible case owner owner (user, group, or location)
 
 
-Location choice providers also support an "include_descendants" property to include descendant locations in the results, which defaults to `false`.
+Location choice providers also support two additional configuration options:
+
+* "include_descendants" - Include descendant locations in the results. Defaults to `false`.
+* "show_full_path" - display the full path to the location in the filter.  Defaults to `false`.
 
 Example assuming "village" is a location ID, which is converted to names using the location `choice_provider`:
 ```json
@@ -1195,7 +1218,8 @@ Example assuming "village" is a location ID, which is converted to names using t
   "datatype": "string",
   "choice_provider": {
       "type": "location",
-      "include_descendants": false
+      "include_descendants": true,
+      "show_full_path": true
   }
 }
 ```
@@ -1328,13 +1352,13 @@ Expanded columns have a type of `"expanded"`. Expanded columns will be "expanded
 
 If you have a data source like this:
 ```
-+---------+----------+-------------+
++---------|----------|-------------+
 | Patient | district | test_result |
-+---------+----------+-------------+
++---------|----------|-------------+
 | Joe     | North    | positive    |
 | Bob     | North    | positive    |
 | Fred    | South    | negative    |
-+---------+----------+-------------+
++---------|----------|-------------+
 ```
 and a report configuration like this:
 ```
@@ -1360,12 +1384,12 @@ columns:
 ```
 Then you will get a report like this:
 ```
-+----------+----------------------+----------------------+
++----------|----------------------|----------------------+
 | district | test_result-positive | test_result-negative |
-+----------+----------------------+----------------------+
++----------|----------------------|----------------------+
 | North    | 2                    | 0                    |
 | South    | 0                    | 1                    |
-+----------+----------------------+----------------------+
++----------|----------------------|----------------------+
 ```
 
 Expanded columns have an optional parameter `"max_expansion"` (defaults to 10) which limits the number of columns that can be created.  WARNING: Only override the default if you are confident that there will be no adverse performance implications for the server.
@@ -1425,6 +1449,9 @@ Column IDs in percentage fields *must be unique for the whole report*. If you us
 ### Calculating Column Totals
 
 To sum a column and include the result in a totals row at the bottom of the report, set the `calculate_total` value in the column configuration to `true`.
+
+Not supported for the following column types:
+- expression
 
 ### Internationalization
 Report columns can be translated into multiple languages.

@@ -16,13 +16,13 @@ var MapItem = function(item, index, mappingContext){
     this.editing = ko.observable(false);
 
     this.cssId = ko.computed(function(){
-        return makeSafeForCSS(this.key());
+        return makeSafeForCSS(this.key()) || '_blank_';
     }, this);
 
 
     // util function to generate icon-name of the format "module<module_id>_list_icon_<property_name>_<hash_of_item.key>"
     this.generateIconPath = function(){
-        var randomFourDigits = Math.floor(Math.random()*9000) + 1000;;
+        var randomFourDigits = Math.floor(Math.random()*9000) + 1000;
         var iconPrefix =  "jr://file/commcare/image/module" + mappingContext.module_id + "_list_icon_" + mappingContext.property_name.val() + "_";
         return iconPrefix + randomFourDigits + ".png";
     };

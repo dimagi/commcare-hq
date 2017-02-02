@@ -26,7 +26,7 @@
                 "required": false,
                 "display": "Case Open Date",
                 "field": "opened_on",
-                "type": "quarter",
+                "type": "date",
                 "show_all": true,
                 "slug": "patient_registration_date"
             },
@@ -41,6 +41,13 @@
                     "type": "location"
                 },
                 "display": "Location"
+            },
+            {
+                "type": "pre",
+                "field": "closed",
+                "slug": "closed",
+                "datatype": "integer",
+                "pre_value": 0
             }
         ],
         "columns": [
@@ -177,6 +184,18 @@
                 "calculate_total": false
             },
             {
+                "display": "Number of New Transgender Cases",
+                "type": "field",
+                "field": "new_transgender",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
                 "display": "Number of New Pulmonary Cases",
                 "type": "field",
                 "field": "new_pulmonary",
@@ -192,18 +211,6 @@
                 "display": "Number of New Extrapulmonary Cases",
                 "type": "field",
                 "field": "new_extra_pulmonary",
-                "aggregation": "sum",
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {
-                },
-                "calculate_total": false
-            },
-            {
-                "display": "Number of New Transgender Cases",
-                "type": "field",
-                "field": "new_transgender",
                 "aggregation": "sum",
                 "sortable": false,
                 "description": null,

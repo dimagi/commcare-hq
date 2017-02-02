@@ -14,7 +14,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.commtrack.tests.util import bootstrap_domain
 from corehq.apps.users.models import CommCareUser
 
-from corehq.apps.app_manager.tests.util import TestXmlMixin
+from corehq.apps.app_manager.tests.util import TestXmlMixin, extract_xml_partial
 from casexml.apps.case.xml import V2
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 
@@ -34,7 +34,7 @@ class FixtureHasLocationsMixin(TestXmlMixin):
     root = os.path.dirname(__file__)
     file_path = ['data']
 
-    def _assert_fixture_has_locations(self, xml_name, desired_locations, flat=False):
+    def _assemble_expected_fixture(self, xml_name, desired_locations):
         ids = {
             "{}_id".format(desired_location.lower().replace(" ", "_")): (
                 self.locations[desired_location].location_id
@@ -42,16 +42,19 @@ class FixtureHasLocationsMixin(TestXmlMixin):
             for desired_location in desired_locations
         }  # eg: {"massachusetts_id" = self.locations["Massachusetts"].location_id}
 
-        generator = flat_location_fixture_generator if flat else location_fixture_generator
-        fixture = ElementTree.tostring(generator(self.user, V2)[0])
-        desired_fixture = self.get_xml(xml_name).format(
+        return self.get_xml(xml_name).format(
             user_id=self.user.user_id,
             **ids
         )
+
+    def _assert_fixture_has_locations(self, xml_name, desired_locations, flat=False):
+        generator = flat_location_fixture_generator if flat else location_fixture_generator
+        fixture = ElementTree.tostring(generator(self.user, V2)[-1])
+        desired_fixture = self._assemble_expected_fixture(xml_name, desired_locations)
         self.assertXmlEqual(desired_fixture, fixture)
 
 
-@mock.patch.object(Domain, 'uses_locations', return_value=True)  # removes dependency on accounting
+@mock.patch.object(Domain, 'uses_locations', lambda: True)  # removes dependency on accounting
 class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
     location_type_names = ['state', 'county', 'city']
     location_structure = [
@@ -76,14 +79,15 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
 
     def setUp(self):
         super(LocationFixturesTest, self).setUp()
+        delete_all_users()
         self.user = create_restore_user(self.domain, 'user', '123')
 
-    def test_no_user_locations_returns_empty(self, uses_locations):
+    def test_no_user_locations_returns_empty(self):
         empty_fixture = "<fixture id='commtrack:locations' user_id='{}' />".format(self.user.user_id)
         fixture = ElementTree.tostring(location_fixture_generator(self.user, V2)[0])
         self.assertXmlEqual(empty_fixture, fixture)
 
-    def test_simple_location_fixture(self, uses_locations):
+    def test_simple_location_fixture(self):
         self.user._couch_user.set_location(self.locations['Suffolk'].couch_location)
 
         self._assert_fixture_has_locations(
@@ -91,7 +95,7 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
             ['Massachusetts', 'Suffolk', 'Boston', 'Revere']
         )
 
-    def test_multiple_locations(self, uses_locations):
+    def test_multiple_locations(self):
         self.user._couch_user.add_to_assigned_locations(self.locations['Suffolk'].couch_location)
         self.user._couch_user.add_to_assigned_locations(self.locations['New York City'].couch_location)
 
@@ -101,7 +105,7 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
              'New York City', 'Manhattan', 'Queens', 'Brooklyn']
         )
 
-    def test_all_locations_flag_returns_all_locations(self, uses_locations):
+    def test_all_locations_flag_returns_all_locations(self):
         with flag_enabled('SYNC_ALL_LOCATIONS'):
             self._assert_fixture_has_locations(
                 'expand_from_root',
@@ -115,7 +119,6 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
             self,
             supports_multiple_locations,
             user_locations,
-            uses_locations
     ):
         multiple_locations_different_states = [
             self.locations['Suffolk'].couch_location,
@@ -130,7 +133,7 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
              'New York City', 'Manhattan', 'Queens', 'Brooklyn']
         )
 
-    def test_expand_to_county(self, uses_locations):
+    def test_expand_to_county(self):
         """
         expand to "county"
         should return:
@@ -147,7 +150,7 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
             ['Massachusetts', 'Suffolk']
         )
 
-    def test_expand_to_county_from_state(self, uses_locations):
+    def test_expand_to_county_from_state(self):
         self.user._couch_user.set_location(self.locations['Massachusetts'].couch_location)
         location_type = self.locations['Massachusetts'].location_type
         location_type.expand_to = self.locations['Suffolk'].location_type
@@ -158,7 +161,7 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
             ['Massachusetts', 'Suffolk', 'Middlesex']
         )
 
-    def test_expand_from_county_at_city(self, uses_locations):
+    def test_expand_from_county_at_city(self):
         self.user._couch_user.set_location(self.locations['Boston'].couch_location)
         location_type = self.locations['Boston'].location_type
         location_type.expand_from = self.locations['Suffolk'].location_type
@@ -169,7 +172,7 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
             ['Massachusetts', 'Suffolk', 'Middlesex', 'Boston', 'Revere']
         )
 
-    def test_expand_from_root_at_city(self, uses_locations):
+    def test_expand_from_root_at_city(self):
         self.user._couch_user.set_location(self.locations['Boston'].couch_location)
         location_type = self.locations['Boston'].location_type
         location_type.expand_from_root = True
@@ -181,7 +184,7 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
              'Somerville', 'New York', 'New York City', 'Manhattan', 'Queens', 'Brooklyn']
         )
 
-    def test_expand_from_root_to_county(self, uses_locations):
+    def test_expand_from_root_to_county(self):
         self.user._couch_user.set_location(self.locations['Massachusetts'].couch_location)
         location_type = self.locations['Massachusetts'].location_type
         location_type.expand_from_root = True
@@ -192,7 +195,7 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
             ['Massachusetts', 'Suffolk', 'Middlesex', 'New York', 'New York City']
         )
 
-    def test_flat_sync_format(self, uses_locations):
+    def test_flat_sync_format(self):
         with flag_enabled('SYNC_ALL_LOCATIONS'):
             with flag_enabled('FLAT_LOCATION_FIXTURE'):
                 self._assert_fixture_has_locations(
@@ -202,7 +205,7 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
                     flat=True,
                 )
 
-    def test_include_without_expanding(self, uses_locations):
+    def test_include_without_expanding(self):
         self.user._couch_user.set_location(self.locations['Boston'].couch_location)
         location_type = self.locations['Boston'].location_type
         location_type.expand_from = self.locations['Suffolk'].location_type
@@ -214,8 +217,43 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
             ['Massachusetts', 'Suffolk', 'Boston', 'Revere', 'New York']
         )
 
+    def test_include_without_expanding_same_level(self):
+        # I want a list of all the counties, but only the cities in my county
+        self.user._couch_user.set_location(self.locations['Boston'].couch_location)
+        location_type = self.locations['Boston'].location_type
 
-@mock.patch.object(Domain, 'uses_locations', return_value=True)  # removes dependency on accounting
+        # Get all the counties
+        location_type.include_without_expanding = self.locations['Middlesex'].location_type
+        # Expand downwards from my county
+        location_type.expand_from = self.locations['Middlesex'].location_type
+        location_type.save()
+        self._assert_fixture_has_locations(
+            'include_without_expanding_same_level',
+            ['Massachusetts', 'New York', 'Middlesex', 'Suffolk', 'New York City', 'Boston', 'Revere']
+        )  # (New York City is of type "county")
+
+    @flag_enabled('FLAT_LOCATION_FIXTURE')
+    def test_index_location_fixtures(self):
+        self.user._couch_user.set_location(self.locations['Massachusetts'])
+        expected_result = self._assemble_expected_fixture(
+            'index_location_fixtures',
+            ['Massachusetts', 'Suffolk', 'Boston', 'Revere', 'Middlesex', 'Cambridge', 'Somerville'],
+        )
+        fixture_nodes = flat_location_fixture_generator(self.user, V2)
+        self.assertEqual(len(fixture_nodes), 2)  # fixture schema, then fixture
+
+        # check the fixture like usual
+        fixture = extract_xml_partial(ElementTree.tostring(fixture_nodes[1]), '.')
+        expected_fixture = extract_xml_partial(expected_result, './fixture')
+        self.assertXmlEqual(expected_fixture, fixture)
+
+        # check the schema
+        schema = extract_xml_partial(ElementTree.tostring(fixture_nodes[0]), '.')
+        expected_schema = extract_xml_partial(expected_result, './schema')
+        self.assertXmlEqual(expected_schema, schema)
+
+
+@mock.patch.object(Domain, 'uses_locations', lambda: True)  # removes dependency on accounting
 class WebUserLocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
 
     location_type_names = ['state', 'county', 'city']
@@ -244,12 +282,12 @@ class WebUserLocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsM
         delete_all_users()
         self.user = create_restore_user(self.domain, 'web_user', '123', is_mobile_user=False)
 
-    def test_no_user_locations_returns_empty(self, uses_locations):
+    def test_no_user_locations_returns_empty(self):
         empty_fixture = "<fixture id='commtrack:locations' user_id='{}' />".format(self.user.user_id)
         fixture = ElementTree.tostring(location_fixture_generator(self.user, V2)[0])
         self.assertXmlEqual(empty_fixture, fixture)
 
-    def test_simple_location_fixture(self, uses_locations):
+    def test_simple_location_fixture(self):
         self.user._couch_user.set_location(self.domain, self.locations['Suffolk'].couch_location)
 
         self._assert_fixture_has_locations(
@@ -257,7 +295,7 @@ class WebUserLocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsM
             ['Massachusetts', 'Suffolk', 'Boston', 'Revere']
         )
 
-    def test_multiple_locations(self, uses_locations):
+    def test_multiple_locations(self):
         self.user._couch_user.add_to_assigned_locations(self.domain, self.locations['Suffolk'].couch_location)
         self.user._couch_user.add_to_assigned_locations(
             self.domain,
@@ -271,7 +309,7 @@ class WebUserLocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsM
         )
 
 
-@mock.patch.object(Domain, 'uses_locations', return_value=True)  # removes dependency on accounting
+@mock.patch.object(Domain, 'uses_locations', lambda: True)  # removes dependency on accounting
 class ForkedHierarchyLocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
     """
     - State

@@ -1,10 +1,12 @@
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.datatables import DataTablesHeader
+from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.graph_models import PieChart, MultiBarChart, Axis
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.style.decorators import use_nvd3
 from corehq.apps.userreports.models import StaticReportConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
-from custom.enikshay.reports.filters import EnikshayLocationFilter, QuarterFilter
+from custom.enikshay.reports.filters import EnikshayLocationFilter
 from custom.enikshay.reports.generic import EnikshayReport
 from custom.enikshay.reports.sqldata.case_finding_sql_data import CaseFindingSqlData
 from custom.enikshay.reports.sqldata.charts_sql_data import ChartsSqlData
@@ -14,6 +16,7 @@ from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext_lazy, ugettext as _
 
 
+@location_safe
 class WebDashboardReport(EnikshayReport):
 
     name = ugettext_lazy('Web Dashboard')
@@ -21,7 +24,9 @@ class WebDashboardReport(EnikshayReport):
     slug = 'web_dashboard'
     use_datatables = False
     report_template_path = 'enikshay/web_dashboard.html'
-    fields = (QuarterFilter, EnikshayLocationFilter)
+    fields = (DatespanFilter, EnikshayLocationFilter)
+
+    emailable = False
 
     @use_nvd3
     def decorator_dispatcher(self, request, *args, **kwargs):
@@ -63,7 +68,7 @@ class WebDashboardReport(EnikshayReport):
             StaticReportConfiguration.by_id('static-%s-sputum_conversion' % self.domain), include_prefilters=True
         )
 
-        filter_values = {'date': QuarterFilter.get_value(self.request, self.domain)}
+        filter_values = {'date': self.datespan}
 
         locations_id = [
             Choice(value=location_id, display='') for location_id in self.report_config.locations_id

@@ -4,9 +4,12 @@ from django.utils.translation import ugettext as _
 
 from corehq.apps.es import users as user_es, filters
 from corehq.apps.domain.models import Domain
+from corehq.apps.es.users import user_ids_at_locations_and_descendants
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.util import namedtupledict
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.cases import get_wrapped_owner
+from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.es.users import user_ids_at_locations_and_descendants
 from corehq.util import remove_dups, flatten_list
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.commtrack.models import SQLLocation
@@ -151,6 +154,25 @@ class EmwfUtils(object):
 
         return static_options
 
+    def _group_to_choice_tuple(self, group):
+        return self.reporting_group_tuple(group)
+
+    def id_to_choice_tuple(self, id_):
+        for static_id, text in self.static_options:
+            if (id_ == static_id[3:] and static_id[:3] == "t__") or id_ == static_id:
+                return (static_id, text)
+
+        owner = get_wrapped_owner(id_)
+        if isinstance(owner, Group):
+            return self._group_to_choice_tuple(owner)
+        elif isinstance(owner, SQLLocation):
+            return self.location_tuple(owner)
+        elif isinstance(owner, (CommCareUser, WebUser)):
+            return self.user_tuple(owner)
+        elif owner is None:
+            return None
+        else:
+            raise Exception("Unexpcted id: {}".format(id_))
 
 _UserData = namedtupledict('_UserData', (
     'users',
@@ -278,6 +300,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         user_ids = cls.selected_user_ids(mobile_user_and_group_slugs)
         user_types = cls.selected_user_types(mobile_user_and_group_slugs)
         group_ids = cls.selected_group_ids(mobile_user_and_group_slugs)
+        location_ids = cls.selected_location_ids(mobile_user_and_group_slugs)
 
         user_type_filters = []
         if HQUserType.ADMIN in user_types:
@@ -295,9 +318,13 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
             return q.OR(*user_type_filters)
         else:
             # return matching user types and exact matches
+            location_ids = list(SQLLocation.active_objects
+                                .get_locations_and_children(location_ids)
+                                .location_ids())
             id_filter = filters.OR(
                 filters.term("_id", user_ids),
                 filters.term("__group_ids", group_ids),
+                user_es.location(location_ids),
             )
             if user_type_filters:
                 return q.OR(
@@ -310,13 +337,17 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
     @classmethod
     def pull_users_and_groups(cls, domain, mobile_user_and_group_slugs,
                               include_inactive=False, limit_user_ids=None):
-        user_ids = cls.selected_user_ids(mobile_user_and_group_slugs)
+        user_ids = set(cls.selected_user_ids(mobile_user_and_group_slugs))
         user_types = cls.selected_user_types(mobile_user_and_group_slugs)
         group_ids = cls.selected_group_ids(mobile_user_and_group_slugs)
+        location_ids = cls.selected_location_ids(mobile_user_and_group_slugs)
         users = []
 
+        if location_ids:
+            user_ids |= set(user_ids_at_locations_and_descendants(location_ids))
+
         if limit_user_ids:
-            user_ids = set(limit_user_ids).intersection(set(user_ids))
+            user_ids = set(limit_user_ids).intersection(user_ids)
 
         if user_ids or HQUserType.REGISTERED in user_types:
             users = util.get_all_users_by_domain(
@@ -338,10 +369,14 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
 
         user_dict = {}
         for group in groups:
-            user_dict["%s|%s" % (group.name, group._id)] = util.get_all_users_by_domain(
+            users_in_group = util.get_all_users_by_domain(
                 group=group,
                 simplified=True
             )
+            if limit_user_ids:
+                users_in_group = filter(lambda user: user['user_id'] in limit_user_ids, users_in_group)
+            user_dict["%s|%s" % (group.name, group._id)] = users_in_group
+
         users_in_groups = flatten_list(user_dict.values())
         users_by_group = user_dict
         combined_users = remove_dups(all_users + users_in_groups, "user_id")
@@ -378,6 +413,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
 
 
 class LocationRestrictedMobileWorkerFilter(ExpandedMobileWorkerFilter):
+    slug = 'location_restricted_mobile_worker'
     options_url = 'new_emwf_options'
 
     def get_default_selections(self):

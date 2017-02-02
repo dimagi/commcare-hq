@@ -116,15 +116,17 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
         if not user_filter:
             user_filter = HQUserType.all()
         users = []
-        submitted_user_ids = get_all_user_ids_submitted(domain)
-        registered_user_ids = dict([(user.user_id, user) for user in CommCareUser.by_domain(domain)])
+        submitted_user_ids = set(get_all_user_ids_submitted(domain))
+        registered_users_by_id = dict([(user.user_id, user) for user in CommCareUser.by_domain(domain)])
         if include_inactive:
-            registered_user_ids.update(dict([(u.user_id, u) for u in CommCareUser.by_domain(domain, is_active=False)]))
+            registered_users_by_id.update(dict(
+                [(u.user_id, u) for u in CommCareUser.by_domain(domain, is_active=False)]
+            ))
         for user_id in submitted_user_ids:
-            if user_id in registered_user_ids and user_filter[HQUserType.REGISTERED].show:
-                user = registered_user_ids[user_id]
+            if user_id in registered_users_by_id and user_filter[HQUserType.REGISTERED].show:
+                user = registered_users_by_id[user_id]
                 users.append(user)
-            elif (user_id not in registered_user_ids and
+            elif (user_id not in registered_users_by_id and
                  (user_filter[HQUserType.ADMIN].show or
                   user_filter[HQUserType.DEMO_USER].show or
                   user_filter[HQUserType.UNKNOWN].show)):
@@ -136,10 +138,7 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
 
         if user_filter[HQUserType.REGISTERED].show:
             # now add all the registered users who never submitted anything
-            for user_id in registered_user_ids:
-                if user_id not in submitted_user_ids:
-                    user = CommCareUser.get_by_user_id(user_id)
-                    users.append(user)
+            users.extend(user for id, user in registered_users_by_id.items() if id not in submitted_user_ids)
 
     if simplified:
         return [_report_user_dict(user) for user in users]
@@ -234,6 +233,17 @@ def _report_user_dict(user):
             raw_username=raw_username,
             is_active=user.get('is_active', None)
         )
+
+
+def get_simplified_users(user_es_query):
+    """
+    Accepts an instance of UserES and returns SimplifiedUserInfo dicts for the
+    matching users, sorted by username.
+    """
+    fields = ['_id', 'username', 'first_name', 'last_name', 'doc_type', 'is_active', 'email']
+    users = user_es_query.fields(fields).run().hits
+    users = map(_report_user_dict, users)
+    return sorted(users, key=lambda u: u['username_in_report'])
 
 
 def format_datatables_data(text, sort_key, raw=None):
@@ -360,7 +370,12 @@ def get_possible_reports(domain_name):
     domain = Domain.get_by_name(domain_name)
     for heading, models in report_map:
         for model in models:
-            if model.show_in_navigation(domain=domain_name, project=domain):
+            if getattr(model, 'parent_report_class', None):
+                report_to_check_if_viewable = model.parent_report_class
+            else:
+                report_to_check_if_viewable = model
+
+            if report_to_check_if_viewable.show_in_navigation(domain=domain_name, project=domain):
                 reports.append({
                     'path': model.__module__ + '.' + model.__name__,
                     'name': model.name

@@ -9,7 +9,7 @@
 {% endblock %}
 {% block js %}{{ block.super }}
     <script src="{% static 'app_manager/js/commcaresettings.js' %}"></script>
-    <script src="{% static 'hqwebapp/ko/bulk_upload_file.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/bulk_upload_file.js' %}"></script>
     <script src="{% static 'app_manager/js/supported-languages.js' %}"></script>
     <script src="{% static 'app_manager/js/password_setter.jquery.js' %}"></script>
     <script src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
@@ -24,6 +24,9 @@
     {{ block.super }}
     {% if app.get_doc_type == "Application" %}
         <script src="{% static 'translations/js/translations.js' %}"></script>
+    {% endif %}
+    {% if linked_apps_enabled %}
+        <script src="{% static 'app_manager/js/linked_whitelist.js' %}"></script>
     {% endif %}
     {% if app %}
     <script>
@@ -53,7 +56,16 @@
             $('#commcare-settings').koApplyBindings(COMMCAREHQ.appView.settings);
         });
 
-        {% if not app.is_remote_app %}
+        {% if not app.is_remote_app and app.get_doc_type != 'LinkedApplication' %}
+            {% if linked_apps_enabled %}
+             $(function () {
+                var domains = {{ app.linked_whitelist|JSON }};
+                var save = '{% url "update_linked_whitelist" domain app.id %}';
+                var LinkedWhitelist = hqImport('app_manager/js/linked_whitelist.js').LinkedWhitelist;
+                linkedWhitelist = new LinkedWhitelist(domains, save);
+                $('#whitelist-tab').koApplyBindings(linkedWhitelist);
+             });
+            {% endif %}
         $(function () {
             var multimedia_tab = (function () {
                 var self = {};
@@ -273,7 +285,7 @@
         <div class="tab-pane" id="releases">
             <!-- templates only; will be populated asynchronously -->
             <script type="text/html" class="hq-loading">
-                <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
+                <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator" />
                 {% trans "Loading..." %}
             </script>
             <script type="text/html" class="hq-loading-error">
@@ -293,7 +305,7 @@
         {% if app.get_doc_type == "Application" %}
             <div class="tab-pane multimedia" id="multimedia">
                 <div data-bind="if: load_state() === 'loading'">
-                    <img src="{% static 'hqwebapp/img/ajax-loader.gif' %}" alt="loading indicator" />
+                    <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator" />
                     {% trans "Loading ..." %}
                 </div>
                 <div data-bind="html: multimedia_page_html"></div>
@@ -304,21 +316,60 @@
 
         {% endif %}
         <div class="tab-pane{% if copy_app_form.is_bound %} active{% endif %}" id="copy">
-            <div>
-                <form class="form form-horizontal" method="post" action="{% url "copy_app" domain %}">
-                    {% crispy copy_app_form %}
-                </form>
-                {% if request|toggle_enabled:"EXPORT_ZIPPED_APPS" %}
-                    <h3>Export compressed application</h3>
-                    <form action="{% url "gzip_app" domain app.id %}" method="POST">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fa fa-arrow-down"></i>
-                            {% trans "Download" %}
-                        </button>
-                    </form>
-                {% endif %}
+            {% if linked_apps_enabled %}
+            <div class="tabbable">
+                <ul class="nav nav-tabs">
+                    <li class="active"><a href="#copy-tab" data-toggle="tab">{% trans "Copy Application" %}</a></li>
+                    <li><a href="#whitelist-tab" data-toggle="tab">{% trans "Linked Project Whitelist" %}</a></li>
+                </ul>
+                <div class="spacer"></div>
+                <div class="tab-content">
+                    <div id="copy-tab" class="tab-pane active">
+            {% endif %}
+                        <form class="form form-horizontal" method="post" action="{% url "copy_app" domain %}">
+                            {% crispy copy_app_form %}
+                        </form>
+                        {% if request|toggle_enabled:"EXPORT_ZIPPED_APPS" %}
+                            <h3>Export compressed application</h3>
+                            <form action="{% url "gzip_app" domain app.id %}" method="POST">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fa fa-arrow-down"></i>
+                                    {% trans "Download" %}
+                                </button>
+                            </form>
+                        {% endif %}
+            {% if linked_apps_enabled %}
+                    </div>
+                    <div id="whitelist-tab" class="tab-pane">
+                    <div class="help-block">
+                        {% blocktrans %}
+                            Project spaces on this list are able to update linked applications
+                            with new changes to this application. Project spaces are automatically added to
+                            this list when this application is copied as a linked application to that project
+                            space. If you would like to prevent a project from making future updates,
+                            you can remove them from the list here.
+                        {% endblocktrans %}
+                    </div>
+                    <div data-bind="saveButton: saveButton"></div>
+                    <table class="table">
+                        <thead>
+                            <tr class="row">
+                                <th></th>
+                                <th>{% trans "Project Space" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody data-bind="foreach: linkedDomains">
+                            <tr class="row">
+                                <td class="col-sm-1"><a href="#"><i class="fa fa-remove" data-bind="click: $root.removeDomain"></i></a></td>
+                                <td class="col-sm-11"><span data-bind="text: $data"></span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    </div>
+                </div>
             </div>
+            {% endif %}
         </div>
         <div class="tab-pane" id="delete">
             <h3>{% trans "Delete Application" %}</h3>

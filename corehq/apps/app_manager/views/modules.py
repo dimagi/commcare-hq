@@ -14,6 +14,7 @@ from django.contrib import messages
 from corehq.apps.app_manager.views.media_utils import process_media_attribute, \
     handle_media_edits
 from corehq.apps.case_search.models import case_search_enabled_for_domain
+from corehq.apps.reports.daterange import get_simple_dateranges
 
 from dimagi.utils.logging import notify_exception
 
@@ -35,7 +36,7 @@ from corehq.apps.app_manager.util import (
     prefix_usercase_properties,
     commtrack_ledger_sections,
     module_offers_search,
-    module_case_hierarchy_has_circular_reference)
+    module_case_hierarchy_has_circular_reference, get_app_manager_template)
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.userreports.models import ReportConfiguration, \
     StaticReportConfiguration
@@ -60,22 +61,38 @@ from corehq.apps.app_manager.models import (
     ReportAppConfig,
     UpdateCaseAction,
     FixtureSelect,
-    DefaultCaseSearchProperty)
+    DefaultCaseSearchProperty, get_all_mobile_filter_configs, get_auto_filter_configurations)
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
 
 logger = logging.getLogger(__name__)
 
 
-def get_module_template(module):
+def get_module_template(domain, module):
     if isinstance(module, CareplanModule):
-        return "app_manager/v1/module_view_careplan.html"
+        return get_app_manager_template(
+            domain,
+            "app_manager/v1/module_view_careplan.html",
+            "app_manager/v2/module_view_careplan.html",
+        )
     elif isinstance(module, AdvancedModule):
-        return "app_manager/v1/module_view_advanced.html"
+        return get_app_manager_template(
+            domain,
+            "app_manager/v1/module_view_advanced.html",
+            "app_manager/v2/module_view_advanced.html",
+        )
     elif isinstance(module, ReportModule):
-        return 'app_manager/v1/module_view_report.html'
+        return get_app_manager_template(
+            domain,
+            'app_manager/v1/module_view_report.html',
+            'app_manager/v2/module_view_report.html',
+        )
     else:
-        return "app_manager/v1/module_view.html"
+        return get_app_manager_template(
+            domain,
+            "app_manager/v1/module_view.html",
+            "app_manager/v2/module_view.html",
+        )
 
 
 def get_module_view_context(app, module, lang=None):
@@ -237,10 +254,20 @@ def _get_report_module_context(app, module):
                          'deleted. These will be removed on save.')
         )
 
+    filter_choices = [
+        {'slug': f.doc_type, 'description': f.short_description} for f in get_all_mobile_filter_configs()
+    ]
+    auto_filter_choices = [
+        {'slug': f.slug, 'description': f.short_description} for f in get_auto_filter_configurations()
+
+    ]
     return {
         'all_reports': [_report_to_config(r) for r in all_reports],
         'current_reports': [r.to_json() for r in module.report_configs],
         'warnings': warnings,
+        'filter_choices': filter_choices,
+        'auto_filter_choices': auto_filter_choices,
+        'daterange_choices': [choice._asdict() for choice in get_simple_dateranges()],
     }
 
 
@@ -356,7 +383,7 @@ class AllowWithReason(namedtuple('AllowWithReason', 'allow reason')):
         if self.reason == self.ALL_FORMS_REQUIRE_CASE:
             return gettext_lazy('Not all forms in the case list update a case.')
         elif self.reason == self.MODULE_IN_ROOT:
-            return gettext_lazy("'Menu Mode' is not configured as 'Display and then forms'")
+            return gettext_lazy("'Menu Mode' is not configured as 'Display menu and then forms'")
         elif self.reason == self.PARENT_SELECT_ACTIVE:
             return gettext_lazy("'Parent Selection' is configured.")
 
@@ -417,29 +444,43 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
     resp = {'update': {}, 'corrections': {}}
     if should_edit("case_type"):
         case_type = request.POST.get("case_type", None)
-        if not case_type or is_valid_case_type(case_type, module):
+        if case_type == USERCASE_TYPE and not isinstance(module, AdvancedModule):
+            return HttpResponseBadRequest('"{}" is a reserved case type'.format(USERCASE_TYPE))
+        elif case_type and not is_valid_case_type(case_type, module):
+            return HttpResponseBadRequest("case type is improperly formatted")
+        else:
             old_case_type = module["case_type"]
             module["case_type"] = case_type
-            for cp_mod in (mod for mod in app.modules if isinstance(mod, CareplanModule)):
-                if cp_mod.unique_id != module.unique_id and cp_mod.parent_select.module_id == module.unique_id:
+
+            # rename other reference to the old case type
+            other_careplan_modules = []
+            all_advanced_modules = []
+            modules_with_old_case_type_exist = False
+            for mod in app.modules:
+                if mod.unique_id != module_id:
+                    if isinstance(mod, CareplanModule):
+                        other_careplan_modules.append(mod)
+
+                if isinstance(mod, AdvancedModule):
+                    all_advanced_modules.append(mod)
+
+                modules_with_old_case_type_exist |= mod.case_type == old_case_type
+
+            for cp_mod in other_careplan_modules:
+                if cp_mod.parent_select.module_id == module_id:
                     cp_mod.case_type = case_type
 
-            def rename_action_case_type(mod):
+            for mod in all_advanced_modules:
                 for form in mod.forms:
-                    for action in form.actions.get_all_actions():
-                        if action.case_type == old_case_type:
+                    for action in form.actions.get_load_update_actions():
+                        if action.case_type == old_case_type and action.details_module == module_id:
                             action.case_type = case_type
 
-            if isinstance(module, AdvancedModule):
-                rename_action_case_type(module)
-            for ad_mod in (mod for mod in app.modules if isinstance(mod, AdvancedModule)):
-                if ad_mod.unique_id != module.unique_id and ad_mod.case_type != old_case_type:
-                    # only apply change if the module's case_type does not reference the old value
-                    rename_action_case_type(ad_mod)
-        elif case_type == USERCASE_TYPE and not isinstance(module, AdvancedModule):
-            return HttpResponseBadRequest('"{}" is a reserved case type'.format(USERCASE_TYPE))
-        else:
-            return HttpResponseBadRequest("case type is improperly formatted")
+                    if mod.unique_id == module_id or not modules_with_old_case_type_exist:
+                        for action in form.actions.get_open_actions():
+                            if action.case_type == old_case_type:
+                                action.case_type = case_type
+
     if should_edit("put_in_root"):
         module["put_in_root"] = json.loads(request.POST.get("put_in_root"))
     if should_edit("display_style"):
@@ -759,6 +800,10 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
             item.type = sort_element['type']
             item.direction = sort_element['direction']
             item.display[lang] = sort_element['display']
+            if toggles.SORT_CALCULATION_IN_CASE_LIST.enabled(domain):
+                item.sort_calculation = sort_element['sort_calculation']
+            else:
+                item.sort_calculation = ""
             detail.short.sort_elements.append(item)
     if parent_select is not None:
         module.parent_select = ParentSelect.wrap(parent_select)
@@ -844,7 +889,11 @@ def validate_module_for_build(request, domain, app_id, module_id, ajax=True):
     errors = module.validate_for_build()
     lang, langs = get_langs(request, app)
 
-    response_html = render_to_string('app_manager/v1/partials/build_errors.html', {
+    response_html = render_to_string(get_app_manager_template(
+            domain,
+            'app_manager/v1/partials/build_errors.html',
+            'app_manager/v2/partials/build_errors.html',
+        ), {
         'request': request,
         'app': app,
         'build_errors': errors,

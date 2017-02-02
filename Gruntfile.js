@@ -13,7 +13,6 @@ module.exports = function(grunt) {
      */
     var apps = [
         'app_manager',
-        'app_manager#b3',
         'app_manager#fields',
         'export',
         'export#ko',

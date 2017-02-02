@@ -103,7 +103,7 @@ class EWSExtension(models.Model):
 
     @property
     def verified_number(self):
-        return PhoneNumber.by_phone(self.phone_number)
+        return PhoneNumber.get_two_way_number(self.phone_number)
 
     @property
     def domain_object(self):

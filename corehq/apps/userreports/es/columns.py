@@ -5,13 +5,21 @@ from corehq.apps.es.aggregations import (
 from corehq.apps.userreports.columns import UCRExpandDatabaseSubcolumn
 
 
+class AggColumn(object):
+    def __init__(self, ui_alias):
+        self.row_key = ui_alias
+
+    def get_value(self, row):
+        return row.get(self.row_key, None) if row else None
+
+
 class UCRExpandEsDatabaseSubcolumn(UCRExpandDatabaseSubcolumn):
     def __init__(self, header, ui_alias, es_alias, expand_value, data_source_field, *args, **kwargs):
         self.ui_alias = ui_alias
         self.data_source_field = data_source_field
         self.es_alias = es_alias
         super(UCRExpandEsDatabaseSubcolumn, self).__init__(
-            header, slug=ui_alias, expand_value=expand_value, *args, **kwargs
+            header, slug=ui_alias, expand_value=expand_value, agg_column=AggColumn(ui_alias), *args, **kwargs
         )
 
     @property
@@ -31,8 +39,8 @@ class UCRExpandEsDatabaseSubcolumn(UCRExpandDatabaseSubcolumn):
 def expand_column(report_column, distinct_values, lang):
     columns = []
     for index, val in enumerate(distinct_values):
-        es_alias = u"{}_dash_{}".format(report_column.column_id, index)
         ui_alias = u"{}-{}".format(report_column.column_id, index)
+        es_alias = safe_es_column(ui_alias)
         columns.append(UCRExpandEsDatabaseSubcolumn(
             u"{}-{}".format(report_column.get_header(lang), val),
             ui_alias=ui_alias,
@@ -45,3 +53,7 @@ def expand_column(report_column, distinct_values, lang):
             help_text=report_column.description
         ))
     return columns
+
+
+def safe_es_column(column_name):
+    return column_name.replace('-', '_dash_')

@@ -1,7 +1,8 @@
 .form-container {
-  padding-top: 35px;
   background-color: white;
-  min-height: 403px;
+  min-height: -webkit-calc(~"100vh - " (@webforms-nav-height + @webforms-breadcrumb-height));
+  min-height: -moz-calc(~"100vh - " (@webforms-nav-height + @webforms-breadcrumb-height));
+  min-height: calc(~"100vh - " (@webforms-nav-height + @webforms-breadcrumb-height));
   box-sizing: border-box;
 
   .page-header {
@@ -40,12 +41,7 @@
 }
 
 .form-single-question {
-  padding-top: 66px;
-  min-height: 443px;
-}
-
-.preview-tablet-mode .form-single-question {
-  min-height: 642px;
+  padding-top: 0px;
 }
 
 .form-container .form-actions {

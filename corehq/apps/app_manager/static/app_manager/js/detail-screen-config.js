@@ -92,6 +92,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
 
         self.textField = uiElement.input().val(typeof params.field !== 'undefined' ? params.field : "");
         module.CC_DETAIL_SCREEN.setUpAutocomplete(this.textField, params.properties);
+        self.sortCalculation = ko.observable(typeof params.sortCalculation !== 'undefined' ? params.sortCalculation : "");
 
         self.showWarning = ko.observable(false);
         self.hasValidPropertyName = function(){
@@ -118,6 +119,9 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         });
         self.direction = ko.observable(typeof params.direction !== 'undefined' ? params.direction : "");
         self.direction.subscribe(function () {
+            self.notifyButton();
+        });
+        self.sortCalculation.subscribe(function () {
             self.notifyButton();
         });
 
@@ -164,14 +168,15 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         var self = this;
         self.sortRows = ko.observableArray([]);
 
-        self.addSortRow = function (field, type, direction, display, notify) {
+        self.addSortRow = function (field, type, direction, display, notify, sortCalculation) {
             self.sortRows.push(new SortRow({
                 field: field,
                 type: type,
                 direction: direction,
                 display: display,
                 saveButton: saveButton,
-                properties: properties
+                properties: properties,
+                sortCalculation: sortCalculation,
             }));
             if (notify) {
                 saveButton.fire('change');
@@ -1057,12 +1062,12 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                         column.saveAttempted(true);
                         if (!column.isTab) {
                             if (column.showWarning()){
-                                alert("There are errors in your property names");
+                                alert(gettext("There are errors in your property names"));
                                 return;
                             }
                         } else {
                             if (column.showWarning()){
-                                alert("There are errors in your tabs");
+                                alert(gettext("There are errors in your tabs"));
                                 return;
                             }
                             containsTab = true;
@@ -1070,7 +1075,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                     }
                     if (containsTab){
                         if (!columns[0].isTab) {
-                            alert("All properties must be below a tab");
+                            alert(gettext("All properties must be below a tab"));
                             return;
                         }
                     }
@@ -1169,6 +1174,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                                 type: row.type(),
                                 direction: row.direction(),
                                 display: row.display(),
+                                sort_calculation: row.sortCalculation(),
                             };
                         }));
                     }
@@ -1306,7 +1312,8 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                                 spec.sortRows[j].type,
                                 spec.sortRows[j].direction,
                                 spec.sortRows[j].display[this.lang],
-                                false
+                                false,
+                                spec.sortRows[j].sort_calculation
                             );
                         }
                     }
@@ -1345,44 +1352,43 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
 
         DetailScreenConfig.message = {
 
-            MODEL: 'Model',
-            FIELD: 'Property',
-            HEADER: 'Display Text',
-            FORMAT: 'Format',
+            FIELD: gettext('Property'),
+            HEADER: gettext('Display Text'),
+            FORMAT: gettext('Format'),
 
-            PLAIN_FORMAT: 'Plain',
-            DATE_FORMAT: 'Date',
-            TIME_AGO_FORMAT: 'Time Since or Until Date',
-            TIME_AGO_EXTRA_LABEL: ' Measuring ',
+            PLAIN_FORMAT: gettext('Plain'),
+            DATE_FORMAT: gettext('Date'),
+            TIME_AGO_FORMAT: gettext('Time Since or Until Date'),
+            TIME_AGO_EXTRA_LABEL: gettext(' Measuring '),
             TIME_AGO_INTERVAL: {
-                YEARS: 'Years since date',
-                MONTHS: 'Months since date',
-                WEEKS: 'Weeks since date',
-                DAYS: 'Days since date',
-                DAYS_UNTIL: 'Days until date',
-                WEEKS_UNTIL: 'Weeks until date',
-                MONTHS_UNTIL: 'Months until date'
+                YEARS: gettext('Years since date'),
+                MONTHS: gettext('Months since date'),
+                WEEKS: gettext('Weeks since date'),
+                DAYS: gettext('Days since date'),
+                DAYS_UNTIL: gettext('Days until date'),
+                WEEKS_UNTIL: gettext('Weeks until date'),
+                MONTHS_UNTIL: gettext('Months until date'),
             },
-            PHONE_FORMAT: 'Phone Number',
-            ENUM_FORMAT: 'ID Mapping',
-            ENUM_IMAGE_FORMAT: 'Icon',
-            ENUM_EXTRA_LABEL: 'Mapping: ',
-            LATE_FLAG_FORMAT: 'Late Flag',
-            LATE_FLAG_EXTRA_LABEL: ' Days late ',
+            PHONE_FORMAT: gettext('Phone Number'),
+            ENUM_FORMAT: gettext('ID Mapping'),
+            ENUM_IMAGE_FORMAT: gettext('Icon'),
+            ENUM_EXTRA_LABEL: gettext('Mapping: '),
+            LATE_FLAG_FORMAT: gettext('Late Flag'),
+            LATE_FLAG_EXTRA_LABEL: gettext(' Days late '),
             FILTER_XPATH_EXTRA_LABEL: '',
-            INVISIBLE_FORMAT: 'Search Only',
-            ADDRESS_FORMAT: 'Address',
-            PICTURE_FORMAT: 'Picture',
-            AUDIO_FORMAT: 'Audio',
-            CALC_XPATH_FORMAT: 'Calculate',
+            INVISIBLE_FORMAT: gettext('Search Only'),
+            ADDRESS_FORMAT: gettext('Address'),
+            PICTURE_FORMAT: gettext('Picture'),
+            AUDIO_FORMAT: gettext('Audio'),
+            CALC_XPATH_FORMAT: gettext('Calculate'),
             CALC_XPATH_EXTRA_LABEL: '',
-            DISTANCE_FORMAT: 'Distance from current location',
+            DISTANCE_FORMAT: gettext('Distance from current location'),
 
-            ADD_COLUMN: 'Add to list',
-            COPY_COLUMN: 'Duplicate',
-            DELETE_COLUMN: 'Delete',
+            ADD_COLUMN: gettext('Add to list'),
+            COPY_COLUMN: gettext('Duplicate'),
+            DELETE_COLUMN: gettext('Delete'),
 
-            UNSAVED_MESSAGE: 'You have unsaved detail screen configurations.'
+            UNSAVED_MESSAGE: gettext('You have unsaved detail screen configurations.'),
         };
 
         DetailScreenConfig.TIME_AGO = {
@@ -1413,17 +1419,17 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
 
         if (COMMCAREHQ.previewEnabled('ENUM_IMAGE')) {
             DetailScreenConfig.MENU_OPTIONS.push(
-                {value: "enum-image", label: DetailScreenConfig.message.ENUM_IMAGE_FORMAT + ' (Preview!)'}
+                {value: "enum-image", label: DetailScreenConfig.message.ENUM_IMAGE_FORMAT + gettext(' (Preview!)')}
             );
         }
 
         if (COMMCAREHQ.previewEnabled('CALC_XPATHS')) {
             DetailScreenConfig.MENU_OPTIONS.push(
-                {value: "calculate", label: DetailScreenConfig.message.CALC_XPATH_FORMAT + ' (Preview!)'}
+                {value: "calculate", label: DetailScreenConfig.message.CALC_XPATH_FORMAT + gettext(' (Preview!)')}
             );
         }
 
-        DetailScreenConfig.field_format_warning_message = "Must begin with a letter and contain only letters, numbers, '-', and '_'";
+        DetailScreenConfig.field_format_warning_message = gettext("Must begin with a letter and contain only letters, numbers, '-', and '_'");
 
         DetailScreenConfig.field_val_re = new RegExp(
             '^(' + word + ':)*(' + word + '\\/)*#?' + word + '$'

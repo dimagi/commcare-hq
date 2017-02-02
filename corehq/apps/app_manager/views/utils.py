@@ -54,7 +54,7 @@ def back_to_main(request, domain, app_id=None, module_id=None, form_id=None,
             1: 'default_app',
             2: 'view_app',
             3: 'view_module',
-            4: 'form_designer' if toggles.APP_MANAGER_V2.enabled(domain) else 'view_form',
+            4: 'form_source' if toggles.APP_MANAGER_V2.enabled(domain) else 'view_form',
         }[len(args)]
 
     return HttpResponseRedirect(

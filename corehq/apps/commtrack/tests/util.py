@@ -2,7 +2,7 @@ from datetime import datetime
 from django.test import TestCase
 from lxml import etree
 
-from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
+from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms, delete_all_ledgers
 from casexml.apps.case.tests.util import delete_all_sync_logs
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.tests.utils import generate_restore_payload
@@ -83,7 +83,11 @@ def bootstrap_user(setup, username=TEST_USER, domain=TEST_DOMAIN,
     if home_loc == setup.loc.site_code:
         user.set_location(setup.loc)
 
-    user.save_verified_number(domain, phone_number, verified=True, backend_id=backend)
+    entry = user.get_or_create_phone_entry(phone_number)
+    entry.set_two_way()
+    entry.set_verified()
+    entry.backend_id = backend
+    entry.save()
     return CommCareUser.wrap(user.to_json())
 
 
@@ -187,6 +191,7 @@ class CommTrackTest(TestCase):
         self.backend_mapping.delete()
         self.backend.delete()
         delete_all_xforms()
+        delete_all_ledgers()
         delete_all_cases()
         delete_all_sync_logs()
         delete_all_users()

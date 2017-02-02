@@ -357,7 +357,7 @@
             "Tanzania": {
               "default": 0,
               "cases": {
-                "Geita": 20000
+                "Geita": 0
               },
               "type": "switch",
               "switch_on": {
@@ -705,7 +705,18 @@
             "Tanzania": {
               "default": 0,
               "cases": {
-                "Geita TC": 20000
+                "Chato": 76482,
+                "Nyang'hwale": 41135,
+                "Bukoba rural": 63744,
+                "Ngara": 54211,
+                "Missenyi": 45344,
+                "Musoma rural": 36682,
+                "Butiama": 52748,
+                "Sengerema": 105129,
+                "Kwimba": 79430,
+                "Geita TC": 20000,
+                "Unguja": 26774,
+                "Pemba": 13714
               },
               "type": "switch",
               "switch_on": {
@@ -1097,13 +1108,7 @@
             "Tanzania": {
               "default": 0,
               "cases": {
-                "Mtakuja": 3018,
-                "Nyankumbu": 2624,
-                "Bunegezi": 2914,
-                "Kalangalala": 2993,
-                "Bulela": 2887,
-                "Bung'wangoko": 2819,
-                "Kasamwa": 2745
+                "Mtakuja": 0
               },
               "type": "switch",
               "switch_on": {
@@ -1429,7 +1434,7 @@
             "Ethiopia": 708258,
             "Mali": 242684,
             "Madagascar": 311916,
-            "Tanzania": 502934,
+            "Tanzania": 615393,
             "benin": 270141
           },
           "type": "switch",

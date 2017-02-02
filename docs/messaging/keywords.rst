@@ -1,7 +1,7 @@
 Keywords
 ========
 
-A Keyword (`corehq.apps.reminders.models.SurveyKeyword <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/reminders/models.py>`_)
+A Keyword (`corehq.apps.sms.models.Keyword <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/sms/models.py>`_)
 defines an action or set of actions to be taken when an inbound SMS is received whose first word matches the keyword configuration.
 
 Any number of actions can be taken, which include:

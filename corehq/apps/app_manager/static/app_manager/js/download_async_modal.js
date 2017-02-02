@@ -3,8 +3,8 @@ hqDefine('app_manager/js/download_async_modal.js', function () {
         "use strict";
         var self = this;
         self.POLL_FREQUENCY = 1500; //ms
-        self.ERROR_MESSAGE = "Sorry, something went wrong with the download. " +
-                             "If you see this repeatedly please report an issue.";
+        self.ERROR_MESSAGE = gettext("Sorry, something went wrong with the download. " +
+                             "If you see this repeatedly please report an issue.");
 
         self.$el = $el;
         self.el_id = $el.attr("id");

@@ -42,9 +42,9 @@ class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectRep
 
     @property
     def config(self):
-        week = self.request.GET.get('week')
+        week = int(self.request.GET.get('week'))
         year = self.request.GET.get('year')
-        date = "%s-W%s-1" % (year, week)
+        date = "%s-W%s-1" % (year, week + 1)
         monday = datetime.datetime.strptime(date, "%Y-W%W-%w")
 
         params = {
@@ -386,7 +386,7 @@ class CumulativeMalaria(MalariaReport):
             denom = (x or 0) + (y or 0) + (z or 0) + (w or 0)
             if not denom:
                 return {'sort_key': 'NA', 'html': 0}
-            div = (num or 1) / float(denom)
+            div = (num or 0) / float(denom)
             return {'sort_key': div, 'html': '%.2f%%' % (div * 100)}
 
         return [

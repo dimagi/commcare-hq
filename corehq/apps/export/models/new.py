@@ -9,7 +9,13 @@ from couchdbkit.ext.django.schema import IntegerProperty
 from django.utils.translation import ugettext as _
 from django.core.urlresolvers import reverse
 
+from corehq.apps.reports.models import HQUserType
+from soil.progress import set_task_progress
+
 from corehq.apps.export.esaccessors import get_ledger_section_entry_combinations
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.reports.daterange import get_daterange_start_end_dates
+from corehq.util.timezones.utils import get_timezone_for_domain
 from dimagi.utils.decorators.memoized import memoized
 from couchdbkit import SchemaListProperty, SchemaProperty, BooleanProperty, DictProperty
 
@@ -18,11 +24,11 @@ from corehq.apps.userreports.expressions.getters import NestedDictGetter
 from corehq.apps.app_manager.const import STOCK_QUESTION_TAG_NAMES
 from corehq.apps.app_manager.dbaccessors import (
     get_built_app_ids_with_submissions_for_app_id,
-    get_all_built_app_ids_and_versions,
+    get_built_app_ids_with_submissions_for_app_ids_and_versions,
     get_latest_app_ids_and_versions,
     get_app_ids_in_domain,
 )
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models import Application, AdvancedFormActions
 from corehq.apps.app_manager.util import get_case_properties, ParentCasePropertyBuilder
 from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import Product
@@ -42,6 +48,7 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
     DateTimeProperty,
     SetProperty,
+    DateProperty,
 )
 from corehq.apps.export.const import (
     PROPERTY_TAG_UPDATE,
@@ -184,6 +191,7 @@ class ExportColumn(DocumentSchema):
     label = StringProperty()
     # Determines whether or not to show the column in the UI Config without clicking advanced
     is_advanced = BooleanProperty(default=False)
+    is_deleted = BooleanProperty(default=False)
     selected = BooleanProperty(default=False)
     tags = ListProperty()
     help_text = StringProperty()
@@ -304,15 +312,15 @@ class ExportColumn(DocumentSchema):
         :param app_ids_and_versions: A dictionary of app ids that map to latest build version
         most recent state of the app(s) in the domain
         """
-        is_deleted = self._is_deleted(app_ids_and_versions)
+        self.is_deleted = self._is_deleted(app_ids_and_versions)
 
         tags = []
-        if is_deleted:
+        if self.is_deleted:
             tags.append(PROPERTY_TAG_DELETED)
 
         if self.item.tag:
             tags.append(self.item.tag)
-        self.is_advanced = is_deleted or self.is_advanced
+        self.is_advanced = self.is_advanced
         self.tags = tags
 
     @property
@@ -495,6 +503,65 @@ class TableConfiguration(DocumentSchema):
         return TableConfiguration._get_sub_documents_helper(path[1:], new_docs)
 
 
+class DatePeriod(DocumentSchema):
+    period_type = StringProperty(required=True)
+    days = IntegerProperty()
+    begin = DateProperty()
+    end = DateProperty()
+
+    @property
+    def startdate(self):
+        startdate, _ = get_daterange_start_end_dates(self.period_type, self.begin, self.end, self.days)
+        return startdate
+
+    @property
+    def enddate(self):
+        _, enddate = get_daterange_start_end_dates(self.period_type, self.begin, self.end, self.days)
+        return enddate
+
+
+class ExportInstanceFilters(DocumentSchema):
+    """
+    A class represented a saved set of filters for an export
+    These are used for Daily Saved Exports, and Dashboard Feeds (which are a type of Daily Saved Export)
+    """
+    # accessible_location_ids is a list of ids that the creator of the report (and thereby creator of the filters
+    # as well) has access to. locations is a list of ids that the user has selected in the filter UI. The user
+    # can't change accessible_location_ids, and they will always be used to filter the export, but locations are
+    # user configurable
+    accessible_location_ids = ListProperty(StringProperty)
+    locations = ListProperty(StringProperty)
+    date_period = SchemaProperty(DatePeriod, default=None)
+    users = ListProperty(StringProperty)
+    reporting_groups = ListProperty(StringProperty)
+    user_types = ListProperty(IntegerProperty)
+    can_access_all_locations = BooleanProperty(default=True)
+
+    def is_location_safe_for_user(self, request):
+        """
+        Return True if the couch_user of the given request has permission to export data with this filter.
+        """
+        if self.can_access_all_locations and not request.can_access_all_locations:
+            return False
+        elif not self.can_access_all_locations:
+            users_accessible_locations = SQLLocation.active_objects.accessible_location_ids(
+                request.domain, request.couch_user
+            )
+            if not set(self.accessible_location_ids).issubset(users_accessible_locations):
+                return False
+        return True
+
+
+class CaseExportInstanceFilters(ExportInstanceFilters):
+    sharing_groups = ListProperty(StringProperty)
+    show_all_data = BooleanProperty(default=True)
+    show_project_data = BooleanProperty()
+
+
+class FormExportInstanceFilters(ExportInstanceFilters):
+    user_types = ListProperty(IntegerProperty, default=[HQUserType.REGISTERED])
+
+
 class ExportInstance(BlobMixin, Document):
     """
     This is an instance of an export. It contains the tables to export and
@@ -505,6 +572,11 @@ class ExportInstance(BlobMixin, Document):
     domain = StringProperty()
     tables = ListProperty(TableConfiguration)
     export_format = StringProperty(default='csv')
+    app_id = StringProperty()
+
+    # The id of the schema that was used to generate the instance.
+    # Used for information and debugging purposes
+    schema_id = StringProperty()
 
     # Whether to split multiselects into multiple columns
     split_multiselects = BooleanProperty(default=False)
@@ -534,6 +606,12 @@ class ExportInstance(BlobMixin, Document):
     @property
     def defaults(self):
         return FormExportInstanceDefaults if self.type == FORM_EXPORT else CaseExportInstanceDefaults
+
+    def get_filters(self):
+        """
+        Return a list of export.filters.ExportFilter objects
+        """
+        raise NotImplementedError
 
     @property
     @memoized
@@ -567,6 +645,8 @@ class ExportInstance(BlobMixin, Document):
             instance = cls._new_from_schema(schema)
 
         instance.name = instance.name or instance.defaults.get_default_instance_name(schema)
+        instance.app_id = schema.app_id
+        instance.schema_id = schema._id
 
         latest_app_ids_and_versions = get_latest_app_ids_and_versions(
             schema.domain,
@@ -612,11 +692,19 @@ class ExportInstance(BlobMixin, Document):
                 prev_index = index
 
             cls._insert_system_properties(instance.domain, schema.type, table)
+            table.columns = cls._move_selected_columns_to_top(table.columns)
 
             if not instance.get_table(group_schema.path):
                 instance.tables.append(table)
 
         return instance
+
+    @classmethod
+    def _move_selected_columns_to_top(cls, columns):
+        ordered_columns = []
+        ordered_columns.extend([column for column in columns if column.selected])
+        ordered_columns.extend([column for column in columns if not column.selected])
+        return ordered_columns
 
     @classmethod
     def _insert_system_properties(cls, domain, export_type, table):
@@ -747,6 +835,14 @@ class CaseExportInstance(ExportInstance):
     case_type = StringProperty()
     type = CASE_EXPORT
 
+    # static filters to limit the data in this export
+    # filters are only used in daily saved and HTML (dashboard feed) exports
+    filters = SchemaProperty(CaseExportInstanceFilters)
+
+    @property
+    def identifier(self):
+        return self.case_type
+
     @classmethod
     def _new_from_schema(cls, schema):
         return cls(
@@ -754,14 +850,40 @@ class CaseExportInstance(ExportInstance):
             case_type=schema.case_type,
         )
 
+    def get_filters(self):
+        if self.filters:
+            from corehq.apps.export.forms import CaseExportFilterBuilder
+            filter_builder = CaseExportFilterBuilder(
+                Domain.get_by_name(self.domain), get_timezone_for_domain(self.domain)
+            )
+            return filter_builder.get_filters(
+                self.filters.can_access_all_locations,
+                self.filters.accessible_location_ids,
+                self.filters.show_all_data,
+                self.filters.show_project_data,
+                self.filters.user_types,
+                self.filters.date_period,
+                self.filters.sharing_groups + self.filters.reporting_groups,
+                self.filters.locations,
+                self.filters.users,
+            )
+        return []
+
 
 class FormExportInstance(ExportInstance):
     xmlns = StringProperty()
-    app_id = StringProperty()
     type = FORM_EXPORT
 
     # Whether to include duplicates and other error'd forms in export
     include_errors = BooleanProperty(default=False)
+
+    # static filters to limit the data in this export
+    # filters are only used in daily saved and HTML (dashboard feed) exports
+    filters = SchemaProperty(FormExportInstanceFilters)
+
+    @property
+    def identifier(self):
+        return self.xmlns
 
     @property
     def formname(self):
@@ -774,6 +896,23 @@ class FormExportInstance(ExportInstance):
             xmlns=schema.xmlns,
             app_id=schema.app_id,
         )
+
+    def get_filters(self):
+        if self.filters:
+            from corehq.apps.export.forms import FormExportFilterBuilder
+            filter_builder = FormExportFilterBuilder(
+                Domain.get_by_name(self.domain), get_timezone_for_domain(self.domain)
+            )
+            return filter_builder.get_filters(
+                self.filters.can_access_all_locations,
+                self.filters.accessible_location_ids,
+                self.filters.reporting_groups,
+                self.filters.user_types,
+                self.filters.users,
+                self.filters.locations,
+                self.filters.date_period,
+            )
+        return []
 
 
 class ExportInstanceDefaults(object):
@@ -1045,18 +1184,31 @@ class ExportDataSchema(Document):
     class Meta:
         app_label = 'export'
 
+    def get_number_of_apps_to_process(self):
+        return len(self._get_app_build_ids_to_process(
+            self.domain,
+            self.app_id,
+            self.last_app_versions,
+        ))
+
     @classmethod
-    def generate_schema_from_builds(cls, domain, app_id, identifier, force_rebuild=False):
+    def generate_schema_from_builds(cls, domain, app_id, identifier, force_rebuild=False,
+            only_process_current_builds=False, task=None):
         """Builds a schema from Application builds for a given identifier
 
         :param domain: The domain that the export belongs to
         :param app_id: The app_id that the export belongs to (or None if export is not associated with an app.
         :param identifier: The unique identifier of the schema being exported.
             case_type for Case Exports and xmlns for Form Exports
+        :param only_process_current_builds: Only process the current apps, not any builds. This
+            means that deleted items may not be present in the schema since past builds have not been
+            processed.
+        :param task: A celery task to update the progress of the build
         :returns: Returns a ExportDataSchema instance
         """
 
         original_id, original_rev = None, None
+        apps_processed = 0
         current_schema = cls.get_latest_export_schema(domain, app_id, identifier)
         if (current_schema
                 and not force_rebuild
@@ -1065,15 +1217,14 @@ class ExportDataSchema(Document):
         else:
             current_schema = cls()
 
-        app_build_ids = cls._get_app_build_ids_to_process(
-            domain,
-            app_id,
-            current_schema.last_app_versions,
-        )
-        if app_id:
-            app_build_ids.append(app_id)
-        else:
-            app_build_ids.extend(cls._get_current_app_ids_for_domain(domain))
+        app_build_ids = []
+        if not only_process_current_builds:
+            app_build_ids = cls._get_app_build_ids_to_process(
+                domain,
+                app_id,
+                current_schema.last_app_versions,
+            )
+        app_build_ids.extend(cls._get_current_app_ids_for_domain(domain, app_id))
 
         for app_doc in iter_docs(Application.get_db(), app_build_ids, chunksize=10):
             if (not app_doc.get('has_submissions', False) and
@@ -1087,7 +1238,14 @@ class ExportDataSchema(Document):
                 identifier,
             )
 
-            current_schema.record_update(app.copy_of or app._id, app.version)
+            # Only record the version of builds on the schema. We don't care about
+            # whether or not the schema has seen the current build because that always
+            # gets processed.
+            if app.copy_of:
+                current_schema.record_update(app.copy_of, app.version)
+
+            apps_processed += 1
+            set_task_progress(task, apps_processed, len(app_build_ids))
 
         inferred_schema = cls._get_inferred_schema(domain, identifier)
         if inferred_schema:
@@ -1217,8 +1375,10 @@ class FormExportDataSchema(ExportDataSchema):
         self.xmlns = form_xmlns
 
     @classmethod
-    def _get_current_app_ids_for_domain(cls, domain):
-        raise BadExportConfiguration('Form exports should only use one app_id and this should not be called')
+    def _get_current_app_ids_for_domain(cls, domain, app_id):
+        if not app_id:
+            raise BadExportConfiguration('Must include app id for form data schemas')
+        return [app_id]
 
     @staticmethod
     def _get_app_build_ids_to_process(domain, app_id, last_app_versions):
@@ -1240,9 +1400,14 @@ class FormExportDataSchema(ExportDataSchema):
 
         case_updates = form.get_case_updates(form.get_module().case_type)
         xform = form.wrapped_xform()
+        if isinstance(form.actions, AdvancedFormActions):
+            open_case_actions = form.actions.open_cases
+        else:
+            open_case_actions = form.actions.subcases
+
         repeats_with_subcases = {
-            subcase_action for subcase_action in form.actions.subcases
-            if subcase_action.repeat_context
+            open_case_action for open_case_action in open_case_actions
+            if open_case_action.repeat_context
         }
         xform_schema = cls._generate_schema_from_xform(
             xform,
@@ -1443,20 +1608,15 @@ class CaseExportDataSchema(ExportDataSchema):
         return get_inferred_schema(domain, case_type)
 
     @classmethod
-    def _get_current_app_ids_for_domain(cls, domain):
+    def _get_current_app_ids_for_domain(cls, domain, app_id):
         return get_app_ids_in_domain(domain)
 
     @staticmethod
     def _get_app_build_ids_to_process(domain, app_id, last_app_versions):
-        app_build_verions = get_all_built_app_ids_and_versions(domain)
-        # Filter by current app id
-        app_build_verions = filter(
-            lambda app_build_version:
-                last_app_versions.get(app_build_version.app_id, -1) < app_build_version.version,
-            app_build_verions
+        return get_built_app_ids_with_submissions_for_app_ids_and_versions(
+            domain,
+            last_app_versions
         )
-        # Map to all build ids
-        return map(lambda app_build_version: app_build_version.build_id, app_build_verions)
 
     @staticmethod
     def get_latest_export_schema(domain, app_id, case_type):

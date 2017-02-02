@@ -95,7 +95,7 @@ LOCATION_ACCESS_DENIED = mark_safe(ugettext_lazy(
     "This project has restricted data access rules. Please contact your "
     "project administrator to be assigned access to data in this project. "
     'More information is available <a href="{link}">here</a>.'
-).format(link="https://wiki.commcarehq.org/display/commcarepublic/Data+Access+Restrictions"))
+).format(link="https://wiki.commcarehq.org/display/commcarepublic/Data+Access+and+User+Editing+Restrictions"))
 
 LOCATION_SAFE_TASTYPIE_RESOURCES = set()
 
@@ -214,6 +214,9 @@ def can_edit_form_location(domain, web_user, form):
         if not form.user_id:
             return False
         form_user = CouchUser.get_by_user_id(form.user_id)
+        if not form_user:
+            # form most likely submitted by a system user
+            return False
         if domain_obj.supports_multiple_locations_per_user:
             form_locations = [loc.sql_location for loc in form_user.locations]
         else:

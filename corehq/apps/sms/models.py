@@ -14,8 +14,8 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.mixin import UUIDGeneratorMixin
 from corehq.apps.users.models import CouchUser
 from corehq.apps.sms.mixin import (CommCareMobileContactMixin,
-    InvalidFormatException,
-    apply_leniency, BadSMSConfigException)
+    InvalidFormatException, PhoneNumberInUseException, apply_leniency,
+    BadSMSConfigException)
 from corehq.apps.sms import util as smsutil
 from corehq.apps.sms.messages import (MSG_MOBILE_WORKER_INVITATION_START,
     MSG_MOBILE_WORKER_ANDROID_INVITATION, MSG_MOBILE_WORKER_JAVA_INVITATION,
@@ -23,7 +23,7 @@ from corehq.apps.sms.messages import (MSG_MOBILE_WORKER_INVITATION_START,
 from corehq.const import GOOGLE_PLAY_STORE_COMMCARE_URL
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
-from dimagi.utils.couch.migration import SyncSQLToCouchMixin
+from dimagi.utils.couch import CriticalSection
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.load_balance import load_balance
 from django.utils.translation import ugettext_noop, ugettext_lazy
@@ -506,6 +506,16 @@ class PhoneNumber(UUIDGeneratorMixin, models.Model):
     ivr_backend_id = models.CharField(max_length=126, null=True)
     verified = models.NullBooleanField(default=False)
     contact_last_modified = models.DateTimeField(null=True)
+    created_on = models.DateTimeField(auto_now_add=True)
+
+    # If True, this phone number can be used for inbound SMS as well as outbound
+    # (because when we look up the phone number for inbound SMS, we get this entry back).
+    # If False, this phone number can only be used for outbound SMS because another
+    # PhoneNumber entry is marked with is_two_way=True for the same phone_number.
+    is_two_way = models.BooleanField()
+
+    # True if the verification workflow has been started and not completed for this PhoneNumber
+    pending_verification = models.BooleanField()
 
     def __init__(self, *args, **kwargs):
         super(PhoneNumber, self).__init__(*args, **kwargs)
@@ -554,26 +564,25 @@ class PhoneNumber(UUIDGeneratorMixin, models.Model):
 
     @classmethod
     def by_extensive_search(cls, phone_number):
-        # Try to look up the verified number entry directly
-        v = cls.by_phone(phone_number)
+        p = cls.get_two_way_number(phone_number)
 
         # If not found, try to see if any number in the database is a substring
         # of the number given to us. This can happen if the telco prepends some
         # international digits, such as 011...
-        if v is None:
-            v = cls.by_phone(phone_number[1:])
-        if v is None:
-            v = cls.by_phone(phone_number[2:])
-        if v is None:
-            v = cls.by_phone(phone_number[3:])
+        if not p:
+            p = cls.get_two_way_number(phone_number[1:])
+        if not p:
+            p = cls.get_two_way_number(phone_number[2:])
+        if not p:
+            p = cls.get_two_way_number(phone_number[3:])
 
         # If still not found, try to match only the last digits of numbers in
         # the database. This can happen if the telco removes the country code
         # in the caller id.
-        if v is None:
-            v = cls.by_suffix(phone_number)
+        if not p:
+            p = cls.get_two_way_number_by_suffix(phone_number)
 
-        return v
+        return p
 
     @classmethod
     def by_couch_id(cls, couch_id):
@@ -583,50 +592,70 @@ class PhoneNumber(UUIDGeneratorMixin, models.Model):
             return None
 
     @classmethod
-    def by_phone(cls, phone_number, include_pending=False):
-        result = cls._by_phone(apply_leniency(phone_number))
-        return cls._filter_pending(result, include_pending)
-
-    @classmethod
-    def by_suffix(cls, phone_number, include_pending=False):
-        """
-        Used to lookup a PhoneNumber, trying to exclude country code digits.
-        """
-        result = cls._by_suffix(apply_leniency(phone_number))
-        return cls._filter_pending(result, include_pending)
+    def get_two_way_number(cls, phone_number):
+        return cls._get_two_way_number(apply_leniency(phone_number))
 
     @classmethod
     @quickcache(['phone_number'], timeout=60 * 60)
-    def _by_phone(cls, phone_number):
-        try:
-            return cls.objects.get(phone_number=phone_number)
-        except cls.DoesNotExist:
-            return None
+    def _get_two_way_number(cls, phone_number):
+        with CriticalSection(['PhoneNumber-CacheAccessor-get_two_way_number-%s' % phone_number]):
+            try:
+                return cls.objects.get(phone_number=phone_number, is_two_way=True)
+            except cls.DoesNotExist:
+                return None
 
     @classmethod
-    def _by_suffix(cls, phone_number):
-        # Decided not to cache this method since in order to clear the cache
-        # we'd have to clear using all suffixes of a number (which would involve
-        # up to ~10 cache clear calls on each save). Since this method is used so
-        # infrequently, it's better to not cache vs. clear so many keys on each
-        # save. Once all of our IVR gateways provide reliable caller id info,
-        # we can also remove this method.
+    def get_number_pending_verification(cls, phone_number):
+        return cls._get_number_pending_verification(apply_leniency(phone_number))
+
+    @classmethod
+    @quickcache(['phone_number'], timeout=60 * 60)
+    def _get_number_pending_verification(cls, phone_number):
+        with CriticalSection(['PhoneNumber-CacheAccessor-get_number_pending_verification-%s' % phone_number]):
+            try:
+                return cls.objects.get(
+                    phone_number=phone_number,
+                    verified=False,
+                    pending_verification=True
+                )
+            except cls.DoesNotExist:
+                return None
+
+    @classmethod
+    def get_reserved_number(cls, phone_number):
+        return (
+            cls.get_two_way_number(phone_number) or
+            cls.get_number_pending_verification(phone_number)
+        )
+
+    @classmethod
+    def get_two_way_number_with_domain_scope(cls, phone_number, domains):
+        phone_number = apply_leniency(phone_number)
+        return (cls
+                .objects
+                .filter(phone_number=phone_number, domain__in=domains)
+                .order_by('-is_two_way', 'created_on', 'couch_id')
+                .first())
+
+    @classmethod
+    def get_two_way_number_by_suffix(cls, phone_number):
+        """
+        Used to lookup a two-way PhoneNumber, trying to exclude country code digits.
+
+        Decided not to cache this method since in order to clear the cache
+        we'd have to clear using all suffixes of a number (which would involve
+        up to ~10 cache clear calls on each save). Since this method is used so
+        infrequently, it's better to not cache vs. clear so many keys on each
+        save. Once all of our IVR gateways provide reliable caller id info,
+        we can also remove this method.
+        """
+        phone_number = apply_leniency(phone_number)
         try:
-            return cls.objects.get(phone_number__endswith=phone_number)
+            return cls.objects.get(phone_number__endswith=phone_number, is_two_way=True)
         except cls.DoesNotExist:
             return None
         except cls.MultipleObjectsReturned:
             return None
-
-    @classmethod
-    def _filter_pending(cls, v, include_pending):
-        if v:
-            if include_pending:
-                return v
-            elif v.verified:
-                return v
-
-        return None
 
     @classmethod
     def by_domain(cls, domain, ids_only=False):
@@ -646,19 +675,20 @@ class PhoneNumber(UUIDGeneratorMixin, models.Model):
         """
         Returns all phone numbers belonging to the given contact.
         """
-        return cls.objects.filter(owner_id=owner_id)
+        with CriticalSection(['PhoneNumber-CacheAccessor-by_owner_id-%s' % owner_id]):
+            return list(cls.objects.filter(owner_id=owner_id))
 
     @classmethod
     def _clear_quickcaches(cls, owner_id, phone_number, old_owner_id=None, old_phone_number=None):
         cls.by_owner_id.clear(cls, owner_id)
-
         if old_owner_id and old_owner_id != owner_id:
             cls.by_owner_id.clear(cls, old_owner_id)
 
-        cls._by_phone.clear(cls, phone_number)
-
+        cls._get_two_way_number.clear(cls, phone_number)
+        cls._get_number_pending_verification.clear(cls, phone_number)
         if old_phone_number and old_phone_number != phone_number:
-            cls._by_phone.clear(cls, old_phone_number)
+            cls._get_two_way_number.clear(cls, old_phone_number)
+            cls._get_number_pending_verification.clear(cls, old_phone_number)
 
     def _clear_caches(self):
         self._clear_quickcaches(
@@ -668,15 +698,69 @@ class PhoneNumber(UUIDGeneratorMixin, models.Model):
             old_phone_number=self._old_phone_number
         )
 
+    @property
+    def cache_accessor_lock_keys(self):
+        keys = [
+            'PhoneNumber-CacheAccessor-by_owner_id-%s' % self.owner_id,
+            'PhoneNumber-CacheAccessor-get_two_way_number-%s' % self.phone_number,
+            'PhoneNumber-CacheAccessor-get_number_pending_verification-%s' % self.phone_number,
+        ]
+
+        if self._old_owner_id and self._old_owner_id != self.owner_id:
+            keys.extend([
+                'PhoneNumber-CacheAccessor-by_owner_id-%s' % self._old_owner_id,
+            ])
+
+        if self._old_phone_number and self._old_phone_number != self.phone_number:
+            keys.extend([
+                'PhoneNumber-CacheAccessor-get_two_way_number-%s' % self._old_phone_number,
+                'PhoneNumber-CacheAccessor-get_number_pending_verification-%s' % self._old_phone_number,
+            ])
+
+        return keys
+
     def save(self, *args, **kwargs):
-        self._clear_caches()
-        self._old_phone_number = self.phone_number
-        self._old_owner_id = self.owner_id
-        return super(PhoneNumber, self).save(*args, **kwargs)
+        with CriticalSection(self.cache_accessor_lock_keys):
+            # Clearing the cache and updating the DB needs to be an atomic operation
+            # otherwise we end up with race conditions where a different method with
+            # a cached result is building a queryset with missing data and ends up
+            # writing it to the cache.
+            self._clear_caches()
+            self._old_phone_number = self.phone_number
+            self._old_owner_id = self.owner_id
+            return super(PhoneNumber, self).save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
-        self._clear_caches()
-        return super(PhoneNumber, self).delete(*args, **kwargs)
+        with CriticalSection(self.cache_accessor_lock_keys):
+            self._clear_caches()
+            return super(PhoneNumber, self).delete(*args, **kwargs)
+
+    def verify_uniqueness(self):
+        entry = self.get_reserved_number(self.phone_number)
+        if entry and entry.pk != self.pk:
+            raise PhoneNumberInUseException()
+
+    def set_two_way(self):
+        if self.is_two_way:
+            return
+
+        with CriticalSection(['reserve-phone-number-%s' % self.phone_number]):
+            self.verify_uniqueness()
+            self.is_two_way = True
+            self.save()
+
+    def set_pending_verification(self):
+        if self.verified or self.pending_verification:
+            return
+
+        with CriticalSection(['reserve-phone-number-%s' % self.phone_number]):
+            self.verify_uniqueness()
+            self.pending_verification = True
+            self.save()
+
+    def set_verified(self):
+        self.verified = True
+        self.pending_verification = False
 
 
 class MessagingStatusMixin(object):
@@ -1040,20 +1124,17 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
 
     @classmethod
     def get_content_info_from_keyword(cls, keyword):
-        from corehq.apps.reminders.models import (METHOD_SMS, METHOD_SMS_SURVEY,
-            METHOD_STRUCTURED_SMS, RECIPIENT_SENDER)
-
         content_type = cls.CONTENT_NONE
         form_unique_id = None
         form_name = None
 
-        for action in keyword.actions:
-            if action.recipient == RECIPIENT_SENDER:
-                if action.action in (METHOD_SMS_SURVEY, METHOD_STRUCTURED_SMS):
+        for action in keyword.keywordaction_set.all():
+            if action.recipient == KeywordAction.RECIPIENT_SENDER:
+                if action.action in (KeywordAction.ACTION_SMS_SURVEY, KeywordAction.ACTION_STRUCTURED_SMS):
                     content_type = cls.CONTENT_SMS_SURVEY
                     form_unique_id = action.form_unique_id
                     form_name = cls.get_form_name_or_none(action.form_unique_id)
-                elif action.action == METHOD_SMS:
+                elif action.action == KeywordAction.ACTION_SMS:
                     content_type = cls.CONTENT_SMS
 
         return (content_type, form_unique_id, form_name)
@@ -1120,7 +1201,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             domain=keyword.domain,
             date=datetime.utcnow(),
             source=cls.SOURCE_KEYWORD,
-            source_id=keyword.get_id,
+            source_id=keyword.couch_id,
             content_type=content_type,
             form_unique_id=form_unique_id,
             form_name=form_name,
@@ -1457,7 +1538,7 @@ class SelfRegistrationInvitation(models.Model):
                 invalid_format_numbers.append(phone_number)
                 continue
 
-            if PhoneNumber.by_phone(phone_number, include_pending=True):
+            if PhoneNumber.get_reserved_number(phone_number):
                 numbers_in_use.append(phone_number)
                 continue
 
@@ -1528,7 +1609,7 @@ class SelfRegistrationInvitation(models.Model):
                 invalid_format_numbers.append(user.phone_number)
                 continue
 
-            phone_number = PhoneNumber.by_phone(user.phone_number)
+            phone_number = PhoneNumber.get_two_way_number(user.phone_number)
             if phone_number:
                 if phone_number.domain != domain:
                     error_numbers.append(user.phone_number)
@@ -1630,6 +1711,9 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
         db_table = 'messaging_mobilebackend'
         app_label = 'sms'
 
+    class ExpectedDomainLevelBackend(Exception):
+        pass
+
     @quickcache(['self.pk', 'domain'], timeout=5 * 60)
     def domain_is_shared(self, domain):
         """
@@ -1638,6 +1722,13 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
         """
         count = self.mobilebackendinvitation_set.filter(domain=domain, accepted=True).count()
         return count > 0
+
+    @property
+    def domains_with_access(self):
+        if self.is_global:
+            raise self.ExpectedDomainLevelBackend()
+
+        return [self.domain] + list(self.get_authorized_domain_list())
 
     def domain_is_authorized(self, domain):
         """
@@ -2299,11 +2390,12 @@ class MigrationStatus(models.Model):
             return False
 
 
-class Keyword(SyncSQLToCouchMixin, models.Model):
+class Keyword(UUIDGeneratorMixin, models.Model):
     """
     A Keyword allows a project to define actions to be taken when a contact
     in the project sends an inbound SMS starting with a certain word.
     """
+    UUIDS_TO_GENERATE = ['couch_id']
 
     class Meta:
         index_together = (
@@ -2337,35 +2429,47 @@ class Keyword(SyncSQLToCouchMixin, models.Model):
 
     last_modified = models.DateTimeField(auto_now=True)
 
+    def is_structured_sms(self):
+        return self.keywordaction_set.filter(action=KeywordAction.ACTION_STRUCTURED_SMS).count() > 0
+
+    @property
+    def get_id(self):
+        return self.couch_id
+
     @classmethod
-    def _migration_get_couch_model_class(cls):
-        from corehq.apps.reminders.models import SurveyKeyword
-        return SurveyKeyword
+    def get_keyword(cls, domain, keyword):
+        try:
+            return cls.objects.get(domain=domain, keyword__iexact=keyword)
+        except cls.DoesNotExist:
+            return None
 
-    def _migration_sync_to_couch(self, couch_obj):
-        from corehq.apps.reminders.models import SurveyKeywordAction
+    @classmethod
+    def get_by_domain(cls, domain, limit=None, skip=None):
+        qs = Keyword.objects.filter(domain=domain).order_by('keyword')
 
-        couch_obj.domain = self.domain
-        couch_obj.keyword = self.keyword
-        couch_obj.description = self.description
-        couch_obj.delimiter = self.delimiter
-        couch_obj.override_open_sessions = self.override_open_sessions
-        couch_obj.initiator_doc_type_filter = self.initiator_doc_type_filter
+        if skip is not None:
+            qs = qs[skip:]
 
-        couch_obj.actions = []
-        for sql_action in self.keywordaction_set.all():
-            couch_obj.actions.append(SurveyKeywordAction(
-                recipient=sql_action.recipient,
-                recipient_id=sql_action.recipient_id,
-                action=sql_action.action,
-                message_content=sql_action.message_content,
-                form_unique_id=sql_action.form_unique_id,
-                use_named_args=sql_action.use_named_args,
-                named_args=sql_action.named_args,
-                named_args_separator=sql_action.named_args_separator
-            ))
+        if limit is not None:
+            qs = qs[:limit]
 
-        couch_obj.save(sync_to_sql=False)
+        return qs
+
+    def save(self, *args, **kwargs):
+        self.clear_caches()
+        return super(Keyword, self).save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        self.clear_caches()
+        return super(Keyword, self).delete(*args, **kwargs)
+
+    def clear_caches(self):
+        self.domain_has_keywords.clear(Keyword, self.domain)
+
+    @classmethod
+    @quickcache(['domain'], timeout=60 * 60)
+    def domain_has_keywords(cls, domain):
+        return cls.get_by_domain(domain).count() > 0
 
 
 class KeywordAction(models.Model):
