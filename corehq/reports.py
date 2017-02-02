@@ -1,7 +1,6 @@
 import datetime
 from django.core.urlresolvers import reverse
 from corehq import privileges
-from corehq.apps.data_dictionary.views import DataDictionaryView
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqadmin.reports import (

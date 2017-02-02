@@ -1,4 +1,4 @@
-/* globals django */
+/* globals django, COMMCAREHQ */
 (function ($, _) {
 
     var CaseType = function (name) {
@@ -11,11 +11,11 @@
                 var groupObj = new PropertyListItem(group, true, group, self.name);
                 self.properties.push(groupObj);
                 _.each(properties, function (prop) {
-                    propObj = new PropertyListItem(prop.name, false, prop.group, self.name, prop.data_type, prop.description);
+                    var propObj = new PropertyListItem(prop.name, false, prop.group, self.name, prop.data_type, prop.description);
                     propObj.description.subscribe(changeSaveButton);
                     propObj.dataType.subscribe(changeSaveButton);
                     self.properties.push(propObj);
-                })
+                });
             });
         };
     };
@@ -56,7 +56,7 @@
                 var currentGroup = '';
                 _.each(self.casePropertyList(), function(element) {
                     if (!element.isGroup) {
-                        data = {
+                        var data = {
                             'caseType': element.caseType(),
                             'name': element.name(),
                             'data_type': element.dataType(),
@@ -76,7 +76,7 @@
                         'properties': JSON.stringify(postProperties),
                     },
                     success: function() {
-                        activeCaseType = self.getActiveCaseType();
+                        var activeCaseType = self.getActiveCaseType();
                         activeCaseType.properties(self.casePropertyList());
                     },
                     error: function() {
@@ -95,7 +95,7 @@
             .done(function (data) {
                 _.each(data.case_types, function (caseType) {
                     var caseTypeObj = new CaseType(caseType.name);
-                    groupDict = _.groupBy(caseType.properties, function(prop) {return prop.group});
+                    var groupDict = _.groupBy(caseType.properties, function(prop) {return prop.group});
                     caseTypeObj.init(groupDict, changeSaveButton);
                     self.caseTypes.push(caseTypeObj);
                 });
@@ -134,35 +134,30 @@
         };
 
         this.newCaseProperty = function () {
-            prop = new PropertyListItem(self.newPropertyName(), false, '', self.activeCaseType());
+            var prop = new PropertyListItem(self.newPropertyName(), false, '', self.activeCaseType());
             prop.dataType.subscribe(changeSaveButton);
             self.newPropertyName('');
             self.casePropertyList.push(prop);
         };
 
         this.newGroup = function () {
-            group = new PropertyListItem(self.newGroupName(), true, '', self.activeCaseType());
+            var group = new PropertyListItem(self.newGroupName(), true, '', self.activeCaseType());
             self.casePropertyList.push(group);
             self.newGroupName('');
         };
 
         this.toggleGroup = function (group) {
             group.toggle();
-            groupIndex = _.findIndex(self.casePropertyList(), function (element) {
+            var groupIndex = _.findIndex(self.casePropertyList(), function (element) {
                 return element.name() === group.name();
             });
-            i = groupIndex + 1;
-            next = self.casePropertyList()[i];
+            var i = groupIndex + 1;
+            var next = self.casePropertyList()[i];
             while (!next.isGroup) {
                 next.toggle();
                 i++;
                 next = self.casePropertyList()[i]
             }
-        };
-
-        this.debugging = function () {
-            debugger;
-            alert('done');
         };
     };
 
