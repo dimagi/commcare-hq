@@ -19,6 +19,37 @@ def owner_id_to_display(owner_id, doc):
 def case_id_to_case_name(case_id, doc):
     return _cached_case_id_to_case_name(case_id)
 
+
+def workflow_transform(workflow, doc):
+    from corehq.apps.sms.models import (
+        WORKFLOW_REMINDER,
+        WORKFLOW_KEYWORD,
+        WORKFLOW_BROADCAST,
+        WORKFLOW_CALLBACK,
+        WORKFLOW_DEFAULT,
+        WORKFLOW_FORWARD,
+        WORKFLOW_PERFORMANCE,
+    )
+    from corehq.apps.sms.filters import MessageTypeFilter
+
+    relevant_workflows = [
+        WORKFLOW_REMINDER,
+        WORKFLOW_KEYWORD,
+        WORKFLOW_BROADCAST,
+        WORKFLOW_CALLBACK,
+        WORKFLOW_PERFORMANCE,
+        WORKFLOW_DEFAULT,
+    ]
+    types = []
+    if workflow in relevant_workflows:
+        types.append(workflow.lower())
+    if doc.get('xforms_session_couch_id', None):
+        types.append(MessageTypeFilter.OPTION_SURVEY.lower())
+    if not types:
+        types.append(MessageTypeFilter.OPTION_OTHER.lower())
+    return ', '.join(types)
+
+
 NULL_CACHE_VALUE = "___NULL_CACHE_VAL___"
 
 

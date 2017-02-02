@@ -15,6 +15,7 @@ from corehq.apps.domain.models import Domain
 USERNAME_TRANSFORM = 'corehq.apps.export.transforms.user_id_to_username'
 OWNERNAME_TRANSFORM = 'corehq.apps.export.transforms.owner_id_to_display'
 CASENAME_TRANSFORM = 'corehq.apps.export.transforms.case_id_to_case_name'
+WORKFLOW_TRANSFORM = 'corehq.apps.export.transforms.workflow_transform'
 
 FORM_CASE_ID_PATH = 'form.case.@case_id'
 

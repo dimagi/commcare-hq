@@ -58,6 +58,7 @@ from corehq.apps.export.const import (
     SMS_EXPORT,
     TRANSFORM_FUNCTIONS,
     USERNAME_TRANSFORM,
+    WORKFLOW_TRANSFORM,
     DEID_TRANSFORM_FUNCTIONS,
     PROPERTY_TAG_CASE,
     USER_DEFINED_SPLIT_TYPES,
@@ -982,7 +983,8 @@ class SMSExportInstance(ExportInstance):
                         ExportColumn(
                             label="Type",
                             item=ExportItem(
-                                path=[PathNode(name='workflow')]
+                                path=[PathNode(name='workflow')],
+                                transform=WORKFLOW_TRANSFORM,
                             ),
                             selected=True,
                         ),
