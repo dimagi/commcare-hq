@@ -540,23 +540,29 @@ class EditOpenClinicaSettingsView(BaseProjectSettingsView):
 @require_POST
 @require_can_edit_web_users
 def cancel_repeat_record(request, domain):
-    record = RepeatRecord.get(request.POST.get('record_id'))
+    try:
+        record = RepeatRecord.get(request.POST.get('record_id'))
+    except ResourceNotFound:
+        return HttpResponse(status=404)
     record.cancel()
     record.save()
-    return json_response({
-        'success': record.cancelled,
-    })
+    if not record.cancelled:
+        return HttpResponse(status=400)
+    return HttpResponse('OK')
 
 
 @require_POST
 @require_can_edit_web_users
 def requeue_repeat_record(request, domain):
-    record = RepeatRecord.get(request.POST.get('record_id'))
+    try:
+        record = RepeatRecord.get(request.POST.get('record_id'))
+    except ResourceNotFound:
+        return HttpResponse(status=404)
     record.requeue()
     record.save()
-    return json_response({
-        'success': not record.cancelled,
-    })
+    if record.cancelled:
+        return HttpResponse(status=400)
+    return HttpResponse('OK')
 
 
 @require_POST
@@ -2341,10 +2347,12 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
                 self._format_date(record.last_checked) if record.last_checked else None,
                 self._format_date(record.next_check) if record.next_check else None,
                 record.failure_reason if not record.succeeded else None,
+                record.overall_tries if record.overall_tries>0 else None,
                 self._make_view_payload_button(record.get_id),
                 self._make_resend_payload_button(record.get_id),
                 self._make_requeue_payload_button(record.get_id) if record.cancelled and not record.succeeded
-                else self._make_cancel_payload_button(record.get_id) if not record.cancelled and not record.succeeded
+                else self._make_cancel_payload_button(record.get_id) if not record.cancelled
+                                                                        and not record.succeeded
                 else None
             ],
             records
@@ -2358,6 +2366,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             DataTablesColumn(_('Last sent date')),
             DataTablesColumn(_('Retry Date')),
             DataTablesColumn(_('Failure Reason')),
+            DataTablesColumn(_('Failure Count')),
             DataTablesColumn(_('View payload')),
             DataTablesColumn(_('Resend')),
             DataTablesColumn(_('Cancel or Requeue payload'))

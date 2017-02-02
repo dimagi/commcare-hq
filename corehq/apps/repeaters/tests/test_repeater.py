@@ -238,7 +238,7 @@ class RepeaterTest(BaseRepeaterTest):
             self.assertEqual(mock_process.delay.call_count, 2)
 
     @run_with_all_backends
-    def test_cancel_repeat_record(self):
+    def test_automatic_cancel_repeat_record(self):
         repeat_record = self.case_repeater.register(CaseAccessors(self.domain).get_case(CASE_ID))
         repeat_record.overall_tries = 1
         with patch('corehq.apps.repeaters.models.simple_post_with_cached_timeout', side_effect=Exception('Boom!')):

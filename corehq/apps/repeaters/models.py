@@ -598,7 +598,7 @@ class RepeatRecord(Document):
         self._fail(unicode(exception), None)
 
     def _fail(self, reason, response):
-        if self.repeater.allow_retries(response) and self.overall_tries<self.max_possible_tries:
+        if self.repeater.allow_retries(response) and self.overall_tries < self.max_possible_tries:
             self.set_next_try()
         else:
             self.cancel()
