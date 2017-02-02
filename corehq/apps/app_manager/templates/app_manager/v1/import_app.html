@@ -1,9 +1,17 @@
 {% extends "app_manager/v1/apps_base.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
+{% load compress %}
+
+{% block js %}{{ block.super }}
+    {% compress js %}
+        <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/urllib.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/lib/compression.js' %}"></script>
+    {% endcompress %}
+{% endblock %}
 
 {% block js-inline %}{{ block.super }}
-    <script src="{% static 'hqwebapp/js/lib/compression.js' %}"></script>
     <script>
         $(function () {
             $(".historyBack").click(function () {
@@ -24,8 +32,8 @@
                 return false;
             };
         }
-        var source = {{ app.export_json|JSON }};
-        var post_url = "{% url "import_app" domain %}";
+        var source = hqImport('hqwebapp/js/initial_page_data.js').get('export_json');
+        var post_url = hqImport('hqwebapp/js/urllib.js').reverse('import_app');
         $('#app-import-form').koApplyBindings(new CompressionViewModel(source, post_url));
     </script>
 {% endblock %}
@@ -35,6 +43,8 @@
 {% endblock %}
 
 {% block page_content %}
+    {% registerurl 'import_app' domain %}
+    {% initial_page_data 'export_json' app.export_json %}
     <form action="{% url "import_app" domain %}" id="app-import-form" method="post" data-bind="submit: save">
         {% csrf_token %}
 {% if app %}
