@@ -192,16 +192,10 @@ class CaseClaimEndpointTests(TestCase):
         }
 
         query_partial = {
-            "query": {
-                "filtered": {
-                    "query": {
-                        "bool": {
-                            "must": [
-                                new_must_clause
-                            ]
-                        }
-                    }
-                }
+            "bool": {
+                "must": [
+                    new_must_clause
+                ]
             }
         }
 
@@ -227,7 +221,6 @@ class CaseClaimEndpointTests(TestCase):
                             {'term': {'domain.exact': DOMAIN}},
                             {'term': {'type.exact': CASE_TYPE}},
                             {'term': {'closed': False}},
-                            {'match_all': {}},
                             {'match_all': {}}
                         ]
                     },

@@ -103,7 +103,7 @@ def search(request, domain):
 
     query_addition_debug_details = {}
     try:
-        _add_case_search_addition(request, domain, search_es, query_addition_id, query_addition_debug_details)
+        search_es = _add_case_search_addition(request, domain, search_es, query_addition_id, query_addition_debug_details)
     except QueryMergeException as e:
         return _handle_query_merge_exception(request, e)
     try:
@@ -120,11 +120,12 @@ def search(request, domain):
 def _add_case_search_addition(request, domain, search_es, query_addition_id, query_addition_debug_details):
     if query_addition_id:
         query_addition = CaseSearchQueryAddition.objects.get(id=query_addition_id, domain=domain)
-        query_addition_debug_details['original_query'] = search_es.raw_query
+        query_addition_debug_details['original_query'] = search_es.get_query()
         query_addition_debug_details['query_addition'] = query_addition.query_addition
-        new_query = merge_queries(search_es.raw_query, query_addition.query_addition)
+        new_query = merge_queries(search_es.get_query(), query_addition.query_addition)
         query_addition_debug_details['new_query'] = new_query
-        search_es.es_query = new_query
+        search_es = search_es.set_query(new_query)
+    return search_es
 
 
 def _handle_query_merge_exception(request, exception):

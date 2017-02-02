@@ -107,7 +107,8 @@ class CaseSearchQueryAddition(models.Model):
         help_text="More information about how this field is used can be found <a href='https://docs.google.com/doc"
                   "ument/d/1MKllkHZ6JlxhfqZLZKWAnfmlA3oUqCLOc7iKzxFTzdY/edit#heading=h.k5pky76mwwon'>here</a>. Thi"
                   "s ES <a href='https://www.elastic.co/guide/en/elasticsearch/guide/1.x/bool-query.html'>document"
-                  "ation</a> may also be useful."
+                  "ation</a> may also be useful. This JSON will be merged at the `query.filtered.query` path of th"
+                  "e query JSON."
     )
 
 
