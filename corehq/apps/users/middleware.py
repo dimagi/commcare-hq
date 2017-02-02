@@ -1,6 +1,7 @@
 from django.conf import settings
 import django.core.exceptions
 from corehq.apps.users.models import CouchUser, InvalidUser
+from corehq.toggles import ANONYMOUS_WEB_APPS_USAGE
 
 
 
@@ -21,12 +22,14 @@ class UsersMiddleware(object):
             raise django.core.exceptions.MiddlewareNotUsed
     
     def process_view(self, request, view_func, view_args, view_kwargs):
+
         if 'domain' in view_kwargs:
             request.domain = view_kwargs['domain']
         if 'org' in view_kwargs:
             request.org = view_kwargs['org']
         if request.user.is_anonymous() and 'domain' in view_kwargs:
-            request.couch_user = CouchUser.get_anonymous_mobile_worker(request.domain)
+            if ANONYMOUS_WEB_APPS_USAGE.enabled(view_kwargs['domain']):
+                request.couch_user = CouchUser.get_anonymous_mobile_worker(request.domain)
         if request.user and request.user.is_authenticated():
             request.couch_user = CouchUser.get_by_username(
                 request.user.username, strict=False)

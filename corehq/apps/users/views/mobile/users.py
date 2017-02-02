@@ -85,7 +85,7 @@ from corehq.apps.users.util import can_add_extra_mobile_workers, format_username
 from corehq.apps.users.exceptions import InvalidMobileWorkerRequest
 from corehq.apps.users.views import BaseUserSettingsView, BaseEditUserView, get_domain_languages
 from corehq.const import USER_DATE_FORMAT, GOOGLE_PLAY_STORE_COMMCARE_URL
-from corehq.toggles import SUPPORT
+from corehq.toggles import SUPPORT, ANONYMOUS_WEB_APPS_USAGE
 from corehq.util.workbook_json.excel import JSONReaderError, HeaderValueError, \
     WorksheetNotFound, WorkbookJSONReader, enforce_string_type, StringTypeRequiredError, \
     InvalidExcelFileException
@@ -777,7 +777,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 'error': _("Forms did not validate"),
             }
 
-        if form_data.get('is_anonymous'):
+        if form_data.get('is_anonymous') and ANONYMOUS_WEB_APPS_USAGE.enabled(self.domain):
             couch_user = self._build_anonymous_commcare_user()
         else:
             couch_user = self._build_commcare_user()

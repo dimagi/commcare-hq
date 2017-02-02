@@ -136,6 +136,7 @@ $(function () {
                                 ng-click="initializeMobileWorker()">
                             <i class="fa fa-plus"></i> {% trans "Create Mobile Worker" %}
                         </button>
+                        {% if request|toggle_enabled:"ANONYMOUS_WEB_APPS_USAGE" %}
                         <button type="button"
                                 class="btn btn-success"
                                 data-toggle="modal"
@@ -143,6 +144,7 @@ $(function () {
                                 ng-click="initializeAnonymousMobileWorker()">
                             <i class="fa fa-plus"></i> {% trans "Create Anonymous Mobile Worker" %}
                         </button>
+                        {% endif %}
                         {% if can_bulk_edit_users and can_access_all_locations %}
                             <a id="bulk_download" class="btn btn-info" href="{% url "download_commcare_users" domain %}">
                                 <i class="fa fa-cloud-download"></i> {% trans "Download Mobile Workers" %}

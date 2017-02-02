@@ -6,6 +6,7 @@ from functools import wraps
 from django.contrib.auth import authenticate
 from django.http import HttpResponse
 from tastypie.authentication import ApiKeyAuthentication
+from corehq.toggles import ANONYMOUS_WEB_APPS_USAGE
 
 
 J2ME = 'j2me'
@@ -99,6 +100,8 @@ def tokenauth(view):
 
     @wraps(view)
     def _inner(request, *args, **kwargs):
+        if not ANONYMOUS_WEB_APPS_USAGE.enabled(request.domain):
+            return HttpResponse(status=401)
         try:
             user, token = TokenAuthentication().authenticate(request)
         except AuthenticationFailed, e:

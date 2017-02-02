@@ -249,8 +249,9 @@ def secure_post(request, domain, app_id=None):
         'digest': _secure_post_digest,
         'basic': _secure_post_basic,
         'noauth': _noauth_post,
-        'token': _secure_post_token,
     }
+    if toggles.ANONYMOUS_WEB_APPS_USAGE.enabled(domain):
+        authtype_map['token'] = _secure_post_token
 
     try:
         decorated_view = authtype_map[determine_authtype(request)]

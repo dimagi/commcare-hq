@@ -1039,3 +1039,10 @@ SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )
+
+ANONYMOUS_WEB_APPS_USAGE = StaticToggle(
+    'anonymous_web_apps_usage',
+    'Allow anonymous users to access web apps applications',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN],
+)
