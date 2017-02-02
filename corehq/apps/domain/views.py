@@ -126,8 +126,10 @@ from corehq.apps.domain.forms import ProjectSettingsForm
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_ip, json_response, get_site_domain
 from corehq.apps.users.decorators import require_can_edit_web_users, require_permission
-from corehq.apps.repeaters.forms import GenericRepeaterForm, FormRepeaterForm, GenericEditRepeaterForm
-from corehq.apps.repeaters.models import Repeater, RepeatRecord
+from corehq.apps.repeaters.forms import GenericRepeaterForm, FormRepeaterForm, GenericEditRepeaterForm, \
+    GenericEditCaseRepeaterForm
+
+from corehq.apps.repeaters.models import Repeater, RepeatRecord, FormRepeater
 from corehq.apps.repeaters.dbaccessors import (
     get_paged_repeat_records,
     get_repeat_record_count,
@@ -2426,12 +2428,25 @@ class AddRepeaterView(BaseAdminProjectSettingsView):
         return self.get(request, *args, **kwargs)
 
 
-class EditRepeaterView(AddRepeaterView):
-    urlname = "edit_repeater"
+class EditFormRepeaterView(AddRepeaterView):
+    urlname = "edit_form_repeater"
     repeater_form_class = GenericEditRepeaterForm
 
     def page_url(self):
         return
+
+    @property
+    @memoized
+    def repeater_class(self):
+        repeater_id = self.request.GET.get('repeater')
+        repeater = Repeater.get(repeater_id)
+        if isinstance(repeater, FormRepeater):
+            print "It's a form repeater"
+            repeater_type = 'FormRepeater'
+        else:
+            print "it's a case repeater"
+            repeater_type = 'CaseRepeater'
+        return get_all_repeater_types()[repeater_type]
 
     @property
     @memoized
@@ -2455,6 +2470,54 @@ class EditRepeaterView(AddRepeaterView):
                      'use_basic_auth': repeater.use_basic_auth,
                      'username': repeater.username,
                      'password': repeater.password
+                     }
+        )
+
+    def post(self, request, *args, **kwargs):
+        if self.add_repeater_form.is_valid():
+            repeater = Repeater.get(request.GET.get('repeater'))
+            repeater.clear_caches()
+            repeater = Repeater.get(request.GET.get('repeater'))
+            repeater.url = self.add_repeater_form.cleaned_data['url']
+            repeater.save()
+            repeater.clear_caches()
+            return HttpResponseRedirect(reverse(DomainForwardingOptionsView.urlname, args=[self.domain]))
+        else:
+            return HttpResponseForbidden('Please enter valid values')
+
+
+class EditCaseRepeaterView(AddRepeaterView):
+    urlname = "edit_case_repeater"
+    repeater_form_class = GenericEditCaseRepeaterForm
+    template_name = 'repeaters/add_case_repeater.html'
+
+    def page_url(self):
+        return
+
+    @property
+    @memoized
+    def add_repeater_form(self):
+        repeater_id = self.request.GET.get('repeater')
+        repeater = Repeater.get(repeater_id)
+        repeater.clear_caches()
+        repeater = Repeater.get(repeater_id)
+        print "white listed", repeater.white_listed_case_types
+        if self.request.method == 'POST':
+            return self.repeater_form_class(
+                self.request.POST,
+                domain=self.domain,
+                repeater_class=self.repeater_class
+            )
+        return self.repeater_form_class(
+            domain=self.domain,
+            repeater_class=self.repeater_class,
+            initial={'url': repeater.url,
+                     'format': repeater.format,
+                     'use_basic_auth': repeater.use_basic_auth,
+                     'username': repeater.username,
+                     'password': repeater.password,
+                     'white_listed_case_types': [(t, t) for t in repeater.white_listed_case_types],
+                     'black_listed_users': [(t, t) for t in repeater.black_listed_users]
                      }
         )
 

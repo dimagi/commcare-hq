@@ -8,7 +8,7 @@
         <a
             class="btn btn-default"
             href="
-            {% url 'domain_report_dispatcher' domain 'edit_repeater' %}?repeater={{ repeater.get_id }}"
+            {% url 'domain_report_dispatcher' domain 'edit_repeater'%}{{ repeater.doc_type }}?repeater={{ repeater.get_id }}"
             >
             {% trans "Edit" %}
         </a>

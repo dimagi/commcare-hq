@@ -144,16 +144,21 @@ class FormRepeaterForm(GenericRepeaterForm):
 
 
 class CaseRepeaterForm(GenericRepeaterForm):
+
     white_listed_case_types = forms.MultipleChoiceField(
         required=False,
         label=_('Case Types'),
-        help_text=_('Only cases of this type will be forwarded. Leave empty to forward all cases')
+        help_text=_('Only cases of this type will be forwarded. Leave empty to forward all cases'),
     )
     black_listed_users = forms.MultipleChoiceField(
         required=False,
         label=_('Users to exclude'),
         help_text=_('Case creations and updates submitted by these users will not be forwarded')
     )
+
+    def __init__(self, *args, **kwargs):
+        super(CaseRepeaterForm, self).__init__(*args, **kwargs)
+        self.fields['white_listed_case_types'].queryset = ("test", "test")
 
     @property
     @memoized
@@ -187,6 +192,29 @@ class CaseRepeaterForm(GenericRepeaterForm):
 
 
 class GenericEditRepeaterForm(GenericRepeaterForm):
+
+    def _initialize_crispy_layout(self):
+        self.helper = FormHelper(self)
+        self.helper.form_class = 'form-horizontal'
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.offset_class = 'col-sm-offset-3 col-md-offset-2'
+
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                'Edit Forwarding Settings',
+                *self.get_ordered_crispy_form_fields()
+            ),
+            hqcrispy.FormActions(
+                twbscrispy.StrictButton(
+                    _("Save Changes"),
+                    type="submit",
+                    css_class='btn-primary',
+                )
+            )
+        )
+
+class GenericEditCaseRepeaterForm(CaseRepeaterForm):
 
     def _initialize_crispy_layout(self):
         self.helper = FormHelper(self)

@@ -36,7 +36,7 @@ from corehq.apps.domain.views import (
     calculated_properties,
     toggle_diff,
     select,
-    CalendarFixtureConfigView, LocationFixtureConfigView, EditRepeaterView)
+    CalendarFixtureConfigView, LocationFixtureConfigView, EditFormRepeaterView, EditCaseRepeaterView)
 from corehq.apps.repeaters.views import AddCaseRepeaterView, RepeatRecordView
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
 
@@ -170,8 +170,10 @@ domain_settings = [
         name=AddFormRepeaterView.urlname),
     url(r'^forwarding/new/CaseRepeater/$', AddCaseRepeaterView.as_view(), {'repeater_type': 'CaseRepeater'},
         name=AddCaseRepeaterView.urlname),
-    url(r'^edit_repeater/$', EditRepeaterView.as_view(), {'repeater_type': 'FormRepeater'},
-        name=EditRepeaterView.urlname),
+    url(r'^edit_repeater/FormRepeater$', EditFormRepeaterView.as_view(), {'repeater_type': 'FormRepeater'},
+        name=EditFormRepeaterView.urlname),
+    url(r'^edit_repeater/CaseRepeater$', EditCaseRepeaterView.as_view(), {'repeater_type': 'CaseRepeater'},
+        name=EditCaseRepeaterView.urlname),
     url(r'^forwarding/new/(?P<repeater_type>\w+)/$', AddRepeaterView.as_view(), name=AddRepeaterView.urlname),
     url(r'^forwarding/test/$', test_repeater, name='test_repeater'),
     url(r'^forwarding/(?P<repeater_id>[\w-]+)/stop/$', drop_repeater, name='drop_repeater'),
