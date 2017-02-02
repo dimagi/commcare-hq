@@ -801,22 +801,25 @@ class CaseLoadReference(DocumentSchema):
 class CaseSaveReference(DocumentSchema):
     _allow_dynamic_properties = False
     case_type = StringProperty()
-    path = StringProperty()
     properties = ListProperty(unicode)
     create = BooleanProperty(default=False)
     close = BooleanProperty(default=False)
 
 
+class CaseSaveReferenceWithPath(CaseSaveReference):
+    path = StringProperty()
+
+
 class CaseReferences(DocumentSchema):
     _allow_dynamic_properties = False
     load = DictProperty()
-    save = DictProperty()
+    save = SchemaDictProperty(CaseSaveReference)
 
     def validate(self, required=True):
         super(CaseReferences, self).validate()
-        # call these methods to force validation to run on the other referenced types
+        # call this method to force validation to run on the other referenced types
+        # since load is not a defined schema (yet)
         list(self.get_load_references())
-        list(self.get_save_references())
 
     def get_load_references(self):
         for path, properties in self.load.items():
@@ -824,9 +827,9 @@ class CaseReferences(DocumentSchema):
 
     def get_save_references(self):
         for path, reference in self.save.items():
-            ref_copy = json.loads(json.dumps(reference))
+            ref_copy = deepcopy(reference.to_json())
             ref_copy['path'] = path
-            yield CaseSaveReference.wrap(ref_copy)
+            yield CaseSaveReferenceWithPath.wrap(ref_copy)
 
 
 class FormBase(DocumentSchema):
