@@ -3,7 +3,7 @@ from uuid import uuid4
 
 from django.core.urlresolvers import reverse
 from django.test import TestCase, Client
-from mock import patch, MagicMock
+from mock import patch
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.util import post_case_blocks
@@ -212,7 +212,10 @@ class CaseClaimEndpointTests(TestCase):
         client.login(username=USERNAME, password=PASSWORD)
         url = reverse('remote_search', kwargs={'domain': DOMAIN})
         some_case_name = "wut"
-        response = client.get(url, {'name': some_case_name, 'case_type': CASE_TYPE, SEARCH_QUERY_ADDITION_KEY: query_addition.id})
+        response = client.get(
+            url,
+            {'name': some_case_name, 'case_type': CASE_TYPE, SEARCH_QUERY_ADDITION_KEY: query_addition.id}
+        )
 
         self.assertEqual(response.status_code, 200)
 
@@ -239,7 +242,9 @@ class CaseClaimEndpointTests(TestCase):
                                                 'filter': {'term': {'case_properties.key': u'name'}},
                                                 'query': {
                                                     'match': {
-                                                        'case_properties.value': {'query': some_case_name, 'fuzziness': '0'}
+                                                        'case_properties.value': {
+                                                            'query': some_case_name, 'fuzziness': '0'
+                                                        }
                                                     }
                                                 }
                                             }

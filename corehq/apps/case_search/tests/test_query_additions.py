@@ -29,7 +29,7 @@ class TestQueryMerge(SimpleTestCase):
     ({'a': [1, 2]}, {'a': [3]}, {'a': [1, 2, 3]}),
     # complex multi-branch merge
     (
-        {"a": {("tuple", "key"): [1, 2]}, "b": [1,2], "c": {"d": 1, "e": 2}},
+        {"a": {("tuple", "key"): [1, 2]}, "b": [1, 2], "c": {"d": 1, "e": 2}},
         {"a": {("tuple", "key"): [3]}, "c": {"f": {"g": 4}}},
         {"a": {("tuple", "key"): [1, 2, 3]}, "b": [1, 2], "c": {"d": 1, "e": 2, "f": {"g": 4}}},
     ),
@@ -37,4 +37,3 @@ class TestQueryMerge(SimpleTestCase):
 def test_merge(self, base_query, addition, expected):
     new = merge_queries(base_query, addition)
     self.assertDictEqual(new, expected)
-
