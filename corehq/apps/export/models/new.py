@@ -925,7 +925,7 @@ class FormExportInstance(ExportInstance):
 
 class SMSExportInstance(ExportInstance):
     type = SMS_EXPORT
-    identifier = SMS_EXPORT
+    identifier = None
 
     @classmethod
     def _new_from_schema(cls, schema):
