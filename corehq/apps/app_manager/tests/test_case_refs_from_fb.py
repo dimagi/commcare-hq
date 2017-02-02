@@ -130,13 +130,13 @@ class AdvancedFormCaseReferenceTest(SimpleTestCase):
                  'properties': ['p1', 'p2'],
                  'create': True,
                  'close': True,
-              },
+             },
              'data/save2': {
                  'case_type': 'foo_type',
                  'properties': ['p1', 'p2'],
                  'create': True,
                  'close': True,
-              }
+             }
          }
      },),
 ])
