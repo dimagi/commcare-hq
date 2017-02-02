@@ -37,7 +37,7 @@ import datetime
 import uuid
 from collections import defaultdict, namedtuple
 from functools import wraps
-from copy import deepcopy, copy
+from copy import deepcopy
 from mimetypes import guess_type
 from urllib2 import urlopen
 from urlparse import urljoin
