@@ -120,25 +120,25 @@ class AdvancedFormCaseReferenceTest(SimpleTestCase):
     ({'load': {}, 'save': {'data/create': {'create': True}}},),
     ({'load': {}, 'save': {'data/close': {'close': True}}},),
     ({
-         'load': {
-             'data/load1': ['p1', 'p2'],
-             'data/load2': ['p1', 'p2']
-         },
-         'save': {
-             'data/save1': {
-                 'case_type': 'foo_type',
-                 'properties': ['p1', 'p2'],
-                 'create': True,
-                 'close': True,
-             },
-             'data/save2': {
-                 'case_type': 'foo_type',
-                 'properties': ['p1', 'p2'],
-                 'create': True,
-                 'close': True,
-             }
-         }
-     },),
+        'load': {
+            'data/load1': ['p1', 'p2'],
+            'data/load2': ['p1', 'p2']
+        },
+        'save': {
+            'data/save1': {
+                'case_type': 'foo_type',
+                'properties': ['p1', 'p2'],
+                'create': True,
+                'close': True,
+            },
+            'data/save2': {
+                'case_type': 'foo_type',
+                'properties': ['p1', 'p2'],
+                'create': True,
+                'close': True,
+            }
+        }
+    },),
 ])
 def test_valid_args(self, case_references):
     wrapped_references = {
