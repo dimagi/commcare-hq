@@ -2346,13 +2346,13 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
                 record.url if record.url else _(u'Unable to generate url for record'),
                 self._format_date(record.last_checked) if record.last_checked else None,
                 self._format_date(record.next_check) if record.next_check else None,
-                escape(record.failure_reason) if not record.succeeded else None,
-                record.overall_tries if record.overall_tries>0 else None,
+                record.failure_reason if not record.succeeded else None,
+                record.overall_tries if record.overall_tries > 0 else None,
                 self._make_view_payload_button(record.get_id),
                 self._make_resend_payload_button(record.get_id),
                 self._make_requeue_payload_button(record.get_id) if record.cancelled and not record.succeeded
                 else self._make_cancel_payload_button(record.get_id) if not record.cancelled
-                                                                        and not record.succeeded
+                and not record.succeeded
                 else None
             ],
             records
