@@ -152,13 +152,19 @@ describe('Entries', function() {
 
         // Fuzzy filter
         assert.isTrue(
-            ComboboxEntry.filter('o', { name: 'one', id: 1 }, Formplayer.Const.COMBOBOX_FUZZY)
+            ComboboxEntry.filter('onet', { name: 'onetwo', id: 1 }, Formplayer.Const.COMBOBOX_FUZZY)
         );
         assert.isTrue(
-            ComboboxEntry.filter('O', { name: 'one', id: 1 }, Formplayer.Const.COMBOBOX_FUZZY)
+            ComboboxEntry.filter('OneT', { name: 'onetwo', id: 1 }, Formplayer.Const.COMBOBOX_FUZZY)
         );
         assert.isFalse(
             ComboboxEntry.filter('one tt', { name: 'one', id: 1 }, Formplayer.Const.COMBOBOX_FUZZY)
+        );
+        assert.isFalse(
+            ComboboxEntry.filter('o', { name: 'one', id: 1 }, Formplayer.Const.COMBOBOX_FUZZY)
+        );
+        assert.isTrue(
+            ComboboxEntry.filter('on', { name: 'on', id: 1 }, Formplayer.Const.COMBOBOX_FUZZY)
         );
     });
 

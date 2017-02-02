@@ -399,7 +399,10 @@ ComboboxEntry.filter = function(query, d, matchType) {
         });
     } else if (matchType === Formplayer.Const.COMBOBOX_FUZZY) {
         // Fuzzy filter, matches if query is "close" to answer
-        return window.Levenshtein.get(d.name.toLowerCase(), query.toLowerCase()) <= 2;
+        return (
+            (window.Levenshtein.get(d.name.toLowerCase(), query.toLowerCase()) <= 2 && query.length > 3) ||
+            d.name.toLowerCase() === query.toLowerCase()
+        );
     } else {
         // Standard filter, matches only start of word
         return d.name.startsWith(query);
