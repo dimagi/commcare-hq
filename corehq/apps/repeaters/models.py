@@ -497,19 +497,20 @@ class RepeatRecord(Document):
         assert self.succeeded is False
         assert self.next_check is not None
         now = datetime.utcnow()
-        window = timedelta(minutes=0)
-        if self.last_checked and not requeue:
-            window = self.next_check - self.last_checked
-            window += (window // 2)  # window *= 1.5
+        if requeue:
+            self.next_check = now
         else:
-            window = MIN_RETRY_WAIT
-        if window < MIN_RETRY_WAIT:
-            window = MIN_RETRY_WAIT
-        elif window > MAX_RETRY_WAIT:
-            window = MAX_RETRY_WAIT
+            window = timedelta(minutes=0)
+            if self.last_checked:
+                window = self.next_check - self.last_checked
+                window += (window // 2)  # window *= 1.5
+            if window < MIN_RETRY_WAIT:
+                window = MIN_RETRY_WAIT
+            elif window > MAX_RETRY_WAIT:
+                window = MAX_RETRY_WAIT
 
-        self.last_checked = now
-        self.next_check = self.last_checked + window
+            self.last_checked = now
+            self.next_check = self.last_checked + window
 
     def try_now(self):
         # try when we haven't succeeded and either we've
