@@ -205,12 +205,12 @@
                                 {% trans 'Prepay by Credit Card' %}
                                 </button>
                                 <button type="button"
-                                class="btn btn-success"
+                                class="btn btn-info"
                                 data-toggle="modal"
                                 data-target="#paymentModal"
                                 data-bind="click: function(){triggerPayment($root.paymentHandler.WIRE)}"
                                 >
-                                {% trans 'Prepay by Wire' %}
+                                {% trans 'Generate Prepayment Invoice' %}
                                 </button>
                                 {% else %}
                                 <span class="label label-default">
@@ -379,7 +379,7 @@
         {% trans 'Prepay by Credit Card' %}
         <!-- /ko -->
         <!-- ko if: $root.paymentMethod() === $root.WIRE -->
-        {% trans 'Prepay by Wire' %}
+        {% trans 'Generate Prepayment Invoice' %}
         <!-- /ko -->
     </script>
 
