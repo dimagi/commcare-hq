@@ -110,6 +110,7 @@
                 <table class="case-properties table" ng-repeat-end>
                     <thead>
                         <th>{% trans "Case Property" %}</th>
+                        <th>{% trans "Description" %}</th>
                         <th>{% trans "Form" %}</th>
                         <th>{% trans "Load questions" %}</th>
                         <th>{% trans "Save questions" %}</th>
@@ -118,6 +119,7 @@
                         <tr ng-repeat="form in property.forms" id="{{ caseType.name }}:{{ property.name }}"
                             ng-class="{'danger': property.has_errors}">
                             <td rowspan="{{ property.forms.length }}" ng-if="$first">{{ property.name }}</td>
+                            <td>{{ property.description }}</td>
                             <td>
                                 {% verbatim %}
                                 {{ getFormName(form.form_id, lang) }}

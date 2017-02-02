@@ -36,6 +36,7 @@ class CaseProperty(models.Model):
         default='',
         blank=True
     )
+    group = models.TextField(default='', blank=True)
 
     class Meta:
         unique_together = ('case_type', 'name')

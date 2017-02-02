@@ -90,6 +90,7 @@ class CaseProperty(JsonObject):
     name = StringProperty()
     forms = ListProperty(CaseFormMeta)
     has_errors = BooleanProperty()
+    description = StringProperty()
 
     def get_form(self, form_id):
         try:

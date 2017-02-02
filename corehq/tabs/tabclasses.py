@@ -718,6 +718,8 @@ class ProjectDataTab(UITab):
             items.extend(FixtureInterfaceDispatcher.navigation_sections(
                 request=self._request, domain=self.domain))
 
+        if toggles.DATA_DICTIONARY.enabled(self.domain):
+            items.append([_('Manage Data'), [{'title': 'Data Dictionary', 'url': reverse('data_dictionary', args=[self.domain])}]])
         return items
 
     @property
