@@ -156,10 +156,6 @@ class CaseRepeaterForm(GenericRepeaterForm):
         help_text=_('Case creations and updates submitted by these users will not be forwarded')
     )
 
-    def __init__(self, *args, **kwargs):
-        super(CaseRepeaterForm, self).__init__(*args, **kwargs)
-        self.fields['white_listed_case_types'].queryset = ("test", "test")
-
     @property
     @memoized
     def case_type_choices(self):
@@ -191,7 +187,7 @@ class CaseRepeaterForm(GenericRepeaterForm):
         return cleaned_data
 
 
-class GenericEditRepeaterForm(GenericRepeaterForm):
+class EditFormRepeaterForm(GenericRepeaterForm):
 
     def _initialize_crispy_layout(self):
         self.helper = FormHelper(self)
@@ -214,7 +210,8 @@ class GenericEditRepeaterForm(GenericRepeaterForm):
             )
         )
 
-class GenericEditCaseRepeaterForm(CaseRepeaterForm):
+
+class EditCaseRepeaterForm(CaseRepeaterForm):
 
     def _initialize_crispy_layout(self):
         self.helper = FormHelper(self)
@@ -236,4 +233,5 @@ class GenericEditCaseRepeaterForm(CaseRepeaterForm):
                 )
             )
         )
+
 

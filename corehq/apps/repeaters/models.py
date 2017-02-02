@@ -214,6 +214,8 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         Repeater.by_domain.clear(cls, self.domain)
         # clear Repeater.by_domain (i.e. not filtered by doc type)
         Repeater.by_domain.clear(Repeater, self.domain)
+        super(Repeater, self).clear_caches()
+
 
     @classmethod
     @quickcache(['cls.__name__', 'domain'], timeout=5 * 60, memoize_timeout=10)

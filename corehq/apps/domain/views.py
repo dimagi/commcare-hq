@@ -126,10 +126,10 @@ from corehq.apps.domain.forms import ProjectSettingsForm
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_ip, json_response, get_site_domain
 from corehq.apps.users.decorators import require_can_edit_web_users, require_permission
-from corehq.apps.repeaters.forms import GenericRepeaterForm, FormRepeaterForm, GenericEditRepeaterForm, \
-    GenericEditCaseRepeaterForm
+from corehq.apps.repeaters.forms import GenericRepeaterForm, FormRepeaterForm, EditFormRepeaterForm, \
+    EditCaseRepeaterForm
 
-from corehq.apps.repeaters.models import Repeater, RepeatRecord, FormRepeater
+from corehq.apps.repeaters.models import Repeater, RepeatRecord, FormRepeater, CaseRepeater
 from corehq.apps.repeaters.dbaccessors import (
     get_paged_repeat_records,
     get_repeat_record_count,
@@ -2430,32 +2430,16 @@ class AddRepeaterView(BaseAdminProjectSettingsView):
 
 class EditFormRepeaterView(AddRepeaterView):
     urlname = "edit_form_repeater"
-    repeater_form_class = GenericEditRepeaterForm
+    repeater_form_class = EditFormRepeaterForm
 
     def page_url(self):
         return
 
     @property
-    @memoized
-    def repeater_class(self):
-        repeater_id = self.request.GET.get('repeater')
-        repeater = Repeater.get(repeater_id)
-        if isinstance(repeater, FormRepeater):
-            print "It's a form repeater"
-            repeater_type = 'FormRepeater'
-        else:
-            print "it's a case repeater"
-            repeater_type = 'CaseRepeater'
-        return get_all_repeater_types()[repeater_type]
-
-    @property
-    @memoized
     def add_repeater_form(self):
         repeater_id = self.request.GET.get('repeater')
-        repeater = Repeater.get(repeater_id)
-        repeater.clear_caches()
-        repeater = Repeater.get(repeater_id)
-        print "making form url", repeater.url
+        repeater = FormRepeater.get(repeater_id)
+
         if self.request.method == 'POST':
             return self.repeater_form_class(
                 self.request.POST,
@@ -2474,13 +2458,15 @@ class EditFormRepeaterView(AddRepeaterView):
         )
 
     def post(self, request, *args, **kwargs):
-        if self.add_repeater_form.is_valid():
-            repeater = Repeater.get(request.GET.get('repeater'))
-            repeater.clear_caches()
-            repeater = Repeater.get(request.GET.get('repeater'))
-            repeater.url = self.add_repeater_form.cleaned_data['url']
+        repeater_form = self.add_repeater_form
+        if repeater_form.is_valid():
+            repeater = FormRepeater.get(request.GET.get('repeater'))
+            repeater.url = repeater_form.cleaned_data['url']
+            repeater.format = repeater_form.cleaned_data['format']
+            repeater.username = repeater_form.cleaned_data['username']
+            repeater.password = repeater_form.cleaned_data['password']
+            repeater.use_basic_auth = repeater_form.cleaned_data['use_basic_auth']
             repeater.save()
-            repeater.clear_caches()
             return HttpResponseRedirect(reverse(DomainForwardingOptionsView.urlname, args=[self.domain]))
         else:
             return HttpResponseForbidden('Please enter valid values')
@@ -2488,8 +2474,12 @@ class EditFormRepeaterView(AddRepeaterView):
 
 class EditCaseRepeaterView(AddRepeaterView):
     urlname = "edit_case_repeater"
-    repeater_form_class = GenericEditCaseRepeaterForm
+    repeater_form_class = EditCaseRepeaterForm
     template_name = 'repeaters/add_case_repeater.html'
+
+    @use_select2
+    def dispatch(self, request, *args, **kwargs):
+        return super(EditCaseRepeaterView, self).dispatch(request, *args, **kwargs)
 
     def page_url(self):
         return
@@ -2498,10 +2488,7 @@ class EditCaseRepeaterView(AddRepeaterView):
     @memoized
     def add_repeater_form(self):
         repeater_id = self.request.GET.get('repeater')
-        repeater = Repeater.get(repeater_id)
-        repeater.clear_caches()
-        repeater = Repeater.get(repeater_id)
-        print "white listed", repeater.white_listed_case_types
+        repeater = CaseRepeater.get(repeater_id)
         if self.request.method == 'POST':
             return self.repeater_form_class(
                 self.request.POST,
@@ -2516,19 +2503,24 @@ class EditCaseRepeaterView(AddRepeaterView):
                      'use_basic_auth': repeater.use_basic_auth,
                      'username': repeater.username,
                      'password': repeater.password,
-                     'white_listed_case_types': [(t, t) for t in repeater.white_listed_case_types],
-                     'black_listed_users': [(t, t) for t in repeater.black_listed_users]
+                     'white_listed_case_types': repeater.white_listed_case_types,
+                     'black_listed_users': repeater.black_listed_users
                      }
         )
 
     def post(self, request, *args, **kwargs):
-        if self.add_repeater_form.is_valid():
-            repeater = Repeater.get(request.GET.get('repeater'))
-            repeater.clear_caches()
-            repeater = Repeater.get(request.GET.get('repeater'))
-            repeater.url = self.add_repeater_form.cleaned_data['url']
+        repeater_form = self.add_repeater_form
+        if repeater_form.is_valid():
+            repeater = CaseRepeater.get(request.GET.get('repeater'))
+            repeater.url = repeater_form.cleaned_data['url']
+            repeater.format = repeater_form.cleaned_data['format']
+            repeater.username = repeater_form.cleaned_data['username']
+            repeater.password = repeater_form.cleaned_data['password']
+            repeater.use_basic_auth = repeater_form.cleaned_data['use_basic_auth']
+            repeater.white_listed_case_types = repeater_form.cleaned_data['white_listed_case_types']
+            repeater.black_listed_users = repeater_form.cleaned_data['black_listed_users']
             repeater.save()
-            repeater.clear_caches()
+
             return HttpResponseRedirect(reverse(DomainForwardingOptionsView.urlname, args=[self.domain]))
         else:
             return HttpResponseForbidden('Please enter valid values')
