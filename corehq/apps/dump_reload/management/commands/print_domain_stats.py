@@ -3,7 +3,9 @@ from collections import Counter
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
 
-from corehq.apps import es
+from corehq.apps.data_pipeline_audit.dbacessors import get_primary_db_case_counts, get_primary_db_form_counts, \
+    get_es_counts_by_doc_type
+from corehq.apps.data_pipeline_audit.utils import map_counter_doc_types
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
 from corehq.apps.dump_reload.couch.dump import DOC_PROVIDERS
 from corehq.apps.dump_reload.couch.id_providers import DocTypeIDProvider
@@ -12,19 +14,9 @@ from corehq.apps.dump_reload.util import get_model_label
 from corehq.apps.hqmedia.models import CommCareMultimedia
 from corehq.apps.users.dbaccessors.all_commcare_users import get_web_user_count, get_mobile_user_count
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
-from corehq.sql_db.config import get_sql_db_aliases_in_use
 from corehq.util.couch import get_document_class_by_doc_type
-from corehq.util.markup import shell_red
-
-DOC_TYPE_MAPPING = {
-    'xforminstance': 'XFormInstance',
-    'submissionerrorlog': 'SubmissionErrorLog',
-    'xformduplicate': 'XFormDuplicate',
-    'xformerror': 'XFormError',
-    'xformarchived': 'XFormArchived',
-}
+from corehq.util.markup import CSVRowFormatter, TableRowFormatter, SimpleTableWriter
 
 
 class Command(BaseCommand):
@@ -38,9 +30,9 @@ class Command(BaseCommand):
     def handle(self, domain, **options):
         csv = options.get('csv')
 
-        couch_counts = _map_doc_types(_get_couchdb_counts(domain))
-        sql_counts = _map_doc_types(_get_sql_counts(domain))
-        es_counts = _map_doc_types(_get_es_counts(domain))
+        couch_counts = map_counter_doc_types(_get_couchdb_counts(domain))
+        sql_counts = map_counter_doc_types(_get_sql_counts(domain))
+        es_counts = map_counter_doc_types(get_es_counts_by_doc_type(domain))
         all_doc_types = set(couch_counts) | set(sql_counts) | set(es_counts)
 
         output_rows = []
@@ -51,29 +43,24 @@ class Command(BaseCommand):
             output_rows.append((doc_type, couch, sql, es))
 
         if csv:
-            self.output_csv(output_rows)
+            row_formatter = CSVRowFormatter()
         else:
-            self.output_table(output_rows)
+            row_formatter = TableRowFormatter(
+                [50, 20, 20, 20],
+                _get_row_color
+            )
 
-    def output_table(self, output_rows):
-        template = "{:<50} | {:<20} | {:<20} | {:<20}"
-        self._write_output(template, output_rows)
+        SimpleTableWriter(self.stdout, row_formatter).write_table(
+            ['Doc Type', 'Couch', 'SQL', 'ES'], output_rows
+        )
 
-    def output_csv(self, output_rows):
-        template = "{},{},{},{}\n"
-        self._write_output(template, output_rows, with_header_divider=False)
 
-    def _write_output(self, template, output_rows, with_header_divider=True, with_color=True):
-        self.stdout.write(template.format('Doc Type', 'Couch', 'SQL', 'ES'))
-        if with_header_divider:
-            self.stdout.write(template.format('-' * 50, *['-' * 20] * 3))
-        for doc_type, couch_count, sql_count, es_count in output_rows:
-            row_template = template
-            couch_dff = couch_count and couch_count != es_count
-            sql_diff = sql_count and sql_count != es_count
-            if with_color and es_count and (couch_dff or sql_diff):
-                row_template = shell_red(template)
-            self.stdout.write(row_template.format(doc_type, couch_count, sql_count, es_count))
+def _get_row_color(row):
+    doc_type, couch_count, sql_count, es_count = row
+    couch_dff = couch_count and couch_count != es_count
+    sql_diff = sql_count and sql_count != es_count
+    if es_count and (couch_dff or sql_diff):
+        return 'red'
 
 
 def _get_couchdb_counts(domain):
@@ -104,19 +91,6 @@ def _get_couchdb_counts(domain):
     return couch_db_counts
 
 
-def _get_doc_counts_for_couch_db(couch_db, domain):
-    doc_types = couch_db.view(
-        "by_domain_doc_type_date/view",
-        startkey=[domain],
-        endkey=[domain, {}],
-        reduce=True,
-        group=True,
-        group_level=2
-    )
-
-    return Counter({row['key'][1]: row['value'] for row in doc_types})
-
-
 @allow_form_processing_queries()
 def _get_sql_counts(domain):
     counter = Counter()
@@ -125,56 +99,6 @@ def _get_sql_counts(domain):
             continue  # User is very slow, others we want to break out
         counter[get_model_label(model_class)] += queryset.count()
 
-    counter += _get_sql_forms_by_doc_type(domain)
-    counter += _get_sql_cases_by_doc_type(domain)
-    return counter
-
-
-def _get_es_counts(domain):
-    counter = Counter()
-    for es_query in (es.CaseES, es.FormES, es.UserES, es.AppES, es.LedgerES, es.GroupES):
-        counter += _get_index_counts(es_query(), domain)
-
-    return counter
-
-
-def _get_index_counts(es_query, domain):
-    return Counter(
-        es_query
-        .remove_default_filters()
-        .filter(es.filters.term('domain', domain))
-        .terms_aggregation('doc_type', 'doc_type')
-        .size(0)
-        .run()
-        .aggregations.doc_type.counts_by_bucket()
-    )
-
-
-def _map_doc_types(counter):
-    return Counter({
-        DOC_TYPE_MAPPING.get(doc_type, doc_type): count
-        for doc_type, count in counter.items()
-    })
-
-
-def _get_sql_forms_by_doc_type(domain):
-    counter = Counter()
-    for db_alias in get_sql_db_aliases_in_use():
-        queryset = XFormInstanceSQL.objects.using(db_alias).filter(domain=domain)
-        for doc_type, state in doc_type_to_state.items():
-            counter[doc_type] += queryset.filter(state=state).count()
-
-        where_clause = 'state & {0} = {0}'.format(XFormInstanceSQL.DELETED)
-        counter['XFormInstance-Deleted'] += queryset.extra(where=[where_clause]).count()
-
-    return counter
-
-
-def _get_sql_cases_by_doc_type(domain):
-    counter = Counter()
-    for db_alias in get_sql_db_aliases_in_use():
-        queryset = CommCareCaseSQL.objects.using(db_alias).filter(domain=domain)
-        counter['CommCareCase'] += queryset.filter(deleted=False).count()
-        counter['CommCareCase-Deleted'] += queryset.filter(deleted=True).count()
-
+    counter += get_primary_db_form_counts(domain)
+    counter += get_primary_db_case_counts(domain)
     return counter

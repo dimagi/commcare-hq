@@ -51,6 +51,7 @@ def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
     new_user.last_login = now
     new_user.date_joined = now
     new_user.last_password_set = now
+    new_user.atypical_user = form.cleaned_data.get('atypical_user', False)
     new_user.save()
 
     return new_user
@@ -123,7 +124,6 @@ def request_new_domain(request, form, is_new_user=True):
                                        request.user.get_full_name())
     send_new_request_update_email(request.user, get_ip(request), new_domain.name, is_new_user=is_new_user)
 
-    set_toggle(toggles.USE_FORMPLAYER_FRONTEND.slug, new_domain.name, True, namespace=toggles.NAMESPACE_DOMAIN)
     meta = get_meta(request)
     track_created_new_project_space_on_hubspot.delay(current_user, request.COOKIES, meta)
     return new_domain.name

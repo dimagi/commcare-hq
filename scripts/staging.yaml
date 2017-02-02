@@ -55,11 +55,10 @@ branches:
   - mk-243862-reassign-cases-manage-forms # MK 1/9
   - es/index-fixtures+mk-243262-new-location-fixture
   - mk-243262-new-location-fixture # MK 1/16
-  - zapier_mods        # FR 1/17
   - zapier_action_mods # NC 1/24
   - np/phonenumbers # NP 1/18
-  - np/billing/report-builder-plans # NP 1/24
-  - es/scope-location-filter  # ES 1/24
+  - dm/julies-billing-gid  # daniel 2/1
+  - externalize-js-appstore # Jenny 2/2
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

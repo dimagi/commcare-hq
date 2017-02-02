@@ -507,8 +507,10 @@ def delete_diff_db(domain):
 
 
 def commit_migration(domain_name):
-    domain = Domain.get_by_name(domain_name)
+    domain = Domain.get_by_name(domain_name, strict=True)
     domain.use_sql_backend = True
     domain.save()
     clear_local_domain_sql_backend_override(domain_name)
-    assert should_use_sql_backend(domain_name)
+    if not should_use_sql_backend(domain_name):
+        Domain.get_by_name.clear(Domain, domain_name)
+        assert should_use_sql_backend(domain_name)

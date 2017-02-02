@@ -74,8 +74,10 @@ hqDefine('style/js/components/inline_edit.js', function() {
                         return;
                     }
 
-                    self.value(DOMPurify.sanitize(self.value()));
+                    // Strip HTML and then undo DOMPurify's HTML escaping
+                    self.value($("<div/>").html(DOMPurify.sanitize(self.value())).text());
                     self.readOnlyValue = self.value();
+
                     var data = self.saveParams;
                     _.each(data, function(value, key) {
                         data[key] = ko.utils.unwrapObservable(value);

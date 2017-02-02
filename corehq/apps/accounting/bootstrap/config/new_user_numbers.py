@@ -6,7 +6,7 @@ from corehq.apps.accounting.models import (
 )
 
 BOOTSTRAP_CONFIG = {
-    (SoftwarePlanEdition.COMMUNITY, False): {
+    (SoftwarePlanEdition.COMMUNITY, False, False): {
         'role': 'community_plan_v0',
         'product_rate': dict(),
         'feature_rates': {

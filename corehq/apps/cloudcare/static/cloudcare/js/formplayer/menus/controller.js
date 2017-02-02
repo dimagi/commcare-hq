@@ -102,7 +102,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             var tabListView = new Menus.Views.DetailTabListView({
                 collection: tabCollection,
                 showDetail: function (detailTabIndex) {
-                    self.showDetail(model, detailTabIndex);
+                    self.showDetail(model, detailTabIndex, caseId);
                 },
             });
 
@@ -177,7 +177,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 title: menuResponse.title,
                 headers: menuResponse.headers,
                 widthHints: menuResponse.widthHints,
-                action: menuResponse.action,
+                actions: menuResponse.actions,
                 pageCount: menuResponse.pageCount,
                 currentPage: menuResponse.currentPage,
                 styles: menuResponse.styles,
