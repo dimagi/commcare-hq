@@ -130,7 +130,7 @@ class ENikshayCaseUtilsTests(ENikshayCaseStructureMixin, TestCase):
 
     @run_with_all_backends
     def test_get_episode_case_from_adherence(self):
-        adherence_case = self.create_adherence_cases([datetime(2017, 02, 17)])[0]
+        adherence_case = self.create_adherence_cases([datetime(2017, 2, 17)])[0]
         self.assertEqual(
             get_episode_case_from_adherence(self.domain, adherence_case.case_id).case_id,
             self.episode_id,

@@ -392,7 +392,7 @@ class TestAdherencePayloadGenerator(TestPayloadGeneratorBase):
 
     @run_with_all_backends
     def test_get_payload(self):
-        date = datetime(2017, 02, 20)
+        date = datetime(2017, 2, 20)
         cases = self.create_case_structure()
         cases['adherence'] = self.create_adherence_cases([date])[0]
         expected_payload = json.dumps(
@@ -407,7 +407,7 @@ class TestAdherencePayloadGenerator(TestPayloadGeneratorBase):
 
     @run_with_all_backends
     def test_handle_success(self):
-        date = datetime(2017, 02, 20)
+        date = datetime(2017, 2, 20)
         cases = self.create_case_structure()
         cases['adherence'] = self.create_adherence_cases([date])[0]
         adherence_id = cases['adherence'].case_id
