@@ -4,6 +4,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps import es
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_type, get_doc_ids_in_domain_by_type
 from corehq.apps.dump_reload.sql.dump import allow_form_processing_queries
+from corehq.apps.es import aggregations
 from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
 from corehq.form_processor.utils.general import should_use_sql_backend
@@ -37,6 +38,30 @@ def get_index_counts_by_domain_doc_type(es_query_class, domain):
     )
 
 
+def get_es_user_counts_by_doc_type(domain):
+    agg = aggregations.TermsAggregation('doc_type', 'doc_type').aggregation(
+        aggregations.TermsAggregation('base_doc', 'base_doc')
+    )
+    doc_type_buckets = (
+        es.UserES()
+        .remove_default_filters()
+        .filter(es.users.domain(domain))
+        .aggregation(agg)
+        .size(0)
+        .run()
+        .aggregations.doc_type.buckets_dict
+    )
+    counts = Counter()
+    for doc_type, bucket in doc_type_buckets.items():
+        for base_doc, count in bucket.base_doc.counts_by_bucket().items():
+            deleted = base_doc.endswith('deleted')
+            if deleted:
+                doc_type += '-Deleted'
+            counts[doc_type] = count
+
+    return counts
+
+
 def get_primary_db_form_counts(domain):
     if should_use_sql_backend(domain):
         return _get_sql_forms_by_doc_type(domain)
@@ -48,7 +73,7 @@ def get_primary_db_form_ids(domain, doc_type):
     if should_use_sql_backend(domain):
         return get_sql_form_ids(domain, doc_type)
     else:
-        return get_doc_ids_in_domain_by_type(domain, doc_type, CommCareCase.get_db())
+        return set(get_doc_ids_in_domain_by_type(domain, doc_type, CommCareCase.get_db()))
 
 
 def get_primary_db_case_counts(domain):
@@ -62,7 +87,7 @@ def get_primary_db_case_ids(domain, doc_type):
     if should_use_sql_backend(domain):
         return get_sql_case_ids(domain, doc_type)
     else:
-        return get_doc_ids_in_domain_by_type(domain, doc_type, CommCareCase.get_db())
+        return set(get_doc_ids_in_domain_by_type(domain, doc_type, CommCareCase.get_db()))
 
 
 def _get_couch_forms_by_doc_type(domain):
@@ -144,7 +169,7 @@ def _get_es_doc_ids(es_query_class, domain, doc_type):
         .filter(es.filters.OR(
             es.filters.doc_type(doc_type),
             es.filters.doc_type(doc_type.lower()),
-        )).get_ids()
+        )).exclude_source().scroll()
     )
 
 
@@ -154,5 +179,17 @@ def get_es_user_ids(domain, doc_type):
         .remove_default_filters()
         .filter(es.users.domain(domain))
         .filter(es.filters.doc_type(doc_type))
+        .filter(_get_user_base_doc_filter(doc_type))
         .get_ids()
     )
+
+
+def _get_user_base_doc_filter(doc_type):
+    deleted = 'Deleted' in doc_type
+    if deleted:
+        doc_type = doc_type[:-1]
+
+    if doc_type == 'CommCareUser':
+        return {"term": {
+            "base_doc": "couchuser-deleted" if deleted else "couchuser"
+        }}

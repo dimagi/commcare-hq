@@ -18,6 +18,10 @@ class IndicatorLaboratoryAdapter(IndicatorAdapter):
         self.es_adapter.build_table()
         self.sql_adapter.build_table()
 
+    def after_table_build(self):
+        self.es_adapter.after_table_build()
+        self.sql_adapter.after_table_build()
+
     def drop_table(self):
         self.es_adapter.drop_table()
         self.sql_adapter.drop_table()

@@ -22,6 +22,7 @@ def _build_date_filter(spec, report):
     return DatespanFilter(
         name=wrapped.slug,
         label=wrapped.get_display(),
+        compare_as_string=wrapped.compare_as_string,
     )
 
 

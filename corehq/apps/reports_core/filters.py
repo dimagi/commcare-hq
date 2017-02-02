@@ -80,10 +80,10 @@ class DatespanFilter(BaseFilter):
     template = 'reports_core/filters/datespan_filter/datespan_filter.html'
     javascript_template = 'reports_core/filters/datespan_filter/datespan_filter.js'
 
-    def __init__(self, name, label='Datespan Filter',
-                 css_id=None):
+    def __init__(self, name, label='Datespan Filter', css_id=None, compare_as_string=False):
         self.label = label
         self.css_id = css_id or name
+        self.compare_as_string = compare_as_string
         params = [
             FilterParam(self.startdate_param_name, True),
             FilterParam(self.enddate_param_name, True),
@@ -107,7 +107,10 @@ class DatespanFilter(BaseFilter):
 
         def date_or_nothing(param):
             if param:
-                return iso_string_to_date(param)
+                if self.compare_as_string:
+                    return iso_string_to_date(param)
+                else:
+                    return datetime.combine(iso_string_to_date(param), time())
             else:
                 return None
         try:
