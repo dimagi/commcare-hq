@@ -881,7 +881,7 @@ class FormBase(DocumentSchema):
 
     @case_references.setter
     def case_references(self, case_references):
-        self.case_references_data = CaseReferences.wrap(case_references)
+        self.case_references_data = case_references
 
     @classmethod
     def get_form(cls, form_unique_id, and_app=False):
@@ -1652,7 +1652,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
 
         format: {"load": {"/data/path": ["case_property", ...], ...}}
         """
-        self.case_references_data = CaseReferences.wrap(refs)
+        self.case_references_data = refs
         if self.actions.load_from_form.preload:
             self.actions.load_from_form = PreloadAction()
 

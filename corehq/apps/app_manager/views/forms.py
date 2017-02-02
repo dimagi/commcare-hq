@@ -756,7 +756,8 @@ def _get_case_references(data):
         refs = json.loads(data.get('case_references', '{}'))
 
     try:
-        CaseReferences.wrap(copy.deepcopy(refs)).validate()
+        references = CaseReferences.wrap(copy.deepcopy(refs))
+        references.validate()
+        return references
     except Exception:
         raise ValueError("bad case references data: {!r}".format(refs))
-    return refs

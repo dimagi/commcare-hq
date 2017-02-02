@@ -6,15 +6,14 @@ from corehq.apps.app_manager.models import AdvancedForm, Form, PreloadAction, Ca
 from corehq.apps.app_manager.views.forms import _get_case_references
 
 
-class FormCaseReferenceBaseTest(SimpleTestCase):
-    def _assert_references_equal(self, wrapped_references, unwrapped_references):
-        self.assertEqual(
-            wrapped_references.to_json(),
-            CaseReferences.wrap(unwrapped_references).to_json(),
-        )
+def _assert_references_equal(testcase, wrapped_references, unwrapped_references):
+    testcase.assertEqual(
+        wrapped_references.to_json(),
+        CaseReferences.wrap(unwrapped_references).to_json(),
+    )
 
 
-class FormCaseReferenceTest(FormCaseReferenceBaseTest):
+class FormCaseReferenceTest(SimpleTestCase):
 
     def setUp(self):
         self.form = Form()
@@ -34,7 +33,8 @@ class FormCaseReferenceTest(FormCaseReferenceBaseTest):
             })
         }
         self.form.case_references = _get_case_references(post_data)
-        self._assert_references_equal(
+        _assert_references_equal(
+            self,
             self.form.case_references,
             {"load": {"/data/question": ["name"]}}
         )
@@ -49,7 +49,7 @@ class FormCaseReferenceTest(FormCaseReferenceBaseTest):
         }
         post_data = {"case_references": json.dumps(refs)}
         self.form.case_references = _get_case_references(post_data)
-        self._assert_references_equal(self.form.case_references, refs)
+        _assert_references_equal(self, self.form.case_references, refs)
         self.assertFalse(self.form.actions.load_from_form.preload)
 
     def test_legacy_preload_action_case_references(self):
@@ -64,13 +64,14 @@ class FormCaseReferenceTest(FormCaseReferenceBaseTest):
                 "operator": None,
             }
         })
-        self._assert_references_equal(
+        _assert_references_equal(
+            self,
             self.form.case_references,
             {"load": {"/data/question": ["name"]}}
         )
 
 
-class AdvancedFormCaseReferenceTest(FormCaseReferenceBaseTest):
+class AdvancedFormCaseReferenceTest(SimpleTestCase):
 
     def setUp(self):
         self.form = AdvancedForm()
@@ -90,7 +91,7 @@ class AdvancedFormCaseReferenceTest(FormCaseReferenceBaseTest):
             })
         }
         self.form.case_references = _get_case_references(post_data)
-        self._assert_references_equal(self.form.case_references, {"load": {"/data/question": ["name"]}})
+        _assert_references_equal(self, self.form.case_references, {"load": {"/data/question": ["name"]}})
         self.assertFalse(hasattr(self.form.actions, "load_from_form"))
 
     def test_two_references(self):
@@ -102,7 +103,7 @@ class AdvancedFormCaseReferenceTest(FormCaseReferenceBaseTest):
         }
         post_data = {"case_references": json.dumps(refs)}
         self.form.case_references = _get_case_references(post_data)
-        self._assert_references_equal(self.form.case_references, refs)
+        _assert_references_equal(self, self.form.case_references, refs)
         self.assertFalse(hasattr(self.form.actions, "load_from_form"))
 
 
@@ -143,7 +144,7 @@ def test_valid_args(self, case_references):
     wrapped_references = {
         'case_references': json.dumps(case_references)
     }
-    self.assertEqual(case_references, _get_case_references(wrapped_references))
+    _assert_references_equal(self, _get_case_references(wrapped_references), case_references)
 
 
 @generate_cases([
