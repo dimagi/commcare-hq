@@ -4,7 +4,7 @@ from mock import patch
 from nose.tools import nottest
 
 from corehq.apps.app_manager.models import Application, Module, OpenCaseAction, ParentSelect, OpenSubCaseAction, \
-    AdvancedModule, LoadUpdateAction, AdvancedOpenCaseAction, CaseIndex
+    AdvancedModule, LoadUpdateAction, AdvancedOpenCaseAction, CaseIndex, CaseReferences
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 
 
@@ -101,7 +101,7 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
         app.version = 1
         m0 = self._make_module(app, 0, 'household')
         m0f1 = m0.new_form('save to case', 'en', attachment=self.get_xml('standard_questions'))
-        m0f1.case_references = {
+        m0f1.case_references = CaseReferences.wrap({
             'save': {
                 "/data/question1": {
                     "case_type": "household",
@@ -111,7 +111,7 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
                     ],
                 }
             }
-        }
+        })
         self._assert_properties(app.get_case_metadata(), {'name', 'save_to_case_p1', 'save_to_case_p2'})
 
     def test_case_references_advanced(self):
@@ -121,7 +121,7 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
         m0 = app.add_module(AdvancedModule.new_module('Module3', lang='en'))
         m0.case_type = 'household_advanced'
         m0f1 = m0.new_form('save to case', 'en', attachment=self.get_xml('standard_questions'))
-        m0f1.case_references = {
+        m0f1.case_references = CaseReferences.wrap({
             'save': {
                 "/data/question1": {
                     "case_type": "household_advanced",
@@ -131,7 +131,7 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
                     ],
                 }
             }
-        }
+        })
         self._assert_properties(app.get_case_metadata(), {'save_to_case_p1', 'save_to_case_p2'})
 
     def test_case_references_open_close(self):
@@ -140,38 +140,38 @@ class CaseMetaTest(SimpleTestCase, TestXmlMixin):
         app.version = 1
         m0 = self._make_module(app, 0, 'household')
         m0f1 = m0.new_form('save to case', 'en', attachment=self.get_xml('standard_questions'))
-        m0f1.case_references = {
+        m0f1.case_references = CaseReferences.wrap({
             'save': {
                 "/data/question1": {
                     "case_type": "save_to_case",
                 }
             }
-        }
+        })
         meta_type = app.get_case_metadata().get_type('save_to_case')
         self.assertEqual({}, meta_type.opened_by)
         self.assertEqual({}, meta_type.closed_by)
 
-        m0f1.case_references = {
+        m0f1.case_references = CaseReferences.wrap({
             'save': {
                 "/data/question1": {
                     "case_type": "save_to_case",
                     "create": True
                 }
             }
-        }
+        })
         app.version = 2
         meta_type = app.get_case_metadata().get_type('save_to_case')
         self.assertTrue(m0f1.unique_id in meta_type.opened_by)
         self.assertEqual({}, meta_type.closed_by)
 
-        m0f1.case_references = {
+        m0f1.case_references = CaseReferences.wrap({
             'save': {
                 "/data/question1": {
                     "case_type": "save_to_case",
                     "close": True
                 }
             }
-        }
+        })
         app.version = 3
         meta_type = app.get_case_metadata().get_type('save_to_case')
         self.assertEqual({}, meta_type.opened_by)
