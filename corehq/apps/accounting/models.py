@@ -2707,6 +2707,13 @@ class CreditLine(ValidateModelMixin, models.Model):
         ).all()
 
     @classmethod
+    def get_non_general_credits_by_subscription(cls, subscription):
+        return cls.objects.filter(subscription=subscription).filter(
+            Q(product_type__in=[c[0] for c in SoftwareProductType.CHOICES] + [SoftwareProductType.ANY]) |
+            Q(feature_type__in=[f[0] for f in FeatureType.CHOICES])
+        ).all()
+
+    @classmethod
     def add_credit(cls, amount, account=None, subscription=None,
                    product_type=None, feature_type=None, payment_record=None,
                    invoice=None, line_item=None, related_credit=None,
