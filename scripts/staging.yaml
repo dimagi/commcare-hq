@@ -58,6 +58,7 @@ branches:
   - zapier_action_mods # NC 1/24
   - np/phonenumbers # NP 1/18
   - dm/julies-billing-gid  # daniel 2/1
+  - externalize-js-appstore # Jenny 2/2
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
