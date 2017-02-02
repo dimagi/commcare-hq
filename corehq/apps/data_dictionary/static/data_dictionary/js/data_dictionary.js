@@ -1,60 +1,10 @@
 /* globals django */
 (function ($, _) {
-    // var CaseProperty = function (caseType, data, casePropertyUrl) {
-    //     var self = this;
-    //
-    //     self.caseType = ko.observable(caseType);
-    //     self.name = ko.observable(data.name);
-    //     self.description = ko.observable(data.description);
-    //     self.dataType = ko.observable(data.data_type);
-    //     self.group = ko.observable(data.group);
-    //     self.availableDataTypes = ko.observableArray([
-    //         {value: 'date', display: django.gettext('Date')},
-    //         {value: 'plain', display: django.gettext('Plain')},
-    //         {value: 'number', display: django.gettext('Number')},
-    //         {value: 'select', display: django.gettext('Select')},
-    //         {value: 'integer', display: django.gettext('Integer')},
-    //     ]);
-    //     self.isVisible = ko.observable(true);
-    //     self.isGroup = false;
-    //
-    //
-    //     self.dataType.subscribe(function (newType) {
-    //         if (newType) {
-    //             self.saveCaseProperty(self.name(), newType)
-    //         }
-    //     }, self);
-    //
-    //     self.saveCaseProperty = function (name, type) {
-    //         $.ajax({
-    //                 url: casePropertyUrl,
-    //                 type: 'POST',
-    //                 dataType: 'JSON',
-    //                 data: {
-    //                     'caseType': self.caseType(),
-    //                     'name': name,
-    //                     'data_type': type,
-    //                 },
-    //                 success: function () { },
-    //                 // todo show errors
-    //                 error: function () { },
-    //         });
-    //     };
-    // };
 
     var CaseType = function (name) {
         var self = this;
         self.name = ko.observable(name);
         self.properties = ko.observableArray();
-        // self.groups = ko.observableArray();
-
-        // self.init = function (group_dict) {
-        //     _.each(group_dict, function (properties, group) {
-        //         var groupObj = new CasePropertyGroup(group, casePropertyUrl);
-        //         groupObj.init(properties);
-        //         self.groups.push(groupObj);
-        //     });
-        // };
 
         self.init = function (group_dict, changeSaveButton) {
             _.each(group_dict, function (properties, group) {
@@ -69,24 +19,6 @@
             });
         };
     };
-
-    // var CasePropertyGroup = function (name, casePropertyUrl) {
-    //     var self = this;
-    //     self.name = ko.observable(name);
-    //     self.properties = ko.observableArray();
-    //     self.expanded = ko.observable(true);
-    //     self.isGroup = true;
-    //
-    //     self.toggle = function () {
-    //         self.expanded(!self.expanded());
-    //     };
-    //
-    //     self.init = function (properties) {
-    //         _.each(properties, function (property) {
-    //             self.properties.push(new CaseProperty(self.name, property, casePropertyUrl));
-    //         });
-    //     };
-    // };
 
     var PropertyListItem = function (name, isGroup, groupName, caseType, dataType, description) {
         var self = this;
