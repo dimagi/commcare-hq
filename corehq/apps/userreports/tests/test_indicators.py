@@ -1,18 +1,28 @@
 from collections import namedtuple
-import datetime
+from datetime import datetime
 import uuid
 from copy import copy
 from decimal import Decimal
 from django.db.models.signals import post_save
 from mock import patch
 from django.test import SimpleTestCase, TestCase
+from casexml.apps.case.tests.util import delete_all_ledgers, delete_all_xforms
+from casexml.apps.stock.const import REPORT_TYPE_BALANCE
+from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack.models import StockState, update_domain_mapping
+from corehq.apps.commtrack.processing import StockProcessingResult
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.indicators import LedgerBalancesIndicator
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.products.models import SQLProduct
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.parsers.ledgers.helpers import StockReportHelper, StockTransactionHelper
+from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.utils import get_simple_wrapped_form
+from corehq.form_processor.utils.general import should_use_sql_backend
+from corehq.form_processor.utils.xform import TestFormMetadata
 from corehq.util.context_managers import drop_connected_signals
 
 
@@ -532,56 +542,95 @@ class LedgerBalancesIndicatorTest(SimpleTestCase):
 
 class TestGetValuesByProduct(TestCase):
     domain_name = 'test-domain'
+    case_id = 'case1'
+
+    def create_report(self, transactions=None, tag=None, date=None):
+        form = get_simple_wrapped_form(uuid.uuid4().hex, metadata=TestFormMetadata(domain=self.domain_name))
+        report = StockReportHelper.make_from_form(
+            form,
+            date or datetime.utcnow(),
+            tag or REPORT_TYPE_BALANCE,
+            transactions or [],
+        )
+        return report, form
+
+    def _create_models_for_stock_report_helper(self, form, stock_report_helper):
+        processing_result = StockProcessingResult(form, stock_report_helpers=[stock_report_helper])
+        processing_result.populate_models()
+        if should_use_sql_backend(self.domain_name):
+            from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
+            LedgerAccessorSQL.save_ledger_values(processing_result.models_to_save)
+        else:
+            processing_result.commit()
 
     @classmethod
     def setUpClass(cls):
-        post_save.disconnect(update_domain_mapping, StockState)
-        cls.domain_obj = create_domain(cls.domain_name)
-        for product_code, section, value in [
-            ('coke', 'soh', 32),
-            ('coke', 'consumption', 63),
-            ('surge', 'soh', 85),
-            ('fanta', 'soh', 11),
-        ]:
-            product = cls._make_product(product_code)
-            cls._make_stock_state(product, section, value)
+        super(TestGetValuesByProduct, cls).setUpClass()
+        cls.data = [
+            {"product": "coke", "section": "soh", "balance": 32},
+            {"product": "coke", "section": "consumption", "balance": 63},
+            {"product": "surge", "section": "soh", "balance": 85},
+            {"product": "fanta", "section": "soh", "balance": 11},
+        ]
+        product_ids = set(map(lambda p: p['product'], cls.data))
+
+        SQLProduct.objects.bulk_create([
+            SQLProduct(domain=cls.domain_name, product_id=id, code=id)
+            for id in product_ids
+        ])
 
     @classmethod
     def tearDownClass(cls):
-        post_save.connect(update_domain_mapping, StockState)
-        cls.domain_obj.delete()
+        SQLProduct.objects.all().delete()
+        super(TestGetValuesByProduct, cls).tearDownClass()
 
-    @staticmethod
-    def _make_product(code):
-        return SQLProduct.objects.create(
-            domain='test-domain',
-            product_id=uuid.uuid4().hex,
-            code=code,
-        )
+    def setUp(self):
+        super(TestGetValuesByProduct, self).setUp()
+        self.ledger_processor = FormProcessorInterface(domain=self.domain_name).ledger_processor
+        self.domain_obj = create_domain(self.domain_name)
 
-    @staticmethod
-    def _make_stock_state(product, section_id, value):
-        with drop_connected_signals(post_save):
-            return StockState.objects.create(
-                stock_on_hand=value,
-                case_id='case1',
-                product_id=product.product_id,
-                sql_product=product,
-                section_id=section_id,
-                last_modified_date=datetime.datetime.now(),
+        transactions_flat = []
+        self.transactions = {}
+        for d in self.data:
+            product = d['product']
+            section = d['section']
+            balance = d['balance']
+            transactions_flat.append(
+                StockTransactionHelper(
+                    case_id=self.case_id,
+                    section_id=section,
+                    product_id=product,
+                    action='soh',
+                    quantity=balance,
+                    timestamp=datetime.utcnow()
+                )
             )
+            self.transactions.setdefault(self.case_id, {}).setdefault(section, {})[product] = balance
 
+        self.new_stock_report, self.form = self.create_report(transactions_flat)
+        self._create_models_for_stock_report_helper(self.form, self.new_stock_report)
+
+    def tearDown(self):
+        self.domain_obj.delete()
+        delete_all_xforms()
+        delete_all_ledgers()
+        StockReport.objects.all().delete()
+        StockTransaction.objects.all().delete()
+        super(TestGetValuesByProduct, self).tearDown()
+
+    @run_with_all_backends
     def test_get_soh_values_by_product(self):
         values = LedgerBalancesIndicator._get_values_by_product(
-            'soh', 'case1', ['coke', 'surge', 'new_coke'], self.domain_name
+            'soh', self.case_id, ['coke', 'surge', 'new_coke'], self.domain_name
         )
         self.assertEqual(values['coke'], 32)
         self.assertEqual(values['surge'], 85)
         self.assertEqual(values['new_coke'], 0)
 
+    @run_with_all_backends
     def test_get_consumption_by_product(self):
         values = LedgerBalancesIndicator._get_values_by_product(
-            'consumption', 'case1', ['coke', 'surge', 'new_coke'], self.domain_name
+            'consumption', self.case_id, ['coke', 'surge', 'new_coke'], self.domain_name
         )
         self.assertEqual(values['coke'], 63)
         self.assertEqual(values['surge'], 0)

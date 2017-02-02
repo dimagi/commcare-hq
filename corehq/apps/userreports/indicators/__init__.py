@@ -1,6 +1,6 @@
 from collections import defaultdict
-from corehq.apps.commtrack.models import StockState
 from corehq.apps.userreports.util import truncate_value
+from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from fluff import TYPE_INTEGER
 
 
@@ -119,12 +119,14 @@ class LedgerBalancesIndicator(ConfigurableIndicator):
     @staticmethod
     def _get_values_by_product(ledger_section, case_id, product_codes, domain):
         """returns a defaultdict mapping product codes to their values"""
-        values_by_product = StockState.objects.filter(
-            section_id=ledger_section,
-            case_id=case_id,
-            sql_product__code__in=product_codes,
-        ).values_list('sql_product__code', 'stock_on_hand')
-        return defaultdict(lambda: 0, values_by_product)
+        ret = defaultdict(lambda: 0)
+        ledgers = LedgerAccessors(domain).get_ledger_values_for_case(case_id)
+        ledgers = filter(lambda l: l.section_id == ledger_section, ledgers)
+        ledgers = filter(lambda l: l.entry_id in product_codes, ledgers)
+        for ledger in ledgers:
+            ret[ledger.entry_id] = ledger.stock_on_hand
+
+        return ret
 
     def get_columns(self):
         return map(self._make_column, self.product_codes)
