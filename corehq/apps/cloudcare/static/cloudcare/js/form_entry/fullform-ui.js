@@ -268,6 +268,11 @@ function Form(json) {
         });
     };
 
+    self.afterRender = function() {
+        // Once form has finished rendering, render all popovers
+        $('.js-form-container [data-toggle="popover"]').popover();
+    };
+
     $.unsubscribe('session');
     $.subscribe('session.reconcile', function(e, response, element) {
         // TODO where does response status parsing belong?
@@ -669,6 +674,10 @@ Formplayer.Const = {
     GEO: 'geo',
     INFO: 'info',
     BARCODE: 'barcode',
+
+    // Appearance attributes
+    NUMERIC: 'numeric',
+    MINIMAL: 'minimal',
 
     // Note it's important to differentiate these two
     NO_PENDING_ANSWER: undefined,

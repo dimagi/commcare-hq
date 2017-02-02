@@ -705,10 +705,10 @@ def prefix_usercase_properties(properties):
 
 
 def module_offers_search(module):
-    from corehq.apps.app_manager.models import AdvancedModule, Module
+    from corehq.apps.app_manager.models import AdvancedModule, Module, ShadowModule
 
     return (
-        isinstance(module, (Module, AdvancedModule)) and
+        isinstance(module, (Module, AdvancedModule, ShadowModule)) and
         module.search_config and
         module.search_config.properties
     )

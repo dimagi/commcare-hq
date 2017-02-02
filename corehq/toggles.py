@@ -726,23 +726,11 @@ HSPH_HACK = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-USE_FORMPLAYER_FRONTEND = PredictablyRandomToggle(
-    'use_formplayer_frontend',
-    'Use New CloudCare',
-    TAG_PRODUCT_PATH,
+USE_OLD_CLOUDCARE = StaticToggle(
+    'use_old_cloudcare',
+    'Use Old CloudCare',
+    TAG_ONE_OFF,
     [NAMESPACE_DOMAIN],
-    randomness=1.0,
-    always_disabled=[
-        'hsph-betterbirth',
-        'figo-ppiud-srilanka',
-        'broadreach-sa',
-        'goal-global',
-        'ipm-senegal',
-        'madla-malaria',
-        'myrice',
-        'pact',
-        'icrc-almanach',
-    ]
 )
 
 FIXTURE_CASE_SELECTION = StaticToggle(
@@ -891,6 +879,15 @@ PHONE_NUMBERS_REPORT = StaticToggle(
 )
 
 
+INBOUND_SMS_LENIENCY = StaticToggle(
+    'inbound_sms_leniency',
+    "Inbound SMS leniency on domain-owned gateways. "
+    "WARNING: This wil be rolled out slowly; do not enable on your own.",
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
+
 UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
     'unlimited_report_builder_reports',
     'Allow unlimited reports created in report builder',
@@ -944,11 +941,12 @@ CUSTOM_CALENDAR_FIXTURE = StaticToggle(
 )
 
 
-PREVIEW_APP = StaticToggle(
+PREVIEW_APP = PredictablyRandomToggle(
     'preview_app',
     'Preview an application in the app builder',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
+    randomness=0.2,
 )
 
 DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
@@ -1026,7 +1024,8 @@ NIMBUS_FORM_VALIDATION = PredictablyRandomToggle(
     [NAMESPACE_DOMAIN],
     randomness=1.0,
     always_disabled=[
-        'icrc-almanach'
+        'icrc-almanach',
+        'mikolo'
     ]
 )
 
@@ -1051,9 +1050,10 @@ SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-DO_NOT_PROCESS_OLD_BUILDS = StaticToggle(
+DO_NOT_PROCESS_OLD_BUILDS = PredictablyRandomToggle(
     'do_not_process_old_builds',
     'Do not process old build for export generation',
     TAG_PRODUCT_CORE,
     [NAMESPACE_DOMAIN],
+    randomness=0.2,
 )

@@ -8,12 +8,14 @@ from corehq.apps.hqadmin.reports import (
     AdminDomainMapReport,
     AdminDomainMapInternal,
     AdminAppReport,
+    AdminPhoneNumberReport,
     AdminUserReport,
     RealProjectSpacesReport,
     CommConnectProjectSpacesReport,
     CommTrackProjectSpacesReport,
     DeviceLogSoftAssertReport,
-    CommCareVersionReport)
+    CommCareVersionReport,
+)
 from corehq.apps.hqpillow_retry.views import PillowErrorsReport
 from corehq.apps.reports.standard import (monitoring, inspect, export,
     deployments, sms, ivr)
@@ -349,6 +351,7 @@ ADMIN_REPORTS = (
         CommTrackProjectSpacesReport,
         DeviceLogSoftAssertReport,
         CommCareVersionReport,
+        AdminPhoneNumberReport,
     )),
 )
 

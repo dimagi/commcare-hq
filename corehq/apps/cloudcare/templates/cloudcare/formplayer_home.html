@@ -146,7 +146,12 @@
             <section id="cloudcare-notifications" class="container notifications-container"></section>
             <div id="persistent-case-tile" class="container"></div>
             <div id="menu-region" class="container"></div>
-            <section id="webforms" data-bind="template: { name: 'form-fullform-ko-template' }"></section>
+            <section id="webforms" data-bind="
+                template: {
+                    name: 'form-fullform-ko-template',
+                    afterRender: afterRender
+                }">
+            </section>
         </div>
         <small id="version-info"></small>
         {% if request.couch_user.can_edit_data %}

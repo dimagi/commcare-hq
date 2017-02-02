@@ -10,7 +10,10 @@ from corehq.apps.repeaters.dbaccessors import delete_all_repeat_records, delete_
 from casexml.apps.case.tests.util import delete_all_cases
 
 from custom.enikshay.tests.utils import ENikshayCaseStructureMixin
-from custom.enikshay.integrations.ninetyninedots.repeater_generators import RegisterPatientPayloadGenerator
+from custom.enikshay.integrations.ninetyninedots.repeater_generators import (
+    RegisterPatientPayloadGenerator,
+    UpdatePatientPayloadGenerator,
+)
 from custom.enikshay.const import PRIMARY_PHONE_NUMBER
 from custom.enikshay.integrations.ninetyninedots.repeaters import (
     NinetyNineDotsRegisterPatientRepeater,
@@ -233,6 +236,59 @@ class TestRegisterPatientPayloadGenerator(ENikshayCaseStructureMixin, TestCase):
             updated_episode_case.dynamic_case_properties().get('dots_99_registered'),
             'false'
         )
+        self.assertEqual(
+            updated_episode_case.dynamic_case_properties().get('dots_99_error'),
+            "400: {}".format(error['error'])
+        )
+
+
+class TestUpdatePatientPayloadGenerator(ENikshayCaseStructureMixin, TestCase):
+    def tearDown(self):
+        super(TestUpdatePatientPayloadGenerator, self).tearDown()
+        delete_all_cases()
+
+    @run_with_all_backends
+    def test_get_payload(self):
+        cases = self.create_case_structure()
+        expected_numbers = u"+91{}, +91{}".format(
+            self.primary_phone_number.replace("0", ""),
+            self.secondary_phone_number.replace("0", "")
+        )
+        expected_payload = json.dumps({
+            'beneficiary_id': self.person_id,
+            'phone_numbers': expected_numbers,
+            'merm_id': cases[self.person_id].dynamic_case_properties().get('merm_id')
+        })
+        actual_payload = UpdatePatientPayloadGenerator(None).get_payload(None, cases[self.person_id])
+        self.assertEqual(expected_payload, actual_payload)
+
+    @run_with_all_backends
+    def test_handle_success(self):
+        cases = self.create_case_structure()
+        self.factory.create_or_update_case(CaseStructure(
+            case_id=self.episode_id,
+            attrs={
+                'create': False,
+                'update': {'dots_99_error': 'bad things'},
+            },
+        ))
+        payload_generator = UpdatePatientPayloadGenerator(None)
+        payload_generator.handle_success(MockResponse(200, {"success": "hooray"}), cases[self.person_id], None)
+        updated_episode_case = CaseAccessors(self.domain).get_case(self.episode_id)
+        self.assertEqual(
+            updated_episode_case.dynamic_case_properties().get('dots_99_error'),
+            ''
+        )
+
+    @run_with_all_backends
+    def test_handle_failure(self):
+        cases = self.create_case_structure()
+        payload_generator = UpdatePatientPayloadGenerator(None)
+        error = {
+            "error": "Something went terribly wrong",
+        }
+        payload_generator.handle_failure(MockResponse(400, error), cases[self.person_id], None)
+        updated_episode_case = CaseAccessors(self.domain).get_case(self.episode_id)
         self.assertEqual(
             updated_episode_case.dynamic_case_properties().get('dots_99_error'),
             "400: {}".format(error['error'])

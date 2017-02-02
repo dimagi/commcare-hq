@@ -629,6 +629,15 @@ class PhoneNumber(UUIDGeneratorMixin, models.Model):
         )
 
     @classmethod
+    def get_two_way_number_with_domain_scope(cls, phone_number, domains):
+        phone_number = apply_leniency(phone_number)
+        return (cls
+                .objects
+                .filter(phone_number=phone_number, domain__in=domains)
+                .order_by('-is_two_way', 'created_on', 'couch_id')
+                .first())
+
+    @classmethod
     def get_two_way_number_by_suffix(cls, phone_number):
         """
         Used to lookup a two-way PhoneNumber, trying to exclude country code digits.
@@ -1702,6 +1711,9 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
         db_table = 'messaging_mobilebackend'
         app_label = 'sms'
 
+    class ExpectedDomainLevelBackend(Exception):
+        pass
+
     @quickcache(['self.pk', 'domain'], timeout=5 * 60)
     def domain_is_shared(self, domain):
         """
@@ -1710,6 +1722,13 @@ class SQLMobileBackend(UUIDGeneratorMixin, models.Model):
         """
         count = self.mobilebackendinvitation_set.filter(domain=domain, accepted=True).count()
         return count > 0
+
+    @property
+    def domains_with_access(self):
+        if self.is_global:
+            raise self.ExpectedDomainLevelBackend()
+
+        return [self.domain] + list(self.get_authorized_domain_list())
 
     def domain_is_authorized(self, domain):
         """
