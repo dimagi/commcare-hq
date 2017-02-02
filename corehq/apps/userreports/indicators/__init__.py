@@ -104,11 +104,12 @@ class CompoundIndicator(ConfigurableIndicator):
 
 class LedgerBalancesIndicator(ConfigurableIndicator):
 
-    def __init__(self, spec):
+    def __init__(self, spec, domain):
         self.product_codes = spec.product_codes
         self.column_id = spec.column_id
         self.ledger_section = spec.ledger_section
         self.case_id_expression = spec.get_case_id_expression()
+        self.domain = domain
         super(LedgerBalancesIndicator, self).__init__(spec.display_name)
 
     def _make_column(self, product_code):
@@ -116,7 +117,7 @@ class LedgerBalancesIndicator(ConfigurableIndicator):
         return Column(column_id, TYPE_INTEGER)
 
     @staticmethod
-    def _get_values_by_product(ledger_section, case_id, product_codes):
+    def _get_values_by_product(ledger_section, case_id, product_codes, domain):
         """returns a defaultdict mapping product codes to their values"""
         values_by_product = StockState.objects.filter(
             section_id=ledger_section,
@@ -130,6 +131,6 @@ class LedgerBalancesIndicator(ConfigurableIndicator):
 
     def get_values(self, item, context=None):
         case_id = self.case_id_expression(item)
-        values = self._get_values_by_product(self.ledger_section, case_id, self.product_codes)
+        values = self._get_values_by_product(self.ledger_section, case_id, self.product_codes, self.domain)
         return [ColumnValue(self._make_column(product_code), values[product_code])
                 for product_code in self.product_codes]

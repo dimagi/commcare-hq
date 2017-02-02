@@ -1,3 +1,4 @@
+from collections import namedtuple
 import datetime
 import uuid
 from copy import copy
@@ -511,10 +512,14 @@ class LedgerBalancesIndicatorTest(SimpleTestCase):
         }
         self.stock_states = {'abc': 32, 'def': 85, 'ghi': 11}
 
+    def _factory_context(self):
+        Context = namedtuple('Context', ('domain'))
+        return Context('test-domain')
+
     @patch.object(LedgerBalancesIndicator, '_get_values_by_product')
     def test_ledger_balances_indicator(self, get_values_by_product):
         get_values_by_product.return_value = self.stock_states
-        indicator = IndicatorFactory.from_spec(self.spec)
+        indicator = IndicatorFactory.from_spec(self.spec, self._factory_context())
 
         doc = {'_id': 'case1'}
         values = indicator.get_values(doc, EvaluationContext(doc, 0))
@@ -526,11 +531,12 @@ class LedgerBalancesIndicatorTest(SimpleTestCase):
 
 
 class TestGetValuesByProduct(TestCase):
+    domain_name = 'test-domain'
 
     @classmethod
     def setUpClass(cls):
         post_save.disconnect(update_domain_mapping, StockState)
-        cls.domain_obj = create_domain('test-domain')
+        cls.domain_obj = create_domain(cls.domain_name)
         for product_code, section, value in [
             ('coke', 'soh', 32),
             ('coke', 'consumption', 63),
@@ -567,7 +573,7 @@ class TestGetValuesByProduct(TestCase):
 
     def test_get_soh_values_by_product(self):
         values = LedgerBalancesIndicator._get_values_by_product(
-            'soh', 'case1', ['coke', 'surge', 'new_coke']
+            'soh', 'case1', ['coke', 'surge', 'new_coke'], self.domain_name
         )
         self.assertEqual(values['coke'], 32)
         self.assertEqual(values['surge'], 85)
@@ -575,7 +581,7 @@ class TestGetValuesByProduct(TestCase):
 
     def test_get_consumption_by_product(self):
         values = LedgerBalancesIndicator._get_values_by_product(
-            'consumption', 'case1', ['coke', 'surge', 'new_coke']
+            'consumption', 'case1', ['coke', 'surge', 'new_coke'], self.domain_name
         )
         self.assertEqual(values['coke'], 63)
         self.assertEqual(values['surge'], 0)
