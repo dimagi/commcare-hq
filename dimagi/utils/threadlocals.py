@@ -1,8 +1,9 @@
+from __future__ import absolute_import
 # threadlocals middleware for global usage
 try:
     from threading import local
 except ImportError:
-    from django.utils._threading_local import local
+    from .django.utils._threading_local import local
 
 _thread_locals = local()
 def get_current_user():

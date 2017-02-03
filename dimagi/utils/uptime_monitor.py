@@ -1,7 +1,8 @@
+from __future__ import absolute_import
 import urllib2
-import logging
+from . import logging
 import json
-from gmailloghandler import TLSSMTPHandler
+from .gmailloghandler import TLSSMTPHandler
 
 # this is a simple uptime monitoring script to send alert emails
 # when something goes wrong with a server. it monitors both:

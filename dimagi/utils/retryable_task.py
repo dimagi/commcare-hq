@@ -1,4 +1,5 @@
-import logging
+from __future__ import absolute_import
+from . import logging
 
 # this is utility code for retrying an unreliable operation
 # (network access, db access, etc.) several times before giving
