@@ -309,7 +309,7 @@ class ExpressionFactory(object):
                                  'Valid options are: {}').format(
                 spec.get('type', '[missing]'),
                 spec,
-                ', '.join(cls.spec_map.keys()),
+                ', '.join(cls.spec_map),
             ))
         except (TypeError, BadValueError) as e:
             raise BadSpecError(_('Problem creating getter: {}. Message is: {}').format(
