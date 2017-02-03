@@ -31,6 +31,7 @@ from django.views.decorators.http import require_POST
 from PIL import Image
 from django.utils.translation import ugettext as _, ugettext_lazy
 from django.contrib.auth.models import User
+from django.utils.html import escape
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
@@ -2346,7 +2347,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
                 record.url if record.url else _(u'Unable to generate url for record'),
                 self._format_date(record.last_checked) if record.last_checked else None,
                 self._format_date(record.next_check) if record.next_check else None,
-                record.failure_reason if not record.succeeded else None,
+                escape(record.failure_reason) if not record.succeeded else None,
                 record.overall_tries if record.overall_tries > 0 else None,
                 self._make_view_payload_button(record.get_id),
                 self._make_resend_payload_button(record.get_id),
