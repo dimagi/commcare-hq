@@ -812,13 +812,6 @@ LEGACY_SYNC_SUPPORT = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-VIEW_BUILD_SOURCE = StaticToggle(
-    'diff_builds',
-    'Allow users to view and diff build source files',
-    TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
 EWS_WEB_USER_EXTENSION = StaticToggle(
     'ews_web_user_extension',
     'Enable EWSGhana web user extension',

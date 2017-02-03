@@ -216,7 +216,7 @@
                         saveValueName: 'comment',
                         errorMessage:'{% trans "Error updating comment.  Please try again."|escapejs %}',
                     "></inline-edit-v2>
-                    {% if request|toggle_enabled:"VIEW_BUILD_SOURCE" %}
+                    {% if request.user.is_superuser %}
                         <h6>
                             {% blocktrans %}
                                 View
