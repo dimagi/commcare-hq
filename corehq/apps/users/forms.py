@@ -314,6 +314,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
         self.new_helper.layout = cb3_layout.Layout(
             cb3_layout.Fieldset(
                 ugettext_lazy("Basic"),
+                *basic_fields
             ),
             (hqcrispy.FieldsetAccordionGroup if self.collapse_other_options else cb3_layout.Fieldset)(
                 ugettext_lazy("Other Options"),
