@@ -860,7 +860,7 @@ class CaseReferences(DocumentSchema):
 
     def get_save_references(self):
         """
-        Returns a generator of `CaseSaveReferenceWithPath` objects containing all the load references.
+        Returns a generator of `CaseSaveReferenceWithPath` objects containing all the save references.
         """
         for path, reference in self.save.items():
             ref_copy = deepcopy(reference.to_json())
