@@ -19,7 +19,7 @@ def _build_compound_filter(spec, context):
     if spec['type'] not in compound_type_map:
         raise BadSpecError(_('Complex filter type {0} must be one of the following choices ({1})').format(
             spec['type'],
-            ', '.join(compound_type_map.keys())
+            ', '.join(compound_type_map)
         ))
     elif not isinstance(spec.get('filters'), list):
         raise BadSpecError(_('{0} filter type must include a "filters" list'.format(spec['type'])))
@@ -87,6 +87,6 @@ class FilterFactory(object):
             raise BadSpecError(
                 _('Illegal or missing filter type: "{0}", must be one of the following choice: ({1})'.format(
                     spec.get('type'),
-                    ', '.join(self.constructor_map.keys())
+                    ', '.join(self.constructor_map)
                 ))
             )
