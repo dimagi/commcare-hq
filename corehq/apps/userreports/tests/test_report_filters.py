@@ -21,6 +21,7 @@ from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.tests.test_view import ConfigurableReportTestMixin
 from corehq.apps.userreports.util import get_indicator_adapter
 from dimagi.utils.dates import DateSpan
+import six
 
 
 class FilterTestCase(SimpleTestCase):
@@ -254,7 +255,7 @@ class DateFilterDBTest(ConfigurableReportTestMixin, TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        for key, adapter in cls.adapters.iteritems():
+        for key, adapter in six.iteritems(cls.adapters):
             adapter.drop_table()
         cls._delete_everything()
         super(DateFilterDBTest, cls).tearDownClass()
