@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 import logging
 import requests
 
@@ -31,14 +32,14 @@ class Command(BaseCommand):
 
         # let user chose a project from the list ['commcare-mobile-2.21', ...]
         selected_project_key = None
-        print "Jenkins has following projects. Please choose one (to end enter END)"
-        print [p for p in self.jenkin_projects if 'commcare-mobile' in p]
+        print("Jenkins has following projects. Please choose one (to end enter END)")
+        print([p for p in self.jenkin_projects if 'commcare-mobile' in p])
         while selected_project_key not in self.jenkin_projects:
             selected_project_key = input("")
             if selected_project_key.lower() == 'end':
                 return
 
-        print "Fetching build information for %s. Please wait..." % selected_project_key
+        print("Fetching build information for %s. Please wait..." % selected_project_key)
         selected_project = self.build_server[selected_project_key]
         build_dict = selected_project.get_build_dict()
         builds_by_version_number = self._extract_version_numbers(build_dict)
@@ -47,23 +48,23 @@ class Command(BaseCommand):
             abort = input("This project doesn't have any builds that has a VERSION set. Do you want"
                               " to chose another project  (Yes) or abort (No).")
             if abort.lower() == 'no':
-                print "Builds URL http://jenkins.dimagi.com/job/", selected_project_key
+                print("Builds URL http://jenkins.dimagi.com/job/", selected_project_key)
                 return
             else:
                 return self.interactive_import()
             return
 
         selected_build_number = None
-        print "Jenkins has following builds for %s. Choose a build-number to import (to end enter 0)" \
-              % selected_project_key
-        print builds_by_version_number
+        print("Jenkins has following builds for %s. Choose a build-number to import (to end enter 0)" \
+              % selected_project_key)
+        print(builds_by_version_number)
         while selected_build_number not in builds_by_version_number:
             if selected_build_number == 0:
                 return
             selected_build_number = int(input(""))
 
         # download and add the build
-        print "Downloading and importing artifacts.zip. Please wait..."
+        print("Downloading and importing artifacts.zip. Please wait...")
         version_number = builds_by_version_number.get(selected_build_number)
         build = selected_project.get_build_metadata(selected_build_number)
         artifacts = build.get_artifact_dict()
@@ -72,8 +73,8 @@ class Command(BaseCommand):
         try:
             zip_file = requests.get(artifacts_url)
         except:
-            print "Failed to fetch artifacts.zip at URL`"
-            print artifacts_url
+            print("Failed to fetch artifacts.zip at URL`")
+            print(artifacts_url)
             return
 
         self.add_build(StringIO(zip_file.content), version_number, selected_build_number)
@@ -81,7 +82,7 @@ class Command(BaseCommand):
     @property
     @memoized
     def jenkin_projects(self):
-        print "Pinging Jenkins build server. Pelase wait..."
+        print("Pinging Jenkins build server. Pelase wait...")
         return list(self.build_server)
 
     @property
