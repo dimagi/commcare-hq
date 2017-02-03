@@ -1031,7 +1031,7 @@ class SubscriptionAdjustmentInterface(GenericTabularReport):
     def rows(self):
         def _subscription_adjustment_to_row(sub_adj):
             from corehq.apps.accounting.views import EditSubscriptionView
-            return map(lambda x: x or '', [
+            return [x or '' for x in [
                 sub_adj.date_created,
                 format_datatables_data(
                     mark_safe(make_anchor_tag(
@@ -1153,7 +1153,7 @@ class CreditAdjustmentInterface(GenericTabularReport):
             ] + types
 
         def _credit_adjustment_to_row(credit_adj):
-            return map(lambda x: x or '', [
+            return [x or '' for x in [
                 credit_adj.date_created,
             ] + _get_credit_line_columns_from_credit_line(credit_adj.credit_line) + [
                 (
@@ -1172,7 +1172,7 @@ class CreditAdjustmentInterface(GenericTabularReport):
                     date_created__lte=credit_adj.date_created,
                 ))),
                 credit_adj.web_user,
-            ] + _get_credit_line_columns_from_credit_line(credit_adj.related_credit))
+            ] + _get_credit_line_columns_from_credit_line(credit_adj.related_credit)]
 
         return list(map(_credit_adjustment_to_row, self._credit_adjustments))
 
