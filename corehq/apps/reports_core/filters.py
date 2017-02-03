@@ -11,6 +11,7 @@ from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext, ugettext_lazy as _
 from django.conf import settings
+import six
 
 FilterParam = namedtuple('FilterParam', ['name', 'required'])
 
@@ -351,7 +352,7 @@ class DynamicChoiceListFilter(BaseFilter):
             ]
 
     def value(self, **kwargs):
-        selection = unicode(kwargs.get(self.name, ""))
+        selection = six.text_type(kwargs.get(self.name, ""))
         user = kwargs.get("request_user", None)
         if selection:
             choices = selection.split(CHOICE_DELIMITER)
