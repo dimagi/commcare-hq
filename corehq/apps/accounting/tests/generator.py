@@ -31,6 +31,7 @@ from corehq.apps.accounting.models import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser, CommCareUser
 from corehq.util.test_utils import unit_testing_only
+import six
 
 
 @unit_testing_only
@@ -210,7 +211,7 @@ class FakeStripeCard(mock.MagicMock):
     @metadata.setter
     def metadata(self, value):
         """Stripe returns everything as JSON. This will do for testing"""
-        self._metadata = {k: str(v) for k, v in value.iteritems()}
+        self._metadata = {k: str(v) for k, v in six.iteritems(value)}
 
     def save(self):
         pass
