@@ -71,6 +71,7 @@ from .utils import (
     make_anchor_tag,
     quantize_accounting_decimal,
 )
+from six.moves import map
 
 
 def invoice_column_cell(invoice):
@@ -158,7 +159,7 @@ class AccountingInterface(AddItemInterface):
                 account.entry_point,
             ]
 
-        return map(_account_to_row, self._accounts)
+        return list(map(_account_to_row, self._accounts))
 
     @property
     def _accounts(self):
@@ -287,7 +288,7 @@ class SubscriptionInterface(AddItemInterface):
                 columns.append(mark_safe('<a href="./%d" class="btn btn-default">Edit</a>' % subscription.id))
             return columns
 
-        return map(_subscription_to_row, self._subscriptions)
+        return list(map(_subscription_to_row, self._subscriptions))
 
     @property
     def _subscriptions(self):
@@ -405,7 +406,7 @@ class SoftwarePlanInterface(AddItemInterface):
                 ),
             ]
 
-        return map(_plan_to_row, self._plans)
+        return list(map(_plan_to_row, self._plans))
 
     @property
     def _plans(self):
@@ -542,7 +543,7 @@ class WireInvoiceInterface(InvoiceInterfaceBase):
                 "YES" if invoice.is_hidden else "no",
             ]
 
-        return map(_invoice_to_row, self._invoices)
+        return list(map(_invoice_to_row, self._invoices))
 
     @property
     @memoized
@@ -753,7 +754,7 @@ class InvoiceInterface(InvoiceInterfaceBase):
                 )
             return columns
 
-        return map(_invoice_to_row, self._invoices)
+        return list(map(_invoice_to_row, self._invoices))
 
     @property
     @memoized
@@ -967,7 +968,7 @@ class PaymentRecordInterface(GenericTabularReport):
                 quantize_accounting_decimal(payment_record.amount),
             ]
 
-        return map(_payment_record_to_row, self._payment_records)
+        return list(map(_payment_record_to_row, self._payment_records))
 
     @property
     def _payment_records(self):
@@ -1042,9 +1043,9 @@ class SubscriptionAdjustmentInterface(GenericTabularReport):
                 dict(SubscriptionAdjustmentMethod.CHOICES).get(sub_adj.method),
                 sub_adj.note,
                 sub_adj.web_user,
-            ])
+            ]]
 
-        return map(_subscription_adjustment_to_row, self._subscription_adjustments)
+        return list(map(_subscription_adjustment_to_row, self._subscription_adjustments))
 
     @property
     def _subscription_adjustments(self):
@@ -1171,7 +1172,7 @@ class CreditAdjustmentInterface(GenericTabularReport):
                 credit_adj.web_user,
             ] + _get_credit_line_columns_from_credit_line(credit_adj.related_credit))
 
-        return map(_credit_adjustment_to_row, self._credit_adjustments)
+        return list(map(_credit_adjustment_to_row, self._credit_adjustments))
 
     @property
     def _credit_adjustments(self):
