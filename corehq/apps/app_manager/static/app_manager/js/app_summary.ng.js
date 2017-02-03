@@ -61,12 +61,12 @@
                 }
                 return formId;
             };
-            self.getModuleUrl = function (formId, target_lang) {
-                var names = config.formNameMap[formId];
+            self.getModuleUrl = function (FormOrModuleId, target_lang) {
+                var names = config.formNameMap[FormOrModuleId];
                 if (names) {
                     return names.module_url
                 }
-                return formId;
+                return FormOrModuleId;
             };
             self.isActive = function (path) {
                 return $location.path().substr(0, path.length) === path;
@@ -137,6 +137,8 @@
         $scope.showRelevance = false;
         $scope.showComments = false;
         $scope.appLangs = summaryConfig.appLangs;
+        $scope.getFormUrl = utils.getFormUrl;
+        $scope.getModuleUrl = utils.getModuleUrl;
         $scope.formDownloadURL = summaryConfig.formDownloadURL;
         $scope.appDownloadURL = summaryConfig.appDownloadURL;
 
