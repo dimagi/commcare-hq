@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime
 from zipfile import ZipFile
 from couchdbkit.exceptions import ResourceNotFound, BadValueError
