@@ -114,7 +114,7 @@ def paginated(req, query_set, per_page=20, prefix="", wrapper=None):
     # object on the page, and replace the list with the result
     if wrapper is not None:
         objects.raw_object_list = objects.object_list
-        objects.object_list = map(wrapper, objects.object_list)
+        objects.object_list = list(map(wrapper, objects.object_list))
 
     # attach the prefix (if provided; might be blank) to the
     # objects, where it can be found by the {% paginator %} tag
