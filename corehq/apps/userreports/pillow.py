@@ -16,6 +16,7 @@ from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import PillowProcessor
 from pillowtop.utils import ensure_matched_revisions, ensure_document_exists
+import six
 
 
 REBUILD_CHECK_INTERVAL = 10 * 60  # in seconds
@@ -87,8 +88,8 @@ class ConfigurableReportTableManagerMixin(object):
                     try:
                         rev_before_rebuild = sql_adapter.config.get_db().get_rev(sql_adapter.config._id)
                         self.rebuild_table(sql_adapter)
-                    except TableRebuildError, e:
-                        _notify_cory(unicode(e), sql_adapter.config.to_json())
+                    except TableRebuildError as e:
+                        _notify_cory(six.text_type(e), sql_adapter.config.to_json())
                 else:
                     self.rebuild_table(sql_adapter)
 

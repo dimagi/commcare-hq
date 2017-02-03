@@ -8,6 +8,7 @@ from corehq.apps.userreports.const import (
 )
 from corehq.apps.userreports.exceptions import ColumnNotFoundError
 from corehq.apps.userreports.util import get_indicator_adapter, get_backend_id
+import six
 
 
 class UCRExpandDatabaseSubcolumn(DatabaseColumn):
@@ -67,7 +68,7 @@ def get_expanded_column_config(data_source_configuration, column_config, lang):
             data_source_configuration, column_config, column_config.max_expansion
         )
     except ColumnNotFoundError as e:
-        return ColumnConfig([], warnings=[unicode(e)])
+        return ColumnConfig([], warnings=[six.text_type(e)])
 
     if over_expansion_limit:
         column_warnings.append(_(

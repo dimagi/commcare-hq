@@ -14,6 +14,7 @@ from corehq.apps.userreports.exceptions import (
     UserReportsError,
 )
 from corehq.util.soft_assert import soft_assert
+import six
 
 _soft_assert = soft_assert(
     to='{}@{}'.format('npellegrino+ucr-get-data', 'dimagi.com'),
@@ -32,8 +33,8 @@ def catch_and_raise_exceptions(func):
             InvalidQueryColumn,
         ) as e:
             if not settings.UNIT_TESTING:
-                _soft_assert(False, unicode(e))
-            raise UserReportsError(unicode(e))
+                _soft_assert(False, six.text_type(e))
+            raise UserReportsError(six.text_type(e))
         except TableNotFoundException:
             raise TableNotFoundWarning
     return _inner
