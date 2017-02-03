@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+from builtins import filter
+from builtins import object
 from collections import defaultdict, namedtuple
 from functools import total_ordering
 from os.path import commonprefix
@@ -27,7 +29,7 @@ class WorkflowHelper(PostProcessor):
         root_modules = [module for module in self.modules if getattr(module, 'put_in_root', False)]
         return [
             datum for module in root_modules
-            for datum in self.get_module_datums(u'm{}'.format(module.id)).values()
+            for datum in list(self.get_module_datums(u'm{}'.format(module.id)).values())
         ]
 
     def update_suite(self):
@@ -82,7 +84,7 @@ class WorkflowHelper(PostProcessor):
         if module_command == id_strings.ROOT:
             datums_list = self.root_module_datums
         else:
-            datums_list = module_datums.values()  # [ [datums for f0], [datums for f1], ...]
+            datums_list = list(module_datums.values())  # [ [datums for f0], [datums for f1], ...]
 
         common_datums = commonprefix(datums_list)
         remaining_datums = form_datums[len(common_datums):]
@@ -96,7 +98,7 @@ class WorkflowHelper(PostProcessor):
         return frame_children
 
     def create_workflow_stack(self, form_command, frame_metas):
-        frames = filter(None, [meta.to_frame() for meta in frame_metas])
+        frames = [_f for _f in [meta.to_frame() for meta in frame_metas] if _f]
         if not frames:
             return
 
@@ -145,8 +147,8 @@ class WorkflowHelper(PostProcessor):
                 for d in e.datums:
                     datums[module_id][form_id].append(WorkflowDatumMeta.from_session_datum(d))
 
-        for module_id, form_datum_map in datums.items():
-            for form_id, entry_datums in form_datum_map.items():
+        for module_id, form_datum_map in list(datums.items()):
+            for form_id, entry_datums in list(form_datum_map.items()):
                 self._add_missing_case_types(module_id, form_id, entry_datums)
 
         return entries, datums

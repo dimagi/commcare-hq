@@ -44,7 +44,7 @@ def get_select_chain_meta(app, module):
 
 
 def validate_suite(suite):
-    if isinstance(suite, unicode):
+    if isinstance(suite, str):
         suite = suite.encode('utf8')
     if isinstance(suite, str):
         suite = etree.fromstring(suite)

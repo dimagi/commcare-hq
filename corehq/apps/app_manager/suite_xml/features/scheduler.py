@@ -28,8 +28,7 @@ class SchedulerFixtureContributor(SectionContributor):
             schedule = form.schedule
 
             if schedule is None:
-                raise (ScheduleError(_("There is no schedule for form {form_id}")
-                                     .format(form_id=form.unique_id)))
+                raise ScheduleError
 
             visits = [ScheduleFixtureVisit(id=visit.id,
                                            due=visit.due,

@@ -1,9 +1,9 @@
+from builtins import object
 from abc import ABCMeta, abstractmethod, abstractproperty
+from future.utils import with_metaclass
 
 
-class BaseSuiteContributor(object):
-    __metaclass__ = ABCMeta
-
+class BaseSuiteContributor(with_metaclass(ABCMeta, object)):
     def __init__(self, suite, app, modules):
         from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
         self.suite = suite
@@ -12,9 +12,7 @@ class BaseSuiteContributor(object):
         self.entries_helper = EntriesHelper(app, modules)
 
 
-class SectionContributor(BaseSuiteContributor):
-    __metaclass__ = ABCMeta
-
+class SectionContributor(with_metaclass(ABCMeta, BaseSuiteContributor)):
     @abstractproperty
     def section_name(self):
         pass
@@ -24,8 +22,7 @@ class SectionContributor(BaseSuiteContributor):
         return []
 
 
-class SuiteContributorByModule(BaseSuiteContributor):
-    __metaclass__ = ABCMeta
+class SuiteContributorByModule(with_metaclass(ABCMeta, BaseSuiteContributor)):
     section = None
 
     @abstractmethod
@@ -33,9 +30,7 @@ class SuiteContributorByModule(BaseSuiteContributor):
         return []
 
 
-class PostProcessor(BaseSuiteContributor):
-    __metaclass__ = ABCMeta
-
+class PostProcessor(with_metaclass(ABCMeta, BaseSuiteContributor)):
     @abstractmethod
     def update_suite(self):
         pass

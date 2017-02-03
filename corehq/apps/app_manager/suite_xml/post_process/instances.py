@@ -1,3 +1,4 @@
+from builtins import object
 from collections import defaultdict
 import re
 from corehq import toggles
@@ -119,7 +120,7 @@ INSTANCE_BY_ID = {
 }
 
 
-@register_factory(*INSTANCE_BY_ID.keys())
+@register_factory(*list(INSTANCE_BY_ID.keys()))
 def preset_instances(domain, instance_name):
     return INSTANCE_BY_ID.get(instance_name, None)
 
@@ -167,7 +168,7 @@ def get_all_instances_referenced_in_xpaths(domain, xpaths):
             if instance:
                 instances.add(instance)
             else:
-                class UnicodeWithContext(unicode):
+                class UnicodeWithContext(str):
                     pass
                 instance_name = UnicodeWithContext(instance_name)
                 instance_name.xpath = xpath

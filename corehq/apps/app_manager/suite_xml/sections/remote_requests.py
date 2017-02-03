@@ -1,3 +1,4 @@
+from builtins import object
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.suite_xml.contributors import SuiteContributorByModule
 from corehq.apps.app_manager.suite_xml.sections.details import DetailsHelper
