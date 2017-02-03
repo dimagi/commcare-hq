@@ -131,7 +131,7 @@ from corehq.apps.repeaters.dbaccessors import (
     get_paged_repeat_records,
     get_repeat_record_count,
 )
-from corehq.apps.repeaters.utils import get_all_repeater_types, get_auth_header
+from corehq.apps.repeaters.utils import get_all_repeater_types, get_repeater_auth_header
 from corehq.apps.repeaters.const import (
     RECORD_FAILURE_STATE,
     RECORD_PENDING_STATE,
@@ -570,7 +570,7 @@ def test_repeater(request, domain):
         if use_basic_auth == 'true':
             username = request.POST.get('username')
             password = request.POST.get('password')
-            headers.update(get_auth_header(headers, username, password))
+            headers.update(get_repeater_auth_header(headers, username, password))
 
         try:
             resp = simple_post(fake_post, url, headers=headers)
