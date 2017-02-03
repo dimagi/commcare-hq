@@ -54,17 +54,17 @@
                 }
                 return formId;
             };
-            self.getFormID = function (formId, target_lang) {
+            self.getFormUrl = function (formId, target_lang) {
                 var names = config.formNameMap[formId];
                 if (names) {
-                    return names.id
+                    return names.form_url
                 }
                 return formId;
             };
-            self.getModuleID = function (formId, target_lang) {
+            self.getModuleUrl = function (formId, target_lang) {
                 var names = config.formNameMap[formId];
                 if (names) {
-                    return names.module_id
+                    return names.module_url
                 }
                 return formId;
             };
@@ -200,8 +200,8 @@
         $scope.isActive = utils.isActive;
         $scope.getFormName = utils.getFormName;
         $scope.getModuleName = utils.getModuleName;
-        $scope.getFormID = utils.getFormID;
-        $scope.getModuleID = utils.getModuleID;
+        $scope.getFormUrl = utils.getFormUrl;
+        $scope.getModuleUrl = utils.getModuleUrl;
         $scope.showConditions = true;
         $scope.showCalculations = true;
         $scope.showLabels = true;
