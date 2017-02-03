@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 from simpleeval import InvalidExpression
 from corehq.apps.locations.document_store import LOCATION_DOC_TYPE

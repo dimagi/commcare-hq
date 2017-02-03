@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import itertools
 from django.utils.translation import ugettext as _
 from dimagi.ext.jsonobject import JsonObject, DictProperty, StringProperty
