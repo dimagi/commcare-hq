@@ -77,11 +77,11 @@ class ConfigurableReportTableManagerMixin(object):
         for engine_id, table_map in tables_by_engine.items():
             engine = connection_manager.get_engine(engine_id)
             with engine.begin() as connection:
-                migration_context = get_migration_context(connection, table_map.keys())
+                migration_context = get_migration_context(connection, list(table_map))
                 raw_diffs = compare_metadata(migration_context, metadata)
                 diffs = reformat_alembic_diffs(raw_diffs)
 
-            tables_to_rebuild = get_tables_to_rebuild(diffs, table_map.keys())
+            tables_to_rebuild = get_tables_to_rebuild(diffs, list(table_map))
             for table_name in tables_to_rebuild:
                 sql_adapter = table_map[table_name]
                 if not sql_adapter.config.is_static:

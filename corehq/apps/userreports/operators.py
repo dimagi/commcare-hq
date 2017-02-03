@@ -66,5 +66,5 @@ def get_operator(slug):
     except KeyError:
         raise BadSpecError('{0} is not a valid operator. Choices are {1}'.format(
             slug,
-            ', '.join(OPERATORS.keys()),
+            ', '.join(list(OPERATORS)),
         ))

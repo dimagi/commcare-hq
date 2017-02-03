@@ -52,7 +52,7 @@ class ConfigurableReportDataSourceMixin(object):
         in the report. These top-level columns may resolve to more than one column in the
         underlying query or report (e.g. percentage columns or expanded columns)
         """
-        return self._column_configs.values()
+        return list(self._column_configs.values())
 
     @property
     def inner_columns(self):

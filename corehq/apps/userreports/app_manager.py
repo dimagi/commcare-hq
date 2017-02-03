@@ -24,7 +24,7 @@ def get_case_data_sources(app):
 
 def get_case_data_source(app, case_type):
 
-    prop_map = get_case_properties(app, [case_type], defaults=DEFAULT_CASE_PROPERTY_DATATYPES.keys())
+    prop_map = get_case_properties(app, [case_type], defaults=list(DEFAULT_CASE_PROPERTY_DATATYPES))
     return DataSourceConfiguration(
         domain=app.domain,
         referenced_doc_type='CommCareCase',

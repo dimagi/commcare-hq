@@ -1282,7 +1282,7 @@ def export_data_source(request, domain, config_id):
 
     # build export
     def get_table(q):
-        yield table.columns.keys()
+        yield list(table.columns)
         for row in q:
             yield row
 
