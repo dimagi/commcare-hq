@@ -1383,7 +1383,7 @@ class SoftwarePlanVersionForm(forms.Form):
             # a brand new rate
             self.is_update = True
             return new_rate
-        if feature.id not in self.current_features_to_rates.keys():
+        if feature.id not in self.current_features_to_rates:
             # the plan does not have this rate yet, compare any changes to the feature's current latest rate
             # also mark the form as updated
             current_rate = feature.get_rate(default_instance=False)
@@ -1405,7 +1405,7 @@ class SoftwarePlanVersionForm(forms.Form):
             # a brand new rate
             self.is_update = True
             return new_rate
-        if product.id not in self.current_products_to_rates.keys():
+        if product.id not in self.current_products_to_rates:
             # the plan does not have this rate yet, compare any changes to the feature's current latest rate
             # also mark the form as updated
             current_rate = product.get_rate(default_instance=False)

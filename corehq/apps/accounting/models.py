@@ -1331,7 +1331,7 @@ class Subscription(models.Model):
         self.date_end = date_end
         self.is_active = True
         for allowed_attr in self.allowed_attr_changes:
-            if allowed_attr in kwargs.keys():
+            if allowed_attr in kwargs:
                 setattr(self, allowed_attr, kwargs[allowed_attr])
         self.save()
         self.subscriber.reactivate_subscription(
