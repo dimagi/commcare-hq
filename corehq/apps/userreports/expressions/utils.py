@@ -6,6 +6,7 @@ from decimal import Decimal
 from types import NoneType
 
 from simpleeval import SimpleEval, DEFAULT_OPERATORS, InvalidExpression, DEFAULT_FUNCTIONS
+import six
 from six.moves import range
 
 
@@ -39,7 +40,7 @@ def eval_statements(statement, variable_context):
     """
     # variable values should be numbers
     var_types = set(type(value) for value in variable_context.values())
-    if not var_types.issubset({int, float, long, Decimal, date, datetime, NoneType, bool}):
+    if not var_types.issubset({float, Decimal, date, datetime, NoneType, bool}.union(set(six.integer_types))):
         raise InvalidExpression
 
     evaluator = SimpleEval(operators=SAFE_OPERATORS, names=variable_context, functions=FUNCTIONS)
