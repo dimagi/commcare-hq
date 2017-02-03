@@ -298,7 +298,7 @@ class ChoiceListFilter(BaseFilter):
     def value(self, **kwargs):
         raw_value = kwargs[self.name]
         choice = transform_from_datatype(self.datatype)(raw_value) if raw_value != SHOW_ALL_CHOICE else raw_value
-        choice_values = map(lambda c: c.value, self.choices)
+        choice_values = [c.value for c in self.choices]
         if choice not in choice_values:
             raise FilterValueException(_(u'Choice "{choice}" not found in choices: {choices}')
                                        .format(choice=choice,
