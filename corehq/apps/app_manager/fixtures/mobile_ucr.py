@@ -1,12 +1,12 @@
-from builtins import str
-from builtins import zip
+import logging
 from builtins import map
 from builtins import object
+from builtins import str
+from builtins import zip
 from collections import defaultdict
 from datetime import datetime
-import logging
-from lxml.builder import E
 from django.conf import settings
+from lxml.builder import E
 
 from casexml.apps.phone.models import OTARestoreUser
 
@@ -72,7 +72,7 @@ class ReportFixturesProvider(object):
         # apply filters specified in report module
         all_filter_values = {
             filter_slug: restore_user.get_ucr_filter_value(filter, report.get_ui_filter(filter_slug))
-            for filter_slug, filter in list(report_config.filters.items())
+            for filter_slug, filter in report_config.filters.items()
         }
         # apply all prefilters
         prefilters = [ReportFilterFactory.from_spec(p, report) for p in report.prefilters]
@@ -80,12 +80,12 @@ class ReportFixturesProvider(object):
         all_filter_values.update(prefilter_values)
         # filter out nulls
         filter_values = {
-            filter_slug: filter_value for filter_slug, filter_value in list(all_filter_values.items())
+            filter_slug: filter_value for filter_slug, filter_value in all_filter_values.items()
             if filter_value is not None
         }
         defer_filters = {
             filter_slug: report.get_ui_filter(filter_slug)
-            for filter_slug, filter_value in list(all_filter_values.items())
+            for filter_slug, filter_value in all_filter_values.items()
             if filter_value is None and is_valid_mobile_select_filter_type(report.get_ui_filter(filter_slug))
         }
         data_source.set_filter_values(filter_values)
@@ -94,7 +94,7 @@ class ReportFixturesProvider(object):
 
         rows_elem = ReportFixturesProvider._get_report_elem(
             data_source,
-            {ui_filter.field for ui_filter in list(defer_filters.values())},
+            {ui_filter.field for ui_filter in defer_filters.values()},
             filter_options_by_field
         )
         filters_elem = ReportFixturesProvider._get_filters_elem(
@@ -114,7 +114,7 @@ class ReportFixturesProvider(object):
     @staticmethod
     def _get_filters_elem(defer_filters, filter_options_by_field, couch_user):
         filters_elem = E.filters()
-        for filter_slug, ui_filter in list(defer_filters.items()):
+        for filter_slug, ui_filter in defer_filters.items():
             # @field is maybe a bad name for this attribute,
             # since it's actually the filter slug
             filter_elem = E.filter(field=filter_slug)
@@ -145,10 +145,10 @@ class ReportFixturesProvider(object):
             total_row = data_source.get_total_row()
             rows_elem.append(_row_to_row_elem(
                 dict(
-                    list(zip(
-                        [column_config.column_id for column_config in data_source.top_level_columns],
-                        list(map(str, total_row))
-                    ))
+                    zip(
+                        [col.column_id for col in data_source.top_level_columns],
+                        map(str, total_row)
+                    )
                 ),
                 data_source.get_total_records(),
                 is_total_row=True,
