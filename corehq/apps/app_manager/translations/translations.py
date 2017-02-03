@@ -76,6 +76,7 @@ def process_bulk_app_translation_upload(app, f):
                 "App Translation Failed! There is an issue with excel columns. Error details: {}."
             ).format(e))
         )
+        return msgs
 
     for sheet in workbook.worksheets:
         # sheet.__iter__ can only be called once, so cache the result
