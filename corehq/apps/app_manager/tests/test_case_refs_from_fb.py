@@ -2,7 +2,7 @@ import json
 from django.test import SimpleTestCase
 from corehq.util.test_utils import generate_cases
 
-from corehq.apps.app_manager.models import AdvancedForm, Form, PreloadAction, CaseReferences
+from corehq.apps.app_manager.models import AdvancedForm, Form, PreloadAction, CaseReferences, CaseSaveReference
 from corehq.apps.app_manager.views.forms import _get_case_references
 
 
@@ -161,3 +161,15 @@ def test_invalid_args(self, case_references):
             'case_references': json.dumps(case_references)
         }
         _get_case_references(wrapped_references)
+
+
+class CaseReferencesTest(SimpleTestCase):
+
+    def test_get_save_refs_dont_mutate_app(self):
+        case_refs = CaseReferences(load={}, save={
+            'p1': CaseSaveReference(properties=['p1', 'p2'])
+        })
+        save_ref = case_refs.get_save_references().next()
+        save_ref.properties.append('p3')
+        self.assertEqual(['p1', 'p2', 'p3'], save_ref.properties)
+        self.assertEqual(['p1', 'p2'], case_refs.save['p1'].properties)
