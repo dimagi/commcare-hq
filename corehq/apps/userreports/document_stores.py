@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.locations.document_store import ReadonlyLocationDocumentStore, LOCATION_DOC_TYPE
 from corehq.form_processor.document_stores import ReadonlyFormDocumentStore, ReadonlyCaseDocumentStore
 from corehq.form_processor.utils import should_use_sql_backend
