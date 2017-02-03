@@ -67,6 +67,7 @@ from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import absolute_reverse
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.privileges import REPORT_BUILDER_ADD_ON_PRIVS
+import six
 
 integer_field_validators = [MaxValueValidator(2147483647), MinValueValidator(-2147483648)]
 
@@ -954,7 +955,7 @@ class Subscriber(models.Model):
         downgraded_privileges is the list of privileges that should be removed
         upgraded_privileges is the list of privileges that should be added
         """
-        _soft_assert_domain_not_loaded(isinstance(self.domain, basestring), "domain is object")
+        _soft_assert_domain_not_loaded(isinstance(self.domain, six.string_types), "domain is object")
 
 
         if new_plan_version is None:
@@ -1629,7 +1630,7 @@ class Subscription(models.Model):
         if date_end is not None:
             future_subscriptions = future_subscriptions.filter(date_start__lt=date_end)
         if future_subscriptions.count() > 0:
-            raise NewSubscriptionError(unicode(
+            raise NewSubscriptionError(six.text_type(
                 _(
                     "There is already a subscription '%(sub)s' that has an end date "
                     "that conflicts with the start and end dates of this "

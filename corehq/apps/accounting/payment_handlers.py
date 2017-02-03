@@ -24,6 +24,7 @@ from corehq.apps.accounting.utils import (
     log_accounting_info,
 )
 from corehq.const import USER_DATE_FORMAT
+import six
 
 stripe.api_key = settings.STRIPE_PRIVATE_KEY
 
@@ -315,8 +316,8 @@ class CreditStripePaymentHandler(BaseStripePaymentHandler):
 
     @property
     def cost_item_name(self):
-        credit_types = [unicode(product['type']) for product in self._humanized_products()]
-        credit_types += [unicode(feature['type']) for feature in self._humanized_features()]
+        credit_types = [six.text_type(product['type']) for product in self._humanized_products()]
+        credit_types += [six.text_type(feature['type']) for feature in self._humanized_features()]
         return _("Credits: {credit_types} for {sub_or_account}").format(
             credit_types=", ".join(credit_types),
             sub_or_account=("Subscription %s" % self.subscription
