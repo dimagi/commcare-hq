@@ -335,8 +335,8 @@ USER_CONFIGURABLE_REPORTS = StaticToggle(
     'User configurable reports UI',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
-     description=(
-        "A feature which will allow your domain to create User Configurable Reports. <br/>"
+    description=(
+        "A feature which will allow your domain to create User Configurable Reports."
     ),
     help_link='https://confluence.dimagi.com/display/RD/User+Configurable+Reporting', 
 )
