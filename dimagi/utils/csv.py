@@ -33,7 +33,7 @@ class UnicodeReader:
         self.reader = csv.reader(f, dialect=dialect, **kwds)
 
     def next(self):
-        row = self.reader.next()
+        row = next(self.reader)
         return [unicode(s, "utf-8") for s in row]
 
     def __iter__(self):

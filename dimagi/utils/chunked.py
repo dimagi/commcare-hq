@@ -12,7 +12,7 @@ def chunked(it, n):
         buffer = []
         try:
             for i in xrange(n):
-                buffer.append(it.next())
+                buffer.append(next(it))
             yield tuple(buffer)
         except StopIteration:
             if buffer:
