@@ -1,3 +1,4 @@
+from functools import reduce
 class QueryableList(list):
     def __getattr__(self, item):
         #  __getattr__ is only called when other attribute lookup methods fail.

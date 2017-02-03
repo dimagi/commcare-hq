@@ -1,5 +1,6 @@
 import hashlib
 from datetime import datetime
+from functools import reduce
 
 def to_number(bytes):
     return reduce(lambda a, b: a*256 + b, bytes)
