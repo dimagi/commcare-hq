@@ -65,14 +65,6 @@ def get_form_list(domain):
     return form_list
 
 
-def get_sample_list(domain):
-    
-    sample_list = []
-    for sample in get_case_groups_in_domain(domain):
-        sample_list.append({"code" : sample._id, "name" : sample.name})
-    return sample_list
-
-
 def get_form_name(form_unique_id):
     try:
         form = Form.get_form(form_unique_id)
