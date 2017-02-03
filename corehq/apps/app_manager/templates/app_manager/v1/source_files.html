@@ -6,6 +6,7 @@
 {% block page_content %}
     {% registerurl 'diff' app.domain app.id '---' %}
     {% initial_page_data 'version_map' version_map %}
+    {% initial_page_data 'current_version' app.built_with.build_number %}
 
     <p class="form-inline" id="compare-form">
       See
@@ -74,13 +75,15 @@
             $(this).parents('tr').next('tr').toggleClass("hide");
         });
 
-        var version_map = hqImport('hqwebapp/js/initial_page_data.js').get('version_map');
-        var $form = $("#compare-form"),
-            $input = $form.find("input");
+        var version_map = hqImport('hqwebapp/js/initial_page_data.js').get('version_map'),
+            current_version = hqImport('hqwebapp/js/initial_page_data.js').get('current_version'),
+            $form = $("#compare-form"),
+            $input = $form.find("input"),
+            versions = _.without(_.keys(version_map), String(current_version));
 
         $input.atwho({
             at: "",
-            data: _.sortBy(_.keys(version_map), function(v) { return parseInt(v); }).reverse(),
+            data: _.sortBy(versions, function(v) { return parseInt(v); }).reverse(),
             limit: Infinity,
             maxLen: Infinity,
             suffix: "",
