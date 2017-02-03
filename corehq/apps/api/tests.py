@@ -55,6 +55,7 @@ from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.pillows.reportxform import transform_xform_for_report_forms_index
 from corehq.pillows.xform import transform_xform_for_elasticsearch
 from custom.hope.models import CC_BIHAR_PREGNANCY
+from six.moves import range
 
 
 class FakeXFormES(object):
@@ -989,7 +990,7 @@ class TestElasticAPIQuerySet(TestCase):
 
     def test_slice(self):
         es = FakeXFormES()
-        for i in xrange(0, 1300):
+        for i in range(0, 1300):
             es.add_doc(i, {'i': i})
         
         queryset = ElasticAPIQuerySet(es_client=es, payload={})
@@ -1015,7 +1016,7 @@ class TestElasticAPIQuerySet(TestCase):
 
     def test_order_by(self):
         es = FakeXFormES()
-        for i in xrange(0, 1300):
+        for i in range(0, 1300):
             es.add_doc(i, {'i': i})
         
         queryset = ElasticAPIQuerySet(es_client=es, payload={})
