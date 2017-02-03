@@ -966,13 +966,10 @@ class SuppressSubscriptionForm(forms.Form):
         if invoices:
             raise ValidationError(mark_safe(
                 "Cannot suppress subscription. Suppress these invoices first: %s"
-                % ', '.join(map(
-                    lambda invoice: '<a href="{edit_url}">{name}</a>'.format(
+                % ', '.join(['<a href="{edit_url}">{name}</a>'.format(
                         edit_url=reverse(InvoiceSummaryView.urlname, args=[invoice.id]),
                         name=invoice.invoice_number,
-                    ),
-                    invoices
-                ))
+                    ) for invoice in invoices])
             ))
 
 
@@ -1788,13 +1785,11 @@ class TriggerInvoiceForm(forms.Form):
                 "{invoice_list}".format(
                     num_invoices=prev_invoices.count(),
                     invoice_list=', '.join(
-                        map(
-                            lambda x: '<a href="{edit_url}">{name}</a>'.format(
+                        ['<a href="{edit_url}">{name}</a>'.format(
                                 edit_url=reverse(InvoiceSummaryView.urlname,
                                                  args=(x.id,)),
                                 name=x.invoice_number
-                            ), prev_invoices.all()
-                        )
+                            ) for x in prev_invoices.all()]
                     ),
                 )
             )

@@ -34,7 +34,7 @@ class BaseModifySubscriptionHandler(object):
         self.date_start = date_start or datetime.date.today()
         self.new_plan_version = new_plan_version
 
-        self.privileges = filter(lambda x: x in self.supported_privileges(), changed_privs)
+        self.privileges = [x for x in changed_privs if x in self.supported_privileges()]
 
     def get_response(self):
         responses = []
@@ -66,7 +66,7 @@ class BaseModifySubscriptionActionHandler(BaseModifySubscriptionHandler):
 
     def get_response(self):
         response = super(BaseModifySubscriptionActionHandler, self).get_response()
-        return len(filter(lambda x: not x, response)) == 0
+        return len([x for x in response if not x]) == 0
 
 
 # TODO - cache
@@ -122,10 +122,7 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         All Reminder rules utilizing "survey" will be deactivated.
         """
         try:
-            surveys = filter(
-                lambda x: x.method in [METHOD_IVR_SURVEY, METHOD_SMS_SURVEY],
-                _active_reminders(domain)
-            )
+            surveys = [x for x in _active_reminders(domain) if x.method in [METHOD_IVR_SURVEY, METHOD_SMS_SURVEY]]
             for survey in surveys:
                 survey.active = False
                 survey.save()
@@ -282,7 +279,7 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
         from corehq.apps.userreports.models import ReportConfiguration
         from corehq.apps.userreports.tasks import rebuild_indicators
         reports = ReportConfiguration.by_domain(project.name)
-        builder_reports = filter(lambda report: report.report_meta.created_by_builder, reports)
+        builder_reports = [report for report in reports if report.report_meta.created_by_builder]
         for report in builder_reports:
             try:
                 report.visible = True
@@ -323,10 +320,7 @@ def _has_report_builder_add_on(plan_version):
 def _get_report_builder_reports(project):
     from corehq.apps.userreports.models import ReportConfiguration
     reports = ReportConfiguration.by_domain(project.name)
-    return filter(
-        lambda report: report.report_meta.created_by_builder,
-        reports
-    )
+    return [report for report in reports if report.report_meta.created_by_builder]
 
 
 class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
@@ -357,13 +351,10 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
 
     def get_response(self):
         response = super(DomainDowngradeStatusHandler, self).get_response()
-        response.extend(filter(
-            lambda response: response is not None,
-            [
+        response.extend([response for response in [
                 self.response_later_subscription,
                 self.response_mobile_worker_creation,
-            ]
-        ))
+            ] if response is not None])
         return response
 
     @staticmethod
@@ -444,7 +435,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         """
         All Reminder rules utilizing "survey" will be deactivated.
         """
-        surveys = filter(lambda x: x in [METHOD_IVR_SURVEY, METHOD_SMS_SURVEY], _active_reminder_methods(domain))
+        surveys = [x for x in _active_reminder_methods(domain) if x in [METHOD_IVR_SURVEY, METHOD_SMS_SURVEY]]
         num_survey = len(surveys)
         if num_survey > 0:
             return _fmt_alert(
@@ -473,7 +464,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
             include_docs=True,
             reduce=False,
         )
-        num_deid_reports = len(filter(lambda r: r.is_safe, reports))
+        num_deid_reports = len([r for r in reports if r.is_safe])
         if num_deid_reports > 0:
             return _fmt_alert(
                 ungettext(

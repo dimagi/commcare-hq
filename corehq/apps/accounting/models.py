@@ -2429,7 +2429,7 @@ class BillingRecord(BillingRecordBase):
     @staticmethod
     def _get_total_balance(credit_lines):
         return (
-            sum(map(lambda credit_line: credit_line.balance, credit_lines))
+            sum([credit_line.balance for credit_line in credit_lines])
             if credit_lines else Decimal('0.0')
         )
 
@@ -2858,7 +2858,7 @@ class StripePaymentMethod(PaymentMethod):
     @property
     def all_cards(self):
         try:
-            return filter(lambda card: card is not None, self.customer.cards.data)
+            return [card for card in self.customer.cards.data if card is not None]
         except stripe.error.AuthenticationError:
             if not settings.STRIPE_PRIVATE_KEY:
                 log_accounting_info("Private key is not defined in settings")
