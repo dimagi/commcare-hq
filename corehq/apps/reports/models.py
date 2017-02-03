@@ -18,7 +18,6 @@ from django.utils.translation import ugettext_noop
 
 from sqlalchemy.util import immutabledict
 
-from corehq.apps.analytics.utils import analytics_enabled_for_email
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import Form, RemoteApp
 from corehq.apps.app_manager.util import get_case_properties
@@ -795,7 +794,7 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
                     title, email, body,
                     email_from=settings.DEFAULT_FROM_EMAIL,
                     file_attachments=excel_files,
-                    ga_track=analytics_enabled_for_email(email),
+                    ga_track=True,
                     ga_tracking_info={'cd4': self.domain, 'cd10': ', '.join(slugs)},
                 )
 

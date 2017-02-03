@@ -10,11 +10,13 @@ from pygments.lexers import PythonLexer
 from pygments.formatters import HtmlFormatter
 
 from celery.utils.mail import ErrorMail
+from dimagi.utils.django.email import send_HTML_email as _send_HTML_email
 from django.core import mail
 from django.http import HttpRequest
 from django.utils.log import AdminEmailHandler
 from django.views.debug import SafeExceptionReporterFilter, get_exception_reporter_filter
 from django.template.loader import render_to_string
+from corehq.apps.analytics.utils import analytics_enabled_for_email
 from corehq.util.view_utils import get_request
 from corehq.util.datadog.utils import log_counter, get_url_group, sanitize_url
 from corehq.util.datadog.metrics import ERROR_COUNT
@@ -287,3 +289,8 @@ def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True):
     end = datetime.now()
     print "Finished at {:%Y-%m-%d %H:%M:%S}".format(end)
     print "Elapsed time: {}".format(display_seconds((end - start).total_seconds()))
+
+
+def send_HTML_email(subject, recipient, html_content, *args, **kwargs):
+    kwargs['ga_track'] = kwargs.get('ga_track', False) and analytics_enabled_for_email(recipient)
+    return _send_HTML_email(subject, recipient, html_content, *args, **kwargs)

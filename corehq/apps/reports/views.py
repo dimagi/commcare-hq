@@ -4,7 +4,6 @@ import itertools
 import json
 from wsgiref.util import FileWrapper
 
-from corehq.apps.analytics.utils import analytics_enabled_for_email
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.domain.utils import get_domain_module_map
 from corehq.apps.domain.views import BaseDomainView
@@ -791,7 +790,7 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
         send_html_email_async.delay(
             subject, email, body,
             email_from=settings.DEFAULT_FROM_EMAIL,
-            ga_track=request.analytics_enabled,
+            ga_track=True,
             ga_tracking_info={
                 'cd4': request.domain,
                 'cd10': report_slug
@@ -803,7 +802,7 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
             send_html_email_async.delay(
                 subject, recipient, body,
                 email_from=settings.DEFAULT_FROM_EMAIL,
-                ga_track=analytics_enabled_for_email(recipient),
+                ga_track=True,
                 ga_tracking_info={
                     'cd4': request.domain,
                     'cd10': report_slug

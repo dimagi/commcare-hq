@@ -2,7 +2,7 @@ from celery.task import task
 from celery.utils.log import get_task_logger
 from django.conf import settings
 from django.core.mail import send_mail, mail_admins
-from dimagi.utils.django.email import send_HTML_email
+from corehq.util.log import send_HTML_email
 
 logger = get_task_logger(__name__)
 

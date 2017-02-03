@@ -14,7 +14,7 @@ from corehq.apps.data_interfaces.utils import add_cases_to_case_group, archive_f
 from corehq.toggles import DATA_MIGRATION
 from .interfaces import FormManagementMode, BulkFormManagementInterface
 from .dispatcher import EditDataInterfaceDispatcher
-from dimagi.utils.django.email import send_HTML_email
+from corehq.util.log import send_HTML_email
 from dimagi.utils.couch import CriticalSection
 
 

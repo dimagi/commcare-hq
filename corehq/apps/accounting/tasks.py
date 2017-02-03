@@ -18,7 +18,7 @@ from couchdbkit import ResourceNotFound
 from couchexport.export import export_from_tables
 from couchexport.models import Format
 from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.django.email import send_HTML_email
+from corehq.util.log import send_HTML_email
 
 from corehq.apps.accounting.exceptions import (
     CreditLineError,

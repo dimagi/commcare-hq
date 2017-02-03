@@ -5,7 +5,7 @@ from django.core.management.base import BaseCommand
 from corehq.apps.export.utils import migrate_domain
 from corehq.apps.domain.models import Domain
 from corehq.form_processor.utils.general import use_new_exports
-from dimagi.utils.django.email import send_HTML_email
+from corehq.util.log import send_HTML_email
 
 
 class Command(BaseCommand):

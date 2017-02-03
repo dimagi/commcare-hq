@@ -6,7 +6,7 @@ import datetime
 from corehq.apps.data_analytics.malt_generator import MALTTableGenerator
 from corehq.apps.data_analytics.gir_generator import GIRTableGenerator
 from dimagi.utils.dates import DateSpan
-from dimagi.utils.django.email import send_HTML_email
+from corehq.util.log import send_HTML_email
 from django.conf import settings
 
 logger = get_task_logger(__name__)
