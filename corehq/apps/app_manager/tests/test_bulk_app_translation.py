@@ -466,7 +466,7 @@ class AggregateMarkdownNodeTests(SimpleTestCase, TestXmlMixin):
         missing_cols = set()
         sheet = self.form1_worksheet
         rows = get_unicode_dicts(sheet)
-        with patch('corehq.apps.app_manager.translations.save_xform') as save_xform_patch:
+        with patch('corehq.apps.app_manager.translations.translations.save_xform') as save_xform_patch:
             msgs = update_form_translations(sheet, rows, missing_cols, self.app)
             self.assertEqual(msgs, [])
             expected_xform = self.get_xml('expected_xform').decode('utf-8')
