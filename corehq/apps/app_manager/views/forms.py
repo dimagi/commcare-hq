@@ -756,7 +756,7 @@ def _get_case_references(data):
         refs = json.loads(data.get('case_references', '{}'))
 
     try:
-        references = CaseReferences.wrap(copy.deepcopy(refs))
+        references = CaseReferences.wrap(refs)
         references.validate()
         return references
     except Exception:
