@@ -16,7 +16,7 @@ class XFormParsingTest(SimpleTestCase, TestXmlMixin):
             self.xforms[filename] = XForm(xml)
 
     def test_properties(self):
-        for _, xform in list(self.xforms.items()):
+        for _, xform in self.xforms.items():
             xform.data_node
             xform.model_node
             xform.instance_node
