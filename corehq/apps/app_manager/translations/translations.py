@@ -457,8 +457,8 @@ def _process_modules_and_forms_sheet(rows, app):
 
         _update_translation_dict('default_', document.name, row, app.langs)
 
-        if (_has_at_least_one_translation(row, 'label_for_cases', app.langs)
-                and hasattr(document, 'case_label')):
+        if (_has_at_least_one_translation(row, 'label_for_cases', app.langs) and
+                hasattr(document, 'case_label')):
             _update_translation_dict('label_for_cases_', document.case_label, row, app.langs)
 
         for lang in app.langs:
