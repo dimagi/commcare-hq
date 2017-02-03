@@ -29,7 +29,7 @@ class WorkflowHelper(PostProcessor):
         root_modules = [module for module in self.modules if getattr(module, 'put_in_root', False)]
         return [
             datum for module in root_modules
-            for datum in list(self.get_module_datums(u'm{}'.format(module.id)).values())
+            for datum in self.get_module_datums(u'm{}'.format(module.id)).values()
         ]
 
     def update_suite(self):
@@ -147,8 +147,8 @@ class WorkflowHelper(PostProcessor):
                 for d in e.datums:
                     datums[module_id][form_id].append(WorkflowDatumMeta.from_session_datum(d))
 
-        for module_id, form_datum_map in list(datums.items()):
-            for form_id, entry_datums in list(form_datum_map.items()):
+        for module_id, form_datum_map in datums.items():
+            for form_id, entry_datums in form_datum_map.items():
                 self._add_missing_case_types(module_id, form_id, entry_datums)
 
         return entries, datums

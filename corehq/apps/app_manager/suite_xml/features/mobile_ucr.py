@@ -1,5 +1,6 @@
-from past.builtins import basestring
 from builtins import object
+from past.builtins import basestring
+
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.models import ReportModule, ReportGraphConfig, \
     MobileSelectFilter
@@ -128,7 +129,7 @@ def _get_summary_details(config, domain):
                         y_function="column[@id='{}']".format(column),
                         configuration=ConfigurationGroup(configs=[
                             ConfigurationItem(id=key, xpath_function=value)
-                            for key, value in list(graph_config.series_configs.get(column, {}).items())
+                            for key, value in graph_config.series_configs.get(column, {}).items()
                         ])
                     )
                 yield Field(
@@ -140,7 +141,7 @@ def _get_summary_details(config, domain):
                             series=[_column_to_series(c.column_id) for c in chart_config.y_axis_columns],
                             configuration=ConfigurationGroup(configs=[
                                 ConfigurationItem(id=key, xpath_function=value)
-                                for key, value in list(graph_config.config.items())
+                                for key, value in graph_config.config.items()
                             ]),
                         ),
                     )
@@ -223,7 +224,7 @@ def _get_data_detail(config, domain):
 
             def _get_word_eval(word_translations, default_value):
                 word_eval = default_value
-                for lang, translation in list(word_translations.items()):
+                for lang, translation in word_translations.items():
                     word_eval = _get_conditional(
                         "$lang = '{lang}'".format(
                             lang=lang,
@@ -239,7 +240,7 @@ def _get_data_detail(config, domain):
             if transform.get('type') == 'translation':
                 default_val = "column[@id='{column_id}']"
                 xpath_function = default_val
-                for word, translations in list(transform['translations'].items()):
+                for word, translations in transform['translations'].items():
                     if isinstance(translations, basestring):
                         # This is a flat mapping, not per-language translations
                         word_eval = "'{}'".format(translations)
@@ -299,7 +300,7 @@ class _MobileSelectFilterHelpers(object):
 
     @staticmethod
     def get_filters(config, domain):
-        return [(slug, f) for slug, f in list(config.filters.items())
+        return [(slug, f) for slug, f in config.filters.items()
                 if isinstance(f, MobileSelectFilter)
                 and is_valid_mobile_select_filter_type(config.report(domain).get_ui_filter(slug))]
 

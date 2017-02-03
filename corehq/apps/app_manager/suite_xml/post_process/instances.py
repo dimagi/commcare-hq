@@ -1,6 +1,7 @@
-from builtins import object
-from collections import defaultdict
 import re
+from builtins import object
+from builtins import str
+from collections import defaultdict
 from corehq import toggles
 from corehq.apps.app_manager.exceptions import DuplicateInstanceIdError
 from corehq.apps.app_manager.suite_xml.contributors import PostProcessor
@@ -120,7 +121,7 @@ INSTANCE_BY_ID = {
 }
 
 
-@register_factory(*list(INSTANCE_BY_ID.keys()))
+@register_factory(*list(INSTANCE_BY_ID))
 def preset_instances(domain, instance_name):
     return INSTANCE_BY_ID.get(instance_name, None)
 
