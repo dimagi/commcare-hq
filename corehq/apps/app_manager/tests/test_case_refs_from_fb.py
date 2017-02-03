@@ -165,6 +165,34 @@ def test_invalid_args(self, case_references):
 
 class CaseReferencesTest(SimpleTestCase):
 
+    def test_get_load_refs(self):
+        load = {
+            'path1': ['p1', 'p2'],
+            'path2': ['p3'],
+        }
+        case_refs = CaseReferences(
+            load=load,
+        )
+        load_refs = list(case_refs.get_load_references())
+        self.assertEqual(2, len(load_refs))
+        for load_ref in load_refs:
+            self.assertEqual(load[load_ref.path], load_ref.properties)
+
+    def test_get_save_refs(self):
+        save = {
+            'path1': CaseSaveReference(case_type='foo', properties=['p1', 'p2']),
+            'path2': CaseSaveReference(properties=['p3'], create=True, close=True),
+        }
+        case_refs = CaseReferences(
+            save=save,
+        )
+        save_refs = list(case_refs.get_save_references())
+        self.assertEqual(2, len(save_refs))
+        for save_ref in save_refs:
+            orig_ref = save[save_ref.path]
+            for attr in ('case_type', 'properties', 'create', 'close'):
+                self.assertEqual(getattr(orig_ref, attr), getattr(save_ref, attr))
+
     def test_get_save_refs_dont_mutate_app(self):
         case_refs = CaseReferences(load={}, save={
             'p1': CaseSaveReference(properties=['p1', 'p2'])
