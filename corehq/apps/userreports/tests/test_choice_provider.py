@@ -131,7 +131,7 @@ class LocationChoiceProviderTest(ChoiceProviderTestMixin, LocationHierarchyTestC
                 location.get_path_display(),
                 searchable_text=[location.site_code, location.name]
             ))
-            for location in cls.locations.itervalues()
+            for location in six.itervalues(cls.locations)
         ]
         choice_tuples.sort()
         choices = [choice for name, choice in choice_tuples]
