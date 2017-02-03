@@ -12,6 +12,7 @@ from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext, ugettext_lazy as _
 from django.conf import settings
 import six
+from six.moves import range
 
 FilterParam = namedtuple('FilterParam', ['name', 'required'])
 
