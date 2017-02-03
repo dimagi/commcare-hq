@@ -4,7 +4,7 @@ import random
 import string
 
 from django.test import TestCase
-from casexml.apps.case.tests.util import delete_all_xforms
+from casexml.apps.case.tests.util import delete_all_ledgers, delete_all_xforms
 from corehq.apps.commtrack.models import SQLProduct
 
 from casexml.apps.stock.const import REPORT_TYPE_BALANCE
@@ -51,6 +51,7 @@ class StockReportDomainTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(StockReportDomainTest, cls).setUpClass()
         cls.case_ids = {'c1': 10, 'c2': 30, 'c3': 50}
         cls.section_ids = {'s1': 2, 's2': 9}
         cls.product_ids = {'p1': 1, 'p2': 3, 'p3': 5}
@@ -62,8 +63,10 @@ class StockReportDomainTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         SQLProduct.objects.all().delete()
+        super(StockReportDomainTest, cls).tearDownClass()
 
     def setUp(self):
+        super(StockReportDomainTest, self).setUp()
         self.domain = _get_name_for_domain()
         self.ledger_processor = FormProcessorInterface(domain=self.domain).ledger_processor
         create_domain(self.domain)
@@ -91,8 +94,10 @@ class StockReportDomainTest(TestCase):
 
     def tearDown(self):
         delete_all_xforms()
+        delete_all_ledgers()
         StockReport.objects.all().delete()
         StockTransaction.objects.all().delete()
+        super(StockReportDomainTest, self).tearDown()
 
     def test_stock_report(self):
         self.create_report()

@@ -15,10 +15,11 @@ FormplayerFrontend.module("Menus.Collections", function (Collections, Formplayer
             'appVersion',
             'appId',
             'persistentCaseTile',
+            'tiles',
         ],
 
         entityProperties: [
-            'action',
+            'actions',
             'styles',
             'headers',
             'currentPage',

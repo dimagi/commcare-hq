@@ -38,6 +38,7 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CouchUser, Permissions, CommCareUser
 from corehq.apps.users import models as user_models
 from corehq.apps.users.views.mobile.users import EditCommCareUserView
+from corehq.apps.reminders.util import get_two_way_number_for_recipient
 from corehq.apps.sms.models import (
     SMS, INCOMING, OUTGOING, ForwardingRule,
     MessagingEvent, SelfRegistrationInvitation,
@@ -355,7 +356,7 @@ class TestSMSMessageView(BaseDomainView):
 
     def post(self, request, *args, **kwargs):
         message = request.POST.get("message", "")
-        phone_entry = PhoneNumber.by_phone(self.phone_number)
+        phone_entry = PhoneNumber.get_two_way_number(self.phone_number)
         if phone_entry and phone_entry.domain != self.domain:
             messages.error(
                 request,
@@ -415,12 +416,11 @@ def api_send_sms(request, domain):
                 assert contact.domain == domain
             except Exception:
                 return HttpResponseBadRequest("Contact not found.")
-            try:
-                vn = contact.get_verified_number()
-                assert vn is not None
-                phone_number = vn.phone_number
-            except Exception:
+
+            vn = get_two_way_number_for_recipient(contact)
+            if not vn:
                 return HttpResponseBadRequest("Contact has no phone number.")
+            phone_number = vn.phone_number
 
         try:
             chat_workflow = string_to_boolean(chat)
@@ -707,7 +707,7 @@ def get_contact_info(domain):
     case_ids = []
     mobile_worker_ids = []
     data = []
-    for p in PhoneNumber.by_domain(domain):
+    for p in PhoneNumber.by_domain(domain).filter(is_two_way=True):
         if p.owner_doc_type == 'CommCareCase':
             case_ids.append(p.owner_id)
             data.append([
@@ -758,7 +758,7 @@ def format_contact_data(domain, data):
 
 
 @require_permission(Permissions.edit_data)
-@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
+@requires_privilege_with_fallback(privileges.INBOUND_SMS)
 def chat_contact_list(request, domain):
     sEcho = request.GET.get('sEcho')
     iDisplayStart = int(request.GET.get('iDisplayStart'))

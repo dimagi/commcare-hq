@@ -129,6 +129,9 @@
                                 </span>
                             </th>
                             <th>{% trans "Direction" %}</th>
+                            {% if request|toggle_enabled:'SORT_CALCULATION_IN_CASE_LIST' %}
+                            <th>{% trans "Sort Calculation" %}</th>
+                            {% endif %}
                             <th>{% trans "Format" %}</th>
                             <th>
                                 {% trans "Display Text" %}
@@ -172,6 +175,15 @@
                                     </option>
                                 </select>
                             </td>
+
+
+                            {% if request|toggle_enabled:'SORT_CALCULATION_IN_CASE_LIST' %}
+                            <td>
+                                <input class="form-control" type='text' data-bind='value: sortCalculation'/>
+                            </td>
+                            {% endif %}
+
+
                             <td>
                                 <select class="form-control" data-bind="value: type">
                                     <option value="plain">
@@ -210,7 +222,7 @@
             </div>
             <div class="form-group">
                 <button class="btn btn-default btn-sm" data-bind="
-                    click: function(data){data.addSortRow('', '', '', '', true);}"
+                    click: function(data){data.addSortRow('', '', '', '', true, '');}"
                 >
                     <i class="fa fa-plus"></i>
                     {% trans "Add sort property" %}

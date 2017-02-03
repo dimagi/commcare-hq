@@ -1,8 +1,17 @@
 import pytz
+from collections import namedtuple
 from django.utils.dateparse import parse_datetime
 
+from corehq.apps.locations.models import SQLLocation
+
+from casexml.apps.case.mock import CaseBlock
+from casexml.apps.case.util import post_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from custom.enikshay.exceptions import ENikshayCaseNotFound
+from custom.enikshay.exceptions import (
+    ENikshayCaseNotFound,
+    NikshayCodeNotFound,
+    NikshayLocationNotFound,
+)
 from corehq.form_processor.exceptions import CaseNotFound
 
 CASE_TYPE_ADHERENCE = "adherence"
@@ -29,8 +38,8 @@ def get_parent_of_case(domain, case_id, parent_case_type):
     ]
     parent_cases = case_accessor.get_cases(parent_case_ids)
     open_parent_cases = [
-        occurrence_case for occurrence_case in parent_cases
-        if not occurrence_case.closed
+        parent_case for parent_case in parent_cases
+        if not parent_case.closed
     ]
 
     if not open_parent_cases:
@@ -53,6 +62,13 @@ def get_person_case_from_occurrence(domain, occurrence_case_id):
     Gets the first open person case for an occurrence
     """
     return get_parent_of_case(domain, occurrence_case_id, CASE_TYPE_PERSON)
+
+
+def get_person_case_from_episode(domain, episode_case_id):
+    return get_person_case_from_occurrence(
+        domain,
+        get_occurrence_case_from_episode(domain, episode_case_id).case_id
+    )
 
 
 def get_open_occurrence_case_from_person(domain, person_case_id):
@@ -108,6 +124,15 @@ def get_open_episode_case_from_person(domain, person_case_id):
     )
 
 
+def get_episode_case_from_adherence(domain, adherence_case_id):
+    """Gets the 'episode' case associated with an adherence datapoint
+
+    Assumes the following case structure:
+    Episode <--ext-- Adherence
+    """
+    return get_parent_of_case(domain, adherence_case_id, CASE_TYPE_EPISODE)
+
+
 def get_adherence_cases_between_dates(domain, person_case_id, start_date, end_date):
     case_accessor = CaseAccessors(domain)
     episode = get_open_episode_case_from_person(domain, person_case_id)
@@ -121,3 +146,46 @@ def get_adherence_cases_between_dates(domain, person_case_id, start_date, end_da
     ]
 
     return open_pertinent_adherence_cases
+
+
+def update_case(domain, case_id, updated_properties, external_id=None):
+    kwargs = {
+        'case_id': case_id,
+        'update': updated_properties,
+    }
+    if external_id is not None:
+        kwargs.update({'external_id': external_id})
+
+    post_case_blocks(
+        [CaseBlock(**kwargs).as_xml()],
+        {'domain': domain}
+    )
+
+
+def get_person_locations(person_case):
+    PersonLocationHierarchy = namedtuple('PersonLocationHierarchy', 'sto dto tu phi')
+    try:
+        phi_location = SQLLocation.objects.get(location_id=person_case.owner_id)
+    except SQLLocation.DoesNotExist:
+        raise NikshayLocationNotFound(
+            "Location with id {location_id} not found. This is the owner for person with id: {person_id}"
+            .format(location_id=person_case.owner_id, person_id=person_case.case_id)
+        )
+
+    try:
+        tu_location = phi_location.parent
+        district_location = tu_location.parent
+        city_location = district_location.parent
+        state_location = city_location.parent
+    except AttributeError:
+        raise NikshayLocationNotFound("Location structure error for person: {}".format(person_case.case_id))
+    try:
+        # TODO: verify how location codes will be stored
+        return PersonLocationHierarchy(
+            sto=state_location.metadata['nikshay_code'],
+            dto=district_location.metadata['nikshay_code'],
+            tu=tu_location.metadata['nikshay_code'],
+            phi=phi_location.metadata['nikshay_code'],
+        )
+    except (KeyError, AttributeError) as e:
+        raise NikshayCodeNotFound("Nikshay codes not found: {}".format(e))

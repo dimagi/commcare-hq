@@ -45,7 +45,7 @@
         },
         "transform": {},
         "is_nullable": false,
-        "is_primary_key": true,
+        "is_primary_key": false,
         "column_id": "case_id",
         "type": "expression"
       },

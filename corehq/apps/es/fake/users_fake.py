@@ -20,3 +20,6 @@ class UserESFake(HQESQueryFake):
     def transform_doc(doc):
         doc['username.exact'] = doc.get('username', '')
         return transform_user_for_elasticsearch(doc)
+
+    def count(self):
+        return len(self._result_docs)

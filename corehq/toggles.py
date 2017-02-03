@@ -3,6 +3,8 @@ from functools import wraps
 import hashlib
 from django.http import Http404
 import math
+
+from django.conf import settings
 from corehq.util.quickcache import quickcache
 from toggle.shortcuts import toggle_enabled, set_toggle
 
@@ -137,7 +139,9 @@ class PredictablyRandomToggle(StaticToggle):
         return '{}:{}:{}'.format(self.namespaces, self.slug, item)
 
     def enabled(self, item, **kwargs):
-        if item in self.always_disabled:
+        if settings.UNIT_TESTING:
+            return False
+        elif item in self.always_disabled:
             return False
         return (
             (item and deterministic_random(self._get_identifier(item)) < self.randomness)
@@ -680,6 +684,13 @@ NINETYNINE_DOTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+NIKSHAY_INTEGRATION = StaticToggle(
+    'nikshay_integration',
+    'Enable patient registration in Nikshay',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
 MULTIPLE_CHOICE_CUSTOM_FIELD = StaticToggle(
     'multiple_choice_custom_field',
     'Allow project to use multiple choice field in custom fields',
@@ -715,10 +726,10 @@ HSPH_HACK = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-USE_FORMPLAYER_FRONTEND = StaticToggle(
-    'use_formplayer_frontend',
-    'Use New CloudCare',
-    TAG_PRODUCT_PATH,
+USE_OLD_CLOUDCARE = StaticToggle(
+    'use_old_cloudcare',
+    'Use Old CloudCare',
+    TAG_ONE_OFF,
     [NAMESPACE_DOMAIN],
 )
 
@@ -860,6 +871,23 @@ PROJECT_HEALTH_DASHBOARD = StaticToggle(
 )
 
 
+PHONE_NUMBERS_REPORT = StaticToggle(
+    'phone_numbers_report',
+    "Shows information related to the phone numbers owned by a project's contacts",
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
+
+INBOUND_SMS_LENIENCY = StaticToggle(
+    'inbound_sms_leniency',
+    "Inbound SMS leniency on domain-owned gateways. "
+    "WARNING: This wil be rolled out slowly; do not enable on your own.",
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
+)
+
+
 UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
     'unlimited_report_builder_reports',
     'Allow unlimited reports created in report builder',
@@ -913,11 +941,12 @@ CUSTOM_CALENDAR_FIXTURE = StaticToggle(
 )
 
 
-PREVIEW_APP = StaticToggle(
+PREVIEW_APP = PredictablyRandomToggle(
     'preview_app',
     'Preview an application in the app builder',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
+    randomness=0.2,
 )
 
 DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
@@ -993,7 +1022,18 @@ NIMBUS_FORM_VALIDATION = PredictablyRandomToggle(
     'Use Nimbus to validate XForms',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
-    randomness=0.4
+    randomness=1.0,
+    always_disabled=[
+        'icrc-almanach',
+        'mikolo'
+    ]
+)
+
+USER_PROPERTY_EASY_REFS = StaticToggle(
+    'user_property_easy_refs',
+    'Easy-reference user properties in the form builder.',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN]
 )
 
 COPY_CASE_CONFIGS = StaticToggle(
@@ -1001,4 +1041,19 @@ COPY_CASE_CONFIGS = StaticToggle(
     'Allow copying case list / details screens in basic modules.',
     TAG_PRODUCT_CORE,
     [NAMESPACE_DOMAIN]
+)
+
+SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
+    'sort_calculation_in_case_list',
+    'Configure a custom xpath calculation for Sort Property in Case Lists',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
+DO_NOT_PROCESS_OLD_BUILDS = PredictablyRandomToggle(
+    'do_not_process_old_builds',
+    'Do not process old build for export generation',
+    TAG_PRODUCT_CORE,
+    [NAMESPACE_DOMAIN],
+    randomness=0.2,
 )

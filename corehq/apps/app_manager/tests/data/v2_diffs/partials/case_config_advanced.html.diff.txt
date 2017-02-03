@@ -89,7 +89,7 @@
      </div>
      <div class="panel-collapse collapse" data-bind="attr: {id: actionType + $index()}">
          <div class="panel-body">
-@@ -400,13 +400,13 @@
+@@ -414,13 +414,13 @@
              </legend>
              <div id="case-load-accordion" class="panel-group" data-bind="foreach: load_update_cases">
                  <!-- ko if: auto_select -->
@@ -106,7 +106,7 @@
                  <!-- /ko -->
              </div>
          </div>
-@@ -416,7 +416,7 @@
+@@ -430,7 +430,7 @@
                  {% trans "Open New Cases" %}
              </legend>
              <div id="case-open-accordion" class="panel-group" data-bind="foreach: open_cases">

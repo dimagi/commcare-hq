@@ -28,10 +28,12 @@ def _domain_from_adjustment(credit_adj):
 class Command(BaseCommand):
     help = 'Print to the console a CSV of credit adjustment info for the given year.'
 
-    def handle(self, year, *args, **options):
+    def add_arguments(self, parser):
+        parser.add_argument('year', type=int)
+
+    def handle(self, year, **options):
         print 'Note,Project Space,Web User,Date Created,Amount,Subscription Type,ID in database'
 
-        year = int(year)
         start = date(year, 1, 1)
         end = date(year, 12, 31)
         for credit_adj in CreditAdjustment.objects.filter(

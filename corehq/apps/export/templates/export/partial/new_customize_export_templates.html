@@ -27,22 +27,37 @@
             <!-- /ko -->
         </legend>
         <div class="col-sm-12" data-bind="visibleFade: table.selected">
-            <div class="form-group pull-right">
+            <div class="form-group pull-right btn-group">
+                <!-- Advanced Button -->
                 <button type="button" class="btn btn-default" data-bind="
                     click: table.toggleShowAdvanced,
                     css: {active: table.showAdvanced}">
                     <span data-bind="visible: !table.showAdvanced()">
-                    {% if export_instance.type == 'form' %}
-                        {% trans "Show Deleted Questions and Advanced Properties" %}
-                    {% else %}
-                        {% trans "Show Deleted Properties and Advanced Properties" %}
-                    {% endif %}
+                    {% trans "Show Advanced Questions" %}
                     </span>
                     <span data-bind="visible: table.showAdvanced">
+                    {% trans "Hide Advanced Questions" %}
+                    </span>
+                </button>
+
+                <!-- Deleted Button -->
+                <button class="btn btn-default" data-bind="
+                    click: $root.toggleShowDeleted.bind($root),
+                    css: {active: table.showDeleted}
+                    ">
+                    <span data-bind="visible: !table.showDeleted()">
                     {% if export_instance.type == 'form' %}
-                        {% trans "Hide Deleted Questions and Advanced Properties" %}
+                        {% trans "Show Deleted Questions" %}
                     {% else %}
-                        {% trans "Hide Deleted Properties and Advanced Properties" %}
+                        {% trans "Show Deleted Properties" %}
+                    {% endif %}
+                    </span>
+
+                    <span data-bind="visible: table.showDeleted()">
+                    {% if export_instance.type == 'form' %}
+                        {% trans "Hide Deleted Questions" %}
+                    {% else %}
+                        {% trans "Hide Deleted Properties" %}
                     {% endif %}
                     </span>
                 </button>

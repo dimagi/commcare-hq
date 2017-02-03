@@ -1,5 +1,6 @@
 from casexml.apps.stock.models import StockTransaction
 from corehq.apps.commtrack.models import StockState
+from corehq.apps.reminders.util import get_two_way_number_for_recipient
 from corehq.apps.sms.api import incoming
 from corehq.util.translation import localize
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues
@@ -262,7 +263,7 @@ class ILSSoHTest(ILSTestScript):
             hmk
             fs 100 md 100 ff 100 pc 100
         """
-        verified_number = self.user1.get_verified_number()
+        verified_number = get_two_way_number_for_recipient(self.user1)
         msg = incoming(
             verified_number.phone_number, message, verified_number.backend_id
         )

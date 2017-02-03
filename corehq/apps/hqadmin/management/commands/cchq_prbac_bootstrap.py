@@ -144,6 +144,10 @@ class Command(BaseCommand):
         Role(slug='pro_plan_v0', name='Pro Plan', description=''),
         Role(slug='advanced_plan_v0', name='Advanced Plan', description=''),
         Role(slug='enterprise_plan_v0', name='Enterprise Plan', description=''),
+    ] + [
+        Role(slug='standard_plan_report_builder_v0', name='Standard Plan - 5 Reports', description=''),
+        Role(slug='pro_plan_report_builder_v0', name='Pro Plan - 5 Reports', description=''),
+        Role(slug='advanced_plan_report_builder_v0', name='Advanced Plan - 5 Reports', description=''),
     ]
 
     community_plan_v0_features = [
@@ -192,6 +196,18 @@ class Command(BaseCommand):
 
     enterprise_plan_features = advanced_plan_features + []
 
+    standard_plan_with_report_builder_features = standard_plan_features + [
+        privileges.REPORT_BUILDER_5,
+    ]
+
+    pro_plan_with_report_builder_features = pro_plan_features + [
+        privileges.REPORT_BUILDER_5,
+    ]
+
+    advanced_plan_with_report_builder_features = advanced_plan_features + [
+        privileges.REPORT_BUILDER_5,
+    ]
+
     OLD_PRIVILEGES = [
         BULK_CASE_AND_USER_MANAGEMENT,
         CROSS_PROJECT_REPORTS,
@@ -204,5 +220,9 @@ class Command(BaseCommand):
         'pro_plan_v0': pro_plan_features,
         'advanced_plan_v0': advanced_plan_features,
         'enterprise_plan_v0': enterprise_plan_features,
+
+        'standard_plan_report_builder_v0': standard_plan_with_report_builder_features,
+        'pro_plan_report_builder_v0': pro_plan_with_report_builder_features,
+        'advanced_plan_report_builder_v0': advanced_plan_with_report_builder_features,
     }
 

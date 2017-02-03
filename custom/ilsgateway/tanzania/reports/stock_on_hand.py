@@ -9,8 +9,6 @@ from django.utils import html
 from custom.ilsgateway.filters import ProgramFilter, ILSDateFilter, ILSAsyncLocationFilter
 from custom.ilsgateway.models import ProductAvailabilityData, \
     OrganizationSummary
-from custom.ilsgateway.tanzania.reports.facility_details import FacilityDetailsReport, InventoryHistoryData, \
-    RegistrationData, RandRHistory, RecentMessages, Notes
 from custom.ilsgateway.tanzania.reports.mixins import ProductAvailabilitySummary, SohSubmissionData
 from django.utils.translation import ugettext as _
 from custom.ilsgateway.tanzania.reports.utils import link_format, format_percent, make_url, get_hisp_resp_rate, \
@@ -338,6 +336,8 @@ class DistrictSohPercentageTableData(ILSData):
 
     @property
     def rows(self):
+        from custom.ilsgateway.tanzania.reports.facility_details import FacilityDetailsReport
+
         rows = []
         enddate = self.config['enddate']
 
@@ -442,6 +442,9 @@ class StockOnHandReport(DetailsReport):
     @property
     @memoized
     def data_providers(self):
+        from custom.ilsgateway.tanzania.reports.facility_details import (InventoryHistoryData,
+            RegistrationData, RandRHistory, Notes, RecentMessages)
+
         config = self.report_config
         data_providers = []
         if config['org_summary']:

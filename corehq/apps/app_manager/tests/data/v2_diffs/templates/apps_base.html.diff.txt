@@ -99,7 +99,7 @@
  
 -        // push LIVE PREVIEW ab test state to kissmetrics
 -      {% if is_onboarding_domain %}
--        window.analytics.workflow(["set", {"{{ live_preview_ab.name }}": "{{ live_preview_ab.version }}"}]);
+-        analytics.workflow("Set live preview A/B test state", {"{{ live_preview_ab.name }}": "{{ live_preview_ab.version }}"});
 -      {% endif %}
 +        var previewApp = hqImport('app_manager/js/preview_app.js');
 +        previewApp.initPreviewWindow(hqLayout);

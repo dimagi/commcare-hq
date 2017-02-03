@@ -80,6 +80,19 @@ class ClassBasedViewStyleGuideView(BaseStyleGuideArticleView):
         ]
 
 
+class CSSStyleGuideView(BaseStyleGuideArticleView):
+    urlname = 'styleguide_css'
+    navigation_name = 'css'
+
+    @property
+    def sections(self):
+        return [
+            'css/overview',
+            'css/hierarchy',
+            'css/z_index',
+        ]
+
+
 class FormsStyleGuideView(BaseStyleGuideArticleView):
     urlname = 'styleguide_forms'
     navigation_name = 'forms'
