@@ -2,6 +2,8 @@ SampleExportInstances = {
     basic: {
         "name": null,
         "type": "form",
+        "domain": "domain",
+        "app_id": "1234",
         "tables": [{
             "path": null,
             "name": null,
@@ -50,6 +52,7 @@ SampleExportInstances = {
             }],
             "doc_type": "TableConfiguration"
         }],
+        "export_format": "csv",
         "doc_type": "ExportInstance",
         "is_deidentified": false,
     },
@@ -105,6 +108,7 @@ SampleExportInstances = {
             }],
             "doc_type": "TableConfiguration"
         }],
+        "export_format": "csv",
         "doc_type": "ExportInstance",
         "is_deidentified": false,
     }

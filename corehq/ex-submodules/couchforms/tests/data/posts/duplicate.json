@@ -62,7 +62,7 @@
         }
     },
     "history": [],
-    "initial_processing_complete": false,
+    "initial_processing_complete": null,
     "partial_submission": false,
     "received_on": "2013-09-21T04:13:14Z",
     "xmlns": "http://openrosa.org/app/general",

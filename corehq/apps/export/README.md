@@ -49,6 +49,52 @@ The export that is then generated will look something like this:
 
 Since q3's latest build_version is 10, the code deduces that it has been deleted and therefore hides it and marks it as deleted.
 
+### Exporting remote apps / defining your own schema
+
+In order to export remote apps, you will need to define your own schema for the export since there are no forms and modules to build the export off of.
+
+To enable the ability to do this turn on the toggle:
+```
+ALLOW_USER_DEFINED_EXPORT_COLUMNS ('Allows users to specify their own export columns')
+```
+
+The UI will then enable you to add columns and tables with a blank textbox to add a path. Paths are specified in a dot notation.
+
+Support the form looked like this:
+
+```
+<data>
+  <question1></question1>
+<data>
+```
+
+To specify this in `.` notation, it'd look like this in the schema:
+```
+form.question1
+```
+
+If you need to specify a repeat group and the form looks like this:
+
+```
+<data>
+  <repeat>
+    <question1></question1>
+  </repeat>
+</data>
+```
+
+The table path for this repeat would be:
+```
+form.repeat[]
+```
+Note the `[]` after the question. This tells the schema that it is a repeat group.
+
+Any columns added to this table will need to be prefixed with this path. So a column in the table would be:
+
+```
+form.repeat[].question1
+```
+
 ### System Properties
 
 System properties are properties that CommCareHQ adds to the form or case that are essentially meta data.  Examples of these include: form id, case type, case id, form xmlns, etc. System properties are added to a white list. This means that by default a system property on the form will _not_ be added to the export for selection. A list of the system properties can be found in [corehq/apps/export/system_properties.py](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/export/system_properties.py)

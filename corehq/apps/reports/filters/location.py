@@ -23,8 +23,6 @@ class LocationGroupFilter(ExpandedMobileWorkerFilter):
     @memoized
     def selected(self):
         selected_ids = self.request.GET.getlist(self.slug)
-        if selected_ids:
-            selected_ids = selected_ids[0].split(',')
 
         selected = (self._selected_group_entries(selected_ids) +
                     self._selected_location_entries(selected_ids))

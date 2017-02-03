@@ -1,3 +1,4 @@
+from corehq.apps.domain.models import Domain
 from corehq.apps.sms.api import (
     MessageMetadata,
     add_msg_tags,
@@ -5,13 +6,12 @@ from corehq.apps.sms.api import (
     log_sms_exception,
 )
 from corehq.apps.sms.messages import *
-from corehq.apps.sms.util import format_message_list
+from corehq.apps.sms.util import format_message_list, get_date_format
 from touchforms.formplayer.api import current_question
 from corehq.apps.smsforms.app import (
     _get_responses,
     _responses_to_text,
 )
-from dateutil.parser import parse
 from corehq.apps.smsforms.models import SQLXFormsSession
 
 
@@ -170,16 +170,20 @@ def validate_answer(event, text, v):
         except ValueError:
             error_msg = get_message(MSG_INVALID_LONG, v)
     
-    # Validate date (Format: YYYYMMDD)
+    # Validate date (Format: specified by Domain.sms_survey_date_format, default: YYYYMMDD)
     elif event.datatype == "date":
-        try:
-            assert len(text) == 8
-            int(text)
-            text = "%s-%s-%s" % (text[0:4], text[4:6], text[6:])
-            parse(text)
-            valid = True
-        except Exception:
-            error_msg = get_message(MSG_INVALID_DATE, v)
+        domain_obj = Domain.get_by_name(v.domain)
+        df = get_date_format(domain_obj.sms_survey_date_format)
+
+        if df.is_valid(text):
+            try:
+                text = df.parse(text).strftime('%Y-%m-%d')
+                valid = True
+            except (ValueError, TypeError):
+                pass
+
+        if not valid:
+            error_msg = get_message(MSG_INVALID_DATE, v, context=(df.human_readable_format,))
 
     # Validate time (Format: HHMM, 24-hour)
     elif event.datatype == "time":

@@ -1,4 +1,3 @@
-from corehq.pillows import cacheinvalidate
 from corehq.pillows.cacheinvalidate import CacheInvalidateProcessor
 from dimagi.utils.decorators.memoized import memoized
 

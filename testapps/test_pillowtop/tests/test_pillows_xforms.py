@@ -153,6 +153,7 @@ class TestReportXFormProcessing(SimpleTestCase):
 
         self.assertNotEqual(for_indexing, orig)
         self.assertNotEqual(for_indexing, restored)
+        del restored['backend_id']
         self.assertEqual(orig, restored)
 
     def testSubCaseForm(self):

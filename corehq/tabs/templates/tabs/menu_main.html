@@ -1,10 +1,10 @@
 {% load i18n %}
 {% load cache %}
 {% get_current_language as LANGUAGE_CODE %}
-<ul class="nav navbar-nav" role="menu">
+<ul class="nav navbar-nav mainmenu-tabs collapse" id="hq-main-tabs" role="menu">
     {% for tab in tabs %}
     {% cache 500 header_tab tab.class_name tab.domain tab.is_active_tab tab.couch_user.get_id LANGUAGE_CODE %}
-    {% with tab.dropdown_items as items %}
+    {% with tab.filtered_dropdown_items as items %}
         <li id="mainmenu-{{ tab.css_id }}"
             class="{% if items %}dropdown{% endif %}{% if tab.is_active_tab %} active{% endif %}">
             <a {% if items %}class="dropdown-toggle" data-toggle="dropdown"{% endif %}

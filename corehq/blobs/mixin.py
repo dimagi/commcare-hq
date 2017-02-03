@@ -1,14 +1,17 @@
 from __future__ import absolute_import
+import re
 import sys
+from collections import defaultdict
+from contextlib import contextmanager, nested
 from cStringIO import StringIO
+from hashlib import sha1
 from itertools import chain
 from os.path import join
-from collections import defaultdict
-from contextlib import contextmanager
 
 from corehq.blobs import BlobInfo, get_blob_db
 from corehq.blobs.exceptions import AmbiguousBlobStorageError, NotFound
-from corehq.blobs.util import ClosingContextProxy, document_method
+from corehq.blobs.interface import SAFENAME
+from corehq.blobs.util import ClosingContextProxy, document_method, random_url_id
 from couchdbkit.exceptions import InvalidAttachment, ResourceNotFound
 from dimagi.ext.couchdbkit import (
     Document,
@@ -42,7 +45,7 @@ class BlobMixin(Document):
     # found in blobdb. Set this to True on subclasses that are in the
     # process of being migrated. When this is false (the default) the
     # methods on this mixin will not touch couchdb.
-    migrating_blobs_from_couch = False
+    _migrating_blobs_from_couch = False
 
     _atomic_blobs = None
 
@@ -50,16 +53,16 @@ class BlobMixin(Document):
         if self._id is None:
             raise ResourceNotFound(
                 "cannot manipulate attachment on unidentified document")
-        return join(_get_couchdb_name(type(self)), self._id)
+        return join(_get_couchdb_name(type(self)), safe_id(self._id))
 
     @property
     def blobs(self):
         """Get a dictionary of BlobMeta objects keyed by attachment name
 
-        Includes CouchDB attachments if `migrating_blobs_from_couch` is true.
+        Includes CouchDB attachments if `_migrating_blobs_from_couch` is true.
         The returned value should not be mutated.
         """
-        if not self.migrating_blobs_from_couch or not self._attachments:
+        if not self._migrating_blobs_from_couch or not self._attachments:
             return self.external_blobs
         value = {name: BlobMeta(
             id=None,
@@ -73,6 +76,9 @@ class BlobMixin(Document):
     @document_method
     def put_attachment(self, content, name=None, content_type=None, content_length=None):
         """Put attachment in blob database
+
+        See `get_short_identifier()` for restrictions on the upper bound
+        for number of attachments per object.
 
         :param content: String or file object.
         """
@@ -91,14 +97,14 @@ class BlobMixin(Document):
 
         bucket = self._blobdb_bucket()
         # do we need to worry about BlobDB reading beyond content_length?
-        info = db.put(content, name, bucket)
+        info = db.put(content, get_short_identifier(), bucket=bucket)
         self.external_blobs[name] = BlobMeta(
             id=info.identifier,
             content_type=content_type,
             content_length=info.length,
             digest=info.digest,
         )
-        if self.migrating_blobs_from_couch and self._attachments:
+        if self._migrating_blobs_from_couch and self._attachments:
             self._attachments.pop(name, None)
         if self._atomic_blobs is None:
             self.save()
@@ -121,14 +127,18 @@ class BlobMixin(Document):
             try:
                 meta = self.external_blobs[name]
             except KeyError:
-                if self.migrating_blobs_from_couch:
+                if self._migrating_blobs_from_couch:
                     return super(BlobMixin, self) \
                         .fetch_attachment(name, stream=stream)
                 raise NotFound
             blob = db.get(meta.id, self._blobdb_bucket())
         except NotFound:
-            raise ResourceNotFound(u"{model} attachment: {name!r}".format(
-                                   model=type(self).__name__, name=name))
+            raise ResourceNotFound(
+                u"{model} {model_id} attachment: {name!r}".format(
+                    model=type(self).__name__,
+                    name=name,
+                    model_id=self._id,
+                ))
         if stream:
             return blob
 
@@ -142,8 +152,11 @@ class BlobMixin(Document):
             pass
         return body
 
+    def has_attachment(self, name):
+        return name in self.blobs
+
     def delete_attachment(self, name):
-        if self.migrating_blobs_from_couch and self._attachments:
+        if self._migrating_blobs_from_couch and self._attachments:
             deleted = bool(self._attachments.pop(name, None))
         else:
             deleted = False
@@ -179,7 +192,7 @@ class BlobMixin(Document):
             if self._id is None:
                 self._id = self.get_db().server.next_uuid()
             old_external_blobs = dict(self.external_blobs)
-            if self.migrating_blobs_from_couch:
+            if self._migrating_blobs_from_couch:
                 if self._attachments:
                     old_attachments = dict(self._attachments)
                 else:
@@ -201,7 +214,7 @@ class BlobMixin(Document):
                     if old_meta is None or meta.id != old_meta.id:
                         db.delete(meta.id, bucket)
                 self.external_blobs = old_external_blobs
-                if self.migrating_blobs_from_couch:
+                if self._migrating_blobs_from_couch:
                     self._attachments = old_attachments
                 raise typ, exc, tb
             finally:
@@ -228,7 +241,7 @@ class BlobHelper(object):
     using the normal attachments API if this is used to copy a document
     having "_attachments" but not "external_blobs" to a database in
     which the "doc_type" uses external blob storage and is not in
-    `migrating_blobs_from_couch` mode. To work around this limitation,
+    `_migrating_blobs_from_couch` mode. To work around this limitation,
     put `"external_blobs": {}` in documents having a "doc_type" that
     uses external blob storage. The same is true when copying a document
     with "external_blobs" to a database that is not using an external
@@ -247,7 +260,7 @@ class BlobHelper(object):
         self.doc = doc
         self.database = database
         self.couch_only = "external_blobs" not in doc
-        self.migrating_blobs_from_couch = bool(doc.get("_attachments")) \
+        self._migrating_blobs_from_couch = bool(doc.get("_attachments")) \
             and not self.couch_only
         self._attachments = doc.get("_attachments")
         blobs = doc.get("external_blobs", {})
@@ -261,7 +274,7 @@ class BlobHelper(object):
         return BlobMixin.blobs.fget(self)
 
     def _blobdb_bucket(self):
-        return join(self.database.dbname, self._id)
+        return join(self.database.dbname, safe_id(self._id))
 
     def put_attachment(self, content, name=None, *args, **kw):
         if self._attachments is None and self.couch_only:
@@ -346,12 +359,26 @@ class DeferredBlobMixin(BlobMixin):
         value = super(DeferredBlobMixin, self).blobs
         if self._deferred_blobs:
             value = dict(value)
-            value.update((name, BlobMeta(
-                id=None,
-                content_type=info.get("content_type", None),
-                content_length=info.get("content_length", None),
-                digest=None,
-            )) for name, info in self._deferred_blobs.iteritems())
+            for name, info in self._deferred_blobs.iteritems():
+                if info is not None:
+                    value[name] = BlobMeta(
+                        id=None,
+                        content_type=info.get("content_type", None),
+                        content_length=info.get("content_length", None),
+                        digest=None,
+                    )
+                else:
+                    value.pop(name, None)
+        return value
+
+    @property
+    def persistent_blobs(self):
+        """Get a dict like `blobs` containing only non-deferred items"""
+        value = super(DeferredBlobMixin, self).blobs
+        if self._deferred_blobs:
+            value = value.copy()
+            for name in self._deferred_blobs:
+                value.pop(name, None)
         return value
 
     def put_attachment(self, content, name=None, *args, **kw):
@@ -362,6 +389,13 @@ class DeferredBlobMixin(BlobMixin):
 
     def fetch_attachment(self, name, stream=False):
         if self._deferred_blobs and name in self._deferred_blobs:
+            if self._deferred_blobs[name] is None:
+                raise ResourceNotFound(
+                    u"{model} {model_id} attachment: {name!r}".format(
+                        model=type(self).__name__,
+                        model_id=self._id,
+                        name=name,
+                    ))
             body = self._deferred_blobs[name]["content"]
             if stream:
                 return ClosingContextProxy(StringIO(body))
@@ -409,17 +443,100 @@ class DeferredBlobMixin(BlobMixin):
             "content_length": length,
         }
 
+    def deferred_delete_attachment(self, name):
+        """Mark attachment to be deleted on save"""
+        if self._deferred_blobs is None:
+            self._deferred_blobs = {}
+        self._deferred_blobs[name] = None
+
     def save(self):
         if self._deferred_blobs:
+            delete_names = []
             with self.atomic_blobs(super(DeferredBlobMixin, self).save):
                 # list deferred blobs to avoid modification during iteration
                 for name, info in list(self._deferred_blobs.iteritems()):
-                    self.put_attachment(name=name, **info)
-                assert not self._deferred_blobs, self._deferred_blobs
+                    if info is not None:
+                        self.put_attachment(name=name, **info)
+                    else:
+                        delete_names.append(name)
+            for name in delete_names:
+                self.delete_attachment(name)
+            assert not self._deferred_blobs, self._deferred_blobs
         else:
             super(DeferredBlobMixin, self).save()
+
+
+def get_short_identifier():
+    """Get a short random identifier
+
+    The identifier is chosen from a 64 bit key space, which is suitably
+    large for no likely collisions in 1000 concurrent keys but kept
+    small to minimize key length. 1000 is an arbitrary number chosen as
+    an upper bound of the number of attachments associated with any
+    given object. We may need to change this if we ever expect an object
+    to have significantly more than 1000 attachments. The probability of
+    a collision with a 64 bit ID is:
+
+    k = 1000
+    N = 2 ** 64
+    (k ** 2) / (2 * N) = 2.7e-14
+
+    which is somewhere near the probability of a meteor landing on
+    your house. For most objects the number of blobs present at any
+    moment in time will be far lower, and therefore the probability
+    of a collision will be much lower as well.
+
+    http://preshing.com/20110504/hash-collision-probabilities/
+    """
+    return random_url_id(8)
+
+
+@contextmanager
+def bulk_atomic_blobs(docs):
+    """Atomic blobs persistence to be used with ``db.bulk_save(docs)``
+
+    Blobs may be added to or deleted from objects within the context
+    body. Blobs previously added with
+    ``DeferredBlobMixin.deferred_put_attachment`` will be persisted
+    automatically. NOTE this method will persist attachments, but it
+    does not save the documents to couch. Call `db.bulk_save(docs)`
+    within the context to do that.
+
+    :param docs: A list of model objects.
+    """
+    save = lambda: None
+    contexts = [d.atomic_blobs(save) for d in docs if hasattr(d, "atomic_blobs")]
+    with nested(*contexts):
+        delete_blobs = []
+        for doc in docs:
+            if isinstance(doc, DeferredBlobMixin) and doc._deferred_blobs:
+                for name, info in list(doc._deferred_blobs.iteritems()):
+                    if info is not None:
+                        doc.put_attachment(name=name, **info)
+                    else:
+                        meta = doc.external_blobs.pop(name, None)
+                        if meta is not None:
+                            delete_blobs.append((meta, doc._blobdb_bucket()))
+                        doc._deferred_blobs.pop(name)
+                assert not doc._deferred_blobs, doc._deferred_blobs
+        yield
+        db = get_blob_db()
+        for meta, bucket in delete_blobs:
+            db.delete(meta.id, bucket)
 
 
 @memoized
 def _get_couchdb_name(doc_class):
     return doc_class.get_db().dbname
+
+
+def safe_id(identifier):
+    if not SAFENAME.match(identifier):
+        identifier = u'sha1-' + sha1(identifier.encode('utf-8')).hexdigest()
+    elif SHA1_ID.match(identifier):
+        # could collide with "safe" id and should never happen anyway
+        raise ValueError("illegal doc id: {!r}".format(identifier))
+    return identifier
+
+
+SHA1_ID = re.compile("sha1-[0-9a-f]{40}$")

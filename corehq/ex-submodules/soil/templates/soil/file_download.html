@@ -3,7 +3,7 @@
     File Downloader
 {% endblock title %}
 {% block extrahead %}
-    <script type="text/javascript">
+    <script>
         var autoRefresh = '';
         var pollDownloader = function () {
             if ($('#ready_{{ download_id }}').length == 0)
@@ -21,7 +21,7 @@
 	            clearInterval(autoRefresh);
 	        }
         };
-        $(document).ready(function () {
+        $(function () {
             autoRefresh = setInterval(pollDownloader, 2000);
         });
     </script>

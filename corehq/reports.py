@@ -6,13 +6,16 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqadmin.reports import (
     AdminDomainStatsReport,
     AdminDomainMapReport,
+    AdminDomainMapInternal,
     AdminAppReport,
+    AdminPhoneNumberReport,
     AdminUserReport,
     RealProjectSpacesReport,
     CommConnectProjectSpacesReport,
     CommTrackProjectSpacesReport,
     DeviceLogSoftAssertReport,
-    CommCareVersionReport)
+    CommCareVersionReport,
+)
 from corehq.apps.hqpillow_retry.views import PillowErrorsReport
 from corehq.apps.reports.standard import (monitoring, inspect, export,
     deployments, sms, ivr)
@@ -38,7 +41,7 @@ import toggles
 from django.utils.translation import ugettext_noop as _, ugettext_lazy
 from corehq.apps.indicators.admin import document_indicators, couch_indicators, dynamic_indicators
 from corehq.apps.data_interfaces.interfaces import CaseReassignmentInterface, BulkFormManagementInterface
-from corehq.apps.importer.base import ImportCases
+from corehq.apps.case_importer.base import ImportCases
 from corehq.apps.accounting.interface import (
     AccountingInterface,
     SubscriptionInterface,
@@ -60,7 +63,6 @@ from custom.openclinica.reports import OdmExportReport
 def REPORTS(project):
     from corehq.apps.reports.standard.cases.basic import CaseListReport
     from corehq.apps.reports.standard.cases.careplan import make_careplan_reports
-    from corehq.apps.reports.standard.maps import DemoMapReport, DemoMapReport2, DemoMapCaseList
 
     reports = []
 
@@ -86,9 +88,6 @@ def REPORTS(project):
             phonelog.DeviceLogDetailsReport,
             deployments.SyncHistoryReport,
             deployments.ApplicationErrorReport,
-        )),
-        (ugettext_lazy("Demos"), (
-            DemoMapReport, DemoMapReport2, DemoMapCaseList,
         )),
     ])
 
@@ -133,6 +132,7 @@ def REPORTS(project):
         sms.SMSOptOutReport,
         ivr.CallReport,
         ivr.ExpectedCallbackReport,
+        sms.PhoneNumberReport,
     ])
 
     messaging_reports += getattr(Domain.get_module_by_name(project.name), 'MESSAGING_REPORTS', ())
@@ -342,6 +342,7 @@ ADMIN_REPORTS = (
     (_('Domain Stats'), (
         AdminDomainStatsReport,
         AdminDomainMapReport,
+        AdminDomainMapInternal,
         AdminUserReport,
         AdminAppReport,
         PillowErrorsReport,
@@ -350,6 +351,7 @@ ADMIN_REPORTS = (
         CommTrackProjectSpacesReport,
         DeviceLogSoftAssertReport,
         CommCareVersionReport,
+        AdminPhoneNumberReport,
     )),
 )
 

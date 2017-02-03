@@ -1,3 +1,4 @@
+# coding: utf-8
 from collections import namedtuple
 from datetime import datetime, timedelta
 from importlib import import_module
@@ -8,8 +9,10 @@ import warnings
 from django.conf import settings
 from django.http import Http404
 from django.utils import html, safestring
+from casexml.apps.case.models import CommCareCase
 from corehq.apps.users.permissions import get_extra_permissions
-from corehq.form_processor.utils import use_new_exports
+from corehq.form_processor.change_publishers import publish_case_saved
+from corehq.form_processor.utils import use_new_exports, should_use_sql_backend
 
 from couchexport.util import SerializableFunction
 from couchforms.analytics import get_first_form_submission_received
@@ -84,7 +87,8 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
             return temp_user
         return None
 
-    user_ids = user_ids if user_ids and user_ids[0] else None
+    user_ids = user_ids or []
+    user_ids = filter(None, user_ids)  # remove empty strings if any
     if not CommCareUser:
         from corehq.apps.users.models import CommCareUser
 
@@ -93,7 +97,7 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
         if not isinstance(group, Group):
             group = Group.get(group)
         users = group.get_users(is_active=(not include_inactive), only_commcare=True)
-    elif user_ids is not None:
+    elif user_ids:
         try:
             users = []
             for id in user_ids:
@@ -112,15 +116,17 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
         if not user_filter:
             user_filter = HQUserType.all()
         users = []
-        submitted_user_ids = get_all_user_ids_submitted(domain)
-        registered_user_ids = dict([(user.user_id, user) for user in CommCareUser.by_domain(domain)])
+        submitted_user_ids = set(get_all_user_ids_submitted(domain))
+        registered_users_by_id = dict([(user.user_id, user) for user in CommCareUser.by_domain(domain)])
         if include_inactive:
-            registered_user_ids.update(dict([(u.user_id, u) for u in CommCareUser.by_domain(domain, is_active=False)]))
+            registered_users_by_id.update(dict(
+                [(u.user_id, u) for u in CommCareUser.by_domain(domain, is_active=False)]
+            ))
         for user_id in submitted_user_ids:
-            if user_id in registered_user_ids and user_filter[HQUserType.REGISTERED].show:
-                user = registered_user_ids[user_id]
+            if user_id in registered_users_by_id and user_filter[HQUserType.REGISTERED].show:
+                user = registered_users_by_id[user_id]
                 users.append(user)
-            elif (user_id not in registered_user_ids and
+            elif (user_id not in registered_users_by_id and
                  (user_filter[HQUserType.ADMIN].show or
                   user_filter[HQUserType.DEMO_USER].show or
                   user_filter[HQUserType.UNKNOWN].show)):
@@ -132,10 +138,7 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
 
         if user_filter[HQUserType.REGISTERED].show:
             # now add all the registered users who never submitted anything
-            for user_id in registered_user_ids:
-                if user_id not in submitted_user_ids:
-                    user = CommCareUser.get_by_user_id(user_id)
-                    users.append(user)
+            users.extend(user for id, user in registered_users_by_id.items() if id not in submitted_user_ids)
 
     if simplified:
         return [_report_user_dict(user) for user in users]
@@ -230,6 +233,17 @@ def _report_user_dict(user):
             raw_username=raw_username,
             is_active=user.get('is_active', None)
         )
+
+
+def get_simplified_users(user_es_query):
+    """
+    Accepts an instance of UserES and returns SimplifiedUserInfo dicts for the
+    matching users, sorted by username.
+    """
+    fields = ['_id', 'username', 'first_name', 'last_name', 'doc_type', 'is_active', 'email']
+    users = user_es_query.fields(fields).run().hits
+    users = map(_report_user_dict, users)
+    return sorted(users, key=lambda u: u['username_in_report'])
 
 
 def format_datatables_data(text, sort_key, raw=None):
@@ -356,7 +370,12 @@ def get_possible_reports(domain_name):
     domain = Domain.get_by_name(domain_name)
     for heading, models in report_map:
         for model in models:
-            if model.show_in_navigation(domain=domain_name, project=domain):
+            if getattr(model, 'parent_report_class', None):
+                report_to_check_if_viewable = model.parent_report_class
+            else:
+                report_to_check_if_viewable = model
+
+            if report_to_check_if_viewable.show_in_navigation(domain=domain_name, project=domain):
                 reports.append({
                     'path': model.__module__ + '.' + model.__name__,
                     'name': model.name
@@ -439,17 +458,16 @@ def get_installed_custom_modules():
     return [import_module(module) for module in settings.CUSTOM_MODULES]
 
 
-def is_mobile_worker_with_report_access(couch_user, domain):
-    return (
-        couch_user.is_commcare_user
-        and domain is not None
-        and Domain.get_by_name(domain).default_mobile_worker_redirect == 'reports'
-    )
-
-
 def get_INFilter_element_bindparam(base_name, index):
     return '%s_%d' % (base_name, index)
 
 
 def get_INFilter_bindparams(base_name, values):
     return tuple(get_INFilter_element_bindparam(base_name, i) for i, val in enumerate(values))
+
+
+def resync_case_to_es(domain, case):
+    if should_use_sql_backend(domain):
+        publish_case_saved(case)
+    else:
+        CommCareCase.get_db().save_doc(case._doc)  # don't just call save to avoid signals

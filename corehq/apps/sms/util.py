@@ -13,11 +13,38 @@ from dimagi.utils.modules import to_function
 from django.utils.translation import ugettext as _
 
 
+class DateFormat(object):
+    def __init__(self, human_readable_format, c_standard_format, validate_regex):
+        self.human_readable_format = human_readable_format
+        self.c_standard_format = c_standard_format
+        self.validate_regex = validate_regex
+
+    def parse(self, value):
+        return datetime.datetime.strptime(value, self.c_standard_format)
+
+    def is_valid(self, value):
+        return re.match(self.validate_regex, value) is not None
+
+
+# A project can specify the expected format of answers to date questions
+# in SMS Surveys. These are the available choices.
+ALLOWED_SURVEY_DATE_FORMATS = (
+    DateFormat('YYYYMMDD', '%Y%m%d', '^\d{8}$'),
+    DateFormat('MMDDYYYY', '%m%d%Y', '^\d{8}$'),
+    DateFormat('DDMMYYYY', '%d%m%Y', '^\d{8}$'),
+)
+
+SURVEY_DATE_FORMAT_LOOKUP = {df.human_readable_format: df for df in ALLOWED_SURVEY_DATE_FORMATS}
+
 phone_number_plus_re = re.compile("^\+{0,1}\d+$")
 
 
 class ContactNotFoundException(Exception):
     pass
+
+
+def get_date_format(human_readable_format):
+    return SURVEY_DATE_FORMAT_LOOKUP.get(human_readable_format, ALLOWED_SURVEY_DATE_FORMATS[0])
 
 
 def strip_plus(phone_number):

@@ -22,6 +22,7 @@ from django_otp.plugins.otp_static.models import StaticToken
 from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
 
 from couchdbkit.exceptions import ResourceNotFound
+from corehq.apps.users.landing_pages import ALLOWED_LANDING_PAGES
 from corehq.util.view_utils import json_error
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.decorators.memoized import memoized
@@ -44,8 +45,8 @@ from corehq.apps.es import AppES
 from corehq.apps.es.queries import search_string_query
 from corehq.apps.hqwebapp.utils import send_confirmation_email
 from corehq.apps.hqwebapp.views import BasePageView, logout
-from corehq.apps.registration.forms import AdminInvitesUserForm, \
-    NewWebUserRegistrationForm
+from corehq.apps.locations.permissions import location_safe
+from corehq.apps.registration.forms import AdminInvitesUserForm, WebUserInvitationForm
 from corehq.apps.registration.utils import activate_new_user
 from corehq.apps.reports.util import get_possible_reports
 from corehq.apps.sms.verify import (
@@ -75,6 +76,7 @@ from corehq.apps.users.models import (CouchUser, CommCareUser, WebUser, DomainRe
 from corehq.elastic import ADD_TO_ES_FILTER, es_query
 from corehq.util.couch import get_document_or_404
 from corehq import toggles
+from django.views.decorators.csrf import csrf_exempt
 
 
 def _users_context(request, domain):
@@ -97,7 +99,6 @@ class BaseUserSettingsView(BaseDomainView):
     @property
     @memoized
     def section_url(self):
-        from corehq.apps.users.views import DefaultProjectUserSettingsView
         return reverse(DefaultProjectUserSettingsView.urlname, args=[self.domain])
 
     @property
@@ -117,6 +118,7 @@ class BaseUserSettingsView(BaseDomainView):
         return context
 
 
+@location_safe
 class DefaultProjectUserSettingsView(BaseUserSettingsView):
     urlname = "users_default"
 
@@ -148,7 +150,7 @@ class BaseEditUserView(BaseUserSettingsView):
     @use_select2
     def dispatch(self, request, *args, **kwargs):
         return super(BaseEditUserView, self).dispatch(request, *args, **kwargs)
-    
+
     @property
     @memoized
     def page_url(self):
@@ -177,10 +179,26 @@ class BaseEditUserView(BaseUserSettingsView):
     @property
     def existing_role(self):
         try:
-            return (self.editable_user.get_role(self.domain,
-                                                include_teams=False).get_qualified_id() or '')
+            return self.editable_user.get_role(self.domain).get_qualified_id() or ''
         except DomainMembershipError:
             raise Http404()
+
+    @property
+    @memoized
+    def editable_role_choices(self):
+        return _get_editable_role_choices(self.domain, self.request.couch_user, allow_admin_role=False)
+
+    @property
+    def can_change_user_roles(self):
+        return (
+            bool(self.editable_role_choices) and
+            self.request.couch_user.user_id != self.editable_user_id and
+            (
+                self.request.couch_user.is_domain_admin(self.domain) or
+                not self.existing_role or
+                self.existing_role in [choice[0] for choice in self.editable_role_choices]
+            )
+        )
 
     @property
     @memoized
@@ -189,10 +207,16 @@ class BaseEditUserView(BaseUserSettingsView):
             raise NotImplementedError("You must specify a form to update the user!")
 
         if self.request.method == "POST" and self.request.POST['form_type'] == "update-user":
-            return self.user_update_form_class(data=self.request.POST)
+            form = self.user_update_form_class(data=self.request.POST)
+        else:
+            form = self.user_update_form_class()
+            form.initialize_form(domain=self.request.domain, existing_user=self.editable_user)
 
-        form = self.user_update_form_class()
-        form.initialize_form(domain=self.request.domain, existing_user=self.editable_user)
+        if self.can_change_user_roles:
+            form.load_roles(current_role=self.existing_role, role_choices=self.user_role_choices)
+        else:
+            del form.fields['role']
+
         return form
 
     @property
@@ -225,9 +249,13 @@ class BaseEditUserView(BaseUserSettingsView):
         user_domain_membership = self.editable_user.get_domain_membership(self.domain)
         linked_loc = user_domain_membership.location_id
         linked_prog = user_domain_membership.program_id
+        assigned_locations = ','.join(user_domain_membership.assigned_location_ids)
         return CommtrackUserForm(
             domain=self.domain,
-            initial={'location': linked_loc, 'program_id': linked_prog}
+            initial={
+                'primary_location': linked_loc,
+                'program_id': linked_prog,
+                'assigned_locations': assigned_locations}
         )
 
     def update_user(self):
@@ -245,16 +273,19 @@ class BaseEditUserView(BaseUserSettingsView):
         return True
 
     def post(self, request, *args, **kwargs):
+        saved = False
         if self.request.POST['form_type'] == "commtrack":
-            self.editable_user.get_domain_membership(self.domain).location_id = self.request.POST['location']
-            if self.request.project.commtrack_enabled:
-                self.editable_user.get_domain_membership(self.domain).program_id = self.request.POST['program_id']
-            self.editable_user.save()
+            if self.commtrack_form.is_valid():
+                self.commtrack_form.save(self.editable_user)
+                saved = True
         elif self.request.POST['form_type'] == "update-user":
             if all([self.update_user(), self.custom_user_is_valid()]):
                 messages.success(self.request, _('Changes saved for user "%s"') % self.editable_user.raw_username)
-
-        return self.get(request, *args, **kwargs)
+                saved = True
+        if saved:
+            return HttpResponseRedirect(self.page_url)
+        else:
+            return self.get(request, *args, **kwargs)
 
 
 class EditWebUserView(BaseEditUserView):
@@ -265,14 +296,7 @@ class EditWebUserView(BaseEditUserView):
 
     @property
     def user_role_choices(self):
-        return UserRole.role_choices(self.domain)
-
-    @property
-    @memoized
-    def form_user_update(self):
-        form = super(EditWebUserView, self).form_user_update
-        form.load_roles(current_role=self.existing_role, role_choices=self.user_role_choices)
-        return form
+        return _get_editable_role_choices(self.domain, self.request.couch_user, allow_admin_role=True)
 
     @property
     def form_user_update_permissions(self):
@@ -296,6 +320,7 @@ class EditWebUserView(BaseEditUserView):
     def page_context(self):
         ctx = {
             'form_uneditable': BaseUserInfoForm(),
+            'can_edit_role': self.can_change_user_roles,
         }
         if (self.request.project.commtrack_enabled or
                 self.request.project.uses_locations):
@@ -421,6 +446,11 @@ class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
 
     @property
     @memoized
+    def can_restrict_access_by_location(self):
+        return self.domain_object.has_privilege(privileges.RESTRICT_ACCESS_BY_LOCATION)
+
+    @property
+    @memoized
     def user_roles(self):
         user_roles = [AdminUserRole(domain=self.domain)]
         user_roles.extend(sorted(
@@ -428,11 +458,13 @@ class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
             key=lambda role: role.name if role.name else u'\uFFFF'
         ))
 
-        #  indicate if a role has assigned users, skip admin role
-        for i in range(1, len(user_roles)):
-            role = user_roles[i]
-            role.__setattr__('hasUsersAssigned',
-                             True if len(role.ids_of_assigned_users) > 0 else False)
+        # skip the admin role since it's not editable
+        for role in user_roles[1:]:
+            role.hasUsersAssigned = bool(role.ids_of_assigned_users)
+            role.has_unpermitted_location_restriction = (
+                not self.can_restrict_access_by_location
+                and not role.permissions.access_all_locations
+            )
         return user_roles
 
     @property
@@ -458,7 +490,26 @@ class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
         return invitations
 
     @property
+    def landing_page_choices(self):
+        return [
+            {'id': None, 'name': _('Use Default')}
+        ] + [
+            {'id': page.id, 'name': _(page.name)}
+            for page in ALLOWED_LANDING_PAGES
+        ]
+
+    @property
     def page_context(self):
+        if (not self.can_restrict_access_by_location
+            and any(not role.permissions.access_all_locations
+                    for role in self.user_roles)
+        ):
+            messages.warning(self.request, _(
+                "This project has user roles that restrict data access by "
+                "organization, but the software plan no longer supports that. "
+                "Any users assigned to roles that are restricted in data access "
+                "by organization can no longer access this project.  Please "
+                "update the existing roles."))
         return {
             'user_roles': self.user_roles,
             'can_edit_roles': self.can_edit_roles,
@@ -469,6 +520,8 @@ class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
             'admins': WebUser.get_admins_by_domain(self.domain),
             'domain_object': self.domain_object,
             'uses_locations': self.domain_object.uses_locations,
+            'can_restrict_access_by_location': self.can_restrict_access_by_location,
+            'landing_page_choices': self.landing_page_choices,
         }
 
 
@@ -519,6 +572,13 @@ def post_user_role(request, domain):
         return json_response({})
     role_data = json.loads(request.body)
     role_data = dict([(p, role_data[p]) for p in set(UserRole.properties().keys() + ['_id', '_rev']) if p in role_data])
+    if (
+        not domain_has_privilege(domain, privileges.RESTRICT_ACCESS_BY_LOCATION)
+        and not role_data['permissions']['access_all_locations']
+    ):
+        # This shouldn't be possible through the UI, but as a safeguard...
+        role_data['permissions']['access_all_locations'] = True
+
     role = UserRole.wrap(role_data)
     role.domain = domain
     if role.get_id:
@@ -640,7 +700,7 @@ class UserInvitationView(object):
                 return render(request, self.template, context)
         else:
             if request.method == "POST":
-                form = NewWebUserRegistrationForm(request.POST)
+                form = WebUserInvitationForm(request.POST)
                 if form.is_valid():
                     # create the new user
                     user = activate_new_user(form, domain=invitation.domain)
@@ -661,7 +721,7 @@ class UserInvitationView(object):
                 if CouchUser.get_by_username(invitation.email):
                     return HttpResponseRedirect(reverse("login") + '?next=' +
                         reverse('domain_accept_invitation', args=[invitation.domain, invitation.get_id]))
-                form = NewWebUserRegistrationForm(initial={
+                form = WebUserInvitationForm(initial={
                     'email': invitation.email,
                     'hr_name': invitation.domain,
                     'create_domain': False,
@@ -700,6 +760,7 @@ class UserInvitationView(object):
                              location_id=invitation.supply_point, program_id=invitation.program)
 
 
+@location_safe
 @sensitive_post_parameters('password')
 def accept_invitation(request, domain, invitation_id):
     return UserInvitationView()(request, invitation_id, domain=domain)
@@ -757,7 +818,7 @@ class InviteWebUserView(BaseManageWebUserView):
     @property
     @memoized
     def invite_web_user_form(self):
-        role_choices = UserRole.role_choices(self.domain)
+        role_choices = _get_editable_role_choices(self.domain, self.request.couch_user, allow_admin_role=True)
         loc = None
         domain_request = DomainRequest.objects.get(id=self.request_id) if self.request_id else None
         initial = {
@@ -973,13 +1034,13 @@ def change_password(request, domain, login_id, template="users/partial/reset_pas
         raise Http404()
     django_user = commcare_user.get_django_user()
     if request.method == "POST":
-        form = SetUserPasswordForm(domain, login_id, user=django_user, data=request.POST)
+        form = SetUserPasswordForm(request.project, login_id, user=django_user, data=request.POST)
         if form.is_valid():
             form.save()
             json_dump['status'] = 'OK'
-            form = SetUserPasswordForm(domain, login_id, user='')
+            form = SetUserPasswordForm(request.project, login_id, user='')
     else:
-        form = SetUserPasswordForm(domain, login_id, user=django_user)
+        form = SetUserPasswordForm(request.project, login_id, user=django_user)
     context = _users_context(request, domain)
     context.update({
         'reset_password_form': form,
@@ -1004,3 +1065,25 @@ def location_restriction_for_users(request, domain):
         project.location_restriction_for_users = json.loads(request.POST["restrict_users"])
     project.save()
     return HttpResponse()
+
+
+@csrf_exempt
+@require_POST
+@require_superuser
+def register_fcm_device_token(request, domain, couch_user_id, device_token):
+    user = WebUser.get_by_user_id(couch_user_id)
+    user.fcm_device_token = device_token
+    user.save()
+    return HttpResponse()
+
+
+def _get_editable_role_choices(domain, couch_user, allow_admin_role):
+    def role_to_choice(role):
+        return (role.get_qualified_id(), role.name or _('(No Name)'))
+
+    roles = UserRole.by_domain(domain)
+    if not couch_user.is_domain_admin(domain):
+        roles = filter(lambda role: role.is_non_admin_editable, roles)
+    elif allow_admin_role:
+        roles = [AdminUserRole(domain=domain)] + roles
+    return [role_to_choice(role) for role in roles]

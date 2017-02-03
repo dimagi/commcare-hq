@@ -6,6 +6,7 @@ import json
 from corehq.apps.indicators.models import DynamicIndicatorDefinition
 
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
+from mvp.indicator_admin import custom
 from mvp.models import MVP
 
 
@@ -72,3 +73,22 @@ class MVPIndicatorReport(CustomProjectReport, ProjectReportParametersMixin):
             except (ResourceNotFound, AttributeError):
                 response['message'] = "Indicator '%s' could not be found." % indicator_slug
         return HttpResponse(json.dumps(response), content_type='application/json')
+
+
+from mvp.reports import mvis, chw, va
+
+CUSTOM_REPORTS = (
+    ('Custom Reports', (
+        mvis.HealthCoordinatorReport,
+        chw.CHWManagerReport,
+        va.VerbalAutopsyReport,
+    )),
+)
+
+INDICATOR_ADMIN_INTERFACES = (
+    ('MVP Custom Indicators', (
+       custom.MVPDaysSinceLastTransmissionAdminInterface,
+       custom.MVPActiveCasesAdminInterface,
+       custom.MVPChildCasesByAgeAdminInterface,
+    )),
+)

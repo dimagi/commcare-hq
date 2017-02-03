@@ -1,7 +1,6 @@
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.suite_xml import xml_models as sx
 from corehq.apps.app_manager.suite_xml import const
-from corehq.apps.app_manager.util import is_sort_only_column
 from corehq.apps.app_manager.xpath import (
     CaseXPath,
     CommCareSession,
@@ -102,12 +101,9 @@ class FormattedDetailColumn(object):
 
     @property
     def locale_id(self):
-        if not is_sort_only_column(self.column):
-            return self.id_strings.detail_column_header_locale(
-                self.module, self.detail_type, self.column,
-            )
-        else:
-            return None
+        return self.id_strings.detail_column_header_locale(
+            self.module, self.detail_type, self.column,
+        )
 
     @property
     def header(self):
@@ -155,8 +151,14 @@ class FormattedDetailColumn(object):
                     'distance': 'double'
                 }.get(self.sort_element.type, self.sort_element.type)
 
+                sort_calculation = self.sort_element.sort_calculation
+                if sort_calculation:
+                    sort_xpath = sort_calculation
+                else:
+                    sort_xpath = self.xpath_function
+
                 sort = sx.Sort(
-                    text=sx.Text(xpath_function=self.xpath_function),
+                    text=sx.Text(xpath_function=sort_xpath),
                     type=sort_type,
                 )
 
@@ -283,8 +285,8 @@ class TimeAgo(FormattedDetailColumn):
 
 @register_format_type('distance')
 class Distance(FormattedDetailColumn):
-    XPATH_FUNCTION = u"if(here() = '', '', if({xpath} = '', '', concat(round(distance({xpath}, here()) div 1000), ' km')))"
-    SORT_XPATH_FUNCTION = u'round(distance({xpath}, here()))'
+    XPATH_FUNCTION = u"if(here() = '' or {xpath} = '', '', concat(round(distance({xpath}, here()) div 100) div 10, ' km'))"
+    SORT_XPATH_FUNCTION = u"if({xpath} = '', 2147483647, round(distance({xpath}, here())))"
     SORT_TYPE = 'double'
 
 
@@ -393,7 +395,27 @@ class LateFlag(HideShortHeaderColumn):
 
 @register_format_type('invisible')
 class Invisible(HideShortColumn):
-    pass
+    @property
+    def header(self):
+        """
+        header given for an invisible column to enable its display as a sort field in sort menu even
+        when missing amongst display properties for case list headers
+        refer: http://manage.dimagi.com/default.asp?232411
+        """
+        if self.sort_element and self.sort_element.has_display_values():
+            header = sx.Header(
+                text=sx.Text(locale_id=self.locale_id),
+                width=self.template_width
+            )
+        else:
+            header = super(Invisible, self).header
+        return header
+
+    @property
+    def locale_id(self):
+        return self.id_strings.detail_column_header_locale(
+            self.module, self.detail_type, self.column
+        )
 
 
 @register_format_type('filter')

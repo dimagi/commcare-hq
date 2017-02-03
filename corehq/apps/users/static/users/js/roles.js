@@ -30,6 +30,10 @@ hqDefine('users/js/roles.js', function () {
                     return cls.unwrap(self);
                 };
                 self.hasUsersAssigned = data.hasUsersAssigned;
+                self.hasUnpermittedLocationRestriction = data.has_unpermitted_location_restriction || false;
+                if (self.hasUnpermittedLocationRestriction) {
+                    self.permissions.access_all_locations(true);
+                }
                 return self;
             },
             unwrap: function (self) {
@@ -47,6 +51,8 @@ hqDefine('users/js/roles.js', function () {
 
         self.allowEdit = o.allowEdit;
         self.reportOptions = o.reportOptions;
+        self.canRestrictAccessByLocation = o.canRestrictAccessByLocation;
+        self.landingPageChoices = o.landingPageChoices;
         self.getReportObject = function (path) {
             var i;
             for (i = 0; i < self.reportOptions.length; i++) {
@@ -87,7 +93,7 @@ hqDefine('users/js/roles.js', function () {
         };
 
         self.setRoleBeingEdited = function (role) {
-            var title = role === self.defaultRole ? "New Role" : "Edit Role: " + role.name();
+            var title = role === self.defaultRole ? gettext("New Role") : gettext("Edit Role: ") + role.name();
             var roleCopy = UserRole.wrap(UserRole.unwrap(role));
             roleCopy.modalTitle = title;
             self.roleBeingEdited(roleCopy);
@@ -98,8 +104,8 @@ hqDefine('users/js/roles.js', function () {
         };
         self.setRoleBeingDeleted = function (role) {
             if (!role._id || !role.hasUsersAssigned) {
-                var title = "Delete Role: " + role.name();
-                var modalConfirmation = "Are you sure you want to delete a role: '" + role.name() + "' ?";
+                var title = gettext("Delete Role: ") + role.name();
+                var modalConfirmation = gettext("Are you sure you want to delete this role?") + role.name();
                 var roleCopy = UserRole.wrap(UserRole.unwrap(role));
                 roleCopy.modalTitle = title;
                 roleCopy.modalConfirmation = modalConfirmation;

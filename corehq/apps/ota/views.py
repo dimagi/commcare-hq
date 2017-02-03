@@ -1,18 +1,26 @@
+from distutils.version import LooseVersion
 from django.core.urlresolvers import reverse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+
+from dimagi.utils.logging import notify_exception
 from django_prbac.utils import has_privilege
 from casexml.apps.case.cleanup import claim_case, get_first_claim
 from casexml.apps.case.fixtures import CaseDBFixture
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.xml import V2
 from corehq import toggles, privileges
+from corehq.const import OPENROSA_VERSION_MAP, OPENROSA_DEFAULT_VERSION
+from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.case_search.models import CaseSearchConfig
-from corehq.apps.domain.decorators import domain_admin_required, login_or_digest_or_basic_or_apikey
+from corehq.apps.case_search.models import CaseSearchConfig, merge_queries, CaseSearchQueryAddition, \
+    SEARCH_QUERY_ADDITION_KEY, QueryMergeException
+from corehq.apps.domain.decorators import (
+    domain_admin_required, login_or_digest_or_basic_or_apikey, check_domain_migration
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin, EditMyProjectSettingsView
 from corehq.apps.es.case_search import CaseSearchES, flatten_result
@@ -20,6 +28,7 @@ from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.ota.forms import PrimeRestoreCacheForm, AdvancedPrimeRestoreCacheForm
 from corehq.apps.ota.tasks import queue_prime_restore
 from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.apps.locations.permissions import location_safe
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_MAX_RESULTS
 from corehq.tabs.tabclasses import ProjectSettingsTab
@@ -29,11 +38,14 @@ from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCach
 from django.http import HttpResponse
 from soil import MultipleTaskDownload
 
-from .utils import demo_user_restore_response, get_restore_user, is_permitted_to_restore
+from .utils import demo_user_restore_response, get_restore_user, is_permitted_to_restore, handle_401_response
 
 
+@location_safe
 @json_error
+@handle_401_response
 @login_or_digest_or_basic_or_apikey()
+@check_domain_migration
 def restore(request, domain, app_id=None):
     """
     We override restore because we have to supply our own
@@ -45,8 +57,10 @@ def restore(request, domain, app_id=None):
     return response
 
 
+@location_safe
 @json_error
 @login_or_digest_or_basic_or_apikey()
+@check_domain_migration
 def search(request, domain):
     """
     Accepts search criteria as GET params, e.g. "https://www.commcarehq.org/a/domain/phone/search/?a=b&c=d"
@@ -57,27 +71,88 @@ def search(request, domain):
         case_type = criteria.pop('case_type')
     except KeyError:
         return HttpResponse('Search request must specify case type', status=400)
+    try:
+        include_closed = criteria.pop('include_closed')
+    except KeyError:
+        include_closed = False
 
     search_es = (CaseSearchES()
                  .domain(domain)
                  .case_type(case_type)
-                 .is_closed(False)
                  .size(CASE_SEARCH_MAX_RESULTS))
-    config = CaseSearchConfig(domain=domain).config
-    fuzzies = config.get_fuzzy_properties_for_case_type(case_type)
+
+    if include_closed != 'True':
+        search_es = search_es.is_closed(False)
+
+    try:
+        config = CaseSearchConfig.objects.get(domain=domain)
+    except CaseSearchConfig.DoesNotExist as e:
+        from corehq.util.soft_assert import soft_assert
+        _soft_assert = soft_assert(
+            to="{}@{}.com".format('frener', 'dimagi'),
+            notify_admins=False, send_to_ops=False
+        )
+        _soft_assert(False, "Someone in domain: {} tried accessing case search without a config".format(domain), e)
+        config = CaseSearchConfig(domain=domain)
+
+    query_addition_id = criteria.pop(SEARCH_QUERY_ADDITION_KEY, None)
+
+    fuzzies = config.config.get_fuzzy_properties_for_case_type(case_type)
     for key, value in criteria.items():
         search_es = search_es.case_property_query(key, value, fuzzy=(key in fuzzies))
-    results = search_es.values()
+
+    query_addition_debug_details = {}
+    try:
+        search_es = _add_case_search_addition(
+            request, domain, search_es, query_addition_id, query_addition_debug_details
+        )
+    except QueryMergeException as e:
+        return _handle_query_merge_exception(request, e)
+    try:
+        results = search_es.values()
+    except Exception as e:
+        return _handle_es_exception(request, e, query_addition_debug_details)
+
     # Even if it's a SQL domain, we just need to render the results as cases, so CommCareCase.wrap will be fine
     cases = [CommCareCase.wrap(flatten_result(result)) for result in results]
     fixtures = CaseDBFixture(cases).fixture
     return HttpResponse(fixtures, content_type="text/xml")
 
 
+def _add_case_search_addition(request, domain, search_es, query_addition_id, query_addition_debug_details):
+    if query_addition_id:
+        query_addition = CaseSearchQueryAddition.objects.get(id=query_addition_id, domain=domain)
+        query_addition_debug_details['original_query'] = search_es.get_query()
+        query_addition_debug_details['query_addition'] = query_addition.query_addition
+        new_query = merge_queries(search_es.get_query(), query_addition.query_addition)
+        query_addition_debug_details['new_query'] = new_query
+        search_es = search_es.set_query(new_query)
+    return search_es
+
+
+def _handle_query_merge_exception(request, exception):
+    notify_exception(request, exception.message, details=dict(
+        exception_type=type(exception),
+        original_query=getattr(exception, "original_query", None),
+        query_addition=getattr(exception, "query_addition", None)
+    ))
+    return HttpResponse(status=500)
+
+
+def _handle_es_exception(request, exception, query_addition_debug_details):
+    notify_exception(request, exception, details=dict(
+        exception_type=type(exception),
+        **query_addition_debug_details
+    ))
+    return HttpResponse(status=500)
+
+
+@location_safe
 @csrf_exempt
 @require_POST
 @json_error
 @login_or_digest_or_basic_or_apikey()
+@check_domain_migration
 def claim(request, domain):
     """
     Allows a user to claim a case that they don't own.
@@ -105,20 +180,31 @@ def get_restore_params(request):
     Given a request, get the relevant restore parameters out with sensible defaults
     """
     # not a view just a view util
+    try:
+        openrosa_headers = getattr(request, 'openrosa_headers', {})
+        openrosa_version = openrosa_headers[OPENROSA_VERSION_HEADER]
+    except KeyError:
+        openrosa_version = request.GET.get('openrosa_version', OPENROSA_DEFAULT_VERSION)
+
     return {
         'since': request.GET.get('since'),
         'version': request.GET.get('version', "1.0"),
         'state': request.GET.get('state'),
         'items': request.GET.get('items') == 'true',
         'as_user': request.GET.get('as'),
-        'has_data_cleanup_privelege': has_privilege(request, privileges.DATA_CLEANUP)
+        'has_data_cleanup_privelege': has_privilege(request, privileges.DATA_CLEANUP),
+        'overwrite_cache': request.GET.get('overwrite_cache') == 'true',
+        'openrosa_version': openrosa_version,
     }
 
 
 def get_restore_response(domain, couch_user, app_id=None, since=None, version='1.0',
                          state=None, items=False, force_cache=False,
                          cache_timeout=None, overwrite_cache=False,
-                         force_restore_mode=None, as_user=None, has_data_cleanup_privelege=False):
+                         force_restore_mode=None,
+                         as_user=None,
+                         has_data_cleanup_privelege=False,
+                         openrosa_version=OPENROSA_DEFAULT_VERSION):
     # not a view just a view util
     is_permitted, message = is_permitted_to_restore(
         domain,
@@ -139,7 +225,10 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
 
     project = Domain.get_by_name(domain)
     app = get_app(domain, app_id) if app_id else None
-    async_restore = toggles.ASYNC_RESTORE.enabled(domain)
+    async_restore_enabled = (
+        toggles.ASYNC_RESTORE.enabled(domain) and
+        LooseVersion(openrosa_version) >= LooseVersion(OPENROSA_VERSION_MAP['ASYNC_RESTORE'])
+    )
     restore_config = RestoreConfig(
         project=project,
         restore_user=restore_user,
@@ -151,11 +240,11 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
             app=app,
         ),
         cache_settings=RestoreCacheSettings(
-            force_cache=force_cache or async_restore,
+            force_cache=force_cache or async_restore_enabled,
             cache_timeout=cache_timeout,
             overwrite_cache=overwrite_cache
         ),
-        async=async_restore
+        async=async_restore_enabled
     )
     return restore_config.get_response(), restore_config.timing_context
 

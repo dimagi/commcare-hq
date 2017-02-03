@@ -17,13 +17,14 @@ from django import forms
 from django.forms import Field, Widget
 from corehq.apps.accounting.utils import domain_is_on_trial
 from corehq.apps.casegroups.models import CommCareCaseGroup
-from corehq.apps.casegroups.dbaccessors import get_case_groups_in_domain
+from corehq.apps.casegroups.dbaccessors import get_case_group_meta_in_domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.util import get_locations_from_ids
 from corehq.apps.reminders.event_handlers import TRIAL_MAX_EMAILS
 from corehq.apps.reminders.util import DotExpandedDict, get_form_list
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.crispy import ErrorsOnlyField
+from corehq.apps.sms.models import Keyword
 from corehq.apps.style.crispy import FieldWithHelpBubble, B3MultiField
 from corehq.apps.users.forms import SupplyPointSelectWidget
 from corehq import toggles
@@ -53,7 +54,6 @@ from .models import (
     METHOD_EMAIL,
     CASE_CRITERIA,
     QUESTION_RETRY_CHOICES,
-    SurveyKeyword,
     RECIPIENT_PARENT_CASE,
     RECIPIENT_SUBCASE,
     FIRE_TIME_RANDOM,
@@ -136,11 +136,6 @@ def user_group_choices(domain):
     ids = Group.ids_by_domain(domain)
     return [(doc['_id'], doc['name'])
             for doc in iter_docs(Group.get_db(), ids)]
-
-
-def case_group_choices(domain):
-    return [(group._id, group.name)
-            for group in get_case_groups_in_domain(domain)]
 
 
 def form_choices(domain):
@@ -591,7 +586,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
             FieldWithHelpBubble(
                 'case_type',
                 css_class="input-xlarge",
-                data_bind="value: case_type, typeahead: available_case_types",
+                data_bind="value: case_type, autocompleteSelect2: available_case_types",
                 placeholder=_("Enter a Case Type"),
                 help_bubble_text=_(
                     "Choose which case type this reminder will be "
@@ -613,7 +608,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                         InlineField(
                             'start_property',
                             css_class="input-xlarge",
-                            data_bind="typeahead: getAvailableCaseProperties",
+                            data_bind="autocompleteSelect2: getAvailableCaseProperties",
                         ),
                         css_class='col-sm-6'
                     ),
@@ -677,7 +672,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     'start_date',
                     placeholder=_("Enter Case Property"),
                     css_class="input-xlarge",
-                    data_bind="typeahead: getAvailableCaseProperties",
+                    data_bind="autocompleteSelect2: getAvailableCaseProperties",
                 ),
                 hqcrispy.B3MultiField(
                     "",
@@ -723,7 +718,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     InlineField(
                         'recipient_case_match_property',
                         css_class="input-xlarge",
-                        data_bind="typeahead: getAvailableSubcaseProperties",
+                        data_bind="autocompleteSelect2: getAvailableSubcaseProperties",
                     ),
                     css_class='col-sm-6'
                 ),
@@ -853,7 +848,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                     InlineField(
                         'until',
                         css_class="input-large",
-                        data_bind="typeahead: getAvailableCaseProperties",
+                        data_bind="autocompleteSelect2: getAvailableCaseProperties",
                     ),
                     css_class="col-sm-6",
                     data_bind="visible: isUntilVisible",
@@ -2212,8 +2207,8 @@ class KeywordForm(Form):
             raise ValidationError(_("This field is required."))
         if len(value.split()) > 1:
             raise ValidationError(_("Keyword should be one word."))
-        duplicate = SurveyKeyword.get_keyword(self._cchq_domain, value)
-        if duplicate is not None and duplicate._id != self._sk_id:
+        duplicate = Keyword.get_keyword(self._cchq_domain, value)
+        if duplicate and duplicate.couch_id != self._sk_id:
             raise ValidationError(_("Keyword already exists."))
         return value
 
@@ -2441,10 +2436,10 @@ class BroadcastForm(Form):
             ])
 
         self.fields['form_unique_id'].choices = form_choices(self.domain)
-        self.fields['case_group_id'].choices = case_group_choices(self.domain)
+        self.fields['case_group_id'].choices = get_case_group_meta_in_domain(self.domain)
         self.fields['user_group_id'].choices = user_group_choices(self.domain)
         self.fields['location_ids'].widget = SupplyPointSelectWidget(
-            domain=self.domain,
+            self.domain,
             multiselect=True,
         )
 

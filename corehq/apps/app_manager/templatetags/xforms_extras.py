@@ -3,9 +3,6 @@ from django.utils import html
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 
-import json
-import re
-
 register = template.Library()
 
 EMPTY_LABEL = '<span class="label label-info">Empty</span>'
@@ -20,34 +17,40 @@ def translate(t, lang, langs=None):
 
 
 @register.filter
-def trans(name, langs=None, include_lang=True, use_delim=True):
+def trans(name, langs=None, include_lang=True, use_delim=True, prefix=False):
     langs = langs or ["default"]
     if include_lang:
         if use_delim:
-            suffix = lambda lang: ' [%s]' % lang
+            tag = lambda lang: ' [%s]' % lang
         else:
-            suffix = lambda lang: '''
+            tag = lambda lang: '''
                 <span class="btn btn-xs btn-info btn-langcode-preprocessed">%(lang)s</span>
             ''' % {"lang": html.escape(lang)}
     else:
-        suffix = lambda lang: ""
+        tag = lambda lang: ""
     for lang in langs:
         if lang in name and name[lang]:
-            return name[lang] + ("" if langs and lang == langs[0] else suffix(lang))
+            affix = ("" if langs and lang == langs[0] else tag(lang))
+            return affix + name[lang] if prefix else name[lang] + affix
         # ok, nothing yet... just return anything in name
     for lang, n in sorted(name.items()):
-        return n + suffix(lang)
+        affix = tag(lang)
+        return affix + n if prefix else n + affix
     return ""
 
 
 @register.filter
 def html_trans(name, langs=["default"]):
-    return mark_safe(trans(name, langs, use_delim=False) or EMPTY_LABEL)
+    return mark_safe(html.strip_tags(trans(name, langs, use_delim=False)) or EMPTY_LABEL)
+
+@register.filter
+def html_trans_prefix(name, langs=["default"]):
+    return mark_safe(trans(name, langs, use_delim=False, prefix=True) or EMPTY_LABEL)
 
 
 @register.filter
 def html_name(name):
-    return mark_safe(name or EMPTY_LABEL)
+    return mark_safe(html.strip_tags(name) or EMPTY_LABEL)
 
 
 @register.simple_tag
@@ -69,7 +72,7 @@ def inline_edit_trans(name, langs=None, url='', saveValueName='', readOnlyClass=
             name: 'name',
             value: '%(value)s',
             placeholder: '%(placeholder)s',
-            rows: 1,
+            nodeName: 'input',
             lang: '%(lang)s',
             url: '{}',
             saveValueName: '{}',
@@ -77,6 +80,27 @@ def inline_edit_trans(name, langs=None, url='', saveValueName='', readOnlyClass=
             postSave: {},
         "></inline-edit>
     '''.format(url, saveValueName, readOnlyClass, postSave)
+    return _input_trans(template, name, langs=langs, allow_blank=False)
+
+
+@register.simple_tag
+def inline_edit_trans_v2(
+        name, langs=None, url='', saveValueName='', containerClass='',
+        postSave='', iconClass=''):
+    template = '''
+        <inline-edit-v2 params="
+            name: 'name',
+            value: '%(value)s',
+            placeholder: '%(placeholder)s',
+            nodeName: 'input',
+            lang: '%(lang)s',
+            url: '{}',
+            saveValueName: '{}',
+            containerClass: '{}',
+            postSave: {},
+            iconClass: '{}',
+        "></inline-edit-v2>
+    '''.format(url, saveValueName, containerClass, postSave, iconClass)
     return _input_trans(template, name, langs=langs, allow_blank=False)
 
 

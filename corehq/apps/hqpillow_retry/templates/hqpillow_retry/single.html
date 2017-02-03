@@ -3,7 +3,7 @@
 {% load hq_shared_tags %}
 {% load compress %}
 {% block js-inline %}{{ block.super }}
-    <script type="text/javascript">
+    <script>
      function performAction(action) {
          if (action === 'delete') {
              var r=confirm("Are you sure you want to delete this error log?");
@@ -65,9 +65,11 @@
                     </a>
                 </td>
             </tr>
-            <tr><td>{% trans "Doc Type:" %}</td><td>{{ error.doc_type}}</td></tr>
-            <tr><td>{% trans "Domain(s):" %}</td><td>{{ error.domains }}</td></tr>
-            <tr><td>{% trans "Doc Date:" %}</td><td>{{ error.doc_date|date:"d M Y H:i" }}</td></tr>
+            <tr><td>{% trans "Doc Type:" %}</td><td>{{ error.change_metadata.document_type }}</td></tr>
+            <tr><td>{% trans "Domain:" %}</td><td>{{ error.change_metadata.domain }}</td></tr>
+            <tr><td>{% trans "DB Type:" %}</td><td>{{ error.change_metadata.data_source_type }}</td></tr>
+            <tr><td>{% trans "DB Name:" %}</td><td>{{ error.change_metadata.data_source_name }}</td></tr>
+            <tr><td>{% trans "Is Deletion:" %}</td><td>{{ error.change_metadata.is_deletion }}</td></tr>
             <tr><td>{% trans "Date Created:" %}</td><td>{{ error.date_created|date:"d M Y H:i"}}</td></tr>
             <tr><td>{% trans "Date of Last Attempt:" %}</td><td>{{ error.date_last_attempt|date:"d M Y H:i" }}</td></tr>
             <tr><td>{% trans "Date of Next Attempt:" %}</td><td>{{ error.date_next_attempt|date:"d M Y H:i" }}</td></tr>

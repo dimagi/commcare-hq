@@ -88,6 +88,7 @@ class SQLMachBackend(SQLSMSBackend):
             'pw': config.password,
             'snr': config.sender_id,
             'dnr': msg.phone_number,
+            'split': '10',
         }
         try:
             text = msg.text.encode('iso-8859-1')

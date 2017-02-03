@@ -4,11 +4,11 @@
 {% load i18n %}
 
 {% block js-inline %} {{ block.super }}
-    <script type="text/javascript">
+    <script>
     $.when(
         $.getScript("{% static 'case/js/cheapxml.js' %}"),
         $.getScript("{% static 'case/js/casexml.js' %}"),
-        $.getScript("{% static 'data_interfaces/ko/case_management.js' %}")
+        $.getScript("{% static 'data_interfaces/js/case_management.js' %}")
     ).done(function () {
         var OPTIONS = {
             users: {{ users|JSON }},
@@ -35,7 +35,7 @@
             $caseManagement.find('.dataTables_length select').change(selectNone);
 
             function selectNone() {
-                $caseManagement.find('input.selected-commcare-case:checked').removeProp('checked').change();
+                $caseManagement.find('input.selected-commcare-case:checked').prop('checked', false).change();
             }
         }
 

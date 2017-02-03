@@ -1,11 +1,16 @@
 import os
-from django.test import TestCase
-from corehq.apps.app_manager.const import APP_V2
+from django.test import TestCase, SimpleTestCase
+from mock import patch
+
 from corehq.apps.app_manager.models import Application, Module
+from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.userreports.dbaccessors import delete_all_report_configs
-from corehq.apps.userreports.models import DataSourceConfiguration, \
-    ReportConfiguration
-from corehq.apps.userreports.reports.builder.forms import ConfigureListReportForm, ConfigureTableReportForm
+from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
+from corehq.apps.userreports.reports.builder.columns import CountColumn, MultiselectQuestionColumnOption
+from corehq.apps.userreports.reports.builder.forms import (
+    ConfigureListReportForm,
+    ConfigureTableReportForm,
+    ConfigurePieChartReportForm)
 
 
 def read(rel_path):
@@ -14,11 +19,49 @@ def read(rel_path):
         return f.read()
 
 
-class ReportBuilderTest(TestCase):
+factory = AppFactory()
+module1, form1 = factory.new_basic_module('my_slug', 'my_case_type')
+form1.source = read(['data', 'forms', 'simple.xml'])
+
+
+@patch('corehq.apps.app_manager.models.Application.get', return_value=factory.app)
+@patch('corehq.apps.app_manager.models.Form.get_form', return_value=form1)
+class ConfigureReportFormsTest(SimpleTestCase):
+
+    def test_count_column_existence(self, _, __):
+        """
+        Confirm that aggregated reports have a count column option, and that
+        non aggregated reports do not.
+        """
+
+        def get_count_column_columns(configuration_form):
+            return len(filter(
+                lambda x: isinstance(x, CountColumn),
+                configuration_form.report_column_options.values()
+            ))
+
+        list_report_form = ConfigureListReportForm(
+            "my report",
+            factory.app._id,
+            "form",
+            form1.unique_id,
+        )
+        self.assertEqual(get_count_column_columns(list_report_form), 0)
+
+        table_report_form = ConfigureTableReportForm(
+            "my report",
+            factory.app._id,
+            "form",
+            form1.unique_id,
+        )
+        self.assertEqual(get_count_column_columns(table_report_form), 1)
+
+
+class ReportBuilderDBTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.app = Application.new_app('domain', 'Untitled Application', application_version=APP_V2)
+        cls.app = Application.new_app('domain', 'Untitled Application')
         module = cls.app.add_module(Module.new_module('Untitled Module', None))
         cls.form = cls.app.new_form(module.id, "Untitled Form", 'en', read(['data', 'forms', 'simple.xml']))
         cls.app.save()
@@ -29,6 +72,9 @@ class ReportBuilderTest(TestCase):
         for config in DataSourceConfiguration.all():
             config.delete()
         delete_all_report_configs()
+
+
+class ReportBuilderTest(ReportBuilderDBTest):
 
     def test_data_source_exclusivity(self):
         """
@@ -44,7 +90,8 @@ class ReportBuilderTest(TestCase):
             self.form.unique_id,
             existing_report=None,
             data={
-                'filters': '[]',
+                'user_filters': '[]',
+                'default_filters': '[]',
                 'columns': '[{"property": "/data/first_name", "display_text": "first name"}]',
             }
         )
@@ -59,7 +106,8 @@ class ReportBuilderTest(TestCase):
             self.form.unique_id,
             existing_report=None,
             data={
-                'filters': '[]',
+                'user_filters': '[]',
+                'default_filters': '[]',
                 'columns': '[{"property": "/data/first_name", "display_text": "first name"}]',
             }
         )
@@ -83,7 +131,8 @@ class ReportBuilderTest(TestCase):
             existing_report=None,
             data={
                 'group_by': 'closed',
-                'filters': '[]',
+                'user_filters': '[]',
+                'default_filters': '[]',
                 'columns': '[{"property": "closed", "display_text": "closed", "calculation": "Count per Choice"}]',
             }
         )
@@ -100,8 +149,9 @@ class ReportBuilderTest(TestCase):
             "some_case_type",
             existing_report=report,
             data={
-                'group_by': 'closed',
-                'filters': '[]',
+                'group_by': 'user_id',
+                'user_filters': '[]',
+                'default_filters': '[]',
                 # Note that a "Sum" calculation on the closed case property isn't very sensical, but doing it so
                 # that I can have a numeric calculation without having to create real case properties for this case
                 #  type.
@@ -132,7 +182,8 @@ class ReportBuilderTest(TestCase):
             self.form.unique_id,
             existing_report=None,
             data={
-                'filters': '[]',
+                'user_filters': '[]',
+                'default_filters': '[]',
                 'columns': '[{"property": "/data/first_name", "display_text": "first name"}]',
             }
         )
@@ -154,7 +205,8 @@ class ReportBuilderTest(TestCase):
             self.form.unique_id,
             existing_report=report,
             data={
-                'filters': '[]',
+                'user_filters': '[]',
+                'default_filters': '[]',
                 'columns': '[{"property": "/data/first_name", "display_text": "first name"}]',
             }
         )
@@ -162,3 +214,82 @@ class ReportBuilderTest(TestCase):
         report = builder_form.update_report()
 
         self.assertNotEqual(report.config_id, report_two.config_id)
+
+
+class MultiselectQuestionTest(ReportBuilderDBTest):
+    """
+    Test class for report builder interactions with MultiSelect questions.
+    """
+
+    def testReportColumnOptions(self):
+        """
+        Confirm that form.report_column_options contains MultiselectQuestionColumnOption objects for mselect
+        questions.
+        """
+
+        builder_form = ConfigureListReportForm(
+            "My Report",
+            self.app._id,
+            "form",
+            self.form.unique_id,
+        )
+        self.assertEqual(
+            type(builder_form.report_column_options["/data/state"]),
+            MultiselectQuestionColumnOption
+        )
+
+    def testDataSource(self):
+        """
+        Confirm that data sources for reports with multiselects use "choice_list" indicators for mselect questions.
+        """
+        builder_form = ConfigureListReportForm(
+            "My Report",
+            self.app._id,
+            "form",
+            self.form.unique_id,
+            data={
+                'user_filters': '[]',
+                'default_filters': '[]',
+                'columns': '[{"property": "/data/first_name", "display_text": "first name"}]',
+            }
+        )
+        self.assertTrue(builder_form.is_valid())
+        report = builder_form.create_report()
+        data_source = report.config
+        mselect_indicators = [i for i in data_source.configured_indicators if i["type"] == "choice_list"]
+        self.assertEqual(len(mselect_indicators), 1)
+        mselect_indicator = mselect_indicators[0]
+        self.assertEqual(set(mselect_indicator['choices']), {'MA', 'MN', 'VT'})
+
+    def testGraphDataSource(self):
+        """
+        Confirm that data sources for chart reports aggregated by a multiselect question use a base_item_expression
+        and that the columns use root_doc expressions
+        """
+        builder_form = ConfigurePieChartReportForm(
+            "My Report",
+            self.app._id,
+            "form",
+            self.form.unique_id,
+            data={
+                'user_filters': '[]',
+                'default_filters': '[]',
+                'group_by': '/data/state'
+            }
+        )
+        self.assertTrue(builder_form.is_valid())
+        report = builder_form.create_report()
+        data_source = report.config
+        mselect_indicators = [i for i in data_source.configured_indicators if i["type"] == "choice_list"]
+        self.assertEqual(len(mselect_indicators), 1)
+        mselect_indicator = mselect_indicators[0]
+
+        self.assertTrue(data_source.base_item_expression)
+        for indicator in data_source.configured_indicators:
+            if (
+                indicator.get('expression', {}).get('property_path', None) != mselect_indicator['property_path']
+                and indicator != mselect_indicator
+                and indicator['type'] != "count"
+            ):
+                self.assertTrue(indicator['type'] == 'expression')
+                self.assertTrue(indicator['expression']['type'] == 'root_doc')

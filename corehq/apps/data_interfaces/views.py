@@ -5,26 +5,33 @@ import uuid
 from couchdbkit import ResourceNotFound
 from django.contrib import messages
 from django.core.cache import cache
+from django.http import HttpResponseBadRequest
+
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.app_manager.util import all_case_properties_by_domain
 from corehq.apps.casegroups.dbaccessors import get_case_groups_in_domain, \
     get_number_of_case_groups_in_domain
 from corehq.apps.casegroups.models import CommCareCaseGroup
+from corehq.apps.es.users import user_ids_at_accessible_locations
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
-from corehq.util.spreadsheets.excel import JSONReaderError, WorkbookJSONReader
+from corehq.apps.locations.permissions import location_safe
+from corehq.apps.users.permissions import can_view_form_exports, can_view_case_exports
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.util.workbook_json.excel import JSONReaderError, WorkbookJSONReader, \
+    InvalidExcelFileException
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from django.utils.decorators import method_decorator
-from openpyxl.utils.exceptions import InvalidFileException
 from corehq.apps.data_interfaces.tasks import (
     bulk_upload_cases_to_group, bulk_archive_forms, bulk_form_management_async)
 from corehq.apps.data_interfaces.forms import (
     AddCaseGroupForm, UpdateCaseGroupForm, AddCaseToGroupForm,
     AddAutomaticCaseUpdateRuleForm)
 from corehq.apps.data_interfaces.models import (AutomaticUpdateRule,
-    AutomaticUpdateRuleCriteria, AutomaticUpdateAction)
+                                                AutomaticUpdateRuleCriteria,
+                                                AutomaticUpdateAction)
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqcase.utils import get_case_by_identifier
@@ -33,6 +40,7 @@ from corehq.apps.data_interfaces.dispatcher import (
     EditDataInterfaceDispatcher,
     require_can_edit_data,
 )
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.style.decorators import use_typeahead, use_angular_js
 from corehq.const import SERVER_DATETIME_FORMAT
 from .dispatcher import require_form_management_privilege
@@ -46,10 +54,10 @@ from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
-from zipfile import BadZipfile
 
 
 @login_and_domain_required
+@location_safe
 def default(request, domain):
     if not request.project or request.project.is_snapshot:
         raise Http404()
@@ -58,11 +66,15 @@ def default(request, domain):
 
 
 def default_data_view_url(request, domain):
-    if request.couch_user.can_view_reports():
-        from corehq.apps.export.views import FormExportListView
+    from corehq.apps.export.views import (
+        FormExportListView, CaseExportListView,
+        DeIdFormExportListView, user_can_view_deid_exports
+    )
+    if can_view_form_exports(request.couch_user, domain):
         return reverse(FormExportListView.urlname, args=[domain])
+    elif can_view_case_exports(request.couch_user, domain):
+        return reverse(CaseExportListView.urlname, args=[domain])
 
-    from corehq.apps.export.views import DeIdFormExportListView, user_can_view_deid_exports
     if user_can_view_deid_exports(domain, request.couch_user):
         return reverse(DeIdFormExportListView.urlname, args=[domain])
 
@@ -123,11 +135,7 @@ class CaseGroupListView(DataInterfaceSection, CRUDPaginatedViewMixin):
 
     @property
     def paginated_list(self):
-        for group in get_case_groups_in_domain(
-                self.domain,
-                limit=self.limit,
-                skip=self.skip
-            ):
+        for group in get_case_groups_in_domain(self.domain)[self.skip:self.skip + self.limit]:
             item_data = self._get_item_data(group)
             item_data['updateForm'] = self.get_update_form_response(
                 self.get_update_form(initial_data={
@@ -202,7 +210,7 @@ class ArchiveFormView(DataInterfaceSection):
         context.update({
             'bulk_upload': {
                 "download_url": static(
-                    'data_interfaces/files/forms_bulk_example.xlsx'),
+                    'data_interfaces/xlsx/forms_bulk_example.xlsx'),
                 "adjective": _("example"),
                 "verb": _("archive"),
                 "plural_noun": _("forms"),
@@ -227,7 +235,7 @@ class ArchiveFormView(DataInterfaceSection):
             raise BulkUploadCasesException(_("No files uploaded"))
         try:
             return WorkbookJSONReader(bulk_file)
-        except (InvalidFileException, BadZipfile):
+        except InvalidExcelFileException:
             try:
                 csv.DictReader(io.StringIO(bulk_file.read().decode('utf-8'),
                                            newline=None))
@@ -301,7 +309,7 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
         context.update({
             'bulk_upload': {
                 "download_url": static(
-                    'data_interfaces/files/cases_bulk_example.xlsx'),
+                    'data_interfaces/xlsx/cases_bulk_example.xlsx'),
                 "adjective": _("case"),
                 "plural_noun": _("cases"),
             },
@@ -397,7 +405,7 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
             raise BulkUploadCasesException(_("No files uploaded"))
         try:
             return WorkbookJSONReader(bulk_file)
-        except (InvalidFileException, BadZipfile):
+        except InvalidExcelFileException:
             try:
                 csv.DictReader(io.StringIO(bulk_file.read().decode('ascii'),
                                            newline=None))
@@ -415,7 +423,7 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
             'detailsUrl': reverse('case_details', args=[self.domain, case.case_id]),
             'name': case.name,
             'externalId': case.external_id if case.external_id else '--',
-            'phoneNumber': getattr(case, 'contact_phone_number', '--'),
+            'phoneNumber': case.get_case_property('contact_phone_number') or '--',
         }
 
     def get_create_form(self, is_blank=False):
@@ -471,29 +479,27 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
         return self.paginate_crud_response
 
 
+@location_safe
 class XFormManagementView(DataInterfaceSection):
     urlname = 'xform_management'
     page_title = ugettext_noop('Form Management')
 
-    def get_form_ids_or_query_string(self, request):
-        if 'select_all' in self.request.POST:
-            # Altough evaluating form_ids and sending to task would be cleaner,
-            # heavier calls should be in in an async task instead
-            import urllib
-            form_query_string = urllib.unquote(self.request.POST.get('select_all'))
-            return form_query_string
-        else:
-            return self.request.POST.getlist('xform_ids')
-
     def post(self, request, *args, **kwargs):
-        form_ids_or_query_string = self.get_form_ids_or_query_string(request)
+        form_ids = self.get_xform_ids(request)
+        if not self.request.can_access_all_locations:
+            inaccessible_forms_accessed = self.inaccessible_forms_accessed(
+                form_ids, self.domain, request.couch_user)
+            if inaccessible_forms_accessed:
+                return HttpResponseBadRequest(
+                    "Inaccessible forms accessed. Id(s): %s " % ','.join(inaccessible_forms_accessed))
+
         mode = self.request.POST.get('mode')
         task_ref = expose_cached_download(payload=None, expiry=1*60*60, file_extension=None)
         task = bulk_form_management_async.delay(
             mode,
             self.domain,
             self.request.couch_user,
-            form_ids_or_query_string
+            form_ids
         )
         task_ref.set_task(task)
 
@@ -504,11 +510,48 @@ class XFormManagementView(DataInterfaceSection):
             )
         )
 
+    def inaccessible_forms_accessed(self, xform_ids, domain, couch_user):
+        xforms = FormAccessors(domain).get_forms(xform_ids)
+        xforms_user_ids = set([xform.user_id for xform in xforms])
+        accessible_user_ids = set(user_ids_at_accessible_locations(domain, couch_user))
+        return xforms_user_ids - accessible_user_ids
+
+    def get_xform_ids(self, request):
+        if 'select_all' in self.request.POST:
+            # Altough evaluating form_ids and sending to task would be cleaner,
+            # heavier calls should be in an async task instead
+            import urllib
+            form_query_string = urllib.unquote(self.request.POST.get('select_all'))
+            from django.http import HttpRequest, QueryDict
+
+            _request = HttpRequest()
+            _request.couch_user = request.couch_user
+            _request.user = request.couch_user.get_django_user()
+            _request.domain = self.domain
+            _request.couch_user.current_domain = self.domain
+            _request.can_access_all_locations = request.couch_user.has_permission(self.domain,
+                                                                                  'access_all_locations')
+
+            _request.GET = QueryDict(form_query_string)
+            dispatcher = EditDataInterfaceDispatcher()
+            xform_ids = dispatcher.dispatch(
+                _request,
+                render_as='form_ids',
+                domain=self.domain,
+                report_slug=BulkFormManagementInterface.slug,
+                skip_permissions_check=True,
+            )
+        else:
+            xform_ids = self.request.POST.getlist('xform_ids')
+
+        return xform_ids
+
     @method_decorator(require_form_management_privilege)
     def dispatch(self, request, *args, **kwargs):
         return super(XFormManagementView, self).dispatch(request, *args, **kwargs)
 
 
+@location_safe
 class XFormManagementStatusView(DataInterfaceSection):
 
     urlname = 'xform_management_status'
@@ -533,13 +576,14 @@ class XFormManagementStatusView(DataInterfaceSection):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
 
 
+@location_safe
 @require_can_edit_data
 @require_form_management_privilege
 def xform_management_job_poll(request, domain, download_id,
                               template="data_interfaces/partials/xform_management_status.html"):
     mode = FormManagementMode(request.GET.get('mode'), validate=True)
     try:
-        context = get_download_context(download_id, check_state=True)
+        context = get_download_context(download_id)
     except TaskFailedError:
         return HttpResponseServerError()
 
@@ -690,6 +734,7 @@ class AddAutomaticUpdateRuleView(JSONResponseMixin, DataInterfaceSection):
             domain=self.domain,
             initial={
                 'action': AddAutomaticCaseUpdateRuleForm.ACTION_CLOSE,
+                'property_value_type': AutomaticUpdateAction.EXACT,
             }
         )
 
@@ -743,6 +788,7 @@ class AddAutomaticUpdateRuleView(JSONResponseMixin, DataInterfaceSection):
                 action=AutomaticUpdateAction.ACTION_UPDATE,
                 property_name=self.rule_form.cleaned_data['update_property_name'],
                 property_value=self.rule_form.cleaned_data['update_property_value'],
+                property_value_type=self.rule_form.cleaned_data['property_value_type']
             )
 
     def create_rule(self):
@@ -753,6 +799,7 @@ class AddAutomaticUpdateRuleView(JSONResponseMixin, DataInterfaceSection):
                 case_type=self.rule_form.cleaned_data['case_type'],
                 active=True,
                 server_modified_boundary=self.rule_form.cleaned_data['server_modified_boundary'],
+                filter_on_server_modified=self.rule_form.cleaned_data['filter_on_server_modified'],
             )
             self.create_criteria(rule)
             self.create_actions(rule)
@@ -804,28 +851,37 @@ class EditAutomaticUpdateRuleView(AddAutomaticUpdateRuleView):
                 'property_value': criterion.property_value,
             })
 
+        close_case = False
         update_case = False
         update_property_name = None
         update_property_value = None
+        property_value_type = AutomaticUpdateAction.EXACT
         for action in self.rule.automaticupdateaction_set.all():
             if action.action == AutomaticUpdateAction.ACTION_UPDATE:
                 update_case = True
                 update_property_name = action.property_name
                 update_property_value = action.property_value
-                break
+                property_value_type = action.property_value_type
+            elif action.action == AutomaticUpdateAction.ACTION_CLOSE:
+                close_case = True
+
+        if close_case and update_case:
+            initial_action = AddAutomaticCaseUpdateRuleForm.ACTION_UPDATE_AND_CLOSE
+        elif update_case and not close_case:
+            initial_action = AddAutomaticCaseUpdateRuleForm.ACTION_UPDATE
+        else:
+            initial_action = AddAutomaticCaseUpdateRuleForm.ACTION_CLOSE
 
         initial = {
             'name': self.rule.name,
             'case_type': self.rule.case_type,
             'server_modified_boundary': self.rule.server_modified_boundary,
             'conditions': json.dumps(conditions),
-            'action': (
-                AddAutomaticCaseUpdateRuleForm.ACTION_UPDATE_AND_CLOSE
-                if update_case
-                else AddAutomaticCaseUpdateRuleForm.ACTION_CLOSE
-            ),
+            'action': initial_action,
             'update_property_name': update_property_name,
             'update_property_value': update_property_value,
+            'property_value_type': property_value_type,
+            'filter_on_server_modified': json.dumps(self.rule.filter_on_server_modified),
         }
         return AddAutomaticCaseUpdateRuleForm(domain=self.domain, initial=initial)
 
@@ -848,6 +904,7 @@ class EditAutomaticUpdateRuleView(AddAutomaticUpdateRuleView):
             rule.name = self.rule_form.cleaned_data['name']
             rule.case_type = self.rule_form.cleaned_data['case_type']
             rule.server_modified_boundary = self.rule_form.cleaned_data['server_modified_boundary']
+            rule.filter_on_server_modified = self.rule_form.cleaned_data['filter_on_server_modified']
             rule.last_run = None
             rule.save()
             rule.automaticupdaterulecriteria_set.all().delete()

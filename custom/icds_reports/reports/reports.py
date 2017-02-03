@@ -1,8 +1,12 @@
+from django.core.urlresolvers import reverse
+
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import YearFilter
+from corehq.apps.reports.standard import CustomProjectReport
 from custom.icds_reports.asr_sqldata import ASRIdentification, ASROperationalization, ASRPopulation, Annual, \
     DisabledChildren, Infrastructure, Equipment
-from custom.icds_reports.filters import ICDSMonthFilter
+from custom.icds_reports.filters import ICDSMonthFilter, IcdsLocationFilter
 from custom.icds_reports.mpr_sqldata import MPRIdentification, MPRSectors, MPRPopulation, MPRBirthsAndDeaths, \
     MPRAWCDetails, MPRSupplementaryNutrition, MPRUsingSalt, MPRProgrammeCoverage, MPRPreschoolEducation, \
     MPRGrowthMonitoring, MPRImmunizationCoverage, MPRVhnd, MPRReferralServices, MPRMonitoring
@@ -11,6 +15,7 @@ from custom.icds_reports.reports import IcdsBaseReport
 from dimagi.utils.decorators.memoized import memoized
 
 
+@location_safe
 class MPRReport(IcdsBaseReport):
 
     title = '1. Identification and Basic Information'
@@ -42,13 +47,14 @@ class MPRReport(IcdsBaseReport):
         ]
 
 
+@location_safe
 class ASRReport(IcdsBaseReport):
 
     title = '1. Identification and Basic Information'
     slug = 'asr_report'
     name = 'Block ASR'
 
-    fields = [AsyncLocationFilter]
+    fields = [IcdsLocationFilter]
 
     @property
     @memoized
@@ -63,3 +69,20 @@ class ASRReport(IcdsBaseReport):
             Infrastructure(config=config),
             Equipment(config=config)
         ]
+
+
+@location_safe
+class TableauReport(CustomProjectReport):
+
+    slug = 'tableau_dashboard'
+    name = 'ICDS-CAS Dashboard'
+
+    @classmethod
+    def get_url(cls, domain=None, **kwargs):
+        domain_to_workbook_mapping = {
+            'icds-test': 'DashboardTest',
+            'icds-cas': 'DashboardR5',
+        }
+        workbook_name = domain_to_workbook_mapping.get(domain, domain_to_workbook_mapping['icds-cas'])
+        worksheet_name = 'Dashboard'
+        return reverse('icds_tableau', args=[domain, workbook_name, worksheet_name])

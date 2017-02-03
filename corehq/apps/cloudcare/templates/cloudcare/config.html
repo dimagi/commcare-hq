@@ -138,17 +138,29 @@
 {% endblock %}
 
 {% block page_content %}
+    {% if request|is_new_cloudcare %}
+    <h2>{% trans 'Manage Web Apps Permissions' %}</h2>
+    {% else %}
     <h2>{% trans 'Manage CloudCare Permissions' %}</h2>
+    {% endif %}
     <section id="cloudcare-app-settings" style="display: none">
         <div data-bind="saveButton: saveButton"></div>
         <div id="cloudcare-app-settings-form" data-bind="with: applicationAccess">
             <label class="radio">
                 <input type="radio" value="false" data-bind="checked: restrict.JSON"/>
-                {% blocktrans %}Allow all mobile workers to see all CloudCare apps{% endblocktrans %}
+                {% if request|is_new_cloudcare %}
+                {% blocktrans %}Allow all mobile workers to see all web apps.{% endblocktrans %}
+                {% else %}
+                {% blocktrans %}Allow all mobile workers to see all CloudCare apps.{% endblocktrans %}
+                {% endif %}
             </label>
             <label class="radio">
                 <input type="radio" value="true" data-bind="checked: restrict.JSON"/>
+                {% if request|is_new_cloudcare %}
+                {% blocktrans %}Customize each mobile worker's access to web apps{% endblocktrans %}
+                {% else %}
                 {% blocktrans %}Customize each mobile worker's CloudCare access{% endblocktrans %}
+                {% endif %}
                 <code data-bind="visible: !restrict()">...</code>
             </label>
             <div data-bind="visible: restrict">
@@ -194,10 +206,18 @@
                             </ul>
                         </li>
                     </ul>
+                    {% if request|is_new_cloudcare %}
+                    <p>{% blocktrans %}...and all other mobile workers do not have access to any web apps.{% endblocktrans %}</p>
+                    {% else %}
                     <p>{% blocktrans %}...and all other mobile workers have no access to CloudCare.{% endblocktrans %}</p>
+                    {% endif %}
                 </div>
                 <div data-bind="if: !app_groups().length">
+                    {% if request|is_new_cloudcare %}
+                    {% trans 'No Web Apps Available' %}
+                    {% else %}
                     {% trans 'No CloudCare Applications Available' %}
+                    {% endif %}
                 </div>
             </div>
         </div>

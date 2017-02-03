@@ -1,6 +1,8 @@
-from django.conf.urls import *
+from django.conf.urls import url
 
-urlpatterns = patterns('corehq.apps.hqcase.views',
+from corehq.apps.hqcase.views import explode_cases
+
+urlpatterns = [
     # for load testing
-    url(r'explode/', 'explode_cases', name='hqcase_explode_cases')
-)
+    url(r'explode/', explode_cases, name='hqcase_explode_cases')
+]

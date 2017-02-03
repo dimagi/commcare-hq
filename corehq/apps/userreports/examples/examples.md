@@ -481,6 +481,36 @@ This will lookup the property `age` and substituite its value in the `statement`
 ```
 This will return value of `weight_at_1_year - weight_at_birth`
 
+### diff_seconds example
+
+```json
+"expression": {
+    "type": "evaluator",
+    "statement": "timedelta_to_seconds(time_end - time_start)",
+    "context_variables": {
+        "time_start": {
+            "datatype": "datetime",
+            "type": "property_path",
+            "property_path": [
+                "form",
+                "meta",
+                "timeStart"
+            ]
+        },
+        "time_end": {
+            "datatype": "datetime",
+            "type": "property_path",
+            "property_path": [
+                "form",
+                "meta",
+                "timeEnd"
+            ]
+        }
+    }
+}
+```
+This will return the difference in seconds between two times (i.e. start and end of form)
+
 ## Getting forms submitted for a case
 
 ```json

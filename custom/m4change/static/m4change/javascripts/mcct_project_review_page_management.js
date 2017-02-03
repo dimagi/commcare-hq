@@ -17,7 +17,7 @@ var McctProjectReviewPageManagement = function (o) {
                     $selectedRow,
                     $row = $checkbox.parent().parent();
                 ignore = true;
-                $checkbox.attr("checked", false).change();
+                $checkbox.prop("checked", false).change();
                 $selectedRow = $checkbox.parent().parent();
                 $selectedRow.removeClass('active');
                 $row.find('input[type="checkbox"].selected-element').parent().html(' <span class="label label-info">updated</span>');

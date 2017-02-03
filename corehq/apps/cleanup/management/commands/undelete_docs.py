@@ -1,7 +1,7 @@
 from datetime import datetime
 from collections import namedtuple
 from couchdbkit import ResourceNotFound
-from django.core.management.base import LabelCommand
+from django.core.management.base import BaseCommand
 from dimagi.utils.chunked import chunked
 from corehq.util.couch import send_keys_to_couch, IterDB
 from corehq.util.couchdb_management import couch_config
@@ -42,7 +42,7 @@ def undelete_docs(db, doc_ids):
     return results, iter_db
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = ("Accepts a series of deleted document ids from stdin and "
             "restores them to the revision immediately prior to deletion."
             "\nUsage: './manage.py undelete_docs [database] [ids_file]'")

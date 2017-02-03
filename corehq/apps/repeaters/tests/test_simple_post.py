@@ -54,8 +54,7 @@ class SimplePostCacheTest(SimpleTestCase):
                 'corehq.apps.repeaters.models.simple_post',
                 side_effect=[MockResponse(status_code=400, reason='Ugly')]) as mock_post:
 
-            with self.assertRaises(RequestConnectionError):
-                simple_post_with_cached_timeout('abc', 'http://google.com')
+            simple_post_with_cached_timeout('abc', 'http://google.com')
 
             self.assertEqual(mock_post.call_count, 1)
 

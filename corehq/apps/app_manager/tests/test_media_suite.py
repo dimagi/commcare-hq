@@ -2,9 +2,9 @@ from copy import deepcopy
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 from lxml import etree
+from mock import patch
 
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application, Module, ReportModule, ReportAppConfig
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
@@ -41,7 +41,8 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
         self.assertTrue(app.get_module(0).uses_media())
         self.assertEqual(app.all_media_paths, set(should_contain_media))
 
-    def test_all_media_paths_with_inline_video(self):
+    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+    def test_all_media_paths_with_inline_video(self, mock):
         inline_video_path = 'jr://file/commcare/video-inline/data/inline_video.mp4'
         app = Application.wrap(self.get_json('app_video_inline'))
 
@@ -93,7 +94,7 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
         """
         from corehq.apps.userreports.tests.utils import get_sample_report_config
 
-        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        app = Application.new_app('domain', "Untitled Application")
 
         report_module = app.add_module(ReportModule.new_module('Reports', None))
         report_module.unique_id = 'report_module'
@@ -130,7 +131,7 @@ class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
     hindi_audio = 'jr://file/commcare/case_list_audo_hin.mp3'
 
     def setUp(self):
-        self.app = Application.new_app('domain', "my app", application_version=APP_V2)
+        self.app = Application.new_app('domain', "my app")
         self.module = self.app.add_module(Module.new_module("Module 1", None))
         self.form = self.app.new_form(0, "Form 1", None)
         self.min_spec = BuildSpec.from_string('2.21/latest')

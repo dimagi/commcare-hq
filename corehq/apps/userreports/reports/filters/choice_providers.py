@@ -1,19 +1,25 @@
 from abc import ABCMeta, abstractmethod
 
+from django.utils.translation import ugettext
+
 from sqlalchemy.exc import ProgrammingError
 from corehq.apps.es import GroupES, UserES
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.exceptions import ColumnNotFoundError
+from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.util import raw_username
-from corehq.util.spreadsheets.excel import alphanumeric_sort_key
+from corehq.util.soft_assert import soft_assert
+from corehq.util.workbook_json.excel import alphanumeric_sort_key
 
 DATA_SOURCE_COLUMN = 'data_source_column'
 LOCATION = 'location'
 USER = 'user'
 OWNER = 'owner'
+
+assert_user_passed_in = soft_assert(to="@".join(["esoergel", "dimagi.com"]), fail_if_debug=True)
 
 
 class ChoiceQueryContext(object):
@@ -21,13 +27,14 @@ class ChoiceQueryContext(object):
     Context that will be passed to a choice provider function.
     """
 
-    def __init__(self, query=None, limit=20, offset=None, page=None):
+    def __init__(self, query=None, limit=20, offset=None, page=None, user=None):
         """
         either offset or page (but not both) must be set
         page is just a helper; it is used to calculate offset as page * limit
         """
         self.query = query
         self.limit = limit
+        self.user = user
 
         if page is not None and offset is not None:
             raise TypeError("Only one of page or offset can be passed in")
@@ -41,6 +48,8 @@ class ChoiceQueryContext(object):
 
 class ChoiceProvider(object):
     __metaclass__ = ABCMeta
+
+    location_safe = False
 
     def __init__(self, report, filter_slug):
         self.report = report
@@ -64,12 +73,12 @@ class ChoiceProvider(object):
     def query(self, query_context):
         pass
 
-    def get_sorted_choices_for_values(self, values):
-        return sorted(self.get_choices_for_values(values),
+    def get_sorted_choices_for_values(self, values, user):
+        return sorted(self.get_choices_for_values(values, user),
                       key=lambda choice: alphanumeric_sort_key(choice.display))
 
-    def get_choices_for_values(self, values):
-        choices = set(self.get_choices_for_known_values(values))
+    def get_choices_for_values(self, values, user):
+        choices = set(self.get_choices_for_known_values(values, user))
         used_values = {value for value, _ in choices}
         for value in values:
             if value not in used_values:
@@ -78,8 +87,43 @@ class ChoiceProvider(object):
         return choices
 
     @abstractmethod
-    def get_choices_for_known_values(self, values):
+    def get_choices_for_known_values(self, values, user):
         pass
+
+
+class SearchableChoice(Choice):
+
+    def __new__(cls, value, display, searchable_text=None):
+        self = super(SearchableChoice, cls).__new__(cls, value, display)
+        self.searchable_text = [text for text in searchable_text or []
+                                if text is not None]
+        return self
+
+
+class StaticChoiceProvider(ChoiceProvider):
+
+    def __init__(self, choices):
+        """
+        choices must be passed in in desired sort order
+        """
+        self.choices = [
+            choice if isinstance(choice, SearchableChoice)
+            else SearchableChoice(
+                choice.value, choice.display,
+                searchable_text=[choice.display]
+            )
+            for choice in choices
+        ]
+        super(StaticChoiceProvider, self).__init__(None, None)
+
+    def query(self, query_context):
+        filtered_set = [choice for choice in self.choices
+                        if any(query_context.query in text for text in choice.searchable_text)]
+        return filtered_set[query_context.offset:query_context.offset + query_context.limit]
+
+    def get_choices_for_known_values(self, values, user):
+        return {choice for choice in self.choices
+                if choice.value in values}
 
 
 class ChainableChoiceProvider(ChoiceProvider):
@@ -90,11 +134,15 @@ class ChainableChoiceProvider(ChoiceProvider):
         pass
 
     @abstractmethod
-    def get_choices_for_known_values(self, values):
+    def get_choices_for_known_values(self, values, user):
         pass
 
     @abstractmethod
     def query_count(self, query_context):
+        pass
+
+    @abstractmethod
+    def default_value(self, user):
         pass
 
 
@@ -134,49 +182,72 @@ class DataSourceColumnChoiceProvider(ChoiceProvider):
         except ProgrammingError:
             return []
 
-    def get_choices_for_known_values(self, values):
+    def get_choices_for_known_values(self, values, user):
         return []
 
 
 class LocationChoiceProvider(ChainableChoiceProvider):
 
+    location_safe = True
+
     def __init__(self, report, filter_slug):
         super(LocationChoiceProvider, self).__init__(report, filter_slug)
         self.include_descendants = False
+        self.show_full_path = False
 
     def configure(self, spec):
         self.include_descendants = spec.get('include_descendants', self.include_descendants)
+        self.show_full_path = spec.get('show_full_path', self.show_full_path)
 
-    def _locations_query(self, query_text):
+    def _locations_query(self, query_text, user):
+        active_locations = SQLLocation.active_objects
         if query_text:
-            return SQLLocation.active_objects.filter_path_by_user_input(
-                domain=self.domain, user_input=query_text)
-        else:
-            return SQLLocation.active_objects.filter(domain=self.domain)
+            return active_locations.filter_path_by_user_input(
+                domain=self.domain,
+                user_input=query_text
+            ).accessible_to_user(self.domain, user)
+
+        return active_locations.accessible_to_user(self.domain, user).filter(domain=self.domain)
 
     def query(self, query_context):
         # todo: consider making this an extensions framework similar to custom expressions
-        # todo: does this need fancier permission restrictions and what not?
-        # see e.g. locations.views.child_locations_for_select2
+        locations = self._locations_query(query_context.query, query_context.user).order_by('name')
 
-        locations = self._locations_query(query_context.query).order_by('name')
-
-        return [
-            Choice(loc.location_id, loc.display_name) for loc in
+        return self._locations_to_choices(
             locations[query_context.offset:query_context.offset + query_context.limit]
-        ]
+        )
 
-    def query_count(self, query):
-        return self._locations_query(query).count()
+    def query_count(self, query, user):
+        return self._locations_query(query, user).count()
 
-    def get_choices_for_known_values(self, values):
-        selected_locations = SQLLocation.active_objects.filter(location_id__in=values)
+    def get_choices_for_known_values(self, values, user):
+        if user is not None:
+            selected_locations = (SQLLocation.active_objects.filter(location_id__in=values)
+                                  .accessible_to_user(self.domain, user))
+        else:
+            assert_user_passed_in(False, "get_choices_for_known_values was called without a user")
+            selected_locations = SQLLocation.active_objects.filter(location_id__in=values)
         if self.include_descendants:
             selected_locations = SQLLocation.objects.get_queryset_descendants(
                 selected_locations, include_self=True
             )
 
-        return [Choice(loc.location_id, loc.display_name) for loc in selected_locations]
+        return self._locations_to_choices(selected_locations)
+
+    def default_value(self, user):
+        """Return only the locations this user can access
+        """
+        location = user.get_sql_location(self.domain)
+        if location:
+            return self._locations_to_choices([location])
+
+        # If the user isn't assigned to a location, they have access to all locations
+        return [Choice(SHOW_ALL_CHOICE, "[{}]".format(ugettext('Show All')))]
+
+    def _locations_to_choices(self, locations):
+        def display(loc):
+            return loc.get_path_display() if self.show_full_path else loc.display_name
+        return [Choice(loc.location_id, display(loc)) for loc in locations]
 
 
 class UserChoiceProvider(ChainableChoiceProvider):
@@ -187,11 +258,11 @@ class UserChoiceProvider(ChainableChoiceProvider):
             limit=query_context.limit, offset=query_context.offset)
         return self.get_choices_from_es_query(user_es)
 
-    def query_count(self, query):
+    def query_count(self, query, user=None):
         user_es = get_search_users_in_domain_es_query(self.domain, query, limit=0, offset=0)
         return user_es.run().total
 
-    def get_choices_for_known_values(self, values):
+    def get_choices_for_known_values(self, values, user):
         user_es = UserES().domain(self.domain).doc_id(values)
         return self.get_choices_from_es_query(user_es)
 
@@ -199,6 +270,9 @@ class UserChoiceProvider(ChainableChoiceProvider):
     def get_choices_from_es_query(user_es):
         return [Choice(user_id, raw_username(username))
                 for user_id, username in user_es.values_list('_id', 'username')]
+
+    def default_value(self, user):
+        return None
 
 
 class GroupChoiceProvider(ChainableChoiceProvider):
@@ -211,14 +285,14 @@ class GroupChoiceProvider(ChainableChoiceProvider):
         )
         return self.get_choices_from_es_query(group_es)
 
-    def query_count(self, query):
+    def query_count(self, query, user=None):
         group_es = (
             GroupES().domain(self.domain).is_case_sharing()
             .search_string_query(query, default_fields=['name'])
         )
         return group_es.size(0).run().total
 
-    def get_choices_for_known_values(self, values):
+    def get_choices_for_known_values(self, values, user):
         group_es = GroupES().domain(self.domain).is_case_sharing().doc_id(values)
         return self.get_choices_from_es_query(group_es)
 
@@ -226,6 +300,9 @@ class GroupChoiceProvider(ChainableChoiceProvider):
     def get_choices_from_es_query(group_es):
         return [Choice(group_id, name)
                 for group_id, name in group_es.values_list('_id', 'name')]
+
+    def default_value(self, user):
+        return None
 
 
 class AbstractMultiProvider(ChoiceProvider):
@@ -246,27 +323,28 @@ class AbstractMultiProvider(ChoiceProvider):
         limit = query_context.limit
         offset = query_context.offset
         query = query_context.query
+        user = query_context.user
         choices = []
         for choice_provider in self.choice_providers:
             if limit <= 0:
                 break
-            query_context = ChoiceQueryContext(query=query, limit=limit, offset=offset)
+            query_context = ChoiceQueryContext(query=query, limit=limit, offset=offset, user=user)
             new_choices = choice_provider.query(query_context)
             choices.extend(new_choices)
             if len(new_choices):
                 limit -= len(new_choices)
                 offset = 0
             else:
-                offset -= choice_provider.query_count(query)
+                offset -= choice_provider.query_count(query, user=user)
         return choices
 
-    def get_choices_for_known_values(self, values):
+    def get_choices_for_known_values(self, values, user):
         remaining_values = set(values)
         choices = []
         for choice_provider in self.choice_providers:
             if len(remaining_values) <= 0:
                 break
-            new_choices = choice_provider.get_choices_for_known_values(list(remaining_values))
+            new_choices = choice_provider.get_choices_for_known_values(list(remaining_values), user)
             remaining_values -= {value for value, _ in new_choices}
             choices.extend(new_choices)
         return choices

@@ -51,7 +51,7 @@ class RetireUserTestCase(TestCase):
                 owner_id=owner_id,
                 user_id=owner_id,
             ).as_string())
-        xform = submit_case_blocks(caseblocks, self.domain, user_id=owner_id)
+        xform = submit_case_blocks(caseblocks, self.domain, user_id=owner_id)[0]
 
         self.commcare_user.retire()
         cases = CaseAccessors(self.domain).get_cases(case_ids)

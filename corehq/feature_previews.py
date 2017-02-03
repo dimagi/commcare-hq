@@ -6,6 +6,8 @@ slug is kept intact.
 from django.utils.translation import ugettext_lazy as _
 from django_prbac.utils import has_privilege as prbac_has_privilege
 
+from corehq.util.quickcache import quickcache
+from .privileges import LOOKUP_TABLES
 from .toggles import StaticToggle, NAMESPACE_DOMAIN, TAG_PREVIEW, \
     all_toggles_by_name_in_scope
 
@@ -37,6 +39,7 @@ class FeaturePreview(StaticToggle):
         return prbac_has_privilege(request, self.privilege)
 
 
+@quickcache([])
 def all_previews():
     return all_toggles_by_name_in_scope(globals()).values()
 
@@ -105,17 +108,6 @@ CALLCENTER = FeaturePreview(
 )
 
 
-MODULE_FILTER = FeaturePreview(
-    slug='module_filter',
-    label=_('Module Filtering'),
-    description=_(
-        'Similar to form display conditions, hide your module unless the condition is met. Most commonly used'
-        ' in conjunction with '
-        '<a href="https://help.commcarehq.org/display/commcarepublic/Custom+User+Data">custom user data</a>.'
-    ),
-)
-
-
 # Only used in Vellum
 VELLUM_ADVANCED_ITEMSETS = FeaturePreview(
     slug='advanced_itemsets',
@@ -124,4 +116,5 @@ VELLUM_ADVANCED_ITEMSETS = FeaturePreview(
         "Allows display of custom lists, such as case sharing groups or locations as choices in Single Answer or "
         "Multiple Answer lookup Table questions. Configuring these questions requires specifying advanced logic."
     ),
+    privilege=LOOKUP_TABLES,
 )

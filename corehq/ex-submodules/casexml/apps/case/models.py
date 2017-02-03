@@ -19,6 +19,7 @@ from couchdbkit.exceptions import ResourceNotFound
 
 from casexml.apps.case.dbaccessors import get_reverse_indices
 from corehq.apps.sms.mixin import MessagingCaseContactMixin
+from corehq.blobs.mixin import DeferredBlobMixin
 from corehq.form_processor.abstract_models import AbstractCommCareCase, DEFAULT_PARENT_IDENTIFIER
 from dimagi.ext.couchdbkit import *
 from dimagi.utils.django.cached_object import (
@@ -73,9 +74,10 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
     def from_parsed_action(cls, date, user_id, xformdoc, action):
         if not action.action_type_slug in const.CASE_ACTIONS:
             raise ValueError("%s not a valid case action!" % action.action_type_slug)
-        
+
+        user_id = user_id or xformdoc.user_id
         ret = CommCareCaseAction(action_type=action.action_type_slug, date=date, user_id=user_id)
-        
+
         ret.server_date = xformdoc.received_on
         ret.xform_id = xformdoc.form_id
         ret.xform_xmlns = xformdoc.xmlns
@@ -149,13 +151,16 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
         )
 
 
-class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
-                   CouchDocLockableMixIn, AbstractCommCareCase, MessagingCaseContactMixin):
+class CommCareCase(DeferredBlobMixin, SafeSaveDocument, IndexHoldingMixIn,
+                   ComputedDocumentMixin, CouchDocLockableMixIn,
+                   AbstractCommCareCase, MessagingCaseContactMixin):
     """
     A case, taken from casexml.  This represents the latest
     representation of the case - the result of playing all
     the actions in sequence.
     """
+    _migrating_blobs_from_couch = True
+
     domain = StringProperty()
     export_tag = StringListProperty()
     xform_ids = StringListProperty()
@@ -272,6 +277,10 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
     def deletion_id(self):
         return getattr(self, '-deletion_id', None)
 
+    @property
+    def deletion_date(self):
+        return getattr(self, '-deletion_date', None)
+
     def soft_delete(self):
         self.doc_type += DELETED_SUFFIX
         self.save()
@@ -371,7 +380,9 @@ class CommCareCase(SafeSaveDocument, IndexHoldingMixIn, ComputedDocumentMixin,
         if self.server_modified_on >= sync_log.date:
             # check all of the actions since last sync for one that had a different sync token
             return any(filter(
-                lambda action: action.server_date > sync_log.date and action.sync_log_id != sync_log._id,
+                lambda action: action.server_date is not None and
+                               action.server_date > sync_log.date and
+                               action.sync_log_id != sync_log._id,
                 self.actions,
             ))
         return False

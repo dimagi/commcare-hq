@@ -6,7 +6,7 @@
     <script src="{% static 'style/js/main.js' %}"></script>
 {% endblock %}
 {% block js-inline %}{{ block.super }}
-    <script type="text/javascript">
+    <script>
         $(function () {
             $("#performance-form").koApplyBindings({
                 application: ko.observable('{{ form.app_id }}'),

@@ -11,6 +11,7 @@ from django.core.management.base import BaseCommand
 
 # External imports
 from corehq import privileges
+from corehq.apps.accounting.utils import ensure_grant, remove_grant
 from django_prbac.models import Grant, Role
 
 logger = logging.getLogger(__name__)
@@ -31,7 +32,7 @@ def cchq_prbac_bootstrap(apps, schema_editor):
 class Command(BaseCommand):
     help = 'Populate a fresh database with some sample roles and grants'
 
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option('--dry-run', action='store_true',  default=False,
                     help='Do not actually modify the database, just verbosely log what happen'),
         make_option('--verbose', action='store_true',  default=False,
@@ -57,11 +58,12 @@ class Command(BaseCommand):
 
         for (plan_role_slug, privs) in self.BOOTSTRAP_GRANTS.items():
             for priv_role_slug in privs:
-                self.ensure_grant(plan_role_slug, priv_role_slug, dry_run=dry_run)
+                ensure_grant(plan_role_slug, priv_role_slug, dry_run=dry_run, verbose=self.verbose)
 
         for old_priv in self.OLD_PRIVILEGES:
-            self.remove_grant(old_priv)
-            Role.objects.filter(slug=old_priv).delete()
+            remove_grant(old_priv, dry_run=dry_run)
+            if not dry_run:
+                Role.objects.filter(slug=old_priv).delete()
 
     def flush_roles(self):
         logger.info('Flushing ALL Roles...')
@@ -85,42 +87,6 @@ class Command(BaseCommand):
                     logger.info('Creating role: %s', role.name)
                 role.save()
 
-    def ensure_grant(self, grantee_slug, priv_slug, dry_run=False):
-        """
-        Adds a parameterless grant between grantee and priv, looked up by slug.
-        """
-
-        if dry_run:
-            grants = Grant.objects.filter(from_role__slug=grantee_slug,
-                                          to_role__slug=priv_slug)
-            if not grants:
-                logger.info('[DRY RUN] Granting privilege: %s => %s', grantee_slug, priv_slug)
-        else:
-            grantee = Role.objects.get(slug=grantee_slug)
-            priv = Role.objects.get(slug=priv_slug)
-
-            Role.get_cache().clear()
-            if grantee.has_privilege(priv):
-                if self.verbose:
-                    logger.info('Privilege already granted: %s => %s', grantee.slug, priv.slug)
-            else:
-                if self.verbose:
-                    logger.info('Granting privilege: %s => %s', grantee.slug, priv.slug)
-                Grant.objects.create(
-                    from_role=grantee,
-                    to_role=priv,
-                )
-
-    def remove_grant(self, priv_slug, dry_run=False):
-        grants = Grant.objects.filter(to_role__slug=priv_slug)
-        if dry_run:
-            if grants:
-                logger.info("[DRY RUN] Removing privilege %s", priv_slug)
-        else:
-            if grants:
-                grants.delete()
-                logger.info("Removing privilege %s", priv_slug)
-
     BOOTSTRAP_PRIVILEGES = [
         Role(slug=privileges.API_ACCESS, name='API Access', description=''),
         Role(slug=privileges.LOOKUP_TABLES, name='Lookup Tables', description=''),
@@ -129,6 +95,7 @@ class Command(BaseCommand):
         Role(slug=privileges.ACTIVE_DATA_MANAGEMENT, name='Active Data Management', description=''),
         Role(slug=privileges.CUSTOM_REPORTS, name='Custom Reports', description=''),
         Role(slug=privileges.ROLE_BASED_ACCESS, name='Role-based Access', description=''),
+        Role(slug=privileges.RESTRICT_ACCESS_BY_LOCATION, name='Restrict Access By Location', description=''),
         Role(slug=privileges.OUTBOUND_SMS, name='Outbound SMS',
              description='Use of any outbound messaging / SMS services.',
         ),
@@ -161,21 +128,37 @@ class Command(BaseCommand):
         Role(slug=privileges.ADVANCED_DOMAIN_SECURITY, name='Advanced Domain Security',
              description='Allows domains to set security policies for all web users'),
         Role(slug=privileges.BUILD_PROFILES, name='Application Profiles',
-             description='Allows domains to create application profiles to customize app deploys')
+             description='Allows domains to create application profiles to customize app deploys'),
+        Role(slug=privileges.EXCEL_DASHBOARD, name="Excel Dashbord",
+             description="Allows domains to create Excel dashboard html exports"),
+        Role(slug=privileges.DAILY_SAVED_EXPORT, name='DAILY_SAVED_EXPORT',
+             description="Allows domains to create Daily Saved Exports"),
+        Role(slug=privileges.ZAPIER_INTEGRATION, name='Zapier Integration',
+             description='Allows domains to use zapier (zapier.com) integration')
     ]
 
     BOOTSTRAP_PLANS = [
         Role(slug='community_plan_v0', name='Community Plan', description=''),
+        Role(slug='community_plan_v1', name='Community Plan', description=''),
         Role(slug='standard_plan_v0', name='Standard Plan', description=''),
         Role(slug='pro_plan_v0', name='Pro Plan', description=''),
         Role(slug='advanced_plan_v0', name='Advanced Plan', description=''),
         Role(slug='enterprise_plan_v0', name='Enterprise Plan', description=''),
+    ] + [
+        Role(slug='standard_plan_report_builder_v0', name='Standard Plan - 5 Reports', description=''),
+        Role(slug='pro_plan_report_builder_v0', name='Pro Plan - 5 Reports', description=''),
+        Role(slug='advanced_plan_report_builder_v0', name='Advanced Plan - 5 Reports', description=''),
     ]
 
-    community_plan_features = [
+    community_plan_v0_features = [
+        privileges.EXCEL_DASHBOARD,
+        privileges.DAILY_SAVED_EXPORT,
     ]
 
-    standard_plan_features = community_plan_features + [
+    community_plan_v1_features = [
+    ]
+
+    standard_plan_features = community_plan_v0_features + [
         privileges.API_ACCESS,
         privileges.LOOKUP_TABLES,
         privileges.OUTBOUND_SMS,
@@ -187,6 +170,7 @@ class Command(BaseCommand):
         privileges.ALLOW_EXCESS_USERS,
         privileges.LOCATIONS,
         privileges.USER_CASE,
+        privileges.ZAPIER_INTEGRATION
     ]
 
     pro_plan_features = standard_plan_features + [
@@ -198,6 +182,7 @@ class Command(BaseCommand):
         privileges.REPORT_BUILDER,
         privileges.DATA_CLEANUP,
         privileges.TEMPLATED_INTENTS,
+        privileges.RESTRICT_ACCESS_BY_LOCATION,
     ]
 
     advanced_plan_features = pro_plan_features + [
@@ -211,16 +196,33 @@ class Command(BaseCommand):
 
     enterprise_plan_features = advanced_plan_features + []
 
+    standard_plan_with_report_builder_features = standard_plan_features + [
+        privileges.REPORT_BUILDER_5,
+    ]
+
+    pro_plan_with_report_builder_features = pro_plan_features + [
+        privileges.REPORT_BUILDER_5,
+    ]
+
+    advanced_plan_with_report_builder_features = advanced_plan_features + [
+        privileges.REPORT_BUILDER_5,
+    ]
+
     OLD_PRIVILEGES = [
         BULK_CASE_AND_USER_MANAGEMENT,
         CROSS_PROJECT_REPORTS,
     ]
 
     BOOTSTRAP_GRANTS = {
-        'community_plan_v0': community_plan_features,
+        'community_plan_v0': community_plan_v0_features,
+        'community_plan_v1': community_plan_v1_features,
         'standard_plan_v0': standard_plan_features,
         'pro_plan_v0': pro_plan_features,
         'advanced_plan_v0': advanced_plan_features,
         'enterprise_plan_v0': enterprise_plan_features,
+
+        'standard_plan_report_builder_v0': standard_plan_with_report_builder_features,
+        'pro_plan_report_builder_v0': pro_plan_with_report_builder_features,
+        'advanced_plan_report_builder_v0': advanced_plan_with_report_builder_features,
     }
 

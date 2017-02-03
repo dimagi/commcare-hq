@@ -1,10 +1,6 @@
 (function () {
     'use strict';
     $.extend({
-        // thanks to http://stackoverflow.com/questions/1149454/non-ajax-get-post-using-jquery-plugin
-        getGo: function (url, params) {
-            document.location = url + '?' + $.param(params);
-        },
         postGo: function (url, params) {
             params.csrfmiddlewaretoken = $.cookie('csrftoken');
             var $form = $("<form>")

@@ -2,7 +2,7 @@ from datetime import datetime
 from django.test import TestCase
 from lxml import etree
 
-from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
+from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms, delete_all_ledgers
 from casexml.apps.case.tests.util import delete_all_sync_logs
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.tests.utils import generate_restore_payload
@@ -16,7 +16,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import Location, LocationType, SQLLocation
 from corehq.apps.products.models import Product, SQLProduct
-from corehq.apps.receiverwrapper import submit_form_locally
+from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.form_processor.parsers.ledgers.helpers import StockTransactionHelper
@@ -56,7 +56,7 @@ FIXED_USER = {
 }
 
 
-def bootstrap_domain(domain_name=TEST_DOMAIN):
+def bootstrap_domain(domain_name):
     # little test utility that makes a commtrack-enabled domain with
     # a default config and a location
     domain_obj = create_domain(domain_name)
@@ -83,7 +83,11 @@ def bootstrap_user(setup, username=TEST_USER, domain=TEST_DOMAIN,
     if home_loc == setup.loc.site_code:
         user.set_location(setup.loc)
 
-    user.save_verified_number(domain, phone_number, verified=True, backend_id=backend)
+    entry = user.get_or_create_phone_entry(phone_number)
+    entry.set_two_way()
+    entry.set_verified()
+    entry.backend_id = backend
+    entry.save()
     return CommCareUser.wrap(user.to_json())
 
 
@@ -151,7 +155,7 @@ class CommTrackTest(TestCase):
 
         self.backend, self.backend_mapping = setup_default_sms_test_backend()
 
-        self.domain = bootstrap_domain()
+        self.domain = bootstrap_domain(TEST_DOMAIN)
         bootstrap_location_types(self.domain.name)
         bootstrap_products(self.domain.name)
         self.ct_settings = CommtrackConfig.for_domain(self.domain.name)
@@ -161,6 +165,7 @@ class CommTrackTest(TestCase):
             optimal_window=60,
             min_periods=0,
         )
+        # todo: remove?
         if self.requisitions_enabled:
             self.ct_settings.requisition_config = get_default_requisition_config()
 
@@ -186,6 +191,7 @@ class CommTrackTest(TestCase):
         self.backend_mapping.delete()
         self.backend.delete()
         delete_all_xforms()
+        delete_all_ledgers()
         delete_all_cases()
         delete_all_sync_logs()
         delete_all_users()

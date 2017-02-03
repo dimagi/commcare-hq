@@ -3,56 +3,47 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.casegroups.dbaccessors import get_case_groups_in_domain, \
     get_number_of_case_groups_in_domain, get_case_group_meta_in_domain
 from corehq.apps.casegroups.models import CommCareCaseGroup
-from corehq.util.test_utils import DocTestMixin
 
 
-class DBAccessorsTest(TestCase, DocTestMixin):
+class DBAccessorsTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
         super(DBAccessorsTest, cls).setUpClass()
-        cls.domain = 'skbanskdjoasdkng'
-        cls.cases = [
-            CommCareCase(name='A', domain=cls.domain),
-            CommCareCase(name='B', domain=cls.domain),
-            CommCareCase(name='C', domain=cls.domain),
-            CommCareCase(name='D', domain=cls.domain),
-            CommCareCase(name='X', domain='bunny'),
-        ]
-        CommCareCase.get_db().bulk_save(cls.cases)
+        cls.domain = 'case-group-test'
         cls.case_groups = [
-            CommCareCaseGroup(name='alpha', domain=cls.domain,
-                              cases=[cls.cases[0]._id, cls.cases[1]._id]),
-            CommCareCaseGroup(name='beta', domain=cls.domain,
-                              cases=[cls.cases[2]._id, cls.cases[3]._id]),
-            CommCareCaseGroup(name='gamma', domain=cls.domain,
-                              cases=[cls.cases[0]._id, cls.cases[3]._id]),
-            CommCareCaseGroup(name='delta', domain=cls.domain,
-                              cases=[cls.cases[1]._id, cls.cases[2]._id]),
+            CommCareCaseGroup(name='A', domain=cls.domain, cases=['A', 'B']),
+            CommCareCaseGroup(name='b', domain=cls.domain, cases=['B', 'C']),
+            CommCareCaseGroup(name='C', domain=cls.domain, cases=['A', 'D']),
+            CommCareCaseGroup(name='D', domain=cls.domain, cases=['B', 'C']),
+            CommCareCaseGroup(name='E', domain=cls.domain + 'x', cases=['B', 'C']),
         ]
-        CommCareCaseGroup.get_db().bulk_save(cls.case_groups)
+        for group in cls.case_groups:
+            # Clear cache and save
+            group.save()
 
     @classmethod
     def tearDownClass(cls):
-        CommCareCase.get_db().bulk_delete(cls.cases)
-        CommCareCaseGroup.get_db().bulk_delete(cls.case_groups)
+        for group in cls.case_groups:
+            # Clear cache and delete
+            group.delete()
         super(DBAccessorsTest, cls).tearDownClass()
 
+    def get_ids(self, groups):
+        return [group.get_id for group in groups]
+
     def test_get_case_groups_in_domain(self):
-        self.assert_doc_lists_equal(
-            get_case_groups_in_domain(self.domain),
-            self.case_groups,
+        # Test that the result should be ordered by name
+        self.assertEqual(
+            self.get_ids(get_case_groups_in_domain(self.domain)),
+            self.get_ids(self.case_groups[0:4]),
         )
 
     def test_get_number_of_case_groups_in_domain(self):
-        self.assertEqual(
-            get_number_of_case_groups_in_domain(self.domain),
-            len(self.case_groups)
-        )
+        self.assertEqual(get_number_of_case_groups_in_domain(self.domain), 4)
 
     def test_get_case_group_meta_in_domain(self):
         self.assertEqual(
             get_case_group_meta_in_domain(self.domain),
-            sorted([(g._id, g.name) for g in self.case_groups],
-                   key=lambda (_, name): name)
+            [(group.get_id, group.name) for group in self.case_groups[0:4]],
         )

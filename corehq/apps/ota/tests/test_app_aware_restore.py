@@ -3,13 +3,14 @@ from mock import patch
 
 from casexml.apps.phone.tests.utils import create_restore_user
 from corehq import toggles
-from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.fixtures.mobile_ucr import report_fixture_generator
 from corehq.apps.app_manager.models import Application, ReportModule, ReportAppConfig
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.userreports.tests.utils import get_sample_report_config
+from corehq.apps.userreports.tests.utils import (
+    get_sample_report_config, mock_datasource_config, mock_sql_backend
+)
 
 
 class AppAwareSyncTests(TestCase):
@@ -27,7 +28,7 @@ class AppAwareSyncTests(TestCase):
         toggles.MOBILE_UCR.set(cls.domain, True, toggles.NAMESPACE_DOMAIN)
         cls.user = create_restore_user(cls.domain)
 
-        cls.app1 = Application.new_app(cls.domain, 'Test App 1', application_version=APP_V2)
+        cls.app1 = Application.new_app(cls.domain, 'Test App 1')
         cls.report_config1 = get_sample_report_config()
         cls.report_config1.domain = cls.domain
         cls.report_config1.save()
@@ -39,7 +40,7 @@ class AppAwareSyncTests(TestCase):
         module.report_configs = [ReportAppConfig.wrap(report_app_config)]
         cls.app1.save()
 
-        cls.app2 = Application.new_app(cls.domain, 'Test App 2', application_version=APP_V2)
+        cls.app2 = Application.new_app(cls.domain, 'Test App 2')
         cls.report_config2 = get_sample_report_config()
         cls.report_config2.domain = cls.domain
         cls.report_config2.save()
@@ -51,7 +52,7 @@ class AppAwareSyncTests(TestCase):
         module.report_configs = [ReportAppConfig.wrap(report_app_config)]
         cls.app2.save()
 
-        cls.app3 = Application.new_app(cls.domain, 'Test App 3', application_version=APP_V2)
+        cls.app3 = Application.new_app(cls.domain, 'Test App 3')
         cls.app3.save()
 
     @classmethod
@@ -72,7 +73,9 @@ class AppAwareSyncTests(TestCase):
         from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
         with patch.object(ConfigurableReportDataSource, 'get_data') as get_data_mock:
             get_data_mock.return_value = self.rows
-            fixtures = report_fixture_generator(self.user, '2.0', None)
+            with mock_sql_backend():
+                with mock_datasource_config():
+                    fixtures = report_fixture_generator(self.user, '2.0', None)
         reports = fixtures[0].findall('.//report')
         self.assertEqual(len(reports), 2)
         report_ids = {r.attrib.get('id') for r in reports}
@@ -85,7 +88,9 @@ class AppAwareSyncTests(TestCase):
         from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
         with patch.object(ConfigurableReportDataSource, 'get_data') as get_data_mock:
             get_data_mock.return_value = self.rows
-            fixtures = report_fixture_generator(self.user, '2.0', None, app=self.app1)
+            with mock_sql_backend():
+                with mock_datasource_config():
+                    fixtures = report_fixture_generator(self.user, '2.0', None, app=self.app1)
         reports = fixtures[0].findall('.//report')
         self.assertEqual(len(reports), 1)
         self.assertEqual(reports[0].attrib.get('id'), '123456')

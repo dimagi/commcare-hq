@@ -1,0 +1,30 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+
+<script type="text/html" id="usercase-config:case-transaction">
+    <div class="row top-spacer">
+        {% if not request|toggle_enabled:'USER_PROPERTY_EASY_REFS' %}
+        <div class="col-sm-6">
+            <div class="panel panel-appmanager"
+                 data-bind="template: 'case-config:case-transaction:case-preload'"></div>
+        </div>
+        {% endif %}
+        <div class="col-sm-6">
+            <div class="panel panel-appmanager"
+                 data-bind="template: 'case-config:case-transaction:case-properties'"></div>
+        </div>
+    </div>
+</script>
+
+<div id="usercase-config-ko">
+    <div class="clearfix">
+            {% if allow_usercase %}
+                <div data-bind="saveButton: saveUsercaseButton"></div>
+                <div data-bind="template: 'case-config:refresh-form-questions'"></div>
+            {% endif %}
+    </div>
+    <div class="spacer"></div>
+    <div data-bind="with: caseConfigViewModel" class="container-fluid">
+        <div data-bind="template: {name: 'usercase-config:case-transaction', data: usercase_transaction }"></div>
+    </div>
+</div>

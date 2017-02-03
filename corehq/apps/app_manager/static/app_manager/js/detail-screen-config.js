@@ -1,4 +1,4 @@
-/*globals $, _, uiElement, eventize, lcsMerge, COMMCAREHQ */
+/*globals $, _, uiElement, eventize, COMMCAREHQ, DOMPurify */
 
 hqDefine('app_manager/js/detail-screen-config.js', function () {
     var module = {};
@@ -39,39 +39,47 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
          * Enable autocomplete on the given jquery element with the given autocomplete
          * options.
          * @param $elem
-         * @param options
+         * @param options: Array of strings.
          */
         setUpAutocomplete: function($elem, options){
-            $elem.$edit_view.autocomplete({
-                source: function (request, response) {
-                    var availableTags = _.map(options, function(value) {
-                        var label = value;
-                        if (module.CC_DETAIL_SCREEN.isAttachmentProperty(value)) {
-                            label = (
-                                '<i class="fa fa-paperclip"></i> ' +
-                                label.substring(label.indexOf(":") + 1)
-                            );
-                        }
-                        return {value: value, label: label};
-                    });
-                    response(
-                        $.ui.autocomplete.filter(availableTags, request.term)
-                    );
-                },
-                minLength: 0,
+            if (!_.contains(options, $elem.value)) {
+                options.unshift($elem.value);
+            }
+            $elem.$edit_view.select2({
+                minimumInputLength: 0,
                 delay: 0,
-                select: function (event, ui) {
-                    $elem.val(ui.item.value);
-                    $elem.fire('change');
-                }
-            }).focus(function () {
-                $(this).autocomplete('search');
-            }).data("ui-autocomplete")._renderItem = function (ul, item) {
-                return $("<li></li>")
-                    .data("item.autocomplete", item)
-                    .append($("<a></a>").html(item.label))
-                    .appendTo(ul);
-            };
+                data: {
+                    results: _.map(options, function(o) {
+                        return {
+                            id: o,
+                            text: o,
+                        };
+                    }),
+                },
+                // Allow manually entered text in drop down, which is not supported by legacy select2.
+                createSearchChoice: function(term, data) {
+                    if (!_.find(data, function(d) { return d.text === term; })) {
+                        return {
+                            id: term,
+                            text: term,
+                        };
+                    }
+                },
+                escapeMarkup: function (m) { return DOMPurify.sanitize(m); },
+                formatResult: function(result) {
+                    var formatted = result.id;
+                    if (module.CC_DETAIL_SCREEN.isAttachmentProperty(result.id)) {
+                        formatted = (
+                            '<i class="fa fa-paperclip"></i> ' +
+                            result.id.substring(result.id.indexOf(":") + 1)
+                        );
+                    }
+                    return DOMPurify.sanitize(formatted);
+                },
+            }).on('change', function() {
+                $elem.val($elem.$edit_view.value);
+                $elem.fire('change');
+            });
             return $elem;
         }
 
@@ -84,16 +92,23 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
 
         self.textField = uiElement.input().val(typeof params.field !== 'undefined' ? params.field : "");
         module.CC_DETAIL_SCREEN.setUpAutocomplete(this.textField, params.properties);
+        self.sortCalculation = ko.observable(typeof params.sortCalculation !== 'undefined' ? params.sortCalculation : "");
 
         self.showWarning = ko.observable(false);
         self.hasValidPropertyName = function(){
             return module.DetailScreenConfig.field_val_re.test(self.textField.val());
         };
+        self.display = ko.observable(typeof params.display !== 'undefined' ? params.display : "");
+        self.display.subscribe(function () {
+            self.notifyButton();
+        });
+        self.toTitleCase = module.CC_DETAIL_SCREEN.toTitleCase;
         this.textField.on('change', function(){
             if (!self.hasValidPropertyName()){
                 self.showWarning(true);
             } else {
                 self.showWarning(false);
+                self.display(self.toTitleCase(this.val()));
                 self.notifyButton();
             }
         });
@@ -104,6 +119,9 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         });
         self.direction = ko.observable(typeof params.direction !== 'undefined' ? params.direction : "");
         self.direction.subscribe(function () {
+            self.notifyButton();
+        });
+        self.sortCalculation.subscribe(function () {
             self.notifyButton();
         });
 
@@ -150,13 +168,15 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         var self = this;
         self.sortRows = ko.observableArray([]);
 
-        self.addSortRow = function (field, type, direction, notify) {
+        self.addSortRow = function (field, type, direction, display, notify, sortCalculation) {
             self.sortRows.push(new SortRow({
                 field: field,
                 type: type,
                 direction: direction,
+                display: display,
                 saveButton: saveButton,
-                properties: properties
+                properties: properties,
+                sortCalculation: sortCalculation,
             }));
             if (notify) {
                 saveButton.fire('change');
@@ -196,19 +216,42 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         };
     };
 
-    var searchViewModel = function (searchProperties, lang, saveButton) {
+    var searchViewModel = function (searchProperties, includeClosed, defaultProperties, lang, saveButton) {
         var self = this,
-            DEFAULT_CLAIM_RELEVANT= "count(instance('casedb')/casedb/case[@case_id=instance('querysession')/session/data/case_id]) = 0";
+            DEFAULT_CLAIM_RELEVANT= "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0";
 
         var SearchProperty = function (name, label) {
             var self = this;
             self.name = ko.observable(name);
             self.label = ko.observable(label);
+
+            self.name.subscribe(function () {
+                saveButton.fire('change');
+            });
+            self.label.subscribe(function () {
+                saveButton.fire('change');
+            });
+        };
+
+        var DefaultProperty = function (property, defaultValue) {
+            var self = this;
+            self.property = ko.observable(property);
+            self.defaultValue = ko.observable(defaultValue);
+
+            self.property.subscribe(function () {
+                saveButton.fire('change');
+            });
+            self.defaultValue.subscribe(function () {
+                saveButton.fire('change');
+            });
         };
 
         self.relevant = ko.observable();
         self.default_relevant = ko.observable(true);
+        self.includeClosed = ko.observable(includeClosed);
         self.searchProperties = ko.observableArray();
+        self.defaultProperties = ko.observableArray();
+
         if (searchProperties.length > 0) {
             for (var i = 0; i < searchProperties.length; i++) {
                 // property labels come in keyed by lang.
@@ -221,9 +264,6 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         } else {
             self.searchProperties.push(new SearchProperty('', ''));
         }
-        self.searchProperties.subscribe(function () {
-            saveButton.fire('change');
-        });
 
         self.addProperty = function () {
             self.searchProperties.push(new SearchProperty('', ''));
@@ -247,6 +287,36 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
             );
         };
 
+        if (defaultProperties.length > 0) {
+            for (var k = 0; k < defaultProperties.length; k++) {
+                self.defaultProperties.push(new DefaultProperty(
+                    defaultProperties[k].property,
+                    defaultProperties[k].defaultValue
+                ));
+            }
+        } else {
+            self.defaultProperties.push(new DefaultProperty('', ''));
+        }
+        self.addDefaultProperty = function () {
+            self.defaultProperties.push(new DefaultProperty('',''));
+        };
+        self.removeDefaultProperty = function (property) {
+            self.defaultProperties.remove(property);
+        };
+        self._getDefaultProperties = function () {
+            return _.map(
+                _.filter(
+                    self.defaultProperties(),
+                    function (p) { return p.property().length > 0; }  // Skip properties where property is blank
+                ),
+                function (p) {
+                    return {
+                        property: p.property(),
+                        defaultValue: p.defaultValue(),
+                    };
+                }
+            );
+        };
         self._getRelevant = function() {
             if (self.default_relevant()) {
                 if (!self.relevant() || self.relevant().trim() === "") {
@@ -262,8 +332,23 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
             return {
                 properties: self._getProperties(),
                 relevant: self._getRelevant(),
+                include_closed: self.includeClosed(),
+                default_properties: self._getDefaultProperties(),
             };
         };
+
+        self.includeClosed.subscribe(function () {
+            saveButton.fire('change');
+        });
+        self.default_relevant.subscribe(function () {
+            saveButton.fire('change');
+        });
+        self.searchProperties.subscribe(function () {
+            saveButton.fire('change');
+        });
+        self.defaultProperties.subscribe(function () {
+            saveButton.fire('change');
+        });
     };
 
     var caseListLookupViewModel = function($el, state, lang, saveButton) {
@@ -281,9 +366,9 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         };
 
         self.initSaveButtonListeners = function($el){
-            $el.find('input[type=text], textarea').bind('textchange', _fireChange);
-            $el.find('input[type=checkbox]').bind('change', _fireChange);
-            $el.find(".case-list-lookup-icon button").bind("click", _fireChange); // Trigger save button when icon upload buttons are clicked
+            $el.find('input[type=text], textarea').on('textchange', _fireChange);
+            $el.find('input[type=checkbox]').on('change', _fireChange);
+            $el.find(".case-list-lookup-icon button").on("click", _fireChange); // Trigger save button when icon upload buttons are clicked
         };
 
         var _remove_empty = function(type){
@@ -857,7 +942,18 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                 this.containsCustomXMLConfiguration = options.containsCustomXMLConfiguration;
                 this.allowsTabs = options.allowsTabs;
                 this.useCaseTiles = ko.observable(spec[this.columnKey].use_case_tiles ? "yes" : "no");
+                this.showCaseTileColumn = ko.computed(function () {
+                    return that.useCaseTiles() === "yes" && COMMCAREHQ.toggleEnabled('CASE_LIST_TILE');
+                });
                 this.persistCaseContext = ko.observable(spec[this.columnKey].persist_case_context || false);
+                this.persistentCaseContextXML = ko.observable(spec[this.columnKey].persistent_case_context_xml|| 'case_name');
+                this.customVariablesViewModel = {
+                    enabled: COMMCAREHQ.toggleEnabled('CASE_LIST_CUSTOM_VARIABLES'),
+                    xml: ko.observable(spec[this.columnKey].custom_variables || ""),
+                };
+                this.customVariablesViewModel.xml.subscribe(function(){
+                    that.fireChange();
+                });
                 this.persistTileOnForms = ko.observable(spec[this.columnKey].persist_tile_on_forms || false);
                 this.enableTilePullDown = ko.observable(spec[this.columnKey].pull_down_tile || false);
                 this.allowsEmptyColumns = options.allowsEmptyColumns;
@@ -939,6 +1035,9 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                 this.persistCaseContext.subscribe(function(){
                     that.saveButton.fire('change');
                 });
+                this.persistentCaseContextXML.subscribe(function(){
+                    that.saveButton.fire('change');
+                });
                 this.persistTileOnForms.subscribe(function(){
                     that.saveButton.fire('change');
                 });
@@ -963,12 +1062,12 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                         column.saveAttempted(true);
                         if (!column.isTab) {
                             if (column.showWarning()){
-                                alert("There are errors in your property names");
+                                alert(gettext("There are errors in your property names"));
                                 return;
                             }
                         } else {
                             if (column.showWarning()){
-                                alert("There are errors in your tabs");
+                                alert(gettext("There are errors in your tabs"));
                                 return;
                             }
                             containsTab = true;
@@ -976,7 +1075,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                     }
                     if (containsTab){
                         if (!columns[0].isTab) {
-                            alert("All properties must be below a tab");
+                            alert(gettext("All properties must be below a tab"));
                             return;
                         }
                     }
@@ -1037,8 +1136,9 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                         function(c){return c.serialize();}
                     ));
 
-                    data.useCaseTiles = this.useCaseTiles() == "yes" ? true : false;
+                    data.useCaseTiles = this.useCaseTiles() === "yes" ? true : false;
                     data.persistCaseContext = this.persistCaseContext();
+                    data.persistentCaseContextXML = this.persistentCaseContextXML();
                     data.persistTileOnForms = this.persistTileOnForms();
                     data.enableTilePullDown = this.persistTileOnForms() ? this.enableTilePullDown() : false;
 
@@ -1072,7 +1172,9 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                             return {
                                 field: row.textField.val(),
                                 type: row.type(),
-                                direction: row.direction()
+                                direction: row.direction(),
+                                display: row.display(),
+                                sort_calculation: row.sortCalculation(),
                             };
                         }));
                     }
@@ -1085,6 +1187,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                     if (this.containsCustomXMLConfiguration){
                         data.custom_xml = this.config.customXMLViewModel.xml();
                     }
+                    data[this.columnKey + '_custom_variables'] = this.customVariablesViewModel.xml();
                     if (this.containsSearchConfiguration) {
                         data.search_properties = JSON.stringify(this.config.search.serialize());
                     }
@@ -1208,7 +1311,9 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                                 spec.sortRows[j].field,
                                 spec.sortRows[j].type,
                                 spec.sortRows[j].direction,
-                                false
+                                spec.sortRows[j].display[this.lang],
+                                false,
+                                spec.sortRows[j].sort_calculation
                             );
                         }
                     }
@@ -1229,6 +1334,8 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                     // Set up case search
                     this.search = new searchViewModel(
                         spec.searchProperties || [],
+                        spec.includeClosed,
+                        spec.defaultProperties,
                         spec.lang,
                         this.shortScreen.saveButton
                     );
@@ -1245,44 +1352,43 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
 
         DetailScreenConfig.message = {
 
-            MODEL: 'Model',
-            FIELD: 'Property',
-            HEADER: 'Display Text',
-            FORMAT: 'Format',
+            FIELD: gettext('Property'),
+            HEADER: gettext('Display Text'),
+            FORMAT: gettext('Format'),
 
-            PLAIN_FORMAT: 'Plain',
-            DATE_FORMAT: 'Date',
-            TIME_AGO_FORMAT: 'Time Since or Until Date',
-            TIME_AGO_EXTRA_LABEL: ' Measuring ',
+            PLAIN_FORMAT: gettext('Plain'),
+            DATE_FORMAT: gettext('Date'),
+            TIME_AGO_FORMAT: gettext('Time Since or Until Date'),
+            TIME_AGO_EXTRA_LABEL: gettext(' Measuring '),
             TIME_AGO_INTERVAL: {
-                YEARS: 'Years since date',
-                MONTHS: 'Months since date',
-                WEEKS: 'Weeks since date',
-                DAYS: 'Days since date',
-                DAYS_UNTIL: 'Days until date',
-                WEEKS_UNTIL: 'Weeks until date',
-                MONTHS_UNTIL: 'Months until date'
+                YEARS: gettext('Years since date'),
+                MONTHS: gettext('Months since date'),
+                WEEKS: gettext('Weeks since date'),
+                DAYS: gettext('Days since date'),
+                DAYS_UNTIL: gettext('Days until date'),
+                WEEKS_UNTIL: gettext('Weeks until date'),
+                MONTHS_UNTIL: gettext('Months until date'),
             },
-            PHONE_FORMAT: 'Phone Number',
-            ENUM_FORMAT: 'ID Mapping',
-            ENUM_IMAGE_FORMAT: 'Icon',
-            ENUM_EXTRA_LABEL: 'Mapping: ',
-            LATE_FLAG_FORMAT: 'Late Flag',
-            LATE_FLAG_EXTRA_LABEL: ' Days late ',
+            PHONE_FORMAT: gettext('Phone Number'),
+            ENUM_FORMAT: gettext('ID Mapping'),
+            ENUM_IMAGE_FORMAT: gettext('Icon'),
+            ENUM_EXTRA_LABEL: gettext('Mapping: '),
+            LATE_FLAG_FORMAT: gettext('Late Flag'),
+            LATE_FLAG_EXTRA_LABEL: gettext(' Days late '),
             FILTER_XPATH_EXTRA_LABEL: '',
-            INVISIBLE_FORMAT: 'Search Only',
-            ADDRESS_FORMAT: 'Address (Android/CloudCare)',
-            PICTURE_FORMAT: 'Picture',
-            AUDIO_FORMAT: 'Audio',
-            CALC_XPATH_FORMAT: 'Calculate',
+            INVISIBLE_FORMAT: gettext('Search Only'),
+            ADDRESS_FORMAT: gettext('Address'),
+            PICTURE_FORMAT: gettext('Picture'),
+            AUDIO_FORMAT: gettext('Audio'),
+            CALC_XPATH_FORMAT: gettext('Calculate'),
             CALC_XPATH_EXTRA_LABEL: '',
-            DISTANCE_FORMAT: 'Distance from current location',
+            DISTANCE_FORMAT: gettext('Distance from current location'),
 
-            ADD_COLUMN: 'Add to list',
-            COPY_COLUMN: 'Duplicate',
-            DELETE_COLUMN: 'Delete',
+            ADD_COLUMN: gettext('Add to list'),
+            COPY_COLUMN: gettext('Duplicate'),
+            DELETE_COLUMN: gettext('Delete'),
 
-            UNSAVED_MESSAGE: 'You have unsaved detail screen configurations.'
+            UNSAVED_MESSAGE: gettext('You have unsaved detail screen configurations.'),
         };
 
         DetailScreenConfig.TIME_AGO = {
@@ -1300,7 +1406,8 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
             {value: "enum", label: DetailScreenConfig.message.ENUM_FORMAT},
             {value: "late-flag", label: DetailScreenConfig.message.LATE_FLAG_FORMAT},
             {value: "invisible", label: DetailScreenConfig.message.INVISIBLE_FORMAT},
-            {value: "address", label: DetailScreenConfig.message.ADDRESS_FORMAT}
+            {value: "address", label: DetailScreenConfig.message.ADDRESS_FORMAT},
+            {value: "distance", label: DetailScreenConfig.message.DISTANCE_FORMAT}
         ];
 
         if (COMMCAREHQ.toggleEnabled('MM_CASE_PROPERTIES')) {
@@ -1312,22 +1419,17 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
 
         if (COMMCAREHQ.previewEnabled('ENUM_IMAGE')) {
             DetailScreenConfig.MENU_OPTIONS.push(
-                {value: "enum-image", label: DetailScreenConfig.message.ENUM_IMAGE_FORMAT + ' (Preview!)'}
+                {value: "enum-image", label: DetailScreenConfig.message.ENUM_IMAGE_FORMAT + gettext(' (Preview!)')}
             );
         }
 
         if (COMMCAREHQ.previewEnabled('CALC_XPATHS')) {
             DetailScreenConfig.MENU_OPTIONS.push(
-                {value: "calculate", label: DetailScreenConfig.message.CALC_XPATH_FORMAT + ' (Preview!)'}
+                {value: "calculate", label: DetailScreenConfig.message.CALC_XPATH_FORMAT + gettext(' (Preview!)')}
             );
         }
 
-        if (COMMCAREHQ.toggleEnabled('CASE_LIST_DISTANCE_SORT')) {
-            DetailScreenConfig.MENU_OPTIONS.push(
-                {value: "distance", label: DetailScreenConfig.message.DISTANCE_FORMAT + ' (Preview!)'}
-            );
-        }
-        DetailScreenConfig.field_format_warning_message = "Must begin with a letter and contain only letters, numbers, '-', and '_'";
+        DetailScreenConfig.field_format_warning_message = gettext("Must begin with a letter and contain only letters, numbers, '-', and '_'");
 
         DetailScreenConfig.field_val_re = new RegExp(
             '^(' + word + ':)*(' + word + '\\/)*#?' + word + '$'

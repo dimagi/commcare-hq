@@ -13,9 +13,9 @@ class NotDeliveredHandler(KeywordHandler):
     def handle(self):
         location = self.user.location
         status_type = None
-        if location.location_type == 'FACILITY':
+        if location.location_type_name == 'FACILITY':
             status_type = SupplyPointStatusTypes.DELIVERY_FACILITY
-        elif location.location_type == 'DISTRICT':
+        elif location.location_type_name == 'DISTRICT':
             status_type = SupplyPointStatusTypes.DELIVERY_DISTRICT
 
         self.respond(NOT_DELIVERED_CONFIRM)

@@ -17,7 +17,7 @@ from custom.ewsghana.tasks import first_soh_reminder, second_soh_reminder, third
     stockout_notification_to_web_supers, reminder_to_visit_website, reminder_to_submit_rrirv
 from custom.ewsghana.tests.handlers.utils import EWSTestCase
 from custom.ewsghana.utils import prepare_domain, bootstrap_user, bootstrap_web_user, \
-    set_sms_notifications
+    set_sms_notifications, user_needs_reminders
 
 TEST_DOMAIN = 'ews-reminders-test-domain'
 
@@ -162,6 +162,16 @@ class TestReminders(EWSTestCase):
         FacilityInCharge.objects.all().delete()
 
         super(TestReminders, cls).tearDownClass()
+
+    def test_needs_reminders_flag(self):
+        self.assertFalse('needs_reminders' in self.user1.user_data)
+        self.assertFalse(user_needs_reminders(self.user1))
+
+        self.assertEqual(self.user2.user_data['needs_reminders'], 'False')
+        self.assertFalse(user_needs_reminders(self.user2))
+
+        self.assertEqual(self.user3.user_data['needs_reminders'], 'True')
+        self.assertTrue(user_needs_reminders(self.user3))
 
     def test_first_soh_reminder(self):
         first_soh_reminder()
@@ -310,10 +320,12 @@ class TestReminders(EWSTestCase):
         self.assertEqual(smses.count(), 2)
 
     def test_visit_reminder(self):
+        now = datetime.utcnow()
+        self.web_user2.last_login = now - timedelta(weeks=1)
+        self.web_user2.save()
         reminder_to_visit_website()
         smses = SMS.objects.all()
         self.assertEqual(smses.count(), 0)
-        now = datetime.utcnow()
         self.web_user2.last_login = now - timedelta(weeks=14)
         self.web_user2.save()
 

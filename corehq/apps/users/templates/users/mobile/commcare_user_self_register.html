@@ -3,11 +3,11 @@
 {% load crispy_forms_tags %}
 {% load i18n %}
 
-{% block title %}{% trans "CommCareHQ Registration" %}{% endblock %}
+{% block title %}{% trans "Registration" %}{% endblock %}
 
 {% block header %}
 <div class="page-header container">
-    <h1>{% trans "CommCareHQ Registration" %}</h1>
+    <h1>{% blocktrans %}{{ hr_name }} Registration{% endblocktrans %}</h1>
 </div>
 {% endblock %}
 
@@ -16,18 +16,9 @@
 {% if invitation.already_registered %}
 <div>
     <p>
-        {% blocktrans with odk_url=invitation.odk_url %}
-        Thank you for registering. To complete CommCare installation you will have to:
-        <ol>
-            <li>Install CommCare.</li>
-            <li>Install a CommCare Application for collecting data.</li>
-        </ol>
-
-        Please do the following:
-        <ol>
-            <li>Please <a target="_blank" href="{{ google_play_store_url }}">click here</a> to go to the Google Play store, and then download and install CommCare.</li>
-            <li><strong>After</strong> installing CommCare, <a target="_blank" href="{{ odk_url }}">click here</a> to install the Application for collecting data.</li>
-        </ol>
+        {% blocktrans %}
+        Thank you for registering.
+        Please <a class="btn btn-default" target="_blank" href="{{ google_play_store_url }}">click here</a> to go to the Google Play store, and then download and install CommCare.
         {% endblocktrans %}
     </p>
 </div>

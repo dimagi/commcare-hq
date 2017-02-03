@@ -122,15 +122,18 @@ class MultiKeyViewArgsProvider(PaginatedViewArgsProvider):
     """
     def __init__(self, keys, include_docs=False, chunk_size=1000):
         self.keys = list(keys)
-        self.key_length = len(self.keys[0])
-        assert all(len(key) == self.key_length for key in self.keys), "All keys must be the same length"
-        super(MultiKeyViewArgsProvider, self).__init__({
+        first_key = self.keys[0]
+        self.key_length = len(first_key)
+        if isinstance(first_key, list):
+            assert all(len(key) == self.key_length for key in self.keys), "All keys must be the same length"
+
+        view_kwargs = {
             'limit': chunk_size,
             'include_docs': include_docs,
             'reduce': False,
-            'startkey': self.keys[0],
-            'endkey': self.keys[0] + [{}]
-        })
+        }
+        view_kwargs.update(self._get_key_kwargs(first_key))
+        super(MultiKeyViewArgsProvider, self).__init__(view_kwargs)
 
     def get_next_args(self, result, *last_args, **last_view_kwargs):
         try:
@@ -140,7 +143,9 @@ class MultiKeyViewArgsProvider(PaginatedViewArgsProvider):
         except StopIteration:
             # all docs for the current key have been processed
             # move on to the next key combo
-            last_key = last_view_kwargs["startkey"][:self.key_length]
+            last_key = last_view_kwargs["startkey"]
+            if isinstance(last_key, list):
+                last_key = last_key[:self.key_length]
             key_index = self.keys.index(last_key) + 1
             self.keys = self.keys[key_index:]
             try:
@@ -149,9 +154,20 @@ class MultiKeyViewArgsProvider(PaginatedViewArgsProvider):
                 raise StopIteration
             last_view_kwargs.pop('skip', None)
             last_view_kwargs.pop("startkey_docid", None)
-            last_view_kwargs['startkey'] = next_key
-            last_view_kwargs['endkey'] = next_key + [{}]
+            last_view_kwargs.update(self._get_key_kwargs(next_key))
         return last_args, last_view_kwargs
+
+    def _get_key_kwargs(self, key):
+        if isinstance(key, list):
+            return {
+                'startkey': key,
+                'endkey': key + [{}]
+            }
+        else:
+            return {
+                'startkey': key,
+                'endkey': key
+            }
 
 
 def paginate_view(db, view_name, chunk_size, event_handler=PaginationEventHandler(), **view_kwargs):

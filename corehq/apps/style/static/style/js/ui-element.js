@@ -61,7 +61,7 @@ var uiElement;
             setPlaceholderValue($elem, value);
         };
 
-        this.$edit_view = $elem.bind('change textchange', function () {
+        this.$edit_view = $elem.on('change textchange', function () {
             that.fire('change');
         });
         this.$noedit_view = $('<span class="ui-element-input"/>');
@@ -72,6 +72,9 @@ var uiElement;
         });
         this.setEdit(this.edit);
         this.val(initialValue);
+
+        // Trigger the textchange plugin's logic, so that it gets the correct initialValue set
+        $elem.trigger('keyup');
     };
     Input.prototype = {
         val: function (value) {

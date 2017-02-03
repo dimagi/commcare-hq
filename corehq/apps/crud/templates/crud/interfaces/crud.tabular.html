@@ -1,19 +1,19 @@
 {% extends "reports/async/tabular.html" %}
 {% load hq_shared_tags %}
 
-{% block js %} {{ block.super }}
-    <script type="text/javascript" src="{% static 'crud/js/crud.admin.js' %}"></script>
-{% endblock %}
-
 {% block js-inline %} {{ block.super }}
-    <script type="text/javascript">
-        var crud_interface = new CRUDAdminControl({
-            itemType: '{{ crud_item.type }}',
-            formSubmitPath: '{{ crud_item.url }}',
-            formType: '{{ crud_item.form }}',
-            {% if hideButton %}hideButton: 1{% endif %} // True is not accepted in JavaScript
-        });
-        crud_interface.init();
+  <script>
+    $.when(
+        $.getScript("{% static 'crud/js/crud.admin.js' %}")
+    ).done(function () {
+      var crud_interface = new CRUDAdminControl({
+        itemType: '{{ crud_item.type }}',
+        formSubmitPath: '{{ crud_item.url }}',
+        formType: '{{ crud_item.form }}',
+        {% if hideButton %}hideButton: 1{% endif %} // True is not accepted in JavaScript
+      });
+      crud_interface.init();
+    });
     </script>
 {% endblock %}
 

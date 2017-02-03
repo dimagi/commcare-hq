@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-import copy
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import logging
@@ -8,12 +7,13 @@ import re
 from restkit.errors import NoMoreData
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError
 from django.db import models
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, override as override_language
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
+from corehq.apps.users.landing_pages import ALLOWED_LANDING_PAGES
+from corehq.apps.users.permissions import EXPORT_PERMISSIONS
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.soft_assert import soft_assert
@@ -36,26 +36,20 @@ from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 from casexml.apps.phone.models import OTARestoreWebUser, OTARestoreCommCareUser
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.domain.shortcuts import create_user
-from corehq.apps.domain.utils import normalize_domain_name, domain_restricts_superusers
+from corehq.apps.domain.utils import normalize_domain_name, domain_restricts_superusers, guess_domain_language
 from corehq.apps.domain.models import Domain, LicenseAgreement
 from corehq.apps.users.util import (
-    normalize_username,
-    user_data_from_registration_form,
     user_display_string,
+    user_location_data,
 )
 from corehq.apps.users.tasks import tag_forms_as_deleted_rebuild_associated_cases, \
     tag_cases_as_deleted_and_remove_indices
 from corehq.apps.users.exceptions import InvalidLocationConfig
-from corehq.apps.sms.mixin import (
-    CommCareMobileContactMixin,
-    InvalidFormatException,
-    PhoneNumberInUseException,
-)
+from corehq.apps.sms.mixin import CommCareMobileContactMixin, apply_leniency
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.dates import force_to_datetime
-from dimagi.utils.django.database import get_unique_value
 from xml.etree import ElementTree
 
 from couchdbkit.exceptions import ResourceConflict, NoResultFound, BadValueError
@@ -86,9 +80,12 @@ class Permissions(DocumentSchema):
     edit_commcare_users = BooleanProperty(default=False)
     edit_data = BooleanProperty(default=False)
     edit_apps = BooleanProperty(default=False)
+    access_all_locations = BooleanProperty(default=True)
 
     view_reports = BooleanProperty(default=False)
     view_report_list = StringListProperty(default=[])
+
+    edit_billing = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):
@@ -164,6 +161,7 @@ class Permissions(DocumentSchema):
             edit_data=True,
             edit_apps=True,
             view_reports=True,
+            edit_billing=True
         )
 
 
@@ -172,10 +170,12 @@ class UserRolePresets(object):
     APP_EDITOR = "App Editor"
     READ_ONLY = "Read Only"
     FIELD_IMPLEMENTER = "Field Implementer"
+    BILLING_ADMIN = "Billing Admin"
     INITIAL_ROLES = (
         READ_ONLY,
         APP_EDITOR,
         FIELD_IMPLEMENTER,
+        BILLING_ADMIN
     )
 
     @classmethod
@@ -185,6 +185,7 @@ class UserRolePresets(object):
             cls.READ_ONLY: lambda: Permissions(view_reports=True),
             cls.FIELD_IMPLEMENTER: lambda: Permissions(edit_commcare_users=True, view_reports=True),
             cls.APP_EDITOR: lambda: Permissions(edit_apps=True, view_reports=True),
+            cls.BILLING_ADMIN: lambda: Permissions(edit_billing=True)
         }
 
     @classmethod
@@ -198,7 +199,11 @@ class UserRolePresets(object):
 class UserRole(QuickCachedDocumentMixin, Document):
     domain = StringProperty()
     name = StringProperty()
+    default_landing_page = StringProperty(
+        choices=[page.id for page in ALLOWED_LANDING_PAGES],
+    )
     permissions = SchemaProperty(Permissions)
+    is_non_admin_editable = BooleanProperty(default=False)
     is_archived = BooleanProperty(default=False)
 
     def get_qualified_id(self):
@@ -301,18 +306,6 @@ class UserRole(QuickCachedDocumentMixin, Document):
     def get_default(cls, domain=None):
         return cls(permissions=Permissions(), domain=domain, name=None)
 
-    @classmethod
-    def role_choices(cls, domain):
-        return [(role.get_qualified_id(), role.name or '(No Name)') for role in
-                [AdminUserRole(domain=domain)] + list(cls.by_domain(domain))]
-
-    @classmethod
-    def commcareuser_role_choices(cls, domain):
-        return [('none','(none)')] + [
-            (role.get_qualified_id(), role.name or '(No Name)')
-            for role in list(cls.by_domain(domain))
-        ]
-
     @property
     def ids_of_assigned_users(self):
         from corehq.apps.api.es import UserES
@@ -328,6 +321,19 @@ class UserRole(QuickCachedDocumentMixin, Document):
             assigned_user_ids.append(user['_id'])
 
         return assigned_user_ids
+
+    @classmethod
+    def get_preset_permission_by_name(cls, name):
+        matches = {k for k, v in PERMISSIONS_PRESETS.iteritems() if v['name'] == name}
+        return matches.pop() if matches else None
+
+    @classmethod
+    def preset_and_domain_role_names(cls, domain_name):
+        return cls.preset_permissions_names().union(set([role.name for role in cls.by_domain(domain_name)]))
+
+    @classmethod
+    def preset_permissions_names(cls):
+        return {details['name'] for role, details in PERMISSIONS_PRESETS.iteritems()}
 
 PERMISSIONS_PRESETS = {
     'edit-apps': {'name': 'App Editor', 'permissions': Permissions(edit_apps=True, view_reports=True)},
@@ -367,6 +373,7 @@ class DomainMembership(Membership):
     override_global_tz = BooleanProperty(default=False)
     role_id = StringProperty()
     location_id = StringProperty()
+    assigned_location_ids = StringListProperty()
     program_id = StringProperty()
 
     @property
@@ -574,7 +581,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
     @memoized
     def has_permission(self, domain, permission, data=None):
         # is_admin is the same as having all the permissions set
-        if self.is_global_admin():
+        if (self.is_global_admin() and (domain is None or not domain_restricts_superusers(domain))):
             return True
         elif self.is_domain_admin(domain):
             return True
@@ -589,7 +596,6 @@ class _AuthorizableMixin(IsMemberOfMixin):
     def get_role(self, domain=None, checking_global_admin=True):
         """
         Get the role object for this user
-
         """
         if domain is None:
             # default to current_domain for django templates
@@ -600,7 +606,7 @@ class _AuthorizableMixin(IsMemberOfMixin):
 
         if checking_global_admin and self.is_global_admin():
             return AdminUserRole(domain=domain)
-        if self.is_member_of(domain): #need to have a way of seeing is_member_of
+        if self.is_member_of(domain):
             return self.get_domain_membership(domain).role
         else:
             raise DomainMembershipError()
@@ -758,12 +764,27 @@ class EulaMixin(DocumentSchema):
         return current_eula
 
 
+class DeviceIdLastUsed(DocumentSchema):
+    device_id = StringProperty()
+    last_used = DateTimeProperty()
+
+    def __eq__(self, other):
+        return all(getattr(self, p) == getattr(other, p) for p in self.properties())
+
+
 class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMixin):
     """
     A user (for web and commcare)
     """
     base_doc = 'CouchUser'
+
+    # todo: it looks like this is only ever set to a useless string and we should probably just remove it
+    # https://github.com/dimagi/commcare-hq/pull/14087#discussion_r90423396
     device_ids = ListProperty()
+
+    # this is the real list of devices
+    devices = SchemaListProperty(DeviceIdLastUsed)
+
     phone_numbers = ListProperty()
     created_on = DateTimeProperty(default=datetime(year=1900, month=1, day=1))
     #    For now, 'status' is things like:
@@ -777,6 +798,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     announcements_seen = ListProperty()
     user_data = DictProperty()
     location_id = StringProperty()
+    assigned_location_ids = StringListProperty()
     has_built_app = BooleanProperty(default=False)
     analytics_enabled = BooleanProperty(default=True)
 
@@ -815,6 +837,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             return self.username.split("@")[0]
         else:
             return self.username
+
+    @property
+    def username_in_report(self):
+        return user_display_string(self.username, self.first_name, self.last_name)
 
     def html_username(self):
         username = self.raw_username
@@ -870,6 +896,11 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         username = self.username.split("@")[0]
         return "%s <%s>" % (self.full_name, username) if self.full_name else username
 
+    @property
+    def days_since_created(self):
+        # Note this does not round, but returns the floor of days since creation
+        return (datetime.utcnow() - self.created_on).days
+
     formatted_name = full_name
     name = full_name
 
@@ -917,7 +948,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
                 del self.phone_numbers[i]
                 break
         self.save()
-        self.delete_verified_number(phone_number)
+        self.delete_phone_entry(phone_number)
 
     def get_django_user(self):
         return User.objects.get(username__iexact=self.username)
@@ -945,26 +976,25 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         from corehq.apps.sms.models import PhoneNumber
         from corehq.apps.hqwebapp.doc_info import get_object_url
 
-        phone_entries = self.get_verified_numbers(True)
+        phone_entries = self.get_phone_entries()
 
         def get_phone_info(phone):
             info = {}
-            phone_entry = phone_entries.get(phone)
+            phone_entry = phone_entries.get(apply_leniency(phone))
 
-            if phone_entry:
-                status = 'verified' if phone_entry.verified else 'pending'
+            if phone_entry and phone_entry.verified:
+                status = 'verified'
+            elif phone_entry and phone_entry.pending_verification:
+                status = 'pending'
             else:
-                try:
-                    self.verify_unique_number(phone)
-                    status = 'unverified'
-                except PhoneNumberInUseException:
+                duplicate = PhoneNumber.get_reserved_number(phone)
+                if duplicate:
                     status = 'duplicate'
-                    duplicate = PhoneNumber.by_phone(phone, include_pending=True)
                     if requesting_user.is_member_of(duplicate.domain):
                         info['dup_url'] = get_object_url(duplicate.domain,
                             duplicate.owner_doc_type, duplicate.owner_id)
-                except InvalidFormatException:
-                    status = 'invalid'
+                else:
+                    status = 'unverified'
 
             info.update({'number': phone, 'status': status})
             return info
@@ -1062,14 +1092,20 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         except User.DoesNotExist:
             django_user = User(username=self.username)
         for attr in DjangoUserMixin.ATTRS:
-            attr_val = getattr(self, attr) or ''
+            attr_val = getattr(self, attr)
+            if attr in [
+                'is_active',
+                'is_staff',
+                'is_superuser',
+            ]:
+                attr_val = attr_val if attr_val is True else False
+            elif not attr_val and attr != 'last_login':
+                attr_val = ''
             # truncate names when saving to django
             if attr == 'first_name' or attr == 'last_name':
                 attr_val = attr_val[:30]
-            if attr == 'last_login' and attr_val == '':
-                attr_val = None
             setattr(django_user, attr, attr_val)
-        django_user.DO_NOT_SAVE_COUCH_USER= True
+        django_user.DO_NOT_SAVE_COUCH_USER = True
         return django_user
 
     def sync_from_old_couch_user(self, old_couch_user):
@@ -1140,6 +1176,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         else:
             return None
 
+
     def clear_quickcache_for_user(self):
         from corehq.apps.hqwebapp.templatetags.hq_shared_tags import _get_domain_list
         from corehq.apps.sms.util import is_user_contact_active
@@ -1209,7 +1246,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         else:
             couch_user.created_on = datetime.utcnow()
 
-        user_data = kwargs.get('user_data', {})
+        user_data = {'commcare_project': domain}
+        user_data.update(kwargs.get('user_data', {}))
         couch_user.user_data = user_data
         couch_user.sync_from_django_user(django_user)
         return couch_user
@@ -1275,21 +1313,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         return self.base_doc.endswith(DELETED_SUFFIX)
 
     def get_viewable_reports(self, domain=None, name=False, slug=False):
-        try:
-            domain = domain or self.current_domain
-        except AttributeError:
-            domain = None
-
-        if self.is_commcare_user():
-            role = self.get_role(domain)
-            if role is None:
-                models = []
-            else:
-                models = role.permissions.view_report_list
-        else:
-            dm = self.get_domain_membership(domain)
-            models = dm.viewable_reports() if dm else []
-
         def slug_name(model):
             try:
                 if slug:
@@ -1300,22 +1323,36 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
                 logging.warning("Unable to load report model: %s", model)
                 return None
 
+        models = self._get_viewable_report_slugs(domain)
         if slug or name:
             return filter(None, [slug_name(m) for m in models])
 
         return models
 
-    def get_exportable_reports(self, domain=None):
-        viewable_reports = self.get_viewable_reports(domain=domain, slug=True)
-        from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
-        export_reports = set(DataInterfaceDispatcher().get_reports_dict(domain).keys())
-        return list(export_reports.intersection(viewable_reports))
+    def _get_viewable_report_slugs(self, domain):
+        try:
+            domain = domain or self.current_domain
+        except AttributeError:
+            domain = None
 
-    def can_export_data(self, domain=None):
-        can_see_exports = self.can_view_reports()
-        if not can_see_exports:
-            can_see_exports = bool(self.get_exportable_reports(domain))
-        return can_see_exports
+        if self.is_commcare_user():
+            role = self.get_role(domain)
+            if role is None:
+                return []
+            else:
+                return role.permissions.view_report_list
+        else:
+            dm = self.get_domain_membership(domain)
+            return dm.viewable_reports() if dm else []
+
+    def can_view_some_reports(self, domain):
+        return self.can_view_reports(domain) or bool(self.get_viewable_reports(domain))
+
+    def can_access_any_exports(self, domain=None):
+        return self.can_view_reports(domain) or any([
+            permission_slug for permission_slug in self._get_viewable_report_slugs(domain)
+            if permission_slug in EXPORT_PERMISSIONS
+        ])
 
     def is_current_web_user(self, request):
         return self.user_id == request.couch_user.user_id
@@ -1325,16 +1362,21 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         if item.startswith('can_'):
             perm = item[len('can_'):]
             if perm:
-                def fn(domain=None, data=None):
-                    try:
-                        domain = domain or self.current_domain
-                    except AttributeError:
-                        domain = None
-                    return self.has_permission(domain, perm, data)
+                fn = self._get_perm_check_fn(perm)
                 fn.__name__ = item
                 return fn
+
         raise AttributeError("'{}' object has no attribute '{}'".format(
             self.__class__.__name__, item))
+
+    def _get_perm_check_fn(self, perm):
+        def fn(domain=None, data=None):
+            try:
+                domain = domain or self.current_domain
+            except AttributeError:
+                domain = None
+            return self.has_permission(domain, perm, data)
+        return fn
 
 
 class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin):
@@ -1350,20 +1392,21 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def wrap(cls, data):
         # migrations from using role_id to using the domain_memberships
         role_id = None
-        should_save = False
-        if not data.has_key('domain_membership') or not data['domain_membership'].get('domain', None):
-            should_save = True
-        if data.has_key('role_id'):
+        if 'role_id' in data:
             role_id = data["role_id"]
             del data['role_id']
-            should_save = True
-        self = super(CommCareUser, cls).wrap(data)
-        if should_save:
-            self.domain_membership = DomainMembership(domain=data.get('domain', ""))
-            if role_id:
-                self.domain_membership.role_id = role_id
+        if not data.get('domain_membership', {}).get('domain', None):
+            data['domain_membership'] = DomainMembership(
+                domain=data.get('domain', ""), role_id=role_id
+            ).to_json()
+        if not data.get('user_data', {}).get('commcare_project'):
+            data['user_data'] = dict(data['user_data'], **{'commcare_project': data['domain']})
 
-        return self
+        # Todo; remove after migration
+        from corehq.apps.users.management.commands import add_multi_location_property
+        add_multi_location_property.Command().migrate_user(data)
+
+        return super(CommCareUser, cls).wrap(data)
 
     def clear_quickcache_for_user(self):
         self.get_usercase_id.clear(self)
@@ -1438,86 +1481,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def project(self):
         return Domain.get_by_name(self.domain)
 
-    @property
-    def username_in_report(self):
-        return user_display_string(self.username, self.first_name, self.last_name)
-
-    @classmethod
-    def create_or_update_from_xform(cls, xform):
-        _assert = soft_assert('@'.join(['droberts', 'dimagi.com']))
-        _assert(False, 'someone actually called CommCareUser.create_or_update_from_xform')
-        # if we have 1,000,000 users with the same name in a domain
-        # then we have bigger problems then duplicate user accounts
-        MAX_DUPLICATE_USERS = 1000000
-
-        def create_or_update_safe(username, password, uuid, date, registering_phone_id, domain, user_data, **kwargs):
-            # check for uuid conflicts, if one exists, respond with the already-created user
-            conflicting_user = CommCareUser.get_by_user_id(uuid)
-
-            # we need to check for username conflicts, other issues
-            # and make sure we send the appropriate conflict response to the phone
-            try:
-                username = normalize_username(username, domain)
-            except ValidationError:
-                raise Exception("Username (%s) is invalid: valid characters include [a-z], "
-                                "[0-9], period, underscore, and single quote" % username)
-
-            if conflicting_user:
-                # try to update. If there are username conflicts, we have to resolve them
-                if conflicting_user.domain != domain:
-                    raise Exception("Found a conflicting user in another domain. This is not allowed!")
-
-                saved = False
-                to_append = 2
-                prefix, suffix = username.split("@")
-                while not saved and to_append < MAX_DUPLICATE_USERS:
-                    try:
-                        conflicting_user.change_username(username)
-                        conflicting_user.password = password
-                        conflicting_user.date = date
-                        conflicting_user.device_id = registering_phone_id
-                        conflicting_user.user_data = user_data
-                        conflicting_user.save()
-                        saved = True
-                    except CouchUser.Inconsistent:
-                        username = "%(pref)s%(count)s@%(suff)s" % {
-                                     "pref": prefix, "count": to_append,
-                                     "suff": suffix}
-                        to_append = to_append + 1
-                if not saved:
-                    raise Exception("There are over 1,000,000 users with that base name in your domain. REALLY?!? REALLY?!?!")
-                return (conflicting_user, False)
-
-            try:
-                User.objects.get(username=username)
-            except User.DoesNotExist:
-                # Desired outcome
-                pass
-            else:
-                # Come up with a suitable username
-                prefix, suffix = username.split("@")
-                username = get_unique_value(User.objects, "username", prefix, sep="", suffix="@%s" % suffix)
-            couch_user = cls.create(domain, username, password,
-                uuid=uuid,
-                device_id=registering_phone_id,
-                date=date,
-                user_data=user_data
-            )
-            return (couch_user, True)
-
-        # will raise TypeError if xform.form doesn't have all the necessary params
-        return create_or_update_safe(
-            domain=xform.domain,
-            user_data=user_data_from_registration_form(xform),
-            **dict([(arg, xform.form_data[arg]) for arg in (
-                'username',
-                'password',
-                'uuid',
-                'date',
-                'registering_phone_id'
-            )])
-        )
-
     def is_commcare_user(self):
         return True
 
@@ -1586,9 +1549,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 self.user_id, self.domain, form_id_list, deletion_id, deletion_date, deleted_cases=deleted_cases
             )
 
-        for phone_number in self.get_verified_numbers(True).values():
-            phone_number.delete()
-
         try:
             django_user = self.get_django_user()
         except User.DoesNotExist:
@@ -1601,11 +1561,15 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         from corehq.apps.groups.models import Group
         # get faked location group objects
         groups = []
-        if self.sql_location:
-            groups.extend(self.sql_location.get_case_sharing_groups(self._id))
+        for sql_location in self.get_sql_locations(self.domain):
+            groups.extend(sql_location.get_case_sharing_groups(self._id))
 
         groups += [group for group in Group.by_user(self) if group.case_sharing]
         return groups
+
+    def get_reporting_groups(self):
+        from corehq.apps.groups.models import Group
+        return [group for group in Group.by_user(self) if group.reporting]
 
     @classmethod
     def cannot_share(cls, domain, limit=None, skip=0):
@@ -1680,10 +1644,37 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 pass
         return None
 
+    def get_location_ids(self, domain):
+        return self.assigned_location_ids
+
+    def get_sql_locations(self, domain):
+        from corehq.apps.locations.models import SQLLocation
+        if self.assigned_location_ids:
+            return SQLLocation.objects.filter(location_id__in=self.assigned_location_ids)
+        else:
+            return SQLLocation.objects.none()
+
+    def add_to_assigned_locations(self, location):
+        if self.location_id:
+            if location.location_id in self.assigned_location_ids:
+                return
+            self.assigned_location_ids.append(location.location_id)
+            self.get_domain_membership(self.domain).assigned_location_ids.append(location.location_id)
+            self.user_data['commcare_location_ids'] = user_location_data(self.assigned_location_ids)
+            self.save()
+        else:
+            self.set_location(location)
+
+    @memoized
+    def get_sql_location(self, domain):
+        return self.sql_location
+
     def set_location(self, location):
         """
-        Set the location, and all important user data, for
+        Set the primary location, and all important user data, for
         the user.
+
+        :param location: may be a sql or couch location
         """
         from corehq.apps.fixtures.models import UserFixtureType
 
@@ -1714,25 +1705,106 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             location.group_id
         })
 
-        self.location_id = location.location_id
         self.update_fixture_status(UserFixtureType.LOCATION)
+        self.location_id = location.location_id
         self.get_domain_membership(self.domain).location_id = location.location_id
+        if self.location_id not in self.assigned_location_ids:
+            self.assigned_location_ids.append(self.location_id)
+            self.get_domain_membership(self.domain).assigned_location_ids.append(self.location_id)
+            self.user_data['commcare_location_ids'] = user_location_data(self.assigned_location_ids)
         self.save()
 
-    def unset_location(self):
+    def unset_location(self, fall_back_to_next=False):
         """
-        Unset the location and remove all associated user data and cases
+        Resets primary location to next available location from assigned_location_ids.
+            If there are no more locations in assigned_location_ids,
+            then the primary location and user data are cleared
+
+            If fall_back_to_next is True, primary location is not set to next but cleared.
+            This option exists only to be backwards compatible when user can only have one location
         """
         from corehq.apps.fixtures.models import UserFixtureType
+        from corehq.apps.locations.models import SQLLocation
+        old_primary_location_id = self.location_id
+        if old_primary_location_id:
+            self._remove_location_from_user(old_primary_location_id)
 
-        self.user_data.pop('commcare_location_id', None)
-        self.user_data.pop('commtrack-supply-point', None)
-        self.user_data.pop('commcare_primary_case_sharing_id', None)
-        self.location_id = None
-        self.clear_location_delegates()
-        self.update_fixture_status(UserFixtureType.LOCATION)
-        self.get_domain_membership(self.domain).location_id = None
-        self.save()
+        if self.assigned_location_ids:
+            self.user_data['commcare_location_ids'] = user_location_data(self.assigned_location_ids)
+        elif self.user_data.get('commcare_location_ids'):
+            self.user_data.pop('commcare_location_ids')
+
+        if self.assigned_location_ids and fall_back_to_next:
+            new_primary_location_id = self.assigned_location_ids[0]
+            self.set_location(SQLLocation.objects.get(location_id=new_primary_location_id))
+        else:
+            self.user_data.pop('commcare_location_id', None)
+            self.user_data.pop('commtrack-supply-point', None)
+            self.user_data.pop('commcare_primary_case_sharing_id', None)
+            self.location_id = None
+            self.clear_location_delegates()
+            self.update_fixture_status(UserFixtureType.LOCATION)
+            self.get_domain_membership(self.domain).location_id = None
+            self.save()
+
+    def unset_location_by_id(self, location_id, fall_back_to_next=False):
+        """
+        Unset a location that the user is assigned to that may or may not be primary location.
+            If the location_id is primary-location, then next available location from
+            assigned_location_ids is set as the primary-location.
+            If fall_back_to_next is True, primary location is not set to next
+        """
+        if location_id == self.location_id:
+            # check if primary location
+            self.unset_location(fall_back_to_next)
+        else:
+            self._remove_location_from_user(location_id)
+
+            if self.assigned_location_ids:
+                self.user_data['commcare_location_ids'] = user_location_data(self.assigned_location_ids)
+            else:
+                self.user_data.pop('commcare_location_ids')
+            self.save()
+
+    def _remove_location_from_user(self, location_id):
+        try:
+            self.assigned_location_ids.remove(location_id)
+        except ValueError:
+            notify_exception(None, "Location missing from user", {
+                'user_id': self._id,
+                'location_id': location_id
+            })
+        try:
+            self.get_domain_membership(self.domain).assigned_location_ids.remove(location_id)
+        except ValueError:
+            notify_exception(None, "Location missing from domain membership", {
+                'user_id': self._id,
+                'location_id': location_id
+            })
+
+    def reset_locations(self, location_ids):
+        """
+        Reset user's assigned_locations to given location_ids and update user data.
+            This should be called after updating primary location via set_location/unset_location
+            If primary-location is not set, then next available location from
+            assigned_location_ids is set as the primary-location
+        """
+        from corehq.apps.locations.models import SQLLocation
+
+        self.assigned_location_ids = location_ids
+        self.get_domain_membership(self.domain).assigned_location_ids = location_ids
+        if location_ids:
+            self.user_data.update({
+                'commcare_location_ids': user_location_data(location_ids)
+            })
+        else:
+            self.user_data.pop('commcare_location_ids')
+
+        # try to set primary-location if not set already
+        if not self.location_id and location_ids:
+            self.set_location(SQLLocation.objects.get(location_id=location_ids[0]))
+        else:
+            self.save()
 
     @property
     def locations(self):
@@ -1741,12 +1813,11 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         locations per user flag set. It will error if you try
         to call it on a normal domain.
         """
+        from corehq.apps.locations.models import SQLLocation
         if not self.project.supports_multiple_locations_per_user:
             raise InvalidLocationConfig(
                 "Attempting to access multiple locations for a user in a domain that does not support this."
             )
-
-        from corehq.apps.locations.models import Location
 
         def _get_linked_supply_point_ids():
             mapping = self.get_location_map_case()
@@ -1757,12 +1828,11 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         def _get_linked_supply_points():
             return SupplyInterface(self.domain).get_supply_points(_get_linked_supply_point_ids())
 
-        def _gen():
-            location_ids = [sp.location_id for sp in _get_linked_supply_points()]
-            for doc in iter_docs(Location.get_db(), location_ids):
-                yield Location.wrap(doc)
-
-        return list(_gen())
+        location_ids = [sp.location_id for sp in _get_linked_supply_points()]
+        return list(SQLLocation.objects
+                    .filter(domain=self.domain,
+                            location_id__in=location_ids)
+                    .couch_locations())
 
     def supply_point_index_mapping(self, supply_point, clear=False):
         from corehq.apps.commtrack.exceptions import (
@@ -1928,6 +1998,23 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         case = CaseAccessors(self.domain).get_case_by_domain_hq_user_id(self._id, USERCASE_TYPE)
         return case.case_id if case else None
 
+    def update_device_id_last_used(self, device_id, when=None):
+        """
+        Sets the last_used date for the device to be the current time
+
+        Does NOT save the user object.
+        """
+        when = when or datetime.utcnow()
+        for user_device_id_last_used in self.devices:
+            if user_device_id_last_used.device_id == device_id:
+                user_device_id_last_used.last_used = when
+                break
+        else:
+            self.devices.append(DeviceIdLastUsed(
+                device_id=device_id,
+                last_used=when
+            ))
+
 
 class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     program_id = StringProperty()
@@ -1935,6 +2022,11 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
 
     login_attempts = IntegerProperty(default=0)
     attempt_date = DateProperty()
+    fcm_device_token = StringProperty()
+    # this property is used to mark users who signed up from internal invitations
+    # such as those going through the recruiting pipeline
+    # to better mark them in our analytics
+    atypical_user = BooleanProperty(default=False)
 
     def sync_from_old_couch_user(self, old_couch_user):
         super(WebUser, self).sync_from_old_couch_user(old_couch_user)
@@ -1991,69 +2083,6 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     def get_domains(self):
         return [dm.domain for dm in self.domain_memberships]
 
-    @memoized
-    def has_permission(self, domain, permission, data=None):
-        # is_admin is the same as having all the permissions set
-        if (self.is_global_admin() and (domain is None or not domain_restricts_superusers(domain))):
-            return True
-        elif self.is_domain_admin(domain):
-            return True
-
-        dm_list = list()
-
-        dm = self.get_domain_membership(domain)
-        if dm:
-            dm_list.append([dm, ''])
-
-        # now find out which dm has the highest permissions
-        if dm_list:
-            role = self.total_domain_membership(dm_list, domain)
-            dm = CustomDomainMembership(domain=domain, custom_role=role)
-            return dm.has_permission(permission, data)
-        else:
-            return False
-
-    @memoized
-    def get_role(self, domain=None, include_teams=True, checking_global_admin=True):
-        """
-        Get the role object for this user
-
-        """
-        if domain is None:
-            # default to current_domain for django templates
-            domain = self.current_domain
-
-        if checking_global_admin and self.is_global_admin():
-            return AdminUserRole(domain=domain)
-
-        if not include_teams:
-            return super(WebUser, self).get_role(domain)
-
-        dm_list = list()
-
-        dm = self.get_domain_membership(domain)
-        if dm:
-            dm_list.append([dm, ''])
-
-        # now find out which dm has the highest permissions
-        if dm_list:
-            return self.total_domain_membership(dm_list, domain)
-        else:
-            raise DomainMembershipError()
-
-    def total_domain_membership(self, domain_memberships, domain):
-        #sort out the permissions
-        total_permission = Permissions()
-        if domain_memberships:
-            for domain_membership, membership_source in domain_memberships:
-                permission = domain_membership.permissions
-                total_permission |= permission
-
-            #set up a user role
-            return UserRole(domain=domain, permissions=total_permission,
-                            name=', '.join(["%s %s" % (dm.role.name, ms) for dm, ms in domain_memberships if dm.role]))
-            #set up a domain_membership
-
     @classmethod
     def get_admins_by_domain(cls, domain):
         user_ids = cls.ids_by_domain(domain)
@@ -2077,16 +2106,67 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             if user_doc['email'].endswith('@dimagi.com'):
                 yield user_doc['email']
 
+    def add_to_assigned_locations(self, domain, location):
+        membership = self.get_domain_membership(domain)
+
+        if membership.location_id:
+            if location.location_id in membership.assigned_location_ids:
+                return
+            membership.assigned_location_ids.append(location.location_id)
+            self.save()
+        else:
+            self.set_location(domain, location)
+
     def set_location(self, domain, location_object_or_id):
+        # set the primary location for user's domain_membership
         if isinstance(location_object_or_id, basestring):
             location_id = location_object_or_id
         else:
-            location_id = location_object_or_id._id
-        self.get_domain_membership(domain).location_id = location_id
+            location_id = location_object_or_id.location_id
+
+        membership = self.get_domain_membership(domain)
+        membership.location_id = location_id
+        if self.location_id not in membership.assigned_location_ids:
+            membership.assigned_location_ids.append(location_id)
         self.save()
 
-    def unset_location(self, domain):
-        self.get_domain_membership(domain).location_id = None
+    def unset_location(self, domain, fall_back_to_next=False):
+        """
+        Change primary location to next location from assigned_location_ids,
+        if there are no more locations in assigned_location_ids, primary location is cleared
+        """
+        membership = self.get_domain_membership(domain)
+        old_location_id = membership.location_id
+        if old_location_id:
+            membership.assigned_location_ids.remove(old_location_id)
+        if membership.assigned_location_ids and fall_back_to_next:
+            membership.location_id = membership.assigned_location_ids[0]
+        else:
+            membership.location_id = None
+        self.save()
+
+    def unset_location_by_id(self, domain, location_id, fall_back_to_next=False):
+        """
+        Unset a location that the user is assigned to that may or may not be primary location
+        """
+        membership = self.get_domain_membership(domain)
+        primary_id = membership.location_id
+        if location_id == primary_id:
+            # check if primary location
+            self.unset_location(domain, fall_back_to_next)
+        else:
+            membership.assigned_location_ids.remove(location_id)
+            self.save()
+
+    def reset_locations(self, domain, location_ids):
+        """
+        reset locations to given list of location_ids. Before calling this, primary location
+            should be explicitly set/unset via set_location/unset_location
+        """
+        membership = self.get_domain_membership(domain)
+        membership.assigned_location_ids = location_ids
+        if not membership.location_id and location_ids:
+            membership.location_id = location_ids[0]
         self.save()
 
     def get_location_id(self, domain):
@@ -2097,11 +2177,19 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         from corehq.apps.locations.models import SQLLocation
         loc_id = self.get_location_id(domain)
         if loc_id:
-            try:
-                return SQLLocation.objects.get(location_id=loc_id)
-            except SQLLocation.DoesNotExist:
-                pass
-        return None
+            return SQLLocation.objects.get_or_None(domain=domain, location_id=loc_id)
+
+    def get_location_ids(self, domain):
+        return getattr(self.get_domain_membership(domain), 'assigned_location_ids', None)
+
+    @memoized
+    def get_sql_locations(self, domain=None):
+        from corehq.apps.locations.models import SQLLocation
+        loc_ids = self.get_location_ids(domain)
+        if loc_ids:
+            return SQLLocation.objects.get_locations(loc_ids)
+        else:
+            return SQLLocation.objects.none()
 
     @memoized
     def get_location(self, domain):
@@ -2222,14 +2310,16 @@ class Invitation(QuickCachedDocumentMixin, Document):
                   "inviter": self.get_inviter().formatted_name}
 
         domain_request = DomainRequest.by_email(self.domain, self.email, is_approved=True)
-        if domain_request is None:
-            text_content = render_to_string("domain/email/domain_invite.txt", params)
-            html_content = render_to_string("domain/email/domain_invite.html", params)
-            subject = _('Invitation from %s to join CommCareHQ') % self.get_inviter().formatted_name
-        else:
-            text_content = render_to_string("domain/email/domain_request_approval.txt", params)
-            html_content = render_to_string("domain/email/domain_request_approval.html", params)
-            subject = _('Request to join CommCareHQ approved')
+        lang = guess_domain_language(self.domain)
+        with override_language(lang):
+            if domain_request is None:
+                text_content = render_to_string("domain/email/domain_invite.txt", params)
+                html_content = render_to_string("domain/email/domain_invite.html", params)
+                subject = _('Invitation from %s to join CommCareHQ') % self.get_inviter().formatted_name
+            else:
+                text_content = render_to_string("domain/email/domain_request_approval.txt", params)
+                html_content = render_to_string("domain/email/domain_request_approval.html", params)
+                subject = _('Request to join CommCareHQ approved')
         send_html_email_async.delay(subject, self.email, html_content,
                                     text_content=text_content,
                                     cc=[self.get_inviter().get_email()],

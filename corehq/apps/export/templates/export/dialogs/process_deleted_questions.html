@@ -1,0 +1,45 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+{% if request|toggle_enabled:"DO_NOT_PROCESS_OLD_BUILDS" %}
+<div class="modal fade" tabindex="-1" role="dialog" id="export-process-deleted-applications">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title">{% trans "Show Deleted Questions" %}</h4>
+      </div>
+      <div class="modal-body">
+        <p>
+        {% blocktrans %}
+        In order to show you your deleted questions, we need to process all of your old applications that have
+        had submissions. This operation can sometimes take a few minutes.
+        {% endblocktrans %}
+        </p>
+        <div class="spacer"></div>
+        <p data-bind="visible: errorOnBuildSchema, css: { 'text-danger': errorOnBuildSchema }">
+            {% trans "Unable to process applications. Please report an issue if this persists" %}
+        </p>
+        <div class="spacer"></div>
+        <div class="progress " data-bind="visible: showBuildSchemaProgressBar">
+          <div class="progress-bar" role="progressbar" data-bind="
+              style: {
+                  width: buildSchemaProgress() + '%'
+              }
+          "></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Close" %}</button>
+        <button type="button" class="btn btn-primary" data-bind="
+            click: onBeginSchemaBuild,
+            text: schemaProgressText
+            ">
+            {% trans "Process" %}
+        </button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+{% endif %}

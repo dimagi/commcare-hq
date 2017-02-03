@@ -1,10 +1,11 @@
+from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.utils.translation import ugettext_noop, ugettext as _
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 
 from corehq import privileges
-from corehq.apps.app_manager.dbaccessors import domain_has_apps
+from corehq.apps.app_manager.dbaccessors import domain_has_apps, get_brief_apps_in_domain
 from corehq.apps.dashboard.models import (
     TileConfiguration,
     AppsPaginatedContext,
@@ -17,12 +18,13 @@ from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.users.views import DefaultProjectUserSettingsView
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.style.decorators import use_angular_js
 from django_prbac.utils import has_privilege
-from django.conf import settings
 
 
 @login_and_domain_required
+@location_safe
 def dashboard_default(request, domain):
     return HttpResponseRedirect(default_dashboard_url(request, domain))
 
@@ -71,6 +73,13 @@ class NewUserDashboardView(BaseDashboardView):
         return {'templates': self.templates(self.domain)}
 
     @classmethod
+    def get_page_context(cls, domain):
+        return {
+            'apps': get_brief_apps_in_domain(domain),
+            'templates': cls.templates(domain),
+        }
+
+    @classmethod
     def templates(cls, domain):
         templates = [{
             'heading': _('Blank Application'),
@@ -102,6 +111,7 @@ class NewUserDashboardView(BaseDashboardView):
         return templates
 
 
+@location_safe
 class DomainDashboardView(JSONResponseMixin, BaseDashboardView):
     urlname = 'dashboard_domain'
     page_title = ugettext_noop("HQ Dashboard")
@@ -126,6 +136,7 @@ class DomainDashboardView(JSONResponseMixin, BaseDashboardView):
                 'slug': d.slug,
                 'ng_directive': d.ng_directive,
             } for d in self.tile_configs],
+            'is_icds': settings.HQ_INSTANCE == 'icds',
         }
 
     def make_tile(self, slug, in_data):
@@ -156,7 +167,7 @@ class DomainDashboardView(JSONResponseMixin, BaseDashboardView):
 
 def _get_default_tile_configurations():
     can_edit_data = lambda request: (request.couch_user.can_edit_data()
-                                     or request.couch_user.can_export_data())
+                                     or request.couch_user.can_access_any_exports())
     can_edit_apps = lambda request: (request.couch_user.is_web_user()
                                      or request.couch_user.can_edit_apps())
     can_view_reports = lambda request: user_can_view_reports(request.project, request.couch_user)
@@ -164,6 +175,8 @@ def _get_default_tile_configurations():
                                       or request.couch_user.can_edit_web_users())
 
     can_view_commtrack_setup = lambda request: (request.project.commtrack_enabled)
+
+    can_view_exchange = lambda request: can_edit_apps(request) and not settings.ENTERPRISE_MODE
 
     def _can_access_sms(request):
         return has_privilege(request, privileges.OUTBOUND_SMS)
@@ -177,7 +190,7 @@ def _get_default_tile_configurations():
         and request.couch_user.can_edit_data()
     )
 
-    is_domain_admin = lambda request: request.couch_user.is_domain_admin(request.domain)
+    is_billing_admin = lambda request: request.couch_user.can_edit_billing()
 
     return [
         TileConfiguration(
@@ -242,7 +255,7 @@ def _get_default_tile_configurations():
             icon='fcc fcc-exchange',
             context_processor_class=IconContext,
             urlname='appstore',
-            visibility_check=can_edit_apps,
+            visibility_check=can_view_exchange,
             url_generator=lambda urlname, req: reverse(urlname),
             help_text=_('Download and share CommCare applications with '
                         'other users around the world'),
@@ -253,7 +266,7 @@ def _get_default_tile_configurations():
             icon='fcc fcc-settings',
             context_processor_class=IconContext,
             urlname=DefaultProjectSettingsView.urlname,
-            visibility_check=is_domain_admin,
+            visibility_check=is_billing_admin,
             help_text=_('Set project-wide settings and manage subscriptions'),
         ),
         TileConfiguration(

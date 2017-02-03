@@ -4,7 +4,7 @@
 {% load i18n %}
 
 {% block js-inline %} {{ block.super }}
-    <script type="text/javascript">
+    <script>
         $(function() {
             $('#check_all').click( function() {
                 var oTable = $('#report_table_{{ report.slug }}').dataTable();

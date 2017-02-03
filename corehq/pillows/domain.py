@@ -7,7 +7,7 @@ from corehq.apps.domain.models import Domain
 from corehq.elastic import get_es_new
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
 from django_countries.data import COUNTRIES
-from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEventHandler
+from pillowtop.checkpoints.manager import PillowCheckpointEventHandler, get_checkpoint_for_elasticsearch_pillow
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import ElasticProcessor
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
@@ -17,7 +17,7 @@ from pillowtop.reindexer.reindexer import ElasticPillowReindexer
 def transform_domain_for_elasticsearch(doc_dict):
     doc_ret = copy.deepcopy(doc_dict)
     sub = Subscription.objects.filter(subscriber__domain=doc_dict['name'], is_active=True)
-    doc_ret['deployment'] = doc_dict.get('deployment', None) or {}
+    doc_ret['deployment'] = doc_ret.get('deployment', None) or {}
     countries = doc_ret['deployment'].get('countries', [])
     doc_ret['deployment']['countries'] = []
     if sub:
@@ -29,8 +29,9 @@ def transform_domain_for_elasticsearch(doc_dict):
     return doc_ret
 
 
-def get_domain_kafka_to_elasticsearch_pillow(pillow_id='domain-kafka-to-es'):
-    checkpoint = PillowCheckpoint(pillow_id)
+def get_domain_kafka_to_elasticsearch_pillow(pillow_id='KafkaDomainPillow'):
+    assert pillow_id == 'KafkaDomainPillow', 'Pillow ID is not allowed to change'
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, DOMAIN_INDEX_INFO)
     domain_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=DOMAIN_INDEX_INFO,

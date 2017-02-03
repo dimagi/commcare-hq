@@ -2,11 +2,11 @@ from copy import copy
 from datetime import datetime, timedelta, date
 import itertools
 import json
-
-from django.views.generic.base import TemplateView
+from wsgiref.util import FileWrapper
 
 from corehq.apps.analytics.utils import analytics_enabled_for_email
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
+from corehq.apps.domain.utils import get_domain_module_map
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.reports.display import xmlns_to_name
@@ -20,7 +20,6 @@ import pytz
 import re
 from StringIO import StringIO
 import tempfile
-import unicodedata
 from urllib2 import URLError
 
 from django.conf import settings
@@ -28,7 +27,6 @@ from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.files.base import ContentFile
-from django.core.servers.basehttp import FileWrapper
 from django.http import (
     Http404,
     HttpResponseBadRequest,
@@ -51,6 +49,7 @@ from django.views.decorators.http import (
     require_POST,
 )
 from django.views.generic import View
+from django.views.generic.base import TemplateView
 
 from casexml.apps.case import const
 from casexml.apps.case.cleanup import rebuild_case_from_forms, close_case
@@ -78,6 +77,8 @@ from couchexport.tasks import rebuild_schemas
 from couchexport.util import SerializableFunction
 from couchforms.filters import instances
 from couchforms.models import XFormDeprecated, XFormInstance
+
+from custom.world_vision import WORLD_VISION_DOMAINS
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import wrapped_docs
 from dimagi.utils.couch.cache.cache_core import get_redis_client
@@ -110,9 +111,9 @@ from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.hqcase.export import export_cases
 from corehq.apps.hqwebapp.utils import csrf_inline
-from corehq.apps.locations.permissions import can_edit_form_location
+from corehq.apps.locations.permissions import can_edit_form_location, location_safe
 from corehq.apps.products.models import SQLProduct
-from corehq.apps.receiverwrapper import submit_form_locally
+from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.userreports.util import default_language as ucr_default_language
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.export import export_users
@@ -123,7 +124,8 @@ from corehq.apps.users.models import (
     WebUser,
 )
 from corehq.util.couch import get_document_or_404
-from corehq.util.spreadsheets.export import WorkBook
+from corehq.util.files import safe_filename_header
+from corehq.util.workbook_json.export import WorkBook
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import absolute_reverse, reverse
 
@@ -159,7 +161,7 @@ from .util import (
     get_group,
     group_filter,
     users_matching_filter,
-)
+    resync_case_to_es)
 from corehq.apps.style.decorators import (
     use_jquery_ui,
     use_select2,
@@ -199,10 +201,11 @@ def can_view_attachments(request):
 
 
 @login_and_domain_required
+@location_safe
 def default(request, domain):
-    module = Domain.get_module_by_name(domain)
-    if hasattr(module, 'DEFAULT_REPORT_CLASS'):
-        return HttpResponseRedirect(getattr(module, 'DEFAULT_REPORT_CLASS').get_url(domain))
+    if domain in WORLD_VISION_DOMAINS and get_domain_module_map().get(domain):
+        from custom.world_vision.reports.mixed_report import MixedTTCReport
+        return HttpResponseRedirect(MixedTTCReport.get_url(domain))
     return HttpResponseRedirect(reverse(MySavedReportsView.urlname, args=[domain]))
 
 
@@ -227,6 +230,7 @@ class BaseProjectReportSectionView(BaseDomainView):
         return reverse('reports_home', args=(self.domain, ))
 
 
+@location_safe
 class MySavedReportsView(BaseProjectReportSectionView):
     urlname = 'saved_reports'
     page_title = _("My Saved Reports")
@@ -567,11 +571,7 @@ def build_download_saved_export_response(payload, format, filename):
     content_type = Format.from_format(format).mimetype
     response = StreamingHttpResponse(FileWrapper(payload), content_type=content_type)
     if format != 'html':
-        # ht: http://stackoverflow.com/questions/1207457/convert-unicode-to-string-in-python-containing-extra-symbols
-        normalized_filename = unicodedata.normalize(
-            'NFKD', unicode(filename),
-        ).encode('ascii', 'ignore')
-        response['Content-Disposition'] = 'attachment; filename="%s"' % normalized_filename
+        response['Content-Disposition'] = safe_filename_header(filename)
     return response
 
 
@@ -653,6 +653,7 @@ def touch_saved_reports_views(user, domain):
     ReportNotification.by_domain_and_owner(domain, user._id, limit=1, stale=False)
 
 
+@location_safe
 class AddSavedReportConfigView(View):
     name = 'add_report_config'
 
@@ -1365,12 +1366,8 @@ def rebuild_case_view(request, domain, case_id):
 def resave_case(request, domain, case_id):
     """Re-save the case to have it re-processed by pillows
     """
-    from corehq.form_processor.change_publishers import publish_case_saved
     case = _get_case_or_404(domain, case_id)
-    if should_use_sql_backend(domain):
-        publish_case_saved(case)
-    else:
-        CommCareCase.get_db().save_doc(case._doc)  # don't just call save to avoid signals
+    resync_case_to_es(domain, case)
     messages.success(
         request,
         _(u'Case %s was successfully saved. Hopefully it will show up in all reports momentarily.' % case.name),
@@ -1605,13 +1602,15 @@ def _get_case_or_404(domain, case_id):
         raise Http404()
 
 
-def _get_form_to_edit(domain, user, instance_id):
+def _get_location_safe_form(domain, user, instance_id):
+    """Fetches a form and verifies that the user can access it."""
     form = _get_form_or_404(domain, instance_id)
     if not can_edit_form_location(domain, user, form):
         raise PermissionDenied()
     return form
 
 
+@location_safe
 class FormDataView(BaseProjectReportSectionView):
     urlname = 'render_form_data'
     page_title = ugettext_lazy("Untitled Form")
@@ -1620,12 +1619,6 @@ class FormDataView(BaseProjectReportSectionView):
 
     @method_decorator(require_form_view_permission)
     def dispatch(self, request, *args, **kwargs):
-        if self.xform_instance is None:
-            raise Http404()
-        try:
-            assert self.domain == self.xform_instance.domain
-        except AssertionError:
-            raise Http404()
         return super(FormDataView, self).dispatch(request, *args, **kwargs)
 
     @property
@@ -1639,10 +1632,8 @@ class FormDataView(BaseProjectReportSectionView):
     @property
     @memoized
     def xform_instance(self):
-        try:
-            return FormAccessors(self.domain).get_form(self.instance_id)
-        except XFormNotFound:
-            return None
+        return _get_location_safe_form(
+            self.domain, self.request.couch_user, self.instance_id)
 
     @property
     @memoized
@@ -1704,6 +1695,7 @@ def download_form(request, domain, instance_id):
     return response
 
 
+@location_safe
 class EditFormInstance(View):
 
     @method_decorator(require_form_view_permission)
@@ -1744,7 +1736,7 @@ class EditFormInstance(View):
         if not (has_privilege(request, privileges.DATA_CLEANUP)) or not instance_id:
             raise Http404()
 
-        instance = _get_form_to_edit(domain, request.couch_user, instance_id)
+        instance = _get_location_safe_form(domain, request.couch_user, instance_id)
         context = _get_form_context(request, domain, instance)
         if not instance.app_id or not instance.build_id:
             return _error(_('Could not detect the application/form for this submission.'))
@@ -1807,11 +1799,12 @@ class EditFormInstance(View):
 @require_form_view_permission
 @require_permission(Permissions.edit_data)
 @require_POST
+@location_safe
 def restore_edit(request, domain, instance_id):
     if not (has_privilege(request, privileges.DATA_CLEANUP)):
         raise Http404()
 
-    instance = _get_form_to_edit(domain, request.couch_user, instance_id)
+    instance = _get_location_safe_form(domain, request.couch_user, instance_id)
     if isinstance(instance, XFormDeprecated):
         submit_form_locally(instance.get_xml(), domain, app_id=instance.app_id, build_id=instance.build_id)
         messages.success(request, _(u'Form was restored from a previous version.'))
@@ -1843,8 +1836,9 @@ def download_attachment(request, domain, instance_id):
 @require_form_view_permission
 @require_permission(Permissions.edit_data)
 @require_POST
+@location_safe
 def archive_form(request, domain, instance_id):
-    instance = _get_form_to_edit(domain, request.couch_user, instance_id)
+    instance = _get_location_safe_form(domain, request.couch_user, instance_id)
     assert instance.domain == domain
     if instance.is_normal:
         instance.archive(user_id=request.couch_user._id)
@@ -1890,8 +1884,9 @@ def archive_form(request, domain, instance_id):
 
 @require_form_view_permission
 @require_permission(Permissions.edit_data)
+@location_safe
 def unarchive_form(request, domain, instance_id):
-    instance = _get_form_to_edit(domain, request.couch_user, instance_id)
+    instance = _get_location_safe_form(domain, request.couch_user, instance_id)
     assert instance.domain == domain
     if instance.is_archived:
         instance.unarchive(user_id=request.couch_user._id)
@@ -1908,11 +1903,12 @@ def unarchive_form(request, domain, instance_id):
 @require_form_view_permission
 @require_permission(Permissions.edit_data)
 @require_POST
+@location_safe
 def resave_form(request, domain, instance_id):
     """Re-save the form to have it re-processed by pillows
     """
     from corehq.form_processor.change_publishers import publish_form_saved
-    instance = _get_form_to_edit(domain, request.couch_user, instance_id)
+    instance = _get_location_safe_form(domain, request.couch_user, instance_id)
     assert instance.domain == domain
     if should_use_sql_backend(domain):
         publish_form_saved(instance)

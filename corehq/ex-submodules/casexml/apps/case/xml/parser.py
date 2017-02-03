@@ -182,6 +182,9 @@ class CaseAttachmentAction(CaseActionBase):
     @classmethod
     def from_v2(cls, block):
         attachments = {}
+        if not isinstance(block, dict):
+            return cls(block, attachments)
+
         for id, data in block.items():
             if isinstance(data, basestring):
                 attachment_from = None
@@ -232,6 +235,9 @@ class CaseIndexAction(CaseActionBase):
     @classmethod
     def from_v2(cls, block):
         indices = []
+        if not isinstance(block, dict):
+            return cls(block, indices)
+
         for id, data in block.items():
             if "@case_type" not in data:
                 raise CaseGenerationException("Invalid index, must have a case type attribute.")

@@ -1,12 +1,33 @@
+import uuid
+
 from django.test import TestCase
+from elasticsearch.exceptions import ConnectionError
+from mock import patch
+
 from casexml.apps.case.dbaccessors import get_open_case_ids_in_domain
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import create_real_cases_from_dummy_cases
-from corehq.apps.hqcase.dbaccessors import get_number_of_cases_in_domain, \
-    get_case_ids_in_domain, get_case_types_for_domain, get_cases_in_domain, \
-    get_case_ids_in_domain_by_owner, \
-    get_all_case_owner_ids, get_case_properties
 from couchforms.models import XFormInstance
+from pillowtop.es_utils import initialize_index_and_mapping
+from testapps.test_pillowtop.utils import process_kafka_changes, process_couch_changes
+
+from corehq.apps.hqcase.analytics import (
+    get_number_of_cases_in_domain_of_type,
+    get_number_of_cases_in_domain,
+)
+from corehq.apps.hqcase.dbaccessors import (
+    get_all_case_owner_ids,
+    get_cases_in_domain,
+    get_case_ids_in_domain,
+    get_case_ids_in_domain_by_owner,
+    get_case_properties,
+    get_case_types_for_domain,
+)
+from corehq.elastic import get_es_new, EsMeta
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
+from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
+from corehq.util.elastic import ensure_index_deleted
+from corehq.util.test_utils import trap_extra_setup, create_and_save_a_case
 
 
 class DBAccessorsTest(TestCase):
@@ -32,15 +53,9 @@ class DBAccessorsTest(TestCase):
         CommCareCase.get_db().bulk_delete(cls.cases)
         XFormInstance.get_db().bulk_delete(cls.forms)
 
-    def test_get_number_of_cases_in_domain(self):
-        self.assertEqual(
-            get_number_of_cases_in_domain(self.domain),
-            len([case for case in self.cases if case.domain == self.domain])
-        )
-
     def test_get_number_of_cases_in_domain__type(self):
         self.assertEqual(
-            get_number_of_cases_in_domain(self.domain, type='type1'),
+            get_number_of_cases_in_domain_of_type(self.domain, case_type='type1'),
             len([case for case in self.cases
                  if case.domain == self.domain and case.type == 'type1'])
         )
@@ -157,3 +172,42 @@ class DBAccessorsTest(TestCase):
              for prop in (action.updated_known_properties.keys() +
                           action.updated_unknown_properties.keys())}
         )
+
+
+TEST_ES_META = {
+    CASE_INDEX_INFO.index: EsMeta(CASE_INDEX_INFO.index, CASE_INDEX_INFO.type)
+}
+
+
+class ESAccessorsTest(TestCase):
+    domain = 'hqadmin-es-accessor'
+
+    def setUp(self):
+        super(ESAccessorsTest, self).setUp()
+        with trap_extra_setup(ConnectionError):
+            self.elasticsearch = get_es_new()
+            initialize_index_and_mapping(self.elasticsearch, CASE_INDEX_INFO)
+
+    def tearDown(self):
+        ensure_index_deleted(CASE_INDEX_INFO.index)
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
+        super(ESAccessorsTest, self).tearDown()
+
+    @patch('corehq.apps.hqcase.analytics.CaseES.index', CASE_INDEX_INFO.index)
+    @patch('corehq.apps.es.es_query.ES_META', TEST_ES_META)
+    @patch('corehq.elastic.ES_META', TEST_ES_META)
+    def test_get_number_of_cases_in_domain(self):
+        cases = [self._create_case_and_sync_to_es() for _ in range(4)]
+        self.assertEqual(
+            get_number_of_cases_in_domain(self.domain),
+            len(cases)
+        )
+
+    def _create_case_and_sync_to_es(self):
+        case_id = uuid.uuid4().hex
+        case_name = 'case-name-{}'.format(uuid.uuid4().hex)
+        with process_kafka_changes('CaseToElasticsearchPillow'):
+            with process_couch_changes('DefaultChangeFeedPillow'):
+                create_and_save_a_case(self.domain, case_id, case_name)
+        self.elasticsearch.indices.refresh(CASE_INDEX_INFO.index)
+        return case_id, case_name

@@ -88,18 +88,18 @@
 		{% endblock main_content %}
 	</div>
     {% compress js %}
-        <script type="text/javascript" src="{% static 'jquery/dist/jquery.min.js' %}"></script>
-        <script type="text/javascript" src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
-        <script type="text/javascript" src="{% static 'd3/d3.min.js' %}"></script>
-        <script type="text/javascript" src="{% static 'nvd3/nv.d3.min.js' %}"></script>
-        <script type="text/javascript" src="{% static 'js/ws4redis.js' %}"></script>
-        <script type="text/javascript" src="{% static 'leaflet/dist/leaflet.js' %}"></script>
-        <script type="text/javascript" src="{% static 'hqadmin/js/dimagisphere_helper.js' %}"></script>
+        <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+        <script src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
+        <script src="{% static 'd3/d3.min.js' %}"></script>
+        <script src="{% static 'nvd3/nv.d3.min.js' %}"></script>
+        <script src="{% static 'js/ws4redis.js' %}"></script>
+        <script src="{% static 'leaflet/dist/leaflet.js' %}"></script>
+        <script src="{% static 'hqadmin/js/dimagisphere_helper.js' %}"></script>
     {% endcompress %}
 
 	{% block script_panel %}
-        <script type="text/javascript">
-jQuery(document).ready(function($) {
+        <script>
+$(function() {
     var filter = {};
 
     // courtesy of http://colorbrewer2.org/

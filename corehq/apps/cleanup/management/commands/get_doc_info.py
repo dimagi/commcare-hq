@@ -12,7 +12,7 @@ from dimagi.utils.couch.database import get_db
 class Command(BaseCommand):
     help = "Takes a file with one doc id per line and outputs their domains"
     args = '<filename>'
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option('--full', action='store_true', dest='full', default=False,
             help = "Output a full list of doc ids, followed by their domain"),
     )

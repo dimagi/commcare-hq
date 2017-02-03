@@ -8,6 +8,13 @@ from corehq.util.dates import iso_string_to_datetime
 
 
 def scrub_meta(xform):
+    if not hasattr(xform, 'form'):
+        return
+
+    scrub_form_meta(xform.form_id, xform.form)
+
+
+def scrub_form_meta(form_id, form_data):
     """
     Cleans up old format metadata to our current standard.
 
@@ -19,27 +26,24 @@ def scrub_meta(xform):
                     'DeviceID': 'deviceID',
                     'uid': 'instanceID'}
 
-    if not hasattr(xform, 'form'):
-        return
-
     # hack to make sure uppercase meta still ends up in the right place
     found_old = False
-    if 'Meta' in xform.form:
-        xform.form['meta'] = xform.form['Meta']
-        del xform.form['Meta']
+    if 'Meta' in form_data:
+        form_data['meta'] = form_data['Meta']
+        del form_data['Meta']
         found_old = True
-    if 'meta' in xform.form:
-        meta_block = xform.form['meta']
+    if 'meta' in form_data:
+        meta_block = form_data['meta']
         # scrub values from 0.9 to 1.0
         if isinstance(meta_block, list):
             if isinstance(meta_block[0], dict):
                 # if it's a list of dictionaries, arbitrarily pick the first one
                 # this is a pretty serious error, but it's also recoverable
-                xform.form['meta'] = meta_block = meta_block[0]
+                form_data['meta'] = meta_block = meta_block[0]
                 logging.error((
                     'form %s contains multiple meta blocks. '
                     'this is not correct but we picked one abitrarily'
-                ) % xform.get_id)
+                ) % form_id)
             else:
                 # if it's a list of something other than dictionaries.
                 # don't bother scrubbing.

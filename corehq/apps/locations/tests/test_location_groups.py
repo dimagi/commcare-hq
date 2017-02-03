@@ -6,6 +6,7 @@ from corehq.apps.locations.tests.test_locations import LocationTestBase
 from corehq import toggles
 from corehq.apps.groups.exceptions import CantSaveException
 from corehq.apps.users.models import CommCareUser
+from corehq.toggles import NAMESPACE_DOMAIN
 
 
 class LocationGroupTest(LocationTestBase):
@@ -30,7 +31,7 @@ class LocationGroupTest(LocationTestBase):
             domain=self.domain.name
         )
 
-        toggles.MULTIPLE_LOCATIONS_PER_USER.set("domain:{}".format(self.domain.name), True)
+        toggles.MULTIPLE_LOCATIONS_PER_USER.set(self.domain.name, True, NAMESPACE_DOMAIN)
 
     def test_group_name(self):
         # just location name for top level
@@ -45,21 +46,11 @@ class LocationGroupTest(LocationTestBase):
             self.test_outlet.sql_location.case_sharing_group_object().name
         )
 
-        # reporting group is similar but has no ending
-        self.assertEqual(
-            'teststate/testvillage/testoutlet',
-            self.test_outlet.sql_location.reporting_group_object().name
-        )
-
     def test_id_assignment(self):
         # each should have the same id, but with a different prefix
         self.assertEqual(
             self.test_outlet._id,
             self.test_outlet.sql_location.case_sharing_group_object()._id
-        )
-        self.assertEqual(
-            LOCATION_REPORTING_PREFIX + self.test_outlet._id,
-            self.test_outlet.sql_location.reporting_group_object()._id
         )
 
     def test_group_properties(self):
@@ -71,19 +62,7 @@ class LocationGroupTest(LocationTestBase):
             self.test_outlet.sql_location.case_sharing_group_object().reporting
         )
 
-        # and reporting groups reporting
-        self.assertFalse(
-            self.test_outlet.sql_location.reporting_group_object().case_sharing
-        )
-        self.assertTrue(
-            self.test_outlet.sql_location.reporting_group_object().reporting
-        )
-
-        # both should set domain properly
-        self.assertEqual(
-            self.domain.name,
-            self.test_outlet.sql_location.reporting_group_object().domain
-        )
+        # and should set domain properly
         self.assertEqual(
             self.domain.name,
             self.test_outlet.sql_location.case_sharing_group_object().domain
@@ -140,21 +119,12 @@ class LocationGroupTest(LocationTestBase):
 
         self.assertDictEqual(
             {
-                'commcare_location_type': self.loc.location_type,
+                'commcare_location_type': self.loc.location_type_name,
                 'commcare_location_name': self.loc.name,
                 'commcare_location_foo': 'bar',
                 'commcare_location_fruit': 'banana'
             },
             self.loc.sql_location.case_sharing_group_object().metadata
-        )
-        self.assertDictEqual(
-            {
-                'commcare_location_type': self.loc.location_type,
-                'commcare_location_name': self.loc.name,
-                'commcare_location_foo': 'bar',
-                'commcare_location_fruit': 'banana'
-            },
-            self.loc.sql_location.reporting_group_object().metadata
         )
 
     @patch('corehq.apps.domain.models.Domain.uses_locations', lambda: True)

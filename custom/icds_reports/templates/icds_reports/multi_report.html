@@ -55,7 +55,7 @@
 
 {% block js-inline %} {{ block.super }}
     <script type="text/javascript">
-        $(document).ready(function() {
+        $(function() {
             $('#fieldset_location_async').on('change', 'select', function(e) {
                 e.stopPropagation();
                 var state = $('select.form-control')[0].selectedIndex;

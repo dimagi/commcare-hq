@@ -1,16 +1,14 @@
 import json
 from simpleeval import InvalidExpression
+from corehq.apps.locations.document_store import LOCATION_DOC_TYPE
 from corehq.apps.userreports.document_stores import get_document_store
 from corehq.apps.userreports.exceptions import BadSpecError
+from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.couch import get_db_by_doc_type
 from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, DictProperty
 from jsonobject.base_properties import DefaultProperty
-from corehq.apps.userreports.expressions.getters import (
-    DictGetter,
-    NestedDictGetter,
-    TransformedGetter,
-    transform_from_datatype)
+from corehq.apps.userreports.expressions.getters import transform_from_datatype, safe_recursive_lookup
 from corehq.apps.userreports.indicators.specs import DataTypeProperty
 from corehq.apps.userreports.specs import TypeProperty, EvaluationContext
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
@@ -52,14 +50,9 @@ class PropertyNameGetterSpec(JsonObject):
     property_name = StringProperty(required=True)
     datatype = DataTypeProperty(required=False)
 
-    @property
-    def expression(self):
-        transform = transform_from_datatype(self.datatype)
-        getter = DictGetter(self.property_name)
-        return TransformedGetter(getter, transform)
-
     def __call__(self, item, context=None):
-        return self.expression(item, context)
+        raw_value = item.get(self.property_name, None) if isinstance(item, dict) else None
+        return transform_from_datatype(self.datatype)(raw_value)
 
 
 class PropertyPathGetterSpec(JsonObject):
@@ -67,14 +60,9 @@ class PropertyPathGetterSpec(JsonObject):
     property_path = ListProperty(unicode, required=True)
     datatype = DataTypeProperty(required=False)
 
-    @property
-    def expression(self):
-        transform = transform_from_datatype(self.datatype)
-        getter = NestedDictGetter(self.property_path)
-        return TransformedGetter(getter, transform)
-
     def __call__(self, item, context=None):
-        return self.expression(item, context)
+        transform = transform_from_datatype(self.datatype)
+        return transform(safe_recursive_lookup(item, self.property_path))
 
 
 class NamedExpressionSpec(JsonObject):
@@ -194,26 +182,31 @@ class RelatedDocExpressionSpec(JsonObject):
     value_expression = DictProperty(required=True)
 
     def configure(self, doc_id_expression, value_expression):
-        if get_db_by_doc_type(self.related_doc_type) is None:
+        non_couch_doc_types = (LOCATION_DOC_TYPE,)
+        if (self.related_doc_type not in non_couch_doc_types
+                and get_db_by_doc_type(self.related_doc_type) is None):
             raise BadSpecError(u'Cannot determine database for document type {}!'.format(self.related_doc_type))
 
         self._doc_id_expression = doc_id_expression
         self._value_expression = value_expression
-        # used in caching
-        self._vary_on = json.dumps(self.value_expression, sort_keys=True)
 
     def __call__(self, item, context=None):
         doc_id = self._doc_id_expression(item, context)
         if doc_id:
             return self.get_value(doc_id, context)
 
-    @quickcache(['self._vary_on', 'doc_id'])
-    def get_value(self, doc_id, context):
+    def _context_cache_key(self, doc_id):
+        return '{}-{}'.format(self.related_doc_type, doc_id)
 
+    def get_value(self, doc_id, context):
         try:
             assert context.root_doc['domain']
             document_store = get_document_store(context.root_doc['domain'], self.related_doc_type)
-            doc = document_store.get_document(doc_id)
+
+            doc = context.get_cache_value(self._context_cache_key(doc_id))
+            if not doc:
+                doc = document_store.get_document(doc_id)
+                context.set_cache_value(self._context_cache_key(doc_id), doc)
             # ensure no cross-domain lookups of different documents
             if context.root_doc['domain'] != doc.get('domain'):
                 return None
@@ -258,6 +251,7 @@ class EvalExpressionSpec(JsonObject):
     type = TypeProperty('evaluator')
     statement = StringProperty(required=True)
     context_variables = DictProperty(required=True)
+    datatype = DataTypeProperty(required=False)
 
     def configure(self, context_variables):
         self._context_variables = context_variables
@@ -265,8 +259,9 @@ class EvalExpressionSpec(JsonObject):
     def __call__(self, item, context=None):
         var_dict = self.get_variables(item, context)
         try:
-            return eval_statements(self.statement, var_dict)
-        except (InvalidExpression, SyntaxError):
+            untransformed_value = eval_statements(self.statement, var_dict)
+            return transform_from_datatype(self.datatype)(untransformed_value)
+        except (InvalidExpression, SyntaxError, TypeError, ZeroDivisionError):
             return None
 
     def get_variables(self, item, context):
@@ -331,3 +326,75 @@ class SubcasesExpressionSpec(JsonObject):
         subcases = [c.to_json() for c in CaseAccessors(domain).get_reverse_indexed_cases([case_id])]
         context.set_cache_value(cache_key, subcases)
         return subcases
+
+
+class _GroupsExpressionSpec(JsonObject):
+    user_id_expression = DictProperty(required=True)
+
+    def configure(self, user_id_expression):
+        self._user_id_expression = user_id_expression
+
+    def __call__(self, item, context=None):
+        user_id = self._user_id_expression(item, context)
+        if not user_id:
+            return []
+
+        assert context.root_doc['domain']
+        return self._get_groups(user_id, context)
+
+    def _get_groups(self, user_id, context):
+        domain = context.root_doc['domain']
+        cache_key = (self.__class__.__name__, domain, user_id)
+        if context.get_cache_value(cache_key) is not None:
+            return context.get_cache_value(cache_key)
+
+        user = CommCareUser.get_by_user_id(user_id, domain)
+        if not user:
+            return []
+
+        groups = self._get_groups_from_user(user)
+        groups = [g.to_json() for g in groups]
+        context.set_cache_value(cache_key, groups)
+        return groups
+
+    def _get_groups_from_user(self, user):
+        raise NotImplementedError
+
+
+class CaseSharingGroupsExpressionSpec(_GroupsExpressionSpec):
+    type = TypeProperty('get_case_sharing_groups')
+
+    def _get_groups_from_user(self, user):
+        return user.get_case_sharing_groups()
+
+
+class ReportingGroupsExpressionSpec(_GroupsExpressionSpec):
+    type = TypeProperty('get_reporting_groups')
+
+    def _get_groups_from_user(self, user):
+        return user.get_reporting_groups()
+
+
+class SplitStringExpressionSpec(JsonObject):
+    type = TypeProperty('split_string')
+    string_expression = DictProperty(required=True)
+    index_expression = DefaultProperty(required=True)
+    delimiter = StringProperty(required=False)
+
+    def configure(self, string_expression, index_expression):
+        self._string_expression = string_expression
+        self._index_expression = index_expression
+
+    def __call__(self, item, context=None):
+        string_value = self._string_expression(item, context)
+        if not isinstance(string_value, basestring):
+            return None
+
+        index_value = self._index_expression(item, context)
+        if not isinstance(index_value, int):
+            return None
+
+        try:
+            return string_value.split(self.delimiter)[index_value]
+        except IndexError:
+            return None

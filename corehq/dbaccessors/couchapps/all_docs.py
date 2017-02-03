@@ -35,6 +35,17 @@ def get_doc_count_by_type(db, doc_type):
         return 0
 
 
+def get_doc_count_by_domain_type(db, domain, doc_type):
+    key = [domain, doc_type]
+    result = db.view(
+        'by_domain_doc_type_date/view', startkey=key, endkey=key + [{}], reduce=True,
+        group_level=2).one()
+    if result:
+        return result['value']
+    else:
+        return 0
+
+
 def get_all_docs_with_doc_types(db, doc_types):
     """
     doc_types must be a sequence of doc_types
@@ -51,6 +62,18 @@ def get_all_docs_with_doc_types(db, doc_types):
             include_docs=True, reduce=False)
         for result in results:
             yield result['doc']
+
+
+def get_doc_ids_by_class(doc_class):
+    """Useful for migrations, but has the potential to be very large"""
+    doc_type = doc_class.__name__
+    return [row['id'] for row in doc_class.get_db().view(
+        'all_docs/by_doc_type',
+        startkey=[doc_type],
+        endkey=[doc_type, {}],
+        include_docs=False,
+        reduce=False,
+    )]
 
 
 def delete_all_docs_by_doc_type(db, doc_types):

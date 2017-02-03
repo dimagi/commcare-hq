@@ -14,7 +14,8 @@ from corehq.apps.export.transforms import (
 
 # When fixing a bug that requires existing schemas to be rebuilt,
 # bump the version number.
-DATA_SCHEMA_VERSION = 1
+FORM_DATA_SCHEMA_VERSION = 9
+CASE_DATA_SCHEMA_VERSION = 8
 
 DEID_ID_TRANSFORM = "deid_id"
 DEID_DATE_TRANSFORM = "deid_date"
@@ -48,7 +49,57 @@ PROPERTY_TAG_ROW = 'row'
 PROPERTY_TAG_APP = "app"
 PROPERTY_TAG_STOCK = 'stock'
 
+# Yeah... let's not hard code this list everywhere
+# This list comes from casexml.apps.case.xml.parser.CaseActionBase.from_v2
+KNOWN_CASE_PROPERTIES = ["type", "name", "external_id", "user_id", "owner_id", "opened_on"]
+
+# Attributes found on a case block. <case case_id="..." date_modified="..." ...>
+CASE_ATTRIBUTES = ['@case_id', '@date_modified', '@user_id']
+
+# Elements that are found in a case create block
+# <case>
+#   <create>
+#       <case_name>
+#       ...
+#   </create>
+# </case>
+CASE_CREATE_ELEMENTS = ['case_name', 'owner_id', 'case_type']
 
 FORM_EXPORT = 'form'
 CASE_EXPORT = 'case'
 MAX_EXPORTABLE_ROWS = 100000
+CASE_SCROLL_SIZE = 10000
+
+# When a question is missing completely from a form/case this should be the value
+MISSING_VALUE = '---'
+# When a question has been answered, but is blank, this shoudl be the value
+EMPTY_VALUE = ''
+
+UNKNOWN_INFERRED_FROM = 'unknown'
+
+SKIPPABLE_PROPERTIES = frozenset([
+    'initial_processing_complete',
+    '_rev',
+    'computed_modified_on_',
+    'server_modified_on',
+    'domain',
+    'form.#type',
+    'form.@uiVersion',
+    'openrosa_headers.HTTP_X_OPENROSA_VERSION',
+    'openrosa_headers.HTTP_ACCEPT_LANGUAGE',
+    'openrosa_headers.HTTP_DATE',
+    'problem',
+    'doc_type',
+    'path',
+    'version',
+    'date_header',
+    'migrating_blobs_from_couch',
+    'orig_id',
+    'edited_on',
+    'deprecated_date',
+    'deprecated_form_id',
+    'auth_context.authenticated',
+    'auth_context.doc_type',
+    'auth_context.domain',
+    'auth_context.user_id',
+])

@@ -1,9 +1,13 @@
+from django.utils.translation import ugettext as _
 import sqlalchemy
 from sqlalchemy.exc import IntegrityError, ProgrammingError
-from corehq.apps.userreports.exceptions import TableRebuildError, TableNotFoundWarning
+from corehq.apps.userreports.adapter import IndicatorAdapter
+from corehq.apps.userreports.exceptions import (
+    ColumnNotFoundError, TableRebuildError, TableNotFoundWarning,
+)
 from corehq.apps.userreports.sql.columns import column_to_sql
 from corehq.apps.userreports.sql.connection import get_engine_id
-from corehq.apps.userreports.sql.util import get_table_name
+from corehq.apps.userreports.util import get_table_name
 from corehq.sql_db.connections import connection_manager
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
@@ -12,10 +16,10 @@ from dimagi.utils.logging import notify_exception
 metadata = sqlalchemy.MetaData()
 
 
-class IndicatorSqlAdapter(object):
+class IndicatorSqlAdapter(IndicatorAdapter):
 
     def __init__(self, config):
-        self.config = config
+        super(IndicatorSqlAdapter, self).__init__(config)
         self.engine_id = get_engine_id(config)
         self.session_helper = connection_manager.get_session_helper(self.engine_id)
         self.engine = self.session_helper.engine
@@ -33,11 +37,27 @@ class IndicatorSqlAdapter(object):
         finally:
             self.session_helper.Session.commit()
 
+    def build_table(self):
+        self.session_helper.Session.remove()
+        try:
+            build_table(self.engine, self.get_table())
+        except ProgrammingError, e:
+            raise TableRebuildError('problem building UCR table {}: {}'.format(self.config, e))
+        finally:
+            self.session_helper.Session.commit()
+
+    def after_table_build(self):
+        pass
+
     def drop_table(self):
         # this will hang if there are any open sessions, so go ahead and close them
         self.session_helper.Session.remove()
         with self.engine.begin() as connection:
             self.get_table().drop(connection, checkfirst=True)
+
+    def refresh_table(self):
+        # SQL is always fresh
+        pass
 
     def get_query_object(self):
         """
@@ -45,30 +65,35 @@ class IndicatorSqlAdapter(object):
         """
         return self.session_helper.Session.query(self.get_table())
 
-    def best_effort_save(self, doc):
-        """
-        Does a best-effort save of the document. Will fail silently if the save is not successful.
+    def get_distinct_values(self, column, limit):
+        too_many_values = False
+        table = self.get_table()
+        if not table.exists(bind=self.engine):
+            return [], False
 
-        For certain known, expected errors this will do no additional logging.
-        For unexpected errors it will log them.
-        """
+        if column not in table.c:
+            raise ColumnNotFoundError(_(
+                'The column "{}" does not exist in the report source! '
+                'Please double check your report configuration.').format(column)
+            )
+        column = table.c[column]
+
+        query = self.session_helper.Session.query(column).order_by(column).limit(limit + 1).distinct()
+        result = query.all()
+        distinct_values = [x[0] for x in result]
+        if len(distinct_values) > limit:
+            distinct_values = distinct_values[:limit]
+            too_many_values = True
+
+        return distinct_values, too_many_values
+
+    def best_effort_save(self, doc):
         try:
             self.save(doc)
         except IntegrityError:
             pass  # can be due to users messing up their tables/data so don't bother logging
         except Exception as e:
             self.handle_exception(doc, e)
-
-    def handle_exception(self, doc, exception):
-        notify_exception(
-            None,
-            u'unexpected error saving UCR doc: {}'.format(exception),
-            details={
-                'domain': self.config.domain,
-                'doc_id': doc.get('_id', '<unknown>'),
-                'table': '{} ({})'.format(self.config.display_name, self.config._id)
-            }
-        )
 
     def save(self, doc):
         """
@@ -123,3 +148,8 @@ def rebuild_table(engine, table):
     with engine.begin() as connection:
         table.drop(connection, checkfirst=True)
         table.create(connection)
+
+
+def build_table(engine, table):
+    with engine.begin() as connection:
+        table.create(connection, checkfirst=True)

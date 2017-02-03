@@ -6,8 +6,6 @@ from django.utils.translation import ugettext as _
 
 import stripe
 
-from dimagi.utils.decorators.memoized import memoized
-
 from corehq.apps.accounting.models import (
     BillingAccount,
     CreditLine,
@@ -25,7 +23,6 @@ from corehq.apps.accounting.utils import (
     log_accounting_error,
     log_accounting_info,
 )
-from corehq.apps.domain.models import Domain
 from corehq.const import USER_DATE_FORMAT
 
 stripe.api_key = settings.STRIPE_PRIVATE_KEY
@@ -127,7 +124,8 @@ class BaseStripePaymentHandler(object):
                     'error_class': e.__class__.__name__,
                     'cost_item': self.cost_item_name,
                     'error_msg': e.json_body['error']
-                }
+                },
+                show_stack_trace=True,
             )
             return generic_error
         except Exception as e:
@@ -135,7 +133,8 @@ class BaseStripePaymentHandler(object):
                 "A payment for %(cost_item)s failed due to: %(error_msg)s" % {
                     'cost_item': self.cost_item_name,
                     'error_msg': e,
-                }
+                },
+                show_stack_trace=True,
             )
             return generic_error
 
@@ -146,7 +145,8 @@ class BaseStripePaymentHandler(object):
                 "Failed to send out an email receipt for "
                 "payment related to PaymentRecord No. %s. "
                 "Everything else succeeded."
-                % payment_record.id
+                % payment_record.id,
+                show_stack_trace=True,
             )
 
         return {

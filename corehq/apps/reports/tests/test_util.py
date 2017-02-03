@@ -1,3 +1,4 @@
+# coding: utf-8
 from django.test import TestCase
 from elasticsearch.exceptions import ConnectionError
 from mock import Mock

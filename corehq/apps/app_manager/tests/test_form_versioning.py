@@ -1,4 +1,6 @@
 from django.test.testcases import TestCase, SimpleTestCase
+from mock import patch
+
 from corehq.apps.app_manager.suite_xml import xml_models as suite_models
 from corehq.apps.app_manager.models import Application, Module, Form, import_app, FormLink
 from corehq.apps.app_manager.tests.util import add_build, patch_default_builds
@@ -37,12 +39,13 @@ BLANK_TEMPLATE = """<?xml version="1.0" encoding="UTF-8" ?>
 class FormVersioningTest(TestCase):
 
     @patch_default_builds
-    def test(self):
+    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+    def test(self, mock):
         add_build(version='2.7.0', build_number=20655)
         domain = 'form-versioning-test'
 
         # set up inital app
-        app = Application.new_app(domain, 'Foo', '2.0')
+        app = Application.new_app(domain, 'Foo')
         app.modules.append(Module(forms=[Form(), Form()]))
         app.build_spec = BuildSpec.from_string('2.7.0/latest')
         app.get_module(0).get_form(0).source = BLANK_TEMPLATE.format(xmlns='xmlns-0.0')
@@ -116,7 +119,7 @@ class FormVersioningTest(TestCase):
 class FormIdTest(SimpleTestCase):
 
     def test_update_form_references_case_list_form(self):
-        app = Application.new_app('domain', 'Foo', '2.0')
+        app = Application.new_app('domain', 'Foo')
         app.modules.append(Module(forms=[Form()]))
         app.modules.append(Module(forms=[Form()]))
         app.build_spec = BuildSpec.from_string('2.7.0/latest')
@@ -132,7 +135,7 @@ class FormIdTest(SimpleTestCase):
         self.assertEqual(new_form_id, copy.get_module(0).case_list_form.form_id)
 
     def test_update_form_references_form_link(self):
-        app = Application.new_app('domain', 'Foo', '2.0')
+        app = Application.new_app('domain', 'Foo')
         app.modules.append(Module(forms=[Form()]))
         app.modules.append(Module(forms=[Form(), Form()]))
         app.build_spec = BuildSpec.from_string('2.7.0/latest')

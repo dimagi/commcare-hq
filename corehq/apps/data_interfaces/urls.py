@@ -1,18 +1,21 @@
-from django.conf.urls import *
+from django.conf.urls import include, url
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher, EditDataInterfaceDispatcher
-from corehq.apps.data_interfaces.views import (CaseGroupListView,
-                                               CaseGroupCaseManagementView,
-                                               ArchiveFormView,
-                                               XFormManagementView,
-                                               XFormManagementStatusView,
-                                               AutomaticUpdateRuleListView,
-                                               AddAutomaticUpdateRuleView,
-                                               EditAutomaticUpdateRuleView)
+from corehq.apps.data_interfaces.views import (
+    CaseGroupListView,
+    CaseGroupCaseManagementView,
+    ArchiveFormView,
+    XFormManagementView,
+    XFormManagementStatusView,
+    AutomaticUpdateRuleListView,
+    AddAutomaticUpdateRuleView,
+    EditAutomaticUpdateRuleView,
+    xform_management_job_poll,
+    default,
+)
 from .interfaces import FormManagementMode
 
 
-edit_data_urls = patterns(
-    'corehq.apps.data_interfaces.views',
+edit_data_urls = [
     url(r'^archive_forms/$', ArchiveFormView.as_view(), name=ArchiveFormView.urlname),
     url(r'^xform_management/$', XFormManagementView.as_view(), name=XFormManagementView.urlname),
     url(
@@ -25,7 +28,7 @@ edit_data_urls = patterns(
         name=XFormManagementStatusView.urlname
     ),
     url(r'^xform_management/status/poll/(?P<download_id>[0-9a-fA-Z]{25,32})/$',
-        'xform_management_job_poll', name='xform_management_job_poll'),
+        xform_management_job_poll, name='xform_management_job_poll'),
     url(r'^case_groups/$', CaseGroupListView.as_view(), name=CaseGroupListView.urlname),
     url(r'^case_groups/(?P<group_id>[\w-]+)/$',
         CaseGroupCaseManagementView.as_view(), name=CaseGroupCaseManagementView.urlname),
@@ -36,12 +39,11 @@ edit_data_urls = patterns(
     url(r'^automatic_updates/edit/(?P<rule_id>\d+)/$', EditAutomaticUpdateRuleView.as_view(),
         name=EditAutomaticUpdateRuleView.urlname),
     EditDataInterfaceDispatcher.url_pattern(),
-)
+]
 
-urlpatterns = patterns(
-    'corehq.apps.data_interfaces.views',
-    url(r'^$', "default", name="data_interfaces_default"),
-    (r'^edit/', include(edit_data_urls)),
-    (r'^export/', include('corehq.apps.export.urls')),
+urlpatterns = [
+    url(r'^$', default, name="data_interfaces_default"),
+    url(r'^edit/', include(edit_data_urls)),
+    url(r'^export/', include('corehq.apps.export.urls')),
     DataInterfaceDispatcher.url_pattern(),
-)
+]

@@ -13,15 +13,18 @@ from corehq.apps.style.decorators import (
     use_datatables,
 )
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, \
-    DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
+    DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE, UCR_LABORATORY_BACKEND
 from couchexport.shortcuts import export_response
+
+from corehq.toggles import DISABLE_COLUMN_LIMIT_IN_UCR
 from dimagi.utils.modules import to_function
 from django.conf import settings
 from django.contrib import messages
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, Http404, HttpResponseBadRequest
+from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseRedirect
 from django.utils.translation import ugettext as _, ugettext_noop
 from braces.views import JSONResponseMixin
+from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.reports.dispatcher import (
     ReportDispatcher,
 )
@@ -42,12 +45,15 @@ from corehq.apps.userreports.models import (
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.reports.util import (
     get_expanded_columns,
+    has_location_filter,
 )
+from corehq.apps.userreports.tasks import compare_ucr_dbs
 from corehq.apps.userreports.util import (
     default_language,
     has_report_builder_trial,
+    has_report_builder_access,
     can_edit_report,
-)
+    get_ucr_class_name)
 from corehq.util.couch import get_document_or_404, get_document_or_not_found, \
     DocumentNotFound
 from couchexport.export import export_from_tables
@@ -63,7 +69,7 @@ from corehq.apps.reports.datatables import DataTablesHeader
 UCR_EXPORT_TO_EXCEL_ROW_LIMIT = 1000
 
 
-def get_filter_values(filters, request_dict):
+def get_filter_values(filters, request_dict, user=None):
     """
     Return a dictionary mapping filter ids to specified values
     :param filters: A list of corehq.apps.reports_core.filters.BaseFilter
@@ -73,7 +79,7 @@ def get_filter_values(filters, request_dict):
     """
     try:
         return {
-            filter.css_id: filter.get_value(request_dict)
+            filter.css_id: filter.get_value(request_dict, user)
             for filter in filters
         }
     except FilterException, e:
@@ -117,9 +123,17 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     @use_jquery_ui
     @use_datatables
     @use_nvd3
+    @conditionally_location_safe(has_location_filter)
     def dispatch(self, request, *args, **kwargs):
-        original = super(ConfigurableReport, self).dispatch(request, *args, **kwargs)
-        return original
+        if self.should_redirect_to_paywall(request):
+            from corehq.apps.userreports.views import paywall_home
+            return HttpResponseRedirect(paywall_home(self.domain))
+        else:
+            original = super(ConfigurableReport, self).dispatch(request, *args, **kwargs)
+            return original
+
+    def should_redirect_to_paywall(self, request):
+        return self.spec.report_meta.created_by_builder and not has_report_builder_access(request)
 
     @property
     def section_url(self):
@@ -138,7 +152,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     @memoized
     def spec(self):
         if self.is_static:
-            return StaticReportConfiguration.by_id(self.report_config_id)
+            return StaticReportConfiguration.by_id(self.report_config_id, domain=self.domain)
         else:
             return get_document_or_not_found(ReportConfiguration, self.domain, self.report_config_id)
 
@@ -167,19 +181,26 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
     @property
     @memoized
     def data_source(self):
-        report = ReportFactory.from_spec(self.spec)
+        report = ReportFactory.from_spec(self.spec, include_prefilters=True)
         report.lang = self.lang
         return report
 
     @property
     @memoized
     def request_dict(self):
-        return query_dict_to_dict(self.request.GET, self.domain)
+        if self.request.method == 'GET':
+            return query_dict_to_dict(self.request.GET, self.domain)
+        elif self.request.method == 'POST':
+            return query_dict_to_dict(self.request.POST, self.domain)
 
     @property
     @memoized
     def filter_values(self):
-        return get_filter_values(self.filters, self.request_dict)
+        try:
+            user = self.request.couch_user
+        except AttributeError:
+            user = None
+        return get_filter_values(self.filters, self.request_dict, user=user)
 
     @property
     @memoized
@@ -222,7 +243,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             elif request.GET.get('format', None) == 'export_size_check':
                 return self.export_size_check_response
             elif request.is_ajax() or request.GET.get('format', None) == 'json':
-                return self.get_ajax(self.request)
+                return self.get_ajax(self.request.GET)
             self.content_type = None
             try:
                 self.add_warnings(self.request)
@@ -250,8 +271,22 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
         else:
             raise Http403()
 
+    def post(self, request, *args, **kwargs):
+        if self.has_permissions(self.domain, request.couch_user):
+            self.get_spec_or_404()
+            if request.is_ajax():
+                return self.get_ajax(self.request.POST)
+            else:
+                return HttpResponseBadRequest()
+        else:
+            raise Http403()
+
     def has_permissions(self, domain, user):
-        return True
+        if domain is None:
+            return False
+        if not user.is_active:
+            return False
+        return user.can_view_report(domain, get_ucr_class_name(self.report_config_id))
 
     def add_warnings(self, request):
         for warning in self.data_source.column_warnings:
@@ -264,6 +299,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
             'report_table': {'default_rows': 25},
             'filter_context': self.filter_context,
             'url': self.url,
+            'method': 'POST',
             'headers': self.headers,
             'can_edit_report': can_edit_report(self.request, self),
             'has_report_builder_trial': has_report_builder_trial(self.request),
@@ -271,6 +307,8 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
         }
         context.update(self.saved_report_context_data)
         context.update(self.pop_report_builder_context_data())
+        if isinstance(self.spec, ReportConfiguration) and self.spec.report_meta.builder_report_type == 'map':
+            context['report_table']['default_rows'] = 100
         return context
 
     def pop_report_builder_context_data(self):
@@ -320,26 +358,25 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
 
     @property
     def headers(self):
-        return DataTablesHeader(*[col.data_tables_column for col in self.data_source.columns])
+        return DataTablesHeader(*[col.data_tables_column for col in self.data_source.inner_columns])
 
-    def get_ajax(self, request):
+    def get_ajax(self, params):
         try:
             data_source = self.data_source
-            if len(data_source.columns) > 50:
+            if len(data_source.inner_columns) > 50 and not DISABLE_COLUMN_LIMIT_IN_UCR.enabled(self.domain):
                 raise UserReportsError(_("This report has too many columns to be displayed"))
             data_source.set_filter_values(self.filter_values)
 
-            sort_column = request.GET.get('iSortCol_0')
-            sort_order = request.GET.get('sSortDir_0', 'ASC')
-            echo = int(request.GET.get('sEcho', 1))
+            sort_column = params.get('iSortCol_0')
+            sort_order = params.get('sSortDir_0', 'ASC')
+            echo = int(params.get('sEcho', 1))
             if sort_column and echo != 1:
                 data_source.set_order_by(
-                    [(data_source.column_configs[int(sort_column)].column_id, sort_order.upper())]
+                    [(data_source.top_level_columns[int(sort_column)].column_id, sort_order.upper())]
                 )
 
-            datatables_params = DatatablesParams.from_request_dict(request.GET)
+            datatables_params = DatatablesParams.from_request_dict(params)
             page = list(data_source.get_data(start=datatables_params.start, limit=datatables_params.count))
-
             total_records = data_source.get_total_records()
             total_row = data_source.get_total_row() if data_source.has_total_row else None
         except UserReportsError as e:
@@ -368,12 +405,17 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
 
         json_response = {
             'aaData': page,
-            "sEcho": self.request_dict.get('sEcho', 0),
+            "sEcho": params.get('sEcho', 0),
             "iTotalRecords": total_records,
             "iTotalDisplayRecords": total_records,
         }
         if total_row is not None:
             json_response["total_row"] = total_row
+        if data_source.data_source.config.backend_id == UCR_LABORATORY_BACKEND:
+            compare_ucr_dbs.delay(
+                self.domain, self.report_config_id, self.filter_values,
+                sort_column, sort_order, params
+            )
         return self.render_json_response(json_response)
 
     def _get_initial(self, request, **kwargs):
@@ -428,7 +470,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
         raw_rows = list(data.get_data())
         headers = [column.header for column in self.data_source.columns]
 
-        column_id_to_expanded_column_ids = get_expanded_columns(data.column_configs, data.config)
+        column_id_to_expanded_column_ids = get_expanded_columns(data.top_level_columns, data.config)
         column_ids = []
         for column in self.spec.report_columns:
             column_ids.extend(column_id_to_expanded_column_ids.get(column.column_id, [column.column_id]))

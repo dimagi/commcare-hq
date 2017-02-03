@@ -30,7 +30,7 @@ class AppMigrationCommandBase(BaseCommand):
     Base class for commands that want to migrate apps.
     """
     include_builds = False
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option('--failfast',
                     action='store_true',
                     dest='failfast',

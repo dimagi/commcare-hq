@@ -15,6 +15,10 @@
   height: @reg-form-height;
 }
 
+#registration-form-container.has-phonenumber {
+  margin-top: -@reg-form-height/2 - 80px;
+}
+
 .reg-form-column {
   position: relative;
   min-height: 400px;
@@ -39,7 +43,6 @@ ul.form-step-progress li {
     -webkit-transform: scale(1.8); /* Safari and Chrome */
     -o-transform: scale(1.8); /* Opera */
 
-    width: 40px;
     margin-left: -22px;
     height: 25px;
   }
@@ -128,4 +131,12 @@ p.validation-message-block {
 
 .initial-padding {
   padding-top: 20px;
+}
+
+.intl-tel-input {
+  width: 100%;
+}
+
+.intl-tel-input .country-list .country {
+  color: @cc-text;
 }

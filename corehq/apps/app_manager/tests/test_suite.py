@@ -2,7 +2,9 @@
 import hashlib
 import re
 from django.test import SimpleTestCase
-from corehq.apps.app_manager.const import APP_V2
+from corehq.util.test_utils import flag_enabled
+
+from corehq.apps.app_manager.exceptions import SuiteValidationError, DuplicateInstanceIdError
 from corehq.apps.app_manager.models import (
     AdvancedModule,
     Application,
@@ -17,6 +19,7 @@ from corehq.apps.app_manager.models import (
     ReportModule,
     SortElement,
     UpdateCaseAction,
+    CustomInstance,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import SuiteMixin, TestXmlMixin, commtrack_enabled
@@ -25,20 +28,11 @@ from corehq.apps.app_manager.xpath import (
 )
 from corehq.apps.hqmedia.models import HQMediaMapItem
 from corehq.apps.userreports.models import ReportConfiguration
-from corehq.toggles import NAMESPACE_DOMAIN
-from corehq.feature_previews import MODULE_FILTER
-from toggle.shortcuts import update_toggle_cache, clear_toggle_cache
 import commcare_translations
 
 
 class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     file_path = ('data', 'suite')
-
-    def setUp(self):
-        update_toggle_cache(MODULE_FILTER.slug, 'domain', True, NAMESPACE_DOMAIN)
-
-    def tearDown(self):
-        clear_toggle_cache(MODULE_FILTER.slug, 'domain', NAMESPACE_DOMAIN)
 
     def test_normal_suite(self):
         self._test_generic_suite('app', 'normal-suite')
@@ -70,6 +64,32 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             self.get_xml('sort-cache'),
             app.create_suite(),
             "./detail[@id='m0_case_short']"
+        )
+
+    def test_sort_calculation(self):
+        app = Application.wrap(self.get_json('suite-advanced'))
+        detail = app.modules[0].case_details.short
+        detail.sort_elements.append(
+            SortElement(
+                field=detail.columns[0].field,
+                type='string',
+                direction='descending',
+                sort_calculation='random()'
+            )
+        )
+        sort_node = """
+        <partial>
+            <sort direction="descending" order="1" type="string">
+              <text>
+                <xpath function="random()"/>
+              </text>
+            </sort>
+        </partial>
+        """
+        self.assertXmlPartialEqual(
+            sort_node,
+            app.create_suite(),
+            "./detail[@id='m0_case_short']/field/sort"
         )
 
     def test_callcenter_suite(self):
@@ -120,7 +140,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self._test_generic_suite_partial('app_attached_image', "./detail", 'suite-attached-image')
 
     def test_copy_form(self):
-        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        app = Application.new_app('domain', "Untitled Application")
         module = app.add_module(AdvancedModule.new_module('module', None))
         original_form = app.new_form(module.id, "Untitled Form", None)
         original_form.source = '<source>'
@@ -164,7 +184,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         """
         Ensure module filter gets added correctly
         """
-        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        app = Application.new_app('domain', "Untitled Application")
         app.build_spec.version = '2.20.0'
         module = app.add_module(Module.new_module('m0', None))
         module.new_form('f0', None)
@@ -177,7 +197,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         )
 
     def test_module_filter_with_session(self):
-        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        app = Application.new_app('domain', "Untitled Application")
         app.build_spec.version = '2.20.0'
         module = app.add_module(Module.new_module('m0', None))
         form = module.new_form('f0', None)
@@ -196,7 +216,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         )
 
     def test_usercase_id_added_update(self):
-        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        app = Application.new_app('domain', "Untitled Application")
 
         child_module = app.add_module(Module.new_module("Untitled Module", None))
         child_module.case_type = 'child'
@@ -210,7 +230,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertXmlPartialEqual(self.get_xml('usercase_entry'), app.create_suite(), "./entry[1]")
 
     def test_usercase_id_added_preload(self):
-        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        app = Application.new_app('domain', "Untitled Application")
 
         child_module = app.add_module(Module.new_module("Untitled Module", None))
         child_module.case_type = 'child'
@@ -224,7 +244,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertXmlPartialEqual(self.get_xml('usercase_entry'), app.create_suite(), "./entry[1]")
 
     def test_open_case_and_subcase(self):
-        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        app = Application.new_app('domain', "Untitled Application")
 
         module = app.add_module(Module.new_module('parent', None))
         module.case_type = 'phone'
@@ -243,7 +263,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertXmlPartialEqual(self.get_xml('open_case_and_subcase'), app.create_suite(), "./entry[1]")
 
     def test_update_and_subcase(self):
-        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        app = Application.new_app('domain', "Untitled Application")
 
         module = app.add_module(Module.new_module('parent', None))
         module.case_type = 'phone'
@@ -346,7 +366,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self._test_generic_suite("app_case_tiles", "suite-case-tiles")
 
     def test_case_detail_icon_mapping(self):
-        app = Application.new_app('domain', 'Untitled Application', application_version=APP_V2)
+        app = Application.new_app('domain', 'Untitled Application')
 
         module = app.add_module(Module.new_module('Untitled Module', None))
         module.case_type = 'patient'
@@ -360,20 +380,25 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 enum=[
                     MappingItem(key='10', value={'en': 'jr://icons/10-year-old.png'}),
                     MappingItem(key='age > 50', value={'en': 'jr://icons/old-icon.png'}),
+                    MappingItem(key='15%', value={'en': 'jr://icons/percent-icon.png'}),
                 ],
             ),
         ]
 
         key1_varname = '10'
         key2_varname = hashlib.md5('age > 50').hexdigest()[:8]
+        key3_varname = hashlib.md5('15%').hexdigest()[:8]
 
         icon_mapping_spec = """
             <partial>
               <template form="image" width="13%">
                 <text>
-                  <xpath function="if(age = '10', $k{key1_varname}, if(age > 50, $h{key2_varname}, ''))">
+                  <xpath function="if(age = '10', $k{key1_varname}, if(age > 50, $h{key2_varname}, if(age = '15%', $h{key3_varname}, '')))">
                     <variable name="h{key2_varname}">
                       <locale id="m0.case_short.case_age_1.enum.h{key2_varname}"/>
+                    </variable>
+                    <variable name="h{key3_varname}">
+                      <locale id="m0.case_short.case_age_1.enum.h{key3_varname}"/>
                     </variable>
                     <variable name="k{key1_varname}">
                       <locale id="m0.case_short.case_age_1.enum.k{key1_varname}"/>
@@ -385,6 +410,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         """.format(
             key1_varname=key1_varname,
             key2_varname=key2_varname,
+            key3_varname=key3_varname,
         )
         # check correct suite is generated
         self.assertXmlPartialEqual(
@@ -395,6 +421,10 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         # check icons map correctly
         app_strings = commcare_translations.loads(app.create_app_strings('en'))
         self.assertEqual(
+            app_strings['m0.case_short.case_age_1.enum.h{key3_varname}'.format(key3_varname=key3_varname,)],
+            'jr://icons/percent-icon.png'
+        )
+        self.assertEqual(
             app_strings['m0.case_short.case_age_1.enum.h{key2_varname}'.format(key2_varname=key2_varname,)],
             'jr://icons/old-icon.png'
         )
@@ -404,7 +434,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         )
 
     def test_case_tile_pull_down(self):
-        app = Application.new_app('domain', 'Untitled Application', application_version=APP_V2)
+        app = Application.new_app('domain', 'Untitled Application')
 
         module = app.add_module(Module.new_module('Untitled Module', None))
         module.case_type = 'patient'
@@ -550,7 +580,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                     </title>
                     <field>
                         <style font-size="large" horz-align="center">
-                            <grid grid-height="2" grid-width="12" grid-x="0" grid-y="0"/>
+                            <grid grid-height="1" grid-width="12" grid-x="0" grid-y="0"/>
                         </style>
                         <header>
                             <text/>
@@ -618,7 +648,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         )
 
     def test_subcase_repeat_mixed(self):
-        app = Application.new_app(None, "Untitled Application", application_version=APP_V2)
+        app = Application.new_app(None, "Untitled Application")
         module_0 = app.add_module(Module.new_module('parent', None))
         module_0.unique_id = 'm0'
         module_0.case_type = 'parent'
@@ -662,7 +692,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     def test_report_module(self):
         from corehq.apps.userreports.tests.utils import get_sample_report_config
 
-        app = Application.new_app('domain', "Untitled Application", application_version=APP_V2)
+        app = Application.new_app('domain', "Untitled Application")
 
         report_module = app.add_module(ReportModule.new_module('Reports', None))
         report_module.unique_id = 'report_module'
@@ -733,23 +763,153 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             "./detail[@id='reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.summary']",
         )
 
-        report_app_config._report.columns[0]['transform'] = {
-            'type': 'translation',
-            'translations': {
-                u'एक': [
-                    ['en', 'one'],
-                    ['es', 'uno'],
-                ],
-                '2': [
-                    ['en', 'two'],
-                    ['es', 'dos\''],
-                    ['hin', u'दो'],
-                ],
+        # Tuple mapping translation formats to the expected output of each
+        translation_formats = [
+            ({
+                u'एक': {
+                    'en': 'one',
+                    'es': 'uno',
+                },
+                '2': {
+                    'en': 'two',
+                    'es': 'dos\'',
+                    'hin': u'दो',
+                },
+            }, 'reports_module_data_detail-translated'),
+            ({
+                u'एक': 'one',
+                '2': 'two',
+            }, 'reports_module_data_detail-translated-simple'),
+            ({
+                u'एक': {
+                    'en': 'one',
+                    'es': 'uno',
+                },
+                '2': 'two',
+            }, 'reports_module_data_detail-translated-mixed'),
+        ]
+        for translation_format, expected_output in translation_formats:
+            report_app_config._report.columns[0]['transform'] = {
+                'type': 'translation',
+                'translations': translation_format,
             }
-        }
-        report_app_config._report = ReportConfiguration.wrap(report_app_config._report._doc)
+            report_app_config._report = ReportConfiguration.wrap(report_app_config._report._doc)
+            self.assertXmlPartialEqual(
+                self.get_xml(expected_output),
+                app.create_suite(),
+                "./detail/detail[@id='reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.data']",
+            )
+
+    def test_circular_parent_case_ref(self):
+        factory = AppFactory()
+        m0, m0f0 = factory.new_basic_module('m0', 'case1')
+        m1, m1f0 = factory.new_basic_module('m1', 'case2')
+        factory.form_requires_case(m0f0, 'case1', parent_case_type='case2')
+        factory.form_requires_case(m1f0, 'case2', parent_case_type='case1')
+
+        with self.assertRaises(SuiteValidationError):
+            factory.app.create_suite()
+
+    def test_custom_variables(self):
+        factory = AppFactory()
+        module, form = factory.new_basic_module('m0', 'case1')
+        short_custom_variables = "<variable function='true()' /><foo function='bar'/>"
+        long_custom_variables = "<bar function='true()' /><baz function='buzz'/>"
+        module.case_details.short.custom_variables = short_custom_variables
+        module.case_details.long.custom_variables = long_custom_variables
         self.assertXmlPartialEqual(
-            self.get_xml('reports_module_data_detail-translated'),
-            app.create_suite(),
-            "./detail/detail[@id='reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i.data']",
+            u"""
+            <partial>
+                <variables>
+                    {short_variables}
+                </variables>
+                <variables>
+                    {long_variables}
+                </variables>
+            </partial>
+            """.format(short_variables=short_custom_variables, long_variables=long_custom_variables),
+            factory.app.create_suite(),
+            "detail/variables"
+        )
+
+
+class InstanceTests(SimpleTestCase, TestXmlMixin, SuiteMixin):
+    file_path = ('data', 'suite')
+
+    def setUp(self):
+        super(InstanceTests, self).setUp()
+        self.factory = AppFactory(include_xmlns=True)
+        self.module, self.form = self.factory.new_basic_module('m0', 'case1')
+
+    def test_custom_instances(self):
+        instance_id = "foo"
+        instance_path = "jr://foo/bar"
+        self.form.custom_instances = [CustomInstance(instance_id=instance_id, instance_path=instance_path)]
+        self.assertXmlPartialEqual(
+            u"""
+            <partial>
+                <instance id='{}' src='{}' />
+            </partial>
+            """.format(instance_id, instance_path),
+            self.factory.app.create_suite(),
+            "entry/instance"
+        )
+
+    def test_duplicate_custom_instances(self):
+        self.factory.form_requires_case(self.form)
+        instance_id = "casedb"
+        instance_path = "jr://casedb/bar"
+        # Use form_filter to add instances
+        self.form.form_filter = "count(instance('casedb')/casedb/case[@case_id='123']) > 0"
+        self.form.custom_instances = [CustomInstance(instance_id=instance_id, instance_path=instance_path)]
+        with self.assertRaises(DuplicateInstanceIdError):
+            self.factory.app.create_suite()
+
+    def test_duplicate_regular_instances(self):
+        """Make sure instances aren't getting added multiple times if they are referenced multiple times
+        """
+        self.factory.form_requires_case(self.form)
+        self.form.form_filter = "instance('casedb') instance('casedb') instance('locations') instance('locations')"
+        self.assertXmlPartialEqual(
+            u"""
+            <partial>
+                <instance id='casedb' src='jr://instance/casedb' />
+                <instance id='locations' src='jr://fixture/commtrack:locations' />
+            </partial>
+            """,
+            self.factory.app.create_suite(),
+            "entry/instance"
+        )
+
+    def test_location_instances(self):
+        self.form.form_filter = "instance('locations')/locations/"
+        with flag_enabled('FLAT_LOCATION_FIXTURE'):
+            self.assertXmlPartialEqual(
+                u"""
+                <partial>
+                    <instance id='locations' src='jr://fixture/locations' />
+                </partial>
+                """,
+                self.factory.app.create_suite(),
+                "entry/instance")
+
+        self.assertXmlPartialEqual(
+            u"""
+            <partial>
+                <instance id='locations' src='jr://fixture/commtrack:locations' />
+            </partial>
+            """,
+            self.factory.app.create_suite(),
+            "entry/instance"
+        )
+
+        self.form.form_filter = "instance('commtrack:locations')/locations/"
+        self.assertXmlPartialEqual(
+            u"""
+            <partial>
+                <instance id='commtrack:locations' src='jr://fixture/commtrack:locations' />
+            </partial>
+            """,
+            self.factory.app.create_suite(),
+            "entry/instance"
         )

@@ -8,3 +8,13 @@ DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE = _(
     'In order to view this data using the Report Builder you will have to delete this report '
     'and then build it again. Click below to delete it.'
 )
+
+UCR_SQL_BACKEND = "SQL"
+UCR_ES_BACKEND = "ES"
+UCR_LABORATORY_BACKEND = "LABORATORY"
+
+UCR_BACKENDS = [UCR_SQL_BACKEND, UCR_ES_BACKEND]
+
+DEFAULT_MAXIMUM_EXPANSION = 10
+
+UCR_CELERY_QUEUE = 'ucr_queue'

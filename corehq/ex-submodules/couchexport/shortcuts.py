@@ -1,6 +1,7 @@
 import logging
+from wsgiref.util import FileWrapper
 from zipfile import ZipFile
-from django.core.servers.basehttp import FileWrapper
+
 from couchexport.files import TempBase
 from couchexport.models import DefaultExportSchema, SavedExportSchema
 from django.http import HttpResponse, HttpResponseNotFound, StreamingHttpResponse
@@ -62,16 +63,8 @@ def export_response(file, format, filename, checkpoint=None):
         response = StreamingHttpResponse(FileWrapper(file), content_type=format.mimetype)
 
     if format.download:
-        try:
-            filename = unidecode(filename)
-        except Exception:
-            logging.exception("Error with filename: %r" % filename)
-            filename = "data"
-        finally:
-            response['Content-Disposition'] = 'attachment; filename="{filename}.{format.extension}"'.format(
-                filename=filename,
-                format=format
-            )
+        from corehq.util.files import safe_filename_header
+        response['Content-Disposition'] = safe_filename_header(filename, format.extension)
 
     if checkpoint:
         response['X-CommCareHQ-Export-Token'] = checkpoint.get_id

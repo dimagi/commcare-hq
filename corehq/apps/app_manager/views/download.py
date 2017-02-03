@@ -11,14 +11,17 @@ from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 
+from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.decorators import safe_download
 from corehq.apps.app_manager.exceptions import ModuleNotFoundException, \
     AppManagerException, FormNotFoundException
-from corehq.apps.app_manager.util import add_odk_profile_after_build
+from corehq.apps.app_manager.util import add_odk_profile_after_build, \
+    get_app_manager_template
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs
 from corehq.apps.builds.jadjar import convert_XML_To_J2ME
 from corehq.apps.hqmedia.views import DownloadMultimediaZip
+from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import set_file_download
 from dimagi.utils.django.cached_object import CachedObject
 from dimagi.utils.web import json_response
@@ -270,6 +273,8 @@ def download_file(request, domain, app_id, path):
                 request.app.save()
                 return download_file(request, domain, app_id, path)
             elif path in ('CommCare.jad', 'CommCare.jar'):
+                if not request.app.build_spec.supports_j2me():
+                    raise Http404()
                 request.app.create_jadjar_from_build_files(save=True)
                 try:
                     request.app.save(increment_version=False)
@@ -289,21 +294,8 @@ def download_file(request, domain, app_id, path):
                     pass
                 else:
                     # this resource should exist but doesn't
-                    logging.error(
-                        'Expected build resource %s not found' % path,
-                        extra={'request': request}
-                    )
-                    if not request.app.build_broken:
-                        request.app.build_broken = True
-                        request.app.build_broken_reason = 'incomplete-build'
-                        try:
-                            request.app.save()
-                        except ResourceConflict:
-                            # this really isn't a big deal:
-                            # It'll get updated next time a resource is request'd;
-                            # in fact the conflict is almost certainly from
-                            # another thread doing this exact update
-                            pass
+                    _assert = soft_assert('@'.join(['jschweers', 'dimagi.com']))
+                    _assert(False, 'Expected build resource %s not found' % path)
                 raise Http404()
         try:
             callback, callback_args, callback_kwargs = resolve_path(path)
@@ -332,12 +324,18 @@ def download_media_profile(request, domain, app_id):
 
 
 @safe_download
-def download_index(request, domain, app_id, template="app_manager/download_index.html"):
+def download_index(request, domain, app_id):
     """
     A landing page, mostly for debugging, that has links the jad and jar as well as
     all the resource files that will end up zipped into the jar.
 
     """
+    template = get_app_manager_template(
+        domain,
+        "app_manager/v1/download_index.html",
+        "app_manager/v2/download_index.html",
+    )
+
     files = []
     try:
         files = source_files(request.app)
@@ -356,6 +354,7 @@ def download_index(request, domain, app_id, template="app_manager/download_index
     return render(request, template, {
         'app': request.app,
         'files': [{'name': f[0], 'source': f[1]} for f in files],
+        'supports_j2me': request.app.build_spec.supports_j2me(),
     })
 
 
@@ -370,17 +369,25 @@ def validate_form_for_build(request, domain, app_id, unique_form_id, ajax=True):
     lang, langs = get_langs(request, app)
 
     if ajax and "blank form" in [error.get('type') for error in errors]:
-        response_html = render_to_string('app_manager/partials/create_form_prompt.html')
+        response_html = ("" if toggles.APP_MANAGER_V2.enabled(domain)
+                         else render_to_string('app_manager/v1/partials/create_form_prompt.html'))
     else:
-        response_html = render_to_string('app_manager/partials/build_errors.html', {
-            'app': app,
-            'form': form,
-            'build_errors': errors,
-            'not_actual_build': True,
-            'domain': domain,
-            'langs': langs,
-            'lang': lang
-        })
+        response_html = render_to_string(
+            get_app_manager_template(
+                domain,
+                'app_manager/v1/partials/build_errors.html',
+                'app_manager/v2/partials/build_errors.html',
+            ), {
+                'request': request,
+                'app': app,
+                'form': form,
+                'build_errors': errors,
+                'not_actual_build': True,
+                'domain': domain,
+                'langs': langs,
+                'lang': lang
+            }
+        )
 
     if ajax:
         return json_response({

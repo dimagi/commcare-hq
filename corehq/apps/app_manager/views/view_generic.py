@@ -2,6 +2,7 @@ from django.http import Http404
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.shortcuts import render
+from corehq.apps.app_manager.const import APP_V1
 
 from corehq.apps.app_manager.views.modules import get_module_template, \
     get_module_view_context
@@ -11,6 +12,7 @@ from corehq.apps.app_manager.views.apps import get_apps_base_context, \
     get_app_view_context
 from corehq.apps.app_manager.views.forms import \
     get_form_view_context_and_template
+from corehq.apps.app_manager.views.releases import get_releases_context
 from corehq.apps.app_manager.views.utils import bail, encode_if_unicode
 from corehq.apps.hqmedia.controller import (
     MultimediaImageUploadController,
@@ -29,9 +31,11 @@ from corehq.apps.app_manager.util import (
     get_all_case_properties,
     get_commcare_versions,
     get_usercase_properties,
+    get_app_manager_template,
 )
 from corehq import toggles
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
+from corehq.apps.cloudcare.utils import should_show_preview_app
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.couch.resource_conflict import retry_resource
 from corehq.apps.app_manager.dbaccessors import get_app
@@ -40,11 +44,12 @@ from corehq.apps.app_manager.models import (
     ModuleNotFoundException,
 )
 from django_prbac.utils import has_privilege
+from corehq.apps.analytics import ab_tests
 
 
 @retry_resource(3)
 def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
-                 copy_app_form=None):
+                 copy_app_form=None, release_manager=False):
     """
     This is the main view for the app. All other views redirect to here.
 
@@ -72,19 +77,30 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     except ModuleNotFoundException:
         return bail(request, domain, app_id)
 
-    if app and app.application_version == '1.0':
-        _assert = soft_assert(to=['droberts' + '@' + 'dimagi.com'])
-        _assert(False, 'App version 1.0', {'domain': domain, 'app_id': app_id})
-        return render(request, 'app_manager/no_longer_supported.html', {
-            'domain': domain,
-            'app': app,
-        })
+    # Application states that should no longer exist
+    if app:
+        if app.application_version == APP_V1:
+            _assert = soft_assert()
+            _assert(False, 'App version 1.0', {'domain': domain, 'app_id': app_id})
+            template = get_app_manager_template(
+                domain,
+                'app_manager/v1/no_longer_supported.html',
+                'app_manager/v2/no_longer_supported.html',
+            )
+            return render(request, template, {
+                'domain': domain,
+                'app': app,
+            })
+        if not app.vellum_case_management:
+            # Soft assert but then continue rendering; template will contain a user-facing warning
+            _assert = soft_assert(['jschweers' + '@' + 'dimagi.com'])
+            _assert(False, 'vellum_case_management=False', {'domain': domain, 'app_id': app_id})
 
     context = get_apps_base_context(request, domain, app)
     if app and app.copy_of:
         # don't fail hard.
         return HttpResponseRedirect(reverse(
-            "corehq.apps.app_manager.views.view_app", args=[domain, app.copy_of]
+            "view_app", args=[domain, app.copy_of] # TODO - is this right?
         ))
 
     # grandfather in people who set commcare sense earlier
@@ -116,23 +132,40 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
 
         context.update(form_context)
     elif module:
-        template = get_module_template(module)
+        template = get_module_template(domain, module)
         # make sure all modules have unique ids
         app.ensure_module_unique_ids(should_save=True)
         module_context = get_module_view_context(app, module, lang)
         context.update(module_context)
     elif app:
-        template = "app_manager/app_view.html"
         context.update(get_app_view_context(request, app))
+
+        v2_template = ('app_manager/v2/app_view_release_manager.html'
+                       if release_manager
+                       else 'app_manager/v2/app_view_settings.html')
+
+        template = get_app_manager_template(
+            domain,
+            'app_manager/v1/app_view.html',
+            v2_template
+        )
+
+        if release_manager:
+            context.update(get_releases_context(request, domain, app_id))
+        context.update({
+            'is_app_settings_page': not release_manager,
+        })
     else:
         from corehq.apps.dashboard.views import NewUserDashboardView
-        template = NewUserDashboardView.template_name
-        context.update({'templates': NewUserDashboardView.templates(domain)})
+        if toggles.APP_MANAGER_V2.enabled(domain):
+            context.update(NewUserDashboardView.get_page_context(domain))
+            template = NewUserDashboardView.template_name
+        else:
+            return HttpResponseRedirect(reverse(NewUserDashboardView.urlname, args=[domain]))
 
     # update multimedia context for forms and modules.
     menu_host = form or module
     if menu_host:
-
         default_file_name = 'module%s' % module_id
         if form_id:
             default_file_name = '%s_form%s' % (default_file_name, form_id)
@@ -205,12 +238,16 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     # Pass form for Copy Application to template
     domain_names = [d.name for d in Domain.active_for_user(request.couch_user)]
     domain_names.sort()
-    if copy_app_form is None:
+    if app and copy_app_form is None:
         toggle_enabled = toggles.EXPORT_ZIPPED_APPS.enabled(request.user.username)
-        copy_app_form = CopyApplicationForm(app_id, export_zipped_apps_enabled=toggle_enabled)
+        copy_app_form = CopyApplicationForm(domain, app_id, export_zipped_apps_enabled=toggle_enabled)
+        context.update({
+            'domain_names': domain_names,
+        })
+    linked_apps_enabled = toggles.LINKED_APPS.enabled(domain)
     context.update({
         'copy_app_form': copy_app_form,
-        'domain_names': domain_names,
+        'linked_apps_enabled': linked_apps_enabled,
     })
 
     context['latest_commcare_version'] = get_commcare_versions(request.user)[-1]
@@ -245,7 +282,20 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
             },
         })
 
+    live_preview_ab = ab_tests.ABTest(ab_tests.LIVE_PREVIEW, request)
+    domain_obj = Domain.get_by_name(domain)
+    context.update({
+        'live_preview_ab': live_preview_ab.context,
+        'is_onboarding_domain': domain_obj.is_onboarding_domain,
+        'show_live_preview': should_show_preview_app(
+            request,
+            domain_obj,
+            request.couch_user.username,
+        )
+    })
+
     response = render(request, template, context)
 
+    live_preview_ab.update_response(response)
     response.set_cookie('lang', encode_if_unicode(lang))
     return response

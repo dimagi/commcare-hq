@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='softwareplanversion',
             name='product_rate',
-            field=models.ForeignKey(to='accounting.SoftwareProductRate'),
+            field=models.ForeignKey(to='accounting.SoftwareProductRate', on_delete=models.CASCADE),
             preserve_default=True,
         ),
     ]

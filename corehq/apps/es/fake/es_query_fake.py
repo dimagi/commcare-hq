@@ -46,7 +46,12 @@ class ESQueryFake(object):
     def save_doc(cls, doc):
         if '_id' not in doc:
             doc['_id'] = 'silly-fake-id-{}'.format(uuid.uuid4().hex[:8])
+        doc = cls.transform_doc(doc)
         cls._get_all_docs().append(doc)
+
+    @staticmethod
+    def transform_doc(doc):
+        return doc
 
     @classmethod
     def reset_docs(cls):
@@ -64,6 +69,8 @@ class ESQueryFake(object):
         return values_list(self.run().hits, *fields, **kwargs)
 
     def search_string_query(self, search_string, default_fields=None):
+        if not search_string:
+            return self
         if default_fields:
             return self._filtered(
                 lambda doc: any(doc[field] is not None and (search_string in doc[field])
@@ -104,6 +111,13 @@ class ESQueryFake(object):
                 'total': total,
             },
         }, self)
+
+    def term(self, field, value):
+        if isinstance(value, (list, tuple, set)):
+            valid_terms = list(value)
+        else:
+            valid_terms = [value]
+        return self._filtered(lambda doc: doc[field] in valid_terms)
 
     def __getattr__(self, item):
         """

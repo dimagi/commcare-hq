@@ -6,7 +6,7 @@ from corehq.elastic import get_es_new
 from corehq.pillows.base import convert_property_dict
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
 from corehq.pillows.xform import transform_xform_for_elasticsearch, xform_pillow_filter
-from pillowtop.checkpoints.manager import PillowCheckpoint
+from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import ElasticProcessor
 from pillowtop.reindexer.change_providers.form import get_domain_form_change_provider
@@ -36,9 +36,8 @@ def transform_xform_for_report_forms_index(doc_dict):
 
 
 def get_report_xform_to_elasticsearch_pillow(pillow_id='ReportXFormToElasticsearchPillow'):
-    checkpoint = PillowCheckpoint(
-        'report-xforms-to-elasticsearch',
-    )
+    assert pillow_id == 'ReportXFormToElasticsearchPillow', 'Pillow ID is not allowed to change'
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, REPORT_XFORM_INDEX_INFO)
     form_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=REPORT_XFORM_INDEX_INFO,

@@ -4,11 +4,11 @@
 {% load djangular_tags %}
 
 {% block js %}
-<script type="text/javascript" src="{% static 'style/js/pagination.ng.js' %}"></script>
+<script src="{% static 'style/js/pagination.ng.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-<script type="text/javascript">
+<script>
 (function (angular, undefined) {
     'use strict';
     var autoUpdateRuleApp = angular.module('autoUpdateRuleApp', ['hq.pagination']);

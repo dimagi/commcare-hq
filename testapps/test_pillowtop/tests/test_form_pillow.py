@@ -8,7 +8,7 @@ from corehq.apps.change_feed.producer import producer
 from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message
 from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer
 from corehq.apps.change_feed.topics import get_multi_topic_offset
-from corehq.apps.receiverwrapper import submit_form_locally
+from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.userreports.tests.utils import doc_to_change
 from corehq.pillows.app_submission_tracker import get_app_form_submission_tracker_pillow
 from corehq.form_processor.tests.utils import FormProcessorTestUtils

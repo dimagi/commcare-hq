@@ -7,7 +7,8 @@ from kafka.common import ConsumerTimeout
 
 from corehq.apps.change_feed.data_sources import get_document_store
 from corehq.apps.change_feed.exceptions import UnknownDocumentStore
-from corehq.apps.change_feed.topics import get_multi_topic_offset, get_topic_offset
+from corehq.apps.change_feed.topics import get_multi_topic_offset, get_topic_offset, \
+    validate_offsets
 from dimagi.utils.logging import notify_error
 from pillowtop.checkpoints.manager import PillowCheckpointEventHandler, DEFAULT_EMPTY_CHECKPOINT_SEQUENCE
 from pillowtop.feed.interface import ChangeFeed, Change, ChangeMeta
@@ -20,7 +21,7 @@ class KafkaChangeFeed(ChangeFeed):
     Kafka-based implementation of a ChangeFeed
     """
 
-    def __init__(self, topics, group_id, partition=0):
+    def __init__(self, topics, group_id, partition=0, strict=False):
         """
         Create a change feed listener for a list of kafka topics, a group ID, and partition.
 
@@ -30,6 +31,7 @@ class KafkaChangeFeed(ChangeFeed):
         self._group_id = group_id
         self._partition = partition
         self._processed_topic_offsets = {}  # maps topics to sequence IDs
+        self.strict = strict
 
     def __unicode__(self):
         return u'KafkaChangeFeed: topics: {}, group: {}'.format(self._topics, self._group_id)
@@ -54,7 +56,8 @@ class KafkaChangeFeed(ChangeFeed):
         timeout = -1 if forever else MIN_TIMEOUT
 
         start_from_latest = since is None
-        reset = 'smallest' if not start_from_latest else 'largest'
+
+        reset = 'largest' if start_from_latest else 'smallest'
         consumer = self._get_consumer(timeout, auto_offset_reset=reset)
         if not start_from_latest:
             if isinstance(since, dict):
@@ -82,8 +85,12 @@ class KafkaChangeFeed(ChangeFeed):
                     return (topic, self._partition)
 
             offsets = [_make_offset_tuple(topic) for topic in self._topics]
+            if self.strict:
+                self._validate_offsets(offsets)
+
             # this is how you tell the consumer to start from a certain point in the sequence
             consumer.set_topic_partitions(*offsets)
+
         try:
             for message in consumer:
                 self._processed_topic_offsets[message.topic] = message.offset
@@ -106,6 +113,12 @@ class KafkaChangeFeed(ChangeFeed):
         topic = self._get_single_topic_or_fail()
         return get_topic_offset(topic)
 
+    def get_checkpoint_value(self):
+        try:
+            return self.get_latest_change_id()
+        except ValueError:
+            return json.dumps(self.get_current_offsets())
+
     def _get_consumer(self, timeout, auto_offset_reset='smallest'):
         config = {
             'group_id': self._group_id,
@@ -117,6 +130,10 @@ class KafkaChangeFeed(ChangeFeed):
             *self._topics,
             **config
         )
+
+    def _validate_offsets(self, offsets):
+        expected_values = {offset[0]: offset[2] for offset in offsets if len(offset) > 2}
+        validate_offsets(expected_values)
 
 
 class MultiTopicCheckpointEventHandler(PillowCheckpointEventHandler):
@@ -138,7 +155,7 @@ class MultiTopicCheckpointEventHandler(PillowCheckpointEventHandler):
             checkpoint_doc.save()
 
     def fire_change_processed(self, change, context):
-        if context.changes_seen % self.checkpoint_frequency == 0 and context.do_set_checkpoint:
+        if self.should_update_checkpoint(context):
             updated_to = self.change_feed.get_current_checkpoint_offsets()
             self.checkpoint.update_to(json.dumps(updated_to))
 
@@ -153,6 +170,7 @@ def change_from_kafka_message(message):
         )
     except UnknownDocumentStore:
         document_store = None
+        notify_error("Unknown document store: {}".format(change_meta.data_source_type))
     return Change(
         id=change_meta.document_id,
         sequence_id=message.offset,

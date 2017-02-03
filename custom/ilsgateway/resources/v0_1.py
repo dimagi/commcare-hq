@@ -1,4 +1,4 @@
-from corehq.apps.api.resources.v0_1 import LoginAndDomainAuthentication
+from corehq.apps.api.resources.auth import LoginAndDomainAuthentication
 from corehq.apps.locations.resources.v0_1 import LocationResource
 
 

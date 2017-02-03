@@ -42,8 +42,8 @@
 					</case>
 				</data>
 			</instance>
-			<instance id="casedb" src="jr://instance/casedb"/>
 			<instance id="commcaresession" src="jr://instance/session"/>
+			<instance id="casedb" src="jr://instance/casedb"/>
 
             <bind nodeset="/data/count_tasks" calculate="count-selected(/data/child_tasks)"/>
 

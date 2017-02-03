@@ -22,7 +22,7 @@ from django.utils.translation import ugettext_noop
 from django.views.decorators.http import require_POST
 from corehq.apps.domain.decorators import domain_admin_required, login_and_domain_required
 from corehq.const import SERVER_DATETIME_FORMAT_NO_SEC
-from custom.ilsgateway import DashboardReport
+from custom.ilsgateway.tanzania.reports.dashboard_report import DashboardReport
 from custom.ilsgateway.forms import SupervisionDocumentForm, ILSConfigForm
 from custom.ilsgateway.oneoff import recalculate_moshi_rural_task, recalculate_non_facilities_task
 from custom.ilsgateway.tanzania import make_url
@@ -326,8 +326,11 @@ class ReportRunDeleteView(DeleteView, DomainViewMixin):
 
 class DashboardPageRedirect(RedirectView):
 
-    def get_redirect_url(self, *args, **kwargs):
-        domain = kwargs['domain']
+    @method_decorator(login_and_domain_required)
+    def dispatch(self, request, domain, *args, **kwargs):
+        return super(DashboardPageRedirect, self).dispatch(request, domain, *args, **kwargs)
+
+    def get_redirect_url(self, domain, *args, **kwargs):
         user = self.request.couch_user
         dm = user.get_domain_membership(domain)
         url = DashboardReport.get_url(domain)

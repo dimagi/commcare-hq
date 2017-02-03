@@ -1,16 +1,16 @@
 from gevent import monkey; monkey.patch_all()
+from corehq.apps.hqcase.analytics import get_number_of_cases_in_domain_of_type
 from itertools import islice
 from casexml.apps.case.models import CommCareCase
 import time
-from corehq.apps.hqcase.dbaccessors import get_number_of_cases_in_domain, \
-    get_case_ids_in_domain
+from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 import sys
 from restkit.session import set_session
 set_session("gevent")
 from gevent.pool import Pool
 
 from couchdbkit.exceptions import ResourceNotFound
-from django.core.management.base import LabelCommand
+from django.core.management.base import BaseCommand
 from corehq.apps.indicators.models import CaseIndicatorDefinition, \
     FormIndicatorDefinition, DocumentMismatchError, DocumentNotInDomainError, \
     FormLabelIndicatorDefinition
@@ -21,7 +21,7 @@ from mvp.models import MVP
 POOL_SIZE = 10
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = "Update MVP indicators in existing cases and forms."
     args = "<domain> <case or form> <case or form label> <start at record #>"
     label = ""
@@ -112,7 +112,7 @@ class Command(LabelCommand):
         )
 
         if relevant_indicators:
-            num_cases = get_number_of_cases_in_domain(domain, type=case_type)
+            num_cases = get_number_of_cases_in_domain_of_type(domain, case_type=case_type)
 
             print ("\nFound the following Case Indicator Definitions "
                    "for Case Type %s in Domain %s") % (case_type, domain)

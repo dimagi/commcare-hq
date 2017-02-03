@@ -1,6 +1,7 @@
 from kafka.common import OffsetRequest
 
 from corehq.apps.change_feed.connection import get_kafka_client
+from corehq.apps.change_feed.exceptions import UnavailableKafkaOffset
 from .document_types import CASE, FORM, DOMAIN, META, APP
 
 # this is redundant but helps avoid import warnings until nothing references these
@@ -18,6 +19,7 @@ LEDGER = 'ledger'
 COMMCARE_USER = 'commcare-user'
 GROUP = 'group'
 WEB_USER = 'web-user'
+LOCATION = 'location'
 
 
 ALL = (
@@ -33,6 +35,7 @@ ALL = (
     SMS,
     WEB_USER,
     APP,
+    LOCATION,
 )
 
 
@@ -46,19 +49,46 @@ def get_topic_offset(topic):
     return get_multi_topic_offset([topic])[topic]
 
 
+def get_all_offsets():
+    """
+    :returns: A dict of offsets keyed by topic"""
+    return get_multi_topic_offset(ALL)
+
+
 def get_multi_topic_offset(topics):
     """
     :returns: A dict of offsets keyed by topic"""
+    return _get_topic_offsets(topics, latest=True)
+
+
+def get_multi_topic_first_available_offsets(topics):
+    """
+    :returns: A dict of offsets keyed by topic"""
+    return _get_topic_offsets(topics, latest=False)
+
+
+def _get_topic_offsets(topics, latest):
+    # https://cwiki.apache.org/confluence/display/KAFKA/A+Guide+To+The+Kafka+Protocol#AGuideToTheKafkaProtocol-OffsetRequest
+    time_value = -1 if latest else -2
     assert set(topics) <= set(ALL)
     client = get_kafka_client()
-    offset_requests = [OffsetRequest(topic, 0, -1, 1) for topic in topics]
+    offset_requests = [OffsetRequest(topic, 0, time_value, 1) for topic in topics]
     responses = client.send_offset_request(offset_requests)
     return {
         r.topic: r.offsets[0] for r in responses
     }
 
 
-def get_all_offsets():
+def validate_offsets(expected_offsets):
     """
-    :returns: A dict of offsets keyed by topic"""
-    return get_multi_topic_offset(ALL)
+    Takes in a dictionary of offsets (topics to checkpoint numbers) and ensures they are all available
+    in the current kafka feed
+    """
+    if expected_offsets:
+        available_offsets = get_multi_topic_first_available_offsets([str(x) for x in expected_offsets.keys()])
+        for topic in expected_offsets.keys():
+            if expected_offsets[topic] < available_offsets[topic]:
+                messsage = (
+                    'First available topic offset for {} is {} but needed {}.'
+                ).format(topic, available_offsets[topic], expected_offsets[topic])
+                raise UnavailableKafkaOffset(messsage)

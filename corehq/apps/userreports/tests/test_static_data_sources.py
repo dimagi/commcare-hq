@@ -4,7 +4,7 @@ from django.test import SimpleTestCase
 from django.test.utils import override_settings
 from mock import patch, MagicMock
 
-from corehq.apps.userreports.tests.utils import domain_lite
+from corehq.apps.userreports.tests.utils import domain_lite, run_with_all_ucr_backends
 from corehq.util.test_utils import TestFileMixin
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, DataSourceConfiguration
 
@@ -41,6 +41,7 @@ class TestStaticDataSource(SimpleTestCase, TestFileMixin):
         self.assertFalse(DataSourceConfiguration().is_static)
         self.assertFalse(DataSourceConfiguration(_id=uuid.uuid4().hex).is_static)
 
+    @run_with_all_ucr_backends
     def test_deactivate_noop(self):
         with override_settings(STATIC_DATA_SOURCES=[self.get_path('sample_static_data_source', 'json')]):
             example = list(StaticDataSourceConfiguration.all())[0]

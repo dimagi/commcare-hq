@@ -25,16 +25,13 @@ from corehq.apps.domain.models import Domain
 from datetime import datetime
 
 from corehq.apps.sms.util import register_sms_contact, strip_plus
+from corehq import toggles
 
 # A list of all keywords which allow registration via sms.
 # Meant to allow support for multiple languages.
 # Keywords should be in all caps.
 REGISTRATION_KEYWORDS = ["JOIN"]
 REGISTRATION_MOBILE_WORKER_KEYWORDS = ["WORKER"]
-
-
-class DomainScopeValidationError(Exception):
-    pass
 
 
 class BackendAuthorizationException(Exception):
@@ -392,17 +389,24 @@ def process_sms_registration(msg):
                     else:
                         username = cleaned_phone_number
                     try:
-                        username = process_username(username, domain)
-                        password = random_password()
-                        new_user = CommCareUser.create(domain.name, username, password)
-                        new_user.add_phone_number(cleaned_phone_number)
-                        new_user.save_verified_number(domain.name, cleaned_phone_number, True, None)
-                        new_user.save()
-                        registration_processed = True
+                        user_data = {}
 
                         invitation = SelfRegistrationInvitation.by_phone(msg.phone_number)
                         if invitation:
                             invitation.completed()
+                            user_data = invitation.custom_user_data
+
+                        username = process_username(username, domain)
+                        password = random_password()
+                        new_user = CommCareUser.create(domain.name, username, password, user_data=user_data)
+                        new_user.add_phone_number(cleaned_phone_number)
+                        new_user.save()
+
+                        entry = new_user.get_or_create_phone_entry(cleaned_phone_number)
+                        entry.set_two_way()
+                        entry.set_verified()
+                        entry.save()
+                        registration_processed = True
 
                         if domain.enable_registration_welcome_sms_for_mobile_worker:
                             send_sms(domain.name, None, cleaned_phone_number,
@@ -440,9 +444,7 @@ def incoming(phone_number, text, backend_api, timestamp=None,
     text - message content
     backend_api - backend API ID of receiving sms backend
     timestamp - message received timestamp; defaults to now (UTC)
-    domain_scope - if present, only messages from phone numbers that can be
-      definitively linked to this domain will be processed; others will be
-      dropped (useful to provide security when simulating incoming sms)
+    domain_scope - set the domain scope for this SMS; see SMSBase.domain_scope for details
     """
     # Log message in message log
     if text is None:
@@ -488,23 +490,55 @@ def get_opt_keywords(msg):
     )
 
 
-def process_incoming(msg):
-    v = PhoneNumber.by_phone(msg.phone_number, include_pending=True)
+def load_and_call(sms_handler_names, phone_number, text, sms):
+    handled = False
 
-    if v is not None and v.verified:
+    for sms_handler_name in sms_handler_names:
+        try:
+            handler = to_function(sms_handler_name)
+        except:
+            notify_exception(None, message=('error loading sms handler: %s' % sms_handler_name))
+            continue
+
+        try:
+            handled = handler(phone_number, text, sms)
+        except Exception:
+            log_sms_exception(sms)
+
+        if handled:
+            break
+
+    return handled
+
+
+def get_inbound_phone_entry(msg):
+    if msg.backend_id:
+        backend = SQLMobileBackend.load(msg.backend_id, is_couch_id=True)
+        if not backend.is_global and toggles.INBOUND_SMS_LENIENCY.enabled(backend.domain):
+            p = PhoneNumber.get_two_way_number_with_domain_scope(msg.phone_number, backend.domains_with_access)
+            return (
+                p,
+                p is not None
+            )
+
+    return (
+        PhoneNumber.get_reserved_number(msg.phone_number),
+        False
+    )
+
+
+def process_incoming(msg):
+    v, has_domain_two_way_scope = get_inbound_phone_entry(msg)
+
+    if v:
         msg.couch_recipient_doc_type = v.owner_doc_type
         msg.couch_recipient = v.owner_id
         msg.domain = v.domain
         msg.location_id = get_location_id_by_verified_number(v)
         msg.save()
-
-    if msg.domain_scope:
-        # only process messages for phones known to be associated with this domain
-        if v is None or v.domain != msg.domain_scope:
-            raise DomainScopeValidationError(
-                'Attempted to simulate incoming sms from phone number not ' \
-                'verified with this domain'
-            )
+    elif msg.domain_scope:
+        msg.domain = msg.domain_scope
+        msg.save()
 
     can_receive_sms = PhoneBlacklist.can_receive_sms(msg.phone_number)
     opt_in_keywords, opt_out_keywords = get_opt_keywords(msg)
@@ -525,35 +559,30 @@ def process_incoming(msg):
                 send_sms_to_verified_number(v, text)
             else:
                 send_sms(msg.domain, None, msg.phone_number, text)
-    elif v is not None and v.verified:
-        if (
-            domain_has_privilege(msg.domain, privileges.INBOUND_SMS) and
-            is_contact_active(v.domain, v.owner_doc_type, v.owner_id)
-        ):
-            for h in settings.SMS_HANDLERS:
-                try:
-                    handler = to_function(h)
-                except:
-                    notify_exception(None, message=('error loading sms handler: %s' % h))
-                    continue
-
-                try:
-                    was_handled = handler(v, msg.text, msg=msg)
-                except Exception, e:
-                    log_sms_exception(msg)
-                    was_handled = False
-
-                if was_handled:
-                    break
     else:
-        handled = process_pre_registration(msg)
+        handled = False
+        is_two_way = v is not None and v.is_two_way
 
-        if not handled:
-            handled = process_sms_registration(msg)
+        if msg.domain and domain_has_privilege(msg.domain, privileges.INBOUND_SMS):
+            handled = load_and_call(settings.CUSTOM_SMS_HANDLERS, v, msg.text, msg)
 
-        if not handled:
-            import verify
-            verify.process_verification(v, msg)
+            if not handled and v and v.pending_verification:
+                import verify
+                handled = verify.process_verification(v, msg,
+                    create_subevent_for_inbound=not has_domain_two_way_scope)
+
+            if (
+                not handled
+                and (is_two_way or has_domain_two_way_scope)
+                and is_contact_active(v.domain, v.owner_doc_type, v.owner_id)
+            ):
+                handled = load_and_call(settings.SMS_HANDLERS, v, msg.text, msg)
+
+        if not handled and not is_two_way:
+            handled = process_pre_registration(msg)
+
+            if not handled:
+                handled = process_sms_registration(msg)
 
     # If the sms queue is enabled, then the billable gets created in remove_from_queue()
     if (

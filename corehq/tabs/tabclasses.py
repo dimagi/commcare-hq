@@ -1,14 +1,15 @@
 from urllib import urlencode
 from django.core.urlresolvers import reverse
+from django.conf import settings
 from django.http import Http404
+from django.utils.html import strip_tags
 from django.utils.safestring import mark_safe, mark_for_escaping
 from django.utils.translation import ugettext_noop, ugettext as _, ugettext_lazy
 from corehq import privileges, toggles
 from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
-from corehq.apps.accounting.models import BillingAccount, Invoice
+from corehq.apps.accounting.models import Invoice, Subscription
 from corehq.apps.accounting.utils import domain_has_privilege, is_accounting_admin
 from corehq.apps.app_manager.dbaccessors import domain_has_apps, get_brief_apps_in_domain
-from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.hqadmin.reports import RealProjectSpacesReport, \
     CommConnectProjectSpacesReport, CommTrackProjectSpacesReport, \
@@ -23,12 +24,12 @@ from corehq.apps.reports.dispatcher import ProjectReportDispatcher, \
 from corehq.apps.reports.models import ReportConfig
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 from corehq.apps.userreports.util import has_report_builder_access
-from corehq.apps.users.decorators import get_permission_name
-from corehq.apps.users.models import Permissions
-from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION
+from corehq.apps.users.permissions import can_view_form_exports, can_view_case_exports
 from corehq.form_processor.utils import use_new_exports
+from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown
+from custom.world_vision import WORLD_VISION_DOMAINS
 from dimagi.utils.decorators.memoized import memoized
 from django_prbac.utils import has_privilege
 
@@ -45,8 +46,7 @@ class ProjectReportsTab(UITab):
 
     @property
     def view(self):
-        module = Domain.get_module_by_name(self.domain)
-        if hasattr(module, 'DEFAULT_REPORT_CLASS'):
+        if self.domain in WORLD_VISION_DOMAINS:
             return "corehq.apps.reports.views.default"
         from corehq.apps.reports.views import MySavedReportsView
         return MySavedReportsView.urlname
@@ -59,7 +59,7 @@ class ProjectReportsTab(UITab):
             request=self._request, domain=self.domain)
         custom_reports = CustomProjectReportDispatcher.navigation_sections(
             request=self._request, domain=self.domain)
-        sidebar_items = tools + report_builder_nav + project_reports + custom_reports
+        sidebar_items = tools + report_builder_nav + custom_reports + project_reports
         return self._filter_sidebar_items(sidebar_items)
 
     def _get_tools_items(self):
@@ -112,8 +112,7 @@ class ProjectReportsTab(UITab):
                 filtered_sidebar_items.append((section, filtered_items))
         return filtered_sidebar_items
 
-    @property
-    def dropdown_items(self):
+    def _get_saved_reports_dropdown(self):
         saved_report_header = dropdown_dict(_('My Saved Reports'), is_header=True)
         saved_reports_list = list(ReportConfig.by_domain_and_owner(
                                   self.domain,
@@ -134,16 +133,47 @@ class ProjectReportsTab(UITab):
         ] if len(saved_reports_list) > MAX_DISPLAYABLE_SAVED_REPORTS else []
 
         if first_five_items:
-            saved_reports_dropdown = ([saved_report_header] + first_five_items + rest_as_second_level_items)
+            return ([saved_report_header] + first_five_items + rest_as_second_level_items)
         else:
-            saved_reports_dropdown = []
+            return []
 
-        reports = sidebar_to_dropdown(
-            ProjectReportDispatcher.navigation_sections(
-                request=self._request, domain=self.domain),
-            current_url=self.url)
+    @property
+    def dropdown_items(self):
+        if self.can_access_all_locations:
+            reports = sidebar_to_dropdown(
+                ProjectReportDispatcher.navigation_sections(
+                    request=self._request, domain=self.domain),
+                current_url=self.url)
+            return self._get_saved_reports_dropdown() + reports
 
-        return saved_reports_dropdown + reports
+        else:
+            return (self._get_saved_reports_dropdown()
+                    + self._get_configurable_reports_dropdown()
+                    + self._get_all_sidebar_items_as_dropdown())
+
+    def _get_all_sidebar_items_as_dropdown(self):
+        def show(page):
+            page['show_in_dropdown'] = True
+            return page
+        return sidebar_to_dropdown([
+            (header, map(show, pages))
+            for header, pages in self.sidebar_items
+        ])
+
+    def _get_configurable_reports_dropdown(self):
+        """Returns all the configurable reports turned on for that user
+        """
+        from corehq.reports import _safely_get_report_configs, _make_report_class
+        configurable_reports = [
+            _make_report_class(config, show_in_dropdown=True)
+            for config in _safely_get_report_configs(self.domain)
+        ]
+        configurable_reports_dropdown = [
+            dropdown_dict(report.name, report.get_url(self.domain))
+            for report in configurable_reports
+            if report.display_in_dropdown(domain=self.domain, project=self.project, user=self.couch_user)
+        ]
+        return configurable_reports_dropdown
 
 
 class IndicatorAdminTab(UITab):
@@ -196,8 +226,8 @@ class DashboardTab(UITab):
             # domain hides Dashboard tab if user is non-admin
             if not user_has_custom_top_menu(self.domain, self.couch_user):
                 if self.couch_user.is_commcare_user():
-                    # only show the dashboard tab if the user has been assigned a custom role
-                    return self.couch_user.get_domain_membership(self.domain).role is not None
+                    # never show the dashboard for mobile workers
+                    return False
                 else:
                     return domain_has_apps(self.domain)
         return False
@@ -293,7 +323,6 @@ class SetupTab(UITab):
 
         if self.project.commtrack_enabled:
             commcare_supply_setup = [
-                # products
                 {
                     'title': ProductListView.page_title,
                     'url': reverse(ProductListView.urlname, args=[self.domain]),
@@ -312,7 +341,6 @@ class SetupTab(UITab):
                         },
                     ]
                 },
-                # programs
                 {
                     'title': ProgramListView.page_title,
                     'url': reverse(ProgramListView.urlname, args=[self.domain]),
@@ -327,27 +355,24 @@ class SetupTab(UITab):
                         },
                     ]
                 },
-                # sms
                 {
                     'title': SMSSettingsView.page_title,
                     'url': reverse(SMSSettingsView.urlname, args=[self.domain]),
                 },
-                # consumption
                 {
                     'title': DefaultConsumptionView.page_title,
                     'url': reverse(DefaultConsumptionView.urlname, args=[self.domain]),
                 },
-                # settings
                 {
                     'title': CommTrackSettingsView.page_title,
                     'url': reverse(CommTrackSettingsView.urlname, args=[self.domain]),
                 },
-                # stock levels
-                {
+            ]
+            if toggles.LOCATION_TYPE_STOCK_RATES.enabled(self.domain):
+                commcare_supply_setup.append({
                     'title': StockLevelsView.page_title,
                     'url': reverse(StockLevelsView.urlname, args=[self.domain]),
-                },
-            ]
+                })
             return [[_('CommCare Supply Setup'), commcare_supply_setup]]
 
 
@@ -382,18 +407,70 @@ class ProjectDataTab(UITab):
     @memoized
     def can_export_data(self):
         return (self.project and not self.project.is_snapshot
-                and self.couch_user.can_export_data())
+                and self.couch_user.can_access_any_exports(self.domain))
+
+    @property
+    @memoized
+    def can_view_form_exports(self):
+        return can_view_form_exports(self.couch_user, self.domain)
+
+    @property
+    @memoized
+    def can_view_case_exports(self):
+        return can_view_case_exports(self.couch_user, self.domain)
+
+    @property
+    @memoized
+    def can_view_form_or_case_exports(self):
+        return self.can_view_case_exports or self.can_view_form_exports
+
+    @property
+    @memoized
+    def use_new_daily_saved_exports_ui(self):
+        from corehq.apps.export.views import use_new_daily_saved_exports_ui
+        return use_new_daily_saved_exports_ui(self.domain)
+
+    @property
+    @memoized
+    def should_see_daily_saved_export_list_view(self):
+        return (
+            self.can_view_form_or_case_exports
+            and self.use_new_daily_saved_exports_ui
+            and domain_has_privilege(self.domain, DAILY_SAVED_EXPORT)
+        )
+
+    @property
+    @memoized
+    def should_see_daily_saved_export_paywall(self):
+        return (
+            self.can_view_form_or_case_exports
+            and self.use_new_daily_saved_exports_ui
+            and not domain_has_privilege(self.domain, DAILY_SAVED_EXPORT)
+        )
+
+    @property
+    @memoized
+    def should_see_dashboard_feed_list_view(self):
+        return (
+            self.can_view_form_or_case_exports
+            and self.use_new_daily_saved_exports_ui  # dashboard feeds are a special kind of daily saved export
+            and domain_has_privilege(self.domain, EXCEL_DASHBOARD)
+        )
+
+    @property
+    @memoized
+    def should_see_dashboard_feed_paywall(self):
+        return (
+            self.can_view_form_or_case_exports
+            and self.use_new_daily_saved_exports_ui  # dashboard feeds are a special kind of daily saved export
+            and not domain_has_privilege(self.domain, EXCEL_DASHBOARD)
+        )
 
     @property
     @memoized
     def can_only_see_deid_exports(self):
         from corehq.apps.export.views import user_can_view_deid_exports
-        return (not self.couch_user.can_view_reports()
-                and not self.couch_user.has_permission(
-                    self.domain,
-                    get_permission_name(Permissions.view_report),
-                    data=FORM_EXPORT_PERMISSION
-                )
+        return (not self.can_view_form_exports
                 and user_can_view_deid_exports(self.domain, self.couch_user))
 
     @property
@@ -411,11 +488,15 @@ class ProjectDataTab(UITab):
 
         export_data_views = []
         if self.can_only_see_deid_exports:
-            from corehq.apps.export.views import DeIdFormExportListView, DownloadFormExportView
+            from corehq.apps.export.views import (
+                DeIdFormExportListView,
+                DownloadFormExportView,
+                DeIdDailySavedExportListView,
+                DeIdDashboardFeedListView,
+            )
             export_data_views.append({
                 'title': DeIdFormExportListView.page_title,
-                'url': reverse(DeIdFormExportListView.urlname,
-                               args=(self.domain,)),
+                'url': reverse(DeIdFormExportListView.urlname, args=(self.domain,)),
                 'subpages': [
                     {
                         'title': DownloadFormExportView.page_title,
@@ -423,6 +504,18 @@ class ProjectDataTab(UITab):
                     },
                 ]
             })
+            if use_new_exports(self.domain):
+                export_data_views.extend([
+                    {
+                        'title': DeIdDailySavedExportListView.page_title,
+                        'url': reverse(DeIdDailySavedExportListView.urlname, args=(self.domain,)),
+                    },
+                    {
+                        'title': DeIdDashboardFeedListView.page_title,
+                        'url': reverse(DeIdDashboardFeedListView.urlname, args=(self.domain,)),
+                    },
+                ])
+
         elif self.can_export_data:
             from corehq.apps.export.views import (
                 FormExportListView,
@@ -441,6 +534,18 @@ class ProjectDataTab(UITab):
                 EditCustomCaseExportView,
                 EditNewCustomFormExportView,
                 EditNewCustomCaseExportView,
+                DashboardFeedListView,
+                DailySavedExportListView,
+                CreateNewDailySavedFormExport,
+                CreateNewDailySavedCaseExport,
+                EditFormDailySavedExportView,
+                EditCaseDailySavedExportView,
+                CreateNewFormFeedView,
+                CreateNewCaseFeedView,
+                EditFormFeedView,
+                EditCaseFeedView,
+                DashboardFeedPaywall,
+                DailySavedExportPaywall
             )
             if use_new_exports(self.domain):
                 create_case_cls = CreateNewCustomCaseExportView
@@ -453,66 +558,135 @@ class ProjectDataTab(UITab):
                 edit_form_cls = EditCustomFormExportView
                 edit_case_cls = EditCustomCaseExportView
 
-            export_data_views.extend([
-                {
-                    'title': FormExportListView.page_title,
-                    'url': reverse(FormExportListView.urlname,
-                                   args=(self.domain,)),
-                    'show_in_dropdown': True,
-                    'icon': 'icon icon-list-alt fa fa-list-alt',
-                    'subpages': filter(None, [
+            if self.can_view_form_exports:
+                export_data_views.append(
+                    {
+                        'title': FormExportListView.page_title,
+                        'url': reverse(FormExportListView.urlname,
+                                       args=(self.domain,)),
+                        'show_in_dropdown': True,
+                        'icon': 'icon icon-list-alt fa fa-list-alt',
+                        'subpages': filter(None, [
+                            {
+                                'title': create_form_cls.page_title,
+                                'urlname': create_form_cls.urlname,
+                            } if self.can_edit_commcare_data else None,
+                            {
+                                'title': BulkDownloadFormExportView.page_title,
+                                'urlname': BulkDownloadFormExportView.urlname,
+                            },
+                            {
+                                'title': BulkDownloadNewFormExportView.page_title,
+                                'urlname': BulkDownloadNewFormExportView.urlname,
+                            },
+                            {
+                                'title': DownloadFormExportView.page_title,
+                                'urlname': DownloadFormExportView.urlname,
+                            },
+                            {
+                                'title': DownloadNewFormExportView.page_title,
+                                'urlname': DownloadNewFormExportView.urlname,
+                            },
+                            {
+                                'title': edit_form_cls.page_title,
+                                'urlname': edit_form_cls.urlname,
+                            } if self.can_edit_commcare_data else None,
+                        ])
+                    }
+                )
+            if self.can_view_case_exports:
+                export_data_views.append(
+                    {
+                        'title': CaseExportListView.page_title,
+                        'url': reverse(CaseExportListView.urlname,
+                                       args=(self.domain,)),
+                        'show_in_dropdown': True,
+                        'icon': 'icon icon-share fa fa-share-square-o',
+                        'subpages': filter(None, [
+                            {
+                                'title': create_case_cls.page_title,
+                                'urlname': create_case_cls.urlname,
+                            } if self.can_edit_commcare_data else None,
+                            {
+                                'title': DownloadCaseExportView.page_title,
+                                'urlname': DownloadCaseExportView.urlname,
+                            },
+                            {
+                                'title': DownloadNewCaseExportView.page_title,
+                                'urlname': DownloadNewCaseExportView.urlname,
+                            },
+                            {
+                                'title': edit_case_cls.page_title,
+                                'urlname': edit_case_cls.urlname,
+                            } if self.can_edit_commcare_data else None,
+                        ])
+                    })
+
+            if self.should_see_daily_saved_export_list_view:
+                export_data_views.append({
+                    "title": DailySavedExportListView.page_title,
+                    "url": reverse(DailySavedExportListView.urlname, args=(self.domain,)),
+                    "show_in_dropdown": True,
+                    "subpages": filter(None, [
                         {
-                            'title': create_form_cls.page_title,
-                            'urlname': create_form_cls.urlname,
+                            'title': CreateNewDailySavedFormExport.page_title,
+                            'urlname': CreateNewDailySavedFormExport.urlname,
                         } if self.can_edit_commcare_data else None,
                         {
-                            'title': BulkDownloadFormExportView.page_title,
-                            'urlname': BulkDownloadFormExportView.urlname,
-                        },
+                            'title': CreateNewDailySavedCaseExport.page_title,
+                            'urlname': CreateNewDailySavedCaseExport.urlname,
+                        } if self.can_edit_commcare_data else None,
                         {
-                            'title': BulkDownloadNewFormExportView.page_title,
-                            'urlname': BulkDownloadNewFormExportView.urlname,
-                        },
+                            'title': EditFormDailySavedExportView.page_title,
+                            'urlname': EditFormDailySavedExportView.urlname,
+                        } if self.can_edit_commcare_data else None,
                         {
-                            'title': DownloadFormExportView.page_title,
-                            'urlname': DownloadFormExportView.urlname,
-                        },
-                        {
-                            'title': DownloadNewFormExportView.page_title,
-                            'urlname': DownloadNewFormExportView.urlname,
-                        },
-                        {
-                            'title': edit_form_cls.page_title,
-                            'urlname': edit_form_cls.urlname,
+                            'title': EditCaseDailySavedExportView.page_title,
+                            'urlname': EditCaseDailySavedExportView.urlname,
                         } if self.can_edit_commcare_data else None,
                     ])
-                },
-                {
-                    'title': CaseExportListView.page_title,
-                    'url': reverse(CaseExportListView.urlname,
-                                   args=(self.domain,)),
+                })
+            elif self.should_see_daily_saved_export_paywall:
+                export_data_views.append({
+                    'title': DailySavedExportListView.page_title,
+                    'url': reverse(DailySavedExportPaywall.urlname, args=(self.domain,)),
                     'show_in_dropdown': True,
-                    'icon': 'icon icon-share fa fa-share-square-o',
-                    'subpages': filter(None, [
+                    'subpages': []
+                })
+            if self.should_see_dashboard_feed_list_view:
+                subpages = []
+                if self.can_edit_commcare_data:
+                    subpages = [
                         {
-                            'title': create_case_cls.page_title,
-                            'urlname': create_case_cls.urlname,
-                        } if self.can_edit_commcare_data else None,
-                        {
-                            'title': DownloadCaseExportView.page_title,
-                            'urlname': DownloadCaseExportView.urlname,
+                            'title': CreateNewFormFeedView.page_title,
+                            'urlname': CreateNewFormFeedView.urlname,
                         },
                         {
-                            'title': DownloadNewCaseExportView.page_title,
-                            'urlname': DownloadNewCaseExportView.urlname,
+                            'title': CreateNewCaseFeedView.page_title,
+                            'urlname': CreateNewCaseFeedView.urlname,
                         },
                         {
-                            'title': edit_case_cls.page_title,
-                            'urlname': edit_case_cls.urlname,
-                        } if self.can_edit_commcare_data else None,
-                    ])
-                },
-            ])
+                            'title': EditFormFeedView.page_title,
+                            'urlname': EditFormFeedView.urlname,
+                        },
+                        {
+                            'title': EditCaseFeedView.page_title,
+                            'urlname': EditCaseFeedView.urlname,
+                        },
+                    ]
+                export_data_views.append({
+                    'title': DashboardFeedListView.page_title,
+                    'url': reverse(DashboardFeedListView.urlname, args=(self.domain,)),
+                    'show_in_dropdown': True,
+                    'subpages': subpages
+                })
+            elif self.should_see_dashboard_feed_paywall:
+                export_data_views.append({
+                    'title': DashboardFeedListView.page_title,
+                    'url': reverse(DashboardFeedPaywall.urlname, args=(self.domain,)),
+                    'show_in_dropdown': True,
+                    'subpages': []
+                })
 
         if export_data_views:
             items.append([_("Export Data"), export_data_views])
@@ -553,23 +727,47 @@ class ProjectDataTab(UITab):
         from corehq.apps.export.views import (
             FormExportListView,
             CaseExportListView,
+            DashboardFeedListView,
+            DailySavedExportListView,
+            DailySavedExportPaywall,
+            DashboardFeedPaywall,
         )
-        return [
-            dropdown_dict(
+        daily_saved_list_url = reverse(DailySavedExportListView.urlname, args=(self.domain,))
+        daily_saved_paywall_url = reverse(DailySavedExportPaywall.urlname, args=(self.domain,))
+        feed_list_url = reverse(DashboardFeedListView.urlname, args=(self.domain,))
+        feed_paywall_url = reverse(DashboardFeedPaywall.urlname, args=(self.domain,))
+        items = []
+        if self.can_view_form_exports:
+            items.append(dropdown_dict(
                 FormExportListView.page_title,
                 url=reverse(FormExportListView.urlname, args=(self.domain,))
-            ),
-            dropdown_dict(
+            ))
+        if self.can_view_case_exports:
+            items.append(dropdown_dict(
                 CaseExportListView.page_title,
                 url=reverse(CaseExportListView.urlname, args=(self.domain,))
-            ),
+            ))
+        if self.should_see_daily_saved_export_list_view or self.should_see_daily_saved_export_paywall:
+            url = daily_saved_list_url if self.should_see_daily_saved_export_list_view else daily_saved_paywall_url
+            items.append(dropdown_dict(
+                DailySavedExportListView.page_title,
+                url=url
+            ))
+        if self.should_see_dashboard_feed_list_view or self.should_see_dashboard_feed_paywall:
+            url = feed_list_url if self.should_see_dashboard_feed_list_view else feed_paywall_url
+            items.append(dropdown_dict(
+                DashboardFeedListView.page_title,
+                url=url,
+            ))
+        items += [
             dropdown_dict(None, is_divider=True),
             dropdown_dict(_("View All"), url=self.url),
         ]
+        return items
 
 
 class ApplicationsTab(UITab):
-    view = "corehq.apps.app_manager.views.view_app"
+    view = "default_app"
 
     url_prefix_formats = ('/a/{domain}/apps/',)
 
@@ -580,7 +778,7 @@ class ApplicationsTab(UITab):
     @classmethod
     def make_app_title(cls, app_name, doc_type):
         return mark_safe("%s%s" % (
-            mark_for_escaping(app_name or '(Untitled)'),
+            mark_for_escaping(strip_tags(app_name) or '(Untitled)'),
             mark_for_escaping(' (Remote)' if doc_type == 'RemoteApp' else ''),
         ))
 
@@ -610,7 +808,9 @@ class ApplicationsTab(UITab):
             submenu_context.append(dropdown_dict(None, is_divider=True))
             submenu_context.append(dropdown_dict(
                 _('New Application'),
-                url=reverse('default_app', args=[self.domain]),
+                url=(reverse('default_new_app', args=[self.domain])
+                     if toggles.APP_MANAGER_V2.enabled(self.domain)
+                     else reverse('default_app', args=[self.domain])),
             ))
         return submenu_context
 
@@ -625,12 +825,24 @@ class ApplicationsTab(UITab):
 
 
 class CloudcareTab(UITab):
-    title = ugettext_noop("CloudCare")
-    view = "corehq.apps.cloudcare.views.default"
-
     url_prefix_formats = ('/a/{domain}/cloudcare/',)
 
     ga_tracker = GaTracker('CloudCare', 'Click Cloud-Care top-level nav')
+
+    @property
+    def view(self):
+        from corehq.apps.cloudcare.views import FormplayerMain
+        if not toggles.USE_OLD_CLOUDCARE.enabled(self.domain):
+            return FormplayerMain.urlname
+        else:
+            return "corehq.apps.cloudcare.views.default"
+
+    @property
+    def title(self):
+        if not toggles.USE_OLD_CLOUDCARE.enabled(self.domain):
+            return _("Web Apps")
+        else:
+            return _("CloudCare")
 
     @property
     def _is_viewable(self):
@@ -975,8 +1187,12 @@ class ProjectUsersTab(UITab):
             ]
 
             if self.can_view_cloudcare:
+                if not toggles.USE_OLD_CLOUDCARE.enabled(self.domain):
+                    title = _("Web Apps Permissions")
+                else:
+                    title = _("CloudCare Permissions")
                 mobile_users_menu.append({
-                    'title': _('CloudCare Permissions'),
+                    'title': title,
                     'url': reverse('cloudcare_app_settings',
                                    args=[self.domain])
                 })
@@ -1090,12 +1306,11 @@ class ProjectSettingsTab(UITab):
 
     @property
     def sidebar_items(self):
-        from corehq.apps.domain.views import (FeatureFlagsView,
-                                              FeaturePreviewsView,
-                                              TransferDomainView)
+        from corehq.apps.domain.views import FeatureFlagsView
 
         items = []
         user_is_admin = self.couch_user.is_domain_admin(self.domain)
+        user_is_billing_admin = self.couch_user.can_edit_billing()
 
         project_info = []
 
@@ -1129,71 +1344,21 @@ class ProjectSettingsTab(UITab):
         items.append((_('Project Information'), project_info))
 
         if user_is_admin:
-            administration = [
-                {
-                    'title': _('CommCare Exchange'),
-                    'url': reverse('domain_snapshot_settings', args=[self.domain])
-                },
-                {
-                    'title': _('Multimedia Sharing'),
-                    'url': reverse('domain_manage_multimedia', args=[self.domain])
-                }
-            ]
+            items.append((_('Project Administration'), _get_administration_section(self.domain)))
 
-            if toggles.SYNC_SEARCH_CASE_CLAIM.enabled(self.domain):
-                administration.append({
-                    'title': _('Case Search'),
-                    'url': reverse('case_search_config', args=[self.domain])
-                })
-
-            def forward_name(repeater_type=None, **context):
-                if repeater_type == 'FormRepeater':
-                    return _("Forward Forms")
-                elif repeater_type == 'ShortFormRepeater':
-                    return _("Forward Form Stubs")
-                elif repeater_type == 'CaseRepeater':
-                    return _("Forward Cases")
-
-            administration.extend([
-                {'title': _('Data Forwarding'),
-                 'url': reverse('domain_forwarding', args=[self.domain]),
-                 'subpages': [
-                     {
-                         'title': forward_name,
-                         'urlname': 'add_repeater',
-                     },
-                     {
-                         'title': forward_name,
-                         'urlname': 'add_form_repeater',
-                     },
-                ]},
-                {
-                    'title': _('Data Forwarding Records'),
-                    'url': reverse('domain_report_dispatcher', args=[self.domain, 'repeat_record_report'])
-                }
-            ])
-
-            administration.append({
-                'title': _(FeaturePreviewsView.page_title),
-                'url': reverse(FeaturePreviewsView.urlname, args=[self.domain])
-            })
-
-            if toggles.TRANSFER_DOMAIN.enabled(self.domain):
-                administration.append({
-                    'title': _(TransferDomainView.page_title),
-                    'url': reverse(TransferDomainView.urlname, args=[self.domain])
-                })
-            items.append((_('Project Administration'), administration))
+        feature_flag_items = _get_feature_flag_items(self.domain)
+        if feature_flag_items:
+            items.append((_('Pre-release Features'), feature_flag_items))
 
         from corehq.apps.users.models import WebUser
         if isinstance(self.couch_user, WebUser):
-            if user_is_admin or self.couch_user.is_superuser:
+            if (user_is_billing_admin or self.couch_user.is_superuser) and not settings.ENTERPRISE_MODE:
                 from corehq.apps.domain.views import (
                     DomainSubscriptionView, EditExistingBillingAccountView,
                     DomainBillingStatementsView, ConfirmSubscriptionRenewalView,
                     InternalSubscriptionManagementView,
                 )
-                billing_account = BillingAccount.get_account_by_domain(self.domain)
+                current_subscription = Subscription.get_subscribed_plan_by_domain(self.domain)[1]
                 subscription = [
                     {
                         'title': DomainSubscriptionView.page_title,
@@ -1210,15 +1375,15 @@ class ProjectSettingsTab(UITab):
                         ]
                     },
                 ]
-                if billing_account is not None:
+                if current_subscription is not None:
                     subscription.append(
                         {
-                            'title':  EditExistingBillingAccountView.page_title,
+                            'title': EditExistingBillingAccountView.page_title,
                             'url': reverse(EditExistingBillingAccountView.urlname,
                                            args=[self.domain]),
                         },
                     )
-                if (billing_account is not None
+                if (current_subscription is not None
                         and Invoice.exists_for_domain(self.domain)):
                     subscription.append(
                         {
@@ -1272,6 +1437,83 @@ class ProjectSettingsTab(UITab):
         return items
 
 
+def _get_administration_section(domain):
+    from corehq.apps.domain.views import FeaturePreviewsView, TransferDomainView
+
+    administration = []
+    if not settings.ENTERPRISE_MODE:
+        administration.extend([
+            {
+                'title': _('CommCare Exchange'),
+                'url': reverse('domain_snapshot_settings', args=[domain])
+            },
+            {
+                'title': _('Multimedia Sharing'),
+                'url': reverse('domain_manage_multimedia', args=[domain])
+            }
+        ])
+
+    def forward_name(repeater_type=None, **context):
+        if repeater_type == 'FormRepeater':
+            return _("Forward Forms")
+        elif repeater_type == 'ShortFormRepeater':
+            return _("Forward Form Stubs")
+        elif repeater_type == 'CaseRepeater':
+            return _("Forward Cases")
+
+    administration.extend([
+        {'title': _('Data Forwarding'),
+         'url': reverse('domain_forwarding', args=[domain]),
+         'subpages': [
+             {
+                 'title': forward_name,
+                 'urlname': 'add_repeater',
+             },
+             {
+                 'title': forward_name,
+                 'urlname': 'add_form_repeater',
+             },
+        ]},
+        {
+            'title': _('Data Forwarding Records'),
+            'url': reverse('domain_report_dispatcher', args=[domain, 'repeat_record_report'])
+        }
+    ])
+
+    administration.append({
+        'title': _(FeaturePreviewsView.page_title),
+        'url': reverse(FeaturePreviewsView.urlname, args=[domain])
+    })
+
+    if toggles.TRANSFER_DOMAIN.enabled(domain):
+        administration.append({
+            'title': _(TransferDomainView.page_title),
+            'url': reverse(TransferDomainView.urlname, args=[domain])
+        })
+    return administration
+
+
+def _get_feature_flag_items(domain):
+    from corehq.apps.domain.views import CalendarFixtureConfigView, LocationFixtureConfigView
+    feature_flag_items = []
+    if toggles.SYNC_SEARCH_CASE_CLAIM.enabled(domain):
+        feature_flag_items.append({
+            'title': _('Case Search'),
+            'url': reverse('case_search_config', args=[domain])
+        })
+    if toggles.CUSTOM_CALENDAR_FIXTURE.enabled(domain):
+        feature_flag_items.append({
+            'title': _('Calendar Fixture'),
+            'url': reverse(CalendarFixtureConfigView.urlname, args=[domain])
+        })
+    if toggles.FLAT_LOCATION_FIXTURE.enabled(domain):
+        feature_flag_items.append({
+            'title': _('Location Fixture'),
+            'url': reverse(LocationFixtureConfigView.urlname, args=[domain])
+        })
+    return feature_flag_items
+
+
 class MySettingsTab(UITab):
     title = ugettext_noop("My Settings")
     view = 'default_my_settings'
@@ -1285,37 +1527,44 @@ class MySettingsTab(UITab):
     def sidebar_items(self):
         from corehq.apps.settings.views import (
             ChangeMyPasswordView,
-            EnableSuperuserView,
+            EnableMobilePrivilegesView,
             MyAccountSettingsView,
             MyProjectsList,
             TwoFactorProfileView,
         )
-        items = [
-            [_("Manage My Settings"), [
-                {
-                    'title': _(MyAccountSettingsView.page_title),
-                    'url': reverse(MyAccountSettingsView.urlname),
-                },
-                {
-                    'title': _(MyProjectsList.page_title),
-                    'url': reverse(MyProjectsList.urlname),
-                },
-                {
-                    'title': _(ChangeMyPasswordView.page_title),
-                    'url': reverse(ChangeMyPasswordView.urlname),
-                },
-                {
-                    'title': _(TwoFactorProfileView.page_title),
-                    'url': reverse(TwoFactorProfileView.urlname),
-                }
-            ]]
+        menu_items = [
+            {
+                'title': MyAccountSettingsView.page_title,
+                'url': reverse(MyAccountSettingsView.urlname),
+            },
         ]
-        if self.couch_user and self.couch_user.is_dimagi:
-            items[0][1].append({
-                'title': _(EnableSuperuserView.page_title),
-                'url': reverse(EnableSuperuserView.urlname),
+
+        if self.couch_user and self.couch_user.is_web_user():
+            menu_items.append({
+                'title': MyProjectsList.page_title,
+                'url': reverse(MyProjectsList.urlname),
             })
-        return items
+
+        menu_items.extend([
+            {
+                'title': ChangeMyPasswordView.page_title,
+                'url': reverse(ChangeMyPasswordView.urlname),
+            },
+            {
+                'title': TwoFactorProfileView.page_title,
+                'url': reverse(TwoFactorProfileView.urlname),
+            }
+        ])
+
+        if (
+            self.couch_user and self.couch_user.is_dimagi or
+            toggles.MOBILE_PRIVILEGES_FLAG.enabled(self.couch_user.username)
+        ):
+            menu_items.append({
+                'title': EnableMobilePrivilegesView.page_title,
+                'url': reverse(EnableMobilePrivilegesView.urlname),
+            })
+        return [[_("Manage My Settings"), menu_items]]
 
 
 class AccountingTab(UITab):
@@ -1460,7 +1709,7 @@ class AdminTab(UITab):
         admin_operations = []
 
         if self.couch_user and self.couch_user.is_staff:
-            from corehq.apps.hqadmin.views import AuthenticateAs, VCMMigrationView
+            from corehq.apps.hqadmin.views import (AuthenticateAs, ReprocessMessagingCaseUpdatesView)
             admin_operations.extend([
                 {'title': _('PillowTop Errors'),
                  'url': reverse('admin_report_dispatcher',
@@ -1473,8 +1722,10 @@ class AdminTab(UITab):
                  'url': reverse('raw_couch')},
                 {'title': _('Check Call Center UCR tables'),
                  'url': reverse('callcenter_ucr_check')},
-                {'title': _('Manage VCM Migration'),
-                 'url': reverse(VCMMigrationView.urlname)},
+                {'title': _('Grant superuser privileges'),
+                 'url': reverse('superuser_management')},
+                {'title': _('Reprocess Messaging Case Updates'),
+                 'url': reverse(ReprocessMessagingCaseUpdatesView.urlname)},
             ])
         return [
             (_('Administrative Reports'), [
@@ -1482,6 +1733,8 @@ class AdminTab(UITab):
                  'url': reverse('admin_report_dispatcher', args=('domains',))},
                 {'title': _('Submission Map'),
                  'url': reverse('dimagisphere')},
+                {'title': _('Active Project Map'),
+                 'url': reverse('admin_report_dispatcher', args=('project_map',))},
                 {'title': _('User List'),
                  'url': reverse('admin_report_dispatcher', args=('user_list',))},
                 {'title': _('Application List'),
@@ -1493,7 +1746,9 @@ class AdminTab(UITab):
                 {'title': _('Download Global Impact Report'),
                  'url': reverse('download_gir')},
                 {'title': _('CommCare Version'),
-                 'url': reverse('admin_report_dispatcher', args=('commcare_version', ))}
+                 'url': reverse('admin_report_dispatcher', args=('commcare_version', ))},
+                {'title': _('Admin Phone Number Report'),
+                 'url': reverse('admin_report_dispatcher', args=('phone_number_report',))},
             ]),
             (_('Administrative Operations'), admin_operations),
             (_('CommCare Reports'), [

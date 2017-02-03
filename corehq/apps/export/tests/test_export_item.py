@@ -32,13 +32,15 @@ class TestExportItemGeneration(SimpleTestCase):
         column = ExportColumn.create_default_from_export_item(MAIN_TABLE, self.item, {self.app_id: 3})
 
         self.assertEqual(column.is_advanced, False)
+        self.assertEqual(column.is_deleted, False)
         self.assertEqual(column.label, 'data.question1')
         self.assertEqual(column.selected, True)
 
     def test_create_default_from_export_item_deleted(self, _):
         column = ExportColumn.create_default_from_export_item(MAIN_TABLE, self.item, {self.app_id: 4})
 
-        self.assertEqual(column.is_advanced, True)
+        self.assertEqual(column.is_advanced, False)
+        self.assertEqual(column.is_deleted, True)
         self.assertEqual(column.label, 'data.question1')
         self.assertEqual(column.selected, False)
 
@@ -46,6 +48,7 @@ class TestExportItemGeneration(SimpleTestCase):
         column = ExportColumn.create_default_from_export_item(['other_table'], self.item, {self.app_id: 3})
 
         self.assertEqual(column.is_advanced, False)
+        self.assertEqual(column.is_deleted, False)
         self.assertEqual(column.label, 'data.question1')
         self.assertEqual(column.selected, False)
 

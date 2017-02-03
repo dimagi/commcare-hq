@@ -2,6 +2,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from functools import partial
 import logging
+
 from celery.schedules import crontab
 
 from celery.task import task, periodic_task
@@ -36,12 +37,29 @@ def report_run_periodic_task():
     report_run.delay('ils-gateway')
 
 
+@periodic_task(run_every=crontab(hour="8", minute="00", day_of_week="*"),
+               queue='logistics_background_queue')
+def test_domains_report_run_periodic_task():
+    for domain in ILSGatewayConfig.get_all_enabled_domains():
+        if domain == 'ils-gateway':
+            # skip live domain
+            continue
+        report_run(domain)
+
+
+def get_start_date(last_successful_run):
+    now = datetime.utcnow()
+    first_day_of_current_month = datetime(now.year, now.month, 1)
+    return first_day_of_current_month if not last_successful_run else last_successful_run.end
+
+
 @serial_task('{domain}', queue='logistics_background_queue', max_retries=0, timeout=60 * 60 * 12)
-def report_run(domain, locations=None, strict=True):
+def report_run(domain, strict=True):
     last_successful_run = ReportRun.last_success(domain)
 
     last_run = ReportRun.last_run(domain)
-    start_date = (datetime.min if not last_successful_run else last_successful_run.end)
+
+    start_date = get_start_date(last_successful_run)
     end_date = datetime.utcnow()
 
     if last_run and last_run.has_error:
@@ -56,7 +74,7 @@ def report_run(domain, locations=None, strict=True):
                                        start_run=datetime.utcnow(), domain=domain)
     has_error = True
     try:
-        populate_report_data(run.start, run.end, domain, run, locations, strict=strict)
+        populate_report_data(run.start, run.end, domain, run, strict=strict)
         has_error = False
     except Exception, e:
         # just in case something funky happened in the DB

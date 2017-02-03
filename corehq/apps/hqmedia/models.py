@@ -6,6 +6,8 @@ from StringIO import StringIO
 
 import magic
 from couchdbkit.exceptions import ResourceConflict
+from django.template.defaultfilters import filesizeformat
+
 from dimagi.ext.couchdbkit import *
 from dimagi.utils.couch.database import get_safe_read_kwargs, iter_docs
 from dimagi.utils.couch.resource_conflict import retry_resource
@@ -72,8 +74,6 @@ class CommCareMultimedia(BlobMixin, SafeSaveDocument):
     licenses = SchemaListProperty(HQMediaLicense, default=[])
     shared_by = StringListProperty(default=[])  # list of domains that can share this file
     tags = DictProperty(default={})  # dict of string lists
-
-    migrating_blobs_from_couch = True
 
     @classmethod
     def get(cls, docid, rev=None, db=None, dynamic_properties=True):
@@ -192,6 +192,7 @@ class CommCareMultimedia(BlobMixin, SafeSaveDocument):
             "original_path": original_path,
             "icon_class": self.get_icon_class(),
             "media_type": self.get_nice_name(),
+            "humanized_content_length": filesizeformat(self.content_length),
         }
 
     @property
@@ -201,6 +202,11 @@ class CommCareMultimedia(BlobMixin, SafeSaveDocument):
         ids = set([aux.attachment_id for aux in self.aux_media])
         assert len(ids) == 1
         return ids.pop()
+
+    @property
+    def content_length(self):
+        if self.attachment_id:
+            return self.blobs[self.attachment_id].content_length
 
     @classmethod
     def get_mime_type(cls, data, filename=None):
@@ -320,6 +326,19 @@ class CommCareImage(CommCareMultimedia):
         return super(CommCareImage, self).attach_data(data, original_filename=original_filename, username=username,
                                                       attachment_id=attachment_id, media_meta=media_meta)
 
+    def get_media_info(self, path, is_updated=False, original_path=None):
+        info = super(CommCareImage, self).get_media_info(path, is_updated=is_updated, original_path=original_path)
+        info['image_size'] = self.image_size_display()
+        return info
+
+    def image_size_display(self):
+        for aux_media in self.aux_media:
+            image_size = aux_media.media_meta.get('size', {})
+            width = image_size.get('width')
+            height = image_size.get('height')
+            if width is not None and height is not None:
+                return "{} X {} Pixels".format(width, height)
+
     @classmethod
     def get_image_object(cls, data):
         return Image.open(StringIO(data))
@@ -339,7 +358,7 @@ class CommCareImage(CommCareMultimedia):
     @classmethod
     def get_invalid_image_data(cls):
         import os
-        invalid_image_path = os.path.join(os.path.dirname(__file__), 'static/hqmedia/img/invalid_image.png')
+        invalid_image_path = os.path.join(os.path.dirname(__file__), 'static/hqmedia/images/invalid_image.png')
         return Image.open(open(invalid_image_path))
 
     @classmethod

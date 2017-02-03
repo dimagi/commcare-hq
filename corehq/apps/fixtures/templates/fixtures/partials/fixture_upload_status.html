@@ -3,7 +3,7 @@
 {% block results %}
 {% if result.success %}
     <div class="alert alert-success">
-        <h3>{{ on_complete_long }}</h3>
+        <h3>{% trans "Lookup table upload has finished" %}</h3>
         <p>{% blocktrans with count=result.number_of_fixtures %}Successfully uploaded {{ count }} tables.{% endblocktrans %}</p>
     </div>
     {% if result.errors %}

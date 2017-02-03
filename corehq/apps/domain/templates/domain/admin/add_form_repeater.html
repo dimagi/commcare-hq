@@ -5,8 +5,8 @@
 {% load crispy_forms_tags %}
 
 {% block js-inline %} {{ block.super }}
-    <script type="text/javascript">
-        $(document).ready(function() {
+    <script>
+        $(function() {
             var $testLinkButton = $('#test-forward-link'),
                 $testResult = $('#test-forward-result');
 
@@ -54,9 +54,12 @@
                 };
                 $testLinkButton.disableButton();
 
-                $.post("{% url "test_repeater" domain %}", data)
-                    .success(handleSuccess)
-                    .fail(handleFailure);
+                $.post({
+                    url: "{% url "test_repeater" domain %}",
+                    data: data,
+                    success: handleSuccess,
+                    error: handleFailure,
+                });
             });
             $('#id_url').change(function () {
                 if ($(this).val()) {

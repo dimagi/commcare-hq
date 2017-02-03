@@ -11,6 +11,7 @@ class ChangeMeta(jsonobject.JsonObject):
     This is only used in kafka-based pillows.
     """
     document_id = DefaultProperty(required=True)
+    document_rev = jsonobject.StringProperty()  # Only relevant for Couch documents
     data_source_type = jsonobject.StringProperty(required=True)
     data_source_name = jsonobject.StringProperty(required=True)
     document_type = DefaultProperty()
@@ -125,4 +126,10 @@ class ChangeFeed(object):
     def get_current_offsets(self):
         """
         :return: A dictionary of ``(topic/db_name, offset integer)`` pairs
+        """
+
+    @abstractmethod
+    def get_checkpoint_value(self):
+        """
+        :return: The current string change ID, or a json string if multiple feeds are used
         """

@@ -1,5 +1,5 @@
 from django.contrib.auth.models import User
-from django.core.management.base import LabelCommand
+from django.core.management.base import BaseCommand
 from corehq.apps.tour.models import GuidedTour
 
 CONFIRM_SINGLE_USER = """Unmark Tour {tour_slug} as seen for User {username}?
@@ -9,7 +9,7 @@ CONFIRM_ALL_USERS = """Unmark Tour {tour_slug} for as seen ALL USERS?
     Type 'yes' to continue or 'no' to cancel: """
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = "marks a tour with tour_slug as not seen for all existing users"
     args = "tour_slug <specific user>"
 

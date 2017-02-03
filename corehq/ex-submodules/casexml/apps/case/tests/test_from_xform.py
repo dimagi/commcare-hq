@@ -9,7 +9,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import CaseTransaction, CommCareCaseSQL
 from corehq.form_processor.tests.utils import run_with_all_backends
-
+from corehq.form_processor.backends.couch.update_strategy import coerce_to_datetime
 
 @override_settings(CASEXML_FORCE_DOMAIN_CHECK=False)
 class CaseFromXFormTest(TestCase):
@@ -79,7 +79,7 @@ class CaseFromXFormTest(TestCase):
         # we also changed everything originally in the case
         self.assertEqual("a_new_type", case.type)
         self.assertEqual("a new name", case.name)
-        self.assertEqual(UPDATE_DATE, case.opened_on)
+        self.assertEqual(coerce_to_datetime(UPDATE_DATE), coerce_to_datetime(case.opened_on))
 
         # case should have a new modified date
         self.assertEqual(MODIFY_DATE, case.modified_on)

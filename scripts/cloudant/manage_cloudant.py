@@ -8,6 +8,12 @@ import requests
 Auth = namedtuple('Auth', 'username password')
 
 
+class AskRun(namedtuple('AskRun', 'ask run')):
+    def ask_and_run(self):
+        ask_user(self.ask())
+        return self.run()
+
+
 class CloudantInstance(Auth):
 
     def create_database(self, db_name):
@@ -19,14 +25,18 @@ class CloudantInstance(Auth):
     def get_db(self, db_name):
         return CloudantDatabase(self, db_name)
 
-    def generate_api_key(self, ask=True):
-        if ask:
-            ask_user('Generating new API key for {}'.format(self.username))
-        new_api_key_response = requests.post(
-            'https://{username}.cloudant.com/_api/v2/api_keys'.format(username=self.username),
-            auth=self).json()
-        assert new_api_key_response['ok'] is True
-        return Auth(new_api_key_response['key'], new_api_key_response['password'])
+    def generate_api_key(self):
+        def ask():
+            return 'Generating new API key for {}'.format(self.username)
+
+        def run():
+            new_api_key_response = requests.post(
+                'https://{username}.cloudant.com/_api/v2/api_keys'.format(username=self.username),
+                auth=self).json()
+            assert new_api_key_response['ok'] is True
+            return Auth(new_api_key_response['key'], new_api_key_response['password'])
+
+        return AskRun(ask, run)
 
 
 class CloudantDatabase(namedtuple('CloudantInstance', 'instance db_name')):
@@ -42,47 +52,64 @@ class CloudantDatabase(namedtuple('CloudantInstance', 'instance db_name')):
             .format(username=self.instance.username, database=self.db_name)
         )
 
-    def create(self, ask=True):
+    def create(self):
         db_uri = self._get_db_uri()
-        if ask:
-            ask_user('Creating database {}'.format(db_uri))
 
-        response = requests.put(db_uri, auth=self.instance).json()
-        print response
+        def ask():
+            return 'Creating database {}'.format(db_uri)
+
+        def run():
+            return requests.put(db_uri, auth=self.instance).json()
+
+        return AskRun(ask, run)
 
     def exists(self):
         db_uri = self._get_db_uri()
         status_code = requests.get(db_uri, auth=self.instance).status_code
         return status_code == 200
 
-    def grant_api_key_access(self, api_key, ask=True):
+    def grant_api_key_access(self, api_key, admin=False):
         db_uri = self._get_db_uri()
         security_url = self._get_security_url()
         security = requests.get(security_url, auth=self.instance).json()
         assert api_key
-        if ask:
-            ask_user('Granting api_key {} access to database {}'.format(api_key, db_uri))
+
         if not security:
             security = {'cloudant': {}}
-        security['cloudant'][api_key] = ["_admin", "_reader", "_writer", "_replicator"]
+        if admin:
+            permissions = ["_admin", "_reader", "_writer", "_replicator"]
+        else:
+            permissions = ["_reader"]
+        security['cloudant'][api_key] = permissions
 
-        security = requests.put(security_url, auth=self.instance, json=security).json()
-        print security
+        def ask():
+            return ('Granting api_key {} access with permissions {} to database {}'
+                    .format(api_key, ' '.join(permissions), db_uri))
 
-    def revoke_api_key_access(self, api_key, ask=True):
+        def run():
+            return requests.put(security_url, auth=self.instance, json=security).json()
+
+        return AskRun(ask, run)
+
+    def revoke_api_key_access(self, api_key):
         db_uri = self._get_db_uri()
         security_url = self._get_security_url()
         security = requests.get(security_url, auth=self.instance).json()
         assert api_key
-        if ask:
-            ask_user('Revoking api_key {} access to database {}'.format(api_key, db_uri))
+
         if not security:
             security = {'cloudant': {}}
+
         if api_key in security['cloudant']:
             del security['cloudant'][api_key]
 
-        security = requests.put(security_url, auth=self.instance, json=security).json()
-        print security
+        def ask():
+            return 'Revoking api_key {} access to database {}'.format(api_key, db_uri)
+
+        def run():
+            return requests.put(security_url, auth=self.instance, json=security).json()
+
+        return AskRun(ask, run)
 
 
 def get_cloudant_password(username):
@@ -95,6 +122,14 @@ def ask_user(statement):
     if y != 'y':
         print 'Aborting'
         exit(0)
+
+
+def run_ask_runs(ask_runs):
+    for ask_run in ask_runs:
+        print ask_run.ask()
+    ask_user('The preceding steps will be performed')
+    for ask_run in ask_runs:
+        print ask_run.run()
 
 
 def authenticate_cloudant_instance(username):

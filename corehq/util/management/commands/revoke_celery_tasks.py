@@ -1,0 +1,28 @@
+from django.core.management.base import BaseCommand, CommandError
+from corehq.util.celery_utils import revoke_tasks
+
+
+class Command(BaseCommand):
+    """
+    Revokes celery tasks matching the given task names. It's best to leave this command
+    running for a bit in order to get them all, as it will keep polling for tasks
+    to revoke, and there might be tasks in the message queue which haven't been
+    received by the worker yet.
+
+    You can stop this process at any time with Ctrl+C.
+
+    Example:
+    python manage.py revoke_celery_tasks couchexport.tasks.export_async
+    """
+    args = '<task name 1> <task name 2> ...'
+    help = ''
+
+    def handle(self, *args, **options):
+        if len(args) == 0:
+            raise CommandError("usage: python manage.py revoke_celery_tasks "
+                "<task name 1> <task name 2> ...")
+
+        try:
+            revoke_tasks(args)
+        except KeyboardInterrupt:
+            pass

@@ -25,6 +25,7 @@
       </display>
       <stack>
         <push>
+          <mark />
           <command value="'search_command.m0'"/>
         </push>
       </stack>

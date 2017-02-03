@@ -11,6 +11,7 @@ from soil import DownloadBase
 from couchexport.export import FormattedRow, get_writer
 from couchexport.files import Temp
 from couchexport.models import Format
+from corehq.util.files import safe_filename
 from corehq.apps.export.esaccessors import (
     get_form_export_base_query,
     get_case_export_base_query,
@@ -56,6 +57,13 @@ class _Writer(object):
 
         # Create and open a temp file
         assert self._path is None
+
+        if len(export_instances) == 1:
+            name = export_instances[0].name or ''
+        else:
+            name = ''
+        name = safe_filename(name)
+
         fd, self._path = tempfile.mkstemp()
         with os.fdopen(fd, 'wb') as file:
 
@@ -68,7 +76,7 @@ class _Writer(object):
                     for t in instance.selected_tables
                 ]
                 table_titles.update({t: t.label for t in instance.selected_tables})
-            self.writer.open(headers, file, table_titles=table_titles)
+            self.writer.open(headers, file, table_titles=table_titles, archive_basepath=name)
             yield
             self.writer.close()
 
@@ -204,7 +212,7 @@ def rebuild_export(export_instance, last_access_cutoff=None, filters=None):
     """
     if _should_not_rebuild_export(export_instance, last_access_cutoff):
         return
-
+    filters = filters or export_instance.get_filters()
     file = get_export_file([export_instance], filters or [])
     with file as payload:
         _save_export_payload(export_instance, payload)

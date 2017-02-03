@@ -4,12 +4,18 @@ from django.test import TestCase, SimpleTestCase
 
 from corehq.apps.export.models import (
     ExportItem,
+    StockItem,
     MultipleChoiceItem,
     FormExportDataSchema,
+    CaseExportDataSchema,
+    InferredSchema,
+    InferredExportGroupSchema,
     ExportGroupSchema,
+    CaseExportInstance,
     FormExportInstance,
     TableConfiguration,
     SplitExportColumn,
+    StockFormExportColumn,
     PathNode,
     MAIN_TABLE,
     FormExportInstanceDefaults,
@@ -33,6 +39,7 @@ class TestExportInstanceGeneration(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestExportInstanceGeneration, cls).setUpClass()
         cls.app_id = '1234'
         cls.schema = FormExportDataSchema(
             group_schemas=[
@@ -42,6 +49,15 @@ class TestExportInstanceGeneration(SimpleTestCase):
                         MultipleChoiceItem(
                             path=[PathNode(name='data'), PathNode(name='question1')],
                             label='Question 1',
+                            last_occurrences={cls.app_id: 3},
+                        ),
+                        StockItem(
+                            path=[
+                                PathNode(name='data'),
+                                PathNode(name='balance:question-id'),
+                                PathNode(name='@type'),
+                            ],
+                            label='Stock 1',
                             last_occurrences={cls.app_id: 3},
                         )
                     ],
@@ -58,21 +74,23 @@ class TestExportInstanceGeneration(SimpleTestCase):
                             ],
                             label='Question 2',
                             last_occurrences={cls.app_id: 2},
-                        )
+                        ),
                     ],
                     last_occurrences={cls.app_id: 2},
                 ),
             ],
         )
 
-    def test_generate_instance_from_schema(self, _, __):
-        """Only questions that are in the main table and of the same version should be shown"""
-        build_ids_and_versions = {self.app_id: 3}
+    def _generate_instance(self, build_ids_and_versions, saved_export=None):
         with mock.patch(
                 'corehq.apps.export.models.new.get_latest_app_ids_and_versions',
                 return_value=build_ids_and_versions):
 
-            instance = FormExportInstance.generate_instance_from_schema(self.schema)
+            return FormExportInstance.generate_instance_from_schema(self.schema, saved_export=saved_export)
+
+    def test_generate_instance_from_schema(self, _, __):
+        """Only questions that are in the main table and of the same version should be shown"""
+        instance = self._generate_instance({self.app_id: 3})
 
         self.assertEqual(len(instance.tables), 2)
 
@@ -83,25 +101,23 @@ class TestExportInstanceGeneration(SimpleTestCase):
         )
         self.assertTrue(isinstance(split_column, SplitExportColumn))
 
+        index, stock_column = instance.tables[0].get_column(
+            [PathNode(name='data'), PathNode(name='balance:question-id'), PathNode(name='@type')],
+            'StockItem',
+            None
+        )
+        self.assertTrue(isinstance(stock_column, StockFormExportColumn))
+
         selected = filter(
             lambda column: column.selected,
             instance.tables[0].columns + instance.tables[1].columns
         )
-        shown = filter(
-            lambda column: column.selected,
-            instance.tables[0].columns + instance.tables[1].columns
-        )
         selected_system_props = len([x for x in MAIN_FORM_TABLE_PROPERTIES if x.selected])
-        self.assertEqual(len(selected), 1 + selected_system_props)
-        self.assertEqual(len(shown), 1 + selected_system_props)
+        self.assertEqual(len(selected), 2 + selected_system_props)
 
     def test_generate_instance_from_schema_deleted(self, _, __):
         """Given a higher app_version, all the old questions should not be shown or selected"""
-        build_ids_and_versions = {self.app_id: 4}
-        with mock.patch(
-                'corehq.apps.export.models.new.get_latest_app_ids_and_versions',
-                return_value=build_ids_and_versions):
-            instance = FormExportInstance.generate_instance_from_schema(self.schema)
+        instance = self._generate_instance({self.app_id: 4})
 
         self.assertEqual(len(instance.tables), 2)
 
@@ -131,6 +147,82 @@ class TestExportInstanceGeneration(SimpleTestCase):
             "Repeat: awesome_repeat"
         )
 
+    def test_export_instance_ordering(self, _, __):
+        """
+        Ensures that export instances order selected columns first
+        """
+        from corehq.apps.export.system_properties import ROW_NUMBER_COLUMN
+
+        instance = self._generate_instance({self.app_id: 3})
+
+        table = instance.tables[0]
+        self.assertEqual(table.columns[0].item.path, ROW_NUMBER_COLUMN.item.path)
+        self.assertTrue(table.columns[0].selected)
+
+        # When we regenerate the instance the first column should no longer be this one
+        table.columns[0].selected = False
+
+        instance = self._generate_instance({self.app_id: 3}, saved_export=instance)
+
+        table = instance.tables[0]
+        self.assertNotEqual(table.columns[0].item.path, ROW_NUMBER_COLUMN.item.path)
+        self.assertTrue(table.columns[0].selected)
+
+
+@mock.patch(
+    'corehq.apps.export.models.new.get_request',
+    return_value=MockRequest(domain='my-domain'),
+)
+@mock.patch(
+    'corehq.apps.export.models.new.Domain.get_by_name',
+    return_value=mock.MagicMock(),
+)
+class TestExportInstanceGenerationWithInferredSchema(SimpleTestCase):
+    app_id = '1234'
+    case_type = 'inferred'
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestExportInstanceGenerationWithInferredSchema, cls).setUpClass()
+        cls.schema = CaseExportDataSchema(
+            app_id=cls.app_id,
+            case_type=cls.case_type,
+            group_schemas=[
+                ExportGroupSchema(
+                    path=MAIN_TABLE,
+                    items=[
+                        ExportItem(
+                            path=[PathNode(name='data'), PathNode(name='case_property')],
+                            label='Question 1',
+                            last_occurrences={cls.app_id: 3},
+                        ),
+                    ],
+                    last_occurrences={cls.app_id: 3},
+                ),
+            ],
+        )
+        cls.inferred_schema = InferredSchema(
+            case_type=cls.case_type,
+            group_schemas=[
+                InferredExportGroupSchema(
+                    path=MAIN_TABLE,
+                    items=[
+                        ExportItem(
+                            path=[PathNode(name='data'), PathNode(name='case_property')],
+                            label='Inferred 1',
+                            inferred=True
+                        ),
+                        ExportItem(
+                            path=[PathNode(name='data'), PathNode(name='case_property_2')],
+                            label='Inferred 1',
+                            inferred=True
+                        ),
+                    ],
+                    inferred=True
+                ),
+            ]
+        )
+
 
 @mock.patch(
     'corehq.apps.export.models.new.FormExportInstanceDefaults.get_default_instance_name',
@@ -145,6 +237,7 @@ class TestExportInstanceGenerationMultipleApps(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestExportInstanceGenerationMultipleApps, cls).setUpClass()
         cls.app_id = '1234'
         cls.second_app_id = '5678'
         cls.schema = FormExportDataSchema(
@@ -237,6 +330,23 @@ class TestExportInstanceGenerationMultipleApps(SimpleTestCase):
         selected_system_props = len([x for x in MAIN_FORM_TABLE_PROPERTIES if x.selected])
         self.assertEqual(len(selected), 0 + selected_system_props)
         self.assertEqual(len(shown), 0 + selected_system_props)
+
+
+class TestExportInstanceDefaultFilters(SimpleTestCase):
+
+    def test_default_form_values(self):
+        # Confirm that FormExportInstances set the default user_types filter correctly
+        form_export = FormExportInstance()
+        form_export_wrapped = FormExportInstance.wrap({})
+        for e in [form_export, form_export_wrapped]:
+            self.assertListEqual(e.filters.user_types, [0])
+
+    def test_default_case_values(self):
+        # Confirm that CaseExportInstances set the default show_all_data flag correctly
+        case_export = CaseExportInstance()
+        case_export_wrapped = CaseExportInstance.wrap({})
+        for e in [case_export, case_export_wrapped]:
+            self.assertTrue(e.filters.show_all_data)
 
 
 class TestExportInstance(SimpleTestCase):
@@ -375,6 +485,7 @@ class TestExportInstanceFromSavedInstance(TestCase):
         self.assertEqual(len(instance.tables), 1)
         self.assertEqual(len(instance.tables[0].columns), 1 + len(MAIN_FORM_TABLE_PROPERTIES))
         self.assertTrue(instance.tables[0].columns[first_non_system_property].selected)
+        item = instance.tables[0].columns[first_non_system_property].item
 
         # Simulate a selection
         instance.tables[0].columns[first_non_system_property].selected = False
@@ -393,8 +504,10 @@ class TestExportInstanceFromSavedInstance(TestCase):
 
         self.assertEqual(len(instance.tables), 2)
         self.assertEqual(len(instance.tables[0].columns), 2 + len(MAIN_FORM_TABLE_PROPERTIES))
+
         # Selection from previous instance should hold the same and not revert to defaults
-        self.assertFalse(instance.tables[0].columns[first_non_system_property].selected)
+        idx, column = instance.tables[0].get_column(item.path, item.doc_type, item.transform)
+        self.assertFalse(column.selected)
 
     def test_export_instance_deleted_columns_updated(self, _):
         """This test ensures that when building from a saved export that the new instance correctly labels the
@@ -430,5 +543,5 @@ class TestExportInstanceFromSavedInstance(TestCase):
         self.assertEqual(len(instance.tables[0].columns), 2 + len(MAIN_FORM_TABLE_PROPERTIES))
         self.assertEqual(
             len(filter(lambda c: c.is_advanced, instance.tables[0].columns)),
-            2 + len([x for x in MAIN_FORM_TABLE_PROPERTIES if x.is_advanced])
+            len([x for x in MAIN_FORM_TABLE_PROPERTIES if x.is_advanced])
         )

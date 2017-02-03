@@ -51,6 +51,10 @@ def NOT(filter_):
     return {"not": filter_}
 
 
+def not_term(field, value):
+    return NOT(term(field, value))
+
+
 def range_filter(field, gt=None, gte=None, lt=None, lte=None):
     """
     Filter ``field`` by a range.  Pass in some sensible combination of ``gt``

@@ -7,6 +7,8 @@ import zipfile
 import csv
 import json
 import bz2
+from collections import OrderedDict
+
 from django.template import Context
 from django.template.loader import render_to_string, get_template
 import xlwt
@@ -22,7 +24,7 @@ class UniqueHeaderGenerator(object):
 
     def next_unique(self, header):
         header = self._next_unique(header)
-        self.used.add(header)
+        self.used.add(header.lower())
         return header
 
     def _next_unique(self, string):
@@ -31,7 +33,7 @@ class UniqueHeaderGenerator(object):
             # truncate from the beginning since the end has more specific information
             string = string[-self.max_column_size:]
         orig_string = string
-        while string in self.used:
+        while string.lower() in self.used:
             string = "%s%s" % (orig_string, counter)
             if len(string) > self.max_column_size:
                 counterlen = len(str(counter))
@@ -143,7 +145,7 @@ class ExportWriter(object):
     max_table_name_size = 500
     target_app = 'Excel'  # Where does this writer export to? Export button to say "Export to Excel"
 
-    def open(self, header_table, file, max_column_size=2000, table_titles=None):
+    def open(self, header_table, file, max_column_size=2000, table_titles=None, archive_basepath=''):
         """
         Create any initial files, headings, etc necessary.
         """
@@ -153,6 +155,7 @@ class ExportWriter(object):
         self.max_column_size = max_column_size
         self._current_primary_id = 0
         self.file = file
+        self.archive_basepath = archive_basepath
 
         self._init()
         self.table_name_generator = UniqueHeaderGenerator(
@@ -242,8 +245,8 @@ class OnDiskExportWriter(ExportWriter):
     writer_class = CsvFileWriter
 
     def _init(self):
-        self.tables = {}
-        self.table_names = {}
+        self.tables = OrderedDict()
+        self.table_names = OrderedDict()
 
     def _init_table(self, table_index, table_title):
         writer = self.writer_class()
@@ -291,9 +294,12 @@ class ZippedExportWriter(OnDiskExportWriter):
             if isinstance(name, unicode):
                 name = name.encode('utf-8')
             path = self.tables[index].get_path()
-            archive.write(path, "{}{}".format(name, self.table_file_extension))
+            archive.write(path, self._get_archive_filename(name))
         archive.close()
         self.file.seek(0)
+
+    def _get_archive_filename(self, name):
+        return os.path.join(self.archive_basepath, '{}{}'.format(name, self.table_file_extension))
 
 
 class CsvExportWriter(ZippedExportWriter):

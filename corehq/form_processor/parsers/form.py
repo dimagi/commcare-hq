@@ -5,7 +5,7 @@ from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import Attachment
 from corehq.form_processor.utils import convert_xform_to_json, adjust_datetimes
 from couchforms import XMLSyntaxError
-from couchforms.exceptions import DuplicateError
+from couchforms.exceptions import DuplicateError, MissingXMLNSError
 from dimagi.utils.couch import LockManager, ReleaseOnError
 
 
@@ -75,7 +75,7 @@ def process_xform_xml(domain, instance, attachments=None):
 
     try:
         return _create_new_xform(domain, instance, attachments=attachments)
-    except XMLSyntaxError as e:
+    except (MissingXMLNSError, XMLSyntaxError) as e:
         return _get_submission_error(domain, instance, e)
     except DuplicateError as e:
         return _handle_id_conflict(instance, e.xform, domain)
@@ -100,6 +100,9 @@ def _create_new_xform(domain, instance_xml, attachments=None):
 
     assert attachments is not None
     form_data = convert_xform_to_json(instance_xml)
+    if not form_data.get('@xmlns'):
+        raise MissingXMLNSError("Form is missing a required field: XMLNS")
+
     adjust_datetimes(form_data)
 
     xform = interface.new_xform(form_data)
@@ -195,6 +198,15 @@ def apply_deprecation(existing_xform, new_xform, interface=None):
 
     interface = interface or FormProcessorInterface(existing_xform.domain)
 
+    if existing_xform.persistent_blobs:
+        for name, meta in existing_xform.persistent_blobs.items():
+            with existing_xform.fetch_attachment(name, stream=True) as content:
+                existing_xform.deferred_put_attachment(
+                    content,
+                    name=name,
+                    content_type=meta.content_type,
+                    content_length=meta.content_length,
+                )
     new_xform.form_id = existing_xform.form_id
     existing_xform = interface.assign_new_id(existing_xform)
     existing_xform.orig_id = new_xform.form_id

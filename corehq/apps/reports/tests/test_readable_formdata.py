@@ -73,6 +73,7 @@ class ReadableFormdataTest(SimpleTestCase):
                 "response": "foo",
                 "type": "Text",
                 'calculate': None,
+                'comment': None,
                 'required': False,
                 'relevant': None,
             }])
@@ -260,7 +261,8 @@ class ReadableFormdataTest(SimpleTestCase):
         #                       for x in questions])
 
         self.assertJSONEqual(json.dumps([x.to_json() for x in questions]),
-                             json.dumps(result))
+                             json.dumps(result),
+                             msg="Search for \"READABLE FORMS TEST\" for more info on fixing this test")
 
     def test_mismatched_group_hierarchy(self):
         self._test_corpus('mismatched_group_hierarchy')

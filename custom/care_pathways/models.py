@@ -1,4 +1,3 @@
-from corehq.apps.change_feed import topics
 import fluff
 from casexml.apps.case.models import CommCareCase
 from corehq.fluff.calculators.case import CasePropertyFilter

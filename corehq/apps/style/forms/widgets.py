@@ -1,15 +1,18 @@
+import collections
 from django import forms
 from django.forms.fields import MultiValueField, CharField
 from django.forms.utils import flatatt
 from django.forms.widgets import (
     CheckboxInput,
     Input,
+    RadioChoiceInput,
     RadioSelect,
     RadioFieldRenderer,
-    RadioInput,
     TextInput,
     MultiWidget,
+    Widget,
 )
+from django.template.loader import render_to_string
 from django.utils.encoding import force_unicode
 from django.utils.html import conditional_escape
 from django.utils.safestring import mark_safe
@@ -39,7 +42,7 @@ class BootstrapCheckboxInput(CheckboxInput):
                          (flatatt(final_attrs), self.inline_label))
 
 
-class BootstrapRadioInput(RadioInput):
+class BootstrapRadioInput(RadioChoiceInput):
 
     def __unicode__(self):
         if 'id' in self.attrs:
@@ -148,7 +151,7 @@ $(function() {
         return output
 
 
-class Select2MultipleChoiceWidget(forms.SelectMultiple):
+class _Select2Mixin(object):
 
     class Media:
         css = {
@@ -157,15 +160,69 @@ class Select2MultipleChoiceWidget(forms.SelectMultiple):
         js = ('select2-3.4.5-legacy/select2.js',)
 
     def render(self, name, value, attrs=None, choices=()):
-        final_attrs = self.build_attrs(attrs)
-        output = super(Select2MultipleChoiceWidget, self).render(name, value, attrs, choices)
+        output = super(_Select2Mixin, self).render(name, value, attrs, choices)
         output += """
-            <script type="text/javascript">
+            <script>
                 $(function() {
                     $('#%s').select2({ width: 'resolve' });
                 });
             </script>
-        """ % final_attrs.get('id')
+        """ % attrs.get('id')
+        return mark_safe(output)
+
+
+class Select2(_Select2Mixin, forms.Select):
+    pass
+
+
+class Select2MultipleChoiceWidget(_Select2Mixin, forms.SelectMultiple):
+    pass
+
+
+class Select2Ajax(forms.TextInput):
+    """
+    A Select2 widget that loads its options asynchronously.
+
+    You must use `set_url()` to set the url. This will usually be done in the form's __init__() method.
+    The url is not specified in the form class definition because in most cases the url will be dependent on the
+    domain of the request.
+    """
+    class Media:
+        css = {
+            'all': ('select2-3.5.2-legacy/select2.css', 'select2-3.5.2-legacy/select2-bootstrap.css')
+        }
+        js = ('select2-3.5.2-legacy/select2.js',)
+
+    def __init__(self, attrs=None, page_size=20, multiple=False):
+        self.page_size = page_size
+        self.multiple = multiple
+        super(Select2Ajax, self).__init__(attrs)
+
+    def set_url(self, url):
+        self.url = url
+
+    def _clean_initial(self, val):
+        if isinstance(val, collections.Sequence) and not isinstance(val, (str, unicode)):
+            # if its a tuple or list
+            return {"id": val[0], "text": val[1]}
+        elif val is None:
+            return None
+        else:
+            # if its a scalar
+            return {"id": val, "text": val}
+
+    def render(self, name, value, attrs=None):
+        output = super(Select2Ajax, self).render(name, value, attrs)
+        output += render_to_string(
+            'hqstyle/forms/select_2_ajax_widget.html',
+            {
+                'id': attrs.get('id'),
+                'initial': self._clean_initial(value),
+                'endpoint': self.url,
+                'page_size': self.page_size,
+                'multiple': self.multiple,
+            }
+        )
         return mark_safe(output)
 
 
@@ -207,7 +264,7 @@ class DateRangePickerWidget(Input):
         # yes, I know inline html in python is gross, but this is what the
         # built in django widgets are doing. :|
         output += """
-            <script type="text/javascript">
+            <script>
                 $(function () {
                     var separator = '%(separator)s';
                     var report_labels = JSON.parse('%(range_labels_json)s');

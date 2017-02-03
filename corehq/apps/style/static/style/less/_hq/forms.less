@@ -94,10 +94,14 @@ legend .subtext {
   }
 }
 
-// Static width for select2 widgets, which otherwise grow too large on case management pages
-.app-manager-select2s(@width) {
+// Static width for select2 widgets, which otherwise grow too large on form view's case management tab
+.case-config-select2s(@width) {
     .select2-container {
         width: @width;
+
+        // Fix firefox bug in select 2 v3.5.2
+        // https://github.com/select2/select2/issues/2078
+        display: inline-block !important;
     }
 
     // This needs a static width so that text-overflow: ellipsis will work in Firefox.
@@ -107,13 +111,13 @@ legend .subtext {
     }
 }
 
-.app-manager-content {
+#case-config-ko, #usercase-config-ko {
     @select2Width: 210px;
 
-    .app-manager-select2s(@select2Width);
+    .case-config-select2s(@select2Width);
 
     .wide-select2s {
-        .app-manager-select2s(@select2Width * 1.5);
+        .case-config-select2s(@select2Width * 1.5);
     }
 }
 
@@ -233,6 +237,11 @@ textarea.vertical-resize {
         .form-group {
             margin-left: 0;
             margin-right: 0;
+        }
+        .langcode-container.has-lang {
+            input, textarea {
+                padding-right: 45px;
+            }
         }
     }
 }

@@ -1,4 +1,5 @@
 from django import forms
+from django.contrib.postgres.forms import SimpleArrayField
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext_lazy, ugettext as _
 from crispy_forms.helper import FormHelper
@@ -22,6 +23,18 @@ class NotificationCreationForm(forms.Form):
         label=ugettext_lazy("Type"),
         choices=NOTIFICATION_TYPES,
     )
+    domain_specific = forms.BooleanField(
+        label=ugettext_lazy("This notification is not for all domains"),
+        required=False
+    )
+    domains = SimpleArrayField(
+        base_field=forms.CharField(),
+        label=ugettext_lazy("Domains"),
+        widget=forms.Textarea,
+        help_text=ugettext_lazy("Enter a comma separated list of domains for this notification. "
+                                "This is only required if you have checked the box above."),
+        required=False
+    )
 
     def __init__(self, *args, **kwargs):
         from corehq.apps.notifications.views import ManageNotificationView
@@ -39,6 +52,11 @@ class NotificationCreationForm(forms.Form):
             crispy.Field('content'),
             crispy.Field('url'),
             crispy.Field('type'),
+            hqcrispy.B3MultiField(
+                "Domain Specific",
+                crispy.Field('domain_specific')
+            ),
+            crispy.Field('domains'),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
                     _("Submit Information"),
@@ -57,4 +75,8 @@ class NotificationCreationForm(forms.Form):
 
     def save(self):
         data = self.cleaned_data
-        Notification(content=data.get('content'), url=data.get('url'), type=data.get('type')).save()
+        Notification(content=data.get('content'),
+                     url=data.get('url'),
+                     type=data.get('type'),
+                     domain_specific=data.get('domain_specific'),
+                     domains=data.get('domains')).save()

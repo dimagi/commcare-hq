@@ -6,7 +6,8 @@ from django.template.loader import render_to_string
 from corehq.apps.accounting.models import (
     SoftwarePlanEdition, DefaultProductPlan, BillingAccount,
     BillingAccountType, Subscription, SubscriptionAdjustmentMethod, Currency,
-    SubscriptionType, PreOrPostPay
+    SubscriptionType, PreOrPostPay,
+    DEFAULT_ACCOUNT_FORMAT,
 )
 from corehq.apps.accounting.tasks import ensure_explicit_community_subscription
 from corehq.apps.registration.models import RegistrationRequest
@@ -48,6 +49,7 @@ def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
     new_user.last_login = now
     new_user.date_joined = now
     new_user.last_password_set = now
+    new_user.atypical_user = form.cleaned_data.get('atypical_user', False)
     new_user.save()
 
     return new_user
@@ -74,7 +76,8 @@ def request_new_domain(request, form, is_new_user=True):
             date_created=datetime.utcnow(),
             creating_user=current_user.username,
             secure_submissions=True,
-            use_sql_backend=True
+            use_sql_backend=True,
+            first_domain_for_user=is_new_user
         )
 
         if form.cleaned_data.get('domain_timezone'):
@@ -93,7 +96,7 @@ def request_new_domain(request, form, is_new_user=True):
     if is_new_user:
         # Only new-user domains are eligible for Advanced trial
         # domains with no subscription are equivalent to be on free Community plan
-        create_30_day_advanced_trial(new_domain)
+        create_30_day_advanced_trial(new_domain, current_user.username)
     else:
         ensure_explicit_community_subscription(new_domain.name, date.today())
 
@@ -230,17 +233,18 @@ You can view the %s here: %s""" % (
 
 
 # Only new-users are eligible for advanced trial
-def create_30_day_advanced_trial(domain_obj):
+def create_30_day_advanced_trial(domain_obj, creating_username):
     # Create a 30 Day Trial subscription to the Advanced Plan
-    advanced_plan_version = DefaultProductPlan.get_default_plan(
+    advanced_plan_version = DefaultProductPlan.get_default_plan_version(
         edition=SoftwarePlanEdition.ADVANCED, is_trial=True
     )
     expiration_date = date.today() + timedelta(days=30)
     trial_account = BillingAccount.objects.get_or_create(
-        name="Trial Account for %s" % domain_obj.name,
+        name=DEFAULT_ACCOUNT_FORMAT % domain_obj.name,
         currency=Currency.get_default(),
+        created_by=creating_username,
         created_by_domain=domain_obj.name,
-        account_type=BillingAccountType.TRIAL,
+        account_type=BillingAccountType.USER_CREATED,
         pre_or_post_pay=PreOrPostPay.POSTPAY,
     )[0]
     trial_subscription = Subscription.new_domain_subscription(

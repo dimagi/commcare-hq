@@ -1,3 +1,6 @@
+import os
+from base64 import urlsafe_b64encode
+
 
 class ClosingContextProxy(object):
     """Context manager wrapper for object with close() method
@@ -11,8 +14,11 @@ class ClosingContextProxy(object):
     def __getattr__(self, name):
         return getattr(self._obj, name)
 
+    def __iter__(self):
+        return iter(self._obj)
+
     def __enter__(self):
-        return self._obj
+        return self
 
     def __exit__(self, *args):
         self._obj.close()
@@ -39,3 +45,12 @@ class document_method(object):
         if obj is None:
             return self.func
         return self.func.__get__(obj, owner)
+
+
+def random_url_id(nbytes):
+    """Get a random URL-safe ID string
+
+    :param nbytes: Number of random bytes to include in the ID.
+    :returns: A URL-safe string.
+    """
+    return urlsafe_b64encode(os.urandom(nbytes)).decode('ascii').rstrip(u'=')

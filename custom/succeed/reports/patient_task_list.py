@@ -9,7 +9,7 @@ from corehq.apps.reports.sqlreport import SqlTabularReport, AggregateColumn, Dat
     TableDataFormat
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
 from corehq.apps.reports.util import get_INFilter_bindparams
-from corehq.apps.userreports.sql import get_table_name
+from corehq.apps.userreports.util import get_table_name
 from custom.succeed.reports.patient_Info import PatientInfoReport
 from custom.succeed.reports import EMPTY_FIELD, OUTPUT_DATE_FORMAT, \
     CM_APP_UPDATE_VIEW_TASK_MODULE, CM_UPDATE_TASK, TASK_RISK_FACTOR, TASK_ACTIVITY

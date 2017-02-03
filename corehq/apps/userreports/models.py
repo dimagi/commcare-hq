@@ -3,7 +3,6 @@ from copy import copy, deepcopy
 import json
 from datetime import datetime
 
-from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.sql_db.connections import UCR_ENGINE_ID
 from corehq.util.quickcache import quickcache, skippable_quickcache
 from dimagi.ext.couchdbkit import (
@@ -20,6 +19,7 @@ from corehq.apps.cachehq.mixins import (
     CachedCouchDocumentMixin,
     QuickCachedDocumentMixin,
 )
+from corehq.apps.userreports.const import UCR_SQL_BACKEND
 from corehq.apps.userreports.dbaccessors import get_number_of_report_configs_by_data_source, \
     get_report_configs_for_domain, get_datasources_for_domain
 from corehq.apps.userreports.exceptions import (
@@ -38,6 +38,7 @@ from corehq.apps.userreports.reports.factory import ReportFactory, ChartFactory,
 from corehq.apps.userreports.reports.filters.specs import FilterSpec
 from django.utils.translation import ugettext as _
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
+from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.pillows.utils import get_deleted_doc_types
 from corehq.util.couch import get_document_or_not_found, DocumentNotFound
 from dimagi.utils.couch.bulk import get_docs
@@ -77,6 +78,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     """
     domain = StringProperty(required=True)
     engine_id = StringProperty(default=UCR_ENGINE_ID)
+    backend_id = StringProperty(default=UCR_SQL_BACKEND)
     referenced_doc_type = StringProperty(required=True)
     table_id = StringProperty(required=True)
     display_name = StringProperty()
@@ -143,7 +145,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
                 'type': 'and',
                 'filters': built_in_filters + extras,
             },
-            context=self._get_factory_context(),
+            context=self.get_factory_context(),
         )
 
     def _get_domain_filter_spec(self):
@@ -156,8 +158,28 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     @property
     @memoized
     def named_expression_objects(self):
-        return {name: ExpressionFactory.from_spec(expression, FactoryContext.empty())
-                for name, expression in self.named_expressions.items()}
+        named_expression_specs = deepcopy(self.named_expressions)
+        named_expressions = {}
+        spec_error = None
+        while named_expression_specs:
+            number_generated = 0
+            for name, expression in named_expression_specs.items():
+                try:
+                    named_expressions[name] = ExpressionFactory.from_spec(
+                        expression,
+                        FactoryContext(named_expressions=named_expressions, named_filters={})
+                    )
+                    number_generated += 1
+                    del named_expression_specs[name]
+                except BadSpecError as spec_error:
+                    # maybe a nested name resolution issue, try again on the next pass
+                    pass
+            if number_generated == 0 and named_expression_specs:
+                # we unsuccessfully generated anything on this pass and there are still unresolved
+                # references. we have to fail.
+                assert spec_error is not None
+                raise spec_error
+        return named_expressions
 
     @property
     @memoized
@@ -165,7 +187,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         return {name: FilterFactory.from_spec(filter, FactoryContext(self.named_expression_objects, {}))
                 for name, filter in self.named_filters.items()}
 
-    def _get_factory_context(self):
+    def get_factory_context(self):
         return FactoryContext(self.named_expression_objects, self.named_filter_objects)
 
     @property
@@ -185,16 +207,16 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
                     "property_name": "_id"
                 }
             }
-        }, self._get_factory_context())]
+        }, self.get_factory_context())]
 
         default_indicators.append(IndicatorFactory.from_spec({
             "type": "inserted_at",
-        }, self._get_factory_context()))
+        }, self.get_factory_context()))
 
         if self.base_item_expression:
             default_indicators.append(IndicatorFactory.from_spec({
                 "type": "repeat_iteration",
-            }, self._get_factory_context()))
+            }, self.get_factory_context()))
 
         return default_indicators
 
@@ -205,7 +227,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         return CompoundIndicator(
             self.display_name,
             self.default_indicators + [
-                IndicatorFactory.from_spec(indicator, self._get_factory_context())
+                IndicatorFactory.from_spec(indicator, self.get_factory_context())
                 for indicator in self.configured_indicators
             ]
         )
@@ -214,7 +236,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     @memoized
     def parsed_expression(self):
         if self.base_item_expression:
-            return ExpressionFactory.from_spec(self.base_item_expression, context=self._get_factory_context())
+            return ExpressionFactory.from_spec(self.base_item_expression, context=self.get_factory_context())
         return None
 
     def get_columns(self):
@@ -285,7 +307,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         if not self.is_static:
             self.is_deactivated = True
             self.save()
-            IndicatorSqlAdapter(self).drop_table()
+            get_indicator_adapter(self).drop_table()
 
 
 class ReportMeta(DocumentSchema):
@@ -319,6 +341,16 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
     def save(self, *args, **kwargs):
         self.report_meta.last_modified = datetime.utcnow()
         super(ReportConfiguration, self).save(*args, **kwargs)
+
+    @property
+    @memoized
+    def filters_without_prefilters(self):
+        return [f for f in self.filters if f['type'] != 'pre']
+
+    @property
+    @memoized
+    def prefilters(self):
+        return [f for f in self.filters if f['type'] == 'pre']
 
     @property
     @memoized
@@ -575,9 +607,12 @@ class StaticReportConfiguration(JsonObject):
         return [ds for ds in cls.all() if ds.domain == domain]
 
     @classmethod
-    def by_id(cls, config_id):
+    def by_id(cls, config_id, domain=None):
         """
         Returns a ReportConfiguration object, NOT StaticReportConfigurations.
+
+        :param domain: Optionally specify domain name to validate access.
+                       Raises ``DocumentNotFound`` if domains don't match.
         """
         mapping = cls.by_id_mapping()
         if config_id not in mapping:
@@ -588,7 +623,14 @@ class StaticReportConfiguration(JsonObject):
             raise BadSpecError(_('The report configuration referenced by this report could '
                                  'not be found.'))
 
-        return cls._get_from_metadata(metadata)
+        config = cls._get_from_metadata(metadata)
+        if domain and config.domain != domain:
+            raise DocumentNotFound("Document {} of class {} not in domain {}!".format(
+                config_id,
+                config.__class__.__name__,
+                domain,
+            ))
+        return config
 
     @classmethod
     def by_ids(cls, config_ids):

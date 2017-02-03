@@ -28,7 +28,7 @@ def change_meta_from_sql_form(form):
         document_id=form.form_id,
         data_source_type=data_sources.FORM_SQL,
         data_source_name='form-sql',  # todo: this isn't really needed.
-        document_type=form.state,
+        document_type=form.doc_type,
         document_subtype=form.xmlns,
         domain=form.domain,
         is_deletion=form.is_deleted,
@@ -40,8 +40,7 @@ def publish_form_deleted(domain, form_id):
         document_id=form_id,
         data_source_type=data_sources.FORM_SQL,
         data_source_name='form-sql',
-        document_type='XFormInstance',
-        document_subtype=None,
+        document_type='XFormInstance-Deleted',
         domain=domain,
         is_deletion=True,
     ))
@@ -61,7 +60,7 @@ def change_meta_from_sql_case(case):
         document_id=case.case_id,
         data_source_type=data_sources.CASE_SQL,
         data_source_name='case-sql',  # todo: this isn't really needed.
-        document_type='CommCareCaseSql',  # todo: should this be the same as the couch models?
+        document_type='CommCareCase',
         document_subtype=case.type,
         domain=case.domain,
         is_deletion=case.is_deleted,
@@ -73,8 +72,7 @@ def publish_case_deleted(domain, case_id):
         document_id=case_id,
         data_source_type=data_sources.CASE_SQL,
         data_source_name='case-sql',  # todo: this isn't really needed.
-        document_type='CommCareCaseSql',  # todo: should this be the same as the couch models?
-        document_subtype=None,  # todo: does this need a value?
+        document_type='CommCareCase-Deleted',
         domain=domain,
         is_deletion=True,
     ))
@@ -102,7 +100,7 @@ def change_meta_from_ledger_v1(stock_state):
     return ChangeMeta(
         document_id=stock_state.pk,
         data_source_type=data_sources.LEDGER_V1,
-        data_source_name='ledger',  # todo: this isn't really needed.
+        data_source_name='ledger-v1',  # todo: this isn't really needed.
         domain=stock_state.domain,
         is_deletion=False,
     )

@@ -9,19 +9,21 @@ from django.test import TestCase
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException, IgnoreDocument
-from corehq.apps.receiverwrapper import submit_form_locally
+from corehq.apps.receiverwrapper.util import submit_form_locally
+from corehq.apps.repeaters.repeater_generators import FormRepeaterXMLPayloadGenerator, RegisterGenerator, \
+    BasePayloadGenerator
 from corehq.apps.repeaters.tasks import check_repeaters
 from corehq.apps.repeaters.models import (
     CaseRepeater,
     FormRepeater,
     RepeatRecord,
-    RegisterGenerator)
-from corehq.apps.repeaters.repeater_generators import BasePayloadGenerator
+)
 from corehq.apps.repeaters.const import MIN_RETRY_WAIT, POST_TIMEOUT
 from corehq.apps.repeaters.dbaccessors import delete_all_repeat_records
 from corehq.form_processor.tests.utils import run_with_all_backends, FormProcessorTestUtils
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from couchforms.const import DEVICE_LOG_XMLNS
+
 
 MockResponse = namedtuple('MockResponse', 'status_code reason')
 CASE_ID = "ABC123CASEID"
@@ -159,7 +161,7 @@ class RepeaterTest(BaseRepeaterTest):
         record = RepeatRecord(domain=self.domain, next_check=now)
         self.assertIsNone(record.last_checked)
 
-        record.update_failure()
+        record.set_next_try()
         self.assertTrue(record.last_checked > now)
         self.assertEqual(record.next_check, record.last_checked + MIN_RETRY_WAIT)
 
@@ -236,6 +238,74 @@ class RepeaterTest(BaseRepeaterTest):
         with patch('corehq.apps.repeaters.tasks.process_repeat_record') as mock_process:
             check_repeaters()
             self.assertEqual(mock_process.delay.call_count, 2)
+
+
+class FormPayloadGeneratorTest(BaseRepeaterTest, TestXmlMixin):
+
+    @classmethod
+    def setUpClass(cls):
+        super(FormPayloadGeneratorTest, cls).setUpClass()
+
+        cls.domain_name = "test-domain"
+        cls.domain = create_domain(cls.domain_name)
+        cls.repeater = FormRepeater(
+            domain=cls.domain_name,
+            url="form-repeater-url",
+        )
+        cls.repeatergenerator = FormRepeaterXMLPayloadGenerator(
+            repeater=cls.repeater
+        )
+        cls.repeater.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain.delete()
+        cls.repeater.delete()
+        super(FormPayloadGeneratorTest, cls).tearDownClass()
+
+    def tearDown(self):
+        FormProcessorTestUtils.delete_all_cases(self.domain_name)
+        delete_all_repeat_records()
+        super(FormPayloadGeneratorTest, self).tearDown()
+
+    @run_with_all_backends
+    def test_get_payload(self):
+        self.post_xml(self.xform_xml, self.domain_name)
+        payload_doc = FormAccessors(self.domain_name).get_form(INSTANCE_ID)
+        payload = self.repeatergenerator.get_payload(None, payload_doc)
+        self.assertXmlEqual(self.xform_xml, payload)
+
+
+class FormRepeaterTest(BaseRepeaterTest, TestXmlMixin):
+
+    @classmethod
+    def setUpClass(cls):
+        super(FormRepeaterTest, cls).setUpClass()
+
+        cls.domain_name = "test-domain"
+        cls.domain = create_domain(cls.domain_name)
+        cls.repeater = FormRepeater(
+            domain=cls.domain_name,
+            url="form-repeater-url",
+        )
+        cls.repeater.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain.delete()
+        cls.repeater.delete()
+        super(FormRepeaterTest, cls).tearDownClass()
+
+    def tearDown(self):
+        FormProcessorTestUtils.delete_all_cases(self.domain_name)
+        delete_all_repeat_records()
+        super(FormRepeaterTest, self).tearDown()
+
+    @run_with_all_backends
+    def test_payload(self):
+        self.post_xml(self.xform_xml, self.domain_name)
+        payload = self.repeat_records(self.domain_name).all()[0].get_payload()
+        self.assertXMLEqual(self.xform_xml, payload)
 
 
 class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
@@ -392,6 +462,16 @@ class RepeaterFailureTest(BaseRepeaterTest):
         self.repeater.delete()
         delete_all_repeat_records()
         super(RepeaterFailureTest, self).tearDown()
+
+    @run_with_all_backends
+    def test_get_payload_exception(self):
+        repeat_record = self.repeater.register(CaseAccessors(self.domain_name).get_case(CASE_ID))
+        with self.assertRaises(Exception):
+            with patch.object(CaseRepeater, 'get_payload', side_effect=Exception('Boom!')):
+                repeat_record.fire()
+
+        self.assertEquals(repeat_record.failure_reason, 'Boom!')
+        self.assertFalse(repeat_record.succeeded)
 
     @run_with_all_backends
     def test_failure(self):

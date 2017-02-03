@@ -1,22 +1,21 @@
 from optparse import make_option
-from django.core.management.base import LabelCommand
+from django.core.management.base import BaseCommand
 import sys
 from pillowtop import get_pillow_by_name, get_all_pillow_configs
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = "Reset checkpoints for pillowtop"
     args = '<pillow_class>'
     label = 'Pillow class'
 
-    option_list = LabelCommand.option_list + \
-                  (
-                     make_option('--noinput',
-                                  action='store_true',
-                                  dest='interactive',
-                                  default=False,
-                                  help="Suppress confirmation messages - dangerous mode!"),
-                  )
+    option_list = (
+        make_option('--noinput',
+            action='store_true',
+            dest='interactive',
+            default=False,
+            help="Suppress confirmation messages - dangerous mode!"),
+    )
 
     def handle(self, *labels, **options):
         """

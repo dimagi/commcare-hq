@@ -20,12 +20,12 @@ from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.signals import commcare_domain_pre_delete
-from corehq.apps.locations.models import Location, SQLLocation
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.util.quickcache import quickcache
 from . import const
-from .const import StockActions, RequisitionActions
+from .const import StockActions
 
 
 STOCK_ACTION_ORDER = [
@@ -33,23 +33,6 @@ STOCK_ACTION_ORDER = [
     StockActions.CONSUMPTION,
     StockActions.STOCKONHAND,
     StockActions.STOCKOUT,
-]
-
-REQUISITION_ACTION_TYPES = [
-    # request a product
-    RequisitionActions.REQUEST,
-
-    # approve a requisition (it is allowed to be fulfilled)
-    # this is optional and depends on app config
-    RequisitionActions.APPROVAL,
-
-    # fulfill a requisition (order is ready)
-    RequisitionActions.FULFILL,
-
-    # receive the sock (closes the requisition)
-    # NOTE: it's not totally clear if this is necessary or
-    # should be built into the regular receipt workflow.
-    RequisitionActions.RECEIPTS,
 ]
 
 
@@ -98,33 +81,14 @@ class CommtrackActionConfig(DocumentSchema):
     def is_stock(self):
         return self.action in STOCK_ACTION_ORDER
 
-    @property
-    def is_requisition(self):
-        return self.action in REQUISITION_ACTION_TYPES
 
-
+# todo: delete this?
 class CommtrackRequisitionConfig(DocumentSchema):
     # placeholder class for when this becomes fancier
     enabled = BooleanProperty(default=False)
 
     # requisitions have their own sets of actions
     actions = SchemaListProperty(CommtrackActionConfig)
-
-    def get_sorted_actions(self):
-        def _action_key(a):
-            # intentionally fails hard if misconfigured.
-            return const.ORDERED_REQUISITION_ACTIONS.index(a.action)
-
-        return sorted(self.actions, key=_action_key)
-
-    def get_next_action(self, previous_action_type):
-        sorted_actions = self.get_sorted_actions()
-        sorted_types = [a.action for a in sorted_actions]
-        if previous_action_type in sorted_types:
-            next_index = sorted_types.index(previous_action_type) + 1
-            return sorted_actions[next_index] if next_index < len(sorted_actions) else None
-        else:
-            return None
 
 
 class ConsumptionConfig(DocumentSchema):
@@ -193,6 +157,7 @@ class CommtrackConfig(QuickCachedDocumentMixin, Document):
     multiaction_enabled = BooleanProperty()
     multiaction_keyword_ = StringProperty()
 
+    # todo: remove?
     requisition_config = SchemaProperty(CommtrackRequisitionConfig)
     openlmis_config = SchemaProperty(OpenLMISConfig)
 
@@ -241,7 +206,7 @@ class CommtrackConfig(QuickCachedDocumentMixin, Document):
         actions = [_action(a, 'stock') for a in self.actions]
         if self.requisitions_enabled:
             actions += [_action(a, 'req') for a in self.requisition_config.actions]
-        return dict((a.keyword, a) for a in actions).get(keyword)
+        return dict((a.keyword.lower(), a) for a in actions).get(keyword.lower())
 
     def get_consumption_config(self):
         def _default_monthly_consumption(case_id, product_id):
@@ -330,17 +295,10 @@ class SupplyPointCase(CommCareCase):
 
     @property
     @memoized
-    def location(self):
-        if self.location_id is None:
-            return None
-        try:
-            return Location.get(self.location_id)
-        except ResourceNotFound:
-            return None
-
-    @property
     def sql_location(self):
         return SQLLocation.objects.get(location_id=self.location_id)
+
+    location = sql_location
 
 
 UNDERSTOCK_THRESHOLD = 0.5  # months
@@ -370,8 +328,8 @@ class StockState(models.Model):
     daily_consumption = models.DecimalField(max_digits=20, decimal_places=5, null=True)
     last_modified_date = models.DateTimeField()
     last_modified_form_id = models.CharField(max_length=100, null=True)
-    sql_product = models.ForeignKey(SQLProduct)
-    sql_location = models.ForeignKey(SQLLocation, null=True)
+    sql_product = models.ForeignKey(SQLProduct, on_delete=models.CASCADE)
+    sql_location = models.ForeignKey(SQLLocation, null=True, on_delete=models.CASCADE)
 
     # override default model manager to only include unarchived data
     objects = ActiveManager()
@@ -390,6 +348,13 @@ class StockState(models.Model):
     @property
     def balance(self):
         return self.stock_on_hand
+
+    @property
+    def ledger_reference(self):
+        from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
+        return UniqueLedgerReference(
+            case_id=self.case_id, section_id=self.section_id, entry_id=self.product_id
+        )
 
     @property
     @memoized
@@ -444,7 +409,7 @@ class StockState(models.Model):
     def to_json(self):
         from corehq.form_processor.serializers import StockStateSerializer
         serializer = StockStateSerializer(self)
-        return serializer.data
+        return dict(serializer.data)
 
     class Meta:
         app_label = 'commtrack'

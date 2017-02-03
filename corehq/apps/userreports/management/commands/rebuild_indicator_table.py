@@ -1,8 +1,8 @@
-from django.core.management.base import LabelCommand, CommandError
+from django.core.management.base import BaseCommand, CommandError
 from corehq.apps.userreports import tasks
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = "Rebuild a user configurable reporting table"
     args = '<indicator_config_id>'
     label = ""

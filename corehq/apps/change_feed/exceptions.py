@@ -6,3 +6,7 @@ class UnknownDocumentStore(ValueError):
 
 class MissingMetaInformationError(Exception):
     pass
+
+
+class UnavailableKafkaOffset(Exception):
+    pass

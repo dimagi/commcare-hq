@@ -34,7 +34,11 @@ DESC_BY_EDITION = {
         'description': _("For projects scaling regionally or country wide (1,001+ people) that require "
                          "the full CommCare feature set. Your organization will receive discounted "
                          "pricing and dedicated enterprise-level support from Dimagi.")
-    }
+    },
+    Edition.RESELLER: {
+        'name': _("Reseller"),
+        'description': _("Reseller")
+    },
 }
 
 FEATURE_TYPE_TO_NAME = {
@@ -256,8 +260,8 @@ class PricingTableFeatures(object):
         return {
             cls.SOFTWARE_PLANS: (Edition.COMMUNITY, Edition.STANDARD, Edition.PRO, Edition.ADVANCED, Edition.ENTERPRISE),
             cls.PRICING: (_("Free"), _("$100 /month"), _("$500 /month"), _("$1,000 /month"), _('(<a href="http://www.dimagi.com/collaborate/contact-us/" target="_blank">Contact Us</a>)')),
-            cls.MOBILE_LIMIT: (_("50"), _("100"), _("500"), _("1,000"), _("Unlimited / Discounted Pricing")),
-            cls.ADDITIONAL_MOBILE_USER: (_("1 USD /month"), _("1 USD /month"), _("1 USD /month"), _("1 USD /month"), _("Unlimited / Discounted Pricing")),
+            cls.MOBILE_LIMIT: (_("10"), _("50"), _("250"), _("500"), _("Unlimited / Discounted Pricing")),
+            cls.ADDITIONAL_MOBILE_USER: (_("2 USD /month"), _("2 USD /month"), _("2 USD /month"), _("2 USD /month"), _("Unlimited / Discounted Pricing")),
             cls.JAVA_AND_ANDROID: (True, True, True, True, True),
             cls.MULTIMEDIA_SUPPORT: (True, True, True, True, True),
             cls.APP_BUILDER: (True, True, True, True, True),

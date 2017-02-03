@@ -24,8 +24,8 @@
     </div>
 {% endif %}
 
-<script type="text/javascript">
-    $.getScript("{% static 'reports/javascripts/field.filter_buttons.js' %}", function() {
+<script>
+    $.getScript("{% static 'reports/js/field.filter_buttons.js' %}", function() {
         linkButtonGroup("{{ css_id }}");
     });
 

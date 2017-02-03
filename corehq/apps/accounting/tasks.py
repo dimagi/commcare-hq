@@ -6,7 +6,7 @@ from urllib import urlencode
 
 from django.conf import settings
 from django.db import transaction
-from django.db.models import F, Q
+from django.db.models import F, Q, Sum
 from django.http import HttpRequest, QueryDict
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext
@@ -22,7 +22,6 @@ from dimagi.utils.django.email import send_HTML_email
 
 from corehq.apps.accounting.exceptions import (
     CreditLineError,
-    InvoiceAlreadyCreatedError,
     InvoiceError,
 )
 from corehq.apps.accounting.invoicing import DomainInvoiceFactory
@@ -40,17 +39,18 @@ from corehq.apps.accounting.models import (
     SubscriptionType,
     WirePrepaymentBillingRecord,
     WirePrepaymentInvoice,
-)
+    Invoice)
 from corehq.apps.accounting.payment_handlers import AutoPayInvoicePaymentHandler
 from corehq.apps.accounting.utils import (
     fmt_dollar_amount,
     get_change_status,
     get_dimagi_from_email,
-    has_subscription_already_ended,
     log_accounting_error,
     log_accounting_info,
 )
 from corehq.apps.domain.models import Domain
+from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.notifications.models import Notification
 from corehq.apps.users.models import FakeUser, WebUser
 from corehq.const import USER_DATE_FORMAT, USER_MONTH_FORMAT
 from corehq.util.view_utils import absolute_reverse
@@ -61,6 +61,8 @@ _invoicing_complete_soft_assert = soft_assert(
     to='{}@{}'.format('npellegrino', 'dimagi.com'),
     exponential_backoff=False,
 )
+
+CONSISTENT_DATES_CHECK = Q(date_start__lt=F('date_end')) | Q(date_end__isnull=True)
 
 
 @transaction.atomic
@@ -75,42 +77,46 @@ def _activate_subscription(subscription):
 
 
 def activate_subscriptions(based_on_date=None):
-    """
-    Activates all subscriptions starting today (or, for testing, based on the date specified)
-    """
-    starting_date = based_on_date or datetime.date.today()
     starting_subscriptions = Subscription.objects.filter(
-        date_start=starting_date,
+        CONSISTENT_DATES_CHECK,
         is_active=False,
     )
-    starting_subscriptions = filter(
-        lambda subscription: not has_subscription_already_ended(subscription),
-        starting_subscriptions
-    )
+    if based_on_date:
+        starting_subscriptions = starting_subscriptions.filter(date_start=based_on_date)
+    else:
+        today = datetime.date.today()
+        starting_subscriptions = starting_subscriptions.filter(
+            Q(date_end__isnull=True) | Q(date_end__gt=today),
+            date_start__lte=today,
+        )
+
     for subscription in starting_subscriptions:
         try:
             _activate_subscription(subscription)
         except Exception as e:
             log_accounting_error(
-                'Error activating subscription %d: %s' % (subscription.id, e.message)
+                'Error activating subscription %d: %s' % (subscription.id, e.message),
+                show_stack_trace=True,
             )
 
 
 @transaction.atomic
-def _deactivate_subscription(subscription, ending_date):
+def _deactivate_subscription(subscription):
     subscription.is_active = False
     subscription.save()
     next_subscription = subscription.next_subscription
-    activate_next_subscription = next_subscription and next_subscription.date_start == ending_date
+    activate_next_subscription = next_subscription and next_subscription.date_start == subscription.date_end
     if activate_next_subscription:
         new_plan_version = next_subscription.plan_version
         next_subscription.is_active = True
         next_subscription.save()
     else:
-        next_subscription = assign_explicit_community_subscription(subscription.subscriber.domain, ending_date)
+        next_subscription = assign_explicit_community_subscription(
+            subscription.subscriber.domain, subscription.date_end
+        )
         new_plan_version = next_subscription.plan_version
     _, downgraded_privs, upgraded_privs = get_change_status(subscription.plan_version, new_plan_version)
-    if next_subscription and subscription.account == next_subscription.account:
+    if subscription.account == next_subscription.account:
         subscription.transfer_credits(subscription=next_subscription)
     else:
         subscription.transfer_credits()
@@ -123,19 +129,23 @@ def _deactivate_subscription(subscription, ending_date):
 
 
 def deactivate_subscriptions(based_on_date=None):
-    """
-    Deactivates all subscriptions ending today (or, for testing, based on the date specified)
-    """
-    ending_date = based_on_date or datetime.date.today()
     ending_subscriptions = Subscription.objects.filter(
-        date_end=ending_date,
+        CONSISTENT_DATES_CHECK,
         is_active=True,
     )
+    if based_on_date:
+        ending_subscriptions = ending_subscriptions.filter(date_end=based_on_date)
+    else:
+        ending_subscriptions = ending_subscriptions.filter(date_end__lte=datetime.date.today())
+
     for subscription in ending_subscriptions:
         try:
-            _deactivate_subscription(subscription, ending_date)
+            _deactivate_subscription(subscription)
         except Exception as e:
-            log_accounting_error('Error deactivating subscription %d: %s' % (subscription.id, e.message))
+            log_accounting_error(
+                'Error deactivating subscription %d: %s' % (subscription.id, e.message),
+                show_stack_trace=True,
+            )
 
 
 def warn_subscriptions_still_active(based_on_date=None):
@@ -159,15 +169,31 @@ def warn_subscriptions_not_active(based_on_date=None):
         log_accounting_error("%s is not active" % subscription)
 
 
-@periodic_task(run_every=crontab(minute=0, hour=5))
+def warn_active_subscriptions_per_domain_not_one():
+    for domain_name in Domain.get_all_names():
+        active_subscription_count = Subscription.objects.filter(
+            subscriber__domain=domain_name,
+            is_active=True,
+        ).count()
+        if active_subscription_count > 1:
+            log_accounting_error("Multiple active subscriptions found for domain %s" % domain_name)
+        elif active_subscription_count == 0:
+            log_accounting_error("There is no active subscription for domain %s" % domain_name)
+
+
+@periodic_task(run_every=crontab(minute=0, hour=5), acks_late=True)
 def update_subscriptions():
+    deactivate_subscriptions(datetime.date.today())
     deactivate_subscriptions()
+    activate_subscriptions(datetime.date.today())
     activate_subscriptions()
+
     warn_subscriptions_still_active()
     warn_subscriptions_not_active()
+    warn_active_subscriptions_per_domain_not_one()
 
 
-@periodic_task(run_every=crontab(hour=13, minute=0, day_of_month='1'))
+@periodic_task(run_every=crontab(hour=13, minute=0, day_of_month='1'), acks_late=True)
 def generate_invoices(based_on_date=None):
     """
     Generates all invoices for the past month.
@@ -189,20 +215,19 @@ def generate_invoices(based_on_date=None):
         except CreditLineError as e:
             log_accounting_error(
                 "There was an error utilizing credits for "
-                "domain %s: %s" % (domain.name, e)
+                "domain %s: %s" % (domain.name, e),
+                show_stack_trace=True,
             )
         except InvoiceError as e:
             log_accounting_error(
-                "Could not create invoice for domain %s: %s" % (domain.name, e)
-            )
-        except InvoiceAlreadyCreatedError as e:
-            log_accounting_error(
-                "Invoice already existed for domain %s: %s" % (domain.name, e)
+                "Could not create invoice for domain %s: %s" % (domain.name, e),
+                show_stack_trace=True,
             )
         except Exception as e:
             log_accounting_error(
                 "Error occurred while creating invoice for "
-                "domain %s: %s" % (domain.name, e)
+                "domain %s: %s" % (domain.name, e),
+                show_stack_trace=True,
             )
 
     if not settings.UNIT_TESTING:
@@ -271,7 +296,7 @@ def send_bookkeeper_email(month=None, year=None, emails=None):
         })
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0))
+@periodic_task(run_every=crontab(minute=0, hour=0), acks_late=True)
 def remind_subscription_ending():
     """
     Sends reminder emails for subscriptions ending N days from now.
@@ -281,12 +306,12 @@ def remind_subscription_ending():
     send_subscription_reminder_emails(1)
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0))
-def remind_dimagi_contact_subscription_ending_40_days():
+@periodic_task(run_every=crontab(minute=0, hour=0), acks_late=True)
+def remind_dimagi_contact_subscription_ending_60_days():
     """
-    Sends reminder emails to Dimagi contacts that subscriptions are ending in 40 days
+    Sends reminder emails to Dimagi contacts that subscriptions are ending in 60 days
     """
-    send_subscription_reminder_emails_dimagi_contact(40)
+    send_subscription_reminder_emails_dimagi_contact(60)
 
 
 def send_subscription_reminder_emails(num_days):
@@ -302,7 +327,8 @@ def send_subscription_reminder_emails(num_days):
                 subscription.send_ending_reminder_email()
         except Exception as e:
             log_accounting_error(
-                "Error sending reminder for subscription %d: %s" % (subscription.id, e.message)
+                "Error sending reminder for subscription %d: %s" % (subscription.id, e.message),
+                show_stack_trace=True,
             )
 
 
@@ -313,14 +339,15 @@ def send_subscription_reminder_emails_dimagi_contact(num_days):
                             .filter(is_active=True)
                             .filter(date_end=date_in_n_days)
                             .filter(do_not_email_reminder=False)
-                            .filter(account__dimagi_contact__isnull=False))
+                            .exclude(account__dimagi_contact=''))
     for subscription in ending_subscriptions:
         # only send reminder emails if the subscription isn't renewed
         if not subscription.is_renewed:
             subscription.send_dimagi_ending_reminder_email()
 
 
-@task(ignore_result=True)
+@task(ignore_result=True, acks_late=True)
+@transaction.atomic()
 def create_wire_credits_invoice(domain_name,
                                 account_created_by,
                                 account_entry_point,
@@ -348,14 +375,15 @@ def create_wire_credits_invoice(domain_name,
             record.send_email(contact_emails=contact_emails)
         except Exception as e:
             log_accounting_error(
-                "Error sending email for WirePrepaymentBillingRecord %d: %s" % (record.id, e.message)
+                "Error sending email for WirePrepaymentBillingRecord %d: %s" % (record.id, e.message),
+                show_stack_trace=True,
             )
     else:
         record.skipped_email = True
         record.save()
 
 
-@task(ignore_result=True)
+@task(ignore_result=True, acks_late=True)
 def send_purchase_receipt(payment_record, domain,
                           template_html, template_plaintext,
                           additional_context):
@@ -368,7 +396,8 @@ def send_purchase_receipt(payment_record, domain,
     except ResourceNotFound:
         log_accounting_error(
             "Strange. A payment attempt was made by a user that "
-            "we can't seem to find! %s" % username
+            "we can't seem to find! %s" % username,
+            show_stack_trace=True,
         )
         name = email = username
 
@@ -391,7 +420,7 @@ def send_purchase_receipt(payment_record, domain,
     )
 
 
-@task(queue='background_queue', ignore_result=True)
+@task(queue='background_queue', ignore_result=True, acks_late=True)
 def send_autopay_failed(invoice, payment_method):
     subscription = invoice.subscription
     auto_payer = subscription.account.auto_pay_user
@@ -427,7 +456,7 @@ def send_autopay_failed(invoice, payment_method):
 
 
 # Email this out every Monday morning.
-@periodic_task(run_every=crontab(minute=0, hour=0, day_of_week=1))
+@periodic_task(run_every=crontab(minute=0, hour=0, day_of_week=1), acks_late=True)
 def weekly_digest():
     today = datetime.date.today()
     in_forty_days = today + datetime.timedelta(days=40)
@@ -439,8 +468,10 @@ def weekly_digest():
             date_end__gte=today,
             is_active=True,
             is_trial=False,
-            account__dimagi_contact__isnull=True,
-        ))
+        ).exclude(
+            account__dimagi_contact='',
+        )
+    )
 
     if not ending_in_forty_days:
         log_accounting_info(
@@ -523,32 +554,33 @@ def weekly_digest():
         })
 
 
-@periodic_task(run_every=crontab(hour=01, minute=0,))
+@periodic_task(run_every=crontab(hour=1, minute=0,), acks_late=True)
 def pay_autopay_invoices():
     """ Check for autopayable invoices every day and pay them """
     AutoPayInvoicePaymentHandler().pay_autopayable_invoices(datetime.datetime.today())
 
 
-@periodic_task(run_every=crontab(minute=0, hour=0), queue='background_queue')
+@periodic_task(run_every=crontab(minute=0, hour=0), queue='background_queue', acks_late=True)
 def update_exchange_rates(app_id=settings.OPEN_EXCHANGE_RATES_API_ID):
-    try:
-        log_accounting_info("Updating exchange rates...")
-        rates = json.load(urllib2.urlopen(
-            'https://openexchangerates.org/api/latest.json?app_id=%s' % app_id))['rates']
-        default_rate = float(rates[Currency.get_default().code])
-        for code, rate in rates.items():
-            currency, _ = Currency.objects.get_or_create(code=code)
-            currency.rate_to_default = float(rate) / default_rate
-            currency.save()
-            log_accounting_info("Exchange rate for %(code)s updated %(rate)f." % {
-                'code': currency.code,
-                'rate': currency.rate_to_default,
-            })
-    except Exception as e:
-        log_accounting_error("Error updating exchange rates: %s" % e.message)
-
-
-CONSISTENT_DATES_CHECK = Q(date_start__lt=F('date_end')) | Q(date_end__isnull=True)
+    if app_id:
+        try:
+            log_accounting_info("Updating exchange rates...")
+            rates = json.load(urllib2.urlopen(
+                'https://openexchangerates.org/api/latest.json?app_id=%s' % app_id))['rates']
+            default_rate = float(rates[Currency.get_default().code])
+            for code, rate in rates.items():
+                currency, _ = Currency.objects.get_or_create(code=code)
+                currency.rate_to_default = float(rate) / default_rate
+                currency.save()
+                log_accounting_info("Exchange rate for %(code)s updated %(rate)f." % {
+                    'code': currency.code,
+                    'rate': currency.rate_to_default,
+                })
+        except Exception as e:
+            log_accounting_error(
+                "Error updating exchange rates: %s" % e.message,
+                show_stack_trace=True,
+            )
 
 
 def ensure_explicit_community_subscription(domain_name, from_date):
@@ -581,9 +613,7 @@ def assign_explicit_community_subscription(domain_name, start_date):
             entry_point=EntryPoint.SELF_STARTED,
         )[0],
         domain=domain_name,
-        plan_version=DefaultProductPlan.get_default_plan(
-            SoftwarePlanEdition.COMMUNITY
-        ).plan.get_version(),
+        plan_version=DefaultProductPlan.get_default_plan_version(),
         date_start=start_date,
         date_end=end_date,
         skip_invoicing_if_no_feature_charges=True,
@@ -591,3 +621,106 @@ def assign_explicit_community_subscription(domain_name, start_date):
         internal_change=True,
         service_type=SubscriptionType.PRODUCT,
     )
+
+
+@periodic_task(run_every=crontab(minute=0, hour=9), queue='background_queue', acks_late=True)
+def send_overdue_reminders(today=None):
+    from corehq.apps.domain.views import DomainSubscriptionView
+    from corehq.apps.domain.views import DomainBillingStatementsView
+
+    today = today or datetime.date.today()
+    invoices = Invoice.objects.filter(is_hidden=False,
+                                      subscription__service_type=SubscriptionType.PRODUCT,
+                                      date_paid__isnull=True,
+                                      date_due__lt=today)\
+        .exclude(subscription__plan_version__plan__edition=SoftwarePlanEdition.ENTERPRISE)\
+        .order_by('date_due')\
+        .select_related('subscription__subscriber')
+
+    domains = set()
+    for invoice in invoices:
+        if invoice.get_domain() not in domains:
+            domains.add(invoice.get_domain())
+            total = Invoice.objects.filter(is_hidden=False,
+                                           subscription__subscriber__domain=invoice.get_domain())\
+                .aggregate(Sum('balance'))['balance__sum']
+            if total >= 100:
+                domain = Domain.get_by_name(invoice.get_domain())
+                current_subscription = Subscription.get_subscribed_plan_by_domain(domain)[1]
+                if (
+                    current_subscription.plan_version.plan.edition != SoftwarePlanEdition.COMMUNITY
+                    and not current_subscription.skip_auto_downgrade
+                ):
+                    days_ago = (today - invoice.date_due).days
+                    context = {
+                        'domain': invoice.get_domain(),
+                        'total': total,
+                        'subscription_url': absolute_reverse(DomainSubscriptionView.urlname,
+                                                             args=[invoice.get_domain()]),
+                        'statements_url': absolute_reverse(DomainBillingStatementsView.urlname,
+                                                           args=[invoice.get_domain()]),
+                        'date_60': invoice.date_due + datetime.timedelta(days=60),
+                        'contact_email': settings.INVOICING_CONTACT_EMAIL
+                    }
+                    if days_ago == 61:
+                        _downgrade_domain(current_subscription)
+                        _send_downgrade_notice(invoice, context)
+                    elif days_ago == 58:
+                        _send_downgrade_warning(invoice, context)
+                    elif days_ago == 30:
+                        _send_overdue_notice(invoice, context)
+                    elif days_ago == 1:
+                        _create_overdue_notification(invoice, context)
+
+
+def _send_downgrade_notice(invoice, context):
+    send_html_email_async.delay(
+        ugettext('Oh no! Your CommCare subscription for {} has been downgraded'.format(invoice.get_domain())),
+        invoice.contact_emails,
+        render_to_string('accounting/downgrade.html', context),
+        render_to_string('accounting/downgrade.txt', context),
+        cc=[settings.ACCOUNTS_EMAIL],
+        email_from=get_dimagi_from_email()
+    )
+
+
+def _downgrade_domain(subscription):
+    subscription.change_plan(
+        DefaultProductPlan.get_default_plan_version(
+            SoftwarePlanEdition.COMMUNITY
+        ),
+        note='Automatic downgrade to community for invoice 60 days late',
+        internal_change=True
+    )
+
+
+def _send_downgrade_warning(invoice, context):
+    send_html_email_async.delay(
+        ugettext("CommCare Alert: {}'s subscription will be downgraded to Community Plan after tomorrow!".format(
+            invoice.get_domain()
+        )),
+        invoice.contact_emails,
+        render_to_string('accounting/downgrade_warning.html', context),
+        render_to_string('accounting/downgrade_warning.txt', context),
+        cc=[settings.ACCOUNTS_EMAIL],
+        email_from=get_dimagi_from_email())
+
+
+def _send_overdue_notice(invoice, context):
+    send_html_email_async.delay(
+        ugettext('CommCare Billing Statement 30 days Overdue for {}'.format(invoice.get_domain())),
+        invoice.contact_emails,
+        render_to_string('accounting/30_days.html', context),
+        render_to_string('accounting/30_days.txt', context),
+        cc=[settings.ACCOUNTS_EMAIL],
+        email_from=get_dimagi_from_email())
+
+
+def _create_overdue_notification(invoice, context):
+    message = ugettext('Reminder - your {} statement is past due!'.format(
+        invoice.date_start.strftime('%B')
+    ))
+    note = Notification.objects.create(content=message, url=context['statements_url'],
+                                       domain_specific=True, type='billing',
+                                       domains=[invoice.get_domain()])
+    note.activate()

@@ -71,6 +71,18 @@ like inactive users or deleted docs.
 These things should nearly always be excluded, but if necessary, you can remove
 these with ``remove_default_filters``.
 
+Running against production
+--------------------------
+Since the ESQuery library is read-only, it's mostly safe to run against
+production. You can define alternate elasticsearch hosts in your localsettings
+file in the ``ELASTICSEARCH_DEBUG_HOSTS`` dictionary and pass in this host name
+as the ``debug_host`` to the constructor:
+
+.. code-block:: python
+
+    >>> CaseES(debug_host='prod').domain('dimagi').count()
+    120
+
 Language
 --------
 
@@ -89,16 +101,15 @@ from collections import namedtuple
 from copy import deepcopy
 import json
 
-from corehq.apps.es import aggregations
-from corehq.apps.es.utils import values_list, flatten_field_dict
-
 from dimagi.utils.decorators.memoized import memoized
 
 from corehq.elastic import ES_META, ESError, run_query, scroll_query, SIZE_LIMIT, \
-    ScanResult
+    ScanResult, SCROLL_PAGE_SIZE_LIMIT
 
+from . import aggregations
 from . import filters
 from . import queries
+from .utils import values_list, flatten_field_dict
 
 
 class ESQuery(object):
@@ -130,12 +141,16 @@ class ESQuery(object):
         "match_all": filters.match_all()
     }
 
-    def __init__(self, index=None):
+    def __init__(self, index=None, debug_host=None):
+        from corehq.apps.userreports.util import is_ucr_table
+
         self.index = index if index is not None else self.index
-        if self.index not in ES_META:
+        if self.index not in ES_META and not is_ucr_table(self.index):
             msg = "%s is not a valid ES index.  Available options are: %s" % (
                 index, ', '.join(ES_META.keys()))
             raise IndexError(msg)
+
+        self.debug_host = debug_host
         self._default_filters = deepcopy(self.default_filters)
         self._facets = []
         self._aggregations = []
@@ -181,20 +196,39 @@ class ESQuery(object):
                 return add_filter
         raise AttributeError("There is no builtin filter named %s" % attr)
 
-    def run(self):
+    def __getitem__(self, sliced_or_int):
+        if isinstance(sliced_or_int, (int, long)):
+            start = sliced_or_int
+            size = 1
+        else:
+            start = sliced_or_int.start or 0
+            size = sliced_or_int.stop - start
+        return self.start(start).size(size).run().hits
+
+    def run(self, include_hits=False):
         """Actually run the query.  Returns an ESQuerySet object."""
-        raw = run_query(self.index, self.raw_query)
-        return ESQuerySet(raw, deepcopy(self))
+        query = self._clean_before_run(include_hits)
+        raw = run_query(query.index, query.raw_query, debug_host=query.debug_host)
+        return ESQuerySet(raw, deepcopy(query))
+
+    def _clean_before_run(self, include_hits=False):
+        query = deepcopy(self)
+        if not include_hits and query.uses_aggregations():
+            query = query.size(0)
+        return query
 
     def scroll(self):
         """
         Run the query against the scroll api. Returns an iterator yielding each
         document that matches the query.
         """
-        result = scroll_query(self.index, self.raw_query)
+        query = deepcopy(self)
+        if query._size is None:
+            query._size = SCROLL_PAGE_SIZE_LIMIT
+        result = scroll_query(query.index, query.raw_query)
         return ScanResult(
             result.count,
-            (ESQuerySet.normalize_result(deepcopy(self), r) for r in result)
+            (ESQuerySet.normalize_result(query, r) for r in result)
         )
 
     @property
@@ -225,6 +259,9 @@ class ESQuery(object):
         """
         return self._default_filters.values() + self._filters
 
+    def uses_aggregations(self):
+        return len(self._aggregations) > 0
+
     def aggregation(self, aggregation):
         """
         Add the passed-in aggregation to the query
@@ -238,8 +275,11 @@ class ESQuery(object):
         query._aggregations.extend(aggregations)
         return query
 
-    def terms_aggregation(self, term, name, size=None):
-        return self.aggregation(aggregations.TermsAggregation(name, term, size=size))
+    def terms_aggregation(self, term, name, size=None, sort_field=None, order="asc"):
+        agg = aggregations.TermsAggregation(name, term, size=size)
+        if sort_field:
+            agg = agg.order(sort_field, order)
+        return self.aggregation(agg)
 
     def date_histogram(self, name, datefield, interval, timezone=None):
         return self.aggregation(aggregations.DateHistogram(name, datefield, interval, timezone=timezone))
@@ -257,6 +297,9 @@ class ESQuery(object):
         es.es_query['query']['filtered']['query'] = query
         return es
 
+    def get_query(self):
+        return self.es_query['query']['filtered']['query']
+
     def search_string_query(self, search_string, default_fields=None):
         """Accepts a user-defined search string"""
         return self.set_query(
@@ -269,7 +312,9 @@ class ESQuery(object):
         if self._start is not None:
             self.es_query['from'] = self._start
         self.es_query['size'] = self._size if self._size is not None else SIZE_LIMIT
-        if self._source:
+        if self._exclude_source:
+            self.es_query['_source'] = False
+        elif self._source is not None:
             self.es_query['_source'] = self._source
         if self._aggregations:
             self.es_query['aggs'] = {
@@ -329,12 +374,26 @@ class ESQuery(object):
         """pretty prints the JSON query that will be sent to elasticsearch."""
         print self.dumps(pretty=True)
 
-    def sort(self, field, desc=False):
+    def sort(self, field, desc=False, reset_sort=True):
         """Order the results by field."""
         query = deepcopy(self)
-        query.es_query['sort'] = {
+        sort_field = {
             field: {'order': 'desc' if desc else 'asc'}
         }
+
+        if reset_sort:
+            query.es_query['sort'] = [sort_field]
+        else:
+            if not query.es_query.get('sort'):
+                query.es_query['sort'] = []
+            query.es_query['sort'].append(sort_field)
+
+        return query
+
+    def set_sorting_block(self, sorting_block):
+        """To be used with `get_sorting_block`, which interprets datatables sorting"""
+        query = deepcopy(self)
+        query.es_query['sort'] = sorting_block
         return query
 
     def remove_default_filters(self):
@@ -365,6 +424,10 @@ class ESQuery(object):
     def count(self):
         """Performs a minimal query to get the count of matching documents"""
         return self.size(0).run().total
+
+    def get_ids(self):
+        """Performs a minimal query to get the ids of the matching documents"""
+        return self.exclude_source().run().doc_ids
 
 
 class ESQuerySet(object):
@@ -408,7 +471,11 @@ class ESQuerySet(object):
     @property
     def hits(self):
         """Return the docs from the response."""
-        return [self.normalize_result(self.query, r) for r in self.raw_hits]
+        raw_hits = self.raw_hits
+        if not raw_hits and self.query.uses_aggregations() and self.query._size == 0:
+            raise ESError("no hits, did you forget about no_hits_with_aggs?")
+
+        return [self.normalize_result(self.query, r) for r in raw_hits]
 
     @property
     def total(self):

@@ -32,13 +32,13 @@
 {% block js %} {{ block.super }}
     <script src="{% static 'style/js/main.js' %}"></script>
     <!-- todo add the media player back in -->
-    <script type="text/javascript" src="{% static 'hqmedia/js/jquery.jplayer.min.js' %}"></script>
-    <script type="text/javascript" src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
-    <script type="text/javascript" src="{% static 'app_manager/js/download_async_modal.js' %}"></script>
+    <script src="{% static 'hqmedia/js/jquery.jplayer.min.js' %}"></script>
+    <script src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
+    <script src="{% static 'app_manager/js/download_async_modal.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
-    <script type="text/javascript">
+    <script>
         var reference_controller = new MultimediaReferenceController(
             {{ references|JSON }},
             {{ object_map|JSON }},
@@ -50,8 +50,8 @@
         $('.preview-media').tooltip();
     </script>
     {% url "download_multimedia_zip" domain app.get_id as media_url%}
-    {% include 'app_manager/partials/download_async_modal.html' with element_id='multimedia-zip-modal' %}
-    {% include 'app_manager/partials/download_async_modal_inline.html' with element_id='multimedia-zip-modal' download_url=media_url%}
+    {% include 'app_manager/v1/partials/download_async_modal.html' with element_id='multimedia-zip-modal' %}
+    {% include 'app_manager/v1/partials/download_async_modal_inline.html' with element_id='multimedia-zip-modal' download_url=media_url%}
 {% endblock %}
 
 {% block page_name %}

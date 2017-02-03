@@ -1,6 +1,6 @@
 from django.utils.translation import ugettext_lazy
 from corehq.apps.reports.filters.select import MonthFilter
-from corehq.apps.userreports.sql import get_table_name
+from corehq.apps.userreports.util import get_table_name
 from dimagi.utils.decorators.memoized import memoized
 from sqlagg.columns import SimpleColumn
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter, BaseSingleOptionFilter

@@ -272,6 +272,12 @@ class Instance(IdNode, OrderedXmlObject):
 
     src = StringField('@src')
 
+    def __eq__(self, other):
+        return self.src == other.src and self.id == other.id
+
+    def __hash__(self):
+        return hash((self.src, self.id))
+
 
 class SessionDatum(IdNode, OrderedXmlObject):
     ROOT_NAME = 'datum'
@@ -319,6 +325,13 @@ class CreatePushBase(IdNode, BaseFrame):
 
     def add_datum(self, datum):
         self.node.append(datum.node)
+
+    def add_mark(self):
+        etree.SubElement(self.node, 'mark')
+
+    def add_rewind(self, rewind_value):
+        node = etree.SubElement(self.node, 'rewind')
+        node.attrib['value'] = rewind_value
 
 
 class CreateFrame(CreatePushBase):
@@ -397,7 +410,7 @@ class Entry(OrderedXmlObject, XmlObject):
         for instance_id in instance_ids:
             if instance_id not in covered_ids:
                 raise UnknownInstanceError(
-                    "Instance reference not recognized: {} in xpath \"{}\""
+                    u"Instance reference not recognized: {} in xpath \"{}\""
                     # to get xpath context to show in this error message
                     # make instance_id a unicode subclass with an xpath property
                     .format(instance_id, getattr(instance_id, 'xpath', "(Xpath Unknown)")))
@@ -421,7 +434,7 @@ class QueryPrompt(DisplayNode):
     key = StringField('@key')
 
 
-class SyncRequestPost(XmlObject):
+class RemoteRequestPost(XmlObject):
     ROOT_NAME = 'post'
 
     url = StringField('@url')
@@ -429,41 +442,42 @@ class SyncRequestPost(XmlObject):
     data = NodeListField('data', QueryData)
 
 
-class SyncRequestQuery(OrderedXmlObject, XmlObject):
+class RemoteRequestQuery(OrderedXmlObject, XmlObject):
     ROOT_NAME = 'query'
     ORDER = ('data', 'prompts')
 
     url = StringField('@url')
     storage_instance = StringField('@storage-instance')
+    template = StringField('@template')
     data = NodeListField('data', QueryData)
     prompts = NodeListField('prompt', QueryPrompt)
 
 
-class SyncRequestSession(OrderedXmlObject, XmlObject):
+class RemoteRequestSession(OrderedXmlObject, XmlObject):
     ROOT_NAME = 'session'
     ORDER = ('queries', 'data')
 
-    queries = NodeListField('query', SyncRequestQuery)
+    queries = NodeListField('query', RemoteRequestQuery)
     data = NodeListField('datum', SessionDatum)
 
 
-class SyncRequest(OrderedXmlObject, XmlObject):
+class RemoteRequest(OrderedXmlObject, XmlObject):
     """
     Used to set the URL and query details for synchronous search.
 
-    See "sync-request" in the `CommCare 2.0 Suite Definition`_ for details.
+    See "remote-request" in the `CommCare 2.0 Suite Definition`_ for details.
 
 
-    .. _CommCare 2.0 Suite Definition: https://github.com/dimagi/commcare/wiki/Suite20#sync-request
+    .. _CommCare 2.0 Suite Definition: https://github.com/dimagi/commcare/wiki/Suite20#remote-request
 
     """
-    ROOT_NAME = 'sync-request'
+    ROOT_NAME = 'remote-request'
     ORDER = ('post', 'command', 'instances', 'session', 'stack')
 
-    post = NodeField('post', SyncRequestPost)
+    post = NodeField('post', RemoteRequestPost)
     instances = NodeListField('instance', Instance)
     command = NodeField('command', Command)
-    session = NodeField('session', SyncRequestSession)
+    session = NodeField('session', RemoteRequestSession)
     stack = NodeField('stack', Stack)
 
 
@@ -740,6 +754,6 @@ class Suite(OrderedXmlObject):
     details = NodeListField('detail', Detail)
     entries = NodeListField('entry', Entry)
     menus = NodeListField('menu', Menu)
-    sync_requests = NodeListField('sync-request', SyncRequest)
+    remote_requests = NodeListField('remote-request', RemoteRequest)
 
     fixtures = NodeListField('fixture', Fixture)

@@ -10,14 +10,14 @@
         <link type="text/css" rel="stylesheet" href="{% static 'jquery-treetable/css/jquery.treetable.css' %}"/>
 
         {% compress js %}
-            <script type="text/javascript" src="{% static 'jquery/dist/jquery.min.js' %}"></script>
-            <script type="text/javascript" src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
-            <script type="text/javascript" src="{% static 'jquery-treetable/jquery.treetable.js' %}"></script>
-            <script type="text/javascript" src="{% static 'codemirror/lib/codemirror.js' %}"></script>
-            <script type="text/javascript" src="{% static 'codemirror/mode/xml/xml.js' %}"></script>
-            <script type="text/javascript" src="{% static 'codemirror/addon/fold/foldcode.js' %}"></script>
-            <script type="text/javascript" src="{% static 'codemirror/addon/fold/foldgutter.js' %}"></script>
-            <script type="text/javascript" src="{% static 'codemirror/addon/fold/xml-fold.js' %}"></script>
+            <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+            <script src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
+            <script src="{% static 'jquery-treetable/jquery.treetable.js' %}"></script>
+            <script src="{% static 'codemirror/lib/codemirror.js' %}"></script>
+            <script src="{% static 'codemirror/mode/xml/xml.js' %}"></script>
+            <script src="{% static 'codemirror/addon/fold/foldcode.js' %}"></script>
+            <script src="{% static 'codemirror/addon/fold/foldgutter.js' %}"></script>
+            <script src="{% static 'codemirror/addon/fold/xml-fold.js' %}"></script>
         {% endcompress %}
 
         <style>
@@ -38,7 +38,12 @@
                     <ul class="list-inline">
                         <li><a href="https://confluence.dimagi.com/display/commcarehq/Hidden+features#Hiddenfeatures-PhoneRestore" target="_blank">Docs</a></li>
                         <li><a href="{{request.get_full_path}}&raw=true">Raw</a></li>
+                        <li><a href="{{request.get_full_path}}&overwrite_cache=true">Overwrite Cache</a></li>
+                        <li><a href="?{% url_replace 'since' restore_id %}">Next Sync</a></li>
                     </ul>
+                    <div>
+                        Number of cases in this restore: <strong>{{num_cases}}</strong>
+                    </div>
                     <div>
                         <ul class="nav nav-tabs" role="tablist">
                             <li role="presentation" class="active"><a href="#payload-tab" role="tab" data-toggle="tab">Payload</a></li>

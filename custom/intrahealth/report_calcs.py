@@ -4,8 +4,14 @@ from dimagi.utils.dates import force_to_date
 import fluff
 import re
 import logging
-from custom.intrahealth import get_location_by_type, PRODUCT_MAPPING, get_domain, PRODUCT_NAMES,\
-    get_loc_from_case, COMMANDE_XMLNSES, OPERATEUR_XMLNSES
+
+from custom.intrahealth import (
+    COMMANDE_XMLNSES,
+    OPERATEUR_XMLNSES,
+    PRODUCT_MAPPING,
+    PRODUCT_NAMES,
+)
+from custom.intrahealth.utils import get_domain, get_location_by_type, get_loc_from_case
 
 
 def get_value_from_path(dictionary, path, default_value=None):
@@ -178,9 +184,12 @@ class PPSConsumption(fluff.Calculator):
             return
 
         for item in (form.get_data('form/products/item') or []):
+            path = 'is-relevant/{}'
+            if self.field == 'total_stock':
+                path = 'is-relevant/question1/{}'
             yield {
                 'date': real_date,
-                'value': numeric_value(get_value_from_path(item, 'is-relevant/{}'.format(self.field))),
+                'value': numeric_value(get_value_from_path(item, path.format(self.field))),
                 'group_by': [get_product_name(item['@id']), item['@id']]
             }
 

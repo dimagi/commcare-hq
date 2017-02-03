@@ -42,7 +42,7 @@ class FormFilterErrorTests(SimpleTestCase, TestXmlMixin):
             <text>
               <locale id="modules.m0"/>
             </text>
-            <command id="m0-f0" relevant="instance('casedb')/casedb/case[@case_type='commcare-user'][hq_user_id=instance('commcaresession')/session/context/userid][1]/due_date &lt;= today()"/>
+            <command id="m0-f0" relevant="instance('casedb')/casedb/case[@case_type='commcare-user'][hq_user_id=instance('commcaresession')/session/context/userid]/due_date &lt;= today()"/>
           </menu>
         </partial>
         """

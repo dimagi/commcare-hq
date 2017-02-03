@@ -1,10 +1,10 @@
 {% extends "style/base_section.html" %}
 {% load hq_shared_tags %}
 {% block js %} {{ block.super }}
-    <script src="{% static 'commtrack/ko/location_bulk_upload_file.js' %}"></script>
+    <script src="{% static 'commtrack/js/location_bulk_upload_file.js' %}"></script>
 {% endblock %}
 {% block js-inline %} {{ block.super }}
-    <script type="text/javascript">
+    <script>
         $(function() {
             gaTrackLink($('#download_link'), 'Organization Structure', 'Bulk Import', 'Download');
             $("button[type='submit']").click(function() {

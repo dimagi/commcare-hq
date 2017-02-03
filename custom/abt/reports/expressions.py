@@ -107,16 +107,23 @@ class AbtSupervisorExpressionSpec(JsonObject):
         Return the language in which this row should be rendered.
         """
         country = cls._get_val(item, ["location_data", "country"])
-        if country in ["Senegal", "Benin", "Mali", "Madagascar"]:
+        if country in ["Senegal", u'S\xe9n\xe9gal', "Benin", "Mali", "Madagascar"]:
             return "fra"
+        elif country in ["mozambique", "Mozambique"]:
+            return "por"
         return "en"
 
     @classmethod
     def _get_warning(cls, spec, item):
         default = unicode(spec.get("warning", u""))
-        if cls._get_language(item) == "fra":
-            return unicode(spec.get("warning_fr", default))
-        return default
+        language = cls._get_language(item)
+        warning_key_map = {
+            "fra": "warning_fr",
+            "por": "warning_por",
+            "en": "warning"
+        }
+        warning = unicode(spec.get(warning_key_map[language], default))
+        return warning if warning else default
 
     @classmethod
     def _get_inspector_names(cls, item):
@@ -143,14 +150,15 @@ class AbtSupervisorExpressionSpec(JsonObject):
         Return value that should be in the flag column. Defaults to the
         question id if spec doesn't specify something else.
         """
-        ret = spec['question'][-1]
-        if cls._get_language(item) == "fra":
-            name = spec.get('flag_name_fr', None)
-            ret = name if name else ret
-        elif cls._get_language(item) == "en":
-            name = spec.get('flag_name', None)
-            ret = name if name else ret
-        return ret
+        default = spec['question'][-1]
+        flag_name_key_map = {
+            "fra": "flag_name_fr",
+            "por": "flag_name_por",
+            "en": "flag_name",
+        }
+        lang = cls._get_language(item)
+        name = spec.get(flag_name_key_map[lang], None)
+        return name if name else default
 
     def __call__(self, item, context=None):
         """

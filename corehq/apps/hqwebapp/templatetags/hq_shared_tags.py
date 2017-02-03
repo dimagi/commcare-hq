@@ -1,24 +1,30 @@
+from collections import OrderedDict
 from datetime import datetime, timedelta
+import hashlib
 import json
 import warnings
 
 from django.conf import settings
+from django.template import loader_tags, NodeList
 from django.template.base import Variable, VariableDoesNotExist
 from django.template.loader import render_to_string
-from django.utils.datastructures import SortedDict
 from django.utils.translation import ugettext as _
 from django.http import QueryDict
 from django import template
 from django.core.urlresolvers import reverse
-from django.utils.html import format_html
+from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
+from dimagi.utils.decorators.memoized import memoized
+from django_prbac.utils import has_privilege
 
 from dimagi.utils.make_uuid import random_hex
+from corehq import privileges
 from corehq.apps.domain.models import Domain
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.web import json_handler
 from corehq.apps.hqwebapp.models import MaintenanceAlert
+from corehq.apps.hqwebapp.exceptions import AlreadyRenderedException
 
 
 register = template.Library()
@@ -137,7 +143,7 @@ def domains_for_user(context, request, selected_domain=None):
 
     domain_list = _get_domain_list(request.couch_user)
     ctxt = {
-        'domain_list': domain_list,
+        'domain_list': sorted(domain_list, key=lambda domain: domain['name'].lower()),
         'current_domain': selected_domain,
         'can_publish_to_exchange': (
             selected_domain is not None and selected_domain != 'public' and
@@ -168,7 +174,7 @@ def mod(value, arg):
 @register.filter(name='sort')
 def listsort(value):
     if isinstance(value, dict):
-        new_dict = SortedDict()
+        new_dict = OrderedDict()
         key_list = value.keys()
         key_list.sort()
         for key in key_list:
@@ -204,10 +210,7 @@ def _toggle_enabled(module, request, toggle_or_toggle_name):
         toggle = getattr(module, toggle_or_toggle_name)
     else:
         toggle = toggle_or_toggle_name
-    return (
-        (hasattr(request, 'user') and toggle.enabled(request.user.username)) or
-        (hasattr(request, 'domain') and toggle.enabled(request.domain))
-    )
+    return toggle.enabled_for_request(request)
 
 
 @register.filter
@@ -216,13 +219,36 @@ def toggle_enabled(request, toggle_or_toggle_name):
     return _toggle_enabled(corehq.toggles, request, toggle_or_toggle_name)
 
 
+@register.filter
+def is_new_cloudcare(request):
+    from corehq import toggles
+    return not _toggle_enabled(toggles, request, toggles.USE_OLD_CLOUDCARE)
+
+
+@register.filter
+def can_use_restore_as(request):
+    if not hasattr(request, 'couch_user'):
+        return False
+
+    return (
+        request.couch_user.can_edit_commcare_users() and
+        has_privilege(request, privileges.DATA_CLEANUP) and
+        has_privilege(request, privileges.CLOUDCARE)
+    )
+
+
 @register.simple_tag
 def toggle_js_url(domain, username):
-    return '{url}?username={username}&cachebuster={domain_cb}-{user_cb}'.format(
+    return (
+        '{url}?username={username}'
+        '&cachebuster={toggles_cb}-{previews_cb}-{domain_cb}-{user_cb}'
+    ).format(
         url=reverse('toggles_js', args=[domain]),
         username=username,
         domain_cb=toggle_js_domain_cachebuster(domain),
         user_cb=toggle_js_user_cachebuster(username),
+        toggles_cb=toggles_cachebuster(),
+        previews_cb=previews_cachebuster(),
     )
 
 
@@ -230,13 +256,36 @@ def toggle_js_url(domain, username):
 def toggle_js_domain_cachebuster(domain):
     # to get fresh cachebusters on the next deploy
     # change the date below (output from *nix `date` command)
-    #   Thu Mar  3 16:21:30 EST 2016
+    #   Mon Oct 31 10:30:09 EDT 2016
     return random_hex()[:3]
 
 
 @quickcache(['username'], timeout=30 * 24 * 60 * 60)
 def toggle_js_user_cachebuster(username):
     return random_hex()[:3]
+
+
+def _get_py_filename(module):
+    """
+    return the full path to the .py file of a module
+    (not the .pyc file)
+
+    """
+    return module.__file__.rstrip('c')
+
+
+@memoized
+def toggles_cachebuster():
+    import corehq.toggles
+    with open(_get_py_filename(corehq.toggles)) as f:
+        return hashlib.sha1(f.read()).hexdigest()[:3]
+
+
+@memoized
+def previews_cachebuster():
+    import corehq.feature_previews
+    with open(_get_py_filename(corehq.feature_previews)) as f:
+        return hashlib.sha1(f.read()).hexdigest()[:3]
 
 
 @register.filter
@@ -411,3 +460,171 @@ def prelogin_url(context, urlname):
         return reverse(urlname, args=[context['LANGUAGE_CODE']])
     else:
         return reverse(urlname)
+
+
+@register.tag
+def addtoblock(parser, token):
+    try:
+        tag_name, args = token.split_contents()
+    except ValueError:
+        raise template.TemplateSyntaxError("'addtoblock' tag requires a block_name.")
+
+    nodelist = parser.parse(('endaddtoblock',))
+    parser.delete_first_token()
+    return AddToBlockNode(nodelist, args)
+
+
+@register.tag(name='block')
+def appending_block(parser, token):
+    """
+    this overrides {% block %} to include the combined contents of
+    all {% addtoblock %} nodes
+    """
+    node = loader_tags.do_block(parser, token)
+    node.__class__ = AppendingBlockNode
+    return node
+
+
+@register.tag(name='include')
+def include_aware_block(parser, token):
+    """
+    this overrides {% include %} to keep track of whether the current template
+    render context is in an include block
+    """
+    node = loader_tags.do_include(parser, token)
+    node.__class__ = IncludeAwareNode
+    return node
+
+
+class AddToBlockNode(template.Node):
+
+    def __init__(self, nodelist, block_name):
+        self.nodelist = nodelist
+        self.block_name = block_name
+
+    def write(self, context, text):
+        rendered_blocks = AppendingBlockNode.get_rendered_blocks_dict(context)
+        if self.block_name in rendered_blocks:
+            raise AlreadyRenderedException('Block {} already rendered. Cannot add new node'.format(self.block_name))
+        request_blocks = self.get_addtoblock_contents_dict(context)
+        if self.block_name not in request_blocks:
+            request_blocks[self.block_name] = ''
+        request_blocks[self.block_name] += text
+
+    def render(self, context):
+        output = self.nodelist.render(context)
+        self.write(context, output)
+        return ''
+
+    @staticmethod
+    def get_addtoblock_contents_dict(context):
+        try:
+            request_blocks = context.render_context._addtoblock_contents
+        except AttributeError:
+            request_blocks = context.render_context._addtoblock_contents = {}
+        return request_blocks
+
+
+class AppendingBlockNode(loader_tags.BlockNode):
+
+    def render(self, context):
+        super_result = super(AppendingBlockNode, self).render(context)
+        if not IncludeAwareNode.get_include_count(context):
+            request_blocks = AddToBlockNode.get_addtoblock_contents_dict(context)
+            if self.name not in request_blocks:
+                request_blocks[self.name] = ''
+
+            contents = request_blocks.pop(self.name, '')
+            rendered_blocks = self.get_rendered_blocks_dict(context)
+            rendered_blocks.add(self.name)
+            return super_result + contents
+        else:
+            return super_result
+
+    @staticmethod
+    def get_rendered_blocks_dict(context):
+        try:
+            rendered_blocks = context.render_context._rendered_blocks
+        except AttributeError:
+            rendered_blocks = context.render_context._rendered_blocks = set()
+        return rendered_blocks
+
+
+class IncludeAwareNode(loader_tags.IncludeNode):
+
+    def render(self, context):
+        include_count = IncludeAwareNode.get_include_count(context)
+        include_count.append(True)
+        super_result = super(IncludeAwareNode, self).render(context)
+        include_count.pop()
+        return super_result
+
+    @staticmethod
+    def get_include_count(context):
+        try:
+            include_count = context.render_context._includes
+        except AttributeError:
+            include_count = context.render_context._includes = []
+        return include_count
+
+
+@register.simple_tag(takes_context=True)
+def url_replace(context, field, value):
+    """Usage <a href="?{% url_replace 'since' restore_id %}">
+    will replace the 'since' parameter in the url with <restore_id>
+    note the presense of the '?' in the href value
+
+    http://stackoverflow.com/a/16609591/2957657
+    """
+    params = context['request'].GET.copy()
+    params[field] = value
+    return params.urlencode()
+
+
+@register.filter
+def view_pdb(element):
+    import ipdb; ipdb.set_trace()
+    return element
+
+
+@register.tag
+def registerurl(parser, token):
+    split_contents = token.split_contents()
+    tag = split_contents[0]
+    url_name = parse_literal(split_contents[1], parser, tag)
+    expressions = [parser.compile_filter(arg) for arg in split_contents[2:]]
+
+    class FakeNode(template.Node):
+
+        def render(self, context):
+            args = [expression.resolve(context) for expression in expressions]
+            url = reverse(url_name, args=args)
+            return ("<script>hqImport('hqwebapp/js/urllib.js').registerUrl({}, {})</script>"
+                    .format(json.dumps(url_name), json.dumps(url)))
+
+    nodelist = NodeList([FakeNode()])
+
+    return AddToBlockNode(nodelist, 'js-inline')
+
+
+@register.tag
+def initial_page_data(parser, token):
+    split_contents = token.split_contents()
+    tag = split_contents[0]
+    name = parse_literal(split_contents[1], parser, tag)
+    value = parser.compile_filter(split_contents[2])
+
+    class FakeNode(template.Node):
+
+        def render(self, context):
+            resolved = value.resolve(context)
+            if isinstance(resolved, basestring):
+                resolved = json.dumps(resolved)[1:-1]
+            else:
+                resolved = JSON(resolved)
+            return ("<div data-name=\"{}\" data-value=\"{}\"></div>"
+                    .format(name, escape(resolved)))
+
+    nodelist = NodeList([FakeNode()])
+
+    return AddToBlockNode(nodelist, 'initial_page_data')

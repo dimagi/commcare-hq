@@ -1,12 +1,20 @@
+from django.conf import settings
 from django.utils.translation import ugettext as _
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 from corehq.apps.domain.models import Domain
+from corehq.apps.users.util import format_username
 from dimagi.utils.logging import notify_exception
 
-from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.models import CouchUser
+
+from dimagi.utils.web import json_response
+from corehq.apps.domain.auth import get_username_and_password_from_request, determine_authtype_from_request
+from corehq.apps.users.decorators import ensure_active_user_by_username
+from corehq.apps.locations.permissions import user_can_access_other_user
 
 from .models import DemoUserRestore
+from .exceptions import RestorePermissionDenied
 
 
 def turn_off_demo_mode(commcare_user):
@@ -84,48 +92,70 @@ def demo_restore_date_created(commcare_user):
             return restore.timestamp_created
 
 
-def is_permitted_to_restore(domain, couch_user, as_user, has_data_cleanup_privelege):
+def is_permitted_to_restore(domain, couch_user, as_user, has_data_cleanup_privilege):
     """
     This function determines if the couch_user is permitted to restore
     for the domain and/or as_user
     :param domain: Domain of restore
     :param couch_user: The couch user attempting authentication
-    :param as_user: a string <user>@<domain> that the couch_user is attempting to get
+    :param as_user: a string username that the couch_user is attempting to get
         a restore for. If None will get restore of the couch_user.
     :param has_data_cleanup_privelege: Whether the user has permissions to do DATA_CLEANUP
     :returns: a tuple - first a boolean if the user is permitted,
         secondly a message explaining why a user was rejected if not permitted
     """
-    message = None
-    if couch_user.is_commcare_user() and domain != couch_user.domain:
-        message = u"{} was not in the domain {}".format(couch_user.username, domain)
-    elif couch_user.is_web_user() and domain not in couch_user.domains and not couch_user.is_superuser:
-        message = u"{} was not in the domain {}".format(couch_user.username, domain)
-    elif (couch_user.is_web_user() and
-            couch_user.is_member_of(domain) and
-            as_user is not None):
-        if not has_data_cleanup_privelege and not couch_user.is_superuser:
-            message = u"{} does not have permissions to restore as {}".format(
-                couch_user.username,
-                as_user,
-            )
+    try:
+        _ensure_valid_domain(domain, couch_user)
+        if as_user is not None and not _restoring_as_yourself(couch_user, as_user):
+            as_user_obj = CouchUser.get_by_username(as_user)
+            if not as_user_obj:
+                raise RestorePermissionDenied(_(u'Invalid restore as user {}').format(as_user))
 
-        try:
-            username = as_user.split('@')[0]
-            user_domain = as_user.split('@')[1]
-        except IndexError:
-            message = u"Invalid to restore user {}. Format is <user>@<domain>".format(as_user)
+            _ensure_cleanup_permission(domain, couch_user, as_user_obj, has_data_cleanup_privilege)
+            _ensure_valid_restore_as_user(domain, couch_user, as_user_obj)
+            _ensure_accessible_location(domain, couch_user, as_user_obj)
+            _ensure_edit_data_permission(domain, couch_user)
+    except RestorePermissionDenied as e:
+        return False, unicode(e)
+    else:
+        return True, None
 
-        else:
-            if user_domain != domain:
-                # In this case we may be dealing with a WebUser
-                user = WebUser.get_by_username(as_user)
-                if user and user.is_member_of(domain):
-                    message = None
-                else:
-                    message = u"{} was not in the domain {}".format(username, domain)
 
-    return message is None, message
+def _restoring_as_yourself(couch_user, as_user):
+    as_user_obj = CouchUser.get_by_username(as_user)
+    return as_user_obj and couch_user._id == as_user_obj._id
+
+
+def _ensure_valid_domain(domain, couch_user):
+    if not couch_user.is_member_of(domain):
+        raise RestorePermissionDenied(_(u"{} was not in the domain {}").format(couch_user.username, domain))
+
+
+def _ensure_cleanup_permission(domain, couch_user, as_user, has_data_cleanup_privilege):
+    if not has_data_cleanup_privilege and not couch_user.is_superuser:
+        raise RestorePermissionDenied(_(u"{} does not have permissions to restore as {}").format(
+            couch_user.username,
+            as_user,
+        ))
+
+
+def _ensure_valid_restore_as_user(domain, couch_user, as_user_obj):
+    if not as_user_obj.is_member_of(domain):
+        raise RestorePermissionDenied(_(u"{} was not in the domain {}").format(as_user_obj.username, domain))
+
+
+def _ensure_accessible_location(domain, couch_user, as_user_obj):
+    if not user_can_access_other_user(domain, couch_user, as_user_obj):
+        raise RestorePermissionDenied(
+            _(u'Restore user {} not in allowed locations').format(as_user_obj.username)
+        )
+
+
+def _ensure_edit_data_permission(domain, couch_user):
+    if couch_user.is_commcare_user() and not couch_user.has_permission(domain, 'edit_commcare_users'):
+        raise RestorePermissionDenied(
+            _(u'{} does not have permission to edit commcare users').format(couch_user.username)
+        )
 
 
 def get_restore_user(domain, couch_user, as_user):
@@ -134,34 +164,43 @@ def get_restore_user(domain, couch_user, as_user):
     if specified
     :param domain: Domain of restore
     :param couch_user: The couch user attempting authentication
-    :param as_user: a string <user>@<domain> that the couch_user is attempting to get
+    :param as_user: a string username that the couch_user is attempting to get
         a restore user for. If None will get restore of the couch_user.
     :returns: An instance of OTARestoreUser
     """
+    couch_restore_user = couch_user
     restore_user = None
-    if couch_user.is_commcare_user():
-        restore_user = couch_user.to_ota_restore_user()
-    elif (couch_user.is_web_user() and as_user is not None):
-        if '@' in as_user:
-            _, user_domain = as_user.split('@')
-        else:
-            user_domain = None
-        # Likely a mobile worker because username contains domain
-        if domain == user_domain:
-            user = CommCareUser.get_by_username('{}.commcarehq.org'.format(as_user))
-            if not user:
-                return None
-            restore_user = user.to_ota_restore_user()
-        # Likely a web user
-        else:
-            user = WebUser.get_by_username(as_user)
-            if not user:
-                return None
-            elif not user.is_member_of(domain):
-                return None
-            restore_user = user.to_ota_restore_user(domain)
+    if as_user is not None:
+        couch_restore_user = CouchUser.get_by_username(as_user)
 
-    elif couch_user.is_web_user():
-        restore_user = couch_user.to_ota_restore_user(domain)
+    if couch_restore_user.is_commcare_user():
+        restore_user = couch_restore_user.to_ota_restore_user()
+    elif couch_restore_user.is_web_user():
+        restore_user = couch_restore_user.to_ota_restore_user(domain)
 
     return restore_user
+
+
+def handle_401_response(f):
+    """
+    Generic decorator to return better notice/message about why the authentication failed. Currently taking care of
+    only basic auth for inactive or deleted mobile user but should/can be extended for other auth methods and cases
+    :return json response with apt error_code in app_string and default response in english for missing
+    translations and status_code as 406(unacceptable), similar code needed different from 401
+    """
+    def _inner(request, domain, *args, **kwargs):
+        response = f(request, domain, *args, **kwargs)
+        if response.status_code == 401:
+            auth_type = determine_authtype_from_request(request)
+            if auth_type and auth_type == 'basic':
+                username, password = get_username_and_password_from_request(request)
+                if username:
+                    valid, message, error_code = ensure_active_user_by_username(username)
+                    if not valid:
+                        return json_response({
+                            "error": error_code,
+                            "default_response": message
+                        }, status_code=406)
+
+        return response
+    return _inner

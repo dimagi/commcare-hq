@@ -4,8 +4,10 @@ from corehq.apps.accounting.models import Feature, FeatureRate, SoftwarePlanVers
     BillingAccount, BillingContactInfo, Currency, PaymentRecord, SoftwareProductRate, \
     SoftwareProduct, SoftwarePlan, DefaultProductPlan, CreditAdjustment, Subscription, CreditLine, Subscriber, \
     SubscriptionAdjustment, BillingRecord, Invoice
-from corehq.apps.api.resources.v0_1 import CustomResourceMeta, AdminAuthentication
+from corehq.apps.api.resources.auth import AdminAuthentication
 from tastypie import fields
+
+from corehq.apps.api.resources.meta import CustomResourceMeta
 from django_prbac.models import Role
 
 
@@ -167,10 +169,11 @@ class SubscriptionResource(ModelResource):
     subscriber = fields.IntegerField('subscriber_id', null=True)
 
     class Meta(AccountingResourceMeta):
-        queryset = Subscription.api_objects.all().order_by('pk')
+        queryset = Subscription.objects.all().order_by('pk')
         fields = ['id', 'salesforce_contract_id', 'date_start', 'date_end', 'date_delay_invoicing',
                   'date_created', 'is_active', 'do_not_invoice', 'auto_generate_credits', 'is_trial',
-                  'service_type', 'pro_bono_status', 'last_modified', 'funding_source', 'is_hidden_to_ops']
+                  'service_type', 'pro_bono_status', 'last_modified', 'funding_source', 'is_hidden_to_ops',
+                  'skip_auto_downgrade']
         resource_name = 'subscription'
 
 

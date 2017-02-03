@@ -7,6 +7,7 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
+from corehq.util.test_utils import flag_enabled
 from django.test.testcases import SimpleTestCase
 from mock import patch, MagicMock
 import re
@@ -89,11 +90,14 @@ class GetCasePropertiesTest(SimpleTestCase, TestXmlMixin):
         phase.add_form(form)
 
 
+@flag_enabled('USER_PROPERTY_EASY_REFS')
 @patch('corehq.apps.app_manager.models.is_usercase_in_use', MagicMock(return_value=False))
+@patch('corehq.apps.app_manager.util.is_usercase_in_use', MagicMock(return_value=False))
 @patch('corehq.apps.app_manager.util.get_per_type_defaults', MagicMock(return_value={}))
 class SchemaTest(SimpleTestCase):
     def setUp(self):
         self.factory = AppFactory()
+        self.factory_2 = AppFactory()
 
     def test_get_casedb_schema_form_without_cases(self):
         survey = self.add_form()
@@ -114,7 +118,6 @@ class SchemaTest(SimpleTestCase):
         self.assert_has_kv_pairs(schema["subsets"][0], {
             'id': 'case',
             'name': 'village',
-            'key': '@case_type',
             'structure': {'case_name': {}},
             'related': None,
         })
@@ -126,7 +129,11 @@ class SchemaTest(SimpleTestCase):
         schema = util.get_casedb_schema(family)
         subsets = {s["id"]: s for s in schema["subsets"]}
         self.assertEqual(subsets["parent"]["related"], None)
-        self.assertDictEqual(subsets["case"]["related"], {"parent": "parent"})
+        self.assertDictEqual(subsets["case"]["related"], {"parent": {
+            "hashtag": "#case/parent",
+            "subset": "parent",
+            "key": "@case_id",
+        }})
 
     def test_get_casedb_schema_with_multiple_parent_case_types(self):
         referral = self.add_form("referral")
@@ -164,7 +171,11 @@ class SchemaTest(SimpleTestCase):
         self.factory.form_opens_case(village, case_type='family', is_subcase=True)
         schema = util.get_casedb_schema(family)
         subsets = {s["id"]: s for s in schema["subsets"]}
-        self.assertDictEqual(subsets["case"]["related"], {"parent": "parent"})
+        self.assertDictEqual(subsets["case"]["related"], {"parent": {
+            "hashtag": "#case/parent",
+            "subset": "parent",
+            "key": "@case_id",
+        }})
         self.assertEqual(subsets["case"]["structure"]["case_name"], {})
         #self.assertEqual(subsets["parent"]["structure"]["has_well"], {}) TODO
         self.assertNotIn("parent/has_well", subsets["case"]["structure"])
@@ -176,34 +187,150 @@ class SchemaTest(SimpleTestCase):
             "id": "commcaresession",
             "uri": "jr://instance/session",
             "name": "Session",
-            "path": "/session/data",
+            "path": "/session",
         })
-        assert "case_id" not in schema["structure"], schema["structure"]
+        assert "data" not in schema["structure"], schema["structure"]
 
     def test_get_session_schema_for_simple_module_with_case(self):
         module, form = self.factory.new_basic_module('village', 'village')
         self.factory.form_requires_case(form)
         schema = util.get_session_schema(form)
-        self.assertDictEqual(schema["structure"]["case_id"], {
-            "reference": {
-                "source": "casedb",
-                "subset": "case",
-                "key": "@case_id",
+        self.assertDictEqual(schema["structure"], {
+            "data": {
+                "merge": True,
+                "structure": {
+                    "case_id": {
+                        "reference": {
+                            "hashtag": "#case",
+                            "source": "casedb",
+                            "subset": "case",
+                            "key": "@case_id",
+                        },
+                    },
+                },
             },
         })
 
-    def test_get_session_schema_advanced_form(self):
-        m2, m2f0 = self.factory.new_advanced_module('visit history', 'visit')
-        self.factory.form_requires_case(m2f0, 'visit')
+    def test_get_session_schema_for_child_module(self):
+        # m0 - opens 'gold-fish' case.
+        # m1 - has m0 as root-module, has parent-select, updates 'guppy' case
+        self.module_0, _ = self.factory.new_basic_module('parent', 'gold-fish')
+        self.module_1, _ = self.factory.new_basic_module('child', 'guppy', parent_module=self.module_0)
+        # m0f0 registers gold-fish case and a child case ('guppy')
+        m0f0 = self.module_0.get_form(0)
+        self.factory.form_requires_case(m0f0, update={'name': 'goldilocks'})
+        self.factory.form_opens_case(m0f0, 'guppy', is_subcase=True)
 
-        schema = util.get_session_schema(m2f0)
-        self.assertDictEqual(schema["structure"]["case_id_load_visit_0"], {
-            "reference": {
-                "source": "casedb",
-                "subset": "case",
-                "key": "@case_id",
+        # m1f0 has parent-select, updates `guppy` case
+        m1f0 = self.module_1.get_form(0)
+        self.factory.form_requires_case(m1f0, parent_case_type='gold-fish')
+
+        casedb_schema = util.get_casedb_schema(m1f0)
+        session_schema = util.get_session_schema(m1f0)
+
+        expected_session_schema_structure = {
+            "data": {
+                "merge": True,
+                "structure": {
+                    "case_id_guppy": {
+                        "reference": {
+                            "hashtag": "#case",
+                            "subset": "case",
+                            "source": "casedb",
+                            "key": "@case_id"
+                        }
+                    }
+                }
+            }
+        }
+
+        expected_casedb_schema_subsets = [
+            {
+                "structure": {
+                    "case_name": {}
+                },
+                "related": {
+                    "parent": {
+                        "hashtag": "#case/parent",
+                        "subset": "parent",
+                        "key": "@case_id",
+                    }
+                },
+                "id": "case",
+                "name": "guppy"
             },
+            {
+                "structure": {
+                    "name": {},
+                    "case_name": {}
+                },
+                "related": None,
+                "id": "parent",
+                "name": "parent (gold-fish)"
+            }
+        ]
+
+        self.assertEqual(casedb_schema['subsets'], expected_casedb_schema_subsets)
+        self.assertEqual(session_schema['structure'], expected_session_schema_structure)
+
+    def test_get_case_sharing_hierarchy(self):
+        with patch('corehq.apps.app_manager.util.get_case_sharing_apps_in_domain') as mock_sharing:
+            mock_sharing.return_value = [self.factory.app, self.factory_2.app]
+            self.factory.app.case_sharing = True
+            self.factory_2.app.case_sharing = True
+
+            self.add_form("referral")
+            child = self.add_form("child")
+            self.factory.form_opens_case(child, case_type='referral', is_subcase=True)
+            pregnancy = self.add_form("pregnancy")
+            self.factory.form_opens_case(pregnancy, case_type='referral', is_subcase=True)
+            referral_2 = self.add_form_app_2('referral')
+            schema = util.get_casedb_schema(referral_2)
+            subsets = {s["id"]: s for s in schema["subsets"]}
+            self.assertTrue(re.match(r'^parent \((pregnancy|child) or (pregnancy|child)\)$',
+                            subsets["parent"]["name"]))
+            self.assertEqual(subsets["parent"]["structure"], {"case_name": {}})
+
+    def test_get_session_schema_with_user_case(self):
+        module, form = self.factory.new_basic_module('village', 'village')
+        with patch('corehq.apps.app_manager.util.is_usercase_in_use') as mock:
+            mock.return_value = True
+            schema = util.get_session_schema(form)
+            self.assertDictEqual(schema["structure"]["context"], {
+                "merge": True,
+                "structure": {
+                    "userid": {
+                        "reference": {
+                            "hashtag": "#user",
+                            "source": "casedb",
+                            "subset": util.USERCASE_TYPE,
+                            "subset_key": "@case_type",
+                            "subset_filter": True,
+                            "key": "hq_user_id",
+                        },
+                    },
+                },
+            })
+
+    def test_get_casedb_schema_with_user_case(self):
+        module, form = self.factory.new_basic_module('village', 'village')
+        self.factory.form_uses_usercase(form, update={
+            'name': '/data/username',
+            'role': '/data/userrole',
         })
+        with patch('corehq.apps.app_manager.util.is_usercase_in_use') as mock:
+            mock.return_value = True
+            schema = util.get_casedb_schema(form)
+            subsets = {s["id"]: s for s in schema["subsets"]}
+            self.assertDictEqual(subsets[util.USERCASE_TYPE], {
+                "id": util.USERCASE_TYPE,
+                "key": "@case_type",
+                "name": "user",
+                "structure": {
+                    "name": {},
+                    "role": {},
+                },
+            })
 
     # -- helpers --
 
@@ -226,3 +353,39 @@ class SchemaTest(SimpleTestCase):
             self.factory.form_requires_case(
                 form, case_type=case_type, update=case_updates)
         return form
+
+    def add_form_app_2(self, case_type=None, case_updates=None):
+        module_id = len(self.factory_2.app.modules)
+        module, form = self.factory_2.new_basic_module(module_id, case_type)
+        if case_type:
+            self.factory_2.form_opens_case(form, case_type)
+        if case_updates:
+            assert case_type, 'case_type is required with case_updates'
+            self.factory_2.form_requires_case(
+                form, case_type=case_type, update=case_updates)
+        return form
+
+
+@patch('corehq.apps.app_manager.models.is_usercase_in_use', MagicMock(return_value=True))
+@patch('corehq.apps.app_manager.util.is_usercase_in_use', MagicMock(return_value=True))
+@patch('corehq.apps.app_manager.util.get_per_type_defaults', MagicMock(return_value={}))
+class DisabledUserPropertiesSchemaTest(SimpleTestCase):
+    # TODO remove this test when removing USER_PROPERTY_EASY_REFS toggle
+
+    def setUp(self):
+        self.factory = AppFactory()
+
+    def test_get_session_schema(self):
+        module, form = self.factory.new_basic_module('village', 'village')
+        schema = util.get_session_schema(form)
+        self.assertNotIn("context", schema["structure"], repr(schema))
+
+    def test_get_casedb_schema(self):
+        module, form = self.factory.new_basic_module('village', 'village')
+        self.factory.form_uses_usercase(form, update={
+            'name': '/data/username',
+            'role': '/data/userrole',
+        })
+        schema = util.get_casedb_schema(form)
+        subsets = {s["id"]: s for s in schema["subsets"]}
+        self.assertNotIn(util.USERCASE_TYPE, subsets, repr(subsets))

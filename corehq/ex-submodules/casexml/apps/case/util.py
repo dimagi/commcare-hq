@@ -20,29 +20,24 @@ from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
 
 
-def validate_phone_datetime(datetime_string, none_ok=False):
+def validate_phone_datetime(datetime_string, none_ok=False, form_id=None):
+    if isinstance(datetime_string, datetime.datetime):
+        return datetime_string
+
     if none_ok:
         if datetime_string is None:
             return None
         if not datetime_string != '':
             soft_assert('@'.join(['droberts', 'dimagi.com']))(
                 False,
-                'phone datetime should never be empty'
+                'phone datetime should never be empty',
+                {'form_id': form_id}
             )
             return None
     try:
         return iso8601.parse_date(datetime_string)
     except iso8601.ParseError:
         raise PhoneDateValueError('{!r}'.format(datetime_string))
-
-
-def make_form_from_case_blocks(case_blocks):
-    form = ElementTree.Element("data")
-    form.attrib['xmlns'] = "https://www.commcarehq.org/test/casexml-wrapper"
-    form.attrib['xmlns:jrm'] = "http://openrosa.org/jr/xforms"
-    for block in case_blocks:
-        form.append(block)
-    return ElementTree.tostring(form)
 
 
 def post_case_blocks(case_blocks, form_extras=None, domain=None):
@@ -52,7 +47,7 @@ def post_case_blocks(case_blocks, form_extras=None, domain=None):
     Extras is used to add runtime attributes to the form before
     sending it off to the case (current use case is sync-token pairing)
     """
-    from corehq.apps.receiverwrapper.util import submit_form_locally
+    from corehq.apps.hqcase.utils import submit_case_blocks
 
     if form_extras is None:
         form_extras = {}
@@ -62,10 +57,11 @@ def post_case_blocks(case_blocks, form_extras=None, domain=None):
         from casexml.apps.case.tests.util import TEST_DOMAIN_NAME
         domain = domain or TEST_DOMAIN_NAME
 
-    form = make_form_from_case_blocks(case_blocks)
-
-    response, xform, cases = submit_form_locally(form, domain, **form_extras)
-    return xform, cases
+    return submit_case_blocks(
+        [ElementTree.tostring(case_block) for case_block in case_blocks],
+        domain=domain,
+        form_extras=form_extras
+    )
 
 
 def create_real_cases_from_dummy_cases(cases):

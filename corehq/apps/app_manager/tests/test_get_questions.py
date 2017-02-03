@@ -1,8 +1,11 @@
 import os
+import uuid
 
+from django.template.loader import render_to_string
 from django.test.testcases import SimpleTestCase
 
-from corehq.apps.app_manager.models import Application, Module, APP_V2
+from corehq.util.test_utils import TestFileMixin
+from corehq.apps.app_manager.models import Application, Module
 
 QUESTIONS = [
     {
@@ -24,6 +27,7 @@ QUESTIONS = [
                      "instance('casedb')/casedb/case[@case_id=instance('casedb')/casedb/case["
                      "@case_id=instance('commcaresession')/session/data/case_id]/index/parent"
                      "]/parent_property_1"),
+        'comment': None,
     },
     {
         'tag': 'input',
@@ -36,6 +40,7 @@ QUESTIONS = [
         'type': 'Text',
         'required': False,
         'relevant': None,
+        'comment': "This is a comment",
     },
     {
         'tag': 'input',
@@ -48,6 +53,7 @@ QUESTIONS = [
         'type': 'Text',
         'required': False,
         'relevant': None,
+        'comment': None,
     },
     {
         'tag': 'trigger',
@@ -60,6 +66,7 @@ QUESTIONS = [
         'type': 'Trigger',
         'required': False,
         'relevant': None,
+        'comment': None,
     },
     {
         'tag': 'input',
@@ -72,6 +79,7 @@ QUESTIONS = [
         'type': 'Text',
         'required': False,
         'relevant': None,
+        'comment': None,
     },
     {
         'tag': 'select1',
@@ -91,6 +99,7 @@ QUESTIONS = [
         'type': 'Select',
         'required': False,
         'relevant': None,
+        'comment': None,
     },
     {
         'tag': 'input',
@@ -103,6 +112,7 @@ QUESTIONS = [
         'type': 'Int',
         'required': False,
         'relevant': None,
+        'comment': None,
     },
     {
         'tag': 'input',
@@ -115,6 +125,7 @@ QUESTIONS = [
         'type': 'Text',
         'required': False,
         'relevant': None,
+        'comment': None,
     },
     {
         'tag': 'hidden',
@@ -130,31 +141,40 @@ QUESTIONS = [
 ]
 
 
-class GetFormQuestionsTest(SimpleTestCase):
+class GetFormQuestionsTest(SimpleTestCase, TestFileMixin):
     domain = 'test-domain'
+
+    file_path = ('data',)
+    root = os.path.dirname(__file__)
 
     maxDiff = None
 
     def setUp(self):
-        def read(filename):
-            path = os.path.join(os.path.dirname(__file__), "data", filename)
-            with open(path) as f:
-                return f.read()
-
-        self.app = app = Application.new_app(
-                self.domain, "Test", application_version=APP_V2)
-        app.add_module(Module.new_module("Module", 'en'))
-        module = app.get_module(0)
+        self.app = Application.new_app(self.domain, "Test")
+        self.app.add_module(Module.new_module("Module", 'en'))
+        module = self.app.get_module(0)
         module.case_type = 'test'
 
-        form = app.new_form(module.id, name="Form", lang='en',
-                attachment=read('case_in_form.xml'))
+        form = self.app.new_form(
+            module.id,
+            name="Form",
+            lang='en',
+            attachment=self.get_xml('case_in_form')
+        )
+
+        form_with_repeats = self.app.new_form(
+            module.id,
+            name="Form with repeats",
+            lang='en',
+            attachment=self.get_xml('form_with_repeats')
+        )
 
         self.form_unique_id = form.unique_id
+        self.form_with_repeats_unique_id = form_with_repeats.unique_id
 
     def test_get_questions(self):
         form = self.app.get_form(self.form_unique_id)
-        questions = form.wrapped_xform().get_questions(['en', 'es'], include_translations=True, form=form)
+        questions = form.wrapped_xform().get_questions(['en', 'es'], include_translations=True)
 
         non_label_questions = [
             q for q in QUESTIONS if q['tag'] not in ('label', 'trigger')]
@@ -164,6 +184,45 @@ class GetFormQuestionsTest(SimpleTestCase):
     def test_get_questions_with_triggers(self):
         form = self.app.get_form(self.form_unique_id)
         questions = form.wrapped_xform().get_questions(
-            ['en', 'es'], include_triggers=True, include_translations=True, form=form)
+            ['en', 'es'], include_triggers=True, include_translations=True)
 
         self.assertEqual(questions, QUESTIONS)
+
+    def test_get_questions_with_repeats(self):
+        """
+        This test ensures that questions that start with the repeat group id
+        do not get marked as repeats. For example:
+
+            /data/repeat_name <-- repeat group path
+            /data/repeat_name_count <-- question path
+
+        Before /data/repeat_name_count would be tagged as a repeat incorrectly.
+        See http://manage.dimagi.com/default.asp?234108 for context
+        """
+        form = self.app.get_form(self.form_with_repeats_unique_id)
+        questions = form.wrapped_xform().get_questions(
+            ['en'],
+            include_groups=True,
+        )
+
+        repeat_name_count = filter(
+            lambda question: question['value'] == '/data/repeat_name_count',
+            questions,
+        )[0]
+        self.assertIsNone(repeat_name_count['repeat'])
+
+        repeat_question = filter(
+            lambda question: question['value'] == '/data/repeat_name/question5',
+            questions,
+        )[0]
+        self.assertEqual(repeat_question['repeat'], '/data/repeat_name')
+
+    def test_blank_form(self):
+        blank_form = render_to_string("app_manager/blank_form.xml", context={
+            'xmlns': str(uuid.uuid4()).upper()
+        })
+        form = self.app.new_form(self.app.get_module(0).id, 'blank', 'en')
+        form.source = blank_form
+
+        questions = form.get_questions(['en'])
+        self.assertEqual([], questions)

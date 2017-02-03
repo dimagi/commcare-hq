@@ -8,6 +8,7 @@
             <input id="{{ css_id }}"
                    name="{{ slug }}"
                    type="text"
+                   {% if required %}required{% endif %}
                    class="form-control {% block input_css_class %}{% endblock %}" value="{{ search_query }}">
             {% if search_help_inline %}
             <p class="help-block">
@@ -30,7 +31,7 @@
 
 {% if search_help_title and search_help_content %}
 {% block filter_js %} {{ block.super }}
-<script type="text/javascript">
+<script>
     $(function () {
         $('.hq-help-template').each(function () {
             COMMCAREHQ.transformHelpTemplate($(this), true);

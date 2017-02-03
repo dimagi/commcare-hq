@@ -129,3 +129,10 @@ def delete_all_repeat_records():
             pass
         else:
             repeat_record.delete()
+
+
+@unit_testing_only
+def delete_all_repeaters():
+    from .models import Repeater
+    for repeater in Repeater.get_db().view('receiverwrapper/repeaters', reduce=False, include_docs=True).all():
+        Repeater.wrap(repeater['doc']).delete()

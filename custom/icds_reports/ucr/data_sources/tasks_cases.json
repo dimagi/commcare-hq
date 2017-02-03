@@ -2,7 +2,8 @@
   "domains": [
     "icds-sql",
     "icds-test",
-    "icds-cas"
+    "icds-cas",
+    "icds-cas-sandbox"
   ],
   "config": {
     "table_id": "static-tasks_cases",
@@ -327,6 +328,6 @@
         "property_value": "pregnancy"
       }
     },
-    "engine_id": "ucr"
+    "engine_id": "icds-ucr"
   }
 }

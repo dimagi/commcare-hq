@@ -1,15 +1,46 @@
 {% load hq_shared_tags %}
+{% load i18n %}
 
-<script type="text/template" id="session-view-list-template">
-    <p><h2>Sessions</h2></p>
-    <table class="table table-hover table-striped table-bordered">
-        <tbody>
-        </tbody>
-    </table>
+<script type="text/template" id="session-view-list-preview-template">
+    <div class="breadcrumb-form-container">
+       <ol class="breadcrumb breadcrumb-form">
+         <li class="breadcrumb-text">{% trans "Incomplete Forms" %}</li>
+       </ol>
+    </div>
+    <div class="module-menu-container module-menu-bar-offset">
+        <table class="table module-table">
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+</script>
+
+<script type="text/template" id="session-view-list-web-apps-template">
+    <div class="module-menu-container module-menu-bar-offset">
+        <div class="page-header menu-header">
+            <h1 class="page-title">{% trans "Incomplete Forms" %}</h1>
+        </div>
+        <table class="table module-table">
+            <tbody>
+            </tbody>
+        </table>
+    </div>
 </script>
 
 <script type="text/template" id="session-view-item-template">
-    <td class="col-sm-2">
-       <div>ID: <%- sessionId %> </div>
+    <td class="module-column module-column-icon">
+        <div class="module-icon-container">
+            <i class="fa fa-pencil module-icon" aria-hidden="true"></i>
+        </div>
+    </td>
+    <td class="module-column module-column-name module-column-name-session">
+        <h3>
+            <b><%- title %></b>
+            <% if (caseName) { %>(<%- caseName %>)<% } %>
+            opened <%- humanDateOpened %>
+        </h3>
+        <div class="module-delete-control">
+            <i class="fa fa-trash module-icon module-delete-icon"></i>
+        </div>
     </td>
 </script>

@@ -29,11 +29,11 @@ An overview of the design, API and data structures used here.
             - [Function calls within evaluator expressions](#function-calls-within-evaluator-expressions)
             - ["Month Start Date" and "Month End Date" expressions](#month-start-date-and-month-end-date-expressions)
             - [Filter, Sort, Map and Reduce Expressions](#filter-sort-map-and-reduce-expressions)
-                - [map_items Expression](#mapitems-expression)
-                - [filter_items Expression](#filteritems-expression)
-                - [sort_items Expression](#sortitems-expression)
-                - [reduce_items Expression](#reduceitems-expression)
-                - [flatten_items expression](#flattenitems-expression)
+                - [map_items Expression](#map_items-expression)
+                - [filter_items Expression](#filte_ritems-expression)
+                - [sort_items Expression](#sort_items-expression)
+                - [reduce_items Expression](#reduce_items-expression)
+                - [flatten_items expression](#flatten_items-expression)
             - [Named Expressions](#named-expressions)
         - [Boolean Expression Filters](#boolean-expression-filters)
             - [Operators](#operators)
@@ -57,6 +57,7 @@ An overview of the design, API and data structures used here.
     - [Report Filters](#report-filters)
         - [Numeric Filters](#numeric-filters)
         - [Date filters](#date-filters)
+        - [Quarter filters](#quarter-filters)
         - [Dynamic choice lists](#dynamic-choice-lists)
             - [Choice providers](#choice-providers)
         - [Choice lists](#choice-lists)
@@ -76,6 +77,7 @@ An overview of the design, API and data structures used here.
         - [Aggregate by 'username' column](#aggregate-by-username-column)
         - [Aggregate by two columns](#aggregate-by-two-columns)
     - [Transforms](#transforms)
+        - [Translations and arbitrary mappings](#translations-and-arbitrary-mappings)
         - [Displaying username instead of user ID](#displaying-username-instead-of-user-id)
         - [Displaying username minus @domain.commcarehq.org instead of user ID](#displaying-username-minus-domaincommcarehqorg-instead-of-user-id)
         - [Displaying owner name instead of owner ID](#displaying-owner-name-instead-of-owner-id)
@@ -182,6 +184,7 @@ property_path   | A nested reference to a property in a document | `doc["child"]
 conditional     | An if/else expression | `"legal" if doc["age"] > 21 else "underage"`
 switch          | A switch statement | `if doc["age"] == 21: "legal"` `elif doc["age"] == 60: ...` `else: ...`
 array_index     | An index into an array | `doc[1]`
+split_string    | Splitting a string and grabbing a specific element from it by index | `doc["foo bar"].split(' ')[0]`
 iterator        | Combine multiple expressions into a list | `[doc.name, doc.age, doc.gender]`
 related_doc     | A way to reference something in another document | `form.case.owner_id`
 root_doc        | A way to reference the root document explicitly (only needed when making a data source from repeat/child data) | `repeat.parent.name`
@@ -331,6 +334,25 @@ This expression returns `doc["siblings"][0]`:
 ```
 It will return nothing if the siblings property is not a list, the index isn't a number, or the indexed item doesn't exist.
 
+##### Split String Expression
+
+This expression returns `(doc["foo bar"]).split(' ')[0]`:
+```json
+{
+    "type": "split_string",
+    "string_expression": {
+        "type": "property_name",
+        "property_name": "multiple_value_string"
+    },
+    "index_expression": {
+        "type": "constant",
+        "constant": 0
+    },
+    "delimiter": ","
+}
+```
+The delimiter is optional and is defaulted to a space.  It will return nothing if the string_expression is not a string, or if the index isn't a number or the indexed item doesn't exist.
+
 ##### Iterator Expression
 
 ```json
@@ -419,7 +441,7 @@ Here is a simple example that demonstrates the structure. The keys of `propertie
 
 ```json
 {
-    "type": "named",
+    "type": "dict",
     "properties": {
         "name": "a constant name",
         "value": {
@@ -468,7 +490,6 @@ The date_expression and months_expression can be any valid expressions, or simpl
     "months_expression": 28
 }
 ```
-
 
 #### "Diff Days" expressions
 
@@ -537,7 +558,28 @@ The `date_expression` can be any valid expression, or simply constant
     },
 }
 ```
-
+#### 'Get Case Sharing Groups' expression
+'get_case_sharing_groups' will return an array of the case sharing groups that are assigned to a provided user ID.  The array will contain one document per case sharing group.
+```json
+{
+    "type": "get_case_sharing_groups",
+    "user_id_expression": {
+        "type": "property_path",
+        "property_path": ["form", "meta", "userID"]
+    }
+}
+```
+#### 'Get Reporting Groups' expression
+'get_reporting_groups' will return an array of the reporting groups that are assigned to a provided user ID.  The array will contain one document per reporting group.
+```json
+{
+    "type": "get_reporting_groups",
+    "user_id_expression": {
+        "type": "property_path",
+        "property_path": ["form", "meta", "userID"]
+    }
+}
+```
 
 #### Filter, Sort, Map and Reduce Expressions
 
@@ -561,7 +603,7 @@ We have following expressions that act on a list of objects or list of lists. Th
     "map_expression": {
         "type": "property_path",
         "property_path": ["age"]
-    },
+    }
 }
 ```
 Above returns list of ages. Note that the `property_path` in `map_expression` is relative to the repeat item rather than to the form.
@@ -612,7 +654,7 @@ Above returns list of ages. Note that the `property_path` in `map_expression` is
     "sort_expression": {
         "type": "property_path",
         "property_path": ["age"]
-    },
+    }
 }
 ```
 
@@ -629,12 +671,14 @@ Function Name  | Example
 -------------- | -----------
 `count`        | `['a', 'b']` -> 2
 `sum`          | `[1, 2, 4]` -> 7
+`min`          | `[2, 5, 1]` -> 1
+`max`          | `[2, 5, 1]` -> 5
 `first_item`   | `['a', 'b']` -> 'a'
 `last_item`    | `['a', 'b']` -> 'b'
 
 ```json
 {
-    "type": "filter_items",
+    "type": "reduce_items",
     "items_expression": {
         "type": "property_name",
         "property_name": "family_repeat"
@@ -655,7 +699,6 @@ This returns number of family members
     "items_expression": {},
 }
 ```
-
 
 #### Named Expressions
 
@@ -919,7 +962,7 @@ Property            | Description
 --------------------|------------
 ledger_section      | The ledger section to use for this indicator, for example, "stock"
 product_codes       | A list of the products to include in the indicator.  This will be used in conjunction with the `column_id` to produce each column name.
-case_id_expression  | (optional) An expression used to get the case where each ledger is found.  If not specified, it will use the row's doc id.
+case_id_expression  | An expression used to get the case where each ledger is found.  If not specified, it will use the row's doc id.
 
 ```
 {
@@ -1077,7 +1120,59 @@ Date filters allow you filter on a date. They will show a datepicker in the UI.
 Date filters have an optional `compare_as_string` option that allows the date
 filter to be compared against an indicator of data type `string`. You shouldn't
 ever need to use this option (make your column a `date` or `datetime` type
-instead), but it exists because the report builder needs it. 
+instead), but it exists because the report builder needs it.
+
+### Quarter filters
+
+Quarter filters are similar to date filters, but a choice is restricted only to the particular quarter of the year. They will show inputs for year and quarter in the UI.
+
+```
+{
+  "type": "quarter",
+  "slug": "modified_on",
+  "field": "modified_on",
+  "display": "Modified on",
+  "required": false
+}
+```
+
+### Pre-Filters
+
+Pre-filters offer the kind of functionality you get from
+[data source filters](#data-source-filtering). This makes it easier to use one
+data source for many reports, especially if some of those reports just need
+the data source to be filtered slightly differently. Pre-filters do not need
+to be configured by app builders in report modules; fields with pre-filters
+will not be listed in the report module among the other fields that can be
+filtered.
+
+A pre-filter's `type` is set to "pre":
+```
+{
+  "type": "pre",
+  "field": "at_risk_field",
+  "slug": "at_risk_slug",
+  "datatype": "string",
+  "pre_value": "yes"
+}
+```
+
+If `pre_value` is scalar (i.e. `datatype` is "string", "integer", etc.), the
+filter will use the "equals" operator. If `pre_value` is null, the filter will
+use "is null". If `pre_value` is an array, the filter will use the "in"
+operator. e.g.
+```
+{
+  "type": "pre",
+  "field": "at_risk_field",
+  "slug": "at_risk_slug",
+  "datatype": "array",
+  "pre_value": ["yes", "maybe"]
+}
+```
+
+(If `pre_value` is an array and `datatype` is not "array", it is assumed that
+`datatype` refers to the data type of the items in the array.)
 
 ### Dynamic choice lists
 
@@ -1108,7 +1203,10 @@ user                 | Select a user
 owner                | Select a possible case owner owner (user, group, or location)
 
 
-Location choice providers also support an "include_descendants" property to include descendant locations in the results, which defaults to `false`.
+Location choice providers also support two additional configuration options:
+
+* "include_descendants" - Include descendant locations in the results. Defaults to `false`.
+* "show_full_path" - display the full path to the location in the filter.  Defaults to `false`.
 
 Example assuming "village" is a location ID, which is converted to names using the location `choice_provider`:
 ```json
@@ -1120,7 +1218,8 @@ Example assuming "village" is a location ID, which is converted to names using t
   "datatype": "string",
   "choice_provider": {
       "type": "location",
-      "include_descendants": false
+      "include_descendants": true,
+      "show_full_path": true
   }
 }
 ```
@@ -1142,7 +1241,10 @@ Choice lists allow manual configuration of a fixed, specified number of choices 
 
 ### Internationalization
 
-Report builders may specify translations for the filter display value. See the section on internationalization in the Report Column section for more information.
+Report builders may specify translations for the filter display value.
+Also see the sections on internationalization in the Report Column and
+the [translations transform](#translations-and-arbitrary-mappings).
+
 ```json
 {
     "type": "choice_list",
@@ -1165,7 +1267,7 @@ Reports are made up of columns. The currently supported column types ares:
 
 Field columns have a type of `"field"`. Here's an example field column that shows the owner name from an associated `owner_id`:
 
-```
+```json
 {
     "type": "field",
     "field": "owner_id",
@@ -1176,7 +1278,7 @@ Field columns have a type of `"field"`. Here's an example field column that show
         "type": "custom",
         "custom_type": "owner_display"
     },
-    "aggregation": "simple",
+    "aggregation": "simple"
 }
 ```
 
@@ -1233,6 +1335,16 @@ Here's an example of an aggregate date column that aggregates the `received_on` 
   }
 ```
 
+AggregateDate supports an optional "format" parameter, which accepts the same [format string](https://docs.python.org/2/library/datetime.html#strftime-strptime-behavior) as [Date formatting](#date-formatting). If you don't specify a format, the default will be "%Y-%m", which will show as, for example, "2008-09".
+
+Keep in mind that the only variables available for formatting are `year` and `month`, but that still gives you a fair range, e.g.
+
+| format    | Example result    |
+| --------- | ----------------- |
+| "%Y-%m"   | "2008-09"         |
+| "%B, %Y"  | "September, 2008" |
+| "%b (%y)" | "Sep (08)"        |
+
 
 ### Expanded Columns
 
@@ -1240,13 +1352,13 @@ Expanded columns have a type of `"expanded"`. Expanded columns will be "expanded
 
 If you have a data source like this:
 ```
-+---------+----------+-------------+
++---------|----------|-------------+
 | Patient | district | test_result |
-+---------+----------+-------------+
++---------|----------|-------------+
 | Joe     | North    | positive    |
 | Bob     | North    | positive    |
 | Fred    | South    | negative    |
-+---------+----------+-------------+
++---------|----------|-------------+
 ```
 and a report configuration like this:
 ```
@@ -1272,16 +1384,46 @@ columns:
 ```
 Then you will get a report like this:
 ```
-+----------+----------------------+----------------------+
++----------|----------------------|----------------------+
 | district | test_result-positive | test_result-negative |
-+----------+----------------------+----------------------+
++----------|----------------------|----------------------+
 | North    | 2                    | 0                    |
 | South    | 0                    | 1                    |
-+----------+----------------------+----------------------+
++----------|----------------------|----------------------+
 ```
 
 Expanded columns have an optional parameter `"max_expansion"` (defaults to 10) which limits the number of columns that can be created.  WARNING: Only override the default if you are confident that there will be no adverse performance implications for the server.
 
+### Expression columns
+
+Expression columns can be used to do just-in-time calculations on the data coming out of reports.
+They allow you to use any UCR expression on the data in the report row.
+These can be referenced according to the `column_id`s from the other defined column.
+They can support advanced use cases like doing math on two different report columns,
+or doing conditional logic based on the contents of another column.
+
+A simple example is below, which assumes another called "number" in the report and shows
+how you could make a column that is 10 times that column.
+
+
+```json
+{
+    "type": "expression",
+    "column_id": "by_tens",
+    "display": "Counting by tens",
+    "expression": {
+        "type": "evaluator",
+        "statement": "a * b",
+        "context_variables": {
+            "a": {
+                "type": "property_name",
+                "property_name": "number"
+            },
+            "b": 10
+        }
+    }
+}
+```
 
 ### The "aggregation" column property
 
@@ -1308,10 +1450,15 @@ Column IDs in percentage fields *must be unique for the whole report*. If you us
 
 To sum a column and include the result in a totals row at the bottom of the report, set the `calculate_total` value in the column configuration to `true`.
 
+Not supported for the following column types:
+- expression
+
 ### Internationalization
-Report columns can be translated into multiple languages. To specify translations
-for a column header, use an object as the `display` value in the configuration
-instead of a string. For example:
+Report columns can be translated into multiple languages.
+To translate values in a given column check out
+the [translations transform](#translations-and-arbitrary-mappings) below.
+To specify translations for a column header, use an object as the `display`
+value in the configuration instead of a string. For example:
 ```
 {
     "type": "field",
@@ -1347,6 +1494,8 @@ In most simple reports you will only have one level of aggregation. See examples
 
 ### No aggregation
 
+Note that if you use `is_primary_key` in any of your columns, you must include all primary key columns here.
+
 ```json
 ["doc_id"]
 ```
@@ -1366,11 +1515,73 @@ In most simple reports you will only have one level of aggregation. See examples
 ## Transforms
 
 Transforms can be used in two places - either to manipulate the value of a column just before it gets saved to a data source, or to transform the value returned by a column just before it reaches the user in a report.
+Here's an example of a transform used in a report config 'field' column:
+
+```json
+{
+    "type": "field",
+    "field": "owner_id",
+    "column_id": "owner_id",
+    "display": "Owner Name",
+    "format": "default",
+    "transform": {
+        "type": "custom",
+        "custom_type": "owner_display"
+    },
+    "aggregation": "simple"
+}
+```
+
 The currently supported transform types are shown below:
+
+### Translations and arbitrary mappings
+
+The translations transform can be used to give human readable strings:
+
+```json
+{
+    "type": "translation",
+    "translations": {
+        "lmp": "Last Menstrual Period",
+        "edd": "Estimated Date of Delivery"
+    }
+}
+```
+
+And for translations:
+
+```json
+{
+    "type": "translation",
+    "translations": {
+        "lmp": {
+            "en": "Last Menstrual Period",
+            "es": "Fecha Última Menstruación",
+        },
+        "edd": {
+            "en": "Estimated Date of Delivery",
+            "es": "Fecha Estimada de Parto",
+        }
+    }
+}
+```
+
+To use this in a mobile ucr, set the `'mobile_or_web'` property to `'mobile'`
+
+```json
+{
+    "type": "translation",
+    "mobile_or_web": "mobile",
+    "translations": {
+        "lmp": "Last Menstrual Period",
+        "edd": "Estimated Date of Delivery"
+    }
+}
+```
 
 ### Displaying username instead of user ID
 
-```
+```json
 {
     "type": "custom",
     "custom_type": "user_display"
@@ -1379,7 +1590,7 @@ The currently supported transform types are shown below:
 
 ### Displaying username minus @domain.commcarehq.org instead of user ID
 
-```
+```json
 {
     "type": "custom",
     "custom_type": "user_without_domain_display"
@@ -1388,7 +1599,7 @@ The currently supported transform types are shown below:
 
 ### Displaying owner name instead of owner ID
 
-```
+```json
 {
     "type": "custom",
     "custom_type": "owner_display"
@@ -1397,7 +1608,7 @@ The currently supported transform types are shown below:
 
 ### Displaying month name instead of month index
 
-```
+```json
 {
     "type": "custom",
     "custom_type": "month_display"
@@ -1408,7 +1619,7 @@ The currently supported transform types are shown below:
 
 Rounds decimal and floating point numbers to two decimal places.
 
-```
+```json
 {
     "type": "custom",
     "custom_type": "short_decimal_display"
@@ -1426,7 +1637,7 @@ If the format string is not valid or the input is not a number then the original
 
 #### Round to the nearest whole number
 
-```
+```json
 {
     "type": "number_format",
     "custom_type": "{0:.0f}"
@@ -1435,7 +1646,7 @@ If the format string is not valid or the input is not a number then the original
 
 #### Always round to 3 decimal places
 
-```
+```json
 {
     "type": "number_format",
     "custom_type": "{0:.3f}"
@@ -1445,7 +1656,7 @@ If the format string is not valid or the input is not a number then the original
 ### Date formatting
 Formats dates with the given format string. See [here](https://docs.python.org/2/library/datetime.html#strftime-strptime-behavior) for an explanation of format string behavior.
 If there is an error formatting the date, the transform is not applied to that value.
-```
+```json
 {
    "type": "date_format", 
    "format": "%Y-%m-%d %H:%M"

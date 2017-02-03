@@ -36,6 +36,7 @@ class CaseES(HQESQuery):
             user,
             user_ids_handle_unknown,
             opened_by,
+            case_ids,
             active_in_range,
         ] + super(CaseES, self).builtin_filters
 
@@ -78,6 +79,10 @@ def user(user_id):
 
 def opened_by(user_id):
     return filters.term('opened_by', user_id)
+
+
+def case_ids(case_ids):
+    return filters.term('_id', case_ids)
 
 
 def active_in_range(gt=None, gte=None, lt=None, lte=None):

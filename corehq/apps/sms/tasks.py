@@ -2,12 +2,13 @@ import math
 from datetime import datetime, timedelta
 from celery.task import task
 from corehq.apps.sms.mixin import (InvalidFormatException,
-    PhoneNumberInUseException)
+    PhoneNumberInUseException, PhoneNumberException, CommCareMobileContactMixin,
+    apply_leniency)
 from corehq.apps.sms.models import (OUTGOING, INCOMING, SMS,
-    PhoneLoadBalancingMixin, QueuedSMS, PhoneNumber)
+    PhoneLoadBalancingMixin, QueuedSMS, PhoneNumber, MigrationStatus)
 from corehq.apps.sms.api import (send_message_via_backend, process_incoming,
     log_sms_exception, create_billable_for_sms, get_utcnow)
-from django.db import transaction
+from django.db import transaction, DataError
 from django.conf import settings
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -16,6 +17,8 @@ from corehq.apps.smsbillables.exceptions import RetryBillableTaskException
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.sms.change_publishers import publish_sms_saved
 from corehq.apps.sms.util import is_contact_active
+from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch import release_lock, CriticalSection
@@ -244,7 +247,7 @@ def process_sms(queued_sms_pk):
             process_sms.delay(queued_sms_pk)
 
 
-@task(ignore_result=True, default_retry_delay=5 * 60, max_retries=10, bind=True)
+@task(ignore_result=True, default_retry_delay=10 * 60, max_retries=10, bind=True)
 def store_billable(self, msg):
     if not isinstance(msg, SMS):
         raise Exception("Expected msg to be an SMS")
@@ -264,6 +267,11 @@ def store_billable(self, msg):
             )
         except RetryBillableTaskException as e:
             self.retry(exc=e)
+        except DataError:
+            from corehq.util.soft_assert import soft_assert
+            _soft_assert = soft_assert(to='{}@{}'.format('jemord', 'dimagi.com'))
+            _soft_assert(len(msg.domain) < 25, "Domain name too long: " + msg.domain)
+            raise
 
 
 @task(queue='background_queue', ignore_result=True, acks_late=True)
@@ -288,56 +296,98 @@ def sync_case_phone_number(self, case):
         self.retry(exc=e)
 
 
-def _phone_number_is_same(phone_number, phone_info):
-    return (
-        phone_number.phone_number == phone_info.phone_number and
-        phone_number.backend_id == phone_info.sms_backend_id and
-        phone_number.ivr_backend_id == phone_info.ivr_backend_id and
-        phone_number.verified
-    )
-
-
 def _sync_case_phone_number(contact_case):
     phone_info = contact_case.get_phone_info()
 
-    lock_keys = ['sync-case-phone-number-for-%s' % contact_case.case_id]
-    if phone_info.phone_number:
-        lock_keys.append('verifying-phone-number-%s' % phone_info.phone_number)
+    with CriticalSection([contact_case.phone_sync_key], timeout=5 * 60):
+        phone_numbers = contact_case.get_phone_entries()
 
-    with CriticalSection(lock_keys, timeout=5 * 60):
-        phone_number = contact_case.get_verified_number()
+        if len(phone_numbers) == 0:
+            phone_number = None
+        elif len(phone_numbers) == 1:
+            phone_number = phone_numbers.values()[0]
+        else:
+            # We use locks to make sure this scenario doesn't happen, but if it
+            # does, just clear the phone number entries and the right one will
+            # be recreated below.
+            for p in phone_numbers.values():
+                p.delete()
+            phone_number = None
+
         if (
             phone_number and
             phone_number.contact_last_modified and
             phone_number.contact_last_modified >= contact_case.server_modified_on
         ):
             return
-        if phone_info.requires_entry:
-            try:
-                contact_case.verify_unique_number(phone_info.phone_number)
-            except (InvalidFormatException, PhoneNumberInUseException):
-                if phone_number:
-                    phone_number.delete()
-                return
 
-            if not phone_number:
-                phone_number = PhoneNumber(
-                    domain=contact_case.domain,
-                    owner_doc_type=contact_case.doc_type,
-                    owner_id=contact_case.case_id,
-                )
-            elif _phone_number_is_same(phone_number, phone_info):
-                return
-
-            phone_number.phone_number = phone_info.phone_number
-            phone_number.backend_id = phone_info.sms_backend_id
-            phone_number.ivr_backend_id = phone_info.ivr_backend_id
-            phone_number.verified = True
-            phone_number.contact_last_modified = contact_case.server_modified_on
-            phone_number.save()
-        else:
+        if not phone_info.requires_entry:
             if phone_number:
                 phone_number.delete()
+            return
+
+        if phone_number and phone_number.phone_number != phone_info.phone_number:
+            phone_number.delete()
+            phone_number = None
+
+        if not phone_number:
+            phone_number = contact_case.create_phone_entry(phone_info.phone_number)
+
+        phone_number.backend_id = phone_info.sms_backend_id
+        phone_number.ivr_backend_id = phone_info.ivr_backend_id
+        phone_number.contact_last_modified = contact_case.server_modified_on
+
+        if phone_info.qualifies_as_two_way:
+            try:
+                phone_number.set_two_way()
+                phone_number.set_verified()
+            except PhoneNumberInUseException:
+                pass
+        else:
+            phone_number.is_two_way = False
+            phone_number.verified = False
+            phone_number.pending_verification = False
+
+        phone_number.save()
+
+
+@task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, ignore_result=True, acks_late=True,
+      default_retry_delay=5 * 60, max_retries=10, bind=True)
+def sync_user_phone_numbers(self, couch_user_id):
+    try:
+        _sync_user_phone_numbers(couch_user_id)
+    except Exception as e:
+        self.retry(exc=e)
+
+
+def _sync_user_phone_numbers(couch_user_id):
+    couch_user = CouchUser.get_by_user_id(couch_user_id)
+
+    if not isinstance(couch_user, CommCareUser):
+        # It isn't necessary to sync WebUser's phone numbers right now
+        # and we need to think through how to support entries when a user
+        # can belong to multiple domains
+        return
+
+    with CriticalSection([couch_user.phone_sync_key], timeout=5 * 60):
+        phone_entries = couch_user.get_phone_entries()
+
+        if couch_user.is_deleted():
+            for phone_number in phone_entries.values():
+                phone_number.delete()
+            return
+
+        numbers_that_should_exist = [apply_leniency(phone_number) for phone_number in couch_user.phone_numbers]
+
+        # Delete entries that should not exist
+        for phone_number in phone_entries.keys():
+            if phone_number not in numbers_that_should_exist:
+                phone_entries[phone_number].delete()
+
+        # Create entries that should exist but do not exist
+        for phone_number in numbers_that_should_exist:
+            if phone_number not in phone_entries:
+                couch_user.create_phone_entry(phone_number)
 
 
 @task(queue='background_queue', ignore_result=True, acks_late=True,
@@ -347,3 +397,18 @@ def publish_sms_change(self, sms):
         publish_sms_saved(sms)
     except Exception as e:
         self.retry(exc=e)
+
+
+@task(queue='background_queue')
+def sync_phone_numbers_for_domain(domain):
+    for user_id in CouchUser.ids_by_domain(domain, is_active=True):
+        _sync_user_phone_numbers(user_id)
+
+    for user_id in CouchUser.ids_by_domain(domain, is_active=False):
+        _sync_user_phone_numbers(user_id)
+
+    case_ids = CaseAccessors(domain).get_case_ids_in_domain()
+    for case in CaseAccessors(domain).iter_cases(case_ids):
+        _sync_case_phone_number(case)
+
+    MigrationStatus.set_migration_completed('phone_sync_domain_%s' % domain)

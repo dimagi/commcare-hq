@@ -13,8 +13,9 @@ from corehq.apps.style.decorators import use_select2
 from corehq.apps.users.forms import AddPhoneNumberForm
 from django.conf import settings
 from django.contrib import messages
+from django.http import Http404
 from django.views.decorators.http import require_POST
-from corehq.mobile_flags import SUPERUSER
+from corehq.mobile_flags import MULTIPLE_APPS_UNLIMITED
 from corehq.tabs.tabclasses import MySettingsTab
 import langcodes
 
@@ -133,12 +134,12 @@ class MyAccountSettingsView(BaseMyAccountView):
         from corehq.apps.users.forms import UpdateMyAccountInfoForm
         if self.request.method == 'POST':
             form = UpdateMyAccountInfoForm(
-                self.request.POST, username=self.request.couch_user.username,
+                self.request.POST, user=self.request.couch_user,
                 api_key=api_key
             )
         else:
             form = UpdateMyAccountInfoForm(
-                username=self.request.couch_user.username,
+                user=self.request.couch_user,
                 api_key=api_key
             )
         try:
@@ -228,8 +229,10 @@ class MyProjectsList(BaseMyAccountView):
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
-        # this is only here to add the login_required decorator
-        return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)
+        if not request.couch_user.is_web_user():
+            raise Http404
+
+        return super(MyProjectsList, self).dispatch(request, *args, **kwargs)
 
     @property
     def all_domains(self):
@@ -275,7 +278,7 @@ class ChangeMyPasswordView(BaseMyAccountView):
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator
-        return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)
+        return super(ChangeMyPasswordView, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized
@@ -307,7 +310,7 @@ class TwoFactorProfileView(BaseMyAccountView, ProfileView):
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator
-        return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)
+        return super(TwoFactorProfileView, self).dispatch(request, *args, **kwargs)
 
 
 class TwoFactorSetupView(BaseMyAccountView, SetupView):
@@ -327,7 +330,7 @@ class TwoFactorSetupView(BaseMyAccountView, SetupView):
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator
-        return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)
+        return super(TwoFactorSetupView, self).dispatch(request, *args, **kwargs)
 
 
 class TwoFactorSetupCompleteView(BaseMyAccountView, SetupCompleteView):
@@ -338,7 +341,7 @@ class TwoFactorSetupCompleteView(BaseMyAccountView, SetupCompleteView):
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator
-        return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)
+        return super(TwoFactorSetupCompleteView, self).dispatch(request, *args, **kwargs)
 
 
 class TwoFactorBackupTokensView(BaseMyAccountView, BackupTokensView):
@@ -349,7 +352,7 @@ class TwoFactorBackupTokensView(BaseMyAccountView, BackupTokensView):
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator
-        return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)
+        return super(TwoFactorBackupTokensView, self).dispatch(request, *args, **kwargs)
 
 
 class TwoFactorDisableView(BaseMyAccountView, DisableView):
@@ -360,7 +363,7 @@ class TwoFactorDisableView(BaseMyAccountView, DisableView):
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator
-        return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)
+        return super(TwoFactorDisableView, self).dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
         return DisableView.get(self, request, *args, **kwargs)
@@ -379,7 +382,7 @@ class TwoFactorPhoneSetupView(BaseMyAccountView, PhoneSetupView):
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator
-        return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)
+        return super(TwoFactorPhoneSetupView, self).dispatch(request, *args, **kwargs)
 
 
 class NewPhoneView(TwoFactorSetupView):
@@ -395,7 +398,7 @@ class NewPhoneView(TwoFactorSetupView):
 
     def get(self, request, *args, **kwargs):
         default_device(request.user).delete()
-        return super(TwoFactorSetupView, self).get(request, *args, **kwargs)
+        return super(NewPhoneView, self).get(request, *args, **kwargs)
 
 
 class BaseProjectDataView(BaseDomainView):
@@ -431,20 +434,20 @@ def get_qrcode(data):
     return png_data
 
 
-class EnableSuperuserView(BaseMyAccountView):
-    urlname = 'enable_superuser'
-    page_title = ugettext_lazy("Enable Superuser on Mobile")
+class EnableMobilePrivilegesView(BaseMyAccountView):
+    urlname = 'enable_mobile_privs'
+    page_title = ugettext_lazy("Enable Privileges on Mobile")
     template_name = 'settings/enable_superuser.html'
 
     @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
         message = json.dumps([
             {'username': request.user.username},
-            {'flag': SUPERUSER.slug}
+            {'flag': MULTIPLE_APPS_UNLIMITED.slug}
         ]).replace(' ', '')
         qrcode_data = json.dumps({
             'username': request.user.username,
-            'flag': SUPERUSER.slug,
+            'flag': MULTIPLE_APPS_UNLIMITED.slug,
             'signature': b64encode(sign(message))
         })
         qrcode = get_qrcode(qrcode_data)

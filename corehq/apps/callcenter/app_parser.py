@@ -8,25 +8,35 @@ ParsedIndicator = namedtuple('ParsedIndicator', 'category, type, date_range, is_
 
 def get_call_center_config_from_app(app):
     indicators = get_indicators_used_in_app(app)
-    parsed_indicators = {
-        parse_indicator(indicator) for indicator in indicators
-    }
+    custom_domain_indicators = const.PER_DOMAIN_FORM_INDICATORS.get(app.domain, {})
+    parsed_indicators = filter(None, {
+        parse_indicator(indicator, custom_domain_indicators) for indicator in indicators
+    })
     config = CallCenterIndicatorConfig()
     for parsed_indicator in parsed_indicators:
         config.set_indicator(parsed_indicator)
     return config
 
 
-def parse_indicator(indicator_name):
+def parse_indicator(indicator_name, custom_domain_indicators=None):
+    custom_domain_indicators = custom_domain_indicators or {}
     is_legacy = '_' not in indicator_name
     if is_legacy:
         if indicator_name == const.LEGACY_TOTAL_CASES:
             return ParsedIndicator(const.CASES_TOTAL, None, None, True)
+
         for legacy_slug, new_slug in const.LEGACY_SLUG_MAP.items():
             if indicator_name.startswith(legacy_slug):
                 period = indicator_name.lstrip(legacy_slug).lower()
-                return ParsedIndicator(new_slug, None, period, True)
-        return ParsedIndicator('custom', None, None, True)
+                if period in const.DATE_RANGES:
+                    return ParsedIndicator(new_slug, None, period, True)
+
+        indicator_name_lower = indicator_name.lower()
+        for date_range in const.DATE_RANGES:
+            if indicator_name_lower.endswith(date_range):
+                name = indicator_name[0:-len(date_range)]
+                if name in custom_domain_indicators:
+                    return ParsedIndicator(const.CUSTOM_FORM, name, date_range, False)
 
     else:
         split = indicator_name.rsplit('_')
@@ -36,7 +46,8 @@ def parse_indicator(indicator_name):
         if len(split) == 4:
             type = split[-2]
 
-        return ParsedIndicator(slug, type, period, False)
+        if period in const.DATE_RANGES and slug in const.STANDARD_SLUGS:
+            return ParsedIndicator(slug, type, period, False)
 
 
 def get_indicators_used_in_app(app):

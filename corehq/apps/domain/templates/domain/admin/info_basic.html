@@ -5,7 +5,7 @@
 {% load i18n %}
 
 {% block js-inline %} {{ block.super }}
-<script type="text/javascript">
+<script>
     $(function() {
         // Update project dropdown in page header with potentially new project name
         var name = $('#id_hr_name').val(),
@@ -22,10 +22,6 @@
 
         $('#id_default_timezone').select2({
             placeholder: 'Select a Timezone...'
-        });
-
-        $('#id_call_center_case_owner').select2({
-            placeholder: 'Select an Owner...'
         });
 
         $('#id_call_center_enabled').change(function() {

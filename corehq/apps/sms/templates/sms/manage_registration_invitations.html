@@ -24,6 +24,21 @@
     </ol>
 {% endblock %}
 
+{% block js-inline %}{{ block.super }}
+<script>
+$(function () {
+    var RegistrationModel = function() {
+        var self = this;
+        self.registration_message_type = ko.observable();
+        self.showCustomRegistrationMessage = ko.computed(function() {
+            return self.registration_message_type() == 'CUSTOM';
+        });
+    };
+    var registrationModel = new RegistrationModel();
+    ko.applyBindings(registrationModel, $('#registration-modal').get(0));
+});
+</script>
+{% endblock %}
 
 {% block page_content %}
 {% if sms_mobile_worker_registration_enabled %}
@@ -37,7 +52,7 @@
 </a>
 <div class="modal fade" id="invitation-form" tabindex="-1" role="dialog">
     <div class="modal-dialog">
-        <div class="modal-content">
+        <div id="registration-modal" class="modal-content" style="padding: 10px;">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                     <h4 class="modal-title">{% trans 'Send Registration Invitation' %}</h4>

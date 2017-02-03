@@ -1,13 +1,16 @@
 import json
 from StringIO import StringIO
 
+import re
 from django.test import SimpleTestCase
+from django.core.cache import cache
 from elasticsearch.exceptions import ConnectionError
 from mock import patch
 from openpyxl import load_workbook
 
 from corehq.apps.export.const import (
     DEID_DATE_TRANSFORM,
+    CASE_NAME_TRANSFORM,
 )
 from corehq.apps.export.export import (
     _get_writer,
@@ -15,6 +18,10 @@ from corehq.apps.export.export import (
     _write_export_instance,
     ExportFile,
     get_export_file,
+)
+from corehq.apps.export.const import (
+    MISSING_VALUE,
+    EMPTY_VALUE,
 )
 from corehq.apps.export.models import (
     TableConfiguration,
@@ -27,7 +34,9 @@ from corehq.apps.export.models import (
     CaseExportInstance,
     PathNode,
     Option,
-    MAIN_TABLE
+    MAIN_TABLE,
+    StockItem,
+    StockFormExportColumn,
 )
 from corehq.apps.export.tests.util import (
     new_case,
@@ -158,8 +167,109 @@ class WriterTest(SimpleTestCase):
                 {
                     u'My table': {
                         u'headers': [u'MC | one', u'MC | two', 'MC | extra'],
-                        u'rows': [[None, 1, 'extra'], [1, 1, '']],
+                        u'rows': [[EMPTY_VALUE, 1, 'extra'], [1, 1, '']],
 
+                    }
+                }
+            )
+
+    def test_form_stock_columns(self):
+        """Ensure that we can export stock properties in a form export"""
+        docs = [{
+            '_id': 'simone-biles',
+            'domain': DOMAIN,
+            'form': {
+                'balance': [
+                    {
+                        '@type': 'question-id',
+                        'entry': {
+                            '@quantity': '2',
+                        }
+                    }, {
+                        '@type': 'other-question-id',
+                        'entry': {
+                            '@quantity': '3',
+                        }
+                    }]
+            },
+        }, {
+            '_id': 'sam-mikulak',
+            'domain': DOMAIN,
+            'form': {
+                'balance': {
+                    '@type': 'question-id',
+                    'entry': {
+                        '@quantity': '2',
+                    }
+                },
+            },
+        }, {
+            '_id': 'kerri-walsh',
+            'domain': DOMAIN,
+            'form': {
+                'balance': {
+                    '@type': 'other-question-id',
+                    'entry': {
+                        '@quantity': '2',
+                    }
+                },
+            },
+        }, {
+            '_id': 'april-ross',
+            'domain': DOMAIN,
+            'form': {},
+        }]
+        export_instance = FormExportInstance(
+            export_format=Format.JSON,
+            domain=DOMAIN,
+            tables=[TableConfiguration(
+                label="My table",
+                selected=True,
+                path=[],
+                columns=[
+                    StockFormExportColumn(
+                        label="StockItem @type",
+                        item=StockItem(
+                            path=[
+                                PathNode(name='form'),
+                                PathNode(name='balance:question-id'),
+                                PathNode(name='@type'),
+                            ],
+                        ),
+                        selected=True,
+                    ),
+                    StockFormExportColumn(
+                        label="StockItem @quantity",
+                        item=StockItem(
+                            path=[
+                                PathNode(name='form'),
+                                PathNode(name='balance:question-id'),
+                                PathNode(name='entry'),
+                                PathNode(name='@quantity'),
+                            ],
+                        ),
+                        selected=True,
+                    ),
+                ]
+            )]
+        )
+        writer = _get_writer([export_instance])
+
+        with writer.open([export_instance]):
+            _write_export_instance(writer, export_instance, docs)
+
+        with ExportFile(writer.path, writer.format) as export:
+            self.assertEqual(
+                json.loads(export),
+                {
+                    u'My table': {
+                        u'headers': [u'StockItem @type', u'StockItem @quantity'],
+                        u'rows': [
+                            ['question-id', '2'],
+                            ['question-id', '2'],
+                            [MISSING_VALUE, MISSING_VALUE],
+                            [MISSING_VALUE, MISSING_VALUE],
+                        ],
                     }
                 }
             )
@@ -196,7 +306,7 @@ class WriterTest(SimpleTestCase):
                 {
                     u'My table': {
                         u'headers': [u'Date'],
-                        u'rows': [[None], [couch_to_excel_datetime('2015-07-22T14:16:49.584880Z', None)]],
+                        u'rows': [[MISSING_VALUE], [couch_to_excel_datetime('2015-07-22T14:16:49.584880Z', None)]],
 
                     }
                 }
@@ -297,6 +407,44 @@ class WriterTest(SimpleTestCase):
                 }
             )
 
+    def test_multi_table_order(self):
+        tables = [
+            TableConfiguration(
+                label="My table {}".format(i),
+                selected=True,
+                path=[],
+                columns=[
+                    ExportColumn(
+                        label="Q{}".format(i),
+                        item=ScalarItem(
+                            path=[PathNode(name='form'), PathNode(name='q{}'.format(i))],
+                        ),
+                        selected=True,
+                    ),
+                ]
+            )
+            for i in range(10)
+        ]
+        export_instance = FormExportInstance(
+            export_format=Format.HTML,
+            tables=tables
+        )
+        writer = _get_writer([export_instance])
+        docs = [
+            {
+                'domain': 'my-domain',
+                '_id': '1234',
+                "form": {'q{}'.format(i): 'value {}'.format(i) for i in range(10)}
+            }
+        ]
+        with writer.open([export_instance]):
+            _write_export_instance(writer, export_instance, docs)
+        with ExportFile(writer.path, writer.format) as export:
+            exported_tables = [table for table in re.findall('<h2>(.*)</h2>', export)]
+
+        expected_tables = [t.label for t in tables]
+        self.assertEqual(expected_tables, exported_tables)
+
     def test_multiple_write_export_instance_calls(self):
         """
         Confirm that calling _write_export_instance() multiple times
@@ -375,7 +523,7 @@ class ExportTest(SimpleTestCase):
             cls.es = get_es_new()
             initialize_index_and_mapping(cls.es, CASE_INDEX_INFO)
 
-        case = new_case(foo="apple", bar="banana", date='2016-4-24')
+        case = new_case(_id='robin', name='batman', foo="apple", bar="banana", date='2016-4-24')
         send_to_elasticsearch('cases', case.to_json())
 
         case = new_case(owner_id="some_other_owner", foo="apple", bar="banana", date='2016-4-04')
@@ -388,10 +536,12 @@ class ExportTest(SimpleTestCase):
         send_to_elasticsearch('cases', case.to_json())
 
         cls.es.indices.refresh(CASE_INDEX_INFO.index)
+        cache.clear()
 
     @classmethod
     def tearDownClass(cls):
         ensure_index_deleted(CASE_INDEX_INFO.index)
+        cache.clear()
         super(ExportTest, cls).tearDownClass()
 
     def test_get_export_file(self):
@@ -443,6 +593,58 @@ class ExportTest(SimpleTestCase):
                 }
             )
 
+    def test_case_name_transform(self):
+        docs = [
+            {
+                'domain': 'my-domain',
+                '_id': '1234',
+                "form": {
+                    "caseid": "robin",
+                },
+            },
+            {
+                'domain': 'my-domain',
+                '_id': '1234',
+                "form": {
+                    "caseid": "i-do-not-exist",
+                },
+            }
+        ]
+        export_instance = FormExportInstance(
+            export_format=Format.JSON,
+            tables=[
+                TableConfiguration(
+                    label="My table",
+                    selected=True,
+                    columns=[
+                        ExportColumn(
+                            label="case_name",
+                            item=ScalarItem(
+                                path=[PathNode(name='form'), PathNode(name='caseid')],
+                                transform=CASE_NAME_TRANSFORM,
+                            ),
+                            selected=True
+                        ),
+                    ]
+                )
+            ]
+        )
+        writer = _get_writer([export_instance])
+        with writer.open([export_instance]):
+            _write_export_instance(writer, export_instance, docs)
+
+        with ExportFile(writer.path, writer.format) as export:
+            self.assertEqual(
+                json.loads(export),
+                {
+                    u'My table': {
+                        u'headers': [u'case_name'],
+                        u'rows': [[u'batman'], [MISSING_VALUE]],
+
+                    }
+                }
+            )
+
     @patch('couchexport.deid.DeidGenerator.random_number', return_value=3)
     def test_export_transforms(self, _):
         export_file = get_export_file(
@@ -481,7 +683,7 @@ class ExportTest(SimpleTestCase):
                             u'DEID Date Transform column [sensitive]',
                         ],
                         u'rows': [
-                            [None],
+                            [MISSING_VALUE],
                             [u'2016-04-07'],
                             [u'2016-04-27'],  # offset by 3 since that's the mocked random offset
                         ],

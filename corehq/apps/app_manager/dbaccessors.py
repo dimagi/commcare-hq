@@ -80,12 +80,16 @@ def wrap_app(app_doc, wrap_cls=None):
     return cls.wrap(app_doc)
 
 
-def get_current_app(domain, app_id):
+def get_current_app_doc(domain, app_id):
     from .models import Application
     app = Application.get_db().get(app_id)
     if app.get('domain', None) != domain:
         raise ResourceNotFound()
-    return wrap_app(app)
+    return app
+
+
+def get_current_app(domain, app_id):
+    return wrap_app(get_current_app_doc(domain, app_id))
 
 
 def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
@@ -98,7 +102,7 @@ def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
 
     Here are some common usages and the simpler dbaccessor alternatives:
         current_app = get_app(domain, app_id)
-                    = get_current_app(domain, app_id)
+                    = get_current_app_doc(domain, app_id)
         latest_released_build = get_app(domain, app_id, latest=True)
                               = get_latest_released_app_doc(domain, app_id)
         latest_build = get_app(domain, app_id, latest=True, target='build')
@@ -124,7 +128,10 @@ def get_app(domain, app_id, wrap_cls=None, latest=False, target=None):
         if target == 'build':
             app = get_latest_build_doc(domain, app_id) or app
         elif target == 'save':
-            pass  # just use the working copy of the app
+            # If the app_id passed in was the working copy, just use that app.
+            # If it's a build, get the working copy.
+            if app.get('copy_of'):
+                app = get_current_app_doc(domain, app_id)
         else:
             app = get_latest_released_app_doc(domain, app_id) or app
 
@@ -228,6 +235,23 @@ def get_built_app_ids_with_submissions_for_app_id(domain, app_id, version=None):
     return [result['id'] for result in results]
 
 
+def get_built_app_ids_with_submissions_for_app_ids_and_versions(domain, app_ids_and_versions=None):
+    """
+    Returns all the built app_ids for a domain that has submissions.
+    If version is specified returns all apps after that version.
+    :domain:
+    :app_ids_and_versions: A dictionary mapping an app_id to build version
+    """
+    app_ids_and_versions = app_ids_and_versions or {}
+    app_ids = get_app_ids_in_domain(domain)
+    results = []
+    for app_id in app_ids:
+        results.extend(
+            get_built_app_ids_with_submissions_for_app_id(domain, app_id, app_ids_and_versions.get(app_id))
+        )
+    return results
+
+
 def get_latest_app_ids_and_versions(domain, app_id=None):
     """
     Returns all the latest app_ids and versions in a dictionary.
@@ -324,3 +348,8 @@ def get_case_types_from_apps(domain):
          .size(0)
          .terms_aggregation('modules.case_type.exact', 'case_types'))
     return set(q.run().aggregations.case_types.keys)
+
+
+def get_case_sharing_apps_in_domain(domain, exclude_app_id=None):
+    apps = get_apps_in_domain(domain, include_remote=False)
+    return [a for a in apps if a.case_sharing and exclude_app_id != a.id]

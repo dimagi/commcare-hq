@@ -10,7 +10,7 @@ from dimagi.utils.couch.database import get_design_docs
 class Command(BaseCommand):
     help = 'Delete all unreferenced couch design docs.'
 
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option('--noinput', help='Do not prompt user for input', action='store_true',
                     default=False),
     )

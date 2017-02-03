@@ -34,12 +34,14 @@ class ExportPermissionsTest(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(ExportPermissionsTest, cls).setUpClass()
         cls.domain = 'export-permissions-test'
         cls.web_user = WebUser(username='temp@example.com', domains=[cls.domain])
         cls.web_user.domain_memberships = [DomainMembership(domain=cls.domain, role_id='MYROLE')]
         cls.permissions = Permissions()
 
     def setUp(self):
+        super(ExportPermissionsTest, self).setUp()
         test_self = self
 
         def get_role(self):
@@ -59,6 +61,7 @@ class ExportPermissionsTest(SimpleTestCase):
 
     def tearDown(self):
         self.permissions = Permissions()
+        super(ExportPermissionsTest, self).tearDown()
 
     def test_deid_permission(self):
         self.assertFalse(user_can_view_deid_exports(self.domain, self.web_user))
@@ -73,3 +76,8 @@ class ExportPermissionsTest(SimpleTestCase):
         )
 
         self.assertTrue(user_can_view_deid_exports(self.domain, self.web_user))
+
+    def test_view_reports(self):
+        self.assertFalse(self.web_user.can_view_reports(self.domain))
+        self.permissions = Permissions(view_reports=True)
+        self.assertTrue(self.web_user.can_view_reports(self.domain))

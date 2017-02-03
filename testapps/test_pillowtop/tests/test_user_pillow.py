@@ -7,7 +7,7 @@ from corehq.apps.change_feed.producer import producer
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.topics import get_topic_offset
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.es import UserES, ESQuery
+from corehq.apps.es import UserES
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import get_es_new
@@ -47,10 +47,6 @@ class UserPillowTestBase(TestCase):
 
 
 class UserPillowTest(UserPillowTestBase):
-    dependent_apps = [
-        'auditcare', 'django_digest', 'pillowtop',
-        'corehq.apps.domain', 'corehq.apps.users', 'corehq.apps.tzmigration',
-    ]
 
     def test_kafka_user_pillow(self):
         self._make_and_test_user_kafka_pillow('user-pillow-test-kafka')
@@ -94,18 +90,6 @@ class UserPillowTest(UserPillowTestBase):
 
 
 class UnknownUserPillowTest(UserPillowTestBase):
-    dependent_apps = [
-        'auditcare',
-        'django_digest',
-        'pillowtop',
-        'couchforms',
-        'corehq.apps.domain',
-        'corehq.apps.users',
-        'corehq.apps.tzmigration',
-        'corehq.form_processor',
-        'corehq.sql_accessors',
-        'corehq.sql_proxy_accessors',
-    ]
 
     @run_with_all_backends
     def test_unknown_user_pillow(self):

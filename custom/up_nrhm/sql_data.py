@@ -4,7 +4,8 @@ from sqlagg.filters import BETWEEN, EQ, LTE
 import sqlalchemy
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
-from corehq.apps.userreports.sql import get_table_name, get_indicator_table
+from corehq.apps.userreports.sql import get_indicator_table
+from corehq.apps.userreports.util import get_table_name
 from django.utils.translation import ugettext as _
 
 TABLE_ID = 'asha_facilitators'
@@ -146,8 +147,13 @@ class ASHAFacilitatorsData(SqlData):
             ),
             DatabaseColumn(
                 _("Total number of ASHAs for whom functionality checklist was filled"),
-                FunctionalityChecklistColumn(
-                    whens={'{} IS NOT NULL'.format(self._qualify_column('case_id')): 1},
+                CountUniqueColumn(
+                    "case_id",
+                    filters=[
+                        EQ('owner_id', 'af'),
+                        EQ('is_checklist', 'is_checklist'),
+                        BETWEEN('date', 'startdate', 'enddate')
+                    ],
                     alias="total_ashas_checklist"
                 )
             ),
@@ -235,7 +241,7 @@ class ASHAFunctionalityChecklistData(SqlData):
 
     @property
     def filters(self):
-        return [BETWEEN("date", "startdate", "enddate"), EQ('owner_id', 'af')]
+        return [BETWEEN("date", "startdate", "enddate"), EQ('owner_id', 'af'), EQ('is_checklist', 'is_checklist')]
 
     @property
     def group_by(self):
@@ -287,7 +293,7 @@ class ASHAAFChecklistData(SqlData):
 
     @property
     def filters(self):
-        return [EQ('doc_id', 'doc_id')]
+        return [EQ('doc_id', 'doc_id'), EQ('is_checklist', 'is_checklist')]
 
     @property
     def group_by(self):

@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db import migrations
-import uuidfield.fields
+from django.db import models, migrations
 
 
 class Migration(migrations.Migration):
@@ -15,7 +14,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='commcarecasesql',
             name='location_uuid',
-            field=uuidfield.fields.UUIDField(max_length=32, null=True),
+            field=models.UUIDField(max_length=32, null=True),
             preserve_default=True,
         ),
     ]

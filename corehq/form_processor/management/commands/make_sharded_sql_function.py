@@ -1,7 +1,7 @@
 import os
 
 from django.core.management.base import LabelCommand
-from django.template.loader import get_template_from_string
+from django.template import Engine
 from django.template import Context
 from django.conf import settings
 
@@ -25,7 +25,7 @@ class Command(LabelCommand):
         with open(os.path.join(accessor_dir, TEMPLATE_NAME)) as f:
             template_string = f.read()
 
-        template = get_template_from_string(template_string)
+        template = Engine().from_string(template_string)
         rendered_template = template.render(Context({'sql_function_name': sql_function_name}))
 
         with open(os.path.join(accessor_dir, '{}.sql'.format(sql_function_name)), 'w+') as f:

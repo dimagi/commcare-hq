@@ -1,3 +1,4 @@
+# coding=utf-8
 from collections import namedtuple
 import re
 from couchdbkit import ResourceNotFound
@@ -113,9 +114,13 @@ def get_commcare_version_from_appversion_text(appversion_text):
     ...     'CommCare Version 2.4. Build 10083, built on: March-12-2013'
     ... )
     '2.4.1'
+    >>> get_commcare_version_from_appversion_text(u'संस्करण "2.27.8" (414593)')
+    '2.27.8'
     """
     patterns = [
         r'version "([\d.]+)"',
+        r'"([\d.]+)"\s+\(\d+\)',
+        r'"([\d.]+)"',
     ]
     return _first_group_match(appversion_text, patterns)
 
@@ -196,13 +201,16 @@ def from_demo_user(form_json):
     except (KeyError, ValueError):
         return False
 
+# Form-submissions with request.GET['submit_mode'] as 'demo' are ignored, if not from demo-user
+DEMO_SUBMIT_MODE = 'demo'
+
 
 def should_ignore_submission(request):
     """
     If submission request.GET has `submit_mode=demo` and submitting user is not demo_user,
     the submissions should be ignored
     """
-    if not request.GET.get('submit_mode') == 'demo':
+    if not request.GET.get('submit_mode') == DEMO_SUBMIT_MODE:
         return False
 
     instance, _ = couchforms.get_instance_and_attachment(request)

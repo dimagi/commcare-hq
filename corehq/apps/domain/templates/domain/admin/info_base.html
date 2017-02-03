@@ -3,7 +3,7 @@
 {% load i18n %}
 
 {% block js-inline %} {{ block.super }}
-<script type="text/javascript">
+<script>
     $(function() {
         {% for field in autocomplete_fields %}
             $("#id_{{ field }}").focus(function() {

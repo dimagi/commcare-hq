@@ -18,6 +18,7 @@ from corehq.apps.userreports.expressions.specs import (
 from corehq.apps.userreports.expressions.specs import eval_statements
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.apps.users.models import CommCareUser
+from corehq.apps.groups.models import Group
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.util.test_utils import generate_cases, create_and_save_a_form, create_and_save_a_case
@@ -177,6 +178,23 @@ class ExpressionFromSpecTest(SimpleTestCase):
 
 
 class PropertyPathExpressionTest(SimpleTestCase):
+
+    def test_datatype(self):
+        spec = {
+            'type': 'property_path',
+            'property_path': ['path', 'to', 'foo'],
+        }
+        item = {
+            'path': {'to': {'foo': '1.0'}}
+        }
+        tests = (
+            ('string', '1.0'),
+            ('decimal', Decimal(1.0)),
+            ('integer', 1)
+        )
+        for datatype, value in tests:
+            spec['datatype'] = datatype
+            self.assertEqual(value, ExpressionFactory.from_spec(spec)(item))
 
     def test_property_path_bad_type(self):
         getter = ExpressionFactory.from_spec({
@@ -726,13 +744,13 @@ class RelatedDocExpressionTest(SimpleTestCase):
         self.test_simple_lookup()
 
         my_doc = self.database.get('my-id')
+
+        context = EvaluationContext(my_doc, 0)
+        self.assertEqual('foo', self.expression(my_doc, context))
+
+        my_doc = self.database.get('my-id')
         self.database.mock_docs.clear()
-
-        self.assertEqual({}, self.database.mock_docs)
-        self.assertEqual('foo', self.expression(my_doc, EvaluationContext(my_doc, 0)))
-
-        same_expression = ExpressionFactory.from_spec(self.spec)
-        self.assertEqual('foo', same_expression(my_doc, EvaluationContext(my_doc, 0)))
+        self.assertEqual('foo', self.expression(my_doc, context))
 
 
 class RelatedDocExpressionDbTest(TestCase):
@@ -850,7 +868,9 @@ def test_add_days_to_date_expression(self, source_doc, count_expression, expecte
             "b": 5
         },
         5 + 2
-    )
+    ),
+    ({}, "a + b", {"a": Decimal(2), "b": Decimal(3)}, Decimal(5)),
+    ({}, "a + b", {"a": Decimal(2.2), "b": Decimal(3.1)}, Decimal(5.3)),
 ])
 def test_valid_eval_expression(self, source_doc, statement, context, expected_value):
     expression = ExpressionFactory.from_spec({
@@ -858,7 +878,8 @@ def test_valid_eval_expression(self, source_doc, statement, context, expected_va
         "statement": statement,
         "context_variables": context
     })
-    self.assertEqual(expression(source_doc), expected_value)
+    # almostEqual handles decimal (im)precision - it means "equal to 7 places"
+    self.assertAlmostEqual(expression(source_doc), expected_value)
 
 
 @generate_cases([
@@ -884,7 +905,12 @@ def test_invalid_eval_expression(self, source_doc, statement, context):
     ("a*b", {"a": 2, "b": 23}, 2 * 23),
     ("a*b if a > b else b -a", {"a": 2, "b": 23}, 23 - 2),
     ("'text1' if a < 5 else `text2`", {"a": 4}, 'text1'),
+    ("a if a else b", {"a": 0, "b": 1}, 1),
+    ("a if a else b", {"a": False, "b": 1}, 1),
+    ("a if a else b", {"a": None, "b": 1}, 1),
     ("range(1, a)", {"a": 5}, [1, 2, 3, 4]),
+    ("a or b", {"a": 0, "b": 1}, True),
+    ("a and b", {"a": 0, "b": 1}, False),
     # ranges > 100 items aren't supported
     ("range(200)", {}, None),
 ])
@@ -897,6 +923,7 @@ def test_supported_evaluator_statements(self, eq, context, expected_value):
     ("a + b", {"a": 2, "b": 'text'}),
     # missing context
     ("a + (a*b)", {"a": 2}),
+    # power function not supported
     ("a**b", {"a": 2, "b": 23}),
     ("lambda x: x*x", {"a": 2}),
     ("int(10 in range(1,20))", {"a": 2}),
@@ -911,6 +938,34 @@ def test_unsupported_evaluator_statements(self, eq, context):
         "context_variables": context
     })
     self.assertEqual(expression({}), None)
+
+
+@generate_cases([
+    ("a/b", {"a": 5, "b": None}, TypeError),
+    ("a/b", {"a": 5, "b": 0}, ZeroDivisionError),
+])
+def test_errors_in_evaluator_statements(self, eq, context, error_type):
+    with self.assertRaises(error_type):
+        eval_statements(eq, context)
+    expression = ExpressionFactory.from_spec({
+        "type": "evaluator",
+        "statement": eq,
+        "context_variables": context
+    })
+    self.assertEqual(expression({}), None)
+
+
+class TestEvaluatorTypes(SimpleTestCase):
+
+    def test_datatype(self):
+        spec = {
+            "type": "evaluator",
+            "statement": '1.0 + a',
+            "context_variables": {'a': 1.0}
+        }
+        self.assertEqual(type(ExpressionFactory.from_spec(spec)({})), float)
+        spec['datatype'] = 'integer'
+        self.assertEqual(type(ExpressionFactory.from_spec(spec)({})), int)
 
 
 class TestFormsExpressionSpec(TestCase):
@@ -1010,10 +1065,123 @@ class TestGetSubcasesExpression(TestCase):
         self.assertEqual(extension.case_id, subcases[0]['_id'])
 
 
+class TestGetCaseSharingGroupsExpression(TestCase):
+
+    def setUp(self):
+        super(TestGetCaseSharingGroupsExpression, self).setUp()
+        self.domain = uuid.uuid4().hex
+        self.second_domain = uuid.uuid4().hex
+        self.expression = ExpressionFactory.from_spec({
+            "type": "get_case_sharing_groups",
+            "user_id_expression": {
+                "type": "property_name",
+                "property_name": "user_id"
+            },
+        })
+        self.context = EvaluationContext({"domain": self.domain})
+
+    def tearDown(self):
+        for group in Group.by_domain(self.domain):
+            group.delete()
+        for group in Group.by_domain(self.second_domain):
+            group.delete()
+        for user in CommCareUser.all():
+            user.delete()
+        super(TestGetCaseSharingGroupsExpression, self).tearDown()
+
+    @run_with_all_backends
+    def test_no_groups(self):
+        user = CommCareUser.create(domain=self.domain, username='test_no_group', password='123')
+        case_sharing_groups = self.expression({'user_id': user._id}, self.context)
+        self.assertEqual(len(case_sharing_groups), 0)
+
+    @run_with_all_backends
+    def test_single_group(self):
+        user = CommCareUser.create(domain=self.domain, username='test_single', password='123')
+        group = Group(domain=self.domain, name='group_single', users=[user._id], case_sharing=True)
+        group.save()
+
+        case_sharing_groups = self.expression({'user_id': user._id}, self.context)
+        self.assertEqual(len(case_sharing_groups), 1)
+        self.assertEqual(group._id, case_sharing_groups[0]['_id'])
+
+    @run_with_all_backends
+    def test_multiple_groups(self):
+        user = CommCareUser.create(domain=self.domain, username='test_multiple', password='123')
+        group1 = Group(domain=self.domain, name='group1', users=[user._id], case_sharing=True)
+        group1.save()
+        group2 = Group(domain=self.domain, name='group2', users=[user._id], case_sharing=True)
+        group2.save()
+
+        case_sharing_groups = self.expression({'user_id': user._id}, self.context)
+        self.assertEqual(len(case_sharing_groups), 2)
+
+    @run_with_all_backends
+    def test_wrong_domain(self):
+        user = CommCareUser.create(domain=self.second_domain, username='test_wrong_domain', password='123')
+        group = Group(domain=self.second_domain, name='group_wrong_domain', users=[user._id], case_sharing=True)
+        group.save()
+
+        case_sharing_groups = self.expression({'user_id': user._id}, self.context)
+        self.assertEqual(len(case_sharing_groups), 0)
+
+
+class TestGetReportingGroupsExpression(TestCase):
+
+    def setUp(self):
+        super(TestGetReportingGroupsExpression, self).setUp()
+        self.domain = uuid.uuid4().hex
+        self.second_domain = uuid.uuid4().hex
+        self.expression = ExpressionFactory.from_spec({
+            "type": "get_reporting_groups",
+            "user_id_expression": {
+                "type": "property_name",
+                "property_name": "user_id"
+            },
+        })
+        self.context = EvaluationContext({"domain": self.domain})
+
+    def tearDown(self):
+        for group in Group.by_domain(self.domain):
+            group.delete()
+        for group in Group.by_domain(self.second_domain):
+            group.delete()
+        for user in CommCareUser.all():
+            user.delete()
+        super(TestGetReportingGroupsExpression, self).tearDown()
+
+    @run_with_all_backends
+    def test_no_groups(self):
+        user = CommCareUser.create(domain=self.domain, username='test_no_group', password='123')
+        reporting_groups = self.expression({'user_id': user._id}, self.context)
+        self.assertEqual(len(reporting_groups), 0)
+
+    @run_with_all_backends
+    def test_multiple_groups(self):
+        user = CommCareUser.create(domain=self.domain, username='test_multiple', password='123')
+        group1 = Group(domain=self.domain, name='group1', users=[user._id])
+        group1.save()
+        group2 = Group(domain=self.domain, name='group2', users=[user._id], case_sharing=True)
+        group2.save()
+
+        reporting_groups = self.expression({'user_id': user._id}, self.context)
+        self.assertEqual(len(reporting_groups), 2)
+
+    @run_with_all_backends
+    def test_wrong_domain(self):
+        user = CommCareUser.create(domain=self.second_domain, username='test_wrong_domain', password='123')
+        group = Group(domain=self.second_domain, name='group_wrong_domain', users=[user._id], case_sharing=True)
+        group.save()
+
+        reporting_groups = self.expression({'user_id': user._id}, self.context)
+        self.assertEqual(len(reporting_groups), 0)
+
+
 class TestIterationNumberExpression(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestIterationNumberExpression, cls).setUpClass()
         cls.spec = ExpressionFactory.from_spec({'type': 'base_iteration_number'})
 
     def test_default(self):
@@ -1030,3 +1198,71 @@ class TestEvaluationContext(SimpleTestCase):
         context.set_cache_value(('k1', 'k2'), 'v1')
         self.assertEqual(context.get_cache_value(('k1', 'k2')), 'v1')
         self.assertEqual(context.get_cache_value(('k1',)), None)
+
+
+class SplitStringExpressionTest(SimpleTestCase):
+
+    def test_split_string_index_expression(self):
+        for expected, string_value, index in [
+            ("a", "a b c", 0),
+            ("b", "a b c", 1),
+            (None, "a b c", 4),
+            (None, "a b c", "foo"),
+            (None, "a b c", None),
+            (None, None, 0),
+            (None, 36, 0),
+        ]:
+            split_string_expression = ExpressionFactory.from_spec({
+                "type": "split_string",
+                "string_expression": {
+                    "type": "property_name",
+                    "property_name": "string_property"
+                },
+                "index_expression": {
+                    "type": "property_name",
+                    "property_name": "index_property"
+                }
+            })
+            self.assertEqual(expected, split_string_expression({
+                "string_property": string_value,
+                "index_property": index
+            }))
+
+    def test_split_string_index_constant(self):
+        for expected, string_value, index in [
+            ("a", "a b c", 0),
+            ("b", "a b c", 1),
+            (None, "a b c", 4),
+            (None, "a b c", "foo"),
+            (None, None, 0),
+            (None, 36, 0),
+        ]:
+            split_string_expression = ExpressionFactory.from_spec({
+                "type": "split_string",
+                "string_expression": {
+                    "type": "property_name",
+                    "property_name": "string_property"
+                },
+                "index_expression": index
+            })
+            self.assertEqual(expected, split_string_expression({"string_property": string_value}))
+
+    def test_split_string_delimiter(self):
+        for expected, string_value, index in [
+            ("a", "a,b,c", 0),
+            ("b", "a,b,c", 1),
+            (None, "a,b,c", 4),
+            (None, "a,b,c", "foo"),
+            (None, None, 0),
+            (None, 36, 0),
+        ]:
+            split_string_expression = ExpressionFactory.from_spec({
+                "type": "split_string",
+                "string_expression": {
+                    "type": "property_name",
+                    "property_name": "string_property"
+                },
+                "delimiter": ",",
+                "index_expression": index
+            })
+            self.assertEqual(expected, split_string_expression({"string_property": string_value}))

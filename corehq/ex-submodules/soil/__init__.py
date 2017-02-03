@@ -1,17 +1,20 @@
 import json
-import logging
-import re
-from django.db import IntegrityError
-from django.core import cache
-from django.core.servers.basehttp import FileWrapper
-from django.core.urlresolvers import reverse
-from django.http import HttpResponse, StreamingHttpResponse
-import uuid
-from django.conf import settings
 import os
+import re
 import stat
-from django_transfer import TransferHttpResponse
+import uuid
 from tempfile import mkstemp
+from wsgiref.util import FileWrapper
+
+from django.conf import settings
+from django.core import cache
+from django.core.urlresolvers import reverse
+from django.db import IntegrityError
+from django.http import HttpResponse, StreamingHttpResponse
+
+from django_transfer import TransferHttpResponse
+from soil.progress import get_task_progress, get_multiple_task_progress
+
 
 GLOBAL_RW = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH
 
@@ -123,37 +126,17 @@ class DownloadBase(object):
 
     @property
     def task(self):
-        from celery.task.base import Task
-        return Task.AsyncResult(self.task_id)
+        from soil.util import get_task
+        return get_task(self.task_id)
 
     def get_progress(self):
-        error = False
-        error_message = ''
-        try:
-            info = self.task.info
-        except (TypeError, NotImplementedError):
-            current = total = percent = None
-            logging.exception("No celery result backend?")
-        else:
-            if info is None:
-                current = total = percent = None
-            elif isinstance(info, Exception):
-                current = total = percent = 100
-                error = True
-                error_message = "%s: %s" % (type(info).__name__, info)
-            else:
-                current = info.get('current')
-                total = info.get('total')
-                percent = int(
-                    current * 100. / total if total and current is not None
-                    else 0
-                )
+        task_progress = get_task_progress(self.task)
         return {
-            'current': current,
-            'total': total,
-            'percent': percent,
-            'error': error,
-            'error_message': error_message,
+            'current': task_progress.current,
+            'total': task_progress.total,
+            'percent': task_progress.percent,
+            'error': task_progress.error,
+            'error_message': task_progress.error_message,
         }
 
     @classmethod
@@ -191,14 +174,7 @@ class MultipleTaskDownload(DownloadBase):
         self.get_cache().set(self._task_key(), task_group.id, timeout)
 
     def get_progress(self):
-        current = sum(int(result.ready()) for result in self.task.results)
-        total = len(self.task.subtasks)
-        percent = current * 100 // total if total and current is not None else 0
-        return {
-            'current': current,
-            'total': total,
-            'percent': percent,
-        }
+        return get_multiple_task_progress(self.task)
 
 
 class CachedDownload(DownloadBase):
@@ -228,7 +204,7 @@ class CachedDownload(DownloadBase):
             # can revisit when loading a whole file into memory becomes a
             # serious concern
             payload = ''.join(payload)
-        download_id = uuid.uuid4().hex
+        download_id = str(uuid.uuid4())
         ret = cls(download_id, **kwargs)
         cache.caches[ret.cache_backend].set(download_id, payload, expiry)
         return ret

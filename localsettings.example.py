@@ -1,6 +1,8 @@
 import os
 ####### Database config. This assumes Postgres ####### 
 
+INTERNAL_IPS = ['127.0.0.1']
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
@@ -80,20 +82,12 @@ COUCH_USERNAME = 'commcarehq'
 COUCH_PASSWORD = 'commcarehq'
 COUCH_DATABASE_NAME = 'commcarehq'
 
-### Staging Replication Setup for Production/Staging
-
-#Staging domains you want to replicate
-STAGING_DOMAINS = []
-
 ### Public / Pre-login Site information
 ENABLE_PRELOGIN_SITE = False
 
-#COUCHDB URI {http|https}://username:password@host:optionalport/dbname
-PRODUCTION_COUCHDB_URI = ""
-
 ####### # Email setup ########
 # email settings: these ones are the custom hq ones
-EMAIL_LOGIN = "notifications@dimagi.com"
+EMAIL_LOGIN = "notifications@example.com"
 EMAIL_PASSWORD = "******"
 EMAIL_SMTP_HOST = "smtp.gmail.com"
 EMAIL_SMTP_PORT = 587
@@ -101,21 +95,20 @@ EMAIL_SMTP_PORT = 587
 # Print emails to console so there is no danger of spamming, but you can still get registration URLs
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-ADMINS = (('HQ Dev Team', 'commcarehq-dev+www-notifications@dimagi.com'),)
-BUG_REPORT_RECIPIENTS = ['commcarehq-support@dimagi.com']
-NEW_DOMAIN_RECIPIENTS = ['commcarehq-dev+newdomain@dimagi.com']
-EXCHANGE_NOTIFICATION_RECIPIENTS = ['commcarehq-dev+exchange@dimagi.com']
+ADMINS = (('HQ Dev Team', 'commcarehq-dev+www-notifications@example.com'),)
+BUG_REPORT_RECIPIENTS = ['commcarehq-support@example.com']
+NEW_DOMAIN_RECIPIENTS = ['commcarehq-dev+newdomain@example.com']
+EXCHANGE_NOTIFICATION_RECIPIENTS = ['commcarehq-dev+exchange@example.com']
 
-SERVER_EMAIL = 'commcarehq-noreply@dimagi.com' #the physical server emailing - differentiate if needed
-DEFAULT_FROM_EMAIL = 'commcarehq-noreply@dimagi.com'
-SUPPORT_EMAIL = "commcarehq-support@dimagi.com"
+SERVER_EMAIL = 'commcarehq-noreply@example.com'  # the physical server emailing - differentiate if needed
+DEFAULT_FROM_EMAIL = 'commcarehq-noreply@example.com'
+SUPPORT_EMAIL = "commcarehq-support@example.com"
 EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 SERVER_ENVIRONMENT = 'changeme' #Modify this value if you are deploying multiple environments of HQ to the same machine. Identify the target type of this running environment
 
 ####### Log/debug setup ########
 
 DEBUG = True
-TEMPLATE_DEBUG = DEBUG
 
 # log directories must exist and be writeable!
 DJANGO_LOG_FILE = "/tmp/commcare-hq.django.log"
@@ -167,9 +160,9 @@ BASE_ADDRESS = 'localhost:8000'
 
 # Set your analytics IDs here for GA and pingdom RUM
 ANALYTICS_IDS = {
-    'GOOGLE_ANALYTICS_API_ID': '*******',
-    'KISSMETRICS_KEY': '*****',
-    'HUBSPOT_API_KEY': '*****',
+    'GOOGLE_ANALYTICS_API_ID': '',
+    'KISSMETRICS_KEY': '',
+    'HUBSPOT_API_KEY': '',
 }
 
 ANALYTICS_CONFIG = {
@@ -209,6 +202,10 @@ LOCAL_APPS = (
 #    'testapps.test_pillowtop',
 )
 
+LOCAL_MIDDLEWARE_CLASSES = [
+    # 'debug_toolbar.middleware.DebugToolbarMiddleware',
+]
+
 # list of domains to enable ADM reporting on
 ADM_ENABLED_PROJECTS = []
 
@@ -234,7 +231,6 @@ ELASTICSEARCH_PORT = 9200
 
 # our production logstash aggregation
 LOGSTASH_DEVICELOG_PORT = 10777
-LOGSTASH_COUCHLOG_PORT = 10888
 LOGSTASH_AUDITCARE_PORT = 10999
 LOGSTASH_HOST = 'localhost'
 
@@ -242,11 +238,6 @@ LOCAL_PILLOWTOPS = {
 #    'my_pillows': ['some.pillow.Class', ],
 #    'and_more': []
 }
-
-# If there are existing doc_ids and case_ids you want to check directly - they are referenced
-# in your localsettings for more accurate direct checks, otherwise use view based which can be inaccurate.
-ES_CASE_CHECK_DIRECT_DOC_ID = None
-ES_XFORM_CHECK_DIRECT_DOC_ID = None
 
 ####### API throttling #####
 

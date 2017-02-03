@@ -5,8 +5,8 @@ from django.test import TestCase
 from django.test.utils import override_settings
 from corehq.apps.users.models import WebUser
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.receiverwrapper import submit_form_locally
-from corehq.util.test_utils import TestFileMixin, softer_assert
+from corehq.apps.receiverwrapper.util import submit_form_locally
+from corehq.util.test_utils import TestFileMixin
 from django.test.client import Client
 from django.core.urlresolvers import reverse
 import os
@@ -67,7 +67,7 @@ class SubmissionTest(TestCase):
             n_times_saved = int(foo['_rev'].split('-')[0])
             self.assertEqual(n_times_saved, 1)
 
-        for key in ['form', '_attachments', '_rev', 'received_on', 'user_id']:
+        for key in ['form', 'external_blobs', '_rev', 'received_on', 'user_id']:
             if key in foo:
                 del foo[key]
 
@@ -91,7 +91,6 @@ class SubmissionTest(TestCase):
         )
 
     @run_with_all_backends
-    @softer_assert
     def test_submit_user_registration(self):
         self._test(
             form='user_registration.xml',
@@ -121,6 +120,7 @@ class SubmissionSQLTransactionsTest(TestCase, TestFileMixin):
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_xforms(self.domain)
+        FormProcessorTestUtils.delete_all_ledgers(self.domain)
         FormProcessorTestUtils.delete_all_cases(self.domain)
         super(SubmissionSQLTransactionsTest, self).tearDown()
 

@@ -3,13 +3,13 @@
 {% load hq_shared_tags %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'reports/javascripts/reports.util.js' %}"></script>
-    <script src="{% static 'reports/javascripts/reports.config.js' %}"></script>
-    <script src="{% static 'reports/ko/saved_reports.js' %}"></script>
+    <script src="{% static 'reports/js/reports.util.js' %}"></script>
+    <script src="{% static 'reports/js/reports.config.js' %}"></script>
+    <script src="{% static 'reports/js/saved_reports.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-    <script type="text/javascript">
+    <script>
         $(function(){
             var $editReportButton = $("#edit-report-link");
 
@@ -33,7 +33,7 @@
         });
     </script>
     {% if not report.is_static %}
-    <script type="text/javascript">
+    <script>
         $(function(){
             // Poll the status of the data source
             var retrying = false;
@@ -60,8 +60,8 @@
         });
     </script>
     {% endif %}
-    <script type="text/javascript">
-        var urlSerialize = hqImport('reports/javascripts/reports.util.js').urlSerialize;
+    <script>
+        var urlSerialize = hqImport('reports/js/reports.util.js').urlSerialize;
         var standardHQReport = new HQReport({
             domain: '{{ domain }}',
             urlRoot: '{{ report.url_root }}',

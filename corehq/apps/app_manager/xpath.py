@@ -17,22 +17,54 @@ from corehq.apps.app_manager.exceptions import (
 from django.utils.translation import ugettext as _, ugettext_lazy
 
 
+# Note that this may match strings that do not need interpolation, such as "blah == 'ellipsis...'",
+# but it should not miss any strings that do need interpolation.
 DOT_INTERPOLATE_PATTERN = r'(\D|^)\.(\D|$)'
 
 CASE_REFERENCE_VALIDATION_ERROR = ugettext_lazy(
     "Your form uses an expression which references a case, but cases are not available. Please go to form "
-    "settings and either remove the case reference or (1) make sure that the module is set to display the "
-    "module first and then form, and (2) make sure that all forms in this module update or close a case "
-    "(which means registration forms must go in a different module)."
+    "settings and either remove the case reference or (1) make sure that the menu mode is set to display the "
+    "menu first and then form, and (2) make sure that all forms in this case list update or close a case "
+    "(which means registration forms must go in a different case list)."
 )
 
 
 def dot_interpolate(string, replacement):
     """
-    Replaces non-decimal dots in `string` with `replacement`
+    Replaces non-decimal, non-quoted dots in `string` with `replacement`
     """
-    repl = '\g<1>%s\g<2>' % replacement
-    return re.sub(DOT_INTERPOLATE_PATTERN, repl, string)
+    quote = ""  # " or ' if inside a string, else blank
+    new = ""
+    i = 0
+    while i < len(string):
+        # Ignore backslash-escaped characters
+        if string[i] == "\\":
+            new += string[i:i + 2]
+            i = i + 2
+            continue
+
+        if quote:
+            # We're inside a quoted string: just check to see if it's ending
+            if string[i] == quote:
+                quote = ""
+            new += string[i]
+        else:
+            if string[i] in "\"'":
+                # We're entering a quoted string: just record the quote type
+                quote = string[i]
+                new += string[i]
+            else:
+                # Non-quote character, not inside a quoted string
+                if string[i] == ".":
+                    # Replace dot with replacement, unless this looks like a decimal number
+                    if (i == 0 or re.match(r'\D', string[i - 1])):
+                        if (i == len(string) - 1 or re.match(r'\D', string[i + 1])):
+                            new += replacement
+                            i = i + 1
+                            continue
+                new += string[i]
+        i = i + 1
+    return new
 
 
 def interpolate_xpath(string, case_xpath=None, fixture_xpath=None, module=None, form=None):
@@ -187,7 +219,7 @@ class UserCaseXPath(XPath):
 
     def case(self):
         user_id = session_var(var='userid', path='context')
-        return CaseTypeXpath(USERCASE_TYPE).case().select('hq_user_id', user_id).select_raw(1)
+        return CaseTypeXpath(USERCASE_TYPE).case().select('hq_user_id', user_id)
 
 
 class CaseXPath(XPath):

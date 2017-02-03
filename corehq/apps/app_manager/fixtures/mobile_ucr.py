@@ -8,6 +8,8 @@ from casexml.apps.phone.models import OTARestoreUser
 
 from corehq import toggles
 from corehq.apps.app_manager.models import ReportModule
+from corehq.apps.app_manager.suite_xml.features.mobile_ucr import is_valid_mobile_select_filter_type
+from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
 from corehq.util.xml_utils import serialize
 
 from corehq.apps.userreports.exceptions import UserReportsError, ReportConfigurationNotFoundError
@@ -28,7 +30,7 @@ class ReportFixturesProvider(object):
         if not toggles.MOBILE_UCR.enabled(restore_user.domain):
             return []
 
-        apps = [app] if app else (a for a in get_apps_in_domain(restore_user.domain, include_remote=False))
+        apps = [app] if app else [a for a in get_apps_in_domain(restore_user.domain, include_remote=False)]
         report_configs = [
             report_config
             for app_ in apps
@@ -62,11 +64,17 @@ class ReportFixturesProvider(object):
             report_config.report_id, restore_user.domain
         )
 
-        # TODO: Convert to be compatiable with restore_user
+        # TODO: Convert to be compatible with restore_user
+        # apply filters specified in report module
         all_filter_values = {
             filter_slug: restore_user.get_ucr_filter_value(filter, report.get_ui_filter(filter_slug))
             for filter_slug, filter in report_config.filters.items()
         }
+        # apply all prefilters
+        prefilters = [ReportFilterFactory.from_spec(p, report) for p in report.prefilters]
+        prefilter_values = {prefilter.name: prefilter.value() for prefilter in prefilters}
+        all_filter_values.update(prefilter_values)
+        # filter out nulls
         filter_values = {
             filter_slug: filter_value for filter_slug, filter_value in all_filter_values.items()
             if filter_value is not None
@@ -74,7 +82,7 @@ class ReportFixturesProvider(object):
         defer_filters = {
             filter_slug: report.get_ui_filter(filter_slug)
             for filter_slug, filter_value in all_filter_values.items()
-            if filter_value is None
+            if filter_value is None and is_valid_mobile_select_filter_type(report.get_ui_filter(filter_slug))
         }
         data_source.set_filter_values(filter_values)
         data_source.defer_filters(defer_filters)
@@ -85,9 +93,10 @@ class ReportFixturesProvider(object):
             {ui_filter.field for ui_filter in defer_filters.values()},
             filter_options_by_field
         )
-        filters_elem = ReportFixturesProvider._get_filters_elem(defer_filters, filter_options_by_field)
+        filters_elem = ReportFixturesProvider._get_filters_elem(
+            defer_filters, filter_options_by_field, restore_user._couch_user)
 
-        report_elem = E.report(id=report_config.uuid)
+        report_elem = E.report(id=report_config.uuid, report_id=report_config.report_id)
         report_elem.append(filters_elem)
         report_elem.append(rows_elem)
         return report_elem
@@ -95,18 +104,18 @@ class ReportFixturesProvider(object):
     @staticmethod
     def _get_report_and_data_source(report_id, domain):
         report = get_report_config(report_id, domain)[0]
-        data_source = ReportFactory.from_spec(report)
+        data_source = ReportFactory.from_spec(report, include_prefilters=True)
         return report, data_source
 
     @staticmethod
-    def _get_filters_elem(defer_filters, filter_options_by_field):
+    def _get_filters_elem(defer_filters, filter_options_by_field, couch_user):
         filters_elem = E.filters()
         for filter_slug, ui_filter in defer_filters.items():
             # @field is maybe a bad name for this attribute,
             # since it's actually the filter slug
             filter_elem = E.filter(field=filter_slug)
             option_values = filter_options_by_field[ui_filter.field]
-            choices = ui_filter.choice_provider.get_sorted_choices_for_values(option_values)
+            choices = ui_filter.choice_provider.get_sorted_choices_for_values(option_values, couch_user)
             for choice in choices:
                 # add the correct text from ui_filter.choice_provider
                 option_elem = E.option(choice.display, value=choice.value)
@@ -133,7 +142,7 @@ class ReportFixturesProvider(object):
             rows_elem.append(_row_to_row_elem(
                 dict(
                     zip(
-                        map(lambda column_config: column_config.column_id, data_source.column_configs),
+                        map(lambda column_config: column_config.column_id, data_source.top_level_columns),
                         map(str, total_row)
                     )
                 ),

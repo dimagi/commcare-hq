@@ -5,6 +5,7 @@ from corehq.apps.sms.api import (send_sms, send_sms_to_verified_number,
     MessageMetadata)
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.sms import messages
+from corehq.apps.sms.mixin import apply_leniency, PhoneNumberInUseException
 from corehq.apps.sms.models import MessagingEvent, SQLMobileBackend, PhoneNumber
 
 
@@ -18,32 +19,40 @@ def initiate_sms_verification_workflow(contact, phone_number):
     # For now this is only applicable to mobile workers
     assert isinstance(contact, CommCareUser)
 
+    phone_number = apply_leniency(phone_number)
+
     logged_event = MessagingEvent.get_current_verification_event(
         contact.domain, contact.get_id, phone_number)
 
-    with CriticalSection(['verifying-phone-number-%s' % phone_number]):
-        vn = PhoneNumber.by_phone(phone_number, include_pending=True)
-        if vn:
-            if vn.owner_id != contact.get_id:
-                return VERIFICATION__ALREADY_IN_USE
-            if vn.verified:
-                return VERIFICATION__ALREADY_VERIFIED
-            else:
-                result = VERIFICATION__RESENT_PENDING
+    p = PhoneNumber.get_reserved_number(phone_number)
+    if p:
+        if p.owner_id != contact.get_id:
+            return VERIFICATION__ALREADY_IN_USE
+        if p.verified:
+            return VERIFICATION__ALREADY_VERIFIED
         else:
-            contact.save_verified_number(contact.domain, phone_number, False)
-            result = VERIFICATION__WORKFLOW_STARTED
-            # Always create a new event when the workflow starts
-            if logged_event:
-                logged_event.status = MessagingEvent.STATUS_NOT_COMPLETED
-                logged_event.save()
-            logged_event = MessagingEvent.create_verification_event(contact.domain, contact)
+            result = VERIFICATION__RESENT_PENDING
+    else:
+        entry = contact.get_or_create_phone_entry(phone_number)
+        try:
+            entry.set_pending_verification()
+        except PhoneNumberInUseException:
+            # On the off chance that the phone number was reserved between
+            # the check above and now
+            return VERIFICATION__ALREADY_IN_USE
 
-        if not logged_event:
-            logged_event = MessagingEvent.create_verification_event(contact.domain, contact)
+        result = VERIFICATION__WORKFLOW_STARTED
+        # Always create a new event when the workflow starts
+        if logged_event:
+            logged_event.status = MessagingEvent.STATUS_NOT_COMPLETED
+            logged_event.save()
+        logged_event = MessagingEvent.create_verification_event(contact.domain, contact)
 
-        send_verification(contact.domain, contact, phone_number, logged_event)
-        return result
+    if not logged_event:
+        logged_event = MessagingEvent.create_verification_event(contact.domain, contact)
+
+    send_verification(contact.domain, contact, phone_number, logged_event)
+    return result
 
 
 def send_verification(domain, user, phone_number, logged_event):
@@ -78,9 +87,8 @@ def send_verification(domain, user, phone_number, logged_event):
     subevent.completed()
 
 
-def process_verification(v, msg):
-    if not v or v.verified:
-        return
+def process_verification(v, msg, verification_keywords=None, create_subevent_for_inbound=True):
+    verification_keywords = verification_keywords or ['123']
 
     logged_event = MessagingEvent.get_current_verification_event(
         v.domain, v.owner_id, v.phone_number)
@@ -88,25 +96,28 @@ def process_verification(v, msg):
     if not logged_event:
         logged_event = MessagingEvent.create_verification_event(v.domain, v.owner)
 
-    subevent = logged_event.create_subevent_for_single_sms(
-        v.owner_doc_type,
-        v.owner_id
-    )
-    subevent.completed()
-
     msg.domain = v.domain
     msg.couch_recipient_doc_type = v.owner_doc_type
     msg.couch_recipient = v.owner_id
-    msg.messaging_subevent_id = subevent.pk
+
+    if create_subevent_for_inbound:
+        subevent = logged_event.create_subevent_for_single_sms(
+            v.owner_doc_type,
+            v.owner_id
+        )
+        subevent.completed()
+        msg.messaging_subevent_id = subevent.pk
+
     msg.save()
 
     if (
         not domain_has_privilege(msg.domain, privileges.INBOUND_SMS) or
-        not verification_response_ok(msg.text)
+        not verification_response_ok(msg.text, verification_keywords)
     ):
-        return
+        return False
 
-    v.verified = True
+    v.set_two_way()
+    v.set_verified()
     v.save()
 
     logged_event.completed()
@@ -122,15 +133,12 @@ def process_verification(v, msg):
     send_sms_to_verified_number(v, message,
         metadata=MessageMetadata(messaging_subevent_id=subevent.pk))
     subevent.completed()
+    return True
 
 
-def verification_response_ok(text):
+def verification_response_ok(text, verification_keywords):
     if not isinstance(text, basestring):
         return False
 
-    parts = text.split()
-
-    if len(parts) == 0:
-        return False
-
-    return parts[0] == '123'
+    text = text.lower()
+    return any([keyword in text for keyword in verification_keywords])

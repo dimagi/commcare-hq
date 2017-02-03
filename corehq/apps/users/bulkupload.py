@@ -1,9 +1,11 @@
 from StringIO import StringIO
 import logging
+from django import forms
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.utils.translation import ugettext as _
-from corehq.util.spreadsheets.excel import flatten_json, json_to_headers, \
+from corehq.util.workbook_json.excel import flatten_json, json_to_headers, \
     alphanumeric_sort_key
 from dimagi.utils.parsing import string_to_boolean
 
@@ -16,13 +18,19 @@ from couchexport.writers import Excel2007ExportWriter
 from soil import DownloadBase
 
 from corehq import privileges
+from corehq import toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.commtrack.util import submit_mapping_case_block, get_supply_point_and_location
 from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
 from corehq.apps.groups.models import Group
+from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.dbaccessors.all_commcare_users import get_all_commcare_users_by_domain
+from corehq.apps.users.dbaccessors.all_commcare_users import (
+    get_all_commcare_users_by_domain,
+    get_user_docs_by_username,
+)
+from corehq.apps.users.models import UserRole
 
 from .forms import get_mobile_worker_max_username_length
 from .models import CommCareUser, CouchUser
@@ -36,7 +44,7 @@ class UserUploadError(Exception):
 required_headers = set(['username'])
 allowed_headers = set([
     'data', 'email', 'group', 'language', 'name', 'password', 'phone-number',
-    'uncategorized_data', 'user_id', 'is_active', 'location_code',
+    'uncategorized_data', 'user_id', 'is_active', 'location_code', 'role', 'User IMEIs (read only)',
 ]) | required_headers
 old_headers = {
     # 'old_header_name': 'new_header_name'
@@ -66,6 +74,45 @@ def check_headers(user_specs):
                 label=label, headers=', '.join(header_set)))
     if messages:
         raise UserUploadError('\n'.join(messages))
+
+
+def check_duplicate_usernames(user_specs):
+    usernames = set()
+    duplicated_usernames = set()
+
+    for row in user_specs:
+        username = row.get('username')
+        if username and username in usernames:
+            duplicated_usernames.add(username)
+        usernames.add(username)
+
+    if duplicated_usernames:
+        raise UserUploadError(_("The following usernames have duplicate entries in "
+            "your file: " + ', '.join(duplicated_usernames)))
+
+
+def check_existing_usernames(user_specs, domain):
+    usernames_without_ids = set()
+    invalid_usernames = set()
+
+    for row in user_specs:
+        username = row.get('username')
+        user_id = row.get('user_id')
+        if username and user_id:
+            continue
+        try:
+            usernames_without_ids.add(normalize_username(username, domain))
+        except ValidationError:
+            invalid_usernames.add(username)
+
+    if invalid_usernames:
+        raise UserUploadError(_('The following usernames are invalid: ' + ', '.join(invalid_usernames)))
+
+    existing_usernames = [u.get('username') for u in get_user_docs_by_username(usernames_without_ids)]
+
+    if existing_usernames:
+        raise UserUploadError(_("The following usernames already exist and must "
+            "have an id specified to be updated: " + ', '.join(existing_usernames)))
 
 
 class GroupMemoizer(object):
@@ -187,7 +234,7 @@ class SiteCodeToLocationCache(BulkCacheBase):
         return SQLLocation.objects.get(
             domain=self.domain,
             site_code=site_code
-        ).couch_location
+        )
 
 
 class LocationIdToSiteCodeCache(BulkCacheBase):
@@ -197,102 +244,6 @@ class LocationIdToSiteCodeCache(BulkCacheBase):
             domain=self.domain,  # this is only for safety
             location_id=location_id
         ).site_code
-
-
-class UserLocMapping(object):
-
-    def __init__(self, username, domain, location_cache):
-        self.username = username
-        self.domain = domain
-        self.to_add = set()
-        self.to_remove = set()
-        self.location_cache = location_cache
-
-    def get_supply_point_from_location(self, sms_code):
-        return self.location_cache.get(sms_code)
-
-    def save(self):
-        """
-        Calculate which locations need added or removed, then submit
-        one caseblock to handle this
-        """
-        user = CommCareUser.get_by_username(self.username)
-        if not user:
-            raise UserUploadError(_('no username with {} found!'.format(self.username)))
-
-        current_locations = user.locations
-        current_location_codes = [loc.site_code for loc in current_locations]
-
-        commit_list = {}
-        messages = []
-
-        def _add_loc(loc, clear=False):
-            sp = self.get_supply_point_from_location(loc)
-            if sp is None:
-                messages.append(_(
-                    "No supply point found for location '{}'. "
-                    "Make sure the location type is not set to administrative only "
-                    "and that the location has a valid sms code."
-                ).format(loc or ''))
-            else:
-                commit_list.update(user.supply_point_index_mapping(sp, clear))
-
-        for loc in self.to_add:
-            if loc not in current_location_codes:
-                _add_loc(loc)
-        for loc in self.to_remove:
-            if loc in current_location_codes:
-                _add_loc(loc, clear=True)
-
-        if commit_list:
-            submit_mapping_case_block(user, commit_list)
-
-        return messages
-
-
-def create_or_update_locations(domain, location_specs, log):
-    """
-    This method should only be used when uploading multiple
-    location per user situations. This is behind a feature
-    flag and is not for normal use.
-
-    It is special because it is creating delegate case
-    submissions to give this location access.
-    """
-    sp_cache = SiteCodeToSupplyPointCache(domain)
-    users = {}
-    for row in location_specs:
-        username = row.get('username')
-        try:
-            username = normalize_username(username, domain)
-        except ValidationError:
-            log['errors'].append(
-                _("Username must be a valid email address: %s") % username
-            )
-        else:
-            location_code = unicode(row.get('location_code'))
-            if username in users:
-                user_mapping = users[username]
-            else:
-                user_mapping = UserLocMapping(username, domain, sp_cache)
-                users[username] = user_mapping
-
-            if row.get('remove') == 'y':
-                user_mapping.to_remove.add(location_code)
-            else:
-                user_mapping.to_add.add(location_code)
-
-    for username, mapping in users.iteritems():
-        try:
-            messages = mapping.save()
-            log['errors'].extend(messages)
-        except UserUploadError as e:
-            log['errors'].append(
-                _('Unable to update locations for {user} because {message}'.format(
-                    user=username,
-                    message=e
-                ))
-            )
 
 
 def create_or_update_groups(domain, group_specs, log):
@@ -358,11 +309,43 @@ def get_location_from_site_code(site_code, location_cache):
         )
 
 
-def create_or_update_users_and_groups(domain, user_specs, group_specs, location_specs, task=None):
+def is_password(password):
+    if not password:
+        return False
+    for c in password:
+        if c != "*":
+            return True
+    return False
+
+
+def users_with_duplicate_passwords(rows):
+    password_dict = dict()
+
+    for row in rows:
+        username = row.get('username')
+        password = unicode(row.get('password'))
+        if not is_password(password):
+            continue
+
+        if password_dict.get(password):
+            password_dict[password].add(username)
+        else:
+            password_dict[password] = {username}
+
+    ret = set()
+
+    for usernames in password_dict.values():
+        if len(usernames) > 1:
+            ret = ret.union(usernames)
+
+    return ret
+
+
+def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None):
     from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
     custom_data_validator = UserFieldsView.get_validator(domain)
     ret = {"errors": [], "rows": []}
-    total = len(user_specs) + len(group_specs) + len(location_specs)
+    total = len(user_specs) + len(group_specs)
 
     def _set_progress(progress):
         if task is not None:
@@ -375,9 +358,17 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
     user_ids = set()
     allowed_groups = set(group_memoizer.groups)
     allowed_group_names = [group.name for group in allowed_groups]
-    can_access_locations = domain_has_privilege(domain, privileges.LOCATIONS)
-    if can_access_locations:
+    allowed_roles = UserRole.by_domain(domain)
+    roles_by_name = {role.name: role for role in allowed_roles}
+    can_assign_locations = domain_has_privilege(domain, privileges.LOCATIONS)
+    # ToDo: We need more speccing on what/how locations can be assigned if location-restrictions is enabled
+    #       For now, don't support bulk assigning if location-restrictions are enabled
+    can_assign_locations = can_assign_locations and not toggles.RESTRICT_WEB_USERS_BY_LOCATION.enabled(domain)
+    if can_assign_locations:
         location_cache = SiteCodeToLocationCache(domain)
+    project = Domain.get_by_name(domain)
+    usernames_with_dupe_passwords = users_with_duplicate_passwords(user_specs)
+
     try:
         for row in user_specs:
             _set_progress(current)
@@ -393,7 +384,12 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
             uncategorized_data = row.get('uncategorized_data')
             user_id = row.get('user_id')
             username = row.get('username')
-            location_code = row.get('location_code', '')
+            location_codes = row.get('location_code') or []
+            if location_codes and not isinstance(location_codes, list):
+                location_codes = [location_codes]
+            # ignore empty
+            location_codes = [code for code in location_codes if code]
+            role = row.get('role', '')
 
             if password:
                 password = unicode(password)
@@ -440,13 +436,20 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
                     else:
                         user = CommCareUser.get_by_username(username)
 
-                    def is_password(password):
-                        if not password:
-                            return False
-                        for c in password:
-                            if c != "*":
-                                return True
-                        return False
+                    if project.strong_mobile_passwords and is_password(password):
+                        if raw_username(username) in usernames_with_dupe_passwords:
+                            raise UserUploadError(_("Provide a unique password for each mobile worker"))
+
+                        try:
+                            clean_password(password)
+                        except forms.ValidationError:
+                            if settings.ENABLE_DRACONIAN_SECURITY_FEATURES:
+                                msg = _("Mobile Worker passwords must be 8 "
+                                    "characters long with at least 1 capital "
+                                    "letter, 1 special character and 1 number")
+                            else:
+                                msg = _("Please provide a stronger password")
+                            raise UserUploadError(msg)
 
                     if user:
                         if user.domain != domain:
@@ -496,22 +499,31 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
                     if is_active is not None:
                         user.is_active = is_active
 
-                    if can_access_locations:
+                    if can_assign_locations:
                         # Do this here so that we validate the location code before we
                         # save any other information to the user, this way either all of
                         # the user's information is updated, or none of it
-                        if location_code:
-                            loc = get_location_from_site_code(location_code, location_cache)
-                        else:
-                            loc = None
+                        location_ids = []
+                        for code in location_codes:
+                            loc = get_location_from_site_code(code, location_cache)
+                            location_ids.append(loc.location_id)
 
+                    if role:
+                        if role in roles_by_name:
+                            user.set_role(domain, roles_by_name[role].get_qualified_id())
+                        else:
+                            raise UserUploadError(_(
+                                "Role '%s' does not exist"
+                            ) % role)
+
+                    # following blocks require user doc id, so it needs to be saved if new user
                     user.save()
-                    if can_access_locations and loc:
-                        if user.location_id != loc.location_id:
-                            # this triggers a second user save so
-                            # we want to avoid doing it if it isn't
-                            # needed
-                            user.set_location(loc)
+                    if can_assign_locations:
+                        if (user.location_id and not location_ids or
+                           user.location_id not in location_ids):
+                            user.unset_location()
+                        if set(user.assigned_location_ids) != set(location_ids):
+                            user.reset_locations(location_ids)
 
                     if is_password(password):
                         # Without this line, digest auth doesn't work.
@@ -551,8 +563,6 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, location_
             ) % (_error_message, e.errors))
             ret['errors'].append(_error_message)
 
-    if Domain.get_by_name(domain).supports_multiple_locations_per_user:
-        create_or_update_locations(domain, location_specs, log=ret)
     _set_progress(total)
     return ret
 
@@ -569,27 +579,6 @@ class GroupNameError(Exception):
         )
 
 
-def get_location_rows(domain):
-    users = CommCareUser.by_domain(domain)
-
-    mappings = []
-    for user in users:
-        # this method is only called when exporting the
-        # locaiton tab (so on domains with multiple
-        # locations per user), so we are relying on
-        # user.locations being a thing that is real
-        # and working
-        locations = user.locations
-        for location in locations:
-            mappings.append([
-                user.raw_username,
-                location.site_code,
-                location.name
-            ])
-
-    return mappings
-
-
 def build_data_headers(keys, header_prefix='data'):
     return json_to_headers(
         {header_prefix: {key: None for key in keys}}
@@ -604,10 +593,31 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache):
             Group.by_user(user, wrap=False)
         ), key=alphanumeric_sort_key)
 
+    def _get_devices(user):
+        """
+        Returns a comma-separated list of IMEI numbers of the user's devices, sorted with most-recently-used first
+        """
+        return ', '.join([device.device_id for device in sorted(
+            user.devices, key=lambda d: d.last_used, reverse=True
+        )])
+
     def _make_user_dict(user, group_names, location_cache):
         model_data, uncategorized_data = (
             user_data_model.get_model_and_uncategorized(user.user_data)
         )
+        role = user.get_role(domain)
+        location_codes = []
+        try:
+            location_codes.append(location_cache.get(user.location_id))
+        except SQLLocation.DoesNotExist:
+            pass
+        for location_id in user.assigned_location_ids:
+            # skip if primary location_id, as it is already added to the start of list above
+            if location_id != user.location_id:
+                try:
+                    location_codes.append(location_cache.get(location_id))
+                except SQLLocation.DoesNotExist:
+                    pass
         return {
             'data': model_data,
             'uncategorized_data': uncategorized_data,
@@ -620,11 +630,14 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache):
             'language': user.language,
             'user_id': user._id,
             'is_active': str(user.is_active),
-            'location_code': location_cache.get(user.location_id),
+            'User IMEIs (read only)': _get_devices(user),
+            'location_code': location_codes,
+            'role': role.name if role else '',
         }
 
     unrecognized_user_data_keys = set()
     user_groups_length = 0
+    max_location_length = 0
     user_dicts = []
     for user in get_all_commcare_users_by_domain(domain):
         group_names = _get_group_names(user)
@@ -632,13 +645,13 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache):
         user_dicts.append(user_dict)
         unrecognized_user_data_keys.update(user_dict['uncategorized_data'].keys())
         user_groups_length = max(user_groups_length, len(group_names))
+        max_location_length = max(max_location_length, len(user_dict["location_code"]))
 
     user_headers = [
         'username', 'password', 'name', 'phone-number', 'email',
-        'language', 'user_id', 'is_active',
+        'language', 'role', 'user_id', 'is_active', 'User IMEIs (read only)',
     ]
-    if domain_has_privilege(domain, privileges.LOCATIONS):
-        user_headers.append('location_code')
+
     user_data_fields = [f.slug for f in user_data_model.get_fields(include_system=False)]
     user_headers.extend(build_data_headers(user_data_fields))
     user_headers.extend(build_data_headers(
@@ -648,6 +661,10 @@ def parse_users(group_memoizer, domain, user_data_model, location_cache):
     user_headers.extend(json_to_headers(
         {'group': range(1, user_groups_length + 1)}
     ))
+    if domain_has_privilege(domain, privileges.LOCATIONS):
+        user_headers.extend(json_to_headers(
+            {'location_code': range(1, max_location_length + 1)}
+        ))
 
     def _user_rows():
         for user_dict in user_dicts:
@@ -730,16 +747,6 @@ def dump_users_and_groups(response, domain):
         ('users', user_rows),
         ('groups', group_rows),
     ]
-
-    domain_obj = Domain.get_by_name(domain)
-    # This is only for domains using the multiple locations feature flag
-    if domain_obj.commtrack_enabled and domain_obj.supports_multiple_locations_per_user:
-        headers.append(
-            ('locations', [['username', 'location_code', 'location name (optional)']])
-        )
-        rows.append(
-            ('locations', get_location_rows(domain))
-        )
 
     writer.open(
         header_table=headers,

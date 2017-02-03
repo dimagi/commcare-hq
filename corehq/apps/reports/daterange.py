@@ -2,7 +2,8 @@ from collections import namedtuple
 import datetime
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.reports.exceptions import InvalidDaterangeException
-from corehq.util.dates import get_current_month_date_range, get_previous_month_date_range
+from corehq.util.dates import get_current_month_date_range, get_previous_month_date_range, \
+    get_current_quarter_date_range, get_previous_quarter_date_range
 
 
 DateRangeChoice = namedtuple('DateRangeChoice', ['slug', 'description', 'simple'])
@@ -14,10 +15,13 @@ def get_all_daterange_choices():
         DateRangeChoice('last30', _('Last 30 Days'), True),
         DateRangeChoice('lastn', _('Last N Days'), False),
         DateRangeChoice('lastmonth', _('Last Month'), True),
+        DateRangeChoice('thisyear', _('This Year'), True),
         DateRangeChoice('lastyear', _('Last Year'), True),
         DateRangeChoice('since', _('Since a Date'), False),
         DateRangeChoice('range', _('Date Range'), False),
         DateRangeChoice('thismonth', _('This Month'), True),
+        DateRangeChoice('thisquarter', _('This Quarter'), True),
+        DateRangeChoice('lastquarter', _('Last Quarter'), True),
     )
 
 
@@ -46,9 +50,15 @@ def get_daterange_start_end_dates(date_range, start_date=None, end_date=None, da
         start_date, end_date = get_current_month_date_range()
     elif date_range == 'lastmonth':
         start_date, end_date = get_previous_month_date_range()
+    elif date_range == 'thisquarter':
+        start_date, end_date = get_current_quarter_date_range()
+    elif date_range == 'lastquarter':
+        start_date, end_date = get_previous_quarter_date_range()
     elif date_range == 'lastyear':
         last_year = today.year - 1
         return datetime.date(last_year, 1, 1), datetime.date(last_year, 12, 31)
+    elif date_range == 'thisyear':
+        return datetime.date(today.year, 1, 1), datetime.date(today.year, 12, 31)
     else:
         end_date = today
         days = {

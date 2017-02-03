@@ -7,7 +7,7 @@ from optparse import make_option
 class Command(BaseCommand):
     args = ""
     help = ("Deletes all messaging phone numbers stored in couch")
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option("--delete-interval",
                     action="store",
                     dest="delete_interval",

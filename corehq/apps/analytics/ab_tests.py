@@ -41,11 +41,22 @@ class ABTest(object):
         }
 
 
-NEW_USER_SIGNUP_OPTION_NEW = 'new'
-NEW_USER_SIGNUP_OPTION_OLD = 'old'
+LIVE_PREVIEW_ENABLED = 'live_preview_enabled'
+LIVE_PREVIEW_DISABLED = 'live_preview_disabled'
 
-NEW_USER_SIGNUP = ABTestConfig(
-    'New User Signup Form',
-    'new_signup_jul2016',
-    (NEW_USER_SIGNUP_OPTION_NEW, NEW_USER_SIGNUP_OPTION_OLD)
+
+LIVE_PREVIEW = ABTestConfig(
+    'Live Preview',
+    'live_preview_dec2016',
+    (LIVE_PREVIEW_ENABLED, LIVE_PREVIEW_DISABLED)
+)
+
+NEW_USER_NUMBER_OPTION_SHOW_NUM = 'show_number'
+NEW_USER_NUMBER_OPTION_HIDE_NUM = 'hide_number'
+
+
+NEW_USER_NUMBER = ABTestConfig(
+    'New User Phone Number',
+    'new_phone_jan2016',
+    (NEW_USER_NUMBER_OPTION_SHOW_NUM, NEW_USER_NUMBER_OPTION_HIDE_NUM)
 )

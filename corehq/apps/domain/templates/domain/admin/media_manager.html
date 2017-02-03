@@ -4,11 +4,11 @@
 {% load i18n %}
 
 {% block js %} {{ block.super }}
-<script type="text/javascript" src="{% static 'domain/js/media_manager.js' %}"></script>
+<script src="{% static 'domain/js/media_manager.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-<script type="text/javascript">
+<script>
 (function () {
     var MediaManager = hqImport('domain/js/media_manager.js').MediaManager;
     $('#update-media-sharing-settings').koApplyBindings(new MediaManager({{ media|JSON }}, {{ licenses|JSON }}));

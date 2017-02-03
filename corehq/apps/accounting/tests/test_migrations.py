@@ -130,11 +130,11 @@ class TestExplicitCommunitySubscriptions(TestCase):
 
     @property
     def _most_recently_created_community_plan_version(self):
-        return DefaultProductPlan.get_default_plan(edition=SoftwarePlanEdition.COMMUNITY)
+        return DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.COMMUNITY)
 
     @property
     def _random_plan_version(self):
-        return DefaultProductPlan.get_default_plan(
+        return DefaultProductPlan.get_default_plan_version(
             edition=random.choice(SoftwarePlanEdition.SELF_SERVICE_ORDER + [SoftwarePlanEdition.ENTERPRISE]),
         )
 

@@ -58,6 +58,7 @@ COMMCAREHQ.transformHelpTemplate = function ($template, wrap) {
 
 COMMCAREHQ.initBlock = function ($elem) {
     'use strict';
+
     $('.submit_on_click', $elem).on("click", function (e) {
         e.preventDefault();
         if (!$(this).data('clicked')) {
@@ -91,13 +92,20 @@ COMMCAREHQ.updateDOM = function (update) {
     var key;
     for (key in update) {
         if (update.hasOwnProperty(key)) {
-            $(key).text(update[key]).val(update[key]);
+            $(key).html(update[key]).val(update[key]);
         }
     }
 };
 
-COMMCAREHQ.makeSaveButton = function(messageStrings, cssClass) {
+COMMCAREHQ.makeSaveButton = function(messageStrings, cssClass, barClass) {
     'use strict';
+    var BAR_STATE = {
+        SAVE: 'savebtn-bar-save',
+        SAVING: 'savebtn-bar-saving',
+        SAVED: 'savebtn-bar-saved',
+        RETRY: 'savebtn-bar-retry',
+    };
+    barClass = barClass || '';
     var SaveButton = {
         /*
          options: {
@@ -115,7 +123,7 @@ COMMCAREHQ.makeSaveButton = function(messageStrings, cssClass) {
                 }).addClass(cssClass),
                 $saving: $('<div/>').text(SaveButton.message.SAVING).addClass('btn btn-default disabled'),
                 $saved: $('<div/>').text(SaveButton.message.SAVED).addClass('btn btn-default disabled'),
-                ui: $('<div/>').addClass('pull-right'),
+                ui: $('<div/>').addClass('pull-right savebtn-bar ' + barClass),
                 setStateWhenReady: function (state) {
                     if (this.state === 'saving') {
                         this.nextState = state;
@@ -132,13 +140,21 @@ COMMCAREHQ.makeSaveButton = function(messageStrings, cssClass) {
                     this.$saving.detach();
                     this.$saved.detach();
                     this.$retry.detach();
+                    var buttonUi = this.ui;
+                    _.each(BAR_STATE, function (v, k) {
+                        buttonUi.removeClass(v);
+                    });
                     if (state === 'save') {
+                        this.ui.addClass(BAR_STATE.SAVE);
                         this.ui.append(this.$save);
                     } else if (state === 'saving') {
+                        this.ui.addClass(BAR_STATE.SAVING);
                         this.ui.append(this.$saving);
                     } else if (state === 'saved') {
+                        this.ui.addClass(BAR_STATE.SAVED);
                         this.ui.append(this.$saved);
                     } else if (state === 'retry') {
+                        this.ui.addClass(BAR_STATE.RETRY);
                         this.ui.append(this.$retry);
                     }
                 },
@@ -183,10 +199,13 @@ COMMCAREHQ.makeSaveButton = function(messageStrings, cssClass) {
             if (options.save) {
                 button.on('save', options.save);
             }
-            $(window).bind('beforeunload', function () {
-                var stillAttached = button.ui.parents()[button.ui.parents().length - 1].tagName.toLowerCase() == 'html';
-                if (button.state !== 'saved' && stillAttached) {
-                    return options.unsavedMessage || "";
+            $(window).on('beforeunload', function () {
+                var lastParent = button.ui.parents()[button.ui.parents().length - 1];
+                if (lastParent) {
+                    var stillAttached = lastParent.tagName.toLowerCase() == 'html';
+                    if (button.state !== 'saved' && stillAttached) {
+                        return options.unsavedMessage || "";
+                    }
                 }
             });
             return button;
@@ -210,7 +229,7 @@ COMMCAREHQ.makeSaveButton = function(messageStrings, cssClass) {
                 };
             _.defer(function () {
                 $form.find('*').change(fireChange);
-                $form.find('input, textarea').bind('textchange', fireChange);
+                $form.find('input, textarea').on('textchange', fireChange);
             });
             return button;
         },
@@ -234,7 +253,7 @@ COMMCAREHQ.DeleteButton = COMMCAREHQ.makeSaveButton({
     SAVED: django.gettext("Deleted"),
     RETRY: django.gettext("Try Again"),
     ERROR_SAVING: django.gettext("There was an error deleting")
-}, 'btn btn-danger');
+}, 'btn btn-danger', 'savebtn-bar-danger');
 
 
 COMMCAREHQ.beforeUnload = [];
@@ -255,7 +274,7 @@ COMMCAREHQ.beforeUnloadCallback = function () {
 $(function () {
     'use strict';
     COMMCAREHQ.initBlock($("body"));
-    $(window).bind('beforeunload', COMMCAREHQ.beforeUnloadCallback);
+    $(window).on('beforeunload', COMMCAREHQ.beforeUnloadCallback);
 });
 
 COMMCAREHQ.toggleEnabled = hqImport('hqwebapp/js/toggles.js').toggleEnabled;

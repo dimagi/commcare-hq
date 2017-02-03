@@ -14,7 +14,7 @@ from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from corehq.apps.receiverwrapper import submit_form_locally
+from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, \
     run_with_all_backends
@@ -1069,48 +1069,71 @@ class ChangingOwnershipTest(SyncBaseTest):
 
     def setUp(self):
         super(ChangingOwnershipTest, self).setUp()
-        self.shared_group = Group(
+
+    @run_with_all_backends
+    def test_remove_user_from_group(self):
+        group = Group(
             domain=self.project.name,
-            name='shared_group',
+            name='remove_user',
             case_sharing=True,
             users=[self.user.user_id]
         )
-        self.shared_group.save()
-        self.sync_log = synclog_from_restore_payload(
+        group.save()
+        initial_sync_log = synclog_from_restore_payload(
             generate_restore_payload(self.project, self.user)
         )
-        self.assertTrue(self.shared_group._id in self.sync_log.owner_ids_on_phone)
+        self.assertTrue(group._id in initial_sync_log.owner_ids_on_phone)
 
         # since we got a new sync log, have to update the factory as well
-        self.factory.form_extras = {'last_sync_token': self.sync_log._id}
+        self.factory.form_extras = {'last_sync_token': initial_sync_log._id}
 
-    @run_with_all_backends
-    def test_change_owner_list(self):
-        # create a case with the extra owner
-        case_id = self.factory.create_case(owner_id=self.shared_group._id).case_id
-
+        # create a case owned by the group
+        case_id = self.factory.create_case(owner_id=group._id).case_id
         # make sure it's there
-        sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
+        sync_log = get_properly_wrapped_sync_log(initial_sync_log._id)
         self.assertTrue(sync_log.phone_is_holding_case(case_id))
 
-        def _get_incremental_synclog_for_user(user, since):
-            incremental_restore_config = RestoreConfig(
-                self.project,
-                restore_user=self.user,
-                params=RestoreParams(version=V2, sync_log_id=since),
-            )
-            return synclog_from_restore_payload(incremental_restore_config.get_payload().as_string())
-
         # make sure it's there on new sync
-        incremental_sync_log = _get_incremental_synclog_for_user(self.user, since=self.sync_log._id)
-        self.assertTrue(self.shared_group._id in incremental_sync_log.owner_ids_on_phone)
+        incremental_sync_log = self._get_incremental_synclog_for_user(self.user, since=initial_sync_log._id)
+        self.assertTrue(group._id in incremental_sync_log.owner_ids_on_phone)
         self.assertTrue(incremental_sync_log.phone_is_holding_case(case_id))
 
         # remove the owner id and confirm that owner and case are removed on next sync
-        self.shared_group.remove_user(self.user.user_id)
-        incremental_sync_log = _get_incremental_synclog_for_user(self.user, since=incremental_sync_log._id)
-        self.assertFalse(self.shared_group._id in incremental_sync_log.owner_ids_on_phone)
+        group.remove_user(self.user.user_id)
+        incremental_sync_log = self._get_incremental_synclog_for_user(self.user, since=incremental_sync_log._id)
+        self.assertFalse(group._id in incremental_sync_log.owner_ids_on_phone)
         self.assertFalse(incremental_sync_log.phone_is_holding_case(case_id))
+
+    @run_with_all_backends
+    def test_add_user_to_group(self):
+        group = Group(
+            domain=self.project.name,
+            name='add_user',
+            case_sharing=True,
+            users=[]
+        )
+        group.save()
+        # create a case owned by the group
+        case_id = self.factory.create_case(owner_id=group._id).case_id
+        # shouldn't be there
+        initial_sync_log = synclog_from_restore_payload(
+            generate_restore_payload(self.project, self.user)
+        )
+        self.assertFalse(initial_sync_log.phone_is_holding_case(case_id))
+
+        group.add_user(self.user.user_id)
+        # make sure it's there on new sync
+        incremental_sync_log = self._get_incremental_synclog_for_user(self.user, since=initial_sync_log._id)
+        self.assertTrue(group._id in incremental_sync_log.owner_ids_on_phone)
+        self.assertTrue(incremental_sync_log.phone_is_holding_case(case_id))
+
+    def _get_incremental_synclog_for_user(self, user, since):
+        incremental_restore_config = RestoreConfig(
+            self.project,
+            restore_user=user,
+            params=RestoreParams(version=V2, sync_log_id=since),
+        )
+        return synclog_from_restore_payload(incremental_restore_config.get_payload().as_string())
 
 
 class SyncTokenCachingTest(SyncBaseTest):
@@ -1446,6 +1469,7 @@ class MultiUserSyncTest(SyncBaseTest):
             date_modified=time,
             case_id=case_id,
             user_id=self.user_id,
+            date_opened=time.date(),
             update={
                 'greeting': 'hello',
                 'greeting_2': 'hello'

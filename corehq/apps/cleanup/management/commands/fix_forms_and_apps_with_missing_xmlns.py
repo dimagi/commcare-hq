@@ -40,7 +40,7 @@ class Command(BaseCommand):
     help = 'Fix forms with "undefined" xmlns'
     args = '<prev_log_path> <log_path>'
 
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option(
             '--dry-run',
             action='store_true',

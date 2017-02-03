@@ -1,7 +1,7 @@
 import json
 from jsonobject.exceptions import BadValueError
 from corehq.apps.reports_core.filters import DatespanFilter, ChoiceListFilter, Choice, DynamicChoiceListFilter, \
-    NumericFilter
+    NumericFilter, PreFilter, QuarterFilter
 from corehq.apps.userreports.exceptions import BadSpecError
 from django.utils.translation import ugettext as _
 from corehq.apps.userreports.reports.filters.choice_providers import DATA_SOURCE_COLUMN, \
@@ -13,8 +13,8 @@ from corehq.apps.userreports.reports.filters.values import(
     SHOW_ALL_CHOICE,
 )
 from corehq.apps.userreports.reports.filters.specs import (
-    ChoiceListFilterSpec, DynamicChoiceListFilterSpec, NumericFilterSpec, DateFilterSpec
-)
+    ChoiceListFilterSpec, DynamicChoiceListFilterSpec, NumericFilterSpec, DateFilterSpec,
+    PreFilterSpec, QuarterFilterSpec)
 
 
 def _build_date_filter(spec, report):
@@ -22,6 +22,16 @@ def _build_date_filter(spec, report):
     return DatespanFilter(
         name=wrapped.slug,
         label=wrapped.get_display(),
+        compare_as_string=wrapped.compare_as_string,
+    )
+
+
+def _build_quarter_filter(spec, report):
+    wrapped = QuarterFilterSpec.wrap(spec)
+    return QuarterFilter(
+        name=wrapped.slug,
+        label=wrapped.get_display(),
+        show_all=wrapped.show_all,
     )
 
 
@@ -30,6 +40,16 @@ def _build_numeric_filter(spec, report):
     return NumericFilter(
         name=wrapped.slug,
         label=wrapped.get_display(),
+    )
+
+
+def _build_pre_filter(spec, report):
+    wrapped = PreFilterSpec.wrap(spec)
+    return PreFilter(
+        name=wrapped.slug,
+        datatype=wrapped.datatype,
+        pre_value=wrapped.pre_value,
+        pre_operator=wrapped.pre_operator,
     )
 
 
@@ -43,6 +63,7 @@ def _build_choice_list_filter(spec, report):
         choices.insert(0, Choice(SHOW_ALL_CHOICE, _('Show all')))
     return ChoiceListFilter(
         name=wrapped.slug,
+        field=wrapped.field,
         datatype=wrapped.datatype,
         label=wrapped.display,
         choices=choices,
@@ -68,6 +89,8 @@ def _build_dynamic_choice_list_filter(spec, report):
 class ReportFilterFactory(object):
     constructor_map = {
         'date': _build_date_filter,
+        'quarter': _build_quarter_filter,
+        'pre': _build_pre_filter,
         'choice_list': _build_choice_list_filter,
         'dynamic_choice_list': _build_dynamic_choice_list_filter,
         'numeric': _build_numeric_filter

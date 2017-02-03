@@ -4,12 +4,12 @@
 
 
 {% block js %}{{ block.super }}
-<script type="text/javascript"
+<script
         src="{% static 'dashboard/js/hq_dashboard.ng.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-<script type="text/javascript">
+<script>
 (function (angular, undefined) {
     'use strict';
     var dashboardApp = angular.module('dashboardApp', [
@@ -37,8 +37,8 @@
 {% block dashboard-content %}
 <div class="page-header">
     <h1>
-        {% if project.commtrack_enabled %}
-            {% trans 'Welcome Back to CommCare Supply' %}
+        {% if is_icds %}
+            {% trans 'Welcome Back to ICDS-CAS' %}
         {% else %}
             {% trans 'Welcome Back to CommCare HQ' %}
         {% endif %}
@@ -55,12 +55,9 @@
         {% endfor %}
     </div>
     <p class="lead text-center" style="margin-bottom: 5em;">
-        {% if project.commtrack_enabled %}
+        {% if is_icds %}
             {% blocktrans %}
-                Thanks for using CommCare Supply! If you have questions, suggestions,
-                or other thoughts, <br />we invite you to join the discussion on the
-                <a href="https://groups.google.com/forum/#!forum/commtrack-users/join"
-                   target="_blank">CommCare Supply Users Mailing List</a>.
+                Thanks for using ICDS-CAS!
             {% endblocktrans %}
         {% else %}
             {% blocktrans %}

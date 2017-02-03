@@ -13,7 +13,11 @@ from corehq.apps.es.aggregations import (
     ExtendedStatsAggregation,
     TopHitsAggregation,
     MissingAggregation,
-    NestedAggregation)
+    NestedAggregation,
+    SumAggregation,
+    NestedTermAggregationsHelper,
+    AggregationTerm,
+)
 from corehq.apps.es.es_query import HQESQuery, ESQuerySet
 from corehq.apps.es.tests.utils import ElasticTestMixin
 from corehq.elastic import SIZE_LIMIT
@@ -397,5 +401,81 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
                 'case_actions',
                 'actions',
             )
+        )
+        self.checkQuery(query, json_output)
+
+    def test_nested_terms_helper(self):
+        json_output = {
+            "query": {
+                "filtered": {
+                    "filter": {
+                        "and": [
+                            {"match_all": {}}
+                        ]
+                    },
+                    "query": {"match_all": {}}
+                }
+            },
+            "aggs": {
+                "app_id": {
+                    "terms": {
+                        "field": "app_id",
+                        "size": SIZE_LIMIT,
+                    },
+                    "aggs": {
+                        "user_id": {
+                            "terms": {
+                                "field": "user_id",
+                                "size": SIZE_LIMIT,
+                            },
+                            "aggs": {
+                                "balance": {
+                                    "sum": {"field": "balance"}
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "size": SIZE_LIMIT
+        }
+        base_query = HQESQuery('cases')
+        query = NestedTermAggregationsHelper(
+            base_query=base_query,
+            terms=[
+                AggregationTerm('app_id', 'app_id'),
+                AggregationTerm('user_id', 'user_id')
+            ],
+            inner_most_aggregation=SumAggregation('balance', 'balance')
+        ).query
+        self.checkQuery(query, json_output)
+
+    def test_terms_aggregation_with_order(self):
+        json_output = {
+            "query": {
+                "filtered": {
+                    "filter": {
+                        "and": [
+                            {"match_all": {}}
+                        ]
+                    },
+                    "query": {"match_all": {}}
+                }
+            },
+            "aggs": {
+                "name": {
+                    "terms": {
+                        "field": "name",
+                        "size": 1000000,
+                        "order": [{
+                            "sort_field": "asc"
+                        }]
+                    },
+                },
+            },
+            "size": SIZE_LIMIT
+        }
+        query = HQESQuery('cases').aggregation(
+            TermsAggregation('name', 'name').order('sort_field')
         )
         self.checkQuery(query, json_output)

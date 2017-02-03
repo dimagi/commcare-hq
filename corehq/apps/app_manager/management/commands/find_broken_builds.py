@@ -6,6 +6,7 @@ from corehq.apps.app_manager.exceptions import SuiteValidationError
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.suite_xml.utils import validate_suite
 from corehq.apps.app_manager.xform import XForm
+from corehq.blobs.mixin import BlobHelper
 from dimagi.utils.couch.database import iter_docs
 
 
@@ -44,7 +45,7 @@ def broken_suite_files(build):
     db = Application.get_db()
     error = None
     try:
-        suite = db.fetch_attachment(build['_id'], 'files/suite.xml')
+        suite = BlobHelper(build, db).fetch_attachment('files/suite.xml')
     except ResourceNotFound:
         error = 'build has no attachment files/suite.xml'
     else:
@@ -72,7 +73,7 @@ CHECK_FUNCTIONS = {
 class Command(BaseCommand):
     help = "Print a list of broken builds"
     args = '<check_function>'
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option('--ids',
                     action='store',
                     dest='build_ids',

@@ -1,4 +1,4 @@
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.couch.database import iter_docs
 from django.core.management.base import BaseCommand, CommandError
@@ -10,7 +10,7 @@ class Command(BaseCommand):
 
     def process_user(self, user):
         if user.location_id:
-            user.set_location(Location.get(user.location_id))
+            user.set_location(SQLLocation.objects.get(location_id=user.location_id))
         else:
             user.unset_location()
 

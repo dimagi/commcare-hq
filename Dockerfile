@@ -3,14 +3,14 @@ MAINTAINER Dimagi <devops@dimagi.com>
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONUSERBASE=/vendor \
-    PATH=/vendor/bin:$PATH
+    PATH=/vendor/bin:$PATH \
+    NODE_VERSION=5.12.0
 
-RUN curl -sL https://deb.nodesource.com/setup_5.x | bash - \
- && apt-get -y install \
-    nodejs \
- && apt-get clean \
- && rm -rf /var/lib/apt/lists/* \
- && mkdir /vendor
+RUN mkdir /vendor
+
+RUN curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-x64.tar.gz" \
+  && tar -xzf "node-v$NODE_VERSION-linux-x64.tar.gz" -C /usr/local --strip-components=1 \
+  && rm "node-v$NODE_VERSION-linux-x64.tar.gz"
 
 RUN wget -O jdk.tar.gz --quiet --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/7u67-b01/jdk-7u67-linux-x64.tar.gz \
  && tar -xzf jdk.tar.gz --absolute-names \
@@ -34,7 +34,6 @@ RUN git config --global url."https://".insteadOf git:// \
  && pip install \
     -r /vendor/requirements.txt \
     -r /vendor/dev-requirements.txt \
-    ipython \
     --user --upgrade \
  && rm -rf /root/.cache/pip
 

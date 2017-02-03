@@ -7,10 +7,18 @@ env:
   matrix:
     - TEST=javascript
     # need node installs for app_manager.XpathValidatorTest
-    - TEST=python NOSE_DIVIDED_WE_RUN=05 JS_SETUP=yes
-    - TEST=python NOSE_DIVIDED_WE_RUN=6a JS_SETUP=yes
+    # Numbers are based off of divided we run plugin
+    # https://github.com/dimagi/commcare-hq/blob/b4b36a9bcae86523f54dd656c55e503a3a6ca193/corehq/tests/noseplugins/dividedwerun.py#L26-L32
+    - TEST=python NOSE_DIVIDED_WE_RUN=03 JS_SETUP=yes
+    - TEST=python NOSE_DIVIDED_WE_RUN=47 JS_SETUP=yes
+    - TEST=python NOSE_DIVIDED_WE_RUN=8a JS_SETUP=yes
     - TEST=python NOSE_DIVIDED_WE_RUN=bf JS_SETUP=yes
     - TEST=python-sharded
+  global:
+    # TRAVIS_HQ_USERNAME
+    - secure: "LuT0vvsY6RjlEX8Gje74Xl0jcuEfaiN/fOOXpfZd1tf8zC3Xd9E8mNn5vlup/3PBBBv1yIAUmw9LTc03ifWBGzaazqIVAgTfgBoW7XAd8G/lx0/eeZFqheSdpP8wSZwn72Z/XrIhQczFCreZRJHlZA9GopRv7Lfs1SfNEbnMoac="
+    # TRAVIS_HQ_PASSWORD
+    - secure: "GmJzDwP60bUWKzIWnhg4j8TkA/IQsM5Ulx+frkPkrZmLnmLZN5K6cWqruZLl/mB6VFvnuGNBwaYq5ADMD8LpIt8LYlmHZ/zOaE04ti3rOvaOHxG+ncMkloeeke+82ismFZsI/X15F4yawUKR74lnAS5u8BfY2P+Jqko1D+15WKg="
 before_install:
   # get newer version of docker-compose for variable substitution in compose files
   - curl -L https://github.com/docker/compose/releases/download/1.5.2/docker-compose-`uname -s`-`uname -m` > docker-compose
@@ -22,11 +30,13 @@ install:
 before_script:
   - docker version
   - docker-compose version
-script: "scripts/docker test --noinput --stop --verbosity=2 --no-migration-optimizer --divide-depth=1"
+script:
+  # workaround for env vars
+  - export TRAVIS_HQ_USERNAME=$TRAVIS_HQ_USERNAME
+  - export TRAVIS_HQ_PASSWORD=$TRAVIS_HQ_PASSWORD
+  - "scripts/docker test --noinput --stop --verbosity=2 --divide-depth=1"
 after_success:
   # create symlink so coverage report can find source files
   - sudo ln -s $(pwd) /mnt/commcare-hq-ro
-  - coverage report
-  - coveralls
 services:
   - docker

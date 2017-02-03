@@ -2,9 +2,12 @@
     var PasswordModel = function () {
         var self = this;
         self.penalizedWords = ['dimagi', 'commcare', 'hq', 'commcarehq'];
-        self.password = ko.observable('');
+        self.password = ko.observable();
         self.strength = ko.computed(function () {
-            return zxcvbn(self.password(), self.penalizedWords).score;
+            if (self.password()) {
+                return zxcvbn(self.password(), self.penalizedWords).score;
+            }
+            return 0;
         });
         self.color = ko.computed(function () {
             if (self.strength() < 1) {
@@ -29,5 +32,5 @@
     };
 
     var passwordModel = new PasswordModel();
-    $('fieldset').koApplyBindings(passwordModel);
+    $('.check-password').koApplyBindings(passwordModel);
 })();

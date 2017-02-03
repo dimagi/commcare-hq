@@ -39,7 +39,7 @@ class Command(BaseCommand):
 
     args = '<log_path>'
 
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option(
             '--dry-run',
             action='store_true',

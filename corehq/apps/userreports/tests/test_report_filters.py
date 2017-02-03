@@ -1,13 +1,24 @@
 from datetime import datetime, date
-from django.test import SimpleTestCase
+
+from django.http import HttpRequest
+from django.test import SimpleTestCase, TestCase
+from mock import Mock
+
+import settings
 from corehq.apps.reports_core.exceptions import FilterValueException
 from corehq.apps.reports_core.filters import DatespanFilter, ChoiceListFilter, \
-    NumericFilter, DynamicChoiceListFilter, Choice
+    NumericFilter, DynamicChoiceListFilter, Choice, PreFilter
+from corehq.apps.userreports.const import UCR_BACKENDS, UCR_SQL_BACKEND
 from corehq.apps.userreports.exceptions import BadSpecError
+from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE, \
-    CHOICE_DELIMITER, NumericFilterValue, DateFilterValue
+    CHOICE_DELIMITER, NumericFilterValue, DateFilterValue, PreFilterValue
 from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
 from corehq.apps.userreports.reports.filters.specs import ReportFilter
+from corehq.apps.userreports.reports.view import ConfigurableReport
+from corehq.apps.userreports.tasks import rebuild_indicators
+from corehq.apps.userreports.tests.test_view import ConfigurableReportTestMixin
+from corehq.apps.userreports.util import get_indicator_adapter
 from dimagi.utils.dates import DateSpan
 
 
@@ -113,6 +124,207 @@ class DateFilterTestCase(SimpleTestCase):
         self.assertEqual(type(val['my_slug_enddate']), str)
 
 
+class DateFilterDBTest(ConfigurableReportTestMixin, TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(DateFilterDBTest, cls).setUpClass()
+        cls._create_data()
+        cls._create_data_source()
+        cls.report_config = cls._create_report()
+
+    @classmethod
+    def _create_data(cls):
+        cls._new_case({"my_date": date(2017, 1, 1), "my_datetime": datetime(2017, 1, 1, 9)}).save()
+
+    @classmethod
+    def _create_data_source(cls):
+        cls.data_sources = {}
+        cls.adapters = {}
+
+        # this is a hack to have both sql and es backends created in a class
+        # method. alternative would be to have these created on each test run
+        for backend_id in UCR_BACKENDS:
+            config = DataSourceConfiguration(
+                backend_id=backend_id,
+                domain=cls.domain,
+                display_name=cls.domain,
+                referenced_doc_type='CommCareCase',
+                table_id="foo",
+                configured_filter={
+                    "type": "boolean_expression",
+                    "operator": "eq",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "type"
+                    },
+                    "property_value": cls.case_type,
+                },
+                configured_indicators=[
+                    {
+                        "type": "expression",
+                        "expression": {
+                            "type": "property_name",
+                            "property_name": 'my_date'
+                        },
+                        "column_id": 'date_as_string',
+                        "display_name": 'date_as_string',
+                        "datatype": "string"
+                    },
+                    {
+                        "type": "expression",
+                        "expression": {
+                            "type": "property_name",
+                            "property_name": 'my_date'
+                        },
+                        "column_id": 'date_as_date',
+                        "datatype": "date"
+                    },
+                    {
+                        "type": "expression",
+                        "expression": {
+                            "type": "property_name",
+                            "property_name": "my_datetime",
+                        },
+                        "column_id": "datetime_as_datetime",
+                        "datatype": "datetime"
+                    }
+                ],
+            )
+            config.validate()
+            config.save()
+            rebuild_indicators(config._id)
+            adapter = get_indicator_adapter(config)
+            adapter.refresh_table()
+            cls.data_sources[backend_id] = config
+            cls.adapters[backend_id] = adapter
+
+    @classmethod
+    def _create_report(cls):
+        backend_id = settings.OVERRIDE_UCR_BACKEND or UCR_SQL_BACKEND
+        report_config = ReportConfiguration(
+            domain=cls.domain,
+            config_id=cls.data_sources[backend_id]._id,
+            title='foo',
+            filters=[
+                {
+                    "type": "date",
+                    "field": "date_as_date",
+                    "slug": "date_as_date_filter",
+                    "display": "Date as Date filter"
+                },
+                {
+                    "type": "date",
+                    "field": "date_as_string",
+                    "slug": "date_as_string_filter",
+                    "display": "Date as String filter",
+                    "compare_as_string": True,
+                },
+                {
+                    "type": "date",
+                    "field": "datetime_as_datetime",
+                    "slug": "datetime_as_datetime_filter",
+                    "display": "Datetime as Datetime filter",
+                    "compare_as_string": False,
+                }
+            ],
+            aggregation_columns=['doc_id'],
+            columns=[{
+                # We don't really care what columns are returned, we're testing the filters
+                "type": "field",
+                "display": "doc_id",
+                "field": 'doc_id',
+                'column_id': 'doc_id',
+                'aggregation': 'simple'
+            }],
+        )
+        report_config.save()
+        return report_config
+
+    def _create_view(self, filter_values):
+        request = HttpRequest()
+        request.method = 'GET'
+        request.GET.update(filter_values)
+        view = ConfigurableReport(request=request)
+        view._domain = self.domain
+        view._lang = "en"
+        view._report_config_id = self.report_config._id
+        return view
+
+    @classmethod
+    def tearDownClass(cls):
+        for key, adapter in cls.adapters.iteritems():
+            adapter.drop_table()
+        cls._delete_everything()
+        super(DateFilterDBTest, cls).tearDownClass()
+
+    def docs_returned(self, export_table):
+        rows = export_table[0][1]
+        return len(rows) - 1  # the first row is the headers, not a document
+
+    def test_standard_date_filter(self):
+        # Confirm that date filters include rows that match the start and/or end date.
+        view = self._create_view({
+            "date_as_date_filter": "2017-01-01 to 2017-01-01",
+            "date_as_date_filter-start": "2017-01-01",
+            "date_as_date_filter-end": "2017-01-01",
+        })
+        self.assertEqual(1, self.docs_returned(view.export_table))
+
+    def test_string_date_filter(self):
+        # Confirm that "compare_as_string" date filters include rows that match the start and/ord end date
+        view = self._create_view({
+            "date_as_string_filter": "2017-01-01 to 2017-01-01",
+            "date_as_string_filter-start": "2017-01-01",
+            "date_as_string_filter-end": "2017-01-01",
+        })
+        self.assertEqual(1, self.docs_returned(view.export_table))
+
+    def test_standard_datetime_filter(self):
+        view = self._create_view({
+            "datetime_as_datetime_filter": "2017-01-01 to 2017-01-01",
+            "datetime_as_datetime_filter-start": "2017-01-01",
+            "datetime_as_datetime_filter-end": "2017-01-01",
+        })
+        self.assertEqual(1, self.docs_returned(view.export_table))
+
+
+class QuarterFilterTestCase(SimpleTestCase):
+
+    def test_date_filter(self):
+        def get_query_value(year, quarter):
+            spec = {
+                "type": "quarter",
+                "field": "modified_on_field",
+                "slug": "my_slug",
+                "display": "date Modified",
+            }
+            reports_core_filter = ReportFilterFactory.from_spec(spec)
+            reports_core_value = reports_core_filter.get_value({
+                "my_slug-year": year,
+                "my_slug-quarter": quarter
+            })
+
+            filter = ReportFilter.wrap(spec)
+            return filter.create_filter_value(reports_core_value).to_sql_values()
+
+        value = get_query_value(2016, 1)
+        self.assertEqual(value['my_slug_startdate'], datetime(2016, 1, 1))
+        self.assertEqual(value['my_slug_enddate'], datetime(2016, 4, 1))
+
+        value = get_query_value(2016, 2)
+        self.assertEqual(value['my_slug_startdate'], datetime(2016, 4, 1))
+        self.assertEqual(value['my_slug_enddate'], datetime(2016, 7, 1))
+
+        value = get_query_value(2016, 3)
+        self.assertEqual(value['my_slug_startdate'], datetime(2016, 7, 1))
+        self.assertEqual(value['my_slug_enddate'], datetime(2016, 10, 1))
+
+        value = get_query_value(2016, 4)
+        self.assertEqual(value['my_slug_startdate'], datetime(2016, 10, 1))
+        self.assertEqual(value['my_slug_enddate'], datetime(2017, 1, 1))
+
+
 class NumericFilterTestCase(SimpleTestCase):
 
     def test_numeric_filter(self):
@@ -137,6 +349,145 @@ class NumericFilterTestCase(SimpleTestCase):
         NumericFilterValue(filter, {'operator': '<', 'operand': 3})
         with self.assertRaises(AssertionError):
             NumericFilterValue(filter, {'operator': 'sql injection', 'operand': 3})
+
+
+class PreFilterTestCase(SimpleTestCase):
+
+    def test_pre_filter(self):
+        filter_ = ReportFilterFactory.from_spec({
+            'type': 'pre',
+            'field': 'at_risk_field',
+            'slug': 'at_risk_slug',
+            'datatype': 'string',
+            'pre_value': 'true'
+        })
+        self.assertEqual(type(filter_), PreFilter)
+        self.assertEqual(filter_.name, 'at_risk_slug')
+        self.assertEqual(filter_.default_value(), {'operator': '=', 'operand': 'true'})
+
+    def test_pre_filter_value(self):
+        pre_value = 'yes'
+        filter_ = ReportFilter.wrap({
+            'type': 'pre',
+            'field': 'at_risk_field',
+            'slug': 'at_risk_slug',
+            'datatype': 'string',
+            'pre_value': pre_value
+        })
+        filter_value = PreFilterValue(filter_, {'operand': pre_value})
+        self.assertEqual(filter_value.to_sql_values(), {'at_risk_slug': 'yes'})
+
+    def test_pre_filter_value_null(self):
+        column = Mock()
+        column.name = 'at_risk_field'
+        column.is_.return_value = 'foo'
+        table = Mock()
+        table.c = [column]
+
+        pre_value = None
+        filter_ = ReportFilter.wrap({
+            'type': 'pre',
+            'field': 'at_risk_field',
+            'slug': 'at_risk_slug',
+            'datatype': 'string',
+            'pre_value': pre_value
+        })
+        filter_value = PreFilterValue(filter_, {'operand': pre_value})
+        self.assertEqual(filter_value.to_sql_values(), {})
+        self.assertEqual(filter_value.to_sql_filter().build_expression(table), 'foo')
+
+    def test_pre_filter_value_array(self):
+        column = Mock()
+        column.name = 'at_risk_field'
+        column.in_.return_value = 'foo'
+        table = Mock()
+        table.c = [column]
+
+        pre_value = ['yes', 'maybe']
+        filter_ = ReportFilter.wrap({
+            'type': 'pre',
+            'field': 'at_risk_field',
+            'slug': 'at_risk_slug',
+            'datatype': 'array',
+            'pre_value': pre_value
+        })
+        filter_value = PreFilterValue(filter_, {'operand': pre_value})
+        self.assertEqual(filter_value.to_sql_values(), {'at_risk_slug_0': 'yes', 'at_risk_slug_1': 'maybe'})
+        self.assertEqual(filter_value.to_sql_filter().build_expression(table), 'foo')
+
+    def test_pre_filter_operator(self):
+        value = {'operator': '<=', 'operand': '99'}
+        filter_ = ReportFilterFactory.from_spec({
+            'type': 'pre',
+            'field': 'risk_indicator_field',
+            'slug': 'risk_indicator_slug',
+            'datatype': 'integer',
+            'pre_value': value['operand'],
+            'pre_operator': value['operator'],
+        })
+        self.assertEqual(type(filter_), PreFilter)
+        self.assertEqual(filter_.default_value(), {'operator': '<=', 'operand': 99})  # operand will be coerced
+
+    def test_pre_filter_invalid_operator(self):
+        value = {'operator': 'in', 'operand': 'no'}  # "in" is invalid for scalar operand
+        filter_ = ReportFilter.wrap({
+            'type': 'pre',
+            'field': 'at_risk_field',
+            'slug': 'at_risk_slug',
+            'datatype': 'string',
+            'pre_value': value['operand'],
+            'pre_operator': value['operator'],
+        })
+        filter_value = PreFilterValue(filter_, value)
+        with self.assertRaises(TypeError):
+            filter_value.to_sql_filter()
+
+    def test_pre_filter_between_operator(self):
+        column = Mock()
+        column.name = 'dob_field'
+        column.between.return_value = 'foo'
+        table = Mock()
+        table.c = [column]
+
+        value = {'operator': 'between', 'operand': ['2017-03-13', '2017-04-11']}
+        filter_ = ReportFilter.wrap({
+            'type': 'pre',
+            'field': 'dob_field',
+            'slug': 'dob_slug',
+            'datatype': 'date',
+            'pre_value': value['operand'],
+            'pre_operator': value['operator'],
+        })
+        filter_value = PreFilterValue(filter_, value)
+        self.assertEqual(filter_value.to_sql_values(), {'dob_slug_0': '2017-03-13', 'dob_slug_1': '2017-04-11'})
+        self.assertEqual(filter_value.to_sql_filter().build_expression(table), 'foo')
+
+    def test_pre_filter_dyn_operator(self):
+        from corehq.apps.reports.daterange import get_daterange_start_end_dates
+
+        column = Mock()
+        column.name = 'dob_field'
+        column.between.return_value = 'foo'
+        table = Mock()
+        table.c = [column]
+
+        start_date, end_date = get_daterange_start_end_dates('lastmonth')
+
+        value = {'operator': 'lastmonth', 'operand': [None]}
+        filter_ = ReportFilter.wrap({
+            'type': 'pre',
+            'field': 'dob_field',
+            'slug': 'dob_slug',
+            'datatype': 'array',
+            'pre_value': value['operand'],
+            'pre_operator': value['operator'],
+        })
+        filter_value = PreFilterValue(filter_, value)
+        self.assertEqual(filter_value.to_sql_values(), {
+            'dob_slug_0': str(start_date),
+            'dob_slug_1': str(end_date),
+        })
+        self.assertEqual(filter_value.to_sql_filter().build_expression(table), 'foo')
 
 
 class ChoiceListFilterTestCase(SimpleTestCase):

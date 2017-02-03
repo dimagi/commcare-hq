@@ -9,8 +9,11 @@ from jsonobject.base import DefaultProperty
 from corehq.apps.userreports.indicators.specs import DataTypeProperty
 from corehq.apps.userreports.reports.filters.choice_providers import DATA_SOURCE_COLUMN
 from corehq.apps.userreports.reports.filters.values import (
-    DateFilterValue, NumericFilterValue, ChoiceListFilterValue
-)
+    PreFilterValue,
+    ChoiceListFilterValue,
+    DateFilterValue,
+    NumericFilterValue,
+    QuarterFilterValue)
 from corehq.apps.userreports.specs import TypeProperty
 
 
@@ -29,8 +32,10 @@ class ReportFilter(JsonObject):
 
     def create_filter_value(self, value):
         return {
+            'quarter': QuarterFilterValue,
             'date': DateFilterValue,
             'numeric': NumericFilterValue,
+            'pre': PreFilterValue,
             'choice_list': ChoiceListFilterValue,
             'dynamic_choice_list': ChoiceListFilterValue,
         }[self.type](self, value)
@@ -49,7 +54,10 @@ class FilterSpec(JsonObject):
     This is the spec for a report filter - a thing that should show up as a UI filter element
     in a report (like a date picker or a select list).
     """
-    type = StringProperty(required=True, choices=['date', 'numeric', 'choice_list', 'dynamic_choice_list'])
+    type = StringProperty(
+        required=True,
+        choices=['date', 'quarter', 'numeric', 'pre', 'choice_list', 'dynamic_choice_list']
+    )
     # this shows up as the ID in the filter HTML.
     slug = StringProperty(required=True)
     field = StringProperty(required=True)  # this is the actual column that is queried
@@ -62,6 +70,11 @@ class FilterSpec(JsonObject):
 
 class DateFilterSpec(FilterSpec):
     compare_as_string = BooleanProperty(default=False)
+
+
+class QuarterFilterSpec(FilterSpec):
+    type = TypeProperty('quarter')
+    show_all = BooleanProperty(default=False)
 
 
 class ChoiceListFilterSpec(FilterSpec):
@@ -83,6 +96,12 @@ class DynamicChoiceListFilterSpec(FilterSpec):
     @property
     def choices(self):
         return []
+
+
+class PreFilterSpec(FilterSpec):
+    type = TypeProperty('pre')
+    pre_value = DefaultProperty(required=True)
+    pre_operator = StringProperty(default=None, required=False)
 
 
 class NumericFilterSpec(FilterSpec):

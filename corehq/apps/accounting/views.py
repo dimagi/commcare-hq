@@ -62,7 +62,7 @@ from corehq.apps.accounting.async_handlers import (
 )
 from corehq.apps.accounting.models import (
     SoftwareProductType, Invoice, WireInvoice, BillingAccount, CreditLine, Subscription,
-    SoftwarePlanVersion, SoftwarePlan, CreditAdjustment
+    SoftwarePlanVersion, SoftwarePlan, CreditAdjustment, DefaultProductPlan,
 )
 from corehq.apps.accounting.user_text import PricingTable
 from corehq.apps.accounting.utils import (
@@ -186,7 +186,7 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
             'subscription_list': [
                 (sub, Invoice.objects.filter(subscription=sub).latest('date_due').date_due
                       if Invoice.objects.filter(subscription=sub).count() else 'None on record',
-                ) for sub in Subscription.objects.filter(account=self.account)
+                ) for sub in Subscription.objects.filter(account=self.account).order_by('subscriber__domain', 'date_end')
             ],
         }
 
@@ -450,7 +450,8 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
         return self.get(request, *args, **kwargs)
 
     def cancel_subscription(self):
-        self.subscription.cancel_subscription(
+        self.subscription.change_plan(
+            new_plan_version=DefaultProductPlan.get_default_plan_version(),
             note=self.cancel_form.cleaned_data['note'],
             web_user=self.request.user.username,
         )
@@ -546,8 +547,8 @@ class EditSoftwarePlanView(AccountingSectionView, AsyncHandlerMixin):
             'role_slug': plan_version.role.slug if plan_version else None,
         }
         if self.request.method == 'POST' and 'update_version' in self.request.POST:
-            return SoftwarePlanVersionForm(self.plan, self.plan.get_version(), self.request.POST, initial=initial)
-        return SoftwarePlanVersionForm(self.plan, self.plan.get_version(), initial=initial)
+            return SoftwarePlanVersionForm(self.plan, plan_version, self.request.POST, initial=initial)
+        return SoftwarePlanVersionForm(self.plan, plan_version, initial=initial)
 
     @property
     def page_context(self):
@@ -576,14 +577,12 @@ class EditSoftwarePlanView(AccountingSectionView, AsyncHandlerMixin):
         if 'update_version' in request.POST:
             if self.software_plan_version_form.is_valid():
                 self.software_plan_version_form.save(request)
-                return HttpResponseRedirect(self.page_url)
             else:
                 for errors in self.software_plan_version_form.errors:
                     for error in errors:
                         messages.error(request, error)
         elif self.plan_info_form.is_valid():
-            self.plan_info_form.update_plan(self.plan)
-            messages.success(request, "The %s Software Plan was successfully updated." % self.plan.name)
+            self.plan_info_form.update_plan(request, self.plan)
         return self.get(request, *args, **kwargs)
 
 

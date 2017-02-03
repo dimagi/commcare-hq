@@ -78,7 +78,11 @@ def restore_cache_key(prefix, user_id, version=None):
 
 def stream_response(payload, headers=None, status=200):
     try:
-        response = StreamingHttpResponse(FileWrapper(payload), content_type="text/xml", status=status)
+        response = StreamingHttpResponse(
+            FileWrapper(payload),
+            content_type="text/xml; charset=utf-8",
+            status=status
+        )
         if headers:
             for header, value in headers.items():
                 response[header] = value
@@ -231,7 +235,7 @@ class AsyncRestoreResponse(object):
         self.task = task
         self.username = username
 
-        task_info = self.task.info if self.task.info else {}
+        task_info = self.task.info if self.task.info and isinstance(self.task.info, dict) else {}
         self.progress = {
             'done': task_info.get('done', 0),
             'total': task_info.get('total', 0),
@@ -349,6 +353,10 @@ class RestoreParams(object):
         self.state_hash = state_hash
         self.include_item_count = include_item_count
         self.app = app
+
+    @property
+    def app_id(self):
+        return self.app._id if self.app else None
 
 
 class RestoreCacheSettings(object):
@@ -501,6 +509,8 @@ class RestoreState(object):
         previous_log_rev = None if self.is_initial else self.last_sync_log._rev
         last_seq = str(get_db().info()["update_seq"])
         new_synclog = SyncLog(
+            domain=self.restore_user.domain,
+            build_id=self.params.app_id,
             user_id=self.restore_user.user_id,
             last_seq=last_seq,
             owner_ids_on_phone=list(self.owner_ids),
@@ -589,8 +599,9 @@ class RestoreConfig(object):
 
     def get_payload(self):
         self.validate()
+        self.delete_cached_payload_if_necessary()
 
-        cached_response = self._get_cached_payload()
+        cached_response = self.get_cached_response()
         if cached_response:
             return cached_response
         # Start new sync
@@ -608,7 +619,7 @@ class RestoreConfig(object):
         self.set_cached_payload_if_necessary(response, self.restore_state.duration)
         return response
 
-    def _get_cached_payload(self):
+    def get_cached_response(self):
         if self.overwrite_cache:
             return CachedResponse(None)
 
@@ -631,20 +642,21 @@ class RestoreConfig(object):
             # start a new task
             task = get_async_restore_payload.delay(self)
             new_task = True
-
             # store the task id in cache
-            self.cache.set(self.async_cache_key, task.id, timeout=None)
-
+            self.cache.set(self.async_cache_key, task.id, timeout=24 * 60 * 60)
         try:
-            # if this is a new task, wait for INITIAL_ASYNC_TIMEOUT in case
-            # this restore completes quickly. otherwise, only wait 1 second for
-            # a response
-            response = task.get(timeout=INITIAL_ASYNC_TIMEOUT_THRESHOLD if new_task else 1)
+            response = task.get(timeout=self._get_task_timeout(new_task))
         except TimeoutError:
             # return a 202 with progress
             response = AsyncRestoreResponse(task, self.restore_user.username)
 
         return response
+
+    def _get_task_timeout(self, new_task):
+        # if this is a new task, wait for INITIAL_ASYNC_TIMEOUT in case
+        # this restore completes quickly. otherwise, only wait 1 second for
+        # a response.
+        return INITIAL_ASYNC_TIMEOUT_THRESHOLD if new_task else 1
 
     def _generate_restore_response(self, async_task=None):
         """
@@ -687,7 +699,7 @@ class RestoreConfig(object):
                 e.message,
                 ResponseNature.OTA_RESTORE_ERROR
             )
-            return HttpResponse(response, content_type="text/xml",
+            return HttpResponse(response, content_type="text/xml; charset=utf-8",
                                 status=412)  # precondition failed
 
     def set_cached_payload_if_necessary(self, resp, duration):
@@ -719,3 +731,7 @@ class RestoreConfig(object):
 
     def _set_cache_in_redis(self, cache_payload):
         self.cache.set(self._initial_cache_key, cache_payload, self.cache_timeout)
+
+    def delete_cached_payload_if_necessary(self):
+        if self.overwrite_cache and self.cache.get(self._initial_cache_key):
+            self.cache.delete(self._initial_cache_key)

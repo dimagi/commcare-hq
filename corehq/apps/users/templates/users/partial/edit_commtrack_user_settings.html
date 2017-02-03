@@ -7,21 +7,13 @@
     {% csrf_token %}
     <input type="hidden" name="form_type" value="commtrack" />
     <fieldset>
-        {% if commtrack_enabled %}
-        <legend>{% trans 'CommCare Supply Settings' %}</legend>
-        {% else %}
         <legend>{% trans 'Organization Settings' %}</legend>
-        {% endif %}
         {% crispy commtrack.update_form %}
     </fieldset>
     <div class="form-actions">
         <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
             <button type="submit" class="btn btn-primary disable-on-submit">
-                {% if commtrack_enabled %}
-                {% trans 'Update CommCare Supply Settings' %}
-                {% else %}
                 {% trans 'Update Location Settings' %}
-                {% endif %}
             </button>
         </div>
     </div>

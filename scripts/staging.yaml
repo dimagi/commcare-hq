@@ -45,29 +45,37 @@
 trunk: master
 name: autostaging
 branches:
-  - addtoblock-js-inline  # Danny 7/20
-  - reduce-all_forms-view  # Danny 7/20
-  - mk-231812-j2me-config # Manish 7/15
-  - hqDefine-users  # danny 6/7
-  - vellum-staging # J$ 11/13
-  - dm/xform-blobs  # daniel 5/23
-  - nc/report-builder # Noah 6/29
+  - general-credits-sr # sreddy 1/10
+  - vellum-staging # J$ 11/13  
+  - django19
+  - bmb/currentind-string # Biyeun 11/12
+  - nh/new_rb  # Norman 11/22
+  - nc/exports-with-conflict-res-branch  # Noah 12/11
+  - mk-243862-locations-submit-history # MK 1/9
+  - mk-243862-reassign-cases-manage-forms # MK 1/9
+  - es/index-fixtures+mk-243262-new-location-fixture
+  - mk-243262-new-location-fixture # MK 1/16
+  - zapier_action_mods # NC 1/24
+  - np/phonenumbers # NP 1/18
+  - dm/julies-billing-gid  # daniel 2/1
+  - np/3/update-dropbox # NP 2/3
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
     branches:
-      - 2.28-jars
+      - commcare_2.32 # WSP 1/12
   submodules/formtranslate-src:
-    # let's leave this here even when empty
-    # just so we always get latest master
-    branches:
-      - 2.28-jars
+    branches: []
   submodules/django-digest-src:
     branches: []
   submodules/dimagi-utils-src:
     branches: []
   submodules/django-prbac-src:
     branches: []
+  corehq/apps/prelogin:
+    branches: []
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
+    branches: []
+  deployment/commcare-hq-deploy:
     branches: []

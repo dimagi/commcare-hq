@@ -67,11 +67,9 @@
                                 </td>
                                 <td>
                                     <input type="checkbox" data-bind="checked: remove, visible: !is_new()"/>
-                                    <!-- ko if:is_new -->
-                                    <button class="btn btn-danger" data-bind="click: remove_if_new " style="vertical-align: top;">
+                                    <button class="btn btn-danger" data-bind="click: remove_if_new, visible: is_new " style="vertical-align: top;">
                                         <i class="fa fa-trash"></i>
                                     </button>
-                                    <!-- /ko -->
                                 </td>
                                 <!-- /ko -->
                                 <!-- ko if: with_props -->

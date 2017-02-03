@@ -61,8 +61,7 @@ class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):
             DataTablesColumn('Attempts (current / total)', sortable=True),
             DataTablesColumn('Error type', sortable=True),
             DataTablesColumn('Doc type', sortable=False),
-            DataTablesColumn('Doc date', sortable=False),
-            DataTablesColumn('Domain(s)', sortable=False),
+            DataTablesColumn('Domain', sortable=False),
             DataTablesColumn('Select', sortable=False),
         )
 
@@ -128,6 +127,7 @@ class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):
         next_deploy = _('Next Deploy')
         errors = query[self.pagination.start:(self.pagination.start+self.pagination.count)]
         for error in errors:
+            metadata = error.change_metadata or {}
             yield [
                 self.make_search_link(error),
                 error.pillow.split('.')[-1],
@@ -135,9 +135,8 @@ class PillowErrorsReport(GenericTabularReport, DatespanMixin, GetParamsMixin):
                 naturaltime(error.date_next_attempt) if error.has_next_attempt() else next_deploy,
                 '{0} / {1}'.format(error.current_attempt, error.total_attempts),
                 error.error_type,
-                error.doc_type,
-                safe_format_date(error.doc_date),
-                error.domains,
+                metadata.get('document_type'),
+                metadata.get('domain'),
                 self.make_checkbox(error)
             ]
 

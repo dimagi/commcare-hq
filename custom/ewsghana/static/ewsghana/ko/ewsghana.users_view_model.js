@@ -84,7 +84,7 @@ function UsersViewModel(sms_users, district_in_charges, location_id, submit_url)
     };
 
     self.save = function() {
-        $('#in_charge_button').attr('disabled', true);
+        $('#in_charge_button').prop('disabled', true);
         $.ajax({
             type: 'POST',
             datatype: 'json',
@@ -103,7 +103,7 @@ function UsersViewModel(sms_users, district_in_charges, location_id, submit_url)
                 });
 
                 $('#configureInCharge').modal('toggle');
-                $('#in_charge_button').attr('disabled', false);
+                $('#in_charge_button').prop('disabled', false);
             }
         });
     };

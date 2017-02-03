@@ -16,7 +16,7 @@
     {% endif %}
     </select>
 </div>
-<script type="text/javascript">
+<script>
     $(function () {
         $('#{{ select.cssId }}').parent().koApplyBindings({
             select_params: {{ select.options|JSON }},

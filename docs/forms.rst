@@ -238,7 +238,7 @@ Your knockout code in `form.person.js`:
         });
 
         self.init = function () {
-            var pets = $.parseJSON(initial.pets || '[]');
+            var pets = JSON.parse(initial.pets || '[]');
             self.petObjects(_.map(pets, function (initial_data) {
                 return new Pet(initial_data);
             }));

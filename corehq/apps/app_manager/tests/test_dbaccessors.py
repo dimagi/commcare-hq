@@ -9,6 +9,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_build_doc_by_version,
     get_built_app_ids_for_app_id,
     get_built_app_ids_with_submissions_for_app_id,
+    get_built_app_ids_with_submissions_for_app_ids_and_versions,
     get_current_app,
     get_latest_build_doc,
     get_latest_app_ids_and_versions,
@@ -21,7 +22,6 @@ from corehq.util.test_utils import DocTestMixin
 
 class DBAccessorsTest(TestCase, DocTestMixin):
     domain = 'app-manager-dbaccessors-test'
-    dependent_apps = ['corehq.apps.domain', 'corehq.apps.tzmigration', 'corehq.couchapps']
     maxDiff = None
 
     @classmethod
@@ -127,6 +127,18 @@ class DBAccessorsTest(TestCase, DocTestMixin):
         )
         self.assertEqual(len(app_ids), 0)  # Should skip the one that has_submissions
 
+    def test_get_built_app_ids_with_submissions_for_app_ids_and_versions(self):
+        app_ids = get_built_app_ids_with_submissions_for_app_ids_and_versions(
+            self.domain,
+            {self.apps[0]._id: self.first_saved_version},
+        )
+        self.assertEqual(len(app_ids), 0)  # Should skip the one that has_submissions
+
+        app_ids = get_built_app_ids_with_submissions_for_app_ids_and_versions(
+            self.domain,
+        )
+        self.assertEqual(len(app_ids), 1)  # Should get the one that has_submissions
+
     def test_get_all_app_ids_for_domain(self):
         app_ids = get_all_app_ids(self.domain)
         self.assertEqual(len(app_ids), 3)
@@ -170,9 +182,9 @@ class TestAppGetters(TestCase):
         app = Application.wrap(app_doc)  # app is v1
 
         app.save()  # app is v2
-        v2_build = app.make_build()
-        v2_build.is_released = True
-        v2_build.save()  # There is a starred build at v2
+        cls.v2_build = app.make_build()
+        cls.v2_build.is_released = True
+        cls.v2_build.save()  # There is a starred build at v2
 
         app.save()  # app is v3
         app.make_build().save()  # There is a build at v3
@@ -190,6 +202,10 @@ class TestAppGetters(TestCase):
 
     def test_get_current_app(self):
         app_doc = get_current_app(self.domain, self.app_id)
+        self.assertEqual(app_doc['version'], 4)
+
+    def test_latest_saved_from_build(self):
+        app_doc = get_app(self.domain, self.v2_build._id, latest=True, target='save')
         self.assertEqual(app_doc['version'], 4)
 
     def test_get_app_latest_released_build(self):

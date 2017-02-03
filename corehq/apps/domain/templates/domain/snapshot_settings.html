@@ -12,7 +12,7 @@
         });
     </script>
 
-    <script type="text/javascript">
+    <script>
         $(function() {
             $('[data-target="#contentDistributionAgreement"]').click(function() {
                 var new_action = $(this).attr('data-action');
@@ -20,7 +20,7 @@
             });
         });
     </script>
-    <script type="text/javascript">
+    <script>
         $(function() {
             $('#toggle-snapshots').click(function() {
                 if ($(this).text() === 'Show previous versions') {
@@ -40,7 +40,7 @@
             return false;
         }
 
-        $(document).ready(function() {
+        $(function() {
             {% for snapshot in snapshots %}
                 $('#publish_{{ snapshot.name }}').click(function() {
                     ga_track_event('Exchange', 'Publish Previous Version', '{{ snapshot.name }}');

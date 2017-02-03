@@ -3,14 +3,14 @@ from collections import namedtuple
 import os
 from xml.sax.saxutils import escape
 
-from django.utils.translation import ugettext_lazy as _
 from eulxml.xmlmap.core import load_xmlobject_from_string
+from lxml import etree
 
 from corehq.apps.app_manager.const import RETURN_TO
 from corehq.apps.app_manager.id_strings import callout_header_locale
 from corehq.apps.app_manager.suite_xml.const import FIELD_TYPE_LEDGER
 from corehq.apps.app_manager.suite_xml.contributors import SectionContributor
-from corehq.apps.app_manager.suite_xml.post_process.instances import EntryInstances
+from corehq.apps.app_manager.suite_xml.post_process.instances import get_all_instances_referenced_in_xpaths
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.app_manager.suite_xml.xml_models import (
     Action,
@@ -34,9 +34,10 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Xpath,
 )
 from corehq.apps.app_manager.suite_xml.features.scheduler import schedule_detail_variables
-from corehq.apps.app_manager.util import create_temp_sort_column, module_offers_search
+from corehq.apps.app_manager.util import create_temp_sort_column, module_offers_search,\
+    get_sort_and_sort_only_columns
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.exceptions import SuiteError, SuiteValidationError
+from corehq.apps.app_manager.exceptions import SuiteError
 from corehq.apps.app_manager.xpath import session_var, XPath
 from dimagi.utils.decorators.memoized import memoized
 
@@ -85,7 +86,7 @@ class DetailContributor(SectionContributor):
                                     if d:
                                         r.append(d)
                         if detail.persist_case_context and not detail.persist_tile_on_forms:
-                            d = self._get_persistent_case_context_detail(module)
+                            d = self._get_persistent_case_context_detail(module, detail.persistent_case_context_xml)
                             r.append(d)
                 if module.fixture_select.active:
                     d = self._get_fixture_detail(module)
@@ -100,6 +101,7 @@ class DetailContributor(SectionContributor):
         """
         from corehq.apps.app_manager.detail_screen import get_column_generator
         d = Detail(id=id, title=title, nodeset=nodeset)
+        self._add_custom_variables(detail, d)
         if tabs:
             tab_spans = detail.get_tab_spans()
             for tab in tabs:
@@ -165,6 +167,18 @@ class DetailContributor(SectionContributor):
             else:
                 # only yield the Detail if it has Fields
                 return d
+
+    def _add_custom_variables(self, detail, d):
+        custom_variables = detail.custom_variables
+        if custom_variables:
+            custom_variable_elements = [
+                variable for variable in
+                etree.fromstring("<variables>{}</variables>".format(custom_variables))
+            ]
+            d.variables.extend([
+                load_xmlobject_from_string(etree.tostring(e), xmlclass=DetailVariable)
+                for e in custom_variable_elements
+            ])
 
     def _get_lookup_element(self, detail, module):
         if detail.lookup_display_results:
@@ -253,12 +267,13 @@ class DetailContributor(SectionContributor):
             stack=Stack()
         )
         frame = PushFrame()
+        frame.add_mark()
         frame.add_command(XPath.string(id_strings.search_command(module)))
         action.stack.add_frame(frame)
         return action
 
     @staticmethod
-    def _get_persistent_case_context_detail(module):
+    def _get_persistent_case_context_detail(module, xml):
         return Detail(
             id=id_strings.persistent_case_context_detail(module),
             title=Text(),
@@ -266,13 +281,13 @@ class DetailContributor(SectionContributor):
                 style=Style(
                     horz_align="center",
                     font_size="large",
-                    grid_height=2,
+                    grid_height=1,
                     grid_width=12,
                     grid_x=0,
                     grid_y=0,
                 ),
                 header=Header(text=Text()),
-                template=Template(text=Text(xpath_function="case_name")),
+                template=Template(text=Text(xpath_function=xml)),
             )]
         )
 
@@ -366,21 +381,15 @@ def get_detail_column_infos(detail, include_sort):
     else:
         sort_elements = get_default_sort_elements(detail)
 
-    # order is 1-indexed
-    sort_elements = {s.field: (s, i + 1)
-                     for i, s in enumerate(sort_elements)}
+    sort_only, sort_columns = get_sort_and_sort_only_columns(detail, sort_elements)
+
     columns = []
     for column in detail.get_columns():
-        sort_element, order = sort_elements.pop(column.field, (None, None))
+        sort_element, order = sort_columns.pop(column.field, (None, None))
         columns.append(DetailColumnInfo(column, sort_element, order))
 
-    # sort elements is now populated with only what's not in any column
-    # add invisible columns for these
-    sort_only = sorted(sort_elements.items(),
-                       key=lambda (field, (sort_element, order)): order)
-
-    for field, (sort_element, order) in sort_only:
-        column = create_temp_sort_column(field)
+    for field, sort_element, order in sort_only:
+        column = create_temp_sort_column(sort_element, order)
         columns.append(DetailColumnInfo(column, sort_element, order))
     return columns
 
@@ -406,7 +415,7 @@ def get_instances_for_module(app, module, additional_xpaths=None):
     for detail_id in detail_ids:
         xpaths.update(details_by_id[detail_id].get_all_xpaths())
 
-    instances, _ = EntryInstances.get_required_instances(xpaths)
+    instances, _ = get_all_instances_referenced_in_xpaths(app.domain, xpaths)
     return instances
 
 

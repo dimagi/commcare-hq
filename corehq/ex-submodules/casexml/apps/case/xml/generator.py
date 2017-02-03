@@ -2,6 +2,14 @@ from casexml.apps.case.xml import V1, V2, V3, check_version, V2_NAMESPACE
 from xml.etree import ElementTree
 import logging
 from dimagi.utils.parsing import json_format_datetime, json_format_date
+from dateutil.parser import parse as parse_datetime
+
+
+def datetime_to_xml_string(datetime_string):
+    if isinstance(datetime_string, basestring):
+        return datetime_string
+
+    return json_format_datetime(datetime_string)
 
 
 def safe_element(tag, text=None):
@@ -16,7 +24,13 @@ def safe_element(tag, text=None):
 
 
 def date_to_xml_string(date):
-    return json_format_date(date) if date else ''
+    if not date:
+        return ''
+
+    if isinstance(date, basestring):
+        date = parse_datetime(date)
+
+    return json_format_date(date)
 
 
 def get_dynamic_element(key, val):
@@ -99,7 +113,7 @@ class V1CaseXMLGenerator(CaseXMLGeneratorBase):
         root.append(safe_element("case_id", self.case.case_id))
         if self.case.modified_on:
             root.append(safe_element("date_modified",
-                                     json_format_datetime(self.case.modified_on)))
+                                     datetime_to_xml_string(self.case.modified_on)))
         return root
 
     def get_case_type_element(self):
@@ -116,6 +130,8 @@ class V1CaseXMLGenerator(CaseXMLGeneratorBase):
     def add_custom_properties(self, element):
         if self.case.owner_id:
             element.append(safe_element('owner_id', self.case.owner_id))
+        if self.case.opened_on:
+            element.append(safe_element('date_opened', date_to_xml_string(self.case.opened_on)))
         super(V1CaseXMLGenerator, self).add_custom_properties(element)
 
     def add_indices(self, element):
@@ -138,7 +154,7 @@ class V2CaseXMLGenerator(CaseXMLGeneratorBase):
             "user_id": self.case.user_id or '',
         }
         if self.case.modified_on:
-            root.attrib["date_modified"] = json_format_datetime(self.case.modified_on)
+            root.attrib["date_modified"] = datetime_to_xml_string(self.case.modified_on)
         return root
 
     def get_case_type_element(self):
@@ -153,6 +169,8 @@ class V2CaseXMLGenerator(CaseXMLGeneratorBase):
     def add_custom_properties(self, element):
         if self.case.external_id:
             element.append(safe_element('external_id', self.case.external_id))
+        if self.case.opened_on:
+            element.append(safe_element("date_opened", date_to_xml_string(self.case.opened_on)))
         super(V2CaseXMLGenerator, self).add_custom_properties(element)
 
     def add_indices(self, element):
@@ -210,9 +228,8 @@ class CaseDBXMLGenerator(V2CaseXMLGenerator):
 
     def add_base_properties(self, element):
         element.append(self.get_case_name_element())
-        element.append(safe_element("date_opened", json_format_datetime(self.case.opened_on)))
         if self.case.modified_on:
-            element.append(safe_element("last_modified", json_format_datetime(self.case.modified_on)))
+            element.append(safe_element("last_modified", datetime_to_xml_string(self.case.modified_on)))
 
     def get_element(self):
         element = self.get_root_element()

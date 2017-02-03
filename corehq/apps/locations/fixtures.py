@@ -2,7 +2,7 @@ from itertools import groupby
 from collections import defaultdict
 from xml.etree.ElementTree import Element
 from casexml.apps.phone.models import OTARestoreUser
-from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.models import SQLLocation, LocationType, LocationFixtureConfiguration
 from corehq import toggles
 
 
@@ -84,7 +84,7 @@ class LocationFixtureProvider(object):
 class HierarchicalLocationSerializer(object):
 
     def get_xml_nodes(self, fixture_id, restore_user, all_locations):
-        if not restore_user.project.uses_locations:
+        if not should_sync_hierarchical_fixture(restore_user.project):
             return []
 
         root_node = Element('fixture', {'id': fixture_id, 'user_id': restore_user.user_id})
@@ -98,10 +98,19 @@ class HierarchicalLocationSerializer(object):
 class FlatLocationSerializer(object):
 
     def get_xml_nodes(self, fixture_id, restore_user, all_locations):
-        if not toggles.FLAT_LOCATION_FIXTURE.enabled(restore_user.domain):
+        if not should_sync_flat_fixture(restore_user.domain):
             return []
+        all_types = LocationType.objects.filter(domain=restore_user.domain).values_list(
+            'code', flat=True
+        )
+        location_type_attrs = ['{}_id'.format(t) for t in all_types if t is not None]
+        attrs_to_index = location_type_attrs + ['id', 'type']
 
-        root_node = Element('fixture', {'id': fixture_id, 'user_id': restore_user.user_id})
+        return [self._get_schema_node(fixture_id, attrs_to_index),
+                self._get_fixture_node(fixture_id, restore_user, all_locations, location_type_attrs)]
+
+    def _get_fixture_node(self, fixture_id, restore_user, all_locations, location_type_attrs):
+        root_node = Element('fixture', {'id': fixture_id, 'user_id': restore_user.user_id, 'indexed': 'true'})
         outer_node = Element('locations')
         root_node.append(outer_node)
         for location in sorted(all_locations.by_id.values(), key=lambda l: l.site_code):
@@ -109,6 +118,8 @@ class FlatLocationSerializer(object):
                 'type': location.location_type.code,
                 'id': location.location_id,
             }
+            attrs.update({attr: '' for attr in location_type_attrs})
+            attrs['{}_id'.format(location.location_type.code)] = location.location_id
             tmp_location = location
             while tmp_location.parent:
                 tmp_location = tmp_location.parent
@@ -118,7 +129,31 @@ class FlatLocationSerializer(object):
             _fill_in_location_element(location_node, location)
             outer_node.append(location_node)
 
-        return [root_node]
+        return root_node
+
+    def _get_schema_node(self, fixture_id, attrs_to_index):
+        indices_node = Element('indices')
+        for index_attr in sorted(attrs_to_index):  # sorted only for tests
+            element = Element('index')
+            element.text = '@{}'.format(index_attr)
+            indices_node.append(element)
+        node = Element('schema', {'id': fixture_id})
+        node.append(indices_node)
+        return node
+
+
+def should_sync_hierarchical_fixture(project):
+    return (
+        project.uses_locations and
+        LocationFixtureConfiguration.for_domain(project.name).sync_hierarchical_fixture
+    )
+
+
+def should_sync_flat_fixture(domain):
+    return (
+        toggles.FLAT_LOCATION_FIXTURE.enabled(domain) and
+        LocationFixtureConfiguration.for_domain(domain).sync_flat_fixture
+    )
 
 
 location_fixture_generator = LocationFixtureProvider(
@@ -135,10 +170,9 @@ def get_all_locations_to_sync(user):
     else:
         all_locations = set()
 
-        user_location = user.sql_location
-        user_locations = set([user_location]) if user_location is not None else set()
+        user_locations = set(user.get_sql_locations(user.domain))
+        # old flagged multi-locations, ToDo remove in next phase
         user_locations |= {location for location in _gather_multiple_locations(user)}
-
         for user_location in user_locations:
             location_type = user_location.location_type
             expand_from = location_type.expand_from or location_type
@@ -153,6 +187,8 @@ def get_all_locations_to_sync(user):
                 for ancestor in expand_from_location.get_ancestors():
                     # We sync all ancestors of the highest location
                     all_locations.add(ancestor)
+
+            all_locations |= _get_include_without_expanding_locations(user.domain, location_type)
 
         return LocationSet(all_locations)
 
@@ -196,6 +232,27 @@ def _get_children(domain, root, expand_to):
         children = children.filter(level__lte=expand_to_level.pop())
 
     return children
+
+
+def _get_include_without_expanding_locations(domain, location_type):
+    """returns all locations set for inclusion along with their ancestors
+    """
+    include_without_expanding = location_type.include_without_expanding
+    if include_without_expanding is not None:
+        # add in other "forced" locations the user should have, along with their ancestors
+        forced_locations = set(SQLLocation.active_objects.filter(
+            domain__exact=domain,
+            location_type=include_without_expanding
+        ))
+        forced_ancestors = {
+            ancestor
+            for location in forced_locations
+            for ancestor in location.get_ancestors()
+        }
+
+        return forced_locations | forced_ancestors
+
+    return set()
 
 
 def _valid_parent_type(location):

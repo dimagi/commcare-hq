@@ -41,7 +41,7 @@ $(function () {
             self._id = ko.observable();
         }
         self.view_link = ko.computed(function(){
-            return TableViewUrl + "?table_id="+self._id();
+            return hqImport('hqwebapp/js/urllib.js').reverse('fixture_interface_dispatcher') + "?table_id=" + self._id();
         }, self);
         self.aboutToDelete = ko.observable(false);
         self.addField = function (data, event, o) {
@@ -100,7 +100,7 @@ $(function () {
         self.save = function () {
             $.ajax({
                 type: self._id() ? (self._destroy ? 'delete' : 'put') : 'post',
-                url: UpdateTableUrl + (self._id() || ''),
+                url: hqImport('hqwebapp/js/urllib.js').reverse('update_lookup_tables') + (self._id() || ''),
                 data: JSON.stringify(self.serialize()),
                 dataType: 'json',
                 error: function(data) {
@@ -138,19 +138,16 @@ $(function () {
                     }
                     self.original_visibility = self.is_global();
                     self.original_tag = self.tag();
-                    var indicesToRemoveAt = [];
+                    var keptFields = [];
                     for (var i = 0; i < self.fields().length; i += 1) {
                         var field = self.fields()[i];
-                        field.original_tag(field.tag());
-                        field.is_new(false);
-                        if (field.remove() == true){
-                            indicesToRemoveAt.push(i);
+                        if (!field.remove()) {
+                            field.original_tag(field.tag());
+                            field.is_new(false);
+                            keptFields.push(field);
                         }
                     }
-                    for (var j = 0; j < indicesToRemoveAt.length; j += 1){
-                        var index = indicesToRemoveAt[j];
-                        self.fields.remove(self.fields()[index]);
-                    }
+                    self.fields(keptFields);
                 }
             });
             self.saveState('saving');
@@ -242,7 +239,7 @@ $(function () {
                 }
                 else {
                     $.each($checkboxes, function() {
-                        $(this).removeProp("checked");
+                        $(this).prop("checked", false);
                     });
                 }
             }
@@ -268,7 +265,7 @@ $(function () {
             if (tables.length > 0){
                 // POST, because a long querystring can overflow the request
                 $.ajax({
-                    url: FixtureDownloadUrl,
+                    url: hqImport('hqwebapp/js/urllib.js').reverse('download_fixtures'),
                     type: 'POST',
                     data: {'table_ids': tables},
                     dataType: 'json',
@@ -344,7 +341,7 @@ $(function () {
         self.loadData = function () {
             self.loading(self.loading() + 3);
             $.ajax({
-                url: DataTypeUrl,
+                url: hqImport('hqwebapp/js/urllib.js').reverse('fixture_data_types'),
                 type: 'get',
                 dataType: 'json',
                 success: function (data) {

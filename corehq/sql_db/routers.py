@@ -1,10 +1,11 @@
 from django.conf import settings
 
-from .config import PartitionConfig
+from .config import partition_config
 
 PROXY_APP = 'sql_proxy_accessors'
 FORM_PROCESSOR_APP = 'form_processor'
 SQL_ACCESSORS_APP = 'sql_accessors'
+ICDS_REPORTS_APP = 'icds_reports'
 
 
 class PartitionRouter(object):
@@ -15,8 +16,7 @@ class PartitionRouter(object):
     def db_for_write(self, model, **hints):
         return db_for_read_write(model)
 
-    def allow_migrate(self, db, model):
-        app_label = model._meta.app_label
+    def allow_migrate(self, db, app_label, model=None, **hints):
         return allow_migrate(db, app_label)
 
 
@@ -27,10 +27,12 @@ class MonolithRouter(object):
 
 
 def allow_migrate(db, app_label):
+    if app_label == ICDS_REPORTS_APP:
+        return hasattr(settings, "ICDS_UCR_DATABASE_ALIAS") and db == settings.ICDS_UCR_DATABASE_ALIAS
+
     if not settings.USE_PARTITIONED_DATABASE:
         return app_label != PROXY_APP
 
-    partition_config = PartitionConfig()
     if app_label == PROXY_APP:
         return db == partition_config.get_proxy_db()
     elif app_label == FORM_PROCESSOR_APP:
@@ -49,8 +51,7 @@ def db_for_read_write(model):
         return 'default'
 
     app_label = model._meta.app_label
-    config = PartitionConfig()
     if app_label == FORM_PROCESSOR_APP:
-        return config.get_proxy_db()
+        return partition_config.get_proxy_db()
     else:
-        return config.get_main_db()
+        return partition_config.get_main_db()

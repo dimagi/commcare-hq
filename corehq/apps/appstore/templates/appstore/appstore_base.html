@@ -183,7 +183,7 @@
                 $wells.height(highest);
             });
         }
-        $(window).load(assure_correct_spacing);
+        $(window).on('load', assure_correct_spacing);
         $(window).resize(assure_correct_spacing);
     </script>
     <script>
@@ -262,7 +262,7 @@
                             </div>
                         {% else %}
                             <div style="text-align: center;">
-                                <img class="app-pic opacity65" src="{% static 'hqstyle/img/commcarehq-icon-large.png' %}" />
+                                <img class="app-pic opacity65" src="{% static 'hqstyle/images/commcarehq-icon-large.png' %}" />
                             </div>
                         {% endif %}
                     </a>

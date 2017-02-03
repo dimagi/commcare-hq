@@ -8,7 +8,9 @@ from corehq.apps.userreports.dbaccessors import get_all_report_configs, \
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import ReportConfiguration, DataSourceConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
-from corehq.apps.userreports.tests.utils import get_sample_report_config
+from corehq.apps.userreports.tests.utils import (
+    get_sample_report_config, mock_datasource_config, mock_sql_backend
+)
 
 
 class ReportConfigurationTest(SimpleTestCase):
@@ -75,7 +77,9 @@ class ReportConfigurationTest(SimpleTestCase):
             configured_charts=[]
         )
         data_source = ReportFactory.from_spec(report_config)
-        self.assertEqual(['doc_id'], data_source.group_by)
+        with mock_sql_backend():
+            with mock_datasource_config():
+                self.assertEqual(['doc_id'], data_source.group_by)
 
     def test_fall_back_display_to_column_id(self):
         config = ReportConfiguration(

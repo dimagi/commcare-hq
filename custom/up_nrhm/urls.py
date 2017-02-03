@@ -1,4 +1,7 @@
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 
-urlpatterns = patterns('custom.up_nrhm.views',
-                       url(r'^asha_af_report/$', 'asha_af_report', name='asha_af_report'),)
+from custom.up_nrhm.views import asha_af_report
+
+urlpatterns = [
+    url(r'^asha_af_report/$', asha_af_report, name='asha_af_report'),
+]

@@ -1,7 +1,7 @@
 from copy import copy
 import urllib
 from datetime import datetime, timedelta
-from corehq.util.spreadsheets.excel import alphanumeric_sort_key
+from corehq.util.workbook_json.excel import alphanumeric_sort_key
 from dimagi.utils.couch.database import iter_docs
 
 from django.template.loader import render_to_string
@@ -422,7 +422,8 @@ def default_nav_link(nav_report, i, report_cls):
 
 
 def get_awcc(group):
-    return group.metadata.get("awc-code") or _('no awcc')
+    metadata = group.metadata or {}
+    return metadata.get("awc-code") or _('no awcc')
 
 
 def url_and_params(urlbase, params):

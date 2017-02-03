@@ -37,7 +37,7 @@ class Migration(migrations.Migration):
                 ('api', models.CharField(max_length=100)),
                 ('limit', models.PositiveIntegerField()),
                 ('offset', models.PositiveIntegerField()),
-                ('location', models.ForeignKey(blank=True, to='locations.SQLLocation', null=True)),
+                ('location', models.ForeignKey(blank=True, to='locations.SQLLocation', null=True, on_delete=models.CASCADE)),
             ],
             options={
                 'abstract': False,

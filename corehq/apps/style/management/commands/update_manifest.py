@@ -1,6 +1,6 @@
 import json
 import os
-from django.core.management.base import LabelCommand
+from django.core.management.base import BaseCommand
 from django.conf import settings
 from dimagi.utils import gitinfo
 from django.core import cache
@@ -16,7 +16,7 @@ class ResourceCompressError(Exception):
     pass
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = "Prints the paths of all the static files"
     args = "save or soft"
 

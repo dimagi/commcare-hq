@@ -23,12 +23,16 @@ from sqlalchemy import types, exc
 from sqlalchemy.exc import ProgrammingError
 
 from corehq.apps.accounting.models import Subscription
+from corehq.apps.analytics.tasks import update_hubspot_properties
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
-from corehq.apps.tour import tours
+from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
+from corehq.apps.userreports.document_stores import get_document_store
+from corehq.apps.userreports.expressions import ExpressionFactory
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
+from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.util import reverse
 from corehq.util.quickcache import quickcache
 from couchexport.export import export_from_tables
@@ -36,6 +40,7 @@ from couchexport.files import Temp
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 
 from corehq import toggles
@@ -45,6 +50,7 @@ from corehq.apps.app_manager.models import Application, Form
 from corehq.apps.app_manager.util import purge_report_from_mobile_ucr
 from corehq.apps.dashboard.models import IconContext, TileConfiguration, Tile
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
+from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq.apps.style.decorators import (
@@ -79,22 +85,32 @@ from corehq.apps.userreports.reports.builder.forms import (
     ConfigureListReportForm,
     ConfigureWorkerReportForm,
     ConfigureMapReportForm)
-from corehq.apps.userreports.reports.filters.choice_providers import ChoiceQueryContext
+from corehq.apps.userreports.reports.filters.choice_providers import (
+    ChoiceQueryContext,
+)
 from corehq.apps.userreports.reports.view import ConfigurableReport
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
-from corehq.apps.userreports.tasks import rebuild_indicators, resume_building_indicators
+from corehq.apps.userreports.tasks import (
+    rebuild_indicators, resume_building_indicators, rebuild_indicators_in_place
+)
 from corehq.apps.userreports.ui.forms import (
     ConfigurableReportEditForm,
     ConfigurableDataSourceEditForm,
     ConfigurableDataSourceFromAppForm,
 )
-from corehq.apps.userreports.util import has_report_builder_access, \
-    has_report_builder_add_on_privilege, add_event, \
-    allowed_report_builder_reports, number_of_report_builder_reports
+from corehq.apps.userreports.util import (
+    add_event,
+    get_indicator_adapter,
+    has_report_builder_access,
+    has_report_builder_add_on_privilege,
+    allowed_report_builder_reports,
+    number_of_report_builder_reports
+)
+from corehq.apps.userreports.reports.util import has_location_filter
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
-from corehq.toggles import REPORT_BUILDER_MAP_REPORTS
 from corehq.util.couch import get_document_or_404
+from pillowtop.dao.exceptions import DocumentNotFoundError
 
 
 def get_datasource_config_or_404(config_id, domain):
@@ -161,10 +177,6 @@ class UserConfigReportsHomeView(BaseUserConfigReportsView):
     urlname = 'configurable_reports_home'
     template_name = 'userreports/configurable_reports_home.html'
     page_title = ugettext_lazy("Reports Home")
-
-    @property
-    def page_context(self):
-        return {}
 
 
 class BaseEditConfigReportView(BaseUserConfigReportsView):
@@ -237,11 +249,7 @@ class ReportBuilderView(BaseDomainView):
     @use_datatables
     def dispatch(self, request, *args, **kwargs):
         if has_report_builder_access(request):
-            report_type = kwargs.get('report_type', None)
-            if report_type != 'map' or toggle_enabled(request, REPORT_BUILDER_MAP_REPORTS):
-                return super(ReportBuilderView, self).dispatch(request, *args, **kwargs)
-            else:
-                raise Http404
+            return super(ReportBuilderView, self).dispatch(request, *args, **kwargs)
         else:
             raise Http404
 
@@ -263,10 +271,8 @@ def paywall_home(domain):
     project = Domain.get_by_name(domain, strict=True)
     if project.requested_report_builder_subscription:
         return reverse(ReportBuilderPaywallActivatingSubscription.urlname, args=[domain])
-    elif project.requested_report_builder_trial:
-        return reverse(ReportBuilderPaywallActivatingTrial.urlname, args=[domain])
     else:
-        return reverse(ReportBuilderPaywall.urlname, args=[domain])
+        return reverse(ReportBuilderPaywallPricing.urlname, args=[domain])
 
 
 class ReportBuilderPaywallBase(BaseDomainView):
@@ -293,36 +299,6 @@ class ReportBuilderPaywallBase(BaseDomainView):
     def plan_name(self):
         plan_version, _ = Subscription.get_subscribed_plan_by_domain(self.domain)
         return plan_version.plan.name
-
-
-class ReportBuilderPaywall(ReportBuilderPaywallBase):
-    template_name = "userreports/paywall/paywall.html"
-    urlname = 'report_builder_paywall'
-
-    def dispatch(self, request, *args, **kwargs):
-        return super(ReportBuilderPaywall, self).dispatch(request, *args, **kwargs)
-
-
-class ReportBuilderPaywallActivatingTrial(ReportBuilderPaywallBase):
-    template_name = "userreports/paywall/activating_trial.html"
-    urlname = 'report_builder_paywall_activating_trial'
-    page_title = ugettext_lazy('Trial')
-
-    def post(self, request, domain, *args, **kwargs):
-        self.domain_object.requested_report_builder_trial.append(request.user.username)
-        self.domain_object.save()
-        send_mail_async.delay(
-            "Report Builder Trial Request: {}".format(domain),
-            "User {} in the {} domain has requested access to the "
-            "report builder trial. Current subscription is '{}'.".format(
-                request.user.username,
-                domain,
-                self.plan_name
-            ),
-            settings.DEFAULT_FROM_EMAIL,
-            [settings.REPORT_BUILDER_ADD_ON_EMAIL],
-        )
-        return self.get(request, domain, *args, **kwargs)
 
 
 class ReportBuilderPaywallPricing(ReportBuilderPaywallBase):
@@ -363,6 +339,7 @@ class ReportBuilderPaywallActivatingSubscription(ReportBuilderPaywallBase):
             settings.DEFAULT_FROM_EMAIL,
             [settings.REPORT_BUILDER_ADD_ON_EMAIL],
         )
+        update_hubspot_properties.delay(request.couch_user, {'report_builder_subscription_request': 'yes'})
         return self.get(request, domain, *args, **kwargs)
 
 
@@ -474,9 +451,7 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
                 help_text=_('A table of aggregated data from form submissions or case properties.'
                             ' You choose the columns and rows.'),
             ),
-        ]
-        if REPORT_BUILDER_MAP_REPORTS.enabled(self.domain):
-            tiles.append(TileConfiguration(
+            TileConfiguration(
                 title=_('Map'),
                 slug='map',
                 analytics_usage_label="Map",
@@ -486,7 +461,8 @@ class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
                 url=reverse('report_builder_select_source', args=[self.domain, 'map']),
                 help_text=_('A map to show data from your cases or forms.'
                             ' You choose the property to map.'),
-            ))
+            )
+        ]
         return tiles
 
 
@@ -614,8 +590,12 @@ class ConfigureChartReport(ReportBuilderView):
             'report_type': self.report_type,
             'form': report_form,
             'editing_existing_report': bool(self.existing_report),
-            'property_options': [p._asdict() for p in report_form.data_source_properties.values()],
-            'initial_filters': [f._asdict() for f in report_form.initial_filters],
+            'report_column_options': [p.to_dict() for p in report_form.report_column_options.values()],
+            'data_source_indicators': [p._asdict() for p in report_form.data_source_properties.values()],
+            # For now only use date ranges that don't require additional parameters
+            'date_range_options': [r._asdict() for r in get_simple_dateranges()],
+            'initial_user_filters': [f._asdict() for f in report_form.initial_user_filters],
+            'initial_default_filters': [f._asdict() for f in report_form.initial_default_filters],
             'initial_columns': [
                 c._asdict() for c in getattr(report_form, 'initial_columns', [])
             ],
@@ -727,7 +707,19 @@ class ConfigureChartReport(ReportBuilderView):
                     return self.get(*args, **kwargs)
             else:
                 self._confirm_report_limit()
-                report_configuration = self.report_form.create_report()
+                try:
+                    report_configuration = self.report_form.create_report()
+                except BadSpecError as err:
+                    messages.error(self.request, str(err))
+                    notify_exception(self.request, str(err), details={
+                        'domain': self.domain,
+                        'report_form_class': self.report_form.__class__.__name__,
+                        'report_type': self.report_form.report_type,
+                        'group_by': getattr(self.report_form, 'group_by', 'Not set'),
+                        'user_filters': getattr(self.report_form, 'user_filters', 'Not set'),
+                        'default_filters': getattr(self.report_form, 'default_filters', 'Not set'),
+                    })
+                    return self.get(*args, **kwargs)
                 self._track_new_report_events()
 
             self._track_valid_form_events(existing_sum_avg_cols, report_configuration)
@@ -871,6 +863,68 @@ def report_source_json(request, domain, report_id):
     return json_response(config)
 
 
+class ExpressionDebuggerView(BaseUserConfigReportsView):
+    urlname = 'expression_debugger'
+    template_name = 'userreports/expression_debugger.html'
+    page_title = ugettext_lazy("Expression Debugger")
+
+
+@login_and_domain_required
+@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
+def evaluate_expression(request, domain):
+    doc_type = request.POST['doc_type']
+    doc_id = request.POST['doc_id']
+    data_source_id = request.POST['data_source']
+    try:
+        if data_source_id:
+            data_source = get_datasource_config(data_source_id, domain)[0]
+            factory_context = data_source.get_factory_context()
+        else:
+            factory_context = FactoryContext.empty()
+        usable_type = {
+            'form': 'XFormInstance',
+            'case': 'CommCareCase',
+        }.get(doc_type, 'Unknown')
+        document_store = get_document_store(domain, usable_type)
+        doc = document_store.get_document(doc_id)
+        expression_text = request.POST['expression']
+        expression_json = json.loads(expression_text)
+        parsed_expression = ExpressionFactory.from_spec(
+            expression_json,
+            context=factory_context
+        )
+        result = parsed_expression(doc, EvaluationContext(doc))
+        return json_response({
+            "result": result,
+        })
+    except DataSourceConfigurationNotFoundError:
+        return json_response(
+            {"error": _("Data source with id {} not found in domain {}.").format(
+                data_source_id, domain
+            )},
+            status_code=404,
+        )
+    except DocumentNotFoundError:
+        return json_response(
+            {"error": _("{} with id {} not found in domain {}.").format(
+                doc_type, doc_id, domain
+            )},
+            status_code=404,
+        )
+    except BadSpecError as e:
+        return json_response(
+            {"error": _("Problem with expression: {}.").format(
+                e
+            )},
+            status_code=400,
+        )
+    except Exception as e:
+        return json_response(
+            {"error": unicode(e)},
+            status_code=500,
+        )
+
+
 class CreateDataSourceFromAppView(BaseUserConfigReportsView):
     urlname = 'create_configurable_data_source_from_app'
     template_name = "userreports/data_source_from_app.html"
@@ -992,7 +1046,7 @@ class EditDataSourceView(BaseEditDataSourceView):
 
     @property
     def page_name(self):
-        return "Edit {}".format(self.config.display_name)
+        return u"Edit {}".format(self.config.display_name)
 
 
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
@@ -1004,7 +1058,7 @@ def delete_data_source(request, domain, config_id):
 
 def delete_data_source_shared(domain, config_id, request=None):
     config = get_document_or_404(DataSourceConfiguration, domain, config_id)
-    adapter = IndicatorSqlAdapter(config)
+    adapter = get_indicator_adapter(config)
     adapter.drop_table()
     config.delete()
     if request:
@@ -1065,6 +1119,27 @@ def resume_building_data_source(request, domain, config_id):
     ))
 
 
+@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
+@require_POST
+def build_data_source_in_place(request, domain, config_id):
+    config, is_static = get_datasource_config_or_404(config_id, domain)
+    if config.is_deactivated:
+        config.is_deactivated = False
+        config.save()
+
+    messages.success(
+        request,
+        _('Table "{}" is now being rebuilt. Data should start showing up soon').format(
+            config.display_name
+        )
+    )
+
+    rebuild_indicators_in_place.delay(config_id, request.user.username)
+    return HttpResponseRedirect(reverse(
+        EditDataSourceView.urlname, args=[domain, config._id]
+    ))
+
+
 @login_and_domain_required
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def data_source_json(request, domain, config_id):
@@ -1093,7 +1168,7 @@ class PreviewDataSourceView(BaseUserConfigReportsView):
     @property
     def page_context(self):
         config, is_static = get_datasource_config_or_404(self.config_id, self.domain)
-        adapter = IndicatorSqlAdapter(config)
+        adapter = get_indicator_adapter(config)
         q = adapter.get_query_object()
         return {
             'data_source': config,
@@ -1230,18 +1305,28 @@ def data_source_status(request, domain, config_id):
     return json_response({'isBuilt': config.meta.build.finished})
 
 
-@login_and_domain_required
-def choice_list_api(request, domain, report_id, filter_id):
+def _get_report_filter(domain, report_id, filter_id):
     report = get_report_config_or_404(report_id, domain)[0]
     report_filter = report.get_ui_filter(filter_id)
     if report_filter is None:
         raise Http404(_(u'Filter {} not found!').format(filter_id))
+    return report_filter
 
+
+def _is_location_safe_choice_list(view_fn, domain, report_id, filter_id, **view_kwargs):
+    return has_location_filter(view_fn, domain=domain, subreport_slug=report_id)
+
+
+@login_and_domain_required
+@conditionally_location_safe(_is_location_safe_choice_list)
+def choice_list_api(request, domain, report_id, filter_id):
+    report_filter = _get_report_filter(domain, report_id, filter_id)
     if hasattr(report_filter, 'choice_provider'):
         query_context = ChoiceQueryContext(
             query=request.GET.get('q', None),
             limit=int(request.GET.get('limit', 20)),
-            page=int(request.GET.get('page', 1)) - 1
+            page=int(request.GET.get('page', 1)) - 1,
+            user=request.couch_user
         )
         return json_response([
             choice._asdict() for choice in

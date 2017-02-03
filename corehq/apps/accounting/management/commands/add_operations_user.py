@@ -11,7 +11,7 @@ from django_prbac.models import UserRole, Role, Grant
 class Command(BaseCommand):
     help = 'Grants the user(s) specified the DIMAGI_OPERATIONS_TEAM privilege'
 
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option('--remove-user', action='store_true',  default=False,
                     help='Remove the users specified from the DIMAGI_OPERATIONS_TEAM privilege'),
     )

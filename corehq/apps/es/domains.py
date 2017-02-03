@@ -22,6 +22,14 @@ from . import filters
 
 class DomainES(HQESQuery):
     index = 'domains'
+    default_filters = {
+        'not_snapshot': filters.NOT(filters.term('is_snapshot', True)),
+    }
+
+    def only_snapshots(self):
+        """Normally snapshots are excluded, instead, return only snapshots"""
+        return (self.remove_default_filter('not_snapshot')
+                .filter(filters.term('is_snapshot', True)))
 
     @property
     def builtin_filters(self):
@@ -36,7 +44,7 @@ class DomainES(HQESQuery):
             last_modified,
             in_domains,
             is_active,
-            is_snapshot,
+            is_active_project,
             created_by_user,
         ] + super(DomainES, self).builtin_filters
 
@@ -87,8 +95,9 @@ def is_active(is_active=True):
     return filters.term('is_active', is_active)
 
 
-def is_snapshot(is_snapshot=True):
-    return filters.term('is_snapshot', is_snapshot)
+def is_active_project(is_active=True):
+    # Project is active - has submitted a form in the last 30 days
+    return filters.term('cp_is_active', is_active)
 
 
 def created_by_user(creating_user):

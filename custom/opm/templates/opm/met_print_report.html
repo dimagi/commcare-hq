@@ -4,8 +4,9 @@
 {% if show_time_notice %}{% endif %}
 
 {% block js %}
-    <script src="{% static 'opm/js/opm_utils.js' %}"></script>
+    <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
     {{ block.super }}
+    <script src="{% static 'opm/js/opm_utils.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}
@@ -78,7 +79,7 @@
 
 {% block modals %}
     <div class="hq-loading">
-        <img src="/static/hqwebapp/img/ajax-loader.gif" alt="loading indicator">
+        <img src="/static/hqwebapp/images/ajax-loader.gif" alt="loading indicator">
         <h6>{% trans "Loading ..." %}</h6>
     </div>
 {% endblock %}

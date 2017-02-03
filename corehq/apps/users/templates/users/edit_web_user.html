@@ -35,6 +35,7 @@
             </dl>
         </fieldset>
     </div>
+    {% if can_edit_role %}
     <form class="form form-horizontal" name="user_role" method="post">
         {% csrf_token %}
         <input type="hidden" name="form_type" value="update-user" />
@@ -49,7 +50,7 @@
             </div>
         </fieldset>
     </form>
-
+    {% endif %}
     {% if update_permissions %}
         <hr />
         <form class="form form-horizontal" name="user_permissions" method="post">
@@ -75,16 +76,12 @@
             {% csrf_token %}
             <input type="hidden" name="form_type" value="commtrack" />
             <fieldset>
-                {% if commtrack_enabled %}
-                    <legend>{% trans 'CommCare Supply Settings' %}</legend>
-                {% else %}
-                    <legend>{% trans 'Location Settings' %}</legend>
-                {% endif %}
+                <legend>{% trans 'Location Settings' %}</legend>
                 {% crispy update_form %}
             </fieldset>
             <div class="form-actions">
                 <div class="col-sm-offset-3 col-md-offset-2 col-sm-9 col-md-8 col-lg-6">
-                    <button type="submit" class="btn btn-primary">{% trans 'Update CommCare Supply Settings' %}</button>
+                    <button type="submit" class="btn btn-primary">{% trans 'Update Location Settings' %}</button>
                 </div>
             </div>
         </form>

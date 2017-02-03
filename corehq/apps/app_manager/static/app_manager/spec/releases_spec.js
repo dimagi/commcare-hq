@@ -1,3 +1,4 @@
+/* eslint-env mocha */
 /* global $, sinon */
 
 describe('App Releases', function() {
@@ -11,7 +12,7 @@ describe('App Releases', function() {
                 build_comment: '',
                 build_broken: false,
                 is_released: false,
-                domain: 'test-domain'
+                domain: 'test-domain',
             }, extraProps);
         });
     }
@@ -20,13 +21,13 @@ describe('App Releases', function() {
             download_multimedia: 'download_multimedia_url ___',
             fetch: 'fetch_url',
             odk_media: 'odk_media',
-            odk: 'odk'
+            odk: 'odk',
         },
         options = {
             urls: urls,
             currentAppVersion: -1,
             recipient_contacts: [],
-            download_modal_id: '#download-zip-modal-test'
+            download_modal_id: '#download-zip-modal-test',
         };
     describe('SavedApp', function() {
         var releases = null,
@@ -44,20 +45,20 @@ describe('App Releases', function() {
         });
 
         it('should only make one request when downloading zip', function() {
-            app = releases.savedApps()[0];
+            var app = releases.savedApps()[0];
             app.download_application_zip();
             assert.equal($.ajax.callCount, 1);
         });
 
         it('should use the correct URL for downloading ccz', function() {
-            app = releases.savedApps()[0];
+            var app = releases.savedApps()[0];
             app.download_application_zip();
             assert.equal($.ajax.callCount, 1);
             assert.equal(ajax_stub.firstCall.args[0].url, releases.url('download_zip', app.id()));
         });
 
         it('should use the correct URL for downloading multimedia', function() {
-            app = releases.savedApps()[0];
+            var app = releases.savedApps()[0];
             app.download_application_zip(true);
             assert.equal($.ajax.callCount, 1);
             assert.equal(ajax_stub.firstCall.args[0].url, releases.url('download_multimedia', app.id()));
@@ -68,7 +69,7 @@ describe('App Releases', function() {
                 ajax_stub.reset();
                 ajax_stub.onFirstCall(0).yieldsTo("success", {
                     download_id: '123' + app.id(),
-                    download_url: 'pollUrl'
+                    download_url: 'pollUrl',
                 });
                 ajax_stub.onSecondCall().yieldsTo("success", 'ready_123' + app.id());
 

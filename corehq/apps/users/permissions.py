@@ -6,6 +6,7 @@ FORM_EXPORT_PERMISSION = 'corehq.apps.reports.standard.export.ExcelExportReport'
 DEID_EXPORT_PERMISSION = 'corehq.apps.reports.standard.export.DeidExportReport'
 CASE_EXPORT_PERMISSION = 'corehq.apps.reports.standard.export.CaseExportReport'
 
+EXPORT_PERMISSIONS = {FORM_EXPORT_PERMISSION, DEID_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION}
 
 ReportPermission = namedtuple('ReportPermission', ['slug', 'title', 'is_visible'])
 
@@ -19,3 +20,28 @@ def get_extra_permissions():
         lambda domain: domain_has_privilege(domain, privileges.DEIDENTIFIED_DATA))
     yield ReportPermission(
         CASE_EXPORT_PERMISSION, CaseExportListView.page_title, lambda domain: True)
+
+
+def can_view_form_exports(couch_user, domain):
+    return couch_user.can_edit_data(domain) or has_permission_to_view_report(
+        couch_user, domain, FORM_EXPORT_PERMISSION
+    )
+
+
+def can_view_case_exports(couch_user, domain):
+    return couch_user.can_edit_data(domain) or has_permission_to_view_report(
+        couch_user, domain, CASE_EXPORT_PERMISSION
+    )
+
+
+def has_permission_to_view_report(couch_user, domain, report_to_check):
+    from corehq.apps.users.decorators import get_permission_name
+    from corehq.apps.users.models import Permissions
+    return (
+        couch_user.can_view_reports(domain) or
+        couch_user.has_permission(
+            domain,
+            get_permission_name(Permissions.view_report),
+            data=report_to_check
+        )
+    )

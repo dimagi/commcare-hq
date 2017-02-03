@@ -3,11 +3,13 @@ from uuid import uuid4
 
 from django.core.urlresolvers import reverse
 from django.test import TestCase, Client
+from mock import patch
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.tests.util import delete_all_cases
-from corehq.apps.case_search.models import CLAIM_CASE_TYPE, CaseSearchConfig
+from corehq.apps.case_search.models import CLAIM_CASE_TYPE, CaseSearchConfig, SEARCH_QUERY_ADDITION_KEY, \
+    CaseSearchQueryAddition
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import get_es_new
@@ -18,7 +20,6 @@ from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO, 
 from corehq.util.elastic import ensure_index_deleted
 from pillowtop.es_utils import initialize_index_and_mapping
 
-
 DOMAIN = 'test-domain'
 USERNAME = 'testy_mctestface'
 PASSWORD = '123'
@@ -26,12 +27,14 @@ CASE_NAME = 'Jamie Hand'
 CASE_TYPE = 'case'
 OWNER_ID = 'nerc'
 TIMESTAMP = '2016-04-17T10:13:06.588694Z'
+FIXED_DATESTAMP = '2016-04-17'
 PATTERN = r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z'
+DATE_PATTERN = r'\d{4}-\d{2}-\d{2}'
+
 # cf. http://www.theguardian.com/environment/2016/apr/17/boaty-mcboatface-wins-poll-to-name-polar-research-vessel
 
 
 class CaseClaimEndpointTests(TestCase):
-
     def setUp(self):
         self.domain = create_domain(DOMAIN)
         self.user = CommCareUser.create(DOMAIN, USERNAME, PASSWORD)
@@ -57,6 +60,8 @@ class CaseClaimEndpointTests(TestCase):
         ensure_index_deleted(CASE_SEARCH_INDEX)
         self.user.delete()
         self.domain.delete()
+        for query_addition in CaseSearchQueryAddition.objects.all():
+            query_addition.delete()
 
     @run_with_all_backends
     def test_claim_case(self):
@@ -114,17 +119,17 @@ class CaseClaimEndpointTests(TestCase):
     def test_search_endpoint(self):
         known_result = (
             '<results id="case">'  # ("case" is not the case type)
-                '<case case_id="{case_id}" '
-                      'case_type="{case_type}" '
-                      'owner_id="{owner_id}" '
-                      'status="open">'
-                    '<case_name>{case_name}</case_name>'
-                    '<date_opened>2016-04-17T10:13:06.588694Z</date_opened>'
-                    '<last_modified>2016-04-17T10:13:06.588694Z</last_modified>'
-                    '<external_id>Jamie Hand</external_id>'
-                    '<location_id>None</location_id>'
-                    '<referrals>None</referrals>'
-                '</case>'
+            '<case case_id="{case_id}" '
+            'case_type="{case_type}" '
+            'owner_id="{owner_id}" '
+            'status="open">'
+            '<case_name>{case_name}</case_name>'
+            '<last_modified>2016-04-17T10:13:06.588694Z</last_modified>'
+            '<external_id>Jamie Hand</external_id>'
+            '<date_opened>2016-04-17</date_opened>'
+            '<location_id>None</location_id>'
+            '<referrals>None</referrals>'
+            '</case>'
             '</results>'.format(
                 case_id=self.case_id,
                 case_name=CASE_NAME,
@@ -134,7 +139,117 @@ class CaseClaimEndpointTests(TestCase):
 
         client = Client()
         client.login(username=USERNAME, password=PASSWORD)
-        url = reverse('sync_search', kwargs={'domain': DOMAIN})
+        url = reverse('remote_search', kwargs={'domain': DOMAIN})
         response = client.get(url, {'name': 'Jamie Hand', 'case_type': CASE_TYPE})
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(re.sub(PATTERN, TIMESTAMP, response.content), known_result)
+        self.assertEqual(re.sub(DATE_PATTERN, FIXED_DATESTAMP, re.sub(PATTERN, TIMESTAMP, response.content)), known_result)
+
+    @patch('corehq.apps.es.es_query.run_query')
+    def test_search_query_addition(self, run_query_mock):
+        new_must_clause = {
+            "bool": {
+                "should": [
+                    {
+                        "nested": {
+                            "path": "case_properties",
+                            "query": {
+                                "filtered": {
+                                    "filter": {
+                                        "term": {"case_properties.key": "is_inactive"}
+                                    },
+                                    "query": {
+                                        "match": {
+                                            "case_properties.value": {
+                                                "fuzziness": "0", "query": "yes"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "nested": {
+                            "path": "case_properties",
+                            "query": {
+                                "filtered": {
+                                    "filter": {
+                                        "term": {"case_properties.key": "awaiting_claim"}
+                                    },
+                                    "query": {
+                                        "match": {
+                                            "case_properties.value": {
+                                                "fuzziness": "0", "query": "yes"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+
+        query_partial = {
+            "bool": {
+                "must": [
+                    new_must_clause
+                ]
+            }
+        }
+
+        query_addition = CaseSearchQueryAddition(domain=DOMAIN, name="foo", query_addition=query_partial)
+        query_addition.save()
+
+        client = Client()
+        client.login(username=USERNAME, password=PASSWORD)
+        url = reverse('remote_search', kwargs={'domain': DOMAIN})
+        some_case_name = "wut"
+        response = client.get(
+            url,
+            {'name': some_case_name, 'case_type': CASE_TYPE, SEARCH_QUERY_ADDITION_KEY: query_addition.id}
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        expected_query = {
+            'query': {
+                'filtered': {
+                    'filter': {
+                        'and': [
+                            {'term': {'domain.exact': DOMAIN}},
+                            {'term': {'type.exact': CASE_TYPE}},
+                            {'term': {'closed': False}},
+                            {'match_all': {}}
+                        ]
+                    },
+                    'query': {
+                        'bool': {
+                            'must': [
+                                {
+                                    'nested': {
+                                        'path': 'case_properties',
+                                        'query': {
+                                            'filtered': {
+                                                'filter': {'term': {'case_properties.key': u'name'}},
+                                                'query': {
+                                                    'match': {
+                                                        'case_properties.value': {
+                                                            'query': some_case_name, 'fuzziness': '0'
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                new_must_clause
+                            ]
+                        }
+                    }
+                }
+            },
+            'size': 10
+        }
+        run_query_mock.assert_called_with("case_search", expected_query, debug_host=None)

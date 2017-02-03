@@ -1,4 +1,4 @@
-from django.core.management.base import LabelCommand
+from django.core.management.base import BaseCommand
 
 from corehq.apps.accounting.models import Currency
 from corehq.apps.smsbillables.utils import log_smsbillables_info
@@ -26,7 +26,7 @@ def bootstrap_twilio_gateway_incoming(apps):
     log_smsbillables_info("Updated INCOMING Twilio gateway fees.")
 
 
-class Command(LabelCommand):
+class Command(BaseCommand):
     help = "bootstrap incoming Twilio gateway fees"
     args = ""
     label = ""

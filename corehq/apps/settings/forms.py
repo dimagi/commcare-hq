@@ -37,8 +37,12 @@ class HQPasswordChangeForm(PasswordChangeForm):
             crispy.Fieldset(
                 _('Specify New Password'),
                 'old_password',
-                crispy.Field('new_password1', data_bind="value: password, valueUpdate: 'input'"),
-                'new_password2'
+                crispy.Field(
+                    'new_password1',
+                    data_bind="value: password, valueUpdate: 'input'",
+                ),
+                'new_password2',
+                css_class="check-password",
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
@@ -46,7 +50,7 @@ class HQPasswordChangeForm(PasswordChangeForm):
                     css_class='btn-primary',
                     type='submit',
                 )
-            )
+            ),
         )
 
     def clean_new_password1(self):

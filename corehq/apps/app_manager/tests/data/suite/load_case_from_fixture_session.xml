@@ -1,0 +1,7 @@
+<partial>
+	<session>
+		<datum id="case_id_case_clinic" nodeset="instance('casedb')/casedb/case[@case_type='clinic'][@status='open']" value="./@case_id" detail-select="m1_case_short" detail-confirm="m1_case_long" />
+		<datum id="selected_date" nodeset="instance('item-list:table_tag')/calendar/year/month/day[@date &gt; 735992 and @date &lt; 736000]" value="./@date" detail-select="m1_case_short" detail-confirm="m1_case_long"/>
+		<datum id="adherence" nodeset="instance('casedb')/casedb/case[@case_type='clinic'][@status='open'][adherence_event_date=instance('commcaresession')/session/data/selected_date]" value="./@case_id" autoselect="true" />
+	</session>
+</partial>

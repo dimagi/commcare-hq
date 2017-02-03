@@ -7,6 +7,6 @@ BEGIN
     RETURN QUERY
     SELECT * FROM form_processor_ledgertransaction
     WHERE case_id = p_case_id AND section_id = p_section_id AND entry_id = p_entry_id
-    ORDER BY report_date DESC limit 1;
+    ORDER BY report_date DESC, "id" DESC limit 1;
 END;
 $$ LANGUAGE plpgsql;

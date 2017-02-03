@@ -9,7 +9,7 @@ $(function () {
         $issueSubjectFormGroup = $("#bug-report-subject-form-group"),
         isBugReportSubmitting = false;
 
-    $hqwebappBugReportModal.on('show.bs.modal', function() {
+    var resetForm = function () {
         $hqwebappBugReportForm.find("button[type='submit']").bootstrapButton('reset');
         $hqwebappBugReportForm.resetForm();
         $hqwebappBugReportCancel.bootstrapButton('reset');
@@ -17,7 +17,8 @@ $(function () {
         $ccFormGroup.find(".label-danger").addClass('hide');
         $emailFormGroup.removeClass('has-error has-feedback');
         $emailFormGroup.find(".label-danger").addClass('hide');
-    });
+    };
+
     $hqwebappBugReportModal.on('shown.bs.modal', function() {
         $("input#bug-report-subject").focus();
     });
@@ -79,6 +80,9 @@ $(function () {
     function hqwebappBugReportSucccess(data) {
         isBugReportSubmitting = false;
         $hqwebappBugReportForm.find("button[type='submit']").bootstrapButton('success').removeClass('btn-primary btn-danger').addClass('btn-success');
+        $hqwebappBugReportModal.one('hidden.bs.modal', function () {
+            resetForm();
+        });
     }
 
     function hqwebappBugReportError(data) {

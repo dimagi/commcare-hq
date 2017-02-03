@@ -66,7 +66,7 @@
 </form>
 
 <script>
-    $(document).ready(function() {
+    $(function() {
         function Row(data, keys) {
             var self = this;
             self.errors = ('form_errors' in data) ? data.form_errors : {};
@@ -107,7 +107,7 @@
                     .attr('name', 'child_form_data')
                     .attr('value', JSON.stringify(self.serialize()))
                     .appendTo(tableForm);
-                $("{% csrf_token %}").appendTo($form);
+                $("{% csrf_token %}").appendTo(tableForm);
                 tableForm.appendTo("body");
                 tableForm.submit();
             };

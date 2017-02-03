@@ -7,7 +7,10 @@ from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.es import cases as case_es
+from corehq.apps.es.users import UserES
 from corehq.apps.groups.models import Group
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.display import FormDisplay
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.generic import GenericReportView
@@ -17,7 +20,7 @@ from corehq.apps.reports.standard.cases.basic import CaseListMixin
 from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
 from corehq.apps.reports.standard.inspect import SubmitHistoryMixin
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
-from corehq.elastic import ADD_TO_ES_FILTER
+from corehq.apps.reports.util import get_simplified_users
 
 from .dispatcher import EditDataInterfaceDispatcher
 
@@ -35,6 +38,7 @@ class DataInterface(GenericReportView):
         return reverse('data_interfaces_default', args=[self.request.project])
 
 
+@location_safe
 class CaseReassignmentInterface(CaseListMixin, DataInterface):
     name = ugettext_noop("Reassign Cases")
     slug = "reassign_cases"
@@ -52,6 +56,9 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface):
     @memoized
     def all_case_sharing_groups(self):
         return Group.get_case_sharing_groups(self.domain)
+
+    def accessible_case_sharing_locations(self, user):
+        return Group.get_case_sharing_accessible_locations(self.domain, user)
 
     @property
     def headers(self):
@@ -84,13 +91,24 @@ class CaseReassignmentInterface(CaseListMixin, DataInterface):
     @property
     def report_context(self):
         context = super(CaseReassignmentInterface, self).report_context
-        active_users = self.get_all_users_by_domain(user_filter=tuple(HQUserType.all()), simplified=True)
+        if not self.request.can_access_all_locations:
+            accessible_location_ids = (SQLLocation.active_objects.accessible_location_ids(
+                self.request.domain,
+                self.request.couch_user)
+            )
+            user_query = UserES().location(accessible_location_ids)
+            active_users = get_simplified_users(user_query)
+            context.update(groups=[dict(ownerid=group.get_id, name=group.name, type="group")
+                                   for group in self.accessible_case_sharing_locations(self.request.couch_user)],
+                           )
+        else:
+            active_users = self.get_all_users_by_domain(user_filter=tuple(HQUserType.all()), simplified=True)
+            context.update(groups=[dict(ownerid=group.get_id, name=group.name, type="group")
+                                   for group in self.all_case_sharing_groups],
+                           )
         context.update(
             users=[dict(ownerid=user.user_id, name=user.username_in_report, type="user")
                    for user in active_users],
-            groups=[dict(ownerid=group.get_id, name=group.name, type="group")
-                    for group in self.all_case_sharing_groups],
-            user_ids=self.user_ids,
         )
         return context
 
@@ -108,7 +126,6 @@ class FormManagementMode(object):
     def __init__(self, mode, validate=False):
         if mode == self.RESTORE_MODE:
             self.mode_name = self.RESTORE_MODE
-            self.xform_filter = ADD_TO_ES_FILTER['archived_forms']
             self.button_text = _("Restore selected Forms")
             self.button_class = _("btn-primary")
             self.status_page_title = _("Restore Forms Status")
@@ -121,7 +138,6 @@ class FormManagementMode(object):
                                   "filter to Normal forms")
         else:
             self.mode_name = self.ARCHIVE_MODE
-            self.xform_filter = ADD_TO_ES_FILTER['forms']
             self.button_text = _("Archive selected forms")
             self.button_class = _("btn-danger")
             self.status_page_title = _("Archive Forms Status")
@@ -167,6 +183,7 @@ class ArchiveOrNormalFormFilter(BaseSingleOptionFilter):
         return FormManagementMode(self.request.GET.get(self.slug)).mode_name
 
 
+@location_safe
 class BulkFormManagementInterface(SubmitHistoryMixin, DataInterface, ProjectReport):
     name = ugettext_noop("Manage Forms")
     slug = "bulk_archive_forms"
@@ -183,12 +200,17 @@ class BulkFormManagementInterface(SubmitHistoryMixin, DataInterface, ProjectRepo
         context.update({
             "form_query_string": self.request.GET.urlencode(),
             "mode": self.mode,
-            "total_xForms": int(self.es_results['hits']['total']),
+            "total_xForms": int(self.es_query_result.total),
         })
         return context
 
-    def _es_xform_filter(self):
-        return self.mode.xform_filter
+    @property
+    def es_query(self):
+        query = super(BulkFormManagementInterface, self).es_query
+        if self.mode.mode_name == self.mode.RESTORE_MODE:
+            return query.only_archived()
+        else:
+            return query
 
     @property
     def headers(self):
@@ -216,10 +238,7 @@ class BulkFormManagementInterface(SubmitHistoryMixin, DataInterface, ProjectRepo
 
     @property
     def rows(self):
-        results = self.es_results.get('hits', {}).get('hits', [])
-
-        for result in results:
-            form = result['_source']
+        for form in self.es_query_result.hits:
             display = FormDisplay(form, self)
             checkbox = mark_safe(
                 """<input type="checkbox" class="xform-checkbox"
@@ -238,13 +257,4 @@ class BulkFormManagementInterface(SubmitHistoryMixin, DataInterface, ProjectRepo
         # returns a list of form_ids
         # this is called using ReportDispatcher.dispatch(render_as='form_ids', ***) in
         # the bulk_form_management_async task
-        from corehq.elastic import es_query
-
-        results = es_query(
-            params={'domain.exact': self.domain},
-            q=self.filters_as_es_query(),
-            es_index='forms',
-            fields=['_id'],
-        )
-        form_ids = [res['_id'] for res in results.get('hits', {}).get('hits', [])]
-        return form_ids
+        return self.es_query.get_ids()

@@ -1,12 +1,13 @@
 import json
 import uuid
 
-from django.core.exceptions import PermissionDenied
 from django.db.models import Count
 from django.http import HttpResponse, Http404
 from django.http import HttpResponseRedirect
 from django.views.generic import View
 from django.utils.decorators import method_decorator
+
+from corehq.apps.app_manager.util import get_app_manager_template
 from django_prbac.decorators import requires_privilege
 from django.contrib import messages
 from django.shortcuts import render
@@ -22,6 +23,7 @@ from phonelog.models import UserErrorEntry
 from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_built_app_on_hubspot
+from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import LoginAndDomainMixin, DomainViewMixin
@@ -33,6 +35,7 @@ from corehq.util.timezones.utils import get_timezone_for_user
 
 from corehq.apps.app_manager.dbaccessors import get_app, get_latest_build_doc
 from corehq.apps.app_manager.models import BuildProfile
+from corehq.apps.app_manager.const import DEFAULT_FETCH_LIMIT
 from corehq.apps.users.models import CommCareUser
 from corehq.util.view_utils import reverse
 from corehq.apps.app_manager.decorators import (
@@ -42,7 +45,7 @@ from corehq.apps.app_manager.models import Application, SavedAppBuild
 from corehq.apps.app_manager.views.apps import get_apps_base_context
 from corehq.apps.app_manager.views.download import source_files
 from corehq.apps.app_manager.views.utils import (back_to_main, encode_if_unicode, get_langs)
-
+from corehq.apps.builds.models import CommCareBuildConfig
 
 def _get_error_counts(domain, app_id, version_numbers):
     res = (UserErrorEntry.objects
@@ -76,8 +79,10 @@ def paginate_releases(request, domain, app_id):
         limit=limit,
         wrapper=lambda x: SavedAppBuild.wrap(x['value']).to_saved_build_json(timezone),
     ).all()
+    j2me_enabled_configs = CommCareBuildConfig.j2me_enabled_config_labels()
     for app in saved_apps:
         app['include_media'] = app['doc_type'] != 'RemoteApp'
+        app['j2me_enabled'] = app['menu_item_label'] in j2me_enabled_configs
 
     if toggles.APPLICATION_ERROR_REPORT.enabled(request.couch_user.username):
         versions = [app['version'] for app in saved_apps]
@@ -89,13 +94,27 @@ def paginate_releases(request, domain, app_id):
 
 
 @require_deploy_apps
-def releases_ajax(request, domain, app_id, template='app_manager/partials/releases.html'):
+def releases_ajax(request, domain, app_id):
+    template = get_app_manager_template(
+        domain,
+        "app_manager/v1/partials/releases.html",
+        "app_manager/v2/partials/releases.html",
+    )
+    context = get_releases_context(request, domain, app_id)
+    response = render(request, template, context)
+    response.set_cookie('lang', encode_if_unicode(context['lang']))
+    return response
+
+
+def get_releases_context(request, domain, app_id):
     app = get_app(domain, app_id)
     context = get_apps_base_context(request, domain, app)
     can_send_sms = domain_has_privilege(domain, privileges.OUTBOUND_SMS)
     build_profile_access = domain_has_privilege(domain, privileges.BUILD_PROFILES)
 
     context.update({
+        'intro_only': len(
+            app.modules) == 0 and toggles.APP_MANAGER_V2.enabled(domain),
         'release_manager': True,
         'can_send_sms': can_send_sms,
         'has_mobile_workers': get_doc_count_in_domain_by_class(domain, CommCareUser) > 0,
@@ -103,8 +122,9 @@ def releases_ajax(request, domain, app_id, template='app_manager/partials/releas
             get_sms_autocomplete_context(request, domain)['sms_contacts']
             if can_send_sms else []
         ),
-        'build_profile_access': build_profile_access,
-        'vellum_case_management': app.vellum_case_management,
+        'build_profile_access': build_profile_access and not toggles.APP_MANAGER_V2.enabled(domain),
+        'lastest_j2me_enabled_build': CommCareBuildConfig.latest_j2me_enabled_config().label,
+        'fetchLimit': request.GET.get('limit', DEFAULT_FETCH_LIMIT),
     })
     if not app.is_remote_app():
         # Multimedia is not supported for remote applications at this time.
@@ -115,9 +135,7 @@ def releases_ajax(request, domain, app_id, template='app_manager/partials/releas
             })
         except ReportConfigurationNotFoundError:
             pass
-    response = render(request, template, context)
-    response.set_cookie('lang', encode_if_unicode(context['lang']))
-    return response
+    return context
 
 
 @login_and_domain_required
@@ -145,6 +163,10 @@ def release_build(request, domain, app_id, saved_app_id):
     saved_app.save(increment_version=False)
     from corehq.apps.app_manager.signals import app_post_release
     app_post_release.send(Application, application=saved_app)
+
+    if is_released:
+        _track_build_for_app_preview(domain, request.couch_user, app_id, 'User starred a build')
+
     if ajax:
         return json_response({'is_released': is_released})
     else:
@@ -181,15 +203,29 @@ def save_copy(request, domain, app_id):
             # To make a RemoteApp always available for building
             if app.is_remote_app():
                 app.save(increment_version=True)
+
+        _track_build_for_app_preview(domain, request.couch_user, app_id, 'User created a build')
+
     else:
         copy = None
     copy = copy and SavedAppBuild.wrap(copy.to_json()).to_saved_build_json(
         get_timezone_for_user(request.couch_user, domain)
     )
     lang, langs = get_langs(request, app)
+    if copy:
+        # Set if build is supported for Java Phones
+        j2me_enabled_configs = CommCareBuildConfig.j2me_enabled_config_labels()
+        copy['j2me_enabled'] = copy['menu_item_label'] in j2me_enabled_configs
+
+    template = get_app_manager_template(
+        domain,
+        "app_manager/v1/partials/build_errors.html",
+        "app_manager/v2/partials/build_errors.html",
+    )
     return json_response({
         "saved_app": copy,
-        "error_html": render_to_string('app_manager/partials/build_errors.html', {
+        "error_html": render_to_string(template, {
+            'request': request,
             'app': get_app(domain, app_id),
             'build_errors': errors,
             'domain': domain,
@@ -197,6 +233,19 @@ def save_copy(request, domain, app_id):
             'lang': lang
         }),
     })
+
+
+def _track_build_for_app_preview(domain, couch_user, app_id, message):
+    track_workflow(couch_user.username, message, properties={
+        'domain': domain,
+        'app_id': app_id,
+        'is_dimagi': couch_user.is_dimagi,
+        'preview_app_enabled': (
+            toggles.PREVIEW_APP.enabled(domain) or
+            toggles.PREVIEW_APP.enabled(couch_user.username)
+        )
+    })
+
 
 
 @no_conflict_require_POST
@@ -242,12 +291,17 @@ def odk_install(request, domain, app_id, with_media=False):
     context = {
         "domain": domain,
         "app": app,
-        "qr_code": reverse("corehq.apps.app_manager.views.%s" % qr_code_view,
+        "qr_code": reverse(qr_code_view,
                            args=[domain, app_id],
                            params={'profile': build_profile_id}),
         "profile_url": profile_url,
     }
-    return render(request, "app_manager/odk_install.html", context)
+    template = get_app_manager_template(
+        domain,
+        "app_manager/v1/odk_install.html",
+        "app_manager/v2/odk_install.html",
+    )
+    return render(request, template, context)
 
 
 def odk_qr_code(request, domain, app_id):
@@ -337,23 +391,24 @@ def _get_app_diffs(first_app, second_app):
 class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
     urlname = 'diff'
     page_title = ugettext_lazy("App diff")
-    template_name = 'app_manager/app_diff.html'
+    template_name = 'app_manager/v1/app_diff.html'
 
     @use_angular_js
     def dispatch(self, request, *args, **kwargs):
-        try:
-            self.first_app_id = self.kwargs["first_app_id"]
-            self.second_app_id = self.kwargs["second_app_id"]
-            self.first_app = Application.get(self.first_app_id)
-            self.second_app = Application.get(self.second_app_id)
-            if not (request.couch_user.is_member_of(self.first_app.domain)
-                    and request.couch_user.is_member_of(self.second_app.domain)):
-                raise PermissionDenied()
-
-        except (ResourceNotFound, KeyError):
-            raise Http404()
-
+        self.template_name = get_app_manager_template(
+            self.domain,
+            self.template_name,
+            'app_manager/v2/app_diff.html',
+        )
         return super(AppDiffView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def first_app_id(self):
+        return self.kwargs["first_app_id"]
+
+    @property
+    def second_app_id(self):
+        return self.kwargs["second_app_id"]
 
     @property
     def app_diffs(self):
@@ -369,6 +424,16 @@ class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
 
     @property
     def page_context(self):
+        try:
+            self.first_app = Application.get(self.first_app_id)
+            self.second_app = Application.get(self.second_app_id)
+        except (ResourceNotFound, KeyError):
+            raise Http404()
+
+        for app in (self.first_app, self.second_app):
+            if not self.request.couch_user.is_member_of(app.domain):
+                raise Http404()
+
         return {
             "app": self.first_app,
             "other_app": self.second_app,

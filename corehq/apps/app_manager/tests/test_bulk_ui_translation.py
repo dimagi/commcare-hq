@@ -1,6 +1,5 @@
 from django.test import SimpleTestCase
 from StringIO import StringIO
-from corehq.apps.app_manager.const import APP_V2
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.views.translations import process_ui_translation_upload,\
     get_default_translations_for_download
@@ -11,7 +10,8 @@ class BulkUiTranslation(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.app = Application.new_app("test-domain", "Test App", application_version=APP_V2)
+        super(BulkUiTranslation, cls).setUpClass()
+        cls.app = Application.new_app("test-domain", "Test App")
         cls.app.langs = ["en", "fra"]
 
     def _build_translation_download_file(self, headers, data=None):
@@ -39,10 +39,14 @@ class BulkUiTranslation(SimpleTestCase):
 
     def test_translation(self):
         headers = (('translations', ('property', 'en', 'fra')),)
-        data = (('date.tomorrow', 'wobble', ''),
-                ('entity.sort.title', 'wabble', ''),
-                ('activity.locationcapture.Longitude', '', 'wibble'),
-                ('entity.sort.title', '', 'wubble'),
+        # on an update to 2.31.0, the keys date.tomorrow, entity.sort.title,
+        # activity.locationcapture.Longitude were no longer present in messages_en-2.txt
+        # They were replaced by other randomly selected strings in that file.
+        # Leaving this note here in case this issue comes up again. --B
+        data = (('key.manage.title', 'wobble', ''),
+                ('bulk.send.dialog.progress', 'wabble', ''),
+                ('connection.test.access.settings', '', 'wibble'),
+                ('bulk.send.dialog.progress', '', 'wubble'),
                 ('home.start.demo', 'Ding', 'Dong'),
                 ('unknown_string', 'Ding', 'Dong'))
 
@@ -53,14 +57,14 @@ class BulkUiTranslation(SimpleTestCase):
             dict(translations),
             {
                 u'en': {
-                    u'date.tomorrow': u'wobble',
-                    u'entity.sort.title': u'wabble',
+                    u'key.manage.title': u'wobble',
+                    u'bulk.send.dialog.progress': u'wabble',
                     u'home.start.demo': u'Ding',
                     u'unknown_string': u'Ding',
                 },
                 u'fra': {
-                    u'activity.locationcapture.Longitude': u'wibble',
-                    u'entity.sort.title': u'wubble',
+                    u'connection.test.access.settings': u'wibble',
+                    u'bulk.send.dialog.progress': u'wubble',
                     u'home.start.demo': u'Dong',
                     u'unknown_string': u'Dong',
                 }

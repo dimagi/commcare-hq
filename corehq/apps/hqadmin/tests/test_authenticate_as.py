@@ -98,7 +98,7 @@ class AuthenticateAsIntegrationTest(TestCase):
 
         resp = self.client.post(reverse(AuthenticateAs.urlname), form.data, follow=True)
         self.assertEqual(
-            self.client.session['_auth_user_id'],
+            int(self.client.session['_auth_user_id']),
             self.mobile_worker.get_django_user().id
         )
 
@@ -111,6 +111,6 @@ class AuthenticateAsIntegrationTest(TestCase):
         resp = self.client.post(reverse(AuthenticateAs.urlname), {})
         self.assertTrue('no_permissions' in resp.url)
         self.assertEqual(
-            self.client.session['_auth_user_id'],
+            int(self.client.session['_auth_user_id']),
             self.regular.get_django_user().id
         )

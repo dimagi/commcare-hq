@@ -14,6 +14,7 @@ $(function () {
     $('.showReadable').click(showReadable);
     $('.showRaw').click(showRaw);
     $('.formDisplayToggle a').click(function () {
+        // activate the correct 'tab' header
         $(this).tab('show');
         return false;
     });
@@ -67,8 +68,9 @@ $(function () {
 </div>
 {% else %}
 <ul class="nav nav-pills formDisplayToggle" style="margin: 10px 0;">
-    <li class="active"><a href="#" class="showReadable">{% trans "Labels" %}</a></li>
-    <li><a href="#" class="showRaw">{% trans "Question IDs" %}</a></li>
+    <!-- hrefs here aren't real but can't be '#' since JQuery crashes-->
+    <li class="active"><a href="#readable-pill" class="showReadable">{% trans "Labels" %}</a></li>
+    <li><a href="#raw-pill" class="showRaw">{% trans "Question IDs" %}</a></li>
 </ul>
 <div class="checkbox">
     <label>
@@ -83,15 +85,17 @@ $(function () {
 {% endif %}
 <div class="row">
     <div class="col-sm-12">
-        <table class="table table-bordered form-data-table">
-            <tr>
-                <th class="col-sm-6">
-                    <span class="form-data-readable">{% trans "Question" %}</span>
-                    <span class="form-data-raw">{% trans "Question ID" %}</span>
-                </th>
-                <th class="col-sm-6">{% trans "Response" %}</th>
-            </tr>
-            {% include 'reports/form/partials/single_form_tree.html' %}
-        </table>
+        <div class="table-responsive">
+            <table class="table table-bordered form-data-table">
+                <tr>
+                    <th class="col-sm-6">
+                        <span class="form-data-readable">{% trans "Question" %}</span>
+                        <span class="form-data-raw">{% trans "Question ID" %}</span>
+                    </th>
+                    <th class="col-sm-6">{% trans "Response" %}</th>
+                </tr>
+                {% include 'reports/form/partials/single_form_tree.html' %}
+            </table>
+        </div>
     </div>
 </div>
