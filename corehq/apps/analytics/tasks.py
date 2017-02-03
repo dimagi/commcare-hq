@@ -162,7 +162,9 @@ def _send_form_to_hubspot(form_id, webuser, cookies, meta, extra_fields=None, em
     This sends hubspot the user's first and last names and tracks everything they did
     up until the point they signed up.
     """
-    if webuser and not webuser.analytics_enabled:
+    if ((webuser and not webuser.analytics_enabled)
+            or (not webuser and not analytics_enabled_for_email(email))):
+        # This user has analytics disabled
         return
 
     hubspot_id = settings.ANALYTICS_IDS.get('HUBSPOT_API_ID')
@@ -301,7 +303,7 @@ def track_clicked_signup_on_hubspot(email, cookies, meta):
         data['a_b_test_variable_newsletter'] = 'B'
     else:
         data['a_b_test_variable_newsletter'] = 'C'
-    if email and analytics_enabled_for_email(email):
+    if email:
         _send_form_to_hubspot(HUBSPOT_CLICKED_SIGNUP_FORM, None, cookies, meta, extra_fields=data, email=email)
 
 
