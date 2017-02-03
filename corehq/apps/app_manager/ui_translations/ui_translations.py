@@ -1,20 +1,24 @@
 from StringIO import StringIO
 from collections import defaultdict
+from distutils.version import StrictVersion
 import re
 from commcare_translations import load_translations
 from corehq.apps.app_manager import app_strings
+from corehq.apps.app_manager.ui_translations.commcare_versioning import \
+    get_commcare_version_from_workbook, set_commcare_version_in_workbook
 from corehq.apps.translations import system_text_sources
 from corehq.util.workbook_json.excel import WorkbookJSONReader
-from couchexport.export import export_raw
+from couchexport.export import export_raw_to_writer
 
 
 def process_ui_translation_upload(app, trans_file):
 
     workbook = WorkbookJSONReader(trans_file)
+    commcare_version = get_commcare_version_from_workbook(workbook.wb)
     translations = workbook.get_worksheet(title='translations')
 
-    commcare_ui_strings = load_translations('en', version=2).keys()
-    default_trans = get_default_translations_for_download(app)
+    commcare_ui_strings = load_translations('en', version=2, commcare_version=commcare_version).keys()
+    default_trans = get_default_translations_for_download(app, commcare_version)
     lang_with_defaults = app.langs[get_index_for_defaults(app.langs)]
 
     trans_dict = defaultdict(dict)
@@ -57,7 +61,12 @@ def build_ui_translation_download_file(app):
             row_dict[prop].append(trans)
 
     rows = row_dict.values()
-    all_prop_trans = get_default_translations_for_download(app)
+    try:
+        commcare_version = str(StrictVersion(app.build_version.vstring))
+    except ValueError:
+        commcare_version = None
+
+    all_prop_trans = get_default_translations_for_download(app, commcare_version)
     rows.extend([[t] for t in sorted(all_prop_trans.keys()) if t not in row_dict])
 
     def fillrow(row):
@@ -86,12 +95,13 @@ def build_ui_translation_download_file(app):
     rows = [add_sources(add_default(fillrow(row))) for row in rows]
 
     data = (("translations", tuple(rows)),)
-    export_raw(headers, data, temp)
+    with export_raw_to_writer(headers, data, temp) as writer:
+        set_commcare_version_in_workbook(writer.book, commcare_version)
     return temp
 
 
-def get_default_translations_for_download(app):
-    return app_strings.CHOICES[app.translation_strategy].get_default_translations('en')
+def get_default_translations_for_download(app, commcare_version):
+    return app_strings.CHOICES[app.translation_strategy].get_default_translations('en', commcare_version)
 
 
 def get_index_for_defaults(langs):

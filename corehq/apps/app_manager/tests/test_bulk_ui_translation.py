@@ -1,3 +1,4 @@
+from distutils.version import StrictVersion
 from django.test import SimpleTestCase
 from StringIO import StringIO
 from corehq.apps.app_manager.models import Application
@@ -17,7 +18,7 @@ class BulkUiTranslation(SimpleTestCase):
     def _build_translation_download_file(self, headers, data=None):
         if data is None:
             data = []
-            translations = get_default_translations_for_download(self.app)
+            translations = get_default_translations_for_download(self.app, str(StrictVersion('2.32.0')))
             for translation_key, translation_value in translations.iteritems():
                 data.append((translation_key, translation_value))
 
