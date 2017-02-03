@@ -190,7 +190,7 @@ class TestGatewayFee(TestCase):
             messages = generator.arbitrary_messages_by_backend_and_direction(
                 {
                     random_key: self.backend_ids[random_key]
-                    for random_key in [choice(self.backend_ids.keys())]
+                    for random_key in [choice(list(self.backend_ids))]
                 },
                 phone_number=phone_number,
             )
