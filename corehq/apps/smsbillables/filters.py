@@ -52,10 +52,10 @@ class HasGatewayFeeFilter(BaseSingleOptionFilter):
 
 
 def get_criteria_property_options(property):
-    return map(
-        lambda value: (str(value), str(value)),
-        SmsGatewayFeeCriteria.objects.values_list(property, flat=True).distinct()
-    )
+    return [
+        (str(value), str(value))
+        for value in SmsGatewayFeeCriteria.objects.values_list(property, flat=True).distinct()
+    ]
 
 
 class GatewayTypeFilter(BaseSingleOptionFilter):
