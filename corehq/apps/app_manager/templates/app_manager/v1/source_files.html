@@ -57,7 +57,13 @@
     {% compress js %}
         <script src="{% static 'hqwebapp/js/urllib.js' %}"></script>
         <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
+        <script src="{% static 'Caret.js/dist/jquery.caret.js' %}"></script>
+        <script src="{% static 'At.js/dist/js/jquery.atwho.min.js' %}"></script>
     {% endcompress %}
+{% endblock %}
+
+{% block stylesheets %}{{ block.super }}
+    <link rel="stylesheet" href="{% static 'At.js/dist/css/jquery.atwho.min.css' %}" />
 {% endblock %}
 
 {% block js-inline %}
@@ -69,9 +75,30 @@
         });
 
         var version_map = hqImport('hqwebapp/js/initial_page_data.js').get('version_map');
-        var $form = $("#compare-form");
+        var $form = $("#compare-form"),
+            $input = $form.find("input");
+
+        $input.atwho({
+            at: "",
+            data: _.sortBy(_.keys(version_map), function(v) { return parseInt(v); }).reverse(),
+            limit: Infinity,
+            maxLen: Infinity,
+            suffix: "",
+            tabSelectsMatch: false,
+            callbacks: {
+                filter: function(query, data, searchKey) {
+                    return _.filter(data, function(item) {
+                        return item.name.indexOf(query) !== -1;
+                    });
+                },
+                matcher: function(flag, subtext, should_startWithSpace) {
+                    return $input.val();
+                },
+            }
+        });
+
         $form.find("button").click(function() {
-            var version = $form.find("input").val();
+            var version = $input.val();
             if (!version) {
                 alert("Please enter a version to compare");
                 return;
