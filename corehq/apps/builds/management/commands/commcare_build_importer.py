@@ -8,6 +8,7 @@ from jenkinsapi.jenkins import Jenkins
 from corehq.apps.builds.models import CommCareBuild
 from django.core.management.base import BaseCommand, CommandError
 from dimagi.utils.decorators.memoized import memoized
+from six.moves import input
 
 
 class Command(BaseCommand):
@@ -33,7 +34,7 @@ class Command(BaseCommand):
         print "Jenkins has following projects. Please choose one (to end enter END)"
         print [p for p in self.jenkin_projects if 'commcare-mobile' in p]
         while selected_project_key not in self.jenkin_projects:
-            selected_project_key = raw_input("")
+            selected_project_key = input("")
             if selected_project_key.lower() == 'end':
                 return
 
@@ -43,7 +44,7 @@ class Command(BaseCommand):
         builds_by_version_number = self._extract_version_numbers(build_dict)
 
         if not builds_by_version_number:
-            abort = raw_input("This project doesn't have any builds that has a VERSION set. Do you want"
+            abort = input("This project doesn't have any builds that has a VERSION set. Do you want"
                               " to chose another project  (Yes) or abort (No).")
             if abort.lower() == 'no':
                 print "Builds URL http://jenkins.dimagi.com/job/", selected_project_key
@@ -59,7 +60,7 @@ class Command(BaseCommand):
         while selected_build_number not in builds_by_version_number:
             if selected_build_number == 0:
                 return
-            selected_build_number = int(raw_input(""))
+            selected_build_number = int(input(""))
 
         # download and add the build
         print "Downloading and importing artifacts.zip. Please wait..."
