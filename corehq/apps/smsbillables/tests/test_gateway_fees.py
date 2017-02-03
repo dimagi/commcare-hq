@@ -20,6 +20,7 @@ from corehq.apps.smsbillables.tests import generator
 from corehq.apps.smsbillables.tests.utils import FakeTwilioMessageFactory
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 import six
+from six.moves import range
 
 
 class TestGatewayFee(TestCase):
