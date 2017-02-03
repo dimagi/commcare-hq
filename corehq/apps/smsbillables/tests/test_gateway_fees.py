@@ -19,6 +19,7 @@ from corehq.apps.smsbillables.models import (
 from corehq.apps.smsbillables.tests import generator
 from corehq.apps.smsbillables.tests.utils import FakeTwilioMessageFactory
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
+import six
 
 
 class TestGatewayFee(TestCase):
@@ -317,7 +318,7 @@ class TestGatewayFee(TestCase):
         self.other_currency.delete()
         SMS.by_domain(generator.TEST_DOMAIN).delete()
 
-        for api_id, backend_id in self.backend_ids.iteritems():
+        for api_id, backend_id in six.iteritems(self.backend_ids):
             SQLMobileBackend.load(backend_id, is_couch_id=True).delete()
 
         FakeTwilioMessageFactory.backend_message_id_to_price = {}
