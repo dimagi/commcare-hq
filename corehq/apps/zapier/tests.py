@@ -411,6 +411,7 @@ class TestZapierCreateCaseAction(TestCase):
         cls.data = {'case_name': 'test1', 'price': '11'}
         cls.accessor = CaseAccessors(cls.domain)
         cls.user = WebUser.create(cls.domain, 'test', '******')
+        cls.client = Client()
 
     @classmethod
     def tearDownClass(cls):
@@ -420,8 +421,7 @@ class TestZapierCreateCaseAction(TestCase):
         super(TestZapierCreateCaseAction, cls).tearDownClass()
 
     def test_create_case(self):
-        client = Client()
-        response = client.post(reverse(ZapierCreateCase.urlname, kwargs={'domain': self.domain})+self.query_string,
+        response = self.client.post(reverse(ZapierCreateCase.urlname, kwargs={'domain': self.domain})+self.query_string,
                                data=json.dumps(self.data),
                                content_type='application/json',
                                )
@@ -435,8 +435,7 @@ class TestZapierCreateCaseAction(TestCase):
         self.assertEqual('watermelon', case.get_case_property('type'))
 
     def test_update_case(self):
-        client = Client()
-        response = client.post(reverse(ZapierCreateCase.urlname, kwargs={'domain': self.domain}) + self.query_string,
+        response = self.client.post(reverse(ZapierCreateCase.urlname, kwargs={'domain': self.domain}) + self.query_string,
                                data=json.dumps(self.data),
                                content_type='application/json',
                                )
@@ -447,7 +446,7 @@ class TestZapierCreateCaseAction(TestCase):
         self.assertEqual('11', case.get_case_property('price'))
 
         data = {'case_name': 'test1', 'price': '15', 'case_id': case_id[0]}
-        response = client.post(reverse(ZapierUpdateCase.urlname, kwargs={'domain': self.domain}) + self.query_string,
+        response = self.client.post(reverse(ZapierUpdateCase.urlname, kwargs={'domain': self.domain}) + self.query_string,
                                data=json.dumps(data),
                                content_type='application/json',
                                )
@@ -457,9 +456,8 @@ class TestZapierCreateCaseAction(TestCase):
         self.assertEqual('15', case.get_case_property('price'))
 
     def test_update_case_does_not_exist(self):
-        client = Client()
         data = {'case_name': 'test1', 'price': '15', 'case_id': 'fake_id'}
-        response = client.post(reverse(ZapierUpdateCase.urlname, kwargs={'domain': self.domain}) + self.query_string,
+        response = self.client.post(reverse(ZapierUpdateCase.urlname, kwargs={'domain': self.domain}) + self.query_string,
                                data=json.dumps(data),
                                content_type='application/json',
                                )
@@ -467,8 +465,7 @@ class TestZapierCreateCaseAction(TestCase):
         self.assertEqual(response.status_code, 403)
 
     def test_update_case_wrong_domain(self):
-        client = Client()
-        response = client.post(reverse(ZapierCreateCase.urlname, kwargs={'domain': self.domain}) + self.query_string,
+        response = self.client.post(reverse(ZapierCreateCase.urlname, kwargs={'domain': self.domain}) + self.query_string,
                                data=json.dumps(self.data),
                                content_type='application/json',
                                )
@@ -478,7 +475,7 @@ class TestZapierCreateCaseAction(TestCase):
 
         data = {'case_name': 'test1', 'price': '15', 'case_id': case_id[0]}
         query_string = "?domain=me&case_type=watermelon&user_id=test_user&user=test"
-        response = client.post(reverse(ZapierUpdateCase.urlname, kwargs={'domain': self.domain}) + query_string,
+        response = self.client.post(reverse(ZapierUpdateCase.urlname, kwargs={'domain': self.domain}) + query_string,
                                data=json.dumps(data),
                                content_type='application/json',
                                )
@@ -486,8 +483,7 @@ class TestZapierCreateCaseAction(TestCase):
         self.assertEqual(response.status_code, 403)
 
     def test_update_case_wrong_type(self):
-        client = Client()
-        response = client.post(reverse(ZapierCreateCase.urlname, kwargs={'domain': self.domain}) + self.query_string,
+        response = self.client.post(reverse(ZapierCreateCase.urlname, kwargs={'domain': self.domain}) + self.query_string,
                                data=json.dumps(self.data),
                                content_type='application/json',
                                )
@@ -497,7 +493,7 @@ class TestZapierCreateCaseAction(TestCase):
 
         data = {'case_name': 'test1', 'price': '15', 'case_id': case_id[0]}
         query_string = "?domain=fruit&case_type=orange&user_id=test_user&user=test"
-        response = client.post(reverse(ZapierUpdateCase.urlname, kwargs={'domain': self.domain}) + query_string,
+        response = self.client.post(reverse(ZapierUpdateCase.urlname, kwargs={'domain': self.domain}) + query_string,
                                data=json.dumps(data),
                                content_type='application/json',
                                )
@@ -507,9 +503,8 @@ class TestZapierCreateCaseAction(TestCase):
     def test_user_does_not_have_access(self):
         fake_domain = Domain.get_or_create_with_name('fake', is_active=True)
         fake_user = WebUser.create('fake', 'faker2', '******')
-        client = Client()
         query_string = "?domain=fruit&case_type=fake&user_id=test_user&user=faker2"
-        response = client.post(reverse(ZapierCreateCase.urlname, kwargs={'domain': self.domain}) + query_string,
+        response = self.client.post(reverse(ZapierCreateCase.urlname, kwargs={'domain': self.domain}) + query_string,
                                data=json.dumps(self.data),
                                content_type='application/json',
                                )
