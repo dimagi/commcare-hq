@@ -82,10 +82,10 @@ def arbitrary_country_code_and_prefixes(
 
 @unit_testing_only
 def _available_gateway_fee_backends():
-    return filter(
-        lambda backend: backend.get_api_id() != SQLTwilioBackend.get_api_id(),
-        get_sms_backend_classes().values()
-    )
+    return [
+        backend for backend in get_sms_backend_classes().values()
+        if backend.get_api_id() != SQLTwilioBackend.get_api_id()
+    ]
 
 
 @unit_testing_only
