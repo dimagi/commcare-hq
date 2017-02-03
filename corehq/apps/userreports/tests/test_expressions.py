@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import copy
 import uuid
 from datetime import date, datetime
