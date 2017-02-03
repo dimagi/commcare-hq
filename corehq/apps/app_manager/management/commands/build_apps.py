@@ -85,7 +85,7 @@ class Command(BaseCommand):
             self.write_files(files, build_path)
 
     def write_files(self, files, path):
-        for filename, payload in list(files.items()):
+        for filename, payload in files.items():
             filepath = os.path.join(path, filename)
             dirpath, filename = os.path.split(filepath)
             try:

@@ -18,7 +18,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         domains = [row['key'] for row in Domain.get_all(include_docs=False)]
         settings = {s['id']: s['default'] for s in get_custom_commcare_settings() if 'default' in s}
-        deviant_counts = {id: 0 for id in list(settings.keys())}
+        deviant_counts = {id: 0 for id in settings}
         app_count = 0
         for domain in domains:
             for app in get_apps_in_domain(domain, include_remote=False):

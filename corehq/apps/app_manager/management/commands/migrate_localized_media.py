@@ -1,7 +1,7 @@
-from past.builtins import basestring
 from corehq.apps.app_manager.management.commands.helpers import AppMigrationCommandBase
 from corehq.apps.app_manager.models import Application
 from optparse import make_option
+from past.builtins import basestring
 
 
 class Command(AppMigrationCommandBase):

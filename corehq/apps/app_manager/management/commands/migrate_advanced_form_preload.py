@@ -18,7 +18,7 @@ class Command(AppMigrationCommandBase):
                 for action in load_actions:
                     preload = action['preload']
                     if preload and list(preload.values())[0].startswith('/'):
-                        action['preload'] = {v: k for k, v in list(preload.items())}
+                        action['preload'] = {v: k for k, v in preload.items()}
                         should_save = True
 
         return Application.wrap(app_doc) if should_save else None

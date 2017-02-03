@@ -94,7 +94,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         args = list(args)
-        valid_functions = ', '.join(list(CHECK_FUNCTIONS.keys()))
+        valid_functions = ', '.join(CHECK_FUNCTIONS)
         if not args:
             raise CommandError('Usage is find_broken_builds %s. Options are: %s' % (
                 self.args,

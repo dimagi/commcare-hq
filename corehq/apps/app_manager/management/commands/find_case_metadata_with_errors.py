@@ -29,7 +29,7 @@ class Command(AppMigrationCommandBase):
                     return None
                 actions = form.actions
                 if actions.case_preload:
-                    for action in list(actions.case_preload.preload.values()):
+                    for action in actions.case_preload.preload.values():
                         log_excessive_parents(app, action)
                 if actions.update_case:
                     for action in actions.update_case.update:
