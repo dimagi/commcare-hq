@@ -3,6 +3,7 @@
 
 
 from __future__ import absolute_import
+from six.moves import filter
 class Filter(object):
     """
     Base filter class
@@ -31,7 +32,7 @@ class ANDFilter(Filter):
         assert len(self.filters) > 0
 
     def __call__(self, item, context=None):
-        return all(filter(item, context) for filter in self.filters)
+        return all(list(filter(item, context)) for filter in self.filters)
 
 
 class ORFilter(Filter):
@@ -44,7 +45,7 @@ class ORFilter(Filter):
         assert len(self.filters) > 0
 
     def __call__(self, item, context=None):
-        return any(filter(item, context) for filter in self.filters)
+        return any(list(filter(item, context)) for filter in self.filters)
 
 
 class CustomFilter(Filter):
