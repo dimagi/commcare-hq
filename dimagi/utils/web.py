@@ -36,8 +36,8 @@ def render_to_response(req, template_name, dictionary=None, **kwargs):
         """Sort apps, based on the tab_order property in the config, if it exists.
            Anything with a value specified comes before everything else, which
            is arbitrarily sorted at the end."""
-        app1_order = int(app1["taborder"]) if "taborder" in app1 else sys.maxint
-        app2_order = int(app2["taborder"]) if "taborder" in app2 else sys.maxint
+        app1_order = int(app1["taborder"]) if "taborder" in app1 else sys.maxsize
+        app2_order = int(app2["taborder"]) if "taborder" in app2 else sys.maxsize
         return app1_order - app2_order
 
     rs_dict = {
