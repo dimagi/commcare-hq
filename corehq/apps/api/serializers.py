@@ -87,7 +87,7 @@ class CommCareCaseSerializer(Serializer):
                 element.set('type', get_type_string(simple_data))
 
             if data_type != 'null':
-                if isinstance(simple_data, unicode):
+                if isinstance(simple_data, six.text_type):
                     element.text = simple_data
                 else:
                     element.text = force_unicode(simple_data)
@@ -98,7 +98,7 @@ class CommCareCaseSerializer(Serializer):
 class CustomXMLSerializer(Serializer):
 
     def to_etree(self, data, options=None, name=None, depth=0):
-        if isinstance(name, basestring):
+        if isinstance(name, six.string_types):
             # need to strip any whitespace from xml tag names
             name = name.strip()
         etree = super(CustomXMLSerializer, self).to_etree(data, options, name, depth)
