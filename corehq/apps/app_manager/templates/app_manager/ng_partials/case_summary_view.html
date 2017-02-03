@@ -120,7 +120,10 @@
                             <td rowspan="{{ property.forms.length }}" ng-if="$first">{{ property.name }}</td>
                             <td>
                                 {% verbatim %}
-                                {{ getFormName(form.form_id, lang) }}
+                                    <a ng-href="/a/demo/apps/view/71d590784e9c5910947a5e7d1878f3b4/modules-{{ getModuleID(form.form_id, lang) }}/">
+                                        {{ getModuleName(form.form_id, lang) }}</a> ->
+                                    <a ng-href="/a/demo/apps/view/71d590784e9c5910947a5e7d1878f3b4/modules-{{ getModuleID(form.form_id, lang) }}/forms-{{ getFormID(form.form_id, lang) }}/">
+                                        {{ getFormName(form.form_id, lang) }}</a>
                                 {% endverbatim %}
                                 <i class="fa fa-exclamation-triangle text-danger" ng-repeat="error in form.errors"
                                         popover="{{ error }}" popover-trigger="mouseenter"

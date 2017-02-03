@@ -40,12 +40,31 @@
                 }
                 return names[firstLang] + (firstLang === target_lang ? '': ' [' + firstLang + ']');
             };
+            self.getModuleName = function (formId, target_lang) {
+                var names = config.formNameMap[formId];
+                if (names) {
+                    return self.translateName(names.module_name, target_lang)
+                }
+                return formId;
+            };
             self.getFormName = function (formId, target_lang) {
                 var names = config.formNameMap[formId];
                 if (names) {
-                    return self.translateName(names.module_name, target_lang) +
-                        ' -> ' +
-                        self.translateName(names.form_name, target_lang);
+                    return self.translateName(names.form_name, target_lang)
+                }
+                return formId;
+            };
+            self.getFormID = function (formId, target_lang) {
+                var names = config.formNameMap[formId];
+                if (names) {
+                    return names.id
+                }
+                return formId;
+            };
+            self.getModuleID = function (formId, target_lang) {
+                var names = config.formNameMap[formId];
+                if (names) {
+                    return names.module_id
                 }
                 return formId;
             };
@@ -180,6 +199,9 @@
         $scope.typeSearch = null;
         $scope.isActive = utils.isActive;
         $scope.getFormName = utils.getFormName;
+        $scope.getModuleName = utils.getModuleName;
+        $scope.getFormID = utils.getFormID;
+        $scope.getModuleID = utils.getModuleID;
         $scope.showConditions = true;
         $scope.showCalculations = true;
         $scope.showLabels = true;

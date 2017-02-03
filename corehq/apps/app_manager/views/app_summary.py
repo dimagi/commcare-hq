@@ -133,6 +133,8 @@ def _get_name_map(app):
             name_map[form.unique_id] = {
                 'form_name': form.name,
                 'module_name': module.name,
+                'id': form.id,
+                'module_id': module.id
             }
     return name_map
 
