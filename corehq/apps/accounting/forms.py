@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 from dateutil.relativedelta import relativedelta
 from decimal import Decimal
@@ -75,6 +76,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.users.models import WebUser
 from corehq.util.dates import get_first_last_days
+from six.moves import range
 
 
 class BillingAccountBasicForm(forms.Form):
