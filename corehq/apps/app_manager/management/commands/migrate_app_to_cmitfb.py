@@ -104,7 +104,7 @@ def migrate_preloads(app, form, preloads):
         hashtag = kwargs.pop("hashtag")
         xform.add_case_preloads(**kwargs)
         refs = {path: [hashtag + case_property]
-                for path, case_property in kwargs["preloads"].iteritems()}
+                for path, case_property in kwargs["preloads"].items()}
         if form.case_references:
             form.case_references.load.update(refs)
         else:

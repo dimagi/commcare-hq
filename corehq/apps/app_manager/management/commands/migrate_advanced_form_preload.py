@@ -17,8 +17,8 @@ class Command(AppMigrationCommandBase):
                 load_actions = form.get('actions', {}).get('load_update_cases', [])
                 for action in load_actions:
                     preload = action['preload']
-                    if preload and preload.values()[0].startswith('/'):
-                        action['preload'] = {v: k for k, v in preload.items()}
+                    if preload and list(preload.values())[0].startswith('/'):
+                        action['preload'] = {v: k for k, v in list(preload.items())}
                         should_save = True
 
         return Application.wrap(app_doc) if should_save else None

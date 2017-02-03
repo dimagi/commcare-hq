@@ -1,3 +1,4 @@
+from __future__ import print_function
 import contextlib
 import json
 import time
@@ -61,7 +62,7 @@ class Command(BaseCommand):
                 app_slugs.append(name[:-len(_JSON)])
 
         for slug in app_slugs:
-            print 'Fetching %s...' % slug
+            print('Fetching %s...' % slug)
             source_path = os.path.join(path, 'src', '%s.json' % slug)
             with open(source_path) as f:
                 j = json.load(f)
@@ -74,7 +75,7 @@ class Command(BaseCommand):
             if not app.domain:
                 app.domain = "test"
             build_path = os.path.join(path, build_slug, slug)
-            print ' Creating files...'
+            print(' Creating files...')
             if track_perf:
                 with record_performance_stats(perfpath, slug):
                     files = app.create_all_files()
@@ -84,7 +85,7 @@ class Command(BaseCommand):
             self.write_files(files, build_path)
 
     def write_files(self, files, path):
-        for filename, payload in files.items():
+        for filename, payload in list(files.items()):
             filepath = os.path.join(path, filename)
             dirpath, filename = os.path.split(filepath)
             try:
