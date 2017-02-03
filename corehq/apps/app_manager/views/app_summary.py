@@ -130,11 +130,15 @@ def _get_name_map(app):
     for module in app.get_modules():
         name_map[module.unique_id] = module.name
         for form in module.get_forms():
+            keywords = {'domain': app.domain, 'app_id': app.id, 'module_id': module.id}
+            module_url = reverse('view_module', kwargs=keywords)
+            keywords['form_id'] = form.id
+            form_url = reverse('view_form', kwargs=keywords)
             name_map[form.unique_id] = {
                 'form_name': form.name,
                 'module_name': module.name,
-                'id': form.id,
-                'module_id': module.id
+                'module_url': module_url,
+                'form_url': form_url
             }
     return name_map
 
