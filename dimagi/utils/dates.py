@@ -125,7 +125,7 @@ def utcnow_sans_milliseconds():
 
 def today_or_tomorrow(date, inclusive=True):
     today = datetime.datetime.combine(datetime.datetime.today(), datetime.time())
-    if type(date) is datetime.date:
+    if isinstance(date, datetime.date):
         today = today.date()
     day_after_tomorrow = today + datetime.timedelta(days=2)
 
