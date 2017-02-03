@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from collections import namedtuple
 from datetime import datetime, time
 from corehq.apps.reports_core.exceptions import FilterValueException
