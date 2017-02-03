@@ -1,8 +1,8 @@
 from django.test import SimpleTestCase
 from StringIO import StringIO
 from corehq.apps.app_manager.models import Application
-from corehq.apps.app_manager.views.translations import process_ui_translation_upload,\
-    get_default_translations_for_download
+from corehq.apps.app_manager.ui_translations import \
+    process_ui_translation_upload, get_default_translations_for_download
 from couchexport.export import export_raw
 
 
