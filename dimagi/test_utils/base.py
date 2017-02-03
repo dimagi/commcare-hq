@@ -20,8 +20,8 @@ from dimagi.utils.couch.sync_docs import sync_design_docs, copy_designs
 class DimagiUtilsTestCase(TestCase):
     def test_create_unique_filter(self):
         l = [{'id': 'a'}, {'id': 'b'}, {'id': 'a'}, {'id': 'c'}, {'id': 'b'}]
-        self.assertEquals(filter(create_unique_filter(lambda x: x['id']), l), [{'id': 'a'}, {'id': 'b'}, {'id': 'c'}])
-        self.assertEquals(filter(create_unique_filter(lambda x: id(x)), l), [{'id': 'a'}, {'id': 'b'}, {'id': 'a'}, {'id': 'c'}, {'id': 'b'}])
+        self.assertEquals(list(filter(create_unique_filter(lambda x: x['id']), l)), [{'id': 'a'}, {'id': 'b'}, {'id': 'c'}])
+        self.assertEquals(list(filter(create_unique_filter(lambda x: id(x)), l)), [{'id': 'a'}, {'id': 'b'}, {'id': 'a'}, {'id': 'c'}, {'id': 'b'}])
 
     def test_memoized_function(self):
         @memoized

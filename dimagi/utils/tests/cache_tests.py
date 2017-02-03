@@ -16,7 +16,7 @@ class FakeCache(object):
 
     def keys(self, pattern):
         all_keys = list(self.cache_dict)
-        filtered = filter(lambda x: x.startswith(pattern[:-1]), all_keys)
+        filtered = [x for x in all_keys if x.startswith(pattern[:-1])]
         return filtered
 
     def set(self, key, value, timeout=None):
