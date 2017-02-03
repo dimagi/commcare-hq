@@ -5,7 +5,7 @@
 
 {% block page_content %}
     {% registerurl 'diff' app.domain app.id '---' %}
-    {% initial_page_data 'version_map' version_map %}
+    {% initial_page_data 'built_versions' built_versions %}
     {% initial_page_data 'current_version' app.built_with.build_number %}
 
     <p class="form-inline" id="compare-form">
@@ -65,6 +65,12 @@
 
 {% block stylesheets %}{{ block.super }}
     <link rel="stylesheet" href="{% static 'At.js/dist/css/jquery.atwho.min.css' %}" />
+    <style type="text/css">
+        /* Limit atwho dropdown width */
+        .atwho-view {
+            max-width: 300px;
+        }
+    </style>
 {% endblock %}
 
 {% block js-inline %}
@@ -75,20 +81,33 @@
             $(this).parents('tr').next('tr').toggleClass("hide");
         });
 
-        var version_map = hqImport('hqwebapp/js/initial_page_data.js').get('version_map'),
-            current_version = hqImport('hqwebapp/js/initial_page_data.js').get('current_version'),
+        var current_version = hqImport('hqwebapp/js/initial_page_data.js').get('current_version'),
+            built_versions = hqImport('hqwebapp/js/initial_page_data.js').get('built_versions'),
             $form = $("#compare-form"),
-            $input = $form.find("input"),
-            versions = _.without(_.keys(version_map), String(current_version));
+            $input = $form.find("input");
+
+        built_versions = _.sortBy(_.filter(built_versions, function(v) {
+            return v.version != current_version;
+        }), function(v) { return parseInt(v.version); }).reverse();
+        version_map = _.indexBy(built_versions, 'version');
 
         $input.atwho({
             at: "",
-            data: _.sortBy(versions, function(v) { return parseInt(v); }).reverse(),
+            data: _.map(built_versions, function(v) {
+                return {
+                    id: v.version,
+                    name: v.version + (v.comment ? " (" + v.comment + ")" : ""),
+                };
+            }),
             limit: Infinity,
             maxLen: Infinity,
             suffix: "",
             tabSelectsMatch: false,
             callbacks: {
+                beforeInsert: function(value, $li) {
+                    value = value.split(/\s+/);
+                    return value[0];
+                },
                 filter: function(query, data, searchKey) {
                     return _.filter(data, function(item) {
                         return item.name.indexOf(query) !== -1;
@@ -109,7 +128,7 @@
                 alert(version + " is not a valid version");
                 return;
             }
-            window.location = hqImport('hqwebapp/js/urllib.js').reverse('diff', version_map[version]);
+            window.location = hqImport('hqwebapp/js/urllib.js').reverse('diff', version_map[version].build_id);
         });
     });
 </script>

@@ -356,7 +356,12 @@ def download_index(request, domain, app_id):
         'app': request.app,
         'files': [{'name': f[0], 'source': f[1]} for f in files],
         'supports_j2me': request.app.build_spec.supports_j2me(),
-        'version_map': {v.version: v.build_id for v in built_versions},
+        'built_versions': [{
+            'app_id': app_id,
+            'build_id': build_id,
+            'version': version,
+            'comment': comment,
+        } for app_id, build_id, version, comment in built_versions]
     })
 
 
