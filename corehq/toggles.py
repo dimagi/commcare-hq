@@ -522,7 +522,7 @@ VELLUM_PRINTING = StaticToggle(
     "Enables the Print Android App Callout",
     TAG_PRODUCT_PATH,
     help_link='https://confluence.dimagi.com/display/ccinternal/Printing+from+a+form+in+CommCare+Android',
-    namespace=[NAMESPACE_DOMAIN]
+    namespaces=[NAMESPACE_DOMAIN]
 )
 
 VELLUM_DATA_IN_SETVALUE = StaticToggle(
