@@ -127,7 +127,7 @@ class ZapierCreateCase(View):
             update=properties
         )
 
-        return HttpResponse('Created case with id ' + str(new_case.case_id))
+        return HttpResponse("Created case with id {case_id}".format(str(new_case.case_id)))
 
 
 class ZapierUpdateCase(View):
@@ -164,4 +164,4 @@ class ZapierUpdateCase(View):
             update=properties
         )
 
-        return HttpResponse('Case ' + case_id + " updated")
+        return HttpResponse("Case {case_id} updated".format(case_id=case_id))
