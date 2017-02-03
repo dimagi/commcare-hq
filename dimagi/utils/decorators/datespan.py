@@ -46,7 +46,7 @@ def datespan_in_request(from_param="from", to_param="to",
             return f(*args, **kwargs)
 
         if hasattr(f, "func_name"):
-            wrapped_func.func_name = f.func_name
+            wrapped_func.__name__ = f.__name__
             # preserve doc strings
             wrapped_func.__doc__ = f.__doc__
             return wrapped_func
