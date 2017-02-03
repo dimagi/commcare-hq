@@ -1,5 +1,6 @@
 from future import standard_library
 standard_library.install_aliases()
+from builtins import str
 from django import template
 import urllib.request, urllib.parse, urllib.error
 
@@ -53,7 +54,7 @@ class URLEncodeNode(template.Node):
             params[key] = [v.encode('utf-8') if isinstance(v, str) else v
                            for v in val]
 
-        for key,val in list(self.extra_params.items()):
+        for key,val in self.extra_params.items():
             key = template.Variable(key).resolve(context)
             val = template.Variable(val).resolve(context)
             params[key] = val
