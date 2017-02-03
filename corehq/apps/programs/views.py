@@ -32,6 +32,17 @@ class ProgramListView(BaseCommTrackManageView):
     template_name = 'programs/manage/programs.html'
     page_title = ugettext_noop("Programs")
 
+    @property
+    def page_context(self):
+        return {
+            'program_product_options': {
+                'total': 10,
+                'start_page': 1,
+                'limit': 10,
+                'list_url': reverse('commtrack_program_fetch', args=[self.domain]),
+            }
+        }
+
 
 class FetchProgramListView(ProgramListView):
     urlname = 'commtrack_program_fetch'

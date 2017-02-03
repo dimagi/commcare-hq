@@ -1,10 +1,14 @@
 {% extends "style/base_section.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
+{% load compress %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'hqwebapp/js/base_list_view_model.js' %}"></script>
-    <script src="{% static 'commtrack/js/products_and_programs.async.js' %}"></script>
+    {% compress js %}
+        <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/base_list_view_model.js' %}"></script>
+        <script src="{% static 'commtrack/js/products_and_programs.async.js' %}"></script>
+    {% endcompress %}
 {% endblock %}
 
 {% block stylesheets %}
@@ -18,18 +22,15 @@
 {% block js-inline %}{{ block.super }}
     <script>
         $(function(){
-            $('#product-list').asyncProgramProductList({
-                total: {{ data_list.total }},
-                start_page: {{ data_list.page }},
-                limit: {{ data_list.limit }},
-                show_inactive: {{ show_inactive|yesno:"true,false" }},
-                list_url: '{% url "commtrack_product_fetch" domain %}'
-            });
+            $('#program-product-list').asyncProgramProductList(
+                hqImport('hqwebapp/js/initial_page_data.js').get('program_product_options')
+            );
         });
     </script>
 {% endblock %}
 
 {% block page_content %}
+{% initial_page_data 'program_product_options' program_product_options %}
 <header>
     <div class="row">
         <div class="col-sm-8">
@@ -56,7 +57,7 @@
     </div>
 </header>
 
-<div id="product-list">
+<div id="program-product-list">
 
     <div class="row">
         <div class="col-sm-12">
