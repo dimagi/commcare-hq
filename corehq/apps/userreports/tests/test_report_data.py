@@ -7,6 +7,7 @@ from corehq.apps.userreports.pillow import get_kafka_ucr_pillow
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.tests.utils import doc_to_change, run_with_all_ucr_backends
 from corehq.apps.userreports.util import get_indicator_adapter
+from six.moves import range
 
 
 ReportDataTestRow = namedtuple('ReportDataTestRow', ['name', 'number'])

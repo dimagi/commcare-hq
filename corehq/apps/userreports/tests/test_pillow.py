@@ -23,6 +23,7 @@ from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.util.test_utils import softer_assert, trap_extra_setup
 from corehq.util.context_managers import drop_connected_signals
+from six.moves import range
 
 
 class ConfigurableReportTableManagerTest(SimpleTestCase):

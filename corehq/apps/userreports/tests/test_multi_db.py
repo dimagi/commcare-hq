@@ -12,6 +12,7 @@ from corehq.apps.userreports.tests.utils import get_sample_data_source, get_samp
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.sql_db import connections
 from corehq.sql_db.tests.utils import temporary_database
+from six.moves import range
 
 
 class UCRMultiDBTest(TestCase):
