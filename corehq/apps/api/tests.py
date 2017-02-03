@@ -82,7 +82,7 @@ class FakeXFormES(object):
         return {
             'hits': {
                 'total': len(self.docs),
-                'hits': [{'_source': doc} for doc in self.docs.values()[start:end]]
+                'hits': [{'_source': doc} for doc in list(self.docs.values())[start:end]]
             }
         }
 
@@ -462,7 +462,7 @@ class TestCommCareCaseResource(APIResourceTest):
             200,
             "Status code was not 200. Response content was {}".format(response.content)
         )
-        parent_cases = json.loads(response.content)['parent_cases'].values()
+        parent_cases = list(json.loads(response.content)['parent_cases'].values())
 
         # Confirm that the case appears in the resource
         self.assertEqual(len(parent_cases), 1)
@@ -476,7 +476,7 @@ class TestCommCareCaseResource(APIResourceTest):
             200,
             "Status code was not 200. Response content was {}".format(response.content)
         )
-        child_cases = json.loads(response.content)['child_cases'].values()
+        child_cases = list(json.loads(response.content)['child_cases'].values())
 
         # Confirm that the case appears in the resource
         self.assertEqual(len(child_cases), 1)
