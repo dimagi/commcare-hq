@@ -19,7 +19,11 @@ class UTF8Recoder:
     def __iter__(self):
         return self
 
+    def __next__(self):
+        return self.reader.next().encode("utf-8")
+
     def next(self):
+        # For Py2 compatibility
         return self.reader.next().encode("utf-8")
 
 class UnicodeReader:
@@ -32,12 +36,17 @@ class UnicodeReader:
         f = UTF8Recoder(f, encoding)
         self.reader = csv.reader(f, dialect=dialect, **kwds)
 
-    def next(self):
+    def __next__(self):
         row = next(self.reader)
         return [unicode(s, "utf-8") for s in row]
 
     def __iter__(self):
         return self
+
+    def next(self):
+        # For Py2 compatibility
+        row = next(self.reader)
+        return [unicode(s, "utf-8") for s in row]
 
 class UnicodeWriter:
     """
