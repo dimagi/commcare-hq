@@ -45,6 +45,7 @@
 trunk: master
 name: autostaging
 branches:
+  - app_manager.translations  # Danny 2/3
   - general-credits-sr # sreddy 1/10
   - vellum-staging # J$ 11/13  
   - django19
@@ -79,3 +80,6 @@ submodules:
     branches: []
   deployment/commcare-hq-deploy:
     branches: []
+  submodules/commcare-translations:
+    branches:
+      - commcare-versioned-translations
