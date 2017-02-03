@@ -12,7 +12,7 @@ from corehq.apps.app_manager import app_strings
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps
-from corehq.apps.app_manager.translations import \
+from corehq.apps.app_manager.app_translations import \
     expected_bulk_app_sheet_headers, expected_bulk_app_sheet_rows, \
     process_bulk_app_translation_upload
 from corehq.apps.translations import system_text_sources
