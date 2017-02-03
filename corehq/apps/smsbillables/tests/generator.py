@@ -15,6 +15,7 @@ from corehq.apps.sms.util import get_sms_backend_classes
 from corehq.apps.smsbillables.models import SmsBillable, SmsGatewayFee, SmsUsageFee
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 from corehq.util.test_utils import unit_testing_only
+from six.moves import range
 
 
 # arbitrarily generated once from http://www.generatedata.com/
