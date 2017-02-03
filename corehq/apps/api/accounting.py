@@ -10,6 +10,7 @@ from tastypie import fields
 
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from django_prbac.models import Role
+import six
 
 
 class AccToManyField(ToManyField):
@@ -64,7 +65,7 @@ class AccountingCurrencyResource(ModelResource):
 
     def build_filters(self, filters=None):
         update = {}
-        for key, val in filters.iteritems():
+        for key, val in six.iteritems(filters):
             args = key.split('__')
             if args and args[0] == 'last_modified':
                 k = 'date_updated__%s' % args[1]

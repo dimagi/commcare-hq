@@ -13,6 +13,7 @@ from corehq.form_processor.abstract_models import CaseToXMLMixin
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from couchforms import const
 from dimagi.ext.couchdbkit import *
+import six
 
 PERMISSION_POST_SMS = "POST_SMS"
 PERMISSION_POST_WISEPILL = "POST_WISEPILL"
@@ -132,12 +133,12 @@ class ESXFormInstance(DictObject):
                     content_length=info.get("length", None),
                     content_type=info.get("content_type", None),
                     digest=info.get("digest", None),
-                ) for name, info in self._attachments.iteritems()
+                ) for name, info in six.iteritems(self._attachments)
             })
         if self.external_blobs:
             blobs.update({
                 name: BlobMeta.wrap(info)
-                for name, info in self.external_blobs.iteritems()
+                for name, info in six.iteritems(self.external_blobs)
             })
 
         return blobs

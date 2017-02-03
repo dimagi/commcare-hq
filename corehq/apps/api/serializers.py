@@ -11,6 +11,7 @@ from tastypie.serializers import Serializer, get_type_string
 # External imports
 import defusedxml.lxml as lxml
 from lxml.etree import Element
+import six
 
 
 class CommCareCaseSerializer(Serializer):
@@ -56,7 +57,7 @@ class CommCareCaseSerializer(Serializer):
             else:
                 element = Element(name or 'object')
                 element.set('type', 'hash')
-            for (key, value) in data.iteritems():
+            for (key, value) in six.iteritems(data):
                 element.append(self.to_etree(value, options, name=key, depth=depth+1))
         elif isinstance(data, Bundle):
             element = self.bundle_to_etree(data) # <--------------- this is the part that is changed from https://github.com/toastdriven/django-tastypie/blob/master/tastypie/serializers.py
