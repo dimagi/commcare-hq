@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from copy import deepcopy
 import datetime
 from elasticsearch import NotFoundError, RequestError
