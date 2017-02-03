@@ -98,11 +98,11 @@ class ZapierCreateCase(View):
 
     @method_decorator(login_or_api_key)
     @method_decorator(csrf_exempt)
-    def dispatch(self, *args, **kwargs):
+    def dispatch(self, request, *args, **kwargs):
         domain = args[0]
         if not domain_has_privilege(domain, privileges.ZAPIER_INTEGRATION):
             return HttpResponseForbidden()
-        return super(ZapierCreateCase, self).dispatch(*args, **kwargs)
+        return super(ZapierCreateCase, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         domain = request.GET.get('domain')
@@ -127,7 +127,7 @@ class ZapierCreateCase(View):
             update=properties
         )
 
-        return HttpResponse("Created case with id {case_id}".format(str(new_case.case_id)))
+        return HttpResponse("Created case with id {case_id}".format(case_id=str(new_case.case_id)))
 
 
 class ZapierUpdateCase(View):
@@ -136,11 +136,11 @@ class ZapierUpdateCase(View):
 
     @method_decorator(login_or_api_key)
     @method_decorator(csrf_exempt)
-    def dispatch(self, *args, **kwargs):
+    def dispatch(self, request, *args, **kwargs):
         domain = args[0]
         if not domain_has_privilege(domain, privileges.ZAPIER_INTEGRATION):
             return HttpResponseForbidden()
-        return super(ZapierUpdateCase, self).dispatch(*args, **kwargs)
+        return super(ZapierUpdateCase, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         domain = request.GET.get('domain')

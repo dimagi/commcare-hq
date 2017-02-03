@@ -14,7 +14,6 @@ from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, So
 from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.domain.models import Domain
 from corehq.apps.repeaters.models import FormRepeater, CaseRepeater
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import WebUser
 from corehq.apps.zapier.consts import EventTypes
 from corehq.apps.zapier.views import SubscribeView, UnsubscribeView, ZapierCreateCase, ZapierUpdateCase
@@ -406,19 +405,25 @@ class TestZapierCreateCaseAction(TestCase):
     @classmethod
     def setUpClass(cls):
         super(TestZapierCreateCaseAction, cls).setUpClass()
+        generator.instantiate_accounting()
         cls.domain_object = Domain.get_or_create_with_name('fruit', is_active=True)
         cls.domain = cls.domain_object.name
+        account = BillingAccount.get_or_create_account_by_domain(cls.domain, created_by="automated-test")[0]
+        plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.STANDARD)
+        subscription = Subscription.new_domain_subscription(account, cls.domain, plan)
+        subscription.is_active = True
+        subscription.save()
         cls.query_string = "?domain=fruit&case_type=watermelon&owner_id=test_user&user=test"
         cls.data = {'case_name': 'test1', 'price': '11'}
         cls.accessor = CaseAccessors(cls.domain)
         cls.user = WebUser.create(cls.domain, 'test', '******')
-        cls.client = Client()
+        api_key_object, _ = ApiKey.objects.get_or_create(user=cls.user.get_django_user())
+        cls.api_key = api_key_object.key
 
     @classmethod
     def tearDownClass(cls):
         cls.user.delete()
         cls.domain_object.delete()
-        cls.client.delete()
         FormProcessorTestUtils.delete_all_cases()
         super(TestZapierCreateCaseAction, cls).tearDownClass()
 
@@ -427,7 +432,7 @@ class TestZapierCreateCaseAction(TestCase):
                                             kwargs={'domain': self.domain}) + self.query_string,
                                data=json.dumps(self.data),
                                content_type='application/json',
-                                    )
+                               HTTP_AUTHORIZATION='ApiKey test:{}'.format(self.api_key))
 
         self.assertEqual(response.status_code, 200)
 
@@ -442,7 +447,7 @@ class TestZapierCreateCaseAction(TestCase):
                                             kwargs={'domain': self.domain}) + self.query_string,
                                data=json.dumps(self.data),
                                content_type='application/json',
-                                    )
+                               HTTP_AUTHORIZATION='ApiKey test:{}'.format(self.api_key))
 
         self.assertEqual(response.status_code, 200)
         case_id = self.accessor.get_case_ids_in_domain()
@@ -454,7 +459,7 @@ class TestZapierCreateCaseAction(TestCase):
                                             kwargs={'domain': self.domain}) + self.query_string,
                                data=json.dumps(data),
                                content_type='application/json',
-                                    )
+                               HTTP_AUTHORIZATION='ApiKey test:{}'.format(self.api_key))
 
         self.assertEqual(response.status_code, 200)
         case = self.accessor.get_case(case_id[0])
@@ -466,7 +471,7 @@ class TestZapierCreateCaseAction(TestCase):
                                             kwargs={'domain': self.domain}) + self.query_string,
                                data=json.dumps(data),
                                content_type='application/json',
-                                    )
+                               HTTP_AUTHORIZATION='ApiKey test:{}'.format(self.api_key))
 
         self.assertEqual(response.status_code, 403)
 
@@ -475,7 +480,7 @@ class TestZapierCreateCaseAction(TestCase):
                                             kwargs={'domain': self.domain}) + self.query_string,
                                data=json.dumps(self.data),
                                content_type='application/json',
-                                    )
+                               HTTP_AUTHORIZATION='ApiKey test:{}'.format(self.api_key))
 
         self.assertEqual(response.status_code, 200)
         case_id = self.accessor.get_case_ids_in_domain()
@@ -486,7 +491,7 @@ class TestZapierCreateCaseAction(TestCase):
                                             kwargs={'domain': self.domain}) + query_string,
                                data=json.dumps(data),
                                content_type='application/json',
-                                    )
+                               HTTP_AUTHORIZATION='ApiKey test:{}'.format(self.api_key))
 
         self.assertEqual(response.status_code, 403)
 
@@ -495,7 +500,7 @@ class TestZapierCreateCaseAction(TestCase):
                                             kwargs={'domain': self.domain}) + self.query_string,
                                data=json.dumps(self.data),
                                content_type='application/json',
-                                    )
+                               HTTP_AUTHORIZATION='ApiKey test:{}'.format(self.api_key))
 
         self.assertEqual(response.status_code, 200)
         case_id = self.accessor.get_case_ids_in_domain()
@@ -506,7 +511,7 @@ class TestZapierCreateCaseAction(TestCase):
                                             kwargs={'domain': self.domain}) + query_string,
                                data=json.dumps(data),
                                content_type='application/json',
-                                    )
+                               HTTP_AUTHORIZATION='ApiKey test:{}'.format(self.api_key))
 
         self.assertEqual(response.status_code, 403)
 
@@ -518,7 +523,7 @@ class TestZapierCreateCaseAction(TestCase):
                                             kwargs={'domain': self.domain}) + query_string,
                                data=json.dumps(self.data),
                                content_type='application/json',
-                                    )
+                               HTTP_AUTHORIZATION='ApiKey test:{}'.format(self.api_key))
 
         self.assertEqual(response.status_code, 403)
         fake_domain.delete()
