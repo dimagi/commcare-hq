@@ -38,4 +38,4 @@
 +    </div>
  </div>
  
- {% if request|toggle_enabled:"DETAIL_LIST_TABS" %}
+ <button class="btn btn-default" data-bind="click: function() { longScreen.addTab(false); }">
