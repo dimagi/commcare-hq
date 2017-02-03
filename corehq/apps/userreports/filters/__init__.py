@@ -2,6 +2,7 @@
 # The largest change is the addition of the evaluation context to every filter
 
 
+from __future__ import absolute_import
 class Filter(object):
     """
     Base filter class

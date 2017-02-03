@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, DictProperty
 from jsonobject.base import DefaultProperty
 from corehq.apps.userreports.exceptions import BadSpecError
