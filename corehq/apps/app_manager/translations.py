@@ -1,15 +1,15 @@
 # coding=utf-8
-from builtins import zip
+import copy
+import re
 from builtins import next
 from builtins import str
-from past.builtins import basestring
+from builtins import zip
 from collections import defaultdict, OrderedDict
 from django.utils.encoding import force_text
 from django.utils.safestring import mark_safe
 from lxml import etree
-import copy
-import re
 from lxml.etree import XMLSyntaxError, Element
+from past.builtins import basestring
 
 from corehq.apps.app_manager.exceptions import (
     FormNotFoundException,
@@ -634,10 +634,10 @@ def update_form_translations(sheet, rows, missing_cols, app):
                     # has already been logged as unrecoginzed column
                     continue
 
-            keep_value_node = any(v for k, v in list(translations.items()))
+            keep_value_node = any(v for k, v in translations.items())
 
             # Add or remove translations
-            for trans_type, new_translation in list(translations.items()):
+            for trans_type, new_translation in translations.items():
                 if not new_translation and col_key not in missing_cols:
                     # If the cell corresponding to the label for this question
                     # in this language is empty, fall back to another language

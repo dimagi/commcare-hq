@@ -1,7 +1,7 @@
-from past.builtins import basestring
 from builtins import object
 from distutils.version import LooseVersion, Version
 from django.conf import settings
+from past.builtins import basestring
 
 
 class CommCareFeatureSupportMixin(object):

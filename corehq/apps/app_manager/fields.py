@@ -1,11 +1,11 @@
-from builtins import map
-from builtins import object
-import logging
-from django.core.urlresolvers import reverse
-from django.http import Http404
 import collections
 import itertools
+import logging
+from builtins import map
+from builtins import object
 from django import forms
+from django.core.urlresolvers import reverse
+from django.http import Http404
 from django.utils.translation import ugettext as _
 
 from corehq import toggles
@@ -85,7 +85,7 @@ class ApplicationDataSourceUIHelper(object):
     def bootstrap(self, domain):
         self.all_sources = get_app_sources(domain)
         self.application_field.choices = sorted(
-            [(app_id, source['name']) for app_id, source in list(self.all_sources.items())],
+            [(app_id, source['name']) for app_id, source in self.all_sources.items()],
             key=lambda id_name_tuple: (id_name_tuple[1] or '').lower()
         )
         self.source_field.choices = []
@@ -98,12 +98,12 @@ class ApplicationDataSourceUIHelper(object):
         if self.enable_cases:
             _add_choices(
                 self.source_field,
-                [(ct['value'], ct['text']) for app in list(self.all_sources.values()) for ct in app['case']]
+                [(ct['value'], ct['text']) for app in self.all_sources.values() for ct in app['case']]
             )
         if self.enable_forms:
             _add_choices(
                 self.source_field,
-                [(ct['value'], ct['text']) for app in list(self.all_sources.values()) for ct in app['form']]
+                [(ct['value'], ct['text']) for app in self.all_sources.values() for ct in app['form']]
             )
 
         # NOTE: This corresponds to a view-model that must be initialized in your template.
@@ -356,7 +356,7 @@ class ApplicationDataRMIHelper(object):
     @staticmethod
     def _get_unique_choices(choices):
         final_choices = collections.defaultdict(list)
-        for k, val_list in list(choices.items()):
+        for k, val_list in choices.items():
             new_val_ids = []
             final_choices[k] = []
             for v in val_list:
@@ -473,7 +473,7 @@ class ApplicationDataRMIHelper(object):
     def _get_cases_for_apps(self, apps_by_type, as_dict=True):
         used_case_types = set()
         case_types_by_app = collections.defaultdict(list)
-        for app_type, apps in list(apps_by_type.items()):
+        for app_type, apps in apps_by_type.items():
             for app_choice in apps:
                 if not app_choice.id == self.UNKNOWN_SOURCE:
                     app = get_app(self.domain, app_choice.id)
@@ -486,7 +486,7 @@ class ApplicationDataRMIHelper(object):
                         ])
 
                         # Add user case if any module uses it
-                        if any([module.uses_usercase() for module in app.modules]):
+                        if any(module.uses_usercase() for module in app.modules):
                             case_types.add(USERCASE_TYPE)
 
                         used_case_types = used_case_types.union(case_types)

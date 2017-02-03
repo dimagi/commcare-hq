@@ -19,13 +19,13 @@ seem to be a good fit.
 
 
 """
-from builtins import str
-from past.builtins import basestring
-from builtins import object
 import re
 import uuid
+from builtins import object
+from builtins import str
 from lxml import etree
 from lxml.builder import E
+from past.builtins import basestring
 
 EMPTY_XFORM = """<?xml version="1.0"?>
 <h:html xmlns:h="http://www.w3.org/1999/xhtml"
@@ -248,7 +248,7 @@ class XFormBuilder(object):
                 get_text_node(name, params['hint'], group, label_safe_=label_safe, is_hint=True)
             )
         if choices:
-            for choice_name, choice_label in list(choices.items()):
+            for choice_name, choice_label in choices.items():
                 self._translation1.append(get_text_node(name, choice_label, group, choice_name, label_safe))
 
     def _append_to_model(self, name, data_type, group=None, **params):
@@ -256,7 +256,7 @@ class XFormBuilder(object):
             attrs = {'nodeset': self.get_data_ref(name, group)}
             if data_type in XSD_TYPES:
                 attrs['type'] = 'xsd:' + data_type
-            for param, value in list(params.items()):
+            for param, value in params.items():
                 if param in QUESTION_PARAMS:
                     ns_param = self.get_namespaced(param)
                     attrs[ns_param] = value
@@ -354,7 +354,7 @@ class XFormBuilder(object):
                 node_.append(
                     E.hint({'ref': "jr:itext('{}')".format(self.get_text_id(name_, groups_, is_hint=True))})
                 )
-            for choice_name in list(choices_.keys()):
+            for choice_name in choices_:
                 node_.append(
                     E.item(
                         E.label({'ref': "jr:itext('{}')".format(self.get_text_id(name_, groups_, choice_name))}),

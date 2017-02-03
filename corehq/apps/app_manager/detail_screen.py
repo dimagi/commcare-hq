@@ -1,5 +1,5 @@
-from builtins import str
 from builtins import object
+from builtins import str
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.suite_xml import xml_models as sx
 from corehq.apps.app_manager.suite_xml import const
@@ -361,7 +361,7 @@ class EnumImage(Enum):
         width = 0
         if self.app.enable_case_list_icon_dynamic_width:
             for i, item in enumerate(self.column.enum):
-                for path in list(item.value.values()):
+                for path in item.value.values():
                     map_item = self.app.multimedia_map[path]
                     if map_item is not None:
                         image = CommCareMultimedia.get(map_item.multimedia_id)

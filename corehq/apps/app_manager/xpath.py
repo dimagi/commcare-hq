@@ -1,6 +1,6 @@
-from builtins import str
-from builtins import object
 import re
+from builtins import object
+from builtins import str
 from corehq.apps.app_manager.const import (
     USERCASE_TYPE,
     SCHEDULE_PHASE,
@@ -94,7 +94,7 @@ def interpolate_xpath(string, case_xpath=None, fixture_xpath=None, module=None, 
         replacements['#parent'] = CaseIDXPath(case_xpath + '/index/parent').case()
         replacements['#host'] = CaseIDXPath(case_xpath + '/index/host').case()
 
-    for pattern, repl in list(replacements.items()):
+    for pattern, repl in replacements.items():
         string = string.replace(pattern, repl)
 
     if case_xpath:

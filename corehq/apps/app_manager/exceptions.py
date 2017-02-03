@@ -1,5 +1,5 @@
-from builtins import str
 import couchdbkit
+from builtins import str
 from corehq.apps.app_manager.const import APP_V2
 
 

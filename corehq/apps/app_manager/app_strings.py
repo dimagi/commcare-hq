@@ -1,6 +1,6 @@
-from builtins import object
 import functools
 
+from builtins import object
 from django.utils.translation import ugettext
 
 from corehq.apps.app_manager import id_strings
@@ -15,7 +15,7 @@ from langcodes import langs_by_code
 
 
 def non_empty_only(dct):
-    return dict([(key, value) for key, value in list(dct.items()) if value])
+    return {key: value for key, value in dct.items() if value}
 
 
 def convert_to_two_letter_code(lc):
@@ -209,7 +209,7 @@ class AppStringsBase(object):
                 self.create_app_strings(app, lc, for_default=True)
             )
 
-            for key, val in list(new_messages.items()):
+            for key, val in new_messages.items():
                 # do not overwrite a real trans with a blank trans
                 if not (val == '' and key in messages):
                     messages[key] = val
@@ -237,7 +237,7 @@ class AppStringsBase(object):
             AUTO_SELECT_RAW: u'custom xpath expression',
         }
 
-        for mode, text in list(mode_text.items()):
+        for mode, text in mode_text.items():
             key = 'case_autoload.{0}.property_missing'.format(mode)
             if key not in messages:
                 messages[key] = (u'The {} specified for case auto-selecting '
@@ -276,7 +276,7 @@ class SelectKnownAppStrings(AppStringsBase):
 
     def get_app_translation_keys(self, app):
         return set.union(set(), *(
-            set(t.keys()) for t in list(app.translations.values())
+            set(t.keys()) for t in app.translations.values()
         ))
 
     def app_strings_parts(self, app, lang, for_default=False):

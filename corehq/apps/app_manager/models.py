@@ -24,16 +24,8 @@ published on the exchange, but those are quite infrequent.
 """
 from future import standard_library
 standard_library.install_aliases()
-from builtins import map
-from builtins import hex
-from builtins import next
-from builtins import str
-from builtins import range
-from past.builtins import basestring
-from builtins import object
+
 import calendar
-from distutils.version import LooseVersion
-from itertools import chain
 import tempfile
 import os
 import logging
@@ -44,10 +36,19 @@ import types
 import re
 import datetime
 import uuid
+from builtins import hex
+from builtins import map
+from builtins import next
+from builtins import object
+from builtins import range
+from builtins import str
 from collections import defaultdict, namedtuple
+from distutils.version import LooseVersion
 from functools import wraps
+from itertools import chain
 from copy import deepcopy
 from mimetypes import guess_type
+from past.builtins import basestring
 from urllib.request import urlopen
 from urllib.parse import urljoin
 
@@ -396,10 +397,10 @@ class FormActions(DocumentSchema):
 
     def all_property_names(self):
         names = set()
-        names.update(list(self.update_case.update.keys()))
-        names.update(list(self.case_preload.preload.values()))
+        names.update(self.update_case.update)
+        names.update(self.case_preload.preload.values())
         for subcase in self.subcases:
-            names.update(list(subcase.case_properties.keys()))
+            names.update(subcase.case_properties)
         return names
 
 
@@ -525,7 +526,7 @@ class LoadUpdateAction(AdvancedAction):
 
     def get_property_names(self):
         names = super(LoadUpdateAction, self).get_property_names()
-        names.update(list(self.preload.values()))
+        names.update(self.preload.values())
         return names
 
     @property
@@ -1422,7 +1423,7 @@ class NavMenuItemMediaMixin(DocumentSchema):
     def _all_media_paths(self, media_attr):
         assert media_attr in ('media_image', 'media_audio')
         media_dict = getattr(self, media_attr) or {}
-        valid_media_paths = {media for media in list(media_dict.values()) if media}
+        valid_media_paths = {media for media in media_dict.values() if media}
         return list(valid_media_paths)
 
     def all_image_paths(self):
@@ -1580,7 +1581,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         ))
 
         def generate_paths():
-            for action in list(self.active_actions().values()):
+            for action in self.active_actions().values():
                 if isinstance(action, list):
                     actions = action
                 else:
@@ -1672,7 +1673,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         if case_type == self.get_module().case_type or case_type == USERCASE_TYPE:
             format_key = self.get_case_property_name_formatter()
             action = self.actions.usercase_update if case_type == USERCASE_TYPE else self.actions.update_case
-            return [format_key(*item) for item in list(action.update.items())]
+            return [format_key(*item) for item in action.update.items()]
         return []
 
     @memoized
@@ -1710,9 +1711,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         case_properties = set()
         for subcase in self.actions.subcases:
             if subcase.case_type == case_type:
-                case_properties.update(
-                    list(subcase.case_properties.keys())
-                )
+                case_properties.update(subcase.case_properties)
                 if case_type != module_case_type and (
                         self.actions.open_case.is_active() or
                         self.actions.update_case.is_active() or
@@ -1730,7 +1729,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         self._add_save_to_case_questions(questions, app_case_meta)
         module_case_type = self.get_module().case_type
         type_meta = app_case_meta.get_type(module_case_type)
-        for type_, action in list(self.active_actions().items()):
+        for type_, action in self.active_actions().items():
             if type_ == 'open_case':
                 type_meta.add_opener(self.unique_id, action.condition)
                 self.add_property_save(
@@ -1969,7 +1968,7 @@ class DetailColumn(IndexedSchema):
         # Lazy migration: enum used to be a dict, now is a list
         if isinstance(data.get('enum'), dict):
             data['enum'] = sorted({'key': key, 'value': value}
-                                  for key, value in list(data['enum'].items()))
+                                  for key, value in data['enum'].items())
 
         return super(DetailColumn, cls).wrap(data)
 
@@ -1994,7 +1993,7 @@ class SortElement(IndexedSchema):
     sort_calculation = StringProperty(default="")
 
     def has_display_values(self):
-        return any(s.strip() != '' for s in list(self.display.values()))
+        return any(s.strip() != '' for s in self.display.values())
 
 
 class CaseListLookupMixin(DocumentSchema):
@@ -2519,7 +2518,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
             case_type='',
             case_details=DetailPair(
                 short=Detail(detail.to_json()),
-                int=Detail(detail.to_json()),
+                long=Detail(detail.to_json()),
             ),
             case_label={(lang or 'en'): 'Cases'},
         )
@@ -2623,7 +2622,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
         for action in load_actions:
             preload = action['preload']
             if preload and list(preload.values())[0].startswith('/'):
-                action['preload'] = {v: k for k, v in list(preload.items())}
+                action['preload'] = {v: k for k, v in preload.items()}
 
         return super(AdvancedForm, cls).wrap(data)
 
@@ -2685,7 +2684,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             """
             if not tag:
                 return not actions_by_tag or all(
-                    getattr(a['action'], 'auto_select', False) for a in list(actions_by_tag.values())
+                    getattr(a['action'], 'auto_select', False) for a in actions_by_tag.values()
                 )
 
             try:
@@ -2869,9 +2868,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
         case_properties = set()
         for subcase in self.actions.get_subcase_actions():
             if subcase.case_type == case_type:
-                case_properties.update(
-                    list(subcase.case_properties.keys())
-                )
+                case_properties.update(subcase.case_properties)
                 for case_index in subcase.case_indices:
                     parent = self.actions.get_action_from_tag(case_index.tag)
                     if parent:
@@ -2887,7 +2884,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
         }
         self._add_save_to_case_questions(questions, app_case_meta)
         for action in self.actions.load_update_cases:
-            for name, question_path in list(action.case_properties.items()):
+            for name, question_path in action.case_properties.items():
                 self.add_property_save(
                     app_case_meta,
                     action.case_type,
@@ -2895,7 +2892,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                     questions,
                     question_path
                 )
-            for question_path, name in list(action.preload.items()):
+            for question_path, name in action.preload.items():
                 self.add_property_load(
                     app_case_meta,
                     action.case_type,
@@ -2916,7 +2913,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                 action.name_path,
                 action.open_condition
             )
-            for name, question_path in list(action.case_properties.items()):
+            for name, question_path in action.case_properties.items():
                 self.add_property_save(
                     app_case_meta,
                     action.case_type,
@@ -3051,7 +3048,7 @@ class AdvancedModule(ModuleBase):
             case_type='',
             case_details=DetailPair(
                 short=Detail(detail.to_json()),
-                int=Detail(detail.to_json()),
+                long=Detail(detail.to_json()),
             ),
             product_details=DetailPair(
                 short=Detail(
@@ -3064,7 +3061,7 @@ class AdvancedModule(ModuleBase):
                         ),
                     ],
                 ),
-                int=Detail(),
+                long=Detail(),
             ),
         )
         module.get_or_create_unique_id()
@@ -3394,7 +3391,7 @@ class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):
                 parent_types.add((module_case_type, 'parent'))
             elif case_type == CAREPLAN_TASK:
                 parent_types.add((CAREPLAN_GOAL, 'goal'))
-            case_properties.update(list(self.case_updates().keys()))
+            case_properties.update(self.case_updates())
 
         return parent_types, case_properties
 
@@ -3408,7 +3405,7 @@ class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):
             for q in self.get_questions(self.get_app().langs, include_translations=True)
         }
         meta = app_case_meta.get_type(self.case_type)
-        for name, question_path in list(self.case_updates().items()):
+        for name, question_path in self.case_updates().items():
             self.add_property_save(
                 app_case_meta,
                 self.case_type,
@@ -3416,7 +3413,7 @@ class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):
                 questions,
                 question_path
             )
-        for name, question_path in list(self.case_preload.items()):
+        for name, question_path in self.case_preload.items():
             self.add_property_load(
                 app_case_meta,
                 self.case_type,
@@ -3557,11 +3554,11 @@ class CareplanModule(ModuleBase):
             case_type=target_case_type,
             goal_details=DetailPair(
                 short=cls._get_detail(lang, 'goal_short'),
-                int=cls._get_detail(lang, 'goal_long'),
+                long=cls._get_detail(lang, 'goal_long'),
             ),
             task_details=DetailPair(
                 short=cls._get_detail(lang, 'task_short'),
-                int=cls._get_detail(lang, 'task_long'),
+                long=cls._get_detail(lang, 'task_long'),
             )
         )
         module.get_or_create_unique_id()
@@ -4208,7 +4205,7 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
             name={(lang or 'en'): name or ugettext("Untitled Module")},
             case_details=DetailPair(
                 short=Detail(detail.to_json()),
-                int=Detail(detail.to_json()),
+                long=Detail(detail.to_json()),
             ),
         )
         module.get_or_create_unique_id()
@@ -4265,7 +4262,7 @@ class LazyBlobDoc(BlobMixin):
             attachments = None
         self = super(LazyBlobDoc, cls).wrap(data)
         if attachments:
-            for name, attachment in list(attachments.items()):
+            for name, attachment in attachments.items():
                 if isinstance(attachment, basestring):
                     info = {"content": attachment}
                 else:
@@ -4349,12 +4346,12 @@ class LazyBlobDoc(BlobMixin):
             super(LazyBlobDoc, self).save(**params)
         if self._LAZY_ATTACHMENTS:
             with self.atomic_blobs(super_save):
-                for name, info in list(self._LAZY_ATTACHMENTS.items()):
+                for name, info in self._LAZY_ATTACHMENTS.items():
                     if not info['content_type']:
                         info['content_type'] = ';'.join([_f for _f in guess_type(name) if _f])
                     super(LazyBlobDoc, self).put_attachment(name=name, **info)
             # super_save() has succeeded by now
-            for name, info in list(self._LAZY_ATTACHMENTS.items()):
+            for name, info in self._LAZY_ATTACHMENTS.items():
                 self.__set_cached_attachment(name, info['content'])
             self._LAZY_ATTACHMENTS.clear()
         else:
@@ -4921,8 +4918,8 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                     for filename in self.blobs if filename.startswith('files/')
                 }
                 all_files = {
-                    name: (contents if isinstance(contents, str) else contents.encode('utf-8'))
-                    for name, contents in list(all_files.items())
+                    name: (contents if isinstance(contents, bytes) else contents.encode('utf-8'))
+                    for name, contents in all_files.items()
                 }
                 release_date = self.built_with.datetime or datetime.datetime.utcnow()
                 jad_settings = {
@@ -5214,7 +5211,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     custom_base_url = StringProperty()
     cloudcare_enabled = BooleanProperty(default=False)
     translation_strategy = StringProperty(default='select-known',
-                                          choices=list(app_strings.CHOICES.keys()))
+                                          choices=list(app_strings.CHOICES))
     commtrack_requisition_mode = StringProperty(choices=CT_REQUISITION_MODES)
     auto_gps_capture = BooleanProperty(default=False)
     date_created = DateTimeProperty()
@@ -5855,7 +5852,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 return True
             completed.add(m.id)
             return False
-        for module in list(modules.values()):
+        for module in modules.values():
             if cycle_helper(module):
                 return True
         return False
@@ -5903,7 +5900,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         case_relationships = builder.get_parent_type_map(self.get_case_types())
         meta = AppCaseMetadata()
 
-        for case_type, relationships in list(case_relationships.items()):
+        for case_type, relationships in case_relationships.items():
             type_meta = meta.get_type(case_type)
             type_meta.relationships = relationships
 
@@ -5992,11 +5989,11 @@ class RemoteApp(ApplicationBase):
 
     def get_build_langs(self):
         if self.build_profiles:
-            if len(list(self.build_profiles.keys())) > 1:
+            if len(list(self.build_profiles)) > 1:
                 raise AppEditingError('More than one app profile for a remote app')
             else:
                 # return first profile, generated as part of lazy migration
-                return self.build_profiles[list(self.build_profiles.keys())[0]].langs
+                return self.build_profiles[list(self.build_profiles)[0]].langs
         else:
             return self.langs
 
@@ -6136,7 +6133,7 @@ def import_app(app_id_or_source, domain, source_properties=None, validate_source
     app.cloudcare_enabled = domain_has_privilege(domain, privileges.CLOUDCARE)
 
     with app.atomic_blobs():
-        for name, attachment in list(attachments.items()):
+        for name, attachment in attachments.items():
             if re.match(ATTACHMENT_REGEX, name):
                 app.put_attachment(attachment, name)
 

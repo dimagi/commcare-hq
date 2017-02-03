@@ -309,7 +309,7 @@ class ParentCasePropertyBuilder(object):
             for parent_type, relationship in parent_types:
                 rel_map[relationship].append(parent_type)
 
-            for relationship, types in list(rel_map.items()):
+            for relationship, types in rel_map.items():
                 if allow_multiple_parents:
                     parent_map[case_type][relationship] = types
                 else:
@@ -836,7 +836,7 @@ def get_sort_and_sort_only_columns(detail, sort_elements):
 
     sort_only_elements = [
         SortOnlyElement(field, element, element_order)
-        for field, (element, element_order) in list(sort_elements.items())
+        for field, (element, element_order) in sort_elements.items()
     ]
     return sort_only_elements, sort_columns
 

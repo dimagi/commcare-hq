@@ -1,12 +1,15 @@
 from __future__ import absolute_import
 from builtins import next
-from past.builtins import basestring
 from builtins import object
+from builtins import str
 from collections import defaultdict, OrderedDict
 from functools import wraps
-import logging
+from past.builtins import basestring
 
+import collections
 import itertools
+import logging
+import re
 from django.utils.translation import ugettext_lazy as _
 
 import formtranslate.api
@@ -25,8 +28,6 @@ from corehq.util.view_utils import get_request
 from dimagi.utils.decorators.memoized import memoized
 from .xpath import CaseIDXPath, session_var, CaseTypeXpath, QualifiedScheduleFormXPath
 from .exceptions import XFormException, CaseError, XFormValidationError, BindNotFound, XFormValidationFailed
-import collections
-import re
 
 
 VALID_VALUE_FORMS = ('image', 'audio', 'video', 'video-inline', 'markdown')
@@ -67,7 +68,7 @@ def _make_elem(tag, attr=None):
     attr = attr or {}
     return ET.Element(
         tag.format(**namespaces),
-        {key.format(**namespaces): val for key, val in list(attr.items())}
+        {key.format(**namespaces): val for key, val in attr.items()}
     )
 
 
@@ -237,7 +238,7 @@ class ItextNodeGroup(object):
             self.nodes[node.lang] = node
 
     def __eq__(self, other):
-        for lang, node in list(self.nodes.items()):
+        for lang, node in self.nodes.items():
             other_node = other.nodes.get(lang)
             if node.rendered_values != other_node.rendered_values:
                 return False
@@ -245,7 +246,7 @@ class ItextNodeGroup(object):
         return True
 
     def __hash__(self):
-        return ''.join(["{0}{1}".format(n.lang, n.rendered_values) for n in list(self.nodes.values())]).__hash__()
+        return ''.join(["{0}{1}".format(n.lang, n.rendered_values) for n in self.nodes.values()]).__hash__()
 
     def __repr__(self):
         return "{0}, {1}".format(self.id, self.nodes)
@@ -262,7 +263,7 @@ class ItextNode(object):
     @property
     @memoized
     def rendered_values(self):
-        return sorted([str.strip(ET.tostring(v.xml)) for v in list(self.values_by_form.values())])
+        return sorted([str.strip(ET.tostring(v.xml)) for v in self.values_by_form.values()])
 
     def __repr__(self):
         return self.id
@@ -441,7 +442,7 @@ class CaseBlock(object):
 
         update_mapping = {}
         attachments = {}
-        for key, value in list(updates.items()):
+        for key, value in updates.items():
             if key == 'name':
                 key = 'case_name'
             if self.is_attachment(value):
@@ -697,7 +698,7 @@ class XForm(WrappedNode):
         :return: dict mapping 'lang' to ItextNodeGroup objects.
         """
         node_groups = {}
-        for lang, translation in list(self.translations().items()):
+        for lang, translation in self.translations().items():
             text_nodes = translation.findall('{f}text')
             for text in text_nodes:
                 node = ItextNode(lang, text)
@@ -732,15 +733,15 @@ class XForm(WrappedNode):
         node_groups = self.itext_node_groups()
 
         duplicate_dict = defaultdict(list)
-        for g in list(node_groups.values()):
+        for g in node_groups.values():
             duplicate_dict[g].append(g)
 
-        duplicates = [sorted(g, key=lambda ng: ng.id) for g in list(duplicate_dict.values()) if len(g) > 1]
+        duplicates = [sorted(g, key=lambda ng: ng.id) for g in duplicate_dict.values() if len(g) > 1]
 
         for dup in duplicates:
             for group in dup[1:]:
                 itext_ref = u'{{f}}text[@id="{0}"]'.format(group.id)
-                for lang in list(group.nodes.keys()):
+                for lang in list(group.nodes):
                     translation = translations[lang]
                     node = translation.find(itext_ref)
                     translation.remove(node.xml)
@@ -807,7 +808,7 @@ class XForm(WrappedNode):
 
     def exclude_languages(self, whitelist):
         changes = False
-        for lang, trans_node in list(self.translations().items()):
+        for lang, trans_node in self.translations().items():
             if lang not in whitelist:
                 self.itext_node.remove(trans_node.xml)
                 changes = True
@@ -838,7 +839,7 @@ class XForm(WrappedNode):
         if not node_group:
             return None
 
-        lang = lang or list(self.translations().keys())[0]
+        lang = lang or list(self.translations())[0]
         text_node = node_group.nodes.get(lang)
         if not text_node:
             return None
@@ -848,7 +849,7 @@ class XForm(WrappedNode):
         if value_node:
             text = ItextValue.from_node(value_node)
         else:
-            for f in list(text_node.values_by_form.keys()):
+            for f in list(text_node.values_by_form):
                 if f not in VALID_VALUE_FORMS + (None,):
                     raise XFormException(_(
                         u'Unrecognized value of "form" attribute in \'<value form="{}">\'. '
@@ -914,7 +915,7 @@ class XForm(WrappedNode):
         if not self.exists():
             return []
 
-        return list(self.translations().keys())
+        return list(self.translations())
 
     def get_questions(self, langs, include_triggers=False,
                       include_groups=False, include_translations=False, form=None):
@@ -1007,7 +1008,8 @@ class XForm(WrappedNode):
                 if data_node.tag_name == 'entry':
                     parent = next(data_node.xml.iterancestors())
                     if parent:
-                        is_stock_element = any([namespace == COMMTRACK_REPORT_XMLNS for namespace in list(parent.nsmap.values())])
+                        is_stock_element = any(namespace == COMMTRACK_REPORT_XMLNS
+                                               for namespace in parent.nsmap.values())
                         if is_stock_element:
                             question.update({
                                 "stock_entry_attributes": dict(data_node.xml.attrib),
@@ -1165,7 +1167,7 @@ class XForm(WrappedNode):
         from corehq.apps.app_manager.util import split_path
 
         self.add_casedb()
-        for nodeset, property_ in list(preloads.items()):
+        for nodeset, property_ in preloads.items():
             parent_path, property_ = split_path(property_)
             property_xpath = {
                 'name': 'case_name',
@@ -1266,7 +1268,7 @@ class XForm(WrappedNode):
 
     @requires_itext()
     def set_default_language(self, lang):
-        for this_lang, translation in list(self.translations().items()):
+        for this_lang, translation in self.translations().items():
             if this_lang == lang:
                 translation.attrib['default'] = ""
             else:
@@ -1663,7 +1665,7 @@ class XForm(WrappedNode):
             session_case_id = CaseIDXPath(session_var(var_name))
             if action.preload:
                 self.add_casedb()
-                for nodeset, property in list(action.preload.items()):
+                for nodeset, property in action.preload.items():
                     parent_path, property = split_path(property)
                     property_xpath = {
                         'name': 'case_name',
@@ -1780,7 +1782,7 @@ class XForm(WrappedNode):
             output: {'': {'name': ...}, 'parent': {'name': ...}}
             """
             updates_by_case = defaultdict(dict)
-            for key, value in list(updates.items()):
+            for key, value in updates.items():
                 path, name = split_path(key)
                 updates_by_case[path][name] = value
             return updates_by_case
@@ -1832,7 +1834,7 @@ class XForm(WrappedNode):
         self.add_meta_2(form)
         self.add_instance('casedb', src='jr://instance/casedb')
 
-        for property, nodeset in list(form.case_preload.items()):
+        for property, nodeset in form.case_preload.items():
             parent_path, property = split_path(property)
             property_xpath = {
                 'name': 'case_name',
@@ -2154,7 +2156,7 @@ def _index_on_fields(dicts, fields):
 
 VELLUM_TYPE_INDEX = _index_on_fields(
     [{field: value for field, value in (list(dct.items()) + [('name', key)])}
-     for key, dct in list(VELLUM_TYPES.items())],
+     for key, dct in VELLUM_TYPES.items()],
     ('tag', 'type', 'media', 'appearance')
 )
 

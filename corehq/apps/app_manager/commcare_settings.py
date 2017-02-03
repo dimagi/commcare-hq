@@ -73,9 +73,7 @@ def _load_commcare_settings_layout(doc_type, domain):
         raise Exception(
             "CommCare settings layout should mention "
             "all the available settings. "
-            "The following settings went unmentioned: %s" % (
-                ', '.join(list(settings.keys()))
-            )
+            "The following settings went unmentioned: " + ', '.join(settings)
         )
     return layout
 
