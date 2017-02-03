@@ -172,7 +172,7 @@
 +          {% endfor %}
 +          {% if details %}
 +            <div class="tab-pane" id="module-actions">
-+                {% include 'app_manager/v1/partials/module_actions.html' %}
++                {% include 'app_manager/v2/partials/module_actions.html' %}
 +            </div>
 +          {% endif %}
 +        {% endif %}
