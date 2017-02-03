@@ -56,7 +56,7 @@ class Command(BaseCommand):
         print "Jenkins has following builds for %s. Choose a build-number to import (to end enter 0)" \
               % selected_project_key
         print builds_by_version_number
-        while selected_build_number not in builds_by_version_number.keys():
+        while selected_build_number not in builds_by_version_number:
             if selected_build_number == 0:
                 return
             selected_build_number = int(raw_input(""))
@@ -81,7 +81,7 @@ class Command(BaseCommand):
     @memoized
     def jenkin_projects(self):
         print "Pinging Jenkins build server. Pelase wait..."
-        return self.build_server.keys()
+        return list(self.build_server)
 
     @property
     @memoized
@@ -111,7 +111,7 @@ class Command(BaseCommand):
 
         to_ret = {}
         count = 0
-        for build_id in sorted(build_dict.keys()):
+        for build_id in sorted(build_dict):
             if count > max_options:
                 return to_ret
             # jenkinsapi has no support for plugins. Following is a very dirty way
