@@ -1,3 +1,4 @@
+from __future__ import print_function
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 
@@ -29,4 +30,4 @@ class Command(BaseCommand):
             raise CommandError('Usage is %s' % self.args)
         arg_dict['host'] = args[0]
         arg_dict['port'] = args[1]
-        print outstring % arg_dict
+        print(outstring % arg_dict)

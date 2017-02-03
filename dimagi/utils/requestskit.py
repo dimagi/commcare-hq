@@ -1,3 +1,4 @@
+from __future__ import print_function
 import urlparse
 from couchdbkit import CouchdbResource
 from restkit import Client
@@ -56,7 +57,7 @@ class WrappedResponse(requests.Response):
 class RequestsClient(Client):
 
     def request(self, url, method='GET', body=None, headers=None):
-        print method, url
+        print(method, url)
         auth = get_auth(url)
         resp = requests.request(method, url, data=body, headers=headers,
                                 auth=auth)

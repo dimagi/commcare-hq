@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+from __future__ import print_function
 import math
 import random
 from optparse import OptionParser
@@ -58,4 +59,4 @@ if __name__ == '__main__':
 
     passwd = make_password(length=op.length, entropy=op.entropy)
 
-    print '%s (length: %d; %.1fb entropy)' % (passwd, len(passwd), entropy_for_length(len(passwd)))
+    print('%s (length: %d; %.1fb entropy)' % (passwd, len(passwd), entropy_for_length(len(passwd))))

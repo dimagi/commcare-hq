@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 import logging
 from datetime import datetime, timedelta
 from time import sleep
@@ -105,9 +106,9 @@ def print_all_stacks():
     Prints the stack for all threads. Useful for debugging when threads
     get stuck or deadlocked.
     """
-    print "Printing all threads at %s" % datetime.utcnow()
+    print("Printing all threads at %s" % datetime.utcnow())
     for thread_id, top_frame in sys._current_frames().items():
-        print "-" * 20, thread_id, "-" * 20
+        print("-" * 20, thread_id, "-" * 20)
         traceback.print_stack(f=top_frame)
 
 

@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 import tempfile
 import time
@@ -59,7 +60,7 @@ def load(path=None, convert=True, convert_args={'dates': True}):
 
     end = time.time()
 
-    print 'data loaded: %d docs, %.2fs' % (len(db), end - start)
+    print('data loaded: %d docs, %.2fs' % (len(db), end - start))
 
 def map_reduce(emitfunc=lambda rec: [(None,)], reducefunc=lambda v: v, data=None, include_docs=False):
     """perform a "map-reduce" on the data
