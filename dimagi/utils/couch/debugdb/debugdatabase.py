@@ -55,7 +55,7 @@ class DebugDatabase(Database):
         stacktrace = tidy_stacktrace(traceback.extract_stack())
 
         if wrapper is not None:
-            view_path_display = "GET %s" % wrapper.im_self._doc_type
+            view_path_display = "GET %s" % wrapper.__self__._doc_type
         else:
             view_path_display = "Raw GET"
 
