@@ -161,11 +161,11 @@ def process_bulk_app_translation_upload(app, f):
 
         if sheet.worksheet.title == "Modules_and_forms":
             # It's the first sheet
-            ms = process_modules_and_forms_sheet(rows, app)
+            ms = _process_modules_and_forms_sheet(rows, app)
             msgs.extend(ms)
         elif sheet.headers[0] == "case_property":
             # It's a module sheet
-            ms = update_case_list_translations(sheet, rows, app)
+            ms = _update_case_list_translations(sheet, rows, app)
             msgs.extend(ms)
         else:
             # It's a form sheet
@@ -178,8 +178,8 @@ def process_bulk_app_translation_upload(app, f):
     return msgs
 
 
-def make_modules_and_forms_row(row_type, sheet_name, languages, case_labels,
-                               media_image, media_audio, unique_id):
+def _make_modules_and_forms_row(row_type, sheet_name, languages, case_labels,
+                                media_image, media_audio, unique_id):
     """
     assemble the various pieces of data that make up a row in the
     "Modules_and_forms" sheet into a single row (a flat tuple).
@@ -225,7 +225,7 @@ def expected_bulk_app_sheet_headers(app):
     # Add headers for the first sheet
     headers.append([
         "Modules_and_forms",
-        make_modules_and_forms_row(
+        _make_modules_and_forms_row(
             row_type='Type',
             sheet_name='sheet_name',
             languages=languages_list,
@@ -265,7 +265,7 @@ def expected_bulk_app_sheet_rows(app):
         module_string = "module" + str(mod_index + 1)
 
         # Add module to the first sheet
-        row_data = make_modules_and_forms_row(
+        row_data = _make_modules_and_forms_row(
             row_type="Module",
             sheet_name=module_string,
             languages=[module.name.get(lang) for lang in app.langs],
@@ -350,7 +350,7 @@ def expected_bulk_app_sheet_rows(app):
 
                 # Add row for this form to the first sheet
                 # This next line is same logic as above :(
-                first_sheet_row = make_modules_and_forms_row(
+                first_sheet_row = _make_modules_and_forms_row(
                     row_type="Form",
                     sheet_name=form_string,
                     languages=[form.name.get(lang) for lang in app.langs],
@@ -407,7 +407,7 @@ def expected_bulk_app_sheet_rows(app):
     return rows
 
 
-def process_modules_and_forms_sheet(rows, app):
+def _process_modules_and_forms_sheet(rows, app):
     """
     Modify the translations and media references for the modules and forms in
     the given app as per the data provided in rows.
@@ -457,7 +457,7 @@ def process_modules_and_forms_sheet(rows, app):
 
         _update_translation_dict('default_', document.name, row, app.langs)
 
-        if (has_at_least_one_translation(row, 'label_for_cases', app.langs)
+        if (_has_at_least_one_translation(row, 'label_for_cases', app.langs)
                 and hasattr(document, 'case_label')):
             _update_translation_dict('label_for_cases_', document.case_label, row, app.langs)
 
@@ -624,7 +624,7 @@ def update_form_translations(sheet, rows, missing_cols, app):
             translations = dict()
             for trans_type in ['default', 'audio', 'image', 'video']:
                 try:
-                    col_key = get_col_key(trans_type, lang)
+                    col_key = _get_col_key(trans_type, lang)
                     translations[trans_type] = row[col_key]
                 except KeyError:
                     # has already been logged as unrecoginzed column
@@ -638,7 +638,7 @@ def update_form_translations(sheet, rows, missing_cols, app):
                     # If the cell corresponding to the label for this question
                     # in this language is empty, fall back to another language
                     for l in app.langs:
-                        key = get_col_key(trans_type, l)
+                        key = _get_col_key(trans_type, l)
                         if key in missing_cols:
                             continue
                         fallback = row[key]
@@ -689,7 +689,7 @@ def escape_output_value(value):
         return element
 
 
-def update_case_list_translations(sheet, rows, app):
+def _update_case_list_translations(sheet, rows, app):
     """
     Modify the translations of a module case list and detail display properties
     given a sheet of translation data. The properties in the sheet must be in
@@ -800,7 +800,7 @@ def update_case_list_translations(sheet, rows, app):
     # Update the translations
     def _update_translation(row, language_dict, require_translation=True):
         ok_to_delete_translations = (
-            not require_translation or has_at_least_one_translation(
+            not require_translation or _has_at_least_one_translation(
                     row, 'default', app.langs
             ))
         if ok_to_delete_translations:
@@ -861,7 +861,7 @@ def update_case_list_translations(sheet, rows, app):
     return msgs
 
 
-def has_at_least_one_translation(row, prefix, langs):
+def _has_at_least_one_translation(row, prefix, langs):
     """
     Returns true if the given row has at least one translation.
 
@@ -882,13 +882,13 @@ def has_at_least_one_translation(row, prefix, langs):
     return bool(filter(None, [row.get(prefix + '_' + l) for l in langs]))
 
 
-def get_col_key(translation_type, language):
-    '''
+def _get_col_key(translation_type, language):
+    """
     Returns the name of the column in the bulk app translation spreadsheet
     given the translation type and language
     :param translation_type: What is being translated, i.e. 'default'
     or 'image'
     :param language:
     :return:
-    '''
+    """
     return "%s_%s" % (translation_type, language)

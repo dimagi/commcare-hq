@@ -5,5 +5,5 @@ from .translations import (
     expected_bulk_app_sheet_rows,
     update_form_translations,
     escape_output_value,
-    update_case_list_translations,
+    _update_case_list_translations,
 )
