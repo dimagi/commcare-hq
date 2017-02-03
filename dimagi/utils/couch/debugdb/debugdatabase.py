@@ -115,7 +115,7 @@ class DebugViewResults64(ViewResults):
 
         # add key in view results that could be added by an external
         # like couchdb-lucene
-        for key in self._result_cache.keys():
+        for key in self._result_cache:
             if key not in ["total_rows", "offset", "rows"]:
                 self._dynamic_keys.append(key)
                 setattr(self, key, self._result_cache[key])
@@ -181,7 +181,7 @@ class DebugViewResults57(ViewResults):
 
         # add key in view results that could be added by an external
         # like couchdb-lucene
-        for key in self._result_cache.keys():
+        for key in self._result_cache:
             if key not in ["total_rows", "offset", "rows"]:
                 self._dynamic_keys.append(key)
                 setattr(self, key, self._result_cache[key])

@@ -23,7 +23,7 @@ def sync_design_docs(db, design_dir, design_name, temp=None):
     log.info("synced '%s' in couchdb", design_name)
     if temp:
         # found in the innards of couchdbkit
-        view_names = db[docid].get('views', {}).keys()
+        view_names = list(db[docid].get('views', {}))
         if len(view_names) > 0:
             log.info('Triggering view rebuild')
             view = '%s/%s' % (design_name_, view_names[0])
