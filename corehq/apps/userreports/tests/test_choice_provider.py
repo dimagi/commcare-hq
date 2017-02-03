@@ -17,6 +17,7 @@ from corehq.apps.userreports.reports.filters.choice_providers import (
     OwnerChoiceProvider, StaticChoiceProvider, SearchableChoice)
 from corehq.apps.users.models import CommCareUser, WebUser, DomainMembership
 from corehq.apps.users.util import normalize_username
+import six
 
 
 class StaticChoiceProviderTest(SimpleTestCase):
@@ -39,7 +40,7 @@ class StaticChoiceProviderTest(SimpleTestCase):
         )
 
 
-class ChoiceProviderTestMixin(object):
+class ChoiceProviderTestMixin(six.with_metaclass(ABCMeta, object)):
     """
     A mixin for a creating uniform tests for different ChoiceProvider subclasses.
 
@@ -56,7 +57,6 @@ class ChoiceProviderTestMixin(object):
     4. Implement the abstract test methods according to the suggestions in the docstrings
 
     """
-    __metaclass__ = ABCMeta
     choice_provider = None
     static_choice_provider = None
     choice_query_context = ChoiceQueryContext
