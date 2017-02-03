@@ -18,6 +18,7 @@ from django.template import Context
 from django_countries.data import COUNTRIES
 
 from corehq import toggles
+from corehq.apps.analytics.tasks import set_analytics_opt_out
 from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
@@ -326,6 +327,13 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
         if not self.set_email_opt_out:
             result.remove('email_opt_out')
         return result
+
+    def update_user(self, existing_user, save=True, **kwargs):
+        if save:
+            analytics_enabled = self.cleaned_data['analytics_enabled']
+            if existing_user.analytics_enabled != analytics_enabled:
+                set_analytics_opt_out(existing_user, analytics_enabled)
+        return super(UpdateMyAccountInfoForm, self).update_user(existing_user, save=save, **kwargs)
 
 
 class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):

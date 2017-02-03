@@ -88,6 +88,24 @@ def _track_on_hubspot(webuser, properties):
         )
 
 
+def set_analytics_opt_out(webuser, analytics_enabled):
+    """
+    Set 'opted_out' on the user whenever they change that, so we don't have
+    opted out users throwing off metrics. This is handled separately because we
+    (ironically) ignore the analytics_enabled flag.
+    """
+    _hubspot_post(
+        url=u"https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(
+            urllib.quote(webuser.get_email())
+        ),
+        data=json.dumps(
+            {'properties': [
+                {'property': 'analytics_disabled', 'value': not analytics_enabled}
+            ]}
+        ),
+    )
+
+
 def batch_track_on_hubspot(users_json):
     """
     Update or create contacts on hubspot in a batch request to prevent exceeding api rate limit
