@@ -5807,14 +5807,11 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @memoized
     def grid_display_for_some_modules(self):
-        return self.grid_menu_toggle_enabled() and self.grid_form_menus == 'some'
+        return self.grid_form_menus == 'some'
 
     @memoized
     def grid_display_for_all_modules(self):
-        return self.grid_menu_toggle_enabled() and self.grid_form_menus == 'all'
-
-    def grid_menu_toggle_enabled(self):
-        return toggles.GRID_MENUS.enabled(self.domain)
+        return self.grid_form_menus == 'all'
 
 
 class RemoteApp(ApplicationBase):

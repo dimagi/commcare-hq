@@ -151,7 +151,6 @@
   value_names: ['List', 'Grid']
   default: false
   since: "2.24"
-  toggle: GRID_MENUS
 
 - id: grid_form_menus
   name: Forms Menu Display
@@ -161,4 +160,3 @@
   value_names: ['List', 'Grid', 'Enable Menu Display Setting Per-Module']
   default: 'none'
   since: '2.24'
-  toggle: GRID_MENUS

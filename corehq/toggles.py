@@ -833,14 +833,6 @@ CALL_CENTER_LOCATION_OWNERS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-GRID_MENUS = StaticToggle(
-    'grid_menus',
-    'Allow using grid menus on Android',
-    TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/internal/Grid+Views',
-)
-
 OLD_EXPORTS = StaticToggle(
     'old_exports',
     'Use old backend export infrastructure',
