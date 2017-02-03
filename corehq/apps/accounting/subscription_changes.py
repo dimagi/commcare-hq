@@ -59,7 +59,7 @@ class BaseModifySubscriptionHandler(object):
 
     @classmethod
     def supported_privileges(cls):
-        return cls.privilege_to_response_function().keys()
+        return list(cls.privilege_to_response_function().keys())
 
 
 class BaseModifySubscriptionActionHandler(BaseModifySubscriptionHandler):

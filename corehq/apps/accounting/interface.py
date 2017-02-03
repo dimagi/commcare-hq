@@ -848,7 +848,7 @@ class InvoiceInterface(InvoiceInterfaceBase):
     @property
     def report_context(self):
         context = super(InvoiceInterface, self).report_context
-        if self.request.GET.items():  # A performance improvement
+        if list(self.request.GET.items()):  # A performance improvement
             context.update(
                 adjust_balance_forms=self.adjust_balance_forms,
             )

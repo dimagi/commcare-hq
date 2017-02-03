@@ -1434,7 +1434,7 @@ class SoftwarePlanVersionForm(forms.Form):
         if errors:
             self._errors.setdefault('feature_rates', errors)
 
-        required_types = dict(FeatureType.CHOICES).keys()
+        required_types = list(dict(FeatureType.CHOICES).keys())
         feature_types = [r.feature.feature_type for r in rate_instances]
         if any([feature_types.count(t) != 1 for t in required_types]):
             raise ValidationError(_(
@@ -1474,7 +1474,7 @@ class SoftwarePlanVersionForm(forms.Form):
         if errors:
             self._errors.setdefault('product_rates', errors)
 
-        available_types = dict(SoftwareProductType.CHOICES).keys()
+        available_types = list(dict(SoftwareProductType.CHOICES).keys())
         product_types = [r.product.product_type for r in rate_instances]
         if any([product_types.count(p) > 1 for p in available_types]):
             raise ValidationError(_(
@@ -1732,7 +1732,7 @@ class TriggerInvoiceForm(forms.Form):
         one_month_ago = today - relativedelta(months=1)
 
         self.fields['month'].initial = one_month_ago.month
-        self.fields['month'].choices = MONTHS.items()
+        self.fields['month'].choices = list(MONTHS.items())
         self.fields['year'].initial = one_month_ago.year
         self.fields['year'].choices = [
             (y, y) for y in range(one_month_ago.year, 2012, -1)
@@ -1813,7 +1813,7 @@ class TriggerBookkeeperEmailForm(forms.Form):
         today = datetime.date.today()
 
         self.fields['month'].initial = today.month
-        self.fields['month'].choices = MONTHS.items()
+        self.fields['month'].choices = list(MONTHS.items())
         self.fields['year'].initial = today.year
         self.fields['year'].choices = [
             (y, y) for y in range(today.year, 2012, -1)
