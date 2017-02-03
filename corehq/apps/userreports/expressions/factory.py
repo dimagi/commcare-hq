@@ -17,6 +17,7 @@ from corehq.apps.userreports.expressions.list_specs import FilterItemsExpression
     MapItemsExpressionSpec, ReduceItemsExpressionSpec, FlattenExpressionSpec, SortItemsExpressionSpec
 from dimagi.utils.parsing import json_format_datetime, json_format_date
 from dimagi.utils.web import json_handler
+import six
 
 
 def _make_filter(spec, context):
@@ -57,7 +58,7 @@ def _switch_expression(spec, context):
     wrapped = SwitchExpressionSpec.wrap(spec)
     wrapped.configure(
         ExpressionFactory.from_spec(wrapped.switch_on, context),
-        {k: ExpressionFactory.from_spec(v, context) for k, v in wrapped.cases.iteritems()},
+        {k: ExpressionFactory.from_spec(v, context) for k, v in six.iteritems(wrapped.cases)},
         ExpressionFactory.from_spec(wrapped.default, context),
     )
     return wrapped
