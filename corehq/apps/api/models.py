@@ -14,6 +14,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAcce
 from couchforms import const
 from dimagi.ext.couchdbkit import *
 import six
+from six.moves import filter
 
 PERMISSION_POST_SMS = "POST_SMS"
 PERMISSION_POST_WISEPILL = "POST_WISEPILL"
@@ -215,7 +216,7 @@ class ESCase(DictObject, CaseToXMLMixin):
     def get_forms(self):
         from corehq.apps.api.util import form_to_es_form
         forms = FormAccessors(self.domain).get_forms(self.xform_ids)
-        return filter(None, [form_to_es_form(form) for form in forms])
+        return list(filter(None, [form_to_es_form(form) for form in forms]))
 
     @property
     def child_cases(self):
