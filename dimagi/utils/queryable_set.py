@@ -12,7 +12,7 @@ class QueryableList(list):
                 else:
                     fr = fq
                 fs += [fr]
-            return filter(reduce(lambda x,y: (lambda(z): x(z) and y(z)), fs), self)
+            return filter(reduce(lambda x,y: (lambda z: x(z) and y(z)), fs), self)
         elif not item.startswith('_'):
             if item.startswith('not_'):
                 return filter(lambda x: not self.__getattribute__("_" + item.replace('not_', ''))(x), self)
