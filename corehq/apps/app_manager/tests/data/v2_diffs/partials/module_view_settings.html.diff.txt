@@ -100,7 +100,7 @@
 +                      {% trans "Display Style" %}
 +                      <span class="hq-help-template"
 +                            data-title="{% trans "Display Style" %}"
-+                            data-content="{% trans "Display this module's forms as a list or a grid." %}"></span>
++                            data-content="{% blocktrans %}Display this module's forms as a list or a grid. Read more on the <a target='_blank' href='https://confluence.dimagi.com/display/commcarepublic/Grid+View+for+Form+and+Module+Screens'>Help Site</a>.{% endblocktrans %}"></span>
 +                  </label>
 +                  <div class="col-sm-4">
 +                      <select type="text" name="display_style" class="form-control">
@@ -162,7 +162,7 @@
 -                {% trans "Display Style" %}
 -                <span class="hq-help-template"
 -                      data-title="{% trans "Display Style" %}"
--                      data-content="{% trans "Display this module's forms as a list or a grid." %}"></span>
+-                      data-content="{% blocktrans %}Display this module's forms as a list or a grid. Read more on the <a target='_blank' href='https://confluence.dimagi.com/display/commcarepublic/Grid+View+for+Form+and+Module+Screens'>Help Site</a>.{% endblocktrans %}"></span>
 -            </label>
 -            <div class="col-sm-4">
 -                <select type="text" name="display_style" class="form-control">
