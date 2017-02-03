@@ -3,6 +3,7 @@ from datetime import date, datetime, time
 from decimal import Decimal, InvalidOperation
 from six import string_types
 from corehq.util.dates import iso_string_to_date, iso_string_to_datetime
+import six
 
 
 class TransformedGetter(object):
@@ -148,7 +149,7 @@ def transform_unicode(item):
     if item is None:
         return None
     try:
-        return unicode(item)
+        return six.text_type(item)
     except (ValueError, TypeError):
         return None
 

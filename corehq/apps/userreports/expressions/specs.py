@@ -16,6 +16,7 @@ from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from pillowtop.dao.exceptions import DocumentNotFoundError
 from .utils import eval_statements
 from corehq.util.quickcache import quickcache
+import six
 
 
 class IdentityExpressionSpec(JsonObject):
@@ -58,7 +59,7 @@ class PropertyNameGetterSpec(JsonObject):
 
 class PropertyPathGetterSpec(JsonObject):
     type = TypeProperty('property_path')
-    property_path = ListProperty(unicode, required=True)
+    property_path = ListProperty(six.text_type, required=True)
     datatype = DataTypeProperty(required=False)
 
     def __call__(self, item, context=None):
