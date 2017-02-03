@@ -323,6 +323,8 @@ def download_profile(request, domain, app_id):
 
 @safe_download
 def download_media_profile(request, domain, app_id):
+    if not request.app.copy_of:
+        make_async_build.delay(request.app)
     return HttpResponse(
         request.app.create_profile(with_media=True)
     )
