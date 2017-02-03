@@ -12,7 +12,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 
 from corehq import toggles
-from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.dbaccessors import get_all_built_app_ids_and_versions, get_app
 from corehq.apps.app_manager.decorators import safe_download
 from corehq.apps.app_manager.exceptions import ModuleNotFoundException, \
     AppManagerException, FormNotFoundException
@@ -351,10 +351,12 @@ def download_index(request, domain, app_id):
             ),
             extra_tags='html'
         )
+    built_versions = get_all_built_app_ids_and_versions(domain, request.app.copy_of)
     return render(request, template, {
         'app': request.app,
         'files': [{'name': f[0], 'source': f[1]} for f in files],
         'supports_j2me': request.app.build_spec.supports_j2me(),
+        'version_map': {v.version: v.build_id for v in built_versions},
     })
 
 

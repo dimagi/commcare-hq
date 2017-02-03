@@ -1,11 +1,23 @@
 {% extends "style/full_screen.html" %}
 
+{% load hq_shared_tags %}
+{% load compress %}
+
 {% block page_content %}
-    <p>
+    {% registerurl 'diff' app.domain app.id '---' %}
+    {% initial_page_data 'version_map' version_map %}
+
+    <p class="form-inline" id="compare-form">
       See
       <a href="{% url "view_app" app.domain app.copy_of|default_if_none:app.get_id %}">
         current app
       </a> for the latest work in progress.
+
+    {% if not other_app %}
+        Or compare with another version:
+        <input type="text" class="form-control input-sm" placeholder="version" />
+        <button class="btn btn-default btn-sm">Compare</button>
+    {% endif %}
     </p>
 
     {% block downloads %}{% endblock %}
@@ -41,12 +53,33 @@
     {% block post_files %}{% endblock %}
 {% endblock page_content %}
 
+{% block js %}{{ block.super }}
+    {% compress js %}
+        <script src="{% static 'hqwebapp/js/urllib.js' %}"></script>
+        <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
+    {% endcompress %}
+{% endblock %}
+
 {% block js-inline %}
 <script>
     $(function(){
         $('.toggle-next').click(function(e){
             e.preventDefault();
             $(this).parents('tr').next('tr').toggleClass("hide");
+        });
+
+        var version_map = hqImport('hqwebapp/js/initial_page_data.js').get('version_map');
+        var $form = $("#compare-form");
+        $form.find("button").click(function() {
+            var version = $form.find("input").val();
+            if (!version) {
+                alert("Please enter a version to compare");
+                return;
+            } else if (!version_map[version]) {
+                alert(version + " is not a valid version");
+                return;
+            }
+            window.location = hqImport('hqwebapp/js/urllib.js').reverse('diff', version_map[version]);
         });
     });
 </script>

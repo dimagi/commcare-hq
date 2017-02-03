@@ -319,16 +319,22 @@ def get_all_app_ids(domain):
     return [result['id'] for result in results]
 
 
-def get_all_built_app_ids_and_versions(domain):
+def get_all_built_app_ids_and_versions(domain, app_id=None):
     """
     Returns a list of all the app_ids ever built and their version.
     [[AppBuildVersion(app_id, build_id, version)], ...]
+    If app_id is provided, limit to bulds for that app.
     """
     from .models import Application
+    startkey = [domain]
+    endkey = [domain, {}]
+    if app_id:
+        startkey = [domain, app_id]
+        endkey = [domain, app_id, {}]
     results = Application.get_db().view(
         'app_manager/saved_app',
-        startkey=[domain],
-        endkey=[domain, {}],
+        startkey=startkey,
+        endkey=endkey,
         include_docs=False,
     ).all()
     return map(lambda result: AppBuildVersion(
