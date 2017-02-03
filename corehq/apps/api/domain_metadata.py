@@ -13,6 +13,7 @@ from tastypie import fields
 from tastypie.exceptions import NotFound
 from tastypie.resources import Resource
 from dimagi.utils.dates import force_to_datetime
+from six.moves import map
 
 
 def _get_domain(bundle):
@@ -29,7 +30,7 @@ class DomainQuerySetAdapter(object):
 
     def __getitem__(self, item):
         if isinstance(item, slice):
-            return map(Domain.wrap, self.es_query.start(item.start).size(item.stop - item.start).run().hits)
+            return list(map(Domain.wrap, self.es_query.start(item.start).size(item.stop - item.start).run().hits))
         raise ValueError('Invalid type of argument. Item should be an instance of slice class.')
 
 
