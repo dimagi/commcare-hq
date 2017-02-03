@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.api.accounting import *
 from corehq.apps.api.domain_metadata import DomainMetadataResource
 from corehq.apps.api.object_fetch_api import CaseAttachmentAPI, FormAttachmentAPI

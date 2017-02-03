@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import logging
 
 from corehq.apps.api.resources.auth import AdminAuthentication
