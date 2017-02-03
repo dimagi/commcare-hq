@@ -911,6 +911,7 @@ def test_invalid_eval_expression(self, source_doc, statement, context):
     ("range(1, a)", {"a": 5}, [1, 2, 3, 4]),
     ("a or b", {"a": 0, "b": 1}, True),
     ("a and b", {"a": 0, "b": 1}, False),
+    ("int(10 in range(1,20))", {"a": 2}, 1),
     # ranges > 100 items aren't supported
     ("range(200)", {}, None),
 ])
@@ -926,7 +927,6 @@ def test_supported_evaluator_statements(self, eq, context, expected_value):
     # power function not supported
     ("a**b", {"a": 2, "b": 23}),
     ("lambda x: x*x", {"a": 2}),
-    ("int(10 in range(1,20))", {"a": 2}),
     ("max(a, b)", {"a": 3, "b": 5}),
 ])
 def test_unsupported_evaluator_statements(self, eq, context):
