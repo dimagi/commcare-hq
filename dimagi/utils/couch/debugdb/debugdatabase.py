@@ -43,7 +43,7 @@ class DebugDatabase(Database):
         error = None
         try:
             doc = self.res.get(docid, **params).json_body
-        except ResourceNotFound, ex:
+        except ResourceNotFound as ex:
             error = ex
             doc = {}
         #############################

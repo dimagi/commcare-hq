@@ -117,7 +117,7 @@ def post_data(data, url, curl_command="curl", use_curl=False,
         else:
             results = simple_post(data, url, content_type).read()
             
-    except Exception, e:
+    except Exception as e:
         errors = str(e)
 
     return results, errors

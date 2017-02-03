@@ -18,7 +18,7 @@ class TimeoutTask(threading.Thread):
     def run(self):
         try:
             self.result = self.eval()
-        except Exception, e:
+        except Exception as e:
             self.err = e
 
         with self.lock:

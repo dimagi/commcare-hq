@@ -138,7 +138,7 @@ class WebServiceTask:
 
             self.value = val
             return True
-        except Exception, e:
+        except Exception as e:
             self.errors.append(e)
             return False
 

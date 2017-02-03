@@ -53,7 +53,7 @@ def safe_date_add(startdate, days, force_to_date_flag=True):
             return force_to_date(val)
         else:
             return val
-    except OverflowError, e:
+    except OverflowError as e:
         logging.exception(str(e))
         return None
 

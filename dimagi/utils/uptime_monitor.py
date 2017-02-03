@@ -59,7 +59,7 @@ try:
 
     if errors:
         logging.error('errors on server:\n\n' + '\n'.join(errors))
-except Exception, e:
+except Exception as e:
     logging.error('could not contact rapidsms server: %s %s' % (type(e), str(e)))
 
 
