@@ -13,7 +13,7 @@ def process_ui_translation_upload(app, trans_file):
     workbook = WorkbookJSONReader(trans_file)
     translations = workbook.get_worksheet(title='translations')
 
-    commcare_ui_strings = load_translations('en', 2).keys()
+    commcare_ui_strings = load_translations('en', version=2).keys()
     default_trans = get_default_translations_for_download(app)
     lang_with_defaults = app.langs[get_index_for_defaults(app.langs)]
 

@@ -73,7 +73,7 @@ class BulkUiTranslation(SimpleTestCase):
         )
         self.assertEqual(len(error_properties), 0)
         # There should be a warning that 'unknown_string' is not a CommCare string
-        self.assertEqual(len(warnings), 1)
+        self.assertEqual(len(warnings), 1, warnings)
 
         # test existing translations get updated correctly
         data = (('home.start.demo', 'change_1', 'change_2'))
