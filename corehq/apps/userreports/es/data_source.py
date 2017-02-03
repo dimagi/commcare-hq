@@ -65,7 +65,7 @@ class ConfigurableReportEsDataSource(ConfigurableReportDataSourceMixin, ReportDa
             ret = self._get_query_results(start, limit)
 
         formatter = DataFormatter(DictDataFormat(self.columns, no_value=None))
-        formatted_data = formatter.format(ret, group_by=self.group_by).values()
+        formatted_data = list(formatter.format(ret, group_by=self.group_by).values())
 
         for report_column in self.top_level_db_columns:
             report_column.format_data(formatted_data)
