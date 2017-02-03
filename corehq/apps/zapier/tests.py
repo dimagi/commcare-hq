@@ -14,6 +14,7 @@ from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, So
 from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.domain.models import Domain
 from corehq.apps.repeaters.models import FormRepeater, CaseRepeater
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import WebUser
 from corehq.apps.zapier.consts import EventTypes
 from corehq.apps.zapier.views import SubscribeView, UnsubscribeView, ZapierCreateCase, ZapierUpdateCase
@@ -417,6 +418,7 @@ class TestZapierCreateCaseAction(TestCase):
     def tearDownClass(cls):
         cls.user.delete()
         cls.domain_object.delete()
+        cls.client.delete()
         FormProcessorTestUtils.delete_all_cases()
         super(TestZapierCreateCaseAction, cls).tearDownClass()
 
