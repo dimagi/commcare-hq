@@ -6,6 +6,7 @@ from decimal import Decimal
 from types import NoneType
 
 from simpleeval import SimpleEval, DEFAULT_OPERATORS, InvalidExpression, DEFAULT_FUNCTIONS
+from six.moves import range
 
 
 def safe_pow_fn(a, b):
@@ -13,7 +14,7 @@ def safe_pow_fn(a, b):
 
 
 def safe_range(start, *args):
-    ret = range(start, *args)
+    ret = list(range(start, *args))
     if len(ret) < 100:
         return ret
     return None
