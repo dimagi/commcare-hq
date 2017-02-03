@@ -10,6 +10,7 @@ from corehq.apps.accounting.exceptions import InvoiceError
 from corehq.apps.accounting.utils import get_money_str
 from corehq.const import USER_DATE_FORMAT
 from corehq.util.view_utils import absolute_reverse
+import six
 
 LOGO_FILENAME = \
     'corehq/apps/accounting/static/accounting/images/Dimagi-Logo-RGB.jpg'
@@ -174,7 +175,7 @@ class InvoiceTemplate(object):
 
     def draw_from_address(self):
         if self.from_address is not None:
-            self.draw_text(unicode(self.from_address), inches(3), inches(11))
+            self.draw_text(six.text_type(self.from_address), inches(3), inches(11))
 
     def draw_to_address(self):
         origin_x = inches(1)
@@ -197,7 +198,7 @@ class InvoiceTemplate(object):
                        middle_horizational + inches(0.1))
 
         if self.to_address is not None:
-            self.draw_text(unicode(self.to_address), inches(0.1), inches(-0.2))
+            self.draw_text(six.text_type(self.to_address), inches(0.1), inches(-0.2))
 
         self.canvas.translate(-origin_x, -origin_y)
 
