@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<apps>
+  <app profile="http://onering.com/a/rohan/apps/download/None/profile.xml?latest=true" domain="rohan" name="Untitled Application" environment="production" media-profile="http://onering.com/a/rohan/apps/download/None/media_profile.xml?latest=true"/>
+  <app profile="http://onering.com/a/angmar/apps/download/None/profile.xml?latest=true" domain="angmar" name="Untitled Application" environment="production" media-profile="http://onering.com/a/angmar/apps/download/None/media_profile.xml?latest=true"/>
+  <app profile="http://onering.com/a/mordor/apps/download/None/profile.xml?latest=true" domain="mordor" name="Untitled Application" environment="production" media-profile="http://onering.com/a/mordor/apps/download/None/media_profile.xml?latest=true"/>
+</apps>
