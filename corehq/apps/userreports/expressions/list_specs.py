@@ -48,10 +48,7 @@ class MapItemsExpressionSpec(JsonObject):
     def __call__(self, doc, context=None):
         items = _evaluate_items_expression(self._items_expression, doc, context)
 
-        return map(
-            lambda i: self._map_expression(i, context),
-            items
-        )
+        return [self._map_expression(i, context) for i in items]
 
 
 class ReduceItemsExpressionSpec(JsonObject):
