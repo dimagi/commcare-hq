@@ -238,7 +238,7 @@ class DictExpressionSpec(JsonObject):
 
     def configure(self, compiled_properties):
         for key in compiled_properties:
-            if not isinstance(key, basestring):
+            if not isinstance(key, six.string_types):
                 raise BadSpecError("Properties in a dict expression must be strings!")
         self._compiled_properties = compiled_properties
 
@@ -389,7 +389,7 @@ class SplitStringExpressionSpec(JsonObject):
 
     def __call__(self, item, context=None):
         string_value = self._string_expression(item, context)
-        if not isinstance(string_value, basestring):
+        if not isinstance(string_value, six.string_types):
             return None
 
         index_value = self._index_expression(item, context)
