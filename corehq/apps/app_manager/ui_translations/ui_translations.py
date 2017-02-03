@@ -3,8 +3,6 @@ from collections import defaultdict
 import re
 from commcare_translations import load_translations
 from corehq.apps.app_manager import app_strings
-from corehq.apps.app_manager.views.translations import \
-    get_index_for_defaults
 from corehq.apps.translations import system_text_sources
 from corehq.util.workbook_json.excel import WorkbookJSONReader
 from couchexport.export import export_raw
@@ -94,3 +92,10 @@ def build_ui_translation_download_file(app):
 
 def get_default_translations_for_download(app):
     return app_strings.CHOICES[app.translation_strategy].get_default_translations('en')
+
+
+def get_index_for_defaults(langs):
+    try:
+        return langs.index("en")
+    except ValueError:
+        return 0

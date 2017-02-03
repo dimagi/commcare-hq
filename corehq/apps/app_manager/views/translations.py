@@ -14,19 +14,11 @@ from corehq.apps.app_manager.app_translations import \
     process_bulk_app_translation_upload
 from corehq.apps.app_manager.ui_translations import process_ui_translation_upload, \
     build_ui_translation_download_file
-
 from couchexport.export import export_raw
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
 from dimagi.utils.decorators.view import get_file
 from dimagi.utils.logging import notify_exception
-
-
-def get_index_for_defaults(langs):
-    try:
-        return langs.index("en")
-    except ValueError:
-        return 0
 
 
 @no_conflict_require_POST
