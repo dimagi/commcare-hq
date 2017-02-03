@@ -32,6 +32,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser, CommCareUser
 from corehq.util.test_utils import unit_testing_only
 import six
+from six.moves import range
 
 
 @unit_testing_only
