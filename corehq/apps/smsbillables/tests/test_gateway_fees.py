@@ -187,11 +187,9 @@ class TestGatewayFee(TestCase):
         for phone_number, prefix in generator.arbitrary_phone_numbers_and_prefixes(
             self.country_code_and_prefixes
         ):
+            random_key = choice(list(self.backend_ids))
             messages = generator.arbitrary_messages_by_backend_and_direction(
-                {
-                    random_key: self.backend_ids[random_key]
-                    for random_key in [choice(list(self.backend_ids))]
-                },
+                {random_key: self.backend_ids[random_key]},
                 phone_number=phone_number,
             )
 
