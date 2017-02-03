@@ -160,7 +160,7 @@
              {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
              <li>
                  <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
-@@ -352,6 +329,7 @@
+@@ -356,6 +333,7 @@
                  </a>
              </li>
              {% endif %}{% endif %}
@@ -168,7 +168,7 @@
              {% if form.form_type == 'advanced_form' and module.has_schedule %}
                   <li>
                       <a href="#visit-scheduler" data-toggle="tab">
-@@ -359,45 +337,46 @@
+@@ -363,45 +341,46 @@
                       </a>
                   </li>
              {% endif %}
@@ -250,7 +250,7 @@
              <div class="tab-pane" id="usercase-configuration">
                  {% if form_errors or xform_validation_errored %}
                      <p class="alert alert-warning">
-@@ -439,7 +418,7 @@
+@@ -471,7 +450,7 @@
                                  </p>
                                  </div>
                              {% endif %}
@@ -259,7 +259,7 @@
                          {% endblock %}
                      </div>
                  {% else %}
-@@ -448,23 +427,25 @@
+@@ -484,23 +463,25 @@
                      </p>
                  {% endif %}
              </div>

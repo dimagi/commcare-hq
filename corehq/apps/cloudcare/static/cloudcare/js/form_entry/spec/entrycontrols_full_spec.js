@@ -1,3 +1,6 @@
+/* eslint-env mocha */
+/* globals Question, DropdownEntry, Formplayer */
+
 describe('Entries', function() {
     var questionJSON,
         spy;
@@ -45,6 +48,34 @@ describe('Entries', function() {
 
         valid = entry.isValid('abc');
         assert.isFalse(valid);
+    });
+
+    it('Should return DropdownEntry', function() {
+        var entry;
+
+        questionJSON.datatype = Formplayer.Const.SELECT;
+        questionJSON.style = { raw: Formplayer.Const.MINIMAL };
+        questionJSON.choices = ['a', 'b'];
+
+        entry = (new Question(questionJSON)).entry;
+        assert.isTrue(entry instanceof DropdownEntry);
+        assert.equal(entry.templateType, 'dropdown');
+        assert.deepEqual(entry.options(), [{
+            text: 'a',
+            idx: 1,
+        }, {
+            text: 'b',
+            idx: 2,
+        }]);
+
+        entry.rawAnswer(1);
+        this.clock.tick(1000);
+        assert.isTrue(spy.calledOnce);
+        assert.equal(entry.answer(), 1);
+
+        entry.rawAnswer(2);
+        this.clock.tick(1000);
+        assert.isTrue(spy.calledTwice);
     });
 
     it('Should return FloatEntry', function() {

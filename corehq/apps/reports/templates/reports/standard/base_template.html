@@ -3,6 +3,12 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
+{% block page_sidebar_classes %}sidebar-offcanvas col-xs-12 col-sm-3 col-lg-2{% endblock %}
+
+{% block page_row_classes %}row-offcanvas row-offcanvas-left{% endblock %}
+
+{% block page_content_classes %}col-xs-12 col-sm-9 col-lg-10{% endblock %}
+
 {% block js %}{{ block.super }}
     {% block reports-js %}
     {% compress js %}
@@ -18,6 +24,13 @@
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
+    <script>
+        $(function () {
+          $('[data-toggle="offcanvas"]').click(function () {
+            $('.row-offcanvas').toggleClass('active')
+          });
+        });
+    </script>
 {% block reports-js-inline %}
     <script>
         var standardHQReport = new HQReport({
@@ -67,12 +80,28 @@
 
 {% block stylesheets %}
     {{ block.super }}
+
+    {% if less_debug %}
+    <link type="text/less"
+          rel="stylesheet"
+          media="all"
+          href="{% static 'reports/less/reports.debug.less' %}" />
+    {% else %}
+    {% compress css %}
+        <link type="text/less"
+              rel="stylesheet"
+              media="all"
+              href="{% static 'reports/less/reports.less' %}" />
+    {% endcompress %}
+  {% endif %}
+
     {% block reports-css %}{% endblock %}
 {% endblock %}
 
 {% block title %}{{ report.title|default:"Project Reports"|safe }}{% endblock %}
 
 {% block page_breadcrumbs %}
+    <a href="#" class="btn btn-link btn-invisible visible-xs btn-report-menu" data-toggle="offcanvas"><i class="fa fa-bars"></i> {% trans "Reports Menu" %}</a>
     <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
         <li>
             <a href="{{ report.default_url }}"><strong>{% trans report.section_name|default:"Reports" %}</strong></a>
@@ -91,7 +120,6 @@
 {% endblock %}
 
 {% block page_content %}
-
     {% block filter_panel %}
         {% include "reports/standard/partials/filter_panel.html" %}
     {% endblock %}

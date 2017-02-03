@@ -39,6 +39,8 @@ def process_incoming_message(*args, **kwargs):
 
     if kwargs["event"] == EVENT_INCOMING:
         if kwargs["message_type"] == MESSAGE_TYPE_SMS:
-            incoming_sms(from_number, kwargs["content"], SQLTelerivetBackend.get_api_id())
+            domain_scope = backend.domain if not backend.is_global else None
+            incoming_sms(from_number, kwargs["content"], SQLTelerivetBackend.get_api_id(),
+                domain_scope=domain_scope, backend_id=backend.couch_id)
         elif kwargs["message_type"] == MESSAGE_TYPE_CALL:
             incoming_ivr(from_number, "TELERIVET-%s" % kwargs["message_id"], None)

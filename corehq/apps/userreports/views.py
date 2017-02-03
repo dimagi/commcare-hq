@@ -32,7 +32,7 @@ from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, DATA_SOURCE
 from corehq.apps.userreports.document_stores import get_document_store
 from corehq.apps.userreports.expressions import ExpressionFactory
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
-from corehq.apps.userreports.specs import EvaluationContext
+from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.util import reverse
 from corehq.util.quickcache import quickcache
 from couchexport.export import export_from_tables
@@ -90,7 +90,9 @@ from corehq.apps.userreports.reports.filters.choice_providers import (
 )
 from corehq.apps.userreports.reports.view import ConfigurableReport
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
-from corehq.apps.userreports.tasks import rebuild_indicators, resume_building_indicators
+from corehq.apps.userreports.tasks import (
+    rebuild_indicators, resume_building_indicators, rebuild_indicators_in_place
+)
 from corehq.apps.userreports.ui.forms import (
     ConfigurableReportEditForm,
     ConfigurableDataSourceEditForm,
@@ -872,7 +874,13 @@ class ExpressionDebuggerView(BaseUserConfigReportsView):
 def evaluate_expression(request, domain):
     doc_type = request.POST['doc_type']
     doc_id = request.POST['doc_id']
+    data_source_id = request.POST['data_source']
     try:
+        if data_source_id:
+            data_source = get_datasource_config(data_source_id, domain)[0]
+            factory_context = data_source.get_factory_context()
+        else:
+            factory_context = FactoryContext.empty()
         usable_type = {
             'form': 'XFormInstance',
             'case': 'CommCareCase',
@@ -881,11 +889,21 @@ def evaluate_expression(request, domain):
         doc = document_store.get_document(doc_id)
         expression_text = request.POST['expression']
         expression_json = json.loads(expression_text)
-        parsed_expression = ExpressionFactory.from_spec(expression_json)
+        parsed_expression = ExpressionFactory.from_spec(
+            expression_json,
+            context=factory_context
+        )
         result = parsed_expression(doc, EvaluationContext(doc))
         return json_response({
             "result": result,
         })
+    except DataSourceConfigurationNotFoundError:
+        return json_response(
+            {"error": _("Data source with id {} not found in domain {}.").format(
+                data_source_id, domain
+            )},
+            status_code=404,
+        )
     except DocumentNotFoundError:
         return json_response(
             {"error": _("{} with id {} not found in domain {}.").format(
@@ -1096,6 +1114,27 @@ def resume_building_data_source(request, domain, config_id):
             _(u'Resuming rebuilding table "{}".').format(config.display_name)
         )
         resume_building_indicators.delay(config_id, request.user.username)
+    return HttpResponseRedirect(reverse(
+        EditDataSourceView.urlname, args=[domain, config._id]
+    ))
+
+
+@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
+@require_POST
+def build_data_source_in_place(request, domain, config_id):
+    config, is_static = get_datasource_config_or_404(config_id, domain)
+    if config.is_deactivated:
+        config.is_deactivated = False
+        config.save()
+
+    messages.success(
+        request,
+        _('Table "{}" is now being rebuilt. Data should start showing up soon').format(
+            config.display_name
+        )
+    )
+
+    rebuild_indicators_in_place.delay(config_id, request.user.username)
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
     ))

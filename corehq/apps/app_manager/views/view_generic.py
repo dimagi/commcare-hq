@@ -35,6 +35,7 @@ from corehq.apps.app_manager.util import (
 )
 from corehq import toggles
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
+from corehq.apps.cloudcare.utils import should_show_preview_app
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.couch.resource_conflict import retry_resource
 from corehq.apps.app_manager.dbaccessors import get_app
@@ -243,8 +244,10 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         context.update({
             'domain_names': domain_names,
         })
+    linked_apps_enabled = toggles.LINKED_APPS.enabled(domain)
     context.update({
         'copy_app_form': copy_app_form,
+        'linked_apps_enabled': linked_apps_enabled,
     })
 
     context['latest_commcare_version'] = get_commcare_versions(request.user)[-1]
@@ -284,10 +287,10 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     context.update({
         'live_preview_ab': live_preview_ab.context,
         'is_onboarding_domain': domain_obj.is_onboarding_domain,
-        'show_live_preview': (
-            toggles.PREVIEW_APP.enabled(domain)
-            or toggles.PREVIEW_APP.enabled(request.couch_user.username)
-            or (domain_obj.is_onboarding_domain and live_preview_ab.version == ab_tests.LIVE_PREVIEW_ENABLED)
+        'show_live_preview': should_show_preview_app(
+            request,
+            domain_obj,
+            request.couch_user.username,
         )
     })
 

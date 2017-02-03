@@ -1,3 +1,4 @@
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesColumnGroup, DataTablesHeader
 from custom.enikshay.reports.generic import EnikshayReport, EnikshayMultiReport
 from custom.enikshay.reports.const import TREATMENT_OUTCOMES
@@ -99,6 +100,10 @@ class AllTBPatientsReport(EnikshayReport):
                 data
             ),
             generate_for_all_outcomes(
+                _('Other previously treated, Clinically diagnosed'), 'other_previously_treated_patients',
+                data
+            ),
+            generate_for_all_outcomes(
                 _('HIV - reactive all'), 'hiv_reactive_patients',
                 data
             ),
@@ -143,6 +148,7 @@ class CPTAndARTReport(EnikshayReport):
         ]
 
 
+@location_safe
 class TreatmentOutcomeReport(EnikshayMultiReport):
 
     name = ugettext_lazy('Treatment Outcome')

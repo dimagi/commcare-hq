@@ -7,7 +7,7 @@ from corehq.apps.commtrack import const
 from corehq.apps.commtrack.const import RequisitionActions
 from corehq.apps.commtrack.models import CommtrackConfig, SupplyPointCase, CommtrackActionConfig, \
     CommtrackRequisitionConfig
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import Product
 from corehq.apps.programs.models import Program
 import itertools
@@ -40,9 +40,9 @@ def all_sms_codes(domain):
 
 
 def get_supply_point_and_location(domain, site_code):
-    location = Location.by_site_code(domain, site_code)
+    location = SQLLocation.objects.get_or_None(domain=domain, site_code=site_code)
     if location:
-        case = SupplyInterface(domain).get_by_location(location)
+        case = location.linked_supply_point()
     else:
         case = None
 

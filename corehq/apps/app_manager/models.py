@@ -115,9 +115,11 @@ from corehq.apps.app_manager.util import (
     app_callout_templates,
     xpath_references_case,
     xpath_references_user_case,
-    module_case_hierarchy_has_circular_reference)
+    module_case_hierarchy_has_circular_reference,
+    get_correct_app_class
+)
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
-    validate_xform, check_for_missing_instances
+    validate_xform
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from .exceptions import (
     AppEditingError,
@@ -472,10 +474,12 @@ class LoadUpdateAction(AdvancedAction):
     preload:                  Value from the case to load into the form. Keys are question paths,
                               values are case properties.
     auto_select:              Configuration for auto-selecting the case
-    load_case_from_fixture:   Configureation for loading a case using fixture data
+    load_case_from_fixture:   Configuration for loading a case using fixture data
     show_product_stock:       If True list the product stock using the module's Product List
                               configuration.
     product_program:          Only show products for this CommCare Supply program.
+    case_index:               Used when a case should be created/updated as a child or extension case
+                              of another case.
     """
     details_module = StringProperty()
     preload = DictProperty()
@@ -990,11 +994,11 @@ class FormBase(DocumentSchema):
         xform.normalize_itext()
         xform.strip_vellum_ns_attributes()
         xform.set_version(self.get_version())
+        xform.add_missing_instances()
 
     def render_xform(self, build_profile_id=None):
         xform = XForm(self.source)
         self.add_stuff_to_xform(xform, build_profile_id)
-        check_for_missing_instances(xform)
         return xform.render()
 
     @quickcache(['self.source', 'langs', 'include_triggers', 'include_groups', 'include_translations'])
@@ -1630,12 +1634,25 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
                                 questions,
                                 question_path
                             )
+
+        def parse_case_type(name, types={"#case": module_case_type,
+                                         "#user": USERCASE_TYPE}):
+            if name.startswith("#") and "/" in name:
+                full_name = name
+                hashtag, name = name.split("/", 1)
+                if hashtag not in types:
+                    hashtag, name = "#case", full_name
+            else:
+                hashtag = "#case"
+            return types[hashtag], name
+
         case_loads = self.case_references.get("load", {})
         for question_path, case_properties in case_loads.iteritems():
             for name in case_properties:
+                case_type, name = parse_case_type(name)
                 self.add_property_load(
                     app_case_meta,
-                    module_case_type,
+                    case_type,
                     name,
                     questions,
                     question_path
@@ -1669,9 +1686,9 @@ class MappingItem(DocumentSchema):
         numeral, which is illegal.
         """
         if re.search(r'\W', self.key) or self.treat_as_expression:
-            return 'h{hash}'.format(hash=hashlib.md5(self.key).hexdigest()[:8])
+            return u'h{hash}'.format(hash=hashlib.md5(self.key.encode('UTF-8')).hexdigest()[:8])
         else:
-            return 'k{key}'.format(key=self.key)
+            return u'k{key}'.format(key=self.key)
 
     def key_as_condition(self, property):
         if self.treat_as_expression:
@@ -1834,9 +1851,11 @@ class SortElement(IndexedSchema):
     type = StringProperty()
     direction = StringProperty()
     display = DictProperty()
+    sort_calculation = StringProperty(default="")
 
     def has_display_values(self):
         return any(s.strip() != '' for s in self.display.values())
+
 
 class CaseListLookupMixin(DocumentSchema):
     """
@@ -3530,30 +3549,43 @@ class ReportAppFilter(DocumentSchema):
     @classmethod
     def wrap(cls, data):
         if cls is ReportAppFilter:
-            doc_type = data['doc_type']
-            doc_type_to_filter_class = {
-                'AutoFilter': AutoFilter,
-                'CustomDataAutoFilter': CustomDataAutoFilter,
-                'StaticChoiceFilter': StaticChoiceFilter,
-                'StaticChoiceListFilter': StaticChoiceListFilter,
-                'StaticDatespanFilter': StaticDatespanFilter,
-                'CustomDatespanFilter': CustomDatespanFilter,
-                'CustomMonthFilter': CustomMonthFilter,
-                'MobileSelectFilter': MobileSelectFilter,
-                'AncestorLocationTypeFilter': AncestorLocationTypeFilter,
-                'NumericFilter': NumericFilter,
-            }
-            try:
-                klass = doc_type_to_filter_class[doc_type]
-            except KeyError:
-                raise ValueError('Unexpected doc_type for ReportAppFilter', doc_type)
-            else:
-                return klass.wrap(data)
+            return get_report_filter_class_for_doc_type(data['doc_type']).wrap(data)
         else:
             return super(ReportAppFilter, cls).wrap(data)
 
     def get_filter_value(self, user, ui_filter):
         raise NotImplementedError
+
+
+MobileFilterConfig = namedtuple('MobileFilterConfig', ['doc_type', 'filter_class', 'short_description'])
+
+
+def get_all_mobile_filter_configs():
+    return [
+        MobileFilterConfig('AutoFilter', AutoFilter, _('Value equal to a standard user property')),
+        MobileFilterConfig('CustomDataAutoFilter', CustomDataAutoFilter,
+                           _('Value equal to a custom user property')),
+        MobileFilterConfig('StaticChoiceFilter', StaticChoiceFilter, _('An exact match of a constant value')),
+        MobileFilterConfig('StaticChoiceListFilter', StaticChoiceListFilter,
+                           _('An exact match of a dynamic property')),
+        MobileFilterConfig('StaticDatespanFilter', StaticDatespanFilter, _('A standard date range')),
+        MobileFilterConfig('CustomDatespanFilter', CustomDatespanFilter, _('A custom range relative to today')),
+        MobileFilterConfig('CustomMonthFilter', CustomMonthFilter,
+                           _("Custom Month Filter (you probably don't want this")),
+        MobileFilterConfig('MobileSelectFilter', MobileSelectFilter, _('Show choices on mobile device')),
+        MobileFilterConfig('AncestorLocationTypeFilter', AncestorLocationTypeFilter,
+                           _("Ancestor location of the user's assigned location of a particular type")),
+        MobileFilterConfig('NumericFilter', NumericFilter, _('A numeric expression')),
+    ]
+
+
+def get_report_filter_class_for_doc_type(doc_type):
+    matched_configs = [config for config in get_all_mobile_filter_configs() if config.doc_type == doc_type]
+    if not matched_configs:
+        raise ValueError('Unexpected doc_type for ReportAppFilter', doc_type)
+    else:
+        assert len(matched_configs) == 1
+        return matched_configs[0].filter_class
 
 
 def _filter_by_case_sharing_group_id(user, ui_filter):
@@ -3565,7 +3597,8 @@ def _filter_by_case_sharing_group_id(user, ui_filter):
 
 
 def _filter_by_location_id(user, ui_filter):
-    return ui_filter.value(**{ui_filter.name: user.location_id})
+    return ui_filter.value(**{ui_filter.name: user.location_id,
+                              'request_user': user})
 
 
 def _filter_by_username(user, ui_filter):
@@ -3581,23 +3614,39 @@ def _filter_by_user_id(user, ui_filter):
 def _filter_by_parent_location_id(user, ui_filter):
     location = user.sql_location
     location_parent = location.parent.location_id if location and location.parent else None
-    return ui_filter.value(**{ui_filter.name: location_parent})
+    return ui_filter.value(**{ui_filter.name: location_parent,
+                              'request_user': user})
 
 
-_filter_type_to_func = {
-    'case_sharing_group': _filter_by_case_sharing_group_id,
-    'location_id': _filter_by_location_id,
-    'parent_location_id': _filter_by_parent_location_id,
-    'username': _filter_by_username,
-    'user_id': _filter_by_user_id,
-}
+AutoFilterConfig = namedtuple('AutoFilterConfig', ['slug', 'filter_function', 'short_description'])
+
+
+def get_auto_filter_configurations():
+    return [
+        AutoFilterConfig('case_sharing_group', _filter_by_case_sharing_group_id,
+                         _("The user's case sharing group")),
+        AutoFilterConfig('location_id', _filter_by_location_id, _("The user's assigned location")),
+        AutoFilterConfig('parent_location_id', _filter_by_parent_location_id,
+                         _("The parent location of the user's assigned location")),
+        AutoFilterConfig('username', _filter_by_username, _("The user's username")),
+        AutoFilterConfig('user_id', _filter_by_user_id, _("The user's ID")),
+    ]
+
+
+def _get_auto_filter_function(slug):
+    matched_configs = [config for config in get_auto_filter_configurations() if config.slug == slug]
+    if not matched_configs:
+        raise ValueError('Unexpected ID for AutoFilter', slug)
+    else:
+        assert len(matched_configs) == 1
+        return matched_configs[0].filter_function
 
 
 class AutoFilter(ReportAppFilter):
-    filter_type = StringProperty(choices=_filter_type_to_func.keys())
+    filter_type = StringProperty(choices=[f.slug for f in get_auto_filter_configurations()])
 
     def get_filter_value(self, user, ui_filter):
-        return _filter_type_to_func[self.filter_type](user, ui_filter)
+        return _get_auto_filter_function(self.filter_type)(user, ui_filter)
 
 
 class CustomDataAutoFilter(ReportAppFilter):
@@ -3942,6 +3991,7 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
     referral_list = SchemaProperty(CaseList)
     task_list = SchemaProperty(CaseList)
     parent_select = SchemaProperty(ParentSelect)
+    search_config = SchemaProperty(CaseSearch)
 
     get_forms = IndexedSchema.Getter('forms')
 
@@ -4069,7 +4119,7 @@ class LazyBlobDoc(BlobMixin):
         if "_attachments" in data:
             data = data.copy()
             attachments = data.pop("_attachments").copy()
-            if cls.migrating_blobs_from_couch:
+            if cls._migrating_blobs_from_couch:
                 # preserve stubs so couch attachments don't get deleted on save
                 stubs = {}
                 for name, value in list(attachments.items()):
@@ -4437,6 +4487,9 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     # Whether or not the Application has had any forms submitted against it
     has_submissions = BooleanProperty(default=False)
 
+    # domains that are allowed to have linked apps with this master
+    linked_whitelist = StringListProperty()
+
     @classmethod
     def wrap(cls, data):
         should_save = False
@@ -4768,7 +4821,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             })
         except UserCaseXPathValidationError as ucve:
             errors.append({
-                'type': 'invalid user case xpath reference',
+                'type': 'invalid user property xpath reference',
                 'module': ucve.module,
                 'form': ucve.form,
             })
@@ -5595,9 +5648,14 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if app_uses_usercase(self) and not domain_has_privilege(self.domain, privileges.USER_CASE):
             errors.append({
                 'type': 'subscription',
-                'message': _('Your application is using User Case functionality. You can remove User Case '
+                'message': _('Your application is using User Properties. You can remove User Properties '
+                             'functionality by opening the User Properties tab in a form that uses it, and '
+                             'clicking "Remove User Properties".')
+                           if toggles.USER_PROPERTY_EASY_REFS.enabled(self.domain) else
+                           # old message, to be removed with USER_PROPERTY_EASY_REFS toggle
+                           _('Your application is using User Case functionality. You can remove User Case '
                              'functionality by opening the User Case Management tab in a form that uses it, and '
-                             'clicking "Remove User Case Properties".')
+                             'clicking "Remove User Case Properties".'),
             })
         return errors
 
@@ -5905,12 +5963,12 @@ class RemoteApp(ApplicationBase):
         return questions
 
 
-str_to_cls = {
-    "Application": Application,
-    "Application-Deleted": Application,
-    "RemoteApp": RemoteApp,
-    "RemoteApp-Deleted": RemoteApp,
-}
+class LinkedApplication(Application):
+    """
+    An app that can pull changes from an app in a different domain.
+    """
+    # This is the id of the master application
+    master = StringProperty()
 
 
 def import_app(app_id_or_source, domain, source_properties=None, validate_source_domain=None):
@@ -5920,10 +5978,9 @@ def import_app(app_id_or_source, domain, source_properties=None, validate_source
         src_dom = source['domain']
         if validate_source_domain:
             validate_source_domain(src_dom)
-        source = source.export_json()
-        source = json.loads(source)
+        source = source.export_json(dump_json=False)
     else:
-        cls = str_to_cls[app_id_or_source['doc_type']]
+        cls = get_correct_app_class(app_id_or_source)
         # Don't modify original app source
         app = cls.wrap(deepcopy(app_id_or_source))
         source = app.export_json(dump_json=False)
@@ -5936,7 +5993,7 @@ def import_app(app_id_or_source, domain, source_properties=None, validate_source
     if source_properties is not None:
         for key, value in source_properties.iteritems():
             source[key] = value
-    cls = str_to_cls[source['doc_type']]
+    cls = get_correct_app_class(source)
     # Allow the wrapper to update to the current default build_spec
     if 'build_spec' in source:
         del source['build_spec']

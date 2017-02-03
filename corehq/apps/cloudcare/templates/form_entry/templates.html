@@ -61,7 +61,9 @@
       <div class="webforms-nav"
            data-bind="template: { name: 'form-navigation-ko-template' }"></div>
     </div>
-    <div class="container form-container" data-bind="css: { 'form-single-question': showInFormNavigation }">
+    <div class="container form-container js-form-container" data-bind="
+          css: { 'form-single-question': showInFormNavigation },
+      ">
 
       <div class="page-header">
         <h1 class="title" data-bind="text: title, visible: !showInFormNavigation()"></h1>
@@ -96,7 +98,8 @@
         <div id="instance-xml-home" class="debugger" data-bind="
             css: {
                 'debugger-minimized': isMinimized,
-                'debugger-maximized': !isMinimized()
+                'debugger-maximized': !isMinimized(),
+                'debugger-updating': updating
             }
             ">
             <!-- Tab title -->
@@ -158,16 +161,6 @@
                                 {% trans "Evaluate XPath" %}
                             </a>
                         </li>
-                        <li role="presentation">
-                            <a
-                                href="#debugger-settings"
-                                aria-controls="debugger-settings"
-                                role="tab"
-                                data-bind="click: collapseNavbar"
-                                data-toggle="tab">
-                                {% trans "Settings" %}
-                            </a>
-                        </li>
                       </ul>
                     </div><!-- /.navbar-collapse -->
                   </div><!-- /.container-fluid -->
@@ -186,22 +179,6 @@
                             name: 'debugger-eval-ko-template',
                             data: evalXPath }">
                         </div>
-                    </div>
-                    <div role="tabpanel" class="tab-pane" id="debugger-settings">
-                        <form class="form-horizontal debug-controls">
-                            <div class="form-group">
-                                <div class="controls" data-bind="css: Formplayer.Const.CONTROL_WIDTH">
-                                    <label class="checkbox">
-                                        <input id="auto-sync-control" type="checkbox" checked="checked">{% trans "Auto Sync" %}
-                                        <span class="help-block">
-                                        {% blocktrans %}
-                                            When this is checked, the Data Preview tool will auto sync your XML after every question answered. On slow connetions, uncheck this.
-                                        {% endblocktrans %}
-                                        </span>
-                                    </label>
-                                </div>
-                            </div>
-                        </form>
                     </div>
                 </div>
             </div>
@@ -288,10 +265,24 @@
                 on: $root.forceRequiredVisible,
             }
         ">
-        <label class="caption control-label" data-bind="
-            html: ko.utils.unwrapObservable($data.caption_markdown) || caption(),
-            css: Formplayer.Const.LABEL_WIDTH
-            "></label>
+        <label class="caption control-label" data-bind="css: Formplayer.Const.LABEL_WIDTH">
+            <div>
+                <!-- ko if: help() -->
+                <a
+                    class="help-popover"
+                    tabindex="0"
+                    role="button"
+                    data-trigger="focus"
+                    data-placement="top"
+                    data-toggle="popover"
+                    data-bind="attr: { 'data-content': help }">
+                    <i class="fa fa-info-circle"></i>
+                </a>
+                <!-- /ko -->
+                <span data-bind="html: ko.utils.unwrapObservable($data.caption_markdown) || caption()"></span>
+            </div>
+            <i class="hint-text" data-bind="text: ko.utils.unwrapObservable($data.hint)"></i>
+        </label>
         <div class="widget-container controls" data-bind="css: Formplayer.Const.CONTROL_WIDTH">
             <div class="loading">
                 <i class="fa fa-check text-success" data-bind="visible: clean "></i>
@@ -456,13 +447,24 @@
             </label>
         </div>
     </div>
-    {% if not request|toggle_enabled:"USE_FORMPLAYER_FRONTEND" %}
+    {% if request|toggle_enabled:"USE_OLD_CLOUDCARE" %}
     <div class="help-block clear-container">
         <button class="btn btn-default btn-xs clear" data-bind="
             click: onClear
         ">Clear choices</button>
     </div>
     {% endif %}
+</script>
+<script type="text/html" id="dropdown-entry-ko-template">
+    <select class="form-control" data-bind="
+        options: options,
+        optionsValue: 'idx',
+        optionsText: 'text',
+        value: rawAnswer,
+        valueAllowUnset: true,
+        optionsCaption: gettext('Choose...')
+        ">
+    </select>
 </script>
 <script type="text/html" id="date-entry-ko-template">
     <div class="input-group">

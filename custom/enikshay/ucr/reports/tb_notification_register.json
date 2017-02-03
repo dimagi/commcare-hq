@@ -22,6 +22,15 @@
         "filters": [
             {
                 "compare_as_string": false,
+                "datatype": "datetime",
+                "required": false,
+                "display": "Case Open Date",
+                "field": "opened_on",
+                "slug": "date",
+                "type": "date"
+            },
+            {
+                "compare_as_string": false,
                 "datatype": "string",
                 "type": "dynamic_choice_list",
                 "slug": "village",
@@ -38,6 +47,13 @@
                 "slug": "episode_type",
                 "datatype": "string",
                 "pre_value": "confirmed_tb"
+            },
+            {
+                "type": "pre",
+                "field": "closed",
+                "slug": "closed",
+                "datatype": "integer",
+                "pre_value": 0
             }
         ],
         "columns": [

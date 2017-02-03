@@ -44,6 +44,17 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             });
         },
 
+        selectDetail: function(caseId, detailIndex) {
+            var urlObject = Util.currentUrlToObject();
+            urlObject.addStep(caseId);
+            var fetchingDetails = FormplayerFrontend.request("entity:get:details", urlObject);
+            $.when(fetchingDetails).done(function (detailResponse) {
+                Menus.Controller.showDetail(detailResponse, detailIndex, caseId);
+            }).fail(function() {
+                FormplayerFrontend.trigger('navigateHome');
+            });
+        },
+
         showMenu: function (menuResponse) {
             var menuListView = Menus.Util.getMenuView(menuResponse);
 
@@ -71,31 +82,32 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             FormplayerFrontend.regions.persistentCaseTile.show(detailView.render());
         },
 
-        showDetail: function (model, detailTabIndex) {
+        showDetail: function (model, detailTabIndex, caseId) {
             var self = this;
-            var detailObjects = model.options.model.get('details');
+            var detailObjects = model.models;
             // If we have no details, just select the entity
-            if (detailObjects === null || detailObjects === undefined) {
-                FormplayerFrontend.trigger("menu:select", model.model.get('id'));
+            if (detailObjects === null || detailObjects === undefined || detailObjects.length === 0) {
+                FormplayerFrontend.trigger("menu:select", caseId);
                 return;
             }
             var detailObject = detailObjects[detailTabIndex];
             var menuListView = Menus.Controller.getDetailList(detailObject);
 
             var tabModels = _.map(detailObjects, function (detail, index) {
-                return {title: detail.title, id: index};
+                return {title: detail.get('title'), id: index};
             });
             var tabCollection = new Backbone.Collection();
             tabCollection.reset(tabModels);
+
             var tabListView = new Menus.Views.DetailTabListView({
                 collection: tabCollection,
                 showDetail: function (detailTabIndex) {
-                    self.showDetail(model, detailTabIndex);
+                    self.showDetail(model, detailTabIndex, caseId);
                 },
             });
 
             $('#select-case').off('click').click(function () {
-                FormplayerFrontend.trigger("menu:select", model.model.get('id'));
+                FormplayerFrontend.trigger("menu:select", caseId);
             });
             $('#case-detail-modal').find('.js-detail-tabs').html(tabListView.render().el);
             $('#case-detail-modal').find('.js-detail-content').html(menuListView.render().el);
@@ -103,8 +115,8 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
         },
 
         getDetailList: function (detailObject) {
-            var headers = detailObject.headers;
-            var details = detailObject.details;
+            var headers = detailObject.get('headers');
+            var details = detailObject.get('details');
             var detailModel = [];
             // we need to map the details and headers JSON to a list for a Backbone Collection
             for (var i = 0; i < headers.length; i++) {
@@ -165,7 +177,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 title: menuResponse.title,
                 headers: menuResponse.headers,
                 widthHints: menuResponse.widthHints,
-                action: menuResponse.action,
+                actions: menuResponse.actions,
                 pageCount: menuResponse.pageCount,
                 currentPage: menuResponse.currentPage,
                 styles: menuResponse.styles,
