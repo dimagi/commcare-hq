@@ -7,6 +7,7 @@ import tempfile
 import uuid
 
 from django.db.backends.base.creation import TEST_DATABASE_PREFIX
+import six
 
 
 def is_testing():
@@ -132,7 +133,7 @@ class CouchSettingsHelper(namedtuple('CouchSettingsHelper',
         return db_uri
 
     def _make_couchdb_tuple(self, row):
-        if isinstance(row, basestring):
+        if isinstance(row, six.string_types):
             app_label, postfix = row, None
         else:
             app_label, postfix = row
