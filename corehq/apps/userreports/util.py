@@ -105,9 +105,7 @@ def allowed_report_builder_reports(request):
 def number_of_report_builder_reports(domain):
     from corehq.apps.userreports.models import ReportConfiguration
     existing_reports = ReportConfiguration.by_domain(domain)
-    builder_reports = filter(
-        lambda report: report.report_meta.created_by_builder, existing_reports
-    )
+    builder_reports = [report for report in existing_reports if report.report_meta.created_by_builder]
     return len(builder_reports)
 
 

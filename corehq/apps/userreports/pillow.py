@@ -60,9 +60,9 @@ class ConfigurableReportTableManagerMixin(object):
         sql_supported_backends = [UCR_SQL_BACKEND, UCR_LABORATORY_BACKEND]
         es_supported_backends = [UCR_ES_BACKEND, UCR_LABORATORY_BACKEND]
         self._rebuild_sql_tables(
-            filter(lambda a: get_backend_id(a.config) in sql_supported_backends, self.table_adapters))
+            [a for a in self.table_adapters if get_backend_id(a.config) in sql_supported_backends])
         self._rebuild_es_tables(
-            filter(lambda a: get_backend_id(a.config) in es_supported_backends, self.table_adapters))
+            [a for a in self.table_adapters if get_backend_id(a.config) in es_supported_backends])
 
     def _rebuild_sql_tables(self, adapters):
         # todo move this code to sql adapter rebuild_if_necessary

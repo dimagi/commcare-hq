@@ -13,7 +13,7 @@ class DataSourceProvider(object):
 class DynamicDataSourceProvider(DataSourceProvider):
 
     def get_data_sources(self):
-        return filter(lambda config: not config.is_deactivated, DataSourceConfiguration.all())
+        return [config for config in DataSourceConfiguration.all() if not config.is_deactivated]
 
 
 class StaticDataSourceProvider(DataSourceProvider):
