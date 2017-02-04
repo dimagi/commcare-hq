@@ -943,7 +943,7 @@ PREVIEW_APP = PredictablyRandomToggle(
     'Preview an application in the app builder',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
-    randomness=0.2,
+    randomness=0.5,
 )
 
 DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
