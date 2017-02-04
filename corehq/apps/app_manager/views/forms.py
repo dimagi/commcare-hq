@@ -26,7 +26,7 @@ from corehq.apps.app_manager.views.schedules import get_schedule_context
 from corehq.apps.app_manager.views.utils import back_to_main, \
     CASE_TYPE_CONFLICT_MSG, get_langs
 
-from corehq import toggles, privileges, feature_previews
+from corehq import toggles, privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.exceptions import (
     BlankXFormError,
@@ -81,7 +81,7 @@ from corehq.apps.app_manager.models import (
     load_case_reserved_words,
     WORKFLOW_FORM,
     CustomInstance,
-)
+    CaseReferences)
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
 from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
@@ -120,11 +120,11 @@ def copy_form(request, domain, app_id, module_id, form_id):
     except BlankXFormError:
         # don't save!
         messages.error(request, _('We could not copy this form, because it is blank.'
-                              'In order to copy this form, please add some questions first.'))
+                                  'In order to copy this form, please add some questions first.'))
     except IncompatibleFormTypeException:
         # don't save!
         messages.error(request, _('This form could not be copied because it '
-                              'is not compatible with the selected module.'))
+                                  'is not compatible with the selected module.'))
     else:
         app.save()
 
@@ -336,7 +336,7 @@ def _edit_form_attr(request, domain, app_id, unique_form_id, attr):
 
     if should_edit('custom_instances'):
         instances = json.loads(request.POST.get('custom_instances'))
-        try:         # validate that custom instances can be added into the XML
+        try:  # validate that custom instances can be added into the XML
             for instance in instances:
                 etree.fromstring(
                     "<instance id='{}' src='{}' />".format(
@@ -745,8 +745,6 @@ def form_casexml(request, domain, form_unique_id):
 
 
 def _get_case_references(data):
-    def is_valid(value):
-        return isinstance(value, list) and all(isinstance(v, unicode) for v in value)
     if "references" in data:
         # old/deprecated format
         preload = json.loads(data['references'])["preload"]
@@ -755,6 +753,10 @@ def _get_case_references(data):
         }
     else:
         refs = json.loads(data.get('case_references', '{}'))
-    if set(refs) - {"load"} or not all(is_valid(v) for v in refs["load"].values()):
+
+    try:
+        references = CaseReferences.wrap(refs)
+        references.validate()
+        return references
+    except Exception:
         raise ValueError("bad case references data: {!r}".format(refs))
-    return refs
