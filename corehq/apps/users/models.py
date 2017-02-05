@@ -834,12 +834,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         return self.username.endswith('@dimagi.com')
 
     @property
-    def is_anonymous(self):
-        return False
-
-    @property
     def raw_username(self):
-        if self.doc_type in ["CommCareUser", "AnonymousCommCareUser"]:
+        if self.doc_type == "CommCareUser":
             return self.username.split("@")[0]
         else:
             return self.username
@@ -1154,7 +1150,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             'WebUser': WebUser,
             'CommCareUser': CommCareUser,
             'FakeUser': FakeUser,
-            'AnonymousCommCareUser': AnonymousCommCareUser
         }[doc_type].wrap(source)
 
     @classmethod
@@ -1407,6 +1402,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     is_demo_user = BooleanProperty(default=False)
     demo_restore_id = IntegerProperty()
 
+    is_anonymous = BooleanProperty(default=False)
+
     @classmethod
     def wrap(cls, data):
         # migrations from using role_id to using the domain_memberships
@@ -1468,8 +1465,17 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         self.user_data              = old_couch_user.default_account.user_data
 
     @classmethod
-    def create(cls, domain, username, password, email=None, uuid='', date='', phone_number=None, commit=True,
-               **kwargs):
+    def create(cls,
+            domain,
+            username,
+            password,
+            email=None,
+            uuid='',
+            date='',
+            phone_number=None,
+            is_anonymous=False,
+            commit=True,
+            **kwargs):
         """
         used to be a function called `create_hq_user_from_commcare_registration_info`
 
@@ -1483,11 +1489,17 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         commcare_user.domain = domain
         commcare_user.device_ids = [device_id]
         commcare_user.registering_device_id = device_id
+        commcare_user.is_anonymous = is_anonymous
 
         commcare_user.domain_membership = DomainMembership(domain=domain, **kwargs)
 
         if commit:
             commcare_user.save(**get_safe_write_kwargs())
+
+        if is_anonymous:
+            assert commit, 'Commit must be true when creating an anonymous user'
+            django_user = commcare_user.get_django_user()
+            Token.objects.create(user=django_user)
 
         return commcare_user
 
@@ -2035,24 +2047,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             ))
 
 
-class AnonymousCommCareUser(CommCareUser):
-    @property
-    def is_anonymous(self):
-        return True
-
-    @classmethod
-    def create(cls, domain, username, password, **kwargs):
-        anonymous_user = super(AnonymousCommCareUser, cls).create(
-            domain,
-            username,
-            password,
-            **kwargs
-        )
-        django_user = anonymous_user.get_django_user()
-        Token.objects.create(user=django_user)
-        return anonymous_user
-
-
 class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     program_id = StringProperty()
     last_password_set = DateTimeProperty(default=datetime(year=1900, month=1, day=1))
@@ -2075,6 +2069,10 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     def is_global_admin(self):
         # override this function to pass global admin rights off to django
         return self.is_superuser
+
+    @property
+    def is_anonymous(self):
+        return False
 
     @classmethod
     def create(cls, domain, username, password, email=None, uuid='', date='', **kwargs):

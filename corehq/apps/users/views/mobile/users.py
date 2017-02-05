@@ -78,7 +78,7 @@ from corehq.apps.users.forms import (
     MultipleSelectionForm, ConfirmExtraUserChargesForm, NewMobileWorkerForm,
     SelfRegistrationForm, SetUserPasswordForm, NewAnonymousMobileWorkerForm
 )
-from corehq.apps.users.models import CommCareUser, UserRole, CouchUser, AnonymousCommCareUser
+from corehq.apps.users.models import CommCareUser, UserRole, CouchUser
 from corehq.apps.users.const import ANONYMOUS_USERNAME, ANONYMOUS_FIRSTNAME, ANONYMOUS_LASTNAME
 from corehq.apps.users.tasks import bulk_upload_async, turn_on_demo_mode_task, reset_demo_user_restore_task
 from corehq.apps.users.util import can_add_extra_mobile_workers, format_username
@@ -733,7 +733,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             username = in_data['username'].strip()
         except KeyError:
             return HttpResponseBadRequest('You must specify a username')
-        if username == 'admin' or username == 'demo_user':
+        if username == 'admin' or username == 'demo_user' or username == ANONYMOUS_USERNAME:
             return {'error': _(u'Username {} is reserved.').format(username)}
         if '@' in username:
             return {
@@ -797,7 +797,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         last_name = ANONYMOUS_LASTNAME
         location_id = self.new_anonymous_mobile_worker_form.cleaned_data['location_id']
 
-        couch_user = AnonymousCommCareUser.create(
+        couch_user = CommCareUser.create(
             self.domain,
             format_username(username, self.domain),
             password,
@@ -805,6 +805,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             first_name=first_name,
             last_name=last_name,
             user_data=self.custom_data.get_data_to_save(),
+            is_anonymous=True,
         )
         if location_id:
             couch_user.set_location(SQLLocation.objects.get(location_id=location_id))
