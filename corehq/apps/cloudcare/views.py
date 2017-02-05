@@ -57,7 +57,7 @@ from corehq.apps.cloudcare.api import (
     get_open_form_sessions,
     look_up_app_json,
 )
-from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
+from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps, get_app_id_from_hash
 from corehq.apps.cloudcare.decorators import require_cloudcare_access
 from corehq.apps.cloudcare.exceptions import RemoteAppError
 from corehq.apps.cloudcare.models import ApplicationAccess
@@ -378,7 +378,14 @@ class SingleAppLandingPageView(TemplateView):
 
     @use_legacy_jquery
     def get(self, request, *args, **kwargs):
-        app = Application.wrap(get_latest_released_app_doc(request.domain, kwargs.pop('app_id')))
+        app_id = get_app_id_from_hash(request.domain, kwargs.pop('app_hash'))
+        print app_id
+
+        if not app_id:
+            raise Http404()
+
+        app = Application.wrap(get_latest_released_app_doc(request.domain, app_id))
+
         if not app.anonymous_cloudcare_enabled:
             raise Http404()
 
