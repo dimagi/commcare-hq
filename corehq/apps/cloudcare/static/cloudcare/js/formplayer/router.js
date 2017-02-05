@@ -197,11 +197,11 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
         API.renderResponse(menuResponse);
     });
 
-    SessionNavigate.on("start", function () {
-        new SessionNavigate.Router({
+    SessionNavigate.start = function () {
+        return new SessionNavigate.Router({
             controller: API,
         });
-    });
+    };
 
     FormplayerFrontend.on("breadcrumbSelect", function (index) {
         var urlObject = Util.currentUrlToObject();
