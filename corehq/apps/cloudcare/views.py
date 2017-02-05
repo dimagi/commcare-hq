@@ -379,6 +379,9 @@ class SingleAppLandingPageView(TemplateView):
     @use_legacy_jquery
     def get(self, request, *args, **kwargs):
         app = Application.wrap(get_latest_released_app_doc(request.domain, kwargs.pop('app_id')))
+        if not app.anonymous_cloudcare_enabled:
+            raise Http404()
+
         return self.render_to_response({
             'app': app,
             'formplayer_url': settings.FORMPLAYER_URL,
