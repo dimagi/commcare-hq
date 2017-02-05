@@ -384,7 +384,12 @@ class SingleAppLandingPageView(TemplateView):
         if not app_id:
             raise Http404()
 
-        app = Application.wrap(get_latest_released_app_doc(request.domain, app_id))
+        app_doc = get_latest_released_app_doc(request.domain, app_id)
+
+        if not app_doc:
+            raise Http404()
+
+        app = Application.wrap(app_doc)
 
         if not app.anonymous_cloudcare_enabled:
             raise Http404()
