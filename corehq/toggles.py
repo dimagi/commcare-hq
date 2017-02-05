@@ -287,13 +287,6 @@ ADD_USERS_FROM_LOCATION = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-DETAIL_LIST_TABS = StaticToggle(
-    'detail-list-tabs',
-    'Tabs in the case detail list',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
 DETAIL_LIST_TAB_NODESETS = StaticToggle(
     'detail-list-tab-nodesets',
     'Associate a nodeset with a case detail tab',
@@ -334,7 +327,11 @@ USER_CONFIGURABLE_REPORTS = StaticToggle(
     'user_reports',
     'User configurable reports UI',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
+    description=(
+        "A feature which will allow your domain to create User Configurable Reports."
+    ),
+    help_link='https://confluence.dimagi.com/display/RD/User+Configurable+Reporting', 
 )
 
 LOCATIONS_IN_UCR = StaticToggle(
@@ -363,13 +360,6 @@ REPORT_BUILDER_BETA_GROUP = StaticToggle(
     'RB beta group',
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN],
-)
-
-STOCK_TRANSACTION_EXPORT = StaticToggle(
-    'ledger_export',
-    'Show "export transactions" link on case details page',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
 SYNC_ALL_LOCATIONS = StaticToggle(
@@ -946,7 +936,7 @@ PREVIEW_APP = PredictablyRandomToggle(
     'Preview an application in the app builder',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
-    randomness=0.2,
+    randomness=0.5,
 )
 
 DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
@@ -1024,7 +1014,8 @@ NIMBUS_FORM_VALIDATION = PredictablyRandomToggle(
     [NAMESPACE_DOMAIN],
     randomness=1.0,
     always_disabled=[
-        'icrc-almanach'
+        'icrc-almanach',
+        'mikolo'
     ]
 )
 
@@ -1049,9 +1040,10 @@ SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-DO_NOT_PROCESS_OLD_BUILDS = StaticToggle(
+DO_NOT_PROCESS_OLD_BUILDS = PredictablyRandomToggle(
     'do_not_process_old_builds',
     'Do not process old build for export generation',
     TAG_PRODUCT_CORE,
     [NAMESPACE_DOMAIN],
+    randomness=0.2,
 )

@@ -253,6 +253,9 @@
     </li>
     {% endif %}
     {% endfor %}
+    {% if details %}
+        <li><a href="#module-actions" data-toggle="tab">{% trans "Actions" %}</a></li>
+    {% endif %}
     {% endblock %}{# endblock tab-headers #}
 </ul>
 <div class="spacer"></div>
@@ -277,6 +280,11 @@
     </div>
     {% endif %}
     {% endfor %}
+    {% if details %}
+    <div class="tab-pane" id="module-actions">
+        {% include 'app_manager/v1/partials/module_actions.html' %}
+    </div>
+    {% endif %}
     {% endblock %}{# endblock tab-content #}
 </div>
 </div>

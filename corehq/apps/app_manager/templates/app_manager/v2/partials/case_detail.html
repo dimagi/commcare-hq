@@ -20,16 +20,16 @@
     </div>
     <div class="panel-body" data-bind="with: longScreen">
         {% include 'app_manager/v2/partials/case_list_properties.html' %}
-        {% include 'app_manager/v2/partials/case_list_module_overwrite.html' %}
     </div>
 </div>
 
-{% if request|toggle_enabled:"DETAIL_LIST_TABS" %}
-    <button class="btn btn-default" data-bind="click: function() { longScreen.addTab(false); }">
-        <i class="fa fa-plus"></i>
-        {% trans "Add tab" %}
-    </button>
-{% endif %}
+<button class="btn btn-default" data-bind="click: function() { longScreen.addTab(false); }">
+    <i class="fa fa-plus"></i>
+    {% trans "Add tab" %}
+</button>
+<span class="hq-help-template"
+      data-title="{% trans "Case Detail Tabs" %}"
+      data-content="{% trans "Do you have a lot of case properties? Try splitting them into tabs, which will appear as separate screens that mobile users can swipe through." %}"></span>
 
 {% if request|toggle_enabled:"DETAIL_LIST_TAB_NODESETS" %}
     <button class="btn btn-default" data-bind="click: function() { longScreen.addTab(true); }">

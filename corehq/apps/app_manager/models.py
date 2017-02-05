@@ -474,10 +474,12 @@ class LoadUpdateAction(AdvancedAction):
     preload:                  Value from the case to load into the form. Keys are question paths,
                               values are case properties.
     auto_select:              Configuration for auto-selecting the case
-    load_case_from_fixture:   Configureation for loading a case using fixture data
+    load_case_from_fixture:   Configuration for loading a case using fixture data
     show_product_stock:       If True list the product stock using the module's Product List
                               configuration.
     product_program:          Only show products for this CommCare Supply program.
+    case_index:               Used when a case should be created/updated as a child or extension case
+                              of another case.
     """
     details_module = StringProperty()
     preload = DictProperty()
@@ -790,6 +792,82 @@ class CommentMixin(DocumentSchema):
         return self.comment if len(self.comment) <= 500 else self.comment[:497] + '...'
 
 
+class CaseLoadReference(DocumentSchema):
+    """
+    This is the schema for a load reference that is used in validation and expected
+    to be worked with when using `CaseReferences`. The format is different from the
+    dict of:
+
+    {
+      'path': ['list', 'of', 'properties']
+    }
+
+    That is stored on the model and expected in Vellum, but as we add more information
+    (like case types) to the load model this format will be easier to extend.
+    """
+    _allow_dynamic_properties = False
+    path = StringProperty()
+    properties = ListProperty(unicode)
+
+
+class CaseSaveReference(DocumentSchema):
+    """
+    This is the schema for what Vellum writes to HQ and what is expected to be stored on the
+    model (reference by a dict where the keys are paths).
+    """
+    _allow_dynamic_properties = False
+    case_type = StringProperty()
+    properties = ListProperty(unicode)
+    create = BooleanProperty(default=False)
+    close = BooleanProperty(default=False)
+
+
+class CaseSaveReferenceWithPath(CaseSaveReference):
+    """
+    Like CaseLoadReference, this is the model that is expected to be worked with as it
+    contains the complete information about the reference in a single place.
+    """
+    path = StringProperty()
+
+
+class CaseReferences(DocumentSchema):
+    """
+    The case references associated with a form. This is dependent on Vellum's API that sends
+    case references to HQ.
+
+    load: is a dict of question paths to lists of properties (see `CaseLoadReference`),
+    save: is a dict of question paths to `CaseSaveReference` objects.
+
+    The intention is that all usage of the objects goes through the `get_load_references` and
+    `get_save_references` helper functions.
+    """
+    _allow_dynamic_properties = False
+    load = DictProperty()
+    save = SchemaDictProperty(CaseSaveReference)
+
+    def validate(self, required=True):
+        super(CaseReferences, self).validate()
+        # call this method to force validation to run on the other referenced types
+        # since load is not a defined schema (yet)
+        list(self.get_load_references())
+
+    def get_load_references(self):
+        """
+        Returns a generator of `CaseLoadReference` objects containing all the load references.
+        """
+        for path, properties in self.load.items():
+            yield CaseLoadReference(path=path, properties=list(properties))
+
+    def get_save_references(self):
+        """
+        Returns a generator of `CaseSaveReferenceWithPath` objects containing all the save references.
+        """
+        for path, reference in self.save.items():
+            ref_copy = reference.to_json()
+            ref_copy['path'] = path
+            yield CaseSaveReferenceWithPath.wrap(ref_copy)
+
+
 class FormBase(DocumentSchema):
     """
     Part of a Managed Application; configuration for a form.
@@ -816,6 +894,7 @@ class FormBase(DocumentSchema):
     form_links = SchemaListProperty(FormLink)
     schedule_form_id = StringProperty()
     custom_instances = SchemaListProperty(CustomInstance)
+    case_references_data = SchemaProperty(CaseReferences)
 
     @classmethod
     def wrap(cls, data):
@@ -834,6 +913,14 @@ class FormBase(DocumentSchema):
                     raise ValueError('Unexpected doc_type for Form', doc_type)
         else:
             return super(FormBase, cls).wrap(data)
+
+    @property
+    def case_references(self):
+        return self.case_references_data or CaseReferences()
+
+    @case_references.setter
+    def case_references(self, case_references):
+        self.case_references_data = case_references
 
     @classmethod
     def get_form(cls, form_unique_id, and_app=False):
@@ -1101,6 +1188,16 @@ class FormBase(DocumentSchema):
     def is_case_list_form(self):
         return bool(self.case_list_modules)
 
+    def get_save_to_case_updates(self, case_type):
+        """
+        Get a flat list of case property names from save to case questions
+        """
+        updates = set()
+        for save_to_case_update in self.case_references_data.get_save_references():
+            if save_to_case_update.case_type == case_type:
+                updates |= set(save_to_case_update.properties)
+        return updates
+
 
 class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
 
@@ -1112,6 +1209,43 @@ class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
 
     def get_case_type(self):
         return self._parent.case_type
+
+    def _add_save_to_case_questions(self, form_questions, app_case_meta):
+        def _make_save_to_case_question(path):
+            from corehq.apps.reports.formdetails.readable import FormQuestionResponse
+            # todo: this is a hack - just make an approximate save-to-case looking question
+            return FormQuestionResponse.wrap({
+                "label": path,
+                "tag": path,
+                "value": path,
+                "repeat": None,
+                "group": None,
+                "type": 'SaveToCase',
+                "relevant": None,
+                "required": None,
+                "comment": None,
+                "hashtagValue": path,
+            })
+
+        def _make_dummy_condition():
+            # todo: eventually would be nice to support proper relevancy conditions here but that's a ways off
+            return FormActionCondition(type='always')
+
+        for property_info in self.case_references_data.get_save_references():
+            if property_info.case_type:
+                type_meta = app_case_meta.get_type(property_info.case_type)
+                for property_name in property_info.properties:
+                    app_case_meta.add_property_save(
+                        property_info.case_type,
+                        property_name,
+                        self.unique_id,
+                        _make_save_to_case_question(property_info.path),
+                        None
+                    )
+                if property_info.create:
+                    type_meta.add_opener(self.unique_id, _make_dummy_condition())
+                if property_info.close:
+                    type_meta.add_closer(self.unique_id, _make_dummy_condition())
 
     def check_case_properties(self, all_names=None, subcase_names=None, case_tag=None):
         all_names = all_names or []
@@ -1321,7 +1455,6 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
     form_filter = StringProperty()
     requires = StringProperty(choices=["case", "referral", "none"], default="none")
     actions = SchemaProperty(FormActions)
-    case_references_data = DictProperty()
 
     @classmethod
     def wrap(cls, data):
@@ -1544,12 +1677,12 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
 
     @property
     def case_references(self):
-        refs = self.case_references_data or {}
-        if "load" not in refs and self.actions.load_from_form.preload:
+        refs = self.case_references_data or CaseReferences()
+        if not refs.load and self.actions.load_from_form.preload:
             # for backward compatibility
             # preload only has one reference per question path
             preload = self.actions.load_from_form.preload
-            refs["load"] = {key: [value] for key, value in preload.iteritems()}
+            refs.load = {key: [value] for key, value in preload.iteritems()}
         return refs
 
     @case_references.setter
@@ -1585,6 +1718,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
             for q in self.get_questions(self.get_app().langs, include_triggers=True,
                 include_groups=True, include_translations=True)
         }
+        self._add_save_to_case_questions(questions, app_case_meta)
         module_case_type = self.get_module().case_type
         type_meta = app_case_meta.get_type(module_case_type)
         for type_, action in self.active_actions().items():
@@ -1644,16 +1778,15 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
                 hashtag = "#case"
             return types[hashtag], name
 
-        case_loads = self.case_references.get("load", {})
-        for question_path, case_properties in case_loads.iteritems():
-            for name in case_properties:
+        for case_load_reference in self.case_references.get_load_references():
+            for name in case_load_reference.properties:
                 case_type, name = parse_case_type(name)
                 self.add_property_load(
                     app_case_meta,
                     case_type,
                     name,
                     questions,
-                    question_path
+                    case_load_reference.path
                 )
 
 
@@ -1684,9 +1817,9 @@ class MappingItem(DocumentSchema):
         numeral, which is illegal.
         """
         if re.search(r'\W', self.key) or self.treat_as_expression:
-            return 'h{hash}'.format(hash=hashlib.md5(self.key).hexdigest()[:8])
+            return u'h{hash}'.format(hash=hashlib.md5(self.key.encode('UTF-8')).hexdigest()[:8])
         else:
-            return 'k{key}'.format(key=self.key)
+            return u'k{key}'.format(key=self.key)
 
     def key_as_condition(self, property):
         if self.treat_as_expression:
@@ -2466,6 +2599,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
     def grid_display_style(self):
         return self.display_style == 'grid'
 
+
 class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
     form_type = 'advanced_form'
     form_filter = StringProperty()
@@ -2720,14 +2854,6 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
 
         return updates.union(scheduler_updates)
 
-    @property
-    def case_references(self):
-        return {}
-
-    @case_references.setter
-    def case_references(self, refs):
-        pass
-
     @memoized
     def get_parent_types_and_contributed_properties(self, module_case_type, case_type):
         parent_types = set()
@@ -2750,6 +2876,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             q['value']: FormQuestionResponse(q)
             for q in self.get_questions(self.get_app().langs, include_translations=True)
         }
+        self._add_save_to_case_questions(questions, app_case_meta)
         for action in self.actions.load_update_cases:
             for name, question_path in action.case_properties.items():
                 self.add_property_save(
@@ -3989,6 +4116,7 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
     referral_list = SchemaProperty(CaseList)
     task_list = SchemaProperty(CaseList)
     parent_select = SchemaProperty(ParentSelect)
+    search_config = SchemaProperty(CaseSearch)
 
     get_forms = IndexedSchema.Getter('forms')
 
@@ -5759,7 +5887,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def has_careplan_module(self):
         return any((module for module in self.modules if isinstance(module, CareplanModule)))
 
-    @quickcache(['self.version'])
+    @quickcache(['self._id', 'self.version'])
     def get_case_metadata(self):
         from corehq.apps.reports.formdetails.readable import AppCaseMetadata
         builder = ParentCasePropertyBuilder(self)

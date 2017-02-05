@@ -5,7 +5,7 @@ from couchdbkit import ResourceNotFound
 from django.core.management import BaseCommand
 
 from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain
-from corehq.apps.app_manager.models import Application, PreloadAction
+from corehq.apps.app_manager.models import Application, PreloadAction, CaseReferences
 from corehq.apps.app_manager.util import save_xform
 from corehq.apps.app_manager.xform import XForm, SESSION_USERCASE_ID
 from corehq.toggles import NAMESPACE_DOMAIN, USER_PROPERTY_EASY_REFS
@@ -106,9 +106,9 @@ def migrate_preloads(app, form, preloads):
         refs = {path: [hashtag + case_property]
                 for path, case_property in kwargs["preloads"].iteritems()}
         if form.case_references:
-            form.case_references["load"].update(refs)
+            form.case_references.load.update(refs)
         else:
-            form.case_references = {"load": refs}
+            form.case_references = CaseReferences(load=refs)
     save_xform(app, form, ET.tostring(xform.xml))
 
 

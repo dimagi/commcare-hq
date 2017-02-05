@@ -187,6 +187,14 @@
     <li ng-repeat="question in questions">
         {% verbatim %}<i class="hq-icon fa-li {{ getIcon(question.question.type) }}"></i>{% endverbatim %}
         {% verbatim %}<span ng-show="showLabels">{{ getQuestionLabel(question.question) }}</span>{% endverbatim %}
+        {% verbatim %}
+        <ul ng-if="question.question.options">
+            <li ng-repeat="option in question.question.options">
+                {{ getSelectOptionsLabel(option) }}
+            </li>
+        </ul>
+        {% endverbatim %}
+
         <span ng-hide="showLabels">{{ question.question.value }}</span>
         <ul class="fa-ul" ng-if="question.condition" ng-show="showConditions">
             <li>

@@ -60,7 +60,7 @@ describe('Entries', function() {
         entry = (new Question(questionJSON)).entry;
         assert.isTrue(entry instanceof DropdownEntry);
         assert.equal(entry.templateType, 'dropdown');
-        assert.deepEqual(entry.options, [{
+        assert.deepEqual(entry.options(), [{
             text: 'a',
             idx: 1,
         }, {

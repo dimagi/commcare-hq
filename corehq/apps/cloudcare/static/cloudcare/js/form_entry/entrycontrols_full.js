@@ -307,15 +307,19 @@ function DropdownEntry(question, options) {
     var self = this;
     EntrySingleAnswer.call(this, question, options);
     self.templateType = 'dropdown';
-    self.options = _.map(question.choices(), function(choice, idx) {
-        return { text: choice, idx: idx + 1 };
+
+    self.options = ko.pureComputed(function() {
+        return _.map(question.choices(), function(choice, idx) {
+            return { text: choice, idx: idx + 1 };
+        });
     });
 }
 DropdownEntry.prototype = Object.create(EntrySingleAnswer.prototype);
 DropdownEntry.prototype.constructor = EntrySingleAnswer;
 DropdownEntry.prototype.onPreProcess = function(newValue) {
-    if (newValue === Formplayer.Const.NO_ANSWER) {
-        this.answer(newValue);
+    // When newValue is undefined it means we've unset the select question.
+    if (newValue === Formplayer.Const.NO_ANSWER || newValue === undefined) {
+        this.answer(Formplayer.Const.NO_ANSWER);
     } else {
         this.answer(+newValue);
     }

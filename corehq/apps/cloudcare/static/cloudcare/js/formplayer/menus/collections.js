@@ -19,7 +19,7 @@ FormplayerFrontend.module("Menus.Collections", function (Collections, Formplayer
         ],
 
         entityProperties: [
-            'action',
+            'actions',
             'styles',
             'headers',
             'currentPage',
