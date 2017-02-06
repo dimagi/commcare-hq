@@ -30,7 +30,6 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
             FormplayerFrontend.Apps.Controller.singleApp(appId);
         },
         landingPageApp: function(appId) {
-            var user = FormplayerFrontend.request('currentUser');
             FormplayerFrontend.Apps.Controller.landingPageApp(appId);
         },
         selectApp: function (appId) {

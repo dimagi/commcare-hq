@@ -25,7 +25,11 @@ app_urls = [
         name=FormplayerPreviewSingleApp.urlname,
     ),
     url(r'^preview_app/(?P<app_id>[\w-]+)/$', PreviewAppView.as_view(), name=PreviewAppView.urlname),
-    url(r'^home/(?P<app_hash>[\w-]+)/$', SingleAppLandingPageView.as_view(), name=SingleAppLandingPageView.urlname),
+    url(
+        r'^home/(?P<app_hash>[\w-]+)/$',
+        SingleAppLandingPageView.as_view(),
+        name=SingleAppLandingPageView.urlname
+    ),
     url(r'^(?P<urlPath>.*)$', CloudcareMain.as_view(), name='cloudcare_main'),
 ]
 

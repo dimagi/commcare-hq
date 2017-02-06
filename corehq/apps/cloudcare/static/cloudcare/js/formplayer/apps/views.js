@@ -110,13 +110,13 @@ FormplayerFrontend.module("Apps.Views", function (Views, FormplayerFrontend, Bac
             this.appId = options.appId;
         },
         templateHelpers: function() {
-            var currentApp = FormplayerFrontend.request("appselect:getApp", this.appId);
-            appName = currentApp.get('name');
+            var currentApp = FormplayerFrontend.request("appselect:getApp", this.appId),
+                appName = currentApp.get('name');
             return {
                 appName: appName,
             };
         },
-        startApp: function(e) {
+        startApp: function() {
             FormplayerFrontend.trigger("app:select", this.appId);
         },
     });

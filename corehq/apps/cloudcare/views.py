@@ -379,7 +379,6 @@ class SingleAppLandingPageView(TemplateView):
     @use_legacy_jquery
     def get(self, request, *args, **kwargs):
         app_id = get_app_id_from_hash(request.domain, kwargs.pop('app_hash'))
-        print app_id
 
         if not app_id:
             raise Http404()
