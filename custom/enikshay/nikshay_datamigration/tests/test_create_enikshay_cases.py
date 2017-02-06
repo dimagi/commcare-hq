@@ -184,6 +184,28 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
         # make sure the case is only created/modified by a single form
         self.assertEqual(1, len(episode_case.xform_ids))
 
+        drtb_hiv_referral_case_ids = self.case_accessor.get_case_ids_in_domain(type='drtb_hiv_referral')
+        self.assertEqual(0, len(drtb_hiv_referral_case_ids))
+
+    @run_with_all_backends
+    def test_drtb_hiv_referral(self):
+        self.outcome.HIVStatus = None
+        self.outcome.save()
+        call_command('create_enikshay_cases', self.domain)
+
+        person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
+        self.assertEqual(1, len(person_case_ids))
+        occurrence_case_ids = self.case_accessor.get_case_ids_in_domain(type='occurrence')
+        self.assertEqual(1, len(occurrence_case_ids))
+        episode_case_ids = self.case_accessor.get_case_ids_in_domain(type='episode')
+        self.assertEqual(1, len(episode_case_ids))
+
+        drtb_hiv_referral_case_ids = self.case_accessor.get_case_ids_in_domain(type='drtb-hiv-referral')
+        self.assertEqual(1, len(drtb_hiv_referral_case_ids))
+        drtb_hiv_referral_case = self.case_accessor.get_case(drtb_hiv_referral_case_ids[0])
+        self.assertEqual('A B C', drtb_hiv_referral_case.name)
+        self.assertEqual(self.drtb_hiv.location_id, drtb_hiv_referral_case.owner_id)
+
     @run_with_all_backends
     def test_case_update(self):
         call_command('create_enikshay_cases', self.domain)
