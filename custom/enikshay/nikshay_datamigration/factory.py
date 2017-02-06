@@ -15,6 +15,7 @@ from custom.enikshay.nikshay_datamigration.models import Outcome
 PERSON_CASE_TYPE = 'person'
 OCCURRENCE_CASE_TYPE = 'occurrence'
 EPISODE_CASE_TYPE = 'episode'
+DRTB_HIV_REFERRAL_CASE_TYPE = 'drtb-hiv-referral'
 
 MockLocation = namedtuple('MockLocation', 'name location_id location_type')
 MockLocationType = namedtuple('MockLocationType', 'name code')
@@ -97,7 +98,11 @@ class EnikshayCaseFactory(object):
         person_structure = self.get_person_case_structure()
         ocurrence_structure = self.get_occurrence_case_structure(person_structure)
         episode_structure = self.get_episode_case_structure(ocurrence_structure)
-        return [episode_structure]
+        if not self._outcome or self._outcome.hiv_status == 'unknown':
+            drtb_hiv_referral_structure = self.get_drtb_hiv_referral_case_structure(episode_structure)
+            return [drtb_hiv_referral_structure]
+        else:
+            return [episode_structure]
 
     def get_person_case_structure(self):
         kwargs = {
@@ -286,6 +291,25 @@ class EnikshayCaseFactory(object):
 
         return CaseStructure(**kwargs)
 
+    def get_drtb_hiv_referral_case_structure(self, episode_structure):
+        kwargs = {
+            'attrs': {
+                'case_type': DRTB_HIV_REFERRAL_CASE_TYPE,
+                'owner_id': self.drtb_hiv.location_id,
+                'update': {
+                    'name': self.patient_detail.pname,
+                }
+            },
+            'indices': [CaseIndex(
+                episode_structure,
+                identifier='host',
+                relationship=CASE_INDEX_EXTENSION,
+                related_type=EPISODE_CASE_TYPE,
+            )],
+        }
+
+        return CaseStructure(**kwargs)
+
     @property
     @memoized
     def _outcome(self):
@@ -306,6 +330,15 @@ class EnikshayCaseFactory(object):
         if self.test_phi is not None:
             return MockLocation('FAKEPHI', self.test_phi, MockLocationType('phi', 'phi'))
         return self.nikshay_codes_to_location.get(self._nikshay_code)
+
+    @property
+    def drtb_hiv(self):
+        if self.test_phi is not None:
+            return MockLocation('FAKEDRTBHIV', 'fake_drtb_hiv_id', MockLocationType('drtb_hiv', 'drtb_hiv'))
+        dto = self.nikshay_codes_to_location['-'.join(self.patient_detail.PregId.split('-')[:2])]
+        for dto_child in dto.get_children():
+            if dto_child.location_type.code == 'drtb-hiv':
+                return dto_child
 
     @property
     def _nikshay_code(self):
