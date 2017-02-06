@@ -1,4 +1,4 @@
-/* globals Formplayer */
+/* globals Formplayer, EntrySingleAnswer, moment */
 
 /**
  * The base Object for all entries. Each entry takes a question object and options
@@ -359,12 +359,12 @@ function ComboboxEntry(question, options) {
             tabSelectsMatch: false,
             suffix: '',
             callbacks: {
-                filter: function(query, data, searchKey) {
+                filter: function(query, data) {
                     return _.filter(data, function(item) {
                         return ComboboxEntry.filter(query, item, self.matchType);
                     });
                 },
-                matcher: function(flag, subtext, should_startWithSpace) {
+                matcher: function() {
                     return $input.val();
                 },
             },
@@ -375,7 +375,7 @@ function ComboboxEntry(question, options) {
             return true;
         }
         return _.include(
-            _.map(self.options(), function(option) { return option.name }),
+            _.map(self.options(), function(option) { return option.name; }),
             value
         );
     };
