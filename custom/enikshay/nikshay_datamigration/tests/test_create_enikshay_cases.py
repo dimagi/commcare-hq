@@ -154,7 +154,6 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
                 ('nikshay_id', 'MH-ABD-05-16-0001'),
                 ('occupation', 'physical_mathematical_and_engineering'),
                 ('patient_type_choice', 'treatment_after_lfu'),
-                ('person_id', 'NIK-MH-ABD-05-16-0001'),
                 ('site_choice', 'abdominal'),
                 ('transfer_in', ''),
                 ('treatment_card_completed_date', '2016-12-13'),
