@@ -18,14 +18,14 @@ from corehq.apps.app_manager.models import (
     AdvancedOpenCaseAction,
     CaseReferences)
 from corehq.apps.app_manager.signals import app_post_save
-from corehq.apps.export.dbaccessors import delete_all_export_data_schemas, delete_all_inferred_schemas
+from corehq.apps.export.dbaccessors import delete_all_export_data_schemas
 from corehq.apps.export.tasks import add_inferred_export_properties
 from corehq.apps.export.models import (
     FormExportDataSchema,
     CaseExportDataSchema,
     ExportDataSchema,
     InferredExportGroupSchema,
-    InferredSchema,
+    CaseInferredSchema,
     ExportGroupSchema,
     ExportItem,
     LabelItem,
@@ -550,9 +550,15 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
             for app in cls.apps:
                 app.save()
 
-        cls.inferred_schema = InferredSchema(
-            domain=cls.domain,
-            case_type=cls.case_type,
+    @classmethod
+    def tearDownClass(cls):
+        for app in cls.apps:
+            app.delete()
+
+    def setUp(self):
+        self.inferred_schema = CaseInferredSchema(
+            domain=self.domain,
+            case_type=self.case_type,
             group_schemas=[
                 InferredExportGroupSchema(
                     path=MAIN_TABLE,
@@ -572,13 +578,7 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
                 ),
             ]
         )
-        cls.inferred_schema.save()
-
-    @classmethod
-    def tearDownClass(cls):
-        for app in cls.apps:
-            app.delete()
-        cls.inferred_schema.delete()
+        self.inferred_schema.save()
 
     def tearDown(self):
         delete_all_export_data_schemas()
@@ -788,7 +788,6 @@ class TestDelayedSchema(TestCase, TestXmlMixin):
 
     def tearDown(self):
         delete_all_export_data_schemas()
-        delete_all_inferred_schemas()
 
     def test_basic_delayed_schema(self):
         schema = FormExportDataSchema.generate_schema_from_builds(
@@ -858,7 +857,6 @@ class TestCaseDelayedSchema(TestCase, TestXmlMixin):
 
     def tearDown(self):
         delete_all_export_data_schemas()
-        delete_all_inferred_schemas()
 
     def test_basic_delayed_schema(self):
         schema = CaseExportDataSchema.generate_schema_from_builds(
@@ -915,7 +913,6 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
 
     def tearDown(self):
         delete_all_export_data_schemas()
-        delete_all_inferred_schemas()
 
     def test_basic_application_schema(self):
         schema = CaseExportDataSchema.generate_schema_from_builds(
