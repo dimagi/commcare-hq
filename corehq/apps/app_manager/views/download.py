@@ -40,6 +40,8 @@ def download_odk_profile(request, domain, app_id):
     See ApplicationBase.create_profile
 
     """
+    if not request.app.copy_of:
+        make_async_build.delay(request.app)
     return HttpResponse(
         request.app.create_profile(is_odk=True),
         content_type="commcare/profile"
@@ -48,6 +50,8 @@ def download_odk_profile(request, domain, app_id):
 
 @safe_download
 def download_odk_media_profile(request, domain, app_id):
+    if not request.app.copy_of:
+        make_async_build.delay(request.app)
     return HttpResponse(
         request.app.create_profile(is_odk=True, with_media=True),
         content_type="commcare/profile"
