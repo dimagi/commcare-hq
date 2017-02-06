@@ -1,3 +1,5 @@
+from builtins import str
+from builtins import object
 import re
 from corehq.apps.app_manager.const import (
     USERCASE_TYPE,
@@ -92,7 +94,7 @@ def interpolate_xpath(string, case_xpath=None, fixture_xpath=None, module=None, 
         replacements['#parent'] = CaseIDXPath(case_xpath + '/index/parent').case()
         replacements['#host'] = CaseIDXPath(case_xpath + '/index/host').case()
 
-    for pattern, repl in replacements.items():
+    for pattern, repl in list(replacements.items()):
         string = string.replace(pattern, repl)
 
     if case_xpath:
@@ -109,7 +111,7 @@ def session_var(var, path=u'data'):
     return session.slash(var)
 
 
-class XPath(unicode):
+class XPath(str):
 
     def __new__(cls, string=u'', compound=False):
         return super(XPath, cls).__new__(cls, string)
@@ -118,7 +120,7 @@ class XPath(unicode):
         self.compound = compound
 
     def paren(self, force=False):
-        return unicode(self) if not (force or self.compound) else u'({})'.format(self)
+        return str(self) if not (force or self.compound) else u'({})'.format(self)
 
     def slash(self, xpath):
         if self:

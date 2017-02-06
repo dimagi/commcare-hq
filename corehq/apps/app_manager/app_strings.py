@@ -1,3 +1,4 @@
+from builtins import object
 import functools
 
 from django.utils.translation import ugettext
@@ -14,7 +15,7 @@ from langcodes import langs_by_code
 
 
 def non_empty_only(dct):
-    return dict([(key, value) for key, value in dct.items() if value])
+    return dict([(key, value) for key, value in list(dct.items()) if value])
 
 
 def convert_to_two_letter_code(lc):
@@ -82,10 +83,10 @@ def _create_custom_app_strings(app, lang, for_default=False):
                 elif column.format == "graph":
                     for index, item in enumerate(column.graph_configuration.annotations):
                         yield id_strings.graph_annotation(module, detail_type, column, index), trans(item.values)
-                    for property, values in column.graph_configuration.locale_specific_config.iteritems():
+                    for property, values in column.graph_configuration.locale_specific_config.items():
                         yield id_strings.graph_configuration(module, detail_type, column, property), trans(values)
                     for index, item in enumerate(column.graph_configuration.series):
-                        for property, values in item.locale_specific_config.iteritems():
+                        for property, values in item.locale_specific_config.items():
                             yield id_strings.graph_series_configuration(
                                 module, detail_type, column, index, property
                             ), trans(values)
@@ -208,7 +209,7 @@ class AppStringsBase(object):
                 self.create_app_strings(app, lc, for_default=True)
             )
 
-            for key, val in new_messages.items():
+            for key, val in list(new_messages.items()):
                 # do not overwrite a real trans with a blank trans
                 if not (val == '' and key in messages):
                     messages[key] = val
@@ -236,7 +237,7 @@ class AppStringsBase(object):
             AUTO_SELECT_RAW: u'custom xpath expression',
         }
 
-        for mode, text in mode_text.items():
+        for mode, text in list(mode_text.items()):
             key = 'case_autoload.{0}.property_missing'.format(mode)
             if key not in messages:
                 messages[key] = (u'The {} specified for case auto-selecting '
@@ -275,7 +276,7 @@ class SelectKnownAppStrings(AppStringsBase):
 
     def get_app_translation_keys(self, app):
         return set.union(set(), *(
-            set(t.keys()) for t in app.translations.values()
+            set(t.keys()) for t in list(app.translations.values())
         ))
 
     def app_strings_parts(self, app, lang, for_default=False):

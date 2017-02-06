@@ -22,6 +22,15 @@ When a build is starred, this is called "releasing" the build.  The parameter
 You might also run in to remote applications and applications copied to be
 published on the exchange, but those are quite infrequent.
 """
+from future import standard_library
+standard_library.install_aliases()
+from builtins import map
+from builtins import hex
+from builtins import next
+from builtins import str
+from builtins import range
+from past.builtins import basestring
+from builtins import object
 import calendar
 from distutils.version import LooseVersion
 from itertools import chain
@@ -39,8 +48,8 @@ from collections import defaultdict, namedtuple
 from functools import wraps
 from copy import deepcopy
 from mimetypes import guess_type
-from urllib2 import urlopen
-from urlparse import urljoin
+from urllib.request import urlopen
+from urllib.parse import urljoin
 
 from couchdbkit import MultipleResultsFound
 import itertools
@@ -307,13 +316,13 @@ class FormAction(DocumentSchema):
         if 'external_id' in action_properties and action.external_id:
             yield 'external_id', action.external_id
         if 'update' in action_properties:
-            for name, path in action.update.items():
+            for name, path in list(action.update.items()):
                 yield name, path
         if 'case_properties' in action_properties:
-            for name, path in action.case_properties.items():
+            for name, path in list(action.case_properties.items()):
                 yield name, path
         if 'preload' in action_properties:
-            for path, name in action.preload.items():
+            for path, name in list(action.preload.items()):
                 yield name, path
 
 
@@ -387,10 +396,10 @@ class FormActions(DocumentSchema):
 
     def all_property_names(self):
         names = set()
-        names.update(self.update_case.update.keys())
-        names.update(self.case_preload.preload.values())
+        names.update(list(self.update_case.update.keys()))
+        names.update(list(self.case_preload.preload.values()))
         for subcase in self.subcases:
-            names.update(subcase.case_properties.keys())
+            names.update(list(subcase.case_properties.keys()))
         return names
 
 
@@ -411,7 +420,7 @@ class AdvancedAction(IndexedSchema):
     __eq__ = DocumentSchema.__eq__
 
     def get_paths(self):
-        for path in self.case_properties.values():
+        for path in list(self.case_properties.values()):
             yield path
 
         if self.close_condition.type == 'if':
@@ -511,12 +520,12 @@ class LoadUpdateAction(AdvancedAction):
         for path in super(LoadUpdateAction, self).get_paths():
             yield path
 
-        for path in self.preload.keys():
+        for path in list(self.preload.keys()):
             yield path
 
     def get_property_names(self):
         names = super(LoadUpdateAction, self).get_property_names()
-        names.update(self.preload.values())
+        names.update(list(self.preload.values()))
         return names
 
     @property
@@ -876,7 +885,7 @@ class FormBase(DocumentSchema):
     """
     form_type = None
 
-    name = DictProperty(unicode)
+    name = DictProperty(str)
     unique_id = StringProperty()
     show_count = BooleanProperty(default=False)
     xmlns = StringProperty()
@@ -1008,7 +1017,7 @@ class FormBase(DocumentSchema):
             except XFormException as e:
                 errors.append(dict(
                     type="invalid xml",
-                    message=unicode(e) if self.source else '',
+                    message=str(e) if self.source else '',
                     **meta
                 ))
             except ValueError:
@@ -1018,7 +1027,7 @@ class FormBase(DocumentSchema):
                 try:
                     self.validate_form()
                 except XFormValidationError as e:
-                    error = {'type': 'validation error', 'validation_message': unicode(e)}
+                    error = {'type': 'validation error', 'validation_message': str(e)}
                     error.update(meta)
                     errors.append(error)
                 except XFormValidationFailed:
@@ -1277,7 +1286,7 @@ class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
             questions = self.get_questions(langs=[], include_triggers=True, include_groups=True)
             valid_paths = {question['value']: question['tag'] for question in questions}
         except XFormException as e:
-            errors.append({'type': 'invalid xml', 'message': unicode(e)})
+            errors.append({'type': 'invalid xml', 'message': str(e)})
         else:
             no_multimedia = not self.get_app().enable_multimedia_case_property
             for path in set(paths):
@@ -1413,7 +1422,7 @@ class NavMenuItemMediaMixin(DocumentSchema):
     def _all_media_paths(self, media_attr):
         assert media_attr in ('media_image', 'media_audio')
         media_dict = getattr(self, media_attr) or {}
-        valid_media_paths = {media for media in media_dict.values() if media}
+        valid_media_paths = {media for media in list(media_dict.values()) if media}
         return list(valid_media_paths)
 
     def all_image_paths(self):
@@ -1571,7 +1580,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         ))
 
         def generate_paths():
-            for action in self.active_actions().values():
+            for action in list(self.active_actions().values()):
                 if isinstance(action, list):
                     actions = action
                 else:
@@ -1663,7 +1672,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         if case_type == self.get_module().case_type or case_type == USERCASE_TYPE:
             format_key = self.get_case_property_name_formatter()
             action = self.actions.usercase_update if case_type == USERCASE_TYPE else self.actions.update_case
-            return [format_key(*item) for item in action.update.items()]
+            return [format_key(*item) for item in list(action.update.items())]
         return []
 
     @memoized
@@ -1682,7 +1691,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
             # for backward compatibility
             # preload only has one reference per question path
             preload = self.actions.load_from_form.preload
-            refs.load = {key: [value] for key, value in preload.iteritems()}
+            refs.load = {key: [value] for key, value in preload.items()}
         return refs
 
     @case_references.setter
@@ -1702,7 +1711,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         for subcase in self.actions.subcases:
             if subcase.case_type == case_type:
                 case_properties.update(
-                    subcase.case_properties.keys()
+                    list(subcase.case_properties.keys())
                 )
                 if case_type != module_case_type and (
                         self.actions.open_case.is_active() or
@@ -1721,7 +1730,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         self._add_save_to_case_questions(questions, app_case_meta)
         module_case_type = self.get_module().case_type
         type_meta = app_case_meta.get_type(module_case_type)
-        for type_, action in self.active_actions().items():
+        for type_, action in list(self.active_actions().items()):
             if type_ == 'open_case':
                 type_meta.add_opener(self.unique_id, action.condition)
                 self.add_property_save(
@@ -1960,7 +1969,7 @@ class DetailColumn(IndexedSchema):
         # Lazy migration: enum used to be a dict, now is a list
         if isinstance(data.get('enum'), dict):
             data['enum'] = sorted({'key': key, 'value': value}
-                                  for key, value in data['enum'].items())
+                                  for key, value in list(data['enum'].items()))
 
         return super(DetailColumn, cls).wrap(data)
 
@@ -1972,7 +1981,7 @@ class DetailColumn(IndexedSchema):
         if to_ret.format == 'enum-image':
             # interpolate icons-paths
             for item in to_ret.enum:
-                for lang, path in item.value.iteritems():
+                for lang, path in item.value.items():
                     item.value[lang] = interpolate_media_path(path)
         return to_ret
 
@@ -1985,7 +1994,7 @@ class SortElement(IndexedSchema):
     sort_calculation = StringProperty(default="")
 
     def has_display_values(self):
-        return any(s.strip() != '' for s in self.display.values())
+        return any(s.strip() != '' for s in list(self.display.values()))
 
 
 class CaseListLookupMixin(DocumentSchema):
@@ -2154,7 +2163,7 @@ class CaseListForm(NavMenuItemMediaMixin):
 
 
 class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
-    name = DictProperty(unicode)
+    name = DictProperty(str)
     unique_id = StringProperty()
     case_type = StringProperty()
     case_list_form = SchemaProperty(CaseListForm)
@@ -2263,10 +2272,10 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
                 hierarchy = hierarchy or parent_child(self.get_app().domain)
                 try:
                     LocationXpath('').validate(column.field_property, hierarchy)
-                except LocationXpathValidationError, e:
+                except LocationXpathValidationError as e:
                     yield {
                         'type': 'invalid location xpath',
-                        'details': unicode(e),
+                        'details': str(e),
                         'module': self.get_module_info(),
                         'column': column,
                     }
@@ -2346,7 +2355,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
         raise IncompatibleFormTypeException()
 
 
-class ModuleDetailsMixin():
+class ModuleDetailsMixin(object):
 
     @classmethod
     def wrap_details(cls, data):
@@ -2510,7 +2519,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
             case_type='',
             case_details=DetailPair(
                 short=Detail(detail.to_json()),
-                long=Detail(detail.to_json()),
+                int=Detail(detail.to_json()),
             ),
             case_label={(lang or 'en'): 'Cases'},
         )
@@ -2613,8 +2622,8 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
         load_actions = data.get('actions', {}).get('load_update_cases', [])
         for action in load_actions:
             preload = action['preload']
-            if preload and preload.values()[0].startswith('/'):
-                action['preload'] = {v: k for k, v in preload.items()}
+            if preload and list(preload.values())[0].startswith('/'):
+                action['preload'] = {v: k for k, v in list(preload.items())}
 
         return super(AdvancedForm, cls).wrap(data)
 
@@ -2676,7 +2685,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             """
             if not tag:
                 return not actions_by_tag or all(
-                    getattr(a['action'], 'auto_select', False) for a in actions_by_tag.values()
+                    getattr(a['action'], 'auto_select', False) for a in list(actions_by_tag.values())
                 )
 
             try:
@@ -2844,7 +2853,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
         for action in self.actions.get_all_actions():
             if action.case_type == case_type:
                 updates.update(format_key(*item)
-                               for item in action.case_properties.iteritems())
+                               for item in action.case_properties.items())
         if self.schedule and self.schedule.enabled and self.source:
             xform = self.wrapped_xform()
             self.add_stuff_to_xform(xform)
@@ -2861,7 +2870,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
         for subcase in self.actions.get_subcase_actions():
             if subcase.case_type == case_type:
                 case_properties.update(
-                    subcase.case_properties.keys()
+                    list(subcase.case_properties.keys())
                 )
                 for case_index in subcase.case_indices:
                     parent = self.actions.get_action_from_tag(case_index.tag)
@@ -2878,7 +2887,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
         }
         self._add_save_to_case_questions(questions, app_case_meta)
         for action in self.actions.load_update_cases:
-            for name, question_path in action.case_properties.items():
+            for name, question_path in list(action.case_properties.items()):
                 self.add_property_save(
                     app_case_meta,
                     action.case_type,
@@ -2886,7 +2895,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                     questions,
                     question_path
                 )
-            for question_path, name in action.preload.items():
+            for question_path, name in list(action.preload.items()):
                 self.add_property_load(
                     app_case_meta,
                     action.case_type,
@@ -2907,7 +2916,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                 action.name_path,
                 action.open_condition
             )
-            for name, question_path in action.case_properties.items():
+            for name, question_path in list(action.case_properties.items()):
                 self.add_property_save(
                     app_case_meta,
                     action.case_type,
@@ -3042,7 +3051,7 @@ class AdvancedModule(ModuleBase):
             case_type='',
             case_details=DetailPair(
                 short=Detail(detail.to_json()),
-                long=Detail(detail.to_json()),
+                int=Detail(detail.to_json()),
             ),
             product_details=DetailPair(
                 short=Detail(
@@ -3055,7 +3064,7 @@ class AdvancedModule(ModuleBase):
                         ),
                     ],
                 ),
-                long=Detail(),
+                int=Detail(),
             ),
         )
         module.get_or_create_unique_id()
@@ -3322,7 +3331,7 @@ class AdvancedModule(ModuleBase):
             except KeyError:
                 self.get_or_create_schedule_phase(anchor)
 
-        deleted_phases_with_forms = [anchor for anchor, phase in old_phases.iteritems() if len(phase.forms)]
+        deleted_phases_with_forms = [anchor for anchor, phase in old_phases.items() if len(phase.forms)]
         if deleted_phases_with_forms:
             raise ScheduleError(_("You can't delete phases with anchors "
                                   "{phase_anchors} because they have forms attached to them").format(
@@ -3367,7 +3376,7 @@ class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):
     def get_case_updates(self, case_type):
         if case_type == self.case_type:
             format_key = self.get_case_property_name_formatter()
-            return [format_key(*item) for item in self.case_updates().iteritems()]
+            return [format_key(*item) for item in self.case_updates().items()]
         else:
             return []
 
@@ -3385,7 +3394,7 @@ class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):
                 parent_types.add((module_case_type, 'parent'))
             elif case_type == CAREPLAN_TASK:
                 parent_types.add((CAREPLAN_GOAL, 'goal'))
-            case_properties.update(self.case_updates().keys())
+            case_properties.update(list(self.case_updates().keys()))
 
         return parent_types, case_properties
 
@@ -3399,7 +3408,7 @@ class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):
             for q in self.get_questions(self.get_app().langs, include_translations=True)
         }
         meta = app_case_meta.get_type(self.case_type)
-        for name, question_path in self.case_updates().items():
+        for name, question_path in list(self.case_updates().items()):
             self.add_property_save(
                 app_case_meta,
                 self.case_type,
@@ -3407,7 +3416,7 @@ class CareplanForm(IndexedFormBase, NavMenuItemMediaMixin):
                 questions,
                 question_path
             )
-        for name, question_path in self.case_preload.items():
+        for name, question_path in list(self.case_preload.items()):
             self.add_property_load(
                 app_case_meta,
                 self.case_type,
@@ -3548,11 +3557,11 @@ class CareplanModule(ModuleBase):
             case_type=target_case_type,
             goal_details=DetailPair(
                 short=cls._get_detail(lang, 'goal_short'),
-                long=cls._get_detail(lang, 'goal_long'),
+                int=cls._get_detail(lang, 'goal_long'),
             ),
             task_details=DetailPair(
                 short=cls._get_detail(lang, 'task_short'),
-                long=cls._get_detail(lang, 'task_long'),
+                int=cls._get_detail(lang, 'task_long'),
             )
         )
         module.get_or_create_unique_id()
@@ -4199,7 +4208,7 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
             name={(lang or 'en'): name or ugettext("Untitled Module")},
             case_details=DetailPair(
                 short=Detail(detail.to_json()),
-                long=Detail(detail.to_json()),
+                int=Detail(detail.to_json()),
             ),
         )
         module.get_or_create_unique_id()
@@ -4256,7 +4265,7 @@ class LazyBlobDoc(BlobMixin):
             attachments = None
         self = super(LazyBlobDoc, cls).wrap(data)
         if attachments:
-            for name, attachment in attachments.items():
+            for name, attachment in list(attachments.items()):
                 if isinstance(attachment, basestring):
                     info = {"content": attachment}
                 else:
@@ -4340,12 +4349,12 @@ class LazyBlobDoc(BlobMixin):
             super(LazyBlobDoc, self).save(**params)
         if self._LAZY_ATTACHMENTS:
             with self.atomic_blobs(super_save):
-                for name, info in self._LAZY_ATTACHMENTS.items():
+                for name, info in list(self._LAZY_ATTACHMENTS.items()):
                     if not info['content_type']:
-                        info['content_type'] = ';'.join(filter(None, guess_type(name)))
+                        info['content_type'] = ';'.join([_f for _f in guess_type(name) if _f])
                     super(LazyBlobDoc, self).put_attachment(name=name, **info)
             # super_save() has succeeded by now
-            for name, info in self._LAZY_ATTACHMENTS.items():
+            for name, info in list(self._LAZY_ATTACHMENTS.items()):
                 self.__set_cached_attachment(name, info['content'])
             self._LAZY_ATTACHMENTS.clear()
         else:
@@ -4627,7 +4636,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             version, build_number = current_builds.TAG_MAP[data['commcare_tag']]
             data['build_spec'] = BuildSpec.from_string("%s/latest" % version).to_json()
             del data['commcare_tag']
-        if data.has_key("built_with") and isinstance(data['built_with'], basestring):
+        if "built_with" in data and isinstance(data['built_with'], basestring):
             data['built_with'] = BuildSpec.from_string(data['built_with']).to_json()
 
         if 'native_input' in data:
@@ -4913,7 +4922,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                 }
                 all_files = {
                     name: (contents if isinstance(contents, str) else contents.encode('utf-8'))
-                    for name, contents in all_files.items()
+                    for name, contents in list(all_files.items())
                 }
                 release_date = self.built_with.datetime or datetime.datetime.utcnow()
                 jad_settings = {
@@ -4952,7 +4961,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             })
         except (AppEditingError, XFormValidationError, XFormException,
                 PermissionDenied, SuiteValidationError) as e:
-            errors.append({'type': 'error', 'message': unicode(e)})
+            errors.append({'type': 'error', 'message': str(e)})
         except Exception as e:
             if settings.DEBUG:
                 raise
@@ -5205,7 +5214,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     custom_base_url = StringProperty()
     cloudcare_enabled = BooleanProperty(default=False)
     translation_strategy = StringProperty(default='select-known',
-                                          choices=app_strings.CHOICES.keys())
+                                          choices=list(app_strings.CHOICES.keys()))
     commtrack_requisition_mode = StringProperty(choices=CT_REQUISITION_MODES)
     auto_gps_capture = BooleanProperty(default=False)
     date_created = DateTimeProperty()
@@ -5232,7 +5241,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def wrap(cls, data):
         for module in data.get('modules', []):
             for attr in ('case_label', 'referral_label'):
-                if not module.has_key(attr):
+                if attr not in module:
                     module[attr] = {}
             for lang in data['langs']:
                 if not module['case_label'].get(lang):
@@ -5356,7 +5365,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         # access to .multimedia_map is slow
         prev_multimedia_map = previous_version.multimedia_map if previous_version else {}
 
-        for path, map_item in self.multimedia_map.iteritems():
+        for path, map_item in self.multimedia_map.items():
             prev_map_item = prev_multimedia_map.get(path, None)
             if prev_map_item and prev_map_item.unique_id:
                 # Re-use the id so CommCare knows it's the same resource
@@ -5511,7 +5520,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 raise XFormException(_('Unable to validate the forms due to a server error. '
                                        'Please try again later.'))
             except XFormException as e:
-                raise XFormException(_('Error in form "{}": {}').format(trans(form.name), unicode(e)))
+                raise XFormException(_('Error in form "{}": {}').format(trans(form.name), str(e)))
         return files
 
     get_modules = IndexedSchema.Getter('modules')
@@ -5704,7 +5713,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             del copy_source['unique_id']
 
         if 'rename' in kwargs and kwargs['rename']:
-            for lang, name in copy_source['name'].iteritems():
+            for lang, name in copy_source['name'].items():
                 with override(lang):
                     copy_source['name'][lang] = _('Copy of {name}').format(name=name)
 
@@ -5846,7 +5855,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 return True
             completed.add(m.id)
             return False
-        for module in modules.values():
+        for module in list(modules.values()):
             if cycle_helper(module):
                 return True
         return False
@@ -5894,7 +5903,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         case_relationships = builder.get_parent_type_map(self.get_case_types())
         meta = AppCaseMetadata()
 
-        for case_type, relationships in case_relationships.items():
+        for case_type, relationships in list(case_relationships.items()):
             type_meta = meta.get_type(case_type)
             type_meta.relationships = relationships
 
@@ -5983,11 +5992,11 @@ class RemoteApp(ApplicationBase):
 
     def get_build_langs(self):
         if self.build_profiles:
-            if len(self.build_profiles.keys()) > 1:
+            if len(list(self.build_profiles.keys())) > 1:
                 raise AppEditingError('More than one app profile for a remote app')
             else:
                 # return first profile, generated as part of lazy migration
-                return self.build_profiles[self.build_profiles.keys()[0]].langs
+                return self.build_profiles[list(self.build_profiles.keys())[0]].langs
         else:
             return self.langs
 
@@ -6116,7 +6125,7 @@ def import_app(app_id_or_source, domain, source_properties=None, validate_source
     finally:
         source['_attachments'] = {}
     if source_properties is not None:
-        for key, value in source_properties.iteritems():
+        for key, value in source_properties.items():
             source[key] = value
     cls = get_correct_app_class(source)
     # Allow the wrapper to update to the current default build_spec
@@ -6127,7 +6136,7 @@ def import_app(app_id_or_source, domain, source_properties=None, validate_source
     app.cloudcare_enabled = domain_has_privilege(domain, privileges.CLOUDCARE)
 
     with app.atomic_blobs():
-        for name, attachment in attachments.items():
+        for name, attachment in list(attachments.items()):
             if re.match(ATTACHMENT_REGEX, name):
                 app.put_attachment(attachment, name)
 

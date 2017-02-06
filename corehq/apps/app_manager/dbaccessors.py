@@ -274,7 +274,7 @@ def get_latest_app_ids_and_versions(domain, app_id=None):
 
     latest_ids_and_versions = {}
     if app_id:
-        results = filter(lambda r: r['value']['_id'] == app_id, results)
+        results = [r for r in results if r['value']['_id'] == app_id]
     for result in results:
         app_id = result['value']['_id']
         version = result['value']['version']
@@ -337,12 +337,12 @@ def get_all_built_app_ids_and_versions(domain, app_id=None):
         endkey=endkey,
         include_docs=True,
     ).all()
-    return map(lambda result: AppBuildVersion(
+    return [AppBuildVersion(
         app_id=result['key'][1],
         build_id=result['id'],
         version=result['key'][2],
         comment=result['value']['build_comment'],
-    ), results)
+    ) for result in results]
 
 
 def get_case_types_from_apps(domain):

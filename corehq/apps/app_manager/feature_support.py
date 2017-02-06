@@ -1,3 +1,5 @@
+from past.builtins import basestring
+from builtins import object
 from distutils.version import LooseVersion, Version
 from django.conf import settings
 

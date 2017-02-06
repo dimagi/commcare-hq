@@ -1,3 +1,4 @@
+from builtins import zip
 import re
 
 ROOT = u'root'

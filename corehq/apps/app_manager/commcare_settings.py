@@ -65,7 +65,7 @@ def _load_commcare_settings_layout(doc_type, domain):
                 section['settings'][i] = setting
             else:
                 section['settings'][i] = None
-        section['settings'] = filter(None, section['settings'])
+        section['settings'] = [_f for _f in section['settings'] if _f]
         for setting in section['settings']:
             setting['value'] = None
 
@@ -74,7 +74,7 @@ def _load_commcare_settings_layout(doc_type, domain):
             "CommCare settings layout should mention "
             "all the available settings. "
             "The following settings went unmentioned: %s" % (
-                ', '.join(settings.keys())
+                ', '.join(list(settings.keys()))
             )
         )
     return layout

@@ -1,3 +1,4 @@
+from builtins import object
 from collections import defaultdict, namedtuple, OrderedDict
 from copy import deepcopy
 import functools
@@ -308,7 +309,7 @@ class ParentCasePropertyBuilder(object):
             for parent_type, relationship in parent_types:
                 rel_map[relationship].append(parent_type)
 
-            for relationship, types in rel_map.items():
+            for relationship, types in list(rel_map.items()):
                 if allow_multiple_parents:
                     parent_map[case_type][relationship] = types
                 else:
@@ -587,14 +588,14 @@ def all_case_properties_by_domain(domain, include_parent_properties=True):
         property_map = get_case_properties(app, app.get_case_types(),
             defaults=('name',), include_parent_properties=include_parent_properties)
 
-        for case_type, properties in property_map.iteritems():
+        for case_type, properties in property_map.items():
             if case_type in result:
                 result[case_type].extend(properties)
             else:
                 result[case_type] = properties
 
     cleaned_result = {}
-    for case_type, properties in result.iteritems():
+    for case_type, properties in result.items():
         properties = list(set(properties))
         properties.sort()
         cleaned_result[case_type] = properties
@@ -835,7 +836,7 @@ def get_sort_and_sort_only_columns(detail, sort_elements):
 
     sort_only_elements = [
         SortOnlyElement(field, element, element_order)
-        for field, (element, element_order) in sort_elements.items()
+        for field, (element, element_order) in list(sort_elements.items())
     ]
     return sort_only_elements, sort_columns
 

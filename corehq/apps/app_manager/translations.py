@@ -1,4 +1,8 @@
 # coding=utf-8
+from builtins import zip
+from builtins import next
+from builtins import str
+from past.builtins import basestring
 from collections import defaultdict, OrderedDict
 from django.utils.encoding import force_text
 from django.utils.safestring import mark_safe
@@ -33,11 +37,11 @@ def get_unicode_dicts(iterable):
 
     """
     def none_or_unicode(val):
-        return unicode(val) if val is not None else val
+        return str(val) if val is not None else val
 
     rows = []
     for row in iterable:
-        rows.append({unicode(k): none_or_unicode(v) for k, v in row.iteritems()})
+        rows.append({str(k): none_or_unicode(v) for k, v in row.items()})
     return rows
 
 
@@ -318,7 +322,7 @@ def expected_bulk_app_sheet_rows(app):
 
                     # Add rows for graph configuration
                     if detail.format == "graph":
-                        for key, val in detail.graph_configuration.locale_specific_config.iteritems():
+                        for key, val in detail.graph_configuration.locale_specific_config.items():
                             rows[module_string].append(
                                 (
                                     key + " (graph config)",
@@ -326,7 +330,7 @@ def expected_bulk_app_sheet_rows(app):
                                 ) + tuple(val.get(lang, "") for lang in app.langs)
                             )
                         for i, series in enumerate(detail.graph_configuration.series):
-                            for key, val in series.locale_specific_config.iteritems():
+                            for key, val in series.locale_specific_config.items():
                                 rows[module_string].append(
                                     (
                                         "{} {} (graph series config)".format(key, i),
@@ -389,7 +393,7 @@ def expected_bulk_app_sheet_rows(app):
                                     value += mark_safe(force_text(part).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;'))
                             itext_items[text_id][(lang, value_form)] = value
 
-                for text_id, values in itext_items.iteritems():
+                for text_id, values in itext_items.items():
                     row = [text_id]
                     for value_form in ["default", "audio", "image", "video"]:
                         # Get the fallback value for this form
@@ -630,10 +634,10 @@ def update_form_translations(sheet, rows, missing_cols, app):
                     # has already been logged as unrecoginzed column
                     continue
 
-            keep_value_node = any(v for k, v in translations.items())
+            keep_value_node = any(v for k, v in list(translations.items()))
 
             # Add or remove translations
-            for trans_type, new_translation in translations.items():
+            for trans_type, new_translation in list(translations.items()):
                 if not new_translation and col_key not in missing_cols:
                     # If the cell corresponding to the label for this question
                     # in this language is empty, fall back to another language
@@ -813,7 +817,7 @@ def update_case_list_translations(sheet, rows, app):
             ))
 
     for row, detail in \
-            zip(list_rows, short_details) + zip(detail_rows, long_details):
+            list(zip(list_rows, short_details)) + list(zip(detail_rows, long_details)):
 
         # Check that names match (user is not allowed to change property in the
         # upload). Mismatched names indicate the user probably botched the sheet.
@@ -879,7 +883,7 @@ def has_at_least_one_translation(row, prefix, langs):
     :param langs:
     :return:
     """
-    return bool(filter(None, [row.get(prefix + '_' + l) for l in langs]))
+    return bool([_f for _f in [row.get(prefix + '_' + l) for l in langs] if _f])
 
 
 def get_col_key(translation_type, language):
