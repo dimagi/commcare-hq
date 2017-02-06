@@ -60,7 +60,7 @@ class Command(BaseCommand):
 
     @mock_ownership_cleanliness_checks()
     def handle(self, domain, **options):
-        base_query = PatientDetail.objects.order_by('PregId')
+        base_query = PatientDetail.objects.order_by('scode', 'Dtocode', 'Tbunitcode', 'PHI')
 
         if options['location_codes']:
             location_filter = Q()
