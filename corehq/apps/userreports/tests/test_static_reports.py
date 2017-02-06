@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import os
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
