@@ -49,7 +49,7 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
             PatientId=self.patient_detail,
             Outcome='NULL',
             HIVStatus='Neg',
-            loginDate=datetime(2016, 1, 2),
+            # loginDate=datetime(2016, 1, 2),
         )
         # Household.objects.create(
         #     PatientID=patient_detail,
