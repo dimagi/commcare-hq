@@ -556,13 +556,16 @@ def bug_report(req):
             u"Feature Flags: {feature_flags}\n"
             u"Feature Previews: {feature_previews}\n"
             u"Is scale backend: {scale_backend}\n"
+            u"Has Support Hand-off Info: {has_handoff_info}\n"
+            u"Internal Project Information: {internal_info_link}\n"
             u"Project description: {project_description}\n"
         ).format(
             software_plan=software_plan,
-            feature_flags=toggles.toggles_dict(username=report['username'],
-                                               domain=domain).keys(),
+            feature_flags=toggles.toggles_dict(username=report['username'], domain=domain).keys(),
             feature_previews=feature_previews.previews_dict(domain).keys(),
             scale_backend=should_use_sql_backend(domain),
+            has_handoff_info=bool(domain_object.internal.partner_contact),
+            internal_info_link=reverse('domain_internal_settings', args=[domain], absolute=True),
             project_description=domain_object.project_description,
         ))
 
