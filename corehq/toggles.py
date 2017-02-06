@@ -287,13 +287,6 @@ ADD_USERS_FROM_LOCATION = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-DETAIL_LIST_TABS = StaticToggle(
-    'detail-list-tabs',
-    'Tabs in the case detail list',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
 DETAIL_LIST_TAB_NODESETS = StaticToggle(
     'detail-list-tab-nodesets',
     'Associate a nodeset with a case detail tab',
@@ -334,7 +327,11 @@ USER_CONFIGURABLE_REPORTS = StaticToggle(
     'user_reports',
     'User configurable reports UI',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
+    description=(
+        "A feature which will allow your domain to create User Configurable Reports."
+    ),
+    help_link='https://confluence.dimagi.com/display/RD/User+Configurable+Reporting', 
 )
 
 LOCATIONS_IN_UCR = StaticToggle(
@@ -363,13 +360,6 @@ REPORT_BUILDER_BETA_GROUP = StaticToggle(
     'RB beta group',
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN],
-)
-
-STOCK_TRANSACTION_EXPORT = StaticToggle(
-    'ledger_export',
-    'Show "export transactions" link on case details page',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
 SYNC_ALL_LOCATIONS = StaticToggle(
@@ -812,13 +802,6 @@ LEGACY_SYNC_SUPPORT = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-VIEW_BUILD_SOURCE = StaticToggle(
-    'diff_builds',
-    'Allow users to view and diff build source files',
-    TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
 EWS_WEB_USER_EXTENSION = StaticToggle(
     'ews_web_user_extension',
     'Enable EWSGhana web user extension',
@@ -946,7 +929,7 @@ PREVIEW_APP = PredictablyRandomToggle(
     'Preview an application in the app builder',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
-    randomness=0.2,
+    randomness=0.5,
 )
 
 DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
@@ -1017,16 +1000,11 @@ LINKED_APPS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-NIMBUS_FORM_VALIDATION = PredictablyRandomToggle(
-    'nimbus_form_validation',
-    'Use Nimbus to validate XForms',
+FORMTRANSLATE_FORM_VALIDATION = StaticToggle(
+    'formtranslate_form_validation',
+    'Use formtranslate to validate XForms',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN],
-    randomness=1.0,
-    always_disabled=[
-        'icrc-almanach',
-        'mikolo'
-    ]
+    [NAMESPACE_DOMAIN]
 )
 
 USER_PROPERTY_EASY_REFS = StaticToggle(

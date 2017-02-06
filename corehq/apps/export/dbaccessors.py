@@ -29,12 +29,12 @@ def _get_latest_export_schema(cls, key):
     return cls.wrap(result['doc']) if result else None
 
 
-def get_inferred_schema(domain, case_type):
-    from .models import InferredSchema
+def get_case_inferred_schema(domain, case_type):
+    from .models import CaseInferredSchema
 
-    key = [domain, 'InferredSchema', case_type]
-    result = InferredSchema.get_db().view(
-        'inferred_schemas_by_case_type/view',
+    key = [domain, 'CaseInferredSchema', case_type]
+    result = CaseInferredSchema.get_db().view(
+        'schemas_by_xmlns_or_case_type/view',
         startkey=key + [{}],
         endkey=key,
         include_docs=True,
@@ -42,7 +42,23 @@ def get_inferred_schema(domain, case_type):
         reduce=False,
         descending=True,
     ).first()
-    return InferredSchema.wrap(result['doc']) if result else None
+    return CaseInferredSchema.wrap(result['doc']) if result else None
+
+
+def get_form_inferred_schema(domain, app_id, xmlns):
+    from .models import FormInferredSchema
+
+    key = [domain, 'FormInferredSchema', app_id, xmlns]
+    result = FormInferredSchema.get_db().view(
+        'schemas_by_xmlns_or_case_type/view',
+        startkey=key + [{}],
+        endkey=key,
+        include_docs=True,
+        limit=1,
+        reduce=False,
+        descending=True,
+    ).first()
+    return FormInferredSchema.wrap(result['doc']) if result else None
 
 
 def get_form_export_instances(domain):
@@ -115,15 +131,5 @@ def delete_all_export_instances():
 
     db = ExportInstance.get_db()
     for row in db.view('export_instances_by_domain/view', reduce=False):
-        doc_id = row['id']
-        safe_delete(db, doc_id)
-
-
-@unit_testing_only
-def delete_all_inferred_schemas():
-    from .models import InferredSchema
-
-    db = InferredSchema.get_db()
-    for row in db.view('inferred_schemas_by_case_type/view', reduce=False):
         doc_id = row['id']
         safe_delete(db, doc_id)

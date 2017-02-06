@@ -59,7 +59,9 @@ DECLARE
 BEGIN
 	_tablename := $1 || '_' || (date_trunc('MONTH', $2)::DATE);
 	EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(_tablename);
-	EXECUTE 'CREATE TABLE ' || quote_ident(_tablename) || '() INHERITS ('  || quote_ident($1) || ')';
+	EXECUTE 'CREATE TABLE ' || quote_ident(_tablename) || '(' ||
+        'CHECK ( month = DATE ' || quote_literal(date_trunc('MONTH', $2)::DATE) || ' )' ||
+	    ') INHERITS ('  || quote_ident($1) || ')';
 END;
 $BODY$
 LANGUAGE plpgsql;
@@ -232,6 +234,7 @@ DECLARE
 	_all_text text;
 	_null_value text;
 	_blank_value text;
+	_no_text text;
 BEGIN
 	_start_date = date_trunc('MONTH', $1)::DATE;
 	_tablename := 'agg_child_health' || '_' || _start_date;
@@ -239,6 +242,7 @@ BEGIN
 	_all_text = 'All';
 	_null_value = NULL;
 	_blank_value = '';
+	_no_text = 'no';
 
 	EXECUTE 'DELETE FROM ' || quote_ident(_tablename);
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
@@ -251,9 +255,9 @@ BEGIN
 		'sex, ' ||
 		'age_tranche, ' ||
 		'caste, ' ||
-		'disabled, ' ||
-		'minority, ' ||
-		'resident, ' ||
+		'COALESCE(disabled, ' || quote_nullable(_no_text) || '), ' ||
+		'COALESCE(minority, ' || quote_nullable(_no_text) || '), ' ||
+		'COALESCE(resident, ' || quote_nullable(_no_text) || '), ' ||
 		'sum(valid_in_month), ' ||
 		'sum(nutrition_status_weighed), ' ||
 		'sum(nutrition_status_unweighed), ' ||
@@ -296,54 +300,6 @@ BEGIN
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx6') || ' ON ' || quote_ident(_tablename) || '(disabled)';
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx7') || ' ON ' || quote_ident(_tablename) || '(minority)';
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx8') || ' ON ' || quote_ident(_tablename) || '(resident)';
-
-	--Roll up by category
-	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
-		'state_id, ' ||
-		'district_id, ' ||
-		'block_id, ' ||
-		'supervisor_id, ' ||
-		'awc_id,' ||
-		'month, ' ||
-		quote_literal(_all_text) || ', ' ||
-		quote_literal(_all_text) || ', ' ||
-		quote_literal(_all_text) || ', ' ||
-		quote_literal(_all_text) || ', ' ||
-		quote_literal(_all_text) || ', ' ||
-		quote_literal(_all_text) || ', ' ||
-		'sum(valid_in_month), ' ||
-		'sum(nutrition_status_weighed), ' ||
-		'sum(nutrition_status_unweighed), ' ||
-		'sum(nutrition_status_normal), ' ||
-		'sum(nutrition_status_moderately_underweight), ' ||
-		'sum(nutrition_status_severely_underweight), ' ||
-		'sum(wer_eligible), ' ||
-		'sum(thr_eligible), ' ||
-		'sum(rations_21_plus_distributed), ' ||
-		'sum(pse_eligible), ' ||
-		'sum(pse_attended_16_days), ' ||
-		'sum(born_in_month), ' ||
-		'sum(low_birth_weight_in_month), ' ||
-		'sum(bf_at_birth), ' ||
-		'sum(ebf_eligible), ' ||
-		'sum(ebf_in_month), ' ||
-		'sum(cf_eligible), ' ||
-		'sum(cf_in_month), ' ||
-		'sum(cf_diet_diversity), ' ||
-		'sum(cf_diet_quantity), ' ||
-		'sum(cf_demo), ' ||
-		'sum(cf_handwashing), ' ||
-		'sum(counsel_increase_food_bf), ' ||
-		'sum(counsel_manage_breast_problems), ' ||
-		'sum(counsel_ebf), ' ||
-		'sum(counsel_adequate_bf), ' ||
-		'sum(counsel_pediatric_ifa), ' ||
-		'sum(counsel_play_cf_video), ' ||
-		'sum(fully_immunized_eligible), ' ||
-		'sum(fully_immunized_on_time), ' ||
-		'sum(fully_immunized_late) ' ||
-		'FROM ' || quote_ident(_tablename) || ' ' ||
-		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month)';
 
 
 	--Roll up by location
@@ -551,12 +507,14 @@ DECLARE
 	_all_text text;
 	_null_value text;
 	_blank_value text;
+	_no_text text;
 BEGIN
 	_start_date = date_trunc('MONTH', $1)::DATE;
 	_tablename := 'agg_ccs_record' || '_' || _start_date;
 	_all_text = 'All';
 	_null_value = NULL;
 	_blank_value = '';
+	_no_text = 'no';
 	EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('ccs_record_monthly') INTO _ucr_ccs_record_table;
 
 	EXECUTE 'DELETE FROM ' || quote_ident(_tablename);
@@ -568,11 +526,11 @@ BEGIN
 		'awc_id, ' ||
 		'month, ' ||
 		'ccs_status, ' ||
-		'trimester, ' ||
+		'COALESCE(trimester::text, ' || quote_nullable(_blank_value) || '), ' ||
 		'caste, ' ||
-		'disabled, ' ||
-		'minority, ' ||
-		'resident, ' ||
+		'COALESCE(disabled, ' || quote_nullable(_no_text) || '), ' ||
+		'COALESCE(minority, ' || quote_nullable(_no_text) || '), ' ||
+		'COALESCE(resident, ' || quote_nullable(_no_text) || '), ' ||
 		'sum(valid_in_month), ' ||
 		'sum(lactating), ' ||
 		'sum(pregnant), ' ||
@@ -617,56 +575,6 @@ BEGIN
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx6') || ' ON ' || quote_ident(_tablename) || '(disabled)';
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx7') || ' ON ' || quote_ident(_tablename) || '(minority)';
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx8') || ' ON ' || quote_ident(_tablename) || '(resident)';
-
-	--Roll up by category
-	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
-		'state_id, ' ||
-		'district_id, ' ||
-		'block_id, ' ||
-		'supervisor_id, ' ||
-		'awc_id,' ||
-		'month, ' ||
-		quote_literal(_all_text) || ', ' ||
-		quote_literal(_all_text) || ', ' ||
-		quote_literal(_all_text) || ', ' ||
-		quote_literal(_all_text) || ', ' ||
-		quote_literal(_all_text) || ', ' ||
-		quote_literal(_all_text) || ', ' ||
-		'sum(valid_in_month), ' ||
-		'sum(lactating), ' ||
-		'sum(pregnant), ' ||
-		'sum(thr_eligible), ' ||
-		'sum(rations_21_plus_distributed), ' ||
-		'sum(tetanus_complete), ' ||
-		'sum(delivered_in_month), ' ||
-		'sum(anc1_received_at_delivery), ' ||
-		'sum(anc2_received_at_delivery), ' ||
-		'sum(anc3_received_at_delivery), ' ||
-		'sum(anc4_received_at_delivery), ' ||
-		'avg(registration_trimester_at_delivery), ' ||
-		'sum(using_ifa), ' ||
-		'sum(ifa_consumed_last_seven_days), ' ||
-		'sum(anemic_normal), ' ||
-		'sum(anemic_moderate), ' ||
-		'sum(anemic_severe), ' ||
-		'sum(anemic_unknown), ' ||
-		'sum(extra_meal), ' ||
-		'sum(resting_during_pregnancy), ' ||
-		'sum(bp1_complete), ' ||
-		'sum(bp2_complete), ' ||
-		'sum(bp3_complete), ' ||
-		'sum(pnc_complete), ' ||
-		'sum(trimester_2), ' ||
-		'sum(trimester_3), ' ||
-		'sum(postnatal), ' ||
-		'sum(counsel_bp_vid), ' ||
-		'sum(counsel_preparation), ' ||
-		'sum(counsel_immediate_bf), ' ||
-		'sum(counsel_fp_vid), ' ||
-		'sum(counsel_immediate_conception), ' ||
-		'sum(counsel_accessible_postpartum_fp) ' ||
-		'FROM ' || quote_ident(_tablename) || ' ' ||
-		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month)';
 
 	--Roll up by location
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
@@ -903,7 +811,7 @@ BEGIN
 		'resident, ' ||
 		'sum(thr_eligible), ' ||
 		'sum(rations_21_plus_distributed) ' ||
-		'FROM ' || quote_ident(_child_health_tablename) || ' WHERE caste != ' || quote_literal('All') || ' ' ||
+		'FROM ' || quote_ident(_child_health_tablename) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, caste, disabled, minority, resident)';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
@@ -920,7 +828,7 @@ BEGIN
 		'resident, ' ||
 		'sum(thr_eligible),' ||
 		'sum(rations_21_plus_distributed) ' ||
-		'FROM ' || quote_ident(_ccs_record_tablename) || ' WHERE caste != ' || quote_literal('All') || ' ' ||
+		'FROM ' || quote_ident(_ccs_record_tablename) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, ccs_status, caste, disabled, minority, resident)';
 
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(state_id, district_id, block_id, supervisor_id, awc_id)';
@@ -930,24 +838,6 @@ BEGIN
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx5') || ' ON ' || quote_ident(_tablename) || '(disabled)';
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx6') || ' ON ' || quote_ident(_tablename) || '(minority)';
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx7') || ' ON ' || quote_ident(_tablename) || '(resident)';
-
-	--Roll up by category
-	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
-		'state_id, ' ||
-		'district_id, ' ||
-		'block_id, ' ||
-		'supervisor_id, ' ||
-		'awc_id,' ||
-		'month, ' ||
-		'beneficiary_type, ' ||
-		quote_literal(_all_text) || ', ' ||
-		quote_literal(_all_text) || ', ' ||
-		quote_literal(_all_text) || ', ' ||
-		quote_literal(_all_text) || ', ' ||
-		'sum(thr_eligible), ' ||
-		'sum(rations_21_plus_distributed) ' ||
-		'FROM ' || quote_ident(_tablename) || ' ' ||
-		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, beneficiary_type)';
 
 
 END;

@@ -16,7 +16,7 @@ from corehq.apps.app_manager.const import (
 from lxml import etree as ET
 
 from corehq.apps.nimbus_api.exceptions import NimbusAPIException
-from corehq.toggles import NIMBUS_FORM_VALIDATION
+from corehq.toggles import FORMTRANSLATE_FORM_VALIDATION
 from corehq.util.view_utils import get_request
 from dimagi.utils.decorators.memoized import memoized
 from .xpath import CaseIDXPath, session_var, CaseTypeXpath, QualifiedScheduleFormXPath
@@ -550,13 +550,13 @@ def validate_xform(domain, source):
         source = source.encode("utf-8")
     # normalize and strip comments
     source = ET.tostring(parse_xml(source))
-    if NIMBUS_FORM_VALIDATION.enabled(domain):
+    if FORMTRANSLATE_FORM_VALIDATION.enabled(domain):
+        validation_results = formtranslate.api.validate(source)
+    else:
         try:
             validation_results = nimbus_api.validate_form(source)
         except NimbusAPIException:
             raise XFormValidationFailed("Unable to validate form")
-    else:
-        validation_results = formtranslate.api.validate(source)
 
     if not validation_results.success:
         raise XFormValidationError(
@@ -2075,6 +2075,12 @@ VELLUM_TYPES = {
         'icon': 'icon-retweet',
         'icon_bs3': 'fa fa-retweet',
     },
+    "SaveToCase": {
+        'tag': 'save_to_case',
+        'icon': 'icon-save',
+        'icon_bs3': 'fa fa-save',
+    },
+
     "Secret": {
         'tag': 'secret',
         'type': ('xsd:string', None),

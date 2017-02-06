@@ -30,7 +30,7 @@
              {% with module_name=module.name|trans:langs %}
              labels[FormWorkflow.Values.MODULE] = "{% trans "Module:" %} {{ module_name|escapejs }}";
              {% endwith %}
-@@ -202,24 +202,12 @@
+@@ -202,28 +202,16 @@
                  workflow: '{{ form.post_form_workflow }}',
              };
  
@@ -55,7 +55,12 @@
  
          gaTrackLink($('.breadcrumb .view-form'), 'App Builder', 'View Form', 'Breadcrumb');
  
-@@ -284,67 +272,56 @@
+-        {% if allow_cloudcare %}
++        {% if can_preview_form and allow_cloudcare %}
+             // tag the 'preview in cloudcare' button with the right url
+             // unfortunately, has to be done in javascript
+             var getCloudCareUrl = function(urlRoot, appId, moduleId, formId, caseId) {
+@@ -284,67 +272,58 @@
      </script>
  {% endblock %}
  
@@ -65,12 +70,14 @@
 -    <br />
 -    <inline-edit params="
 +{% block pre_page_content %}
++  {% if can_preview_form %}
 +  <div class="appmanager-page-actions">
 +      <a class="btn btn-purple js-preview-toggle" style="display: none;" href="#">
 +        <span class="js-preview-action-show hide"><i class="fa fa-play-circle"></i> {% trans "Preview App" %}</span>
 +        <span class="js-preview-action-hide hide"><i class="fa fa-pause-circle"></i> {% trans "Preview App" %}</span>
 +      </a>
 +  </div>
++  {% endif %}
 +
 +  <div class="appmanager-edit-title">
 +    {% if form.get_action_type == 'open' %}
@@ -119,7 +126,7 @@
 -            {% trans "Edit" %}
 -        </button>
 -        {% endif %}
--        {% if allow_cloudcare %}
+-        {% if can_preview_form and allow_cloudcare %}
 -            {% if form.source %}
 -            <a id="cloudcare-preview-url" href="#" target="_blank" class="btn btn-default">
 -                <i class="fa fa-play"></i>
@@ -160,7 +167,7 @@
              {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
              <li>
                  <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
-@@ -356,6 +333,7 @@
+@@ -356,6 +335,7 @@
                  </a>
              </li>
              {% endif %}{% endif %}
@@ -168,7 +175,7 @@
              {% if form.form_type == 'advanced_form' and module.has_schedule %}
                   <li>
                       <a href="#visit-scheduler" data-toggle="tab">
-@@ -363,45 +341,46 @@
+@@ -363,45 +343,46 @@
                       </a>
                   </li>
              {% endif %}
@@ -250,7 +257,7 @@
              <div class="tab-pane" id="usercase-configuration">
                  {% if form_errors or xform_validation_errored %}
                      <p class="alert alert-warning">
-@@ -471,7 +450,7 @@
+@@ -471,7 +452,7 @@
                                  </p>
                                  </div>
                              {% endif %}
@@ -259,7 +266,7 @@
                          {% endblock %}
                      </div>
                  {% else %}
-@@ -484,23 +463,25 @@
+@@ -484,23 +465,25 @@
                      </p>
                  {% endif %}
              </div>

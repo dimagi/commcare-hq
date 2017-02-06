@@ -135,11 +135,7 @@ class CaseGroupListView(DataInterfaceSection, CRUDPaginatedViewMixin):
 
     @property
     def paginated_list(self):
-        for group in get_case_groups_in_domain(
-                self.domain,
-                limit=self.limit,
-                skip=self.skip
-            ):
+        for group in get_case_groups_in_domain(self.domain)[self.skip:self.skip + self.limit]:
             item_data = self._get_item_data(group)
             item_data['updateForm'] = self.get_update_form_response(
                 self.get_update_form(initial_data={

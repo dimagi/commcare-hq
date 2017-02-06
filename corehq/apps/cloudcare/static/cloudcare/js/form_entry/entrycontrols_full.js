@@ -1,4 +1,4 @@
-/* globals Formplayer */
+/* globals Formplayer, EntrySingleAnswer, moment */
 
 /**
  * The base Object for all entries. Each entry takes a question object and options
@@ -325,6 +325,115 @@ DropdownEntry.prototype.onPreProcess = function(newValue) {
     }
 };
 
+/**
+ * The ComboboxEntry is an advanced android formatting entry. It is enabled
+ * when the user specifies combobox in the appearance attributes for a
+ * single select question.
+ *
+ * Docs: https://confluence.dimagi.com/display/commcarepublic/Advanced+CommCare+Android+Formatting#AdvancedCommCareAndroidFormatting-SingleSelect"ComboBox"
+ */
+function ComboboxEntry(question, options) {
+    var self = this;
+    EntrySingleAnswer.call(this, question, options);
+
+    // Specifies the type of matching we will do when a user types a query
+    self.matchType = options.matchType;
+    self.lengthLimit = Infinity;
+    self.templateType = 'str';
+
+    self.options = ko.computed(function() {
+        return _.map(question.choices(), function(choice, idx) {
+            return { name: choice, id: idx + 1 };
+        });
+    });
+    self.options.subscribe(function () {
+        self.renderAtwho();
+        if (!self.isValid(self.rawAnswer())) {
+            self.question.error(gettext('Not a valid choice'));
+        }
+    });
+    self.helpText = function() { return 'Combobox'; };
+
+    self.renderAtwho = function() {
+        var $input = $('#' + self.entryId);
+        $input.atwho({
+            at: '',
+            data: self.options(),
+            maxLen: Infinity,
+            tabSelectsMatch: false,
+            suffix: '',
+            callbacks: {
+                filter: function(query, data) {
+                    return _.filter(data, function(item) {
+                        return ComboboxEntry.filter(query, item, self.matchType);
+                    });
+                },
+                matcher: function() {
+                    return $input.val();
+                },
+            },
+        });
+    };
+    self.isValid = function(value) {
+        if (!value) {
+            return true;
+        }
+        return _.include(
+            _.map(self.options(), function(option) { return option.name; }),
+            value
+        );
+    };
+
+    self.afterRender = function() {
+        self.renderAtwho();
+    };
+}
+
+ComboboxEntry.filter = function(query, d, matchType) {
+    if (matchType === Formplayer.Const.COMBOBOX_MULTIWORD) {
+        // Multiword filter, matches any choice that contains all of the words in the query
+        //
+        // Assumption is both query and choice will not be very long. Runtime is O(nm)
+        // where n is number of words in the query, and m is number of words in the choice
+        var wordsInQuery = query.split(' ');
+        var wordsInChoice = d.name.split(' ');
+
+        return _.all(wordsInQuery, function(word) {
+            return _.include(wordsInChoice, word);
+        });
+    } else if (matchType === Formplayer.Const.COMBOBOX_FUZZY) {
+        // Fuzzy filter, matches if query is "close" to answer
+        return (
+            (window.Levenshtein.get(d.name.toLowerCase(), query.toLowerCase()) <= 2 && query.length > 3) ||
+            d.name.toLowerCase() === query.toLowerCase()
+        );
+    } else {
+        // Standard filter, matches only start of word
+        return d.name.startsWith(query);
+    }
+};
+
+ComboboxEntry.prototype = Object.create(EntrySingleAnswer.prototype);
+ComboboxEntry.prototype.constructor = EntrySingleAnswer;
+ComboboxEntry.prototype.onPreProcess = function(newValue) {
+    var value;
+    if (newValue === Formplayer.Const.NO_ANSWER || newValue === '') {
+        this.answer(Formplayer.Const.NO_ANSWER);
+        this.question.error(null);
+        return;
+    }
+
+    value = _.find(this.options(), function(d) {
+        return d.name === newValue;
+    });
+    if (value) {
+        this.answer(value.id);
+        this.question.error(null);
+    } else {
+        this.question.error(gettext('Not a valid choice'));
+    }
+};
+
 $.datetimepicker.setDateFormatter({
     parseDate: function (date, format) {
         var d = moment(date, format);
@@ -549,6 +658,12 @@ function getEntry(question) {
     var options = {};
     var isNumeric = false;
     var isMinimal = false;
+    var isCombobox = false;
+    var style;
+
+    if (question.style) {
+        style = ko.utils.unwrapObservable(question.style.raw);
+    }
 
     var displayOptions = _getDisplayOptions(question);
     var isPhoneMode = ko.utils.unwrapObservable(displayOptions.phoneMode);
@@ -557,9 +672,7 @@ function getEntry(question) {
     case Formplayer.Const.STRING:
     // Barcode uses text box for CloudCare so it's possible to still enter a barcode field
     case Formplayer.Const.BARCODE:
-        if (question.style) {
-            isNumeric = ko.utils.unwrapObservable(question.style.raw) === Formplayer.Const.NUMERIC;
-        }
+        isNumeric = style === Formplayer.Const.NUMERIC;
         if (isNumeric) {
             entry = new PhoneEntry(question, { enableAutoUpdate: isPhoneMode });
         } else {
@@ -576,11 +689,27 @@ function getEntry(question) {
         entry = new FloatEntry(question, { enableAutoUpdate: isPhoneMode });
         break;
     case Formplayer.Const.SELECT:
-        if (question.style) {
-            isMinimal = ko.utils.unwrapObservable(question.style.raw) === Formplayer.Const.MINIMAL;
+        isMinimal =  style === Formplayer.Const.MINIMAL;
+        if (style) {
+            isCombobox = style.startsWith(Formplayer.Const.COMBOBOX);
         }
+
         if (isMinimal) {
             entry = new DropdownEntry(question, {});
+        } else if (isCombobox) {
+
+            entry = new ComboboxEntry(question, {
+                /*
+                 * The appearance attribute is either:
+                 *
+                 * combobox
+                 * combobox multiword
+                 * combobox fuzzy
+                 *
+                 * The second word designates the matching type
+                 */
+                matchType: question.style.raw().split(' ')[1],
+            });
         } else {
             entry = new SingleSelectEntry(question, {});
         }

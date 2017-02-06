@@ -133,7 +133,7 @@ class PatientDetail(models.Model):
             '8': 'other',
             '9': 'other',
             '10': 'other',
-        }.get(self.dcexpulmunory.strip(), '')
+        }.get(self.dcexpulmunory.strip(), 'other')
 
     @property
     def patient_type_choice(self):
