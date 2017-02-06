@@ -665,6 +665,13 @@ class DomainSubscriptionView(DomainAccountingSettings):
                         'renew_url': reverse(SubscriptionRenewalView.urlname, args=[self.domain]),
                     })
 
+        if subscription:
+            credit_lines = CreditLine.get_non_general_credits_by_subscription(subscription)
+            credit_lines = [cl for cl in credit_lines if cl.balance > 0]
+            has_credits_in_non_general_credit_line = len(credit_lines) > 0
+        else:
+            has_credits_in_non_general_credit_line = False
+
         info = {
             'products': [self.get_product_summary(plan_version, self.account, subscription)],
             'features': self.get_feature_summary(plan_version, self.account, subscription),
@@ -686,6 +693,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
             'date_end': date_end,
             'cards': cards,
             'next_subscription': next_subscription,
+            'has_credits_in_non_general_credit_line': has_credits_in_non_general_credit_line
         }
         info['has_account_level_credit'] = (
             any(
@@ -1123,7 +1131,15 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
                     for pt in SoftwareProductType.CHOICES
                     if Decimal(request.POST.get(pt[0], 0)) > 0]
 
-        return products + features
+        items = products + features
+
+        if Decimal(request.POST.get('general_credit', 0)) > 0:
+            items.append({
+                'type': 'General Credits',
+                'amount': Decimal(request.POST.get('general_credit', 0))
+            })
+
+        return items
 
 
 class InvoiceStripePaymentView(BaseStripePaymentView):
