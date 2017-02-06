@@ -88,3 +88,22 @@ def _create_properties_for_case_types(domain, case_type_to_prop):
                 ))
 
     CaseProperty.objects.bulk_create(new_case_properties)
+
+
+def get_case_property_description_dict(domain):
+    """
+    This returns a dictionary of the structure
+    {
+        case_type: {
+                        case_property: description,
+                        ...
+                    },
+        ...
+    }
+    for each case type and case property in the domain.
+    """
+    annotated_types = CaseType.objects.filter(domain=domain).prefetch_related('properties')
+    descriptions_dict = {}
+    for case_type in annotated_types:
+        descriptions_dict[case_type.name] = {prop.name: prop.description for prop in case_type.properties.all()}
+    return descriptions_dict
