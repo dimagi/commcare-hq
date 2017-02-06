@@ -577,6 +577,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             {'instanceId': instance.instance_id, 'instancePath': instance.instance_path}
             for instance in form.custom_instances
         ],
+        'can_preview_form': request.couch_user.has_permission(domain, 'edit_data')
     }
 
     if tours.NEW_APP.is_enabled(request.user):

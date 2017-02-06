@@ -190,6 +190,7 @@
 
     </script>
 
+    {% if can_preview_form %}
     <script type="text/html" id="js-fd-app-preview-btn-template">
       <div class="btn-group js-preview-toggle-container">
         <a class="btn btn-purple js-preview-toggle" href="#">
@@ -198,6 +199,7 @@
         </a>
       </div>
     </script>
+    {% endif %}
 
     <script type="text/html" id="js-fd-manage-case">
       <div class="btn-group pull-right">

@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,29 +1,32 @@
+@@ -1,29 +1,34 @@
  {% load i18n %}
  {% load xforms_extras %}
 +{% load hq_shared_tags %}
@@ -9,10 +9,12 @@
 -<br />
 -<inline-edit params="
 +<div class="appmanager-page-actions">
++  {% if can_preview_form %}
 +  <a class="btn btn-purple js-preview-toggle" style="display: none;" href="#">
 +    <span class="js-preview-action-show hide"><i class="fa fa-play-circle"></i> {% trans "Preview App" %}</span>
 +    <span class="js-preview-action-hide hide"><i class="fa fa-pause-circle"></i> {% trans "Preview App" %}</span>
 +  </a>
++  {% endif %}
 +</div>
 +<div class="appmanager-edit-title">
 +  {% if module.case_type == '' %}

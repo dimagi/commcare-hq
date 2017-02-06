@@ -98,7 +98,7 @@
 +          </h2>
 +      </div>
  
--        {% if show_live_preview %}
+-        {% if show_live_preview and can_preview_form %}
 -        <li>
 -          <a class="js-preview-toggle">
 -              <i class="fa fa-mobile-phone preview-icon"></i>
