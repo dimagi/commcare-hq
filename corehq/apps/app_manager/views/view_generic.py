@@ -253,7 +253,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     context['latest_commcare_version'] = get_commcare_versions(request.user)[-1]
 
     if app and app.doc_type == 'Application' and has_privilege(request, privileges.COMMCARE_LOGO_UPLOADER):
-        uploader_slugs = list(ANDROID_LOGO_PROPERTY_MAPPING.keys())
+        uploader_slugs = list(ANDROID_LOGO_PROPERTY_MAPPING)
         from corehq.apps.hqmedia.controller import MultimediaLogoUploadController
         from corehq.apps.hqmedia.views import ProcessLogoFileUploadView
         context.update({

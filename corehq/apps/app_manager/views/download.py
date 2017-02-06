@@ -1,5 +1,6 @@
 from future import standard_library
 standard_library.install_aliases()
+from builtins import str
 import json
 import logging
 import os
@@ -251,7 +252,7 @@ def download_file(request, domain, app_id, path):
                         raise
                 else:
                     raise
-            if type(payload) is str:
+            if isinstance(payload, str):
                 payload = payload.encode('utf-8')
             buffer = StringIO(payload)
             metadata = {'content_type': content_type}
@@ -423,7 +424,7 @@ def download_index_files(app, build_profile_id=None):
         files = [(path[len(prefix):], app.fetch_attachment(path))
                  for path in app.blobs if needed_for_CCZ(path)]
     else:
-        files = list(app.create_all_files().items())
+        files = app.create_all_files().items()
     return sorted(files)
 
 

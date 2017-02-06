@@ -171,7 +171,8 @@ def get_app_view_context(request, app):
         section['settings'] = new_settings
 
     if toggles.CUSTOM_PROPERTIES.enabled(request.domain) and 'custom_properties' in app.profile:
-        custom_properties_array = [{'key': p[0], 'value': p[1]} for p in list(app.profile.get('custom_properties').items())]
+        custom_properties_array = [{'key': p[0], 'value': p[1]}
+            for p in app.profile.get('custom_properties').items()]
         context.update({'custom_properties': custom_properties_array})
 
     context.update({
@@ -193,8 +194,13 @@ def get_app_view_context(request, app):
             app_ver = MAJOR_RELEASE_TO_VERSION[option.build.major_release()]
             builds["default"] = build_config.get_default(app_ver).to_string()
 
-    (build_spec_setting,) = [x for x in [setting for section in context['settings_layout']
-            for setting in section['settings']] if x['type'] == 'hq' and x['id'] == 'build_spec'] if context['settings_layout'] else (None,)
+    if context['settings_layout']:
+        settings = [setting for section in context['settings_layout']
+                            for setting in section['settings']]
+        (build_spec_setting,) = [x for x in settings if x['type'] == 'hq' and
+                                                        x['id'] == 'build_spec']
+    else:
+        build_spec_setting = None
     if build_spec_setting:
         build_spec_setting['options_map'] = options_map
         build_spec_setting['default_app_version'] = app.application_version
@@ -531,7 +537,7 @@ def edit_app_langs(request, domain, app_id):
         return HttpResponse(status=400)
 
     # now do it
-    for old, new in list(rename.items()):
+    for old, new in rename.items():
         if old != new:
             app.rename_lang(old, new)
 
@@ -583,7 +589,7 @@ def get_app_ui_translations(request, domain):
     one = params.get('one', False)
     translations = Translation.get_translations(lang, key, one)
     if isinstance(translations, dict):
-        translations = {k: v for k, v in list(translations.items())
+        translations = {k: v for k, v in translations.items()
                         if not id_strings.is_custom_app_string(k)
                         and '=' not in k}
     return json_response(translations)
@@ -804,7 +810,7 @@ def formdefs(request, domain, app_id):
             [
                 FormattedRow([
                     cell for (_, cell) in
-                    sorted(list(row.items()), key=lambda item: sheet['columns'].index(item[0]))
+                    sorted(row.items(), key=lambda item: sheet['columns'].index(item[0]))
                 ])
                 for row in sheet['rows']
             ]

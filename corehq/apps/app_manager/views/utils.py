@@ -1,5 +1,6 @@
 from future import standard_library
 standard_library.install_aliases()
+from builtins import str
 import json
 from urllib.parse import urlencode
 from django.contrib import messages
@@ -107,7 +108,7 @@ def validate_langs(request, existing_langs):
     # assert that there are no repeats in the values of rename
     assert len(set(rename.values())) == len(list(rename.values()))
     # assert that no lang is renamed to an already existing lang
-    for old, new in list(rename.items()):
+    for old, new in rename.items():
         if old != new:
             assert(new not in existing_langs)
 
