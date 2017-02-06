@@ -7,7 +7,7 @@ from django.http import Http404
 
 from corehq.apps.es import AppES
 
-AppBuildVersion = namedtuple('AppBuildVersion', ['app_id', 'build_id', 'version'])
+AppBuildVersion = namedtuple('AppBuildVersion', ['app_id', 'build_id', 'version', 'comment'])
 
 
 @quickcache(['domain'], timeout=1 * 60 * 60)
@@ -319,22 +319,29 @@ def get_all_app_ids(domain):
     return [result['id'] for result in results]
 
 
-def get_all_built_app_ids_and_versions(domain):
+def get_all_built_app_ids_and_versions(domain, app_id=None):
     """
     Returns a list of all the app_ids ever built and their version.
-    [[AppBuildVersion(app_id, build_id, version)], ...]
+    [[AppBuildVersion(app_id, build_id, version, comment)], ...]
+    If app_id is provided, limit to bulds for that app.
     """
     from .models import Application
+    startkey = [domain]
+    endkey = [domain, {}]
+    if app_id:
+        startkey = [domain, app_id]
+        endkey = [domain, app_id, {}]
     results = Application.get_db().view(
         'app_manager/saved_app',
-        startkey=[domain],
-        endkey=[domain, {}],
-        include_docs=False,
+        startkey=startkey,
+        endkey=endkey,
+        include_docs=True,
     ).all()
     return map(lambda result: AppBuildVersion(
         app_id=result['key'][1],
         build_id=result['id'],
         version=result['key'][2],
+        comment=result['value']['build_comment'],
     ), results)
 
 
