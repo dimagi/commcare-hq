@@ -878,7 +878,7 @@ class DownloadFormExportView(BaseDownloadExportView):
             from corehq.apps.reports.tasks import build_form_multimedia_zip
             download.set_task(build_form_multimedia_zip.delay(**task_kwargs))
         except Exception as e:
-            return format_angular_error(e)
+            return format_angular_error(str(e))
         return format_angular_success({
             'download_id': download.download_id,
         })
