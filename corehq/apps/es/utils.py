@@ -52,6 +52,8 @@ def chunk_query(query, term, chunk_size=1000):
         an array of ESQuerys with the chunked term.
 
     '''
+    from corehq.apps.userreports.expressions.getters import recursive_lookup
+
     query = deepcopy(query)
 
     path_to_term = _chunk_query([], None, query.es_query, term)
@@ -61,7 +63,7 @@ def chunk_query(query, term, chunk_size=1000):
     if path_to_term is None:
         return [query]
 
-    term_list = _dict_lookup(path_to_term, query.es_query)
+    term_list = recursive_lookup(query.es_query, path_to_term)
 
     # Cannot chunk term that is not a list
     if not isinstance(term_list, list):
@@ -72,21 +74,11 @@ def chunk_query(query, term, chunk_size=1000):
         chunked_query = deepcopy(query)
 
         # Set query to the chunk
-        _dict_lookup(path_to_term[:-1], chunked_query.es_query)[term] = terms
+        recursive_lookup(chunked_query.es_query, path_to_term[:-1])[term] = terms
 
         chunked_queries.append(chunked_query)
 
     return chunked_queries
-
-
-def _dict_lookup(path, dict_):
-    partial = dict_
-    for part in path:
-        try:
-            partial = partial[part]
-        except IndexError:
-            return None
-    return partial
 
 
 def _chunk_query(path_to_term, key, es_query, term):
