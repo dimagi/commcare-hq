@@ -12,11 +12,11 @@ from django.utils.translation import ugettext_lazy as _
 from django.db.transaction import atomic
 
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.couch import CriticalSection
 
 from corehq import toggles
 from corehq.apps.case_importer.tracking.filestorage import make_temp_file
 from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.data_dictionary import util
 from corehq.apps.data_dictionary.models import CaseType, CaseProperty
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
@@ -89,8 +89,12 @@ def update_case_property(request, domain):
                 name=name, case_type__name=case_type, case_type__domain=domain
             )
         except CaseProperty.DoesNotExist:
-            case_type_obj = CaseType.objects.get(domain=domain, name=case_type)
-            prop = CaseProperty.objects.create(case_type=case_type_obj, name=name)
+            key = 'data-dict-property-{domain}-{type}-{name}'.format(
+                domain=domain, type=case_type, name=name
+            )
+            with CriticalSection([key]):
+                case_type_obj = CaseType.objects.get(domain=domain, name=case_type)
+                prop = CaseProperty.objects.create(case_type=case_type_obj, name=name)
         if data_type:
             prop.data_type = data_type
         if description:
@@ -163,6 +167,7 @@ class DataDictionaryView(BaseProjectDataView):
     def section_url(self):
         return reverse(DataDictionaryView.urlname, args=[self.domain])
 
+
 class UploadDataDictionaryView(BaseProjectDataView):
     section_name = _("Data Dictionary")
     template_name = "data_dictionary/import_data_dict.html"
@@ -204,8 +209,12 @@ class UploadDataDictionaryView(BaseProjectDataView):
                                 name=name, case_type__name=case_type, case_type__domain=self.domain
                             )
                         except CaseProperty.DoesNotExist:
-                            case_type_obj = CaseType.objects.get(domain=self.domain, name=case_type)
-                            prop = CaseProperty.objects.create(case_type=case_type_obj, name=name)
+                            key = 'data-dict-property-{domain}-{type}-{name}'.format(
+                                domain=self.domain, type=case_type, name=name
+                            )
+                            with CriticalSection([key]):
+                                case_type_obj = CaseType.objects.get(domain=self.domain, name=case_type)
+                                prop = CaseProperty.objects.create(case_type=case_type_obj, name=name)
                         if data_type:
                             prop.data_type = data_type
                         if description:

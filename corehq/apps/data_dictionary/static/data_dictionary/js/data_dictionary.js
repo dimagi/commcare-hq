@@ -61,7 +61,7 @@
                             'name': element.name(),
                             'data_type': element.dataType(),
                             'group': currentGroup,
-                            'description': element.description()
+                            'description': element.description(),
                         };
                         postProperties.push(data);
                     } else {
@@ -95,12 +95,12 @@
             .done(function (data) {
                 _.each(data.case_types, function (caseType) {
                     var caseTypeObj = new CaseType(caseType.name);
-                    var groupDict = _.groupBy(caseType.properties, function(prop) {return prop.group});
+                    var groupDict = _.groupBy(caseType.properties, function(prop) {return prop.group;});
                     caseTypeObj.init(groupDict, changeSaveButton);
                     self.caseTypes.push(caseTypeObj);
                 });
                 self.goToCaseType(self.caseTypes()[0]);
-                self.casePropertyList.subscribe(changeSaveButton)
+                self.casePropertyList.subscribe(changeSaveButton);
             });
         };
 
@@ -113,7 +113,7 @@
         this.activeCaseTypeData = function () {
             var caseTypes = self.caseTypes();
             if (caseTypes.length) {
-                caseType = self.getActiveCaseType();
+                var caseType = self.getActiveCaseType();
                 if (caseType) {
                     return caseType.properties();
                 }
@@ -123,7 +123,7 @@
 
         this.goToCaseType = function (caseType) {
             if (self.saveButton.state === 'save') {
-                dialog = confirm('You have unsaved changes to this case type. Are you sure you would like to continue?');
+                var dialog = confirm('You have unsaved changes to this case type. Are you sure you would like to continue?');
                 if (!dialog) {
                     return;
                 }
@@ -156,7 +156,7 @@
             while (!next.isGroup) {
                 next.toggle();
                 i++;
-                next = self.casePropertyList()[i]
+                next = self.casePropertyList()[i];
             }
         };
     };

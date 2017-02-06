@@ -5769,7 +5769,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         annotated_types = CaseType.objects.filter(domain=self.domain).prefetch_related('properties')
         descriptions_dict = {}
         for case_type in annotated_types:
-            descriptions_dict[case_type.name] = {prop.name: prop.description for prop in case_type.properties.all()}
+            descriptions_dict[case_type.name] = {prop.name: prop.description
+                                                 for prop in case_type.properties.all()}
 
         for case_type, relationships in case_relationships.items():
             type_meta = meta.get_type(case_type)
