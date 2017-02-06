@@ -1267,3 +1267,51 @@ class SplitStringExpressionTest(SimpleTestCase):
                 "index_expression": index
             })
             self.assertEqual(expected, split_string_expression({"string_property": string_value}))
+
+
+class TestCoalesceExpression(SimpleTestCase):
+
+    def setUp(self):
+        self.spec = {
+            'type': 'coalesce',
+            'expression': {
+                'type': 'property_name',
+                'property_name': 'expression'
+            },
+            'default_expression': {
+                'type': 'property_name',
+                'property_name': 'default_expression'
+            },
+        }
+        self.expression = ExpressionFactory.from_spec(self.spec)
+
+    def testNoCoalesce(self):
+        self.assertEqual('foo', self.expression({
+            'expression': 'foo',
+            'default_expression': 'default',
+        }))
+
+    def testNoValue(self):
+        self.assertEqual('default', self.expression({
+            'default_expression': 'default',
+        }))
+
+    def testNull(self):
+        self.assertEqual('default', self.expression({
+            'expression': None,
+            'default_expression': 'default',
+        }))
+
+    def testEmptyString(self):
+        self.assertEqual('default', self.expression({
+            'expression': '',
+            'default_expression': 'default',
+        }))
+
+    def testBlankDefaultValue2(self):
+        self.assertEqual('foo', self.expression({
+            'expression': 'foo',
+        }))
+
+    def testBlankDefaultValue2(self):
+        self.assertEqual(None, self.expression({}))
