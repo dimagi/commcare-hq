@@ -678,6 +678,9 @@ Formplayer.Const = {
     // Appearance attributes
     NUMERIC: 'numeric',
     MINIMAL: 'minimal',
+    COMBOBOX: 'combobox',
+    COMBOBOX_MULTIWORD: 'multiword',
+    COMBOBOX_FUZZY: 'fuzzy',
 
     // Note it's important to differentiate these two
     NO_PENDING_ANSWER: undefined,
@@ -774,6 +777,7 @@ Formplayer.Utils.initialRender = function(formJSON, resourceMap, $div) {
 
     return form;
 };
+
 
 Formplayer.Utils.getIconFromType = function(type) {
     var icon = '';
