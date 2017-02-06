@@ -392,7 +392,7 @@ def get_casedb_schema(form):
     builder = ParentCasePropertyBuilder(app, ['case_name'], per_type_defaults)
     related = builder.get_parent_type_map(case_types, allow_multiple_parents=True)
     map = builder.get_case_property_map(case_types, include_parent_properties=False)
-    get_case_property_description_dict(app.domain)
+    descriptions_dict = get_case_property_description_dict(app.domain)
 
     if base_case_type:
         # Generate hierarchy of case types, represented as a list of lists of strings:

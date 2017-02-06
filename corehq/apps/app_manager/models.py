@@ -51,7 +51,6 @@ from couchdbkit.exceptions import BadValueError
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator, MediaSuiteGenerator
 from corehq.apps.app_manager.xpath_validator import validate_xpath
-from corehq.apps.data_dictionary.models import CaseType
 from corehq.apps.data_dictionary.util import get_case_property_description_dict
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.apps.users.dbaccessors.couch_users import get_display_name_for_user_id
@@ -5767,7 +5766,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         builder = ParentCasePropertyBuilder(self)
         case_relationships = builder.get_parent_type_map(self.get_case_types())
         meta = AppCaseMetadata()
-        get_case_property_description_dict(self.domain)
+        descriptions_dict = get_case_property_description_dict(self.domain)
 
         for case_type, relationships in case_relationships.items():
             type_meta = meta.get_type(case_type)
