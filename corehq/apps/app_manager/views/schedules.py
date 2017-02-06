@@ -1,3 +1,4 @@
+from builtins import str
 import json
 
 from django.http import HttpResponseBadRequest
@@ -30,7 +31,7 @@ def edit_schedule_phases(request, domain, app_id, module_id):
         module.update_schedule_phases(all_anchors)
         module.has_schedule = enabled
     except ScheduleError as e:
-        return HttpResponseBadRequest(unicode(e))
+        return HttpResponseBadRequest(str(e))
 
     response_json = {}
     app.save(response_json)
@@ -53,7 +54,7 @@ def edit_visit_schedule(request, domain, app_id, module_id, form_id):
         try:
             phase, is_new_phase = module.get_or_create_schedule_phase(anchor=anchor)
         except ScheduleError as e:
-            return HttpResponseBadRequest(unicode(e))
+            return HttpResponseBadRequest(str(e))
         form.schedule_form_id = schedule_form_id
         form.schedule = FormSchedule.wrap(json_loads)
         phase.add_form(form)

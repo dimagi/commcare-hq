@@ -1,6 +1,9 @@
+from future import standard_library
+standard_library.install_aliases()
+from builtins import range
 from collections import defaultdict
 import re
-from StringIO import StringIO
+from io import StringIO
 
 from django.contrib import messages
 from django.core.urlresolvers import reverse
@@ -86,7 +89,7 @@ def download_bulk_app_translations(request, domain, app_id):
     headers = expected_bulk_app_sheet_headers(app)
     rows = expected_bulk_app_sheet_rows(app)
     temp = StringIO()
-    data = [(k, v) for k, v in rows.iteritems()]
+    data = [(k, v) for k, v in rows.items()]
     export_raw(headers, data, temp)
     return export_response(temp, Format.XLS_2007, "bulk_app_translations")
 
@@ -113,7 +116,7 @@ def process_ui_translation_upload(app, trans_file):
     workbook = WorkbookJSONReader(trans_file)
     translations = workbook.get_worksheet(title='translations')
 
-    commcare_ui_strings = load_translations('en', 2).keys()
+    commcare_ui_strings = list(load_translations('en', 2).keys())
     default_trans = get_default_translations_for_download(app)
     lang_with_defaults = app.langs[get_index_for_defaults(app.langs)]
 
@@ -149,14 +152,14 @@ def build_ui_translation_download_file(app):
     for i, lang in enumerate(app.langs):
         index = i + 1
         trans_dict = app.translations.get(lang, {})
-        for prop, trans in trans_dict.iteritems():
+        for prop, trans in trans_dict.items():
             if prop not in row_dict:
                 row_dict[prop] = [prop]
             num_to_fill = index - len(row_dict[prop])
             row_dict[prop].extend(["" for i in range(num_to_fill)] if num_to_fill > 0 else [])
             row_dict[prop].append(trans)
 
-    rows = row_dict.values()
+    rows = list(row_dict.values())
     all_prop_trans = get_default_translations_for_download(app)
     rows.extend([[t] for t in sorted(all_prop_trans.keys()) if t not in row_dict])
 

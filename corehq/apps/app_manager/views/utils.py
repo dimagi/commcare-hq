@@ -1,5 +1,7 @@
+from future import standard_library
+standard_library.install_aliases()
 import json
-from urllib import urlencode
+from urllib.parse import urlencode
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
@@ -92,7 +94,7 @@ def bail(request, domain, app_id, not_found=""):
 
 
 def encode_if_unicode(s):
-    return s.encode('utf-8') if isinstance(s, unicode) else s
+    return s.encode('utf-8') if isinstance(s, str) else s
 
 
 def validate_langs(request, existing_langs):
@@ -103,9 +105,9 @@ def validate_langs(request, existing_langs):
     assert set(rename.keys()).issubset(existing_langs)
     assert set(rename.values()).issubset(langs)
     # assert that there are no repeats in the values of rename
-    assert len(set(rename.values())) == len(rename.values())
+    assert len(set(rename.values())) == len(list(rename.values()))
     # assert that no lang is renamed to an already existing lang
-    for old, new in rename.items():
+    for old, new in list(rename.items()):
         if old != new:
             assert(new not in existing_langs)
 

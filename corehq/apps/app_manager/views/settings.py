@@ -58,7 +58,7 @@ def edit_commcare_profile(request, domain, app_id):
     for settings_type in types:
         if settings_type == "custom_properties":
             app.profile[settings_type] = {}
-        for name, value in settings.get(settings_type, {}).items():
+        for name, value in list(settings.get(settings_type, {}).items()):
             if settings_type not in app.profile:
                 app.profile[settings_type] = {}
             app.profile[settings_type][name] = value

@@ -1,7 +1,9 @@
+from future import standard_library
+standard_library.install_aliases()
 import json
 import logging
 import os
-from StringIO import StringIO
+from io import StringIO
 
 from couchdbkit import ResourceConflict, ResourceNotFound
 from django.contrib import messages
@@ -249,7 +251,7 @@ def download_file(request, domain, app_id, path):
                         raise
                 else:
                     raise
-            if type(payload) is unicode:
+            if type(payload) is str:
                 payload = payload.encode('utf-8')
             buffer = StringIO(payload)
             metadata = {'content_type': content_type}
@@ -421,7 +423,7 @@ def download_index_files(app, build_profile_id=None):
         files = [(path[len(prefix):], app.fetch_attachment(path))
                  for path in app.blobs if needed_for_CCZ(path)]
     else:
-        files = app.create_all_files().items()
+        files = list(app.create_all_files().items())
     return sorted(files)
 
 

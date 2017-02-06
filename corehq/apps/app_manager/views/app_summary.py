@@ -1,5 +1,9 @@
+from builtins import next
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
 from copy import copy
-from StringIO import StringIO
+from io import StringIO
 from collections import namedtuple
 
 from django.core.urlresolvers import reverse
@@ -108,7 +112,7 @@ class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, Appli
                     form_meta['questions'] = [FormQuestionResponse(q).to_json() for q in questions]
                 except XFormException as e:
                     form_meta['error'] = {
-                        'details': unicode(e),
+                        'details': str(e),
                         'edit_url': reverse('form_source', args=[self.domain, self.app_id, module.id, form.id])
                     }
                     form_meta['module'] = copy(module_meta)
@@ -143,7 +147,7 @@ def _translate_name(names, language):
     try:
         return names[language]
     except KeyError:
-        first_name = names.iteritems().next()
+        first_name = next(iter(names.items()))
         return u"{} [{}]".format(first_name[1], first_name[0])
 
 

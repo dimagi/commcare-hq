@@ -1,3 +1,4 @@
+from builtins import map
 from django.utils.text import slugify
 from django.template.loader import render_to_string
 
@@ -38,7 +39,7 @@ def list_apps(request, domain):
     applications = Domain.get_by_name(domain).applications()
     return json_response({
         'status': 'success',
-        'applications': map(app_to_json, applications),
+        'applications': list(map(app_to_json, applications)),
     })
 
 

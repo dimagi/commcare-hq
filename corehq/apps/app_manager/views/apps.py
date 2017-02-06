@@ -1,10 +1,14 @@
+from future import standard_library
+standard_library.install_aliases()
+from builtins import chr
+from builtins import str
 import copy
 import json
 import os
 import tempfile
 import zipfile
 from collections import defaultdict
-from StringIO import StringIO
+from io import StringIO
 from wsgiref.util import FileWrapper
 
 from django.utils.text import slugify
@@ -167,8 +171,7 @@ def get_app_view_context(request, app):
         section['settings'] = new_settings
 
     if toggles.CUSTOM_PROPERTIES.enabled(request.domain) and 'custom_properties' in app.profile:
-        custom_properties_array = map(lambda p: {'key': p[0], 'value': p[1]},
-                                      app.profile.get('custom_properties').items())
+        custom_properties_array = [{'key': p[0], 'value': p[1]} for p in list(app.profile.get('custom_properties').items())]
         context.update({'custom_properties': custom_properties_array})
 
     context.update({
@@ -190,11 +193,8 @@ def get_app_view_context(request, app):
             app_ver = MAJOR_RELEASE_TO_VERSION[option.build.major_release()]
             builds["default"] = build_config.get_default(app_ver).to_string()
 
-    (build_spec_setting,) = filter(
-        lambda x: x['type'] == 'hq' and x['id'] == 'build_spec',
-        [setting for section in context['settings_layout']
-            for setting in section['settings']]
-    ) if context['settings_layout'] else (None,)
+    (build_spec_setting,) = [x for x in [setting for section in context['settings_layout']
+            for setting in section['settings']] if x['type'] == 'hq' and x['id'] == 'build_spec'] if context['settings_layout'] else (None,)
     if build_spec_setting:
         build_spec_setting['options_map'] = options_map
         build_spec_setting['default_app_version'] = app.application_version
@@ -368,7 +368,7 @@ def export_gzip(req, domain, app_id):
     response['Content-Length'] = os.path.getsize(fpath)
     app = Application.get(app_id)
     set_file_download(response, '{domain}-{app_name}-{app_version}.zip'.format(
-        app_name=slugify(app.name), app_version=slugify(unicode(app.version)), domain=domain
+        app_name=slugify(app.name), app_version=slugify(str(app.version)), domain=domain
     ))
     return response
 
@@ -489,7 +489,7 @@ def rename_language(request, domain, form_unique_id):
         app.save()
         return HttpResponse(json.dumps({"status": "ok"}))
     except XFormException as e:
-        response = HttpResponse(json.dumps({'status': 'error', 'message': unicode(e)}), status=409)
+        response = HttpResponse(json.dumps({'status': 'error', 'message': str(e)}), status=409)
         return response
 
 
@@ -531,7 +531,7 @@ def edit_app_langs(request, domain, app_id):
         return HttpResponse(status=400)
 
     # now do it
-    for old, new in rename.items():
+    for old, new in list(rename.items()):
         if old != new:
             app.rename_lang(old, new)
 
@@ -583,7 +583,7 @@ def get_app_ui_translations(request, domain):
     one = params.get('one', False)
     translations = Translation.get_translations(lang, key, one)
     if isinstance(translations, dict):
-        translations = {k: v for k, v in translations.items()
+        translations = {k: v for k, v in list(translations.items())
                         if not id_strings.is_custom_app_string(k)
                         and '=' not in k}
     return json_response(translations)
@@ -804,7 +804,7 @@ def formdefs(request, domain, app_id):
             [
                 FormattedRow([
                     cell for (_, cell) in
-                    sorted(row.items(), key=lambda item: sheet['columns'].index(item[0]))
+                    sorted(list(row.items()), key=lambda item: sheet['columns'].index(item[0]))
                 ])
                 for row in sheet['rows']
             ]
@@ -854,7 +854,7 @@ def pull_master_app(request, domain, app_id):
             ['date_created', 'build_profiles', 'copy_history', 'copy_of', 'name', 'comment', 'doc_type']
         )
         master_json = latest_master_build.to_json()
-        for key, value in master_json.iteritems():
+        for key, value in master_json.items():
             if key not in excluded_fields:
                 app[key] = value
         app['version'] = master_json['version']
