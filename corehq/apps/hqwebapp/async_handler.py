@@ -14,15 +14,19 @@ class AsyncHandlerMixin(object):
     def handler_slug(self):
         return self.request.POST.get('handler')
 
-    def get_async_handler(self):
-        handler_class = dict([(h.slug, h) for h in self.async_handlers])[self.handler_slug]
-        return handler_class(self.request)
+    def get_async_handlers_mapping(self):
+        mapping = {}
+        for async_handler in self.async_handlers:
+            mapping[async_handler.slug] = async_handler
+        return mapping
 
     @property
     @memoized
     def async_response(self):
-        if self.handler_slug in [h.slug for h in self.async_handlers]:
-            return self.get_async_handler().get_response()
+        async_handlers_mapping = self.get_async_handlers_mapping()
+        if self.handler_slug in async_handlers_mapping.keys():
+            async_handler = async_handlers_mapping[self.handler_slug](self.request)
+            return async_handler.get_response()
 
 
 class AsyncHandlerError(Exception):
