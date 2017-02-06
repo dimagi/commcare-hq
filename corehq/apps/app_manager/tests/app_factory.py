@@ -1,3 +1,6 @@
+from builtins import next
+from past.builtins import basestring
+from builtins import object
 import uuid
 from corehq.apps.app_manager.const import AUTO_SELECT_USERCASE
 from corehq.apps.app_manager.models import AdvancedModule, Module, UpdateCaseAction, LoadUpdateAction, \

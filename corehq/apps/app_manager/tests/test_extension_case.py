@@ -1,3 +1,5 @@
+from builtins import next
+from builtins import str
 from corehq.apps.app_manager.exceptions import CaseError
 from corehq.apps.app_manager.models import (
     Application,

@@ -1,9 +1,13 @@
 # coding=utf-8
+from future import standard_library
+standard_library.install_aliases()
+from builtins import next
+from builtins import zip
 import codecs
 import tempfile
 
 from django.test import SimpleTestCase
-from StringIO import StringIO
+from io import StringIO
 
 from mock import patch
 
@@ -358,7 +362,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
 
         actual_workbook = [
             {'name': title,
-             'rows': [dict(zip(headers, row)) for row in actual_rows[title]]}
+             'rows': [dict(list(zip(headers, row))) for row in actual_rows[title]]}
             for title, headers in actual_headers
         ]
 

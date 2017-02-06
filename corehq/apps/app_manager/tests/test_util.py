@@ -340,7 +340,7 @@ class SchemaTest(SimpleTestCase):
         Key/value pairs in `test_dict` but not present in
         `expected_dict` will be ignored.
         """
-        for key, value in expected_dict.items():
+        for key, value in list(expected_dict.items()):
             self.assertEqual(test_dict[key], value)
 
     def add_form(self, case_type=None, case_updates=None):

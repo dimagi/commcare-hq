@@ -1,4 +1,6 @@
 # coding: utf-8
+from builtins import zip
+from builtins import range
 import json
 from mock import patch
 from corehq.apps.app_manager.tests.util import add_build, patch_default_builds
@@ -108,7 +110,7 @@ class AppManagerTest(TestCase):
     @patch_default_builds
     def _test_import_app(self, app_id_or_source):
         new_app = import_app(app_id_or_source, self.domain)
-        self.assertEqual(set(new_app.blobs.keys()).intersection(self.app.blobs.keys()), set())
+        self.assertEqual(set(new_app.blobs.keys()).intersection(list(self.app.blobs.keys())), set())
         new_forms = list(new_app.get_forms())
         old_forms = list(self.app.get_forms())
         for new_form, old_form in zip(new_forms, old_forms):

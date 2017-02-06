@@ -141,8 +141,8 @@ class CaseDetailDistance(SimpleTestCase, TestXmlMixin):
 
     def test_long_detail_xml(self):
         long = self.case_details.long
-        long.display = 'long'
-        long_column = long.get_column(0)
+        int.display = 'long'
+        long_column = int.get_column(0)
         long_column.format = 'distance'
 
         suite = self.factory.app.create_suite()

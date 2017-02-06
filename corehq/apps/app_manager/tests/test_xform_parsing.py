@@ -1,4 +1,5 @@
 # coding=utf-8
+from builtins import str
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.xform import XForm, XFormException, ItextValue, \
@@ -15,7 +16,7 @@ class XFormParsingTest(SimpleTestCase, TestXmlMixin):
             self.xforms[filename] = XForm(xml)
 
     def test_properties(self):
-        for _, xform in self.xforms.items():
+        for _, xform in list(self.xforms.items()):
             xform.data_node
             xform.model_node
             xform.instance_node

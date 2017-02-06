@@ -36,8 +36,8 @@ class ProfileTest(SimpleTestCase, TestXmlMixin):
             'features': self._test_feature,
             'properties': self._test_property,
         }
-        for p_type, test_method in types.items():
-            for key, value in app.profile.get(p_type, {}).items():
+        for p_type, test_method in list(types.items()):
+            for key, value in list(app.profile.get(p_type, {}).items()):
                 setting = get_commcare_settings_lookup()[p_type][key]
                 test_method(profile_xml, key, value, setting)
 
