@@ -512,7 +512,14 @@ def bug_report(req):
         email = report['email']
     report['full_name'] = full_name
     report['email'] = email or report['username']
-    domain = report['domain'] or "<no domain>"
+
+    if report['domain']:
+        domain = report['domain']
+    elif len(couch_user.domains) == 1:
+        # This isn't a domain page, but the user has only one domain, so let's use that
+        domain = couch_user.domains[0]
+    else:
+        domain = "<no domain>"
 
     message = (
         u"username: {username}\n"
