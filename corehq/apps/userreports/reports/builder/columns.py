@@ -28,8 +28,8 @@ class ColumnOption(object):
     @memoized
     def aggregation_options(self):
         if self._is_non_numeric:
-            return ("Count per Choice",)
-        return ("Count per Choice", "Sum", "Average")
+            return ("Group By", "Count per Choice",)
+        return ("Group By", "Count per Choice", "Sum", "Average")
 
     def to_column_dicts(self, index, display_text, aggregation, is_aggregated_on=False):
         return [{
@@ -80,7 +80,7 @@ class MultiselectQuestionColumnOption(QuestionColumnOption):
     @property
     @memoized
     def aggregation_options(self):
-        return ("Count per Choice",)
+        return ("Group By", "Count per Choice")
 
 
 class CountColumn(ColumnOption):
