@@ -77,3 +77,41 @@ dcexpulmonory = {
     'pulmonary': 'N',
     'extra_pulmonary': 'Y',
 }
+
+# this needs some serious dig in to do for correct mapping
+purpose_of_testing = {
+    'end_of_ip': 1,
+    'end_of_cp': 999,
+    'posttreatment_6month': 999,
+    'posttreatment_12month': 999,
+    'posttreatment_18month': 999,
+    'posttreatment_24month': 999,
+}
+
+smear_result_grade = {
+    # Neg: 99
+    '0': 99,
+    '1': 1,
+    '2': 2,
+    '3': 3,
+    '4': 4,
+    '5': 5,
+    '6': 6,
+    '7': 7,
+    '8': 8,
+    '9': 9,
+    '1+': 11,
+    '2+': 12,
+    '3+': 13,
+}
+
+hiv_status = {
+    'reactive': 'Pos',
+    'non-reactive': 'Neg',
+    'unknown': 'Unknown',
+}
+
+art_initiated = {
+    'no': 0,
+    'yes': 1,
+}

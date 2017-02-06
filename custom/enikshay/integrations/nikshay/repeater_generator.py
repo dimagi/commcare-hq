@@ -10,7 +10,11 @@ from custom.enikshay.const import (
     TREATMENT_SUPPORTER_LAST_NAME,
     TREATMENT_SUPPORTER_PHONE,
 )
-from custom.enikshay.case_utils import get_person_case_from_episode, get_person_locations
+from custom.enikshay.case_utils import (
+    get_person_case_from_episode,
+    get_person_locations,
+    get_episode_case_from_test,
+    get_open_episode_case_from_person)
 from custom.enikshay.integrations.nikshay.repeaters import NikshayRegisterPatientRepeater
 from custom.enikshay.integrations.nikshay.exceptions import NikshayResponseException
 from custom.enikshay.exceptions import NikshayLocationNotFound
@@ -23,6 +27,10 @@ from custom.enikshay.integrations.nikshay.field_mappings import (
     disease_classification,
     dcexpulmonory,
     dcpulmonory,
+    purpose_of_testing,
+    smear_result_grade,
+    hiv_status,
+    art_initiated,
 )
 from custom.enikshay.case_utils import update_case
 
@@ -136,6 +144,127 @@ class NikshayRegisterPatientPayloadGenerator(BasePayloadGenerator):
     def handle_exception(self, exception, repeat_record):
         if isinstance(exception, RequestConnectionError):
             _save_error_message(repeat_record.domain, repeat_record.payload_id, unicode(exception))
+
+
+class NikshayFollowupPayloadGenerator(BasePayloadGenerator):
+    @property
+    def content_type(self):
+        return 'application/json'
+
+    def get_payload(self, repeat_record, test_case):
+        """
+        "PatientID": "Nikshay-ID",
+        "TestDate": "dd/mm/yyyy",
+        "LabNo": "23",
+        "RegBy": "nikshay-user",
+        "Local_ID": "patients-case-id",
+        "IP_From": "Servers IP address or Mobile device MAC Address",
+        "IntervalId": 0:4,
+        "PatientWeight": 45,
+        "SmearResult": 0:99,
+        "Source": nikshay-id,
+        "DMC": owner_id
+
+        :param repeat_record:
+        :param episode_case:
+        :return:
+        """
+        episode_case = get_episode_case_from_test(test_case.get_id)
+        person_case = get_person_case_from_episode(episode_case.get_id)
+
+        test_case_properties = test_case.dynamic_case_properties()
+        episode_case_properties = episode_case.dynamic_case_properties()
+
+        if test_case_properties.get('purpose_of_testing') == 'diagnostic':
+            interval_id = 0
+        else:
+            interval_id = purpose_of_testing.get(test_case_properties.get('follow_up_test_reason'))
+
+        properties_dict = {
+            "PatientID": episode_case_properties.get('nikshay_id'),
+            "TestDate": datetime.datetime.strptime(test_case_properties.get('date_tested'),
+                                                   '%Y-%m-%d').strftime('%d/%m/%Y'),
+            "LabNo": test_case.case_id,  # This needs to be confirmed
+            "RegBy": "tbu-dmdmo01",  # TODO: change this to a real username, store in localsettings
+            "Local_ID": person_case.get_id,
+            "IP_From": "127.0.0.1",
+            "IntervalId": interval_id,
+            "SmearResult": smear_result_grade.get(test_case_properties.get('result_grade'), 0),
+            "Source": ENIKSHAY_ID,
+            "DMC": test_case_properties.get('owner_id')  # This needs to be confirmed
+        }
+
+        return json.dumps(properties_dict)
+
+    def handle_success(self, response, payload_doc, repeat_record):
+        # Simple success message that has {"Nikshay_Message": "Success"...}
+        try:
+            update_case(
+                payload_doc.domain,
+                payload_doc.case_id,
+                {
+                    "nikshay_registered": "true",
+                    "nikshay_error": "",
+                },
+            )
+        except NikshayResponseException as e:
+            _save_error_message(payload_doc.domain, payload_doc.case_id, e.message)
+
+    def handle_failure(self, response, payload_doc, repeat_record):
+        _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(response.json()))
+
+
+class NikshayHIVTestPayloadGenerator(BasePayloadGenerator):
+    @property
+    def content_type(self):
+        return 'application/json'
+
+    def get_payload(self, repeat_record, person_case):
+        """
+        "PatientID": "Nikshay-ID",
+        "HIVStatus": "Pos/Neg/Unknown",
+        "HIVTestDate": "dd/mm/yyyy",
+        "CPTDeliverDate": "dd/mm/yyyy",
+        "ARTCentreDate": "dd/mm/yyyy",
+        "InitiatedOnART": 1/0, (Passing this 0 and not passing ARTCentreDate and InitiatedDate does not work)
+        "InitiatedDate": "dd/mm/yyyy",
+        "Source": "nikshay-id",
+        "regby": "nikshay-user",
+        "MORemark": "This is dev test", (Optional)
+        "IP_FROM": "Servers IP address or Mobile device MAC Address",
+        """
+
+        episode_case = get_open_episode_case_from_person(person_case.get_id)
+        episode_case_properties = episode_case.dynamic_case_properties()
+        person_case_properties = person_case.dynamic_case_properties()
+        properties_dict = {
+            "PatientID": episode_case_properties.get('nikshay_id'),
+            "HIVStatus": hiv_status.get(person_case_properties.get('hiv_status')),
+            "HIVTestDate": datetime.datetime.strptime(person_case_properties.get('hiv_test_date'),
+                                                      '%Y-%m-%d').strftime('%d/%m/%Y'),
+            # might not be available if cpt_initiated is no
+            "CPTDeliverDate": datetime.datetime.strptime(person_case_properties.get('cpt_initiation_date'),
+                                                         '%Y-%m-%d').strftime('%d/%m/%Y'),
+            # might not be available if art_initiated is no
+            "ARTCentreDate": datetime.datetime.strptime(person_case_properties.get('art_initiation_date'),
+                                                        '%Y-%m-%d').strftime('%d/%m/%Y'),
+            "InitiatedOnART": art_initiated.get(person_case_properties.get('art_initiated')),
+            # might not be available if art_initiated is no
+            "InitiatedDate": datetime.datetime.strptime(person_case_properties.get('art_initiation_date'),
+                                                        '%Y-%m-%d').strftime('%d/%m/%Y'),
+            "Source": ENIKSHAY_ID,
+            "regby": "tbu-dmdmo01",  # TODO: change this to a real username, store in localsettings
+            "IP_FROM": "127.0.0.1",
+        }
+
+        return json.dumps(properties_dict)
+
+    def handle_success(self, response, payload_doc, repeat_record):
+        # Simple success message that has {"Nikshay_Message": "Success"...}
+        pass
+
+    def handle_failure(self, response, payload_doc, repeat_record):
+        _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(response.json()))
 
 
 def _get_nikshay_id_from_response(response):

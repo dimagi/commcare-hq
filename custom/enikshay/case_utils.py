@@ -64,6 +64,13 @@ def get_person_case_from_occurrence(domain, occurrence_case_id):
     return get_parent_of_case(domain, occurrence_case_id, CASE_TYPE_PERSON)
 
 
+def get_episode_case_from_test(domain, test_case_id):
+    """
+        Gets the first open episode case for a test
+        """
+    return get_parent_of_case(domain, test_case_id, CASE_TYPE_EPISODE)
+
+
 def get_person_case_from_episode(domain, episode_case_id):
     return get_person_case_from_occurrence(
         domain,
