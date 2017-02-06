@@ -14,7 +14,6 @@ from corehq.apps.app_manager.exceptions import SuiteError, SuiteValidationError
 from corehq.apps.app_manager.xpath import DOT_INTERPOLATE_PATTERN, UserCaseXPath
 from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.app_manager.tasks import create_user_cases
-from corehq.apps.data_dictionary.models import CaseType
 from corehq.apps.data_dictionary.util import get_case_property_description_dict
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
