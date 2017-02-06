@@ -1,8 +1,9 @@
 from future import standard_library
 standard_library.install_aliases()
 
-import urllib.request, urllib.parse, urllib.error
-
+import urllib.request
+import urllib.parse
+import urllib.error
 from builtins import object
 from django.core.urlresolvers import reverse
 

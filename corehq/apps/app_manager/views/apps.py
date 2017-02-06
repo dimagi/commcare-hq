@@ -37,7 +37,6 @@ from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.tour import tours
 from corehq.apps.translations.models import Translation
 from corehq.apps.app_manager.const import (
-    APP_V2,
     MAJOR_RELEASE_TO_VERSION,
     AUTO_SELECT_USERCASE,
     DEFAULT_FETCH_LIMIT,
@@ -136,7 +135,7 @@ def default_new_app(request, domain):
         # APP MANAGER V2 is completely blank on new app
         module = Module.new_module(_("Untitled Module"), lang)
         app.add_module(module)
-        form = app.new_form(0, "Untitled Form", lang)
+        app.new_form(0, "Untitled Form", lang)
 
     if request.project.secure_submissions:
         app.secure_submissions = True
@@ -195,10 +194,11 @@ def get_app_view_context(request, app):
             builds["default"] = build_config.get_default(app_ver).to_string()
 
     if context['settings_layout']:
-        settings = [setting for section in context['settings_layout']
-                            for setting in section['settings']]
-        (build_spec_setting,) = [x for x in settings if x['type'] == 'hq' and
-                                                        x['id'] == 'build_spec']
+        settings = [setting
+            for section in context['settings_layout']
+            for setting in section['settings']]
+        (build_spec_setting,) = [x
+            for x in settings if x['type'] == 'hq' and x['id'] == 'build_spec']
     else:
         build_spec_setting = None
     if build_spec_setting:
@@ -618,7 +618,6 @@ def edit_app_attr(request, domain, app_id, attr):
 
     """
     app = get_app(domain, app_id)
-    lang = request.COOKIES.get('lang', (app.langs or ['en'])[0])
 
     try:
         hq_settings = json.loads(request.body)['hq']

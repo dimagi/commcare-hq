@@ -1,8 +1,10 @@
 from future import standard_library
 standard_library.install_aliases()
+import urllib.request
+import urllib.parse
+import urllib.error
 from builtins import str
 from django import template
-import urllib.request, urllib.parse, urllib.error
 
 register = template.Library()
 
@@ -34,14 +36,15 @@ def urlencode(parser, token):
             except:
                 raise template.TemplateSyntaxError("%r tag has incomplete 'without'" % tag_name)
         else:
-            raise template.TemplateSyntaxError("%r tag found '%s'; expected 'with...as' or 'without'" % (tag_name, cmd))
+            raise template.TemplateSyntaxError(
+                "%r tag found '%s'; expected 'with...as' or 'without'" % (tag_name, cmd))
 
     return URLEncodeNode(path_var, params_var, params, delete)
 
 
 class URLEncodeNode(template.Node):
 
-    def __init__(self, path_var,  params_var, extra_params, delete_params):
+    def __init__(self, path_var, params_var, extra_params, delete_params):
         self.path_var = template.Variable(path_var)
         self.params_var = template.Variable(params_var)
         self.extra_params = extra_params
@@ -54,7 +57,7 @@ class URLEncodeNode(template.Node):
             params[key] = [v.encode('utf-8') if isinstance(v, str) else v
                            for v in val]
 
-        for key,val in self.extra_params.items():
+        for key, val in self.extra_params.items():
             key = template.Variable(key).resolve(context)
             val = template.Variable(val).resolve(context)
             params[key] = val

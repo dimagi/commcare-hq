@@ -1,7 +1,8 @@
 from future import standard_library
 standard_library.install_aliases()
 from lxml import etree
-import urllib.request, urllib.error, urllib.parse
+import urllib.request
+import urllib.error
 import urllib.parse
 from django.core import urlresolvers
 from corehq.apps.app_manager.exceptions import AppEditingError
