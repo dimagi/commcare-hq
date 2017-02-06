@@ -65,9 +65,10 @@ submodules:
     # let's leave this here even when empty
     # just so we always get latest master
     branches:
-      - commcare_2.32 # WSP 1/12
+      - commcare_2.33 # WSP 2/8
   submodules/formtranslate-src:
-    branches: []
+    branches:
+      - commcare_2.33 # WSP 2/8
   submodules/django-digest-src:
     branches: []
   submodules/dimagi-utils-src:
