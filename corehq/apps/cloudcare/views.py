@@ -373,6 +373,11 @@ class PreviewAppView(TemplateView):
 
 
 class SingleAppLandingPageView(TemplateView):
+    '''
+    This View renders a landing page for anonymous users to
+    land on and enter Web Apps without a login.
+    '''
+
     template_name = 'landing_page/base.html'
     urlname = 'home'
 

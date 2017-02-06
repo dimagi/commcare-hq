@@ -24,6 +24,13 @@ def get_cloudcare_apps(domain):
 
 
 def get_app_id_from_hash(domain, app_hash):
+    '''
+    Given an app hash this looks up the equivalent app_id associated
+    with that hash
+
+    :domain: domain
+    :app_hash: A character string that maps to an application id
+    '''
     from corehq.apps.app_manager.models import Application
 
     result = Application.get_db().view(
