@@ -1,5 +1,8 @@
 from django.db import models
 
+from dimagi.utils.couch import CriticalSection
+
+
 PROPERTY_TYPE_CHOICES = (
     ('date', 'Date'),
     ('plain', 'Plain'),
@@ -40,3 +43,18 @@ class CaseProperty(models.Model):
 
     class Meta:
         unique_together = ('case_type', 'name')
+
+    @classmethod
+    def get_or_create(cls, name, case_type, domain):
+        key = 'data-dict-property-{domain}-{type}-{name}'.format(
+            domain=domain, type=case_type, name=name
+        )
+        with CriticalSection([key]):
+            try:
+                prop = CaseProperty.objects.get(
+                    name=name, case_type__name=case_type, case_type__domain=domain
+                )
+            except CaseProperty.DoesNotExist:
+                case_type_obj = CaseType.objects.get(domain=domain, name=case_type)
+                prop = CaseProperty.objects.create(case_type=case_type_obj, name=name)
+            return prop

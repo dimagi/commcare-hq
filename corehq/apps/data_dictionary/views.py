@@ -12,7 +12,6 @@ from django.utils.translation import ugettext_lazy as _
 from django.db.transaction import atomic
 
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.couch import CriticalSection
 
 from corehq import toggles
 from corehq.apps.case_importer.tracking.filestorage import make_temp_file
@@ -84,17 +83,9 @@ def update_case_property(request, domain):
         description = property.get('description')
         data_type = property.get('data_type')
         group = property.get('group')
-        try:
-            prop = CaseProperty.objects.get(
-                name=name, case_type__name=case_type, case_type__domain=domain
-            )
-        except CaseProperty.DoesNotExist:
-            key = 'data-dict-property-{domain}-{type}-{name}'.format(
-                domain=domain, type=case_type, name=name
-            )
-            with CriticalSection([key]):
-                case_type_obj = CaseType.objects.get(domain=domain, name=case_type)
-                prop = CaseProperty.objects.create(case_type=case_type_obj, name=name)
+        prop = CaseProperty.get_or_create(
+            name=name, case_type=case_type, domain=domain
+        )
         if data_type:
             prop.data_type = data_type
         if description:
@@ -204,17 +195,9 @@ class UploadDataDictionaryView(BaseProjectDataView):
                 for row in itertools.islice(worksheet.iter_rows(), 1, None):
                     name, group, data_type, description = [cell.value for cell in row[:4]]
                     if name:
-                        try:
-                            prop = CaseProperty.objects.get(
-                                name=name, case_type__name=case_type, case_type__domain=self.domain
-                            )
-                        except CaseProperty.DoesNotExist:
-                            key = 'data-dict-property-{domain}-{type}-{name}'.format(
-                                domain=self.domain, type=case_type, name=name
-                            )
-                            with CriticalSection([key]):
-                                case_type_obj = CaseType.objects.get(domain=self.domain, name=case_type)
-                                prop = CaseProperty.objects.create(case_type=case_type_obj, name=name)
+                        prop = CaseProperty.get_or_create(
+                            name=name, case_type=case_type, domain=self.domain
+                        )
                         if data_type:
                             prop.data_type = data_type
                         if description:
