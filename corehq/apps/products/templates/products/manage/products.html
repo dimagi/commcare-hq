@@ -19,16 +19,6 @@
     </style>
 {% endblock %}
 
-{% block js-inline %}{{ block.super }}
-    <script>
-        $(function(){
-            $('#program-product-list').asyncProgramProductList(
-                hqImport('hqwebapp/js/initial_page_data.js').get('program_product_options')
-            );
-        });
-    </script>
-{% endblock %}
-
 {% block page_content %}
 {% initial_page_data 'program_product_options' program_product_options %}
 <header>
@@ -57,7 +47,7 @@
     </div>
 </header>
 
-<div id="program-product-list">
+<div class="ko-program-product-list">
 
     <div class="row">
         <div class="col-sm-12">

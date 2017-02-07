@@ -70,12 +70,6 @@ var CommtrackProductsProgramsViewModel = function (o) {
     return view_model;
 };
 
-$.fn.asyncProgramProductList = function (options) {
-    var viewModel = new CommtrackProductsProgramsViewModel(options);
-    $(this).koApplyBindings(viewModel);
-    viewModel.init();
-};
-
 ko.bindingHandlers.isPrevNextDisabled = {
     update: function(element, valueAccessor) {
         var value = valueAccessor()();
@@ -98,3 +92,12 @@ ko.bindingHandlers.isPaginationActive = {
         }
     }
 };
+
+$(function(){
+    var options = hqImport('hqwebapp/js/initial_page_data.js').get('program_product_options')
+    _.each($('.ko-program-product-list'), function(list) {
+        var viewModel = new CommtrackProductsProgramsViewModel(options);
+        $(list).koApplyBindings(viewModel);
+        viewModel.init();
+    });
+});

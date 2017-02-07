@@ -15,18 +15,6 @@
     {% endcompress %}
 {% endblock %}
 
-{% block js-inline %}{{ block.super }}
-    {% if program.get_id %}
-        <script>
-            $(function(){
-                $('#program-product-list').asyncProgramProductList(
-                    hqImport('hqwebapp/js/initial_page_data.js').get('program_product_options')
-                );
-            });
-        </script>
-    {% endif %}
-{% endblock %}
-
 {% block page_content %}
     {% initial_page_data 'program_product_options' program_product_options %}
     <form class="form form-horizontal" name="program" method="post">
@@ -47,7 +35,7 @@
     </form>
 
 {% if has_data_list %}
-    <div id="program-product-list">
+    <div class="ko-program-product-list">
 
         <div class="row" data-bind="visible: !initial_load()">
             <div class="col-sm-12">
