@@ -323,7 +323,7 @@ class EnikshayCaseFactory(object):
     def tu(self):
         if self.test_phi is not None:
             return MockLocation('FAKETU', 'fake_tu_id', MockLocationType('tu', 'tu'))
-        return self.nikshay_codes_to_location.get('-'.join(self.patient_detail.PregId.split('-')[:3]))
+        return self.nikshay_codes_to_location.get('-'.join(self._phi_code.split('-')[:3]))
 
     @property
     def phi(self):
@@ -335,7 +335,7 @@ class EnikshayCaseFactory(object):
     def drtb_hiv(self):
         if self.test_phi is not None:
             return MockLocation('FAKEDRTBHIV', 'fake_drtb_hiv_id', MockLocationType('drtb_hiv', 'drtb_hiv'))
-        dto = self.nikshay_codes_to_location['-'.join(self.patient_detail.PregId.split('-')[:2])]
+        dto = self.nikshay_codes_to_location['-'.join(self._phi_code.split('-')[:2])]
         for dto_child in dto.get_children():
             if dto_child.location_type.code == 'drtb-hiv':
                 return dto_child
