@@ -345,6 +345,26 @@ class FundamentalCaseTests(TestCase):
             _, xform, _ = submit_form_locally(form.format(form_id=form_id), 'domain2')
             self.assertNotEqual(form_id, xform.form_id)
 
+    def test_globally_unique_case_id(self):
+        case_id = uuid.uuid4().hex
+        case = CaseBlock(
+            create=True,
+            case_id=case_id,
+            user_id='user1',
+            owner_id='user1',
+            case_type='demo',
+            case_name='create_case'
+        )
+
+        with override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False):
+            post_case_blocks([case.as_xml()], domain='domain1')
+
+        with override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True):
+            xform, cases = post_case_blocks([case.as_xml()], domain='domain2')
+            self.assertEqual(0, len(cases))
+            self.assertTrue(xform.is_error)
+            self.assertIn('IllegalCaseId', xform.problem)
+
 
 def _submit_case_block(create, case_id, **kwargs):
     domain = kwargs.pop('domain', DOMAIN)

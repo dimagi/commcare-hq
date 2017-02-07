@@ -1,6 +1,7 @@
 import datetime
 import logging
 
+import redis
 from couchdbkit.exceptions import ResourceNotFound
 
 from casexml.apps.case import const
@@ -174,6 +175,26 @@ class FormProcessorCouch(object):
         """
         form_ids = get_case_xform_ids(case_id)
         return [fetch_and_wrap_form(id) for id in form_ids]
+
+    @staticmethod
+    def get_case_with_lock(case_id, lock=False, strip_history=False, wrap=False):
+        try:
+            if strip_history:
+                case_doc = CommCareCase.get_lite(case_id, wrap=wrap)
+            elif lock:
+                try:
+                    return CommCareCase.get_locked_obj(_id=case_id)
+                except redis.RedisError:
+                    case_doc = CommCareCase.get(case_id)
+            else:
+                if wrap:
+                    case_doc = CommCareCase.get(case_id)
+                else:
+                    case_doc = CommCareCase.get_db().get(case_id)
+        except ResourceNotFound:
+            return None, None
+
+        return case_doc, None
 
 
 def _get_actions_from_forms(domain, sorted_forms, case_id):

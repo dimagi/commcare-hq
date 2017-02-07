@@ -24,22 +24,6 @@ class CaseDbCacheSQL(AbstractCaseDbCache):
             if not self.deleted_ok:
                 raise IllegalCaseId("Case [%s] is deleted " % case.case_id)
 
-    def _get_case(self, case_id):
-        try:
-            if self.lock:
-                try:
-                    case, lock = CommCareCaseSQL.get_locked_obj(_id=case_id)
-                except redis.RedisError:
-                    case = CaseAccessorSQL.get_case(case_id)
-                else:
-                    self.locks.append(lock)
-            else:
-                case = CaseAccessorSQL.get_case(case_id)
-        except CaseNotFound:
-            return None
-
-        return case
-
     def _iter_cases(self, case_ids):
         return iter(CaseAccessorSQL.get_cases(case_ids))
 
