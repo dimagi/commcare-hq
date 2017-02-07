@@ -585,6 +585,7 @@ Formplayer.ViewModels.EvaluateXPath = function() {
         self.$xpath.atwho('setIframe', window.frameElement, true);
         self.$xpath.atwho({
             at: '',
+            suffix: '',
             data: autocompleteData,
             searchKey: 'value',
             maxLen: Infinity,
