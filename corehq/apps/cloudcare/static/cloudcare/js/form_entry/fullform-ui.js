@@ -590,6 +590,15 @@ Formplayer.ViewModels.EvaluateXPath = function() {
         self.$xpath = $('#xpath');
         self.$xpath.atwho('destroy');
         self.$xpath.atwho('setIframe', window.frameElement, true);
+        self.$xpath.off('inserted.atwho');
+        self.$xpath.on('inserted.atwho', function(atwhoEvent, $li, e) {
+            var input = atwhoEvent.currentTarget
+
+            // Move cursor back one so we are inbetween the parenthesis
+            if (input.setSelectionRange && $li.data().itemData.type === 'Function') {
+                input.setSelectionRange(input.selectionStart - 1, input.selectionStart - 1);
+            }
+        });
         self.$xpath.atwho({
             at: '',
             suffix: '',
