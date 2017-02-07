@@ -22,6 +22,7 @@ from .new import (
     ExportDataSchema,
     FormExportDataSchema,
     CaseExportDataSchema,
+    SMSExportDataSchema,
     InferredSchema,
     InferredExportGroupSchema,
     FormInferredSchema,
