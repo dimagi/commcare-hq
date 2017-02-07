@@ -331,7 +331,12 @@ class Outcome(models.Model):
             if '-' in self.OutcomeDate:
                 return datetime.strptime(self.OutcomeDate, '%d-%m-%Y').date()
             else:
-                return datetime.strptime(self.OutcomeDate, '%d/%m/%Y').date()
+                format = '%d/%m/%Y'
+                try:
+                    return datetime.strptime(self.OutcomeDate, format).date()
+                except ValueError:
+                    date_string = self.OutcomeDate[:-2] + '20' + self.OutcomeDate[-2:]
+                    return datetime.strptime(date_string, format).date()
 
 
 # class Household(models.Model):
