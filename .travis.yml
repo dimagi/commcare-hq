@@ -1,7 +1,6 @@
 language: python
 python:
  - "2.7"
- - "3.6"
 install:
  - "sudo apt-get install libfreetype6 libfreetype6-dev zlib1g-dev libpng12-dev zlib1g"
  - "sudo ln -s /usr/lib/x86_64-linux-gnu/libfreetype.so /usr/lib"
