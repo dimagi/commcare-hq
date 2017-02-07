@@ -58,19 +58,12 @@
     {% compress js %}
         <script src="{% static 'hqwebapp/js/urllib.js' %}"></script>
         <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
-        <script src="{% static 'Caret.js/dist/jquery.caret.js' %}"></script>
-        <script src="{% static 'At.js/dist/js/jquery.atwho.min.js' %}"></script>
+        <script src="{% static 'select2/dist/js/select2.full.min.js' %}"></script>
     {% endcompress %}
 {% endblock %}
 
 {% block stylesheets %}{{ block.super }}
-    <link rel="stylesheet" href="{% static 'At.js/dist/css/jquery.atwho.min.css' %}" />
-    <style type="text/css">
-        /* Limit atwho dropdown width */
-        .atwho-view {
-            max-width: 300px;
-        }
-    </style>
+    <link type="text/css" rel="stylesheet" media="all" href="{% static 'select2/dist/css/select2.min.css' %}" />
 {% endblock %}
 
 {% block js-inline %}
@@ -91,32 +84,13 @@
         }), function(v) { return parseInt(v.version); }).reverse();
         version_map = _.indexBy(built_versions, 'version');
 
-        $input.atwho({
-            at: "",
+        $input.select2({
             data: _.map(built_versions, function(v) {
                 return {
                     id: v.version,
-                    name: v.version + (v.comment ? " (" + v.comment + ")" : ""),
+                    text: v.version + ": " + (v.comment || "no comment"),
                 };
             }),
-            limit: Infinity,
-            maxLen: Infinity,
-            suffix: "",
-            tabSelectsMatch: false,
-            callbacks: {
-                beforeInsert: function(value, $li) {
-                    value = value.split(/\s+/);
-                    return value[0];
-                },
-                filter: function(query, data, searchKey) {
-                    return _.filter(data, function(item) {
-                        return item.name.indexOf(query) !== -1;
-                    });
-                },
-                matcher: function(flag, subtext, should_startWithSpace) {
-                    return $input.val();
-                },
-            }
         });
 
         $form.find("button").click(function() {
