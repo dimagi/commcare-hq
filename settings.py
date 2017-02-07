@@ -274,6 +274,7 @@ HQ_APPS = (
     'corehq.apps.sms',
     'corehq.apps.smsforms',
     'corehq.apps.ivr',
+    'corehq.messaging.scheduling',
     'corehq.messaging.smsbackends.tropo',
     'corehq.messaging.smsbackends.twilio',
     'corehq.apps.dropbox',
