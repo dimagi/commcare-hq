@@ -2,9 +2,7 @@ from django.core.exceptions import ValidationError
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
-from corehq.apps.app_manager.util import all_case_properties_by_domain
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
-from corehq.apps.export.models.new import CaseExportDataSchema
 
 
 class OldExportsEnabledException(Exception):
@@ -21,6 +19,10 @@ def generate_data_dictionary(domain):
 
 
 def _get_all_case_properties(domain):
+    # moved here to avoid circular import
+    from corehq.apps.app_manager.util import all_case_properties_by_domain
+    from corehq.apps.export.models.new import CaseExportDataSchema
+
     case_type_to_properties = {}
     case_properties_from_apps = all_case_properties_by_domain(
         domain, include_parent_properties=False
@@ -109,6 +111,7 @@ def get_case_property_description_dict(domain):
     for case_type in annotated_types:
         descriptions_dict[case_type.name] = {prop.name: prop.description for prop in case_type.properties.all()}
     return descriptions_dict
+
 
 def save_case_property(name, case_type=None, domain=None, data_type=None, description=None, group=None):
     """

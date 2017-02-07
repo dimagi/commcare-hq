@@ -12,7 +12,7 @@ urlpatterns = [
     url(r"^json/$", data_dictionary_json, name='data_dictionary_json'),
     url(r"^json/?(?P<case_type_name>\w+)/?$", data_dictionary_json, name='case_type_dictionary_json'),
     url(r"^update_case_property/$", update_case_property, name='update_case_property'),
-    url(r"^export/$", ExportDataDictionaryView, name=ExportDataDictionaryView.urlname),
+    url(r"^export/$", ExportDataDictionaryView.as_view(), name=ExportDataDictionaryView.urlname),
     url(r"^$", DataDictionaryView.as_view(), name=DataDictionaryView.urlname),
     url(r"^import$", UploadDataDictionaryView.as_view(), name=UploadDataDictionaryView.urlname),
 ]
