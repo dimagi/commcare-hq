@@ -284,7 +284,6 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
 
     domain_obj = Domain.get_by_name(domain)
     context.update({
-        'is_onboarding_domain': domain_obj.is_onboarding_domain,
         'show_live_preview': should_show_preview_app(
             request,
             domain_obj,
