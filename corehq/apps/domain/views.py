@@ -132,7 +132,7 @@ from corehq.apps.repeaters.dbaccessors import (
     get_paged_repeat_records,
     get_repeat_record_count,
 )
-from corehq.apps.repeaters.utils import get_all_repeater_types
+from corehq.apps.repeaters.utils import get_all_repeater_types, get_repeater_auth_header
 from corehq.apps.repeaters.const import (
     RECORD_FAILURE_STATE,
     RECORD_PENDING_STATE,
@@ -553,6 +553,8 @@ def test_repeater(request, domain):
     repeater_type = request.POST['repeater_type']
     format = request.POST.get('format', None)
     repeater_class = get_all_repeater_types()[repeater_type]
+    use_basic_auth = request.POST.get('use_basic_auth')
+
     form = GenericRepeaterForm(
         {"url": url, "format": format},
         domain=domain,
@@ -565,6 +567,11 @@ def test_repeater(request, domain):
         generator = generator_class(repeater_class())
         fake_post = generator.get_test_payload(domain)
         headers = generator.get_headers()
+
+        if use_basic_auth == 'true':
+            username = request.POST.get('username')
+            password = request.POST.get('password')
+            headers.update(get_repeater_auth_header(headers, username, password))
 
         try:
             resp = simple_post(fake_post, url, headers=headers)
