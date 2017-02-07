@@ -936,6 +936,7 @@ class FormExportInstance(ExportInstance):
 class SMSExportInstance(ExportInstance):
     type = SMS_EXPORT
     identifier = None
+    name = "Messages"
 
     @classmethod
     def _new_from_schema(cls, schema):
@@ -950,7 +951,7 @@ class SMSExportInstance(ExportInstance):
             ("Type", "workflow", WORKFLOW_TRANSFORM),
         ]
         main_table = TableConfiguration(
-            label="Messages",
+            label='Messages',
             path=MAIN_TABLE,
             selected=True,
             columns=[
