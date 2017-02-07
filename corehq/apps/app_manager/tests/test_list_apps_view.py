@@ -17,6 +17,7 @@ class ListAppsTest(SimpleTestCase, TestXmlMixin):
         self.factories = {domain: AppFactory(domain, build_version='2.9.0') for domain in self.domains}
         for factory in self.factories.itervalues():
             factory.new_basic_module('register', 'orc')
+            factory.app._id = 'app_id'  # force an ID so we don't have to save the apps
 
     @override_settings(BASE_ADDRESS='onering.com')
     @override_settings(SERVER_ENVIRONMENT='production')
