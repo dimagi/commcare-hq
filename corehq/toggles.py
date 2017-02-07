@@ -454,7 +454,7 @@ PRODUCTS_PER_LOCATION = StaticToggle(
     'products_per_location',
     "Products Per Location: Specify products stocked at individual locations.  "
     "This doesn't actually do anything yet.",
-    TAG_PRODUCT_CORE,
+    TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )
 
