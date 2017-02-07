@@ -900,8 +900,8 @@ class InstanceTests(SimpleTestCase, TestXmlMixin, SuiteMixin):
     @mock.patch.object(LocationFixtureConfiguration, 'for_domain')
     def test_location_instance_during_migration(self, sync_patch):
         # tests for expectations during migration from hierarchical to flat location fixture
-        # Domains with HIERARCHICAL_LOCATION_FIXTURE enabled and with sync_hierarchical_fixture set in
-        # configuration should have hierarchical jr://fixture/commtrack:locations fixture format
+        # Domains with HIERARCHICAL_LOCATION_FIXTURE enabled and with sync_flat_fixture set to False
+        # should have hierarchical jr://fixture/commtrack:locations fixture format
         # All other cases to have flat jr://fixture/locations fixture format
         self.form.form_filter = "instance('locations')/locations/"
         configuration_mock_obj = mock.MagicMock()
@@ -924,11 +924,17 @@ class InstanceTests(SimpleTestCase, TestXmlMixin, SuiteMixin):
         # switch between hierarchical and flat fixture
         with flag_enabled('HIERARCHICAL_LOCATION_FIXTURE'):
             configuration_mock_obj.sync_hierarchical_fixture = True  # default value
-            self.assertXmlPartialEqual(hierarchical_fixture_format_xml,
+            self.assertXmlPartialEqual(flat_fixture_format_xml,
                                        self.factory.app.create_suite(), "entry/instance")
 
             configuration_mock_obj.sync_hierarchical_fixture = False
             self.assertXmlPartialEqual(flat_fixture_format_xml, self.factory.app.create_suite(), "entry/instance")
+
+            configuration_mock_obj.sync_flat_fixture = False
+            self.assertXmlPartialEqual(hierarchical_fixture_format_xml, self.factory.app.create_suite(), "entry/instance")
+
+            configuration_mock_obj.sync_hierarchical_fixture = True
+            self.assertXmlPartialEqual(hierarchical_fixture_format_xml, self.factory.app.create_suite(), "entry/instance")
 
         # To ensure for new domains or domains adding locations now come on flat fixture
         configuration_mock_obj.sync_hierarchical_fixture = True  # default value
