@@ -32,9 +32,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-02-07 20:36+0000\n"
-"PO-Revision-Date: 2017-02-06 19:25+0000\n"
-"Last-Translator: Aissetou Sawadogo <ais107@hotmail.com>\n"
+"POT-Creation-Date: 2017-02-07 20:41+0000\n"
+"PO-Revision-Date: 2017-02-07 20:38+0000\n"
+"Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: French (http://www.transifex.com/dimagi/commcare-hq/language/"
 "fr/)\n"
 "Language: fr\n"
@@ -6299,10 +6299,8 @@ msgstr "Ajoutez onglet"
 
 #: corehq/apps/app_manager/templates/app_manager/v1/partials/case_detail.html:27
 #: corehq/apps/app_manager/templates/app_manager/v2/partials/case_detail.html:31
-#, fuzzy
-#| msgid "Case Details"
 msgid "Case Detail Tabs"
-msgstr "Détails du dossier"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/v1/partials/case_detail.html:28
 #: corehq/apps/app_manager/templates/app_manager/v2/partials/case_detail.html:32
@@ -6736,10 +6734,8 @@ msgstr "Remplacer la liste de dossiers"
 
 #: corehq/apps/app_manager/templates/app_manager/v1/partials/case_list_module_overwrite.html:21
 #: corehq/apps/app_manager/templates/app_manager/v2/partials/case_list_module_overwrite.html:21
-#, fuzzy
-#| msgid "Overwrite Case List"
 msgid "Overwrite Case Detail"
-msgstr "Remplacer la liste de dossiers"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/v1/partials/case_list_module_overwrite.html:24
 #: corehq/apps/app_manager/templates/app_manager/v2/partials/case_list_module_overwrite.html:24
@@ -7757,10 +7753,8 @@ msgstr "Ajouter un Rapport"
 
 #: corehq/apps/app_manager/templates/app_manager/v1/partials/module_actions.html:2
 #: corehq/apps/app_manager/templates/app_manager/v2/partials/module_actions.html:2
-#, fuzzy
-#| msgid "Use Configuration from Existing Module"
 msgid "Overwrite Case List/Detail from Existing Module"
-msgstr "Utilisez la configuration d'un module existant"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/v1/partials/module_actions.html:3
 #: corehq/apps/app_manager/templates/app_manager/v2/partials/module_actions.html:3
@@ -7862,22 +7856,11 @@ msgstr "Style d'affichage"
 
 #: corehq/apps/app_manager/templates/app_manager/v1/partials/module_view_settings.html:63
 #: corehq/apps/app_manager/templates/app_manager/v2/partials/module_view_settings.html:95
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "              Learn more about Application Profiles on our <a "
-#| "href='https://confluence.dimagi.com/display/commcarepublic/Application"
-#| "+Profiles'>Help Site</a>\n"
-#| "          "
 msgid ""
 "Display this module's forms as a list or a grid. Read more on the <a "
 "target='_blank' href='https://confluence.dimagi.com/display/commcarepublic/"
 "Grid+View+for+Form+and+Module+Screens'>Help Site</a>."
 msgstr ""
-"\n"
-"Pour en savoir plus sur les profils d'application, visitez <a href='https://"
-"confluence.dimagi.com/display/commcarepublic/Application+Profiles'> sur "
-"notre site d'aide</a>"
 
 #: corehq/apps/app_manager/templates/app_manager/v1/partials/module_view_settings.html:67
 #: corehq/apps/app_manager/templates/app_manager/v2/partials/module_view_settings.html:99
@@ -8505,10 +8488,8 @@ msgstr "Télécharger multimédia"
 
 #: corehq/apps/app_manager/templates/app_manager/v1/partials/releases_deploy_modal.html:306
 #: corehq/apps/app_manager/templates/app_manager/v2/partials/releases_deploy_modal.html:319
-#, fuzzy
-#| msgid "Source File"
 msgid "View Source Files"
-msgstr "Fichier source"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/v1/partials/supported-languages.html:53
 #: corehq/apps/app_manager/templates/app_manager/v2/partials/supported-languages.html:39
@@ -10855,10 +10836,8 @@ msgid "Fuzzy"
 msgstr "Flou"
 
 #: corehq/apps/case_search/templates/case_search/case_search.html:93
-#, fuzzy
-#| msgid "Custom Branding"
 msgid "Custom Query Addition"
-msgstr "Marquage personnalisé"
+msgstr ""
 
 #: corehq/apps/case_search/templates/case_search/case_search.html:105
 #: corehq/apps/reports/filters/search.py:8
@@ -13109,10 +13088,8 @@ msgid "Update Privacy Settings"
 msgstr "Mettre à jour les paramètres de confidentialité "
 
 #: corehq/apps/domain/forms.py:1065
-#, fuzzy
-#| msgid "More information"
 msgid "Support Hand-off information"
-msgstr "Plus d'Informations "
+msgstr ""
 
 #: corehq/apps/domain/forms.py:1078
 msgid "Salesforce Details"
@@ -14348,10 +14325,8 @@ msgstr "Prépayé par carte de crédit"
 
 #: corehq/apps/domain/templates/domain/current_subscription.html:209
 #: corehq/apps/domain/templates/domain/current_subscription.html:384
-#, fuzzy
-#| msgid "Your prepayment invoice"
 msgid "Generate Prepayment Invoice"
-msgstr "Facture de votre paiement anticipé"
+msgstr ""
 
 #: corehq/apps/domain/templates/domain/current_subscription.html:214
 msgid "Not Billing Admin, Can't Add Credit"
@@ -14908,13 +14883,6 @@ msgid "Wire Payment Information"
 msgstr "Information sur paiement par virement bancaire "
 
 #: corehq/apps/domain/templates/domain/partials/payment_modal.html:41
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                        Dimagi accepts wire payments via ACH and wire "
-#| "transfer. You will receive an invoice via email with instructions for "
-#| "wire payment. Please include the invoice ID in the wire payment details.\n"
-#| "                        "
 msgid ""
 "\n"
 "                        Dimagi accepts wire payments via ACH and wire "
@@ -14926,11 +14894,6 @@ msgid ""
 "\">More information...</a>\n"
 "                        "
 msgstr ""
-"\n"
-"Dimagi accepte les paiements électroniques via ACH et les virements "
-"bancaires. Vous allez recevoir une facture par courriel avec les "
-"instructions pour le paiement électronique. Veuillez inclure l'identifiant "
-"de la facture dans les détails du paiement électronique."
 
 #: corehq/apps/domain/templates/domain/partials/payment_modal.html:48
 msgid "Invoice Recipients"
@@ -16282,16 +16245,12 @@ msgid "CommCare Supply"
 msgstr "CommCare Supply"
 
 #: corehq/apps/export/forms.py:112 corehq/apps/export/forms.py:153
-#, fuzzy
-#| msgid "Select Module"
 msgid "Select model type"
-msgstr "Choisir le module"
+msgstr ""
 
 #: corehq/apps/export/forms.py:114
-#, fuzzy
-#| msgid "forms"
 msgid "form"
-msgstr "formulaires"
+msgstr ""
 
 #: corehq/apps/export/forms.py:164
 msgid "Select Application Type"
@@ -16302,22 +16261,16 @@ msgid "Select Module"
 msgstr "Choisir le module"
 
 #: corehq/apps/export/forms.py:234
-#, fuzzy
-#| msgid "{} is required!"
 msgid "Module is required"
-msgstr "{} est requis!"
+msgstr ""
 
 #: corehq/apps/export/forms.py:236
-#, fuzzy
-#| msgid "{} is required!"
 msgid "Form is required"
-msgstr "{} est requis!"
+msgstr ""
 
 #: corehq/apps/export/forms.py:242
-#, fuzzy
-#| msgid "This field is required"
 msgid "case type is required"
-msgstr "Ce champ est obligatoire"
+msgstr ""
 
 #: corehq/apps/export/forms.py:261
 msgid "User Types or Group"
@@ -16346,10 +16299,8 @@ msgid "YYYY-MM-DD"
 msgstr "AAAA-MM-JJ"
 
 #: corehq/apps/export/forms.py:421
-#, fuzzy
-#| msgid "Bad date format!"
 msgid "Invalid date format"
-msgstr "Format de date erroné !"
+msgstr ""
 
 #: corehq/apps/export/forms.py:430 corehq/apps/export/forms.py:435
 #: corehq/apps/reports/filters/users.py:196
@@ -16424,16 +16375,12 @@ msgid "Cannot submit case and form users and groups filter"
 msgstr ""
 
 #: corehq/apps/export/forms.py:498
-#, fuzzy
-#| msgid "A valid project space is required."
 msgid "A valid start date is required"
-msgstr "Un espace de projet valide est nécessaire"
+msgstr ""
 
 #: corehq/apps/export/forms.py:502
-#, fuzzy
-#| msgid "A valid project space is required."
 msgid "A valid end date is required"
-msgstr "Un espace de projet valide est nécessaire"
+msgstr ""
 
 #: corehq/apps/export/forms.py:675
 #, python-format
@@ -17101,17 +17048,13 @@ msgstr ""
 
 #: corehq/apps/export/templates/export/partial/daily_saved_export_list_controller.html:7
 #: corehq/apps/export/templates/export/partial/export_list_controller.html:281
-#, fuzzy
-#| msgid "Columns"
 msgid "Edit Columns"
-msgstr "Colonnes"
+msgstr ""
 
 #: corehq/apps/export/templates/export/partial/daily_saved_export_list_controller.html:12
 #: corehq/apps/export/templates/export/partial/export_list_controller.html:305
-#, fuzzy
-#| msgid "Export Filters"
 msgid "Edit Filters"
-msgstr "Manejo de Casos"
+msgstr ""
 
 #: corehq/apps/export/templates/export/partial/dashboard_list_controller.html:7
 msgid ""
@@ -17239,15 +17182,7 @@ msgid "Learn more about Sync to Dropbox"
 msgstr "Apprendre d'avantage sur la synchronisation vers Dropbox"
 
 #: corehq/apps/export/templates/export/partial/export_list_controller.html:10
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "            These exports are <strong>De-Identified</strong>, meaning "
-#| "that\n"
-#| "            the administrator of this domain has removed all personally-"
-#| "identifying\n"
-#| "            properties from the exported data.\n"
-#| "        "
+#, python-format
 msgid ""
 "\n"
 "            These %(export_type_plural)s are <strong>De-Identified</strong>, "
@@ -17257,10 +17192,6 @@ msgid ""
 "            properties from the exported data.\n"
 "        "
 msgstr ""
-"\n"
-"Ces exportation sont  <strong>anonymisées</strong>, ce qui signifie que\n"
-"l'administrateur de ce domaine a enlevé toutes les propriétés pouvant\n"
-"identifier un individu des données exportées. "
 
 #: corehq/apps/export/templates/export/partial/export_list_controller.html:19
 msgid ""
@@ -17277,85 +17208,51 @@ msgstr ""
 
 #: corehq/apps/export/templates/export/partial/export_list_controller.html:32
 #: corehq/apps/export/templates/export/partial/export_list_controller.html:46
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                Submitted by %(auth_user)s\n"
-#| "            "
+#, python-format
 msgid ""
 "\n"
 "                Create New %(export_type_caps)s\n"
 "            "
 msgstr ""
-"\n"
-"Soumis par %(auth_user)s"
 
 #: corehq/apps/export/templates/export/partial/export_list_controller.html:39
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "            It seems you haven't created any exports yet!\n"
-#| "        "
+#, python-format
 msgid ""
 "\n"
 "            It seems you haven't created any %(export_type_plural)s yet!\n"
 "        "
 msgstr ""
-"\n"
-"Vous n'avez pas encore créé un téléchargement!"
 
 #: corehq/apps/export/templates/export/partial/export_list_controller.html:59
-#, fuzzy, python-format
-#| msgid "Fetching List of Exports..."
+#, python-format
 msgid "Fetching List of %(export_type_caps_plural)s..."
-msgstr "Obtenant la liste de téléchargements..."
+msgstr ""
 
 #: corehq/apps/export/templates/export/partial/export_list_controller.html:66
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                            Download %(plural_noun)s\n"
-#| "                        "
+#, python-format
 msgid ""
 "\n"
 "                            No De-Identified %(export_type_caps_plural)s are "
 "available at this time.\n"
 "                        "
 msgstr ""
-"\n"
-"Télécharger %(plural_noun)s"
 
 #: corehq/apps/export/templates/export/partial/export_list_controller.html:70
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                            Download %(plural_noun)s\n"
-#| "                        "
+#, python-format
 msgid ""
 "\n"
 "                            No %(export_type_caps_plural)s Created Yet.\n"
 "                        "
 msgstr ""
-"\n"
-"Télécharger %(plural_noun)s"
 
 #: corehq/apps/export/templates/export/partial/export_list_controller.html:79
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                                There was an issue fetching the export "
-#| "data.\n"
-#| "                                Please check your internet connection.\n"
-#| "                            "
+#, python-format
 msgid ""
 "\n"
 "                        Issue fetching list of %(export_type_plural)s. "
 "Please check your Internet connection.\n"
 "                    "
 msgstr ""
-"\n"
-"Il y a eu un problème pour récupérer les données des exportations.\n"
-"Veuillez vérifier votre connexion internet."
 
 #: corehq/apps/export/templates/export/partial/export_list_controller.html:86
 msgid ""
@@ -17384,19 +17281,12 @@ msgid "Form:"
 msgstr "Formulaire: "
 
 #: corehq/apps/export/templates/export/partial/export_list_controller.html:134
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                Build your mobile app today.\n"
-#| "                            "
 msgid ""
 "\n"
 "                                This export is filtered to data you don't "
 "have access to.\n"
 "                                "
 msgstr ""
-"\n"
-"Créez votre application mobile aujourd'hui."
 
 #: corehq/apps/export/templates/export/partial/export_list_controller.html:142
 msgid "Size:"
@@ -17421,15 +17311,7 @@ msgid "Copy Dashboard Feed Link"
 msgstr ""
 
 #: corehq/apps/export/templates/export/partial/export_list_controller.html:200
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                                        This saved export has expired "
-#| "because it has not been used in\n"
-#| "                                        the last 35 days. To renew daily "
-#| "updates, click the 'Update Data'\n"
-#| "                                        button and download the file.\n"
-#| "                                    "
+#, python-format
 msgid ""
 "\n"
 "                                        This saved %(export_type)s has "
@@ -17439,11 +17321,6 @@ msgid ""
 "                                        button and download the file.\n"
 "                                    "
 msgstr ""
-"\n"
-"Cette exportation enregistrée a expiré parce qu'elle n 'a pas été utilisé \n"
-"durant les derniers 35 jours. Pour renouveler les mises à jour quotidiennes, "
-"cliquez sur le bouton \"Mettre à jour les données\" et télécharger le "
-"fichier. "
 
 #: corehq/apps/export/templates/export/partial/export_list_controller.html:208
 msgid "Data update started."
@@ -17456,14 +17333,6 @@ msgstr ""
 "de la page requise)"
 
 #: corehq/apps/export/templates/export/partial/export_list_controller.html:217
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                                  The field label that "
-#| "users will see when adding or editing\n"
-#| "                                                  a %(entity_string)s in "
-#| "CommCareHQ.\n"
-#| "                                              "
 msgid ""
 "\n"
 "                                        <strong>No data is available yet.</"
@@ -17472,23 +17341,12 @@ msgid ""
 "the automatic scheduler hasn't picked up the changes in a while.\n"
 "                                        "
 msgstr ""
-"\n"
-"L'étiquette de champs que l'utilisateur va voir en ajoutant ou modifiant\n"
-"un  %(entity_string)s dans CommCareHQ."
 
 #: corehq/apps/export/templates/export/partial/export_list_controller.html:230
 msgid "Confirm data updates."
 msgstr "Confirmez les mises à jour des données."
 
 #: corehq/apps/export/templates/export/partial/export_list_controller.html:233
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                                    To renew daily "
-#| "updates, click the Update Data button below and check back in a little\n"
-#| "                                                    bit once the updates "
-#| "have finished processing.\n"
-#| "                                                "
 msgid ""
 "\n"
 "                                                        To renew daily "
@@ -17497,19 +17355,8 @@ msgid ""
 "have finished processing.\n"
 "                                                    "
 msgstr ""
-"\n"
-"Pour renouveler les mises à jour quotidiennes, cliquez sur le bouton de Mise "
-"à jour des données ci-dessous et vérifier sous peu\n"
-"une fois que les mises à jour ont terminé le traitement."
 
 #: corehq/apps/export/templates/export/partial/export_list_controller.html:240
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                                        <strong>Once the "
-#| "data is updated, a data refresh should occur automatically on a daily "
-#| "basis.</strong>\n"
-#| "                                                    "
 msgid ""
 "\n"
 "                                                            <strong>Once the "
@@ -17517,39 +17364,21 @@ msgid ""
 "</strong>\n"
 "                                                        "
 msgstr ""
-"\n"
-"<strong>Une fois que les données ont été mises à jour, une actualisation des "
-"données devrait avoir lieu quotidiennement.</strong>"
 
 #: corehq/apps/export/templates/export/partial/export_list_controller.html:245
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                                        To download data "
-#| "now, please click the Export button instead.\n"
-#| "                                                    "
 msgid ""
 "\n"
 "                                                            To download data "
 "now, please click the Export button instead.\n"
 "                                                        "
 msgstr ""
-"\n"
-"Si vous voulez télécharger les données maintenant, s'il vous plaît cliquez "
-"sur le bouton 'Télécharger'"
 
 #: corehq/apps/export/templates/export/partial/export_list_create_export_modal.html:22
 msgid "Loading Form"
 msgstr "Chargement du formulaire"
 
 #: corehq/apps/export/templates/export/partial/export_list_create_export_modal.html:30
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                                There was an issue fetching the export "
-#| "data.\n"
-#| "                                Please check your internet connection.\n"
-#| "                            "
+#, python-format
 msgid ""
 "\n"
 "                                There was an issue fetching the "
@@ -17557,9 +17386,6 @@ msgid ""
 "                                Please check your internet connection.\n"
 "                            "
 msgstr ""
-"\n"
-"Il y a eu un problème pour récupérer les données des exportations.\n"
-"Veuillez vérifier votre connexion internet."
 
 #: corehq/apps/export/templates/export/partial/export_list_create_export_modal.html:47
 msgid ""
@@ -17626,18 +17452,12 @@ msgid "Restore App"
 msgstr "Restaurer l'application:"
 
 #: corehq/apps/export/templates/export/partial/export_list_create_export_modal.html:110
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                            Preparing Export Data...\n"
-#| "                        "
+#, python-format
 msgid ""
 "\n"
 "                            Preparing %(export_type_caps)s Data...\n"
 "                        "
 msgstr ""
-"\n"
-"Préparation de l'exportation des données..."
 
 #: corehq/apps/export/templates/export/partial/export_list_create_export_modal.html:115
 msgid ""
@@ -17684,14 +17504,7 @@ msgstr ""
 "résoudre le problème. "
 
 #: corehq/apps/export/templates/export/partial/export_list_create_export_modal.html:149
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                        It seems as though you haven't submitted any data "
-#| "to CommCare HQ.\n"
-#| "                        Please deploy an Application and submit data "
-#| "before creating any exports.\n"
-#| "                    "
+#, python-format
 msgid ""
 "\n"
 "                        It seems as though you haven't submitted any data to "
@@ -17700,52 +17513,34 @@ msgid ""
 "creating any %(export_type_plural)s.\n"
 "                    "
 msgstr ""
-"\n"
-"Il semble que vous n'avez pas soumis de données à ComCare HQ. \n"
-"Veuillez déployer une application et soumettre des données avant de créer "
-"des exportations."
 
 #: corehq/apps/export/templates/export/partial/export_list_create_export_modal.html:157
 msgid "How to Create and Deploy a CommCare Application."
 msgstr "Comment créer et utiliser une application CommCare."
 
 #: corehq/apps/export/templates/export/partial/export_list_create_export_modal.html:169
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                            Preparing Export Data...\n"
-#| "                        "
+#, python-format
 msgid ""
 "\n"
 "                            Create %(export_type_caps)s\n"
 "                        "
 msgstr ""
-"\n"
-"Préparation de l'exportation des données..."
 
 #: corehq/apps/export/templates/export/partial/feed_filter_modal.html:20
-#, fuzzy
-#| msgid "Filter Type"
 msgid "Filter Feed"
-msgstr "Type de filtre"
+msgstr ""
 
 #: corehq/apps/export/templates/export/partial/feed_filter_modal.html:25
-#, fuzzy
-#| msgid "The report returned the following error"
 msgid "This export is limited to the following locations:"
-msgstr "Le rapport contient les erreurs suivantes "
+msgstr ""
 
 #: corehq/apps/export/templates/export/partial/feed_filter_modal.html:35
-#, fuzzy
-#| msgid "There was an error retrieving the data"
 msgid "There was an unknown saving the filters"
-msgstr "Une erreur est survenue lors de la récupération des données"
+msgstr ""
 
 #: corehq/apps/export/templates/export/partial/feed_filter_modal.html:48
-#, fuzzy
-#| msgid "Date Filter"
 msgid "Save filters"
-msgstr "Filtrer par date"
+msgstr ""
 
 #: corehq/apps/export/templates/export/partial/feed_filter_modal.html:51
 #: corehq/apps/fixtures/templates/fixtures/manage_tables.html:88
@@ -17797,18 +17592,11 @@ msgid "Share Daily Data with Excel and Other Systems"
 msgstr ""
 
 #: corehq/apps/export/templates/export/paywall.html:14
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                        Do more with case management.\n"
-#| "                    "
 msgid ""
 "\n"
 "                    Share Daily Data with Excel and Other Systems\n"
 "                "
 msgstr ""
-"\n"
-"Faire plus avec la gestion de dossier."
 
 #: corehq/apps/export/templates/export/paywall.html:19
 msgid ""
@@ -17826,10 +17614,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/export/templates/export/paywall.html:28
-#, fuzzy
-#| msgid "Read more about our pricing plans"
 msgid "Learn More About Pricing Plans"
-msgstr "En savoir plus sur nos plans d'abonnement"
+msgstr ""
 
 #: corehq/apps/export/views.py:302 corehq/apps/export/views.py:1818
 msgid "Export <strong>{}</strong> created."
@@ -17931,20 +17717,16 @@ msgid "Export"
 msgstr "Télécharger"
 
 #: corehq/apps/export/views.py:985
-#, fuzzy
-#| msgid "Export"
 msgid "export"
-msgstr "Télécharger"
+msgstr ""
 
 #: corehq/apps/export/views.py:986
 msgid "Exports"
 msgstr "Téléchargements "
 
 #: corehq/apps/export/views.py:987
-#, fuzzy
-#| msgid "Exports"
 msgid "exports"
-msgstr "Téléchargements "
+msgstr ""
 
 #: corehq/apps/export/views.py:1178
 msgid "Issue fetching list of exports: {}"
@@ -17968,34 +17750,24 @@ msgid "Daily Saved Exports"
 msgstr "Exports Sauvegardés Quotidiens"
 
 #: corehq/apps/export/views.py:1375
-#, fuzzy
-#| msgid "Problem getting Create Export Form: {} {}"
 msgid "Problem getting Create Daily Saved Export Form: {} {}"
-msgstr "Problème pour récupérer le formulaire de création d'exportation: {} {}"
+msgstr ""
 
 #: corehq/apps/export/views.py:1473
-#, fuzzy
-#| msgid "Dashboard"
 msgid "Dashboard Feed"
-msgstr "Tableau de bord"
+msgstr ""
 
 #: corehq/apps/export/views.py:1474
-#, fuzzy
-#| msgid "Dashboard"
 msgid "dashboard feed"
-msgstr "Tableau de bord"
+msgstr ""
 
 #: corehq/apps/export/views.py:1475
-#, fuzzy
-#| msgid "Dashboard"
 msgid "Dashboard Feeds"
-msgstr "Tableau de bord"
+msgstr ""
 
 #: corehq/apps/export/views.py:1476
-#, fuzzy
-#| msgid "Dashboard"
 msgid "dashboard feeds"
-msgstr "Tableau de bord"
+msgstr ""
 
 #: corehq/apps/export/views.py:1523 corehq/apps/reports/standard/export.py:92
 msgid "Export Forms"
@@ -18014,16 +17786,12 @@ msgid "Export De-Identified Forms"
 msgstr "Exporter les formulaires anonymisés "
 
 #: corehq/apps/export/views.py:1652
-#, fuzzy
-#| msgid "Export De-Identified Forms"
 msgid "Export De-Identified Daily Saved Exports"
-msgstr "Exporter les formulaires anonymisés "
+msgstr ""
 
 #: corehq/apps/export/views.py:1662
-#, fuzzy
-#| msgid "Export De-Identified Cases"
 msgid "Export De-Identified Dashboard Feeds"
-msgstr "Exporter les dossiers anonymisés "
+msgstr ""
 
 #: corehq/apps/export/views.py:1672
 msgid "Export Cases"
@@ -18042,10 +17810,8 @@ msgid "Problem getting Create Export Form: {}"
 msgstr "Problème pour récupérer le formulaire de création d'exportation: {}"
 
 #: corehq/apps/export/views.py:1953 corehq/apps/export/views.py:1959
-#, fuzzy
-#| msgid "Create Password"
 msgid "Create Dashboard Feed"
-msgstr "Créer un mot de passe"
+msgstr ""
 
 #: corehq/apps/export/views.py:1988
 msgid "Export <strong>{}</strong> was saved."
@@ -18058,16 +17824,12 @@ msgstr ""
 "créer une nouvelle exportation"
 
 #: corehq/apps/export/views.py:2071
-#, fuzzy
-#| msgid "Edit User Fields"
 msgid "Edit Case Feed"
-msgstr "Éditer les champs de l`utilisateur"
+msgstr ""
 
 #: corehq/apps/export/views.py:2076
-#, fuzzy
-#| msgid "Edit Form Export"
 msgid "Edit Form Feed"
-msgstr "Réviser le téléchargement de la forme "
+msgstr ""
 
 #: corehq/apps/export/views.py:2187
 #, python-format
@@ -28850,10 +28612,8 @@ msgstr ""
 "électronique. Veuillez essayer à nouveau."
 
 #: corehq/apps/reports/templates/reports/standard/base_template.html:104
-#, fuzzy
-#| msgid "Reports"
 msgid "Reports Menu"
-msgstr "Rapports"
+msgstr ""
 
 #: corehq/apps/reports/templates/reports/standard/base_template.html:138
 msgid "Email report:"
@@ -42347,160 +42107,38 @@ msgstr ""
 "Si vous avez des problèmes pour remplir le formulaire, veuillez signaler ce "
 "problème."
 
-#~ msgid "Initiative"
-#~ msgstr "Initiative"
-
-#~ msgid "Workshop Region"
-#~ msgstr "Région de l'atelier"
-
-#~ msgid "e.g. US, LAC, SA, Sub-Saharan Africa, Southeast Asia, etc."
-#~ msgstr ""
-#~ "p.ex. É-U, Amérique latine et Caraïbes, SA, Afrique subsaharienne, Asie "
-#~ "du Sud-Est, etc."
-
-#~ msgid "Self Started?"
-#~ msgstr "Vous avez démarré seul ?"
-
-#~ msgid ""
-#~ "The organization built and deployed their app themselves. Dimagi may have "
-#~ "provided indirect support"
-#~ msgstr ""
-#~ "Les organisations ont conçu et déployé leur application par eux-mêmes. "
-#~ "Dimagi a pu pourvoir une assistance indirecte."
-
 #~ msgid "Real Project"
-#~ msgstr "Project Réél"
-
-#~ msgid "Test"
-#~ msgstr "Test"
-
-#~ msgid "Real"
-#~ msgstr "Réel"
-
-#~ msgid "Sector*"
-#~ msgstr "Secteur*"
-
-#~ msgid "Sub-Sector*"
-#~ msgstr "Sous-Secteur*"
+#~ msgstr " Total transferidos no mês"
 
 #~ msgid "Organization Name*"
-#~ msgstr "Nom de l'Organisation*"
-
-#~ msgid "Quick 1-2 sentence summary of the project."
-#~ msgstr "Résumé rapide en 1-2 phrases max du projet."
-
-#~ msgid "Notes*"
-#~ msgstr "Notes*"
-
-#~ msgid "Device Model"
-#~ msgstr "Model de l'appareil"
-
-#~ msgid "Add CloudCare, if this project is using CloudCare as well"
-#~ msgstr "Ajouter CloudCare, si ce projet utilise CloudCare également"
-
-#~ msgid "Countries"
-#~ msgstr "Pays"
+#~ msgstr "Manejo de Casos"
 
 #~ msgid "CommCare Supply Project"
-#~ msgstr "Projet CommCare Supply"
-
-#~ msgid "This app aims to improve the supply of goods and materials"
-#~ msgstr ""
-#~ "Cet application vise à améliorer l'approvisionnement de biens et "
-#~ "matériels."
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid "Performance Threshold"
-#~ msgstr "Seuil de performance"
-
-#~ msgid ""
-#~ "The number of forms submitted per month for a user to count as "
-#~ "\"performing well\". The default value is 15."
-#~ msgstr ""
-#~ "Le nombre de formulaires soumis par mois par un utilisateur afin qu'il "
-#~ "soit défini autant que \"performant\". La valeur par défaut est 15."
+#~ msgstr "Casos IRA Tratados"
 
 #~ msgid "Experienced Threshold"
-#~ msgstr "Seuil d'expérience"
-
-#~ msgid ""
-#~ "The number of different months in which a worker must submit forms to "
-#~ "count as experienced. The default value is 3."
-#~ msgstr ""
-#~ "Le nombre de mois différents dans lesquels un utilisateur doit soumettre "
-#~ "des formulaires afin qu'il soit défini comme expérimenté. La valeur par "
-#~ "défaut est 3."
-
-#~ msgid "Service Delivery App"
-#~ msgstr "Application de prestation de service"
+#~ msgstr "Casos IRA Tratados"
 
 #~ msgid "Amplifies Project"
-#~ msgstr "Amplifie le projet"
-
-#~ msgid "Minimum Monthly Data Accesses"
-#~ msgstr "Accès mensuel minimum aux données "
-
-#~ msgid ""
-#~ "Minimum number of times project staff are expected to access CommCare "
-#~ "data each month. The default value is 20."
-#~ msgstr ""
-#~ "Nombre minimal de fois que le staff du projet est attendu d'accéder aux "
-#~ "données CommCare chaque mois. Le nombre par défaut est 20."
-
-#~ msgid "Custom Eula?"
-#~ msgstr "Eula personnalisé ?"
-
-#~ msgid "Can use project data?"
-#~ msgstr "Peut il utiliser les données du Projet?"
-
-#~ msgid "Prepay by Wire"
-#~ msgstr "Prépayé par virement bancaire"
+#~ msgstr " Total transferidos no mês"
 
 #~ msgid "Create New Export"
-#~ msgstr "Configurer un nouveau téléchargement"
-
-#~ msgid "No De-Identified Exports are available at this time."
-#~ msgstr "Aucune exportation anonymisée n'est disponible en ce moment. "
-
-#~ msgid "No Exports Created Yet."
-#~ msgstr "Aucun téléchargement déjà créé."
-
-#~ msgid ""
-#~ "Issue fetching list of exports. Please check your Internet connection."
-#~ msgstr ""
-#~ "Problème pour récupérer la liste des exportations. Veuillez vérifier "
-#~ "votre connexion internet. "
+#~ msgstr "Manejo de Casos"
 
 #~ msgid "Bulk Export:"
-#~ msgstr "Téléchargement en Bloc:"
+#~ msgstr "Manejo de Casos"
 
 #~ msgid "Saved for Daily Report"
-#~ msgstr "Sauvegardé pour rapport journalier"
+#~ msgstr "Casos IRA Tratados"
 
 #~ msgid "Create Export"
-#~ msgstr "Créer exportation"
+#~ msgstr "Manejo de Casos"
 
 #~ msgid "Welcome to CommCare HQ"
 #~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#~ msgid "This string will have %(value)s inside."
-#~ msgstr "Cette chaîne aura %(value)s à l'intérieur."
-
-#~ msgid ""
-#~ "\n"
-#~ "        That will cost $ %(amount)s.\n"
-#~ "    "
-#~ msgstr ""
-#~ "\n"
-#~ "Ceci vous coûtera $ %(amount)s."
-
-#~ msgid ""
-#~ "\n"
-#~ "        This will have %(myvar)s inside.\n"
-#~ "    "
-#~ msgstr ""
-#~ "\n"
-#~ "Ceci aura %(myvar)s à l'interieur.\n"
-#~ "    "
 
 #~ msgid "Transfer-in"
 #~ msgstr "Criança com problemas de malnutrição"

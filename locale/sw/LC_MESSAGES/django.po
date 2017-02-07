@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-02-07 20:36+0000\n"
-"PO-Revision-Date: 2017-01-25 12:13+0000\n"
+"POT-Creation-Date: 2017-02-07 20:41+0000\n"
+"PO-Revision-Date: 2017-02-07 20:38+0000\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
 "Language-Team: Swahili (http://www.transifex.com/dimagi/commcare-hq/language/"
 "sw/)\n"
@@ -14025,10 +14025,8 @@ msgid "CommCare Supply"
 msgstr ""
 
 #: corehq/apps/export/forms.py:112 corehq/apps/export/forms.py:153
-#, fuzzy
-#| msgid "Select Case Type..."
 msgid "Select model type"
-msgstr "Criança com problemas de malnutrição"
+msgstr ""
 
 #: corehq/apps/export/forms.py:114
 msgid "form"
@@ -14761,17 +14759,13 @@ msgstr ""
 
 #: corehq/apps/export/templates/export/partial/daily_saved_export_list_controller.html:7
 #: corehq/apps/export/templates/export/partial/export_list_controller.html:281
-#, fuzzy
-#| msgid "Edit a form"
 msgid "Edit Columns"
-msgstr "Manejo de Casos"
+msgstr ""
 
 #: corehq/apps/export/templates/export/partial/daily_saved_export_list_controller.html:12
 #: corehq/apps/export/templates/export/partial/export_list_controller.html:305
-#, fuzzy
-#| msgid "Export Filters"
 msgid "Edit Filters"
-msgstr "Manejo de Casos"
+msgstr ""
 
 #: corehq/apps/export/templates/export/partial/dashboard_list_controller.html:7
 msgid ""
@@ -15487,10 +15481,8 @@ msgid "Edit Case Feed"
 msgstr ""
 
 #: corehq/apps/export/views.py:2076
-#, fuzzy
-#| msgid "Edit a form"
 msgid "Edit Form Feed"
-msgstr "Manejo de Casos"
+msgstr ""
 
 #: corehq/apps/export/views.py:2187
 #, python-format
@@ -25090,10 +25082,8 @@ msgid "An error occurred emailing your report. Please try again."
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/standard/base_template.html:104
-#, fuzzy
-#| msgid "Report Title"
 msgid "Reports Menu"
-msgstr "Manejo de Casos"
+msgstr ""
 
 #: corehq/apps/reports/templates/reports/standard/base_template.html:138
 msgid "Email report:"
@@ -37942,6 +37932,36 @@ msgid ""
 "have problems filling in the rest of your form please report an issue."
 msgstr ""
 
+#~ msgid "Real Project"
+#~ msgstr " Total transferidos no mês"
+
+#~ msgid "Organization Name*"
+#~ msgstr "Manejo de Casos"
+
+#~ msgid "CommCare Supply Project"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#~ msgid "Performance Threshold"
+#~ msgstr "Casos IRA Tratados"
+
+#~ msgid "Experienced Threshold"
+#~ msgstr "Casos IRA Tratados"
+
+#~ msgid "Amplifies Project"
+#~ msgstr " Total transferidos no mês"
+
+#~ msgid "Create New Export"
+#~ msgstr "Manejo de Casos"
+
+#~ msgid "Bulk Export:"
+#~ msgstr "Manejo de Casos"
+
+#~ msgid "Saved for Daily Report"
+#~ msgstr "Casos IRA Tratados"
+
+#~ msgid "Create Export"
+#~ msgstr "Manejo de Casos"
+
 #~ msgid "Welcome to CommCare HQ"
 #~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
@@ -38005,6 +38025,9 @@ msgstr ""
 
 #~ msgid "Information updated!"
 #~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#~ msgid "Report Title"
+#~ msgstr "Manejo de Casos"
 
 #~ msgid "Case Type: "
 #~ msgstr "Manejo de Casos"
@@ -38132,6 +38155,9 @@ msgstr ""
 #~ msgid "Welcome to the App Builder"
 #~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
+#~ msgid "Edit a form"
+#~ msgstr "Manejo de Casos"
+
 #~ msgid "Fix locations"
 #~ msgstr "Casos IRA Tratados"
 
@@ -38140,6 +38166,9 @@ msgstr ""
 
 #~ msgid "Select Form..."
 #~ msgstr "Manejo de Casos"
+
+#~ msgid "Select Case Type..."
+#~ msgstr "Criança com problemas de malnutrição"
 
 #~ msgid "Edit Survey"
 #~ msgstr "Manejo de Casos"
