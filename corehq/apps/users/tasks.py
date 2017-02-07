@@ -171,3 +171,9 @@ def reset_demo_user_restore_task(couch_user, domain):
 
     DownloadBase.set_progress(reset_demo_user_restore_task, 100, 100)
     return {'messages': results}
+
+
+@task
+def remove_unused_custom_fields_from_users_task(domain):
+    from corehq.apps.users.custom_data import remove_unused_custom_fields_from_users
+    remove_unused_custom_fields_from_users(domain)
