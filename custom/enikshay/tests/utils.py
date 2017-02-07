@@ -188,13 +188,13 @@ class ENikshayLocationStructureMixin(object):
 
         self.tu = locations['TU']
         self.tu.metadata = {
-            'nikshay_code': '05',
+            'nikshay_code': '1',
         }
         self.tu.save()
 
         self.phi = locations['PHI']
         self.phi.metadata = {
-            'nikshay_code': '16',
+            'nikshay_code': '2',
         }
         self.phi.save()
         super(ENikshayLocationStructureMixin, self).setUp()

@@ -20,6 +20,8 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
         super(TestCreateEnikshayCases, self).setUp()
         self.patient_detail = PatientDetail.objects.create(
             PregId='MH-ABD-05-16-0001',
+            scode='MH',
+            Dtocode='ABD',
             Tbunitcode=1,
             pname='A B C',
             pgender='M',
