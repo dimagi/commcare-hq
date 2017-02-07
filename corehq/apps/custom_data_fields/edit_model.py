@@ -19,6 +19,7 @@ class CustomDataFieldsForm(forms.Form):
     The main form for editing a custom data definition
     """
     data_fields = forms.CharField(widget=forms.HiddenInput)
+    purge_existing = forms.BooleanField(widget=forms.HiddenInput, required=False, initial=False)
 
     def verify_no_duplicates(self, data_fields):
         errors = set()
