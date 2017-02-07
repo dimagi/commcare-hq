@@ -165,6 +165,8 @@ class CustomDataModelMixin(object):
     def post(self, request, *args, **kwargs):
         if self.form.is_valid():
             self.save_custom_fields()
+            if self.show_purge_existing and self.form.cleaned_data['purge_existing']:
+                self.update_existing_models()
             msg = _(u"{} fields saved successfully").format(
                 unicode(self.entity_string)
             )
@@ -172,3 +174,9 @@ class CustomDataModelMixin(object):
             return self.get(request, success=True, *args, **kwargs)
         else:
             return self.get(request, *args, **kwargs)
+
+    def update_existing_models(self):
+        """
+        Subclasses with show_purge_exiting set to True should override this to update existing models
+        """
+        raise NotImplementedError()
