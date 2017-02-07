@@ -13,7 +13,6 @@ from corehq.util.log import SensitiveErrorMail
 from couchforms.exceptions import UnexpectedDeletedXForm
 from corehq.apps.domain.models import Domain
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.parsing import json_format_datetime
 from soil import DownloadBase
 from casexml.apps.case.xform import get_case_ids_from_form
 
