@@ -147,12 +147,12 @@ class EnikshayCaseFactory(object):
                 kwargs['attrs']['owner_id'] = ARCHIVED_CASE_OWNER_ID
                 kwargs['attrs']['update']['archive_reason'] = 'migration_not_phi_location'
                 kwargs['attrs']['update']['migration_error'] = 'not_phi_location'
-                kwargs['attrs']['update']['migration_error_details'] = self._nikshay_code
+                kwargs['attrs']['update']['migration_error_details'] = self._phi_code
         else:
             kwargs['attrs']['owner_id'] = ARCHIVED_CASE_OWNER_ID
             kwargs['attrs']['update']['archive_reason'] = 'migration_location_not_found'
             kwargs['attrs']['update']['migration_error'] = 'location_not_found'
-            kwargs['attrs']['update']['migration_error_details'] = self._nikshay_code
+            kwargs['attrs']['update']['migration_error_details'] = self._phi_code
 
         if self._outcome:
             if self._outcome.hiv_status:
@@ -339,10 +339,6 @@ class EnikshayCaseFactory(object):
         for dto_child in dto.get_children():
             if dto_child.location_type.code == 'drtb-hiv':
                 return dto_child
-
-    @property
-    def _nikshay_code(self):
-        return '-'.join(self.patient_detail.PregId.split('-')[:4])
 
     @property
     def _phi_code(self):
