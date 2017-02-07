@@ -1,3 +1,5 @@
+import uuid
+
 from django.test import TestCase
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -21,7 +23,8 @@ class AutoCloseExtensionsTest(TestCase):
         self.user = create_restore_user(self.domain, username='name', password="changeme")
         self.factory = CaseFactory(domain=self.domain)
         self.extension_ids = ['1', '2', '3']
-        self.host_id = 'host'
+        self.host_id = 'host-{}'.format(uuid.uuid4().hex)
+        self.parent_id = 'parent-{}'.format(uuid.uuid4().hex)
 
     def tearDown(self):
         FormProcessorTestUtils.delete_all_cases()
@@ -66,7 +69,7 @@ class AutoCloseExtensionsTest(TestCase):
         return self.factory.create_or_update_cases([host])
 
     def _create_host_is_subcase_chain(self):
-        parent = CaseStructure(case_id='parent')
+        parent = CaseStructure(case_id=self.parent_id)
         host = CaseStructure(
             case_id=self.host_id,
             indices=[CaseIndex(
@@ -159,7 +162,7 @@ class AutoCloseExtensionsTest(TestCase):
 
         # close parent, shouldn't get extensions
         created_cases[-1] = self.factory.create_or_update_case(CaseStructure(
-            case_id='parent',
+            case_id=self.parent_id,
             attrs={'close': True}
         ))[0]
         no_cases = get_extensions_to_close(created_cases[-1], self.domain)
@@ -228,9 +231,9 @@ class AutoCloseExtensionsTest(TestCase):
         ))
         cases = {
             case.case_id: case.closed
-            for case in CaseAccessors(self.domain).get_cases(['parent', self.host_id] + self.extension_ids)
+            for case in CaseAccessors(self.domain).get_cases([self.parent_id, self.host_id] + self.extension_ids)
         }
-        self.assertFalse(cases['parent'])
+        self.assertFalse(cases[self.parent_id])
         self.assertTrue(cases[self.host_id])
         self.assertTrue(cases[self.extension_ids[0]])
         self.assertTrue(cases[self.extension_ids[1]])
