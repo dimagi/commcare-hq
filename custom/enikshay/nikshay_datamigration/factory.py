@@ -98,7 +98,7 @@ class EnikshayCaseFactory(object):
         person_structure = self.get_person_case_structure()
         ocurrence_structure = self.get_occurrence_case_structure(person_structure)
         episode_structure = self.get_episode_case_structure(ocurrence_structure)
-        if not self._outcome or self._outcome.hiv_status == 'unknown':
+        if not self._outcome or self._outcome.hiv_status in ['unknown', 'reactive']:
             drtb_hiv_referral_structure = self.get_drtb_hiv_referral_case_structure(episode_structure)
             return [drtb_hiv_referral_structure]
         else:
