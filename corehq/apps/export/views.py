@@ -10,7 +10,7 @@ from django.template.defaultfilters import filesizeformat
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 
-from corehq.toggles import DO_NOT_PROCESS_OLD_BUILDS
+from corehq.toggles import DO_NOT_PROCESS_OLD_BUILDS, MESSAGE_LOG_METADATA
 from corehq.apps.export.export import get_export_download, get_export_size
 from corehq.apps.export.models.new import DatePeriod
 from corehq.apps.locations.models import SQLLocation
@@ -2326,7 +2326,11 @@ class DownloadNewSmsExportView(GenericDownloadNewExportMixin, BaseDownloadExport
         return filter_form
 
     def _get_export(self, domain, export_id):
-        return SMSExportInstance._new_from_schema(SMSExportDataSchema.get_latest_export_schema(domain, None, None))
+        user = self.request.couch_user
+        include_metadata = MESSAGE_LOG_METADATA.enabled_for_request(self.request)
+        return SMSExportInstance._new_from_schema(
+            SMSExportDataSchema.get_latest_export_schema(domain, include_metadata, None)
+        )
 
     def get_filters(self, filter_form_data, mobile_user_and_group_slugs):
         filter_form = self._get_filter_form(filter_form_data)
