@@ -329,7 +329,7 @@ class EnikshayCaseFactory(object):
     def phi(self):
         if self.test_phi is not None:
             return MockLocation('FAKEPHI', self.test_phi, MockLocationType('phi', 'phi'))
-        return self.nikshay_codes_to_location.get(self._nikshay_code)
+        return self.nikshay_codes_to_location.get(self._phi_code)
 
     @property
     def drtb_hiv(self):
@@ -343,6 +343,15 @@ class EnikshayCaseFactory(object):
     @property
     def _nikshay_code(self):
         return '-'.join(self.patient_detail.PregId.split('-')[:4])
+
+    @property
+    def _phi_code(self):
+        return '%s-%s-%d-%d' % (
+            self.patient_detail.scode,
+            self.patient_detail.Dtocode,
+            self.patient_detail.Tbunitcode,
+            self.patient_detail.PHI,
+        )
 
 
 def get_nikshay_codes_to_location(domain):
