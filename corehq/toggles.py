@@ -378,9 +378,12 @@ FLAT_LOCATION_FIXTURE = StaticToggle(
 
 HIERARCHICAL_LOCATION_FIXTURE = StaticToggle(
     'hierarchical_location_fixture',
-    'Allow to switch to old hierarchical location fixture',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
+    'Display Settings To Get Hierarchical Location Fixture',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+    description=(
+        "Do not turn this feature flag.  It is only used for providing compatability for old projects.  We are actively trying to remove projects from this list."
+    ),
 )
 
 EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
