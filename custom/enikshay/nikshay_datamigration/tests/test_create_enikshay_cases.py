@@ -249,7 +249,7 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
         self.assertEqual(person_case.owner_id, ARCHIVED_CASE_OWNER_ID)
         self.assertEqual(person_case.dynamic_case_properties()['archive_reason'], 'migration_location_not_found')
         self.assertEqual(person_case.dynamic_case_properties()['migration_error'], 'location_not_found')
-        self.assertEqual(person_case.dynamic_case_properties()['migration_error_details'], 'MH-ABD-05-16')
+        self.assertEqual(person_case.dynamic_case_properties()['migration_error_details'], 'MH-ABD-1-2')
 
     @run_with_all_backends
     def test_outcome_cured(self):
