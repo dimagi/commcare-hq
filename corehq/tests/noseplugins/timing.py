@@ -34,7 +34,7 @@ class TimingPlugin(Plugin):
                                'for reviewing in text mode (not CSV).')
         parser.add_option('--threshold', type=int,
                           default=env.get('NOSE_TIMING_THRESHOLD'),
-                          help='Only print timing info for events above this threshold.')
+                          help='Only print timing info for events above this threshold (seconds).')
 
     def configure(self, options, conf):
         """Configure plugin.
