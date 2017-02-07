@@ -43,11 +43,6 @@ class ScheduleInstance(UUIDGeneratorMixin, models.Model):
 
     @property
     @memoized
-    def schedule_events(self):
-        return list(self.schedule.ordered_events)
-
-    @property
-    @memoized
     def recipient(self):
         if self.recipient_type == 'CommCareCase':
             return CaseAccessors(self.domain).get_case(self.recipient_id)
@@ -109,57 +104,9 @@ class ScheduleInstance(UUIDGeneratorMixin, models.Model):
             active=True
         )
 
-        obj.set_first_event_due_timestamp(start_date)
+        schedule.set_first_event_due_timestamp(obj, start_date)
         save_schedule_instance(obj)
         return obj
-
-    def set_first_event_due_timestamp(self, start_date=None):
-        """
-        If start_date is None, we set it automatically ensuring that
-        self.next_event_due does not get set in the past for the first
-        event.
-        """
-        if start_date:
-            self.start_date = start_date
-        else:
-            self.start_date = ServerTime(datetime.utcnow()).user_time(self.timezone).done().date()
-
-        self.set_next_event_due_timestamp()
-
-        if not start_date and self.next_event_due < datetime.utcnow():
-            self.start_date += timedelta(days=1)
-            self.next_event_due += timedelta(days=1)
-
-    def set_next_event_due_timestamp(self):
-        current_event = self.schedule_events[self.current_event_num]
-        days_since_start_date = (
-            ((self.schedule_iteration_num - 1) * self.schedule.schedule_length) + current_event.day
-        )
-
-        timestamp = datetime.combine(self.start_date + timedelta(days=days_since_start_date), current_event.time)
-        self.next_event_due = (
-            UserTime(timestamp, self.timezone)
-            .server_time()
-            .done()
-            .replace(tzinfo=None)
-        )
-
-    def move_to_next_event(self):
-        self.current_event_num += 1
-        if self.current_event_num >= len(self.schedule_events):
-            self.schedule_iteration_num += 1
-            self.current_event_num = 0
-        self.set_next_event_due_timestamp()
-
-        if (
-            self.schedule.total_iterations != Schedule.REPEAT_INDEFINITELY and
-            self.schedule_iteration_num > self.schedule.total_iterations
-        ):
-            self.active = False
-
-    def move_to_next_event_not_in_the_past(self):
-        while self.active and self.next_event_due < datetime.utcnow():
-            self.move_to_next_event()
 
     def expand_recipients(self):
         """
@@ -193,14 +140,13 @@ class ScheduleInstance(UUIDGeneratorMixin, models.Model):
             raise self.UnknownRecipient(self.recipient_type)
 
     def handle_current_event(self):
-        current_event = self.schedule_events[self.current_event_num]
-        content = current_event.get_content()
+        content = self.schedule.get_current_event_content(self)
         for recipient in self.expand_recipients():
             content.handle(recipient)
         # As a precaution, always explicitly move to the next event after processing the current
         # event to prevent ever getting stuck on the current event.
-        self.move_to_next_event()
-        self.move_to_next_event_not_in_the_past()
+        self.schedule.move_to_next_event(self)
+        self.schedule.move_to_next_event_not_in_the_past(self)
         save_schedule_instance(self)
 
 
@@ -219,6 +165,61 @@ class Schedule(models.Model):
     @property
     def ordered_events(self):
         return self.event_set.order_by('order')
+
+    def get_current_event_content(self, instance):
+        current_event = self.ordered_events[instance.current_event_num]
+        return current_event.get_content()
+
+    def set_first_event_due_timestamp(self, instance, start_date=None):
+        """
+        If start_date is None, we set it automatically ensuring that
+        self.next_event_due does not get set in the past for the first
+        event.
+        """
+        if start_date:
+            instance.start_date = start_date
+        else:
+            instance.start_date = ServerTime(datetime.utcnow()).user_time(instance.timezone).done().date()
+
+        self.set_next_event_due_timestamp(instance)
+
+        if not start_date and instance.next_event_due < datetime.utcnow():
+            instance.start_date += timedelta(days=1)
+            instance.next_event_due += timedelta(days=1)
+
+    def set_next_event_due_timestamp(self, instance):
+        current_event = self.ordered_events[instance.current_event_num]
+        days_since_start_date = (
+            ((instance.schedule_iteration_num - 1) * self.schedule_length) + current_event.day
+        )
+
+        timestamp = datetime.combine(
+            instance.start_date + timedelta(days=days_since_start_date),
+            current_event.time
+        )
+        instance.next_event_due = (
+            UserTime(timestamp, instance.timezone)
+            .server_time()
+            .done()
+            .replace(tzinfo=None)
+        )
+
+    def move_to_next_event(self, instance):
+        instance.current_event_num += 1
+        if instance.current_event_num >= len(self.ordered_events):
+            instance.schedule_iteration_num += 1
+            instance.current_event_num = 0
+        self.set_next_event_due_timestamp(instance)
+
+        if (
+            self.total_iterations != self.REPEAT_INDEFINITELY and
+            instance.schedule_iteration_num > self.total_iterations
+        ):
+            self.active = False
+
+    def move_to_next_event_not_in_the_past(self, instance):
+        while instance.active and instance.next_event_due < datetime.utcnow():
+            self.move_to_next_event(instance)
 
     @classmethod
     def create_daily_schedule(cls, domain, schedule_length=1, total_iterations=REPEAT_INDEFINITELY):
