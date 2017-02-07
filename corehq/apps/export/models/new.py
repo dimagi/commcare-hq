@@ -939,71 +939,31 @@ class SMSExportInstance(ExportInstance):
 
     @classmethod
     def _new_from_schema(cls, schema):
+        columns = [
+            ("Contact Type", "couch_recipient_doc_type", DOC_TYPE_TRANSFORM),
+            ("Contact ID", "couch_recipient", None),
+            ("Timestamp", "date", None),
+            ("Owner Name", "couch_recipient", OWNER_ID_TRANSFORM),
+            ("Phone Number", "phone_number", None),
+            ("Direction", "direction", None),
+            ("Message", "text", None),
+            ("Type", "workflow", WORKFLOW_TRANSFORM),
+        ]
         main_table = TableConfiguration(
             label="Messages",
-            columns=[
-                ExportColumn(
-                    label="Contact Type",
-                    item=ExportItem(
-                        path=[PathNode(name='couch_recipient_doc_type')],
-                        transform=DOC_TYPE_TRANSFORM,
-                    ),
-                    selected=True,
-                ),
-                ExportColumn(
-                    label="Contact ID",
-                    item=ExportItem(
-                        path=[PathNode(name='couch_recipient')]
-                    ),
-                    selected=True,
-                ),
-                ExportColumn(
-                    label="Timestamp",
-                    item=ExportItem(
-                        path=[PathNode(name='date')]
-                    ),
-                    selected=True,
-                ),
-                ExportColumn(
-                    label="Owner Name",
-                    item=ExportItem(
-                        path=[PathNode(name='couch_recipient')],
-                        transform=OWNER_ID_TRANSFORM,
-                    ),
-                    selected=True,
-                ),
-                ExportColumn(
-                    label="Phone Number",
-                    item=ExportItem(
-                        path=[PathNode(name='phone_number')]
-                    ),
-                    selected=True,
-                ),
-                ExportColumn(
-                    label="Direction",
-                    item=ExportItem(
-                        path=[PathNode(name='direction')]
-                    ),
-                    selected=True,
-                ),
-                ExportColumn(
-                    label="Message",
-                    item=ExportItem(
-                        path=[PathNode(name='text')]
-                    ),
-                    selected=True,
-                ),
-                ExportColumn(
-                    label="Type",
-                    item=ExportItem(
-                        path=[PathNode(name='workflow')],
-                        transform=WORKFLOW_TRANSFORM,
-                    ),
-                    selected=True,
-                ),
-            ],
             path=MAIN_TABLE,
             selected=True,
+            columns=[
+                ExportColumn(
+                    label=col[0],
+                    item=ExportItem(
+                        path=[PathNode(name=col[1])],
+                        transform=col[2]
+                    ),
+                    selected=True
+                )
+                for col in columns
+            ],
         )
         if schema.include_metadata:
             main_table.columns.append(ExportColumn(
@@ -1014,10 +974,7 @@ class SMSExportInstance(ExportInstance):
                 selected=True,
             ))
 
-        instance = cls(
-            domain=schema.domain,
-            tables=[main_table],
-        )
+        instance = cls(domain=schema.domain, tables=[main_table])
         cls._insert_system_properties(instance.domain, schema.type, instance.tables[0])
         return instance
 
