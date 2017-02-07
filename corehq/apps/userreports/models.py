@@ -3,7 +3,6 @@ from collections import namedtuple
 from copy import copy, deepcopy
 import json
 from datetime import datetime
-from six.moves import filter as ifilter
 
 from corehq.sql_db.connections import UCR_ENGINE_ID
 from corehq.util.quickcache import quickcache, skippable_quickcache
@@ -400,7 +399,7 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
                     'XFormInstance': _('Forms'),
                     'CommCareCase': _('Cases')
                 }.get(self.config.referenced_doc_type, "Layer"),
-                'columns': ifilter(None, [map_col(col) for col in self.columns])
+                'columns': [x for x in (map_col(col) for col in self.columns) if x]
             }
 
     @property
