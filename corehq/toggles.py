@@ -371,7 +371,7 @@ SYNC_ALL_LOCATIONS = StaticToggle(
 
 FLAT_LOCATION_FIXTURE = StaticToggle(
     'flat_location_fixture',
-    'Use the new, flat locations fixture declaration in new app builds.',
+    'Sync the location fixture in a flat format.',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
