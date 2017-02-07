@@ -153,7 +153,7 @@ class ReportDispatcher(View):
         report_kwargs = kwargs.copy()
 
         class_name = self.get_report_class_name(domain, report_slug)
-        cls = to_function(class_name)
+        cls = to_function(class_name) if class_name else None
 
         permissions_check = permissions_check or self.permissions_check
         if (
