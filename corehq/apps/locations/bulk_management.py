@@ -143,7 +143,7 @@ class LocationStub(object):
         self.do_delete = do_delete
         self.external_id = str(external_id) if isinstance(external_id, int) else external_id
         self.index = index
-        self.custom_data = custom_data or {}
+        self.custom_data = {key: unicode(value) for key, value in custom_data.items()} if custom_data else {}
         self.uncategorized_data = uncategorized_data or {}
         if not self.location_id and not self.site_code:
             raise LocationExcelSheetError(
