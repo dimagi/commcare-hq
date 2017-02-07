@@ -217,11 +217,7 @@ def can_edit_form_location(domain, web_user, form):
         if not form_user:
             # form most likely submitted by a system user
             return False
-        if domain_obj.supports_multiple_locations_per_user:
-            form_locations = [loc.sql_location for loc in form_user.locations]
-        else:
-            form_locations = form_user.get_sql_locations(domain)
-        for location in form_locations:
+        for location in form_user.get_sql_locations(domain):
             if user_can_edit_location(web_user, location, domain_obj):
                 return True
         return False

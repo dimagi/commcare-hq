@@ -442,14 +442,6 @@ MOBILE_PRIVILEGES_FLAG = StaticToggle(
     [NAMESPACE_USER]
 )
 
-MULTIPLE_LOCATIONS_PER_USER = StaticToggle(
-    'multiple_locations',
-    "(Deprecated) Enable multiple locations per user on domain.",
-    TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN],
-    description="Don't enable this flag."
-)
-
 PRODUCTS_PER_LOCATION = StaticToggle(
     'products_per_location',
     "Products Per Location: Specify products stocked at individual locations.  "
