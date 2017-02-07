@@ -535,26 +535,6 @@ class DomainAdminRestoreView(AdminRestoreView):
         return super(DomainAdminRestoreView, self).get(request, *args, **kwargs)
 
 
-class ManagementCommandsView(BaseAdminSectionView):
-    urlname = 'management_commands'
-    page_title = ugettext_lazy("Management Commands")
-    template_name = 'hqadmin/management_commands.html'
-
-    @method_decorator(require_superuser)
-    @use_jquery_ui
-    @use_datatables
-    def dispatch(self, request, *args, **kwargs):
-        return super(ManagementCommandsView, self).dispatch(request, *args, **kwargs)
-
-    @property
-    def page_context(self):
-        commands = [(_('Remove Duplicate Domains'), 'remove_duplicate_domains')]
-        context = get_hqadmin_base_context(self.request)
-        context["hide_filters"] = True
-        context["commands"] = commands
-        return context
-
-
 @require_POST
 @require_superuser
 def run_command(request):
