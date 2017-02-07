@@ -66,7 +66,7 @@ class DomainFilter(BaseAccountingSingleOptionFilter):
 
 
 def clean_options(options):
-    return sorted(set([option for option in options if option[1] and option[1].strip()]))
+    return sorted({option for option in options if option[1] and option[1].strip()})
 
 
 class SalesforceAccountIDFilter(BaseAccountingSingleOptionFilter):
