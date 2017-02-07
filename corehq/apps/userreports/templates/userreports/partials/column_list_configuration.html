@@ -21,7 +21,7 @@
   <td>
     <!-- ko ifnot: $root.optionsContainQuestions -->
     <input type="text"
-           class="form-control"
+           class="form-control input-sm"
            data-placeholder="Select a case property"
            data-bind="
             select2: selectablePropertyOptions,
@@ -29,7 +29,7 @@
     "/>
     <!-- /ko -->
     <!-- ko if: $root.optionsContainQuestions -->
-    <input class="form-control"
+    <input class="form-control input-sm"
            type="hidden"
            data-bind="
             questionsSelect: selectablePropertyOptions,
@@ -42,7 +42,7 @@
   <td></td>
   <!-- /ko -->
   <td>
-    <button class="btn btn-primary" data-bind="click: buttonHandler">
+    <button class="btn btn-primary btn-sm" data-bind="click: buttonHandler">
       <i class="fa fa-plus"></i>
     </button>
   </td>
