@@ -210,6 +210,8 @@ class TestCreateEnikshayCases(ENikshayLocationStructureMixin, TestCase):
 
     @run_with_all_backends
     def test_case_update(self):
+        self.outcome.HIVStatus = None
+        self.outcome.save()
         call_command('create_enikshay_cases', self.domain)
 
         new_addhaar_number = 867386000001
