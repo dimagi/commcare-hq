@@ -112,14 +112,8 @@ class FormProcessorInterface(object):
             return self.processor.is_duplicate(xform_id, domain=domain)
         else:
             # check across Couch & SQL to ensure global uniqueness
-            from corehq.form_processor.backends.sql.processor import FormProcessorSQL
-            from corehq.form_processor.backends.couch.processor import FormProcessorCouch
-
-            all_processors = [FormProcessorSQL, FormProcessorCouch]
-            all_processors.remove(self.processor)
-            other_processor = all_processors[0]
             # check this domains DB first to support existing bad data
-            return self.processor.is_duplicate(xform_id) or other_processor.is_duplicate(xform_id)
+            return self.processor.is_duplicate(xform_id) or self.other_db_processor().is_duplicate(xform_id)
 
     def new_xform(self, form_json):
         return self.processor.new_xform(form_json)
@@ -191,23 +185,24 @@ class FormProcessorInterface(object):
         :raises: IllegalCaseId
         """
         # check across Couch & SQL to ensure global uniqueness
-        from corehq.form_processor.backends.sql.processor import FormProcessorSQL
-        from corehq.form_processor.backends.couch.processor import FormProcessorCouch
-
-        all_processors = [FormProcessorSQL, FormProcessorCouch]
-        all_processors.remove(self.processor)
-        other_processor = all_processors[0]
         # check this domains DB first to support existing bad data
         case, lock = self.processor.get_case_with_lock(case_id, lock, strip_history, wrap)
         if case:
             return case, lock
 
-        case, _ = other_processor.get_case_with_lock(case_id, lock=False, strip_history=True, wrap=False)
+        case, _ = self.other_db_processor().get_case_with_lock(case_id, lock=False, strip_history=True, wrap=False)
         if case:
             # case exists in other database
             raise IllegalCaseId("Bad case id")
 
         return case, lock
+
+    def other_db_processor(self):
+        """Get the processor for the database not used by this domain."""
+        from corehq.form_processor.backends.sql.processor import FormProcessorSQL
+        from corehq.form_processor.backends.couch.processor import FormProcessorCouch
+        (other_processor,) = {FormProcessorSQL, FormProcessorCouch} - {self.processor}
+        return other_processor
 
 
 def _list_to_processed_forms_tuple(forms):
