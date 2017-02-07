@@ -498,9 +498,10 @@ def bug_report(req):
     )])
 
     domain_object = Domain.get_by_name(report['domain'])
-    current_project_description = domain_object.project_description
+    current_project_description = domain_object.project_description if domain_object else None
     new_project_description = req.POST.get('project_description')
-    if (req.couch_user.is_domain_admin(domain=report['domain']) and
+    if (domain_object and
+            req.couch_user.is_domain_admin(domain=report['domain']) and
             new_project_description and
             current_project_description != new_project_description):
 
@@ -513,7 +514,7 @@ def bug_report(req):
                                                    domain=report['domain']).keys()
     report['feature_previews'] = feature_previews.previews_dict(report['domain']).keys()
     report['scale_backend'] = should_use_sql_backend(report['domain']) if report['domain'] else False
-    report['project_description'] = domain_object.project_description
+    report['project_description'] = domain_object.project_description if domain_object else '(Not applicable)'
 
     try:
         couch_user = req.couch_user

@@ -2483,7 +2483,7 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
     def internal_settings_form(self):
         can_edit_eula = CAN_EDIT_EULA.enabled(self.request.couch_user.username)
         if self.request.method == 'POST':
-            return DomainInternalForm(can_edit_eula, self.request.POST)
+            return DomainInternalForm(self.request.domain, can_edit_eula, self.request.POST)
         initial = {
             'countries': self.domain_object.deployment.countries,
             'is_test': self.domain_object.is_test,
@@ -2506,6 +2506,15 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             'data_access_threshold',
             'business_unit',
             'workshop_region',
+            'partner_technical_competency',
+            'support_prioritization',
+            'gs_continued_involvement',
+            'technical_complexity',
+            'app_design_comments',
+            'training_materials',
+            'partner_comments',
+            'partner_contact',
+            'dimagi_contact',
         ]
         if can_edit_eula:
             internal_attrs += [
@@ -2517,7 +2526,7 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             if isinstance(val, bool):
                 val = 'true' if val else 'false'
             initial[attr] = val
-        return DomainInternalForm(can_edit_eula, initial=initial)
+        return DomainInternalForm(self.request.domain, can_edit_eula, initial=initial)
 
     @property
     def page_context(self):
@@ -2526,6 +2535,23 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
             'form': self.internal_settings_form,
             'areas': dict([(a["name"], a["sub_areas"]) for a in settings.INTERNAL_DATA["area"]]),
         }
+
+    def send_handoff_email(self):
+        partner_contact = self.internal_settings_form.cleaned_data['partner_contact']
+        dimagi_contact = self.internal_settings_form.cleaned_data['dimagi_contact']
+        recipients = [partner_contact, dimagi_contact]
+        params = {'contact_name': CouchUser.get_by_username(dimagi_contact).human_friendly_name}
+        send_html_email_async.delay(
+            subject="Project Support Transition",
+            recipient=recipients,
+            html_content=render_to_string(
+                "domain/email/support_handoff.html", params),
+            text_content=render_to_string(
+                "domain/email/support_handoff.txt", params),
+            email_from=settings.SUPPORT_EMAIL,
+        )
+        messages.success(self.request,
+                         _("Sent hand-off email to {}.").format(" and ".join(recipients)))
 
     def post(self, request, *args, **kwargs):
         if self.internal_settings_form.is_valid():
@@ -2556,10 +2582,13 @@ class EditInternalDomainInfoView(BaseInternalDomainSettingsView):
 
             messages.success(request, _("The internal information for project %s was successfully updated!")
                                       % self.domain)
+            if self.internal_settings_form.cleaned_data['send_handoff_email']:
+                self.send_handoff_email()
+            return redirect(self.urlname, self.domain)
         else:
             messages.error(request, _(
                 "Your settings are not valid, see below for errors. Correct them and try again!"))
-        return self.get(request, *args, **kwargs)
+            return self.get(request, *args, **kwargs)
 
 
 class EditInternalCalculationsView(BaseInternalDomainSettingsView):
