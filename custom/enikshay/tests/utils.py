@@ -183,15 +183,18 @@ class ENikshayLocationStructureMixin(object):
         }
         self.dto.save()
 
+        self.drtb_hiv = locations['DRTB-HIV']
+        self.drtb_hiv.save()
+
         self.tu = locations['TU']
         self.tu.metadata = {
-            'nikshay_code': '05',
+            'nikshay_code': '1',
         }
         self.tu.save()
 
         self.phi = locations['PHI']
         self.phi.metadata = {
-            'nikshay_code': '16',
+            'nikshay_code': '2',
         }
         self.phi.save()
         super(ENikshayLocationStructureMixin, self).setUp()
