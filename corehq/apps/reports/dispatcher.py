@@ -5,6 +5,7 @@ from django.utils.translation import ugettext
 from django.views.generic.base import View
 
 from dimagi.utils.decorators.datespan import datespan_in_request
+from dimagi.utils.modules import to_function
 
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
@@ -17,6 +18,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import get_domain_module_map
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.reports.exceptions import BadRequestError
+from corehq.util.quickcache import quickcache
 
 
 datespan_default = datespan_in_request(
@@ -119,6 +121,11 @@ class ReportDispatcher(View):
         """
         return self.get_reports_dict(domain).get(report_slug, None)
 
+    @quickcache(['domain', 'report_slug'], timeout=60)
+    def get_report_class_name(self, domain, report_slug):
+        report_cls = self.get_report(domain, report_slug)
+        return report_cls.__module__ + '.' + report_cls.__name__ if report_cls else ''
+
     def _redirect_slug(self, slug):
         return self.slug_aliases.get(slug) is not None
 
@@ -145,8 +152,8 @@ class ReportDispatcher(View):
 
         report_kwargs = kwargs.copy()
 
-        cls = self.get_report(domain, report_slug)
-        class_name = cls.__module__ + '.' + cls.__name__ if cls else ''
+        class_name = self.get_report_class_name(domain, report_slug)
+        cls = to_function(class_name)
 
         permissions_check = permissions_check or self.permissions_check
         if (
