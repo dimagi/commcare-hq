@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime
 from django.test import TestCase
 from corehq.apps.sms.api import create_billable_for_sms
