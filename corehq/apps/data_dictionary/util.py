@@ -1,3 +1,5 @@
+from django.core.exceptions import ValidationError
+
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
 from corehq.apps.app_manager.util import all_case_properties_by_domain
@@ -107,3 +109,22 @@ def get_case_property_description_dict(domain):
     for case_type in annotated_types:
         descriptions_dict[case_type.name] = {prop.name: prop.description for prop in case_type.properties.all()}
     return descriptions_dict
+
+def save_case_property(name, case_type=None, domain=None, data_type=None, description=None, group=None):
+    """
+    Takes a case property to update and returns an error if there was one
+    """
+    prop = CaseProperty.get_or_create(
+        name=name, case_type=case_type, domain=domain
+    )
+    if data_type:
+        prop.data_type = data_type
+    if description:
+        prop.description = description
+    if group:
+        prop.group = group
+    try:
+        prop.full_clean()
+    except ValidationError as e:
+        return unicode(e)
+    prop.save()

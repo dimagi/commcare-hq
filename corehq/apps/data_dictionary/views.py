@@ -12,9 +12,11 @@ from django.utils.translation import ugettext_lazy as _
 from django.db.transaction import atomic
 
 from dimagi.utils.decorators.memoized import memoized
+from django.views.generic import View
 
 from corehq import toggles
 from corehq.apps.case_importer.tracking.filestorage import make_temp_file
+from corehq.apps.data_dictionary.util import save_case_property
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.data_dictionary import util
 from corehq.apps.data_dictionary.models import CaseType, CaseProperty
@@ -77,30 +79,23 @@ def data_dictionary_json(request, domain, case_type_name=None):
 @toggles.DATA_DICTIONARY.required_decorator()
 def update_case_property(request, domain):
     property_list = json.loads(request.POST.get('properties'))
+    errors = []
     for property in property_list:
         case_type = property.get('caseType')
         name = property.get('name')
         description = property.get('description')
         data_type = property.get('data_type')
         group = property.get('group')
-        prop = CaseProperty.get_or_create(
-            name=name, case_type=case_type, domain=domain
-        )
-        if data_type:
-            prop.data_type = data_type
-        if description:
-            prop.description = description
-        if group:
-            prop.group = group
-        try:
-            prop.full_clean()
-        except ValidationError as e:
-            return JsonResponse({"status": "failed", "error": unicode(e)}, status=400)
-        prop.save()
-    return JsonResponse({"status": "success"})
+        error = save_case_property(name, case_type, domain, data_type, description, group)
+        if error:
+            errors.append(error)
+    if errors:
+        return JsonResponse({"status": "failed", "errors": errors}, status=400)
+    else:
+        return JsonResponse({"status": "success"})
 
 
-def export_data_dictionary(request, domain):
+def _export_data_dictionary(domain):
     queryset = CaseType.objects.filter(domain=domain).prefetch_related(
         Prefetch('properties', queryset=CaseProperty.objects.order_by('name'))
     )
@@ -123,10 +118,22 @@ def export_data_dictionary(request, domain):
             tab_rows.append([row.get(header, '') for header in headers])
         writer.write([(tab_name, tab_rows)])
     writer.close()
-    response = HttpResponse(content_type=Format.from_format('xlsx').mimetype)
-    response['Content-Disposition'] = 'attachment; filename="data_dictionary.xlsx"'
-    response.write(outfile.getvalue())
-    return response
+    return outfile
+
+
+class ExportDataDictionaryView(View):
+    urlname = 'export_data_dictionary'
+
+    @method_decorator(login_and_domain_required)
+    def dispatch(self, request, *args, **kwargs):
+        return super(ExportDataDictionaryView, self).dispatch(request, *args, **kwargs)
+
+    def get(self, request, domain, *args, **kwargs):
+        outfile = _export_data_dictionary(domain)
+        response = HttpResponse(content_type=Format.from_format('xlsx').mimetype)
+        response['Content-Disposition'] = 'attachment; filename="data_dictionary.xlsx"'
+        response.write(outfile.getvalue())
+        return response
 
 
 class DataDictionaryView(BaseProjectDataView):
@@ -188,27 +195,24 @@ class UploadDataDictionaryView(BaseProjectDataView):
     @method_decorator(atomic)
     def post(self, request, *args, **kwargs):
         bulk_file = self.request.FILES['bulk_upload_file']
-        filename = make_temp_file(bulk_file.read(), file_extention_from_filename(bulk_file.name))
-        with open_any_workbook(filename) as workbook:
-            for worksheet in workbook.worksheets:
-                case_type = worksheet.title
-                for row in itertools.islice(worksheet.iter_rows(), 1, None):
-                    name, group, data_type, description = [cell.value for cell in row[:4]]
-                    if name:
-                        prop = CaseProperty.get_or_create(
-                            name=name, case_type=case_type, domain=self.domain
-                        )
-                        if data_type:
-                            prop.data_type = data_type
-                        if description:
-                            prop.description = description
-                        if group:
-                            prop.group = group
-                        try:
-                            prop.full_clean()
-                        except ValidationError as e:
-                            messages.error(request, unicode(e))
-                            return self.get(request, *args, **kwargs)
-                        prop.save()
-        messages.success(request, _('Data dictionary import complete'))
+        errors = _process_bulk_upload(bulk_file, self.domain)
+        if errors:
+            messages.error(request, errors)
+        else:
+            messages.success(request, _('Data dictionary import complete'))
         return self.get(request, *args, **kwargs)
+
+
+def _process_bulk_upload(bulk_file, domain):
+    filename = make_temp_file(bulk_file.read(), file_extention_from_filename(bulk_file.name))
+    errors = []
+    with open_any_workbook(filename) as workbook:
+        for worksheet in workbook.worksheets:
+            case_type = worksheet.title
+            for row in itertools.islice(worksheet.iter_rows(), 1, None):
+                name, group, data_type, description = [cell.value for cell in row[:4]]
+                if name:
+                    error = save_case_property(name, case_type, domain, data_type, description, group)
+                    if error:
+                        errors.append(error)
+    return errors
