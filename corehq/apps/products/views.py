@@ -113,11 +113,6 @@ class ProductListView(BaseCommTrackManageView):
     @property
     def page_context(self):
         return {
-            'data_list': {
-                'page': self.page,
-                'limit': self.limit,
-                'total': self.total
-            },
             'archive_help_text': _(
                 "Archive a product to stop showing data for it in \
                 reports and on mobile applications. Archiving is \
