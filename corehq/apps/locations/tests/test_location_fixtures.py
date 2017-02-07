@@ -117,26 +117,6 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
                  'Somerville', 'New York', 'New York City', 'Manhattan', 'Queens', 'Brooklyn']
             )
 
-    @mock.patch.object(CommCareUser, 'locations')
-    @mock.patch.object(Domain, 'supports_multiple_locations_per_user')
-    def test_multiple_locations_returns_multiple_trees(
-            self,
-            supports_multiple_locations,
-            user_locations,
-    ):
-        multiple_locations_different_states = [
-            self.locations['Suffolk'].couch_location,
-            self.locations['New York City'].couch_location
-        ]
-        supports_multiple_locations.__get__ = mock.Mock(return_value=True)
-        user_locations.__get__ = mock.Mock(return_value=multiple_locations_different_states)
-
-        self._assert_fixture_has_locations(
-            'multiple_locations',
-            ['Massachusetts', 'Suffolk', 'Boston', 'Revere', 'New York',
-             'New York City', 'Manhattan', 'Queens', 'Brooklyn']
-        )
-
     def test_expand_to_county(self):
         """
         expand to "county"

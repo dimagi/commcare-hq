@@ -1,12 +1,9 @@
 from mock import patch
-from corehq.apps.locations.models import LOCATION_REPORTING_PREFIX
 from corehq.apps.locations.fixtures import location_fixture_generator
 from corehq.apps.locations.tests.util import make_loc
 from corehq.apps.locations.tests.test_locations import LocationTestBase
-from corehq import toggles
 from corehq.apps.groups.exceptions import CantSaveException
 from corehq.apps.users.models import CommCareUser
-from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.util.test_utils import flag_enabled
 
 
@@ -32,8 +29,6 @@ class LocationGroupTest(LocationTestBase):
             parent=self.test_village,
             domain=self.domain.name
         )
-
-        toggles.MULTIPLE_LOCATIONS_PER_USER.set(self.domain.name, True, NAMESPACE_DOMAIN)
 
     def test_group_name(self):
         # just location name for top level
@@ -128,67 +123,6 @@ class LocationGroupTest(LocationTestBase):
             },
             self.loc.sql_location.case_sharing_group_object().metadata
         )
-
-    @patch('corehq.apps.domain.models.Domain.uses_locations', lambda: True)
-    def test_location_fixture_generator(self):
-        """
-        This tests the location XML fixture generator. It specifically ensures that no duplicate XML
-        nodes are generated when all locations have a parent and multiple locations are enabled.
-        """
-        self.domain.commtrack_enabled = True
-        self.domain.save()
-        self.loc.delete()
-
-        state = make_loc(
-            'teststate1',
-            type='state',
-            domain=self.domain.name
-        )
-        district = make_loc(
-            'testdistrict1',
-            type='district',
-            domain=self.domain.name,
-            parent=state
-        )
-        block = make_loc(
-            'testblock1',
-            type='block',
-            domain=self.domain.name,
-            parent=district
-        )
-        village = make_loc(
-            'testvillage1',
-            type='village',
-            domain=self.domain.name,
-            parent=block
-        )
-        outlet1 = make_loc(
-            'testoutlet1',
-            type='outlet',
-            domain=self.domain.name,
-            parent=village
-        )
-        outlet2 = make_loc(
-            'testoutlet2',
-            type='outlet',
-            domain=self.domain.name,
-            parent=village
-        )
-        outlet3 = make_loc(
-            'testoutlet3',
-            type='outlet',
-            domain=self.domain.name,
-            parent=village
-        )
-        self.user.set_location(outlet2)
-        self.user.add_location_delegate(outlet1)
-        self.user.add_location_delegate(outlet2)
-        self.user.add_location_delegate(outlet3)
-        self.user.add_location_delegate(state)
-        self.user.save()
-        fixture = location_fixture_generator(self.user.to_ota_restore_user(), '2.0')
-        self.assertEquals(len(fixture[0].findall('.//state')), 1)
-        self.assertEquals(len(fixture[0].findall('.//outlet')), 3)
 
     @patch('corehq.apps.domain.models.Domain.uses_locations', lambda: True)
     def test_location_fixture_generator_no_user_location(self):
