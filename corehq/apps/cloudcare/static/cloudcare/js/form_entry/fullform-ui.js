@@ -567,11 +567,18 @@ Formplayer.ViewModels.EvaluateXPath = function() {
     };
 
     self.matcher = function(flag, subtext) {
-        var match, regexp;
+        var match, regexp, currentQuery;
         // Match text that starts with the flag and then looks like a path.
         regexp = new RegExp('([\\s\(]+|^)' + RegExp.escape(flag) + '([\\w/-]*)$', 'gi');
         match = regexp.exec(subtext);
-        return match ? match[2] : null;
+        if (!match) {
+            return null;
+        }
+        currentQuery = match[2]
+        if (currentQuery.length < 2) {
+            return null;
+        }
+        return currentQuery;
     };
 
     /**
