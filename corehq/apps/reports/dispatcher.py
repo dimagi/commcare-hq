@@ -121,7 +121,7 @@ class ReportDispatcher(View):
         """
         return self.get_reports_dict(domain).get(report_slug, None)
 
-    @quickcache(['domain', 'report_slug'], timeout=60)
+    @quickcache(['domain', 'report_slug'], timeout=300)
     def get_report_class_name(self, domain, report_slug):
         report_cls = self.get_report(domain, report_slug)
         return report_cls.__module__ + '.' + report_cls.__name__ if report_cls else ''
