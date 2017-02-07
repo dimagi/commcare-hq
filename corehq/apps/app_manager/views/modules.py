@@ -931,6 +931,7 @@ def new_module(request, domain, app_id):
             if module_type == 'case':
                 # registration form
                 register = app.new_form(module_id, "Register", lang)
+                register.actions.open_case = OpenCaseAction(condition=FormActionCondition(type='always'))
                 register.actions.update_case = UpdateCaseAction(
                     condition=FormActionCondition(type='always'))
 
