@@ -1032,5 +1032,5 @@ DO_NOT_PROCESS_OLD_BUILDS = PredictablyRandomToggle(
     'Do not process old build for export generation',
     TAG_PRODUCT_CORE,
     [NAMESPACE_DOMAIN],
-    randomness=0.2,
+    randomness=0.5,
 )
