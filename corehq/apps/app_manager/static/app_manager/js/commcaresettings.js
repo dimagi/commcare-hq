@@ -417,7 +417,7 @@ hqDefine('app_manager/js/commcaresettings.js', function () {
                 window.setTimeout(function() { $btn.tooltip('hide'); }, 1000);
             });
             clipboard.onClick(e);
-        }
+        };
     };
 
     CommcareSettings.widgets.build_spec = function (self, settingsIndex) {
