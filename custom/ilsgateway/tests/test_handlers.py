@@ -14,8 +14,8 @@ from corehq.util.test_utils import flag_enabled
 from custom.ilsgateway.models import (
     DeliveryGroups, SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues
 )
-from custom.ilsgateway.tanzania.reminders import ARRIVED_HELP, ARRIVED_DEFAULT, ARRIVED_KNOWN, EMG_ERROR, EMG_HELP
 from custom.ilsgateway.tanzania.reminders import (
+    ARRIVED_HELP, ARRIVED_DEFAULT, ARRIVED_KNOWN, EMG_ERROR, EMG_HELP,
     CONTACT_SUPERVISOR, DELIVERED_CONFIRM, DELIVERY_CONFIRM_CHILDREN,
     DELIVERY_CONFIRM_DISTRICT, DELIVERY_LATE_DISTRICT, DELIVERY_PARTIAL_CONFIRM,
     DELIVERY_REMINDER_DISTRICT, DELIVERY_REMINDER_FACILITY, HELP_REGISTERED,
@@ -26,7 +26,7 @@ from custom.ilsgateway.tanzania.reminders import (
     STOP_CONFIRM, SUBMITTED_CONFIRM,
     SUBMITTED_NOTIFICATION_MSD, SUBMITTED_REMINDER_DISTRICT, SUBMITTED_REMINDER_FACILITY,
     SUPERVISION_REMINDER, TEST_HANDLER_BAD_CODE,
-    TEST_HANDLER_CONFIRM, TEST_HANDLER_HELP, YES_HELP,
+    TEST_HANDLER_CONFIRM, TEST_HANDLER_HELP,
 )
 from custom.ilsgateway.tests.handlers.utils import TEST_DOMAIN, ILSTestScript
 from custom.ilsgateway.utils import get_sql_locations_by_domain_and_group
