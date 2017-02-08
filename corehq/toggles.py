@@ -287,13 +287,6 @@ ADD_USERS_FROM_LOCATION = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-DETAIL_LIST_TABS = StaticToggle(
-    'detail-list-tabs',
-    'Tabs in the case detail list',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
 DETAIL_LIST_TAB_NODESETS = StaticToggle(
     'detail-list-tab-nodesets',
     'Associate a nodeset with a case detail tab',
@@ -334,7 +327,11 @@ USER_CONFIGURABLE_REPORTS = StaticToggle(
     'user_reports',
     'User configurable reports UI',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
+    description=(
+        "A feature which will allow your domain to create User Configurable Reports."
+    ),
+    help_link='https://confluence.dimagi.com/display/RD/User+Configurable+Reporting', 
 )
 
 LOCATIONS_IN_UCR = StaticToggle(
@@ -365,13 +362,6 @@ REPORT_BUILDER_BETA_GROUP = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-STOCK_TRANSACTION_EXPORT = StaticToggle(
-    'ledger_export',
-    'Show "export transactions" link on case details page',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
 SYNC_ALL_LOCATIONS = StaticToggle(
     'sync_all_locations',
     'Sync the full location hierarchy when syncing location fixtures',
@@ -384,6 +374,16 @@ FLAT_LOCATION_FIXTURE = StaticToggle(
     'Sync the location fixture in a flat format.',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
+)
+
+HIERARCHICAL_LOCATION_FIXTURE = StaticToggle(
+    'hierarchical_location_fixture',
+    'Display Settings To Get Hierarchical Location Fixture',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+    description=(
+        "Do not turn this feature flag.  It is only used for providing compatability for old projects.  We are actively trying to remove projects from this list."
+    ),
 )
 
 EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
@@ -457,7 +457,7 @@ PRODUCTS_PER_LOCATION = StaticToggle(
     'products_per_location',
     "Products Per Location: Specify products stocked at individual locations.  "
     "This doesn't actually do anything yet.",
-    TAG_PRODUCT_CORE,
+    TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )
 
@@ -812,13 +812,6 @@ LEGACY_SYNC_SUPPORT = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-VIEW_BUILD_SOURCE = StaticToggle(
-    'diff_builds',
-    'Allow users to view and diff build source files',
-    TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
-)
-
 EWS_WEB_USER_EXTENSION = StaticToggle(
     'ews_web_user_extension',
     'Enable EWSGhana web user extension',
@@ -831,14 +824,6 @@ CALL_CENTER_LOCATION_OWNERS = StaticToggle(
     'Enable the use of locations as owners of call center cases',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
-)
-
-GRID_MENUS = StaticToggle(
-    'grid_menus',
-    'Allow using grid menus on Android',
-    TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/internal/Grid+Views',
 )
 
 OLD_EXPORTS = StaticToggle(
@@ -946,7 +931,7 @@ PREVIEW_APP = PredictablyRandomToggle(
     'Preview an application in the app builder',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
-    randomness=0.2,
+    randomness=1.0,
 )
 
 DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
@@ -1017,16 +1002,11 @@ LINKED_APPS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-NIMBUS_FORM_VALIDATION = PredictablyRandomToggle(
-    'nimbus_form_validation',
-    'Use Nimbus to validate XForms',
+FORMTRANSLATE_FORM_VALIDATION = StaticToggle(
+    'formtranslate_form_validation',
+    'Use formtranslate to validate XForms',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN],
-    randomness=1.0,
-    always_disabled=[
-        'icrc-almanach',
-        'mikolo'
-    ]
+    [NAMESPACE_DOMAIN]
 )
 
 USER_PROPERTY_EASY_REFS = StaticToggle(
@@ -1055,5 +1035,5 @@ DO_NOT_PROCESS_OLD_BUILDS = PredictablyRandomToggle(
     'Do not process old build for export generation',
     TAG_PRODUCT_CORE,
     [NAMESPACE_DOMAIN],
-    randomness=0.2,
+    randomness=0.5,
 )

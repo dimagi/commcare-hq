@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test import SimpleTestCase
 from corehq.apps.userreports.sql import get_column_name
 from corehq.apps.userreports.util import get_table_name, truncate_value

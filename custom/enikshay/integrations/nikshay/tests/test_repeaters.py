@@ -10,9 +10,7 @@ from custom.enikshay.tests.utils import ENikshayCaseStructureMixin, ENikshayLoca
 from custom.enikshay.integrations.nikshay.repeater_generator import (
     NikshayRegisterPatientPayloadGenerator,
     ENIKSHAY_ID,
-    get_person_locations,
 )
-from custom.enikshay.integrations.nikshay.exceptions import NikshayLocationNotFound
 from corehq.form_processor.tests.utils import run_with_all_backends
 from casexml.apps.case.mock import CaseStructure
 from corehq.apps.repeaters.models import RepeatRecord
@@ -135,7 +133,7 @@ class TestNikshayRegisterPatientPayloadGenerator(ENikshayLocationStructureMixin,
         self.assertEqual(payload['regBy'], "tbu-dmdmo01")
 
         # From Person
-        self.assertEqual(payload['pname'], "Pippin")
+        self.assertEqual(payload['pname'], "Peregrine Took")
         self.assertEqual(payload['page'], '20')
         self.assertEqual(payload['pgender'], 'M')
         self.assertEqual(payload['paddress'], 'Mr. Everest')
@@ -149,8 +147,8 @@ class TestNikshayRegisterPatientPayloadGenerator(ENikshayLocationStructureMixin,
         self.assertEqual(payload['sitedetail'], 2)
         self.assertEqual(payload['Ptype'], '6')
         self.assertEqual(payload['poccupation'], 4)
-        self.assertEqual(payload['dotname'], 'awesome dot')
-        self.assertEqual(payload['dotmob'], '123456789')
+        self.assertEqual(payload['dotname'], 'Gandalf The Grey')
+        self.assertEqual(payload['dotmob'], '066000666')
         self.assertEqual(payload['disease_classification'], 'EP')
         self.assertEqual(payload['pregdate'], '2014-09-09')
         self.assertEqual(payload['ptbyr'], '2014')
@@ -263,26 +261,3 @@ class TestNikshayRegisterPatientPayloadGenerator(ENikshayLocationStructureMixin,
         updated_episode_case = CaseAccessors(self.domain).get_case(self.episode_id)
         self._assert_case_property_equal(updated_episode_case, 'nikshay_registered', 'false')
         self._assert_case_property_equal(updated_episode_case, 'nikshay_error', unicode(message))
-
-
-class TestGetPersonLocations(ENikshayCaseStructureMixin, ENikshayLocationStructureMixin, TestCase):
-    def setUp(self):
-        super(TestGetPersonLocations, self).setUp()
-        self.cases = self.create_case_structure()
-
-    def test_get_person_locations(self):
-        self.assign_person_to_location(self.phi.location_id)
-        person_case = CaseAccessors(self.domain).get_case(self.person_id)
-        expected_locations = {
-            'scode': self.sto.metadata['nikshay_code'],
-            'dcode': self.dto.metadata['nikshay_code'],
-            'tcode': self.tu.metadata['nikshay_code'],
-            'dotphi': self.phi.metadata['nikshay_code'],
-        }
-        self.assertEqual(expected_locations, get_person_locations(person_case))
-
-    def test_nikshay_location_not_found(self):
-        self.assign_person_to_location("-")
-        person_case = CaseAccessors(self.domain).get_case(self.person_id)
-        with self.assertRaises(NikshayLocationNotFound):
-            get_person_locations(person_case)

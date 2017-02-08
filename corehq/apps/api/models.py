@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import os
 from collections import defaultdict
 from functools import wraps
@@ -12,6 +13,8 @@ from corehq.form_processor.abstract_models import CaseToXMLMixin
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from couchforms import const
 from dimagi.ext.couchdbkit import *
+import six
+from six.moves import filter
 
 PERMISSION_POST_SMS = "POST_SMS"
 PERMISSION_POST_WISEPILL = "POST_WISEPILL"
@@ -131,12 +134,12 @@ class ESXFormInstance(DictObject):
                     content_length=info.get("length", None),
                     content_type=info.get("content_type", None),
                     digest=info.get("digest", None),
-                ) for name, info in self._attachments.iteritems()
+                ) for name, info in six.iteritems(self._attachments)
             })
         if self.external_blobs:
             blobs.update({
                 name: BlobMeta.wrap(info)
-                for name, info in self.external_blobs.iteritems()
+                for name, info in six.iteritems(self.external_blobs)
             })
 
         return blobs
@@ -186,7 +189,7 @@ class ESCase(DictObject, CaseToXMLMixin):
         return get_index_map(self.indices)
 
     def get_properties_in_api_format(self):
-        return dict(self.dynamic_case_properties().items() + {
+        return dict(list(self.dynamic_case_properties().items()) + list({
             "external_id": self.external_id,
             "owner_id": self.owner_id,
             # renamed
@@ -196,7 +199,7 @@ class ESCase(DictObject, CaseToXMLMixin):
             # renamed
             "date_opened": self.opened_on,
             # all custom properties go here
-        }.items())
+        }.items()))
 
     def dynamic_case_properties(self):
         from casexml.apps.case.models import CommCareCase
@@ -213,7 +216,7 @@ class ESCase(DictObject, CaseToXMLMixin):
     def get_forms(self):
         from corehq.apps.api.util import form_to_es_form
         forms = FormAccessors(self.domain).get_forms(self.xform_ids)
-        return filter(None, [form_to_es_form(form) for form in forms])
+        return list(filter(None, [form_to_es_form(form) for form in forms]))
 
     @property
     def child_cases(self):

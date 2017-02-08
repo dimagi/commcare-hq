@@ -45,9 +45,9 @@
 trunk: master
 name: autostaging
 branches:
+  - app_manager.translations  # Danny 2/3
   - general-credits-sr # sreddy 1/10
   - vellum-staging # J$ 11/13  
-  - django19
   - bmb/currentind-string # Biyeun 11/12
   - nh/new_rb  # Norman 11/22
   - nc/exports-with-conflict-res-branch  # Noah 12/11
@@ -58,14 +58,16 @@ branches:
   - zapier_action_mods # NC 1/24
   - np/phonenumbers # NP 1/18
   - dm/julies-billing-gid  # daniel 2/1
+  - np/3/update-dropbox # NP 2/3
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
     branches:
-      - commcare_2.32 # WSP 1/12
+      - commcare_2.33 # WSP 2/8
   submodules/formtranslate-src:
-    branches: []
+    branches:
+      - commcare_2.33 # WSP 2/8
   submodules/django-digest-src:
     branches: []
   submodules/dimagi-utils-src:
@@ -78,3 +80,6 @@ submodules:
     branches: []
   deployment/commcare-hq-deploy:
     branches: []
+  submodules/commcare-translations:
+    branches:
+      - commcare-versioned-translations

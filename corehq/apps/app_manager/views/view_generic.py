@@ -290,8 +290,9 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         'show_live_preview': should_show_preview_app(
             request,
             domain_obj,
-            request.couch_user.username,
-        )
+            request.couch_user.username
+        ),
+        'can_preview_form': request.couch_user.has_permission(domain, 'edit_data')
     })
 
     response = render(request, template, context)

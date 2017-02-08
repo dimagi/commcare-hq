@@ -14,7 +14,7 @@
     <instance id="casedb" src="jr://instance/casedb"/>
     <instance id="commcaresession" src="jr://instance/session"/>
     <instance id="groups" src="jr://fixture/user-groups"/>
-    <instance id="locations" src="jr://fixture/commtrack:locations"/>
+    <instance id="locations" src="jr://fixture/locations"/>
     <session>
       <query url="https://www.example.com/a/test_domain/phone/search/"
              storage-instance="results"

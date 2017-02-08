@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from datetime import datetime, timedelta
 from django.test import SimpleTestCase
 from mock import patch

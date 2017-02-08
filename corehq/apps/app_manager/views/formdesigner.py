@@ -155,7 +155,8 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
             request,
             domain_obj,
             request.couch_user.username,
-        )
+        ),
+        'can_preview_form': request.couch_user.has_permission(domain, 'edit_data')
     })
 
     template = get_app_manager_template(

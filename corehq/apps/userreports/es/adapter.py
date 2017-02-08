@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from copy import deepcopy
 import datetime
 from elasticsearch import NotFoundError, RequestError
@@ -11,6 +12,7 @@ from pillowtop.es_utils import (
     set_index_reindex_settings,
     set_index_normal_settings,
 )
+import six
 
 
 # These settings tell ES to not tokenize strings
@@ -72,7 +74,7 @@ class ESAlchemy(object):
     def __getitem__(self, sliced_or_int):
         hits = self.es[sliced_or_int]
         hits = [self._hit_to_row(hit) for hit in hits]
-        if isinstance(sliced_or_int, (int, long)):
+        if isinstance(sliced_or_int, six.integer_types):
             return hits[0]
         return hits
 
