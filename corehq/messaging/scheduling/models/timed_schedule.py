@@ -1,4 +1,4 @@
-from corehq.messaging.scheduling.models.generic import Schedule, Event
+from corehq.messaging.scheduling.models.abstract import Schedule, Event
 from corehq.util.timezones.conversions import ServerTime, UserTime
 from datetime import timedelta, datetime
 from dimagi.utils.decorators.memoized import memoized

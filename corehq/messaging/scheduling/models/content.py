@@ -1,5 +1,5 @@
 import jsonfield
-from corehq.messaging.scheduling.models.generic import Content
+from corehq.messaging.scheduling.models.abstract import Content
 
 
 class SMSContent(Content):
