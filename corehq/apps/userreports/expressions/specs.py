@@ -414,4 +414,7 @@ class CoalesceExpressionSpec(JsonObject):
     def __call__(self, item, context=None):
         expression_value = self._expression(item, context)
         default_value = self._default_expression(item, context)
-        return expression_value or default_value
+        if expression_value is None or expression_value == '':
+            return default_value
+        else:
+            return expression_value
