@@ -44,7 +44,7 @@ def sub_git_cmd(git_dir, args):
         )
     except OSError as e:
         # Is git missing ?
-        if isinstance(e, OSError) and e.errno == 2:
+        if e.errno == 2:
             e.strerror += ": git"
         raise(e)
 
