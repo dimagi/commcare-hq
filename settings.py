@@ -202,6 +202,7 @@ DEFAULT_APPS = (
     'two_factor',
     'ws4redis',
     'statici18n',
+    'raven.contrib.django.raven_compat',
 )
 
 CAPTCHA_FIELD_TEMPLATE = 'hq-captcha-field.html'
@@ -877,6 +878,11 @@ ONBOARDING_DOMAIN_TEST_DATE = ()
 
 HQ_INSTANCE = 'development'
 
+SENTRY_PUBLIC_KEY = None
+SENTRY_PRIVATE_KEY = None
+SENTRY_PROJECT_ID = None
+SENTRY_QUERY_URL = 'https://sentry.io/{org}/{project}/?query='
+
 try:
     # try to see if there's an environmental variable set for local_settings
     custom_settings = os.environ.get('CUSTOMSETTINGS', None)
@@ -1064,6 +1070,10 @@ LOGGING = {
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 20  # Backup 200 MB of logs
         },
+        'sentry': {
+            'level': 'ERROR',
+            'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
+        },
     },
     'loggers': {
         '': {
@@ -1086,7 +1096,7 @@ LOGGING = {
             'propagate': False,
         },
         'notify': {
-            'handlers': ['notify_exception'],
+            'handlers': ['notify_exception', 'sentry'],
             'level': 'ERROR',
             'propagate': True,
         },
@@ -1155,6 +1165,11 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
+        'sentry.errors.uncaught': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        }
     }
 }
 
@@ -1937,3 +1952,24 @@ else:
 REST_FRAMEWORK = {
     'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S.%fZ'
 }
+
+if SENTRY_PUBLIC_KEY and SENTRY_PRIVATE_KEY and SENTRY_PROJECT_ID:
+    import os
+    try:
+        from raven import breadcrumbs, fetch_git_sha
+    except ImportError:
+        pass
+    else:
+
+        RAVEN_CONFIG = {
+            'dsn': 'https://{pub_key}:{priv_key}@sentry.io/{project_id}'.format(
+                pub_key=SENTRY_PUBLIC_KEY,
+                priv_key=SENTRY_PRIVATE_KEY,
+                project_id=SENTRY_PROJECT_ID
+            ),
+            'release': fetch_git_sha(os.path.dirname(os.pardir)),
+            'environment': SERVER_ENVIRONMENT,
+            'tags': {},
+        }
+
+        breadcrumbs.ignore_logger('quickcache')
