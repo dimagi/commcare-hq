@@ -4,6 +4,7 @@ from django.core import management
 
 from corehq.apps.receiverwrapper.auth import AuthContext
 from corehq.apps.receiverwrapper.util import submit_form_locally
+from corehq.util.test_utils import softer_assert
 from custom.intrahealth.models import TauxDeSatisfactionFluff, CouvertureFluff
 
 import sqlalchemy
@@ -14,6 +15,7 @@ from testapps.test_pillowtop.utils import real_pillow_settings
 DATAPATH = os.path.join(os.path.dirname(__file__), 'data')
 
 
+@softer_assert()
 class TestFluffs(IntraHealthTestCase):
 
     @classmethod
