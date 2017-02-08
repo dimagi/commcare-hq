@@ -37,8 +37,6 @@ class Command(BaseCommand):
      " It will only fix xforms that are submitted against builds that have"
      " already been repaired.")
 
-    args = '<log_path>'
-
     option_list = (
         make_option(
             '--dry-run',
@@ -56,11 +54,14 @@ class Command(BaseCommand):
         )
     )
 
-    def handle(self, *args, **options):
+    def add_arguments(self, parser):
+        parser.add_argument('log_path')
+
+    def handle(self, log_path, **options):
 
         dry_run = options.get("dry_run", True)
         noinput = options.get("noinput", False)
-        log_path = args[0].strip()
+        log_path = log_path.strip()
 
         if not noinput and not dry_run:
             confirm = raw_input(
