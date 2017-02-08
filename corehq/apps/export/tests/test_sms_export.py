@@ -6,13 +6,7 @@ from mock import patch
 
 from couchexport.models import Format
 
-from corehq.apps.export.export import (
-    _get_writer,
-    _Writer,
-    _write_export_instance,
-    ExportFile,
-    get_export_file,
-)
+from corehq.apps.export.export import get_export_file
 from corehq.apps.export.models import SMSExportInstance, SMSExportDataSchema
 from corehq.apps.sms.models import WORKFLOWS_FOR_REPORTS
 

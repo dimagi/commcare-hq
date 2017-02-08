@@ -2326,7 +2326,6 @@ class DownloadNewSmsExportView(GenericDownloadNewExportMixin, BaseDownloadExport
         return filter_form
 
     def _get_export(self, domain, export_id):
-        user = self.request.couch_user
         include_metadata = MESSAGE_LOG_METADATA.enabled_for_request(self.request)
         return SMSExportInstance._new_from_schema(
             SMSExportDataSchema.get_latest_export_schema(domain, include_metadata)
