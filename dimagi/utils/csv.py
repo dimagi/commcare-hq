@@ -8,11 +8,12 @@ import csv
 import codecs
 import cStringIO
 
+
 class UTF8Recoder:
     """
     Iterator that reads an encoded stream and reencodes the input to UTF-8
     """
-    
+
     def __init__(self, f, encoding):
         self.reader = codecs.getreader(encoding)(f)
 
@@ -20,11 +21,10 @@ class UTF8Recoder:
         return self
 
     def __next__(self):
-        return self.reader.next().encode("utf-8")
+        return next(self.reader).encode("utf-8")
 
-    def next(self):
-        # For Py2 compatibility
-        return self.reader.next().encode("utf-8")
+    next = __next__  # For Py2 compatibility
+
 
 class UnicodeReader:
     """
@@ -40,13 +40,11 @@ class UnicodeReader:
         row = next(self.reader)
         return [unicode(s, "utf-8") for s in row]
 
+    next = __next__  # For Py2 compatibility
+
     def __iter__(self):
         return self
 
-    def next(self):
-        # For Py2 compatibility
-        row = next(self.reader)
-        return [unicode(s, "utf-8") for s in row]
 
 class UnicodeWriter:
     """

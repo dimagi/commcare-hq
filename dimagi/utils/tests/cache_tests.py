@@ -7,6 +7,7 @@ from unittest2 import TestCase
 from dimagi.utils.django import cached_object
 from dimagi.utils.django.cached_object import CachedObject, CachedImage, IMAGE_SIZE_ORDERING, OBJECT_ORIGINAL
 
+
 class FakeCache(object):
     def __init__(self):
         self.cache_dict = {}
@@ -15,7 +16,7 @@ class FakeCache(object):
         return self.cache_dict.get(key, None)
 
     def keys(self, pattern):
-        all_keys = list(self.cache_dict)
+        all_keys = self.cache_dict
         filtered = [x for x in all_keys if x.startswith(pattern[:-1])]
         return filtered
 
@@ -27,6 +28,7 @@ class FakeCache(object):
 
 
 fake_cache = FakeCache()
+
 
 class CachedObjectTests(TestCase):
     def setUp(self):
@@ -47,7 +49,6 @@ class CachedObjectTests(TestCase):
         cmeta, cstream = obj.get()
         self.assertEqual(cmeta['content_length'], len(text))
         self.assertEqual(cstream.read(), text)
-
 
     def _make_image(self, width=3001, height=2001):
         im = Image.new("RGB", (width, height), (0, 0, 0))
@@ -103,7 +104,6 @@ class CachedObjectTests(TestCase):
             else:
                 self.assertEqual(stream_size, orig_size)
 
-
     def testSmallerImageObject(self):
         image, buffer = self._make_image(width=641, height=481)
         buffer.seek(0, os.SEEK_END)
@@ -134,14 +134,3 @@ class CachedObjectTests(TestCase):
             self.assertEqual(stream_size, orig_size)
             self.assertNotEqual(cmeta['size_key'], size_key)
             self.assertEqual(cmeta['size_key'], OBJECT_ORIGINAL)
-
-
-
-
-
-
-
-
-
-
-
