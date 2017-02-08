@@ -1,30 +1,65 @@
-import jsonfield
-import uuid
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.messaging.scheduling.dbaccessors import (
-    get_schedule_instances_for_schedule_and_recipient,
-    save_schedule_instance,
-)
+from corehq.messaging.scheduling.dbaccessors import save_schedule_instance
 from corehq.util.mixin import UUIDGeneratorMixin
-from corehq.util.timezones.conversions import ServerTime, UserTime
 from corehq.util.timezones.utils import get_timezone_for_domain, coerce_timezone_value
-from datetime import timedelta, datetime, date, time, tzinfo
+from datetime import datetime, tzinfo
 from dimagi.utils.decorators.memoized import memoized
 from django.db import models
 from django.core.exceptions import ValidationError
 
 
-class ScheduleInstance(UUIDGeneratorMixin, models.Model):
+class ScheduleForeignKeyMixin(models.Model):
+    timed_schedule_id = models.IntegerField(null=True)
+
+    class Meta:
+        abstract = True
+
+    class NoAvailableSchedule(Exception):
+        pass
+
+    class UnknownScheduleType(Exception):
+        pass
+
+    @property
+    def schedule(self):
+        from corehq.messaging.scheduling.models import TimedSchedule
+
+        if self.timed_schedule_id:
+            return TimedSchedule.objects.get(pk=self.timed_schedule_id)
+
+        raise self.NoAvailableSchedule()
+
+    @property
+    @memoized
+    def memoized_schedule(self):
+        """
+        This is named with a memoized_ prefix to be clear that it should only be used
+        when the schedule is not changing.
+        """
+        return self.schedule
+
+    @schedule.setter
+    def schedule(self, value):
+        from corehq.messaging.scheduling.models import TimedSchedule
+
+        self.timed_schedule_id = None
+
+        if isinstance(value, TimedSchedule):
+            self.timed_schedule_id = value.pk
+        else:
+            raise self.UnknownScheduleType()
+
+
+class ScheduleInstance(UUIDGeneratorMixin, ScheduleForeignKeyMixin):
     UUIDS_TO_GENERATE = ['schedule_instance_id']
     CONVERT_UUID_TO_HEX = False
 
     domain = models.CharField(max_length=126)
     schedule_instance_id = models.UUIDField()
-    schedule_id = models.IntegerField()
     recipient_type = models.CharField(max_length=126)
     recipient_id = models.CharField(max_length=126)
     start_date = models.DateField()
@@ -35,11 +70,6 @@ class ScheduleInstance(UUIDGeneratorMixin, models.Model):
 
     class UnknownRecipient(Exception):
         pass
-
-    @property
-    @memoized
-    def schedule(self):
-        return Schedule.objects.get(pk=self.schedule_id)
 
     @property
     @memoized
@@ -85,18 +115,11 @@ class ScheduleInstance(UUIDGeneratorMixin, models.Model):
         return pytz.UTC
 
     @classmethod
-    def get_or_create_for_recipient(cls, schedule, recipient_type, recipient_id, start_date=None):
-        instances = get_schedule_instances_for_schedule_and_recipient(schedule.pk, recipient_type, recipient_id)
-
-        if len(instances) > 1:
-            raise cls.MultipleObjectsReturned()
-
-        if len(instances) == 1:
-            return instances[0]
+    def create_for_recipient(cls, schedule, recipient_type, recipient_id, start_date=None,
+            move_to_next_event_not_in_the_past=True):
 
         obj = cls(
             domain=schedule.domain,
-            schedule_id=schedule.pk,
             recipient_type=recipient_type,
             recipient_id=recipient_id,
             current_event_num=0,
@@ -104,7 +127,12 @@ class ScheduleInstance(UUIDGeneratorMixin, models.Model):
             active=True
         )
 
+        obj.schedule = schedule
         schedule.set_first_event_due_timestamp(obj, start_date)
+
+        if move_to_next_event_not_in_the_past:
+            schedule.move_to_next_event_not_in_the_past(obj)
+
         save_schedule_instance(obj)
         return obj
 
@@ -125,7 +153,7 @@ class ScheduleInstance(UUIDGeneratorMixin, models.Model):
                 yield user
         elif self.recipient_type == 'Location':
             location = self.recipient
-            if self.schedule.include_descendant_locations:
+            if self.memoized_schedule.include_descendant_locations:
                 location_ids = location.get_descendants(include_self=True).filter(is_archived=False).location_ids()
             else:
                 location_ids = [location.location_id]
@@ -140,161 +168,95 @@ class ScheduleInstance(UUIDGeneratorMixin, models.Model):
             raise self.UnknownRecipient(self.recipient_type)
 
     def handle_current_event(self):
-        content = self.schedule.get_current_event_content(self)
+        content = self.memoized_schedule.get_current_event_content(self)
         for recipient in self.expand_recipients():
-            content.handle(recipient)
+            content.send(recipient)
         # As a precaution, always explicitly move to the next event after processing the current
         # event to prevent ever getting stuck on the current event.
-        self.schedule.move_to_next_event(self)
-        self.schedule.move_to_next_event_not_in_the_past(self)
+        self.memoized_schedule.move_to_next_event(self)
+        self.memoized_schedule.move_to_next_event_not_in_the_past(self)
         save_schedule_instance(self)
 
 
 class Schedule(models.Model):
-    REPEAT_INDEFINITELY = -1
-
     domain = models.CharField(max_length=126)
-    schedule_length = models.IntegerField()
-    total_iterations = models.IntegerField()
 
     # Only matters when the recipient of a ScheduleInstance is a Location
     # If False, only include users at that location as recipients
     # If True, include all users at that location or at any descendant locations as recipients
     include_descendant_locations = models.BooleanField(default=False)
 
-    @property
-    def ordered_events(self):
-        return self.event_set.order_by('order')
-
-    def get_current_event_content(self, instance):
-        current_event = self.ordered_events[instance.current_event_num]
-        return current_event.get_content()
+    class Meta:
+        abstract = True
 
     def set_first_event_due_timestamp(self, instance, start_date=None):
-        """
-        If start_date is None, we set it automatically ensuring that
-        self.next_event_due does not get set in the past for the first
-        event.
-        """
-        if start_date:
-            instance.start_date = start_date
-        else:
-            instance.start_date = ServerTime(datetime.utcnow()).user_time(instance.timezone).done().date()
-
-        self.set_next_event_due_timestamp(instance)
-
-        if not start_date and instance.next_event_due < datetime.utcnow():
-            instance.start_date += timedelta(days=1)
-            instance.next_event_due += timedelta(days=1)
-
-    def set_next_event_due_timestamp(self, instance):
-        current_event = self.ordered_events[instance.current_event_num]
-        days_since_start_date = (
-            ((instance.schedule_iteration_num - 1) * self.schedule_length) + current_event.day
-        )
-
-        timestamp = datetime.combine(
-            instance.start_date + timedelta(days=days_since_start_date),
-            current_event.time
-        )
-        instance.next_event_due = (
-            UserTime(timestamp, instance.timezone)
-            .server_time()
-            .done()
-            .replace(tzinfo=None)
-        )
+        raise NotImplementedError()
 
     def move_to_next_event(self, instance):
-        instance.current_event_num += 1
-        if instance.current_event_num >= len(self.ordered_events):
-            instance.schedule_iteration_num += 1
-            instance.current_event_num = 0
-        self.set_next_event_due_timestamp(instance)
+        raise NotImplementedError()
 
-        if (
-            self.total_iterations != self.REPEAT_INDEFINITELY and
-            instance.schedule_iteration_num > self.total_iterations
-        ):
-            self.active = False
+    def get_current_event_content(self, instance):
+        raise NotImplementedError()
 
     def move_to_next_event_not_in_the_past(self, instance):
         while instance.active and instance.next_event_due < datetime.utcnow():
             self.move_to_next_event(instance)
 
-    @classmethod
-    def create_daily_schedule(cls, domain, schedule_length=1, total_iterations=REPEAT_INDEFINITELY):
-        return cls.objects.create(
-            domain=domain,
-            schedule_length=schedule_length,
-            total_iterations=total_iterations
-        )
 
-    def add_event(self, day=0, time=None):
-        return self.event_set.create(
-            order=self.ordered_events.count(),
-            day=day,
-            time=time
-        )
+class ContentForeignKeyMixin(models.Model):
+    sms_content = models.ForeignKey('scheduling.SMSContent', null=True, on_delete=models.CASCADE)
 
+    class Meta:
+        abstract = True
 
-class Event(models.Model):
-    schedule = models.ForeignKey('Schedule', on_delete=models.CASCADE)
-    order = models.IntegerField()
-    day = models.IntegerField()
-    time = models.TimeField()
-
-    class ContentObjectNotFound(Exception):
+    class NoAvailableContent(Exception):
         pass
-
-    class MultipleContentObjectsFound(Exception):
-        pass
-
-    def get_content(self):
-        objs = list(self.content_set.all())
-
-        if len(objs) > 1:
-            raise MultipleContentObjectsFound(self.pk)
-
-        if len(objs) == 0:
-            raise ContentObjectNotFound(self.pk)
-
-        return objs[0]
-
-    def set_sms_content(self, message):
-        self.content_set.all().delete()
-        self.content_set.create(
-            content_type=Content.CONTENT_SMS,
-            message=message
-        )
-        return self
-
-
-class Content(models.Model):
-    CONTENT_SMS = 'SMS'
-
-    event = models.ForeignKey('Event', on_delete=models.CASCADE)
-    content_type = models.CharField(max_length=126)
-    message = jsonfield.JSONField(default=dict, null=True)
 
     class UnknownContentType(Exception):
         pass
 
-    def handle(self, recipient):
+    @property
+    def content(self):
+        if self.sms_content_id:
+            return self.sms_content
+
+        raise self.NoAvailableContent()
+
+    @property
+    @memoized
+    def memoized_content(self):
+        """
+        This is named with a memoized_ prefix to be clear that it should only be used
+        when the content is not changing.
+        """
+        return self.content
+
+    @content.setter
+    def content(self, value):
+        from corehq.messaging.scheduling.models import SMSContent
+
+        self.sms_content = None
+
+        if isinstance(value, SMSContent):
+            self.sms_content = value
+        else:
+            raise self.UnknownContentType()
+
+
+class Event(ContentForeignKeyMixin):
+    order = models.IntegerField()
+
+    class Meta:
+        abstract = True
+
+
+class Content(models.Model):
+    class Meta:
+        abstract = True
+
+    def send(self, recipient):
         """
         :param recipient: a CommCareUser, WebUser, or CommCareCase/SQL
         representing the contact who should receive the content.
         """
-        method = {
-            self.CONTENT_SMS: self.handle_sms,
-        }.get(self.content_type)
-
-        if not method:
-            raise UnknownContentType(self.content_type)
-
-        method(recipient)
-
-    def handle_sms(self, recipient):
-        print '*******************************'
-        print 'To:', recipient
-        print 'Message: ', self.message
-        print '*******************************'
+        raise NotImplementedError()
