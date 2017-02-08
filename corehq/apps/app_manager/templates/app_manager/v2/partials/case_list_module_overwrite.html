@@ -1,29 +1,22 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load xforms_extras %}
-{% load app_manager_extras %}
 {% if module.module_type != 'basic' or request|toggle_enabled:'COPY_CASE_CONFIGS' %}
 <form class="form-inline" method='POST' action='{% url "overwrite_module_case_list" domain app.id module.id %}'>
     {% csrf_token %}
     <fieldset>
-    {% with app|get_available_modules_for_case_list_configuration:module as available_modules %}
-        {% if available_modules %}
-            <label for="other_module_id">{% trans "Module" %}: </label>
-            <select name='source_module_id' class='form-control'>{% for other_mod in available_modules %}
-                <option value={{ other_mod.id }}>{{ other_mod.name|html_trans:langs }}</option>
-            {% endfor %}</select>
-            <input name="detail_type" type="hidden" value="{{ detail_type }}" />
-            <button class='btn btn-danger' type="submit">
-                <i class="fa fa-copy"></i>
-                {% if detail_type == 'short' %}
-                    {% trans "Overwrite Case List" %}
-                {% else %}
-                    {% trans "Overwrite Case Detail" %}
-                {% endif %}
-        {% else %}
-            <p><em>{% trans "Didn't find any other modules with the same case type."%}</em></p>
-        {% endif %}
-    {% endwith %}
+        <label for="other_module_id">{% trans "Module" %}: </label>
+        <select name='source_module_id' class='form-control'>{% for other_mod in available_modules %}
+            <option value={{ other_mod.id }}>{{ other_mod.name|html_trans:langs }}</option>
+        {% endfor %}</select>
+        <input name="detail_type" type="hidden" value="{{ detail_type }}" />
+        <button class='btn btn-danger' type="submit">
+            <i class="fa fa-copy"></i>
+            {% if detail_type == 'short' %}
+                {% trans "Overwrite Case List" %}
+            {% else %}
+                {% trans "Overwrite Case Detail" %}
+            {% endif %}
     </fieldset>
 </form>
 {% endif %}
