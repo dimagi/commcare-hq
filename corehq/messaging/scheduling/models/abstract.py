@@ -14,6 +14,7 @@ from django.core.exceptions import ValidationError
 
 class ScheduleForeignKeyMixin(models.Model):
     timed_schedule_id = models.IntegerField(null=True)
+    alert_schedule_id = models.IntegerField(null=True)
 
     class Meta:
         abstract = True
@@ -26,10 +27,12 @@ class ScheduleForeignKeyMixin(models.Model):
 
     @property
     def schedule(self):
-        from corehq.messaging.scheduling.models import TimedSchedule
+        from corehq.messaging.scheduling.models import TimedSchedule, AlertSchedule
 
         if self.timed_schedule_id:
             return TimedSchedule.objects.get(pk=self.timed_schedule_id)
+        elif self.alert_schedule_id:
+            return AlertSchedule.objects.get(pk=self.alert_schedule_id)
 
         raise self.NoAvailableSchedule()
 
@@ -44,12 +47,15 @@ class ScheduleForeignKeyMixin(models.Model):
 
     @schedule.setter
     def schedule(self, value):
-        from corehq.messaging.scheduling.models import TimedSchedule
+        from corehq.messaging.scheduling.models import TimedSchedule, AlertSchedule
 
         self.timed_schedule_id = None
+        self.alert_schedule_id = None
 
         if isinstance(value, TimedSchedule):
             self.timed_schedule_id = value.pk
+        elif isinstance(value, AlertSchedule):
+            self.alert_schedule_id = value.pk
         else:
             raise self.UnknownScheduleType()
 
@@ -62,7 +68,7 @@ class ScheduleInstance(UUIDGeneratorMixin, ScheduleForeignKeyMixin):
     schedule_instance_id = models.UUIDField()
     recipient_type = models.CharField(max_length=126)
     recipient_id = models.CharField(max_length=126)
-    start_date = models.DateField()
+    start_date = models.DateField(null=True)
     current_event_num = models.IntegerField()
     schedule_iteration_num = models.IntegerField()
     next_event_due = models.DateTimeField()

@@ -69,7 +69,7 @@ class TimedSchedule(Schedule):
             self.total_iterations != self.REPEAT_INDEFINITELY and
             instance.schedule_iteration_num > self.total_iterations
         ):
-            self.active = False
+            instance.active = False
 
     @classmethod
     def create_daily_schedule(cls, domain, schedule_length=1, total_iterations=REPEAT_INDEFINITELY):
@@ -81,7 +81,7 @@ class TimedSchedule(Schedule):
 
     def add_event(self, day, time, content, order=None):
         if order is None:
-            order = self.timedevent_set.count()
+            order = self.timedevent_set.count() + 1
 
         if content.pk is None:
             content.save()
