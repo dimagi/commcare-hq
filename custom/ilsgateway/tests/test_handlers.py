@@ -1110,3 +1110,25 @@ class TestHandlers(ILSTestScript):
             5551234 < {}
         """.format(unicode(INVALID_PRODUCT_CODE % {'product_code': 'invalid_code'}))
         self.run_script(script)
+
+    def test_unicode_characters(self):
+        with localize('sw'):
+            response = _(SOH_CONFIRM)
+        script = u"""
+            5551235 > Hmk Id 400 \u0660Dp 569 Ip 678
+            5551235 < %(soh_confirm)s
+        """ % {"soh_confirm": response}
+
+        now = datetime.datetime.utcnow()
+        self.run_script(script)
+
+        txs = list(StockTransaction.objects.filter(
+            case_id=self.loc1.sql_location.supply_point_id,
+            report__date__gte=now)
+        )
+        self.assertEqual(len(txs), 3)
+
+        self.assertSetEqual(
+            {(tx.sql_product.code, int(tx.stock_on_hand)) for tx in txs},
+            {('id', 400), ('dp', 569), ('ip', 678)}
+        )
