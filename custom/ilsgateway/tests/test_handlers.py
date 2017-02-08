@@ -10,10 +10,11 @@ from corehq.apps.reminders.util import get_two_way_number_for_recipient
 from corehq.apps.sms.api import incoming
 from corehq.apps.users.models import CommCareUser
 from corehq.util.translation import localize
+from corehq.util.test_utils import flag_enabled
 from custom.ilsgateway.models import (
     DeliveryGroups, SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues
 )
-from custom.ilsgateway.tanzania.reminders import ARRIVED_HELP, ARRIVED_DEFAULT, ARRIVED_KNOWN
+from custom.ilsgateway.tanzania.reminders import ARRIVED_HELP, ARRIVED_DEFAULT, ARRIVED_KNOWN, EMG_ERROR, EMG_HELP
 from custom.ilsgateway.tanzania.reminders import (
     CONTACT_SUPERVISOR, DELIVERED_CONFIRM, DELIVERY_CONFIRM_CHILDREN,
     DELIVERY_CONFIRM_DISTRICT, DELIVERY_LATE_DISTRICT, DELIVERY_PARTIAL_CONFIRM,
@@ -30,6 +31,7 @@ from custom.ilsgateway.tanzania.reminders import (
 from custom.ilsgateway.tests.handlers.utils import TEST_DOMAIN, ILSTestScript
 from custom.ilsgateway.utils import get_sql_locations_by_domain_and_group
 from custom.logistics.tests.utils import bootstrap_user
+from custom.zipline.models import EmergencyOrder
 
 
 class TestHandlers(ILSTestScript):
@@ -37,6 +39,8 @@ class TestHandlers(ILSTestScript):
     def tearDown(self):
         StockReport.objects.all().delete()
         StockState.objects.all().delete()
+        EmergencyOrder.objects.all().delete()
+        super(TestHandlers, self).tearDown()
 
     def test_register_facility(self):
         with localize('sw'):
@@ -339,8 +343,11 @@ class TestHandlers(ILSTestScript):
         self.assertEqual(StockState.objects.get(sql_product__code="ip").stock_on_hand, 691)
 
     def test_stop(self):
-        bootstrap_user(self.loc1, username='stop_person', domain=self.domain.name, phone_number='643',
-                       first_name='stop', last_name='Person', language='sw')
+        user = bootstrap_user(
+            self.loc1, username='stop_person', domain=self.domain.name,
+            phone_number='643', first_name='stop', last_name='Person', language='sw'
+        )
+        self.addCleanup(user.delete)
 
         with localize('sw'):
             response = unicode(STOP_CONFIRM)
@@ -1046,3 +1053,60 @@ class TestHandlers(ILSTestScript):
             5551235 < {0}
         """.format(response2)
         self.run_script(soh_script)
+
+    def test_help(self):
+        script = """
+            5551234 > emg
+            5551234 < {}
+        """.format(unicode(EMG_HELP))
+        self.run_script(script)
+
+    @flag_enabled('EMG_AND_REC_SMS_HANDLERS')
+    def test_valid_message(self):
+        script = """
+            5551235 > emg dp 100 fs 50
+        """
+        self.run_script(script)
+
+        emergency_order = EmergencyOrder.objects.filter(domain=self.domain.name)[0]
+
+        self.assertListEqual(
+            [
+                emergency_order.domain,
+                emergency_order.requesting_user_id,
+                emergency_order.requesting_phone_number,
+                emergency_order.location_code,
+                emergency_order.products_requested
+            ],
+            [
+                self.domain.name,
+                self.en_user1.get_id,
+                '5551235',
+                self.en_user1.sql_location.site_code,
+                {'dp': {'quantity': u'100'}, 'fs': {'quantity': u'50'}}
+            ]
+        )
+
+    @flag_enabled('EMG_AND_REC_SMS_HANDLERS')
+    def test_invalid_quantity(self):
+        script = """
+            5551234 > emg dp quantity fs 50
+            5551234 < {}
+        """.format(unicode(EMG_ERROR))
+        self.run_script(script)
+
+    @flag_enabled('EMG_AND_REC_SMS_HANDLERS')
+    def test_incomplete_message(self):
+        script = """
+            5551234 > emg dp fs 50
+            5551234 < {}
+        """.format(unicode(EMG_ERROR))
+        self.run_script(script)
+
+    @flag_enabled('EMG_AND_REC_SMS_HANDLERS')
+    def test_invalid_product_code(self):
+        script = """
+            5551234 > emg invalid_code 40 fs 50
+            5551234 < {}
+        """.format(unicode(INVALID_PRODUCT_CODE % {'product_code': 'invalid_code'}))
+        self.run_script(script)
