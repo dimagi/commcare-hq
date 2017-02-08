@@ -7,9 +7,6 @@ from custom.ilsgateway.tests.handlers.utils import ILSTestScript
 
 class ILSRandRTest(ILSTestScript):
 
-    def setUp(self):
-        super(ILSRandRTest, self).setUp()
-
     def test_invalid_randr_with_amounts(self):
         with localize('sw'):
             response1 = unicode(SUBMITTED_INVALID_QUANTITY)
