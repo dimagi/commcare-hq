@@ -165,13 +165,15 @@ hqDefine('app_manager/js/case-config-ui-2.js', function () {
             var $home = $('#case-config-ko');
             var $usercaseMgmt = $('#usercase-config-ko');
             _.delay(function () {
-                $home.koApplyBindings(self);
-                $home.on('textchange', 'input', self.change)
-                     // all select2's are represented by an input[type="hidden"]
-                     .on('change', 'select, input[type="hidden"]', self.change)
-                     .on('click', 'a', self.change);
-                self.ensureBlankProperties();
-                self.forceRefreshTextchangeBinding($home);
+                if ($home.length) {
+                    $home.koApplyBindings(self);
+                    $home.on('textchange', 'input', self.change)
+                         // all select2's are represented by an input[type="hidden"]
+                         .on('change', 'select, input[type="hidden"]', self.change)
+                         .on('click', 'a', self.change);
+                    self.ensureBlankProperties();
+                    self.forceRefreshTextchangeBinding($home);
+                }
 
                 if ($usercaseMgmt.length) {
                     $usercaseMgmt.koApplyBindings(self);
