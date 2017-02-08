@@ -62,6 +62,10 @@ class ILSTestScript(TestScript):
             cls.facility, username='stella', domain=domain.name, home_loc='loc1', phone_number='5551234',
             first_name='stella', last_name='Test', language='sw'
         )
+        cls.en_user1 = bootstrap_user(
+            cls.facility, username='stella_en', domain=domain.name, home_loc='loc1', phone_number='5551235',
+            first_name='stella', last_name='Test English', language='en'
+        )
         bootstrap_user(facility2, username='bella', domain=domain.name, home_loc='loc2', phone_number='5555678',
                        first_name='bella', last_name='Test', language='sw')
         bootstrap_user(cls.district, username='trella', domain=domain.name, home_loc='dis1', phone_number='555',
@@ -92,6 +96,7 @@ class ILSTestScript(TestScript):
         self.loc2 = Location.by_site_code(TEST_DOMAIN, 'loc2')
         self.dis = Location.by_site_code(TEST_DOMAIN, 'dis1')
         self.user_fac1 = CommCareUser.get_by_username('stella')
+        self.user_fac1_en = CommCareUser.get_by_username('stella_en')
         self.user_fac2 = CommCareUser.get_by_username('bella')
         self.user_dis = CommCareUser.get_by_username('trella')
         self.msd_user = CommCareUser.get_by_username('msd_person')

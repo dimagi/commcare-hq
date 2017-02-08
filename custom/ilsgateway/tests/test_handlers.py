@@ -13,6 +13,7 @@ from corehq.util.translation import localize
 from custom.ilsgateway.models import (
     DeliveryGroups, SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues
 )
+from custom.ilsgateway.tanzania.reminders import ARRIVED_HELP, ARRIVED_DEFAULT, ARRIVED_KNOWN
 from custom.ilsgateway.tanzania.reminders import (
     CONTACT_SUPERVISOR, DELIVERED_CONFIRM, DELIVERY_CONFIRM_CHILDREN,
     DELIVERY_CONFIRM_DISTRICT, DELIVERY_LATE_DISTRICT, DELIVERY_PARTIAL_CONFIRM,
@@ -1000,3 +1001,48 @@ class TestHandlers(ILSTestScript):
         for ps in StockState.objects.all():
             self.assertEqual(self.user_fac1.location.linked_supply_point().get_id, ps.case_id)
             self.assertTrue(0 != ps.stock_on_hand)
+
+    def test_arrived_help(self):
+        msg = """
+           5551235 > arrived
+           5551235 < {0}
+        """.format(unicode(ARRIVED_HELP))
+        self.run_script(msg)
+
+    def test_arrived_unknown_code(self):
+        msg = """
+           5551235 > arrived NOTACODEINTHESYSTEM
+           5551235 < {0}
+        """.format(unicode(ARRIVED_DEFAULT))
+        self.run_script(msg)
+
+    def test_arrived_known_code(self):
+        msg = """
+           5551235 > arrived loc1
+           5551235 < {0}
+        """.format(unicode(ARRIVED_KNOWN) % {'facility': self.loc1.name})
+        self.run_script(msg)
+
+    def test_arrived_with_time(self):
+        msg = """
+           5551235 > arrived loc1 10:00
+           5551235 < {0}
+        """.format(unicode(ARRIVED_KNOWN % {'facility': self.loc1.name}))
+        self.run_script(msg)
+
+    def test_soh_in_swahili(self):
+        with localize('sw'):
+            response1 = unicode(LANGUAGE_CONFIRM)
+            response2 = unicode(SOH_CONFIRM)
+
+        language_message = """
+            5551235 > language sw
+            5551235 < {0}
+        """.format(response1 % dict(language='Swahili'))
+        self.run_script(language_message)
+
+        soh_script = """
+            5551235 > hmk jd 400 mc 569
+            5551235 < {0}
+        """.format(response2)
+        self.run_script(soh_script)
