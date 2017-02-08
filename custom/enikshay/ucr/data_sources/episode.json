@@ -32,7 +32,7 @@
                     "property_value": "episode"
                 },
                 {
-                    "operator": "neq",
+                    "operator": "not_eq",
                     "expression": {
                         "datatype": null,
                         "type": "property_name",
