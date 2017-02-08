@@ -671,16 +671,15 @@ class DomainGlobalSettingsForm(forms.Form):
 class DomainMetadataForm(DomainGlobalSettingsForm):
 
     cloudcare_releases = ChoiceField(
-        label=ugettext_lazy("CloudCare should use"),
+        label=ugettext_lazy("Web Apps should use"),
         initial=None,
         required=False,
         choices=(
             ('stars', ugettext_lazy('Latest starred version')),
             ('nostars', ugettext_lazy('Highest numbered version (not recommended)')),
         ),
-        help_text=ugettext_lazy("Choose whether CloudCare should use the latest "
-                    "starred build or highest numbered build in your "
-                    "application.")
+        help_text=ugettext_lazy("Choose whether Web Apps should use the latest starred build or highest numbered "
+                                "build in your application.")
     )
 
     def __init__(self, *args, **kwargs):
@@ -861,7 +860,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
     notes = CharField(label="Notes*", required=False, widget=forms.Textarea)
     phone_model = CharField(
         label="Device Model",
-        help_text="Add CloudCare, if this project is using CloudCare as well",
+        help_text="Add Web Apps, if this project is using Web Apps as well",
         required=False,
     )
     business_unit = forms.ChoiceField(
