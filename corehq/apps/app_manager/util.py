@@ -1,3 +1,4 @@
+from builtins import object
 from collections import defaultdict, namedtuple, OrderedDict
 from copy import deepcopy
 import functools
@@ -587,14 +588,14 @@ def all_case_properties_by_domain(domain, include_parent_properties=True):
         property_map = get_case_properties(app, app.get_case_types(),
             defaults=('name',), include_parent_properties=include_parent_properties)
 
-        for case_type, properties in property_map.iteritems():
+        for case_type, properties in property_map.items():
             if case_type in result:
                 result[case_type].extend(properties)
             else:
                 result[case_type] = properties
 
     cleaned_result = {}
-    for case_type, properties in result.iteritems():
+    for case_type, properties in result.items():
         properties = list(set(properties))
         properties.sort()
         cleaned_result[case_type] = properties

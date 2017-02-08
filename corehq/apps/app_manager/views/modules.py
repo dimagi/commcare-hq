@@ -1,4 +1,6 @@
 # coding=utf-8
+from builtins import next
+from builtins import map
 import os
 from collections import OrderedDict, namedtuple
 import json
@@ -750,7 +752,7 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
 
     lang = request.COOKIES.get('lang', app.langs[0])
     if short is not None:
-        detail.short.columns = map(DetailColumn.from_json, short)
+        detail.short.columns = list(map(DetailColumn.from_json, short))
         if persist_case_context is not None:
             detail.short.persist_case_context = persist_case_context
             detail.short.persistent_case_context_xml = persistent_case_context_xml
@@ -764,9 +766,9 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
             _save_case_list_lookup_params(detail.short, case_list_lookup, lang)
 
     if long is not None:
-        detail.long.columns = map(DetailColumn.from_json, long)
+        detail.long.columns = list(map(DetailColumn.from_json, long))
         if tabs is not None:
-            detail.long.tabs = map(DetailTab.wrap, tabs)
+            detail.long.tabs = list(map(DetailTab.wrap, tabs))
     if filter != ():
         # Note that we use the empty tuple as the sentinel because a filter
         # value of None represents clearing the filter.

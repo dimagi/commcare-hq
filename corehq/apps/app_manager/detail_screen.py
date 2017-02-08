@@ -1,3 +1,5 @@
+from builtins import object
+from builtins import str
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.suite_xml import xml_models as sx
 from corehq.apps.app_manager.suite_xml import const
@@ -482,7 +484,7 @@ class Graph(FormattedDetailColumn):
                                     #       figure out why their unquoted colors
                                     #       aren't working.
                                     sx.ConfigurationItem(id=k, xpath_function=v)
-                                    for k, v in s.config.iteritems()
+                                    for k, v in s.config.items()
                                 ] + [
                                     sx.ConfigurationItem(
                                         id=k,
@@ -494,7 +496,7 @@ class Graph(FormattedDetailColumn):
                                             k
                                         )
                                     )
-                                    for k, v in s.locale_specific_config.iteritems()
+                                    for k, v in s.locale_specific_config.items()
                                 ]
                             )
                         )
@@ -505,7 +507,7 @@ class Graph(FormattedDetailColumn):
                         [
                             sx.ConfigurationItem(id=k, xpath_function=v)
                             for k, v
-                            in self.column.graph_configuration.config.iteritems()
+                            in self.column.graph_configuration.config.items()
                         ] + [
                             sx.ConfigurationItem(
                                 id=k,
@@ -517,7 +519,7 @@ class Graph(FormattedDetailColumn):
                                 )
                             )
                             for k, v
-                            in self.column.graph_configuration.locale_specific_config.iteritems()
+                            in self.column.graph_configuration.locale_specific_config.items()
                         ]
                     )
                 ),

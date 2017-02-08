@@ -1,4 +1,5 @@
 import couchdbkit
+from builtins import str
 from corehq.apps.app_manager.const import APP_V2
 
 
@@ -70,7 +71,7 @@ class XFormValidationError(XFormException):
     def __str__(self):
         fatal_error_text = self.format_v1(self.fatal_error)
         ret = u"Validation Error%s" % (': %s' % fatal_error_text if fatal_error_text else '')
-        problems = filter(lambda problem: problem['message'] != self.fatal_error, self.validation_problems)
+        problems = [problem for problem in self.validation_problems if problem['message'] != self.fatal_error]
         if problems:
             ret += u"\n\nMore information:"
             for problem in problems:
@@ -86,8 +87,8 @@ class XFormValidationError(XFormException):
         # and just return the undecorated string
         #
         # ... unless the first line says
-        message_lines = unicode(msg).split('\n')[2:]
-        if len(message_lines) > 0 and ':' in message_lines[0] and 'XPath Dependency Cycle' not in unicode(msg):
+        message_lines = str(msg).split('\n')[2:]
+        if len(message_lines) > 0 and ':' in message_lines[0] and 'XPath Dependency Cycle' not in str(msg):
             message = ' '.join(message_lines[0].split(':')[1:])
         else:
             message = '\n'.join(message_lines)

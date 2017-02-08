@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+from builtins import filter
+from builtins import object
 from collections import defaultdict, namedtuple
 from functools import total_ordering
 from os.path import commonprefix
@@ -82,7 +84,7 @@ class WorkflowHelper(PostProcessor):
         if module_command == id_strings.ROOT:
             datums_list = self.root_module_datums
         else:
-            datums_list = module_datums.values()  # [ [datums for f0], [datums for f1], ...]
+            datums_list = list(module_datums.values())  # [ [datums for f0], [datums for f1], ...]
 
         common_datums = commonprefix(datums_list)
         remaining_datums = form_datums[len(common_datums):]
@@ -96,7 +98,7 @@ class WorkflowHelper(PostProcessor):
         return frame_children
 
     def create_workflow_stack(self, form_command, frame_metas):
-        frames = filter(None, [meta.to_frame() for meta in frame_metas])
+        frames = [_f for _f in [meta.to_frame() for meta in frame_metas] if _f]
         if not frames:
             return
 

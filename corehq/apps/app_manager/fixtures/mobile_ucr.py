@@ -1,8 +1,12 @@
+import logging
+from builtins import map
+from builtins import object
+from builtins import str
+from builtins import zip
 from collections import defaultdict
 from datetime import datetime
-import logging
-from lxml.builder import E
 from django.conf import settings
+from lxml.builder import E
 
 from casexml.apps.phone.models import OTARestoreUser
 
@@ -142,7 +146,7 @@ class ReportFixturesProvider(object):
             rows_elem.append(_row_to_row_elem(
                 dict(
                     zip(
-                        map(lambda column_config: column_config.column_id, data_source.top_level_columns),
+                        [col.column_id for col in data_source.top_level_columns],
                         map(str, total_row)
                     )
                 ),

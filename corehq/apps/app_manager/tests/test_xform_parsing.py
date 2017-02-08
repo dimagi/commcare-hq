@@ -1,4 +1,5 @@
 # coding=utf-8
+from builtins import str
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.xform import XForm, XFormException, ItextValue, \

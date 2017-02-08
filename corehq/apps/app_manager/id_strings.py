@@ -1,4 +1,5 @@
 import re
+from builtins import zip
 
 ROOT = u'root'
 

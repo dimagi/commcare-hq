@@ -1,3 +1,6 @@
+from builtins import object
+from past.builtins import basestring
+
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.models import ReportModule, ReportGraphConfig, \
     MobileSelectFilter

@@ -1,3 +1,4 @@
+from __future__ import print_function
 from optparse import make_option
 from django.core.management.base import BaseCommand, CommandError
 
@@ -56,7 +57,7 @@ class Command(BaseCommand):
                     save_xform(app, form, f.read())
 
         app.save()
-        print 'successfully updated {}'.format(app.name)
+        print('successfully updated {}'.format(app.name))
         if options['deploy']:
             # make build and star it
             comment = options.get('comment', 'form changes from {0}'.format(datetime.utcnow().strftime(SERVER_DATETIME_FORMAT_NO_SEC)))
@@ -67,4 +68,4 @@ class Command(BaseCommand):
             )
             copy.is_released = True
             copy.save(increment_version=False)
-            print 'successfully released new version'
+            print('successfully released new version')

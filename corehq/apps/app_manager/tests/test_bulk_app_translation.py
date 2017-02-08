@@ -1,9 +1,14 @@
 # coding=utf-8
+from future import standard_library
+standard_library.install_aliases()
+
 import codecs
 import tempfile
+from builtins import next
+from builtins import zip
 
 from django.test import SimpleTestCase
-from StringIO import StringIO
+from io import StringIO
 
 from mock import patch
 

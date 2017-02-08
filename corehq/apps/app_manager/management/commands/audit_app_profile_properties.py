@@ -18,14 +18,14 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         domains = [row['key'] for row in Domain.get_all(include_docs=False)]
         settings = {s['id']: s['default'] for s in get_custom_commcare_settings() if 'default' in s}
-        deviant_counts = {id: 0 for id in settings.keys()}
+        deviant_counts = {id: 0 for id in settings}
         app_count = 0
         for domain in domains:
             for app in get_apps_in_domain(domain, include_remote=False):
                 #logger.info("looking at app {}".format(app.id))
                 if ('properties' in app.profile):
                     app_count = app_count + 1
-                    for id, default in settings.iteritems():
+                    for id, default in settings.items():
                         if (id not in app.profile['properties']):
                             #logger.info("{}: not found".format(id))
                             pass
@@ -35,6 +35,6 @@ class Command(BaseCommand):
                         else:
                             #logger.info("{}: {} == {}".format(id, app.profile['properties'][id], default))
                             pass
-        for id, count in deviant_counts.iteritems():
+        for id, count in deviant_counts.items():
             logger.info("{}\t{}".format(count, id))
         logger.info('done with audit_app_profile_properties, examined {} apps in {} domains'.format(app_count, len(domains)))

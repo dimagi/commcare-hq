@@ -21,8 +21,11 @@ seem to be a good fit.
 """
 import re
 import uuid
+from builtins import object
+from builtins import str
 from lxml import etree
 from lxml.builder import E
+from past.builtins import basestring
 
 EMPTY_XFORM = """<?xml version="1.0"?>
 <h:html xmlns:h="http://www.w3.org/1999/xhtml"
@@ -351,7 +354,7 @@ class XFormBuilder(object):
                 node_.append(
                     E.hint({'ref': "jr:itext('{}')".format(self.get_text_id(name_, groups_, is_hint=True))})
                 )
-            for choice_name in choices_.keys():
+            for choice_name in choices_:
                 node_.append(
                     E.item(
                         E.label({'ref': "jr:itext('{}')".format(self.get_text_id(name_, groups_, choice_name))}),

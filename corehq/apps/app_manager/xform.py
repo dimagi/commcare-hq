@@ -1,8 +1,15 @@
+from __future__ import absolute_import
+from builtins import next
+from builtins import object
+from builtins import str
 from collections import defaultdict, OrderedDict
 from functools import wraps
-import logging
+from past.builtins import basestring
 
+import collections
 import itertools
+import logging
+import re
 from django.utils.translation import ugettext_lazy as _
 
 import formtranslate.api
@@ -21,8 +28,6 @@ from corehq.util.view_utils import get_request
 from dimagi.utils.decorators.memoized import memoized
 from .xpath import CaseIDXPath, session_var, CaseTypeXpath, QualifiedScheduleFormXPath
 from .exceptions import XFormException, CaseError, XFormValidationError, BindNotFound, XFormValidationFailed
-import collections
-import re
 
 
 VALID_VALUE_FORMS = ('image', 'audio', 'video', 'video-inline', 'markdown')
@@ -31,11 +36,11 @@ VALID_VALUE_FORMS = ('image', 'audio', 'video', 'video-inline', 'markdown')
 def parse_xml(string):
     # Work around: ValueError: Unicode strings with encoding
     # declaration are not supported.
-    if isinstance(string, unicode):
+    if isinstance(string, str):
         string = string.encode("utf-8")
     try:
         return ET.fromstring(string, parser=ET.XMLParser(encoding="utf-8", remove_comments=True))
-    except ET.ParseError, e:
+    except ET.ParseError as e:
         raise XFormException(_(u"Error parsing XML: {}").format(e))
 
 
@@ -198,7 +203,7 @@ class WrappedNode(object):
     def __getattr__(self, attr):
         return getattr(self.xml, attr)
 
-    def __nonzero__(self):
+    def __bool__(self):
         return self.xml is not None
 
     def __len__(self):
@@ -273,7 +278,7 @@ class ItextOutput(object):
         return context.get(self.ref)
 
 
-class ItextValue(unicode):
+class ItextValue(str):
 
     def __new__(cls, parts):
         return super(ItextValue, cls).__new__(cls, cls._render(parts))
@@ -546,7 +551,7 @@ def autoset_owner_id_for_advanced_action(action):
 
 
 def validate_xform(domain, source):
-    if isinstance(source, unicode):
+    if isinstance(source, str):
         source = source.encode("utf-8")
     # normalize and strip comments
     source = ET.tostring(parse_xml(source))
@@ -736,7 +741,7 @@ class XForm(WrappedNode):
         for dup in duplicates:
             for group in dup[1:]:
                 itext_ref = u'{{f}}text[@id="{0}"]'.format(group.id)
-                for lang in group.nodes.keys():
+                for lang in list(group.nodes):
                     translation = translations[lang]
                     node = translation.find(itext_ref)
                     translation.remove(node.xml)
@@ -834,7 +839,7 @@ class XForm(WrappedNode):
         if not node_group:
             return None
 
-        lang = lang or self.translations().keys()[0]
+        lang = lang or list(self.translations())[0]
         text_node = node_group.nodes.get(lang)
         if not text_node:
             return None
@@ -844,7 +849,7 @@ class XForm(WrappedNode):
         if value_node:
             text = ItextValue.from_node(value_node)
         else:
-            for f in text_node.values_by_form.keys():
+            for f in list(text_node.values_by_form):
                 if f not in VALID_VALUE_FORMS + (None,):
                     raise XFormException(_(
                         u'Unrecognized value of "form" attribute in \'<value form="{}">\'. '
@@ -910,7 +915,7 @@ class XForm(WrappedNode):
         if not self.exists():
             return []
 
-        return self.translations().keys()
+        return list(self.translations())
 
     def get_questions(self, langs, include_triggers=False,
                       include_groups=False, include_translations=False, form=None):
@@ -981,7 +986,7 @@ class XForm(WrappedNode):
 
         repeat_contexts = sorted(repeat_contexts, reverse=True)
 
-        for path, data_node in leaf_data_nodes.iteritems():
+        for path, data_node in leaf_data_nodes.items():
             if path not in excluded_paths:
                 bind = self.get_bind(path)
                 try:
@@ -1003,10 +1008,8 @@ class XForm(WrappedNode):
                 if data_node.tag_name == 'entry':
                     parent = next(data_node.xml.iterancestors())
                     if parent:
-                        is_stock_element = any(map(
-                            lambda namespace: namespace == COMMTRACK_REPORT_XMLNS,
-                            parent.nsmap.values()
-                        ))
+                        is_stock_element = any(namespace == COMMTRACK_REPORT_XMLNS
+                                               for namespace in parent.nsmap.values())
                         if is_stock_element:
                             question.update({
                                 "stock_entry_attributes": dict(data_node.xml.attrib),
@@ -1826,7 +1829,7 @@ class XForm(WrappedNode):
                 node.append(parent_case_block.elem)
 
     def add_care_plan(self, form):
-        from const import CAREPLAN_GOAL, CAREPLAN_TASK
+        from .const import CAREPLAN_GOAL, CAREPLAN_TASK
         from corehq.apps.app_manager.util import split_path
         self.add_meta_2(form)
         self.add_instance('casedb', src='jr://instance/casedb')
@@ -2152,7 +2155,7 @@ def _index_on_fields(dicts, fields):
 
 
 VELLUM_TYPE_INDEX = _index_on_fields(
-    [{field: value for field, value in (dct.items() + [('name', key)])}
+    [{field: value for field, value in (list(dct.items()) + [('name', key)])}
      for key, dct in VELLUM_TYPES.items()],
     ('tag', 'type', 'media', 'appearance')
 )

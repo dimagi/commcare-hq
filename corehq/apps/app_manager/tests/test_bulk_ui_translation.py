@@ -1,5 +1,7 @@
+from future import standard_library
+standard_library.install_aliases()
 from django.test import SimpleTestCase
-from StringIO import StringIO
+from io import StringIO
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.views.translations import process_ui_translation_upload,\
     get_default_translations_for_download
@@ -18,7 +20,7 @@ class BulkUiTranslation(SimpleTestCase):
         if data is None:
             data = []
             translations = get_default_translations_for_download(self.app)
-            for translation_key, translation_value in translations.iteritems():
+            for translation_key, translation_value in translations.items():
                 data.append((translation_key, translation_value))
 
         data = (('translations', tuple(data)),)

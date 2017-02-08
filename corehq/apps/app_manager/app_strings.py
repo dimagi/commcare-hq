@@ -1,5 +1,6 @@
 import functools
 
+from builtins import object
 from django.utils.translation import ugettext
 
 from corehq.apps.app_manager import id_strings
@@ -14,7 +15,7 @@ from langcodes import langs_by_code
 
 
 def non_empty_only(dct):
-    return dict([(key, value) for key, value in dct.items() if value])
+    return {key: value for key, value in dct.items() if value}
 
 
 def convert_to_two_letter_code(lc):
@@ -82,10 +83,10 @@ def _create_custom_app_strings(app, lang, for_default=False):
                 elif column.format == "graph":
                     for index, item in enumerate(column.graph_configuration.annotations):
                         yield id_strings.graph_annotation(module, detail_type, column, index), trans(item.values)
-                    for property, values in column.graph_configuration.locale_specific_config.iteritems():
+                    for property, values in column.graph_configuration.locale_specific_config.items():
                         yield id_strings.graph_configuration(module, detail_type, column, property), trans(values)
                     for index, item in enumerate(column.graph_configuration.series):
-                        for property, values in item.locale_specific_config.iteritems():
+                        for property, values in item.locale_specific_config.items():
                             yield id_strings.graph_series_configuration(
                                 module, detail_type, column, index, property
                             ), trans(values)

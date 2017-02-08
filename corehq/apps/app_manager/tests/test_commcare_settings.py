@@ -1,3 +1,4 @@
+from builtins import range
 from collections import defaultdict
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.commcare_settings import (

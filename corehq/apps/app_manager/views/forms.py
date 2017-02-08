@@ -1,3 +1,6 @@
+from builtins import zip
+from builtins import str
+from past.builtins import basestring
 import logging
 import hashlib
 import re
@@ -163,7 +166,7 @@ def edit_advanced_form_actions(request, domain, app_id, module_id, form_id):
     actions = AdvancedFormActions.wrap(json_loads)
     form.actions = actions
     for action in actions.load_update_cases:
-        add_properties_to_data_dictionary(domain, action.case_type, action.case_properties.keys())
+        add_properties_to_data_dictionary(domain, action.case_type, list(action.case_properties))
     if advanced_actions_use_usercase(form.actions) and not is_usercase_in_use(domain):
         enable_usercase(domain)
     response_json = {}
@@ -180,7 +183,7 @@ def edit_form_actions(request, domain, app_id, module_id, form_id):
     form = module.get_form(form_id)
     old_load_from_form = form.actions.load_from_form
     form.actions = FormActions.wrap(json.loads(request.POST['actions']))
-    add_properties_to_data_dictionary(domain, module.case_type, form.actions.update_case.update.keys())
+    add_properties_to_data_dictionary(domain, module.case_type, list(form.actions.update_case.update))
     if old_load_from_form:
         form.actions.load_from_form = old_load_from_form
 
@@ -191,7 +194,7 @@ def edit_form_actions(request, domain, app_id, module_id, form_id):
     if actions_use_usercase(form.actions):
         if not is_usercase_in_use(domain):
             enable_usercase(domain)
-        add_properties_to_data_dictionary(domain, USERCASE_TYPE, form.actions.usercase_update.update.keys())
+        add_properties_to_data_dictionary(domain, USERCASE_TYPE, list(form.actions.usercase_update.update))
 
     response_json = {}
     app.save(response_json)
@@ -248,7 +251,7 @@ def _edit_form_attr(request, domain, app_id, unique_form_id, attr):
         form = app.get_form(unique_form_id)
     except FormNotFoundException as e:
         if ajax:
-            return HttpResponseBadRequest(unicode(e))
+            return HttpResponseBadRequest(str(e))
         else:
             messages.error(request, _("There was an error saving, please try again!"))
             return back_to_main(request, domain, app_id=app_id)
@@ -276,7 +279,7 @@ def _edit_form_attr(request, domain, app_id, unique_form_id, attr):
                 xform = request.POST.get('xform')
             else:
                 try:
-                    xform = unicode(xform, encoding="utf-8")
+                    xform = str(xform, encoding="utf-8")
                 except Exception:
                     raise Exception("Error uploading form: Please make sure your form is encoded in UTF-8")
             if request.POST.get('cleanup', False):
@@ -293,11 +296,11 @@ def _edit_form_attr(request, domain, app_id, unique_form_id, attr):
                 save_xform(app, form, xform)
             else:
                 raise Exception("You didn't select a form to upload")
-        except Exception, e:
+        except Exception as e:
             if ajax:
-                return HttpResponseBadRequest(unicode(e))
+                return HttpResponseBadRequest(str(e))
             else:
-                messages.error(request, unicode(e))
+                messages.error(request, str(e))
     if should_edit("references") or should_edit("case_references"):
         form.case_references = _get_case_references(request.POST)
     if should_edit("show_count"):
@@ -317,14 +320,14 @@ def _edit_form_attr(request, domain, app_id, unique_form_id, attr):
     if (should_edit("form_links_xpath_expressions") and
             should_edit("form_links_form_ids") and
             toggles.FORM_LINK_WORKFLOW.enabled(domain)):
-        form_links = zip(
+        form_links = list(zip(
             request.POST.getlist('form_links_xpath_expressions'),
             request.POST.getlist('form_links_form_ids'),
             [
                 json.loads(datum_json) if datum_json else []
                 for datum_json in request.POST.getlist('datums_json')
             ],
-        )
+        ))
         form.form_links = [FormLink(
             xpath=link[0],
             form_id=link[1],
@@ -515,11 +518,11 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             except CaseError as e:
                 messages.error(request, u"Error in Case Management: %s" % e)
             except XFormException as e:
-                messages.error(request, unicode(e))
+                messages.error(request, str(e))
             except Exception as e:
                 if settings.DEBUG:
                     raise
-                logging.exception(unicode(e))
+                logging.exception(str(e))
                 messages.error(request, u"Unexpected Error: %s" % e)
 
     try:
@@ -592,7 +595,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             star = '* ' if auto_link else '  '
             return u"{}{} -> {}".format(star, module_name, form_name)
 
-        modules = filter(lambda m: m.case_type == module.case_type, all_modules)
+        modules = [m for m in all_modules if m.case_type == module.case_type]
         if getattr(module, 'root_module_id', None) and module.root_module not in modules:
             modules.append(module.root_module)
         auto_linkable_forms = list(itertools.chain.from_iterable(list(m.get_forms()) for m in modules))

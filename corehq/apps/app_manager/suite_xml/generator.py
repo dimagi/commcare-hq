@@ -1,5 +1,10 @@
-import urllib
+from future import standard_library
+standard_library.install_aliases()
 
+import urllib.request
+import urllib.parse
+import urllib.error
+from builtins import object
 from django.core.urlresolvers import reverse
 
 from corehq.apps.app_manager.exceptions import MediaResourceError
@@ -148,5 +153,5 @@ class MediaSuiteGenerator(object):
                 remote=self.app.url_base + reverse(
                     'hqmedia_download',
                     args=[m.media_type, m.multimedia_id]
-                ) + urllib.quote(name.encode('utf-8')) if name else name
+                ) + urllib.parse.quote(name.encode('utf-8')) if name else name
             )

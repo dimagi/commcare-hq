@@ -28,7 +28,7 @@ class Command(BaseCommand):
                 logger.info('migration failed')
                 failures[hit['_id']] = hit['domain']
 
-        for id, domain in failures.iteritems():
+        for id, domain in failures.items():
             logger.info('Failed: {} in {}'.format(id, domain))
         logger.info('Total: {} successes, {} failures'.format(len(hits) - len(failures), len(failures)))
         logger.info('Done with migrate_all_apps_to_cmitfb')

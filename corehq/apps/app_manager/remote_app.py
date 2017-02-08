@@ -1,6 +1,9 @@
+from future import standard_library
+standard_library.install_aliases()
 from lxml import etree
-import urllib2
-import urlparse
+import urllib.request
+import urllib.error
+import urllib.parse
 from django.core import urlresolvers
 from corehq.apps.app_manager.exceptions import AppEditingError
 from corehq.apps.app_manager.xform import WrappedNode
@@ -39,7 +42,7 @@ def reset_suite_remote_url(suite_node, url_base, profile_url, download_index_url
     suite_local_text = suite_node.findtext('resource/location[@authority="local"]')
     suite_remote = suite_node.find('resource/location[@authority="remote"]')
     suite_name = strip_location(profile_url, suite_local_text)
-    suite_remote.xml.text = url_base + urlparse.urljoin(download_index_url,
+    suite_remote.xml.text = url_base + urllib.parse.urljoin(download_index_url,
                                                         suite_name)
 
 
@@ -56,7 +59,7 @@ def strip_location(profile_url, location):
 
 def make_remote_profile(app, langs=None):
     try:
-        profile = urllib2.urlopen(app.profile_url).read()
+        profile = urllib.request.urlopen(app.profile_url).read()
     except Exception:
         raise AppEditingError('Unable to access profile url: "%s"' % app.profile_url)
 

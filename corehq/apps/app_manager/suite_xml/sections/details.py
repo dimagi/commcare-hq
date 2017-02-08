@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from builtins import object
 from collections import namedtuple
 import os
 from xml.sax.saxutils import escape
@@ -406,7 +407,7 @@ def get_instances_for_module(app, module, additional_xpaths=None):
     detail_ids = [helper.get_detail_id_safe(module, detail_type)
                   for detail_type, detail, enabled in module.get_details()
                   if enabled]
-    detail_ids = filter(None, detail_ids)
+    detail_ids = [_f for _f in detail_ids if _f]
     xpaths = set()
 
     if additional_xpaths:

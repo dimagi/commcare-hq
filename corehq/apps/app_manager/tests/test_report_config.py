@@ -1,3 +1,4 @@
+from past.builtins import basestring
 import os
 from xml.etree import ElementTree
 from django.test import SimpleTestCase, TestCase

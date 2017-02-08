@@ -1,7 +1,10 @@
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
 import json
 import logging
 import os
-from StringIO import StringIO
+from io import StringIO
 
 from couchdbkit import ResourceConflict, ResourceNotFound
 from django.contrib import messages
@@ -249,7 +252,7 @@ def download_file(request, domain, app_id, path):
                         raise
                 else:
                     raise
-            if type(payload) is unicode:
+            if isinstance(payload, str):
                 payload = payload.encode('utf-8')
             buffer = StringIO(payload)
             metadata = {'content_type': content_type}

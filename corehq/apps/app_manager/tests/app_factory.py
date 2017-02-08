@@ -1,4 +1,8 @@
 import uuid
+from builtins import next
+from builtins import object
+from past.builtins import basestring
+
 from corehq.apps.app_manager.const import AUTO_SELECT_USERCASE
 from corehq.apps.app_manager.models import AdvancedModule, Module, UpdateCaseAction, LoadUpdateAction, \
     FormActionCondition, OpenSubCaseAction, OpenCaseAction, AdvancedOpenCaseAction, Application, AdvancedForm, \
