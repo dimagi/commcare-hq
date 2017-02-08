@@ -192,8 +192,8 @@
                         <span class="hq-help-template"
                               data-title="{% trans "Remove Unused Fields" %}"
                               data-content="{% blocktrans with entity_string=view.entity_string|lower %}
-                                  If checked, this will remove any extra information from any existing {{ entity_string }}
-                                  that has data fields that are no longer used.
+                                  If checked, this will remove any other fields from every {{ entity_string }}.
+                                  This could break existing applications if they rely on these other fields.
                               {% endblocktrans %}">
                         </span>
                     </label>
