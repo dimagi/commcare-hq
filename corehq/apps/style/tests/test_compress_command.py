@@ -1,11 +1,10 @@
 from StringIO import StringIO
 from mock import patch
 
+from django.test.utils import override_settings
 from django.core.management import call_command
 from django.test import SimpleTestCase
 from nose.plugins.attrib import attr
-
-B3_BASE = 'style/base.html'
 
 BLOCK_JS = ' block js '
 BLOCK_CSS = ' block stylesheets '
@@ -35,6 +34,7 @@ class TestDjangoCompressOffline(SimpleTestCase):
             self.assertNotRegexpMatches(tag[0], line.strip(), tag[1])
 
     @attr("slow")
+    @override_settings(COMPRESS_JS_COMPRESSOR='corehq.apps.style.noop.JsNoopCompressor')
     def test_compress_offline(self):
         call_command('collectstatic', verbosity=0, interactive=False)
         call_command('fix_less_imports_collectstatic', verbosity=0, interactive=False)
