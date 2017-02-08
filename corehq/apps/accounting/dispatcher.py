@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.utils.decorators import method_decorator
 from corehq import privileges
 from corehq.apps.reports.dispatcher import ReportDispatcher

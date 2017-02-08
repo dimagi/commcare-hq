@@ -230,6 +230,9 @@ def can_use_restore_as(request):
     if not hasattr(request, 'couch_user'):
         return False
 
+    if request.couch_user.is_superuser:
+        return True
+
     return (
         request.couch_user.can_edit_commcare_users() and
         has_privilege(request, privileges.DATA_CLEANUP) and

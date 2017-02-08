@@ -26,7 +26,8 @@ class FormPreparationV2Test(SimpleTestCase, TestXmlMixin):
     file_path = 'data', 'form_preparation_v2'
 
     def setUp(self):
-        self.app = Application.new_app('domain', 'New App')
+        self.domain = 'domain'
+        self.app = Application.new_app(self.domain, 'New App')
         self.app.version = 3
         self.module = self.app.add_module(Module.new_module('New Module', lang='en'))
         self.form = self.app.new_form(0, 'New Form', lang='en')
@@ -104,7 +105,7 @@ class FormPreparationV2Test(SimpleTestCase, TestXmlMixin):
     def test_instance_check(self):
         xml = self.get_xml('missing_instances')
         with self.assertRaises(XFormValidationError) as cm:
-            XForm(xml).add_missing_instances()
+            XForm(xml).add_missing_instances(self.domain)
         exception_message = str(cm.exception)
         self.assertIn('casebd', exception_message)
         self.assertIn('custom2', exception_message)

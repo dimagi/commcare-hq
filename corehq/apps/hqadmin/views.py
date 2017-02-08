@@ -4,14 +4,14 @@ from lxml.builder import E
 import HTMLParser
 import json
 import socket
-from datetime import timedelta, date, datetime
+from datetime import timedelta, date
 from collections import defaultdict, namedtuple, OrderedDict
 from StringIO import StringIO
 
 import dateutil
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.csv import UnicodeWriter
-from django.utils.safestring import mark_safe
+from dimagi.utils.dates import add_months
 from django.views.decorators.http import require_POST
 from django.conf import settings
 from django.contrib import messages
@@ -19,7 +19,6 @@ from django.contrib.auth.models import User
 from django.contrib.auth import login
 from django.core import management, cache
 from django.shortcuts import render
-from django.template.loader import render_to_string
 from django.views.generic import FormView, TemplateView, View
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_lazy
@@ -918,11 +917,13 @@ class DownloadGIRView(BaseAdminSectionView):
 
 def _gir_csv_response(month, year):
     query_month = "{year}-{month}-01".format(year=year, month=month)
-    prev_month = "{year}-{month}-01".format(year=year, month=month - 1)
-    two_ago = "{year}-{month}-01".format(year=year, month=month - 2)
+    prev_month_year, prev_month = add_months(year, month, -1)
+    prev_month_string = "{year}-{month}-01".format(year=prev_month_year, month=prev_month)
+    two_ago_year, two_ago_month = add_months(year, month, -2)
+    two_ago_string = "{year}-{month}-01".format(year=two_ago_year, month=two_ago_month)
     if not GIRRow.objects.filter(month=query_month).exists():
         return HttpResponse('Sorry, that month is not yet available')
-    queryset = GIRRow.objects.filter(month__in=[query_month, prev_month, two_ago]).order_by('-month')
+    queryset = GIRRow.objects.filter(month__in=[query_month, prev_month_string, two_ago_string]).order_by('-month')
     domain_months = defaultdict(list)
     for item in queryset:
         domain_months[item.domain_name].append(item)

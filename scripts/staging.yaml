@@ -48,7 +48,6 @@ branches:
   - app_manager.translations  # Danny 2/3
   - general-credits-sr # sreddy 1/10
   - vellum-staging # J$ 11/13  
-  - django19
   - bmb/currentind-string # Biyeun 11/12
   - nh/new_rb  # Norman 11/22
   - nc/exports-with-conflict-res-branch  # Noah 12/11

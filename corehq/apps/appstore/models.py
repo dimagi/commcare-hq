@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from couchdbkit import ResourceNotFound
 from corehq.apps.appstore.exceptions import CopiedFromDeletedException
 from dimagi.ext.couchdbkit import *

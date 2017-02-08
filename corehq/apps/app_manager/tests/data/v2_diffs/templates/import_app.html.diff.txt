@@ -5,4 +5,4 @@
 +{% extends "app_manager/v2/apps_base.html" %}
  {% load i18n %}
  {% load hq_shared_tags %}
- 
+ {% load compress %}

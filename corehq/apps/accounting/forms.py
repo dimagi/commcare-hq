@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import datetime
 from dateutil.relativedelta import relativedelta
 from decimal import Decimal
@@ -75,6 +76,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.users.models import WebUser
 from corehq.util.dates import get_first_last_days
+from six.moves import range
 
 
 class BillingAccountBasicForm(forms.Form):
@@ -966,13 +968,10 @@ class SuppressSubscriptionForm(forms.Form):
         if invoices:
             raise ValidationError(mark_safe(
                 "Cannot suppress subscription. Suppress these invoices first: %s"
-                % ', '.join(map(
-                    lambda invoice: '<a href="{edit_url}">{name}</a>'.format(
+                % ', '.join(['<a href="{edit_url}">{name}</a>'.format(
                         edit_url=reverse(InvoiceSummaryView.urlname, args=[invoice.id]),
                         name=invoice.invoice_number,
-                    ),
-                    invoices
-                ))
+                    ) for invoice in invoices])
             ))
 
 
@@ -1386,7 +1385,7 @@ class SoftwarePlanVersionForm(forms.Form):
             # a brand new rate
             self.is_update = True
             return new_rate
-        if feature.id not in self.current_features_to_rates.keys():
+        if feature.id not in self.current_features_to_rates:
             # the plan does not have this rate yet, compare any changes to the feature's current latest rate
             # also mark the form as updated
             current_rate = feature.get_rate(default_instance=False)
@@ -1408,7 +1407,7 @@ class SoftwarePlanVersionForm(forms.Form):
             # a brand new rate
             self.is_update = True
             return new_rate
-        if product.id not in self.current_products_to_rates.keys():
+        if product.id not in self.current_products_to_rates:
             # the plan does not have this rate yet, compare any changes to the feature's current latest rate
             # also mark the form as updated
             current_rate = product.get_rate(default_instance=False)
@@ -1437,7 +1436,7 @@ class SoftwarePlanVersionForm(forms.Form):
         if errors:
             self._errors.setdefault('feature_rates', errors)
 
-        required_types = dict(FeatureType.CHOICES).keys()
+        required_types = list(dict(FeatureType.CHOICES).keys())
         feature_types = [r.feature.feature_type for r in rate_instances]
         if any([feature_types.count(t) != 1 for t in required_types]):
             raise ValidationError(_(
@@ -1477,7 +1476,7 @@ class SoftwarePlanVersionForm(forms.Form):
         if errors:
             self._errors.setdefault('product_rates', errors)
 
-        available_types = dict(SoftwareProductType.CHOICES).keys()
+        available_types = list(dict(SoftwareProductType.CHOICES).keys())
         product_types = [r.product.product_type for r in rate_instances]
         if any([product_types.count(p) > 1 for p in available_types]):
             raise ValidationError(_(
@@ -1735,7 +1734,7 @@ class TriggerInvoiceForm(forms.Form):
         one_month_ago = today - relativedelta(months=1)
 
         self.fields['month'].initial = one_month_ago.month
-        self.fields['month'].choices = MONTHS.items()
+        self.fields['month'].choices = list(MONTHS.items())
         self.fields['year'].initial = one_month_ago.year
         self.fields['year'].choices = [
             (y, y) for y in range(one_month_ago.year, 2012, -1)
@@ -1788,13 +1787,11 @@ class TriggerInvoiceForm(forms.Form):
                 "{invoice_list}".format(
                     num_invoices=prev_invoices.count(),
                     invoice_list=', '.join(
-                        map(
-                            lambda x: '<a href="{edit_url}">{name}</a>'.format(
+                        ['<a href="{edit_url}">{name}</a>'.format(
                                 edit_url=reverse(InvoiceSummaryView.urlname,
                                                  args=(x.id,)),
                                 name=x.invoice_number
-                            ), prev_invoices.all()
-                        )
+                            ) for x in prev_invoices.all()]
                     ),
                 )
             )
@@ -1818,7 +1815,7 @@ class TriggerBookkeeperEmailForm(forms.Form):
         today = datetime.date.today()
 
         self.fields['month'].initial = today.month
-        self.fields['month'].choices = MONTHS.items()
+        self.fields['month'].choices = list(MONTHS.items())
         self.fields['year'].initial = today.year
         self.fields['year'].choices = [
             (y, y) for y in range(today.year, 2012, -1)
