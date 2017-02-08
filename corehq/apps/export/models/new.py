@@ -970,7 +970,7 @@ class SMSExportInstance(ExportInstance):
             main_table.columns.append(ExportColumn(
                 label="Message Log ID",
                 item=ExportItem(
-                    path=[PathNode(name='_id')],
+                    path=[PathNode(name='_id')]
                 ),
                 selected=True,
             ))
@@ -1845,7 +1845,7 @@ class SMSExportDataSchema(ExportDataSchema):
         return SMS_DATA_SCHEMA_VERSION
 
     @staticmethod
-    def get_latest_export_schema(domain, include_metadata, identifier):
+    def get_latest_export_schema(domain, include_metadata, identifier=None):
         return SMSExportDataSchema(domain=domain, include_metadata=include_metadata)
 
 
