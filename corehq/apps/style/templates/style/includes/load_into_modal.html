@@ -1,7 +1,7 @@
 <script>
     $(function() {
         $("#{{ modal_id }}").on("show show.bs.modal", function() {
-            $(this).find(".modal-body .fetched-data").load("{{ load_from }}");
+            $(this).find(".fetched-data").load("{{ load_from }}");
         });
     });
 </script>
