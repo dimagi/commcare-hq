@@ -37,7 +37,8 @@ class Command(BaseCommand):
         )
     )
 
-    def handle(self, *privs, **kwargs):
+    def handle(self, priv, **kwargs):
+        privs = [priv]
 
         dry_run = kwargs.get('dry_run', False)
         verbose = kwargs.get('verbose')
@@ -62,6 +63,9 @@ class Command(BaseCommand):
         for plan_role_slug in all_plan_slugs:
             for priv in privs:
                 ensure_grant(plan_role_slug, priv, dry_run=dry_run, verbose=verbose)
+
+    def add_arguments(self, parser):
+        parser.add_argument('priv')
 
 
 def _confirm(msg):
