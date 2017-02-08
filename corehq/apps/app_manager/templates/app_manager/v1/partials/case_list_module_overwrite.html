@@ -1,7 +1,6 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load xforms_extras %}
-{% if module.module_type != 'basic' or request|toggle_enabled:'COPY_CASE_CONFIGS' %}
 <form class="form-inline" method='POST' action='{% url "overwrite_module_case_list" domain app.id module.id %}'>
     {% csrf_token %}
     <fieldset>
@@ -19,4 +18,3 @@
             {% endif %}
     </fieldset>
 </form>
-{% endif %}

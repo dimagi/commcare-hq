@@ -271,9 +271,9 @@
                 </li>
               {% endif %}
             {% endfor %}
-            {% if details %}
+            {% if details %}{% if  module.module_type != 'basic' or request|toggle_enabled:'COPY_CASE_CONFIGS' %}
                 <li><a href="#module-actions" data-toggle="tab">{% trans "Actions" %}</a></li>
-            {% endif %}
+            {% endif %}{% endif %}
           {% endif %}
         {% endblock %}{# endblock tab-headers #}
       </ul>
@@ -297,11 +297,11 @@
               </div>
             {% endif %}
           {% endfor %}
-          {% if details %}
+          {% if details %}{% if  module.module_type != 'basic' or request|toggle_enabled:'COPY_CASE_CONFIGS' %}
             <div class="tab-pane" id="module-actions">
                 {% include 'app_manager/v2/partials/module_actions.html' %}
             </div>
-          {% endif %}
+          {% endif %}{% endif %}
         {% endif %}
       {% endblock %}
     </div>
