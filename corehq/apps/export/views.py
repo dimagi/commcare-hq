@@ -2296,7 +2296,7 @@ class DownloadNewSmsExportView(GenericDownloadNewExportMixin, BaseDownloadExport
 
     @staticmethod
     def get_export_schema(domain, include_metadata):
-        return SMSExportDataSchema.get_latest_export_schema(domain, include_metadata, None)
+        return SMSExportDataSchema.get_latest_export_schema(domain, include_metadata)
 
     @property
     def export_list_url(self):
@@ -2329,7 +2329,7 @@ class DownloadNewSmsExportView(GenericDownloadNewExportMixin, BaseDownloadExport
         user = self.request.couch_user
         include_metadata = MESSAGE_LOG_METADATA.enabled_for_request(self.request)
         return SMSExportInstance._new_from_schema(
-            SMSExportDataSchema.get_latest_export_schema(domain, include_metadata, None)
+            SMSExportDataSchema.get_latest_export_schema(domain, include_metadata)
         )
 
     def get_filters(self, filter_form_data, mobile_user_and_group_slugs):
