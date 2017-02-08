@@ -33,7 +33,7 @@ class ConfigureReportFormsTest(SimpleTestCase):
     def test_count_column_existence(self, _, __):
         """
         Confirm that aggregated reports have a count column option, and that
-        non aggregated reports do not.
+        non aggregated reports ... also do.
         """
 
         def get_count_column_columns(configuration_form):
@@ -48,7 +48,7 @@ class ConfigureReportFormsTest(SimpleTestCase):
             "form",
             form1.unique_id,
         )
-        self.assertEqual(get_count_column_columns(list_report_form), 0)
+        self.assertEqual(get_count_column_columns(list_report_form), 1)
 
         table_report_form = ConfigureTableReportForm(
             "my report",
