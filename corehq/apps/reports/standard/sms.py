@@ -34,13 +34,8 @@ from corehq.apps.hqwebapp.doc_info import (get_doc_info, get_doc_info_by_id,
     get_object_info, DomainMismatchException)
 from corehq.apps.sms.mixin import apply_leniency
 from corehq.apps.sms.models import (
-    WORKFLOW_REMINDER,
-    WORKFLOW_KEYWORD,
-    WORKFLOW_BROADCAST,
-    WORKFLOW_CALLBACK,
-    WORKFLOW_DEFAULT,
+    WORKFLOWS_FOR_REPORTS,
     WORKFLOW_FORWARD,
-    WORKFLOW_PERFORMANCE,
     INCOMING,
     OUTGOING,
     MessagingEvent,
@@ -282,16 +277,8 @@ class MessageLogReport(BaseCommConnectLogReport):
 
     @staticmethod
     def _get_message_types(message):
-        relevant_workflows = [
-            WORKFLOW_REMINDER,
-            WORKFLOW_KEYWORD,
-            WORKFLOW_BROADCAST,
-            WORKFLOW_CALLBACK,
-            WORKFLOW_PERFORMANCE,
-            WORKFLOW_DEFAULT,
-        ]
         types = []
-        if message.workflow in relevant_workflows:
+        if message.workflow in WORKFLOWS_FOR_REPORTS:
             types.append(message.workflow.lower())
         if message.xforms_session_couch_id is not None:
             types.append(MessageTypeFilter.OPTION_SURVEY.lower())
@@ -344,17 +331,9 @@ class MessageLogReport(BaseCommConnectLogReport):
             if not filtered_types:
                 return data_
 
-            relevant_workflows = (
-                WORKFLOW_REMINDER,
-                WORKFLOW_KEYWORD,
-                WORKFLOW_BROADCAST,
-                WORKFLOW_CALLBACK,
-                WORKFLOW_DEFAULT,
-                WORKFLOW_PERFORMANCE,
-            )
             incl_survey = MessageTypeFilter.OPTION_SURVEY in filtered_types
             incl_other = MessageTypeFilter.OPTION_OTHER in filtered_types
-            is_workflow_relevant = Q(workflow__in=relevant_workflows)
+            is_workflow_relevant = Q(workflow__in=WORKFLOWS_FOR_REPORTS)
             workflow_filter = Q(is_workflow_relevant & Q(workflow__in=filtered_types))
             survey_filter = Q(xforms_session_couch_id__isnull=False)
             other_filter = ~Q(is_workflow_relevant | survey_filter)
