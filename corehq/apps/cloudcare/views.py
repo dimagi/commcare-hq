@@ -401,6 +401,7 @@ def form_context(request, domain, app_id, module_id, form_id):
 
     root_context = {
         'form_url': form_url,
+        'formplayer_url' : settings.FORMPLAYER_URL,
     }
     if instance_id:
         try:

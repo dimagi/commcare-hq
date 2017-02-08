@@ -61,7 +61,7 @@ class BaseSessionDataHelper(object):
         # always tell touchforms to include footprinted cases in its case db
         session_data["additional_filters"] = {"footprint": True}
         session_data.update(session_extras)
-        xform_url = reverse("xform_player_proxy")
+        xform_url = root_extras.get('formplayer_url')
         ret = {
             "session_data": session_data,
             "xform_url": xform_url,
