@@ -91,6 +91,26 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
         fixture = ElementTree.tostring(location_fixture_generator(self.user, V2)[0])
         self.assertXmlEqual(empty_fixture, fixture)
 
+    def test_metadata(self):
+        location_type = self.location_types['state']
+        location = SQLLocation(
+            id="854208",
+            domain="test-domain",
+            name="Braavos",
+            location_type=location_type,
+            metadata={
+                'best_swordsman': "Sylvio Forel",
+                'in_westeros': "false",
+                'appeared_in_num_episodes': 2,
+            },
+        )
+        location_db = LocationSet([location])
+        fixture = _location_to_fixture(location_db, location, location_type)
+        location_data = {
+            e.tag: e.text for e in fixture.find('location_data')
+        }
+        self.assertEquals(location_data, {k: unicode(v) for k, v in location.metadata.items()})
+
     def test_simple_location_fixture(self):
         self.user._couch_user.set_location(self.locations['Suffolk'].couch_location)
 
@@ -391,22 +411,6 @@ class ShouldSyncLocationFixturesTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.domain_obj.delete()
-
-    def test_metadata(self):
-        location = SQLLocation(
-            id="854208",
-            domain="test-domain",
-            name="Braavos",
-            location_type=self.location_type,
-            metadata={'best_swordsman': "Sylvio Forel",
-                      'in_westeros': "false"},
-        )
-        location_db = LocationSet([location])
-        fixture = _location_to_fixture(location_db, location, self.location_type)
-        location_data = {
-            e.tag: e.text for e in fixture.find('location_data')
-        }
-        self.assertEquals(location_data, location.metadata)
 
     def test_should_sync_locations_change_location_type(self):
         """
