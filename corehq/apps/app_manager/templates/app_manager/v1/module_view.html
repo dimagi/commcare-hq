@@ -48,6 +48,7 @@
             var fixture_columns_by_type = {{ fixture_columns_by_type|JSON }};
             var searchProperties = {{ search_properties|JSON }};
             var includeClosed = {{ include_closed|BOOL }};
+            var searchButtonDisplayCondition = {{ search_button_display_condition|JSON }};
             var defaultProperties = {{ default_properties|JSON }};
 
             for (var i = 0; i < details.length; i++) {
@@ -75,6 +76,7 @@
                     searchProperties: searchProperties,
                     includeClosed: includeClosed,
                     defaultProperties: defaultProperties,
+                    searchButtonDisplayCondition: searchButtonDisplayCondition,
                     contextVariables: state,
                 });
                 var $list_home = $("#" + detail.type + "-detail-screen-config-tab");
