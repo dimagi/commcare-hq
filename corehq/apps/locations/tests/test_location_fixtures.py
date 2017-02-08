@@ -101,7 +101,7 @@ class LocationFixturesTest(LocationHierarchyPerTest, FixtureHasLocationsMixin):
             metadata={
                 'best_swordsman': "Sylvio Forel",
                 'in_westeros': "false",
-                'appeared_in_num_episodes': 2,
+                'appeared_in_num_episodes': 3,
             },
         )
         location_db = LocationSet([location])
