@@ -31,19 +31,18 @@ class ReindexEventHandler(PaginationEventHandler):
 
 
 class Command(BaseCommand):
-    args = '<pillow_name> <domain domain ...>'
     help = (
         'Reindex a fluff pillow. '
         'If no domains are specified all domains for the pillow will be re-indexed.'
     )
 
-    def handle(self, *args, **options):
-        if len(args) < 1:
-            raise CommandError('Usage is ptop_reindexer_fluff %s' % self.args)
+    def add_arguments(self, parser):
+        parser.add_argument('pillow_name')
+        parser.add_argument('domain', nargs='*')  # TODO - check this
 
+    def handle(self, pillow_name, **options):
         fluff_configs = {config.name: config for config in get_fluff_pillow_configs()}
 
-        pillow_name = args[0]
         if pillow_name not in fluff_configs:
             raise CommandError('Unrecognised fluff pillow: "{}". Options are:\n\t{}'.format(
                 pillow_name, '\n\t'.join(fluff_configs)))
@@ -51,18 +50,15 @@ class Command(BaseCommand):
         pillow_getter = get_pillow_by_name(pillow_name, instantiate=False)
         pillow = pillow_getter(delete_filtered=True)
 
-        if len(args) == 1:
-            domains = pillow.domains
-        else:
-            domains = args[1:]
-            domains_not_in_pillow = set(domains) - set(pillow.domains)
-            if domains_not_in_pillow:
-                bad_domains = ', '.join(domains_not_in_pillow)
-                available_domains = ', '.join(pillow.domains)
-                raise CommandError(
-                    "The following domains aren't for this pillow: {}.\nAvailable domains are: {}".format(
-                        bad_domains, available_domains
-                    ))
+        domains = options.get('domain', pillow.domains)
+        domains_not_in_pillow = set(domains) - set(pillow.domains)
+        if domains_not_in_pillow:
+            bad_domains = ', '.join(domains_not_in_pillow)
+            available_domains = ', '.join(pillow.domains)
+            raise CommandError(
+                "The following domains aren't for this pillow: {}.\nAvailable domains are: {}".format(
+                    bad_domains, available_domains
+                ))
 
         if pillow.kafka_topic in (topics.CASE, topics.FORM):
             couch_db = couch_config.get_db(None)
