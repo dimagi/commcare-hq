@@ -10,8 +10,7 @@ from corehq.apps.app_manager.models import (
     CaseSearchProperty,
     DefaultCaseSearchProperty
 )
-from corehq.apps.app_manager.tests.util import TestXmlMixin, SuiteMixin
-
+from corehq.apps.app_manager.tests.util import TestXmlMixin, SuiteMixin, parse_normalize
 
 DOMAIN = 'test_domain'
 
@@ -61,3 +60,10 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         """
         suite = self.app.create_suite()
         self.assertXmlPartialEqual(self.get_xml('search_command_detail'), suite, "./detail[1]")
+
+    def test_case_search_action_relevant_condition(self):
+        condition = "'foo' = 'bar'"
+        self.module.search_config.search_button_display_condition = condition
+        suite = self.app.create_suite()
+        suite = parse_normalize(suite, to_string=False)
+        self.assertEqual(condition, suite.xpath('./detail[1]/action/@relevant')[0])

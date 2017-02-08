@@ -220,12 +220,6 @@ def toggle_enabled(request, toggle_or_toggle_name):
 
 
 @register.filter
-def is_new_cloudcare(request):
-    from corehq import toggles
-    return not _toggle_enabled(toggles, request, toggles.USE_OLD_CLOUDCARE)
-
-
-@register.filter
 def can_use_restore_as(request):
     if not hasattr(request, 'couch_user'):
         return False
