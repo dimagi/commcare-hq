@@ -1314,7 +1314,7 @@ class TestCoalesceExpression(SimpleTestCase):
             'default_expression': 'default',
         }))
 
-    def testBlankDefaultValue2(self):
+    def testBlankDefaultValue(self):
         self.assertEqual('foo', self.expression({
             'expression': 'foo',
         }))
