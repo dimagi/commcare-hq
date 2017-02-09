@@ -28,14 +28,15 @@ class TestExtensionCaseIds(TestCase):
         """ Returns empty when there are other index types """
         parent_id = uuid.uuid4().hex
         child_id = uuid.uuid4().hex
-        parent = CaseStructure(case_id=parent_id)
+        parent = CaseStructure(case_id=parent_id, attrs={'create': True})
 
         self.factory.create_or_update_case(
             CaseStructure(
                 case_id=child_id,
                 indices=[
                     CaseIndex(parent, relationship=CASE_INDEX_CHILD)
-                ]
+                ],
+                attrs={'create': True}
             )
         )
         returned_cases = CaseAccessors(self.domain).get_extension_case_ids([parent_id])
@@ -46,14 +47,15 @@ class TestExtensionCaseIds(TestCase):
         """ Should return extension if it exists """
         host_id = uuid.uuid4().hex
         extension_id = uuid.uuid4().hex
-        host = CaseStructure(case_id=host_id)
+        host = CaseStructure(case_id=host_id, attrs={'create': True})
 
         self.factory.create_or_update_case(
             CaseStructure(
                 case_id=extension_id,
                 indices=[
                     CaseIndex(host, relationship=CASE_INDEX_EXTENSION)
-                ]
+                ],
+                attrs={'create': True}
             )
         )
         returned_cases = CaseAccessors(self.domain).get_extension_case_ids([host_id])
@@ -66,9 +68,9 @@ class TestExtensionCaseIds(TestCase):
         host_2_id = uuid.uuid4().hex
         parent_id = uuid.uuid4().hex
         extension_id = uuid.uuid4().hex
-        host = CaseStructure(case_id=host_id)
-        host_2 = CaseStructure(case_id=host_2_id)
-        parent = CaseStructure(case_id=parent_id)
+        host = CaseStructure(case_id=host_id, attrs={'create': True})
+        host_2 = CaseStructure(case_id=host_2_id, attrs={'create': True})
+        parent = CaseStructure(case_id=parent_id, attrs={'create': True})
 
         self.factory.create_or_update_case(
             CaseStructure(
@@ -77,7 +79,8 @@ class TestExtensionCaseIds(TestCase):
                     CaseIndex(host, relationship=CASE_INDEX_EXTENSION, identifier="host"),
                     CaseIndex(host_2, relationship=CASE_INDEX_EXTENSION, identifier="host_2"),
                     CaseIndex(parent, relationship=CASE_INDEX_CHILD),
-                ]
+                ],
+                attrs={'create': True}
             )
         )
 
@@ -93,20 +96,22 @@ class TestExtensionCaseIds(TestCase):
         extension_id = uuid.uuid4().hex
         extension_2_id = uuid.uuid4().hex
 
-        host = CaseStructure(case_id=host_id)
+        host = CaseStructure(case_id=host_id, attrs={'create': True})
 
         self.factory.create_or_update_cases([
             CaseStructure(
                 case_id=extension_id,
                 indices=[
                     CaseIndex(host, relationship=CASE_INDEX_EXTENSION, identifier="host"),
-                ]
+                ],
+                attrs={'create': True}
             ),
             CaseStructure(
                 case_id=extension_2_id,
                 indices=[
                     CaseIndex(host, relationship=CASE_INDEX_EXTENSION, identifier="host"),
-                ]
+                ],
+                attrs={'create': True}
             ),
         ]
         )
@@ -122,14 +127,15 @@ class TestExtensionCaseIds(TestCase):
         extension_id = uuid.uuid4().hex
         extension_2_id = uuid.uuid4().hex
 
-        host = CaseStructure(case_id=host_id)
-        host_2 = CaseStructure(case_id=host_2_id)
+        host = CaseStructure(case_id=host_id, attrs={'create': True})
+        host_2 = CaseStructure(case_id=host_2_id, attrs={'create': True})
         self.factory.create_or_update_case(
             CaseStructure(
                 case_id=extension_id,
                 indices=[
                     CaseIndex(host, relationship=CASE_INDEX_EXTENSION, identifier="host"),
-                ]
+                ],
+                attrs={'create': True}
             )
         )
         self.factory.create_or_update_case(
@@ -137,7 +143,8 @@ class TestExtensionCaseIds(TestCase):
                 case_id=extension_2_id,
                 indices=[
                     CaseIndex(host_2, relationship=CASE_INDEX_EXTENSION, identifier="host"),
-                ]
+                ],
+                attrs={'create': True}
             )
         )
         returned_cases = CaseAccessors(self.domain).get_extension_case_ids([host_id, host_2_id])
@@ -161,14 +168,15 @@ class TestIndexedCaseIds(TestCase):
         """ When getting indices, also return extensions """
         host_id = uuid.uuid4().hex
         extension_id = uuid.uuid4().hex
-        host = CaseStructure(case_id=host_id)
+        host = CaseStructure(case_id=host_id, attrs={'create': True})
 
         self.factory.create_or_update_case(
             CaseStructure(
                 case_id=extension_id,
                 indices=[
                     CaseIndex(host, relationship=CASE_INDEX_EXTENSION)
-                ]
+                ],
+                attrs={'create': True}
             )
         )
         returned_cases = CaseAccessors(self.domain).get_indexed_case_ids([extension_id])

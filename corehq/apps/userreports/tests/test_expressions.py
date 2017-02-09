@@ -1043,7 +1043,8 @@ class TestGetSubcasesExpression(TestCase):
             case_id=child_id,
             indices=[
                 CaseIndex(CaseStructure(case_id=parent_id, attrs={'create': True}))
-            ]
+            ],
+            attrs={'create': True}
         ))
         subcases = self.expression(parent.to_json(), self.context)
         self.assertEqual(len(subcases), 1)
@@ -1060,7 +1061,8 @@ class TestGetSubcasesExpression(TestCase):
                     CaseStructure(case_id=host_id, attrs={'create': True}),
                     relationship=CASE_INDEX_EXTENSION
                 )
-            ]
+            ],
+            attrs={'create': True}
         ))
         subcases = self.expression(host.to_json(), self.context)
         self.assertEqual(len(subcases), 1)
