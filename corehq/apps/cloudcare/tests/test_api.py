@@ -30,7 +30,7 @@ class CaseAPITestMixin(object):
 
     @classmethod
     def do_setup(cls):
-        create_domain(cls.domain)
+        cls.project = create_domain(cls.domain)
         cls.password = "****"
 
         def create_user(username):
@@ -64,6 +64,7 @@ class CaseAPITestMixin(object):
     def do_teardown(cls):
         for user in cls.users:
             user.delete()
+        cls.project.delete()
         clear_toggle_cache(toggles.CLOUDCARE_CACHE.slug, TEST_DOMAIN, toggles.NAMESPACE_DOMAIN)
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(TEST_DOMAIN)
 
@@ -244,7 +245,7 @@ class CaseAPIMiscTests(TestCase):
     def setUpClass(cls):
         super(CaseAPIMiscTests, cls).setUpClass()
         cls.domain = uuid.uuid4().hex
-        create_domain(cls.domain)
+        cls.project = create_domain(cls.domain)
         cls.username = uuid.uuid4().hex
         cls.password = "****"
 
@@ -261,6 +262,7 @@ class CaseAPIMiscTests(TestCase):
         cls.user.delete()
         clear_toggle_cache(toggles.CLOUDCARE_CACHE.slug, cls.domain, toggles.NAMESPACE_DOMAIN)
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(cls.domain)
+        cls.project.delete()
         super(CaseAPIMiscTests, cls).tearDownClass()
 
     def testCaseAPIResultJSON(self):
