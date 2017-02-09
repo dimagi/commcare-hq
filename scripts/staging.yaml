@@ -60,6 +60,8 @@ branches:
   - dm/julies-billing-gid  # daniel 2/1
   - np/3/update-dropbox # NP 2/3
   - refresh-to-same-tab # Jenny 2/9
+  - v2-case-name-assignment # Jenny 2/9
+  - form-error-link # Jenny 2/9
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
