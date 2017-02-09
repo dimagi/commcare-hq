@@ -20,11 +20,6 @@
     {% endcompress %}
 {% endblock %}
 
-{% block js-inline  %}{{ block.super }}
-  {% url "eula_basic" as eula_url %}
-  {% include 'style/includes/load_into_modal.html' with modal_id="eulaModal" load_from=eula_url %}
-{% endblock %}
-
 {% block stylesheets %}
 <link type="text/css"
       rel="stylesheet"

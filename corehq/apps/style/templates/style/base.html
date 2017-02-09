@@ -602,6 +602,11 @@
         {# Report Issue #}
         {% include 'style/includes/modal_report_issue.html' %}
 
+        {# Remote modals (EULA and CDA) #}
+        {% compress js %}
+            <script src="{% static 'style/js/remote-modals.js' %}"></script>
+        {% endcompress %}
+
         {# EULA #}
         {% if request.couch_user and not request.couch_user.is_eula_signed %}
             {% include 'style/includes/modal_eula.html' with needs_agreement=True %}
