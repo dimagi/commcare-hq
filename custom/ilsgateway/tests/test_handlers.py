@@ -1054,6 +1054,7 @@ class TestHandlers(ILSTestScript):
         """.format(response2)
         self.run_script(soh_script)
 
+    @flag_enabled('EMG_AND_REC_SMS_HANDLERS')
     def test_help(self):
         script = """
             5551234 > emg
