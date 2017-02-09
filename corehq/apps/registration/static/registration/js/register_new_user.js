@@ -7,6 +7,7 @@ $(function () {
         $('.reg-form-column').css('min-height', Math.max(newHeight, minHeight) + 'px');
     });
 
+    // Link up with registration form ko model
     var reg = hqImport('registration/js/new_user.ko.js');
     reg.onModuleLoad = function () {
         $('.loading-form-step').fadeOut(500, function () {
@@ -24,21 +25,25 @@ $(function () {
     );
     $('#registration-form-container').koApplyBindings(regForm);
 
+    // Email validation feedback
     reg.setResetEmailFeedbackFn(function (isValidating) {
-        // separating form and function
+        var $email = $('#div_id_email');
         if (isValidating) {
-            $('#div_id_email').removeClass('has-error has-success')
-                              .addClass('has-warning')
-                              .find('.form-control-feedback').removeClass('fa-check fa-remove')
-                                                             .addClass('fa-spinner fa-spin');
+            $email.removeClass('has-error has-success').addClass('has-warning');
+            $email.find('.form-control-feedback').removeClass('fa-check fa-remove').addClass('fa-spinner fa-spin');
         } else {
-            $('#div_id_email').removeClass('has-warning')
-                              .addClass((regForm.emailDelayed.isValid() && regForm.email.isValid()) ? 'has-success' : 'has-error')
-                              .find('.form-control-feedback').removeClass('fa-spinner fa-spin')
-                              .addClass((regForm.emailDelayed.isValid() && regForm.email.isValid()) ? 'fa-check' : 'fa-remove');
+            var inputClass = 'has-error',
+                iconClass = 'fa-remove';
+            if (regForm.emailDelayed.isValid() && regForm.email.isValid()) {
+                inputClass = 'has-success';
+                iconClass = 'fa-check';
+            }
+            $email.removeClass('has-warning').addClass(inputClass);
+            $email.find('.form-control-feedback').removeClass('fa-spinner fa-spin').addClass(iconClass);
         }
     });
 
+    // Analytics
     reg.setSubmitAttemptFn(function () {
         _kmq.push(["trackClick", "create_account_clicked", "Clicked Create Account"]);
     });
@@ -46,6 +51,7 @@ $(function () {
         _kmq.push(["trackClick", "create_account_success", "Account Creation was Successful"]);
     });
 
+    // Handle phone number input
     if (initial_page_data('show_number')) {
         var $number = $('#id_phone_number');
         $number.intlTelInput({
