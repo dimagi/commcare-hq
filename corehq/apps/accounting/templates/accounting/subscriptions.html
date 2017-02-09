@@ -4,6 +4,7 @@
 {% load i18n %}
 
 {% block js %}{{ block.super }}
+    <script src="{% static 'hqwebapp/js/initial_page_data.js' %}"></script>
     <script src="{% static 'accounting/js/stay-on-tab.js' %}"></script>
     <script src="{% static 'accounting/js/adjust-balance-modal.js' %}"></script>
 {% endblock %}
@@ -18,7 +19,7 @@
                 return {
                     'product': $('#id_new_plan_product').val(),
                     'edition': $('#id_new_plan_edition').val(),
-                    'current_version': '{{ subscription.plan_version.id }}'
+                    'current_version': hqImport('hqwebapp/js/initial_page_data.js').get('current_version'),
                 }
             };
             hqImport('accounting/js/accounting.billing_info_handler.js').initBillingContactInfoHandler();
@@ -36,6 +37,7 @@
 {% endblock %}
 
 {% block page_content %}
+    {% initial_page_data 'current_version' subscription.plan_version.id %}
     <ul class="nav nav-tabs" id="user-settings-tabs">
         <li><a href="#subscription" data-toggle="tab">{% trans "Subscription" %}</a></li>
         <li><a href="#invoices" data-toggle="tab">{% trans "Invoices" %}</a></li>
