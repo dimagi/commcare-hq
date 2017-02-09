@@ -34,12 +34,11 @@ def get_parent_of_case(domain, case_id, parent_case_type):
 
     parent_case_ids = [
         indexed_case.referenced_id for indexed_case in child_case.indices
-        if indexed_case.referenced_type == parent_case_type
     ]
     parent_cases = case_accessor.get_cases(parent_case_ids)
     open_parent_cases = [
         parent_case for parent_case in parent_cases
-        if not parent_case.closed
+        if not parent_case.closed and parent_case.referenced_type == parent_case_type
     ]
 
     if not open_parent_cases:
