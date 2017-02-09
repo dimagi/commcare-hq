@@ -1,3 +1,4 @@
+import uuid
 from collections import namedtuple
 from datetime import datetime, timedelta
 from mock import patch
@@ -27,8 +28,6 @@ from couchforms.const import DEVICE_LOG_XMLNS
 
 MockResponse = namedtuple('MockResponse', 'status_code reason')
 CASE_ID = "ABC123CASEID"
-INSTANCE_ID = "XKVB636DFYL38FNX3D38WV5EH"
-UPDATE_INSTANCE_ID = "ZYXKVB636DFYL38FNX3D38WV5"
 USER_ID = 'mojo-jojo'
 
 XFORM_XML_TEMPLATE = """<?xml version='1.0' ?>
@@ -66,22 +65,23 @@ class BaseRepeaterTest(TestCase):
             case_name="ABC 234",
         ).as_string()
 
+        cls.instance_id = uuid.uuid4().hex
         cls.xform_xml = XFORM_XML_TEMPLATE.format(
             "https://www.commcarehq.org/test/repeater/",
             USER_ID,
-            INSTANCE_ID,
+            cls.instance_id,
             case_block
         )
         cls.update_xform_xml = XFORM_XML_TEMPLATE.format(
             "https://www.commcarehq.org/test/repeater/",
             USER_ID,
-            UPDATE_INSTANCE_ID,
+            uuid.uuid4().hex,
             update_case_block,
         )
 
     @classmethod
     def post_xml(cls, xml, domain_name):
-        submit_form_locally(xml, domain_name)
+        return submit_form_locally(xml, domain_name)
 
     @classmethod
     def repeat_records(cls, domain_name):
@@ -110,7 +110,7 @@ class RepeaterTest(BaseRepeaterTest):
     def tearDown(self):
         self.case_repeater.delete()
         self.form_repeater.delete()
-        FormProcessorTestUtils.delete_all_xforms(self.domain)
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
         delete_all_repeat_records()
         super(RepeaterTest, self).tearDown()
 
@@ -264,14 +264,14 @@ class FormPayloadGeneratorTest(BaseRepeaterTest, TestXmlMixin):
         super(FormPayloadGeneratorTest, cls).tearDownClass()
 
     def tearDown(self):
-        FormProcessorTestUtils.delete_all_cases(self.domain_name)
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain_name)
         delete_all_repeat_records()
         super(FormPayloadGeneratorTest, self).tearDown()
 
     @run_with_all_backends
     def test_get_payload(self):
         self.post_xml(self.xform_xml, self.domain_name)
-        payload_doc = FormAccessors(self.domain_name).get_form(INSTANCE_ID)
+        payload_doc = FormAccessors(self.domain_name).get_form(self.instance_id)
         payload = self.repeatergenerator.get_payload(None, payload_doc)
         self.assertXmlEqual(self.xform_xml, payload)
 
@@ -561,7 +561,7 @@ class TestRepeaterFormat(BaseRepeaterTest):
 
     def tearDown(self):
         self.repeater.delete()
-        FormProcessorTestUtils.delete_all_xforms(self.domain)
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
         delete_all_repeat_records()
         super(TestRepeaterFormat, self).tearDown()
 
