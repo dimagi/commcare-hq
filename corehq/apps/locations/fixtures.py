@@ -290,7 +290,7 @@ def _get_metadata_node(location):
     node = Element('location_data')
     for key, value in location.metadata.items():
         element = Element(key)
-        element.text = value
+        element.text = unicode(value)
         node.append(element)
     return node
 
