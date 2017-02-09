@@ -30,6 +30,7 @@ def get_case_export_base_query(domain, case_type):
 def get_sms_export_base_query(domain):
     return (SMSES()
             .domain(domain)
+            .processed_or_incoming_messages()
             .sort("date"))
 
 
