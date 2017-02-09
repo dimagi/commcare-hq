@@ -58,6 +58,12 @@
         $('#profiles-tab').koApplyBindings(profileManager);
         {% endif %}
     });
+    {% if intro_only %}
+    $(function () {
+        var previewApp = hqImport('app_manager/js/preview_app.js');
+        previewApp.makePreviewHidden();
+    });
+    {% endif %}
 
     //analytics.workflow('Visited the Release Manager');
 </script>
