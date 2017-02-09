@@ -74,9 +74,15 @@
 </script>
 
 {% if intro_only %}
+  <p class="lead">
+    <i class="fa fa-arrow-left"></i>
   {% blocktrans %}
-    Please click <strong>Add...</strong> to the left to start building your application!
+    Please click <i class="fa fa-plus"></i> <strong>Add...</strong> to the left to start building your Application!
   {% endblocktrans %}
+  </p>
+  <p class="alert alert-info">
+    <i class="fa fa-info-circle"></i> Use AppBuilder to <strong>create</strong> and <strong>customize</strong> your CommCare Application for Mobile and Web.
+  </p>
 {% else %}
 
 {% if intro_only and build_profile_access %}
