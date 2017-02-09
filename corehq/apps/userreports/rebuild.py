@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.userreports.models import id_is_static
 from dimagi.utils.couch import get_redis_client
 
