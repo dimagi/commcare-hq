@@ -20,6 +20,13 @@ def case_id_to_case_name(case_id, doc):
     return _cached_case_id_to_case_name(case_id)
 
 
+def case_or_user_id_to_name(id, doc):
+    if doc['doc_type'] == 'CommCareCase':
+        return case_id_to_case_name(id, doc)
+    elif doc['doc_type'] in ('CommCareUser', 'WebUser'):
+        return user_id_to_username(id, doc)
+
+
 def workflow_transform(workflow, doc):
     from corehq.apps.sms.models import WORKFLOWS_FOR_REPORTS
     from corehq.apps.sms.filters import MessageTypeFilter
