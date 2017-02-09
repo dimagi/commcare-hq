@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from collections import namedtuple
+from collections import defaultdict, namedtuple
 import datetime
 import logging
 
@@ -275,52 +275,55 @@ def get_default_domain_url(domain):
     )
 
 
-def ensure_grant(grantee_slug, priv_slug, dry_run=False, verbose=False):
+def ensure_grants(grants_to_privs, dry_run=False, verbose=False, roles_by_slug=None):
     """
     Adds a parameterless grant between grantee and priv, looked up by slug.
+
+    :param grants_to_privs: An iterable of two-tuples:
+    `(grantee_slug, priv_slugs)`. Will only be iterated once.
     """
+    dry_run_tag = "[DRY RUN] " if dry_run else ""
+    if roles_by_slug is None:
+        roles_by_slug = {role.slug: role for role in Role.objects.all()}
 
-    try:
-        grantee = Role.objects.get(slug=grantee_slug)
-    except Role.DoesNotExist:
-        logger.info('[DRY RUN] grantee {} does not exist.'.format(grantee_slug))
-        return
+    granted = defaultdict(set)
+    for grant in Grant.objects.select_related('from_role', 'to_role').all():
+        granted[grant.from_role.slug].add(grant.to_role.slug)
 
-    try:
-        priv = Role.objects.get(slug=priv_slug)
-    except Role.DoesNotExist:
-        logger.info('[DRY RUN] privilege {} does not exist.'.format(priv_slug))
-        return
+    grants_to_create = []
+    for grantee_slug, priv_slugs in grants_to_privs:
+        if grantee_slug not in roles_by_slug:
+            logger.info('grantee %s does not exist.', grantee_slug)
+            continue
 
-    if dry_run:
-        grants = Grant.objects.filter(from_role__slug=grantee_slug,
-                                      to_role__slug=priv_slug)
-        if not grants:
-            logger.info('[DRY RUN] Granting privilege: %s => %s', grantee_slug, priv_slug)
-        if grantee.has_privilege(priv):
-            if verbose:
-                logger.info('[DRY RUN] Privilege already granted: %s => %s', grantee.slug, priv.slug)
+        for priv_slug in priv_slugs:
+            if priv_slug not in roles_by_slug:
+                logger.info('privilege %s does not exist.', priv_slug)
+                continue
 
-    else:
+            if priv_slug in granted[grantee_slug]:
+                if verbose or dry_run:
+                    logger.info('%sPrivilege already granted: %s => %s',
+                        dry_run_tag, grantee_slug, priv_slug)
+            else:
+                granted[grantee_slug].add(priv_slug)
+                if verbose or dry_run:
+                    logger.info('%sGranting privilege: %s => %s',
+                        dry_run_tag, grantee_slug, priv_slug)
+                if not dry_run:
+                    grants_to_create.append(Grant(
+                        from_role=roles_by_slug[grantee_slug],
+                        to_role=roles_by_slug[priv_slug]
+                    ))
+    if grants_to_create:
         Role.get_cache().clear()
-        if grantee.has_privilege(priv):
-            if verbose:
-                logger.info('Privilege already granted: %s => %s', grantee.slug, priv.slug)
-        else:
-            if verbose:
-                logger.info('Granting privilege: %s => %s', grantee.slug, priv.slug)
-            Grant.objects.create(
-                from_role=grantee,
-                to_role=priv,
-            )
+        Grant.objects.bulk_create(grants_to_create)
 
 
-def remove_grant(priv_slug, dry_run=False):
-    grants = Grant.objects.filter(to_role__slug=priv_slug)
-    if dry_run:
-        if grants:
-            logger.info("[DRY RUN] Removing privilege %s", priv_slug)
-    else:
-        if grants:
-            grants.delete()
-            logger.info("Removing privilege %s", priv_slug)
+def log_removed_grants(priv_slugs, dry_run=False):
+    grants = Grant.objects.filter(to_role__slug__in=list(priv_slugs))
+    if grants:
+        logger.info("%sRemoving privileges: %s",
+            ("[DRY RUN] " if dry_run else ""),
+            ", ".join(g.to_role.slug for g in grants),
+        )

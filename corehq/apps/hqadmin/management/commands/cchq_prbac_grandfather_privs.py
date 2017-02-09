@@ -3,7 +3,7 @@ from optparse import make_option
 from django.core.management.base import BaseCommand
 
 from corehq.privileges import MAX_PRIVILEGES
-from corehq.apps.accounting.utils import ensure_grant
+from corehq.apps.accounting.utils import ensure_grants
 from corehq.apps.accounting.models import SoftwarePlanVersion
 
 
@@ -43,9 +43,9 @@ class Command(BaseCommand):
         verbose = kwargs.get('verbose')
         noinput = kwargs.get('noinput')
         all_plan_slugs = (
-            set(map(lambda s: s.role.slug, SoftwarePlanVersion.objects.all())) -
+            set(s.role.slug for s in SoftwarePlanVersion.objects.all()) -
             set(MAX_PRIVILEGES) -  # no privileges should be in software plan roles, this is just a safeguard
-            set(map(lambda plan_slug: plan_slug.strip(), kwargs.get('skip', []).split(',')))
+            set(plan_slug.strip() for plan_slug in kwargs.get('skip', '').split(','))
         )
 
         if not dry_run and not noinput and not _confirm('Are you sure you want to grant {} to {}?'.format(
@@ -55,13 +55,12 @@ class Command(BaseCommand):
             print 'Aborting'
             return
 
-        if not all(map(lambda priv: priv in MAX_PRIVILEGES, privs)):
+        if not all(priv in MAX_PRIVILEGES for priv in privs):
             print 'Not all specified privileges are valid: {}'.format(', '.join(privs))
             return
 
-        for plan_role_slug in all_plan_slugs:
-            for priv in privs:
-                ensure_grant(plan_role_slug, priv, dry_run=dry_run, verbose=verbose)
+        grants_to_privs = ((role_slug, privs) for role_slug in all_plan_slugs)
+        ensure_grants(grants_to_privs, dry_run=dry_run, verbose=verbose)
 
 
 def _confirm(msg):
