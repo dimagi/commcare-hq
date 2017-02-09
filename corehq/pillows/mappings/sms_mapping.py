@@ -1,3 +1,5 @@
+from corehq.pillows.base import DEFAULT_META
+from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
 from corehq.util.elastic import es_index
 from pillowtop.es_utils import ElasticsearchIndexInfo
 
@@ -8,20 +10,7 @@ SMS_MAPPING = {
        'created': None
     },
     'date_detection': False,
-    'date_formats': [
-        'yyyy-MM-dd',
-        "yyyy-MM-dd'T'HH:mm:ssZZ",
-        "yyyy-MM-dd'T'HH:mm:ss.SSSSSS",
-        "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'",
-        "yyyy-MM-dd'T'HH:mm:ss'Z'",
-        "yyyy-MM-dd'T'HH:mm:ssZ",
-        "yyyy-MM-dd'T'HH:mm:ssZZ'Z'",
-        "yyyy-MM-dd'T'HH:mm:ss.SSSZZ",
-        "yyyy-MM-dd'T'HH:mm:ss",
-        "yyyy-MM-dd' 'HH:mm:ss",
-        "yyyy-MM-dd' 'HH:mm:ss.SSSSSS",
-        "mm/dd/yy' 'HH:mm:ss"
-    ],
+    'date_formats': DATE_FORMATS_ARR,
     'dynamic': False,
     'properties': {
         'backend_api': {'type': 'string'},
@@ -31,7 +20,7 @@ SMS_MAPPING = {
         'couch_recipient': {'type': 'string'},
         'couch_recipient_doc_type': {'type': 'string'},
         'date': {
-            'format': "yyyy-MM-dd||yyyy-MM-dd'T'HH:mm:ssZZ||yyyy-MM-dd'T'HH:mm:ss.SSSSSS||yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'||yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd'T'HH:mm:ssZ||yyyy-MM-dd'T'HH:mm:ssZZ'Z'||yyyy-MM-dd'T'HH:mm:ss.SSSZZ||yyyy-MM-dd'T'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss||yyyy-MM-dd' 'HH:mm:ss.SSSSSS||mm/dd/yy' 'HH:mm:ss",
+            'format': DATE_FORMATS_STRING,
             'type': 'date'
         },
         'direction': {'type': 'string'},
@@ -51,27 +40,12 @@ SMS_MAPPING = {
     }
 }
 
-SMS_META = {
-    "settings": {
-        "analysis": {
-            "analyzer": {
-                "default": {
-                    "type": "custom",
-                    "tokenizer": "whitespace",
-                    "filter": ["lowercase"]
-                },
-            }
-        }
-    }
-}
-
 SMS_TYPE = 'sms'
-
 
 SMS_INDEX_INFO = ElasticsearchIndexInfo(
     index=SMS_INDEX,
     alias="smslogs",
     type=SMS_TYPE,
-    meta=SMS_META,
+    meta=DEFAULT_META,
     mapping=SMS_MAPPING,
 )
