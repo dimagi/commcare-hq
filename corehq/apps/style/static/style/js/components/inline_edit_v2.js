@@ -3,10 +3,8 @@
  * Component for an inline editing widget: a piece of text that, when clicked on, turns into an input (textarea or
  * text input). The input is accompanied by a save button capable of saving the new value to the server via ajax.
  *
- * Required parameters
- *  - url: The URL to call on save.
- *
  * Optional parameters
+ *  - url: The URL to call on save. If none is given, no ajax call will be made
  *  - value: Text to display and edit
  *  - name: HTML name of input
  *  - id: HTML id of input
@@ -24,10 +22,6 @@ hqDefine('style/js/components/inline_edit_v2.js', function() {
     return {
         viewModel: function(params) {
             var self = this;
-
-            if (!params.url) {
-                throw "Inline edit widget requires a url";
-            }
 
             // Attributes passed on to the input
             self.name = params.name || '';
@@ -76,43 +70,44 @@ hqDefine('style/js/components/inline_edit_v2.js', function() {
             // On server success, just hide the spinner. On error, display error and go back to edit mode.
             self.save = function() {
                 self.isEditing(false);
+                if (params.url) {
+                    // Nothing changed
+                    if (self.readOnlyValue === self.value() && self.serverValue === self.value()) {
+                        return;
+                    }
 
-                // Nothing changed
-                if (self.readOnlyValue === self.value() && self.serverValue === self.value()) {
-                    return;
+                    self.value(DOMPurify.sanitize(self.value()));
+                    self.readOnlyValue = self.value();
+                    var data = self.saveParams;
+                    _.each(data, function (value, key) {
+                        data[key] = ko.utils.unwrapObservable(value);
+                    });
+                    data[self.saveValueName] = self.value();
+                    self.isSaving(true);
+                    $(window).on("beforeunload", self.beforeUnload);
+
+                    $.ajax({
+                        url: self.url,
+                        type: 'POST',
+                        dataType: 'JSON',
+                        data: data,
+                        success: function (data) {
+                            self.isSaving(false);
+                            self.hasError(false);
+                            self.serverValue = self.readOnlyValue;
+                            if (self.postSave) {
+                                self.postSave(data);
+                            }
+                            $(window).off("beforeunload", self.beforeUnload);
+                        },
+                        error: function () {
+                            self.isEditing(true);
+                            self.isSaving(false);
+                            self.hasError(true);
+                            $(window).off("beforeunload", self.beforeUnload);
+                        },
+                    });
                 }
-
-                self.value(DOMPurify.sanitize(self.value()));
-                self.readOnlyValue = self.value();
-                var data = self.saveParams;
-                _.each(data, function(value, key) {
-                    data[key] = ko.utils.unwrapObservable(value);
-                });
-                data[self.saveValueName] = self.value();
-                self.isSaving(true);
-                $(window).on("beforeunload", self.beforeUnload);
-
-                $.ajax({
-                    url: self.url,
-                    type: 'POST',
-                    dataType: 'JSON',
-                    data: data,
-                    success: function (data) {
-                        self.isSaving(false);
-                        self.hasError(false);
-                        self.serverValue = self.readOnlyValue;
-                        if (self.postSave) {
-                            self.postSave(data);
-                        }
-                        $(window).off("beforeunload", self.beforeUnload);
-                    },
-                    error: function () {
-                        self.isEditing(true);
-                        self.isSaving(false);
-                        self.hasError(true);
-                        $(window).off("beforeunload", self.beforeUnload);
-                    },
-                });
             };
 
             // Revert to last value and switch modes
