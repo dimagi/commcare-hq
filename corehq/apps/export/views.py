@@ -10,7 +10,7 @@ from django.template.defaultfilters import filesizeformat
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 
-from corehq.toggles import DO_NOT_PROCESS_OLD_BUILDS
+from corehq.toggles import DO_NOT_PROCESS_OLD_BUILDS, MESSAGE_LOG_METADATA
 from corehq.apps.export.export import get_export_download, get_export_size
 from corehq.apps.export.models.new import DatePeriod
 from corehq.apps.locations.models import SQLLocation
@@ -55,14 +55,17 @@ from corehq.apps.export.forms import (
     FilterCaseCouchExportDownloadForm,
     EmwfFilterFormExport,
     FilterCaseESExportDownloadForm,
+    FilterSmsESExportDownloadForm,
     CreateExportTagForm,
     DashboardFeedFilterForm,
 )
 from corehq.apps.export.models import (
     FormExportDataSchema,
     CaseExportDataSchema,
+    SMSExportDataSchema,
     FormExportInstance,
     CaseExportInstance,
+    SMSExportInstance,
     ExportInstance,
 )
 from corehq.apps.export.const import (
@@ -602,7 +605,7 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
         ):
             raw_export_list = json.loads(self.request.POST['export_list'])
             exports = [self._get_export(self.domain, e['id']) for e in raw_export_list]
-        elif self.export_id:
+        elif self.export_id or self.sms_export:
             exports = [self._get_export(self.domain, self.export_id)]
 
         if not self.has_view_permissions:
@@ -2281,6 +2284,56 @@ class DownloadNewCaseExportView(GenericDownloadNewExportMixin, DownloadCaseExpor
             mobile_user_and_group_slugs, self.request.can_access_all_locations, accessible_location_ids
         )
         return form_filters
+
+
+class DownloadNewSmsExportView(GenericDownloadNewExportMixin, BaseDownloadExportView):
+    urlname = 'new_export_download_sms'
+    page_title = ugettext_noop("Export SMS")
+    form_or_case = None  # todo: remove this property from exports
+    filter_form_class = FilterSmsESExportDownloadForm
+    export_id = None
+    sms_export = True  # todo: remove this property from exports
+
+    @staticmethod
+    def get_export_schema(domain, include_metadata):
+        return SMSExportDataSchema.get_latest_export_schema(domain, include_metadata)
+
+    @property
+    def export_list_url(self):
+        return None
+
+    @property
+    @memoized
+    def download_export_form(self):
+        return self.filter_form_class(
+            self.domain_object,
+            timezone=self.timezone,
+            initial={
+                'type_or_group': 'type',
+            },
+        )
+
+    @property
+    def parent_pages(self):
+        return []
+
+    def _get_filter_form(self, filter_form_data):
+        filter_form = self.filter_form_class(
+            self.domain_object, self.timezone, filter_form_data,
+        )
+        if not filter_form.is_valid():
+            raise ExportFormValidationException()
+        return filter_form
+
+    def _get_export(self, domain, export_id):
+        include_metadata = MESSAGE_LOG_METADATA.enabled_for_request(self.request)
+        return SMSExportInstance._new_from_schema(
+            SMSExportDataSchema.get_latest_export_schema(domain, include_metadata)
+        )
+
+    def get_filters(self, filter_form_data, mobile_user_and_group_slugs):
+        filter_form = self._get_filter_form(filter_form_data)
+        return filter_form.get_filter()
 
 
 class GenerateSchemaFromAllBuildsView(View):
